@@ -90,7 +90,8 @@ async function main() {
 
   // Apply key migrations in order
   const migrations = [
-    '20250918_enhance_workflow_system.sql'
+    '20250918_enhance_workflow_system.sql',
+    '20250918_ma01_jobs_table.sql'
   ];
 
   let successCount = 0;
@@ -128,6 +129,18 @@ async function main() {
         console.log('✅ workflow_analytics table accessible');
       } else {
         console.log('⚠️  workflow_analytics table issue:', analyticsError.message);
+      }
+
+      // Test MA01 jobs table
+      const { data: jobs, error: jobsError } = await supabase
+        .from('ma01_jobs')
+        .select('*')
+        .limit(1);
+
+      if (!jobsError) {
+        console.log('✅ ma01_jobs table accessible');
+      } else {
+        console.log('⚠️  ma01_jobs table issue:', jobsError.message);
       }
 
     } catch (error) {

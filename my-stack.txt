@@ -1,0 +1,40 @@
+VITAL Path Platform - Technology Stack Analysis
+===================================================
+
+Framework: Next.js 14.0.3 with React 18 and TypeScript
+- App Router structure (src/app/)
+- Server and client components
+- API routes in src/app/api/
+
+Database & ORM: Supabase (PostgreSQL) with direct client calls
+- Using @supabase/supabase-js for database operations
+- No traditional ORM - direct Supabase client queries
+- Tables: agents, jtbd_executions, jtbd_process_steps, workflow_templates, etc.
+
+API Structure: REST API using Next.js App Router
+- API routes in src/app/api/ directory
+- RESTful endpoints like /api/jtbd/catalog, /api/jtbd/execute
+- JSON request/response format
+
+Authentication: Supabase Auth
+- Auth context in src/lib/auth/auth-context.tsx
+- User session management
+- Protected routes with authentication middleware
+
+UI Library: Tailwind CSS + Shadcn/ui components
+- Tailwind for styling (tailwind.config.ts)
+- Shadcn/ui component library (components.json)
+- UI components in src/components/ui/
+
+Key Directories:
+- src/app/ - Next.js app router pages and API routes
+- src/components/ - React components and UI library
+- src/lib/ - Utility functions, database clients, services
+- src/types/ - TypeScript type definitions
+
+Current Features:
+- JTBD (Jobs To Be Done) workflow system
+- Agent-based execution engine
+- Visual workflow builder
+- Dashboard with multiple pages (JTBD, workflows, knowledge, chat)
+- Supabase integration for data persistence

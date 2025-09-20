@@ -16,6 +16,8 @@
     "db:migrate": "npm run migrate:run",
     "db:status": "npm run migrate:status",
     "db:validate": "npm run migrate:validate",
+    "db:setup": "psql -f database/sql/run_all_migrations.sql",
+    "db:schema": "psql -f database/sql/schema/main_schema.sql",
     "test": "node scripts/testing/run-tests.ts"
   },
   "dependencies": {

@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Clear VITALpath Cache</title>
+</head>
+<body>
+    <h1>Clear VITALpath Agent Cache</h1>
+    <p>Click the button below to clear all cached agent data from your browser:</p>
+    <button onclick="clearCache()">Clear All Cache</button>
+    <div id="status"></div>
+
+    <script>
+        function clearCache() {
+            const status = document.getElementById('status');
+
+            try {
+                // Clear all localStorage keys related to VITALpath
+                const keysToRemove = [];
+                for (let i = 0; i < localStorage.length; i++) {
+                    const key = localStorage.key(i);
+                    if (key && (key.includes('vitalpath') || key.includes('agent') || key.includes('chat'))) {
+                        keysToRemove.push(key);
+                    }
+                }
+
+                keysToRemove.forEach(key => {
+                    localStorage.removeItem(key);
+                    console.log('Removed:', key);
+                });
+
+                // Clear sessionStorage too
+                sessionStorage.clear();
+
+                status.innerHTML = `
+                    <div style="color: green; margin-top: 10px;">
+                        ✅ Cache cleared successfully!<br>
+                        Removed ${keysToRemove.length} localStorage items<br>
+                        Cleared sessionStorage<br><br>
+                        <strong>Please refresh your VITALpath page now.</strong>
+                    </div>
+                `;
+
+                console.log('All VITALpath cache cleared');
+
+            } catch (error) {
+                status.innerHTML = `
+                    <div style="color: red; margin-top: 10px;">
+                        ❌ Error clearing cache: ${error.message}
+                    </div>
+                `;
+                console.error('Error clearing cache:', error);
+            }
+        }
+
+        // Show current cache status
+        window.onload = function() {
+            const cacheKeys = [];
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key && (key.includes('vitalpath') || key.includes('agent') || key.includes('chat'))) {
+                    cacheKeys.push(key);
+                }
+            }
+
+            if (cacheKeys.length > 0) {
+                document.getElementById('status').innerHTML = `
+                    <div style="color: orange; margin-top: 10px;">
+                        Found ${cacheKeys.length} cached items:<br>
+                        ${cacheKeys.map(key => `• ${key}`).join('<br>')}
+                    </div>
+                `;
+            } else {
+                document.getElementById('status').innerHTML = `
+                    <div style="color: green; margin-top: 10px;">
+                        No VITALpath cache found.
+                    </div>
+                `;
+            }
+        };
+    </script>
+</body>
+</html>

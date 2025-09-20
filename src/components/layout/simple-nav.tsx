@@ -15,8 +15,12 @@ export function SimpleNav() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const pathname = usePathname();
 
-  // Don't show navigation on dashboard pages - they have their own layout
-  if (pathname?.startsWith('/dashboard')) {
+  // Don't show navigation on authenticated app pages - they have their own layout
+  if (pathname?.startsWith('/dashboard') ||
+      pathname?.startsWith('/chat') ||
+      pathname?.startsWith('/agents') ||
+      pathname?.startsWith('/knowledge') ||
+      pathname?.startsWith('/workflows')) {
     return null;
   }
 

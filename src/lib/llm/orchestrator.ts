@@ -257,7 +257,7 @@ class LLMOrchestrator {
       content = question;
     }
 
-    const message = await this.anthropic.messages.create({
+    const message = await (this.anthropic as any).messages.create({
       model: config.model,
       max_tokens: options.maxTokens ?? config.maxTokens,
       temperature: options.temperature ?? config.temperature,

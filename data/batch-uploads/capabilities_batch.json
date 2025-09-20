@@ -1,0 +1,269 @@
+{
+  "capabilities": [
+    {
+      "name": "clinical-trial-design",
+      "display_name": "Clinical Trial Design",
+      "description": "Design and structure clinical trials for medical devices including protocol development, endpoint selection, and statistical planning",
+      "category": "clinical",
+      "domain": "medical",
+      "complexity_level": "advanced",
+      "status": "active",
+      "estimated_duration_hours": 4,
+      "methodology": {
+        "approach": "evidence-based",
+        "steps": [
+          "Define primary and secondary endpoints",
+          "Determine study population and inclusion/exclusion criteria",
+          "Calculate sample size and statistical power",
+          "Design randomization and blinding strategy",
+          "Develop data collection plan",
+          "Create safety monitoring plan"
+        ]
+      },
+      "quality_metrics": {
+        "accuracy_target": "95%",
+        "time_target": "4 hours",
+        "compliance_requirements": ["ICH-GCP", "FDA 21 CFR Part 820", "ISO 14155"]
+      },
+      "output_format": {
+        "primary": "Clinical Trial Protocol",
+        "secondary": "Statistical Analysis Plan",
+        "deliverables": ["Protocol Synopsis", "Informed Consent Template", "CRF Design"]
+      },
+      "prerequisite_capabilities": ["regulatory-pathway-analysis", "risk-assessment"],
+      "prerequisite_knowledge": [
+        "Good Clinical Practice (GCP)",
+        "Medical Device Regulations",
+        "Clinical Biostatistics",
+        "Ethics in Clinical Research"
+      ],
+      "tools_required": ["Statistical software", "Protocol templates", "Regulatory databases"],
+      "validation_requirements": {
+        "medical_review_required": true,
+        "regulatory_review_required": true,
+        "peer_review_required": true
+      },
+      "compliance_tags": ["FDA", "CE-MDR", "ICH-GCP", "HIPAA"],
+      "examples": [
+        "Design a pivotal trial for Class III cardiac device",
+        "Create protocol for software as medical device validation study"
+      ],
+      "limitations": [
+        "Requires domain expert validation for novel device types",
+        "Statistical assumptions may need adjustment for rare conditions"
+      ]
+    },
+    {
+      "name": "regulatory-submission",
+      "display_name": "Regulatory Submission Preparation",
+      "description": "Prepare comprehensive regulatory submissions including 510(k), PMA, CE-MDR technical documentation",
+      "category": "regulatory",
+      "domain": "regulatory",
+      "complexity_level": "expert",
+      "status": "active",
+      "estimated_duration_hours": 8,
+      "methodology": {
+        "approach": "systematic",
+        "steps": [
+          "Conduct predicate device analysis",
+          "Prepare substantial equivalence comparison",
+          "Compile clinical evidence",
+          "Develop risk analysis documentation",
+          "Create labeling and instructions for use",
+          "Prepare quality system documentation"
+        ]
+      },
+      "quality_metrics": {
+        "accuracy_target": "98%",
+        "time_target": "8 hours",
+        "compliance_requirements": ["FDA 21 CFR 807", "CE-MDR Annex II", "ISO 13485"]
+      },
+      "output_format": {
+        "primary": "Regulatory Submission Package",
+        "secondary": "Submission Cover Letter",
+        "deliverables": ["Device Description", "Predicate Comparison", "Clinical Summary", "Risk Analysis"]
+      },
+      "prerequisite_capabilities": ["device-classification", "risk-assessment", "clinical-evidence-evaluation"],
+      "prerequisite_knowledge": [
+        "FDA Regulatory Framework",
+        "CE-MDR Requirements",
+        "Quality System Regulations",
+        "Clinical Evaluation Principles"
+      ],
+      "tools_required": ["Regulatory databases", "Submission templates", "Document management systems"],
+      "validation_requirements": {
+        "regulatory_review_required": true,
+        "legal_review_required": true,
+        "technical_review_required": true
+      },
+      "compliance_tags": ["FDA", "CE-MDR", "Health Canada", "TGA"],
+      "examples": [
+        "Prepare 510(k) submission for diagnostic imaging device",
+        "Create CE-MDR technical documentation for surgical instrument"
+      ],
+      "limitations": [
+        "Requires current regulatory intelligence",
+        "May need jurisdiction-specific adaptations"
+      ]
+    },
+    {
+      "name": "health-economics",
+      "display_name": "Health Economic Analysis",
+      "description": "Conduct health economic evaluations, budget impact analyses, and cost-effectiveness studies for medical technologies",
+      "category": "commercial",
+      "domain": "commercial",
+      "complexity_level": "advanced",
+      "status": "active",
+      "estimated_duration_hours": 6,
+      "methodology": {
+        "approach": "evidence-based",
+        "steps": [
+          "Define economic research question",
+          "Develop economic model structure",
+          "Identify and value relevant costs",
+          "Measure health outcomes and utilities",
+          "Conduct sensitivity analyses",
+          "Interpret and present results"
+        ]
+      },
+      "quality_metrics": {
+        "accuracy_target": "92%",
+        "time_target": "6 hours",
+        "compliance_requirements": ["ISPOR Guidelines", "NICE Methods Guide", "ICER Framework"]
+      },
+      "output_format": {
+        "primary": "Health Economic Report",
+        "secondary": "Budget Impact Model",
+        "deliverables": ["Cost-Effectiveness Analysis", "Sensitivity Analysis", "Executive Summary"]
+      },
+      "prerequisite_capabilities": ["clinical-evidence-evaluation", "market-analysis", "statistical-modeling"],
+      "prerequisite_knowledge": [
+        "Health Economics Principles",
+        "Health Technology Assessment",
+        "Healthcare Costing Methods",
+        "Quality of Life Measurement"
+      ],
+      "tools_required": ["Economic modeling software", "Literature databases", "Cost databases"],
+      "validation_requirements": {
+        "economic_review_required": true,
+        "clinical_review_required": true,
+        "statistical_review_required": true
+      },
+      "compliance_tags": ["ISPOR", "NICE", "ICER", "CADTH"],
+      "examples": [
+        "Cost-effectiveness analysis of remote monitoring device",
+        "Budget impact assessment for AI diagnostic tool"
+      ],
+      "limitations": [
+        "Depends on availability of clinical and cost data",
+        "Results may vary by healthcare system"
+      ]
+    },
+    {
+      "name": "quality-systems",
+      "display_name": "Quality Management Systems",
+      "description": "Develop and implement quality management systems compliant with ISO 13485 and FDA QSR",
+      "category": "quality",
+      "domain": "technical",
+      "complexity_level": "advanced",
+      "status": "active",
+      "estimated_duration_hours": 5,
+      "methodology": {
+        "approach": "systematic",
+        "steps": [
+          "Conduct gap analysis against standards",
+          "Develop quality manual and procedures",
+          "Implement design controls",
+          "Establish document control system",
+          "Create training and competency programs",
+          "Design audit and review processes"
+        ]
+      },
+      "quality_metrics": {
+        "accuracy_target": "96%",
+        "time_target": "5 hours",
+        "compliance_requirements": ["ISO 13485", "FDA 21 CFR 820", "ISO 9001"]
+      },
+      "output_format": {
+        "primary": "Quality Management System",
+        "secondary": "Quality Manual",
+        "deliverables": ["Procedures", "Work Instructions", "Forms and Records"]
+      },
+      "prerequisite_capabilities": ["risk-management", "document-control", "process-validation"],
+      "prerequisite_knowledge": [
+        "ISO 13485 Requirements",
+        "FDA Quality System Regulation",
+        "Design Control Principles",
+        "Risk Management (ISO 14971)"
+      ],
+      "tools_required": ["Quality management software", "Document control systems", "Audit tools"],
+      "validation_requirements": {
+        "quality_review_required": true,
+        "regulatory_review_required": true,
+        "management_review_required": true
+      },
+      "compliance_tags": ["ISO 13485", "FDA QSR", "CE-MDR", "MDSAP"],
+      "examples": [
+        "Implement QMS for Class II medical device manufacturer",
+        "Design controls for software as medical device"
+      ],
+      "limitations": [
+        "Implementation time varies by organization size",
+        "Requires ongoing maintenance and updates"
+      ]
+    },
+    {
+      "name": "statistical-analysis",
+      "display_name": "Clinical Statistical Analysis",
+      "description": "Perform statistical analyses for clinical studies including descriptive statistics, hypothesis testing, and survival analysis",
+      "category": "clinical",
+      "domain": "medical",
+      "complexity_level": "advanced",
+      "status": "active",
+      "estimated_duration_hours": 4,
+      "methodology": {
+        "approach": "statistical",
+        "steps": [
+          "Define statistical analysis plan",
+          "Conduct data quality assessment",
+          "Perform descriptive analyses",
+          "Execute inferential statistical tests",
+          "Conduct sensitivity analyses",
+          "Generate statistical report"
+        ]
+      },
+      "quality_metrics": {
+        "accuracy_target": "97%",
+        "time_target": "4 hours",
+        "compliance_requirements": ["ICH E9", "FDA Statistical Guidance", "EMA Statistical Guidelines"]
+      },
+      "output_format": {
+        "primary": "Statistical Analysis Report",
+        "secondary": "Analysis Datasets",
+        "deliverables": ["Summary Tables", "Figures", "Listings"]
+      },
+      "prerequisite_capabilities": ["clinical-data-management", "study-design", "data-validation"],
+      "prerequisite_knowledge": [
+        "Biostatistics",
+        "Clinical Trial Statistics",
+        "Regulatory Statistics",
+        "Statistical Software Proficiency"
+      ],
+      "tools_required": ["Statistical software (SAS, R, SPSS)", "Data management systems", "Validation tools"],
+      "validation_requirements": {
+        "statistical_review_required": true,
+        "clinical_review_required": true,
+        "data_review_required": true
+      },
+      "compliance_tags": ["ICH-GCP", "FDA", "EMA", "CDISC"],
+      "examples": [
+        "Primary efficacy analysis for pivotal trial",
+        "Safety analysis for post-market surveillance study"
+      ],
+      "limitations": [
+        "Requires clean, validated datasets",
+        "Statistical assumptions must be verified"
+      ]
+    }
+  ]
+}

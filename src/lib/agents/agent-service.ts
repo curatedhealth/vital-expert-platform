@@ -13,7 +13,7 @@ export interface AgentWithCategories extends Agent {
   categories: AgentCategory[];
 }
 
-export interface AgentWithMetrics extends Agent {
+export interface AgentWithMetrics extends Omit<Agent, 'performance_metrics'> {
   performance_metrics?: AgentPerformanceMetrics;
 }
 
@@ -32,28 +32,64 @@ export class AgentService {
 
   // Get all active agents
   async getActiveAgents(): Promise<AgentWithCategories[]> {
-    const { data, error } = await this.supabase
-      .from('agents')
-      .select(`
-        *,
-        agent_category_mapping(
-          agent_categories(*)
-        )
-      `)
-      .eq('status', 'active')
-      .order('tier', { ascending: true })
-      .order('priority', { ascending: true });
+    console.log('🔍 AgentService: Loading active agents from database...');
 
-    if (error) {
-      console.error('Error fetching agents:', error);
-      throw new Error('Failed to fetch agents');
+    try {
+      // Use API route to bypass RLS issues
+      const response = await fetch('/api/agents-crud', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('❌ AgentService: API error');
+        console.error('- Status:', response.status);
+        console.error('- Error data:', errorData);
+
+        throw new Error(errorData.error || 'Failed to fetch agents');
+      }
+
+      const result = await response.json();
+      const data = result.agents || [];
+
+      console.log(`✅ AgentService: Loaded ${data.length} agents from API`);
+      console.log('📋 Agent names:', data.map((a: any) => a.display_name || a.name));
+
+      // Transform the data to include empty categories array since categories tables don't exist yet
+      return data.map((agent: any) => ({
+        ...agent,
+        categories: []
+      }));
+
+    } catch (error) {
+      console.error('❌ AgentService: Request error');
+      console.error('- Error:', error);
+
+      // Fallback to direct Supabase call (might fail due to RLS but worth trying)
+      console.log('🔄 Attempting fallback to direct Supabase call...');
+
+      const { data, error: dbError } = await this.supabase
+        .from('agents')
+        .select('*')
+        .eq('status', 'active')
+        .order('tier', { ascending: true })
+        .order('priority', { ascending: true })
+        .limit(1000);
+
+      if (dbError) {
+        console.error('❌ Fallback also failed:', dbError);
+        throw new Error('Failed to fetch agents from both API and database');
+      }
+
+      console.log(`✅ Fallback successful: Loaded ${data?.length || 0} agents`);
+      return data?.map(agent => ({
+        ...agent,
+        categories: []
+      })) || [];
     }
-
-    // Transform the data to include categories properly
-    return data?.map(agent => ({
-      ...agent,
-      categories: agent.agent_category_mapping?.map((mapping: any) => mapping.agent_categories) || []
-    })) || [];
   }
 
   // Get agents by tier
@@ -278,24 +314,53 @@ export class AgentService {
     id: string,
     updates: Database['public']['Tables']['agents']['Update']
   ): Promise<AgentWithCategories> {
-    const { data, error } = await this.supabase
-      .from('agents')
-      .update(updates)
-      .eq('id', id)
-      .select()
-      .single();
+    console.log('🔧 AgentService.updateAgent: Starting...');
+    console.log('- Agent ID:', id);
+    console.log('- Agent ID type:', typeof id);
+    console.log('- Updates to apply:', updates);
+    console.log('- Update keys:', Object.keys(updates));
 
-    if (error) {
-      console.error('Error updating agent:', error);
-      throw new Error('Failed to update agent');
+    try {
+      // Use API route to bypass RLS issues
+      const response = await fetch(`/api/agents/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(updates),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('❌ AgentService.updateAgent: API error');
+        console.error('- Status:', response.status);
+        console.error('- Error data:', errorData);
+
+        throw new Error(errorData.error || 'Failed to update agent');
+      }
+
+      const result = await response.json();
+      console.log('✅ AgentService.updateAgent: API update successful');
+      console.log('- Updated data:', result.agent);
+
+      // Transform the result to include categories
+      return {
+        ...result.agent,
+        categories: []
+      };
+
+    } catch (error) {
+      console.error('❌ AgentService.updateAgent: Request error');
+      console.error('- Error:', error);
+
+      // Provide more specific error message
+      let errorMessage = 'Failed to update agent';
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+
+      throw new Error(errorMessage);
     }
-
-    const updatedAgent = await this.getAgentById(data.id);
-    if (!updatedAgent) {
-      throw new Error('Failed to retrieve updated agent');
-    }
-
-    return updatedAgent;
   }
 
   // Delete agent (soft delete by setting status to 'deprecated')

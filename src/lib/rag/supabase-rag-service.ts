@@ -2,11 +2,32 @@ import { supabase } from '@/lib/supabase/client';
 import type { Database } from '@/lib/supabase/types';
 import { agentService, type Agent } from '@/lib/agents/agent-service';
 
-// Types for RAG system
-export type KnowledgeSource = Database['public']['Tables']['knowledge_sources']['Row'];
-export type DocumentChunk = Database['public']['Tables']['document_chunks']['Row'];
-export type KnowledgeDomain = Database['public']['Tables']['knowledge_domains']['Row'];
-export type QueryLog = Database['public']['Tables']['query_logs']['Row'];
+// Types for RAG system - using fallback types for missing tables
+export interface KnowledgeSource {
+  id: string;
+  title: string;
+  content: string;
+  source_type: string;
+  created_at: string;
+}
+export interface DocumentChunk {
+  id: string;
+  content: string;
+  embedding: number[];
+  metadata: any;
+  created_at: string;
+}
+export interface KnowledgeDomain {
+  id: string;
+  name: string;
+  description: string;
+}
+export interface QueryLog {
+  id: string;
+  query: string;
+  response: string;
+  created_at: string;
+}
 
 export interface EmbeddingModels {
   openai: number[]; // 1536 dimensions
@@ -217,7 +238,7 @@ export class SupabaseRAGService {
       await this.logQuery({
         agent_id,
         query_text: text,
-        query_embedding: queryEmbedding.openai, // Store primary embedding
+        query_embedding: queryEmbedding.openai || [], // Store primary embedding
         query_domain: domain,
         embedding_model,
         top_k: max_results,
@@ -274,10 +295,10 @@ export class SupabaseRAGService {
 
     // Update access patterns
     if (data && data.length > 0) {
-      await this.updateAgentKnowledgeAccess(agentId, data.map(r => r.source_id));
+      await this.updateAgentKnowledgeAccess(agentId, data.map((r: any) => r.source_id));
     }
 
-    return data?.map(item => ({
+    return data?.map((item: any) => ({
       chunk_id: item.chunk_id,
       source_id: item.source_id || '', // Handle potential null
       content: item.content,
@@ -402,8 +423,8 @@ export class SupabaseRAGService {
     const { error } = await this.supabase
       .from('document_chunks')
       .update({
-        feedback_score: score,
-        retrieval_count: this.supabase.sql`retrieval_count + 1`
+        feedback_score: score
+        // Note: retrieval_count increment would need to be handled via RPC or separate query
       })
       .eq('id', chunkId);
 
@@ -595,7 +616,7 @@ export class SupabaseRAGService {
     ]);
 
     const totalSize = chunksCount.data?.reduce((sum, chunk) => sum + (chunk.content_length || 0), 0) || 0;
-    const avgTime = avgQueryTime.data?.reduce((sum, log) => sum + (log.retrieval_time_ms || 0), 0) / Math.max(avgQueryTime.data?.length || 1, 1);
+    const avgTime = (avgQueryTime.data?.reduce((sum, log) => sum + (log.retrieval_time_ms || 0), 0) || 0) / Math.max(avgQueryTime.data?.length || 1, 1);
 
     const domainCounts: Record<string, number> = {};
     domainStats.data?.forEach(source => {

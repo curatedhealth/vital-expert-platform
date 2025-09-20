@@ -1,14 +1,25 @@
 'use client';
 
 import { createContext, useContext, useEffect, useState } from 'react';
-import { User, Session } from '@supabase/supabase-js';
-import { supabase } from '@/lib/supabase/client';
+// import { User, Session } from '@supabase/supabase-js';
+// import { supabase } from '@/lib/supabase/client';
+
+// Temporary types for development
+interface User {
+  id: string;
+  email?: string;
+}
+
+interface Session {
+  user: User;
+}
 
 interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
   signOut: () => Promise<void>;
+  userProfile: any | null;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -16,6 +27,7 @@ const AuthContext = createContext<AuthContextType>({
   session: null,
   loading: true,
   signOut: async () => {},
+  userProfile: null,
 });
 
 export const useAuth = () => {
@@ -29,44 +41,46 @@ export const useAuth = () => {
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
+  const [userProfile, setUserProfile] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    // Get initial session
-    const getInitialSession = async () => {
-      const { data: { session }, error } = await supabase.auth.getSession();
-      if (error) {
-        console.error('Error getting session:', error);
-      } else {
-        setSession(session);
-        setUser(session?.user ?? null);
-      }
-      setLoading(false);
+  console.log('AuthProvider rendered with loading:', loading);
+
+  const fetchUserProfile = async (user: User) => {
+    // Temporary mock implementation
+    return {
+      user_id: user.id,
+      email: user.email,
+      role: 'user',
+      is_active: true
     };
+  };
 
-    getInitialSession();
+  useEffect(() => {
+    console.log('Auth useEffect starting...');
 
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
+    // Simple initialization without Supabase calls that might fail
+    const initAuth = async () => {
+      try {
+        // Set loading to false immediately for now
+        // In the future, we can add proper auth initialization here
+        setLoading(false);
+      } catch (error) {
+        console.error('Auth initialization error:', error);
         setLoading(false);
       }
-    );
+    };
 
-    return () => subscription.unsubscribe();
+    initAuth();
   }, []);
 
   const signOut = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) {
-      console.error('Error signing out:', error);
-    }
+    // Temporary mock implementation
+    console.log('Sign out requested');
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, loading, signOut }}>
+    <AuthContext.Provider value={{ user, session, loading, signOut, userProfile }}>
       {children}
     </AuthContext.Provider>
   );

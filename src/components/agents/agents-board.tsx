@@ -23,9 +23,10 @@ import {
   Upload,
   FileText,
   ChevronDown,
+  MessageSquare,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useChatStore, type Agent } from '@/lib/stores/chat-store';
+import { useAgentsStore, type Agent } from '@/lib/stores/agents-store';
 import type { AgentWithCategories } from '@/lib/agents/agent-service';
 import { AgentAvatar } from '@/components/ui/agent-avatar';
 import { AgentCreator } from '@/components/chat/agent-creator';
@@ -33,11 +34,38 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 
 interface AgentsBoard {
   onAgentSelect?: (agent: Agent) => void;
+  onAddToChat?: (agent: Agent) => void;
   showCreateButton?: boolean;
+  hiddenControls?: boolean;
+  // External state management for sidebar controls
+  searchQuery?: string;
+  onSearchChange?: (query: string) => void;
+  selectedDomain?: string;
+  selectedCapability?: string;
+  selectedBusinessFunction?: string;
+  selectedRole?: string;
+  onFilterChange?: (filters: any) => void;
+  viewMode?: 'grid' | 'list';
+  onViewModeChange?: (mode: 'grid' | 'list') => void;
 }
 
-export function AgentsBoard({ onAgentSelect, showCreateButton = true }: AgentsBoard) {
-  const { agents, createCustomAgent, updateAgent, deleteAgent, loadAgentsFromDatabase } = useChatStore();
+export function AgentsBoard({
+  onAgentSelect,
+  onAddToChat,
+  showCreateButton = true,
+  hiddenControls = false,
+  // External props for sidebar control
+  searchQuery: externalSearchQuery,
+  onSearchChange: externalOnSearchChange,
+  selectedDomain: externalSelectedDomain,
+  selectedCapability: externalSelectedCapability,
+  selectedBusinessFunction: externalSelectedBusinessFunction,
+  selectedRole: externalSelectedRole,
+  onFilterChange: externalOnFilterChange,
+  viewMode: externalViewMode,
+  onViewModeChange: externalOnViewModeChange,
+}: AgentsBoard) {
+  const { agents, createCustomAgent, updateAgent, deleteAgent, loadAgents } = useAgentsStore();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedDomain, setSelectedDomain] = useState('all');
   const [selectedCapability, setSelectedCapability] = useState('all');
@@ -49,16 +77,21 @@ export function AgentsBoard({ onAgentSelect, showCreateButton = true }: AgentsBo
   const [savedAgents, setSavedAgents] = useState<Set<string>>(new Set());
   const [showFileUpload, setShowFileUpload] = useState(false);
 
-  // Load agents on component mount
+  // Load agents on component mount only if not already loaded
   useEffect(() => {
-    loadAgentsFromDatabase();
-  }, [loadAgentsFromDatabase]);
+    if (agents.length === 0) {
+      console.log('🎯 AgentsBoard: No agents found, loading from database...');
+      loadAgents();
+    } else {
+      console.log('🎯 AgentsBoard: Agents already loaded, skipping fetch');
+    }
+  }, [loadAgents, agents.length]);
 
   // Dynamic filter options based on actual agent data
   const availableDomains = useMemo(() => {
     const uniqueDomains = new Set<string>();
     agents.forEach(agent => {
-      agent.knowledgeDomains?.forEach(domain => uniqueDomains.add(domain));
+      agent.knowledge_domains?.forEach(domain => uniqueDomains.add(domain));
     });
     return Array.from(uniqueDomains).sort();
   }, [agents]);
@@ -74,8 +107,8 @@ export function AgentsBoard({ onAgentSelect, showCreateButton = true }: AgentsBo
   const availableBusinessFunctions = useMemo(() => {
     const uniqueBusinessFunctions = new Set<string>();
     agents.forEach(agent => {
-      if (agent.businessFunction) {
-        uniqueBusinessFunctions.add(agent.businessFunction);
+      if (agent.business_function) {
+        uniqueBusinessFunctions.add(agent.business_function);
       }
     });
     return Array.from(uniqueBusinessFunctions).sort();
@@ -121,29 +154,6 @@ export function AgentsBoard({ onAgentSelect, showCreateButton = true }: AgentsBo
     ...availableRoles.map(role => ({ value: role, label: role }))
   ];
 
-  // Filtered agents based on search and filters
-  const filteredAgents = useMemo(() => {
-    return agents.filter(agent => {
-      const matchesSearch = !searchQuery ||
-        agent.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        agent.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        agent.capabilities.some(cap => cap.toLowerCase().includes(searchQuery.toLowerCase()));
-
-      const matchesDomain = selectedDomain === 'all' ||
-        (agent.knowledgeDomains && agent.knowledgeDomains.includes(selectedDomain));
-
-      const matchesCapability = selectedCapability === 'all' ||
-        agent.capabilities.includes(selectedCapability);
-
-      const matchesBusinessFunction = selectedBusinessFunction === 'all' ||
-        agent.businessFunction === selectedBusinessFunction;
-
-      const matchesRole = selectedRole === 'all' ||
-        agent.role === selectedRole;
-
-      return matchesSearch && matchesDomain && matchesCapability && matchesBusinessFunction && matchesRole;
-    });
-  }, [agents, searchQuery, selectedDomain, selectedCapability, selectedBusinessFunction, selectedRole]);
 
   const handleSaveToLibrary = (agentId: string) => {
     setSavedAgents(prev => {
@@ -161,8 +171,8 @@ export function AgentsBoard({ onAgentSelect, showCreateButton = true }: AgentsBo
     const duplicatedAgent: Agent = {
       ...agent,
       id: `${agent.id}-copy-${Date.now()}`,
-      name: `${agent.name} (Copy)`,
-      isCustom: true,
+      display_name: `${agent.display_name} (Copy)`,
+      is_custom: true,
     };
     createCustomAgent(duplicatedAgent);
   };
@@ -173,9 +183,9 @@ export function AgentsBoard({ onAgentSelect, showCreateButton = true }: AgentsBo
   };
 
   const handleDeleteAgent = (agent: Agent) => {
-    if (agent.isCustom) {
+    if (agent.is_custom) {
       // Only allow deleting custom agents, not default ones
-      if (confirm(`Are you sure you want to delete "${agent.name}"? This action cannot be undone.`)) {
+      if (confirm(`Are you sure you want to delete "${agent.display_name}"? This action cannot be undone.`)) {
         deleteAgent(agent.id);
       }
     } else {
@@ -214,19 +224,22 @@ export function AgentsBoard({ onAgentSelect, showCreateButton = true }: AgentsBo
       const newAgent: Agent = {
         id: `imported-${Date.now()}`,
         name: agentData.name,
+        display_name: agentData.name,
         description: agentData.description,
-        systemPrompt: agentData.systemPrompt || agentData.prompt || 'You are a helpful AI assistant.',
+        system_prompt: agentData.systemPrompt || agentData.prompt || 'You are a helpful AI assistant.',
         model: agentData.model || 'gpt-4',
         avatar: agentData.avatar || '🤖',
         color: agentData.color || 'text-trust-blue',
         capabilities: agentData.capabilities || [],
-        ragEnabled: agentData.ragEnabled ?? true,
+        rag_enabled: agentData.ragEnabled ?? true,
         temperature: agentData.temperature ?? 0.7,
-        maxTokens: agentData.maxTokens ?? 2000,
-        isCustom: true,
-        knowledgeDomains: agentData.knowledgeDomains || [],
-        tools: agentData.tools || [],
-        knowledgeUrls: agentData.knowledgeUrls || [],
+        max_tokens: agentData.maxTokens ?? 2000,
+        is_custom: true,
+        status: 'active' as const,
+        tier: 1,
+        priority: 1,
+        implementation_phase: 1,
+        knowledge_domains: agentData.knowledgeDomains || [],
       };
 
       createCustomAgent(newAgent);
@@ -253,7 +266,7 @@ export function AgentsBoard({ onAgentSelect, showCreateButton = true }: AgentsBo
 
       // Check for headers
       if (trimmedLine.startsWith('# ')) {
-        agent.name = trimmedLine.substring(2).trim();
+        agent.display_name = trimmedLine.substring(2).trim();
       } else if (trimmedLine.startsWith('## Description')) {
         if (currentSection) {
           agent[currentSection] = currentContent.join('\n').trim();
@@ -307,140 +320,220 @@ export function AgentsBoard({ onAgentSelect, showCreateButton = true }: AgentsBo
     return colors[primaryDomain as keyof typeof colors] || 'bg-gray-100 text-gray-800';
   };
 
+  // Use external state when available, otherwise use internal state
+  const actualSearchQuery = externalSearchQuery !== undefined ? externalSearchQuery : searchQuery;
+  const actualSelectedDomain = externalSelectedDomain !== undefined ? externalSelectedDomain : selectedDomain;
+  const actualSelectedCapability = externalSelectedCapability !== undefined ? externalSelectedCapability : selectedCapability;
+  const actualSelectedBusinessFunction = externalSelectedBusinessFunction !== undefined ? externalSelectedBusinessFunction : selectedBusinessFunction;
+  const actualSelectedRole = externalSelectedRole !== undefined ? externalSelectedRole : selectedRole;
+  const actualViewMode = externalViewMode !== undefined ? externalViewMode : viewMode;
+
+  // Filtered agents based on actual search and filters
+  const filteredAgents = useMemo(() => {
+    return agents.filter(agent => {
+      const matchesSearch = !actualSearchQuery ||
+        agent.display_name.toLowerCase().includes(actualSearchQuery.toLowerCase()) ||
+        agent.description.toLowerCase().includes(actualSearchQuery.toLowerCase()) ||
+        agent.capabilities.some(cap => cap.toLowerCase().includes(actualSearchQuery.toLowerCase()));
+
+      const matchesDomain = actualSelectedDomain === 'all' ||
+        (agent.knowledge_domains && agent.knowledge_domains.includes(actualSelectedDomain));
+
+      const matchesCapability = actualSelectedCapability === 'all' ||
+        agent.capabilities.includes(actualSelectedCapability);
+
+      const matchesBusinessFunction = actualSelectedBusinessFunction === 'all' ||
+        agent.business_function === actualSelectedBusinessFunction;
+
+      const matchesRole = actualSelectedRole === 'all' ||
+        agent.role === actualSelectedRole;
+
+      return matchesSearch && matchesDomain && matchesCapability && matchesBusinessFunction && matchesRole;
+    });
+  }, [agents, actualSearchQuery, actualSelectedDomain, actualSelectedCapability, actualSelectedBusinessFunction, actualSelectedRole]);
+
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-deep-charcoal">AI Agents</h1>
-          <p className="text-medical-gray">
-            Discover, manage, and create specialized AI experts for your healthcare needs
-          </p>
-        </div>
-        {showCreateButton && (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button className="bg-progress-teal hover:bg-progress-teal/90">
-                <Plus className="h-4 w-4 mr-2" />
-                Create Agent
-                <ChevronDown className="h-4 w-4 ml-2" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48">
-              <DropdownMenuItem
-                onClick={() => {
-                  setEditingAgent(null);
-                  setShowCreateModal(true);
-                }}
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Create New Agent
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => {
-                  const input = document.createElement('input');
-                  input.type = 'file';
-                  input.accept = '.json,.md,.markdown';
-                  input.onchange = handleFileUpload as any;
-                  input.click();
-                }}
-              >
-                <Upload className="h-4 w-4 mr-2" />
-                Upload from File
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        )}
-      </div>
+      {!hiddenControls && (
+        <>
+          {/* Header */}
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div>
+              <h1 className="text-2xl font-bold text-deep-charcoal">AI Agents</h1>
+              <p className="text-medical-gray">
+                Discover, manage, and create specialized AI experts for your healthcare needs
+              </p>
+            </div>
+            {showCreateButton && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button className="bg-progress-teal hover:bg-progress-teal/90">
+                    <Plus className="h-4 w-4 mr-2" />
+                    Create Agent
+                    <ChevronDown className="h-4 w-4 ml-2" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuItem
+                    onClick={() => {
+                      setEditingAgent(null);
+                      setShowCreateModal(true);
+                    }}
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Create New Agent
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => {
+                      const input = document.createElement('input');
+                      input.type = 'file';
+                      input.accept = '.json,.md,.markdown';
+                      input.onchange = handleFileUpload as any;
+                      input.click();
+                    }}
+                  >
+                    <Upload className="h-4 w-4 mr-2" />
+                    Upload from File
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+          </div>
 
-      {/* Search and Filters */}
-      <div className="space-y-4">
-        {/* Search Bar */}
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-medical-gray" />
-          <Input
-            placeholder="Search agents by name, description, or capabilities..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10 pr-4"
-          />
-        </div>
-
-        {/* Filters and View Controls */}
-        <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
-          <div className="flex flex-wrap gap-4 items-center">
-            <div className="flex items-center gap-2">
-              <Filter className="h-4 w-4 text-medical-gray" />
-              <span className="text-sm text-medical-gray">Filters:</span>
+          {/* Search and Filters */}
+          <div className="space-y-4">
+            {/* Search Bar */}
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-medical-gray" />
+              <Input
+                placeholder="Search agents by name, description, or capabilities..."
+                value={actualSearchQuery}
+                onChange={(e) => externalOnSearchChange ? externalOnSearchChange(e.target.value) : setSearchQuery(e.target.value)}
+                className="pl-10 pr-4"
+              />
             </div>
 
-            <select
-              value={selectedDomain}
-              onChange={(e) => setSelectedDomain(e.target.value)}
-              className="px-3 py-1 border border-gray-300 rounded-md text-sm"
-            >
-              {domains.map(domain => (
-                <option key={domain.value} value={domain.value}>
-                  {domain.label}
-                </option>
-              ))}
-            </select>
+            {/* Filters and View Controls */}
+            <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
+              <div className="flex flex-wrap gap-4 items-center">
+                <div className="flex items-center gap-2">
+                  <Filter className="h-4 w-4 text-medical-gray" />
+                  <span className="text-sm text-medical-gray">Filters:</span>
+                </div>
 
-            <select
-              value={selectedCapability}
-              onChange={(e) => setSelectedCapability(e.target.value)}
-              className="px-3 py-1 border border-gray-300 rounded-md text-sm"
-            >
-              {capabilities.map(cap => (
-                <option key={cap.value} value={cap.value}>
-                  {cap.label}
-                </option>
-              ))}
-            </select>
+                <select
+                  value={actualSelectedDomain}
+                  onChange={(e) => {
+                    if (externalOnFilterChange) {
+                      externalOnFilterChange({
+                        selectedDomain: e.target.value,
+                        selectedCapability: actualSelectedCapability,
+                        selectedBusinessFunction: actualSelectedBusinessFunction,
+                        selectedRole: actualSelectedRole,
+                      });
+                    } else {
+                      setSelectedDomain(e.target.value);
+                    }
+                  }}
+                  className="px-3 py-1 border border-gray-300 rounded-md text-sm"
+                >
+                  {domains.map(domain => (
+                    <option key={domain.value} value={domain.value}>
+                      {domain.label}
+                    </option>
+                  ))}
+                </select>
 
-            <select
-              value={selectedBusinessFunction}
-              onChange={(e) => setSelectedBusinessFunction(e.target.value)}
-              className="px-3 py-1 border border-gray-300 rounded-md text-sm"
-            >
-              {businessFunctions.map(bf => (
-                <option key={bf.value} value={bf.value}>
-                  {bf.label}
-                </option>
-              ))}
-            </select>
+                <select
+                  value={actualSelectedCapability}
+                  onChange={(e) => {
+                    if (externalOnFilterChange) {
+                      externalOnFilterChange({
+                        selectedDomain: actualSelectedDomain,
+                        selectedCapability: e.target.value,
+                        selectedBusinessFunction: actualSelectedBusinessFunction,
+                        selectedRole: actualSelectedRole,
+                      });
+                    } else {
+                      setSelectedCapability(e.target.value);
+                    }
+                  }}
+                  className="px-3 py-1 border border-gray-300 rounded-md text-sm"
+                >
+                  {capabilities.map(cap => (
+                    <option key={cap.value} value={cap.value}>
+                      {cap.label}
+                    </option>
+                  ))}
+                </select>
 
-            <select
-              value={selectedRole}
-              onChange={(e) => setSelectedRole(e.target.value)}
-              className="px-3 py-1 border border-gray-300 rounded-md text-sm"
-            >
-              {roles.map(role => (
-                <option key={role.value} value={role.value}>
-                  {role.label}
-                </option>
-              ))}
-            </select>
+                <select
+                  value={actualSelectedBusinessFunction}
+                  onChange={(e) => {
+                    if (externalOnFilterChange) {
+                      externalOnFilterChange({
+                        selectedDomain: actualSelectedDomain,
+                        selectedCapability: actualSelectedCapability,
+                        selectedBusinessFunction: e.target.value,
+                        selectedRole: actualSelectedRole,
+                      });
+                    } else {
+                      setSelectedBusinessFunction(e.target.value);
+                    }
+                  }}
+                  className="px-3 py-1 border border-gray-300 rounded-md text-sm"
+                >
+                  {businessFunctions.map(bf => (
+                    <option key={bf.value} value={bf.value}>
+                      {bf.label}
+                    </option>
+                  ))}
+                </select>
+
+                <select
+                  value={actualSelectedRole}
+                  onChange={(e) => {
+                    if (externalOnFilterChange) {
+                      externalOnFilterChange({
+                        selectedDomain: actualSelectedDomain,
+                        selectedCapability: actualSelectedCapability,
+                        selectedBusinessFunction: actualSelectedBusinessFunction,
+                        selectedRole: e.target.value,
+                      });
+                    } else {
+                      setSelectedRole(e.target.value);
+                    }
+                  }}
+                  className="px-3 py-1 border border-gray-300 rounded-md text-sm"
+                >
+                  {roles.map(role => (
+                    <option key={role.value} value={role.value}>
+                      {role.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <Button
+                  variant={actualViewMode === 'grid' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => externalOnViewModeChange ? externalOnViewModeChange('grid') : setViewMode('grid')}
+                >
+                  <Grid className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant={actualViewMode === 'list' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => externalOnViewModeChange ? externalOnViewModeChange('list') : setViewMode('list')}
+                >
+                  <List className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
           </div>
-
-          <div className="flex items-center gap-2">
-            <Button
-              variant={viewMode === 'grid' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setViewMode('grid')}
-            >
-              <Grid className="h-4 w-4" />
-            </Button>
-            <Button
-              variant={viewMode === 'list' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setViewMode('list')}
-            >
-              <List className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-      </div>
+        </>
+      )}
 
       {/* Results Count */}
       <div className="flex items-center justify-between">
@@ -451,7 +544,7 @@ export function AgentsBoard({ onAgentSelect, showCreateButton = true }: AgentsBo
 
       {/* Agents Grid/List */}
       <div className={cn(
-        viewMode === 'grid'
+        actualViewMode === 'grid'
           ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6'
           : 'space-y-4'
       )}>
@@ -460,26 +553,26 @@ export function AgentsBoard({ onAgentSelect, showCreateButton = true }: AgentsBo
             key={agent.id}
             className={cn(
               'hover:shadow-lg transition-all cursor-pointer group',
-              viewMode === 'list' && 'hover:bg-gray-50'
+              actualViewMode === 'list' && 'hover:bg-gray-50'
             )}
             onClick={() => onAgentSelect?.(agent)}
           >
             <CardContent className={cn(
               'p-4',
-              viewMode === 'list' && 'flex items-center gap-4'
+              actualViewMode === 'list' && 'flex items-center gap-4'
             )}>
               {/* Grid View Layout */}
-              {viewMode === 'grid' && (
+              {actualViewMode === 'grid' && (
                 <div className="space-y-3">
                   {/* Header */}
                   <div className="flex items-start justify-between">
                     <div className="flex items-center gap-3">
-                      <AgentAvatar agent={agent} size="md" />
+                      <AgentAvatar avatar={agent.avatar} name={agent.name} size="md" />
                       <div className="flex-1">
                         <h3 className="font-semibold text-deep-charcoal group-hover:text-progress-teal transition-colors">
-                          {agent.name}
+                          {agent.display_name}
                         </h3>
-                        {agent.isCustom && (
+                        {agent.is_custom && (
                           <Badge variant="outline" className="text-xs mt-1">
                             Custom
                           </Badge>
@@ -500,6 +593,15 @@ export function AgentsBoard({ onAgentSelect, showCreateButton = true }: AgentsBo
                           <Eye className="h-4 w-4 mr-2" />
                           View Details
                         </DropdownMenuItem>
+                        {onAddToChat && (
+                          <DropdownMenuItem onClick={(e) => {
+                            e.stopPropagation();
+                            onAddToChat(agent);
+                          }}>
+                            <MessageSquare className="h-4 w-4 mr-2" />
+                            Add to Chat
+                          </DropdownMenuItem>
+                        )}
                         <DropdownMenuItem onClick={(e) => {
                           e.stopPropagation();
                           handleEditAgent(agent);
@@ -524,7 +626,7 @@ export function AgentsBoard({ onAgentSelect, showCreateButton = true }: AgentsBo
                           )} />
                           {savedAgents.has(agent.id) ? 'Remove from Library' : 'Save to Library'}
                         </DropdownMenuItem>
-                        {agent.isCustom && (
+                        {agent.is_custom && (
                           <DropdownMenuItem
                             onClick={(e) => {
                               e.stopPropagation();
@@ -546,9 +648,9 @@ export function AgentsBoard({ onAgentSelect, showCreateButton = true }: AgentsBo
                   </p>
 
                   {/* Knowledge Domains */}
-                  {agent.knowledgeDomains && agent.knowledgeDomains.length > 0 && (
+                  {agent.knowledge_domains && agent.knowledge_domains.length > 0 && (
                     <div className="flex flex-wrap gap-1">
-                      {agent.knowledgeDomains.slice(0, 2).map((domain) => (
+                      {agent.knowledge_domains.slice(0, 2).map((domain) => (
                         <Badge
                           key={domain}
                           className={cn('text-xs', getDomainColor([domain]))}
@@ -556,9 +658,9 @@ export function AgentsBoard({ onAgentSelect, showCreateButton = true }: AgentsBo
                           {domains.find(d => d.value === domain)?.label || domain}
                         </Badge>
                       ))}
-                      {agent.knowledgeDomains.length > 2 && (
+                      {agent.knowledge_domains.length > 2 && (
                         <Badge variant="outline" className="text-xs">
-                          +{agent.knowledgeDomains.length - 2} more
+                          +{agent.knowledge_domains.length - 2} more
                         </Badge>
                       )}
                     </div>
@@ -592,15 +694,15 @@ export function AgentsBoard({ onAgentSelect, showCreateButton = true }: AgentsBo
               )}
 
               {/* List View Layout */}
-              {viewMode === 'list' && (
+              {actualViewMode === 'list' && (
                 <>
-                  <AgentAvatar agent={agent} size="sm" />
+                  <AgentAvatar avatar={agent.avatar} name={agent.name} size="sm" />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <h3 className="font-semibold text-deep-charcoal group-hover:text-progress-teal transition-colors">
-                        {agent.name}
+                        {agent.display_name}
                       </h3>
-                      {agent.isCustom && (
+                      {agent.is_custom && (
                         <Badge variant="outline" className="text-xs">
                           Custom
                         </Badge>
@@ -611,9 +713,9 @@ export function AgentsBoard({ onAgentSelect, showCreateButton = true }: AgentsBo
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
-                    {agent.knowledgeDomains && agent.knowledgeDomains.length > 0 && (
-                      <Badge className={cn('text-xs', getDomainColor(agent.knowledgeDomains))}>
-                        {domains.find(d => d.value === agent.knowledgeDomains![0])?.label || agent.knowledgeDomains[0]}
+                    {agent.knowledge_domains && agent.knowledge_domains.length > 0 && (
+                      <Badge className={cn('text-xs', getDomainColor(agent.knowledge_domains))}>
+                        {domains.find(d => d.value === agent.knowledge_domains![0])?.label || agent.knowledge_domains[0]}
                       </Badge>
                     )}
                     {savedAgents.has(agent.id) && (
@@ -633,6 +735,15 @@ export function AgentsBoard({ onAgentSelect, showCreateButton = true }: AgentsBo
                           <Eye className="h-4 w-4 mr-2" />
                           View Details
                         </DropdownMenuItem>
+                        {onAddToChat && (
+                          <DropdownMenuItem onClick={(e) => {
+                            e.stopPropagation();
+                            onAddToChat(agent);
+                          }}>
+                            <MessageSquare className="h-4 w-4 mr-2" />
+                            Add to Chat
+                          </DropdownMenuItem>
+                        )}
                         <DropdownMenuItem onClick={(e) => {
                           e.stopPropagation();
                           handleEditAgent(agent);
@@ -657,7 +768,7 @@ export function AgentsBoard({ onAgentSelect, showCreateButton = true }: AgentsBo
                           )} />
                           {savedAgents.has(agent.id) ? 'Remove from Library' : 'Save to Library'}
                         </DropdownMenuItem>
-                        {agent.isCustom && (
+                        {agent.is_custom && (
                           <DropdownMenuItem
                             onClick={(e) => {
                               e.stopPropagation();
@@ -718,9 +829,12 @@ export function AgentsBoard({ onAgentSelect, showCreateButton = true }: AgentsBo
             setShowCreateModal(false);
             setEditingAgent(null);
             // Reload agents from database to show the newly created/edited agent
-            loadAgentsFromDatabase();
+            loadAgents();
           }}
-          editingAgent={editingAgent as unknown as AgentWithCategories}
+          editingAgent={editingAgent ? {
+            ...editingAgent,
+            categories: []
+          } as unknown as AgentWithCategories : null}
         />
       )}
     </div>

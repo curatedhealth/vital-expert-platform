@@ -387,7 +387,7 @@ export class RAGIntegrationService {
         embeddingModel: this.getEmbeddingModelForDomain(searchDomain || 'general'),
         contentTypes: [],
         updateFrequency: 'daily'
-      }]),
+      }]) as "clinical" | "openai" | "legal" | "scientific" | undefined,
       max_results: 10
     };
 

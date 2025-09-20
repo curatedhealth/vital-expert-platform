@@ -1,0 +1,294 @@
+{
+  "prompts": [
+    {
+      "name": "clinical-trial-protocol-generator",
+      "display_name": "Clinical Trial Protocol Generator",
+      "description": "Generate comprehensive clinical trial protocols for medical devices with regulatory compliance",
+      "domain": "medical",
+      "complexity_level": "advanced",
+      "estimated_duration_hours": 3,
+      "system_prompt": "You are an expert Clinical Research Protocol Developer. Generate comprehensive, regulatory-compliant clinical trial protocols for medical devices. Ensure all protocols meet FDA, CE-MDR, and ICH-GCP requirements. Include detailed study objectives, methodology, statistical analysis plans, and safety monitoring procedures. Always provide evidence-based recommendations with proper citations to current guidelines.",
+      "user_prompt_template": "Generate a clinical trial protocol for: {device_type}\n\nDevice Details:\n- Classification: {device_class}\n- Indication: {indication}\n- Primary Endpoint: {primary_endpoint}\n- Target Population: {population}\n- Regulatory Pathway: {pathway}\n\nRequirements:\n- Study Design: {study_design}\n- Sample Size: {sample_size}\n- Duration: {study_duration}\n- Special Considerations: {special_requirements}\n\nPlease provide a comprehensive protocol including:\n1. Protocol synopsis\n2. Study objectives and endpoints\n3. Study design and methodology\n4. Patient population and eligibility criteria\n5. Statistical analysis plan\n6. Safety monitoring plan\n7. Regulatory considerations",
+      "input_schema": {
+        "device_type": "string",
+        "device_class": "enum['I','II','III']",
+        "indication": "string",
+        "primary_endpoint": "string",
+        "population": "string",
+        "pathway": "enum['510k','PMA','CE-MDR']",
+        "study_design": "enum['RCT','Single-arm','Observational']",
+        "sample_size": "integer",
+        "study_duration": "string",
+        "special_requirements": "string"
+      },
+      "output_schema": {
+        "protocol_title": "string",
+        "protocol_synopsis": "string",
+        "objectives": "array",
+        "study_design": "object",
+        "patient_population": "object",
+        "endpoints": "object",
+        "statistical_plan": "object",
+        "safety_monitoring": "object",
+        "regulatory_considerations": "object"
+      },
+      "success_criteria": {
+        "description": "Protocol passes regulatory review checklist",
+        "metrics": ["Completeness score >95%", "Regulatory compliance verified", "Medical review approved"]
+      },
+      "validation_rules": {
+        "input_requirements": [
+          "Device classification must be valid",
+          "Primary endpoint must be clinically meaningful",
+          "Sample size must be statistically justified"
+        ],
+        "output_validation": [
+          "Protocol must include all ICH-GCP required sections",
+          "Statistical plan must be mathematically sound",
+          "Safety monitoring plan must be comprehensive"
+        ]
+      },
+      "prerequisite_capabilities": ["clinical-trial-design", "regulatory-compliance", "statistical-analysis"],
+      "prerequisite_prompts": ["device-classification", "risk-assessment"],
+      "model_requirements": {
+        "model": "gpt-4",
+        "temperature": 0.3,
+        "max_tokens": 4000
+      },
+      "compliance_tags": ["FDA", "CE-MDR", "ICH-GCP", "HIPAA"],
+      "estimated_tokens": 3500,
+      "version": "1.0.0"
+    },
+    {
+      "name": "regulatory-submission-writer",
+      "display_name": "Regulatory Submission Writer",
+      "description": "Create comprehensive regulatory submission documents for FDA 510(k), PMA, and CE-MDR pathways",
+      "domain": "regulatory",
+      "complexity_level": "expert",
+      "estimated_duration_hours": 4,
+      "system_prompt": "You are an expert Regulatory Affairs Specialist with extensive experience in medical device submissions. Create comprehensive, compliant regulatory documents for FDA 510(k), PMA, CE-MDR, and other global pathways. Ensure all content meets current regulatory requirements and follows established templates. Always include proper predicate analysis, substantial equivalence arguments, and risk-benefit assessments.",
+      "user_prompt_template": "Create a regulatory submission document for:\n\nDevice Information:\n- Device Name: {device_name}\n- Classification: {device_class}\n- Intended Use: {intended_use}\n- Regulatory Pathway: {pathway}\n- Predicate Device: {predicate_device}\n\nSubmission Details:\n- Submission Type: {submission_type}\n- Special Controls: {special_controls}\n- Clinical Data: {clinical_data_available}\n- Risk Classification: {risk_class}\n\nPlease create a comprehensive submission including:\n1. Executive summary\n2. Device description and intended use\n3. Predicate device comparison\n4. Substantial equivalence analysis\n5. Risk analysis and mitigation\n6. Clinical evidence summary\n7. Labeling and instructions for use",
+      "input_schema": {
+        "device_name": "string",
+        "device_class": "enum['I','II','III']",
+        "intended_use": "string",
+        "pathway": "enum['510k','PMA','CE-MDR','Health_Canada']",
+        "predicate_device": "string",
+        "submission_type": "enum['Initial','Supplement','Amendment']",
+        "special_controls": "string",
+        "clinical_data_available": "boolean",
+        "risk_class": "enum['Low','Medium','High']"
+      },
+      "output_schema": {
+        "executive_summary": "string",
+        "device_description": "object",
+        "predicate_comparison": "object",
+        "substantial_equivalence": "object",
+        "risk_analysis": "object",
+        "clinical_summary": "object",
+        "labeling": "object"
+      },
+      "success_criteria": {
+        "description": "Submission meets regulatory acceptance criteria",
+        "metrics": ["Regulatory completeness >98%", "Technical accuracy verified", "Compliance confirmed"]
+      },
+      "validation_rules": {
+        "input_requirements": [
+          "Device classification must be accurate",
+          "Predicate device must be legally marketed",
+          "Intended use must be clearly defined"
+        ],
+        "output_validation": [
+          "Substantial equivalence argument must be sound",
+          "Risk analysis must be comprehensive",
+          "Clinical evidence must support claims"
+        ]
+      },
+      "prerequisite_capabilities": ["regulatory-submission", "device-classification", "risk-assessment"],
+      "prerequisite_prompts": ["predicate-analysis", "clinical-evidence-summary"],
+      "model_requirements": {
+        "model": "gpt-4",
+        "temperature": 0.2,
+        "max_tokens": 4500
+      },
+      "compliance_tags": ["FDA", "CE-MDR", "Health Canada", "TGA"],
+      "estimated_tokens": 4000,
+      "version": "1.0.0"
+    },
+    {
+      "name": "health-economic-evaluator",
+      "display_name": "Health Economic Evaluation Generator",
+      "description": "Conduct comprehensive health economic analyses and budget impact assessments for medical technologies",
+      "domain": "commercial",
+      "complexity_level": "advanced",
+      "estimated_duration_hours": 3,
+      "system_prompt": "You are an expert Health Economist specializing in medical device and digital health evaluations. Conduct comprehensive health economic analyses including cost-effectiveness, budget impact, and value assessments. Follow ISPOR guidelines and international HTA standards. Provide clear methodology, transparent assumptions, and actionable recommendations for payers and providers.",
+      "user_prompt_template": "Conduct a health economic evaluation for:\n\nTechnology Details:\n- Technology: {technology_name}\n- Indication: {indication}\n- Target Population: {population}\n- Comparator: {comparator}\n- Time Horizon: {time_horizon}\n\nEconomic Parameters:\n- Perspective: {perspective}\n- Analysis Type: {analysis_type}\n- Cost Categories: {cost_categories}\n- Outcome Measures: {outcomes}\n- Budget: {budget_constraint}\n\nPlease provide:\n1. Economic research question\n2. Model structure and assumptions\n3. Cost analysis and valuation\n4. Outcome measurement and valuation\n5. Cost-effectiveness results\n6. Sensitivity and scenario analyses\n7. Budget impact assessment\n8. Value proposition summary",
+      "input_schema": {
+        "technology_name": "string",
+        "indication": "string",
+        "population": "string",
+        "comparator": "string",
+        "time_horizon": "string",
+        "perspective": "enum['Healthcare_System','Payer','Societal','Provider']",
+        "analysis_type": "enum['CEA','CUA','BIA','CMA']",
+        "cost_categories": "array",
+        "outcomes": "array",
+        "budget_constraint": "number"
+      },
+      "output_schema": {
+        "research_question": "string",
+        "model_structure": "object",
+        "cost_analysis": "object",
+        "outcome_analysis": "object",
+        "cost_effectiveness": "object",
+        "sensitivity_analysis": "object",
+        "budget_impact": "object",
+        "value_proposition": "object"
+      },
+      "success_criteria": {
+        "description": "Analysis meets HTA methodological standards",
+        "metrics": ["Methodological rigor >90%", "Data quality verified", "Payer relevance confirmed"]
+      },
+      "validation_rules": {
+        "input_requirements": [
+          "Technology must be clearly defined",
+          "Comparator must be current standard of care",
+          "Population must be well-characterized"
+        ],
+        "output_validation": [
+          "Model structure must be appropriate",
+          "Costs must be comprehensive and accurate",
+          "Outcomes must be clinically meaningful"
+        ]
+      },
+      "prerequisite_capabilities": ["health-economics", "statistical-analysis", "market-analysis"],
+      "prerequisite_prompts": ["clinical-evidence-synthesis", "cost-data-collection"],
+      "model_requirements": {
+        "model": "gpt-4",
+        "temperature": 0.4,
+        "max_tokens": 4000
+      },
+      "compliance_tags": ["ISPOR", "NICE", "ICER", "CADTH"],
+      "estimated_tokens": 3800,
+      "version": "1.0.0"
+    },
+    {
+      "name": "quality-system-designer",
+      "display_name": "Quality Management System Designer",
+      "description": "Design comprehensive quality management systems compliant with ISO 13485 and FDA QSR",
+      "domain": "technical",
+      "complexity_level": "advanced",
+      "estimated_duration_hours": 4,
+      "system_prompt": "You are an expert Quality Systems Professional with deep knowledge of medical device quality standards. Design comprehensive quality management systems that comply with ISO 13485, FDA QSR, and other international standards. Ensure all processes are risk-based, efficient, and support regulatory compliance. Provide detailed procedures, forms, and implementation guidance.",
+      "user_prompt_template": "Design a quality management system for:\n\nOrganization Details:\n- Company Type: {company_type}\n- Device Types: {device_types}\n- Regulatory Markets: {markets}\n- Organization Size: {size}\n- Current QMS Status: {current_status}\n\nRequirements:\n- Standards: {standards}\n- Certification Goals: {certifications}\n- Risk Level: {risk_level}\n- Timeline: {timeline}\n- Special Requirements: {special_requirements}\n\nPlease provide:\n1. QMS gap analysis\n2. Quality manual structure\n3. Process documentation hierarchy\n4. Design control procedures\n5. Risk management integration\n6. Document and record control\n7. Training and competency framework\n8. Internal audit program\n9. Management review process",
+      "input_schema": {
+        "company_type": "enum['Manufacturer','Distributor','Service_Provider']",
+        "device_types": "array",
+        "markets": "array",
+        "size": "enum['Startup','Small','Medium','Large']",
+        "current_status": "enum['New','Basic','Partial','Full']",
+        "standards": "array",
+        "certifications": "array",
+        "risk_level": "enum['Low','Medium','High']",
+        "timeline": "string",
+        "special_requirements": "string"
+      },
+      "output_schema": {
+        "gap_analysis": "object",
+        "quality_manual": "object",
+        "process_documentation": "object",
+        "design_controls": "object",
+        "risk_management": "object",
+        "document_control": "object",
+        "training_framework": "object",
+        "audit_program": "object",
+        "management_review": "object"
+      },
+      "success_criteria": {
+        "description": "QMS design meets certification requirements",
+        "metrics": ["Standards compliance >95%", "Process effectiveness verified", "Audit readiness confirmed"]
+      },
+      "validation_rules": {
+        "input_requirements": [
+          "Device types must be properly classified",
+          "Regulatory markets must be specified",
+          "Standards requirements must be clear"
+        ],
+        "output_validation": [
+          "All required processes must be documented",
+          "Risk-based approach must be evident",
+          "Procedures must be implementable"
+        ]
+      },
+      "prerequisite_capabilities": ["quality-systems", "risk-management", "document-control"],
+      "prerequisite_prompts": ["risk-assessment", "process-mapping"],
+      "model_requirements": {
+        "model": "gpt-4",
+        "temperature": 0.3,
+        "max_tokens": 4200
+      },
+      "compliance_tags": ["ISO 13485", "FDA QSR", "CE-MDR", "MDSAP"],
+      "estimated_tokens": 3900,
+      "version": "1.0.0"
+    },
+    {
+      "name": "clinical-data-analyzer",
+      "display_name": "Clinical Data Analysis Generator",
+      "description": "Perform comprehensive statistical analyses of clinical trial data with regulatory-compliant reporting",
+      "domain": "medical",
+      "complexity_level": "advanced",
+      "estimated_duration_hours": 3,
+      "system_prompt": "You are an expert Clinical Biostatistician with extensive experience in medical device clinical trials. Perform comprehensive statistical analyses following ICH guidelines and regulatory requirements. Generate clear, accurate statistical reports with appropriate tables, figures, and interpretations. Ensure all analyses support regulatory submissions and clinical decision-making.",
+      "user_prompt_template": "Perform clinical data analysis for:\n\nStudy Details:\n- Study Type: {study_type}\n- Primary Endpoint: {primary_endpoint}\n- Secondary Endpoints: {secondary_endpoints}\n- Study Population: {population}\n- Sample Size: {sample_size}\n\nAnalysis Requirements:\n- Analysis Sets: {analysis_sets}\n- Statistical Methods: {methods}\n- Significance Level: {alpha}\n- Missing Data Approach: {missing_data}\n- Subgroup Analyses: {subgroups}\n\nPlease provide:\n1. Statistical analysis plan summary\n2. Data quality assessment\n3. Baseline characteristics analysis\n4. Primary endpoint analysis\n5. Secondary endpoint analyses\n6. Safety analysis\n7. Subgroup and sensitivity analyses\n8. Summary and conclusions",
+      "input_schema": {
+        "study_type": "enum['RCT','Single-arm','Observational','Registry']",
+        "primary_endpoint": "string",
+        "secondary_endpoints": "array",
+        "population": "string",
+        "sample_size": "integer",
+        "analysis_sets": "array",
+        "methods": "array",
+        "alpha": "number",
+        "missing_data": "enum['Complete_case','LOCF','Multiple_imputation']",
+        "subgroups": "array"
+      },
+      "output_schema": {
+        "analysis_plan": "object",
+        "data_quality": "object",
+        "baseline_characteristics": "object",
+        "primary_analysis": "object",
+        "secondary_analyses": "object",
+        "safety_analysis": "object",
+        "subgroup_analyses": "object",
+        "conclusions": "object"
+      },
+      "success_criteria": {
+        "description": "Analysis meets regulatory statistical standards",
+        "metrics": ["Statistical validity >95%", "Regulatory compliance verified", "Clinical interpretability confirmed"]
+      },
+      "validation_rules": {
+        "input_requirements": [
+          "Primary endpoint must be pre-specified",
+          "Statistical methods must be appropriate",
+          "Sample size must be adequate"
+        ],
+        "output_validation": [
+          "All analyses must be statistically sound",
+          "Results must be clearly interpreted",
+          "Limitations must be acknowledged"
+        ]
+      },
+      "prerequisite_capabilities": ["statistical-analysis", "clinical-data-management", "regulatory-statistics"],
+      "prerequisite_prompts": ["study-design-review", "data-validation"],
+      "model_requirements": {
+        "model": "gpt-4",
+        "temperature": 0.3,
+        "max_tokens": 4000
+      },
+      "compliance_tags": ["ICH-GCP", "FDA", "EMA", "CDISC"],
+      "estimated_tokens": 3700,
+      "version": "1.0.0"
+    }
+  ]
+}

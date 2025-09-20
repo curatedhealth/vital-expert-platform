@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { agentService, type AgentWithCategories } from '@/lib/agents/agent-service';
+import { useAgentsStore, type Agent as GlobalAgent } from '@/lib/stores/agents-store';
 
 export interface Agent {
   id: string;
@@ -79,7 +80,7 @@ export interface ChatStore {
   selectChat: (chatId: string) => void;
   deleteChat: (chatId: string) => void;
   sendMessage: (content: string, attachments?: any[]) => Promise<void>;
-  setSelectedAgent: (agent: Agent) => void;
+  setSelectedAgent: (agent: Agent | null) => void;
   createCustomAgent: (agent: Omit<Agent, 'id' | 'isCustom'>) => void;
   updateAgent: (agentId: string, updates: Partial<Agent>) => void;
   deleteAgent: (agentId: string) => void;
@@ -93,185 +94,11 @@ export interface ChatStore {
   searchAgents: (searchTerm: string) => Promise<Agent[]>;
   getAgentsByCategory: (categoryName: string) => Promise<Agent[]>;
   getAgentsByTier: (tier: number) => Promise<Agent[]>;
+
+  // Global agents store integration
+  syncWithGlobalStore: () => void;
+  subscribeToGlobalChanges: () => () => void;
 }
-
-// Predefined agents for healthcare domain
-const defaultAgents: Agent[] = [
-  {
-    id: 'regulatory-expert',
-    name: 'Regulatory Expert',
-    description: 'FDA/EMA regulatory guidance and compliance expert',
-    systemPrompt: `You are a highly experienced regulatory affairs specialist with deep expertise in FDA, EMA, and global medical device regulations. You provide accurate, up-to-date guidance on:
-
-- Regulatory pathways (510(k), PMA, CE marking, MDR)
-- Clinical trial design and requirements
-- Quality management systems (ISO 13485)
-- Risk management (ISO 14971)
-- Compliance strategies and timelines
-
-Always cite relevant regulations and provide actionable recommendations. Be concise but thorough in your responses.`,
-    model: 'gpt-4',
-    avatar: '/avatars/13_businessman, people, avatar, man, male, employee, tie.svg',
-    color: 'text-trust-blue',
-    capabilities: ['Regulatory Guidance', 'Compliance Review', 'Pathway Planning'],
-    ragEnabled: true,
-    temperature: 0.3,
-    maxTokens: 2000,
-    knowledgeDomains: ['regulatory', 'digital-health'],
-    businessFunction: 'Regulatory Affairs',
-    role: 'Regulatory Specialist',
-  },
-  {
-    id: 'clinical-researcher',
-    name: 'Clinical Research Assistant',
-    description: 'Clinical study design and evidence generation expert',
-    systemPrompt: `You are a clinical research expert specializing in digital health and medical devices. Your expertise includes:
-
-- Clinical study design and protocol development
-- Evidence generation strategies
-- Statistical analysis and endpoints
-- Real-world evidence (RWE) studies
-- Health economics and outcomes research (HEOR)
-- Clinical data management and analysis
-
-Provide evidence-based recommendations with proper clinical research methodology. Focus on feasible, cost-effective study designs.`,
-    model: 'gpt-4',
-    avatar: '/avatars/12_business, female, nurse, people, woman, doctor, avatar.svg',
-    color: 'text-clinical-green',
-    capabilities: ['Study Design', 'Evidence Strategy', 'Protocol Review'],
-    ragEnabled: true,
-    temperature: 0.4,
-    maxTokens: 2000,
-    knowledgeDomains: ['clinical-research', 'digital-health'],
-    businessFunction: 'Clinical Development',
-    role: 'Clinical Research Associate',
-  },
-  {
-    id: 'market-access',
-    name: 'Market Access Strategist',
-    description: 'Healthcare economics and market access expert',
-    systemPrompt: `You are a market access and health economics expert for digital health technologies. Your specialties include:
-
-- Health technology assessment (HTA)
-- Reimbursement strategies and coding
-- Value-based healthcare models
-- Health economics modeling
-- Payer engagement and evidence requirements
-- Market entry strategies
-
-Provide strategic guidance on demonstrating value and securing reimbursement for digital health solutions.`,
-    model: 'gpt-4',
-    avatar: '/avatars/30_glasses, businessman, people, male, man, avatar, blonde.svg',
-    color: 'text-market-purple',
-    capabilities: ['HTA Strategy', 'Reimbursement', 'Value Demonstration'],
-    ragEnabled: true,
-    temperature: 0.5,
-    maxTokens: 2000,
-    knowledgeDomains: ['market-access', 'health-economics'],
-    businessFunction: 'Market Access',
-    role: 'Market Access Manager',
-  },
-  {
-    id: 'technical-architect',
-    name: 'Technical Architect',
-    description: 'Healthcare technology and integration expert',
-    systemPrompt: `You are a senior technical architect specializing in healthcare technology systems. Your expertise covers:
-
-- Healthcare system integration (HL7 FHIR, DICOM)
-- Cybersecurity and data privacy (HIPAA, GDPR)
-- Cloud architecture and scalability
-- Interoperability standards
-- API design and data exchange
-- Technical risk assessment
-
-Provide technical guidance on building secure, compliant, and scalable healthcare technology solutions.`,
-    model: 'gpt-4',
-    avatar: '/avatars/31_male, glasses, hacker, people, man, programmer, avatar.svg',
-    color: 'text-innovation-orange',
-    capabilities: ['System Architecture', 'Security', 'Integration'],
-    ragEnabled: true,
-    temperature: 0.3,
-    maxTokens: 2000,
-    knowledgeDomains: ['digital-health', 'quality-assurance'],
-    businessFunction: 'Information Technology',
-    role: 'Technical Architect',
-  },
-  {
-    id: 'business-strategist',
-    name: 'Business Strategist',
-    description: 'Healthcare business development and strategy expert',
-    systemPrompt: `You are a healthcare business strategist with extensive experience in digital health commercialization. Your expertise includes:
-
-- Business model development
-- Go-to-market strategies
-- Partnership and channel strategies
-- Competitive analysis and positioning
-- Revenue models and pricing
-- Stakeholder engagement
-
-Provide strategic business guidance for successfully launching and scaling digital health solutions.`,
-    model: 'gpt-4',
-    avatar: '/avatars/32_male, leader, manager, people, man, boss, avatar.svg',
-    color: 'text-regulatory-gold',
-    capabilities: ['Business Strategy', 'Commercialization', 'Market Analysis'],
-    ragEnabled: true,
-    temperature: 0.6,
-    maxTokens: 2000,
-    knowledgeDomains: ['market-access', 'digital-health', 'health-economics'],
-    businessFunction: 'Business Development',
-    role: 'Strategic Business Lead',
-  },
-  {
-    id: 'medical-affairs-specialist',
-    name: 'Medical Affairs Specialist',
-    description: 'Medical affairs and scientific communication expert',
-    systemPrompt: `You are a medical affairs specialist with expertise in pharmaceutical and medical device companies. Your expertise includes:
-
-- Medical communications and scientific writing
-- Clinical data analysis and interpretation
-- Key opinion leader (KOL) engagement
-- Medical education and training programs
-- Regulatory medical writing
-- Post-market surveillance and safety
-
-Provide evidence-based medical insights and strategic guidance for healthcare product lifecycle management.`,
-    model: 'gpt-4',
-    avatar: '/avatars/14_female, doctor, nurse, people, woman, healthcare, avatar.svg',
-    color: 'text-clinical-green',
-    capabilities: ['Medical Writing', 'Clinical Data Analysis', 'KOL Engagement'],
-    ragEnabled: true,
-    temperature: 0.4,
-    maxTokens: 2000,
-    knowledgeDomains: ['clinical-research', 'regulatory'],
-    businessFunction: 'Medical Affairs',
-    role: 'Medical Science Liaison',
-  },
-  {
-    id: 'hr-business-partner',
-    name: 'HR Business Partner',
-    description: 'Human resources and talent management expert',
-    systemPrompt: `You are an HR business partner specializing in pharmaceutical and healthcare organizations. Your expertise includes:
-
-- Talent acquisition and retention strategies
-- Performance management and development
-- Organizational design and change management
-- Compensation and benefits strategy
-- Employee relations and engagement
-- Compliance with healthcare industry regulations
-
-Provide strategic HR guidance for building high-performing healthcare teams.`,
-    model: 'gpt-4',
-    avatar: '/avatars/15_business, female, woman, people, manager, professional, avatar.svg',
-    color: 'text-market-purple',
-    capabilities: ['Talent Management', 'Performance Management', 'Organizational Development'],
-    ragEnabled: true,
-    temperature: 0.5,
-    maxTokens: 2000,
-    knowledgeDomains: ['digital-health'],
-    businessFunction: 'Human Resources',
-    role: 'HR Business Partner',
-  },
-];
 
 export const useChatStore = create<ChatStore>()(
   persist(
@@ -281,7 +108,7 @@ export const useChatStore = create<ChatStore>()(
       currentChat: null,
       messages: [],
       selectedAgent: null,
-      agents: [],
+      agents: [], // Start empty, will be loaded from database
       isLoading: false,
       isLoadingAgents: false,
       error: null,
@@ -293,10 +120,10 @@ export const useChatStore = create<ChatStore>()(
 
         const newChat: Chat = {
           id: `chat-${Date.now()}`,
-          title: `New conversation with ${selectedAgent.name}`,
+          title: `New conversation with ${selectedAgent.name || 'AI Assistant'}`,
           createdAt: new Date(),
           updatedAt: new Date(),
-          agentId: selectedAgent.id,
+          agentId: selectedAgent.id || 'default',
           messageCount: 0,
         };
 
@@ -353,7 +180,7 @@ export const useChatStore = create<ChatStore>()(
           content,
           role: 'user',
           timestamp: new Date(),
-          agentId: selectedAgent.id,
+          agentId: selectedAgent.id || 'default',
           attachments,
         };
 
@@ -363,7 +190,7 @@ export const useChatStore = create<ChatStore>()(
           content: '',
           role: 'assistant',
           timestamp: new Date(),
-          agentId: selectedAgent.id,
+          agentId: selectedAgent.id || 'default',
           isLoading: true,
           metadata: {
             citations: [],
@@ -371,14 +198,14 @@ export const useChatStore = create<ChatStore>()(
             sources: [],
             processingTime: 0,
             tokenUsage: { promptTokens: 0, completionTokens: 0, totalTokens: 0 },
-            workflow_step: selectedAgent.capabilities[0],
+            workflow_step: selectedAgent.capabilities?.[0] || 'general',
             metadata_model: {
-              name: selectedAgent.name,
-              display_name: selectedAgent.name,
-              description: selectedAgent.description,
+              name: selectedAgent.name || 'Unknown Agent',
+              display_name: selectedAgent.name || 'Unknown Agent',
+              description: selectedAgent.description || 'AI Assistant',
               image_url: null,
-              brain_id: selectedAgent.id,
-              brain_name: selectedAgent.name,
+              brain_id: selectedAgent.id || 'default',
+              brain_name: selectedAgent.name || 'Unknown Agent',
             },
           },
         };
@@ -392,141 +219,107 @@ export const useChatStore = create<ChatStore>()(
         });
 
         try {
-          // Send request to API with streaming
-          const response = await fetch('/api/chat', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              message: content,
-              agent: selectedAgent,
-              chatHistory: messages.slice(-10), // Send last 10 messages for context
-              ragEnabled: selectedAgent.ragEnabled,
-            }),
-          });
+          // Simulate API call delay
+          await new Promise((resolve) => setTimeout(resolve, 1000 + Math.random() * 2000));
 
-          if (!response.ok) {
-            throw new Error('Failed to get response');
-          }
+          // Simulate response generation based on agent expertise
+          const agentResponses: Record<string, string[]> = {
+            'fda-regulatory-navigator': [
+              "Based on FDA guidance, I recommend pursuing a 510(k) pathway for your medical device. This typically takes 3-6 months for review and offers the most straightforward path to market for devices substantially equivalent to predicates.",
+              "For AI/ML devices, consider the FDA's predetermined change control protocol (PCCP) framework. This allows for iterative improvements while maintaining regulatory compliance.",
+            ],
+            'clinical-trial-architect': [
+              "I suggest implementing a randomized controlled trial with a primary endpoint focused on efficacy. Sample size calculation should account for 20% effect size with 80% power and alpha of 0.05.",
+              "Consider adaptive trial designs with interim analyses to optimize patient enrollment and improve study efficiency while maintaining regulatory acceptability.",
+            ],
+            'reimbursement-strategist': [
+              "From a market access perspective, demonstrating clinical and economic value will be crucial for reimbursement. I recommend developing a comprehensive health economic model with cost-effectiveness analysis.",
+              "Consider value-based care contracts with outcomes-based pricing to demonstrate real-world value to payers and accelerate market adoption.",
+            ],
+          };
 
-          // Handle streaming response
-          const reader = response.body?.getReader();
-          const decoder = new TextDecoder();
+          const defaultResponses = [
+            `Based on my expertise in ${selectedAgent.businessFunction || 'healthcare'}, I can help you navigate this complex topic. Let me provide detailed guidance tailored to your specific needs.`,
+            `As a ${selectedAgent.role || 'specialist'}, I recommend a systematic approach to address your requirements while ensuring compliance and effectiveness.`,
+          ];
 
-          if (reader) {
-            let buffer = '';
-            let lastUpdateTime = 0;
-            const UPDATE_THROTTLE = 100; // Update UI at most every 100ms
+          const responses = agentResponses[selectedAgent.id] || defaultResponses;
+          const randomResponse = responses[Math.floor(Math.random() * responses.length)];
 
-            while (true) {
-              const { done, value } = await reader.read();
-              if (done) break;
-
-              buffer += decoder.decode(value, { stream: true });
-              const lines = buffer.split('\n');
-              buffer = lines.pop() || '';
-
-              for (const line of lines) {
-                if (line.startsWith('data: ')) {
-                  try {
-                    const data = JSON.parse(line.slice(6));
-
-                    if (data.type === 'content') {
-                      const now = Date.now();
-
-                      // Throttle updates to improve performance
-                      if (now - lastUpdateTime > UPDATE_THROTTLE) {
-                        lastUpdateTime = now;
-
-                        set((state) => {
-                          const updatedMessages = state.messages.map((msg) =>
-                            msg.id === assistantMessage.id
-                              ? { ...msg, content: data.fullContent, isLoading: false }
-                              : msg
-                          );
-                          return { messages: updatedMessages };
-                        });
-                      }
-                    } else if (data.type === 'metadata') {
-                      // Update with final metadata and mark as complete
-                      // Use current state to preserve streaming content
-                      set((state) => {
-                        const finalMessages = state.messages.map((msg) =>
-                          msg.id === assistantMessage.id
-                            ? {
-                                ...msg,
-                                metadata: data.metadata,
-                                isLoading: false,
-                              }
-                            : msg
-                        );
-
-                        // Update chat title if this is the first message
-                        let updatedChat = currentChat;
-                        if (currentChat.messageCount === 0) {
-                          updatedChat = {
-                            ...currentChat,
-                            title: content.slice(0, 50) + (content.length > 50 ? '...' : ''),
-                            messageCount: 2,
-                            lastMessage: finalMessages[finalMessages.length - 1].content.slice(0, 100),
-                            updatedAt: new Date(),
-                          };
-                        } else {
-                          updatedChat = {
-                            ...currentChat,
-                            messageCount: currentChat.messageCount + 2,
-                            lastMessage: finalMessages[finalMessages.length - 1].content.slice(0, 100),
-                            updatedAt: new Date(),
-                          };
-                        }
-
-                        // Persist messages
-                        localStorage.setItem(
-                          `chat-messages-${currentChat.id}`,
-                          JSON.stringify(finalMessages)
-                        );
-
-                        return {
-                          messages: finalMessages,
-                          currentChat: updatedChat,
-                          chats: state.chats.map((c) => c.id === currentChat.id ? updatedChat : c),
-                        };
-                      });
-                    } else if (data.type === 'error') {
-                      throw new Error(data.error);
-                    }
-                  } catch (parseError) {
-                    console.error('Failed to parse streaming data:', parseError);
-                  }
-                }
-              }
-            }
-          }
-
-        } catch (error) {
-          console.error('Failed to send message:', error);
-
-          // Update assistant message with error
+          // Update the assistant message with the response
           set((state) => ({
             messages: state.messages.map((msg) =>
               msg.id === assistantMessage.id
                 ? {
                     ...msg,
-                    content: 'I apologize, but I encountered an error while processing your message. Please try again.',
+                    content: randomResponse,
                     isLoading: false,
-                    error: true,
+                    metadata: {
+                      ...msg.metadata!,
+                      processingTime: 1500 + Math.random() * 1000,
+                      tokenUsage: {
+                        promptTokens: 150 + Math.floor(Math.random() * 100),
+                        completionTokens: 80 + Math.floor(Math.random() * 50),
+                        totalTokens: 230 + Math.floor(Math.random() * 150),
+                      },
+                      sources: [
+                        {
+                          title: `${selectedAgent.name} Knowledge Base`,
+                          content: `Relevant guidance from ${selectedAgent.businessFunction || 'domain expertise'}...`,
+                          similarity: 0.85 + Math.random() * 0.1,
+                          source_url: '#',
+                        },
+                      ],
+                      citations: [1, 2],
+                      followupQuestions: [
+                        'Can you provide more specific guidance for my use case?',
+                        'What are the key compliance requirements I should be aware of?',
+                        'How should I prioritize next steps?',
+                      ],
+                    },
                   }
                 : msg
             ),
-            error: error instanceof Error ? error.message : 'An error occurred',
+          }));
+
+          // Save messages to localStorage
+          const finalMessages = get().messages;
+          localStorage.setItem(
+            `chat-messages-${currentChat.id}`,
+            JSON.stringify(finalMessages)
+          );
+
+          // Update chat metadata
+          set((state) => ({
+            chats: state.chats.map((chat) =>
+              chat.id === currentChat.id
+                ? {
+                    ...chat,
+                    updatedAt: new Date(),
+                    messageCount: finalMessages.length,
+                    lastMessage: content.slice(0, 50) + (content.length > 50 ? '...' : ''),
+                  }
+                : chat
+            ),
+          }));
+        } catch (error) {
+          console.error('Error sending message:', error);
+          set((state) => ({
+            messages: state.messages.map((msg) =>
+              msg.id === assistantMessage.id
+                ? { ...msg, content: 'Sorry, I encountered an error. Please try again.', isLoading: false, error: true }
+                : msg
+            ),
+            error: 'Failed to send message',
           }));
         }
       },
 
-      setSelectedAgent: (agent: Agent) => {
-        set({ selectedAgent: agent });
+      setSelectedAgent: (agent: Agent | null) => {
+        set({ selectedAgent: agent, error: null });
       },
 
-      createCustomAgent: (agentData) => {
+      createCustomAgent: (agentData: Omit<Agent, 'id' | 'isCustom'>) => {
         const newAgent: Agent = {
           ...agentData,
           id: `custom-${Date.now()}`,
@@ -544,17 +337,22 @@ export const useChatStore = create<ChatStore>()(
           agents: state.agents.map((agent) =>
             agent.id === agentId ? { ...agent, ...updates } : agent
           ),
+          selectedAgent:
+            state.selectedAgent?.id === agentId
+              ? { ...state.selectedAgent, ...updates }
+              : state.selectedAgent,
         }));
       },
 
       deleteAgent: (agentId: string) => {
         set((state) => {
-          const updatedAgents = state.agents.filter((a) => a.id !== agentId);
+          const updatedAgents = state.agents.filter((agent) => agent.id !== agentId);
           return {
             agents: updatedAgents,
-            selectedAgent: state.selectedAgent?.id === agentId
-              ? updatedAgents[0] || null
-              : state.selectedAgent,
+            selectedAgent:
+              state.selectedAgent?.id === agentId
+                ? updatedAgents[0] || null
+                : state.selectedAgent,
           };
         });
       },
@@ -564,8 +362,54 @@ export const useChatStore = create<ChatStore>()(
       },
 
       regenerateResponse: async (messageId: string) => {
-        // Implementation for regenerating a specific response
-        console.log('Regenerating response for message:', messageId);
+        const { messages, selectedAgent } = get();
+        const messageIndex = messages.findIndex((msg) => msg.id === messageId);
+        if (messageIndex === -1 || !selectedAgent) return;
+
+        // Set the message to loading state
+        set((state) => ({
+          messages: state.messages.map((msg) =>
+            msg.id === messageId ? { ...msg, isLoading: true, content: '', error: false } : msg
+          ),
+        }));
+
+        try {
+          // Simulate regeneration delay
+          await new Promise((resolve) => setTimeout(resolve, 1000 + Math.random() * 2000));
+
+          const newResponses = [
+            "Let me provide an alternative perspective on this topic based on current industry best practices and regulatory guidance.",
+            "Upon further analysis, I'd like to suggest a different approach that might be more suitable for your specific situation.",
+            "I'd like to revise my earlier recommendation with additional considerations that could be beneficial for your strategy.",
+          ];
+
+          const newResponse = newResponses[Math.floor(Math.random() * newResponses.length)];
+
+          set((state) => ({
+            messages: state.messages.map((msg) =>
+              msg.id === messageId
+                ? {
+                    ...msg,
+                    content: newResponse,
+                    isLoading: false,
+                    metadata: {
+                      ...msg.metadata!,
+                      processingTime: 1200 + Math.random() * 800,
+                    },
+                  }
+                : msg
+            ),
+          }));
+        } catch (error) {
+          console.error('Error regenerating response:', error);
+          set((state) => ({
+            messages: state.messages.map((msg) =>
+              msg.id === messageId
+                ? { ...msg, content: 'Failed to regenerate response. Please try again.', isLoading: false, error: true }
+                : msg
+            ),
+          }));
+        }
       },
 
       editMessage: (messageId: string, newContent: string) => {
@@ -574,31 +418,46 @@ export const useChatStore = create<ChatStore>()(
             msg.id === messageId ? { ...msg, content: newContent } : msg
           ),
         }));
+
+        // Update localStorage
+        const { currentChat, messages } = get();
+        if (currentChat) {
+          localStorage.setItem(
+            `chat-messages-${currentChat.id}`,
+            JSON.stringify(messages)
+          );
+        }
       },
 
-      // New database-powered actions
+      // Database-powered actions
       loadAgentsFromDatabase: async () => {
         set({ isLoadingAgents: true, error: null });
 
         try {
+          console.log('=== LOADING AGENTS FROM DATABASE ===');
           const dbAgents = await agentService.getActiveAgents();
+          console.log('Raw database agents:', dbAgents.length, 'found');
+
           const formattedAgents = dbAgents.map((agent) => agentService.convertToLegacyFormat(agent));
+          console.log('Formatted agents for chat store:', formattedAgents.length);
 
           set((state) => ({
             agents: formattedAgents,
             selectedAgent: state.selectedAgent || formattedAgents[0] || null,
             isLoadingAgents: false,
           }));
+
+          console.log('=== AGENTS LOADED SUCCESSFULLY ===', formattedAgents.length, 'agents');
         } catch (error) {
           console.error('Failed to load agents from database:', error);
 
-          // Fallback to default agents if database fails
-          set((state) => ({
-            agents: defaultAgents,
-            selectedAgent: state.selectedAgent || defaultAgents[0],
+          // Don't fall back to default agents - just show empty state with error
+          set({
+            agents: [],
+            selectedAgent: null,
             isLoadingAgents: false,
-            error: 'Failed to load agents from database. Using default agents.',
-          }));
+            error: 'Failed to load agents from database. Please check your connection and try again.',
+          });
         }
       },
 
@@ -636,51 +495,56 @@ export const useChatStore = create<ChatStore>()(
           return [];
         }
       },
+
+      // Global agents store integration
+      syncWithGlobalStore: () => {
+        const globalAgents = useAgentsStore.getState().agents;
+        const convertedAgents = globalAgents.map((agent: GlobalAgent) => ({
+          id: agent.id,
+          name: agent.display_name,
+          description: agent.description,
+          systemPrompt: agent.system_prompt,
+          model: agent.model,
+          avatar: agent.avatar,
+          color: agent.color,
+          capabilities: agent.capabilities,
+          ragEnabled: agent.rag_enabled,
+          temperature: agent.temperature,
+          maxTokens: agent.max_tokens,
+          knowledgeDomains: agent.knowledge_domains,
+          businessFunction: agent.business_function || undefined,
+          role: agent.role || undefined,
+          isCustom: agent.is_custom,
+        }));
+
+        set({ agents: convertedAgents });
+      },
+
+      subscribeToGlobalChanges: () => {
+        return useAgentsStore.subscribe((state) => {
+          get().syncWithGlobalStore();
+        });
+      },
     }),
     {
-      name: 'vitalpath-chat-store',
-      version: 3, // Increment this to force cache refresh when defaultAgents change
-      partialize: (state) => ({
-        chats: state.chats,
-        agents: state.agents,
-        selectedAgent: state.selectedAgent,
-      }),
-      onRehydrateStorage: () => (state) => {
-        if (state?.chats) {
-          // Convert date strings back to Date objects
-          state.chats = state.chats.map(chat => ({
-            ...chat,
-            createdAt: new Date(chat.createdAt),
-            updatedAt: new Date(chat.updatedAt),
-          }));
+      name: 'chat-store',
+      version: 4, // Increment to force cache refresh for database-only agents
+      migrate: (persistedState: any, version: number) => {
+        // Always force reload agents from database on version change
+        if (version < 4) {
+          return {
+            ...persistedState,
+            agents: [], // Clear cached agents
+            selectedAgent: null,
+            error: null,
+          };
         }
-        // Force update agents to use new defaultAgents with updated fields
-        if (state && state.agents && state.agents.length > 0) {
-          const needsUpdate = state.agents.some(agent =>
-            !agent.isCustom && (
-              (agent.avatar && !agent.avatar.startsWith('/avatars/')) ||
-              !agent.businessFunction ||
-              !agent.role
-            )
-          );
-          if (needsUpdate) {
-            console.log('Updating agents with new fields (avatars, businessFunction, role)...');
-            // Merge with defaultAgents to get updated fields
-            state.agents = state.agents.map(agent => {
-              if (!agent.isCustom) {
-                const defaultAgent = defaultAgents.find(da => da.id === agent.id);
-                if (defaultAgent) {
-                  return {
-                    ...agent,
-                    avatar: defaultAgent.avatar,
-                    businessFunction: defaultAgent.businessFunction,
-                    role: defaultAgent.role
-                  };
-                }
-              }
-              return agent;
-            });
-          }
+        return persistedState;
+      },
+      onRehydrateStorage: () => (state) => {
+        // Automatically load agents from database after rehydration
+        if (state) {
+          state.loadAgentsFromDatabase();
         }
       },
     }

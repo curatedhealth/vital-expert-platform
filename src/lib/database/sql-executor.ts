@@ -25,12 +25,12 @@ export class SQLExecutor {
 
     // Try alternative execution via direct REST API
     try {
-      const response = await fetch(`${this.supabase.supabaseUrl}/rest/v1/rpc/exec_sql`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/rpc/exec_sql`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${this.supabase.supabaseKey}`,
-          'apikey': this.supabase.supabaseKey,
+          'Authorization': `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''}`,
+          'apikey': process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '',
           'Prefer': 'return=minimal'
         },
         body: JSON.stringify({ sql })
@@ -159,12 +159,12 @@ export class SQLExecutor {
 
   private async executeRawSQL(statement: string): Promise<any> {
     // Use the Supabase client's underlying fetch capability
-    const response = await fetch(`${this.supabase.supabaseUrl}/rest/v1/rpc/exec_sql`, {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/rpc/exec_sql`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${this.supabase.supabaseKey}`,
-        'apikey': this.supabase.supabaseKey
+        'Authorization': `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''}`,
+        'apikey': process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
       },
       body: JSON.stringify({ sql: statement })
     });

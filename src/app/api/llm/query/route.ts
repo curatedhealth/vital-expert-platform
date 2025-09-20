@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { llmOrchestrator } from '@/lib/llm/orchestrator';
-import { semanticSearch } from '@/lib/pinecone/search';
+import { SupabaseRAGService } from '../../../../../backend/lib/chat/supabase-rag-service';
 import { createClient } from '@/lib/supabase/server';
 import { Phase, QueryType, ModelType } from '@/types';
 
@@ -56,20 +56,19 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Step 1: Retrieve relevant context from Pinecone
-    const searchOptions = {
-      topK: 5,
-      includeSystemDocs,
-      minScore: 0.7,
-      filters: projectId ? { projectId } : {},
-    };
+    // Step 1: Retrieve relevant context from Supabase RAG
+    const ragService = new SupabaseRAGService();
 
-    const searchResults = await semanticSearch(question, organizationId, searchOptions);
+    const searchResults = await ragService.enhancedSearch(question, {
+      agentType: queryType,
+      phase,
+      maxResults: 5,
+      similarityThreshold: 0.7,
+      includeMetadata: true,
+    });
 
     // Step 2: Build context from search results
-    const context = searchResults.results
-      .map(result => `${result.metadata.title}:\n${result.text}`)
-      .join('\n\n---\n\n');
+    const context = searchResults.context;
 
     // Step 3: Select appropriate model(s)
     let llmResponse;
@@ -120,8 +119,17 @@ export async function POST(request: NextRequest) {
     }
 
     // Step 4: Merge citations from RAG and LLM
+    const ragCitations = searchResults.sources.map(source => ({
+      source: source.metadata.title || source.metadata.source || 'Unknown',
+      url: source.metadata.source || '',
+      pageNumber: source.metadata.page_number,
+      section: source.metadata.section,
+      quote: source.content.substring(0, 200) + '...',
+      confidenceScore: source.similarity,
+    }));
+
     const allCitations = [
-      ...searchResults.results.map(r => r.citation),
+      ...ragCitations,
       ...llmResponse.citations,
     ];
 
@@ -194,7 +202,7 @@ export async function POST(request: NextRequest) {
       processingTime: llmResponse.processingTime,
       tokensUsed: llmResponse.tokensUsed,
       modelsUsed,
-      searchResults: searchResults.results.length,
+      searchResults: searchResults.sources.length,
     });
 
   } catch (error) {

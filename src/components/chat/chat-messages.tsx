@@ -4,6 +4,7 @@ import { useState, memo, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
+import { Textarea } from '@/components/ui/textarea';
 import { AgentAvatar } from '@/components/ui/agent-avatar';
 import { ChatMessage, useChatStore } from '@/lib/stores/chat-store';
 import {
@@ -18,6 +19,8 @@ import {
   Clock,
   Zap,
   FileText,
+  Check,
+  X,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -28,6 +31,7 @@ interface ChatMessagesProps {
 export function ChatMessages({ messages }: ChatMessagesProps) {
   const { agents, regenerateResponse, editMessage } = useChatStore();
   const [editingMessage, setEditingMessage] = useState<string | null>(null);
+  const [editContent, setEditContent] = useState<string>('');
 
   const getAgent = useCallback((agentId?: string) => {
     return agents.find((a) => a.id === agentId);
@@ -37,8 +41,30 @@ export function ChatMessages({ messages }: ChatMessagesProps) {
     navigator.clipboard.writeText(text);
   }, []);
 
-  const formatTimestamp = useCallback((date: Date) => {
-    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  const formatTimestamp = useCallback((date: Date | string | number) => {
+    const dateObj = date instanceof Date ? date : new Date(date);
+    if (isNaN(dateObj.getTime())) {
+      return 'Invalid time';
+    }
+    return dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  }, []);
+
+  const handleEditStart = useCallback((message: ChatMessage) => {
+    setEditingMessage(message.id);
+    setEditContent(message.content);
+  }, []);
+
+  const handleEditSave = useCallback(() => {
+    if (editingMessage && editContent.trim()) {
+      editMessage(editingMessage, editContent.trim());
+      setEditingMessage(null);
+      setEditContent('');
+    }
+  }, [editingMessage, editContent, editMessage]);
+
+  const handleEditCancel = useCallback(() => {
+    setEditingMessage(null);
+    setEditContent('');
   }, []);
 
   const MessageActions = ({ message }: { message: ChatMessage }) => (
@@ -81,7 +107,7 @@ export function ChatMessages({ messages }: ChatMessagesProps) {
         variant="ghost"
         size="icon"
         className="h-6 w-6"
-        onClick={() => setEditingMessage(message.id)}
+        onClick={() => handleEditStart(message)}
       >
         <Edit className="h-3 w-3" />
       </Button>
@@ -239,28 +265,60 @@ export function ChatMessages({ messages }: ChatMessagesProps) {
                     : 'bg-white border border-gray-200 mr-12'
                 )}
               >
-                <div className="prose prose-sm max-w-none">
-                  {message.isLoading ? (
+                {editingMessage === message.id ? (
+                  // Edit mode
+                  <div className="space-y-3">
+                    <Textarea
+                      value={editContent}
+                      onChange={(e) => setEditContent(e.target.value)}
+                      className="min-h-[100px] resize-none"
+                      placeholder="Edit your message..."
+                    />
                     <div className="flex items-center gap-2">
-                      <div className="flex space-x-1">
-                        <div className="w-2 h-2 bg-progress-teal rounded-full animate-bounce [animation-delay:-0.3s]"></div>
-                        <div className="w-2 h-2 bg-progress-teal rounded-full animate-bounce [animation-delay:-0.15s]"></div>
-                        <div className="w-2 h-2 bg-progress-teal rounded-full animate-bounce"></div>
-                      </div>
-                      <span className="text-sm text-medical-gray">Generating response...</span>
+                      <Button
+                        size="sm"
+                        onClick={handleEditSave}
+                        className="h-8"
+                      >
+                        <Check className="h-3 w-3 mr-1" />
+                        Save
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={handleEditCancel}
+                        className="h-8"
+                      >
+                        <X className="h-3 w-3 mr-1" />
+                        Cancel
+                      </Button>
                     </div>
-                  ) : (
-                    <p className={cn(
-                      'whitespace-pre-wrap',
-                      isUser ? 'text-white' : 'text-deep-charcoal'
-                    )}>
-                      {message.content}
-                      {message.isLoading && message.content && (
-                        <span className="inline-block w-2 h-4 bg-current animate-pulse ml-1"></span>
-                      )}
-                    </p>
-                  )}
-                </div>
+                  </div>
+                ) : (
+                  // Normal view mode
+                  <div className="prose prose-sm max-w-none">
+                    {message.isLoading ? (
+                      <div className="flex items-center gap-2">
+                        <div className="flex space-x-1">
+                          <div className="w-2 h-2 bg-progress-teal rounded-full animate-bounce [animation-delay:-0.3s]"></div>
+                          <div className="w-2 h-2 bg-progress-teal rounded-full animate-bounce [animation-delay:-0.15s]"></div>
+                          <div className="w-2 h-2 bg-progress-teal rounded-full animate-bounce"></div>
+                        </div>
+                        <span className="text-sm text-medical-gray">Generating response...</span>
+                      </div>
+                    ) : (
+                      <p className={cn(
+                        'whitespace-pre-wrap',
+                        isUser ? 'text-white' : 'text-deep-charcoal'
+                      )}>
+                        {message.content}
+                        {message.isLoading && message.content && (
+                          <span className="inline-block w-2 h-4 bg-current animate-pulse ml-1"></span>
+                        )}
+                      </p>
+                    )}
+                  </div>
+                )}
 
                 {/* Metadata for assistant messages */}
                 {!isUser && message.metadata && (

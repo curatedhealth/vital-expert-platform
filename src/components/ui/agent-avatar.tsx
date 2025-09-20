@@ -22,8 +22,8 @@ export function AgentAvatar({ agent, avatar: avatarProp, name: nameProp, size = 
   const avatar = agent?.avatar || avatarProp || '🤖';
   const name = agent?.name || nameProp || 'Agent';
 
-  // Check if avatar is a file path (starts with /) or an emoji
-  const isImagePath = avatar && avatar.startsWith('/');
+  // Check if avatar is a file path or URL
+  const isImagePath = avatar && (avatar.startsWith('/') || avatar.startsWith('http'));
 
   if (isImagePath) {
     return (

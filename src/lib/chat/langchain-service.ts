@@ -34,7 +34,6 @@ export class LangChainRAGService {
       client: supabase,
       tableName: 'document_chunks',
       queryName: 'match_documents',
-      embeddingColumnName: 'embedding_openai',
     });
 
     this.textSplitter = new RecursiveCharacterTextSplitter({
@@ -81,15 +80,15 @@ export class LangChainRAGService {
         // Check against existing documents in database
         const { data: existingDocs, error } = await supabase
           .from('knowledge_sources')
-          .select('name, file_size, file_hash, title')
-          .or(`file_hash.eq.${hash},name.eq.${file.name}`);
+          .select('name, file_size, content_hash, title')
+          .or(`content_hash.eq.${hash},name.eq.${file.name}`);
 
         if (!error && existingDocs && existingDocs.length > 0) {
           for (const existingDoc of existingDocs) {
             const duplicateCheck = areDocumentsDuplicate(
               { hash, name: file.name, size: file.size },
               {
-                hash: existingDoc.file_hash || '',
+                hash: existingDoc.content_hash || '',
                 name: existingDoc.name,
                 size: existingDoc.file_size,
                 title: existingDoc.title
@@ -425,7 +424,7 @@ export class LangChainRAGService {
       source_type: 'uploaded_file',
       file_path: metadata.fileName,
       file_size: metadata.fileSize,
-      file_hash: metadata.fileHash,
+      content_hash: metadata.fileHash,
       mime_type: metadata.mimeType,
       title: metadata.title || metadata.fileName.replace(/\.[^/.]+$/, ""),
       description: this.generateDescription(metadata),
@@ -436,42 +435,10 @@ export class LangChainRAGService {
       is_public: metadata.isGlobal,
       access_level: metadata.isGlobal ? 'public' : 'agent-specific',
 
-      // Enhanced metadata fields (using JSON columns)
-      metadata: {
-        // Document classification
-        documentType: metadata.documentType,
-        researchType: metadata.researchType,
-
-        // Content metadata
-        author: metadata.author,
-        subject: metadata.subject,
-        keywords: metadata.keywords,
-        topics: metadata.topics,
-        methodology: metadata.methodology,
-        language: metadata.language,
-
-        // Publication info
-        journal: metadata.journal,
-        doi: metadata.doi,
-        pmid: metadata.pmid,
-        publishedDate: metadata.publishedDate,
-        volume: metadata.volume,
-        issue: metadata.issue,
-        pages: metadata.pages,
-
-        // Quality indicators
-        citationCount: metadata.citationCount,
-        impactFactor: metadata.impactFactor,
-        evidenceLevel: metadata.evidenceLevel,
-
-        // Technical metadata
-        pageCount: metadata.pageCount,
-        wordCount: metadata.wordCount,
-        creator: metadata.creator,
-        producer: metadata.producer,
-        creationDate: metadata.creationDate,
-        modificationDate: metadata.modificationDate,
-      },
+      // Map enhanced metadata to existing columns
+      authors: metadata.author ? [metadata.author] : null,
+      publication_date: this.parseValidDate(metadata.publishedDate),
+      tags: metadata.topics || [],
     };
 
     const { data, error } = await supabase
@@ -518,23 +485,60 @@ export class LangChainRAGService {
     return description || `Document: ${metadata.fileName}`;
   }
 
+  private parseValidDate(dateString: string): string | null {
+    if (!dateString || typeof dateString !== 'string') {
+      return null;
+    }
+
+    // Remove common non-date text that might be extracted incorrectly
+    const cleanedDate = dateString.trim();
+
+    // Skip obvious non-dates
+    if (cleanedDate.toLowerCase().includes('room') ||
+        cleanedDate.length < 4 ||
+        cleanedDate.length > 50 ||
+        /^[A-Za-z\s]+$/.test(cleanedDate)) {
+      return null;
+    }
+
+    try {
+      // Try to parse as various date formats
+      const date = new Date(cleanedDate);
+
+      // Check if it's a valid date and not too far in the future or past
+      if (isNaN(date.getTime())) {
+        return null;
+      }
+
+      const currentYear = new Date().getFullYear();
+      const year = date.getFullYear();
+
+      // Reasonable date range for documents (1900 to current year + 5)
+      if (year < 1900 || year > currentYear + 5) {
+        return null;
+      }
+
+      return date.toISOString().split('T')[0]; // Return YYYY-MM-DD format
+    } catch (error) {
+      return null;
+    }
+  }
+
   async createConversationalChain(agentId: string, systemPrompt: string) {
     // Create a retriever that searches both global and agent-specific documents
     const retriever = this.vectorStore.asRetriever({
       searchType: 'similarity',
-      searchKwargs: {
-        k: 6,
-        filter: {
-          $or: [
-            { isGlobal: { $eq: true } },
-            { agentId: { $eq: agentId } },
-          ],
-        },
+      k: 6,
+      filter: {
+        $or: [
+          { isGlobal: { $eq: true } },
+          { agentId: { $eq: agentId } },
+        ],
       },
     });
 
-    // Create custom prompt template
-    const qaPrompt = PromptTemplate.fromTemplate(`
+    // Create custom prompt template string
+    const qaPromptString = `
 ${systemPrompt}
 
 Context from knowledge base:
@@ -544,7 +548,7 @@ Chat History:
 {chat_history}
 Human Question: {question}
 
-Based on the context and chat history above, provide a comprehensive and accurate response. If you reference information from the context, please cite it appropriately.`);
+Based on the context and chat history above, provide a comprehensive and accurate response. If you reference information from the context, please cite it appropriately.`;
 
     // Create memory for conversation history
     const memory = new BufferMemory({
@@ -558,7 +562,7 @@ Based on the context and chat history above, provide a comprehensive and accurat
       retriever,
       {
         memory,
-        qaTemplate: qaPrompt,
+        qaTemplate: qaPromptString,
         returnSourceDocuments: true,
       }
     );
@@ -646,7 +650,7 @@ Please provide a comprehensive and accurate response based on your knowledge as 
 
       // Invoke LangChain LLM
       const result = await this.llm.invoke(prompt);
-      const answer = result.content;
+      const answer = result.content as string;
 
       console.log('LangChain LLM returned response, length:', answer.length);
       // const response = await this.llm.invoke(prompt);
@@ -683,7 +687,7 @@ Please provide a comprehensive and accurate response based on your knowledge as 
 
         // Invoke LangChain LLM for fallback
         const fallbackResult = await this.llm.invoke(fallbackPrompt);
-        const answer = fallbackResult.content;
+        const answer = fallbackResult.content as string;
 
         console.log('LangChain LLM fallback returned response, length:', answer.length);
         // const response = await this.llm.invoke(fallbackPrompt);

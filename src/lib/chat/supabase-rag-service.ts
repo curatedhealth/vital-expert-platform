@@ -95,7 +95,7 @@ export class SupabaseRAGService {
           citation_id: index + 1,
         })),
         context,
-        enhanced_query: enhancedQuery,
+        enhanced_query: enhancedQuery || undefined,
         search_strategy: searchStrategies.strategy,
       };
 
@@ -260,11 +260,11 @@ export class SupabaseRAGService {
       // Add filters
       if (options.filters) {
         Object.entries(options.filters).forEach(([key, value]) => {
-          if (typeof value === 'object' && value.eq) {
-            supabaseQuery = supabaseQuery.eq(key, value.eq);
-          } else if (typeof value === 'object' && value.in) {
-            supabaseQuery = supabaseQuery.in(key, value.in);
-          } else {
+          if (typeof value === 'object' && value && (value as any).eq) {
+            supabaseQuery = supabaseQuery.eq(key, (value as any).eq);
+          } else if (typeof value === 'object' && value && (value as any).in) {
+            supabaseQuery = supabaseQuery.in(key, (value as any).in);
+          } else if (value !== null) {
             supabaseQuery = supabaseQuery.eq(key, value);
           }
         });
@@ -310,11 +310,11 @@ export class SupabaseRAGService {
       // Add filters
       if (options.filters) {
         Object.entries(options.filters).forEach(([key, value]) => {
-          if (typeof value === 'object' && value.eq) {
-            supabaseQuery = supabaseQuery.eq(key, value.eq);
-          } else if (typeof value === 'object' && value.in) {
-            supabaseQuery = supabaseQuery.in(key, value.in);
-          } else {
+          if (typeof value === 'object' && value && (value as any).eq) {
+            supabaseQuery = supabaseQuery.eq(key, (value as any).eq);
+          } else if (typeof value === 'object' && value && (value as any).in) {
+            supabaseQuery = supabaseQuery.in(key, (value as any).in);
+          } else if (value !== null) {
             supabaseQuery = supabaseQuery.eq(key, value);
           }
         });

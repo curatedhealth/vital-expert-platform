@@ -112,3 +112,24 @@ jspm_packages/
 
 # TernJS port file
 .tern-port
+
+# Project specific
+*.txt
+*.json.backup
+test-*.js
+audit-*.js
+check-*.js
+populate-*.js
+setup-*.js
+verify-*.js
+upload-*.js
+clear-*.js
+force-*.js
+simple-*.js
+comprehensive-*.js
+temp_*.ts
+schema-audit-report.json
+
+# Temporary files
+test-*.txt
+agent-template.json

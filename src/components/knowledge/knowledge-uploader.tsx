@@ -1,14 +1,17 @@
 'use client';
 
-import { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Separator } from '@/components/ui/separator';
 import { AgentAvatar } from '@/components/ui/agent-avatar';
-import { useChatStore } from '@/lib/stores/chat-store';
+import { useAgentsStore } from '@/lib/stores/agents-store';
 import {
   Upload,
   FileText,
@@ -19,6 +22,8 @@ import {
   User,
   Brain,
   Users,
+  ChevronDown,
+  Check,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -30,7 +35,7 @@ interface UploadFile {
   error?: string;
   domain: string;
   isGlobal: boolean;
-  agentId?: string;
+  selectedAgents: string[];
 }
 
 interface KnowledgeUploaderProps {
@@ -38,13 +43,13 @@ interface KnowledgeUploaderProps {
 }
 
 export function KnowledgeUploader({ onUploadComplete }: KnowledgeUploaderProps) {
-  const { agents } = useChatStore();
+  const { agents, loadAgents } = useAgentsStore();
   const [files, setFiles] = useState<UploadFile[]>([]);
   const [dragActive, setDragActive] = useState(false);
   const [uploadSettings, setUploadSettings] = useState({
     domain: 'digital-health',
     isGlobal: true,
-    agentId: '',
+    selectedAgents: [] as string[],
   });
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -75,6 +80,13 @@ export function KnowledgeUploader({ onUploadComplete }: KnowledgeUploaderProps) 
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
+  // Load agents on component mount
+  useEffect(() => {
+    if (agents.length === 0) {
+      loadAgents();
+    }
+  }, [agents.length, loadAgents]);
+
   const validateFile = (file: File): string | null => {
     if (!acceptedTypes.includes(file.type)) {
       return `File type ${file.type} is not supported. Please upload PDF, Word, Excel, or text files.`;
@@ -99,7 +111,7 @@ export function KnowledgeUploader({ onUploadComplete }: KnowledgeUploaderProps) 
           status: 'pending',
           domain: uploadSettings.domain,
           isGlobal: uploadSettings.isGlobal,
-          agentId: uploadSettings.agentId,
+          selectedAgents: [...uploadSettings.selectedAgents],
         });
       }
     });
@@ -151,8 +163,8 @@ export function KnowledgeUploader({ onUploadComplete }: KnowledgeUploaderProps) 
       formData.append('files', file.file);
       formData.append('domain', file.domain);
       formData.append('isGlobal', file.isGlobal.toString());
-      if (file.agentId) {
-        formData.append('agentId', file.agentId);
+      if (file.selectedAgents.length > 0) {
+        formData.append('selectedAgents', JSON.stringify(file.selectedAgents));
       }
 
       // Simulate upload progress
@@ -184,7 +196,7 @@ export function KnowledgeUploader({ onUploadComplete }: KnowledgeUploaderProps) 
           size: file.file.size,
           domain: file.domain,
           isGlobal: file.isGlobal,
-          agentId: file.agentId,
+          selectedAgents: file.selectedAgents,
         };
       } else {
         throw new Error(result.details || 'Processing failed');
@@ -242,23 +254,6 @@ export function KnowledgeUploader({ onUploadComplete }: KnowledgeUploaderProps) 
     }
   };
 
-  const getAgentsWithAccess = () => {
-    if (uploadSettings.isGlobal) {
-      // Global knowledge is accessible to all agents
-      return agents;
-    } else {
-      // Agent-specific knowledge is only accessible to agents with matching knowledge domains
-      // or all agents if no domain filtering is set up yet
-      return agents.filter(agent => {
-        if (!agent.knowledgeDomains || agent.knowledgeDomains.length === 0) {
-          // If agent has no knowledge domain restrictions, they can access all knowledge
-          return true;
-        }
-        // Agent can access if their knowledge domains include the selected domain
-        return agent.knowledgeDomains.includes(uploadSettings.domain);
-      });
-    }
-  };
 
   return (
     <div className="space-y-6">
@@ -287,10 +282,14 @@ export function KnowledgeUploader({ onUploadComplete }: KnowledgeUploaderProps) 
               <select
                 id="scope"
                 value={uploadSettings.isGlobal ? 'global' : 'agent'}
-                onChange={(e) => setUploadSettings(prev => ({
-                  ...prev,
-                  isGlobal: e.target.value === 'global'
-                }))}
+                onChange={(e) => {
+                  const isGlobal = e.target.value === 'global';
+                  setUploadSettings(prev => ({
+                    ...prev,
+                    isGlobal,
+                    selectedAgents: isGlobal ? [] : prev.selectedAgents
+                  }));
+                }}
                 className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md"
               >
                 <option value="global">Global (All Agents)</option>
@@ -300,106 +299,58 @@ export function KnowledgeUploader({ onUploadComplete }: KnowledgeUploaderProps) 
 
             {!uploadSettings.isGlobal && (
               <div>
-                <Label htmlFor="agentId">Target Agent</Label>
-                <Input
-                  id="agentId"
-                  placeholder="Enter agent ID"
-                  value={uploadSettings.agentId}
-                  onChange={(e) => setUploadSettings(prev => ({ ...prev, agentId: e.target.value }))}
-                />
+                <Label className="mb-4 text-sm font-medium">Target Agents</Label>
+                <ScrollArea className="h-72 w-full rounded-md border mt-2">
+                  <div className="p-4">
+                    {agents.length > 0 ? (
+                      agents.map((agent, index) => (
+                        <React.Fragment key={agent.id}>
+                          <div className="flex items-center space-x-3 py-2">
+                            <Checkbox
+                              id={`agent-${agent.id}`}
+                              checked={uploadSettings.selectedAgents.includes(agent.id)}
+                              onCheckedChange={(checked) => {
+                                setUploadSettings(prev => ({
+                                  ...prev,
+                                  selectedAgents: checked
+                                    ? [...prev.selectedAgents, agent.id]
+                                    : prev.selectedAgents.filter(id => id !== agent.id)
+                                }));
+                              }}
+                            />
+                            <div className="flex items-center space-x-3 flex-1">
+                              <AgentAvatar
+                                avatar={agent.avatar}
+                                name={agent.display_name}
+                                size="sm"
+                              />
+                              <Label
+                                htmlFor={`agent-${agent.id}`}
+                                className="text-sm font-medium cursor-pointer flex-1"
+                              >
+                                {agent.display_name}
+                              </Label>
+                            </div>
+                          </div>
+                          {index < agents.length - 1 && <Separator className="my-1" />}
+                        </React.Fragment>
+                      ))
+                    ) : (
+                      <p className="text-sm text-muted-foreground">No agents available</p>
+                    )}
+                  </div>
+                </ScrollArea>
+                {uploadSettings.selectedAgents.length > 0 && (
+                  <p className="text-xs text-muted-foreground mt-2">
+                    {uploadSettings.selectedAgents.length} agent(s) selected
+                  </p>
+                )}
               </div>
             )}
           </div>
         </CardContent>
       </Card>
 
-      {/* Agent Access Preview */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Users className="h-5 w-5 text-trust-blue" />
-            Agent Access Preview
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {(() => {
-            const agentsWithAccess = getAgentsWithAccess();
-            return (
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-deep-charcoal font-medium">
-                      {uploadSettings.isGlobal
-                        ? 'All agents will have access to this knowledge'
-                        : `Agents with "${domains.find(d => d.value === uploadSettings.domain)?.label}" domain access`
-                      }
-                    </p>
-                    <p className="text-xs text-medical-gray mt-1">
-                      {agentsWithAccess.length} agent{agentsWithAccess.length !== 1 ? 's' : ''} will be able to access this knowledge
-                    </p>
-                  </div>
-                  <Badge variant="outline" className="text-xs">
-                    {agentsWithAccess.length} / {agents.length} agents
-                  </Badge>
-                </div>
-
-                {agentsWithAccess.length > 0 ? (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                    {agentsWithAccess.map((agent) => (
-                      <div key={agent.id} className="flex items-center gap-3 p-3 border rounded-lg bg-background-gray/30">
-                        <AgentAvatar
-                          avatar={agent.avatar}
-                          name={agent.name}
-                          size="sm"
-                        />
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-deep-charcoal truncate">
-                            {agent.name}
-                          </p>
-                          <div className="flex flex-wrap gap-1 mt-1">
-                            {agent.knowledgeDomains && agent.knowledgeDomains.length > 0 ? (
-                              agent.knowledgeDomains.slice(0, 2).map((domain) => {
-                                const domainInfo = domains.find(d => d.value === domain);
-                                return (
-                                  <Badge
-                                    key={domain}
-                                    variant="outline"
-                                    className={cn(
-                                      "text-xs px-1 py-0",
-                                      domain === uploadSettings.domain ? "bg-trust-blue/10 text-trust-blue border-trust-blue" : ""
-                                    )}
-                                  >
-                                    {domainInfo?.label.substring(0, 8) || domain}
-                                  </Badge>
-                                );
-                              })
-                            ) : (
-                              <Badge variant="outline" className="text-xs px-1 py-0 text-medical-gray">
-                                All domains
-                              </Badge>
-                            )}
-                            {agent.knowledgeDomains && agent.knowledgeDomains.length > 2 && (
-                              <Badge variant="outline" className="text-xs px-1 py-0">
-                                +{agent.knowledgeDomains.length - 2}
-                              </Badge>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-6 text-medical-gray">
-                    <Users className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                    <p className="text-sm">No agents have access to this knowledge domain</p>
-                    <p className="text-xs mt-1">Consider changing the domain or making it global</p>
-                  </div>
-                )}
-              </div>
-            );
-          })()}
-        </CardContent>
-      </Card>
 
       {/* Drop Zone */}
       <div
@@ -500,9 +451,30 @@ export function KnowledgeUploader({ onUploadComplete }: KnowledgeUploaderProps) 
                             {file.isGlobal ? (
                               <><Globe className="h-3 w-3 mr-1" />Global</>
                             ) : (
-                              <><User className="h-3 w-3 mr-1" />Agent-Specific</>
+                              <><User className="h-3 w-3 mr-1" />
+                                {file.selectedAgents.length > 0
+                                  ? `${file.selectedAgents.length} agent${file.selectedAgents.length > 1 ? 's' : ''}`
+                                  : 'Agent-Specific'
+                                }</>
                             )}
                           </Badge>
+                          {!file.isGlobal && file.selectedAgents.length > 0 && (
+                            <div className="flex flex-wrap gap-1 mt-1">
+                              {file.selectedAgents.slice(0, 3).map((agentId) => {
+                                const agent = agents.find(a => a.id === agentId);
+                                return agent ? (
+                                  <Badge key={agentId} variant="outline" className="text-xs">
+                                    {agent.display_name}
+                                  </Badge>
+                                ) : null;
+                              })}
+                              {file.selectedAgents.length > 3 && (
+                                <Badge variant="outline" className="text-xs">
+                                  +{file.selectedAgents.length - 3}
+                                </Badge>
+                              )}
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>

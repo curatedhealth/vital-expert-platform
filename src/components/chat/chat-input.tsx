@@ -82,62 +82,9 @@ export function ChatInput({
     },
   ];
 
-  const suggestedPrompts = [
-    'Explain FDA 510(k) requirements',
-    'Design a clinical study protocol',
-    'Market access strategy for digital therapeutics',
-    'Technical architecture review',
-  ];
 
   return (
     <div className="relative">
-      {/* Agent Info Bar */}
-      {selectedAgent && (
-        <div className="flex items-center gap-3 mb-3 p-3 bg-background-gray rounded-lg">
-          <AgentAvatar
-            avatar={selectedAgent.avatar}
-            name={selectedAgent.name}
-            size="md"
-          />
-          <div className="flex-1">
-            <div className="flex items-center gap-2">
-              <span className="font-medium text-deep-charcoal text-sm">
-                {selectedAgent.name}
-              </span>
-              {selectedAgent.ragEnabled && (
-                <Badge variant="outline" className="text-xs">
-                  <Zap className="h-3 w-3 mr-1" />
-                  RAG Enabled
-                </Badge>
-              )}
-            </div>
-            <p className="text-xs text-medical-gray">
-              {selectedAgent.description}
-            </p>
-          </div>
-        </div>
-      )}
-
-      {/* Suggested Prompts (when input is empty) */}
-      {!value && !isLoading && (
-        <div className="mb-4">
-          <p className="text-sm text-medical-gray mb-2">Try asking:</p>
-          <div className="flex flex-wrap gap-2">
-            {suggestedPrompts.map((prompt, index) => (
-              <Button
-                key={index}
-                variant="outline"
-                size="sm"
-                className="h-auto py-2 px-3 text-xs hover:bg-progress-teal/5 hover:border-progress-teal/30"
-                onClick={() => onChange(prompt)}
-              >
-                {prompt}
-              </Button>
-            ))}
-          </div>
-        </div>
-      )}
-
       {/* Main Input Area */}
       <div className="relative bg-white border border-gray-200 rounded-lg shadow-sm">
         {/* Attachment Options */}

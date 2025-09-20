@@ -47,41 +47,46 @@ VITAL Path empowers healthcare organizations through AI-powered expertise across
 - npm or yarn
 - Supabase account
 
-### Installation
+### Quick Start
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/YOUR_USERNAME/vital-path-digital-health-platform.git
+   git clone https://github.com/curatedhealth/vital-path-digital-health-platform.git
    cd vital-path-digital-health-platform
    ```
 
-2. **Install dependencies**
+2. **Run automated setup**
+   ```bash
+   ./scripts/setup/setup-dev-environment.sh
+   ```
+
+### Manual Installation
+
+1. **Install dependencies**
    ```bash
    npm install
    ```
 
-3. **Environment Setup**
+2. **Environment Setup**
    ```bash
    cp .env.example .env.local
    ```
 
-   Update `.env.local` with your Supabase credentials:
+   Update `.env.local` with your credentials:
    ```env
    NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
    NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
    SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+   OPENAI_API_KEY=your_openai_api_key
+   ANTHROPIC_API_KEY=your_anthropic_api_key
    ```
 
-4. **Database Setup**
+3. **Database Setup**
    ```bash
-   # Run database migrations
-   npm run migrate
-
-   # Load initial agent data
-   npm run seed
+   npm run db:migrate
    ```
 
-5. **Start Development Server**
+4. **Start Development Server**
    ```bash
    npm run dev
    ```
@@ -113,28 +118,49 @@ Visit `http://localhost:3000` to access the platform.
 - `npm run build` - Build for production
 - `npm run start` - Start production server
 - `npm run lint` - Run ESLint
-- `npm run migrate` - Run database migrations
-- `npm run seed` - Seed database with initial data
+- `npm run type-check` - TypeScript type checking
+- `npm run db:migrate` - Run database migrations
+- `npm run db:status` - Check migration status
+- `npm run test` - Run test suite
 
 ### Project Structure
 
 ```
 src/
-├── app/                    # Next.js app router
-│   ├── (app)/             # Authenticated app routes
-│   └── api/               # API routes
-├── components/            # React components
-├── lib/                   # Utilities and services
-├── types/                 # TypeScript type definitions
-└── agents/                # Agent implementations
+├── app/                     # Next.js 14 app router
+│   ├── (app)/              # Authenticated app routes
+│   │   ├── agents/         # Agent management pages
+│   │   ├── chat/           # Chat interface
+│   │   ├── dashboard/      # Analytics dashboard
+│   │   └── knowledge/      # Knowledge management
+│   └── api/                # API routes
+│       ├── admin/          # Admin endpoints
+│       ├── agents/         # Agent CRUD operations
+│       ├── chat/           # Chat functionality
+│       ├── debug/          # Debug utilities
+│       └── llm/            # LLM provider integration
+├── components/             # Reusable React components
+│   ├── agents/             # Agent-specific components
+│   ├── chat/               # Chat interface components
+│   ├── ui/                 # Base UI components
+│   └── ...                 # Feature-specific components
+├── lib/                    # Utilities and services
+│   ├── auth/               # Authentication logic
+│   ├── database/           # Database utilities
+│   ├── stores/             # Zustand state management
+│   └── supabase/           # Supabase configuration
+├── types/                  # TypeScript definitions
+└── services/               # External service integrations
 
-database/
-├── migrations/            # Database schema migrations
-└── README.md             # Database documentation
+scripts/                    # Utility scripts
+├── setup/                  # Environment setup
+├── migration/              # Database migrations
+├── testing/                # Test utilities
+└── maintenance/            # Maintenance scripts
 
-docs/                      # Documentation
-├── Agents_Cap_Libraries/  # Agent configuration guides
-└── prompt-library/        # Prompt templates
+docs/                       # Documentation
+├── Agents_Cap_Libraries/   # Agent configuration guides
+└── prompt-library/         # Prompt templates
 ```
 
 ## 🔒 Security & Compliance

@@ -1,6 +1,7 @@
 {
-  "name": "vitalpath-platform",
-  "version": "0.1.0",
+  "name": "vital-path-digital-health-platform",
+  "version": "1.0.0",
+  "description": "VITAL Path Digital Health Intelligence Platform - 50+ Healthcare AI Agents",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -8,14 +9,14 @@
     "start": "next start",
     "lint": "next lint",
     "type-check": "tsc --noEmit",
-    "migrate": "node scripts/migrate-runner.js",
-    "migrate:run": "node scripts/migrate-runner.js run",
-    "migrate:status": "node scripts/migrate-runner.js status",
-    "migrate:validate": "node scripts/migrate-runner.js validate",
+    "migrate": "node scripts/migration/migrate-runner.js",
+    "migrate:run": "node scripts/migration/migrate-runner.js run",
+    "migrate:status": "node scripts/migration/migrate-runner.js status",
+    "migrate:validate": "node scripts/migration/migrate-runner.js validate",
     "db:migrate": "npm run migrate:run",
     "db:status": "npm run migrate:status",
     "db:validate": "npm run migrate:validate",
-    "db:reset": "npm run migrate:reset --force"
+    "test": "node scripts/testing/run-tests.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.9.1",
@@ -52,10 +53,7 @@
     "@tanstack/react-query": "^5.8.4",
     "@tanstack/react-table": "^8.21.3",
     "@types/dagre": "^0.7.53",
-    "@types/react": "^18",
-    "@types/react-dom": "^18",
     "@types/uuid": "^9.0.7",
-    "autoprefixer": "^10.0.1",
     "buffer": "^6.0.3",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.0.0",
@@ -70,7 +68,6 @@
     "node-fetch": "^3.3.2",
     "openai": "^4.20.1",
     "pdf-parse": "^1.1.1",
-    "postcss": "^8",
     "process": "^0.11.10",
     "react": "^18",
     "react-dnd": "^16.0.1",
@@ -81,9 +78,7 @@
     "recharts": "^2.15.4",
     "sonner": "^2.0.7",
     "tailwind-merge": "^2.0.0",
-    "tailwindcss": "^3.3.0",
     "tailwindcss-animate": "^1.0.7",
-    "typescript": "^5",
     "uuid": "^9.0.1",
     "vaul": "^1.1.2",
     "zod": "^3.22.4",
@@ -99,12 +94,9 @@
     "dotenv": "^17.2.2",
     "eslint": "^8",
     "eslint-config-next": "14.0.3",
-    "events": "^3.3.0",
     "postcss": "^8",
-    "stream": "^0.0.3",
     "tailwindcss": "^3.3.0",
     "ts-node": "^10.9.2",
-    "typescript": "^5",
-    "util": "^0.12.5"
+    "typescript": "^5"
   }
 }

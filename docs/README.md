@@ -18,8 +18,7 @@ System design, technical architecture, and implementation details:
 - **[platform_sitemap.yaml](architecture/platform_sitemap.yaml)** - YAML sitemap configuration
 - **[platform_description.md](architecture/platform_description.md)** - Detailed platform description
 - **[architecture_c4.mmd](architecture/architecture_c4.mmd)** - C4 architecture diagram (Mermaid)
-- **[EVIDENCE_BASED_IMPLEMENTATION_SUMMARY.md](architecture/EVIDENCE_BASED_IMPLEMENTATION_SUMMARY.md)** - Evidence-based implementation approach
-- **[EVIDENCE_BASED_MODEL_SCORING.md](architecture/EVIDENCE_BASED_MODEL_SCORING.md)** - Model scoring methodology
+- **[EVIDENCE_BASED_MODEL_SCORING.md](architecture/EVIDENCE_BASED_MODEL_SCORING.md)** - Model scoring methodology and citations
 - **[MODEL_FITNESS_SCORING.md](architecture/MODEL_FITNESS_SCORING.md)** - Model fitness evaluation
 
 ### User and Developer Guides (`guides/`)
@@ -28,7 +27,6 @@ How-to guides, tutorials, and best practices:
 
 - **[ADDING_AGENTS_GUIDE.md](guides/ADDING_AGENTS_GUIDE.md)** - Complete guide to adding new agents
 - **[BATCH_UPLOAD_GUIDE.md](guides/BATCH_UPLOAD_GUIDE.md)** - Batch uploading agents and capabilities
-- **[ORGANIZED_STRUCTURE.md](guides/ORGANIZED_STRUCTURE.md)** - Project organization guidelines
 - **[Executive_Implementation_Report.md](guides/Executive_Implementation_Report.md)** - Executive summary and implementation report
 
 ### API Documentation (`api/`)
@@ -62,16 +60,17 @@ Agent specifications, capabilities, and configuration:
 
 ### Archive (`archive/`)
 
-Historical documentation and deprecated resources:
+Historical documentation and reference materials:
 
-- **[MA001 PRD ARD/](archive/MA001%20PRD%20ARD/)** - Original PRD and ARD documents (archived)
-  - Cursor AI implementation prompts
-  - Quick reference guides
-  - Troubleshooting guides
-  - Master roadmap
-- **[REORGANIZATION_SUMMARY.md](archive/REORGANIZATION_SUMMARY.md)** - Previous reorganization documentation
-- Historical CSV data files
-- Deprecated documentation
+- **[README.md](archive/README.md)** - Archive index and guide
+- **[CHANGELOG.md](archive/CHANGELOG.md)** - Project changelog and version history
+- **[CONTRIBUTING.md](archive/CONTRIBUTING.md)** - Contributing guidelines
+- **[SECURITY.md](archive/SECURITY.md)** - Security policy
+- **[AGENTS_QUICK_REFERENCE.md](archive/AGENTS_QUICK_REFERENCE.md)** - Quick reference guide for agents
+- **[VITAL_AI_PLATFORM_PRD.md](archive/VITAL_AI_PLATFORM_PRD.md)** - Original Product Requirements Document
+- Historical architecture and planning documents
+
+**Note**: Temporary implementation reports have been removed. See git history for details on past migrations, fixes, and implementations.
 
 ## Quick Start Guides
 
@@ -86,7 +85,7 @@ Historical documentation and deprecated resources:
 
 1. Review the [Executive_Implementation_Report.md](guides/Executive_Implementation_Report.md)
 2. Understand the [ORGANIZATIONAL_STRUCTURE.md](architecture/ORGANIZATIONAL_STRUCTURE.md)
-3. Browse available agents in [api/vital_agents_complete_registry.json](api/vital_agents_complete_registry.json)
+3. Browse available agents in [vital_agents_complete_registry.json](api/vital_agents_complete_registry.json)
 
 ### For System Architects
 

@@ -1,192 +1,186 @@
-# VITALpath Platform
+# VITAL Path Documentation
 
-A Digital Health Transformation Platform that guides healthcare organizations through the VITAL Framework: **Vision, Integrate, Test, Activate, Learn**.
+Welcome to the VITAL Path Platform documentation. This directory contains comprehensive documentation for developers, users, and administrators.
 
-## 🎯 Overview
+## Documentation Structure
 
-VITALpath orchestrates multiple LLMs to provide expert-level guidance across clinical development, regulatory affairs, and market access. The platform helps healthcare organizations reduce development time by 40% and accelerate regulatory approval by 6-8 months.
+### Architecture Documentation (`architecture/`)
 
-## 🏗️ Tech Stack
+System design, technical architecture, and implementation details:
 
-- **Frontend**: Next.js 14 with App Router, TypeScript, Tailwind CSS
-- **UI Components**: shadcn/ui
-- **Backend**: Supabase (PostgreSQL, Auth, Realtime, Edge Functions)
-- **Vector DB**: Pinecone for RAG (Retrieval Augmented Generation)
-- **LLM Orchestration**: OpenAI, Anthropic, custom models via API
-- **Workflow Automation**: n8n (self-hosted)
-- **Deployment**: Vercel (frontend) + Supabase Cloud + Pinecone Cloud
+- **[ARCHITECTURE.md](architecture/ARCHITECTURE.md)** - High-level system architecture
+- **[MICROSERVICES_ARCHITECTURE.md](architecture/MICROSERVICES_ARCHITECTURE.md)** - Microservices design patterns
+- **[AGENT_SYSTEMS_ARCHITECTURE.md](architecture/AGENT_SYSTEMS_ARCHITECTURE.md)** - AI agent system architecture
+- **[AGENT_DATA_MODEL.md](architecture/AGENT_DATA_MODEL.md)** - Agent data models and schemas
+- **[AGENT_REGISTRY_250_IMPLEMENTATION.md](architecture/AGENT_REGISTRY_250_IMPLEMENTATION.md)** - 250 agent registry implementation
+- **[ORGANIZATIONAL_STRUCTURE.md](architecture/ORGANIZATIONAL_STRUCTURE.md)** - Organizational hierarchy and structure
+- **[SITEMAP.md](architecture/SITEMAP.md)** - Platform sitemap
+- **[platform_sitemap.yaml](architecture/platform_sitemap.yaml)** - YAML sitemap configuration
+- **[platform_description.md](architecture/platform_description.md)** - Detailed platform description
+- **[architecture_c4.mmd](architecture/architecture_c4.mmd)** - C4 architecture diagram (Mermaid)
+- **[EVIDENCE_BASED_IMPLEMENTATION_SUMMARY.md](architecture/EVIDENCE_BASED_IMPLEMENTATION_SUMMARY.md)** - Evidence-based implementation approach
+- **[EVIDENCE_BASED_MODEL_SCORING.md](architecture/EVIDENCE_BASED_MODEL_SCORING.md)** - Model scoring methodology
+- **[MODEL_FITNESS_SCORING.md](architecture/MODEL_FITNESS_SCORING.md)** - Model fitness evaluation
 
-## 🎨 Brand Identity
+### User and Developer Guides (`guides/`)
 
-- **Primary Colors**: Trust Blue (#0B4F8C), Progress Teal (#00A19C), Deep Charcoal (#1A1A2E)
-- **Secondary**: Regulatory Gold (#F5A623), Clinical Green (#27AE60), Market Purple (#7B68EE)
-- **Typography**: Inter font family
-- **Design**: 5-phase journey visualization with progressive opacity (35% to 100%)
+How-to guides, tutorials, and best practices:
 
-## 🚀 Getting Started
+- **[ADDING_AGENTS_GUIDE.md](guides/ADDING_AGENTS_GUIDE.md)** - Complete guide to adding new agents
+- **[BATCH_UPLOAD_GUIDE.md](guides/BATCH_UPLOAD_GUIDE.md)** - Batch uploading agents and capabilities
+- **[ORGANIZED_STRUCTURE.md](guides/ORGANIZED_STRUCTURE.md)** - Project organization guidelines
+- **[Executive_Implementation_Report.md](guides/Executive_Implementation_Report.md)** - Executive summary and implementation report
 
-### Prerequisites
+### API Documentation (`api/`)
 
-- Node.js 18+ and npm
-- Supabase account and project
-- Pinecone account and index
-- OpenAI API key
-- Anthropic API key
+API schemas, endpoints, and integration guides:
 
-### Installation
+- **[agent-bulk-import-schema.json](api/agent-bulk-import-schema.json)** - Agent bulk import JSON schema
+- **[vital_agents_complete_registry.json](api/vital_agents_complete_registry.json)** - Complete 250 agent registry
 
-1. **Clone the repository**
-   ```bash
-   git clone <repository-url>
-   cd vitalpath-platform
-   ```
+### Compliance Documentation (`compliance/`)
 
-2. **Install dependencies**
-   ```bash
-   npm install
-   ```
+HIPAA compliance, regulatory documentation, and security policies:
 
-3. **Set up environment variables**
-   ```bash
-   cp .env.example .env.local
-   # Edit .env.local with your actual values
-   ```
+*Currently being populated with compliance documentation*
 
-4. **Start the development server**
-   ```bash
-   npm run dev
-   ```
+### Prompt Library (`prompt-library/`)
 
-   Open [http://localhost:3000](http://localhost:3000) in your browser.
+AI prompt templates and engineering resources:
 
-## 📁 Project Structure
+- Complete library of AI prompts for development
+- Agent-specific prompt templates
+- Conversation patterns and best practices
 
-```
-src/
-├── app/                    # Next.js 14 App Router
-│   ├── (auth)/            # Authentication routes
-│   ├── (platform)/        # Main platform routes
-│   ├── (admin)/           # Admin panel routes
-│   └── api/               # API routes
-├── components/
-│   ├── ui/                # shadcn/ui components
-│   ├── platform/          # Platform-specific components
-│   ├── journey/           # VITAL journey components
-│   └── citations/         # Citation components
-├── lib/
-│   ├── supabase/          # Supabase client and utilities
-│   ├── pinecone/          # Pinecone client and RAG
-│   ├── llm/               # LLM orchestration
-│   └── utils/             # Utility functions
-├── types/                 # TypeScript type definitions
-├── hooks/                 # Custom React hooks
-└── styles/                # Additional styles
-```
+### Agent Capabilities (`Agents_Cap_Libraries/`)
 
-## 🔐 Key Features
+Agent specifications, capabilities, and configuration:
 
-### Multi-Tenant SaaS
-- Complete data isolation between organizations
-- Role-based access control (RBAC)
-- Usage-based billing
-- White-label options for enterprise
+- Agent capability definitions
+- Agent configuration templates
+- Specialized agent libraries
 
-### HIPAA Compliance
-- End-to-end encryption
-- Audit logging
-- Access controls
-- Data retention policies
+### Archive (`archive/`)
 
-### AI-Powered Guidance
-- Multi-LLM orchestration for specialized expertise
-- Regulatory expert models for FDA/EMA guidance
-- Clinical specialist models for trial design
-- Market analyst models for reimbursement pathways
+Historical documentation and deprecated resources:
 
-### Real-time Collaboration
-- Live updates using Supabase Realtime
-- Team collaboration features
-- Progress tracking across the VITAL journey
+- **[MA001 PRD ARD/](archive/MA001%20PRD%20ARD/)** - Original PRD and ARD documents (archived)
+  - Cursor AI implementation prompts
+  - Quick reference guides
+  - Troubleshooting guides
+  - Master roadmap
+- **[REORGANIZATION_SUMMARY.md](archive/REORGANIZATION_SUMMARY.md)** - Previous reorganization documentation
+- Historical CSV data files
+- Deprecated documentation
 
-## 🔧 Environment Variables
+## Quick Start Guides
 
-See `.env.example` for the complete list of required environment variables.
+### For New Developers
 
-Key variables:
-- `NEXT_PUBLIC_SUPABASE_URL` - Your Supabase project URL
-- `NEXT_PUBLIC_SUPABASE_ANON_KEY` - Supabase anonymous key
-- `PINECONE_API_KEY` - Pinecone API key for vector search
-- `OPENAI_API_KEY` - OpenAI API key for LLM
-- `ANTHROPIC_API_KEY` - Anthropic API key for Claude
+1. Start with the main [README.md](../README.md) in the project root
+2. Review [ARCHITECTURE.md](architecture/ARCHITECTURE.md) for system overview
+3. Read [ADDING_AGENTS_GUIDE.md](guides/ADDING_AGENTS_GUIDE.md) to understand agent development
+4. Check [prompt-library/](prompt-library/) for AI-assisted development
 
-## 📝 Scripts
+### For Platform Users
 
-- `npm run dev` - Start development server
-- `npm run build` - Build for production
-- `npm run start` - Start production server
-- `npm run lint` - Run ESLint
-- `npm run type-check` - Run TypeScript type checking
+1. Review the [Executive_Implementation_Report.md](guides/Executive_Implementation_Report.md)
+2. Understand the [ORGANIZATIONAL_STRUCTURE.md](architecture/ORGANIZATIONAL_STRUCTURE.md)
+3. Browse available agents in [api/vital_agents_complete_registry.json](api/vital_agents_complete_registry.json)
 
-## 🧪 Testing
+### For System Architects
 
-```bash
-# Run unit tests
-npm run test
+1. Study [AGENT_SYSTEMS_ARCHITECTURE.md](architecture/AGENT_SYSTEMS_ARCHITECTURE.md)
+2. Review [MICROSERVICES_ARCHITECTURE.md](architecture/MICROSERVICES_ARCHITECTURE.md)
+3. Examine [AGENT_DATA_MODEL.md](architecture/AGENT_DATA_MODEL.md)
+4. Check [architecture_c4.mmd](architecture/architecture_c4.mmd) for visual diagrams
 
-# Run e2e tests
-npm run test:e2e
+### For Compliance Officers
 
-# Run type checking
-npm run type-check
-```
+1. Review compliance documentation in [compliance/](compliance/)
+2. Check HIPAA configuration in `../config/compliance/`
+3. Review audit logging and access control documentation
 
-## 🚢 Deployment
+## Key Concepts
 
-The platform is designed for deployment on:
-- **Frontend**: Vercel
-- **Backend**: Supabase Cloud
-- **Vector DB**: Pinecone Cloud
-- **Workflows**: Self-hosted n8n
+### VITAL Framework
 
-See the deployment guide in the docs for detailed instructions.
+The platform is built around the VITAL Framework:
+- **V**ision - Define digital health objectives
+- **I**ntegrate - Connect systems and data
+- **T**est - Validate and verify solutions
+- **A**ctivate - Deploy and launch
+- **L**earn - Measure and optimize
 
-## 🤝 Contributing
+### AI Agent System
 
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+VITAL Path includes 250+ specialized AI agents organized by:
+- **Business Functions** - Market Access, Clinical, Regulatory, etc.
+- **Departments** - Organized by healthcare department
+- **Roles** - Specific job functions and responsibilities
+- **Capabilities** - Individual skills and knowledge areas
 
-## 📄 License
+### Multi-LLM Orchestration
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+The platform orchestrates multiple Large Language Models:
+- OpenAI GPT-4 for general intelligence
+- Anthropic Claude for reasoning and analysis
+- Specialized models for domain-specific tasks
+- Custom fine-tuned models for healthcare
 
-## 📚 Documentation
+## Database Documentation
 
-### Core Documentation
-- **Platform Overview**: This README
-- **API Documentation**: `/docs/api/`
-- **Deployment Guide**: `/docs/deployment/`
+Database schema and migrations are documented in:
+- `../database/sql/schema/` - Schema definitions
+- `../database/sql/migrations/` - Migration history
+- `../database/sql/README.md` - Database documentation
 
-### Development Resources
-- **Prompt Library**: `/docs/prompt-library/` - Complete AI-powered development prompts
-- **Agent Capabilities**: `/docs/Agents_Cap_Libraries/` - Agent specifications and prompts
-- **Architecture Documents**: `/docs/MA001 PRD ARD/` - Product requirements and design
+## Configuration
 
-### Quick Start
-1. **New to VITALpath?** Start with the [Platform Overview](#-overview)
-2. **Ready to develop?** Check out the [Prompt Library](/docs/prompt-library/)
-3. **Need specific guidance?** Browse [Agent Capabilities](/docs/Agents_Cap_Libraries/)
+Configuration files are organized in:
+- `../config/environments/` - Environment-specific configs
+- `../config/compliance/` - HIPAA compliance configurations
 
-## 🆘 Support
+## Contributing to Documentation
 
-For support and questions:
-- Create an issue in this repository
-- Contact the VITALpath team
-- Check the documentation in the `/docs` folder
-- Use the [Prompt Library](/docs/prompt-library/) for AI-assisted development
+When adding or updating documentation:
+
+1. **Architecture docs** go in `architecture/`
+2. **How-to guides** go in `guides/`
+3. **API documentation** goes in `api/`
+4. **Compliance docs** go in `compliance/`
+5. **Old/deprecated docs** go in `archive/`
+
+### Documentation Standards
+
+- Use Markdown format (.md)
+- Include table of contents for long documents
+- Add code examples where applicable
+- Link to related documentation
+- Keep language clear and concise
+- Update this index when adding new docs
+
+## Getting Help
+
+- Check relevant documentation sections above
+- Review the [archive/](archive/) for historical context
+- Use the [prompt-library/](prompt-library/) for AI assistance
+- Create an issue in the repository for missing documentation
+
+## Documentation Changelog
+
+### October 2025 Reorganization
+
+Major documentation reorganization completed:
+- Created structured subdirectories (architecture, guides, api, compliance, archive)
+- Moved 70+ documentation files to appropriate locations
+- Archived outdated MA001 PRD ARD documentation
+- Consolidated CSV data files
+- Created this comprehensive index
+
+See [archive/REORGANIZATION_SUMMARY.md](archive/REORGANIZATION_SUMMARY.md) for previous reorganization details.
 
 ---
 
-**VITALpath** - Transforming Digital Health, One Journey at a Time.
+**Last Updated**: October 2, 2025
+**Maintained By**: VITAL Path Development Team

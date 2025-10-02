@@ -162,3 +162,23 @@ test-report.html
 # Tool-specific healthcare entries
 /tools/medical-validation/cache/
 /tools/compliance-scanner/reports/
+
+# Backups and archives
+*.tar.gz
+/backups/
+docs-archive-backup-*.tar.gz
+
+# Root directory - loose files (should be organized into proper folders)
+/*.png
+/*.jpg
+/*.jpeg
+/*.gif
+/*.pdf
+check-*.js
+auto-*.js
+
+# ESLint reports
+ESLINT_*.json
+
+# HTML files in root (should be in public/)
+/*.html

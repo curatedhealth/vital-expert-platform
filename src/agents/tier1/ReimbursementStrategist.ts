@@ -3,7 +3,6 @@
  * Priority: 115 | Tier 1 | Critical for market viability
  */
 
-import { DigitalHealthAgent } from '../core/DigitalHealthAgent';
 import {
   DigitalHealthAgentConfig,
   AgentTier,
@@ -13,6 +12,8 @@ import {
   AgentResponse,
   ExecutionContext
 } from '@/types/digital-health-agent.types';
+
+import { DigitalHealthAgent } from '../core/DigitalHealthAgent';
 
 export class ReimbursementStrategist extends DigitalHealthAgent {
   constructor() {

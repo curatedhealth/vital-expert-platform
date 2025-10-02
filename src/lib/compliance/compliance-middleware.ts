@@ -3,14 +3,16 @@
  * Integrates compliance checks into agent execution pipeline
  */
 
-import { HIPAAComplianceManager, DataProcessingRequest, ComplianceValidationResult } from './hipaa-compliance';
-import { DigitalHealthAgent } from '../../agents/core/DigitalHealthAgent';
 import {
   AgentResponse,
   ExecutionContext,
   ComplianceLevel,
   ComplianceError
 } from '@/types/digital-health-agent.types';
+
+import { DigitalHealthAgent } from '../../agents/core/DigitalHealthAgent';
+
+import { HIPAAComplianceManager, DataProcessingRequest, ComplianceValidationResult } from './hipaa-compliance';
 
 export interface ComplianceMiddlewareConfig {
   enablePHIDetection: boolean;
@@ -33,7 +35,7 @@ export class ComplianceMiddleware {
   private complianceManager: HIPAAComplianceManager;
   private config: ComplianceMiddlewareConfig;
 
-  constructor(config: Partial<ComplianceMiddlewareConfig> = {}) {
+  constructor(config: Partial<ComplianceMiddlewareConfig> = { /* TODO: implement */ }) {
     this.complianceManager = new HIPAAComplianceManager();
     this.config = {
       enablePHIDetection: true,
@@ -50,7 +52,7 @@ export class ComplianceMiddleware {
   async executeWithCompliance(
     agent: DigitalHealthAgent,
     promptTitle: string,
-    inputs: Record<string, any>,
+    inputs: Record<string, unknown>,
     context: ExecutionContext
   ): Promise<ProtectedAgentResponse> {
     const agentConfig = agent.getConfig();
@@ -65,9 +67,6 @@ export class ComplianceMiddleware {
       data_content: inputs,
       context
     };
-
-    console.log(`🔒 Validating HIPAA compliance for: ${agentConfig.display_name}`);
-
     let validationResult: ComplianceValidationResult;
     try {
       validationResult = await this.complianceManager.validateCompliance(preExecutionRequest);
@@ -110,8 +109,7 @@ export class ComplianceMiddleware {
         if (this.config.strictMode && agentConfig.metadata.compliance_level === ComplianceLevel.CRITICAL) {
           // For critical compliance agents, redact PHI
           try {
-            sanitizedInputs = JSON.parse(phiResult.redactedContent || '{}');
-            console.log(`🔒 PHI redacted for critical compliance agent`);
+            sanitizedInputs = JSON.parse(phiResult.redactedContent || '{ /* TODO: implement */ }');
           } catch {
             sanitizedInputs = { ...inputs, _phi_redacted: true };
           }
@@ -120,8 +118,6 @@ export class ComplianceMiddleware {
     }
 
     // Step 4: Execute agent with sanitized inputs
-    console.log(`🤖 Executing agent: ${agentConfig.display_name}`);
-
     let agentResponse: AgentResponse;
     try {
       agentResponse = await agent.executePrompt(promptTitle, sanitizedInputs, context);
@@ -211,9 +207,6 @@ export class ComplianceMiddleware {
         redacted_content: outputRedacted ? agentResponse.content : undefined
       }
     };
-
-    console.log(`✅ Compliance validation complete: Risk Score ${finalValidationResult.riskScore}`);
-
     return protectedResponse;
   }
 
@@ -252,7 +245,7 @@ export class ComplianceMiddleware {
    */
   async validateWorkflowCompliance(
     workflowId: string,
-    inputs: Record<string, any>,
+    inputs: Record<string, unknown>,
     context: ExecutionContext
   ): Promise<ComplianceValidationResult> {
     const request: DataProcessingRequest = {
@@ -334,7 +327,6 @@ export class ComplianceMiddleware {
    */
   updateConfig(newConfig: Partial<ComplianceMiddlewareConfig>): void {
     this.config = { ...this.config, ...newConfig };
-    console.log(`🔒 Compliance configuration updated:`, this.config);
   }
 
   /**

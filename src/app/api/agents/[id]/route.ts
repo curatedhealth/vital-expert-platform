@@ -1,5 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { NextRequest, NextResponse } from 'next/server';
 
 // Use service role key for server-side operations (bypasses RLS)
 const supabaseAdmin = createClient(
@@ -14,11 +14,6 @@ export async function PUT(
   try {
     const { id } = params;
     const updates = await request.json();
-
-    console.log('🔧 Agent API: Starting update...');
-    console.log('- Agent ID:', id);
-    console.log('- Updates:', updates);
-
     // Use admin client to bypass RLS
     const { data, error } = await supabaseAdmin
       .from('agents')
@@ -46,9 +41,6 @@ export async function PUT(
         details: error.details
       }, { status: 500 });
     }
-
-    console.log('✅ Agent API: Update successful:', data);
-
     return NextResponse.json({
       success: true,
       agent: data

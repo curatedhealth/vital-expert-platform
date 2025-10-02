@@ -4,14 +4,12 @@
  */
 
 import { ComplianceAwareOrchestrator } from '@/agents/core/ComplianceAwareOrchestrator';
-import { HIPAAComplianceManager } from '@/lib/compliance/hipaa-compliance';
 import { ComplianceMiddleware } from '@/lib/compliance/compliance-middleware';
+import { HIPAAComplianceManager } from '@/lib/compliance/hipaa-compliance';
 import { DatabaseLibraryLoader } from '@/lib/utils/database-library-loader';
 import {
   ExecutionContext,
-  ComplianceLevel,
-  AgentTier,
-  AgentDomain
+  ComplianceLevel
 } from '@/types/digital-health-agent.types';
 
 // Test configuration
@@ -593,7 +591,7 @@ export class AgentSystemTestSuite {
       await this.orchestrator.executeAgentWithCompliance(
         'invalid-agent',
         'Invalid Prompt',
-        {},
+        { /* TODO: implement */ },
         context
       );
       throw new Error('Should have thrown error for invalid agent');
@@ -615,7 +613,7 @@ export class AgentSystemTestSuite {
 
       await this.orchestrator.executeWorkflowWithCompliance(
         'invalid-workflow',
-        {},
+        { /* TODO: implement */ },
         context
       );
       throw new Error('Should have thrown error for invalid workflow');

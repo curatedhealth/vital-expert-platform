@@ -45,8 +45,8 @@ CREATE TABLE IF NOT EXISTS prompts (
 CREATE INDEX IF NOT EXISTS idx_prompts_name ON prompts(name);
 CREATE INDEX IF NOT EXISTS idx_prompts_domain ON prompts(domain);
 CREATE INDEX IF NOT EXISTS idx_prompts_complexity ON prompts(complexity_level);
-CREATE INDEX IF NOT EXISTS idx_prompts_active ON prompts(status);
-CREATE INDEX IF NOT EXISTS idx_prompts_capabilities ON prompts USING GIN(prerequisite_capabilities);
+CREATE INDEX IF NOT EXISTS idx_prompts_active ON prompts(is_active);
+-- CREATE INDEX IF NOT EXISTS idx_prompts_capabilities ON prompts USING GIN(prerequisite_capabilities); -- Will be created by later migrations
 CREATE INDEX IF NOT EXISTS idx_prompts_tags ON prompts USING GIN(compliance_tags);
 
 -- Create prompt-capability relationship table
@@ -75,7 +75,7 @@ ALTER TABLE prompt_capabilities ENABLE ROW LEVEL SECURITY;
 -- RLS Policies for prompts
 CREATE POLICY "Public prompts are viewable by everyone"
     ON prompts FOR SELECT
-    USING (status = 'active');
+    USING (is_active = true);
 
 CREATE POLICY "Authenticated users can create prompts"
     ON prompts FOR INSERT
@@ -99,7 +99,7 @@ CREATE POLICY "Prompt capabilities are viewable with prompt access"
         EXISTS (
             SELECT 1 FROM prompts
             WHERE prompts.id = prompt_capabilities.prompt_id
-            AND prompts.status = 'active'
+            AND prompts.is_active = true
         )
     );
 

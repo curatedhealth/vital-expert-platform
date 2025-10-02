@@ -1,13 +1,14 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { AgentsBoard } from '@/components/agents/agents-board';
-import { AgentDetailsModal } from '@/components/agents/agent-details-modal';
-import { AgentCreator } from '@/components/chat/agent-creator';
-import { type Agent } from '@/lib/stores/chat-store';
-import { type Agent as AgentsStoreAgent, useAgentsStore } from '@/lib/stores/agents-store';
+import { useState, useEffect } from 'react';
+
+import { AgentDetailsModal } from '@/features/agents/components/agent-details-modal';
+import { AgentsBoard } from '@/features/agents/components/agents-board';
+import { AgentCreator } from '@/features/chat/components/agent-creator';
 import { useAuth } from '@/lib/auth/auth-context';
+import { type Agent as AgentsStoreAgent, useAgentsStore } from '@/lib/stores/agents-store';
+import { type Agent } from '@/lib/stores/chat-store';
 
 export default function AgentsPage() {
   const router = useRouter();
@@ -31,7 +32,6 @@ export default function AgentsPage() {
 
     if (uploadParam === 'true') {
       // Handle upload functionality here
-      console.log('Upload agent functionality triggered');
       // Clear the URL parameter
       router.replace('/agents', { scroll: false });
     }
@@ -93,8 +93,6 @@ export default function AgentsPage() {
     try {
       // Check if this is an admin agent that needs to be copied
       if (!agent.is_user_copy) {
-        console.log('Creating user copy of admin agent:', agent.display_name);
-
         // Create user copy through the store
         const userCopy = await createUserCopy(agent);
 
@@ -122,16 +120,13 @@ export default function AgentsPage() {
         const userAgents = existingAgents ? JSON.parse(existingAgents) : [];
 
         // Check if agent is already added (by original agent id)
-        const isAlreadyAdded = userAgents.some((ua: any) => ua.original_agent_id === agent.id);
+        const isAlreadyAdded = userAgents.some((ua: unknown) => ua.original_agent_id === agent.id);
 
         if (!isAlreadyAdded) {
           // Add user copy to localStorage
           const newUserAgents = [...userAgents, chatAgent];
           localStorage.setItem('user-chat-agents', JSON.stringify(newUserAgents));
-          console.log('Added user copy to chat:', chatAgent.name);
-        } else {
-          console.log('User copy already exists in chat');
-        }
+        } else { /* TODO: implement */ }
 
         // Navigate to chat page
         router.push('/chat');
@@ -160,13 +155,12 @@ export default function AgentsPage() {
         const userAgents = existingAgents ? JSON.parse(existingAgents) : [];
 
         // Check if agent is already added
-        const isAlreadyAdded = userAgents.some((ua: any) => ua.id === agent.id);
+        const isAlreadyAdded = userAgents.some((ua: unknown) => ua.id === agent.id);
 
         if (!isAlreadyAdded) {
           // Add existing user copy to localStorage
           const newUserAgents = [...userAgents, chatAgent];
           localStorage.setItem('user-chat-agents', JSON.stringify(newUserAgents));
-          console.log('Added existing user copy to chat:', chatAgent.name);
         }
 
         // Navigate to chat page
@@ -183,7 +177,7 @@ export default function AgentsPage() {
 
       const existingAgents = localStorage.getItem('user-chat-agents');
       const userAgents = existingAgents ? JSON.parse(existingAgents) : [];
-      const isAlreadyAdded = userAgents.some((ua: any) => ua.id === agent.id);
+      const isAlreadyAdded = userAgents.some((ua: unknown) => ua.id === agent.id);
 
       if (!isAlreadyAdded) {
         const newUserAgents = [...userAgents, chatAgent];
@@ -224,7 +218,7 @@ export default function AgentsPage() {
             // Force refresh of the agents board
             window.location.reload();
           }}
-          editingAgent={editingAgent as any}
+          editingAgent={editingAgent as unknown}
         />
       )}
     </div>

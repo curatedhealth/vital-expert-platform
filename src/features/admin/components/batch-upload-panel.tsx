@@ -1,15 +1,5 @@
 'use client';
 
-import React, { useState, useCallback } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
-import { Checkbox } from '@/components/ui/checkbox';
 import {
   Upload,
   CheckCircle,
@@ -24,6 +14,17 @@ import {
   Play,
   RefreshCw
 } from 'lucide-react';
+import React, { useState, useCallback } from 'react';
+
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
+import { Progress } from '@/components/ui/progress';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Textarea } from '@/components/ui/textarea';
 
 interface UploadResult {
   success: boolean;
@@ -179,6 +180,7 @@ export default function BatchUploadPanel() {
   }, [uploadData, activeTab, options]);
 
   const downloadSample = useCallback((type: UploadType) => {
+    // eslint-disable-next-line security/detect-object-injection
     const data = sampleData[type];
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
@@ -192,6 +194,7 @@ export default function BatchUploadPanel() {
   }, []);
 
   const loadSample = useCallback((type: UploadType) => {
+    // eslint-disable-next-line security/detect-object-injection
     setUploadData(JSON.stringify(sampleData[type], null, 2));
   }, []);
 

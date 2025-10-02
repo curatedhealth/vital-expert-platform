@@ -3,7 +3,6 @@
  * Priority: 105 | Tier 1 | Critical for evidence generation
  */
 
-import { DigitalHealthAgent } from '../core/DigitalHealthAgent';
 import {
   DigitalHealthAgentConfig,
   AgentTier,
@@ -13,6 +12,8 @@ import {
   AgentResponse,
   ExecutionContext
 } from '@/types/digital-health-agent.types';
+
+import { DigitalHealthAgent } from '../core/DigitalHealthAgent';
 
 export class ClinicalTrialDesigner extends DigitalHealthAgent {
   constructor() {
@@ -235,7 +236,7 @@ You have 12+ years designing pivotal trials with expertise in FDA IDE regulation
     const { effect_size, sample_size, alpha } = params;
 
     // Mock calculation - replace with proper statistical analysis
-    const z_alpha = alpha === 0.05 ? 1.96 : 2.58;
+
     const estimated_power = Math.min(0.99, 0.5 + (effect_size * Math.sqrt(sample_size)) / 4);
 
     let recommendation = "Sample size appears adequate";

@@ -32,8 +32,6 @@ export class AgentService {
 
   // Get all active agents
   async getActiveAgents(): Promise<AgentWithCategories[]> {
-    console.log('🔍 AgentService: Loading active agents from database...');
-
     try {
       // Use API route to bypass RLS issues
       const response = await fetch('/api/agents-crud', {
@@ -55,11 +53,8 @@ export class AgentService {
       const result = await response.json();
       const data = result.agents || [];
 
-      console.log(`✅ AgentService: Loaded ${data.length} agents from API`);
-      console.log('📋 Agent names:', data.map((a: any) => a.display_name || a.name));
-
       // Transform the data to include empty categories array since categories tables don't exist yet
-      return data.map((agent: any) => ({
+      return data.map((agent: unknown) => ({
         ...agent,
         categories: []
       }));
@@ -69,8 +64,6 @@ export class AgentService {
       console.error('- Error:', error);
 
       // Fallback to direct Supabase call (might fail due to RLS but worth trying)
-      console.log('🔄 Attempting fallback to direct Supabase call...');
-
       const { data, error: dbError } = await this.supabase
         .from('agents')
         .select('*')
@@ -83,8 +76,6 @@ export class AgentService {
         console.error('❌ Fallback also failed:', dbError);
         throw new Error('Failed to fetch agents from both API and database');
       }
-
-      console.log(`✅ Fallback successful: Loaded ${data?.length || 0} agents`);
       return data?.map(agent => ({
         ...agent,
         categories: []
@@ -113,7 +104,7 @@ export class AgentService {
 
     return data?.map(agent => ({
       ...agent,
-      categories: agent.agent_category_mapping?.map((mapping: any) => mapping.agent_categories) || []
+      categories: agent.agent_category_mapping?.map((mapping: unknown) => mapping.agent_categories) || []
     })) || [];
   }
 
@@ -138,7 +129,7 @@ export class AgentService {
 
     return data?.map(agent => ({
       ...agent,
-      categories: agent.agent_category_mapping?.map((mapping: any) => mapping.agent_categories) || []
+      categories: agent.agent_category_mapping?.map((mapping: unknown) => mapping.agent_categories) || []
     })) || [];
   }
 
@@ -163,7 +154,7 @@ export class AgentService {
 
     return data?.map(agent => ({
       ...agent,
-      categories: agent.agent_category_mapping?.map((mapping: any) => mapping.agent_categories) || []
+      categories: agent.agent_category_mapping?.map((mapping: unknown) => mapping.agent_categories) || []
     })) || [];
   }
 
@@ -187,7 +178,7 @@ export class AgentService {
 
     return data ? {
       ...data,
-      categories: data.agent_category_mapping?.map((mapping: any) => mapping.agent_categories) || []
+      categories: data.agent_category_mapping?.map((mapping: unknown) => mapping.agent_categories) || []
     } : null;
   }
 
@@ -211,7 +202,7 @@ export class AgentService {
 
     return data ? {
       ...data,
-      categories: data.agent_category_mapping?.map((mapping: any) => mapping.agent_categories) || []
+      categories: data.agent_category_mapping?.map((mapping: unknown) => mapping.agent_categories) || []
     } : null;
   }
 
@@ -314,12 +305,6 @@ export class AgentService {
     id: string,
     updates: Database['public']['Tables']['agents']['Update']
   ): Promise<AgentWithCategories> {
-    console.log('🔧 AgentService.updateAgent: Starting...');
-    console.log('- Agent ID:', id);
-    console.log('- Agent ID type:', typeof id);
-    console.log('- Updates to apply:', updates);
-    console.log('- Update keys:', Object.keys(updates));
-
     try {
       // Use API route to bypass RLS issues
       const response = await fetch(`/api/agents/${id}`, {
@@ -340,9 +325,6 @@ export class AgentService {
       }
 
       const result = await response.json();
-      console.log('✅ AgentService.updateAgent: API update successful');
-      console.log('- Updated data:', result.agent);
-
       // Transform the result to include categories
       return {
         ...result.agent,
@@ -421,7 +403,7 @@ export class AgentService {
 
     return data?.map(agent => ({
       ...agent,
-      categories: agent.agent_category_mapping?.map((mapping: any) => mapping.agent_categories) || []
+      categories: agent.agent_category_mapping?.map((mapping: unknown) => mapping.agent_categories) || []
     })) || [];
   }
 
@@ -498,7 +480,7 @@ export class AgentService {
 
     if (!data) return null;
 
-    const capabilitiesDetail = data.agent_capabilities?.map((ac: any) => ({
+    const capabilitiesDetail = data.agent_capabilities?.map((ac: unknown) => ({
       ...ac,
       capability: ac.capability
     })) || [];
@@ -506,7 +488,7 @@ export class AgentService {
     return {
       ...data,
       capabilities_detail: capabilitiesDetail,
-      primary_capabilities: capabilitiesDetail.filter((cap: any) => cap.is_primary)
+      primary_capabilities: capabilitiesDetail.filter((cap: unknown) => cap.is_primary)
     };
   }
 
@@ -535,7 +517,7 @@ export class AgentService {
 
     return data?.map(agent => ({
       ...agent,
-      categories: agent.agent_category_mapping?.map((mapping: any) => mapping.agent_categories) || []
+      categories: agent.agent_category_mapping?.map((mapping: unknown) => mapping.agent_categories) || []
     })) || [];
   }
 
@@ -635,10 +617,10 @@ export class AgentService {
       return acc;
     }, {
       total_agents: 0,
-      proficiency_distribution: {} as Record<string, number>,
+      proficiency_distribution: { /* TODO: implement */ } as Record<string, number>,
       usage_count: 0,
       success_rate: 0
-    }) || { total_agents: 0, proficiency_distribution: {}, usage_count: 0, success_rate: 0 };
+    }) || { total_agents: 0, proficiency_distribution: { /* TODO: implement */ }, usage_count: 0, success_rate: 0 };
 
     if (stats.total_agents > 0) {
       stats.success_rate = stats.success_rate / stats.total_agents;
@@ -648,7 +630,7 @@ export class AgentService {
   }
 
   // Convert database agent to chat store format (enhanced with capabilities)
-  async convertToLegacyFormatWithCapabilities(agent: Agent): Promise<any> {
+  async convertToLegacyFormatWithCapabilities(agent: Agent): Promise<unknown> {
     const agentWithCapabilities = await this.getAgentWithCapabilities(agent.id);
 
     const capabilityNames = agentWithCapabilities?.capabilities_detail?.map(
@@ -672,7 +654,7 @@ export class AgentService {
   }
 
   // Convert database agent to chat store format
-  convertToLegacyFormat(agent: Agent): any {
+  convertToLegacyFormat(agent: Agent): unknown {
     return {
       id: agent.name,
       name: agent.display_name,
@@ -690,4 +672,5 @@ export class AgentService {
   }
 }
 
-export const agentService = new AgentService();
+const _agentService = new AgentService();
+export const agentService = _agentService;

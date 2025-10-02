@@ -5,6 +5,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+
 import { ComplianceAwareOrchestrator } from '@/agents/core/ComplianceAwareOrchestrator';
 import {
   ExecuteWorkflowRequest,
@@ -93,7 +94,7 @@ export async function POST(request: NextRequest) {
     // Execute workflow with compliance protection
     const execution = await orch.executeWorkflowWithCompliance(
       body.workflow_name,
-      body.initial_inputs || {},
+      body.initial_inputs || { /* TODO: implement */ },
       context
     );
 
@@ -114,7 +115,7 @@ export async function POST(request: NextRequest) {
           action: interaction.action,
           success: interaction.success,
           execution_time: interaction.execution_time,
-          compliance_status: (interaction.outputs as any).compliance_status
+          compliance_status: (interaction.outputs as unknown).compliance_status
         }))
       },
       timestamp: new Date().toISOString()

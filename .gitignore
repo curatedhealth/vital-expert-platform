@@ -133,3 +133,32 @@ schema-audit-report.json
 # Temporary files
 test-*.txt
 agent-template.json
+
+# Testing and reports
+junit.xml
+test-report.html
+
+# Healthcare/Medical specific entries
+# PHI and sensitive medical data
+/data/phi/
+/backups/patient-data/
+/exports/medical-records/
+*.phi
+*.medical
+/audit-logs/sensitive/
+
+# Compliance and security
+/compliance-reports/
+/security-scans/
+/penetration-tests/
+/audit-trails/detailed/
+*.compliance
+
+# Development and testing with medical data
+/mock-patient-data/realistic/
+/test-phi/
+/dev-medical-records/
+
+# Tool-specific healthcare entries
+/tools/medical-validation/cache/
+/tools/compliance-scanner/reports/

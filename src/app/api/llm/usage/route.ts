@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+
 import { usageTracker } from '@/lib/services/usage-tracker.service';
 
 export async function GET(request: NextRequest) {
@@ -49,7 +50,24 @@ export async function POST(request: NextRequest) {
     ];
 
     for (const field of requiredFields) {
-      if (usage[field] === undefined || usage[field] === null) {
+      // Validate field name to prevent object injection
+      if (!requiredFields.includes(field)) {
+        return NextResponse.json(
+          { error: `Invalid field name: ${field}` },
+          { status: 400 }
+        );
+      }
+      
+      // Use safe property access with explicit type checking
+      let fieldValue: unknown;
+      if (Object.prototype.hasOwnProperty.call(usage, field)) {
+        // Use Object.getOwnPropertyDescriptor for safe property access
+        const descriptor = Object.getOwnPropertyDescriptor(usage, field);
+        fieldValue = descriptor ? descriptor.value : undefined;
+      } else {
+        fieldValue = undefined;
+      }
+      if (fieldValue === undefined || fieldValue === null) {
         return NextResponse.json(
           { error: `Missing required field: ${field}` },
           { status: 400 }

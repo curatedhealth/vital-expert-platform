@@ -1,5 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 // Validation schema for prompts batch upload
@@ -96,11 +96,8 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const validatedData = PromptBatchSchema.parse(body);
 
-    const { prompts, options = {} } = validatedData;
+    const { prompts, options = { /* TODO: implement */ } } = validatedData;
     const { validate_only = false, link_capabilities = true, validate_templates = true } = options;
-
-    console.log(`🚀 Batch prompt upload: ${prompts.length} prompts, validate_only: ${validate_only}`);
-
     // Validation results
     const results = {
       total: prompts.length,
@@ -140,8 +137,6 @@ export async function POST(request: NextRequest) {
     // Process each prompt
     for (const prompt of prompts) {
       try {
-        console.log(`Processing prompt: ${prompt.name}`);
-
         // Check if prompt already exists
         const { data: existing, error: checkError } = await supabase
           .from('prompts')
@@ -165,7 +160,7 @@ export async function POST(request: NextRequest) {
           input_schema: prompt.input_schema,
           output_schema: prompt.output_schema,
           success_criteria: prompt.success_criteria,
-          validation_rules: prompt.validation_rules || {},
+          validation_rules: prompt.validation_rules || { /* TODO: implement */ },
           prerequisite_capabilities: prompt.prerequisite_capabilities || [],
           prerequisite_prompts: prompt.prerequisite_prompts || [],
           model_requirements: prompt.model_requirements,
@@ -185,8 +180,6 @@ export async function POST(request: NextRequest) {
           if (updateError) {
             throw new Error(`Update failed: ${updateError.message}`);
           }
-
-          console.log(`✅ Updated prompt: ${prompt.name}`);
           results.updated++;
         } else {
           // Create new prompt
@@ -199,8 +192,6 @@ export async function POST(request: NextRequest) {
           if (insertError) {
             throw new Error(`Insert failed: ${insertError.message}`);
           }
-
-          console.log(`✅ Created prompt: ${prompt.name}`);
           results.created++;
 
           // Link capabilities if requested and prompt was created
@@ -222,8 +213,6 @@ export async function POST(request: NextRequest) {
                 await supabase
                   .from('prompt_capabilities')
                   .insert(links);
-
-                console.log(`Linked ${links.length} capabilities to prompt: ${prompt.name}`);
               }
             } catch (linkError) {
               console.warn(`Warning: Could not link capabilities to prompt ${prompt.name}:`, linkError);

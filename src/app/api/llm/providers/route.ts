@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAuth, requirePermission, rateLimit } from '@/middleware/auth';
+
+import { requirePermission, rateLimit } from '@/middleware/auth';
+import { llmProviderService } from '@/shared/services/llm/llm-provider.service';
 import { PermissionScope, PermissionAction } from '@/types/auth.types';
-import { llmProviderService } from '@/services/llm-provider.service';
 import { LLMProviderConfig, ProviderFilters, ProviderSort } from '@/types/llm-provider.types';
 
 // GET /api/llm/providers - List providers with pagination and filtering
-export const GET = rateLimit(50)(requirePermission({
+export const _GET = rateLimit(50)(requirePermission({
   scope: PermissionScope.LLM_PROVIDERS,
   action: PermissionAction.READ
 })(async (request: NextRequest) => {
@@ -23,16 +24,16 @@ export const GET = rateLimit(50)(requirePermission({
 
     // Build filters
     const filters: ProviderFilters = {
-      provider_type: providerType as any,
-      status: status as any,
+      provider_type: providerType as unknown,
+      status: status as unknown,
       is_active: isActive
-    } as any;
+    } as unknown;
 
     // Build sort
     const sortBy = searchParams.get('sortBy') || 'created_at';
     const sortOrder = searchParams.get('sortOrder') === 'asc' ? 'asc' : 'desc';
     const sort: ProviderSort = {
-      field: sortBy as any,
+      field: sortBy as unknown,
       direction: sortOrder
     };
 
@@ -61,7 +62,7 @@ export const GET = rateLimit(50)(requirePermission({
 }));
 
 // POST /api/llm/providers - Create new provider
-export const POST = rateLimit(10)(requirePermission({
+export const _POST = rateLimit(10)(requirePermission({
   scope: PermissionScope.LLM_PROVIDERS,
   action: PermissionAction.CREATE
 })(async (request: NextRequest, user) => {

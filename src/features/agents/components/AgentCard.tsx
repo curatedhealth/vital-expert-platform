@@ -1,21 +1,3 @@
-import React from 'react';
-import { Agent, DomainExpertise, ValidationStatus, DOMAIN_COLORS } from '@/types/agent.types';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import {
   MoreVertical,
   Eye,
@@ -32,6 +14,27 @@ import {
   Brain,
   DollarSign
 } from 'lucide-react';
+import React from 'react';
+
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Progress } from '@/components/ui/progress';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import { useBusinessFunctionMap } from '@/hooks/useBusinessFunctionMap';
+import { AgentAvatar } from '@/shared/components/ui/agent-avatar';
+import { Agent, DomainExpertise, ValidationStatus, DOMAIN_COLORS } from '@/types/agent.types';
 
 interface AgentCardProps {
   agent: Agent;
@@ -58,8 +61,12 @@ export const AgentCard: React.FC<AgentCardProps> = ({
   showMetrics = true,
   showActions = true
 }) => {
+  // Get business function name from function_id
+  const { getFunctionName } = useBusinessFunctionMap();
+
   // Get domain-specific color
   const getDomainColor = (domain: DomainExpertise) => {
+    // eslint-disable-next-line security/detect-object-injection
     return DOMAIN_COLORS[domain] || DOMAIN_COLORS.general;
   };
 
@@ -169,16 +176,25 @@ export const AgentCard: React.FC<AgentCardProps> = ({
           {/* Header */}
           <div className="flex items-start justify-between mb-3">
             <div className="flex items-center gap-3 flex-1 min-w-0">
-              <div className="text-2xl flex-shrink-0">
-                {agent.avatar || '🤖'}
+              <div className="flex-shrink-0" style={{ width: '25%', maxWidth: '80px' }}>
+                <AgentAvatar
+                  agent={agent}
+                  size="xl"
+                  className="w-full aspect-square"
+                />
               </div>
               <div className="min-w-0 flex-1">
                 <h3 className="font-semibold text-base truncate">
                   {agent.display_name}
                 </h3>
                 <p className="text-sm text-gray-600 truncate">
-                  {agent.role || agent.business_function || 'General Purpose'}
+                  {agent.department || agent.business_function || 'General Purpose'}
                 </p>
+                {agent.role && (
+                  <p className="text-xs text-gray-500 truncate">
+                    {agent.role}
+                  </p>
+                )}
               </div>
             </div>
 
@@ -205,7 +221,18 @@ export const AgentCard: React.FC<AgentCardProps> = ({
 
           {/* Domain & Specialization */}
           <div className="mb-3">
-            <div className="flex items-center gap-2 mb-2">
+            <div className="flex items-center gap-2 mb-2 flex-wrap">
+              {(() => {
+                // Try to get function name from function_id, fallback to business_function string
+                const functionName = getFunctionName((agent as any).function_id) ||
+                                    agent.business_function?.replace(/_/g, ' ');
+
+                return functionName ? (
+                  <Badge variant="outline" className="text-xs bg-purple-50 text-purple-700 border-purple-200">
+                    {functionName.toUpperCase()}
+                  </Badge>
+                ) : null;
+              })()}
               <Badge
                 style={{ backgroundColor: getDomainColor(agent.domain_expertise) }}
                 className="text-white text-xs"

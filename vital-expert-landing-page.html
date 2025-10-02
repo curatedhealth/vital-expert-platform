@@ -1,0 +1,1043 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VITAL.expert - Scale Expertise Instantly. Test Strategies Safely.</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            /* Core Brand Colors */
+            --vital-black: #0A0A0A;
+            --vital-white: #FFFFFF;
+            --vital-gray-95: #FAFAFA;
+            --vital-gray-90: #F5F5F5;
+            --vital-gray-80: #E5E5E5;
+            --vital-gray-70: #CCCCCC;
+            --vital-gray-60: #999999;
+            --vital-gray-40: #666666;
+            
+            /* Service Line Colors */
+            --regulatory-blue: #0066FF;
+            --clinical-green: #00CC88;
+            --safety-red: #FF3366;
+            --data-purple: #9933FF;
+            --market-orange: #FF6600;
+            --research-cyan: #00CCFF;
+            --quality-gold: #FFAA00;
+            --strategy-navy: #003399;
+            
+            /* Typography */
+            --font-primary: 'Inter', -apple-system, sans-serif;
+            
+            /* Shadows */
+            --shadow-xs: 0 1px 3px rgba(0,0,0,0.05);
+            --shadow-sm: 0 2px 8px rgba(0,0,0,0.08);
+            --shadow-md: 0 4px 16px rgba(0,0,0,0.10);
+            --shadow-lg: 0 8px 32px rgba(0,0,0,0.12);
+            --shadow-xl: 0 16px 48px rgba(0,0,0,0.15);
+        }
+
+        body {
+            font-family: var(--font-primary);
+            font-weight: 500;
+            background: var(--vital-white);
+            color: var(--vital-black);
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* NAVIGATION */
+        .nav-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--vital-gray-80);
+            z-index: 1000;
+        }
+
+        .nav {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: inline-flex;
+            align-items: baseline;
+            font-weight: 800;
+            font-size: 20px;
+            letter-spacing: -0.02em;
+            text-decoration: none;
+        }
+
+        .logo-vital {
+            color: var(--vital-black);
+        }
+
+        .logo-dot {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin: 0 3px;
+            background: var(--regulatory-blue);
+            transform: translateY(-2px);
+            transition: all 0.3s ease;
+        }
+
+        .logo-expert {
+            color: var(--vital-black);
+            font-weight: 600;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 32px;
+            align-items: center;
+        }
+
+        .nav-link {
+            color: var(--vital-gray-60);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 600;
+            transition: color 0.2s ease;
+        }
+
+        .nav-link:hover {
+            color: var(--vital-black);
+        }
+
+        .nav-cta {
+            padding: 10px 20px;
+            background: var(--vital-black);
+            color: var(--vital-white);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 600;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+        }
+
+        .nav-cta:hover {
+            background: var(--regulatory-blue);
+            transform: translateY(-1px);
+        }
+
+        /* HERO SECTION */
+        .hero {
+            margin-top: 80px;
+            padding: 100px 40px 80px;
+            text-align: center;
+            background: linear-gradient(180deg, var(--vital-white) 0%, var(--vital-gray-95) 100%);
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 6px 16px;
+            background: var(--vital-gray-90);
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--vital-gray-60);
+            margin-bottom: 24px;
+        }
+
+        .hero h1 {
+            font-size: 56px;
+            font-weight: 800;
+            line-height: 1.1;
+            letter-spacing: -0.02em;
+            margin-bottom: 24px;
+            max-width: 900px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .hero-subtitle {
+            font-size: 20px;
+            font-weight: 500;
+            color: var(--vital-gray-60);
+            max-width: 700px;
+            margin: 0 auto 32px;
+            line-height: 1.5;
+        }
+
+        .value-statement {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 40px;
+            color: var(--vital-black);
+        }
+
+        .hero-buttons {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            margin-bottom: 48px;
+        }
+
+        .btn {
+            padding: 14px 32px;
+            font-size: 16px;
+            font-weight: 600;
+            text-decoration: none;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+            cursor: pointer;
+            border: none;
+        }
+
+        .btn-primary {
+            background: var(--vital-black);
+            color: var(--vital-white);
+        }
+
+        .btn-primary:hover {
+            background: var(--regulatory-blue);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .btn-secondary {
+            background: var(--vital-white);
+            color: var(--vital-black);
+            border: 2px solid var(--vital-gray-80);
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--vital-black);
+            transform: translateY(-2px);
+        }
+
+        .btn-tertiary {
+            background: transparent;
+            color: var(--vital-gray-60);
+            text-decoration: underline;
+        }
+
+        .btn-tertiary:hover {
+            color: var(--vital-black);
+        }
+
+        .trust-line {
+            font-size: 14px;
+            color: var(--vital-gray-60);
+            font-weight: 600;
+        }
+
+        /* CONTENT SECTIONS */
+        .section {
+            padding: 80px 40px;
+        }
+
+        .section-alt {
+            background: var(--vital-gray-95);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 60px;
+        }
+
+        .section-label {
+            font-size: 14px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--regulatory-blue);
+            margin-bottom: 16px;
+        }
+
+        .section-title {
+            font-size: 40px;
+            font-weight: 800;
+            line-height: 1.2;
+            margin-bottom: 20px;
+        }
+
+        .section-description {
+            font-size: 18px;
+            color: var(--vital-gray-60);
+            max-width: 600px;
+            margin: 0 auto;
+            line-height: 1.5;
+        }
+
+        /* CHALLENGE SECTION */
+        .challenge-content {
+            max-width: 700px;
+            margin: 0 auto;
+            text-align: center;
+        }
+
+        .challenge-points {
+            font-size: 18px;
+            line-height: 2;
+            color: var(--vital-gray-60);
+            margin: 32px 0;
+        }
+
+        .challenge-conclusion {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--vital-black);
+        }
+
+        /* SOLUTION GRID */
+        .solution-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 32px;
+            margin-top: 48px;
+        }
+
+        .solution-card {
+            padding: 32px;
+            background: var(--vital-white);
+            border-radius: 12px;
+            box-shadow: var(--shadow-sm);
+            transition: all 0.3s ease;
+        }
+
+        .solution-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .solution-card h3 {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 12px;
+        }
+
+        .solution-card p {
+            color: var(--vital-gray-60);
+            line-height: 1.5;
+        }
+
+        /* HOW IT WORKS */
+        .steps-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 40px;
+            margin-top: 60px;
+        }
+
+        .step {
+            text-align: center;
+        }
+
+        .step-number {
+            display: inline-flex;
+            width: 48px;
+            height: 48px;
+            align-items: center;
+            justify-content: center;
+            background: var(--vital-black);
+            color: var(--vital-white);
+            border-radius: 50%;
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 20px;
+        }
+
+        .step h3 {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 12px;
+        }
+
+        .step p {
+            color: var(--vital-gray-60);
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .step-example {
+            font-style: italic;
+            color: var(--vital-gray-40);
+            font-size: 13px;
+            margin-top: 8px;
+        }
+
+        /* RESULTS / TESTIMONIALS */
+        .testimonials-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 32px;
+            margin-top: 48px;
+        }
+
+        .testimonial {
+            padding: 32px;
+            background: var(--vital-white);
+            border-radius: 12px;
+            border: 1px solid var(--vital-gray-80);
+        }
+
+        .quote {
+            font-size: 18px;
+            font-weight: 600;
+            line-height: 1.5;
+            margin-bottom: 20px;
+            color: var(--vital-black);
+        }
+
+        .attribution {
+            font-size: 14px;
+            color: var(--vital-gray-60);
+            font-style: italic;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 40px;
+            margin-top: 60px;
+            text-align: center;
+        }
+
+        .metric {
+            padding: 24px;
+            background: var(--vital-gray-95);
+            border-radius: 8px;
+        }
+
+        .metric-value {
+            font-size: 32px;
+            font-weight: 800;
+            color: var(--regulatory-blue);
+            margin-bottom: 8px;
+        }
+
+        .metric-label {
+            font-size: 14px;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: var(--vital-gray-60);
+            letter-spacing: 0.05em;
+        }
+
+        /* PRICING */
+        .pricing-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 32px;
+            margin-top: 60px;
+        }
+
+        .pricing-card {
+            padding: 40px 32px;
+            background: var(--vital-white);
+            border-radius: 12px;
+            border: 2px solid var(--vital-gray-80);
+            text-align: center;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .pricing-card:hover {
+            border-color: var(--regulatory-blue);
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .pricing-card.featured {
+            border-color: var(--regulatory-blue);
+            transform: scale(1.05);
+            box-shadow: var(--shadow-xl);
+        }
+
+        .pricing-card.featured::before {
+            content: 'MOST POPULAR';
+            position: absolute;
+            top: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 4px 16px;
+            background: var(--regulatory-blue);
+            color: var(--vital-white);
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            border-radius: 12px;
+        }
+
+        .plan-name {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .plan-price {
+            font-size: 36px;
+            font-weight: 800;
+            margin-bottom: 4px;
+        }
+
+        .plan-price span {
+            font-size: 16px;
+            font-weight: 500;
+            color: var(--vital-gray-60);
+        }
+
+        .plan-features {
+            list-style: none;
+            margin: 24px 0;
+            text-align: left;
+        }
+
+        .plan-features li {
+            padding: 8px 0;
+            font-size: 14px;
+            color: var(--vital-gray-60);
+            position: relative;
+            padding-left: 24px;
+        }
+
+        .plan-features li::before {
+            content: '✓';
+            position: absolute;
+            left: 0;
+            color: var(--clinical-green);
+            font-weight: 700;
+        }
+
+        .plan-cta {
+            width: 100%;
+            padding: 12px;
+            background: var(--vital-black);
+            color: var(--vital-white);
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .plan-cta:hover {
+            background: var(--regulatory-blue);
+        }
+
+        .pricing-note {
+            text-align: center;
+            margin-top: 32px;
+            font-size: 14px;
+            color: var(--vital-gray-60);
+        }
+
+        /* CTA SECTION */
+        .cta {
+            background: var(--vital-black);
+            color: var(--vital-white);
+            text-align: center;
+            padding: 100px 40px;
+        }
+
+        .cta h2 {
+            font-size: 48px;
+            font-weight: 800;
+            margin-bottom: 24px;
+        }
+
+        .cta p {
+            font-size: 20px;
+            margin-bottom: 40px;
+            opacity: 0.9;
+        }
+
+        .cta-button {
+            display: inline-block;
+            padding: 16px 40px;
+            background: var(--vital-white);
+            color: var(--vital-black);
+            text-decoration: none;
+            font-size: 18px;
+            font-weight: 700;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+        }
+
+        .cta-button:hover {
+            background: var(--regulatory-blue);
+            color: var(--vital-white);
+            transform: translateY(-2px);
+        }
+
+        .cta-note {
+            margin-top: 20px;
+            font-size: 14px;
+            opacity: 0.7;
+        }
+
+        .cta-alternative {
+            margin-top: 32px;
+            font-size: 16px;
+        }
+
+        .cta-alternative a {
+            color: var(--vital-white);
+            text-decoration: underline;
+        }
+
+        /* FOOTER */
+        footer {
+            padding: 60px 40px 40px;
+            background: var(--vital-gray-95);
+            border-top: 1px solid var(--vital-gray-80);
+        }
+
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .footer-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 40px;
+            margin-bottom: 40px;
+        }
+
+        .footer-column h4 {
+            font-size: 14px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 16px;
+        }
+
+        .footer-links {
+            list-style: none;
+        }
+
+        .footer-links li {
+            margin-bottom: 12px;
+        }
+
+        .footer-links a {
+            color: var(--vital-gray-60);
+            text-decoration: none;
+            font-size: 14px;
+            transition: color 0.2s ease;
+        }
+
+        .footer-links a:hover {
+            color: var(--vital-black);
+        }
+
+        .footer-bottom {
+            padding-top: 32px;
+            border-top: 1px solid var(--vital-gray-80);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .footer-logo {
+            display: inline-flex;
+            align-items: baseline;
+            font-weight: 800;
+            font-size: 18px;
+            letter-spacing: -0.02em;
+        }
+
+        .footer-legal {
+            display: flex;
+            gap: 24px;
+            font-size: 12px;
+            color: var(--vital-gray-60);
+        }
+
+        .footer-disclaimer {
+            text-align: center;
+            margin-top: 24px;
+            padding-top: 24px;
+            border-top: 1px solid var(--vital-gray-80);
+            font-size: 12px;
+            color: var(--vital-gray-60);
+            font-style: italic;
+        }
+
+        /* RESPONSIVE */
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 36px;
+            }
+            
+            .hero-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .nav-links {
+                display: none;
+            }
+            
+            .pricing-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .pricing-card.featured {
+                transform: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="nav-container">
+        <div class="nav">
+            <a href="#" class="logo">
+                <span class="logo-vital">VITAL</span>
+                <span class="logo-dot"></span>
+                <span class="logo-expert">expert</span>
+            </a>
+            <div class="nav-links">
+                <a href="#platform" class="nav-link">Platform</a>
+                <a href="#services" class="nav-link">Services</a>
+                <a href="#pricing" class="nav-link">Pricing</a>
+                <a href="#resources" class="nav-link">Resources</a>
+                <a href="#company" class="nav-link">Company</a>
+                <a href="#" class="nav-cta">Enter Sandbox</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="container">
+            <div class="badge">Strategic Intelligence Platform</div>
+            
+            <h1>Scale Expertise Instantly.<br>Test Strategies Safely.</h1>
+            
+            <p class="hero-subtitle">
+                Healthcare organizations need flexible capacity to meet dynamic challenges.
+                VITAL Expert provides on-demand strategic intelligence that scales with your needs.
+            </p>
+            
+            <p class="value-statement">
+                Access 136 specialized advisors. Test scenarios risk-free. Pay only for what you use.
+            </p>
+            
+            <div class="hero-buttons">
+                <a href="#" class="btn btn-primary">Enter Sandbox</a>
+                <a href="#" class="btn btn-secondary">View Demo</a>
+                <a href="#" class="btn btn-tertiary">Calculate ROI</a>
+            </div>
+            
+            <p class="trust-line">Trusted by 200+ healthcare organizations</p>
+        </div>
+    </section>
+
+    <!-- The Challenge -->
+    <section class="section">
+        <div class="container">
+            <div class="section-header">
+                <h2 class="section-title">Healthcare's Capacity Constraint</h2>
+            </div>
+            <div class="challenge-content">
+                <p class="challenge-points">
+                    Your organization faces unlimited complexity with limited resources.<br>
+                    Traditional consulting is slow and expensive.<br>
+                    Hiring takes months. Knowledge walks out the door.
+                </p>
+                <p class="challenge-conclusion">There's a better way.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- The Solution -->
+    <section class="section section-alt">
+        <div class="container">
+            <div class="section-header">
+                <h2 class="section-title">Elastic Intelligence Infrastructure</h2>
+                <p class="section-description">VITAL Expert enables your team to:</p>
+            </div>
+            
+            <div class="solution-grid">
+                <div class="solution-card">
+                    <h3>Test Without Risk</h3>
+                    <p>Use our Innovation Sandbox™ to model strategies before implementation</p>
+                </div>
+                
+                <div class="solution-card">
+                    <h3>Scale On Demand</h3>
+                    <p>Expand from 5 to 50 experts for product launches, then scale back</p>
+                </div>
+                
+                <div class="solution-card">
+                    <h3>Preserve Knowledge</h3>
+                    <p>Every insight strengthens your institutional memory permanently</p>
+                </div>
+                
+                <div class="solution-card">
+                    <h3>Unify Your AI</h3>
+                    <p>Integrate existing AI investments into one orchestrated platform</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- How It Works -->
+    <section class="section">
+        <div class="container">
+            <div class="section-header">
+                <h2 class="section-title">Simple. Fast. Measurable.</h2>
+            </div>
+            
+            <div class="steps-container">
+                <div class="step">
+                    <div class="step-number">1</div>
+                    <h3>Ask</h3>
+                    <p>Natural language queries. No special training.</p>
+                    <p class="step-example">"What's our optimal regulatory pathway?"</p>
+                </div>
+                
+                <div class="step">
+                    <div class="step-number">2</div>
+                    <h3>Analyze</h3>
+                    <p>Multiple expert agents collaborate instantly</p>
+                    <p class="step-example">Drawing from 10M+ validated documents</p>
+                </div>
+                
+                <div class="step">
+                    <div class="step-number">3</div>
+                    <h3>Test</h3>
+                    <p>Run scenarios in the sandbox</p>
+                    <p class="step-example">See outcomes before committing resources</p>
+                </div>
+                
+                <div class="step">
+                    <div class="step-number">4</div>
+                    <h3>Implement</h3>
+                    <p>Deploy with confidence</p>
+                    <p class="step-example">Track results and compound knowledge</p>
+                </div>
+            </div>
+            
+            <div style="text-align: center; margin-top: 60px;">
+                <a href="#" class="btn btn-primary">Try It Now - No Login Required</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Results -->
+    <section class="section section-alt">
+        <div class="container">
+            <div class="section-header">
+                <h2 class="section-title">Results from Real Organizations</h2>
+                <p class="section-description">Actual Customer Outcomes:</p>
+            </div>
+            
+            <div class="testimonials-grid">
+                <div class="testimonial">
+                    <p class="quote">"Reduced our regulatory timeline by 6 months"</p>
+                    <p class="attribution">- VP Regulatory Affairs, Global Pharma</p>
+                </div>
+                
+                <div class="testimonial">
+                    <p class="quote">"Replaced $2M in annual consulting spend"</p>
+                    <p class="attribution">- Chief Strategy Officer, Regional Health System</p>
+                </div>
+                
+                <div class="testimonial">
+                    <p class="quote">"Achieved FDA clearance 40% faster than projected"</p>
+                    <p class="attribution">- CEO, Digital Therapeutics Startup</p>
+                </div>
+            </div>
+            
+            <div class="metrics-grid">
+                <div class="metric">
+                    <div class="metric-value">96%</div>
+                    <div class="metric-label">Query Accuracy</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-value">&lt;2s</div>
+                    <div class="metric-label">Avg Response Time</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-value">99.99%</div>
+                    <div class="metric-label">Uptime</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-value">SOC 2</div>
+                    <div class="metric-label">Type II Certified</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Pricing -->
+    <section class="section" id="pricing">
+        <div class="container">
+            <div class="section-header">
+                <h2 class="section-title">Transparent. Scalable. Month-to-Month.</h2>
+            </div>
+            
+            <div class="pricing-grid">
+                <div class="pricing-card">
+                    <h3 class="plan-name">Starter</h3>
+                    <div class="plan-price">$2K<span>/month</span></div>
+                    <ul class="plan-features">
+                        <li>5 users</li>
+                        <li>10 agents</li>
+                        <li>1,000 queries</li>
+                        <li>Sandbox access</li>
+                    </ul>
+                    <button class="plan-cta">Start Free Trial</button>
+                </div>
+                
+                <div class="pricing-card featured">
+                    <h3 class="plan-name">Growth</h3>
+                    <div class="plan-price">$5K<span>/month</span></div>
+                    <ul class="plan-features">
+                        <li>25 users</li>
+                        <li>50 agents</li>
+                        <li>5,000 queries</li>
+                        <li>Priority support</li>
+                    </ul>
+                    <button class="plan-cta">Start Free Trial</button>
+                </div>
+                
+                <div class="pricing-card">
+                    <h3 class="plan-name">Enterprise</h3>
+                    <div class="plan-price">$15K<span>/month</span></div>
+                    <ul class="plan-features">
+                        <li>Unlimited users</li>
+                        <li>All 136 agents</li>
+                        <li>Unlimited queries</li>
+                        <li>Dedicated success manager</li>
+                    </ul>
+                    <button class="plan-cta">Start Free Trial</button>
+                </div>
+                
+                <div class="pricing-card">
+                    <h3 class="plan-name">Custom</h3>
+                    <div class="plan-price">Let's talk</div>
+                    <ul class="plan-features">
+                        <li>White-label options</li>
+                        <li>On-premise deployment</li>
+                        <li>Custom integrations</li>
+                        <li>Unlimited everything</li>
+                    </ul>
+                    <button class="plan-cta">Contact Sales</button>
+                </div>
+            </div>
+            
+            <p class="pricing-note">
+                All plans include: Daily updates, data isolation, API access
+            </p>
+        </div>
+    </section>
+
+    <!-- CTA -->
+    <section class="cta">
+        <div class="container">
+            <h2>Start Transforming Today</h2>
+            <p>Join healthcare leaders already using VITAL Expert to scale their strategic capacity.</p>
+            
+            <a href="#" class="cta-button">Enter Your Sandbox</a>
+            
+            <p class="cta-note">No credit card. No sales call. Just results.</p>
+            
+            <p class="cta-alternative">
+                Questions? Book a 15-minute strategy session.<br>
+                <a href="#">Schedule Call</a>
+            </p>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="footer-content">
+            <div class="footer-grid">
+                <div class="footer-column">
+                    <h4>Platform</h4>
+                    <ul class="footer-links">
+                        <li><a href="#">How It Works</a></li>
+                        <li><a href="#">Innovation Sandbox</a></li>
+                        <li><a href="#">Agent Library</a></li>
+                        <li><a href="#">Integrations</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-column">
+                    <h4>Services</h4>
+                    <ul class="footer-links">
+                        <li><a href="#">Strategic Advisory</a></li>
+                        <li><a href="#">Workflow Orchestration</a></li>
+                        <li><a href="#">Knowledge Management</a></li>
+                        <li><a href="#">Custom Solutions</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-column">
+                    <h4>Resources</h4>
+                    <ul class="footer-links">
+                        <li><a href="#">Documentation</a></li>
+                        <li><a href="#">API Reference</a></li>
+                        <li><a href="#">Community</a></li>
+                        <li><a href="#">Academy</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-column">
+                    <h4>Company</h4>
+                    <ul class="footer-links">
+                        <li><a href="#">About</a></li>
+                        <li><a href="#">Manifesto</a></li>
+                        <li><a href="#">VITAL Framework</a></li>
+                        <li><a href="#">Careers</a></li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="footer-bottom">
+                <div class="footer-logo">
+                    <span class="logo-vital">VITAL</span>
+                    <span class="logo-dot"></span>
+                    <span class="logo-expert">expert</span>
+                </div>
+                
+                <div class="footer-legal">
+                    <a href="#">Security</a>
+                    <a href="#">Privacy</a>
+                    <a href="#">Terms</a>
+                    <a href="#">Status</a>
+                </div>
+            </div>
+            
+            <div class="footer-disclaimer">
+                © 2025 VITAL Expert. Your data remains yours.<br>
+                *VITAL Expert is business operations software. Not a medical device.
+            </div>
+        </div>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,467 @@
+name: VITAL Path CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  # Security scanning and code quality
+  security-scan:
+    runs-on: ubuntu-latest
+    name: Security Scan
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Install security tools
+      run: |
+        pip install bandit safety semgrep
+        npm install -g audit-ci
+
+    - name: Run Bandit security linter
+      run: |
+        bandit -r src/ -f json -o bandit-report.json || true
+
+    - name: Run Safety check
+      run: |
+        pip freeze | safety check --json --output safety-report.json || true
+
+    - name: Run Semgrep
+      run: |
+        semgrep --config=auto src/ --json --output=semgrep-report.json || true
+
+    - name: Node.js security audit
+      run: |
+        audit-ci --report-type json --output-file npm-audit-report.json || true
+
+    - name: Upload security reports
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: security-reports
+        path: |
+          bandit-report.json
+          safety-report.json
+          semgrep-report.json
+          npm-audit-report.json
+
+  # Code quality and linting
+  code-quality:
+    runs-on: ubuntu-latest
+    name: Code Quality
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+
+    - name: Install Python dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install black flake8 mypy pytest pytest-asyncio pytest-cov
+
+    - name: Install Node.js dependencies
+      run: |
+        npm ci
+
+    - name: Run Python code formatting check
+      run: |
+        black --check src/
+
+    - name: Run Python linting
+      run: |
+        flake8 src/ --max-line-length=100 --extend-ignore=E203,W503
+
+    - name: Run Python type checking
+      run: |
+        mypy src/ --ignore-missing-imports
+
+    - name: Run Next.js linting
+      run: |
+        npm run lint
+
+    - name: Run Next.js type checking
+      run: |
+        npm run type-check
+
+  # Unit and integration tests
+  test:
+    runs-on: ubuntu-latest
+    name: Test Suite
+    needs: [security-scan, code-quality]
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: test
+          POSTGRES_USER: test
+          POSTGRES_DB: vital_path_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+
+    - name: Install Python dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install -r requirements-api.txt
+        pip install -r requirements-security.txt
+        pip install -r requirements-monitoring.txt
+        pip install pytest pytest-asyncio pytest-cov
+
+    - name: Install Node.js dependencies
+      run: |
+        npm ci
+
+    - name: Run Python tests
+      env:
+        DATABASE_URL: postgresql://test:test@localhost:5432/vital_path_test
+        REDIS_URL: redis://localhost:6379
+        SECRET_KEY: test-secret-key
+        ENVIRONMENT: test
+      run: |
+        pytest src/ --cov=src --cov-report=xml --cov-report=html -v
+
+    - name: Run Next.js tests
+      run: |
+        npm run test
+
+    - name: Upload coverage reports
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./coverage.xml
+        flags: unittests
+
+  # Build and push Docker images
+  build:
+    runs-on: ubuntu-latest
+    name: Build Images
+    needs: [test]
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
+
+    outputs:
+      image-tag: ${{ steps.meta.outputs.tags }}
+      image-digest: ${{ steps.build.outputs.digest }}
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Log in to Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Extract metadata
+      id: meta
+      uses: docker/metadata-action@v5
+      with:
+        images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+        tags: |
+          type=ref,event=branch
+          type=ref,event=pr
+          type=sha,prefix={{branch}}-
+          type=raw,value=latest,enable={{is_default_branch}}
+
+    # Main application
+    - name: Build and push main app
+      id: build
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        file: ./Dockerfile
+        push: true
+        tags: ${{ steps.meta.outputs.tags }}-main
+        labels: ${{ steps.meta.outputs.labels }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+
+    # API Gateway
+    - name: Build and push API Gateway
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        file: ./Dockerfile.api-gateway-enhanced
+        push: true
+        tags: ${{ steps.meta.outputs.tags }}-api-gateway
+        labels: ${{ steps.meta.outputs.labels }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+
+    # Clinical Validator
+    - name: Build and push Clinical Validator
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        file: ./Dockerfile.clinical-validator
+        push: true
+        tags: ${{ steps.meta.outputs.tags }}-clinical-validator
+        labels: ${{ steps.meta.outputs.labels }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+
+    # Security and Compliance
+    - name: Build and push Security Service
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        file: ./Dockerfile.security-compliance
+        push: true
+        tags: ${{ steps.meta.outputs.tags }}-security-compliance
+        labels: ${{ steps.meta.outputs.labels }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+
+    # Monitoring Service
+    - name: Build and push Monitoring Service
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        file: ./Dockerfile.monitoring
+        push: true
+        tags: ${{ steps.meta.outputs.tags }}-monitoring
+        labels: ${{ steps.meta.outputs.labels }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+
+    # Worker
+    - name: Build and push Worker
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        file: ./Dockerfile.worker
+        push: true
+        tags: ${{ steps.meta.outputs.tags }}-worker
+        labels: ${{ steps.meta.outputs.labels }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+
+  # Deploy to staging
+  deploy-staging:
+    runs-on: ubuntu-latest
+    name: Deploy to Staging
+    needs: [build]
+    if: github.ref == 'refs/heads/develop'
+    environment: staging
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Deploy to staging environment
+      uses: appleboy/ssh-action@v1.0.0
+      with:
+        host: ${{ secrets.STAGING_HOST }}
+        username: ${{ secrets.STAGING_USER }}
+        key: ${{ secrets.STAGING_SSH_KEY }}
+        script: |
+          cd /opt/vital-path-staging
+
+          # Pull latest images
+          docker compose pull
+
+          # Update environment variables
+          echo "IMAGE_TAG=${{ needs.build.outputs.image-tag }}" > .env.deploy
+
+          # Deploy with zero downtime
+          docker compose -f docker-compose.yml -f docker-compose.staging.yml up -d
+
+          # Health check
+          sleep 30
+          curl -f http://localhost:8000/health || exit 1
+
+          # Clean up old images
+          docker image prune -f
+
+  # Deploy to production
+  deploy-production:
+    runs-on: ubuntu-latest
+    name: Deploy to Production
+    needs: [build, deploy-staging]
+    if: github.ref == 'refs/heads/main'
+    environment: production
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Deploy to production environment
+      uses: appleboy/ssh-action@v1.0.0
+      with:
+        host: ${{ secrets.PRODUCTION_HOST }}
+        username: ${{ secrets.PRODUCTION_USER }}
+        key: ${{ secrets.PRODUCTION_SSH_KEY }}
+        script: |
+          cd /opt/vital-path-production
+
+          # Create backup
+          ./scripts/backup-before-deploy.sh
+
+          # Pull latest images
+          docker compose pull
+
+          # Update environment variables
+          echo "IMAGE_TAG=${{ needs.build.outputs.image-tag }}" > .env.deploy
+
+          # Deploy with zero downtime using blue-green strategy
+          ./scripts/blue-green-deploy.sh
+
+          # Health check
+          sleep 60
+          curl -f https://api.vitalpath.ai/health || exit 1
+
+          # Run post-deployment tests
+          ./scripts/post-deploy-tests.sh
+
+          # Clean up old images
+          docker image prune -f
+
+    - name: Notify deployment success
+      if: success()
+      uses: 8398a7/action-slack@v3
+      with:
+        status: success
+        text: '🚀 VITAL Path deployed successfully to production!'
+        webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+
+    - name: Notify deployment failure
+      if: failure()
+      uses: 8398a7/action-slack@v3
+      with:
+        status: failure
+        text: '❌ VITAL Path production deployment failed!'
+        webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+
+  # Post-deployment monitoring
+  post-deploy-monitor:
+    runs-on: ubuntu-latest
+    name: Post-Deployment Monitoring
+    needs: [deploy-production]
+    if: github.ref == 'refs/heads/main' && success()
+
+    steps:
+    - name: Wait for system stabilization
+      run: sleep 300  # 5 minutes
+
+    - name: Run health checks
+      run: |
+        # Check main application
+        curl -f https://api.vitalpath.ai/health
+
+        # Check API gateway
+        curl -f https://api.vitalpath.ai/api/v1/health
+
+        # Check monitoring endpoint
+        curl -f https://monitoring.vitalpath.ai/health
+
+    - name: Check performance metrics
+      run: |
+        # Query Prometheus for key metrics
+        curl -s 'https://metrics.vitalpath.ai/api/v1/query?query=up' | jq '.data.result[] | select(.value[1] != "1")'
+
+    - name: Trigger smoke tests
+      uses: repository-dispatch@v1
+      with:
+        token: ${{ secrets.REPO_ACCESS_TOKEN }}
+        event_type: smoke-tests
+        client_payload: |
+          {
+            "deployment_id": "${{ github.run_id }}",
+            "environment": "production"
+          }
+
+  # Rollback workflow (manual trigger)
+  rollback:
+    runs-on: ubuntu-latest
+    name: Emergency Rollback
+    if: github.event_name == 'workflow_dispatch'
+    environment: production
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Rollback production deployment
+      uses: appleboy/ssh-action@v1.0.0
+      with:
+        host: ${{ secrets.PRODUCTION_HOST }}
+        username: ${{ secrets.PRODUCTION_USER }}
+        key: ${{ secrets.PRODUCTION_SSH_KEY }}
+        script: |
+          cd /opt/vital-path-production
+
+          # Execute rollback script
+          ./scripts/rollback.sh
+
+          # Verify rollback
+          sleep 30
+          curl -f https://api.vitalpath.ai/health || exit 1
+
+    - name: Notify rollback completion
+      uses: 8398a7/action-slack@v3
+      with:
+        status: custom
+        custom_payload: |
+          {
+            "text": "🔄 VITAL Path production rollback completed",
+            "color": "warning"
+          }
+        webhook_url: ${{ secrets.SLACK_WEBHOOK }}

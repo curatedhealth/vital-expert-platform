@@ -1,14 +1,15 @@
-import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
-import './globals.css'
-import { SimpleNav } from '@/components/layout/simple-nav'
+
 import { AuthProvider } from '@/lib/auth/auth-context'
+
+import type { Metadata } from 'next'
+import './globals.css'
 
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'VITALpath - Digital Health Transformation Platform',
-  description: 'Guide healthcare organizations through the VITAL Framework: Vision, Intelligence, Trials, Activation, Learning.',
+  title: 'VITAL Expert - Strategic Intelligence Platform',
+  description: 'Scale expertise instantly. Test strategies safely. Access 136 specialized advisors for healthcare organizations.',
 }
 
 export default function RootLayout({
@@ -20,7 +21,6 @@ export default function RootLayout({
     <html lang="en">
       <body className={inter.className}>
         <AuthProvider>
-          <SimpleNav />
           {children}
         </AuthProvider>
       </body>

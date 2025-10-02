@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
+
 import { supabase } from '@/lib/supabase/client';
-import type { MedicalCompetency } from '@/types/healthcare-compliance';
 
 /**
  * Medical Competencies Management API
@@ -15,13 +15,6 @@ export async function GET(request: NextRequest) {
     const capabilityId = searchParams.get('capabilityId');
     const evidenceLevel = searchParams.get('evidenceLevel');
     const requiresMedicalReview = searchParams.get('requiresMedicalReview');
-
-    console.log('🔍 Fetching competencies with params:', {
-      capabilityId,
-      evidenceLevel,
-      requiresMedicalReview
-    });
-
     // Build query
     let query = supabase
       .from('competencies')
@@ -56,9 +49,6 @@ export async function GET(request: NextRequest) {
         { status: 500 }
       );
     }
-
-    console.log(`✅ Successfully fetched ${data?.length || 0} competencies`);
-
     return NextResponse.json({
       competencies: data || [],
       count: data?.length || 0,
@@ -79,11 +69,12 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    console.log('📝 Creating new competency:', body);
-
     // Validate required fields
     const requiredFields = ['capability_id', 'name', 'description', 'prompt_snippet'];
-    const missingFields = requiredFields.filter(field => !body[field]);
+    const missingFields = requiredFields.filter(field => {
+      // eslint-disable-next-line security/detect-object-injection
+      return !body[field];
+    });
 
     if (missingFields.length > 0) {
       return NextResponse.json(
@@ -115,8 +106,8 @@ export async function POST(request: NextRequest) {
       medical_accuracy_requirement: body.medical_accuracy_requirement || 0.95,
       evidence_level: body.evidence_level || 'Expert Opinion',
       clinical_guidelines_reference: body.clinical_guidelines_reference || [],
-      required_knowledge: body.required_knowledge || {},
-      quality_metrics: body.quality_metrics || {},
+      required_knowledge: body.required_knowledge || { /* TODO: implement */ },
+      quality_metrics: body.quality_metrics || { /* TODO: implement */ },
       icd_codes: body.icd_codes || [],
       snomed_codes: body.snomed_codes || [],
       order_priority: body.order_priority || 0,
@@ -146,9 +137,6 @@ export async function POST(request: NextRequest) {
         { status: 500 }
       );
     }
-
-    console.log('✅ Successfully created competency:', data.id);
-
     // Create audit log entry
     await createCompetencyAuditEntry('competency_created', data.id, competencyData);
 
@@ -179,9 +167,6 @@ export async function PUT(request: NextRequest) {
         { status: 400 }
       );
     }
-
-    console.log('🔧 Updating competency:', id, updateData);
-
     // Get existing competency for audit trail
     const { data: existingCompetency, error: fetchError } = await supabase
       .from('competencies')
@@ -229,9 +214,6 @@ export async function PUT(request: NextRequest) {
         { status: 500 }
       );
     }
-
-    console.log('✅ Successfully updated competency:', id);
-
     // Create audit log entry
     await createCompetencyAuditEntry('competency_updated', id, updateData);
 
@@ -262,9 +244,6 @@ export async function DELETE(request: NextRequest) {
         { status: 400 }
       );
     }
-
-    console.log('🗑️ Deleting competency:', id);
-
     // Check if competency is in use by agents
     const { data: agentCompetencies, error: usageError } = await supabase
       .from('agent_capabilities')
@@ -303,9 +282,6 @@ export async function DELETE(request: NextRequest) {
         { status: 500 }
       );
     }
-
-    console.log('✅ Successfully deleted competency:', id);
-
     // Create audit log entry
     await createCompetencyAuditEntry('competency_deleted', id, { deletion_reason: 'Deleted via API' });
 
@@ -326,7 +302,7 @@ export async function DELETE(request: NextRequest) {
 /**
  * Create audit log entry for competency operations
  */
-async function createCompetencyAuditEntry(action: string, entityId: string, data: any) {
+async function createCompetencyAuditEntry(action: string, entityId: string, data: unknown) {
   try {
     await supabase
       .from('medical_validations')

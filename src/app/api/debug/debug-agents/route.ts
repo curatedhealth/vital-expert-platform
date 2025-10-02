@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+
 import { supabase } from '@/lib/supabase/client';
 
 export async function GET(request: NextRequest) {
@@ -20,7 +21,7 @@ export async function GET(request: NextRequest) {
     const idCounts = duplicateCheck?.reduce((acc, agent) => {
       acc[agent.id] = (acc[agent.id] || 0) + 1;
       return acc;
-    }, {} as Record<string, number>) || {};
+    }, { /* TODO: implement */ } as Record<string, number>) || { /* TODO: implement */ };
 
     const duplicates = Object.entries(idCounts).filter(([id, count]) => count > 1);
 

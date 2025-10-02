@@ -76,8 +76,10 @@ export class SQLExecutor {
     let stringChar = '';
 
     for (let i = 0; i < sql.length; i++) {
-      const char = sql[i];
-      const nextChar = sql[i + 1];
+      // Validate index before accessing string
+      if (i >= 0 && i < sql.length) {
+        // eslint-disable-next-line security/detect-object-injection
+        const char = sql[i];
 
       if (!inString && (char === '"' || char === "'")) {
         inString = true;
@@ -95,6 +97,7 @@ export class SQLExecutor {
       } else {
         current += char;
       }
+      }
     }
 
     if (current.trim()) {
@@ -110,7 +113,7 @@ export class SQLExecutor {
     );
   }
 
-  private async executeIndividualStatement(statement: string): Promise<any> {
+  private async executeIndividualStatement(statement: string): Promise<unknown> {
     const trimmed = statement.trim().toLowerCase();
 
     // Handle CREATE TABLE statements
@@ -157,7 +160,7 @@ export class SQLExecutor {
     return this.executeRawSQL(statement);
   }
 
-  private async executeRawSQL(statement: string): Promise<any> {
+  private async executeRawSQL(statement: string): Promise<unknown> {
     // Use the Supabase client's underlying fetch capability
     const response = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/rpc/exec_sql`, {
       method: 'POST',

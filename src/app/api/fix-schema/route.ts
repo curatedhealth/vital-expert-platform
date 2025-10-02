@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+
 import { supabase } from '@/lib/supabase/client';
 
 export async function POST(request: NextRequest) {
@@ -10,8 +11,6 @@ export async function POST(request: NextRequest) {
       .limit(1);
 
     if (testError) {
-      console.log('Columns missing, trying to check table structure');
-
       // Check if we can query the table structure
       const { data: tableInfo, error: infoError } = await supabase
         .from('information_schema.columns')
@@ -23,7 +22,6 @@ export async function POST(request: NextRequest) {
         console.error('Cannot access table info:', infoError);
       } else {
         const columns = tableInfo?.map(col => col.column_name) || [];
-        console.log('Current agents table columns:', columns);
       }
 
       return NextResponse.json({

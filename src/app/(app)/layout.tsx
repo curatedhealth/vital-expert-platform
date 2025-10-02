@@ -1,18 +1,31 @@
 'use client';
 
-import { useState } from 'react';
-import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { cn } from '@/lib/utils';
-import { useAuth } from '@/lib/auth/auth-context';
-import { DashboardSidebar } from '@/components/dashboard-sidebar';
 import {
   Menu,
   X,
   Package2,
+  User,
+  Settings,
+  LogOut,
+  ChevronDown,
 } from 'lucide-react';
+import Link from 'next/link';
+import { usePathname, useRouter } from 'next/navigation';
+import { useState } from 'react';
+
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { DashboardSidebar } from '@/features/dashboard/components/dashboard-sidebar';
+import { useAuth } from '@/lib/auth/auth-context';
+import { cn } from '@/lib/utils';
 
 export default function AppLayout({
   children,
@@ -48,19 +61,15 @@ export default function AppLayout({
   };
 
   // Temporary bypass auth for debugging
-  console.log('Layout state:', { loading, user: user?.email, userProfile: userProfile?.email });
-
   // Skip auth check temporarily
   // if (!loading && !user) {
-  //   console.log('No user, redirecting to login');
-  //   router.push('/login');
+  //   //   router.push('/login');
   //   return null;
   // }
 
   // Skip loading state temporarily
   // if (loading) {
-  //   console.log('Still loading...');
-  //   return (
+  //   //   return (
   //     <div className="min-h-screen bg-background flex items-center justify-center">
   //       <div className="text-center">
   //         <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
@@ -106,22 +115,13 @@ export default function AppLayout({
           <div className="w-full flex-1">
             <nav className="flex items-center space-x-6 text-sm font-medium">
               <Link
-                href="/knowledge"
+                href="/dashboard"
                 className={cn(
                   "transition-colors hover:text-foreground/80",
-                  pathname.startsWith("/knowledge") ? "text-foreground" : "text-foreground/60"
+                  pathname === "/dashboard" ? "text-foreground" : "text-foreground/60"
                 )}
               >
-                Knowledge
-              </Link>
-              <Link
-                href="/agents"
-                className={cn(
-                  "transition-colors hover:text-foreground/80",
-                  pathname.startsWith("/agents") ? "text-foreground" : "text-foreground/60"
-                )}
-              >
-                Agents
+                Dashboard
               </Link>
               <Link
                 href="/chat"
@@ -133,35 +133,126 @@ export default function AppLayout({
                 Ask Expert
               </Link>
               <Link
-                href="/workflows"
+                href="/ask-panel"
                 className={cn(
-                  "text-foreground/60 transition-colors hover:text-foreground/80 cursor-not-allowed"
+                  "transition-colors hover:text-foreground/80",
+                  pathname.startsWith("/ask-panel") ? "text-foreground" : "text-foreground/60"
                 )}
               >
-                Workflows <Badge variant="secondary" className="ml-1 text-xs">Coming Soon</Badge>
+                Ask Panel
               </Link>
-              {userProfile && (userProfile.role === 'admin' || userProfile.role === 'super_admin') && (
-                <Link
-                  href="/admin/batch-upload"
-                  className={cn(
-                    "transition-colors hover:text-foreground/80",
-                    pathname.startsWith("/admin") ? "text-foreground" : "text-foreground/60"
-                  )}
-                >
-                  Admin <Badge variant="outline" className="ml-1 text-xs">Pro</Badge>
-                </Link>
-              )}
+              <Link
+                href="/ask-team"
+                className={cn(
+                  "transition-colors hover:text-foreground/80",
+                  pathname.startsWith("/ask-team") ? "text-foreground" : "text-foreground/60"
+                )}
+              >
+                Ask Team
+              </Link>
+              <Link
+                href="/solution-builder"
+                className={cn(
+                  "transition-colors hover:text-foreground/80",
+                  pathname.startsWith("/solution-builder") ? "text-foreground" : "text-foreground/60"
+                )}
+              >
+                Build Solution
+              </Link>
+              <Link
+                href="/agents"
+                className={cn(
+                  "transition-colors hover:text-foreground/80",
+                  pathname.startsWith("/agents") ? "text-foreground" : "text-foreground/60"
+                )}
+              >
+                Agents
+              </Link>
+              <Link
+                href="/knowledge"
+                className={cn(
+                  "transition-colors hover:text-foreground/80",
+                  pathname.startsWith("/knowledge") ? "text-foreground" : "text-foreground/60"
+                )}
+              >
+                Knowledge
+              </Link>
+              <Link
+                href="/prompts"
+                className={cn(
+                  "transition-colors hover:text-foreground/80",
+                  pathname.startsWith("/prompts") ? "text-foreground" : "text-foreground/60"
+                )}
+              >
+                Prompt PRISM
+              </Link>
+              <Link
+                href="/capabilities"
+                className={cn(
+                  "transition-colors hover:text-foreground/80",
+                  pathname.startsWith("/capabilities") ? "text-foreground" : "text-foreground/60"
+                )}
+              >
+                Capabilities
+              </Link>
+              <Link
+                href="/workflows"
+                className={cn(
+                  "transition-colors hover:text-foreground/80",
+                  pathname.startsWith("/workflows") ? "text-foreground" : "text-foreground/60"
+                )}
+              >
+                Workflows
+              </Link>
             </nav>
           </div>
-          <Button variant="outline" size="sm" onClick={signOut}>
-            Sign Out
-          </Button>
+
+          {/* User Profile Dropdown */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="sm" className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                  <User className="h-4 w-4 text-primary" />
+                </div>
+                <span className="hidden md:inline-block text-sm font-medium">
+                  {user?.email?.split('@')[0] || 'User'}
+                </span>
+                <ChevronDown className="h-4 w-4 text-muted-foreground" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuLabel>
+                <div className="flex flex-col space-y-1">
+                  <p className="text-sm font-medium leading-none">
+                    {user?.email?.split('@')[0] || 'User'}
+                  </p>
+                  <p className="text-xs leading-none text-muted-foreground">
+                    {user?.email}
+                  </p>
+                </div>
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => router.push('/dashboard')}>
+                <User className="mr-2 h-4 w-4" />
+                <span>Profile</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => router.push('/dashboard')}>
+                <Settings className="mr-2 h-4 w-4" />
+                <span>Settings</span>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={signOut} className="text-red-600">
+                <LogOut className="mr-2 h-4 w-4" />
+                <span>Log out</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </header>
 
         {/* Mobile Sidebar */}
         {sidebarOpen && (
           <div className="fixed inset-0 z-50 md:hidden">
-            <div className="fixed inset-0 bg-black/80" onClick={() => setSidebarOpen(false)} />
+            <div className="fixed inset-0 bg-black/80" onClick={() => setSidebarOpen(false)} onKeyDown={() => setSidebarOpen(false)} role="button" tabIndex={0} />
             <div className="fixed left-0 top-0 z-50 h-full w-72 bg-background shadow-lg">
               <div className="flex items-center justify-between p-4 border-b">
                 <div className="flex items-center gap-2">
@@ -183,7 +274,10 @@ export default function AppLayout({
         )}
 
         {/* Main Content */}
-        <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6">
+        <main className={cn(
+          "flex flex-1 flex-col overflow-hidden",
+          pathname === '/chat' ? '' : 'gap-4 p-4 lg:gap-6 lg:p-6'
+        )}>
           {children}
         </main>
       </div>

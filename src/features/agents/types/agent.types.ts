@@ -64,9 +64,9 @@ export interface Agent {
   capabilities: string[];
   knowledge_domains?: string[];
   domain_expertise: DomainExpertise;
-  competency_levels?: Record<string, any>;
-  knowledge_sources?: Record<string, any>;
-  tool_configurations?: Record<string, any>;
+  competency_levels?: Record<string, unknown>;
+  knowledge_sources?: Record<string, unknown>;
+  tool_configurations?: Record<string, unknown>;
 
   // Business Context
   business_function?: string;
@@ -133,17 +133,17 @@ export interface Agent {
   workflow_positions?: string[];
 
   // Configuration
-  escalation_rules?: Record<string, any>;
+  escalation_rules?: Record<string, unknown>;
   confidence_thresholds?: ConfidenceThresholds;
-  input_validation_rules?: Record<string, any>;
-  output_format_rules?: Record<string, any>;
-  citation_requirements?: Record<string, any>;
+  input_validation_rules?: Record<string, unknown>;
+  output_format_rules?: Record<string, unknown>;
+  citation_requirements?: Record<string, unknown>;
   rate_limits?: RateLimits;
 
   // Testing
-  test_scenarios?: any[];
+  test_scenarios?: unknown[];
   validation_history?: ValidationHistoryEntry[];
-  performance_benchmarks?: Record<string, any>;
+  performance_benchmarks?: Record<string, unknown>;
   reviewer_id?: string;
   last_validation_date?: Date | string;
   validation_expiry_date?: Date | string;
@@ -153,7 +153,7 @@ export interface Agent {
   updated_at?: Date | string;
   created_by?: string;
   updated_by?: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 // Supporting interfaces
@@ -325,8 +325,8 @@ export interface AgentAuditLog {
   action: string;
   changed_by?: string;
   changed_at: Date | string;
-  old_values?: Record<string, any>;
-  new_values?: Record<string, any>;
+  old_values?: Record<string, unknown>;
+  new_values?: Record<string, unknown>;
   ip_address?: string;
   user_agent?: string;
 }

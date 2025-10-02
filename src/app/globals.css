@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -5,6 +7,56 @@
 @layer base {
   :root {
     --radius: 0.65rem;
+
+    /* VITAL.expert Brand Colors - Core Neutrals */
+    --vital-black: #0A0A0A;
+    --vital-white: #FFFFFF;
+    --vital-gray-95: #FAFAFA;
+    --vital-gray-90: #F5F5F5;
+    --vital-gray-80: #E5E5E5;
+    --vital-gray-70: #CCCCCC;
+    --vital-gray-60: #999999;
+    --vital-gray-40: #666666;
+
+    /* Service Line Colors */
+    --regulatory-blue: #0066FF;
+    --clinical-green: #00CC88;
+    --safety-red: #FF3366;
+    --data-purple: #9933FF;
+    --market-orange: #FF6600;
+    --research-cyan: #00CCFF;
+    --quality-gold: #FFAA00;
+    --strategy-navy: #003399;
+
+    /* Spacing System */
+    --space-xs: 4px;
+    --space-sm: 8px;
+    --space-md: 16px;
+    --space-lg: 24px;
+    --space-xl: 32px;
+    --space-2xl: 48px;
+    --space-3xl: 64px;
+    --space-4xl: 80px;
+
+    /* Shadow System */
+    --shadow-xs: 0 1px 3px rgba(0,0,0,0.05);
+    --shadow-sm: 0 2px 8px rgba(0,0,0,0.08);
+    --shadow-md: 0 4px 16px rgba(0,0,0,0.10);
+    --shadow-lg: 0 8px 32px rgba(0,0,0,0.12);
+    --shadow-xl: 0 16px 48px rgba(0,0,0,0.15);
+
+    /* Border Radius */
+    --radius-sm: 4px;
+    --radius-md: 6px;
+    --radius-lg: 8px;
+    --radius-xl: 12px;
+    --radius-2xl: 16px;
+    --radius-full: 9999px;
+
+    /* Animation Timing */
+    --ease-in: cubic-bezier(0.4, 0, 1, 1);
+    --ease-out: cubic-bezier(0, 0, 0.2, 1);
+    --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
     --background: oklch(1 0 0);
     --foreground: oklch(0.141 0.005 285.823);
     --card: oklch(1 0 0);
@@ -81,30 +133,132 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
     font-feature-settings: "rlig" 1, "calt" 1;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 }
 
-/* VITALpath Custom Styles */
+/* VITAL.expert Design System Components */
 @layer components {
+  /* Animations */
+  @keyframes pulse-dot {
+    0%, 100% { transform: translateY(-0.15em) scale(1); opacity: 1; }
+    50% { transform: translateY(-0.15em) scale(1.2); opacity: 0.8; }
+  }
+
+  @keyframes dot-morph {
+    0% { background: var(--regulatory-blue); }
+    14% { background: var(--clinical-green); }
+    28% { background: var(--safety-red); }
+    42% { background: var(--data-purple); }
+    57% { background: var(--market-orange); }
+    71% { background: var(--research-cyan); }
+    85% { background: --quality-gold); }
+    100% { background: var(--regulatory-blue); }
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .animate-pulse-dot {
+    animation: pulse-dot 2s ease-in-out infinite;
+  }
+
+  .animate-morph-dot {
+    animation: dot-morph 4s linear infinite;
+  }
+
+  .animate-fade-in {
+    animation: fadeIn 0.5s ease-out;
+  }
+
+  /* Typography */
+  .display {
+    @apply text-[56px] font-extrabold leading-[1.1] tracking-tight;
+  }
+
+  .h1 {
+    @apply text-5xl font-extrabold leading-tight tracking-tight;
+  }
+
+  .h2 {
+    @apply text-4xl font-extrabold leading-tight tracking-tight;
+  }
+
+  .h3 {
+    @apply text-[32px] font-bold leading-snug tracking-tight;
+  }
+
+  .h4 {
+    @apply text-2xl font-bold leading-snug;
+  }
+
+  .h5 {
+    @apply text-xl font-semibold leading-normal;
+  }
+
+  .body-large {
+    @apply text-lg font-medium leading-relaxed;
+  }
+
+  .body {
+    @apply text-base font-medium leading-relaxed;
+  }
+
+  .small-text {
+    @apply text-sm font-medium leading-normal;
+  }
+
+  .caption {
+    @apply text-xs font-semibold leading-tight;
+  }
+
+  /* Buttons */
+  .btn {
+    @apply px-8 py-3.5 text-base font-semibold rounded-lg transition-all duration-200 cursor-pointer inline-flex items-center justify-center;
+  }
+
+  .btn-primary {
+    @apply bg-vital-black text-vital-white hover:bg-[var(--regulatory-blue)] hover:-translate-y-0.5 hover:shadow-[var(--shadow-md)];
+  }
+
+  .btn-secondary {
+    @apply bg-transparent text-vital-black border-2 border-vital-gray-80 hover:border-vital-black hover:-translate-y-0.5;
+  }
+
+  /* Cards */
+  .card {
+    @apply p-8 bg-white border border-vital-gray-80 rounded-xl transition-all duration-300;
+  }
+
+  .card-hover {
+    @apply hover:-translate-y-1 hover:shadow-[var(--shadow-lg)] hover:border-[var(--regulatory-blue)];
+  }
+
+  /* Containers */
+  .container-custom {
+    @apply max-w-[1200px] mx-auto px-10;
+  }
+
+  /* Legacy support */
   .journey-phase {
     @apply transition-all duration-300 ease-in-out;
   }
 
-  .journey-phase-active {
-    @apply ring-4 ring-progress-teal/20 shadow-lg;
-  }
-
   .citation-link {
-    @apply text-trust-blue hover:text-progress-teal underline cursor-pointer;
+    @apply text-[var(--regulatory-blue)] hover:text-[var(--clinical-green)] underline cursor-pointer;
   }
 
   .gradient-vital {
-    background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+    background: linear-gradient(135deg, var(--regulatory-blue) 0%, var(--clinical-green) 100%);
   }
 
   .text-gradient-vital {
-    background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+    background: linear-gradient(135deg, var(--research-cyan), var(--regulatory-blue));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;

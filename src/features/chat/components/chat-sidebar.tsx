@@ -1,19 +1,20 @@
 'use client';
 
+import { ChevronLeft, ChevronRight, Zap, User } from 'lucide-react';
 import * as React from 'react';
-import { MessageSquare, ChevronLeft, ChevronRight, Package2 } from 'lucide-react';
+
 import { Button } from '@/components/ui/button';
-import { NavAskExpert } from './nav-ask-expert';
-import { NavAiAgents } from './nav-ai-agents';
-import { cn } from '@/lib/utils';
 import {
   Sidebar,
   SidebarContent,
   SidebarHeader,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
 } from '@/components/ui/sidebar';
+import { Switch } from '@/components/ui/switch';
+import { cn } from '@/lib/utils';
+import { VitalLogo } from '@/shared/components/vital-logo';
+
+import { NavAiAgents } from './nav-ai-agents';
+import { NavAskExpert } from './nav-ask-expert';
 
 interface Chat {
   id: string;
@@ -37,12 +38,15 @@ interface ChatSidebarProps extends React.ComponentProps<typeof Sidebar> {
   onAgentStoreClick: () => void;
   onCreateAgentClick: () => void;
   onAgentSelect?: (agentId: string) => void;
+  onAgentRemove?: (agentId: string) => void;
   selectedAgentId?: string;
   agents?: Agent[];
   formatDate: (date: string) => string;
   isCollapsed?: boolean;
   onToggleCollapse?: () => void;
   mounted?: boolean;
+  interactionMode?: 'automatic' | 'manual';
+  onToggleMode?: (mode: 'automatic' | 'manual') => void;
 }
 
 export function ChatSidebar({
@@ -55,25 +59,25 @@ export function ChatSidebar({
   onAgentStoreClick,
   onCreateAgentClick,
   onAgentSelect,
+  onAgentRemove,
   selectedAgentId,
   agents = [],
   formatDate,
   isCollapsed = false,
   onToggleCollapse,
   mounted = true,
+  interactionMode,
+  onToggleMode,
   ...props
 }: ChatSidebarProps) {
   return (
     <Sidebar side="left" variant="sidebar" collapsible="offcanvas" {...props}>
-      <SidebarHeader className="border-b border-sidebar-border">
+      <SidebarHeader className="border-b border-sidebar-border bg-vital-gray-95">
         <div className={cn("px-3 py-2", isCollapsed && "px-1")}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Package2 className="h-6 w-6" />
               {!isCollapsed && (
-                <h2 className="text-lg font-semibold tracking-tight">
-                  Context Menu
-                </h2>
+                <VitalLogo size="sm" serviceLine="regulatory" animated="pulse" />
               )}
             </div>
             {onToggleCollapse && (
@@ -91,6 +95,24 @@ export function ChatSidebar({
               </Button>
             )}
           </div>
+
+          {/* Interaction Mode Toggle */}
+          {!isCollapsed && onToggleMode && (
+            <div className="mt-3 flex items-center gap-2 px-2 py-1.5 border border-vital-gray-80 rounded-lg bg-vital-gray-95">
+              <div className="flex items-center gap-1">
+                <Zap className={`h-3 w-3 ${interactionMode === 'automatic' ? 'text-clinical-green' : 'text-vital-gray-60'}`} />
+                <span className="text-xs font-medium text-vital-black">Auto</span>
+              </div>
+              <Switch
+                checked={interactionMode === 'manual'}
+                onCheckedChange={(checked) => onToggleMode(checked ? 'manual' : 'automatic')}
+              />
+              <div className="flex items-center gap-1">
+                <User className={`h-3 w-3 ${interactionMode === 'manual' ? 'text-data-purple' : 'text-vital-gray-60'}`} />
+                <span className="text-xs font-medium text-vital-black">Manual</span>
+              </div>
+            </div>
+          )}
         </div>
       </SidebarHeader>
 
@@ -109,6 +131,7 @@ export function ChatSidebar({
           onAgentStoreClick={onAgentStoreClick}
           onCreateAgentClick={onCreateAgentClick}
           onAgentSelect={onAgentSelect}
+          onAgentRemove={onAgentRemove}
           selectedAgentId={selectedAgentId}
           agents={agents}
           isCollapsed={isCollapsed}

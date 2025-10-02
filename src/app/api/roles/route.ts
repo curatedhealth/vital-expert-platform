@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+
 import { supabase } from '@/lib/supabase/client';
 
 /**
@@ -13,9 +14,6 @@ export async function GET(request: NextRequest) {
     const department = searchParams.get('department');
     const seniorityLevel = searchParams.get('seniorityLevel');
     const requiresMedicalLicense = searchParams.get('requiresMedicalLicense');
-
-    console.log('👨‍⚕️ Fetching roles with params:', { department, seniorityLevel, requiresMedicalLicense });
-
     // Build query
     let query = supabase
       .from('roles')
@@ -47,9 +45,6 @@ export async function GET(request: NextRequest) {
         { status: 500 }
       );
     }
-
-    console.log(`✅ Successfully fetched ${data?.length || 0} roles`);
-
     // Get unique departments and seniority levels for filtering
     const departments = [...new Set(data?.map(role => role.department).filter(Boolean))];
     const seniorityLevels = [...new Set(data?.map(role => role.seniority_level).filter(Boolean))];
@@ -78,11 +73,12 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    console.log('📝 Creating new role:', body);
-
     // Validate required fields
     const requiredFields = ['name', 'clinical_title', 'seniority_level', 'department'];
-    const missingFields = requiredFields.filter(field => !body[field]);
+    const missingFields = requiredFields.filter(field => {
+      // eslint-disable-next-line security/detect-object-injection
+      return !body[field];
+    });
 
     if (missingFields.length > 0) {
       return NextResponse.json(
@@ -137,9 +133,6 @@ export async function POST(request: NextRequest) {
         { status: 500 }
       );
     }
-
-    console.log('✅ Successfully created role:', data.id);
-
     return NextResponse.json({
       role: data,
       message: 'Role created successfully',
@@ -167,9 +160,6 @@ export async function PUT(request: NextRequest) {
         { status: 400 }
       );
     }
-
-    console.log('🔧 Updating role:', id, updateData);
-
     const { data, error } = await supabase
       .from('roles')
       .update(updateData)
@@ -190,9 +180,6 @@ export async function PUT(request: NextRequest) {
         { status: 500 }
       );
     }
-
-    console.log('✅ Successfully updated role:', id);
-
     return NextResponse.json({
       role: data,
       message: 'Role updated successfully',
@@ -220,9 +207,6 @@ export async function DELETE(request: NextRequest) {
         { status: 400 }
       );
     }
-
-    console.log('🗑️ Deleting role:', id);
-
     // Check if role is in use by agents
     const { data: agentUsage, error: usageError } = await supabase
       .from('agents')
@@ -261,9 +245,6 @@ export async function DELETE(request: NextRequest) {
         { status: 500 }
       );
     }
-
-    console.log('✅ Successfully deleted role:', id);
-
     return NextResponse.json({
       message: 'Role deleted successfully',
       timestamp: new Date().toISOString()

@@ -1,17 +1,5 @@
 'use client';
 
-import React, { useState, useCallback, useRef, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Checkbox } from '@/components/ui/checkbox';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Separator } from '@/components/ui/separator';
-import { AgentAvatar } from '@/components/ui/agent-avatar';
-import { useAgentsStore } from '@/lib/stores/agents-store';
 import {
   Upload,
   FileText,
@@ -20,11 +8,19 @@ import {
   CheckCircle,
   Globe,
   User,
-  Brain,
-  Users,
-  ChevronDown,
-  Check,
 } from 'lucide-react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
+
+import { AgentAvatar } from '@/components/ui/agent-avatar';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
+import { Progress } from '@/components/ui/progress';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Separator } from '@/components/ui/separator';
+import { useAgentsStore } from '@/lib/stores/agents-store';
 import { cn } from '@/lib/utils';
 
 interface UploadFile {
@@ -39,7 +35,7 @@ interface UploadFile {
 }
 
 interface KnowledgeUploaderProps {
-  onUploadComplete: (files: any[]) => void;
+  onUploadComplete: (files: unknown[]) => void;
 }
 
 export function KnowledgeUploader({ onUploadComplete }: KnowledgeUploaderProps) {
@@ -77,6 +73,7 @@ export function KnowledgeUploader({ onUploadComplete }: KnowledgeUploaderProps) 
     const k = 1024;
     const sizes = ['Bytes', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
+    // eslint-disable-next-line security/detect-object-injection
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
@@ -254,7 +251,6 @@ export function KnowledgeUploader({ onUploadComplete }: KnowledgeUploaderProps) 
     }
   };
 
-
   return (
     <div className="space-y-6">
       {/* Upload Settings */}
@@ -350,7 +346,6 @@ export function KnowledgeUploader({ onUploadComplete }: KnowledgeUploaderProps) 
           </div>
         </CardContent>
       </Card>
-
 
       {/* Drop Zone */}
       <div

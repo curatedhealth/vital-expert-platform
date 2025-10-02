@@ -3,15 +3,15 @@
  * Extends the base orchestrator with HIPAA compliance integration
  */
 
-import { AgentOrchestrator } from './AgentOrchestrator';
-import { ComplianceMiddleware, ProtectedAgentResponse } from '../../lib/compliance/compliance-middleware';
 import {
   WorkflowExecution,
   ExecutionContext,
-  AgentResponse,
-  ComplianceLevel,
   ComplianceError
 } from '@/types/digital-health-agent.types';
+
+import { ComplianceMiddleware, ProtectedAgentResponse } from '../../lib/compliance/compliance-middleware';
+
+import { AgentOrchestrator } from './AgentOrchestrator';
 
 export class ComplianceAwareOrchestrator extends AgentOrchestrator {
   private complianceMiddleware: ComplianceMiddleware;
@@ -31,7 +31,7 @@ export class ComplianceAwareOrchestrator extends AgentOrchestrator {
    */
   async executeWorkflowWithCompliance(
     workflowId: string,
-    inputs: Record<string, any>,
+    inputs: Record<string, unknown>,
     context: ExecutionContext
   ): Promise<WorkflowExecution & {
     compliance_summary: {
@@ -42,8 +42,6 @@ export class ComplianceAwareOrchestrator extends AgentOrchestrator {
       compliance_violations: number;
     };
   }> {
-    console.log(`🔒 Starting compliance-aware workflow execution: ${workflowId}`);
-
     // Step 1: Pre-workflow compliance validation
     const preWorkflowValidation = await this.complianceMiddleware.validateWorkflowCompliance(
       workflowId,
@@ -76,9 +74,12 @@ export class ComplianceAwareOrchestrator extends AgentOrchestrator {
 
     // Process each interaction through compliance middleware
     for (let i = 0; i < execution.interactions.length; i++) {
-      const interaction = execution.interactions[i];
+      // Validate index before accessing array
+      if (i >= 0 && i < execution.interactions.length) {
+        // eslint-disable-next-line security/detect-object-injection
+        const interaction = execution.interactions[i];
 
-      try {
+        try {
         // Validate the interaction for compliance
         const agent = this.agents.get(interaction.agent_name);
         if (!agent) continue;
@@ -115,15 +116,20 @@ export class ComplianceAwareOrchestrator extends AgentOrchestrator {
         }
 
         // Update the interaction with protected response
-        execution.interactions[i] = {
-          ...interaction,
-          outputs: protectedResponse
-        };
+        // Validate index before accessing array
+        if (i >= 0 && i < execution.interactions.length) {
+          // eslint-disable-next-line security/detect-object-injection
+          execution.interactions[i] = {
+            ...interaction,
+            outputs: protectedResponse
+          };
+        }
 
-      } catch (error) {
-        console.error(`Compliance processing failed for interaction ${interaction.interaction_id}:`, error);
-        complianceSummary.compliance_violations++;
-        complianceSummary.overall_compliant = false;
+        } catch (error) {
+          console.error(`Compliance processing failed for interaction ${interaction.interaction_id}:`, error);
+          complianceSummary.compliance_violations++;
+          complianceSummary.overall_compliant = false;
+        }
       }
     }
 
@@ -131,12 +137,6 @@ export class ComplianceAwareOrchestrator extends AgentOrchestrator {
     if (complianceSummary.total_risk_score > 50) {
       complianceSummary.overall_compliant = false;
     }
-
-    console.log(`✅ Compliance-aware workflow execution completed:`);
-    console.log(`   - Overall Compliant: ${complianceSummary.overall_compliant}`);
-    console.log(`   - Risk Score: ${complianceSummary.total_risk_score}`);
-    console.log(`   - PHI Detected: ${complianceSummary.phi_detected}`);
-
     return {
       ...execution,
       compliance_summary: complianceSummary
@@ -149,7 +149,7 @@ export class ComplianceAwareOrchestrator extends AgentOrchestrator {
   async executeAgentWithCompliance(
     agentName: string,
     promptTitle: string,
-    inputs: Record<string, any>,
+    inputs: Record<string, unknown>,
     context: ExecutionContext
   ): Promise<ProtectedAgentResponse> {
     const agent = this.agents.get(agentName);
@@ -222,7 +222,7 @@ export class ComplianceAwareOrchestrator extends AgentOrchestrator {
    * Generate compliance report for specific workflow
    */
   async generateWorkflowComplianceReport(executionId: string): Promise<{
-    execution_summary: any;
+    execution_summary: unknown;
     compliance_analysis: {
       total_steps: number;
       compliant_steps: number;
@@ -316,11 +316,10 @@ export class ComplianceAwareOrchestrator extends AgentOrchestrator {
    */
   async initializeWithCompliance(): Promise<void> {
     await this.initialize();
-
-    console.log('🔒 Compliance-aware orchestrator initialized');
-    console.log(`   - PHI Detection: ${this.complianceMiddleware.getConfig().enablePHIDetection ? 'ENABLED' : 'DISABLED'}`);
-    console.log(`   - Audit Logging: ${this.complianceMiddleware.getConfig().enableAuditLogging ? 'ENABLED' : 'DISABLED'}`);
-    console.log(`   - Strict Mode: ${this.complianceMiddleware.getConfig().strictMode ? 'ENABLED' : 'DISABLED'}`);
-    console.log(`   - Alert Threshold: ${this.complianceMiddleware.getConfig().alertThreshold}`);
+    // Configuration initialized with compliance middleware
+    console.log(`PHI Detection: ${this.complianceMiddleware['config'].enablePHIDetection ? 'ENABLED' : 'DISABLED'}`);
+    console.log(`Audit Logging: ${this.complianceMiddleware['config'].enableAuditLogging ? 'ENABLED' : 'DISABLED'}`);
+    console.log(`Strict Mode: ${this.complianceMiddleware['config'].strictMode ? 'ENABLED' : 'DISABLED'}`);
+    console.log(`Alert Threshold: ${this.complianceMiddleware['config'].alertThreshold}`);
   }
 }

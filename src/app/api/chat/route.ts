@@ -1,7 +1,13 @@
+import { createClient } from '@supabase/supabase-js';
 import { NextRequest, NextResponse } from 'next/server';
 import { OpenAI } from 'openai';
-import { createClient } from '@supabase/supabase-js';
-import { langchainRAGService } from '@/lib/chat/langchain-service';
+
+import { langchainRAGService } from '@/features/chat/services/langchain-service';
+import {
+  streamAgentSelection,
+  loadAvailableAgents,
+  selectAgentWithReasoning,
+} from '@/features/chat/services/intelligent-agent-router';
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY || 'demo-key',
@@ -15,7 +21,7 @@ const supabase = createClient(
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { message, agent, chatHistory, ragEnabled } = body;
+    const { message, agent, model, chatHistory, ragEnabled, sessionId } = body;
 
     if (!message || !agent) {
       return NextResponse.json(
@@ -26,16 +32,17 @@ export async function POST(request: NextRequest) {
 
     const startTime = Date.now();
 
+    // Determine which provider to use based on model
+    const modelId = model?.id || agent.model || 'gpt-4';
+    const modelProvider = getModelProvider(modelId);
+
     // If in demo mode (no API keys), return a mock response
     if (process.env.OPENAI_API_KEY === 'demo-key' || !process.env.OPENAI_API_KEY) {
       return getDemoStreamingResponse(message, agent, ragEnabled, startTime);
     }
-    console.log('Performing LangChain RAG search for agent:', agent.name);
-    console.log('Agent ID for RAG query:', agent.id);
-
     // Prepare messages for LLM (system prompt will be handled by LangChain service)
     const messages = [
-      ...chatHistory.map((msg: any) => ({
+      ...chatHistory.map((msg: unknown) => ({
         role: msg.role,
         content: msg.content,
       })),
@@ -45,47 +52,115 @@ export async function POST(request: NextRequest) {
       },
     ];
 
-    // Use LangChain for response generation
-    console.log('Calling LangChain service...');
+    // Use LangChain ConversationalRetrievalQAChain for response generation
+    // Now properly uses memory and agent knowledge domains
     const ragResult = await langchainRAGService.queryKnowledge(
       message,
       agent.id,
       chatHistory,
-      agent
+      agent,
+      sessionId || agent.id // Use sessionId for memory persistence
     );
-    console.log('LangChain service returned:', ragResult?.answer ? 'Success' : 'Empty');
-
     const fullResponse = ragResult.answer || 'I apologize, but I encountered an issue generating a response. Please try again.';
+
+    // Capture alternative agents for recommendations (only in automatic mode)
+    let alternativeAgents: Array<{ agent: typeof agent; score: number; reason?: string }> = [];
+    let selectedAgentConfidence = 100;
+
+    if (body.useIntelligentRouting || body.automaticRouting) {
+      try {
+        const agents = await loadAvailableAgents();
+        const selectionResult = await selectAgentWithReasoning(message, agents, agent, chatHistory);
+        alternativeAgents = selectionResult.alternativeAgents;
+        selectedAgentConfidence = selectionResult.confidence;
+      } catch (error) {
+        console.error('Failed to get alternative agents:', error);
+      }
+    }
 
     // Create a readable stream for the response
     const stream = new ReadableStream({
       async start(controller) {
         try {
-          console.log('Starting streaming response, fullResponse length:', fullResponse.length);
+          // Check if automatic routing is enabled via request body
+          const useIntelligentRouting = body.useIntelligentRouting || body.automaticRouting || false;
+
+          if (useIntelligentRouting) {
+            // Use intelligent agent selection with real reasoning
+            // Pass current agent and chat history to maintain conversation continuity
+            console.log('🧠 Using intelligent agent routing...');
+            console.log(`📊 Chat history length: ${chatHistory.length} messages`);
+            console.log(`🤖 Current agent: ${agent.display_name || agent.name}`);
+
+            for await (const reasoningStep of streamAgentSelection(message, agent, chatHistory)) {
+              const reasoningData = JSON.stringify({
+                type: 'reasoning',
+                content: reasoningStep.step,
+                details: reasoningStep.details,
+              });
+              controller.enqueue(new TextEncoder().encode(`data: ${reasoningData}\n\n`));
+              await new Promise(resolve => setTimeout(resolve, 200));
+            }
+          } else {
+            // Enhanced reasoning for manual mode showing chain of thought
+            const knowledgeDomains = agent?.knowledge_domains || agent?.knowledgeDomains || [];
+            const domainText = knowledgeDomains.length > 0
+              ? knowledgeDomains.map((d: string) => d.replace(/_/g, ' ')).join(', ')
+              : 'general knowledge base';
+
+            const reasoningSteps = [
+              `🤖 Selected Agent: ${agent.display_name || agent.name}`,
+              `📚 Knowledge Domains: ${domainText}`,
+              `🔍 Analyzing query intent and complexity...`,
+              `💾 Searching vector knowledge base for relevant documents...`,
+              ragResult.sources && ragResult.sources.length > 0
+                ? `✅ Found ${ragResult.sources.length} relevant knowledge chunks`
+                : `⚠️ No knowledge base sources found (database is empty)`,
+              `🧠 Generating contextualized response with LLM...`,
+              ragResult.citations && ragResult.citations.length > 0
+                ? `📝 Extracting ${ragResult.citations.length} citations from response`
+                : '📝 Response generated (no citations to extract)',
+            ];
+
+            for (const step of reasoningSteps) {
+              const reasoningData = JSON.stringify({
+                type: 'reasoning',
+                content: step,
+              });
+              controller.enqueue(new TextEncoder().encode(`data: ${reasoningData}\n\n`));
+              await new Promise(resolve => setTimeout(resolve, 400 + Math.random() * 300));
+            }
+          }
+
+          // Signal reasoning complete
+          const reasoningDone = JSON.stringify({ type: 'reasoning_done' });
+          controller.enqueue(new TextEncoder().encode(`data: ${reasoningDone}\n\n`));
+
+          // Small pause before content
+          await new Promise(resolve => setTimeout(resolve, 200));
 
           // Simulate streaming by sending chunks of the response
           const words = fullResponse.split(' ');
           let currentText = '';
-
-          console.log('Split into', words.length, 'words');
-
           for (let i = 0; i < words.length; i++) {
-            currentText += (i > 0 ? ' ' : '') + words[i];
+            // Validate index before accessing array
+            if (i >= 0 && i < words.length) {
+              // eslint-disable-next-line security/detect-object-injection
+              currentText += (i > 0 ? ' ' : '') + words[i];
 
-            const data = JSON.stringify({
-              type: 'content',
-              content: (i > 0 ? ' ' : '') + words[i],
-              fullContent: currentText,
-            });
+              const data = JSON.stringify({
+                type: 'content',
+                // eslint-disable-next-line security/detect-object-injection
+                content: (i > 0 ? ' ' : '') + words[i],
+                fullContent: currentText,
+              });
 
-            controller.enqueue(new TextEncoder().encode(`data: ${data}\n\n`));
+              controller.enqueue(new TextEncoder().encode(`data: ${data}\n\n`));
 
-            // Add small delay to simulate streaming
-            await new Promise(resolve => setTimeout(resolve, 20 + Math.random() * 30));
+              // Add small delay to simulate streaming
+              await new Promise(resolve => setTimeout(resolve, 20 + Math.random() * 30));
+            }
           }
-
-          console.log('Finished streaming words, sending metadata...');
-
           // Generate final metadata
           const citations = ragResult.citations || [];
           const followupQuestions = generateFollowupQuestions(message, fullResponse, agent);
@@ -104,7 +179,7 @@ export async function POST(request: NextRequest) {
                 completionTokens: 0,
                 totalTokens: 0,
               },
-              workflow_step: agent.capabilities[0],
+              workflow_step: agent?.capabilities?.[0] || 'General',
               metadata_model: {
                 name: agent.name,
                 display_name: agent.name,
@@ -113,6 +188,8 @@ export async function POST(request: NextRequest) {
                 brain_id: agent.id,
                 brain_name: agent.name,
               },
+              alternativeAgents: alternativeAgents,
+              selectedAgentConfidence: selectedAgentConfidence,
             },
           });
 
@@ -148,7 +225,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
-function buildSystemPrompt(agent: any, ragData: any): string {
+function buildSystemPrompt(agent: unknown, ragData: unknown): string {
   let prompt = agent.systemPrompt;
 
   if (ragData && ragData.context) {
@@ -160,7 +237,7 @@ function buildSystemPrompt(agent: any, ragData: any): string {
   return prompt;
 }
 
-function extractCitations(response: string, sources: any[]): number[] {
+function extractCitations(response: string, sources: unknown[]): number[] {
   const citations: number[] = [];
   const citationRegex = /\[(\d+)\]/g;
   let match;
@@ -175,7 +252,7 @@ function extractCitations(response: string, sources: any[]): number[] {
   return citations.sort((a, b) => a - b);
 }
 
-function generateFollowupQuestions(userMessage: string, response: string, agent: any): string[] {
+function generateFollowupQuestions(userMessage: string, response: string, agent: unknown): string[] {
   // Simple follow-up generation based on agent type and context
   const questions: Record<string, string[]> = {
     'regulatory-expert': [
@@ -212,7 +289,7 @@ function generateFollowupQuestions(userMessage: string, response: string, agent:
   ];
 }
 
-function getDemoResponse(message: string, agent: any, ragEnabled: boolean, startTime: number) {
+function getDemoResponse(message: string, agent: unknown, ragEnabled: boolean, startTime: number) {
   // Demo responses for different agent types
   const demoResponses: Record<string, string> = {
     'regulatory-expert': `Based on your question about "${message}", here's what I can tell you:
@@ -348,18 +425,23 @@ Projected break-even: 18-24 months with proper execution.`,
         let currentText = '';
 
         for (let i = 0; i < words.length; i++) {
-          currentText += (i > 0 ? ' ' : '') + words[i];
+          // Validate index before accessing array
+          if (i >= 0 && i < words.length) {
+            // eslint-disable-next-line security/detect-object-injection
+            currentText += (i > 0 ? ' ' : '') + words[i];
 
-          const data = JSON.stringify({
-            type: 'content',
-            content: (i > 0 ? ' ' : '') + words[i],
-            fullContent: currentText,
-          });
+            const data = JSON.stringify({
+              type: 'content',
+              // eslint-disable-next-line security/detect-object-injection
+              content: (i > 0 ? ' ' : '') + words[i],
+              fullContent: currentText,
+            });
 
-          controller.enqueue(new TextEncoder().encode(`data: ${data}\n\n`));
+            controller.enqueue(new TextEncoder().encode(`data: ${data}\n\n`));
 
-          // Add small delay to simulate streaming
-          await new Promise(resolve => setTimeout(resolve, 20 + Math.random() * 30));
+            // Add small delay to simulate streaming
+            await new Promise(resolve => setTimeout(resolve, 20 + Math.random() * 30));
+          }
         }
 
         // Send final metadata
@@ -415,6 +497,20 @@ Projected break-even: 18-24 months with proper execution.`,
   });
 }
 
-function getDemoStreamingResponse(message: string, agent: any, ragEnabled: boolean, startTime: number) {
+function getDemoStreamingResponse(message: string, agent: unknown, ragEnabled: boolean, startTime: number) {
   return getDemoResponse(message, agent, ragEnabled, startTime);
+}
+
+/**
+ * Determine which provider to use based on model ID
+ */
+function getModelProvider(modelId: string): 'openai' | 'anthropic' | 'huggingface' {
+  if (modelId.startsWith('gpt-')) {
+    return 'openai';
+  } else if (modelId.startsWith('claude-')) {
+    return 'anthropic';
+  } else {
+    // All Hugging Face models (including CuratedHealth custom models)
+    return 'huggingface';
+  }
 }

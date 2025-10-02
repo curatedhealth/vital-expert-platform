@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+
 import { AuthProvider } from '@/lib/supabase/auth-context';
 
 export function ClientProviders({ children }: { children: React.ReactNode }) {

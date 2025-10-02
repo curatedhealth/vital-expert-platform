@@ -1,20 +1,12 @@
 'use client';
 
-import { useState } from 'react';
-import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { cn } from '@/lib/utils';
-import { useAuth } from '@/lib/auth/auth-context';
-import { DashboardSidebar } from '@/components/dashboard-sidebar';
 import {
   Menu,
   X,
   User,
+  Users,
   LogOut,
   Bell,
-  HelpCircle,
   Search,
   Package2,
   Home,
@@ -25,44 +17,67 @@ import {
   Settings,
   Zap,
 } from 'lucide-react';
+import Link from 'next/link';
+import { usePathname, useRouter } from 'next/navigation';
+import { useState } from 'react';
 
-// Global navigation items
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { DashboardSidebar } from '@/features/dashboard/components/dashboard-sidebar';
+import { useAuth } from '@/lib/auth/auth-context';
+import { cn } from '@/lib/utils';
+
+// Global navigation items - Standardized across all pages
 const globalNavItems = [
   {
-    title: 'Overview',
+    title: 'Dashboard',
     href: '/dashboard',
     icon: Home,
-  },
-  {
-    title: 'Projects',
-    href: '/dashboard/projects',
-    icon: FolderOpen,
   },
   {
     title: 'Ask Expert',
     href: '/chat',
     icon: MessageSquare,
-    badge: 'New',
+  },
+  {
+    title: 'Ask Panel',
+    href: '/ask-panel',
+    icon: Users,
+  },
+  {
+    title: 'Ask Team',
+    href: '/ask-team',
+    icon: Users,
+  },
+  {
+    title: 'Agents',
+    href: '/agents',
+    icon: User,
+  },
+  {
+    title: 'Build Solution',
+    href: '/solution-builder',
+    icon: Zap,
   },
   {
     title: 'Knowledge',
-    href: '/dashboard/knowledge',
+    href: '/knowledge',
     icon: Database,
   },
   {
-    title: 'Prompts',
-    href: '/dashboard/prompts',
+    title: 'Prompt PRISM',
+    href: '/prompts',
     icon: FileText,
   },
   {
     title: 'Capabilities',
-    href: '/dashboard/capabilities',
-    icon: Zap,
+    href: '/capabilities',
+    icon: Settings,
   },
   {
-    title: 'Documents',
-    href: '/dashboard/documents',
-    icon: FileText,
+    title: 'Workflows',
+    href: '/ask-team',
+    icon: Zap,
   },
 ];
 
@@ -222,7 +237,7 @@ export default function DashboardLayout({
                   <div className="absolute top-full right-0 mt-1 w-56 bg-white border rounded-lg shadow-lg py-1 z-50">
                     <div className="px-3 py-2 border-b">
                       <p className="text-sm font-medium">
-                        {(user as any)?.user_metadata?.full_name || 'User'}
+                        {(user as unknown)?.user_metadata?.full_name || 'User'}
                       </p>
                       <p className="text-xs text-muted-foreground">{user?.email}</p>
                     </div>
@@ -265,7 +280,7 @@ export default function DashboardLayout({
         {/* Mobile Sidebar */}
         {sidebarOpen && (
           <div className="fixed inset-0 z-50 md:hidden">
-            <div className="fixed inset-0 bg-black/80" onClick={() => setSidebarOpen(false)} />
+            <div className="fixed inset-0 bg-black/80" onClick={() => setSidebarOpen(false)} onKeyDown={() => setSidebarOpen(false)} role="button" tabIndex={0} />
             <div className="fixed left-0 top-0 z-50 h-full w-72 bg-background shadow-lg">
               <div className="flex items-center justify-between p-4 border-b">
                 <div className="flex items-center gap-2">
@@ -285,7 +300,7 @@ export default function DashboardLayout({
         {userDropdownOpen && (
           <div
             className="fixed inset-0 z-40"
-            onClick={() => setUserDropdownOpen(false)}
+            onClick={() => setUserDropdownOpen(false)} onKeyDown={() => setUserDropdownOpen(false)} role="button" tabIndex={0}
           />
         )}
 

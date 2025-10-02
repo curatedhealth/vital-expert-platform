@@ -1,19 +1,3 @@
-import React, { useState, useRef } from 'react';
-import { AgentBulkImport, DomainExpertise, ValidationStatus, AgentStatus, RiskLevel } from '@/types/agent.types';
-import { AgentService } from '@/services/agent.service';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Progress } from '@/components/ui/progress';
-import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import {
   Download,
   Upload,
@@ -24,11 +8,28 @@ import {
   X,
   RefreshCw
 } from 'lucide-react';
+import React, { useState, useRef } from 'react';
+
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Progress } from '@/components/ui/progress';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { AgentService } from '@/services/agent.service';
+import { AgentBulkImport, DomainExpertise, ValidationStatus, AgentStatus, RiskLevel } from '@/types/agent.types';
 
 export const AgentImport: React.FC = () => {
   const [importing, setImporting] = useState(false);
   const [progress, setProgress] = useState(0);
-  const [result, setResult] = useState<any>(null);
+  const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState<string | null>(null);
   const [importMode, setImportMode] = useState<'create' | 'update' | 'upsert'>('upsert');
   const [validationErrors, setValidationErrors] = useState<any[]>([]);
@@ -232,7 +233,7 @@ export const AgentImport: React.FC = () => {
 
   const downloadExampleData = (domain: DomainExpertise) => {
     // Create domain-specific examples
-    const examples: Record<DomainExpertise, any> = {
+    const examples: Record<DomainExpertise, unknown> = {
       [DomainExpertise.MEDICAL]: {
         name: "cardiology-specialist",
         display_name: "Cardiology Specialist",
@@ -294,6 +295,7 @@ export const AgentImport: React.FC = () => {
       }
     };
 
+    // eslint-disable-next-line security/detect-object-injection
     const example = examples[domain];
     if (example) {
       const template: AgentBulkImport = {
@@ -361,7 +363,7 @@ export const AgentImport: React.FC = () => {
                 {/* Import Mode Selection */}
                 <div>
                   <label className="block text-sm font-medium mb-2">Import Mode</label>
-                  <Select value={importMode} onValueChange={(value: any) => setImportMode(value)}>
+                  <Select value={importMode} onValueChange={(value: unknown) => setImportMode(value)}>
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
@@ -538,6 +540,7 @@ export const AgentImport: React.FC = () => {
                 <div>
                   <h4 className="font-medium mb-2">By Domain</h4>
                   <div className="flex flex-wrap gap-2">
+                    {/* eslint-disable-next-line security/detect-object-injection */}
                     {Object.entries(result.summary.by_domain).map(([domain, count]) => (
                       (count as number) > 0 && (
                         <Badge key={domain} variant="outline">
@@ -554,7 +557,7 @@ export const AgentImport: React.FC = () => {
                 <div>
                   <h4 className="font-medium mb-2 text-red-600">Errors</h4>
                   <div className="space-y-1 max-h-40 overflow-y-auto">
-                    {result.errors.map((err: any, i: number) => (
+                    {result.errors.map((err: unknown, i: number) => (
                       <Alert key={i} variant="destructive">
                         <AlertDescription>
                           <strong>{err.agent}:</strong> {err.error}
@@ -570,7 +573,7 @@ export const AgentImport: React.FC = () => {
                 <div>
                   <h4 className="font-medium mb-2 text-yellow-600">Warnings</h4>
                   <div className="space-y-1 max-h-40 overflow-y-auto">
-                    {result.warnings.map((warning: any, i: number) => (
+                    {result.warnings.map((warning: unknown, i: number) => (
                       <Alert key={i}>
                         <Info className="h-4 w-4" />
                         <AlertDescription>

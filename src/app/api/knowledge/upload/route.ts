@@ -1,25 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { langchainRAGService } from '@/lib/chat/langchain-service';
+
+import { langchainRAGService } from '@/features/chat/services/langchain-service';
 
 export async function POST(request: NextRequest) {
-  console.log('=== LangChain Upload API called ===');
   try {
-    console.log('Step 1: Parsing form data...');
     const formData = await request.formData();
-
-    console.log('Step 2: Extracting files and parameters...');
     const files = formData.getAll('files') as File[];
     const agentId = formData.get('agentId') as string;
     const isGlobal = formData.get('isGlobal') === 'true';
     const domain = formData.get('domain') as string || 'digital-health';
-
-    console.log('Parameters received:', {
-      filesCount: files.length,
-      agentId,
-      isGlobal,
-      domain,
-      fileNames: files.map(f => f.name)
-    });
 
     if (!files || files.length === 0) {
       return NextResponse.json(
@@ -28,19 +17,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log('Step 3: Processing documents with LangChain...');
-
     // Use LangChain service to process all documents
     const result = await langchainRAGService.processDocuments(files, {
       agentId,
       isGlobal,
       domain,
-    });
-
-    console.log('LangChain processing complete:', {
-      success: result.success,
-      totalProcessed: result.results.filter(r => r.status === 'success').length,
-      totalFailed: result.results.filter(r => r.status === 'error').length
     });
 
     return NextResponse.json({

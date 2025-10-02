@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { agentService, type AgentWithCategories } from '@/lib/agents/agent-service';
+
+import { agentService } from '@/lib/agents/agent-service';
 import { useAgentsStore, type Agent as GlobalAgent } from '@/lib/stores/agents-store';
 
 export interface Agent {
@@ -31,9 +32,9 @@ export interface ChatMessage {
   agentId?: string;
   isLoading?: boolean;
   error?: boolean;
-  attachments?: any[];
+  attachments?: unknown[];
   metadata?: {
-    sources?: any[];
+    sources?: unknown[];
     citations?: number[];
     followupQuestions?: string[];
     processingTime?: number;
@@ -79,7 +80,7 @@ export interface ChatStore {
   createNewChat: () => void;
   selectChat: (chatId: string) => void;
   deleteChat: (chatId: string) => void;
-  sendMessage: (content: string, attachments?: any[]) => Promise<void>;
+  sendMessage: (content: string, attachments?: unknown[]) => Promise<void>;
   setSelectedAgent: (agent: Agent | null) => void;
   createCustomAgent: (agent: Omit<Agent, 'id' | 'isCustom'>) => void;
   updateAgent: (agentId: string, updates: Partial<Agent>) => void;
@@ -100,7 +101,7 @@ export interface ChatStore {
   subscribeToGlobalChanges: () => () => void;
 }
 
-export const useChatStore = create<ChatStore>()(
+export const _useChatStore = create<ChatStore>()(
   persist(
     (set, get) => ({
       // Initial state
@@ -146,7 +147,7 @@ export const useChatStore = create<ChatStore>()(
 
           set({
             currentChat: chat,
-            messages: chatMessages.map((msg: any) => ({
+            messages: chatMessages.map((msg: unknown) => ({
               ...msg,
               timestamp: new Date(msg.timestamp),
             })),
@@ -171,7 +172,7 @@ export const useChatStore = create<ChatStore>()(
         });
       },
 
-      sendMessage: async (content: string, attachments?: any[]) => {
+      sendMessage: async (content: string, attachments?: unknown[]) => {
         const { currentChat, selectedAgent, messages } = get();
         if (!currentChat || !selectedAgent) return;
 
@@ -434,20 +435,13 @@ export const useChatStore = create<ChatStore>()(
         set({ isLoadingAgents: true, error: null });
 
         try {
-          console.log('=== LOADING AGENTS FROM DATABASE ===');
           const dbAgents = await agentService.getActiveAgents();
-          console.log('Raw database agents:', dbAgents.length, 'found');
-
           const formattedAgents = dbAgents.map((agent) => agentService.convertToLegacyFormat(agent));
-          console.log('Formatted agents for chat store:', formattedAgents.length);
-
           set((state) => ({
             agents: formattedAgents,
             selectedAgent: state.selectedAgent || formattedAgents[0] || null,
             isLoadingAgents: false,
           }));
-
-          console.log('=== AGENTS LOADED SUCCESSFULLY ===', formattedAgents.length, 'agents');
         } catch (error) {
           console.error('Failed to load agents from database:', error);
 
@@ -529,7 +523,7 @@ export const useChatStore = create<ChatStore>()(
     {
       name: 'chat-store',
       version: 4, // Increment to force cache refresh for database-only agents
-      migrate: (persistedState: any, version: number) => {
+      migrate: (persistedState: unknown, version: number) => {
         // Always force reload agents from database on version change
         if (version < 4) {
           return {

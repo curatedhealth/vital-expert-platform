@@ -1,41 +1,5 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import { Button } from '@/components/ui/button';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-// import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
-  LineChart,
-  Line,
-  Area,
-  AreaChart
-} from 'recharts';
 import {
   Database,
   FileText,
@@ -54,7 +18,6 @@ import {
   Activity,
   Zap,
   Eye,
-  Download,
   Globe,
   MoreHorizontal,
   ExternalLink,
@@ -62,6 +25,42 @@ import {
   Copy,
   Trash2
 } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+  Area,
+  AreaChart
+} from 'recharts';
+
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger
+} from '@/components/ui/dropdown-menu';
+import { Separator } from '@/components/ui/separator';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow
+} from '@/components/ui/table';
+
+// import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface AnalyticsData {
   ragCategories: {
@@ -159,7 +158,7 @@ const CHART_COLORS = {
   other: 'hsl(var(--muted-foreground))'
 };
 
-const getChartData = (ragCategories: any) => {
+const getChartData = (ragCategories: unknown) => {
   return Object.entries(ragCategories).map(([category, stats]: [string, any]) => ({
     name: category.charAt(0).toUpperCase() + category.slice(1),
     documents: stats.documents,
@@ -177,7 +176,7 @@ interface KnowledgeAnalyticsDashboardProps {
 export function KnowledgeAnalyticsDashboard({
   categoryFilter,
   agentFilter
-}: KnowledgeAnalyticsDashboardProps = {}) {
+}: KnowledgeAnalyticsDashboardProps = { /* TODO: implement */ }) {
   const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -217,6 +216,7 @@ export function KnowledgeAnalyticsDashboard({
     const k = 1024;
     const sizes = ['B', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
+    // eslint-disable-next-line security/detect-object-injection
     return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
   };
 
@@ -407,6 +407,7 @@ export function KnowledgeAnalyticsDashboard({
                       dataKey="day"
                       fontSize={12}
                       tickFormatter={(value, index) => {
+                        // eslint-disable-next-line security/detect-object-injection
                         const dataPoint = analytics.recentActivity.timeSeriesData[index];
                         return dataPoint ? `${dataPoint.month} ${value}` : value;
                       }}

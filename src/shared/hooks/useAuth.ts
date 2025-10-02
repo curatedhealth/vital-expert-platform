@@ -1,13 +1,13 @@
-import { useState, useEffect, useCallback, createContext, useContext } from 'react';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { User } from '@supabase/supabase-js';
+import { useState, useEffect, useCallback, createContext, useContext } from 'react';
+
 import {
   UserRole,
   PermissionScope,
   PermissionAction,
   UserProfile,
   AuthenticatedUser,
-  PermissionCheck,
   ROLE_HIERARCHY
 } from '@/types/auth.types';
 
@@ -40,7 +40,7 @@ export const useAuth = () => {
   return context;
 };
 
-export const useAuthState = () => {
+export const _useAuthState = () => {
   const [state, setState] = useState<AuthState>({
     user: null,
     profile: null,
@@ -235,6 +235,7 @@ export const useAuthState = () => {
 
   const canAccess = useCallback((requiredRole: UserRole): boolean => {
     if (!state.user) return false;
+    // eslint-disable-next-line security/detect-object-injection
     return ROLE_HIERARCHY[state.user.role] >= ROLE_HIERARCHY[requiredRole];
   }, [state.user]);
 
@@ -355,19 +356,19 @@ export const useAuthState = () => {
 };
 
 // Helper hook for specific permission checks
-export const usePermission = (scope: PermissionScope, action: PermissionAction) => {
+export const _usePermission = (scope: PermissionScope, action: PermissionAction) => {
   const { hasPermission } = useAuth();
   return hasPermission(scope, action);
 };
 
 // Helper hook for role checks
-export const useRole = (role: UserRole) => {
+export const _useRole = (role: UserRole) => {
   const { hasRole } = useAuth();
   return hasRole(role);
 };
 
 // Helper hook for admin checks
-export const useAdmin = () => {
+export const _useAdmin = () => {
   const { isAdmin } = useAuth();
   return isAdmin();
 };

@@ -35,7 +35,7 @@ export interface CostBreakdown {
   total_requests: number;
 }
 
-export const useUsageMetrics = () => {
+export const _useUsageMetrics = () => {
   const [metrics, setMetrics] = useState<UsageMetrics | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -76,7 +76,7 @@ export const useUsageMetrics = () => {
   };
 };
 
-export const useCostBreakdown = (
+export const _useCostBreakdown = (
   startDate: Date,
   endDate: Date,
   providerId?: string,
@@ -127,8 +127,8 @@ export const useCostBreakdown = (
   };
 };
 
-export const useProviderUsage = (providerId: string, startDate: Date, endDate: Date) => {
-  const [usage, setUsage] = useState<any>(null);
+export const _useProviderUsage = (providerId: string, startDate: Date, endDate: Date) => {
+  const [usage, setUsage] = useState<unknown>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 

@@ -56,9 +56,6 @@ class OpenAIUsageService {
 
     try {
       const startDateStr = startDate.toISOString().split('T')[0];
-      const endDateStr = endDate.toISOString().split('T')[0];
-
-      console.log(`Fetching OpenAI usage from ${startDateStr} to ${endDateStr}`);
 
       const response = await fetch(
         `${this.baseURL}/usage?date=${startDateStr}`,
@@ -71,7 +68,7 @@ class OpenAIUsageService {
       );
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
+        const errorData = await response.json().catch(() => ({ /* TODO: implement */ }));
         throw new Error(`OpenAI API error: ${response.status} - ${errorData.error?.message || response.statusText}`);
       }
 
@@ -134,7 +131,7 @@ class OpenAIUsageService {
       const latency = Date.now() - startTime;
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
+        const errorData = await response.json().catch(() => ({ /* TODO: implement */ }));
         return {
           success: false,
           message: `API Error: ${response.status} - ${errorData.error?.message || response.statusText}`,
@@ -189,7 +186,7 @@ class OpenAIUsageService {
     let totalCost = 0;
     let totalTokens = 0;
     let totalRequests = 0;
-    const byModel: Record<string, { tokens: number; cost: number; requests: number }> = {};
+    const byModel: Record<string, { tokens: number; cost: number; requests: number }> = { /* TODO: implement */ };
 
     allRecords.forEach(record => {
       totalCost += record.estimated_cost;
@@ -295,6 +292,7 @@ class OpenAIUsageService {
 
     // Default pricing if model not found
     const defaultPricing = { input: 0.001, output: 0.002 };
+    // eslint-disable-next-line security/detect-object-injection
     const modelPricing = pricing[model] || defaultPricing;
 
     const inputCost = (contextTokens / 1000) * modelPricing.input;
@@ -304,5 +302,5 @@ class OpenAIUsageService {
   }
 }
 
-export const openAIUsageService = new OpenAIUsageService();
+export const _openAIUsageService = new OpenAIUsageService();
 export default OpenAIUsageService;

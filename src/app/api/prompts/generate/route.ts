@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+
 import { promptGenerationService } from '@/lib/services/prompt-generation-service';
 import type { SystemPromptGenerationRequest } from '@/types/healthcare-compliance';
 
@@ -12,8 +13,6 @@ import type { SystemPromptGenerationRequest } from '@/types/healthcare-complianc
 export async function POST(request: NextRequest) {
   try {
     const body: SystemPromptGenerationRequest = await request.json();
-    console.log('🧠 Generating system prompt for agent:', body.agentId);
-
     // Validate required fields
     const missingFields: string[] = [];
     if (!body.selectedCapabilities) missingFields.push('selectedCapabilities');
@@ -42,10 +41,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log('📋 Prompt generation request:', {
-      agentId: body.agentId,
-      capabilitiesCount: body.selectedCapabilities.length,
-      competenciesCount: Object.keys(body.competencySelection || {}).length,
+    .length,
       medicalSpecialty: body.medicalContext.medicalSpecialty,
       pharmaEnabled: body.pharmaProtocolRequired,
       verifyEnabled: body.verifyProtocolRequired
@@ -55,23 +51,13 @@ export async function POST(request: NextRequest) {
     const startTime = Date.now();
     const response = await promptGenerationService.generateSystemPrompt(body);
     const generationTime = Date.now() - startTime;
-
-    console.log('✅ System prompt generated successfully:', {
-      tokenCount: response.metadata.tokenCount,
-      capabilitiesUsed: response.metadata.capabilities.length,
-      competenciesUsed: response.metadata.competencies.length,
-      toolsUsed: response.metadata.tools.length,
-      generationTimeMs: generationTime,
-      validationRequired: response.validationRequired
-    });
-
     // Add generation metrics to response
     const enrichedResponse = {
       ...response,
       metrics: {
         generationTimeMs: generationTime,
         capabilitiesProcessed: body.selectedCapabilities.length,
-        competenciesProcessed: Object.values(body.competencySelection || {}).flat().length,
+        competenciesProcessed: Object.values(body.competencySelection || { /* TODO: implement */ }).flat().length,
         protocolsIncluded: [
           ...(body.pharmaProtocolRequired ? ['PHARMA'] : []),
           ...(body.verifyProtocolRequired ? ['VERIFY'] : [])
@@ -122,9 +108,6 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams;
     const includeExamples = searchParams.get('includeExamples') === 'true';
     const specialty = searchParams.get('specialty');
-
-    console.log('📖 Fetching prompt generation templates');
-
     const templates = {
       pharmaProtocolTemplate: {
         purpose: "Define the medical/clinical purpose and patient outcomes focus",
@@ -158,7 +141,7 @@ export async function GET(request: NextRequest) {
       }
     };
 
-    let examples: any = null;
+    let examples: unknown = null;
     if (includeExamples) {
       examples = await getPromptExamples(specialty);
     }
@@ -199,7 +182,7 @@ export async function GET(request: NextRequest) {
 /**
  * Calculate estimated accuracy based on capabilities
  */
-function calculateEstimatedAccuracy(capabilities: any[]): number {
+function calculateEstimatedAccuracy(capabilities: unknown[]): number {
   if (capabilities.length === 0) return 0.95; // Default
 
   const accuracySum = capabilities.reduce((sum, cap) => sum + (cap.accuracy_threshold || 0.95), 0);
@@ -226,8 +209,9 @@ async function getPromptExamples(specialty?: string | null) {
     }
   };
 
-  if (specialty && (examples as any)[specialty]) {
-    return (examples as any)[specialty];
+  if (specialty && (examples as unknown)[specialty]) {
+    // eslint-disable-next-line security/detect-object-injection
+    return (examples as unknown)[specialty];
   }
 
   return specialty ? null : examples;

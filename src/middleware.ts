@@ -4,6 +4,10 @@ import { NextResponse, type NextRequest } from 'next/server';
 export async function middleware(request: NextRequest) {
   const url = request.nextUrl.clone();
 
+  // Public routes that don't require authentication
+  const publicRoutes = ['/', '/login', '/register', '/forgot-password', '/platform', '/services', '/framework'];
+  const isPublicRoute = publicRoutes.includes(url.pathname);
+
   // Redirect old dashboard routes to new structure
   const redirectMap: Record<string, string> = {
     '/dashboard/agents': '/agents',
@@ -34,6 +38,11 @@ export async function middleware(request: NextRequest) {
     },
   });
 
+  // Skip auth check for public routes
+  if (isPublicRoute) {
+    return response;
+  }
+
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -42,7 +51,7 @@ export async function middleware(request: NextRequest) {
         get(name: string) {
           return request.cookies.get(name)?.value;
         },
-        set(name: string, value: string, options: any) {
+        set(name: string, value: string, options: unknown) {
           request.cookies.set({
             name,
             value,
@@ -59,7 +68,7 @@ export async function middleware(request: NextRequest) {
             ...options,
           });
         },
-        remove(name: string, options: any) {
+        remove(name: string, options: unknown) {
           request.cookies.set({
             name,
             value: '',

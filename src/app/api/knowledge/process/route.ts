@@ -1,7 +1,8 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
-import { OpenAI } from 'openai';
 import crypto from 'crypto';
+
+import { createClient } from '@supabase/supabase-js';
+import { NextRequest, NextResponse } from 'next/server';
+import { OpenAI } from 'openai';
 import pdf from 'pdf-parse';
 
 const supabase = createClient(
@@ -42,8 +43,6 @@ export async function POST(request: NextRequest) {
 
     for (const url of knowledgeUrls) {
       try {
-        console.log(`Processing knowledge source: ${url}`);
-
         // Step 1: Fetch content from URL
         const content = await fetchContentFromUrl(url);
 
@@ -305,8 +304,9 @@ function extractKeywords(content: string): string[] {
     .filter(word => word.length > 3);
 
   // Get word frequency
-  const frequency: Record<string, number> = {};
+  const frequency: Record<string, number> = { /* TODO: implement */ };
   words.forEach(word => {
+    // eslint-disable-next-line security/detect-object-injection
     frequency[word] = (frequency[word] || 0) + 1;
   });
 

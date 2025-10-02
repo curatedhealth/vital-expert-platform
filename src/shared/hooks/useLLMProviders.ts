@@ -1,4 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
+
+import { llmProviderService } from '@/services/llm-provider.service';
 import {
   LLMProvider,
   ProviderFilters,
@@ -10,7 +12,6 @@ import {
   LLMProviderMetrics,
   ProviderStatus
 } from '@/types/llm-provider.types';
-import { llmProviderService } from '@/services/llm-provider.service';
 
 interface UseLLMProvidersState {
   providers: LLMProvider[];
@@ -46,7 +47,7 @@ export const useLLMProviders = (
     page: 1
   });
 
-  const [filters, setFilters] = useState<ProviderFilters>(initialFilters || {});
+  const [filters, setFilters] = useState<ProviderFilters>(initialFilters || { /* TODO: implement */ });
   const [sort, setSort] = useState<ProviderSort | undefined>(initialSort);
 
   // Load providers from service
@@ -286,7 +287,7 @@ export const useLLMProviders = (
 };
 
 // Specialized hook for provider selection
-export const useProviderSelection = () => {
+export const _useProviderSelection = () => {
   const [recommendations, setRecommendations] = useState<ProviderRecommendation[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -314,9 +315,9 @@ export const useProviderSelection = () => {
 };
 
 // Hook for real-time provider monitoring
-export const useProviderMonitoring = (providerIds: string[], refreshInterval: number = 30000) => {
-  const [healthStatuses, setHealthStatuses] = useState<Record<string, boolean>>({});
-  const [metrics, setMetrics] = useState<Record<string, LLMProviderMetrics>>({});
+export const _useProviderMonitoring = (providerIds: string[], refreshInterval: number = 30000) => {
+  const [healthStatuses, setHealthStatuses] = useState<Record<string, boolean>>({ /* TODO: implement */ });
+  const [metrics, setMetrics] = useState<Record<string, LLMProviderMetrics>>({ /* TODO: implement */ });
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
 
   const updateHealthStatuses = useCallback(async () => {
@@ -331,7 +332,7 @@ export const useProviderMonitoring = (providerIds: string[], refreshInterval: nu
       });
 
       const results = await Promise.all(promises);
-      const newStatuses: Record<string, boolean> = {};
+      const newStatuses: Record<string, boolean> = { /* TODO: implement */ };
 
       results.forEach(({ id, isHealthy }) => {
         newStatuses[id] = isHealthy;

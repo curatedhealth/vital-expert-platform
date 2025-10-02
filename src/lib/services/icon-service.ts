@@ -17,7 +17,7 @@ export interface Icon {
 export class IconService {
   private baseUrl = '/api/icons';
 
-  private async fetchAPI(endpoint: string, options?: RequestInit): Promise<any> {
+  private async fetchAPI(endpoint: string, options?: RequestInit): Promise<{ icons?: Icon[]; icon?: Icon; success?: boolean }> {
     try {
       const response = await fetch(`${this.baseUrl}${endpoint}`, options);
       const data = await response.json();

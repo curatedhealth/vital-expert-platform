@@ -1,0 +1,977 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VITAL.expert - Platform Overview</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            /* Core Brand Colors */
+            --vital-black: #0A0A0A;
+            --vital-white: #FFFFFF;
+            --vital-gray-95: #FAFAFA;
+            --vital-gray-90: #F5F5F5;
+            --vital-gray-80: #E5E5E5;
+            --vital-gray-70: #CCCCCC;
+            --vital-gray-60: #999999;
+            --vital-gray-40: #666666;
+            
+            /* Service Line Colors */
+            --regulatory-blue: #0066FF;
+            --clinical-green: #00CC88;
+            --safety-red: #FF3366;
+            --data-purple: #9933FF;
+            --market-orange: #FF6600;
+            --research-cyan: #00CCFF;
+            --quality-gold: #FFAA00;
+            --strategy-navy: #003399;
+            
+            /* Typography */
+            --font-primary: 'Inter', -apple-system, sans-serif;
+            
+            /* Shadows */
+            --shadow-xs: 0 1px 3px rgba(0,0,0,0.05);
+            --shadow-sm: 0 2px 8px rgba(0,0,0,0.08);
+            --shadow-md: 0 4px 16px rgba(0,0,0,0.10);
+            --shadow-lg: 0 8px 32px rgba(0,0,0,0.12);
+            --shadow-xl: 0 16px 48px rgba(0,0,0,0.15);
+        }
+
+        body {
+            font-family: var(--font-primary);
+            font-weight: 500;
+            background: var(--vital-white);
+            color: var(--vital-black);
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* NAVIGATION */
+        .nav-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--vital-gray-80);
+            z-index: 1000;
+        }
+
+        .nav {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: inline-flex;
+            align-items: baseline;
+            font-weight: 800;
+            font-size: 20px;
+            letter-spacing: -0.02em;
+            text-decoration: none;
+        }
+
+        .logo-vital {
+            color: var(--vital-black);
+        }
+
+        .logo-dot {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin: 0 3px;
+            background: var(--regulatory-blue);
+            transform: translateY(-2px);
+            animation: morphColors 8s infinite;
+        }
+
+        @keyframes morphColors {
+            0%, 100% { background: var(--regulatory-blue); }
+            14% { background: var(--clinical-green); }
+            28% { background: var(--safety-red); }
+            42% { background: var(--data-purple); }
+            57% { background: var(--market-orange); }
+            71% { background: var(--research-cyan); }
+            85% { background: var(--quality-gold); }
+        }
+
+        .logo-expert {
+            color: var(--vital-black);
+            font-weight: 600;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 32px;
+            align-items: center;
+        }
+
+        .nav-link {
+            color: var(--vital-gray-60);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 600;
+            transition: color 0.2s ease;
+        }
+
+        .nav-link:hover,
+        .nav-link.active {
+            color: var(--vital-black);
+        }
+
+        .nav-cta {
+            padding: 10px 20px;
+            background: var(--vital-black);
+            color: var(--vital-white);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 600;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+        }
+
+        .nav-cta:hover {
+            background: var(--regulatory-blue);
+            transform: translateY(-1px);
+        }
+
+        /* PLATFORM HERO */
+        .platform-hero {
+            margin-top: 80px;
+            padding: 80px 40px;
+            background: linear-gradient(135deg, var(--vital-gray-95) 0%, var(--vital-white) 100%);
+            text-align: center;
+        }
+
+        .platform-hero h1 {
+            font-size: 48px;
+            font-weight: 800;
+            margin-bottom: 20px;
+            letter-spacing: -0.02em;
+        }
+
+        .platform-tagline {
+            font-size: 20px;
+            color: var(--vital-gray-60);
+            max-width: 700px;
+            margin: 0 auto 40px;
+        }
+
+        /* PLATFORM ARCHITECTURE */
+        .architecture-section {
+            padding: 80px 40px;
+            background: var(--vital-white);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 60px;
+        }
+
+        .section-title {
+            font-size: 36px;
+            font-weight: 800;
+            margin-bottom: 20px;
+        }
+
+        .section-subtitle {
+            font-size: 18px;
+            color: var(--vital-gray-60);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        /* CORE COMPONENTS */
+        .components-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 40px;
+            margin-top: 60px;
+        }
+
+        .component-card {
+            padding: 40px;
+            background: var(--vital-gray-95);
+            border-radius: 12px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .component-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--regulatory-blue);
+            transform: translateX(-100%);
+            transition: transform 0.3s ease;
+        }
+
+        .component-card:hover::before {
+            transform: translateX(0);
+        }
+
+        .component-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .component-number {
+            display: inline-block;
+            width: 32px;
+            height: 32px;
+            background: var(--vital-black);
+            color: var(--vital-white);
+            border-radius: 50%;
+            text-align: center;
+            line-height: 32px;
+            font-weight: 700;
+            margin-bottom: 20px;
+        }
+
+        .component-title {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 16px;
+        }
+
+        .component-description {
+            color: var(--vital-gray-60);
+            margin-bottom: 20px;
+        }
+
+        .component-features {
+            list-style: none;
+        }
+
+        .component-features li {
+            padding: 8px 0;
+            padding-left: 24px;
+            position: relative;
+            color: var(--vital-gray-60);
+            font-size: 14px;
+        }
+
+        .component-features li::before {
+            content: '→';
+            position: absolute;
+            left: 0;
+            color: var(--regulatory-blue);
+            font-weight: 700;
+        }
+
+        /* SECURITY SECTION */
+        .security-section {
+            padding: 80px 40px;
+            background: var(--vital-gray-95);
+        }
+
+        .security-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 32px;
+            margin-top: 60px;
+        }
+
+        .security-item {
+            text-align: center;
+            padding: 32px;
+            background: var(--vital-white);
+            border-radius: 8px;
+            transition: all 0.2s ease;
+        }
+
+        .security-item:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .security-icon {
+            width: 48px;
+            height: 48px;
+            margin: 0 auto 20px;
+            padding: 12px;
+            background: var(--vital-gray-95);
+            border-radius: 50%;
+        }
+
+        .security-icon.certified {
+            background: var(--clinical-green);
+            color: var(--vital-white);
+        }
+
+        .security-title {
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .security-description {
+            font-size: 14px;
+            color: var(--vital-gray-60);
+        }
+
+        /* PERFORMANCE METRICS */
+        .performance-section {
+            padding: 80px 40px;
+            background: var(--vital-black);
+            color: var(--vital-white);
+        }
+
+        .metrics-showcase {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 40px;
+            margin-top: 60px;
+        }
+
+        .metric-card {
+            text-align: center;
+        }
+
+        .metric-value {
+            font-size: 48px;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--research-cyan), var(--regulatory-blue));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 8px;
+        }
+
+        .metric-label {
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            opacity: 0.8;
+        }
+
+        /* INTEGRATION ECOSYSTEM */
+        .integration-section {
+            padding: 80px 40px;
+            background: var(--vital-white);
+        }
+
+        .integration-logos {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 32px;
+            margin-top: 60px;
+        }
+
+        .integration-logo {
+            height: 60px;
+            background: var(--vital-gray-95);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+            transition: all 0.2s ease;
+            cursor: pointer;
+            font-weight: 700;
+            color: var(--vital-gray-60);
+        }
+
+        .integration-logo:hover {
+            background: var(--vital-gray-90);
+            transform: scale(1.05);
+        }
+
+        .integration-logo.connected {
+            background: var(--clinical-green);
+            color: var(--vital-white);
+        }
+
+        /* PLATFORM BOUNDARIES */
+        .boundaries-section {
+            padding: 80px 40px;
+            background: var(--vital-gray-95);
+        }
+
+        .boundaries-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 60px;
+            margin-top: 60px;
+        }
+
+        .boundary-column h3 {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 24px;
+        }
+
+        .boundary-list {
+            list-style: none;
+        }
+
+        .boundary-list li {
+            padding: 12px 0;
+            padding-left: 32px;
+            position: relative;
+            font-size: 16px;
+        }
+
+        .boundary-list.is li::before {
+            content: '✓';
+            position: absolute;
+            left: 0;
+            color: var(--clinical-green);
+            font-weight: 700;
+            font-size: 20px;
+        }
+
+        .boundary-list.not li::before {
+            content: '✗';
+            position: absolute;
+            left: 0;
+            color: var(--safety-red);
+            font-weight: 700;
+            font-size: 20px;
+        }
+
+        /* INTERACTIVE DEMO */
+        .demo-section {
+            padding: 100px 40px;
+            background: linear-gradient(135deg, var(--vital-black) 0%, #1a1a2e 100%);
+            color: var(--vital-white);
+            text-align: center;
+        }
+
+        .demo-container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .demo-screen {
+            background: var(--vital-white);
+            border-radius: 12px;
+            padding: 40px;
+            margin-top: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            color: var(--vital-black);
+        }
+
+        .demo-chat {
+            text-align: left;
+        }
+
+        .demo-message {
+            margin-bottom: 24px;
+            padding: 16px;
+            background: var(--vital-gray-95);
+            border-radius: 8px;
+            animation: fadeInUp 0.5s ease;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .demo-message.user {
+            background: var(--regulatory-blue);
+            color: var(--vital-white);
+            margin-left: 100px;
+        }
+
+        .demo-message.ai {
+            background: var(--vital-gray-95);
+            margin-right: 100px;
+        }
+
+        .demo-label {
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+            opacity: 0.6;
+        }
+
+        .demo-text {
+            font-size: 16px;
+        }
+
+        .demo-metrics {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 32px;
+            padding-top: 32px;
+            border-top: 1px solid var(--vital-gray-80);
+        }
+
+        .demo-metric {
+            text-align: center;
+        }
+
+        .demo-metric-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--regulatory-blue);
+        }
+
+        .demo-metric-label {
+            font-size: 12px;
+            color: var(--vital-gray-60);
+            text-transform: uppercase;
+        }
+
+        /* CTA SECTION */
+        .platform-cta {
+            padding: 80px 40px;
+            background: var(--vital-white);
+            text-align: center;
+        }
+
+        .cta-title {
+            font-size: 40px;
+            font-weight: 800;
+            margin-bottom: 20px;
+        }
+
+        .cta-subtitle {
+            font-size: 18px;
+            color: var(--vital-gray-60);
+            margin-bottom: 40px;
+        }
+
+        .cta-buttons {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+        }
+
+        .btn {
+            padding: 14px 32px;
+            font-size: 16px;
+            font-weight: 600;
+            text-decoration: none;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+            cursor: pointer;
+            border: none;
+        }
+
+        .btn-primary {
+            background: var(--vital-black);
+            color: var(--vital-white);
+        }
+
+        .btn-primary:hover {
+            background: var(--regulatory-blue);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: var(--vital-black);
+            border: 2px solid var(--vital-gray-80);
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--vital-black);
+        }
+
+        /* FOOTER */
+        .footer {
+            padding: 60px 40px;
+            background: var(--vital-gray-95);
+            border-top: 1px solid var(--vital-gray-80);
+        }
+
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            text-align: center;
+        }
+
+        .footer-disclaimer {
+            margin-top: 32px;
+            font-size: 12px;
+            color: var(--vital-gray-60);
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="nav-container">
+        <div class="nav">
+            <a href="vital-expert-landing-page.html" class="logo">
+                <span class="logo-vital">VITAL</span>
+                <span class="logo-dot"></span>
+                <span class="logo-expert">expert</span>
+            </a>
+            <div class="nav-links">
+                <a href="#" class="nav-link active">Platform</a>
+                <a href="#" class="nav-link">Services</a>
+                <a href="#" class="nav-link">Pricing</a>
+                <a href="#" class="nav-link">Resources</a>
+                <a href="#" class="nav-link">Company</a>
+                <a href="#" class="nav-cta">Enter Sandbox</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Platform Hero -->
+    <section class="platform-hero">
+        <div class="container">
+            <h1>The Technical Foundation of Elastic Intelligence</h1>
+            <p class="platform-tagline">
+                Not Software. Not Consulting. Infrastructure.
+            </p>
+            <p class="platform-tagline">
+                VITAL Expert is foundational infrastructure that enables healthcare organizations 
+                to operate with elastic intelligence.
+            </p>
+        </div>
+    </section>
+
+    <!-- Core Components -->
+    <section class="architecture-section">
+        <div class="container">
+            <div class="section-header">
+                <h2 class="section-title">Core Components</h2>
+                <p class="section-subtitle">
+                    Four integrated systems working together to deliver elastic capacity
+                </p>
+            </div>
+
+            <div class="components-grid">
+                <div class="component-card">
+                    <div class="component-number">1</div>
+                    <h3 class="component-title">Expert Agent Network</h3>
+                    <p class="component-description">
+                        136 specialized healthcare advisors delivering instant expertise
+                    </p>
+                    <ul class="component-features">
+                        <li>Trained on 10M+ validated documents</li>
+                        <li>Updated daily from authoritative sources</li>
+                        <li>96% accuracy rate (validated monthly)</li>
+                        <li>Sub-2 second response time</li>
+                    </ul>
+                </div>
+
+                <div class="component-card">
+                    <div class="component-number">2</div>
+                    <h3 class="component-title">Innovation Sandbox™</h3>
+                    <p class="component-description">
+                        Test bold strategies without operational risk
+                    </p>
+                    <ul class="component-features">
+                        <li>Isolated testing environment</li>
+                        <li>Digital twin creation</li>
+                        <li>Scenario modeling engine</li>
+                        <li>Monte Carlo simulation</li>
+                    </ul>
+                </div>
+
+                <div class="component-card">
+                    <div class="component-number">3</div>
+                    <h3 class="component-title">Knowledge Graph</h3>
+                    <p class="component-description">
+                        Your institutional memory, permanently captured
+                    </p>
+                    <ul class="component-features">
+                        <li>Semantic relationship mapping</li>
+                        <li>Institutional memory storage</li>
+                        <li>Pattern recognition system</li>
+                        <li>Insight compounding engine</li>
+                    </ul>
+                </div>
+
+                <div class="component-card">
+                    <div class="component-number">4</div>
+                    <h3 class="component-title">Integration Layer</h3>
+                    <p class="component-description">
+                        Seamlessly connect with your existing tech stack
+                    </p>
+                    <ul class="component-features">
+                        <li>API-first architecture</li>
+                        <li>BYOAI orchestration</li>
+                        <li>Enterprise system connectors</li>
+                        <li>Real-time data pipelines</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Security & Compliance -->
+    <section class="security-section">
+        <div class="container">
+            <div class="section-header">
+                <h2 class="section-title">Enterprise-Grade Security & Compliance</h2>
+                <p class="section-subtitle">
+                    Your data remains yours. Always isolated. Always protected.
+                </p>
+            </div>
+
+            <div class="security-grid">
+                <div class="security-item">
+                    <div class="security-icon certified">✓</div>
+                    <h3 class="security-title">SOC 2 Type II</h3>
+                    <p class="security-description">Independently certified</p>
+                </div>
+
+                <div class="security-item">
+                    <div class="security-icon certified">✓</div>
+                    <h3 class="security-title">ISO 27001</h3>
+                    <p class="security-description">Fully compliant</p>
+                </div>
+
+                <div class="security-item">
+                    <div class="security-icon certified">✓</div>
+                    <h3 class="security-title">HIPAA BAA</h3>
+                    <p class="security-description">Available for all plans</p>
+                </div>
+
+                <div class="security-item">
+                    <div class="security-icon certified">✓</div>
+                    <h3 class="security-title">Complete Isolation</h3>
+                    <p class="security-description">Cryptographic tenant separation</p>
+                </div>
+
+                <div class="security-item">
+                    <div class="security-icon">🔒</div>
+                    <h3 class="security-title">You Own Outputs</h3>
+                    <p class="security-description">All insights remain yours</p>
+                </div>
+
+                <div class="security-item">
+                    <div class="security-icon">🔒</div>
+                    <h3 class="security-title">No Training</h3>
+                    <p class="security-description">Never train on client data</p>
+                </div>
+
+                <div class="security-item">
+                    <div class="security-icon">🔒</div>
+                    <h3 class="security-title">Full Audit Trails</h3>
+                    <p class="security-description">Complete transparency</p>
+                </div>
+
+                <div class="security-item">
+                    <div class="security-icon">🔒</div>
+                    <h3 class="security-title">24/7 Monitoring</h3>
+                    <p class="security-description">Continuous security scanning</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Performance Metrics -->
+    <section class="performance-section">
+        <div class="container">
+            <div class="section-header">
+                <h2 class="section-title" style="color: white;">Platform Performance</h2>
+                <p class="section-subtitle" style="color: rgba(255,255,255,0.8);">
+                    Built for speed, reliability, and infinite scale
+                </p>
+            </div>
+
+            <div class="metrics-showcase">
+                <div class="metric-card">
+                    <div class="metric-value">&lt;2s</div>
+                    <div class="metric-label">Average Response</div>
+                </div>
+
+                <div class="metric-card">
+                    <div class="metric-value">99.99%</div>
+                    <div class="metric-label">Uptime SLA</div>
+                </div>
+
+                <div class="metric-card">
+                    <div class="metric-value">1000+</div>
+                    <div class="metric-label">Concurrent Users</div>
+                </div>
+
+                <div class="metric-card">
+                    <div class="metric-value">∞</div>
+                    <div class="metric-label">Query Capacity</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Integration Ecosystem -->
+    <section class="integration-section">
+        <div class="container">
+            <div class="section-header">
+                <h2 class="section-title">Integration Ecosystem</h2>
+                <p class="section-subtitle">
+                    Connect with your existing tools and workflows
+                </p>
+            </div>
+
+            <div class="integration-logos">
+                <div class="integration-logo connected">Microsoft Teams</div>
+                <div class="integration-logo connected">Slack</div>
+                <div class="integration-logo connected">Salesforce</div>
+                <div class="integration-logo">ServiceNow</div>
+                <div class="integration-logo">Epic</div>
+                <div class="integration-logo">Cerner</div>
+                <div class="integration-logo">Veeva</div>
+                <div class="integration-logo">Box</div>
+                <div class="integration-logo">Dropbox</div>
+                <div class="integration-logo">Google Workspace</div>
+                <div class="integration-logo">Office 365</div>
+                <div class="integration-logo">Custom API</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Platform Boundaries -->
+    <section class="boundaries-section">
+        <div class="container">
+            <div class="section-header">
+                <h2 class="section-title">Platform Boundaries</h2>
+                <p class="section-subtitle">
+                    Clear classification for regulatory compliance
+                </p>
+            </div>
+
+            <div class="boundaries-grid">
+                <div class="boundary-column">
+                    <h3>What VITAL Expert IS:</h3>
+                    <ul class="boundary-list is">
+                        <li>Business operations platform</li>
+                        <li>Strategic intelligence system</li>
+                        <li>Innovation testing environment</li>
+                        <li>Knowledge management infrastructure</li>
+                        <li>Workflow automation platform</li>
+                        <li>Decision support for business</li>
+                    </ul>
+                </div>
+
+                <div class="boundary-column">
+                    <h3>What VITAL Expert IS NOT:</h3>
+                    <ul class="boundary-list not">
+                        <li>Medical device or SaMD</li>
+                        <li>Clinical decision support</li>
+                        <li>Patient care platform</li>
+                        <li>Healthcare delivery system</li>
+                        <li>Diagnostic tool</li>
+                        <li>Treatment recommendation system</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div style="text-align: center; margin-top: 40px; padding: 24px; background: var(--vital-white); border-radius: 8px;">
+                <p style="font-size: 14px; color: var(--vital-gray-60); font-style: italic;">
+                    *This classification is important: VITAL Expert is business software, not subject to FDA medical device regulations.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Interactive Demo -->
+    <section class="demo-section">
+        <div class="demo-container">
+            <h2 style="font-size: 40px; font-weight: 800; margin-bottom: 20px;">See It In Action</h2>
+            <p style="font-size: 18px; opacity: 0.9;">
+                Watch how VITAL Expert delivers instant strategic intelligence
+            </p>
+
+            <div class="demo-screen">
+                <div class="demo-chat">
+                    <div class="demo-message user">
+                        <div class="demo-label">You</div>
+                        <div class="demo-text">What's the optimal FDA pathway for our digital therapeutic device?</div>
+                    </div>
+
+                    <div class="demo-message ai">
+                        <div class="demo-label">VITAL Expert (12 agents collaborating)</div>
+                        <div class="demo-text">
+                            Based on analysis of your device characteristics and 47 similar precedents, 
+                            I recommend the De Novo classification pathway with 94% confidence. 
+                            This pathway offers the clearest route to market given your novel features and lack of direct predicates.
+                        </div>
+                    </div>
+
+                    <div class="demo-metrics">
+                        <div class="demo-metric">
+                            <div class="demo-metric-value">0.8s</div>
+                            <div class="demo-metric-label">Response Time</div>
+                        </div>
+                        <div class="demo-metric">
+                            <div class="demo-metric-value">12</div>
+                            <div class="demo-metric-label">Agents Used</div>
+                        </div>
+                        <div class="demo-metric">
+                            <div class="demo-metric-value">47</div>
+                            <div class="demo-metric-label">Precedents</div>
+                        </div>
+                        <div class="demo-metric">
+                            <div class="demo-metric-value">94%</div>
+                            <div class="demo-metric-label">Confidence</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Platform CTA -->
+    <section class="platform-cta">
+        <div class="container">
+            <h2 class="cta-title">Ready to Scale Your Intelligence?</h2>
+            <p class="cta-subtitle">
+                Experience the power of elastic capacity with no commitment
+            </p>
+            
+            <div class="cta-buttons">
+                <a href="#" class="btn btn-primary">Enter Your Sandbox</a>
+                <a href="#" class="btn btn-secondary">Request Technical Documentation</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="logo">
+                <span class="logo-vital">VITAL</span>
+                <span class="logo-dot"></span>
+                <span class="logo-expert">expert</span>
+            </div>
+            
+            <p class="footer-disclaimer">
+                © 2025 VITAL Expert. Strategic Intelligence Platform for Healthcare Organizations.<br>
+                *VITAL Expert is business operations software. Not a medical device.
+            </p>
+        </div>
+    </footer>
+</body>
+</html>

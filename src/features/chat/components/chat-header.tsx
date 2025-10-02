@@ -1,9 +1,5 @@
 'use client';
 
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { AgentAvatar } from '@/components/ui/agent-avatar';
-import { Agent } from '@/lib/stores/chat-store';
 import {
   Menu,
   Plus,
@@ -15,7 +11,13 @@ import {
   Brain,
   Users,
   Clock,
+  Sparkles,
+  User,
 } from 'lucide-react';
+
+import { AgentAvatar } from '@/components/ui/agent-avatar';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -24,12 +26,16 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { Switch } from '@/components/ui/switch';
+import { Agent } from '@/lib/stores/chat-store';
 
 interface ChatHeaderProps {
   selectedAgent: Agent | null;
   onToggleSidebar: () => void;
   onNewChat: () => void;
   onEditAgent?: (agent: Agent) => void;
+  interactionMode?: 'automatic' | 'manual';
+  onToggleMode?: (mode: 'automatic' | 'manual') => void;
 }
 
 export function ChatHeader({
@@ -37,6 +43,8 @@ export function ChatHeader({
   onToggleSidebar,
   onNewChat,
   onEditAgent,
+  interactionMode = 'automatic',
+  onToggleMode,
 }: ChatHeaderProps) {
   return (
     <div className="bg-white border-b border-gray-200 px-6 py-4">
@@ -100,6 +108,24 @@ export function ChatHeader({
 
         {/* Right Section */}
         <div className="flex items-center gap-2">
+          {/* Interaction Mode Toggle */}
+          {onToggleMode && (
+            <div className="flex items-center gap-3 mr-4 px-3 py-1.5 border border-gray-200 rounded-lg bg-background-gray/30">
+              <div className="flex items-center gap-2">
+                <Sparkles className={`h-4 w-4 ${interactionMode === 'automatic' ? 'text-progress-teal' : 'text-gray-400'}`} />
+                <span className="text-sm font-medium text-gray-700">Auto</span>
+              </div>
+              <Switch
+                checked={interactionMode === 'manual'}
+                onCheckedChange={(checked) => onToggleMode(checked ? 'manual' : 'automatic')}
+              />
+              <div className="flex items-center gap-2">
+                <User className={`h-4 w-4 ${interactionMode === 'manual' ? 'text-market-purple' : 'text-gray-400'}`} />
+                <span className="text-sm font-medium text-gray-700">Manual</span>
+              </div>
+            </div>
+          )}
+
           {/* Quick Stats */}
           {selectedAgent && (
             <div className="hidden md:flex items-center gap-4 text-xs text-medical-gray mr-4">

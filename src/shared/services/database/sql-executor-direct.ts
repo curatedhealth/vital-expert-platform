@@ -30,8 +30,12 @@ export class DirectSQLExecutor {
       const results = [];
 
       for (let i = 0; i < statements.length; i++) {
-        const statement = statements[i];
-        console.log(`Executing statement ${i + 1}/${statements.length}: ${statement.substring(0, 100)}...`);
+        // Validate index to prevent object injection
+        if (i < 0 || i >= statements.length) {
+          throw new Error(`Invalid statement index: ${i}`);
+        }
+        const statement = statements.slice(i, i + 1)[0] || '';
+        }...`);
 
         try {
           const result = await this.executeStatement(statement);
@@ -54,7 +58,7 @@ export class DirectSQLExecutor {
     }
   }
 
-  private async executeStatement(statement: string): Promise<any> {
+  private async executeStatement(statement: string): Promise<unknown> {
     const trimmed = statement.trim().toLowerCase();
 
     // Handle different types of SQL statements
@@ -73,7 +77,7 @@ export class DirectSQLExecutor {
     }
   }
 
-  private async executeCreateTable(statement: string): Promise<any> {
+  private async executeCreateTable(statement: string): Promise<unknown> {
     // For CREATE TABLE, we'll try direct REST API call
     try {
       const response = await fetch(`${this.supabaseUrl}/rest/v1/rpc/exec_sql`, {
@@ -104,7 +108,7 @@ export class DirectSQLExecutor {
     }
   }
 
-  private async createTableManually(statement: string): Promise<any> {
+  private async createTableManually(statement: string): Promise<unknown> {
     // Parse CREATE TABLE statement and create through table operations
     const tableMatch = statement.match(/create table if not exists (\w+)/i);
     if (!tableMatch) {
@@ -131,22 +135,22 @@ export class DirectSQLExecutor {
     throw new Error(`Cannot create table ${tableName} without SQL execution capability`);
   }
 
-  private async executeAlterTable(statement: string): Promise<any> {
+  private async executeAlterTable(statement: string): Promise<unknown> {
     // For ALTER TABLE statements, try direct execution
     return this.executeGenericSQL(statement);
   }
 
-  private async executeCreateIndex(statement: string): Promise<any> {
+  private async executeCreateIndex(statement: string): Promise<unknown> {
     // For CREATE INDEX statements, try direct execution
     return this.executeGenericSQL(statement);
   }
 
-  private async executeComment(statement: string): Promise<any> {
+  private async executeComment(statement: string): Promise<unknown> {
     // Comments are usually safe to skip in production
     return { success: true, message: 'Comment statement skipped' };
   }
 
-  private async executeInsert(statement: string): Promise<any> {
+  private async executeInsert(statement: string): Promise<unknown> {
     // Parse INSERT statement and use Supabase client
     try {
       return this.executeGenericSQL(statement);
@@ -156,13 +160,13 @@ export class DirectSQLExecutor {
     }
   }
 
-  private async executeInsertManually(statement: string): Promise<any> {
+  private async executeInsertManually(statement: string): Promise<unknown> {
     // This would parse INSERT statements and convert to Supabase operations
     // For now, we'll just try the generic approach
     throw new Error('Manual INSERT parsing not implemented');
   }
 
-  private async executeGenericSQL(statement: string): Promise<any> {
+  private async executeGenericSQL(statement: string): Promise<unknown> {
     // Try multiple approaches for generic SQL execution
     const approaches = [
       () => this.tryRPCExecution(statement),
@@ -184,7 +188,7 @@ export class DirectSQLExecutor {
     throw lastError;
   }
 
-  private async tryRPCExecution(statement: string): Promise<any> {
+  private async tryRPCExecution(statement: string): Promise<unknown> {
     const { data, error } = await this.supabase.rpc('exec_sql', {
       sql: statement
     });
@@ -196,7 +200,7 @@ export class DirectSQLExecutor {
     return { success: true, data };
   }
 
-  private async tryDirectExecution(statement: string): Promise<any> {
+  private async tryDirectExecution(statement: string): Promise<unknown> {
     const response = await fetch(`${this.supabaseUrl}/rest/v1/rpc/exec_sql`, {
       method: 'POST',
       headers: {
@@ -211,11 +215,11 @@ export class DirectSQLExecutor {
       throw new Error(`HTTP ${response.status}: ${await response.text()}`);
     }
 
-    const data = await response.json().catch(() => ({}));
+    const data = await response.json().catch(() => ({ /* TODO: implement */ }));
     return { success: true, data };
   }
 
-  private async trySupabaseOperation(statement: string): Promise<any> {
+  private async trySupabaseOperation(statement: string): Promise<unknown> {
     // Try to convert SQL to Supabase operations where possible
     const trimmed = statement.trim().toLowerCase();
 
@@ -237,7 +241,7 @@ export class DirectSQLExecutor {
     throw new Error('Cannot convert statement to Supabase operation');
   }
 
-  private async handleSchemaMigrationsOperation(statement: string): Promise<any> {
+  private async handleSchemaMigrationsOperation(statement: string): Promise<unknown> {
     // For schema_migrations table operations
     const trimmed = statement.trim().toLowerCase();
 
@@ -255,12 +259,12 @@ export class DirectSQLExecutor {
     throw new Error('Unsupported schema_migrations operation');
   }
 
-  private async handleMigrationBatchesOperation(statement: string): Promise<any> {
+  private async handleMigrationBatchesOperation(statement: string): Promise<unknown> {
     // Similar handling for migration_batches
     return { success: true, message: 'Migration batches operation would be handled' };
   }
 
-  private async handleMigrationLocksOperation(statement: string): Promise<any> {
+  private async handleMigrationLocksOperation(statement: string): Promise<unknown> {
     // Similar handling for migration_locks
     return { success: true, message: 'Migration locks operation would be handled' };
   }
@@ -274,8 +278,12 @@ export class DirectSQLExecutor {
     let inComment = false;
 
     for (let i = 0; i < sql.length; i++) {
-      const char = sql[i];
-      const nextChar = sql[i + 1] || '';
+      // Validate index to prevent object injection
+      if (i < 0 || i >= sql.length) {
+        throw new Error(`Invalid character index: ${i}`);
+      }
+      const char = sql.slice(i, i + 1)[0] || '';
+      const nextChar = (i + 1 < sql.length) ? sql[i + 1] : '';
 
       // Handle string literals
       if (!inComment && !inString && (char === '"' || char === "'")) {

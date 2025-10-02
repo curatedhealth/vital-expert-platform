@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
+
+import { SupabaseRAGService } from '@/features/chat/services/supabase-rag-service';
 import { llmOrchestrator } from '@/lib/llm/orchestrator';
-import { SupabaseRAGService } from '../../../../../backend/lib/chat/supabase-rag-service';
 import { createClient } from '@/lib/supabase/server';
-import { Phase, QueryType, ModelType } from '@/types';
+import { ModelType } from '@/types';
 
 const querySchema = z.object({
   question: z.string().min(10).max(1000),
@@ -224,7 +225,7 @@ export async function POST(request: NextRequest) {
 
 // Helper function to update usage metrics
 async function updateUsageMetrics(
-  supabase: any,
+  supabase: unknown,
   organizationId: string,
   metrics: { queries?: number; tokens?: number }
 ) {

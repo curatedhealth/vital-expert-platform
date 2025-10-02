@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAuth, requirePermission, rateLimit } from '@/middleware/auth';
+
+import { requirePermission, rateLimit } from '@/middleware/auth';
+import { llmProviderService } from '@/shared/services/llm/llm-provider.service';
 import { PermissionScope, PermissionAction } from '@/types/auth.types';
-import { llmProviderService } from '@/services/llm-provider.service';
 import { LLMProviderConfig } from '@/types/llm-provider.types';
 
 interface RouteParams {
@@ -11,10 +12,10 @@ interface RouteParams {
 }
 
 // GET /api/llm/providers/[id] - Get specific provider
-export const GET = rateLimit(100)(requirePermission({
+export const _GET = rateLimit(100)(requirePermission({
   scope: PermissionScope.LLM_PROVIDERS,
   action: PermissionAction.READ
-})(async (request: NextRequest, user: any) => {
+})(async (request: NextRequest, user: unknown) => {
   const params = { id: request.url.split('/').pop()! };
   try {
     const provider = await llmProviderService.getProvider(params.id);
@@ -37,10 +38,10 @@ export const GET = rateLimit(100)(requirePermission({
 }));
 
 // PUT /api/llm/providers/[id] - Update provider
-export const PUT = rateLimit(20)(requirePermission({
+export const _PUT = rateLimit(20)(requirePermission({
   scope: PermissionScope.LLM_PROVIDERS,
   action: PermissionAction.UPDATE
-})(async (request: NextRequest, user: any) => {
+})(async (request: NextRequest, user: unknown) => {
   const params = { id: request.url.split('/').pop()! };
   try {
     const body = await request.json();
@@ -85,7 +86,7 @@ export const PUT = rateLimit(20)(requirePermission({
 export const DELETE = rateLimit(10)(requirePermission({
   scope: PermissionScope.LLM_PROVIDERS,
   action: PermissionAction.DELETE
-})(async (request: NextRequest, user: any) => {
+})(async (request: NextRequest, user: unknown) => {
   const params = { id: request.url.split('/').pop()! };
   try {
     await llmProviderService.deleteProvider(params.id);

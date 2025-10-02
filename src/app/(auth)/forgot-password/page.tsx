@@ -1,16 +1,17 @@
 'use client';
 
+import { zodResolver } from '@hookform/resolvers/zod';
+import { ArrowLeft, Mail, AlertCircle, CheckCircle } from 'lucide-react';
+import Link from 'next/link';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import Link from 'next/link';
+
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/lib/supabase/auth-context';
-import { ArrowLeft, Mail, AlertCircle, CheckCircle } from 'lucide-react';
 
 const forgotPasswordSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -39,7 +40,7 @@ export default function ForgotPasswordPage() {
     try {
       await resetPassword(data.email);
       setSuccess(true);
-    } catch (error: any) {
+    } catch (error: unknown) {
       setError(error.message || 'Failed to send reset email');
     } finally {
       setIsLoading(false);

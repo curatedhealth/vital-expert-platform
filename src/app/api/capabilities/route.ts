@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
+
 import { supabase } from '@/lib/supabase/client';
-import type { MedicalCapability } from '@/types/healthcare-compliance';
 
 /**
  * Medical Capabilities Management API
@@ -16,14 +16,6 @@ export async function GET(request: NextRequest) {
     const status = searchParams.get('status') || 'active';
     const includeCompetencies = searchParams.get('includeCompetencies') === 'true';
     const validationStatus = searchParams.get('validationStatus');
-
-    console.log('🔍 Fetching capabilities with params:', {
-      domain,
-      status,
-      includeCompetencies,
-      validationStatus
-    });
-
     // Build query
     let query = supabase
       .from('capabilities')
@@ -54,9 +46,6 @@ export async function GET(request: NextRequest) {
         { status: 500 }
       );
     }
-
-    console.log(`✅ Successfully fetched ${data?.length || 0} capabilities`);
-
     return NextResponse.json({
       capabilities: data || [],
       count: data?.length || 0,
@@ -77,11 +66,12 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    console.log('📝 Creating new capability:', body);
-
     // Validate required fields
     const requiredFields = ['name', 'display_name', 'description', 'medical_domain'];
-    const missingFields = requiredFields.filter(field => !body[field]);
+    const missingFields = requiredFields.filter(field => {
+      // eslint-disable-next-line security/detect-object-injection
+      return !body[field];
+    });
 
     if (missingFields.length > 0) {
       return NextResponse.json(
@@ -106,7 +96,7 @@ export async function POST(request: NextRequest) {
       fda_classification: body.fda_classification || null,
       hipaa_relevant: body.hipaa_relevant || false,
       clinical_validation_status: body.clinical_validation_status || 'pending',
-      validation_rules: body.validation_rules || {},
+      validation_rules: body.validation_rules || { /* TODO: implement */ },
       complexity_level: body.complexity_level || 'intermediate',
       status: body.status || 'active',
       icon: body.icon || '🏥',
@@ -134,9 +124,6 @@ export async function POST(request: NextRequest) {
         { status: 500 }
       );
     }
-
-    console.log('✅ Successfully created capability:', data.id);
-
     // Create audit log entry
     await createAuditLogEntry('capability_created', data.id, capabilityData);
 
@@ -167,9 +154,6 @@ export async function PUT(request: NextRequest) {
         { status: 400 }
       );
     }
-
-    console.log('🔧 Updating capability:', id, updateData);
-
     // Add audit trail for the update
     const auditUpdate = {
       ...updateData,
@@ -195,9 +179,6 @@ export async function PUT(request: NextRequest) {
         { status: 500 }
       );
     }
-
-    console.log('✅ Successfully updated capability:', id);
-
     // Create audit log entry
     await createAuditLogEntry('capability_updated', id, updateData);
 
@@ -228,9 +209,6 @@ export async function DELETE(request: NextRequest) {
         { status: 400 }
       );
     }
-
-    console.log('🗑️ Soft deleting capability:', id);
-
     // Soft delete by updating status
     const { data, error } = await supabase
       .from('capabilities')
@@ -253,9 +231,6 @@ export async function DELETE(request: NextRequest) {
         { status: 500 }
       );
     }
-
-    console.log('✅ Successfully deactivated capability:', id);
-
     // Create audit log entry
     await createAuditLogEntry('capability_deactivated', id, { status: 'inactive' });
 
@@ -276,7 +251,7 @@ export async function DELETE(request: NextRequest) {
 /**
  * Create audit log entry for FDA 21 CFR Part 11 compliance
  */
-async function createAuditLogEntry(action: string, entityId: string, data: any) {
+async function createAuditLogEntry(action: string, entityId: string, data: unknown) {
   try {
     await supabase
       .from('medical_validations')

@@ -1,17 +1,11 @@
 'use client';
 
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   X,
   Brain,
-  Settings,
   MessageSquare,
   Database,
   Star,
-  Users,
   Thermometer,
   Hash,
   Edit,
@@ -19,9 +13,14 @@ import {
   Heart,
   Play,
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { type Agent, useChatStore } from '@/lib/stores/chat-store';
+
 import { AgentAvatar } from '@/components/ui/agent-avatar';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { type Agent, useChatStore } from '@/lib/stores/chat-store';
+import { cn } from '@/lib/utils';
 
 interface AgentDetailsModalProps {
   agent: Agent;

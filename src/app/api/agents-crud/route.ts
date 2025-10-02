@@ -1,5 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { NextRequest, NextResponse } from 'next/server';
 
 // Use service role key for server-side operations (bypasses RLS)
 const supabaseAdmin = createClient(
@@ -9,11 +9,94 @@ const supabaseAdmin = createClient(
 
 export async function GET(request: NextRequest) {
   try {
-    console.log('🔍 Agents CRUD API: Loading active agents...');
+    // Check for special action parameter
+    const { searchParams } = new URL(request.url);
+    const action = searchParams.get('action');
 
+    // Get organizational structure for filters
+    if (action === 'get_org_structure') {
+      // Fetch unique departments and roles from agents
+      const { data: agentsData } = await supabaseAdmin
+        .from('agents')
+        .select('department, role')
+        .eq('status', 'active');
+
+      // Fetch business functions
+      const { data: functionsData } = await supabaseAdmin
+        .from('business_functions')
+        .select('id, name, description');
+
+      // Extract unique departments and roles
+      const departments = [...new Set(
+        (agentsData || [])
+          .map(a => a.department)
+          .filter(Boolean)
+      )].sort();
+
+      const roles = [...new Set(
+        (agentsData || [])
+          .map(a => a.role)
+          .filter(Boolean)
+      )].sort();
+
+      return NextResponse.json({
+        success: true,
+        organizationalStructure: {
+          businessFunctions: functionsData || [],
+          departments,
+          roles
+        }
+      });
+    }
+
+    // Regular agent fetch - explicitly select columns to avoid schema cache issues
     const { data, error } = await supabaseAdmin
       .from('agents')
-      .select('*')
+      .select(`
+        id,
+        name,
+        display_name,
+        description,
+        system_prompt,
+        model,
+        avatar,
+        color,
+        capabilities,
+        rag_enabled,
+        temperature,
+        max_tokens,
+        is_custom,
+        is_public,
+        status,
+        tier,
+        priority,
+        implementation_phase,
+        knowledge_domains,
+        business_function,
+        role,
+        department,
+        function_id,
+        department_id,
+        role_id,
+        domain_expertise,
+        medical_specialty,
+        clinical_validation_status,
+        medical_accuracy_score,
+        citation_accuracy,
+        hallucination_rate,
+        medical_error_rate,
+        fda_samd_class,
+        hipaa_compliant,
+        pharma_enabled,
+        verify_enabled,
+        last_clinical_review,
+        medical_reviewer_id,
+        cost_per_query,
+        average_latency_ms,
+        audit_trail,
+        created_at,
+        updated_at
+      `)
       .eq('status', 'active')
       .order('tier', { ascending: true })
       .order('priority', { ascending: true })
@@ -27,11 +110,24 @@ export async function GET(request: NextRequest) {
       }, { status: 500 });
     }
 
-    console.log(`✅ Agents CRUD API: Loaded ${data?.length || 0} agents`);
+    // Get business functions to map UUIDs to names
+    const { data: businessFunctions } = await supabaseAdmin
+      .from('business_functions')
+      .select('id, name');
+
+    const functionMap = new Map(
+      (businessFunctions || []).map(f => [f.id, f.name])
+    );
+
+    // Transform agents to include readable business_function name
+    const transformedAgents = (data || []).map(agent => ({
+      ...agent,
+      business_function: functionMap.get(agent.business_function) || agent.business_function
+    }));
 
     return NextResponse.json({
       success: true,
-      agents: data || []
+      agents: transformedAgents
     });
 
   } catch (error) {
@@ -46,10 +142,6 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const agentData = await request.json();
-
-    console.log('🔧 Agents CRUD API: Creating agent...');
-    console.log('- Agent data:', agentData);
-
     const { data, error } = await supabaseAdmin
       .from('agents')
       .insert([{
@@ -75,9 +167,6 @@ export async function POST(request: NextRequest) {
         details: error.details
       }, { status: 500 });
     }
-
-    console.log('✅ Agents CRUD API: Agent created successfully:', data);
-
     return NextResponse.json({
       success: true,
       agent: data

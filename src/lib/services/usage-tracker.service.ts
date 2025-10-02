@@ -124,7 +124,7 @@ export class UsageTracker {
   async recordUsage(usage: UsageRecord): Promise<string> {
     try {
       const { data, error } = await this.supabase
-        .from('llm_usage_logs' as any)
+        .from('llm_usage_logs' as unknown)
         .insert({
           provider_id: usage.provider_id,
           user_id: usage.user_id,
@@ -147,7 +147,7 @@ export class UsageTracker {
           started_at: usage.started_at.toISOString(),
           completed_at: usage.completed_at.toISOString(),
           created_at: new Date().toISOString()
-        } as any)
+        } as unknown)
         .select('id')
         .single();
 
@@ -158,7 +158,7 @@ export class UsageTracker {
       // Update provider metrics asynchronously
       this.updateProviderMetrics(usage.provider_id, usage);
 
-      return (data as any)?.id || 'unknown';
+      return (data as unknown)?.id || 'unknown';
     } catch (error) {
       console.error('Failed to record usage:', error);
       throw error;
@@ -262,12 +262,12 @@ export class UsageTracker {
         throw error;
       }
 
-      const activeProviders = new Set((data as any)?.map((d: any) => d.provider_id) || []).size;
-      const totalRequests = (data as any)?.length || 0;
-      const totalCost = (data as any)?.reduce((sum: number, d: any) => sum + (d.total_cost || 0), 0) || 0;
-      const successfulRequests = (data as any)?.filter((d: any) => d.success).length || 0;
-      const averageLatency = (data as any)?.length ?
-        (data as any).reduce((sum: number, d: any) => sum + (d.latency_ms || 0), 0) / (data as any).length : 0;
+      const activeProviders = new Set((data as unknown)?.map((d: unknown) => d.provider_id) || []).size;
+      const totalRequests = (data as unknown)?.length || 0;
+      const totalCost = (data as unknown)?.reduce((sum: number, d: unknown) => sum + (d.total_cost || 0), 0) || 0;
+      const successfulRequests = (data as unknown)?.filter((d: unknown) => d.success).length || 0;
+      const averageLatency = (data as unknown)?.length ?
+        (data as unknown).reduce((sum: number, d: unknown) => sum + (d.latency_ms || 0), 0) / (data as unknown).length : 0;
 
       return {
         activeProviders,
@@ -302,10 +302,10 @@ export class UsageTracker {
         .limit(100);
 
       if (recentUsage && recentUsage.length > 0) {
-        const avgLatency = recentUsage.reduce((sum: number, u: any) => sum + u.latency_ms, 0) / recentUsage.length;
-        const successRate = (recentUsage.filter((u: any) => u.success).length / recentUsage.length) * 100;
+        const avgLatency = recentUsage.reduce((sum: number, u: unknown) => sum + u.latency_ms, 0) / recentUsage.length;
+        const successRate = (recentUsage.filter((u: unknown) => u.success).length / recentUsage.length) * 100;
 
-        await (this.supabase as any)
+        await (this.supabase as unknown)
           .from('llm_providers')
           .update({
             average_latency_ms: Math.round(avgLatency),
@@ -322,7 +322,7 @@ export class UsageTracker {
    * Calculate usage summary from raw data
    */
   private calculateUsageSummary(
-    data: any[],
+    data: unknown[],
     startDate: Date,
     endDate: Date
   ): ProviderUsageSummary {
@@ -364,7 +364,7 @@ export class UsageTracker {
   /**
    * Calculate cost breakdown from raw data
    */
-  private calculateCostBreakdown(data: any[], startDate: Date, endDate: Date): CostBreakdown {
+  private calculateCostBreakdown(data: unknown[], startDate: Date, endDate: Date): CostBreakdown {
     // Daily breakdown
     const dailyMap = new Map<string, { cost: number; tokens: number; requests: number }>();
 
@@ -379,7 +379,7 @@ export class UsageTracker {
 
     let totalCost = 0;
     let totalTokens = 0;
-    let totalRequests = data.length;
+    const totalRequests = data.length;
 
     data.forEach(record => {
       const cost = record.total_cost || 0;
@@ -481,5 +481,5 @@ export class UsageTracker {
 }
 
 // Export singleton instance
-export const usageTracker = UsageTracker.getInstance();
+export const _usageTracker = UsageTracker.getInstance();
 export default UsageTracker;

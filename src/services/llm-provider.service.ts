@@ -1,4 +1,5 @@
 // LLM Provider Registry and Management Service
+import { createClient } from '@/lib/supabase/client';
 import {
   LLMProvider,
   LLMProviderConfig,
@@ -17,10 +18,8 @@ import {
   RetryConfig,
   UsageStatus,
   ValidationStatus,
-  LLMUsageLog,
   UsageLogCreateInput
 } from '@/types/llm-provider.types';
-import { createClient } from '@/lib/supabase/client';
 
 export class LLMProviderService {
   private supabase = createClient();
@@ -39,7 +38,6 @@ export class LLMProviderService {
       await this.loadProvidersFromDB();
       this.startHealthCheckScheduler();
       this.initialized = true;
-      console.log('LLM Provider Service initialized successfully');
     } catch (error) {
       console.error('Failed to initialize LLM Provider Service:', error);
       throw error;
@@ -84,7 +82,7 @@ export class LLMProviderService {
       is_hipaa_compliant: config.is_hipaa_compliant || false,
       is_production_ready: config.is_production_ready || false,
       medical_accuracy_score: config.medical_accuracy_score,
-      custom_headers: config.custom_headers || {},
+      custom_headers: config.custom_headers || { /* TODO: implement */ },
       retry_config: {
         max_retries: 3,
         retry_delay_ms: 1000,
@@ -92,7 +90,7 @@ export class LLMProviderService {
         backoff_multiplier: 2,
         ...config.retry_config
       },
-      metadata: config.metadata || {},
+      metadata: config.metadata || { /* TODO: implement */ },
       tags: config.tags || [],
       status: ProviderStatus.INITIALIZING
     };
@@ -117,8 +115,6 @@ export class LLMProviderService {
 
     // Add to memory cache
     this.providers.set(provider.id, provider);
-
-    console.log(`Provider ${provider.provider_name} created successfully`);
     return provider.id;
   }
 
@@ -128,7 +124,7 @@ export class LLMProviderService {
       throw new Error(`Provider ${providerId} not found`);
     }
 
-    const updateData: any = { ...updates };
+    const updateData: unknown = { ...updates };
 
     // Handle API key encryption
     if (updates.api_key) {
@@ -156,8 +152,6 @@ export class LLMProviderService {
       const isHealthy = await this.testProviderHealth(provider);
       await this.updateProviderStatus(providerId, isHealthy ? ProviderStatus.ACTIVE : ProviderStatus.ERROR);
     }
-
-    console.log(`Provider ${providerId} updated successfully`);
   }
 
   async deleteProvider(providerId: string): Promise<void> {
@@ -183,8 +177,6 @@ export class LLMProviderService {
     // Soft delete by deactivating
     await this.updateProvider(providerId, { is_active: false });
     await this.updateProviderStatus(providerId, ProviderStatus.DISABLED);
-
-    console.log(`Provider ${providerId} deactivated successfully`);
   }
 
   async getProvider(providerId: string): Promise<LLMProvider | null> {
@@ -285,7 +277,7 @@ export class LLMProviderService {
       page,
       limit,
       has_next_page: (data?.length || 0) === limit,
-      filters_applied: filters || {}
+      filters_applied: filters || { /* TODO: implement */ }
     };
   }
 
@@ -314,7 +306,7 @@ export class LLMProviderService {
     let score = 0;
     const reasoning: string[] = [];
     let estimatedCost = 0;
-    let estimatedLatency = provider.average_latency_ms || 1000;
+    const estimatedLatency = provider.average_latency_ms || 1000;
 
     // Base score from priority and weight
     score += (10 - provider.priority_level) * 10; // Higher priority = higher score
@@ -470,7 +462,7 @@ export class LLMProviderService {
         contains_phi: request.contains_phi || false,
         clinical_validation_status: ValidationStatus.PENDING,
         confidence_score: response.confidence_score,
-        request_metadata: request.request_metadata || {},
+        request_metadata: request.request_metadata || { /* TODO: implement */ },
         response_metadata: response.response_metadata
       });
 
@@ -494,12 +486,12 @@ export class LLMProviderService {
           latency_ms: latency,
           status: UsageStatus.ERROR,
           error_message: error instanceof Error ? error.message : String(error),
-          error_type: (error as any)?.code || 'UNKNOWN_ERROR',
+          error_type: (error as unknown)?.code || 'UNKNOWN_ERROR',
           medical_context: request.medical_context,
           contains_phi: request.contains_phi || false,
           clinical_validation_status: ValidationStatus.NOT_REQUIRED,
-          request_metadata: request.request_metadata || {},
-          response_metadata: {}
+          request_metadata: request.request_metadata || { /* TODO: implement */ },
+          response_metadata: { /* TODO: implement */ }
         });
       }
 
@@ -547,7 +539,7 @@ export class LLMProviderService {
     const startTime = Date.now();
 
     // Provider-specific API calls
-    let response: any;
+    let response: unknown;
 
     switch (provider.provider_type) {
       case ProviderType.OPENAI:
@@ -587,13 +579,13 @@ export class LLMProviderService {
       latency_ms: latency,
       confidence_score: response.confidence_score,
       finish_reason: response.finish_reason,
-      response_metadata: response.metadata || {},
+      response_metadata: response.metadata || { /* TODO: implement */ },
       created_at: new Date()
     };
   }
 
   // Provider-specific API implementations
-  private async callOpenAI(provider: LLMProvider, request: LLMRequest): Promise<any> {
+  private async callOpenAI(provider: LLMProvider, request: LLMRequest): Promise<unknown> {
     const apiKey = await this.decryptApiKey(provider.api_key_encrypted!);
 
     const response = await fetch(`${provider.api_endpoint}/chat/completions`, {
@@ -647,7 +639,7 @@ export class LLMProviderService {
     };
   }
 
-  private async callAnthropic(provider: LLMProvider, request: LLMRequest): Promise<any> {
+  private async callAnthropic(provider: LLMProvider, request: LLMRequest): Promise<unknown> {
     const apiKey = await this.decryptApiKey(provider.api_key_encrypted!);
 
     const response = await fetch(`${provider.api_endpoint}/messages`, {
@@ -698,12 +690,12 @@ export class LLMProviderService {
     };
   }
 
-  private async callGoogle(provider: LLMProvider, request: LLMRequest): Promise<any> {
+  private async callGoogle(provider: LLMProvider, request: LLMRequest): Promise<unknown> {
     // Implement Google/Vertex AI API call
     throw new Error('Google provider not yet implemented');
   }
 
-  private async callAzure(provider: LLMProvider, request: LLMRequest): Promise<any> {
+  private async callAzure(provider: LLMProvider, request: LLMRequest): Promise<unknown> {
     // Implement Azure OpenAI API call
     throw new Error('Azure provider not yet implemented');
   }
@@ -735,9 +727,9 @@ export class LLMProviderService {
       // Record failed health check
       await this.recordHealthCheck(provider.id, {
         is_healthy: false,
-        error_type: (error as any)?.code || 'UNKNOWN_ERROR',
+        error_type: (error as unknown)?.code || 'UNKNOWN_ERROR',
         error_message: error instanceof Error ? error.message : String(error),
-        http_status_code: (error as any)?.details?.status
+        http_status_code: (error as unknown)?.details?.status
       });
 
       return false;
@@ -761,7 +753,7 @@ export class LLMProviderService {
       error_message: healthData.error_message,
       error_code: healthData.error_code,
       http_status_code: healthData.http_status_code,
-      metadata: healthData.metadata || {}
+      metadata: healthData.metadata || { /* TODO: implement */ }
     };
 
     const { error } = await this.supabase
@@ -817,11 +809,9 @@ export class LLMProviderService {
         this.providers.set(provider.id, provider);
       });
     }
-
-    console.log(`Loaded ${this.providers.size} LLM providers`);
   }
 
-  private transformDBProvider(dbProvider: any): LLMProvider {
+  private transformDBProvider(dbProvider: unknown): LLMProvider {
     return {
       id: dbProvider.id,
       provider_name: dbProvider.provider_name,
@@ -850,9 +840,9 @@ export class LLMProviderService {
       health_check_enabled: dbProvider.health_check_enabled,
       health_check_interval_minutes: dbProvider.health_check_interval_minutes,
       health_check_timeout_seconds: dbProvider.health_check_timeout_seconds,
-      custom_headers: dbProvider.custom_headers || {},
+      custom_headers: dbProvider.custom_headers || { /* TODO: implement */ },
       retry_config: dbProvider.retry_config as RetryConfig,
-      metadata: dbProvider.metadata || {},
+      metadata: dbProvider.metadata || { /* TODO: implement */ },
       tags: dbProvider.tags || [],
       created_at: new Date(dbProvider.created_at),
       updated_at: new Date(dbProvider.updated_at),
@@ -924,7 +914,7 @@ export class LLMProviderService {
     return `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   }
 
-  private isRetryableError(error: any): boolean {
+  private isRetryableError(error: unknown): boolean {
     // Define which errors are retryable
     const retryableCodes = ['TIMEOUT', 'RATE_LIMITED', 'SERVER_ERROR'];
     return retryableCodes.includes(error.code) || (error.status >= 500 && error.status < 600);
@@ -943,4 +933,4 @@ export class LLMProviderService {
 }
 
 // Singleton instance
-export const llmProviderService = new LLMProviderService();
+export const _llmProviderService = new LLMProviderService();

@@ -154,7 +154,7 @@ export interface LLMProvider {
   retry_config: RetryConfig;
 
   // Metadata
-  metadata: Record<string, any>;
+  metadata: Record<string, unknown>;
   tags: string[];
 
   // Audit fields
@@ -178,7 +178,7 @@ export interface LLMProviderHealthCheck {
   error_message?: string;
   error_code?: string;
   http_status_code?: number;
-  metadata: Record<string, any>;
+  metadata: Record<string, unknown>;
 }
 
 export interface LLMUsageLog {
@@ -222,8 +222,8 @@ export interface LLMUsageLog {
   medical_accuracy_score?: number; // 0.00 to 1.00
 
   // Metadata
-  request_metadata: Record<string, any>;
-  response_metadata: Record<string, any>;
+  request_metadata: Record<string, unknown>;
+  response_metadata: Record<string, unknown>;
 
   // Audit
   created_at: Date;
@@ -332,7 +332,7 @@ export interface LLMProviderConfig {
   medical_accuracy_score?: number;
   custom_headers?: Record<string, string>;
   retry_config?: Partial<RetryConfig>;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
   tags?: string[];
 }
 
@@ -345,7 +345,7 @@ export interface LLMRequest {
   max_tokens?: number;
   temperature?: number;
   stream?: boolean;
-  functions?: any[]; // Function calling definitions
+  functions?: unknown[]; // Function calling definitions
   function_call?: any;
 
   // Context
@@ -357,7 +357,7 @@ export interface LLMRequest {
   patient_context_id?: string;
 
   // Metadata
-  request_metadata?: Record<string, any>;
+  request_metadata?: Record<string, unknown>;
   priority?: 'low' | 'normal' | 'high' | 'critical';
   timeout_ms?: number;
   retry_attempts?: number;
@@ -370,7 +370,7 @@ export interface LLMResponse {
 
   // Content
   content: string;
-  function_calls?: any[];
+  function_calls?: unknown[];
 
   // Usage
   usage: {
@@ -396,7 +396,7 @@ export interface LLMResponse {
   finish_reason: 'stop' | 'length' | 'function_call' | 'content_filter' | 'error';
 
   // Metadata
-  response_metadata: Record<string, any>;
+  response_metadata: Record<string, unknown>;
   created_at: Date;
 }
 
@@ -543,7 +543,7 @@ export interface LLMError {
   message: string;
   provider_id?: string;
   request_id?: string;
-  details?: Record<string, any>;
+  details?: Record<string, unknown>;
   retry_after?: number; // seconds
   is_retryable: boolean;
   timestamp: Date;
@@ -554,7 +554,7 @@ export interface LLMProviderEvent {
   type: 'status_change' | 'health_check' | 'quota_exceeded' | 'high_latency' | 'error_spike';
   provider_id: string;
   timestamp: Date;
-  data: Record<string, any>;
+  data: Record<string, unknown>;
   severity: 'info' | 'warning' | 'error' | 'critical';
 }
 
@@ -562,7 +562,7 @@ export interface LLMProviderEvent {
 export interface BulkProviderOperation {
   operation: 'activate' | 'deactivate' | 'update_config' | 'reset_health' | 'update_costs';
   provider_ids: string[];
-  parameters?: Record<string, any>;
+  parameters?: Record<string, unknown>;
 }
 
 export interface BulkOperationResult {
@@ -588,7 +588,7 @@ export interface ProviderListResponse {
   page: number;
   limit: number;
   has_next_page: boolean;
-  filters_applied: Record<string, any>;
+  filters_applied: Record<string, unknown>;
 }
 
 export interface ProviderResponse {
@@ -669,7 +669,7 @@ export class LLMError extends Error {
   constructor(
     message: string,
     provider: string,
-    originalError?: any,
+    originalError?: unknown,
     errorCode?: string,
     retryable: boolean = false
   ) {
@@ -689,7 +689,7 @@ export class LLMRateLimitError extends LLMError {
     message: string,
     provider: string,
     retryAfter?: number,
-    originalError?: any
+    originalError?: unknown
   ) {
     super(message, provider, originalError, 'RATE_LIMIT', true);
     this.name = 'LLMRateLimitError';
@@ -701,7 +701,7 @@ export class LLMAuthenticationError extends LLMError {
   constructor(
     message: string,
     provider: string,
-    originalError?: any
+    originalError?: unknown
   ) {
     super(message, provider, originalError, 'AUTH_ERROR', false);
     this.name = 'LLMAuthenticationError';
@@ -712,7 +712,7 @@ export class LLMValidationError extends LLMError {
   constructor(
     message: string,
     provider: string,
-    originalError?: any
+    originalError?: unknown
   ) {
     super(message, provider, originalError, 'VALIDATION_ERROR', false);
     this.name = 'LLMValidationError';

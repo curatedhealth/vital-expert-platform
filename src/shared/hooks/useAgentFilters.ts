@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+
 import { useAgentsStore } from '@/lib/stores/agents-store';
 
 export function useAgentFilters() {

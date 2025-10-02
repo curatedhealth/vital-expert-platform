@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+
 import { supabase } from '@/lib/supabase/client';
 
 /**
@@ -12,9 +13,6 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams;
     const department = searchParams.get('department');
     const category = searchParams.get('category');
-
-    console.log('🏢 Fetching business functions with params:', { department, category });
-
     // Build query
     let query = supabase
       .from('business_functions')
@@ -41,9 +39,6 @@ export async function GET(request: NextRequest) {
         { status: 500 }
       );
     }
-
-    console.log(`✅ Successfully fetched ${data?.length || 0} business functions`);
-
     // Get unique departments and categories for filtering
     const departments = [...new Set(data?.map(bf => bf.department).filter(Boolean))];
     const categories = [...new Set(data?.map(bf => bf.healthcare_category).filter(Boolean))];
@@ -72,11 +67,12 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    console.log('📝 Creating new business function:', body);
-
     // Validate required fields
     const requiredFields = ['name', 'department', 'healthcare_category', 'description'];
-    const missingFields = requiredFields.filter(field => !body[field]);
+    const missingFields = requiredFields.filter(field => {
+      // eslint-disable-next-line security/detect-object-injection
+      return !body[field];
+    });
 
     if (missingFields.length > 0) {
       return NextResponse.json(
@@ -129,9 +125,6 @@ export async function POST(request: NextRequest) {
         { status: 500 }
       );
     }
-
-    console.log('✅ Successfully created business function:', data.id);
-
     return NextResponse.json({
       businessFunction: data,
       message: 'Business function created successfully',
@@ -159,9 +152,6 @@ export async function PUT(request: NextRequest) {
         { status: 400 }
       );
     }
-
-    console.log('🔧 Updating business function:', id, updateData);
-
     const { data, error } = await supabase
       .from('business_functions')
       .update(updateData)
@@ -182,9 +172,6 @@ export async function PUT(request: NextRequest) {
         { status: 500 }
       );
     }
-
-    console.log('✅ Successfully updated business function:', id);
-
     return NextResponse.json({
       businessFunction: data,
       message: 'Business function updated successfully',
@@ -212,9 +199,6 @@ export async function DELETE(request: NextRequest) {
         { status: 400 }
       );
     }
-
-    console.log('🗑️ Deleting business function:', id);
-
     // Check if business function is in use by agents
     const { data: agentUsage, error: usageError } = await supabase
       .from('agents')
@@ -253,9 +237,6 @@ export async function DELETE(request: NextRequest) {
         { status: 500 }
       );
     }
-
-    console.log('✅ Successfully deleted business function:', id);
-
     return NextResponse.json({
       message: 'Business function deleted successfully',
       timestamp: new Date().toISOString()

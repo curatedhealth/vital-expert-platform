@@ -1,11 +1,5 @@
 'use client';
 
-import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent } from '@/components/ui/card';
-import { AgentAvatar } from '@/components/ui/agent-avatar';
-import { useChatStore } from '@/lib/stores/chat-store';
 import {
   ChevronDown,
   ChevronUp,
@@ -15,17 +9,38 @@ import {
   Brain,
   CheckCircle,
   Edit,
+  BookmarkPlus,
+  BookmarkCheck,
 } from 'lucide-react';
+import { useState } from 'react';
+import { toast } from 'sonner';
+
+import { AgentAvatar } from '@/components/ui/agent-avatar';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { useChatStore } from '@/lib/stores/chat-store';
 import { cn } from '@/lib/utils';
 
 interface AgentSelectorProps {
   compact?: boolean;
-  onEditAgent?: (agent: any) => void;
+  onEditAgent?: (agent: unknown) => void;
 }
 
 export function AgentSelector({ compact = false, onEditAgent }: AgentSelectorProps) {
-  const { agents, selectedAgent, setSelectedAgent } = useChatStore();
+  const { agents, selectedAgent, setSelectedAgent, addToLibrary, removeFromLibrary, isInLibrary } = useChatStore();
   const [isOpen, setIsOpen] = useState(false);
+
+  const handleToggleLibrary = (agentId: string, agentName: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (isInLibrary(agentId)) {
+      removeFromLibrary(agentId);
+      toast.success(`Removed ${agentName} from your library`);
+    } else {
+      addToLibrary(agentId);
+      toast.success(`Added ${agentName} to your library`);
+    }
+  };
 
   if (compact) {
     return (
@@ -61,6 +76,14 @@ export function AgentSelector({ compact = false, onEditAgent }: AgentSelectorPro
             <div
               className="fixed inset-0 z-40"
               onClick={() => setIsOpen(false)}
+              onKeyDown={(e) => {
+                if (e.key === 'Escape') {
+                  setIsOpen(false);
+                }
+              }}
+              role="button"
+              tabIndex={0}
+              aria-label="Close agent selector"
             />
 
             {/* Dropdown */}
@@ -129,6 +152,14 @@ export function AgentSelector({ compact = false, onEditAgent }: AgentSelectorPro
                 isSelected && 'ring-2 ring-progress-teal bg-progress-teal/5'
               )}
               onClick={() => setSelectedAgent(agent)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  setSelectedAgent(agent);
+                }
+              }}
+              role="button"
+              tabIndex={0}
             >
               {/* Edit Button */}
               {onEditAgent && (
@@ -225,9 +256,32 @@ export function AgentSelector({ compact = false, onEditAgent }: AgentSelectorPro
                 size="lg"
               />
               <div className="flex-1">
-                <h4 className="font-semibold text-deep-charcoal mb-1">
-                  {selectedAgent.name} - Ready to Help
-                </h4>
+                <div className="flex items-center justify-between mb-1">
+                  <h4 className="font-semibold text-deep-charcoal">
+                    {selectedAgent.name} - Ready to Help
+                  </h4>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={(e) => handleToggleLibrary(selectedAgent.id, selectedAgent.name, e)}
+                    className={cn(
+                      "h-8",
+                      isInLibrary(selectedAgent.id) && "text-market-purple"
+                    )}
+                  >
+                    {isInLibrary(selectedAgent.id) ? (
+                      <>
+                        <BookmarkCheck className="h-4 w-4 mr-1" />
+                        In Library
+                      </>
+                    ) : (
+                      <>
+                        <BookmarkPlus className="h-4 w-4 mr-1" />
+                        Add to Library
+                      </>
+                    )}
+                  </Button>
+                </div>
                 <p className="text-sm text-medical-gray mb-3">
                   {selectedAgent.description}
                 </p>

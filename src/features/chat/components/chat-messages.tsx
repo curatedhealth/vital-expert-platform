@@ -1,20 +1,11 @@
 'use client';
 
-import { useState, memo, useCallback } from 'react';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Card } from '@/components/ui/card';
-import { Textarea } from '@/components/ui/textarea';
-import { AgentAvatar } from '@/components/ui/agent-avatar';
-import { ChatMessage, useChatStore } from '@/lib/stores/chat-store';
 import {
   Copy,
-  MoreHorizontal,
   ThumbsUp,
   ThumbsDown,
   RefreshCw,
   Edit,
-  Trash2,
   ExternalLink,
   Clock,
   Zap,
@@ -22,13 +13,29 @@ import {
   Check,
   X,
 } from 'lucide-react';
+import { useState, useCallback } from 'react';
+
+import { AgentAvatar } from '@/components/ui/agent-avatar';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { Textarea } from '@/components/ui/textarea';
+import {
+  Reasoning,
+  ReasoningTrigger,
+  ReasoningContent,
+} from '@/components/ai/reasoning';
+import { ChatMessage, useChatStore } from '@/lib/stores/chat-store';
 import { cn } from '@/lib/utils';
+import { renderTextWithCitations, type CitationSource } from '@/shared/components/ui/inline-citation';
 
 interface ChatMessagesProps {
   messages: ChatMessage[];
+  liveReasoning?: string;
+  isReasoningActive?: boolean;
 }
 
-export function ChatMessages({ messages }: ChatMessagesProps) {
+export function ChatMessages({ messages, liveReasoning, isReasoningActive }: ChatMessagesProps) {
   const { agents, regenerateResponse, editMessage } = useChatStore();
   const [editingMessage, setEditingMessage] = useState<string | null>(null);
   const [editContent, setEditContent] = useState<string>('');
@@ -200,6 +207,64 @@ export function ChatMessages({ messages }: ChatMessagesProps) {
             </div>
           </div>
         )}
+
+        {/* Expert Recommendations - Role-based */}
+        {metadata.alternativeAgents && metadata.alternativeAgents.length > 0 && (
+          <div className="mt-4 pt-4 border-t border-gray-200">
+            <h4 className="text-xs font-medium text-medical-gray mb-3 flex items-center gap-2">
+              <span className="text-market-purple">💡</span>
+              Would you like to discuss this with a specialist?
+            </h4>
+            <div className="space-y-2">
+              {metadata.alternativeAgents.slice(0, 3).map((altAgent, index) => (
+                <Card key={index} className="p-3 bg-market-purple/5 border-market-purple/20 hover:bg-market-purple/10 transition-colors cursor-pointer">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-3 flex-1">
+                      <AgentAvatar
+                        avatar={altAgent.agent.avatar}
+                        name={altAgent.agent.display_name || altAgent.agent.name}
+                        size="sm"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <h5 className="text-sm font-medium text-deep-charcoal">
+                            {altAgent.agent.display_name || altAgent.agent.name}
+                          </h5>
+                          <Badge variant="outline" className="text-xs">
+                            {altAgent.score}% match
+                          </Badge>
+                        </div>
+                        <p className="text-xs text-medical-gray line-clamp-1">
+                          {altAgent.agent.description}
+                        </p>
+                        {altAgent.agent.role && (
+                          <p className="text-xs text-market-purple mt-1">
+                            Role: {altAgent.agent.role}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="text-xs text-market-purple hover:bg-market-purple/10"
+                      onClick={() => {
+                        const { setSelectedAgent, setInteractionMode } = useChatStore.getState();
+                        setInteractionMode('manual');
+                        setSelectedAgent(altAgent.agent);
+                      }}
+                    >
+                      Talk to Specialist
+                    </Button>
+                  </div>
+                </Card>
+              ))}
+            </div>
+            <p className="text-xs text-medical-gray mt-2 italic">
+              Switching will start a new conversation in manual mode with the selected specialist.
+            </p>
+          </div>
+        )}
       </div>
     );
   };
@@ -256,6 +321,20 @@ export function ChatMessages({ messages }: ChatMessagesProps) {
                 )}
               </div>
 
+              {/* AI Reasoning Component - show ABOVE message content for assistant */}
+              {!isUser && message.metadata?.reasoning && (
+                <div className="mb-3">
+                  <Reasoning isStreaming={false}>
+                    <ReasoningTrigger title="I am thinking..." />
+                    <ReasoningContent>
+                      <div className="text-sm text-gray-600 whitespace-pre-wrap">
+                        {message.metadata.reasoning}
+                      </div>
+                    </ReasoningContent>
+                  </Reasoning>
+                </div>
+              )}
+
               {/* Message Bubble */}
               <div
                 className={cn(
@@ -297,21 +376,30 @@ export function ChatMessages({ messages }: ChatMessagesProps) {
                 ) : (
                   // Normal view mode
                   <div className="prose prose-sm max-w-none">
-                    {message.isLoading ? (
-                      <div className="flex items-center gap-2">
-                        <div className="flex space-x-1">
-                          <div className="w-2 h-2 bg-progress-teal rounded-full animate-bounce [animation-delay:-0.3s]"></div>
-                          <div className="w-2 h-2 bg-progress-teal rounded-full animate-bounce [animation-delay:-0.15s]"></div>
-                          <div className="w-2 h-2 bg-progress-teal rounded-full animate-bounce"></div>
-                        </div>
-                        <span className="text-sm text-medical-gray">Generating response...</span>
-                      </div>
+                    {message.isLoading && !message.content ? (
+                      // Show nothing - reasoning component will display below
+                      <div className="h-4"></div>
                     ) : (
                       <p className={cn(
                         'whitespace-pre-wrap',
                         isUser ? 'text-white' : 'text-deep-charcoal'
                       )}>
-                        {message.content}
+                        {message.role === 'assistant' && message.metadata?.sources ? (
+                          // Render message with inline citations
+                          renderTextWithCitations(
+                            message.content,
+                            (message.metadata.sources || []).map((src: any, idx: number) => ({
+                              id: src.id || `source-${idx}`,
+                              title: src.title || src.name || 'Unknown Source',
+                              category: src.category || src.domain,
+                              excerpt: src.excerpt || src.content?.substring(0, 200),
+                              score: src.score || src.similarity,
+                              url: src.url
+                            }))
+                          )
+                        ) : (
+                          message.content
+                        )}
                         {message.isLoading && message.content && (
                           <span className="inline-block w-2 h-4 bg-current animate-pulse ml-1"></span>
                         )}
@@ -320,28 +408,7 @@ export function ChatMessages({ messages }: ChatMessagesProps) {
                   </div>
                 )}
 
-                {/* Metadata for assistant messages */}
-                {!isUser && message.metadata && (
-                  <div className="mt-3 pt-3 border-t border-gray-100">
-                    {/* Processing info */}
-                    {message.metadata.processingTime && (
-                      <div className="flex items-center gap-4 text-xs text-medical-gray mb-3">
-                        <div className="flex items-center gap-1">
-                          <Clock className="h-3 w-3" />
-                          {message.metadata.processingTime}ms
-                        </div>
-                        {message.metadata.tokenUsage && (
-                          <div className="flex items-center gap-1">
-                            <Zap className="h-3 w-3" />
-                            {message.metadata.tokenUsage.totalTokens} tokens
-                          </div>
-                        )}
-                      </div>
-                    )}
-
-                    <SourcesAndCitations metadata={message.metadata} />
-                  </div>
-                )}
+                {/* Metadata removed - clean interface */}
               </div>
 
               {/* Message Actions - positioned below the message bubble */}
@@ -356,6 +423,19 @@ export function ChatMessages({ messages }: ChatMessagesProps) {
         );
       })}
 
+      {/* Live Reasoning Component - shows while AI is thinking */}
+      {liveReasoning && (
+        <div className="mb-6">
+          <Reasoning isStreaming={isReasoningActive || false}>
+            <ReasoningTrigger title="I am thinking..." />
+            <ReasoningContent>
+              <div className="text-sm text-gray-600 whitespace-pre-wrap">
+                {liveReasoning}
+              </div>
+            </ReasoningContent>
+          </Reasoning>
+        </div>
+      )}
     </div>
   );
 }

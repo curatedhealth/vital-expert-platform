@@ -69,8 +69,8 @@ export interface SecurityAuditLog {
   action: string;
   resource_type?: string;
   resource_id?: string;
-  old_values?: Record<string, any>;
-  new_values?: Record<string, any>;
+  old_values?: Record<string, unknown>;
+  new_values?: Record<string, unknown>;
   ip_address?: string;
   user_agent?: string;
   success: boolean;
@@ -141,11 +141,35 @@ export const ACTION_DISPLAY_NAMES: Record<PermissionAction, string> = {
 
 // Helper functions
 export function canUserAccess(userRole: UserRole, requiredRole: UserRole): boolean {
-  return ROLE_HIERARCHY[userRole] >= ROLE_HIERARCHY[requiredRole];
+  // Use switch statements to avoid object injection
+  const getUserRoleLevel = (role: UserRole): number => {
+    switch (role) {
+      case UserRole.SUPER_ADMIN: return 5;
+      case UserRole.ADMIN: return 4;
+      case UserRole.MANAGER: return 3;
+      case UserRole.USER: return 2;
+      case UserRole.GUEST: return 1;
+      default: return 0;
+    }
+  };
+  
+  return getUserRoleLevel(userRole) >= getUserRoleLevel(requiredRole);
 }
 
 export function isHigherRole(role1: UserRole, role2: UserRole): boolean {
-  return ROLE_HIERARCHY[role1] > ROLE_HIERARCHY[role2];
+  // Use switch statements to avoid object injection
+  const getUserRoleLevel = (role: UserRole): number => {
+    switch (role) {
+      case UserRole.SUPER_ADMIN: return 5;
+      case UserRole.ADMIN: return 4;
+      case UserRole.MANAGER: return 3;
+      case UserRole.USER: return 2;
+      case UserRole.GUEST: return 1;
+      default: return 0;
+    }
+  };
+  
+  return getUserRoleLevel(role1) > getUserRoleLevel(role2);
 }
 
 export function getRoleColor(role: UserRole): string {

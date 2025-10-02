@@ -1,13 +1,5 @@
 'use client';
 
-import Link from 'next/link';
-import Image from 'next/image';
-import { usePathname, useSearchParams } from 'next/navigation';
-import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Separator } from '@/components/ui/separator';
 import {
   FileText,
   Settings,
@@ -21,12 +13,9 @@ import {
   ChevronLeft,
   ChevronRight,
   Upload,
-  Globe,
   Plus,
-  Filter,
   Grid,
   List,
-  ChevronDown,
   Server,
   Database,
   Activity,
@@ -37,19 +26,24 @@ import {
   Key,
   AlertTriangle,
   TrendingUp,
-  Workflow,
-  Code,
   Monitor,
-  HardDrive,
   CloudCog,
   CheckCircle,
   Star,
 } from 'lucide-react';
+import Image from 'next/image';
+import Link from 'next/link';
+import { usePathname, useSearchParams } from 'next/navigation';
+
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Separator } from '@/components/ui/separator';
+import { cn } from '@/lib/utils';
 
 interface NavItem {
   title: string;
   href: string;
-  icon: React.ComponentType<any>;
+  icon: React.ComponentType<unknown>;
   badge?: string;
   disabled?: boolean;
   avatar?: string;
@@ -418,7 +412,6 @@ export function DashboardSidebar({
     </>
   );
 
-
   const renderLLMNavigation = () => (
     <>
       <div className="px-3">
@@ -668,10 +661,11 @@ export function DashboardSidebar({
           {!isCollapsed && filters && (
             <div className="px-4 space-y-3">
               <div>
-                <label className="text-xs font-medium text-muted-foreground mb-1 block">
+                <label htmlFor="domain-select" className="text-xs font-medium text-muted-foreground mb-1 block">
                   Domain
                 </label>
                 <select
+                  id="domain-select"
                   value={filters.selectedDomain}
                   onChange={(e) => onFilterChange?.({
                     ...filters,
@@ -688,10 +682,11 @@ export function DashboardSidebar({
                 </select>
               </div>
               <div>
-                <label className="text-xs font-medium text-muted-foreground mb-1 block">
+                <label htmlFor="capability-select" className="text-xs font-medium text-muted-foreground mb-1 block">
                   Capability
                 </label>
                 <select
+                  id="capability-select"
                   value={filters.selectedCapability}
                   onChange={(e) => onFilterChange?.({
                     ...filters,
@@ -708,10 +703,11 @@ export function DashboardSidebar({
                 </select>
               </div>
               <div>
-                <label className="text-xs font-medium text-muted-foreground mb-1 block">
+                <label htmlFor="business-function-select" className="text-xs font-medium text-muted-foreground mb-1 block">
                   Business Function
                 </label>
                 <select
+                  id="business-function-select"
                   value={filters.selectedBusinessFunction}
                   onChange={(e) => onFilterChange?.({
                     ...filters,
@@ -728,10 +724,11 @@ export function DashboardSidebar({
                 </select>
               </div>
               <div>
-                <label className="text-xs font-medium text-muted-foreground mb-1 block">
+                <label htmlFor="role-select" className="text-xs font-medium text-muted-foreground mb-1 block">
                   Role
                 </label>
                 <select
+                  id="role-select"
                   value={filters.selectedRole}
                   onChange={(e) => onFilterChange?.({
                     ...filters,

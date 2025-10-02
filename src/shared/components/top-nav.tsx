@@ -1,20 +1,5 @@
 'use client';
 
-import { useState } from 'react';
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import {
   Menu,
   X,
@@ -31,8 +16,25 @@ import {
   Target,
   TestTube,
   Play,
-  BookOpen,
+  BookOpen
 } from 'lucide-react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { useState } from 'react';
+
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger
+} from '@/components/ui/dropdown-menu';
+import { cn } from '@/lib/utils';
+
 // import { useAuth } from '@/lib/supabase/auth-context';
 
 const mainNavItems = [
@@ -98,11 +100,8 @@ export function TopNav() {
   // const { user, signOut } = useAuth();
 
   // Mock user for demo - in real app this would come from auth context
-  const user = pathname?.startsWith('/dashboard') ? { email: 'demo@vitalpath.com' } : null;
-  const signOut = () => console.log('Sign out');
-
-  const isAuthenticated = !!user;
-  const isDashboard = pathname?.startsWith('/dashboard');
+// const user = // Unused variable pathname?.startsWith('/dashboard') ? { email: 'demo@vitalpath.com' } : null;
+  const signOut = () => const isAuthenticated = !!user;
 
   const getInitials = (email: string) => {
     return email
@@ -257,7 +256,7 @@ export function TopNav() {
                     <DropdownMenuLabel className="font-normal">
                       <div className="flex flex-col space-y-1">
                         <p className="text-sm font-medium leading-none">
-                          {(user as any)?.user_metadata?.full_name || 'Demo User'}
+                          {(user as unknown)?.user_metadata?.full_name || 'Demo User'}
                         </p>
                         <p className="text-xs leading-none text-medical-gray">
                           {user?.email || 'demo@vitalpath.com'}

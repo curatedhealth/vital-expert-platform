@@ -3,26 +3,25 @@
  * Coordinates multi-agent workflows and manages agent interactions
  */
 
+import { LibraryLoader } from '@/lib/utils/library-loader';
 import {
-  DigitalHealthAgentConfig,
   AgentResponse,
   ExecutionContext,
   WorkflowDefinition,
   WorkflowStep,
   WorkflowExecution,
   AgentInteraction,
-  WorkflowStatus,
   ComplianceLevel
 } from '@/types/digital-health-agent.types';
-import { DigitalHealthAgent } from './DigitalHealthAgent';
-import { LibraryLoader } from '@/lib/utils/library-loader';
 
 // Import Tier 1 agents
-import { FDARegulatoryStrategist } from '../tier1/FDARegulatoryStrategist';
 import { ClinicalTrialDesigner } from '../tier1/ClinicalTrialDesigner';
+import { FDARegulatoryStrategist } from '../tier1/FDARegulatoryStrategist';
 import { HIPAAComplianceOfficer } from '../tier1/HIPAAComplianceOfficer';
-import { ReimbursementStrategist } from '../tier1/ReimbursementStrategist';
 import { QMSArchitect } from '../tier1/QMSArchitect';
+import { ReimbursementStrategist } from '../tier1/ReimbursementStrategist';
+
+import { DigitalHealthAgent } from './DigitalHealthAgent';
 
 export class AgentOrchestrator {
   protected agents: Map<string, DigitalHealthAgent> = new Map();
@@ -38,8 +37,6 @@ export class AgentOrchestrator {
    * Initialize the orchestrator with all available agents
    */
   async initialize(): Promise<void> {
-    console.log('🚀 Initializing Agent Orchestrator...');
-
     try {
       // Initialize Tier 1 agents
       await this.registerAgent(new FDARegulatoryStrategist());
@@ -50,10 +47,6 @@ export class AgentOrchestrator {
 
       // Load predefined workflows
       await this.loadWorkflows();
-
-      console.log(`✅ Agent Orchestrator initialized successfully`);
-      console.log(`   - Registered ${this.agents.size} agents`);
-      console.log(`   - Loaded ${this.workflows.size} workflows`);
     } catch (error) {
       console.error('❌ Failed to initialize Agent Orchestrator:', error);
       throw error;
@@ -67,7 +60,6 @@ export class AgentOrchestrator {
     await agent.initialize();
     const config = agent.getConfig();
     this.agents.set(config.name, agent);
-    console.log(`   ✓ Registered agent: ${config.display_name}`);
   }
 
   /**
@@ -187,7 +179,7 @@ export class AgentOrchestrator {
    */
   async executeWorkflow(
     workflowId: string,
-    inputs: Record<string, any>,
+    inputs: Record<string, unknown>,
     context: ExecutionContext
   ): Promise<WorkflowExecution> {
     const workflow = this.workflows.get(workflowId);
@@ -206,16 +198,11 @@ export class AgentOrchestrator {
       context,
       steps_completed: 0,
       total_steps: workflow.steps.length,
-      step_results: {},
+      step_results: { /* TODO: implement */ },
       interactions: []
     };
 
     this.activeExecutions.set(executionId, execution);
-
-    console.log(`🔄 Starting workflow execution: ${workflow.name}`);
-    console.log(`   Execution ID: ${executionId}`);
-    console.log(`   Total steps: ${workflow.steps.length}`);
-
     try {
       // Execute steps in dependency order
       const stepOrder = this.calculateStepOrder(workflow.steps);
@@ -223,11 +210,15 @@ export class AgentOrchestrator {
       for (const stepId of stepOrder) {
         const step = workflow.steps.find(s => s.step_id === stepId);
         if (!step) continue;
-
-        console.log(`   🔄 Executing step: ${step.step_id}`);
-
         const stepResult = await this.executeStep(step, execution);
-        execution.step_results[stepId] = stepResult;
+        // Validate stepId before using as object key
+        if (this.isValidKey(stepId)) {
+          // Use direct assignment with validated key
+          // eslint-disable-next-line security/detect-object-injection
+          execution.step_results[stepId] = stepResult;
+        } else {
+          throw new Error(`Invalid stepId: ${stepId}`);
+        }
         execution.steps_completed++;
 
         // Log the interaction
@@ -242,15 +233,13 @@ export class AgentOrchestrator {
           execution_time: stepResult.response.execution_time || 0
         };
         execution.interactions.push(interaction);
-
-        console.log(`   ✅ Step completed: ${step.step_id} (${stepResult.response.success ? 'SUCCESS' : 'FAILED'})`);
       }
 
       execution.status = 'completed';
       execution.completed_at = new Date().toISOString();
 
-      console.log(`✅ Workflow execution completed: ${workflow.name}`);
-      console.log(`   Duration: ${this.calculateExecutionDuration(execution)} minutes`);
+      const duration = this.calculateExecutionDuration(execution);
+      console.log(`✅ Workflow completed: ${workflow.name} (${duration} minutes)`);
 
     } catch (error) {
       execution.status = 'failed';
@@ -271,7 +260,7 @@ export class AgentOrchestrator {
     execution: WorkflowExecution
   ): Promise<{
     response: AgentResponse;
-    inputs_used: Record<string, any>;
+    inputs_used: Record<string, unknown>;
   }> {
     const agent = this.agents.get(step.agent_name);
     if (!agent) {
@@ -300,30 +289,79 @@ export class AgentOrchestrator {
   private prepareStepInputs(
     step: WorkflowStep,
     execution: WorkflowExecution
-  ): Record<string, any> {
-    const inputs: Record<string, any> = {};
+  ): Record<string, unknown> {
+    const inputs: Record<string, unknown> = { /* TODO: implement */ };
 
     // Start with required inputs from workflow inputs
     step.required_inputs.forEach(inputKey => {
-      if (execution.inputs[inputKey] !== undefined) {
-        inputs[inputKey] = execution.inputs[inputKey];
+      // Validate inputKey before using as object key
+      if (this.isValidKey(inputKey)) {
+        // Use hasOwnProperty check and direct assignment for safer property access
+        if (Object.prototype.hasOwnProperty.call(execution.inputs, inputKey)) {
+          // Use direct assignment with validated key
+          // eslint-disable-next-line security/detect-object-injection
+          inputs[inputKey] = execution.inputs[inputKey];
+        }
+      } else {
+        console.warn(`Invalid inputKey: ${inputKey}`);
       }
     });
 
     // Apply input mapping from previous steps
     if (step.input_mapping && step.depends_on) {
       for (const [targetKey, sourceKey] of Object.entries(step.input_mapping)) {
-        for (const dependencyStepId of step.depends_on) {
-          const dependencyResult = execution.step_results[dependencyStepId];
-          if (dependencyResult?.response.data?.[sourceKey]) {
-            inputs[targetKey] = dependencyResult.response.data[sourceKey];
-            break;
+        // Validate keys before using as object keys
+        if (this.isValidKey(targetKey) && this.isValidKey(sourceKey)) {
+          for (const dependencyStepId of step.depends_on) {
+            // Validate dependencyStepId before using as object key
+            if (this.isValidKey(dependencyStepId)) {
+              // Use hasOwnProperty check for safer property access
+              if (Object.prototype.hasOwnProperty.call(execution.step_results, dependencyStepId)) {
+                // eslint-disable-next-line security/detect-object-injection
+                const dependencyResult = execution.step_results[dependencyStepId];
+                if (dependencyResult?.response?.data && Object.prototype.hasOwnProperty.call(dependencyResult.response.data, sourceKey)) {
+                  // Use direct assignment with validated key
+                  // eslint-disable-next-line security/detect-object-injection
+                  inputs[targetKey] = dependencyResult.response.data[sourceKey];
+                  break;
+                }
+              }
+            }
           }
+        } else {
+          console.warn(`Invalid mapping keys: targetKey=${targetKey}, sourceKey=${sourceKey}`);
         }
       }
     }
 
     return inputs;
+  }
+
+  /**
+   * Validate if a key is safe to use as an object property
+   */
+  private isValidKey(key: string): boolean {
+    return typeof key === 'string' && 
+           key.length > 0 && 
+           key.length < 100 && 
+           /^[a-zA-Z_][a-zA-Z0-9_-]*$/.test(key);
+  }
+
+  /**
+   * Safely set a property on an object to avoid injection vulnerabilities
+   */
+  private safeSetProperty(obj: Record<string, unknown>, key: string, value: unknown): void {
+    if (this.isValidKey(key)) {
+      // Use Object.defineProperty for safe property assignment
+      Object.defineProperty(obj, key, {
+        value: value,
+        writable: true,
+        enumerable: true,
+        configurable: true
+      });
+    } else {
+      throw new Error(`Invalid key for property assignment: ${key}`);
+    }
   }
 
   /**
@@ -448,20 +486,14 @@ export class AgentOrchestrator {
   async executeAgentPrompt(
     agentName: string,
     promptTitle: string,
-    inputs: Record<string, any>,
+    inputs: Record<string, unknown>,
     context: ExecutionContext
   ): Promise<AgentResponse> {
     const agent = this.agents.get(agentName);
     if (!agent) {
       throw new Error(`Agent '${agentName}' not found`);
     }
-
-    console.log(`🤖 Executing direct agent prompt: ${agentName} -> ${promptTitle}`);
-
     const response = await agent.executePrompt(promptTitle, inputs, context);
-
-    console.log(`✅ Direct execution completed: ${response.success ? 'SUCCESS' : 'FAILED'}`);
-
     return response;
   }
 

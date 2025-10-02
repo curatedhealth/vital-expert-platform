@@ -18,15 +18,34 @@ const config: Config = {
   	},
   	extend: {
   		colors: {
-  			'trust-blue': '#0B4F8C',
-  			'progress-teal': '#00A19C',
-  			'deep-charcoal': '#1A1A2E',
-  			'regulatory-gold': '#F5A623',
-  			'clinical-green': '#27AE60',
-  			'market-purple': '#7B68EE',
-  			'medical-gray': '#6C7893',
-  			'light-gray': '#E8ECF0',
-  			'background-gray': '#F7F9FB',
+  			// VITAL.expert Brand Colors
+  			'vital-black': '#0A0A0A',
+  			'vital-white': '#FFFFFF',
+  			'vital-gray-95': '#FAFAFA',
+  			'vital-gray-90': '#F5F5F5',
+  			'vital-gray-80': '#E5E5E5',
+  			'vital-gray-60': '#999999',
+  			'vital-gray-40': '#666666',
+
+  			// Service Line Colors
+  			'regulatory-blue': '#0066FF',
+  			'clinical-green': '#00CC88',
+  			'safety-red': '#FF3366',
+  			'data-purple': '#9933FF',
+  			'market-orange': '#FF6600',
+  			'research-cyan': '#00CCFF',
+  			'quality-gold': '#FFAA00',
+  			'strategy-navy': '#003399',
+
+  			// Legacy colors (for backwards compatibility)
+  			'trust-blue': '#0066FF',
+  			'progress-teal': '#00CC88',
+  			'deep-charcoal': '#0A0A0A',
+  			'regulatory-gold': '#FFAA00',
+  			'market-purple': '#9933FF',
+  			'medical-gray': '#999999',
+  			'light-gray': '#E5E5E5',
+  			'background-gray': '#FAFAFA',
   			border: 'var(--border)',
   			input: 'var(--input)',
   			ring: 'var(--ring)',

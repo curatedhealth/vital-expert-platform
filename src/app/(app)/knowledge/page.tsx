@@ -1,53 +1,44 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
-import { useSearchParams } from 'next/navigation';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { KnowledgeUploader } from '@/components/knowledge/knowledge-uploader';
-import { KnowledgeViewer } from '@/components/knowledge/knowledge-viewer';
-import { KnowledgeAnalyticsDashboard } from '@/components/knowledge/knowledge-analytics-dashboard';
 import {
   Upload,
-  Database,
   FileText,
   Trash2,
   Search,
-  Filter,
-  Download,
-  Globe,
-  Brain,
-  Users,
-  Clock,
-  CheckCircle,
   AlertCircle,
   MoreHorizontal,
   Grid3X3,
   List,
   Eye,
   Edit,
-  Copy,
+  Copy
 } from 'lucide-react';
+import { useSearchParams } from 'next/navigation';
+import { useState, useCallback, useEffect } from 'react';
+
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger
+} from '@/components/ui/dropdown-menu';
+import { Input } from '@/components/ui/input';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow
+} from '@/components/ui/table';
+import { KnowledgeAnalyticsDashboard } from '@/features/knowledge/components/knowledge-analytics-dashboard';
+import { KnowledgeUploader } from '@/features/knowledge/components/knowledge-uploader';
+import { KnowledgeViewer } from '@/features/knowledge/components/knowledge-viewer';
 
 interface Document {
   id: string;
@@ -117,8 +108,7 @@ export default function KnowledgePage() {
     fetchDocuments();
   }, [fetchDocuments]);
 
-  const handleUploadComplete = useCallback((newDocs: any[]) => {
-    console.log('Upload completed, refreshing documents list...');
+  const handleUploadComplete = useCallback((newDocs: unknown[]) => {
     // Refresh the documents list to show newly uploaded documents
     fetchDocuments();
   }, [fetchDocuments]);
@@ -130,16 +120,12 @@ export default function KnowledgePage() {
     return matchesSearch && matchesDomain;
   });
 
-  const totalDocuments = documents.length;
-  const completedDocuments = documents.filter(d => d.status === 'completed').length;
-  const totalChunks = documents.reduce((sum, doc) => sum + doc.chunks, 0);
-  const totalSize = documents.reduce((sum, doc) => sum + doc.size, 0);
-
   const formatFileSize = (bytes: number) => {
     if (bytes === 0) return '0 Bytes';
     const k = 1024;
     const sizes = ['Bytes', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
+    // eslint-disable-next-line security/detect-object-injection
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
@@ -155,7 +141,6 @@ export default function KnowledgePage() {
 
   return (
     <div className="space-y-6">
-
 
       {/* Main Content */}
       {activeTab === 'upload' ? (
@@ -222,10 +207,12 @@ export default function KnowledgePage() {
                 className="flex h-9 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <option value="all">All Domains</option>
-                <option value="digital-health">Digital Health</option>
-                <option value="clinical-research">Clinical Research</option>
-                <option value="market-access">Market Access</option>
-                <option value="regulatory">Regulatory</option>
+                <option value="digital_health">Digital Health</option>
+                <option value="clinical_research">Clinical Research</option>
+                <option value="market_access">Market Access</option>
+                <option value="regulatory_compliance">Regulatory</option>
+                <option value="quality_assurance">Quality Assurance</option>
+                <option value="health_economics">Health Economics</option>
               </select>
             </div>
           </div>
@@ -309,7 +296,7 @@ export default function KnowledgePage() {
                             </Badge>
                           </TableCell>
                           <TableCell className="capitalize">
-                            {doc.domain.replace('-', ' ')}
+                            {doc.domain.replace(/_/g, ' ')}
                           </TableCell>
                           <TableCell>{formatFileSize(doc.size)}</TableCell>
                           <TableCell>{doc.chunks}</TableCell>
@@ -463,7 +450,7 @@ export default function KnowledgePage() {
                         </div>
 
                         <div className="flex items-center justify-between text-xs text-muted-foreground">
-                          <span className="capitalize">{doc.domain.replace('-', ' ')}</span>
+                          <span className="capitalize">{doc.domain.replace(/_/g, ' ')}</span>
                           <span>{formatDate(doc.uploadedAt)}</span>
                         </div>
                       </div>

@@ -1,5 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { NextRequest, NextResponse } from 'next/server';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -8,18 +8,13 @@ const supabase = createClient(
 
 export async function GET(request: NextRequest) {
   try {
-    console.log('=== Fetching knowledge documents ===');
-
     const { searchParams } = new URL(request.url);
     const domain = searchParams.get('domain');
     const agentId = searchParams.get('agentId');
     const isGlobal = searchParams.get('isGlobal');
-
-    console.log('Query parameters:', { domain, agentId, isGlobal });
-
-    // Build query for knowledge_sources table (using available columns)
+    // Build query for rag_knowledge_sources table
     let query = supabase
-      .from('knowledge_sources')
+      .from('rag_knowledge_sources')
       .select(`
         id,
         name,
@@ -30,8 +25,6 @@ export async function GET(request: NextRequest) {
         domain,
         processing_status,
         processed_at,
-        is_public,
-        access_level,
         created_at,
         updated_at,
         description
@@ -43,10 +36,8 @@ export async function GET(request: NextRequest) {
       query = query.eq('domain', domain);
     }
 
-    if (isGlobal !== null && isGlobal !== undefined) {
-      const isPublic = isGlobal === 'true';
-      query = query.eq('is_public', isPublic);
-    }
+    // Note: rag_knowledge_sources doesn't have is_public field
+    // All documents are tied to tenant_id for access control
 
     const { data: documents, error } = await query;
 
@@ -57,9 +48,6 @@ export async function GET(request: NextRequest) {
         { status: 500 }
       );
     }
-
-    console.log(`Found ${documents?.length || 0} documents`);
-
     // Transform the data to match the frontend Document interface
     const transformedDocuments = (documents || []).map(doc => {
 
@@ -72,29 +60,28 @@ export async function GET(request: NextRequest) {
         status: doc.processing_status === 'completed' ? 'completed' :
                doc.processing_status === 'processing' ? 'processing' : 'failed',
         domain: doc.domain,
-        isGlobal: doc.is_public,
+        isGlobal: false, // All documents are tenant-scoped in RAG system
         chunks: 0, // We'll populate this below
 
-        // Basic metadata (enhanced metadata will be available after schema update)
+        // Basic metadata
         title: doc.title,
         description: doc.description,
 
         // Legacy summary field for backward compatibility
-        summary: doc.description || `${doc.title || doc.name}${doc.access_level ? ` - ${doc.access_level}` : ''}`
+        summary: doc.description || doc.title || doc.name
       };
     });
 
     // Get chunks count for each document
     if (transformedDocuments.length > 0) {
       try {
-        const documentIds = transformedDocuments.map(doc => doc.id);
 
-        // Count chunks manually for each document
+        // Count chunks manually for each document - use rag_knowledge_chunks table
         for (const doc of transformedDocuments) {
           const { count, error } = await supabase
-            .from('document_chunks')
+            .from('rag_knowledge_chunks')
             .select('*', { count: 'exact', head: true })
-            .eq('knowledge_source_id', doc.id);
+            .eq('source_id', doc.id);
 
           if (!error && count !== null) {
             doc.chunks = count;

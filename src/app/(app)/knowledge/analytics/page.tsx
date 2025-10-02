@@ -1,6 +1,6 @@
 'use client';
 
-import { KnowledgeAnalyticsDashboard } from '@/components/knowledge/knowledge-analytics-dashboard';
+import { KnowledgeAnalyticsDashboard } from '@/features/knowledge/components/knowledge-analytics-dashboard';
 
 export default function KnowledgeAnalyticsPage() {
   return (

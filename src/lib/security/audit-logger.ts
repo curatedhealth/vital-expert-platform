@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
-import { SecurityAuditLog, UserRole } from '@/types/auth.types';
+
+import { SecurityAuditLog } from '@/types/auth.types';
 
 /**
  * Security Audit Logging Service
@@ -86,14 +87,14 @@ export interface AuditLogEntry {
   action: AuditAction;
   resourceType?: string;
   resourceId?: string;
-  oldValues?: Record<string, any>;
-  newValues?: Record<string, any>;
+  oldValues?: Record<string, unknown>;
+  newValues?: Record<string, unknown>;
   ipAddress?: string;
   userAgent?: string;
   success: boolean;
   severity?: AuditSeverity;
   errorMessage?: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
   timestamp?: Date;
 }
 
@@ -274,8 +275,8 @@ export class AuditLogger {
     }));
 
     const { error } = await this.supabase
-      .from('security_audit_log' as any)
-      .insert(dbEntries as any);
+      .from('security_audit_log' as unknown)
+      .insert(dbEntries as unknown);
 
     if (error) {
       throw new Error(`Database write failed: ${error.message}`);
@@ -394,7 +395,7 @@ export class AuditLogger {
     }
 
     const totalEvents = logs.length;
-    const successfulEvents = logs.filter((log: any) => log.success).length;
+    const successfulEvents = logs.filter((log: unknown) => log.success).length;
     const failedEvents = totalEvents - successfulEvents;
 
     // Critical events (approximate - would need severity column)
@@ -403,13 +404,13 @@ export class AuditLogger {
       AuditAction.API_KEY_LEAKED,
       AuditAction.COMPLIANCE_VIOLATION
     ];
-    const criticalEvents = logs.filter((log: any) => criticalActions.includes(log.action as AuditAction)).length;
+    const criticalEvents = logs.filter((log: unknown) => criticalActions.includes(log.action as AuditAction)).length;
 
     // Top actions
-    const actionCounts = logs.reduce((acc: any, log: any) => {
+    const actionCounts = logs.reduce((acc: unknown, log: unknown) => {
       acc[log.action] = (acc[log.action] || 0) + 1;
       return acc;
-    }, {} as Record<string, number>);
+    }, { /* TODO: implement */ } as Record<string, number>);
 
     const topActions = Object.entries(actionCounts)
       .map(([action, count]) => ({ action, count: count as number }))
@@ -417,12 +418,12 @@ export class AuditLogger {
       .slice(0, 10);
 
     // User activity
-    const userCounts = logs.reduce((acc: any, log: any) => {
+    const userCounts = logs.reduce((acc: unknown, log: unknown) => {
       if (log.user_id) {
         acc[log.user_id] = (acc[log.user_id] || 0) + 1;
       }
       return acc;
-    }, {} as Record<string, number>);
+    }, { /* TODO: implement */ } as Record<string, number>);
 
     const userActivity = Object.entries(userCounts)
       .map(([user_id, count]) => ({ user_id, count: count as number }))
@@ -464,12 +465,12 @@ export class AuditLogger {
         .includes(log.action as AuditAction)
     ).length;
 
-    const dataAccess = logs.filter((log: any) =>
+    const dataAccess = logs.filter((log: unknown) =>
       [AuditAction.DATA_EXPORT, AuditAction.DATA_IMPORT, AuditAction.LLM_PROVIDER_CREATED]
         .includes(log.action as AuditAction)
     ).length;
 
-    const adminActions = logs.filter((log: any) =>
+    const adminActions = logs.filter((log: unknown) =>
       [AuditAction.ADMIN_ACCESS, AuditAction.SUPER_ADMIN_ACCESS, AuditAction.ROLE_CHANGED]
         .includes(log.action as AuditAction)
     ).length;
@@ -544,7 +545,7 @@ export class AuditLogger {
 export const auditLogger = AuditLogger.getInstance();
 
 // Convenience methods for common audit events
-export const auditLoggers = {
+export const _auditLoggers = {
   logLogin: (userId: string, success: boolean, ipAddress?: string, userAgent?: string, errorMessage?: string) =>
     auditLogger.log({
       userId,

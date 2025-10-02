@@ -19,14 +19,14 @@ interface AuthContextType {
   session: Session | null;
   loading: boolean;
   signOut: () => Promise<void>;
-  userProfile: any | null;
+  userProfile: unknown | null;
 }
 
 const AuthContext = createContext<AuthContextType>({
   user: null,
   session: null,
   loading: true,
-  signOut: async () => {},
+  signOut: async () => { /* TODO: implement */ },
   userProfile: null,
 });
 
@@ -44,9 +44,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [userProfile, setUserProfile] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
 
-  console.log('AuthProvider rendered with loading:', loading);
-
-  const fetchUserProfile = async (user: User) => {
     // Temporary mock implementation
     return {
       user_id: user.id,
@@ -57,8 +54,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   useEffect(() => {
-    console.log('Auth useEffect starting...');
-
     // Simple initialization without Supabase calls that might fail
     const initAuth = async () => {
       try {
@@ -76,7 +71,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signOut = async () => {
     // Temporary mock implementation
-    console.log('Sign out requested');
   };
 
   return (

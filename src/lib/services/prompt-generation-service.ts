@@ -401,7 +401,7 @@ All interactions are logged for quality assurance and regulatory compliance.`;
           system_prompt_contribution: cap.system_prompt_template?.length || 0
         };
         return acc;
-      }, {} as Record<string, any>),
+      }, { /* TODO: implement */ } as Record<string, unknown>),
       competencies: competencies.reduce((acc, comp) => {
         acc[comp.id] = {
           name: comp.name,
@@ -410,7 +410,7 @@ All interactions are logged for quality assurance and regulatory compliance.`;
           accuracy_requirement: comp.medical_accuracy_requirement
         };
         return acc;
-      }, {} as Record<string, any>),
+      }, { /* TODO: implement */ } as Record<string, unknown>),
       tools: tools.reduce((acc, tool) => {
         acc[tool.id] = {
           name: tool.name,
@@ -419,7 +419,7 @@ All interactions are logged for quality assurance and regulatory compliance.`;
           hipaa_compliant: tool.hipaa_compliant
         };
         return acc;
-      }, {} as Record<string, any>)
+      }, { /* TODO: implement */ } as Record<string, unknown>)
     };
   }
 
@@ -454,7 +454,7 @@ All interactions are logged for quality assurance and regulatory compliance.`;
   /**
    * Calculate compliance level
    */
-  private calculateComplianceLevel(context: any): string {
+  private calculateComplianceLevel(context: unknown): string {
     let score = 0;
 
     if (context.hipaaRequired) score += 3;
@@ -473,7 +473,7 @@ All interactions are logged for quality assurance and regulatory compliance.`;
   private async createAuditEntry(
     agentId: string,
     promptContent: string,
-    metadata: any
+    metadata: unknown
   ): Promise<void> {
     try {
       const { error } = await supabase
@@ -511,4 +511,5 @@ All interactions are logged for quality assurance and regulatory compliance.`;
 }
 
 // Export singleton instance
-export const promptGenerationService = new PromptGenerationService();
+const _promptGenerationService = new PromptGenerationService();
+export const promptGenerationService = _promptGenerationService;

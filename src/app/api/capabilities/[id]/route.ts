@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+
 import { supabase } from '@/lib/supabase/client';
 
 /**
@@ -17,9 +18,6 @@ export async function GET(
     const includeCompetencies = searchParams.get('includeCompetencies') !== 'false';
     const includeTools = searchParams.get('includeTools') === 'true';
     const includeValidations = searchParams.get('includeValidations') === 'true';
-
-    console.log('🔍 Fetching capability details:', id);
-
     // Build comprehensive query
     let selectQuery = `
       *,
@@ -58,7 +56,7 @@ export async function GET(
       );
     }
 
-    console.log('✅ Successfully fetched capability:', (data as any)?.name || 'Unknown');
+    ?.name || 'Unknown');
 
     // Calculate capability metrics
     const metrics = await calculateCapabilityMetrics(id);
@@ -86,9 +84,6 @@ export async function PUT(
   try {
     const { id } = params;
     const updateData = await request.json();
-
-    console.log('🔧 Updating capability:', id, updateData);
-
     // Validate capability exists
     const { data: existingCapability, error: fetchError } = await supabase
       .from('capabilities')
@@ -133,9 +128,6 @@ export async function PUT(
         { status: 500 }
       );
     }
-
-    console.log('✅ Successfully updated capability:', id);
-
     // Create medical validation entry if validation status changed
     if (updateData.clinical_validation_status &&
         updateData.clinical_validation_status !== existingCapability.clinical_validation_status) {
@@ -166,9 +158,6 @@ export async function DELETE(
     const { id } = params;
     const searchParams = request.nextUrl.searchParams;
     const reason = searchParams.get('reason') || 'Deactivated via API';
-
-    console.log('🗑️ Deactivating capability:', id);
-
     // Check if capability is in use by agents
     const { data: agentCapabilities, error: usageError } = await supabase
       .from('agent_capabilities')
@@ -216,9 +205,6 @@ export async function DELETE(
         { status: 500 }
       );
     }
-
-    console.log('✅ Successfully deactivated capability:', id);
-
     return NextResponse.json({
       message: 'Capability deactivated successfully',
       timestamp: new Date().toISOString()
@@ -246,7 +232,7 @@ async function calculateCapabilityMetrics(capabilityId: string) {
 
     if (usageError) {
       console.error('⚠️ Error fetching capability metrics:', usageError);
-      return {};
+      return { /* TODO: implement */ };
     }
 
     const totalUsage = agentUsage?.reduce((sum, usage) => sum + (usage.usage_count || 0), 0) || 0;
@@ -270,7 +256,7 @@ async function calculateCapabilityMetrics(capabilityId: string) {
 
   } catch (error) {
     console.error('⚠️ Error calculating capability metrics:', error);
-    return {};
+    return { /* TODO: implement */ };
   }
 }
 

@@ -1,4 +1,5 @@
 import { Metadata } from 'next';
+
 import MeditronSetup from '@/components/llm/MeditronSetup';
 
 export const metadata: Metadata = {

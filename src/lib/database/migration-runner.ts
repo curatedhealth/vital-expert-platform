@@ -1,7 +1,9 @@
-import { createClient } from '@supabase/supabase-js';
-import { SQLExecutor, createSQLExecutor } from './sql-executor';
 import fs from 'fs';
 import path from 'path';
+
+import { createClient } from '@supabase/supabase-js';
+
+import { SQLExecutor } from './sql-executor';
 
 export interface Migration {
   id: string;
@@ -121,8 +123,6 @@ export class MigrationRunner {
   }
 
   async runPendingMigrations(): Promise<MigrationResult[]> {
-    console.log('🚀 Starting migration process...');
-
     try {
       // Ensure migration tracking table exists
       await this.ensureMigrationTable();
@@ -139,17 +139,12 @@ export class MigrationRunner {
       );
 
       if (pendingMigrations.length === 0) {
-        console.log('✅ All migrations are up to date');
         return [];
       }
-
-      console.log(`📋 Found ${pendingMigrations.length} pending migrations`);
-
       const results: MigrationResult[] = [];
 
       // Apply each pending migration
       for (const migration of pendingMigrations) {
-        console.log(`🔄 Applying migration: ${migration.name}`);
         const startTime = Date.now();
 
         try {
@@ -158,7 +153,7 @@ export class MigrationRunner {
 
           await this.recordMigration(migration, executionTime);
 
-          console.log(`✅ Migration ${migration.name} applied successfully (${executionTime}ms)`);
+          `);
 
           results.push({
             success: true,
@@ -178,9 +173,6 @@ export class MigrationRunner {
           break;
         }
       }
-
-      const successCount = results.filter(r => r.success).length;
-      console.log(`🎉 Migration process completed: ${successCount}/${pendingMigrations.length} successful`);
 
       return results;
     } catch (error) {

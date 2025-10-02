@@ -1,6 +1,6 @@
 'use client';
 
-import { AgentCreator } from '@/components/chat/agent-creator';
+import { AgentCreator } from '@/features/chat/components/agent-creator';
 
 export default function CreateAgentPage() {
   return (

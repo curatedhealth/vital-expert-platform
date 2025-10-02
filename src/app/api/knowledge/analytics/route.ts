@@ -1,5 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { NextRequest, NextResponse } from 'next/server';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -8,18 +8,13 @@ const supabase = createClient(
 
 export async function GET(request: NextRequest) {
   try {
-    console.log('=== Knowledge Analytics API called ===');
-
     // Get URL parameters for filtering
     const { searchParams } = new URL(request.url);
     const categoryFilter = searchParams.get('category');
     const agentFilter = searchParams.get('agent');
-
-    console.log('Filters:', { categoryFilter, agentFilter });
-
-    // Get all documents with metadata
+    // Get all documents with metadata from RAG tables
     const { data: documents, error: docsError } = await supabase
-      .from('knowledge_sources')
+      .from('rag_knowledge_sources')
       .select('*')
       .order('created_at', { ascending: false });
 
@@ -28,10 +23,10 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to fetch documents' }, { status: 500 });
     }
 
-    // Get all chunks with metadata
+    // Get all chunks with metadata from RAG tables
     const { data: chunks, error: chunksError } = await supabase
-      .from('document_chunks')
-      .select('knowledge_source_id, content_length, chunk_quality_score, created_at');
+      .from('rag_knowledge_chunks')
+      .select('source_id, word_count, quality_score, created_at');
 
     if (chunksError) {
       console.error('Error fetching chunks:', chunksError);
@@ -71,7 +66,7 @@ export async function GET(request: NextRequest) {
     let avgChunkQuality = 0;
 
     // Helper function to determine document category
-    const getDocumentCategory = (doc: any): string => {
+    const getDocumentCategory = (doc: unknown): string => {
       let category = 'other';
       const tags = doc.tags || [];
       const title = (doc.title || '').toLowerCase();
@@ -92,7 +87,7 @@ export async function GET(request: NextRequest) {
     };
 
     // Helper function to check if document matches agent
-    const matchesAgent = (doc: any, agentName: string): boolean => {
+    const matchesAgent = (doc: unknown, agentName: string): boolean => {
       const category = getDocumentCategory(doc);
       const agentMapping: Record<string, string[]> = {
         'fda-regulatory': ['regulatory'],
@@ -102,6 +97,7 @@ export async function GET(request: NextRequest) {
         'ema-regulatory': ['regulatory']
       };
 
+      // eslint-disable-next-line security/detect-object-injection
       const agentCategories = agentMapping[agentName] || [];
       return agentCategories.includes(category) || doc.is_public;
     };
@@ -121,7 +117,7 @@ export async function GET(request: NextRequest) {
     if (!categoryFilter && !agentFilter) {
       documents.forEach(doc => {
         const docDate = new Date(doc.created_at);
-        const docChunks = chunks.filter(chunk => chunk.knowledge_source_id === doc.id);
+        const docChunks = chunks.filter(chunk => chunk.source_id === doc.id);
 
         // Time-based counting
         if (docDate >= today) todayUploads++;
@@ -138,22 +134,21 @@ export async function GET(request: NextRequest) {
           ragCategories[category as keyof typeof ragCategories].size += doc.file_size;
         }
 
-        // Agent statistics (all agents have access to global documents)
-        if (doc.is_public) {
-          Object.keys(agentStats).forEach(agent => {
-            if (agent in agentStats) {
-              agentStats[agent as keyof typeof agentStats].documents++;
-              agentStats[agent as keyof typeof agentStats].chunks += docChunks.length;
-              agentStats[agent as keyof typeof agentStats].domains.add(doc.domain);
-            }
-          });
-        }
+        // Agent statistics (in RAG system, all documents are tenant-scoped)
+        // Count documents for all agents
+        Object.keys(agentStats).forEach(agent => {
+          if (agent in agentStats) {
+            agentStats[agent as keyof typeof agentStats].documents++;
+            agentStats[agent as keyof typeof agentStats].chunks += docChunks.length;
+            agentStats[agent as keyof typeof agentStats].domains.add(doc.domain);
+          }
+        });
       });
     } else {
       // Process filtered documents
       filteredDocuments.forEach(doc => {
         const docDate = new Date(doc.created_at);
-        const docChunks = chunks.filter(chunk => chunk.knowledge_source_id === doc.id);
+        const docChunks = chunks.filter(chunk => chunk.source_id === doc.id);
 
         // Time-based counting
         if (docDate >= today) todayUploads++;
@@ -189,6 +184,7 @@ export async function GET(request: NextRequest) {
             'reimbursement': 'Reimbursement Strategist',
             'ema-regulatory': 'EMA/EU Regulatory Specialist'
           };
+          // eslint-disable-next-line security/detect-object-injection
           const agentName = agentNameMap[agentFilter];
           if (agentName && matchesAgent(doc, agentFilter) && agentName in agentStats) {
             agentStats[agentName as keyof typeof agentStats].documents++;
@@ -196,34 +192,33 @@ export async function GET(request: NextRequest) {
             agentStats[agentName as keyof typeof agentStats].domains.add(doc.domain);
           }
         } else {
-          // Show all agents
-          if (doc.is_public) {
-            Object.keys(agentStats).forEach(agent => {
-              if (agent in agentStats) {
-                agentStats[agent as keyof typeof agentStats].documents++;
-                agentStats[agent as keyof typeof agentStats].chunks += docChunks.length;
-                agentStats[agent as keyof typeof agentStats].domains.add(doc.domain);
-              }
-            });
-          }
+          // Show all agents (RAG system: all documents available to all agents within tenant)
+          Object.keys(agentStats).forEach(agent => {
+            if (agent in agentStats) {
+              agentStats[agent as keyof typeof agentStats].documents++;
+              agentStats[agent as keyof typeof agentStats].chunks += docChunks.length;
+              agentStats[agent as keyof typeof agentStats].domains.add(doc.domain);
+            }
+          });
         }
       });
     }
 
     // Calculate average chunk quality
     if (chunks.length > 0) {
-      avgChunkQuality = chunks.reduce((sum, chunk) => sum + (chunk.chunk_quality_score || 0), 0) / chunks.length;
+      avgChunkQuality = chunks.reduce((sum, chunk) => sum + (chunk.quality_score || 0), 0) / chunks.length;
     }
 
     // Convert Sets to arrays for agent domains
     Object.keys(agentStats).forEach(agent => {
-      (agentStats as any)[agent].domains = Array.from((agentStats as any)[agent].domains);
+      // eslint-disable-next-line security/detect-object-injection
+      (agentStats as unknown)[agent].domains = Array.from((agentStats as unknown)[agent].domains);
     });
 
     // Content statistics (use filtered documents when applicable)
     const statsDocuments = (categoryFilter || agentFilter) ? filteredDocuments : documents;
     const statsChunks = (categoryFilter || agentFilter) ?
-      chunks.filter(chunk => statsDocuments.some(doc => doc.id === chunk.knowledge_source_id)) :
+      chunks.filter(chunk => statsDocuments.some(doc => doc.id === chunk.source_id)) :
       chunks;
 
     const contentStats = {
@@ -234,7 +229,7 @@ export async function GET(request: NextRequest) {
       avgChunksPerDocument: statsDocuments.length > 0 ? statsChunks.length / statsDocuments.length : 0,
       avgChunkQuality: avgChunkQuality,
       domains: [...new Set(statsDocuments.map(doc => doc.domain))],
-      categories: [...new Set(statsDocuments.map(doc => doc.category))],
+      categories: [...new Set(statsDocuments.map(doc => getDocumentCategory(doc)))],
       filteredBy: {
         category: categoryFilter,
         agent: agentFilter
@@ -259,7 +254,7 @@ export async function GET(request: NextRequest) {
           return docDate === dateStr;
         })
         .reduce((sum, doc) => {
-          return sum + chunks.filter(chunk => chunk.knowledge_source_id === doc.id).length;
+          return sum + chunks.filter(chunk => chunk.source_id === doc.id).length;
         }, 0);
 
       timeSeriesData.push({
@@ -282,11 +277,11 @@ export async function GET(request: NextRequest) {
         name: doc.name,
         title: doc.title || doc.name,
         size: doc.file_size,
-        chunks: chunks.filter(chunk => chunk.knowledge_source_id === doc.id).length,
+        chunks: chunks.filter(chunk => chunk.source_id === doc.id).length,
         uploadedAt: doc.created_at,
         category: getDocumentCategory(doc),
         domain: doc.domain,
-        status: doc.status || 'processed'
+        status: doc.processing_status || 'processed'
       }))
     };
 
@@ -297,15 +292,15 @@ export async function GET(request: NextRequest) {
       title: doc.title || doc.name,
       description: doc.description,
       size: doc.file_size,
-      chunks: chunks.filter(chunk => chunk.knowledge_source_id === doc.id).length,
+      chunks: chunks.filter(chunk => chunk.source_id === doc.id).length,
       uploadedAt: doc.created_at,
       category: getDocumentCategory(doc),
       domain: doc.domain,
-      status: doc.status || 'processed',
+      status: doc.processing_status || 'processed',
       tags: doc.tags || [],
-      file_type: doc.file_type,
-      url: doc.url,
-      is_public: doc.is_public
+      file_type: doc.mime_type,
+      url: doc.file_path,
+      is_public: false // RAG system uses tenant-based access, not is_public
     }));
 
     const analytics = {
@@ -317,8 +312,6 @@ export async function GET(request: NextRequest) {
       documents: filteredDocumentsList,
       generatedAt: new Date().toISOString()
     };
-
-    console.log('Analytics generated successfully');
     return NextResponse.json(analytics);
 
   } catch (error) {

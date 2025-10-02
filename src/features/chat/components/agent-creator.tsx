@@ -1,28 +1,5 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { useChatStore } from '@/lib/stores/chat-store';
-import { useAgentsStore } from '@/lib/stores/agents-store';
-import { AgentService, type AgentWithCategories } from '@/lib/agents/agent-service';
-import { AgentAvatar } from '@/components/ui/agent-avatar';
-import { IconSelectionModal } from '@/components/ui/icon-selection-modal';
-import { supabase } from '@/lib/supabase/client';
-import type {
-  MedicalCapability,
-  MedicalCompetency,
-  HealthcareBusinessFunction,
-  HealthcareRole,
-  PHARMAProtocol,
-  VERIFYProtocol,
-  SystemPromptGenerationRequest,
-  SystemPromptGenerationResponse
-} from '@/types/healthcare-compliance';
-import { promptGenerationService } from '@/lib/services/prompt-generation-service';
 import {
   X,
   Plus,
@@ -34,10 +11,33 @@ import {
   Star,
   Trash2,
   CheckCircle,
-  MessageSquare,
+  MessageSquare
 } from 'lucide-react';
 import Image from 'next/image';
+import { useState, useEffect } from 'react';
+
+import { AgentAvatar } from '@/components/ui/agent-avatar';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { IconSelectionModal } from '@/components/ui/icon-selection-modal';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { BUSINESS_FUNCTIONS, DEPARTMENTS_BY_FUNCTION, ROLES_BY_DEPARTMENT } from '@/config/organizational-structure';
+import { AgentService, type AgentWithCategories } from '@/features/agents/services/agent-service';
+import { promptGenerationService } from '@/lib/services/prompt-generation-service';
+import { useAgentsStore } from '@/lib/stores/agents-store';
+import { useChatStore } from '@/lib/stores/chat-store';
+import { supabase } from '@/lib/supabase/client';
 import { cn } from '@/lib/utils';
+import type {
+  MedicalCapability,
+  MedicalCompetency,
+  HealthcareBusinessFunction,
+  HealthcareRole,
+  SystemPromptGenerationRequest,
+  SystemPromptGenerationResponse
+} from '@/types/healthcare-compliance';
 
 interface AgentCreatorProps {
   isOpen: boolean;
@@ -46,12 +46,23 @@ interface AgentCreatorProps {
   editingAgent?: AgentWithCategories | null;
 }
 
-const modelOptions = [
+// Default model options (fallback)
+const defaultModelOptions = [
   { id: 'gpt-4', name: 'GPT-4', description: 'Most capable, best for complex reasoning' },
+  { id: 'gpt-4-turbo', name: 'GPT-4 Turbo', description: 'Faster GPT-4 with 128K context window' },
   { id: 'gpt-3.5-turbo', name: 'GPT-3.5 Turbo', description: 'Fast and efficient for most tasks' },
-  { id: 'claude-3', name: 'Claude 3', description: 'Excellent for analysis and writing' },
-  { id: 'claude-2', name: 'Claude 2', description: 'Good balance of capability and speed' },
+  { id: 'claude-3-opus', name: 'Claude 3 Opus', description: 'Most powerful Claude model for complex tasks' },
+  { id: 'claude-3-sonnet', name: 'Claude 3 Sonnet', description: 'Balanced performance and speed' },
+  { id: 'claude-3-haiku', name: 'Claude 3 Haiku', description: 'Fastest Claude model for quick responses' },
 ];
+
+interface ModelOption {
+  id: string;
+  name: string;
+  description: string;
+  provider?: string;
+  maxTokens?: number;
+}
 
 // Avatar icons will be loaded from Supabase IconService
 
@@ -86,6 +97,7 @@ const availableTools = [
 ];
 
 import { IconService, type Icon } from '@/lib/services/icon-service';
+import { ModelFitnessScorer, type FitnessScore, type ModelCapabilities, type AgentProfile } from '@/lib/services/model-fitness-scorer';
 
 interface PromptStarter {
   id: string;
@@ -105,20 +117,10 @@ const knowledgeDomains = [
   { value: 'health-economics', label: 'Health Economics' },
 ];
 
-const staticBusinessFunctions = [
-  { value: 'regulatory-affairs', label: 'Regulatory Affairs' },
-  { value: 'clinical-development', label: 'Clinical Development' },
-  { value: 'market-access', label: 'Market Access' },
-  { value: 'information-technology', label: 'Information Technology' },
-  { value: 'business-development', label: 'Business Development' },
-  { value: 'medical-affairs', label: 'Medical Affairs' },
-  { value: 'human-resources', label: 'Human Resources' },
-  { value: 'quality-assurance', label: 'Quality Assurance' },
-  { value: 'manufacturing', label: 'Manufacturing' },
-  { value: 'finance', label: 'Finance' },
-  { value: 'legal', label: 'Legal' },
-  { value: 'marketing', label: 'Marketing' },
-];
+// Use shared organizational structure configuration
+const staticBusinessFunctions = BUSINESS_FUNCTIONS;
+const staticDepartmentsByFunction = DEPARTMENTS_BY_FUNCTION;
+const staticRolesByDepartment = ROLES_BY_DEPARTMENT;
 
 const roles = [
   { value: 'AI/ML Specialist', label: 'AI/ML Specialist' },
@@ -176,6 +178,11 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
   const [showPromptIconModal, setShowPromptIconModal] = useState(false);
   const [editingPromptId, setEditingPromptId] = useState<string | null>(null);
 
+  // Dynamic model options state
+  const [modelOptions, setModelOptions] = useState<ModelOption[]>(defaultModelOptions);
+  const [loadingModels, setLoadingModels] = useState(true);
+  const [modelFitnessScore, setModelFitnessScore] = useState<FitnessScore | null>(null);
+
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -192,6 +199,7 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
     knowledgeDomains: [] as string[],
     businessFunction: '',
     role: '',
+    department: '',
     promptStarters: [] as PromptStarter[],
 
     // Medical Compliance Fields
@@ -204,7 +212,7 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
     accuracyThreshold: 0.95,
     citationRequired: true,
     selectedMedicalCapabilities: [] as string[],
-    competencySelection: {} as Record<string, string[]>,
+    competencySelection: { /* TODO: implement */ } as Record<string, string[]>,
   });
 
   const [newCapability, setNewCapability] = useState('');
@@ -215,15 +223,47 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
 
   // Medical Capability State
   const [medicalCapabilities, setMedicalCapabilities] = useState<MedicalCapability[]>([]);
-  const [competencies, setCompetencies] = useState<Record<string, MedicalCompetency[]>>({});
+  const [competencies, setCompetencies] = useState<Record<string, MedicalCompetency[]>>({ /* TODO: implement */ });
   const [businessFunctions, setBusinessFunctions] = useState<HealthcareBusinessFunction[]>([]);
   const [healthcareRoles, setHealthcareRoles] = useState<HealthcareRole[]>([]);
   const [loadingMedicalData, setLoadingMedicalData] = useState(true);
+
+  // Filtered options for conditional dropdowns
+  const [availableDepartments, setAvailableDepartments] = useState<string[]>([]);
+  const [availableRoles, setAvailableRoles] = useState<HealthcareRole[]>([]);
 
   // Dynamic Prompt Generation State
   const [generatedPrompt, setGeneratedPrompt] = useState<SystemPromptGenerationResponse | null>(null);
   const [isGeneratingPrompt, setIsGeneratingPrompt] = useState(false);
   const [showPromptPreview, setShowPromptPreview] = useState(false);
+
+  // Fetch available LLM models dynamically
+  useEffect(() => {
+    const fetchAvailableModels = async () => {
+      try {
+        setLoadingModels(true);
+        const response = await fetch('/api/llm/available-models');
+        const data = await response.json();
+
+        if (data.models && data.models.length > 0) {
+          setModelOptions(data.models);
+          console.log(`✅ Loaded ${data.models.length} LLM models from ${data.source}`);
+        } else {
+          // Fallback to default models
+          setModelOptions(defaultModelOptions);
+          console.log('ℹ️ Using default model options');
+        }
+      } catch (error) {
+        console.error('❌ Error fetching available models:', error);
+        // Fallback to default models on error
+        setModelOptions(defaultModelOptions);
+      } finally {
+        setLoadingModels(false);
+      }
+    };
+
+    fetchAvailableModels();
+  }, []);
 
   // Load editing agent data
   useEffect(() => {
@@ -249,7 +289,7 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
         const iconMap = icons.reduce((acc, icon) => {
           acc[icon.name] = icon;
           return acc;
-        }, {} as Record<string, Icon>);
+        }, { /* TODO: implement */ } as Record<string, Icon>);
 
         return [
           {
@@ -289,13 +329,22 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
 
       const defaultPromptStarters = createDefaultPromptStarters(availableIcons);
 
+      // Map function_id to department_name for the dropdown
+      let businessFunctionName = editingAgent.business_function || '';
+      if ((editingAgent as any).function_id && businessFunctions.length > 0) {
+        const matchedFunction = businessFunctions.find(f => f.id === (editingAgent as any).function_id);
+        if (matchedFunction) {
+          businessFunctionName = matchedFunction.department_name || matchedFunction.name || businessFunctionName;
+          console.log('[Agent Creator] Mapped function_id to:', businessFunctionName, 'for agent:', editingAgent.display_name);
+        } else {
+          console.warn('[Agent Creator] No match found for function_id:', (editingAgent as any).function_id);
+        }
+      } else {
+        console.log('[Agent Creator] businessFunctions not loaded yet or no function_id. Count:', businessFunctions.length);
+      }
+
       // Debug logging
-      console.log('Setting form data for editing agent:', {
-        display_name: editingAgent.display_name,
-        name: editingAgent.name,
-        description: editingAgent.description,
-        system_prompt: editingAgent.system_prompt
-      });
+      console.log('[Agent Creator] Setting formData.businessFunction to:', businessFunctionName);
 
       setFormData({
         name: editingAgent.display_name || editingAgent.name || 'Unnamed Agent',
@@ -311,23 +360,24 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
         knowledgeFiles: [] as File[],
         tools: [],
         knowledgeDomains: knowledgeDomains,
-        businessFunction: editingAgent.business_function || '',
+        businessFunction: businessFunctionName,
         role: editingAgent.role || '',
+        department: editingAgent.department || '',
         promptStarters: defaultPromptStarters,
         // Medical Compliance Fields (with safe property access)
-        medicalSpecialty: (editingAgent as any)?.medical_specialty || '',
-        clinicalValidationStatus: ((editingAgent as any)?.clinical_validation_status as "pending" | "validated" | "expired" | "under_review") || 'pending',
-        hipaaCompliant: (editingAgent as any)?.hipaa_compliant || false,
-        pharmaEnabled: (editingAgent as any)?.pharma_enabled || false,
-        verifyEnabled: (editingAgent as any)?.verify_enabled || false,
-        fdaSamdClass: (editingAgent as any)?.fda_samd_class || '',
-        accuracyThreshold: (editingAgent as any)?.medical_accuracy_score || 0.95,
+        medicalSpecialty: (editingAgent as unknown)?.medical_specialty || '',
+        clinicalValidationStatus: ((editingAgent as unknown)?.clinical_validation_status as "pending" | "validated" | "expired" | "under_review") || 'pending',
+        hipaaCompliant: (editingAgent as unknown)?.hipaa_compliant || false,
+        pharmaEnabled: (editingAgent as unknown)?.pharma_enabled || false,
+        verifyEnabled: (editingAgent as unknown)?.verify_enabled || false,
+        fdaSamdClass: (editingAgent as unknown)?.fda_samd_class || '',
+        accuracyThreshold: (editingAgent as unknown)?.medical_accuracy_score || 0.95,
         citationRequired: true,
         selectedMedicalCapabilities: [] as string[], // TODO: Load from agent capabilities
-        competencySelection: {} as Record<string, string[]>, // TODO: Load from agent competencies
+        competencySelection: { /* TODO: implement */ } as Record<string, string[]>, // TODO: Load from agent competencies
       });
     }
-  }, [editingAgent, availableIcons]);
+  }, [editingAgent, availableIcons, businessFunctions]);
 
   // Load agent templates, avatars, and icons from database
   useEffect(() => {
@@ -382,27 +432,30 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
 
         if (capError) throw capError;
 
-        // Load business functions
-        const { data: functions, error: funcError } = await supabase
-          .from('business_functions')
-          .select('*');
+        // Load organizational structure from API
+        const response = await fetch('/api/organizational-structure');
+        if (!response.ok) throw new Error('Failed to load organizational structure');
 
-        if (funcError) throw funcError;
+        const orgData = await response.json();
+        if (!orgData.success) throw new Error(orgData.error || 'Failed to load organizational structure');
 
-        // Load healthcare roles
-        const { data: roles, error: rolesError } = await supabase
-          .from('roles')
-          .select('*');
-
-        if (rolesError) throw rolesError;
+        const functions = orgData.data.functions;
+        const roles = orgData.data.roles;
+        const departments = orgData.data.departments;
 
         // Set state
         setMedicalCapabilities(capabilities || []);
         setBusinessFunctions(functions || []);
         setHealthcareRoles(roles || []);
 
+        console.log('[Agent Creator] Loaded organizational data:', {
+          functions: functions?.length || 0,
+          departments: departments?.length || 0,
+          roles: roles?.length || 0
+        });
+
         // Organize competencies by capability
-        const competencyMap: Record<string, MedicalCompetency[]> = {};
+        const competencyMap: Record<string, MedicalCompetency[]> = { /* TODO: implement */ };
         capabilities?.forEach(cap => {
           if (cap.competencies) {
             competencyMap[cap.id] = cap.competencies;
@@ -419,6 +472,105 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
 
     loadMedicalData();
   }, [isOpen]);
+
+  // Filter departments based on selected business function
+  useEffect(() => {
+    if (!formData.businessFunction) {
+      setAvailableDepartments([]);
+      return;
+    }
+
+    // If database has data, use it
+    if (businessFunctions.length > 0 && healthcareRoles.length > 0) {
+      // Find the selected business function
+      const selectedFunction = businessFunctions.find(bf =>
+        (bf.department_name || bf.name) === formData.businessFunction
+      );
+
+      if (selectedFunction) {
+        // Get unique departments from roles that belong to this function
+        const rolesInFunction = healthcareRoles.filter(role =>
+          role.function_id === selectedFunction.id
+        );
+
+        const uniqueDepartments = Array.from(
+          new Set(
+            rolesInFunction
+              .map(role => role.department_name)
+              .filter((dept): dept is string => Boolean(dept))
+          )
+        ).sort();
+
+        setAvailableDepartments(uniqueDepartments);
+
+        // If current department is not in available departments, reset it
+        if (formData.department && uniqueDepartments.length > 0 && !uniqueDepartments.includes(formData.department)) {
+          setFormData(prev => ({ ...prev, department: '', role: '' }));
+        }
+        return;
+      }
+    }
+
+    // Fallback to static data
+    const selectedStaticFunction = staticBusinessFunctions.find(bf =>
+      bf.value === formData.businessFunction || bf.label === formData.businessFunction
+    );
+
+    if (selectedStaticFunction) {
+      const departments = staticDepartmentsByFunction[selectedStaticFunction.value] || [];
+      setAvailableDepartments(departments);
+
+      // If current department is not in available departments, reset it
+      if (formData.department && departments.length > 0 && !departments.includes(formData.department)) {
+        setFormData(prev => ({ ...prev, department: '', role: '' }));
+      }
+    } else {
+      setAvailableDepartments([]);
+    }
+  }, [formData.businessFunction, businessFunctions, healthcareRoles]);
+
+  // Filter roles based on selected business function and department
+  useEffect(() => {
+    if (!formData.businessFunction) {
+      setAvailableRoles([]);
+      return;
+    }
+
+    // If database has data, use it
+    if (businessFunctions.length > 0 && healthcareRoles.length > 0) {
+      const selectedFunction = businessFunctions.find(bf =>
+        (bf.department_name || bf.name) === formData.businessFunction
+      );
+
+      if (selectedFunction) {
+        let filteredRoles = healthcareRoles.filter(role =>
+          role.function_id === selectedFunction.id
+        );
+
+        // Further filter by department if selected
+        if (formData.department) {
+          filteredRoles = filteredRoles.filter(role =>
+            role.department_name === formData.department
+          );
+        }
+
+        setAvailableRoles(filteredRoles);
+
+        // If current role is not in available roles, reset it
+        const currentRoleInAvailable = filteredRoles.some(role =>
+          (role.role_name || role.name) === formData.role
+        );
+        if (formData.role && filteredRoles.length > 0 && !currentRoleInAvailable) {
+          setFormData(prev => ({ ...prev, role: '' }));
+        }
+        return;
+      }
+    }
+
+    // Fallback to static data - roles are conditional on department
+    // Don't show any roles until department is selected
+    setAvailableRoles([]);
+  }, [formData.businessFunction, formData.department, businessFunctions, healthcareRoles]);
 
   const handleCapabilityAdd = (capability: string) => {
     if (capability && !formData.capabilities.includes(capability)) {
@@ -487,7 +639,8 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
 
   const handleCompetencySelection = (capabilityId: string, competencyId: string) => {
     setFormData(prev => {
-      const currentCompetencySelection = prev.competencySelection || {};
+      const currentCompetencySelection = prev.competencySelection || { /* TODO: implement */ };
+      // eslint-disable-next-line security/detect-object-injection
       const currentSelections = currentCompetencySelection[capabilityId] || [];
       const newSelections = currentSelections.includes(competencyId)
         ? currentSelections.filter(id => id !== competencyId)
@@ -519,8 +672,12 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
 
     try {
       // Find the selected business function and role
-      const selectedBusinessFunction = businessFunctions.find(bf => bf.name === formData.businessFunction);
-      const selectedRole = healthcareRoles.find(role => role.name === formData.role);
+      const selectedBusinessFunction = businessFunctions.find(bf =>
+        (bf.department_name || bf.name) === formData.businessFunction
+      );
+      const selectedRole = healthcareRoles.find(role =>
+        (role.role_name || role.name) === formData.role
+      );
 
       if (!selectedBusinessFunction || !selectedRole) {
         throw new Error('Selected business function or role not found');
@@ -530,7 +687,7 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
         agentId: '', // We'll set this when saving
         selectedCapabilities: formData.selectedMedicalCapabilities,
         competencySelection: formData.competencySelection,
-        mode: 'standalone' as any, // Default mode
+        mode: 'standalone' as unknown, // Default mode
         medicalContext: {
           businessFunction: selectedBusinessFunction,
           role: selectedRole,
@@ -612,12 +769,60 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
     }));
   };
 
-  const processKnowledgeSources = async () => {
-    console.log('Processing knowledge sources:', {
-      urlCount: formData.knowledgeUrls.length,
-      fileCount: formData.knowledgeFiles.length
-    });
+  // Calculate model fitness score
+  const calculateModelFitness = (modelId: string) => {
+    const selectedModel = modelOptions.find(m => m.id === modelId);
+    if (!selectedModel) {
+      setModelFitnessScore(null);
+      return;
+    }
 
+    // Build agent profile from form data with dynamic criteria from Supabase agent registry
+    const agentProfile: AgentProfile = {
+      role: formData.role || formData.businessFunction,
+      businessFunction: formData.businessFunction,
+      capabilities: formData.capabilities,
+      description: formData.description,
+      medicalSpecialty: formData.medicalSpecialty,
+      requiresHighAccuracy: formData.accuracyThreshold >= 0.95,
+      requiresMedicalKnowledge: !!(formData.medicalSpecialty ||
+        formData.businessFunction?.toLowerCase().includes('medical') ||
+        formData.businessFunction?.toLowerCase().includes('clinical')),
+      requiresCodeGeneration: formData.capabilities.some(c =>
+        c.toLowerCase().includes('code') ||
+        c.toLowerCase().includes('technical') ||
+        c.toLowerCase().includes('development')
+      ),
+      expectedOutputLength: formData.maxTokens > 4000 ? 'very_long' :
+                           formData.maxTokens > 2000 ? 'long' :
+                           formData.maxTokens > 1000 ? 'medium' : 'short',
+      hipaaCompliant: formData.hipaaCompliant,
+
+      // Dynamic agent configuration from Supabase agent registry
+      temperature: formData.temperature,
+      max_tokens: formData.maxTokens,
+      rag_enabled: formData.ragEnabled,
+      context_window: formData.maxTokens, // Use max_tokens as context window requirement
+      response_format: 'markdown', // Default response format
+      tools: formData.tools,
+      knowledge_domains: formData.knowledgeDomains,
+    };
+
+    // Build model capabilities object
+    const modelCapabilities: ModelCapabilities = {
+      id: selectedModel.id,
+      name: selectedModel.name,
+      provider: selectedModel.provider || 'unknown',
+      maxTokens: selectedModel.maxTokens || 4096,
+      capabilities: selectedModel.capabilities as any,
+    };
+
+    // Calculate fitness
+    const fitness = ModelFitnessScorer.calculateFitness(modelCapabilities, agentProfile);
+    setModelFitnessScore(fitness);
+  };
+
+  const processKnowledgeSources = async () => {
     if (formData.knowledgeUrls.length === 0 && formData.knowledgeFiles.length === 0) {
       setKnowledgeProcessingStatus('No knowledge sources to process');
       return;
@@ -627,8 +832,8 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
     setKnowledgeProcessingStatus('Processing knowledge sources...');
 
     try {
-      let urlResults: any = { totalProcessed: 0, totalFailed: 0, results: [] };
-      let fileResults: any = { totalProcessed: 0, totalFailed: 0, results: [] };
+      let urlResults: unknown = { totalProcessed: 0, totalFailed: 0, results: [] };
+      let fileResults: unknown = { totalProcessed: 0, totalFailed: 0, results: [] };
 
       // Process URLs if any
       if (formData.knowledgeUrls.length > 0) {
@@ -652,10 +857,8 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
 
       // Process files if any
       if (formData.knowledgeFiles.length > 0) {
-        console.log('Processing files:', formData.knowledgeFiles.length);
         const fileFormData = new FormData();
         formData.knowledgeFiles.forEach(file => {
-          console.log('Adding file to FormData:', file.name, file.size);
           fileFormData.append('files', file);
         });
         fileFormData.append('domain', 'digital-health');
@@ -663,17 +866,12 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
         if (editingAgent?.id) {
           fileFormData.append('agentId', editingAgent.id);
         }
-
-        console.log('Sending file upload request...');
         const fileResponse = await fetch('/api/knowledge/upload', {
           method: 'POST',
           body: fileFormData,
         });
-
-        console.log('File upload response status:', fileResponse.status);
         if (fileResponse.ok) {
           fileResults = await fileResponse.json();
-          console.log('File upload results:', fileResults);
         } else {
           const errorText = await fileResponse.text();
           console.error('File upload error:', errorText);
@@ -738,11 +936,10 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
     setSelectedTemplate(template.name);
   };
 
-
   const handleDelete = async () => {
     if (!editingAgent) return;
 
-    const isUserAgent = (editingAgent as any).is_user_copy || editingAgent.is_custom;
+    const isUserAgent = (editingAgent as unknown).is_user_copy || editingAgent.is_custom;
 
     if (!isUserAgent) {
       alert('You can only delete your own agents.');
@@ -756,26 +953,20 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
     if (!confirmDelete) return;
 
     try {
-      console.log('=== DELETING USER AGENT ===');
-      console.log('- Agent ID:', editingAgent.id);
-      console.log('- Agent name:', editingAgent.display_name);
-
       // If it's a localStorage-only agent, just remove it from localStorage
-      const isLocalStorageOnly = (editingAgent as any).is_user_copy && editingAgent.is_custom;
+      const isLocalStorageOnly = (editingAgent as unknown).is_user_copy && editingAgent.is_custom;
 
       if (isLocalStorageOnly) {
         // Remove from localStorage
         const saved = localStorage.getItem('user-chat-agents');
         if (saved) {
           const userAgents = JSON.parse(saved);
-          const filteredAgents = userAgents.filter((agent: any) => agent.id !== editingAgent.id);
+          const filteredAgents = userAgents.filter((agent: unknown) => agent.id !== editingAgent.id);
           localStorage.setItem('user-chat-agents', JSON.stringify(filteredAgents));
         }
-        console.log('✅ Removed agent from localStorage');
       } else {
         // Delete from database
         await deleteAgent(editingAgent.id);
-        console.log('✅ Deleted agent from database');
       }
 
       // Close modal and refresh
@@ -795,8 +986,12 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
     }
 
     // Find the selected business function and role for foreign key references
-    const selectedBusinessFunction = businessFunctions.find(bf => bf.name === formData.businessFunction);
-    const selectedRole = healthcareRoles.find(role => role.name === formData.role);
+    const selectedBusinessFunction = businessFunctions.find(bf =>
+      (bf.department_name || bf.name) === formData.businessFunction
+    );
+    const selectedRole = healthcareRoles.find(role =>
+      (role.role_name || role.name) === formData.role
+    );
 
     const agentData = {
       name: formData.name,
@@ -811,8 +1006,10 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
       temperature: formData.temperature,
       max_tokens: formData.maxTokens, // Convert to snake_case
       knowledge_domains: formData.knowledgeDomains, // Convert to snake_case
-      business_function: selectedBusinessFunction?.id || null, // Use UUID from business_functions table
-      role: selectedRole?.id || null, // Use UUID from roles table
+      function_id: formData.businessFunction || null, // Store UUID
+      business_function: null, // Deprecated field
+      role: formData.role || null,
+      department: formData.department || null,
       // Medical Compliance Fields
       medical_specialty: formData.medicalSpecialty,
       clinical_validation_status: formData.clinicalValidationStatus,
@@ -831,23 +1028,12 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
       is_public: false,
     };
 
-    console.log('=== AGENT SAVE DEBUG START ===');
-    console.log('Current timestamp:', new Date().toISOString());
-    console.log('Editing agent:', editingAgent);
-    console.log('Agent data being sent:', agentData);
-    console.log('Agent data fields:', Object.keys(agentData));
-    console.log('Form data:', formData);
-    console.log('=== END DEBUG INITIAL DATA ===');
-
     try {
       if (editingAgent) {
         // Check if this is a user copy from localStorage that doesn't exist in DB yet
-        const isUserCopyFromLocalStorage = (editingAgent as any).is_user_copy && editingAgent.is_custom;
+        const isUserCopyFromLocalStorage = (editingAgent as unknown).is_user_copy && editingAgent.is_custom;
 
         if (isUserCopyFromLocalStorage) {
-          console.log('=== CREATING USER COPY IN DATABASE ===');
-          console.log('- This is a user copy from localStorage that needs to be created in DB');
-
           // Create user copy in database using agents store
           const userCopyData = {
             id: crypto.randomUUID(), // Generate new ID
@@ -872,9 +1058,7 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
             priority: 1,
             implementation_phase: 1,
           };
-
-          console.log('Creating new user copy with data:', userCopyData);
-          await createUserCopy(userCopyData as any);
+          await createUserCopy(userCopyData as unknown);
         } else {
           // Update existing agent - Only send updateable fields
           const updates = {
@@ -883,14 +1067,15 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
             system_prompt: formData.systemPrompt,
             model: formData.model,
             avatar: formData.avatar,
-            color: 'text-market-purple',
+            // Don't update color - keep existing value
             capabilities: formData.capabilities,
             rag_enabled: formData.ragEnabled,
             temperature: formData.temperature,
             max_tokens: formData.maxTokens,
             knowledge_domains: formData.knowledgeDomains,
-            business_function: selectedBusinessFunction?.id || null,
-            role: selectedRole?.id || null,
+            business_function: formData.businessFunction || null, // Store the name, not UUID
+            department: formData.department || null, // Store the department name
+            role: formData.role || null, // Store the name, not UUID
             // Medical Compliance Fields
             medical_specialty: formData.medicalSpecialty,
             clinical_validation_status: formData.clinicalValidationStatus,
@@ -902,22 +1087,23 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
             citation_accuracy: formData.citationRequired ? 1.0 : 0.0,
           };
 
-          console.log('=== CALLING UPDATE AGENT ===');
-          console.log('- Agent ID:', editingAgent.id);
-          console.log('- Update data:', updates);
+          // Call API to update agent
+          const response = await fetch(`/api/agents/${editingAgent.id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(updates),
+          });
 
-          try {
-            const updateResult = await updateAgent(editingAgent.id, updates);
-            console.log('updateAgent result:', updateResult);
-            console.log('=== UPDATE AGENT COMPLETED SUCCESSFULLY ===');
-          } catch (updateError) {
-            console.error('=== UPDATE AGENT ERROR ===');
-            console.error('Update error:', updateError);
-
-            // Provide more specific error message
-            const errorMessage = (updateError as Error)?.message || 'Failed to update agent';
-            throw new Error(`Failed to save agent: ${errorMessage}`);
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Failed to update agent');
           }
+
+          const result = await response.json();
+          console.log('✅ Agent updated successfully:', result.agent);
+
+          // Update the agent in the agents store
+          updateAgent(editingAgent.id, result.agent);
         }
       } else {
         // Create new agent - convert to chat store format
@@ -933,10 +1119,9 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
           temperature: formData.temperature,
           maxTokens: formData.maxTokens, // camelCase for chat store
           knowledgeDomains: formData.knowledgeDomains, // camelCase for chat store
-          businessFunction: selectedBusinessFunction?.name || '', // Use name for chat store
-          role: selectedRole?.name || '', // Use name for chat store
+          businessFunction: selectedBusinessFunction?.department_name || selectedBusinessFunction?.name || '',
+          role: selectedRole?.role_name || selectedRole?.name || '',
         };
-        console.log('Calling createCustomAgent with chat store data:', chatStoreAgentData);
         createCustomAgent(chatStoreAgentData);
       }
 
@@ -1120,62 +1305,116 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
                     />
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-4">
                     <div>
                       <Label htmlFor="businessFunction">Business Function</Label>
                       <select
                         id="businessFunction"
                         value={formData.businessFunction}
-                        onChange={(e) => setFormData(prev => ({ ...prev, businessFunction: e.target.value }))}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        onChange={(e) => {
+                          setFormData(prev => ({
+                            ...prev,
+                            businessFunction: e.target.value
+                          }));
+                        }}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-progress-teal"
                       >
                         <option value="">Select Business Function</option>
-                        {loadingMedicalData ? (
-                          <option disabled>Loading...</option>
-                        ) : (
-                          businessFunctions.length > 0 ? (
-                            businessFunctions.map(bf => (
-                              <option key={bf.id} value={bf.name}>
-                                {bf.name} - {bf.department}
-                              </option>
-                            ))
-                          ) : (
-                            staticBusinessFunctions.map(bf => (
-                              <option key={bf.value} value={bf.value}>
-                                {bf.label}
-                              </option>
-                            ))
-                          )
-                        )}
+                        {businessFunctions.map(bf => (
+                          <option key={bf.id} value={bf.id}>
+                            {bf.department_name}
+                          </option>
+                        ))}
                       </select>
                     </div>
+
                     <div>
-                      <Label htmlFor="role">Role</Label>
+                      <Label htmlFor="department">Department</Label>
+                      <select
+                        id="department"
+                        value={formData.department}
+                        onChange={(e) => {
+                          setFormData(prev => ({
+                            ...prev,
+                            department: e.target.value,
+                            role: '' // Reset role when department changes
+                          }));
+                        }}
+                        disabled={!formData.businessFunction}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                      >
+                        <option value="">
+                          {!formData.businessFunction
+                            ? 'Select Business Function first'
+                            : availableDepartments.length === 0
+                            ? 'Not available'
+                            : 'Select Department (Optional)'}
+                        </option>
+                        {availableDepartments.map(dept => (
+                          <option key={dept} value={dept}>
+                            {dept}
+                          </option>
+                        ))}
+                      </select>
+                      <p className="text-xs text-gray-500 mt-1">
+                        Optional: Filter roles by department
+                      </p>
+                    </div>
+
+                    <div>
+                      <Label htmlFor="role">Role *</Label>
                       <select
                         id="role"
                         value={formData.role}
                         onChange={(e) => setFormData(prev => ({ ...prev, role: e.target.value }))}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        disabled={!formData.businessFunction || (!formData.department && businessFunctions.length === 0)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
                       >
-                        <option value="">Select Role</option>
+                        <option value="">
+                          {!formData.businessFunction
+                            ? 'Select Business Function first'
+                            : !formData.department && businessFunctions.length === 0
+                            ? 'Select Department first'
+                            : 'Select Role'}
+                        </option>
                         {loadingMedicalData ? (
                           <option disabled>Loading...</option>
                         ) : (
-                          healthcareRoles.length > 0 ? (
-                            healthcareRoles.map(role => (
-                              <option key={role.id} value={role.name}>
-                                {role.clinical_title || role.name} - {role.seniority_level}
+                          // Database data available
+                          healthcareRoles.length > 0 && availableRoles.length > 0 ? (
+                            availableRoles.map(role => (
+                              <option key={role.id} value={role.role_name || role.name}>
+                                {role.role_title || role.role_name || role.clinical_title || role.name}
+                                {role.seniority_level ? ` - ${role.seniority_level}` : ''}
                               </option>
                             ))
-                          ) : (
-                            roles.map(role => (
-                              <option key={role.value} value={role.value}>
-                                {role.label}
-                              </option>
-                            ))
-                          )
+                          ) : formData.businessFunction && formData.department ? (
+                            // Static data - show roles for selected department
+                            (() => {
+                              const selectedStaticFunction = staticBusinessFunctions.find(bf =>
+                                bf.value === formData.businessFunction || bf.label === formData.businessFunction
+                              );
+                              const functionKey = selectedStaticFunction?.value || '';
+                              const rolesForDepartment = staticRolesByDepartment[functionKey]?.[formData.department] || [];
+
+                              return rolesForDepartment.length > 0 ? (
+                                rolesForDepartment.map(role => (
+                                  <option key={role} value={role}>
+                                    {role}
+                                  </option>
+                                ))
+                              ) : (
+                                <option disabled>No roles available for this department</option>
+                              );
+                            })()
+                          ) : null
                         )}
                       </select>
+                      <p className="text-xs text-gray-500 mt-1">
+                        {formData.department
+                          ? `Showing roles for ${formData.department}`
+                          : 'Select a department to see available roles'}
+                      </p>
                     </div>
                   </div>
 
@@ -1675,19 +1914,137 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
                 <CardContent className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <Label htmlFor="model">AI Model</Label>
+                      <Label htmlFor="model">
+                        AI Model
+                        {loadingModels && <span className="ml-2 text-xs text-medical-gray">(Loading...)</span>}
+                      </Label>
                       <select
                         id="model"
                         value={formData.model}
-                        onChange={(e) => setFormData(prev => ({ ...prev, model: e.target.value }))}
-                        className="w-full p-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-market-purple"
+                        onChange={(e) => {
+                          const selectedModel = modelOptions.find(m => m.id === e.target.value);
+                          setFormData(prev => ({
+                            ...prev,
+                            model: e.target.value,
+                            // Auto-update max tokens if model has a specific limit
+                            maxTokens: selectedModel?.maxTokens || prev.maxTokens
+                          }));
+                          // Calculate fitness score for the selected model
+                          calculateModelFitness(e.target.value);
+                        }}
+                        disabled={loadingModels}
+                        className="w-full p-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-market-purple disabled:opacity-50 disabled:cursor-not-allowed"
                       >
-                        {modelOptions.map((model) => (
-                          <option key={model.id} value={model.id}>
-                            {model.name} - {model.description}
-                          </option>
-                        ))}
+                        {loadingModels ? (
+                          <option>Loading available models...</option>
+                        ) : (
+                          modelOptions.map((model) => (
+                            <option key={model.id} value={model.id}>
+                              {model.name} - {model.description}
+                            </option>
+                          ))
+                        )}
                       </select>
+                      {!loadingModels && modelOptions.length > 0 && (
+                        <p className="text-xs text-medical-gray mt-1">
+                          {modelOptions.length} model{modelOptions.length !== 1 ? 's' : ''} available
+                        </p>
+                      )}
+
+                      {/* Model Fitness Score Display */}
+                      {modelFitnessScore && (
+                        <div className="mt-3 p-3 border rounded-lg bg-gradient-to-r from-blue-50 to-purple-50">
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="text-sm font-medium text-gray-700">Model Fitness Score</span>
+                            <div className="flex items-center gap-2">
+                              <div className={cn(
+                                "px-2 py-1 rounded-full text-xs font-bold",
+                                modelFitnessScore.recommendation === 'excellent' && "bg-green-100 text-green-800",
+                                modelFitnessScore.recommendation === 'good' && "bg-blue-100 text-blue-800",
+                                modelFitnessScore.recommendation === 'acceptable' && "bg-yellow-100 text-yellow-800",
+                                modelFitnessScore.recommendation === 'poor' && "bg-orange-100 text-orange-800",
+                                modelFitnessScore.recommendation === 'not_recommended' && "bg-red-100 text-red-800"
+                              )}>
+                                {modelFitnessScore.overall}/100
+                              </div>
+                              {modelFitnessScore.recommendation === 'excellent' && <span className="text-green-600">⭐️ Excellent</span>}
+                              {modelFitnessScore.recommendation === 'good' && <span className="text-blue-600">✓ Good</span>}
+                              {modelFitnessScore.recommendation === 'acceptable' && <span className="text-yellow-600">○ Acceptable</span>}
+                              {modelFitnessScore.recommendation === 'poor' && <span className="text-orange-600">△ Poor</span>}
+                              {modelFitnessScore.recommendation === 'not_recommended' && <span className="text-red-600">✕ Not Recommended</span>}
+                            </div>
+                          </div>
+
+                          {/* Progress bars for breakdown */}
+                          <div className="space-y-1.5 mt-2">
+                            {Object.entries({
+                              'Role Match': modelFitnessScore.breakdown.roleMatch,
+                              'Capabilities': modelFitnessScore.breakdown.capabilityMatch,
+                              'Performance': modelFitnessScore.breakdown.performanceMatch,
+                              'Cost': modelFitnessScore.breakdown.costEfficiency,
+                              'Context Size': modelFitnessScore.breakdown.contextSizeMatch,
+                              'Compliance': modelFitnessScore.breakdown.complianceMatch,
+                            }).map(([label, score]) => (
+                              <div key={label} className="flex items-center gap-2">
+                                <span className="text-xs text-gray-600 w-24">{label}:</span>
+                                <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
+                                  <div
+                                    className={cn(
+                                      "h-full rounded-full transition-all",
+                                      score >= 80 ? "bg-green-500" :
+                                      score >= 60 ? "bg-blue-500" :
+                                      score >= 40 ? "bg-yellow-500" : "bg-red-500"
+                                    )}
+                                    style={{ width: `${score}%` }}
+                                  />
+                                </div>
+                                <span className="text-xs text-gray-500 w-8 text-right">{score}</span>
+                              </div>
+                            ))}
+                          </div>
+
+                          {/* Reasoning */}
+                          <p className="text-xs text-gray-600 mt-2 italic">{modelFitnessScore.reasoning}</p>
+
+                          {/* Strengths and Weaknesses */}
+                          {(modelFitnessScore.strengths.length > 0 || modelFitnessScore.weaknesses.length > 0) && (
+                            <div className="mt-2 grid grid-cols-2 gap-2">
+                              {modelFitnessScore.strengths.length > 0 && (
+                                <div>
+                                  <p className="text-xs font-semibold text-green-700 mb-1">Strengths:</p>
+                                  <ul className="text-xs text-green-600 space-y-0.5">
+                                    {modelFitnessScore.strengths.slice(0, 3).map((strength, i) => (
+                                      <li key={i}>• {strength}</li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              )}
+                              {modelFitnessScore.weaknesses.length > 0 && (
+                                <div>
+                                  <p className="text-xs font-semibold text-orange-700 mb-1">Considerations:</p>
+                                  <ul className="text-xs text-orange-600 space-y-0.5">
+                                    {modelFitnessScore.weaknesses.slice(0, 3).map((weakness, i) => (
+                                      <li key={i}>• {weakness}</li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              )}
+                            </div>
+                          )}
+
+                          {/* Alternative Suggestions */}
+                          {modelFitnessScore.alternativeSuggestions && modelFitnessScore.alternativeSuggestions.length > 0 && (
+                            <div className="mt-2 p-2 bg-white rounded border border-gray-200">
+                              <p className="text-xs font-semibold text-gray-700 mb-1">💡 Better Alternatives:</p>
+                              <ul className="text-xs text-blue-600 space-y-0.5">
+                                {modelFitnessScore.alternativeSuggestions.map((suggestion, i) => (
+                                  <li key={i}>• {suggestion}</li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
 
                   </div>
@@ -1905,7 +2262,7 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
                                       <input
                                         type="checkbox"
                                         id={`competency-${competency.id}`}
-                                        checked={((formData.competencySelection || {})[capability.id] || []).includes(competency.id)}
+                                        checked={((formData.competencySelection || { /* TODO: implement */ })[capability.id] || []).includes(competency.id)}
                                         onChange={() => handleCompetencySelection(capability.id, competency.id)}
                                         className="mt-1 rounded border-gray-300 text-market-purple focus:ring-market-purple"
                                       />
@@ -2073,7 +2430,7 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
             <p className="text-sm text-medical-gray">
               * Required fields
             </p>
-            {editingAgent && ((editingAgent as any).is_user_copy || editingAgent.is_custom) && (
+            {editingAgent && ((editingAgent as unknown).is_user_copy || editingAgent.is_custom) && (
               <Button
                 variant="outline"
                 onClick={handleDelete}

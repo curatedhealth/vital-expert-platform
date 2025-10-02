@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+
 import { openAIUsageService } from '@/lib/services/openai-usage.service';
 
 export async function GET(request: NextRequest) {

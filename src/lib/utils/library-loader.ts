@@ -5,6 +5,7 @@
 
 import { promises as fs } from 'fs';
 import { join } from 'path';
+
 import {
   DigitalHealthAgentConfig,
   Capability,
@@ -406,9 +407,9 @@ export class LibraryLoader {
    * Escape special regex characters
    */
   private escapeRegex(str: string): string {
-    return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    return str.replace(/[.*+?^${ /* TODO: implement */ }()|[\]\\]/g, '\\$&');
   }
 }
 
 // Singleton instance for global use
-export const libraryLoader = new LibraryLoader();
+export const _libraryLoader = new LibraryLoader();

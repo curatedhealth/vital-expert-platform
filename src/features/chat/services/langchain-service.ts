@@ -32,8 +32,8 @@ export class LangChainRAGService {
   constructor() {
     this.vectorStore = new SupabaseVectorStore(embeddings, {
       client: supabase,
-      tableName: 'document_chunks',
-      queryName: 'match_documents',
+      tableName: 'rag_knowledge_chunks',
+      // Don't specify queryName - let LangChain use its own similaritySearchVectorWithScore
     });
 
     this.textSplitter = new RecursiveCharacterTextSplitter({
@@ -79,7 +79,7 @@ export class LangChainRAGService {
 
         // Check against existing documents in database
         const { data: existingDocs, error } = await supabase
-          .from('knowledge_sources')
+          .from('rag_knowledge_sources')
           .select('name, file_size, content_hash, title')
           .or(`content_hash.eq.${hash},name.eq.${file.name}`);
 
@@ -316,18 +316,19 @@ export class LangChainRAGService {
 
         // Prepare all chunk data for the batch
         const batchData = batch.map((chunk, index) => ({
-          knowledge_source_id: knowledgeSourceId,
+          source_id: knowledgeSourceId,
           content: chunk.pageContent,
-          content_length: chunk.pageContent.length,
+          content_type: 'text',
           chunk_index: totalProcessed + index,
-          embedding_openai: batchEmbeddings[index],
-          keywords: this.extractKeywords(chunk.pageContent),
-          chunk_quality_score: this.calculateChunkQuality(chunk.pageContent),
+          embedding: batchEmbeddings[index],
+          word_count: chunk.pageContent.split(/\s+/).length,
+          medical_context: {},
+          regulatory_context: {},
         }));
 
         // Insert the entire batch at once
         const { error } = await supabase
-          .from('document_chunks')
+          .from('rag_knowledge_chunks')
           .insert(batchData);
 
         if (error) {
@@ -406,7 +407,7 @@ export class LangChainRAGService {
     };
 
     const { data, error } = await supabase
-      .from('knowledge_sources')
+      .from('rag_knowledge_sources')
       .insert(insertData)
       .select()
       .single();
@@ -419,30 +420,53 @@ export class LangChainRAGService {
   }
 
   private async createKnowledgeSourceWithMetadata(metadata: any) {
+    // Get default tenant ID
+    const { data: tenant } = await supabase
+      .from('rag_tenants')
+      .select('id')
+      .eq('domain', 'default.vitalpath.com')
+      .single();
+
+    if (!tenant) {
+      throw new Error('Default tenant not found');
+    }
+
+    // Map UI domain values to database enum values
+    const domainMap: Record<string, string> = {
+      'regulatory': 'regulatory_compliance',
+      'digital-health': 'digital_health',
+      'clinical': 'clinical_research',
+      'market-access': 'market_access',
+      'commercial': 'commercial_strategy',
+      'methodology': 'methodology_frameworks',
+      'technology': 'technology_platforms',
+    };
+
+    const mappedDomain = domainMap[metadata.domain] || metadata.domain || 'medical_affairs';
+
     const insertData = {
+      tenant_id: tenant.id,
       name: metadata.title || metadata.fileName,
+      title: metadata.title || metadata.fileName.replace(/\.[^/.]+$/, ""),
+      description: this.generateDescription(metadata),
       source_type: 'uploaded_file',
       file_path: metadata.fileName,
       file_size: metadata.fileSize,
       content_hash: metadata.fileHash,
       mime_type: metadata.mimeType,
-      title: metadata.title || metadata.fileName.replace(/\.[^/.]+$/, ""),
-      description: this.generateDescription(metadata),
-      domain: metadata.domain,
-      category: 'uploaded_document',
+      domain: mappedDomain,
       processing_status: 'completed',
       processed_at: new Date().toISOString(),
-      is_public: metadata.isGlobal,
-      access_level: metadata.isGlobal ? 'public' : 'agent-specific',
-
-      // Map enhanced metadata to existing columns
-      authors: metadata.author ? [metadata.author] : null,
-      publication_date: this.parseValidDate(metadata.publishedDate),
       tags: metadata.topics || [],
+      metadata: {
+        isGlobal: metadata.isGlobal,
+        author: metadata.author,
+        publishedDate: metadata.publishedDate,
+      },
     };
 
     const { data, error } = await supabase
-      .from('knowledge_sources')
+      .from('rag_knowledge_sources')
       .insert(insertData)
       .select()
       .single();
@@ -582,39 +606,49 @@ Based on the context and chat history above, provide a comprehensive and accurat
   }> {
     try {
       console.log(`🔍 Searching for knowledge with embedding for agent: ${agentId}`);
+      console.log(`🎯 Agent knowledge domains: ${JSON.stringify(agent?.knowledge_domains || agent?.knowledgeDomains)}`);
 
-      // Generate embedding for the query
-      const queryEmbedding = await embeddings.embedQuery(query);
-
-      // Search for relevant chunks using direct SQL with current schema
-      // Note: The match_document_chunks function should be updated to filter by agent's knowledge domains
-      // For now, it filters by agent_id which includes agent-specific and global knowledge
-      const { data: chunks, error } = await supabase.rpc('match_document_chunks', {
-        agent_id: agentId,
-        query_embedding: queryEmbedding,
-        match_threshold: 0.7,
-        match_count: 5,
-        // TODO: Add knowledge_domains parameter when database function is updated
-        // knowledge_domains: agent?.knowledgeDomains || []
-      });
+      // Use LangChain's vectorStore for similarity search
+      const searchResults = await this.vectorStore.similaritySearchWithScore(query, 5);
 
       let ragContext = '';
       let sources: any[] = [];
 
-      if (chunks && chunks.length > 0) {
-        console.log(`Found ${chunks.length} relevant chunks`);
-        ragContext = chunks.map((chunk: any) => chunk.content).join('\n\n');
-        sources = chunks.map((chunk: any, index: number) => ({
-          id: chunk.id,
-          content: chunk.content,
-          title: chunk.title || 'Document Chunk',
-          excerpt: chunk.content.substring(0, 200) + '...',
-          similarity: chunk.similarity,
+      if (searchResults && searchResults.length > 0) {
+        console.log(`✅ Found ${searchResults.length} relevant chunks from LangChain vectorStore`);
+
+        // Filter by agent's knowledge domains if specified
+        let filteredResults = searchResults;
+        if (agent?.knowledge_domains || agent?.knowledgeDomains) {
+          const domains = agent.knowledge_domains || agent.knowledgeDomains;
+          filteredResults = searchResults.filter(([doc]) => {
+            const docDomain = doc.metadata?.domain;
+            return domains.includes(docDomain);
+          });
+          console.log(`📊 Filtered to ${filteredResults.length} chunks matching agent domains`);
+        }
+
+        // If no results after filtering, use all results
+        if (filteredResults.length === 0) {
+          console.log(`⚠️  No chunks matched agent domains, using all results`);
+          filteredResults = searchResults;
+        }
+
+        ragContext = filteredResults.map(([doc]) => doc.pageContent).join('\n\n');
+        sources = filteredResults.map(([doc, score], index) => ({
+          id: doc.metadata?.id || index,
+          content: doc.pageContent,
+          title: doc.metadata?.source_name || doc.metadata?.title || 'Document Chunk',
+          excerpt: doc.pageContent.substring(0, 200) + '...',
+          similarity: score,
           citation: `[${index + 1}]`,
-          access_level: chunk.is_public ? 'public' : 'agent-specific'
+          domain: doc.metadata?.domain,
+          source_id: doc.metadata?.source_id
         }));
+
+        console.log(`📚 Using ${sources.length} sources for RAG context`);
       } else {
-        console.log('No relevant chunks found, using basic LLM response');
+        console.log('⚠️  No relevant chunks found, using basic LLM response');
       }
 
       // Prepare enhanced prompt with RAG context
@@ -634,12 +668,28 @@ ${chatHistoryStr}
 Human Question: ${query}`;
 
       if (ragContext) {
+        // Create numbered source references for the AI
+        const sourceReferences = sources.map((source, index) =>
+          `[${index + 1}] ${source.title}`
+        ).join('\n');
+
         prompt += `
 
-Relevant Knowledge Base Context:
+IMPORTANT: You have access to the following knowledge base sources. You MUST cite these sources inline using the format [1], [2], etc. when you reference information from them.
+
+Available Sources:
+${sourceReferences}
+
+Knowledge Base Content:
 ${ragContext}
 
-Please provide a comprehensive response based on the context above and your knowledge. When referencing information from the knowledge base, use citations like [1], [2], etc.`;
+INSTRUCTIONS:
+- Answer the user's question comprehensively using the knowledge base context above
+- ALWAYS add inline citations [1], [2], [3] immediately after statements that come from the sources
+- Example: "Clinical trials showed 85% efficacy in treating anxiety [1]. The FDA approval was granted in 2023 [2]."
+- You MUST use citations throughout your response, not just at the end
+- If information comes from multiple sources, cite all relevant sources like [1][2]
+- Only use information from the sources provided above when citing`;
       } else {
         prompt += `
 

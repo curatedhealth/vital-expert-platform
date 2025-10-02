@@ -1,11 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import { X, Search } from 'lucide-react';
+import Image from 'next/image';
+import { useState, useEffect } from 'react';
+
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { IconService, type Icon } from '@/lib/services/icon-service';
-import Image from 'next/image';
 
 interface IconSelectionModalProps {
   isOpen: boolean;

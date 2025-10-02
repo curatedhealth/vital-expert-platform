@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { agentService, type AgentWithCategories } from '@/lib/agents/agent-service';
+
+import { agentService } from '@/features/agents/services/agent-service';
 import { useAgentsStore, type Agent as GlobalAgent } from '@/lib/stores/agents-store';
 
 export interface Agent {
@@ -31,12 +32,13 @@ export interface ChatMessage {
   agentId?: string;
   isLoading?: boolean;
   error?: boolean;
-  attachments?: any[];
+  attachments?: unknown[];
   metadata?: {
-    sources?: any[];
+    sources?: unknown[];
     citations?: number[];
     followupQuestions?: string[];
     processingTime?: number;
+    reasoning?: string;
     tokenUsage?: {
       promptTokens: number;
       completionTokens: number;
@@ -51,6 +53,12 @@ export interface ChatMessage {
       brain_id: string;
       brain_name: string;
     };
+    alternativeAgents?: Array<{
+      agent: Agent;
+      score: number;
+      reason?: string;
+    }>;
+    selectedAgentConfidence?: number;
   };
 }
 
@@ -62,6 +70,14 @@ export interface Chat {
   agentId: string;
   messageCount: number;
   lastMessage?: string;
+  mode?: 'automatic' | 'manual'; // Track which mode was used for this chat
+}
+
+export interface AIModel {
+  id: string;
+  name: string;
+  description: string;
+  category: string;
 }
 
 export interface ChatStore {
@@ -70,23 +86,53 @@ export interface ChatStore {
   currentChat: Chat | null;
   messages: ChatMessage[];
   selectedAgent: Agent | null;
+  selectedModel: AIModel | null;
   agents: Agent[];
+  libraryAgents: string[]; // Agent IDs in user's library
   isLoading: boolean;
   isLoadingAgents: boolean;
   error: string | null;
+  liveReasoning: string;
+  isReasoningActive: boolean;
+  abortController: AbortController | null;
+
+  // Dual-Mode State
+  interactionMode: 'automatic' | 'manual';
+  currentTier: 1 | 2 | 3 | 'human';
+  escalationHistory: unknown[];
+  selectedExpert: Agent | null;
+  conversationContext: {
+    sessionId: string;
+    messageCount: number;
+    startTime: Date | null;
+    lastActivity: Date | null;
+  };
 
   // Actions
   createNewChat: () => void;
   selectChat: (chatId: string) => void;
   deleteChat: (chatId: string) => void;
-  sendMessage: (content: string, attachments?: any[]) => Promise<void>;
+  sendMessage: (content: string, attachments?: unknown[]) => Promise<void>;
+  stopGeneration: () => void;
   setSelectedAgent: (agent: Agent | null) => void;
+  setSelectedModel: (model: AIModel | null) => void;
   createCustomAgent: (agent: Omit<Agent, 'id' | 'isCustom'>) => void;
   updateAgent: (agentId: string, updates: Partial<Agent>) => void;
   deleteAgent: (agentId: string) => void;
   clearError: () => void;
   regenerateResponse: (messageId: string) => Promise<void>;
   editMessage: (messageId: string, newContent: string) => void;
+
+  // Dual-Mode Actions
+  setInteractionMode: (mode: 'automatic' | 'manual') => void;
+  setSelectedExpert: (expert: Agent | null) => void;
+  escalateToNextTier: (reason: string) => void;
+  resetEscalation: () => void;
+
+  // Library Actions
+  addToLibrary: (agentId: string) => void;
+  removeFromLibrary: (agentId: string) => void;
+  isInLibrary: (agentId: string) => boolean;
 
   // New database-powered actions
   loadAgentsFromDatabase: () => Promise<void>;
@@ -100,7 +146,7 @@ export interface ChatStore {
   subscribeToGlobalChanges: () => () => void;
 }
 
-export const useChatStore = create<ChatStore>()(
+const _useChatStore = create<ChatStore>()(
   persist(
     (set, get) => ({
       // Initial state
@@ -108,14 +154,31 @@ export const useChatStore = create<ChatStore>()(
       currentChat: null,
       messages: [],
       selectedAgent: null,
+      selectedModel: null,
       agents: [], // Start empty, will be loaded from database
+      libraryAgents: [], // Agent IDs in user's library
       isLoading: false,
       isLoadingAgents: false,
       error: null,
+      liveReasoning: '',
+      isReasoningActive: false,
+      abortController: null,
+
+      // Dual-Mode Initial State
+      interactionMode: 'automatic',
+      currentTier: 1,
+      escalationHistory: [],
+      selectedExpert: null,
+      conversationContext: {
+        sessionId: `session-${Date.now()}`,
+        messageCount: 0,
+        startTime: null,
+        lastActivity: null,
+      },
 
       // Actions
       createNewChat: () => {
-        const { selectedAgent } = get();
+        const { selectedAgent, interactionMode } = get();
         if (!selectedAgent) return;
 
         const newChat: Chat = {
@@ -125,6 +188,7 @@ export const useChatStore = create<ChatStore>()(
           updatedAt: new Date(),
           agentId: selectedAgent.id || 'default',
           messageCount: 0,
+          mode: interactionMode, // Track the mode for this chat
         };
 
         set((state) => ({
@@ -146,7 +210,7 @@ export const useChatStore = create<ChatStore>()(
 
           set({
             currentChat: chat,
-            messages: chatMessages.map((msg: any) => ({
+            messages: chatMessages.map((msg: unknown) => ({
               ...msg,
               timestamp: new Date(msg.timestamp),
             })),
@@ -171,9 +235,38 @@ export const useChatStore = create<ChatStore>()(
         });
       },
 
-      sendMessage: async (content: string, attachments?: any[]) => {
-        const { currentChat, selectedAgent, messages } = get();
-        if (!currentChat || !selectedAgent) return;
+      sendMessage: async (content: string, attachments?: unknown[]) => {
+        let { currentChat, selectedAgent, messages, interactionMode } = get();
+
+        // If no agent selected, return early
+        if (!selectedAgent) {
+          console.warn('⚠️  No agent selected. Please select an agent before sending a message.');
+          return;
+        }
+
+        // Auto-create a chat if one doesn't exist
+        if (!currentChat) {
+          console.log('📝 Auto-creating new chat for selected agent:', selectedAgent.display_name || selectedAgent.name);
+          const newChat: Chat = {
+            id: `chat-${Date.now()}`,
+            title: `New conversation with ${selectedAgent.name || 'AI Assistant'}`,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            agentId: selectedAgent.id || 'default',
+            messageCount: 0,
+            mode: interactionMode, // Track the mode for this chat
+          };
+
+          set((state) => ({
+            chats: [newChat, ...state.chats],
+            currentChat: newChat,
+            messages: [],
+            error: null,
+          }));
+
+          // Update local reference
+          currentChat = newChat;
+        }
 
         const userMessage: ChatMessage = {
           id: `msg-${Date.now()}`,
@@ -210,76 +303,159 @@ export const useChatStore = create<ChatStore>()(
           },
         };
 
-        // Add both messages immediately
+        // Add both messages immediately and reset reasoning state
         const updatedMessages = [...messages, userMessage, assistantMessage];
+        console.log('🔍 [sendMessage] Adding messages to store:', {
+          totalMessages: updatedMessages.length,
+          userMessageId: userMessage.id,
+          assistantMessageId: assistantMessage.id,
+          chatId: currentChat.id
+        });
         set({
           messages: updatedMessages,
           isLoading: false,
           error: null,
+          liveReasoning: '',
+          isReasoningActive: false,
         });
 
         try {
-          // Simulate API call delay
-          await new Promise((resolve) => setTimeout(resolve, 1000 + Math.random() * 2000));
+          // Create new abort controller for this request
+          const controller = new AbortController();
+          set({ abortController: controller });
 
-          // Simulate response generation based on agent expertise
-          const agentResponses: Record<string, string[]> = {
-            'fda-regulatory-navigator': [
-              "Based on FDA guidance, I recommend pursuing a 510(k) pathway for your medical device. This typically takes 3-6 months for review and offers the most straightforward path to market for devices substantially equivalent to predicates.",
-              "For AI/ML devices, consider the FDA's predetermined change control protocol (PCCP) framework. This allows for iterative improvements while maintaining regulatory compliance.",
-            ],
-            'clinical-trial-architect': [
-              "I suggest implementing a randomized controlled trial with a primary endpoint focused on efficacy. Sample size calculation should account for 20% effect size with 80% power and alpha of 0.05.",
-              "Consider adaptive trial designs with interim analyses to optimize patient enrollment and improve study efficiency while maintaining regulatory acceptability.",
-            ],
-            'reimbursement-strategist': [
-              "From a market access perspective, demonstrating clinical and economic value will be crucial for reimbursement. I recommend developing a comprehensive health economic model with cost-effectiveness analysis.",
-              "Consider value-based care contracts with outcomes-based pricing to demonstrate real-world value to payers and accelerate market adoption.",
-            ],
-          };
+          // Get interaction mode to determine if we use intelligent routing
+          const { interactionMode } = get();
+          const useAutomaticRouting = interactionMode === 'automatic';
 
-          const defaultResponses = [
-            `Based on my expertise in ${selectedAgent.businessFunction || 'healthcare'}, I can help you navigate this complex topic. Let me provide detailed guidance tailored to your specific needs.`,
-            `As a ${selectedAgent.role || 'specialist'}, I recommend a systematic approach to address your requirements while ensuring compliance and effectiveness.`,
-          ];
+          // Call the actual chat API with streaming support
+          const response = await fetch('/api/chat', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            signal: controller.signal,
+            body: JSON.stringify({
+              message: content,
+              agent: selectedAgent,
+              model: get().selectedModel, // Include selected model
+              chatHistory: messages.map(msg => ({
+                role: msg.role,
+                content: msg.content
+              })),
+              ragEnabled: selectedAgent.ragEnabled || false,
+              sessionId: currentChat.id, // Pass chat ID as session ID for memory persistence
+              automaticRouting: useAutomaticRouting, // Enable intelligent agent routing
+              useIntelligentRouting: useAutomaticRouting
+            })
+          });
 
-          const responses = agentResponses[selectedAgent.id] || defaultResponses;
-          const randomResponse = responses[Math.floor(Math.random() * responses.length)];
+          if (!response.ok) {
+            throw new Error(`API error: ${response.status}`);
+          }
 
-          // Update the assistant message with the response
+          // Handle streaming response
+          const reader = response.body?.getReader();
+          const decoder = new TextDecoder();
+          let fullContent = '';
+          let metadata: unknown = null;
+
+          if (!reader) {
+            throw new Error('Response body is not readable');
+          }
+
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+
+            const chunk = decoder.decode(value);
+            const lines = chunk.split('\n');
+
+            for (const line of lines) {
+              if (line.startsWith('data: ')) {
+                try {
+                  const data = JSON.parse(line.slice(6));
+
+                  if (data.type === 'reasoning') {
+                    // Accumulate reasoning steps
+                    set((state) => ({
+                      liveReasoning: state.liveReasoning
+                        ? `${state.liveReasoning}\n${data.content || ''}`
+                        : (data.content || ''),
+                      isReasoningActive: true,
+                    }));
+                  } else if (data.type === 'reasoning_done') {
+                    // Reasoning complete, store in message metadata
+                    set({
+                      isReasoningActive: false,
+                    });
+                    // The final reasoning will be stored in metadata
+                  } else if (data.type === 'content') {
+                    fullContent = data.fullContent;
+                    console.log('📥 [streaming] Received content chunk:', {
+                      length: fullContent.length,
+                      assistantMsgId: assistantMessage.id
+                    });
+
+                    // Update message with streaming content
+                    set((state) => ({
+                      messages: state.messages.map((msg) =>
+                        msg.id === assistantMessage.id
+                          ? { ...msg, content: fullContent, isLoading: true }
+                          : msg
+                      ),
+                    }));
+                  } else if (data.type === 'metadata') {
+                    metadata = data.metadata;
+                  } else if (data.type === 'error') {
+                    throw new Error(data.error);
+                  }
+                } catch (parseError) {
+                  console.warn('Failed to parse SSE data:', parseError);
+                }
+              }
+            }
+          }
+
+          const processingTime = Date.now() - (assistantMessage.timestamp.getTime());
+
+          // Update the assistant message with final metadata and clear live reasoning
+          console.log('✅ [streaming complete] Finalizing message:', {
+            fullContentLength: fullContent.length,
+            hasMetadata: !!metadata,
+            assistantMsgId: assistantMessage.id
+          });
+
           set((state) => ({
             messages: state.messages.map((msg) =>
               msg.id === assistantMessage.id
                 ? {
                     ...msg,
-                    content: randomResponse,
+                    content: fullContent,
                     isLoading: false,
                     metadata: {
                       ...msg.metadata!,
-                      processingTime: 1500 + Math.random() * 1000,
-                      tokenUsage: {
-                        promptTokens: 150 + Math.floor(Math.random() * 100),
-                        completionTokens: 80 + Math.floor(Math.random() * 50),
-                        totalTokens: 230 + Math.floor(Math.random() * 150),
+                      processingTime,
+                      reasoning: metadata?.reasoning || state.liveReasoning || undefined,
+                      tokenUsage: metadata?.tokenUsage || {
+                        promptTokens: 0,
+                        completionTokens: 0,
+                        totalTokens: 0,
                       },
-                      sources: [
-                        {
-                          title: `${selectedAgent.name} Knowledge Base`,
-                          content: `Relevant guidance from ${selectedAgent.businessFunction || 'domain expertise'}...`,
-                          similarity: 0.85 + Math.random() * 0.1,
-                          source_url: '#',
-                        },
+                      sources: metadata?.sources || [],
+                      citations: metadata?.citations || [],
+                      followupQuestions: metadata?.followupQuestions || [
+                        'Can you provide more specific guidance?',
+                        'What are the key requirements I should know?',
+                        'How should I proceed?',
                       ],
-                      citations: [1, 2],
-                      followupQuestions: [
-                        'Can you provide more specific guidance for my use case?',
-                        'What are the key compliance requirements I should be aware of?',
-                        'How should I prioritize next steps?',
-                      ],
+                      alternativeAgents: metadata?.alternativeAgents || [],
                     },
                   }
                 : msg
             ),
+            liveReasoning: '',
+            isReasoningActive: false,
           }));
 
           // Save messages to localStorage
@@ -301,22 +477,143 @@ export const useChatStore = create<ChatStore>()(
                   }
                 : chat
             ),
+            abortController: null,
           }));
         } catch (error) {
-          console.error('Error sending message:', error);
-          set((state) => ({
-            messages: state.messages.map((msg) =>
-              msg.id === assistantMessage.id
-                ? { ...msg, content: 'Sorry, I encountered an error. Please try again.', isLoading: false, error: true }
-                : msg
-            ),
-            error: 'Failed to send message',
-          }));
+          // Check if this was an abort
+          if (error instanceof Error && error.name === 'AbortError') {
+            console.log('🛑 Request was aborted by user');
+            set((state) => ({
+              messages: state.messages.map((msg) =>
+                msg.id === assistantMessage.id
+                  ? { ...msg, content: 'Generation stopped by user.', isLoading: false, error: false }
+                  : msg
+              ),
+              abortController: null,
+              isLoading: false,
+              liveReasoning: '',
+              isReasoningActive: false,
+            }));
+          } else {
+            console.error('Error sending message:', error);
+            set((state) => ({
+              messages: state.messages.map((msg) =>
+                msg.id === assistantMessage.id
+                  ? { ...msg, content: 'Sorry, I encountered an error. Please try again.', isLoading: false, error: true }
+                  : msg
+              ),
+              error: 'Failed to send message',
+              abortController: null,
+            }));
+          }
+        }
+      },
+
+      stopGeneration: () => {
+        const { abortController } = get();
+        if (abortController) {
+          console.log('🛑 Stopping generation...');
+          abortController.abort();
+          set({
+            abortController: null,
+            isLoading: false,
+            liveReasoning: '',
+            isReasoningActive: false,
+          });
         }
       },
 
       setSelectedAgent: (agent: Agent | null) => {
         set({ selectedAgent: agent, error: null });
+      },
+
+      setSelectedModel: (model: AIModel | null) => {
+        set({ selectedModel: model, error: null });
+      },
+
+      // Dual-Mode Actions Implementation
+      setInteractionMode: (mode: 'automatic' | 'manual') => {
+        const state = get();
+        set({
+          interactionMode: mode,
+          // Reset tier when switching to manual mode
+          currentTier: mode === 'manual' ? 1 : state.currentTier,
+          // Update conversation context
+          conversationContext: {
+            ...state.conversationContext,
+            lastActivity: new Date(),
+          },
+        });
+      },
+
+      setSelectedExpert: (expert: Agent | null) => {
+        set({
+          selectedExpert: expert,
+          selectedAgent: expert, // Also set as selected agent for compatibility
+          interactionMode: 'manual', // Selecting expert switches to manual mode
+          conversationContext: {
+            ...get().conversationContext,
+            lastActivity: new Date(),
+          },
+        });
+      },
+
+      escalateToNextTier: (reason: string) => {
+        const state = get();
+        const currentTier = state.currentTier;
+
+        let nextTier: 1 | 2 | 3 | 'human';
+        if (currentTier === 1) nextTier = 2;
+        else if (currentTier === 2) nextTier = 3;
+        else if (currentTier === 3) nextTier = 'human';
+        else nextTier = 'human';
+
+        const escalation = {
+          id: `escalation-${Date.now()}`,
+          fromTier: currentTier,
+          toTier: nextTier,
+          reason,
+          timestamp: new Date(),
+        };
+
+        set({
+          currentTier: nextTier,
+          escalationHistory: [...state.escalationHistory, escalation],
+          conversationContext: {
+            ...state.conversationContext,
+            lastActivity: new Date(),
+          },
+        });
+      },
+
+      resetEscalation: () => {
+        set({
+          currentTier: 1,
+          escalationHistory: [],
+          conversationContext: {
+            ...get().conversationContext,
+            sessionId: `session-${Date.now()}`,
+            messageCount: 0,
+            lastActivity: new Date(),
+          },
+        });
+      },
+
+      // Library Actions Implementation
+      addToLibrary: (agentId: string) => {
+        const { libraryAgents } = get();
+        if (!libraryAgents.includes(agentId)) {
+          set({ libraryAgents: [...libraryAgents, agentId] });
+        }
+      },
+
+      removeFromLibrary: (agentId: string) => {
+        const { libraryAgents } = get();
+        set({ libraryAgents: libraryAgents.filter(id => id !== agentId) });
+      },
+
+      isInLibrary: (agentId: string) => {
+        return get().libraryAgents.includes(agentId);
       },
 
       createCustomAgent: (agentData: Omit<Agent, 'id' | 'isCustom'>) => {
@@ -434,20 +731,14 @@ export const useChatStore = create<ChatStore>()(
         set({ isLoadingAgents: true, error: null });
 
         try {
-          console.log('=== LOADING AGENTS FROM DATABASE ===');
           const dbAgents = await agentService.getActiveAgents();
-          console.log('Raw database agents:', dbAgents.length, 'found');
-
           const formattedAgents = dbAgents.map((agent) => agentService.convertToLegacyFormat(agent));
-          console.log('Formatted agents for chat store:', formattedAgents.length);
-
           set((state) => ({
             agents: formattedAgents,
-            selectedAgent: state.selectedAgent || formattedAgents[0] || null,
+            // Don't auto-select first agent - keep current selection or null
+            selectedAgent: state.selectedAgent || null,
             isLoadingAgents: false,
           }));
-
-          console.log('=== AGENTS LOADED SUCCESSFULLY ===', formattedAgents.length, 'agents');
         } catch (error) {
           console.error('Failed to load agents from database:', error);
 
@@ -528,15 +819,16 @@ export const useChatStore = create<ChatStore>()(
     }),
     {
       name: 'chat-store',
-      version: 4, // Increment to force cache refresh for database-only agents
-      migrate: (persistedState: any, version: number) => {
+      version: 5, // Increment to force cache refresh - exclude messages from persistence
+      migrate: (persistedState: unknown, version: number) => {
         // Always force reload agents from database on version change
-        if (version < 4) {
+        if (version < 5) {
           return {
             ...persistedState,
             agents: [], // Clear cached agents
             selectedAgent: null,
             error: null,
+            messages: [], // Clear messages - they're loaded per-chat from separate storage
           };
         }
         return persistedState;
@@ -547,6 +839,22 @@ export const useChatStore = create<ChatStore>()(
           state.loadAgentsFromDatabase();
         }
       },
+      // Exclude messages and transient state from persistence to avoid conflicts
+      partialize: (state) => ({
+        chats: state.chats,
+        currentChat: state.currentChat,
+        selectedAgent: state.selectedAgent,
+        selectedModel: state.selectedModel,
+        agents: state.agents,
+        interactionMode: state.interactionMode,
+        selectedExpert: state.selectedExpert,
+        currentTier: state.currentTier,
+        escalationHistory: state.escalationHistory,
+        // Explicitly exclude: messages, isLoading, error, liveReasoning, isReasoningActive, abortController
+      }),
     }
   )
 );
+
+// Export as useChatStore (without underscore)
+export const useChatStore = _useChatStore;

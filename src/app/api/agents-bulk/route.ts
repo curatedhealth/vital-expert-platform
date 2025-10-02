@@ -1,5 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { NextRequest, NextResponse } from 'next/server';
 
 // Use service role key for server-side operations (bypasses RLS)
 const supabaseAdmin = createClient(
@@ -51,13 +51,10 @@ export async function POST(request: NextRequest) {
         message: 'Expected an object with an "agents" array'
       }, { status: 400 });
     }
-
-    console.log(`🚀 Bulk upload: Processing ${body.agents.length} agents...`);
-
     const results = {
-      successful: [] as any[],
-      failed: [] as any[],
-      skipped: [] as any[]
+      successful: [] as unknown[],
+      failed: [] as unknown[],
+      skipped: [] as unknown[]
     };
 
     for (const agentData of body.agents) {
@@ -152,7 +149,6 @@ export async function POST(request: NextRequest) {
             id: result.data[0].id,
             action: existingAgent ? 'updated' : 'created'
           });
-          console.log(`✅ ${existingAgent ? 'Updated' : 'Created'}: ${agentData.display_name}`);
         }
 
       } catch (error) {
@@ -162,12 +158,6 @@ export async function POST(request: NextRequest) {
         });
       }
     }
-
-    console.log(`\n📊 Bulk upload complete:`);
-    console.log(`   ✅ Successful: ${results.successful.length}`);
-    console.log(`   ❌ Failed: ${results.failed.length}`);
-    console.log(`   ⏭️ Skipped: ${results.skipped.length}`);
-
     return NextResponse.json({
       success: true,
       summary: {

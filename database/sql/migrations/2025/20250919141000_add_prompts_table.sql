@@ -29,6 +29,7 @@ CREATE TABLE IF NOT EXISTS prompts (
 
     -- Dependencies
     prerequisite_prompts TEXT[], -- Other prompt names required
+    prerequisite_capabilities TEXT[] DEFAULT '{}', -- Array of capability names required
     related_capabilities TEXT[], -- Capability names this prompt supports
     required_context TEXT[], -- Context requirements
 
@@ -40,7 +41,7 @@ CREATE TABLE IF NOT EXISTS prompts (
     -- Compliance
     hipaa_relevant BOOLEAN DEFAULT false,
     phi_handling_rules JSONB DEFAULT '{}',
-    compliance_tags TEXT[],
+    compliance_tags TEXT[] DEFAULT '{}',
 
     -- Metadata
     created_at TIMESTAMPTZ DEFAULT NOW(),
@@ -66,6 +67,8 @@ CREATE INDEX IF NOT EXISTS idx_prompts_name ON prompts(name);
 CREATE INDEX IF NOT EXISTS idx_prompts_category ON prompts(category);
 CREATE INDEX IF NOT EXISTS idx_prompts_domain ON prompts(domain);
 CREATE INDEX IF NOT EXISTS idx_prompts_status ON prompts(status);
+CREATE INDEX IF NOT EXISTS idx_prompts_capabilities ON prompts USING GIN(prerequisite_capabilities);
+CREATE INDEX IF NOT EXISTS idx_prompts_tags ON prompts USING GIN(compliance_tags);
 
 CREATE INDEX IF NOT EXISTS idx_agent_prompts_agent_id ON agent_prompts(agent_id);
 CREATE INDEX IF NOT EXISTS idx_agent_prompts_prompt_id ON agent_prompts(prompt_id);

@@ -3,6 +3,7 @@
  * Core implementation for all digital health AI agents
  */
 
+import { DatabaseLibraryLoader } from '@/lib/utils/database-library-loader';
 import {
   DigitalHealthAgentConfig,
   Capability,
@@ -10,19 +11,17 @@ import {
   AgentResponse,
   ExecutionContext,
   AuditLogEntry,
-  ComplianceLevel,
   AgentError,
   CapabilityError,
   PromptError
 } from '@/types/digital-health-agent.types';
-import { DatabaseLibraryLoader } from '@/lib/utils/database-library-loader';
 
 export class DigitalHealthAgent {
   protected config: DigitalHealthAgentConfig;
   protected capabilities: Map<string, Capability> = new Map();
   protected prompts: Map<string, PromptTemplate> = new Map();
   protected conversationHistory: Array<{
-    input: Record<string, any>;
+    input: Record<string, unknown>;
     output: AgentResponse;
     timestamp: string;
   }> = [];
@@ -41,9 +40,6 @@ export class DigitalHealthAgent {
     try {
       await this.loadCapabilities();
       await this.loadPrompts();
-      console.log(`✅ Agent ${this.config.display_name} initialized successfully`);
-      console.log(`   - Loaded ${this.capabilities.size} capabilities`);
-      console.log(`   - Loaded ${this.prompts.size} prompts`);
     } catch (error) {
       console.error(`❌ Failed to initialize agent ${this.config.name}:`, error);
       throw new AgentError(
@@ -63,7 +59,6 @@ export class DigitalHealthAgent {
         const capability = await this.libraryLoader.loadCapability(capabilityTitle);
         if (capability) {
           this.capabilities.set(capabilityTitle, capability);
-          console.log(`   ✓ Loaded capability: ${capabilityTitle}`);
         } else {
           console.warn(`   ⚠️  Could not load capability: ${capabilityTitle}`);
         }
@@ -89,7 +84,6 @@ export class DigitalHealthAgent {
         const prompt = await this.libraryLoader.loadPrompt(promptTitle);
         if (prompt) {
           this.prompts.set(promptTitle, prompt);
-          console.log(`   ✓ Loaded prompt: ${promptTitle}`);
         } else {
           console.warn(`   ⚠️  Could not load prompt: ${promptTitle}`);
         }
@@ -111,7 +105,7 @@ export class DigitalHealthAgent {
    */
   async executePrompt(
     promptTitle: string,
-    userInputs: Record<string, any>,
+    userInputs: Record<string, unknown>,
     context?: ExecutionContext
   ): Promise<AgentResponse> {
     const startTime = Date.now();
@@ -199,13 +193,13 @@ export class DigitalHealthAgent {
   /**
    * Validate user inputs against prompt requirements
    */
-  private validateInputs(prompt: PromptTemplate, userInputs: Record<string, any>): void {
+  private validateInputs(prompt: PromptTemplate, userInputs: Record<string, unknown>): void {
     for (const requiredInput of prompt.input_requirements) {
       // Extract variable names from requirements (simple implementation)
       const variableMatch = requiredInput.match(/\{\{(\w+)\}\}/g);
       if (variableMatch) {
         for (const variable of variableMatch) {
-          const varName = variable.replace(/[{}]/g, '');
+          const varName = variable.replace(/[{ /* TODO: implement */ }]/g, '');
           if (!(varName in userInputs)) {
             throw new Error(`Required input missing: ${varName}`);
           }
@@ -217,7 +211,7 @@ export class DigitalHealthAgent {
   /**
    * Replace placeholders in prompt with user inputs
    */
-  private preparePrompt(prompt: PromptTemplate, userInputs: Record<string, any>): string {
+  private preparePrompt(prompt: PromptTemplate, userInputs: Record<string, unknown>): string {
     let prepared = prompt.detailed_prompt;
 
     // Replace all {{variable}} placeholders
@@ -232,7 +226,7 @@ export class DigitalHealthAgent {
   /**
    * Call the configured AI model (to be implemented with actual LLM integrations)
    */
-  private async callAIModel(prompt: string): Promise<{ content: string; data?: Record<string, any> }> {
+  private async callAIModel(prompt: string): Promise<{ content: string; data?: Record<string, unknown> }> {
     // For now, this is a mock implementation
     // In production, this would integrate with OpenAI, Anthropic, etc.
 
@@ -251,7 +245,7 @@ export class DigitalHealthAgent {
   /**
    * Generate mock responses for testing (to be replaced with real AI calls)
    */
-  private generateMockResponse(prompt: string): { content: string; data: Record<string, any> } {
+  private generateMockResponse(_prompt: string): { content: string; data: Record<string, unknown> } {
     const agentType = this.config.name;
 
     switch (agentType) {
@@ -409,9 +403,9 @@ Please review the analysis and let me know if you need any clarification or addi
    * Validate response meets success criteria
    */
   private validateResponse(
-    response: { content: string; data?: Record<string, any> },
-    prompt: PromptTemplate
-  ): { content: string; data?: Record<string, any> } {
+    response: { content: string; data?: Record<string, unknown> },
+    _prompt: PromptTemplate
+  ): { content: string; data?: Record<string, unknown> } {
     // Basic validation - ensure content is present and meaningful
     if (!response.content || response.content.trim().length < 100) {
       throw new Error("Response too short or empty");
@@ -426,7 +420,7 @@ Please review the analysis and let me know if you need any clarification or addi
    */
   private logExecution(
     promptTitle: string,
-    inputs: Record<string, any>,
+    inputs: Record<string, unknown>,
     context: ExecutionContext
   ): void {
     const auditEntry: AuditLogEntry = {
@@ -448,7 +442,7 @@ Please review the analysis and let me know if you need any clarification or addi
   /**
    * Hash inputs for PHI protection
    */
-  private hashInputs(inputs: Record<string, any>): string {
+  private hashInputs(inputs: Record<string, unknown>): string {
     // Simple hash implementation - in production use a proper crypto library
     const inputString = JSON.stringify(inputs);
     let hash = 0;

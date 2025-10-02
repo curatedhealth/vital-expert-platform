@@ -3,7 +3,6 @@
  * Priority: 100 | Tier 1 | Critical for regulatory compliance
  */
 
-import { DigitalHealthAgent } from '../core/DigitalHealthAgent';
 import {
   DigitalHealthAgentConfig,
   AgentTier,
@@ -13,6 +12,8 @@ import {
   AgentResponse,
   ExecutionContext
 } from '@/types/digital-health-agent.types';
+
+import { DigitalHealthAgent } from '../core/DigitalHealthAgent';
 
 export class FDARegulatoryStrategist extends DigitalHealthAgent {
   constructor() {
@@ -224,7 +225,15 @@ When users select a prompt starter, retrieve the full workflow from the Prompt L
       "PMA": { simple: 18, moderate: 24, complex: 30 }
     };
 
-    const totalMonths = baseTimelines[pathway][complexity];
+    // Validate pathway and complexity to prevent object injection
+    const validPathways = ['510k', 'De Novo', 'PMA'] as const;
+    const validComplexities = ['simple', 'moderate', 'complex'] as const;
+    
+    if (!validPathways.includes(pathway as unknown) || !validComplexities.includes(complexity as unknown)) {
+      throw new Error('Invalid pathway or complexity level');
+    }
+    
+    const totalMonths = baseTimelines[pathway as keyof typeof baseTimelines][complexity as keyof typeof baseTimelines[keyof typeof baseTimelines]];
 
     return {
       total_months: totalMonths,

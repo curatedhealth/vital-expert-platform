@@ -1,6 +1,6 @@
 'use client';
 
-import { KnowledgeUploader } from '@/components/knowledge/knowledge-uploader';
+import { KnowledgeUploader } from '@/features/knowledge/components/knowledge-uploader';
 
 export default function KnowledgeUploadPage() {
   return (
@@ -14,7 +14,6 @@ export default function KnowledgeUploadPage() {
 
       <KnowledgeUploader onUploadComplete={() => {
         // Optional: Add success message or redirect
-        console.log('Upload completed successfully');
       }} />
     </div>
   );

@@ -1,14 +1,5 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Progress } from '@/components/ui/progress';
 import {
   TestTube,
   Settings,
@@ -21,10 +12,18 @@ import {
   Brain,
   FileText,
   Users,
-  Heart,
-  AlertTriangle,
-  PlayCircle
+  Heart
 } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Progress } from '@/components/ui/progress';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 interface MeditronModel {
   id: string;
@@ -65,7 +64,6 @@ export const MeditronSetup: React.FC = () => {
     checkApiKeyConfiguration();
   }, []);
 
-  const fetchMeditronModels = async () => {
     try {
       const response = await fetch('/api/llm-providers?provider_type=huggingface&search=meditron');
       if (response.ok) {
@@ -77,7 +75,6 @@ export const MeditronSetup: React.FC = () => {
     }
   };
 
-  const checkApiKeyConfiguration = async () => {
     const storedKey = localStorage.getItem('huggingface_api_key');
     if (storedKey) {
       setApiKey(storedKey);
@@ -127,6 +124,7 @@ export const MeditronSetup: React.FC = () => {
     setConnectionTests(tests);
 
     for (let i = 0; i < models.length; i++) {
+      // eslint-disable-next-line security/detect-object-injection
       const model = models[i];
       setTestProgress(((i + 1) / models.length) * 100);
 

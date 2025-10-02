@@ -1,7 +1,8 @@
 'use client';
 
-import * as React from 'react';
 import { Stethoscope, FileText, Search, BarChart3, Wrench } from 'lucide-react';
+import * as React from 'react';
+
 import {
   SidebarGroup,
   SidebarGroupContent,

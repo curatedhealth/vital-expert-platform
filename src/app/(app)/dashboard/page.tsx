@@ -1,9 +1,5 @@
 'use client';
 
-import Link from 'next/link';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
 import {
   BarChart3,
   Users,
@@ -19,6 +15,11 @@ import {
   Play,
   BookOpen,
 } from 'lucide-react';
+import Link from 'next/link';
+
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Progress } from '@/components/ui/progress';
 
 const vitalPhases = [
   {

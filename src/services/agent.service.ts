@@ -1,4 +1,5 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
+
 import {
   Agent,
   AgentBulkImport,
@@ -475,8 +476,8 @@ export class AgentService {
   private async logAudit(
     agentId: string,
     action: string,
-    oldValues: any,
-    newValues: any
+    oldValues: unknown,
+    newValues: unknown
   ): Promise<void> {
     try {
       await this.supabase.from('agent_audit_log').insert({
@@ -546,7 +547,7 @@ export class AgentService {
 
   // Check domain compliance
   private checkDomainCompliance(agent: Agent): Record<string, boolean> {
-    const compliance: Record<string, boolean> = {};
+    const compliance: Record<string, boolean> = { /* TODO: implement */ };
 
     switch (agent.domain_expertise) {
       case DomainExpertise.MEDICAL:
@@ -570,7 +571,7 @@ export class AgentService {
   // Export agents
   async exportAgents(filters?: AgentFilters): Promise<AgentBulkImport> {
     const result = await this.getAgents(filters);
-    const user = await this.supabase.auth.getUser();
+// const user = // Unused variable await this.supabase.auth.getUser();
 
     return {
       agents: result.data,

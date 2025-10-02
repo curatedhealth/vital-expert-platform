@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { langchainRAGService } from '@/lib/chat/langchain-service';
+
+import { langchainRAGService } from '@/features/chat/services/langchain-service';
 
 export async function POST(request: NextRequest) {
   try {

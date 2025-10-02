@@ -1,6 +1,5 @@
+import { agentService } from '@/lib/agents/agent-service';
 import { supabase } from '@/lib/supabase/client';
-import type { Database } from '@/lib/supabase/types';
-import { agentService, type Agent } from '@/lib/agents/agent-service';
 
 // Types for RAG system - using fallback types for missing tables
 export interface KnowledgeSource {
@@ -14,7 +13,7 @@ export interface DocumentChunk {
   id: string;
   content: string;
   embedding: number[];
-  metadata: any;
+  metadata: unknown;
   created_at: string;
 }
 export interface KnowledgeDomain {
@@ -58,7 +57,7 @@ export interface RAGQuery {
   embedding_model?: 'openai' | 'clinical' | 'legal' | 'scientific';
   max_results?: number;
   similarity_threshold?: number;
-  filters?: Record<string, any>;
+  filters?: Record<string, unknown>;
 }
 
 export interface ProcessingJob {
@@ -191,7 +190,7 @@ export class SupabaseRAGService {
       embedding_legal: chunk.embeddings.legal ? JSON.stringify(chunk.embeddings.legal) : null,
       embedding_scientific: chunk.embeddings.scientific ? JSON.stringify(chunk.embeddings.scientific) : null,
       keywords: chunk.keywords || [],
-      entities: chunk.entities || {},
+      entities: chunk.entities || { /* TODO: implement */ },
       chunk_quality_score: chunk.quality_score || 1.0,
       embedding_model_versions: {
         openai: chunk.embeddings.openai ? 'text-embedding-ada-002' : null,
@@ -242,12 +241,13 @@ export class SupabaseRAGService {
         query_domain: domain,
         embedding_model,
         top_k: max_results,
-        filters: query.filters || {}
+        filters: query.filters || { /* TODO: implement */ }
       });
     }
 
     // Use Supabase function for vector search
     const { data, error } = await this.supabase.rpc('search_knowledge_by_embedding', {
+      // eslint-disable-next-line security/detect-object-injection
       query_embedding: JSON.stringify(queryEmbedding[embedding_model] || queryEmbedding.openai),
       domain_filter: domain || null,
       embedding_model,
@@ -295,17 +295,17 @@ export class SupabaseRAGService {
 
     // Update access patterns
     if (data && data.length > 0) {
-      await this.updateAgentKnowledgeAccess(agentId, data.map((r: any) => r.source_id));
+      await this.updateAgentKnowledgeAccess(agentId, data.map((r: unknown) => r.source_id));
     }
 
-    return data?.map((item: any) => ({
+    return data?.map((item: unknown) => ({
       chunk_id: item.chunk_id,
       source_id: item.source_id || '', // Handle potential null
       content: item.content,
       similarity: item.relevance_boost, // Use boosted similarity
       source_title: item.source_title,
       domain: '', // Will be filled by join in real implementation
-      metadata: {} // Will be filled by join in real implementation
+      metadata: { /* TODO: implement */ } // Will be filled by join in real implementation
     })) || [];
   }
 
@@ -345,7 +345,7 @@ export class SupabaseRAGService {
     query_domain?: string;
     embedding_model: string;
     top_k: number;
-    filters: Record<string, any>;
+    filters: Record<string, unknown>;
   }): Promise<void> {
     const { error } = await this.supabase
       .from('query_logs')
@@ -618,7 +618,7 @@ export class SupabaseRAGService {
     const totalSize = chunksCount.data?.reduce((sum, chunk) => sum + (chunk.content_length || 0), 0) || 0;
     const avgTime = (avgQueryTime.data?.reduce((sum, log) => sum + (log.retrieval_time_ms || 0), 0) || 0) / Math.max(avgQueryTime.data?.length || 1, 1);
 
-    const domainCounts: Record<string, number> = {};
+    const domainCounts: Record<string, number> = { /* TODO: implement */ };
     domainStats.data?.forEach(source => {
       domainCounts[source.domain] = (domainCounts[source.domain] || 0) + 1;
     });
@@ -634,4 +634,4 @@ export class SupabaseRAGService {
   }
 }
 
-export const supabaseRAGService = new SupabaseRAGService();
+export const _supabaseRAGService = new SupabaseRAGService();

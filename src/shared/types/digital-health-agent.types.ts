@@ -101,7 +101,7 @@ export interface ExecutionContext {
 export interface AgentResponse {
   success: boolean;
   content?: string;
-  data?: Record<string, any>;
+  data?: Record<string, unknown>;
   error?: string;
   execution_time: number;
   validation_status: "passed" | "failed" | "warning";
@@ -137,13 +137,13 @@ export interface WorkflowExecution {
   status: WorkflowStatus;
   started_at: string;
   completed_at?: string;
-  inputs: Record<string, any>;
+  inputs: Record<string, unknown>;
   context: ExecutionContext;
   steps_completed: number;
   total_steps: number;
   step_results: Record<string, {
     response: AgentResponse;
-    inputs_used: Record<string, any>;
+    inputs_used: Record<string, unknown>;
   }>;
   interactions: AgentInteraction[];
   error?: string;
@@ -154,7 +154,7 @@ export interface AgentInteraction {
   timestamp: string;
   agent_name: string;
   action: string;
-  inputs: Record<string, any>;
+  inputs: Record<string, unknown>;
   outputs: AgentResponse;
   success: boolean;
   execution_time: number;
@@ -232,14 +232,14 @@ export interface SystemHealth {
 export interface ExecutePromptRequest {
   agent_name: string;
   prompt_title: string;
-  inputs: Record<string, any>;
+  inputs: Record<string, unknown>;
   user_id: string;
   context?: Partial<ExecutionContext>;
 }
 
 export interface ExecuteWorkflowRequest {
   workflow_name: string;
-  initial_inputs: Record<string, any>;
+  initial_inputs: Record<string, unknown>;
   user_id: string;
   context?: Partial<ExecutionContext>;
 }
@@ -273,7 +273,7 @@ export interface WorkflowExecutionResult {
     error?: string;
     execution_time: number;
   }>;
-  final_output?: Record<string, any>;
+  final_output?: Record<string, unknown>;
   total_execution_time: number;
   audit_log_ids: string[];
 }
@@ -284,7 +284,7 @@ export class AgentError extends Error {
     message: string,
     public agent_name: string,
     public error_code: string,
-    public details?: Record<string, any>
+    public details?: Record<string, unknown>
   ) {
     super(message);
     this.name = "AgentError";
@@ -356,7 +356,7 @@ export type PromptStarterTitle =
   | "Create Safety Monitoring Plan";
 
 // Validation helpers
-export const isValidAgentName = (name: string): name is AgentName => {
+export const _isValidAgentName = (name: string): name is AgentName => {
   const validNames: AgentName[] = [
     "fda-regulatory-strategist",
     "clinical-trial-designer",
@@ -370,10 +370,10 @@ export const isValidAgentName = (name: string): name is AgentName => {
   return validNames.includes(name as AgentName);
 };
 
-export const isValidTier = (tier: number): tier is AgentTier => {
+export const _isValidTier = (tier: number): tier is AgentTier => {
   return Object.values(AgentTier).includes(tier as AgentTier);
 };
 
-export const isValidComplianceLevel = (level: string): level is ComplianceLevel => {
+export const _isValidComplianceLevel = (level: string): level is ComplianceLevel => {
   return Object.values(ComplianceLevel).includes(level as ComplianceLevel);
 };

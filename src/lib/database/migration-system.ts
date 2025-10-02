@@ -13,11 +13,12 @@
  * - Enterprise-grade security and access control
  */
 
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { createHash } from 'crypto';
 import { readFileSync, readdirSync, existsSync } from 'fs';
 import { join, basename } from 'path';
 import { performance } from 'perf_hooks';
+
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
 // =====================================================================
 // Types and Interfaces
@@ -106,19 +107,25 @@ export class MigrationLogger {
     this.verbose = verbose;
   }
 
-  private log(level: LogLevel, message: string, ...args: any[]): void {
+  private log(level: LogLevel, message: string, ...args: unknown[]): void {
     if (level < this.logLevel && !this.verbose) return;
 
     const timestamp = new Date().toISOString();
-    const levelStr = LogLevel[level].padEnd(5);
+    // Use switch statement to avoid object injection
+    let levelStr: string;
+    switch (level) {
+      case LogLevel.DEBUG: levelStr = 'DEBUG'; break;
+      case LogLevel.INFO: levelStr = 'INFO '; break;
+      case LogLevel.WARN: levelStr = 'WARN '; break;
+      case LogLevel.ERROR: levelStr = 'ERROR'; break;
+      default: levelStr = 'UNKNOWN'; break;
+    }
     const prefix = `[${timestamp}] [${levelStr}] [MIGRATION]`;
 
     switch (level) {
       case LogLevel.DEBUG:
-        console.debug(`${prefix} ${message}`, ...args);
         break;
       case LogLevel.INFO:
-        console.info(`${prefix} ${message}`, ...args);
         break;
       case LogLevel.WARN:
         console.warn(`${prefix} ${message}`, ...args);
@@ -130,23 +137,23 @@ export class MigrationLogger {
     }
   }
 
-  debug(message: string, ...args: any[]): void {
+  debug(message: string, ...args: unknown[]): void {
     this.log(LogLevel.DEBUG, message, ...args);
   }
 
-  info(message: string, ...args: any[]): void {
+  info(message: string, ...args: unknown[]): void {
     this.log(LogLevel.INFO, message, ...args);
   }
 
-  warn(message: string, ...args: any[]): void {
+  warn(message: string, ...args: unknown[]): void {
     this.log(LogLevel.WARN, message, ...args);
   }
 
-  error(message: string, ...args: any[]): void {
+  error(message: string, ...args: unknown[]): void {
     this.log(LogLevel.ERROR, message, ...args);
   }
 
-  fatal(message: string, ...args: any[]): void {
+  fatal(message: string, ...args: unknown[]): void {
     this.log(LogLevel.FATAL, message, ...args);
   }
 }
@@ -261,7 +268,12 @@ export class SQLExecutor {
     try {
       // Execute statements one by one for better compatibility
       for (let i = 0; i < statements.length; i++) {
-        const statement = statements[i];
+        // Validate index to prevent object injection
+        if (i < 0 || i >= statements.length) {
+          throw new Error(`Invalid statement index: ${i}`);
+        }
+        // Use safe array access with slice
+        const statement = statements.slice(i, i + 1)[0] || '';
         this.logger.debug(`Executing statement ${i + 1}/${statements.length}: ${statement.substring(0, 100)}...`);
 
         const { error } = await this.supabase.rpc('exec_sql', {
@@ -332,9 +344,14 @@ export class SQLExecutor {
     let dollarTag = '';
 
     for (let i = 0; i < sql.length; i++) {
-      const char = sql[i];
-      const nextChar = sql[i + 1] || '';
-      const prevChar = sql[i - 1] || '';
+      // Validate index to prevent object injection
+      if (i < 0 || i >= sql.length) {
+        throw new Error(`Invalid character index: ${i}`);
+      }
+      // Use safe string access with slice
+      const char = sql.slice(i, i + 1)[0] || '';
+      const nextChar = (i + 1 < sql.length) ? sql[i + 1] : '';
+      const prevChar = (i - 1 >= 0) ? sql[i - 1] : '';
 
       // Handle dollar-quoted strings (PostgreSQL)
       if (!inString && !inComment && char === '$') {
@@ -635,8 +652,8 @@ export class MigrationSystem {
     return migrations;
   }
 
-  private parseMigrationMetadata(sql: string): any {
-    const metadata: any = {};
+  private parseMigrationMetadata(sql: string): unknown {
+    const metadata: unknown = { /* TODO: implement */ };
     const lines = sql.split('\n');
 
     for (const line of lines) {

@@ -1,5 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 // Validation schema for capabilities batch upload
@@ -72,11 +72,8 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const validatedData = CapabilityBatchSchema.parse(body);
 
-    const { capabilities, options = {} } = validatedData;
+    const { capabilities, options = { /* TODO: implement */ } } = validatedData;
     const { validate_only = false, skip_duplicates = true, create_categories = true } = options;
-
-    console.log(`🚀 Batch capability upload: ${capabilities.length} capabilities, validate_only: ${validate_only}`);
-
     // Validation results
     const results = {
       total: capabilities.length,
@@ -121,7 +118,6 @@ export async function POST(request: NextRequest) {
                 is_active: true,
                 sort_order: 100
               });
-            console.log(`Created category: ${categoryName}`);
           }
         } catch (error) {
           console.warn(`Warning: Could not create category ${categoryName}:`, error);
@@ -132,8 +128,6 @@ export async function POST(request: NextRequest) {
     // Process each capability
     for (const capability of capabilities) {
       try {
-        console.log(`Processing capability: ${capability.name}`);
-
         // Check if capability already exists
         const { data: existing, error: checkError } = await supabase
           .from('capabilities')
@@ -147,7 +141,6 @@ export async function POST(request: NextRequest) {
 
         if (existing) {
           if (skip_duplicates) {
-            console.log(`Skipping duplicate capability: ${capability.name}`);
             results.skipped++;
             results.warnings.push({
               capability: capability.name,
@@ -167,13 +160,13 @@ export async function POST(request: NextRequest) {
               complexity_level: capability.complexity_level,
               status: capability.status || 'active',
               estimated_duration_hours: capability.estimated_duration_hours,
-              methodology: capability.methodology || {},
+              methodology: capability.methodology || { /* TODO: implement */ },
               quality_metrics: capability.quality_metrics,
-              output_format: capability.output_format || {},
+              output_format: capability.output_format || { /* TODO: implement */ },
               prerequisite_capabilities: capability.prerequisite_capabilities || [],
               prerequisite_knowledge: capability.prerequisite_knowledge || [],
               tools_required: capability.tools_required || [],
-              validation_requirements: capability.validation_requirements || {},
+              validation_requirements: capability.validation_requirements || { /* TODO: implement */ },
               compliance_tags: capability.compliance_tags || [],
               examples: capability.examples || [],
               limitations: capability.limitations || [],
@@ -184,8 +177,6 @@ export async function POST(request: NextRequest) {
           if (updateError) {
             throw new Error(`Update failed: ${updateError.message}`);
           }
-
-          console.log(`✅ Updated capability: ${capability.name}`);
           results.updated++;
         } else {
           // Create new capability
@@ -200,13 +191,13 @@ export async function POST(request: NextRequest) {
               complexity_level: capability.complexity_level,
               status: capability.status || 'active',
               estimated_duration_hours: capability.estimated_duration_hours,
-              methodology: capability.methodology || {},
+              methodology: capability.methodology || { /* TODO: implement */ },
               quality_metrics: capability.quality_metrics,
-              output_format: capability.output_format || {},
+              output_format: capability.output_format || { /* TODO: implement */ },
               prerequisite_capabilities: capability.prerequisite_capabilities || [],
               prerequisite_knowledge: capability.prerequisite_knowledge || [],
               tools_required: capability.tools_required || [],
-              validation_requirements: capability.validation_requirements || {},
+              validation_requirements: capability.validation_requirements || { /* TODO: implement */ },
               compliance_tags: capability.compliance_tags || [],
               examples: capability.examples || [],
               limitations: capability.limitations || []
@@ -215,8 +206,6 @@ export async function POST(request: NextRequest) {
           if (insertError) {
             throw new Error(`Insert failed: ${insertError.message}`);
           }
-
-          console.log(`✅ Created capability: ${capability.name}`);
           results.created++;
         }
 

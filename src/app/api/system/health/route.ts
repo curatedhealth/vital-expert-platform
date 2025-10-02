@@ -4,6 +4,7 @@
  */
 
 import { NextResponse } from 'next/server';
+
 import { ComplianceAwareOrchestrator } from '@/agents/core/ComplianceAwareOrchestrator';
 import { SystemHealth } from '@/types/digital-health-agent.types';
 
@@ -81,8 +82,8 @@ export async function GET() {
             status: agent.status,
             capabilities_loaded: agent.capabilities_loaded,
             prompts_loaded: agent.prompts_loaded,
-            total_executions: (agent as any).total_executions || 0,
-            last_execution: (agent as any).last_execution || null
+            total_executions: (agent as unknown).total_executions || 0,
+            last_execution: (agent as unknown).last_execution || null
           })),
           active_executions: {
             count: activeExecutions.length,

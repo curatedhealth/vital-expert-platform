@@ -1,4 +1,5 @@
 import { Metadata } from 'next';
+
 import BatchUploadPanel from '@/components/admin/batch-upload-panel';
 
 export const metadata: Metadata = {

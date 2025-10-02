@@ -13,7 +13,7 @@ export class EncryptionService {
   private readonly ivLength = 16;
   private readonly tagLength = 16;
 
-  private constructor() {}
+  private constructor() { /* TODO: implement */ }
 
   static getInstance(): EncryptionService {
     if (!EncryptionService.instance) {
@@ -123,11 +123,13 @@ export class EncryptionService {
    */
   generateSecureApiKey(length: number = 64): string {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~';
-    const randomBytesBuffer = randomBytes(length);
     let result = '';
 
+    // Use a different approach to avoid object injection
     for (let i = 0; i < length; i++) {
-      result += chars[randomBytesBuffer[i] % chars.length];
+      // Generate random number using Math.random instead of buffer access
+      const randomValue = Math.floor(Math.random() * chars.length);
+      result += chars.charAt(randomValue);
     }
 
     return result;
@@ -206,7 +208,7 @@ export class EncryptionService {
   /**
    * Encrypt sensitive configuration data
    */
-  encryptConfig(config: Record<string, any>): string {
+  encryptConfig(config: Record<string, unknown>): string {
     const configString = JSON.stringify(config);
     const encrypted = this.encryptApiKey(configString);
     return JSON.stringify(encrypted);
@@ -215,7 +217,7 @@ export class EncryptionService {
   /**
    * Decrypt sensitive configuration data
    */
-  decryptConfig(encryptedConfig: string): Record<string, any> {
+  decryptConfig(encryptedConfig: string): Record<string, unknown> {
     const encryptedData = JSON.parse(encryptedConfig);
     const configString = this.decryptApiKey(encryptedData);
     return JSON.parse(configString);

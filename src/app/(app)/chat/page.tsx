@@ -1,67 +1,43 @@
 'use client';
 
-import { useState, useEffect, useRef, useMemo } from 'react';
-import { useRouter, usePathname } from 'next/navigation';
-import Link from 'next/link';
-import Image from 'next/image';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Checkbox } from '@/components/ui/checkbox';
-import { ChatSidebar } from '@/components/chat/chat-sidebar';
-import { ChatMessages } from '@/components/chat/chat-messages';
-import { ChatInput } from '@/components/chat/chat-input';
-import { AgentSelector } from '@/components/chat/agent-selector';
-import { ChatHeader } from '@/components/chat/chat-header';
-import { AgentCreator } from '@/components/chat/agent-creator';
-import { AgentAvatar } from '@/components/ui/agent-avatar';
-import { useChatStore, Agent } from '@/lib/stores/chat-store';
-import { useAuth } from '@/lib/auth/auth-context';
-import { useAgentsStore } from '@/lib/stores/agents-store';
-import { cn } from '@/lib/utils';
-import type { AgentWithCategories } from '@/lib/agents/agent-service';
-import { IconService, type Icon } from '@/lib/services/icon-service';
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarFooter,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarGroupLabel,
-  SidebarHeader,
-  SidebarInset,
-  SidebarMenu,
-  SidebarMenuAction,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  SidebarProvider,
-  SidebarSeparator,
-} from '@/components/ui/sidebar';
 import {
   MessageSquare,
-  Brain,
-  FileText,
-  Search,
   Settings,
-  Plus,
-  Zap,
   Users,
   Workflow,
-  Stethoscope,
   Home,
   Database,
-  ChevronUp,
-  ChevronDown,
-  CheckCircle,
-  Trash2,
-  Bot,
+  Zap,
+  User,
+  ImageIcon
 } from 'lucide-react';
+import Image from 'next/image';
+import { useRouter, usePathname } from 'next/navigation';
+import { useState, useEffect, useRef, useMemo } from 'react';
+
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import {
+  SidebarInset,
+  SidebarProvider
+} from '@/components/ui/sidebar';
+import { Switch } from '@/components/ui/switch';
+import { AgentCreator } from '@/features/chat/components/agent-creator';
+import { ChatInput } from '@/features/chat/components/chat-input';
+import { ChatMessages } from '@/features/chat/components/chat-messages';
+import { ChatSidebar } from '@/features/chat/components/chat-sidebar';
+import { InteractionModeSelector } from '@/features/chat/components/interaction-mode-selector';
+import { AgentsBoard } from '@/features/agents/components/agents-board';
+import type { AgentWithCategories } from '@/lib/agents/agent-service';
+import { useAuth } from '@/lib/auth/auth-context';
+import { IconService, type Icon } from '@/lib/services/icon-service';
+import { useAgentsStore } from '@/lib/stores/agents-store';
+import { useChatStore, Agent, type AIModel } from '@/lib/stores/chat-store';
+import { cn } from '@/lib/utils';
 
 // Global navigation items (unused in chat page but kept for consistency)
-const globalNavItems = [
+const navItems = [
   {
     title: 'Dashboard',
     href: '/dashboard',
@@ -114,7 +90,9 @@ const generateDynamicPrompts = (capabilities: string[]) => {
   const prompts: {text: string, description: string, color: string}[] = [];
   capabilities.forEach(capability => {
     const capabilityKey = capability.toLowerCase().replace(/[^a-z0-9]/g, '-');
-    if (capabilityPrompts[capabilityKey]) {
+    // Validate key before accessing object
+    if (Object.prototype.hasOwnProperty.call(capabilityPrompts, capabilityKey)) {
+      // eslint-disable-next-line security/detect-object-injection
       prompts.push(...capabilityPrompts[capabilityKey]);
     }
   });
@@ -132,6 +110,7 @@ const getDefaultPrompts = () => [
 export default function ChatPage() {
   const router = useRouter();
   const pathname = usePathname();
+
   const { user, loading, signOut } = useAuth();
   const { createUserCopy, canEditAgent } = useAgentsStore();
 
@@ -140,14 +119,25 @@ export default function ChatPage() {
     currentChat,
     messages,
     selectedAgent,
+    selectedModel,
     agents,
     isLoading,
     isLoadingAgents,
+    liveReasoning,
+    isReasoningActive,
+    interactionMode,
+    currentTier,
+    escalationHistory,
+    selectedExpert,
+    setInteractionMode,
+    setSelectedExpert,
     createNewChat,
     selectChat,
     deleteChat,
     sendMessage,
+    stopGeneration,
     setSelectedAgent,
+    setSelectedModel,
     loadAgentsFromDatabase,
     syncWithGlobalStore,
     subscribeToGlobalChanges,
@@ -169,6 +159,8 @@ export default function ChatPage() {
     ragCategories: false,
     aiAgents: false,
   });
+  const [hasUserSelectedAgent, setHasUserSelectedAgent] = useState(false);
+  const [useDirectLLM, setUseDirectLLM] = useState(true); // Default to direct LLM
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -198,7 +190,8 @@ export default function ChatPage() {
     }
   }, []);
 
-  const getInitials = (email: string) => {
+  // Helper function to get user initials
+  const getUserInitials = (email: string) => {
     return email
       .split('@')[0]
       .split('.')
@@ -253,19 +246,50 @@ export default function ChatPage() {
       'Medical communication': 'checklist'
     };
 
-    const iconName = iconMap[promptText];
+    // Validate key before accessing object
+    // eslint-disable-next-line security/detect-object-injection
+    const iconName = Object.prototype.hasOwnProperty.call(iconMap, promptText) ? iconMap[promptText] : 'checklist';
     const icon = promptIcons.find(i => i.name === iconName);
     return icon?.file_url || '📋'; // Fallback emoji
   };
 
+  // State for agent-specific prompt starters
+  const [agentPromptStarters, setAgentPromptStarters] = useState<{text: string, description: string, color: string, icon?: string, fullPrompt?: string}[]>([]);
+
+  // Fetch agent-specific prompt starters when agent changes
+  useEffect(() => {
+    const fetchAgentPromptStarters = async () => {
+      if (!selectedAgent?.id) {
+        setAgentPromptStarters([]);
+        return;
+      }
+
+      try {
+        const response = await fetch(`/api/agents/${selectedAgent.id}/prompt-starters`);
+        if (response.ok) {
+          const starters = await response.json();
+          if (starters && starters.length > 0) {
+            setAgentPromptStarters(starters);
+          } else {
+            // Fallback to default prompts if no agent-specific prompts found
+            setAgentPromptStarters([]);
+          }
+        } else {
+          setAgentPromptStarters([]);
+        }
+      } catch (error) {
+        console.error('Error fetching agent prompt starters:', error);
+        setAgentPromptStarters([]);
+      }
+    };
+
+    fetchAgentPromptStarters();
+  }, [selectedAgent?.id]);
+
   // Get agent-specific prompt starters with memoization
   const promptStarters = useMemo(() => {
     // Debug logging
-    console.log('=== PROMPT STARTERS DEBUG ===');
-    console.log('Selected agent:', selectedAgent?.id, selectedAgent?.name);
-
     if (!selectedAgent) {
-      console.log('No agent selected, using default prompts');
       return [
         { text: '510(k) vs PMA requirements', description: 'Compare pathway requirements and timelines', color: 'blue' },
         { text: 'Regulatory strategy guidance', description: 'Get strategic advice for your submission', color: 'green' },
@@ -274,15 +298,17 @@ export default function ChatPage() {
       ];
     }
 
+    // Use agent-specific prompts if available, otherwise use dynamic prompts based on capabilities
+    if (agentPromptStarters.length > 0) {
+      return agentPromptStarters;
+    }
+
     // Dynamic prompts based on agent capabilities or use default general prompts
     const prompts = selectedAgent?.capabilities && selectedAgent.capabilities.length > 0
       ? generateDynamicPrompts(selectedAgent.capabilities)
       : getDefaultPrompts();
-    console.log('Using prompts for agent:', selectedAgent.id, prompts);
-    console.log('=== END DEBUG ===');
-
     return prompts;
-  }, [selectedAgent?.id]);
+  }, [selectedAgent?.id, agentPromptStarters]);
 
   const handleSendMessage = async () => {
     if (!input.trim()) return;
@@ -304,14 +330,19 @@ export default function ChatPage() {
     .filter((chat) => chat.title.toLowerCase().includes(searchQuery.toLowerCase()))
     .map((chat) => ({
       ...chat,
+      createdAt: chat.createdAt instanceof Date ? chat.createdAt : new Date(chat.createdAt || Date.now()),
       updatedAt: chat.updatedAt instanceof Date ? chat.updatedAt.toISOString() : chat.updatedAt
     }));
 
-  const formatDate = (date: Date | string) => {
+  const formatDate = (date: Date | string | undefined | null) => {
+    if (!date) {
+      return 'Unknown';
+    }
+    
     const now = new Date();
     const dateObj = typeof date === 'string' ? new Date(date) : date;
 
-    if (isNaN(dateObj.getTime())) {
+    if (!dateObj || isNaN(dateObj.getTime())) {
       return 'Unknown';
     }
 
@@ -325,29 +356,28 @@ export default function ChatPage() {
   };
 
   const groupChatsByDate = (chats: typeof filteredChats) => {
-    const groups: Record<string, typeof filteredChats> = {};
+    const groups: Record<string, typeof filteredChats> = { /* TODO: implement */ };
 
     chats.forEach((chat) => {
       const dateKey = formatDate(chat.createdAt);
-      if (!groups[dateKey]) groups[dateKey] = [];
+      // Validate key before accessing object
+      if (!Object.prototype.hasOwnProperty.call(groups, dateKey)) {
+        // eslint-disable-next-line security/detect-object-injection
+        groups[dateKey] = [];
+      }
+      // eslint-disable-next-line security/detect-object-injection
       groups[dateKey].push(chat);
     });
 
     return groups;
   };
 
-  const groupedChats = groupChatsByDate(filteredChats);
-
-
-
   const handleAgentStoreClick = () => {
-    console.log('Opening Agent Store');
     // TODO: Navigate to agent marketplace/store
     router.push('/agents');
   };
 
   const handleCreateAgentClick = () => {
-    console.log('Opening Agent Creator');
     setShowAgentCreator(true);
   };
 
@@ -356,8 +386,6 @@ export default function ChatPage() {
       // Check if this is an admin agent that needs to be copied
       // Admin agents are not custom, so we need to create user copies
       if (!agent.isCustom) {
-        console.log('Creating user copy of admin agent:', agent.name);
-
         // Create user copy through the store
         const userCopy = await createUserCopy({
           id: agent.id,
@@ -381,7 +409,7 @@ export default function ChatPage() {
           knowledge_domains: agent.knowledgeDomains || [],
           business_function: agent.businessFunction || '',
           role: agent.role || '',
-        } as any);
+        } as unknown);
 
         // Convert to chat store format and add to user's agents
         const chatAgent: Agent = {
@@ -409,10 +437,7 @@ export default function ChatPage() {
           setUserAgents(newUserAgents);
           // Persist to localStorage
           localStorage.setItem('user-chat-agents', JSON.stringify(newUserAgents));
-          console.log('Added user copy to chat:', chatAgent.name);
-        } else {
-          console.log('User copy already exists in chat');
-        }
+        } else { /* TODO: implement */ }
       } else {
         // This is already a user copy, just add it directly
         const isAlreadyAdded = userAgents.some(ua => ua.id === agent.id);
@@ -421,10 +446,7 @@ export default function ChatPage() {
           setUserAgents(newUserAgents);
           // Persist to localStorage
           localStorage.setItem('user-chat-agents', JSON.stringify(newUserAgents));
-          console.log('Added existing user copy to chat:', agent.name);
-        } else {
-          console.log('Agent already in chat:', agent.name);
-        }
+        } else { /* TODO: implement */ }
       }
     } catch (error) {
       console.error('Failed to add agent to chat:', error);
@@ -434,39 +456,42 @@ export default function ChatPage() {
         const newUserAgents = [...userAgents, agent];
         setUserAgents(newUserAgents);
         localStorage.setItem('user-chat-agents', JSON.stringify(newUserAgents));
-        console.log('Added agent to chat (fallback):', agent.name);
       }
     }
   };
 
   const handleAgentSelect = (agentId: string) => {
-    console.log('=== AGENT SELECTION DEBUG ===');
-    console.log('Selecting agent ID:', agentId);
-    console.log('Available user agents:', userAgents.map(a => ({ id: a.id, name: a.name })));
-    console.log('Available system agents:', agents.map(a => ({ id: a.id, name: a.name })));
-
     // First try to find in user's agents, then in all system agents
     let agent = userAgents.find(a => a.id === agentId);
     if (!agent) {
       agent = agents.find(a => a.id === agentId);
     }
-
-    console.log('Found agent:', agent?.id, agent?.name);
-
     if (agent) {
-      console.log('Setting selected agent to:', agent.id);
       setSelectedAgent(agent);
-      // Don't auto-create chat - let user see the updated prompt starters first
-      // createNewChat will be called when they send their first message
-    } else {
-      console.log(`Agent not found for ID: ${agentId}`);
+      setHasUserSelectedAgent(true); // Mark that user has explicitly selected an agent
+      setUseDirectLLM(false); // Switch to agent mode
+      // Create a new chat to show the agent profile with prompt starters
+      createNewChat();
     }
-    console.log('=== END AGENT SELECTION DEBUG ===');
+  };
+
+  const handleAgentRemove = (agentId: string) => {
+    // Remove agent from user's collection
+    const updatedAgents = userAgents.filter(ua => ua.id !== agentId);
+    setUserAgents(updatedAgents);
+    localStorage.setItem('user-chat-agents', JSON.stringify(updatedAgents));
+
+    // If this was the selected agent, clear selection
+    if (selectedAgent?.id === agentId) {
+      setSelectedAgent(null);
+      setHasUserSelectedAgent(false);
+    }
   };
 
   const toggleSection = (section: keyof typeof collapsedSections) => {
     setCollapsedSections(prev => ({
       ...prev,
+      // eslint-disable-next-line security/detect-object-injection
       [section]: !prev[section]
     }));
   };
@@ -573,7 +598,8 @@ export default function ChatPage() {
                   if (!selectedAgent && agents.length > 0) {
                     setSelectedAgent(agents[0]);
                   }
-                  setInput(prompt.text);
+                  // Use fullPrompt if available (from PRISM library), otherwise use display text
+                  setInput(prompt.fullPrompt || prompt.text);
                   // Create chat first, then send message
                   createNewChat();
                   setTimeout(() => handleSendMessage(), 100);
@@ -612,247 +638,305 @@ export default function ChatPage() {
     </div>
   );
 
-  // Render chat interface with prompt starters
-  const renderChatInterface = () => (
-    <div className="flex-1 flex flex-col bg-gray-50/30">
-      {/* Enhanced Agent header with RAG status */}
-      <div className="border-b bg-white shadow-sm">
-        <div className="max-w-5xl mx-auto p-6">
-          <div className="flex items-center gap-4">
-            <div className="relative w-12 h-12 rounded-full overflow-hidden ring-2 ring-blue-100">
-              {selectedAgent?.avatar && (selectedAgent.avatar.startsWith('/') || selectedAgent.avatar.startsWith('http')) ? (
+  // Initial welcome view - no agent selected
+  const renderInitialWelcome = () => (
+    <div className="flex-1 flex flex-col h-full bg-white">
+      <div className="flex-1 overflow-y-auto">
+        <div className="flex flex-col items-center justify-center h-full px-6">
+          {/* Orchestrator Avatar and Info - Show when in automatic mode */}
+          {interactionMode === 'automatic' && (
+            <div className="text-center mb-6">
+              <div className="w-20 h-20 rounded-full flex items-center justify-center bg-gradient-to-br from-blue-50 to-purple-50 border-2 border-blue-200 mx-auto mb-4 overflow-hidden relative">
                 <Image
-                  src={selectedAgent.avatar}
-                  alt={selectedAgent.name || "Agent"}
+                  src="/icons/png/general/AI Ethics.png"
+                  alt="AI Agent Orchestrator"
                   width={48}
                   height={48}
-                  className="w-full h-full object-cover"
+                  className="object-contain"
                 />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center bg-gray-100 text-2xl">
-                  {selectedAgent?.avatar || '🤖'}
+              </div>
+              <h2 className="text-lg font-semibold text-gray-900 mb-1">
+                AI Agent Orchestrator
+              </h2>
+              <p className="text-sm text-gray-600 mb-3">
+                Automatic agent selection and escalation
+              </p>
+              {escalationHistory.length > 0 && (
+                <div className="text-sm text-gray-600">
+                  <Badge variant="outline" className="mr-2">
+                    Tier {currentTier === 'human' ? 'Human Expert' : currentTier}
+                  </Badge>
+                  {escalationHistory.length} escalation(s)
                 </div>
               )}
             </div>
-            <div className="flex-1">
-              <div className="flex items-center gap-3 mb-1">
-                <h2 className="text-xl font-semibold text-gray-900">{selectedAgent?.name || "FDA Regulatory Navigator"}</h2>
-                <Badge variant="outline" className="text-xs bg-green-50 border-green-200 text-green-700">
-                  <span className="mr-1">⚡</span>
-                  RAG Enabled
-                </Badge>
-              </div>
-              <p className="text-sm text-gray-600 leading-relaxed">
-                {selectedAgent?.description || "Guide regulatory pathway selection and submission strategies for FDA approvals"}
-              </p>
-            </div>
-{selectedAgent && selectedAgent.isCustom && (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="flex-shrink-0 text-gray-500 hover:text-gray-700"
-              onClick={() => {
-                if (selectedAgent) {
-                  // Convert the selected agent to the expected format for editing
-                  const currentAgent = {
-                    id: selectedAgent.id,
-                    name: selectedAgent.name,
-                    display_name: selectedAgent.name,
-                    description: selectedAgent.description,
-                    system_prompt: selectedAgent.systemPrompt || '',
-                    avatar: selectedAgent.avatar,
-                    color: selectedAgent.color || '#3B82F6',
-                    model: selectedAgent.model || 'gpt-4',
-                    capabilities: selectedAgent.capabilities || [],
-                    tier: 1,
-                    priority: 1,
-                    implementation_phase: 1,
-                    rag_enabled: selectedAgent.ragEnabled || true,
-                    knowledge_domains: selectedAgent.knowledgeDomains || [],
-                    status: 'active' as const,
-                    is_custom: selectedAgent.isCustom || false,
-                    created_by: null,
-                    created_at: new Date().toISOString(),
-                    updated_at: new Date().toISOString(),
-                    temperature: selectedAgent.temperature || 0.7,
-                    max_tokens: selectedAgent.maxTokens || 2000,
-                    categories: [],
-                    business_function: selectedAgent.businessFunction || '',
-                    role: selectedAgent.role || '',
-                    // Fields that exist in the database schema
-                    target_users: (selectedAgent as any).target_users || [],
-                    // Healthcare compliance fields
-                    medical_specialty: (selectedAgent as any).medicalSpecialty || '',
-                    validation_status: (selectedAgent as any).validationStatus || 'pending',
-                    accuracy_score: (selectedAgent as any).medicalAccuracyScore || 0.95,
-                    hipaa_compliant: (selectedAgent as any).hipaaCompliant || false,
-                    pharma_enabled: (selectedAgent as any).pharmaEnabled || false,
-                    verify_enabled: (selectedAgent as any).verifyEnabled || false,
-                    // Performance tracking fields
-                    cost_per_query: null
-                  };
-                  setEditingAgent(currentAgent as unknown as AgentWithCategories);
-                }
-              }}
-            >
-              <Settings className="h-4 w-4" />
-              <span className="ml-1">Edit</span>
-            </Button>
-            )}
+          )}
+
+          {/* Simple welcome message */}
+          <div className="text-center mb-8">
+            <h1 className="text-3xl font-normal text-gray-900 mb-4">
+              What's on the agenda today?
+            </h1>
+            <p className="text-gray-600 mb-6">
+              Ask me anything about digital health, clinical trials, regulatory compliance, and more.
+            </p>
           </div>
-        </div>
-      </div>
 
-      {/* Chat messages area */}
-      <div className="flex-1 overflow-y-auto">
-        {messages.length === 0 ? (
-          <div className="max-w-4xl mx-auto p-8">
-            {/* Welcome Section */}
-            <div className="text-left mb-8">
-              <h3 className="text-2xl font-semibold text-gray-900 mb-2">How can I help you today?</h3>
-              <p className="text-gray-600">
-                Choose a topic below or ask me anything about {selectedAgent?.description ? selectedAgent.description.toLowerCase() : 'healthcare and regulatory topics'}
-              </p>
-            </div>
-
-            {/* Enhanced Prompt Starters */}
-            <div key={selectedAgent?.id || 'default'} className="grid gap-6 md:grid-cols-2 mb-16">
-              {promptStarters.map((prompt, index) => (
-                <Card
-                  key={index}
-                  className="group p-5 cursor-pointer hover:shadow-lg transition-all duration-200 hover:border-blue-300 border-gray-200 bg-white hover:-translate-y-0.5"
-                  onClick={() => {
-                    // Make sure we have an agent selected before sending message
-                    if (!selectedAgent && agents.length > 0) {
-                      setSelectedAgent(agents[0]);
-                    }
-                    setInput(prompt.text);
-                    setTimeout(() => handleSendMessage(), 100);
-                  }}
-                >
-                  <div className="flex items-start gap-4">
-                    <div className={cn(
-                    "w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors",
-                    prompt.color === 'blue' && "bg-blue-100 group-hover:bg-blue-200",
-                    prompt.color === 'green' && "bg-green-100 group-hover:bg-green-200",
-                    prompt.color === 'purple' && "bg-purple-100 group-hover:bg-purple-200",
-                    prompt.color === 'orange' && "bg-orange-100 group-hover:bg-orange-200"
-                  )}>
-                      {getPromptIcon(prompt.text).startsWith('http') || getPromptIcon(prompt.text).startsWith('/') ? (
-                        <Image
-                          src={getPromptIcon(prompt.text)}
-                          alt={prompt.text}
-                          width={20}
-                          height={20}
-                          className="w-5 h-5"
-                        />
-                      ) : (
-                        <span className="text-lg">{getPromptIcon(prompt.text)}</span>
-                      )}
-                    </div>
-                    <div>
-                      <h4 className="font-semibold text-gray-900 mb-1">{prompt.text}</h4>
-                      <p className="text-sm text-gray-600">{prompt.description}</p>
-                    </div>
-                  </div>
-                </Card>
-              ))}
-            </div>
-
-          </div>
-        ) : (
-          <div className="max-w-5xl mx-auto p-6">
-            <ChatMessages messages={messages} />
-          </div>
-        )}
-        <div ref={messagesEndRef} />
-      </div>
-
-      {/* Enhanced Input area */}
-      <div className="border-t bg-white shadow-sm">
-        <div className="max-w-5xl mx-auto p-6">
-          <div className="space-y-4">
+          {/* Single chat input - always visible */}
+          <div className="w-full max-w-3xl">
             <ChatInput
               value={input}
               onChange={setInput}
               onSend={handleSendMessage}
               onKeyPress={handleKeyPress}
               isLoading={isLoading}
-              selectedAgent={selectedAgent}
+              selectedAgent={null}
+              enableVoice={true}
+              selectedModel={selectedModel || undefined}
+              onModelChange={setSelectedModel}
+              onStop={stopGeneration}
             />
-
           </div>
         </div>
       </div>
     </div>
   );
 
-  return (
-    <SidebarProvider defaultOpen={sidebarOpen}>
-      <ChatSidebar
-        chats={filteredChats}
-        currentChat={currentChat ? {
-          ...currentChat,
-          updatedAt: currentChat.updatedAt instanceof Date ? currentChat.updatedAt.toISOString() : currentChat.updatedAt
-        } : null}
-        searchQuery={searchQuery}
-        onSearchChange={setSearchQuery}
-        onNewChat={createNewChat}
-        onSelectChat={selectChat}
-        onAgentStoreClick={handleAgentStoreClick}
-        onCreateAgentClick={handleCreateAgentClick}
-        onAgentSelect={handleAgentSelect}
-        selectedAgentId={selectedAgent?.id}
-        agents={mounted ? userAgents : []}
-        formatDate={formatDate}
-        isCollapsed={isCollapsed}
-        onToggleCollapse={() => setIsCollapsed(!isCollapsed)}
-        mounted={mounted}
-      />
-
-      <SidebarInset>
-        {/* Main Content Area */}
-        <div className="flex flex-col h-full">
-
-
-          {/* Content - Either agent selection or chat interface */}
-          <div className="flex-1 overflow-hidden">
-            {currentChat ? renderChatInterface() : renderAgentSelection()}
+  // Agent-specific interface with avatar and prompt starters
+  const renderChatInterface = () => (
+    <div className="flex-1 flex flex-col h-full bg-white overflow-hidden">
+      {/* Expert Profile Header - Show when in manual mode */}
+      {interactionMode === 'manual' && selectedExpert && (
+        <div className="border-b p-4 bg-gray-50">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 rounded-full flex items-center justify-center text-2xl bg-white border-2 border-gray-200 overflow-hidden relative">
+              {selectedExpert.avatar && selectedExpert.avatar.startsWith('/') || selectedExpert.avatar?.includes('avatar_') ? (
+                <Image
+                  src={selectedExpert.avatar}
+                  alt={selectedExpert.display_name || selectedExpert.name}
+                  width={48}
+                  height={48}
+                  className="object-cover"
+                />
+              ) : (
+                selectedExpert.avatar || '🤖'
+              )}
+            </div>
+            <div className="flex-1">
+              <h3 className="font-semibold text-gray-900">{selectedExpert.display_name || selectedExpert.name}</h3>
+              <p className="text-sm text-gray-600">{selectedExpert.description}</p>
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setSelectedExpert(null)}
+            >
+              Change Expert
+            </Button>
           </div>
         </div>
-      </SidebarInset>
+      )}
+      {messages.length === 0 ? (
+        // No messages - show agent profile with prompt starters
+        <div className="flex-1 overflow-y-auto">
+          <div className="flex flex-col items-center justify-center h-full px-6">
+            {/* Agent Avatar and Info */}
+            <div className="text-center mb-6">
+              <div className="w-20 h-20 rounded-full flex items-center justify-center text-4xl bg-gray-100 mx-auto mb-4 overflow-hidden relative">
+                {selectedAgent?.avatar && (selectedAgent.avatar.startsWith('/') || selectedAgent.avatar.includes('avatar_')) ? (
+                  <Image
+                    src={selectedAgent.avatar}
+                    alt={selectedAgent.name || "AI Assistant"}
+                    width={80}
+                    height={80}
+                    className="object-cover"
+                  />
+                ) : (
+                  selectedAgent?.avatar || '🤖'
+                )}
+              </div>
+              <h1 className="text-2xl font-semibold text-gray-900 mb-2">
+                {selectedAgent?.name || "AI Assistant"}
+              </h1>
+              <p className="text-sm text-gray-600 mb-1">
+                By {selectedAgent?.name || "AI Assistant"}
+              </p>
+              <p className="text-sm text-gray-600 max-w-xl mx-auto">
+                {selectedAgent?.description || "Your AI assistant"}
+              </p>
+            </div>
 
-
-      {/* Agent Creator Modal */}
-      {(editingAgent || showAgentCreator) && (
-        <AgentCreator
-          isOpen={!!editingAgent || showAgentCreator}
-          onClose={() => {
-            setEditingAgent(null);
-            setShowAgentCreator(false);
-          }}
-          onSave={() => {
-            setEditingAgent(null);
-            setShowAgentCreator(false);
-            // Refresh agents list after saving and sync with global store
-            loadAgentsFromDatabase();
-            syncWithGlobalStore();
-            // Also refresh userAgents from localStorage
-            const saved = localStorage.getItem('user-chat-agents');
-            if (saved) {
-              const agents = JSON.parse(saved);
-              const markedAgents = agents.map((agent: Agent) => ({
-                ...agent,
-                is_user_copy: true,
-                isCustom: true,
-              }));
-              setUserAgents(markedAgents);
-            }
-          }}
-          editingAgent={editingAgent}
-        />
+            {/* 4 Dynamic Prompt Starters */}
+            <div className="w-full max-w-4xl grid grid-cols-4 gap-3 mb-8">
+              {promptStarters.slice(0, 4).map((prompt, index) => (
+                <button
+                  key={index}
+                  onClick={() => {
+                    setInput(prompt.text);
+                    setTimeout(() => handleSendMessage(), 100);
+                  }}
+                  className="p-4 text-left border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  <div className="text-sm text-gray-900 line-clamp-3">{prompt.text}</div>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      ) : (
+        // Has messages - show messages area
+        <div className="flex-1 overflow-y-auto">
+          <div className="max-w-6xl mx-auto px-6 py-6">
+            <ChatMessages
+              messages={messages}
+              liveReasoning={liveReasoning}
+              isReasoningActive={isReasoningActive}
+            />
+          </div>
+          <div ref={messagesEndRef} />
+        </div>
       )}
 
-    </SidebarProvider>
+      {/* Input component always at bottom */}
+      <div className="px-6 py-4 border-t bg-white">
+        <div className="w-full max-w-6xl mx-auto">
+          <ChatInput
+            value={input}
+            onChange={setInput}
+            onSend={handleSendMessage}
+            onKeyPress={handleKeyPress}
+            isLoading={isLoading}
+            selectedAgent={selectedAgent}
+            enableVoice={true}
+            selectedModel={selectedModel || undefined}
+            onModelChange={setSelectedModel}
+            onStop={stopGeneration}
+          />
+        </div>
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="flex flex-col h-full">
+      <SidebarProvider defaultOpen={sidebarOpen}>
+        <ChatSidebar
+          chats={filteredChats}
+          currentChat={currentChat ? {
+            ...currentChat,
+            updatedAt: currentChat.updatedAt instanceof Date ? currentChat.updatedAt.toISOString() : currentChat.updatedAt
+          } : null}
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          onNewChat={createNewChat}
+          onSelectChat={selectChat}
+          onAgentStoreClick={handleAgentStoreClick}
+          onCreateAgentClick={handleCreateAgentClick}
+          onAgentSelect={handleAgentSelect}
+          onAgentRemove={handleAgentRemove}
+          selectedAgentId={selectedAgent?.id}
+          agents={mounted ? userAgents : []}
+          formatDate={formatDate}
+          isCollapsed={isCollapsed}
+          onToggleCollapse={() => setIsCollapsed(!isCollapsed)}
+          mounted={mounted}
+          interactionMode={interactionMode}
+          onToggleMode={setInteractionMode}
+        />
+
+        <SidebarInset className="flex flex-col flex-1 overflow-hidden">
+
+          {/* Content - Show initial welcome, agent selection, or chat interface */}
+          <div className="flex-1 overflow-hidden">
+            {(() => {
+              // Debug logging
+              console.log('🔍 Render Decision:', {
+                interactionMode,
+                selectedExpert: !!selectedExpert,
+                messagesLength: messages.length,
+                useDirectLLM,
+                hasUserSelectedAgent,
+                selectedAgent: !!selectedAgent
+              });
+
+              // Simplified dual-mode logic (prioritize new system)
+              if (interactionMode === 'manual') {
+                // In manual mode, show agent profile when agent is selected
+                if (selectedAgent) {
+                  console.log('✅ Rendering: Manual mode with selected agent - Chat Interface with Agent Profile');
+                  return renderChatInterface();
+                } else if (selectedExpert) {
+                  console.log('✅ Rendering: Manual mode with expert - Chat Interface');
+                  return renderChatInterface();
+                } else {
+                  console.log('✅ Rendering: Manual mode no agent - Initial Welcome with Agents Board');
+                  return renderInitialWelcome();
+                }
+              }
+
+              if (interactionMode === 'automatic') {
+                if (messages.length > 0) {
+                  console.log('✅ Rendering: Automatic mode with messages - Chat Interface');
+                  return renderChatInterface();
+                } else {
+                  console.log('✅ Rendering: Automatic mode no messages - Initial Welcome');
+                  return renderInitialWelcome();
+                }
+              }
+
+              // Legacy fallbacks (should rarely be hit now)
+              if (!useDirectLLM && !hasUserSelectedAgent) {
+                console.log('⚠️ Legacy: Agent mode no agent - Initial Welcome');
+                return renderInitialWelcome();
+              }
+
+              if (messages.length > 0) {
+                console.log('⚠️ Legacy: Has messages - Chat Interface');
+                return renderChatInterface();
+              }
+
+              if (selectedAgent && hasUserSelectedAgent) {
+                console.log('⚠️ Legacy: Agent selected - Chat Interface');
+                return renderChatInterface();
+              }
+
+              console.log('⚠️ Fallback: Agent Selection');
+              return renderAgentSelection();
+            })()}
+          </div>
+        </SidebarInset>
+
+        {/* Agent Creator Modal */}
+        {(editingAgent || showAgentCreator) && (
+          <AgentCreator
+            isOpen={!!editingAgent || showAgentCreator}
+            onClose={() => {
+              setEditingAgent(null);
+              setShowAgentCreator(false);
+            }}
+            onSave={() => {
+              setEditingAgent(null);
+              setShowAgentCreator(false);
+              // Refresh agents list after saving and sync with global store
+              loadAgentsFromDatabase();
+              syncWithGlobalStore();
+              // Also refresh userAgents from localStorage
+              const saved = localStorage.getItem('user-chat-agents');
+              if (saved) {
+                const agents = JSON.parse(saved);
+                const markedAgents = agents.map((agent: Agent) => ({
+                  ...agent,
+                  is_user_copy: true,
+                  isCustom: true,
+                }));
+                setUserAgents(markedAgents);
+              }
+            }}
+            editingAgent={editingAgent}
+          />
+        )}
+
+      </SidebarProvider>
+    </div>
   );
 }

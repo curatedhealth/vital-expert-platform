@@ -26,8 +26,8 @@ export interface Organization {
   slug: string;
   subscription_tier: 'starter' | 'professional' | 'enterprise';
   subscription_status: 'active' | 'inactive' | 'trial';
-  settings: Record<string, any>;
-  metadata: Record<string, any>;
+  settings: Record<string, unknown>;
+  metadata: Record<string, unknown>;
   created_at: string;
   updated_at: string;
 }
@@ -39,7 +39,7 @@ export interface User {
   full_name?: string;
   role: 'admin' | 'clinician' | 'researcher' | 'member';
   avatar_url?: string;
-  settings: Record<string, any>;
+  settings: Record<string, unknown>;
   created_at: string;
   updated_at: string;
 }
@@ -55,7 +55,7 @@ export interface Project {
   milestones: Milestone[];
   regulatory_pathway?: string;
   target_markets?: string[];
-  metadata: Record<string, any>;
+  metadata: Record<string, unknown>;
   created_by: string;
   created_at: string;
   updated_at: string;
@@ -114,7 +114,7 @@ export interface Document {
   source: string;
   url?: string;
   content: string;
-  metadata: Record<string, any>;
+  metadata: Record<string, unknown>;
   vector_id?: string;
   indexed_at?: string;
   created_by: string;
@@ -129,7 +129,7 @@ export interface Workflow {
   description?: string;
   workflow_type: string;
   n8n_workflow_id?: string;
-  configuration: Record<string, any>;
+  configuration: Record<string, unknown>;
   is_active: boolean;
   last_run_at?: string;
   created_by: string;
@@ -155,7 +155,7 @@ export interface LLMResponse {
 export interface SearchResult {
   text: string;
   score: number;
-  metadata: any;
+  metadata: unknown;
   citation: Citation;
 }
 

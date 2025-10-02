@@ -1,36 +1,144 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent } from '@/components/ui/card';
 import {
   Search,
   Filter,
   Grid,
   List,
   Plus,
-  Star,
   Heart,
   Edit,
   Copy,
   MoreVertical,
   Brain,
-  Settings,
   Eye,
   Trash2,
   Upload,
-  FileText,
   ChevronDown,
-  MessageSquare,
+  MessageSquare
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { useAgentsStore, type Agent } from '@/lib/stores/agents-store';
-import type { AgentWithCategories } from '@/lib/agents/agent-service';
+import { useState, useMemo, useEffect } from 'react';
+
 import { AgentAvatar } from '@/components/ui/agent-avatar';
-import { AgentCreator } from '@/components/chat/agent-creator';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Input } from '@/components/ui/input';
+import { AgentCreator } from '@/features/chat/components/agent-creator';
+import type { AgentWithCategories } from '@/lib/agents/agent-service';
+import { useAgentsStore, type Agent } from '@/lib/stores/agents-store';
+import { supabase } from '@/lib/supabase/client';
+import { cn } from '@/lib/utils';
+import type { HealthcareBusinessFunction, HealthcareRole } from '@/types/healthcare-compliance';
+import { BUSINESS_FUNCTIONS, DEPARTMENTS_BY_FUNCTION, ROLES_BY_DEPARTMENT } from '@/config/organizational-structure';
+
+// Use shared organizational structure configuration
+const staticDepartmentsByFunction = DEPARTMENTS_BY_FUNCTION;
+const staticRolesByDepartment = ROLES_BY_DEPARTMENT;
+
+// OLD definitions (replaced by shared config - keeping for reference only)
+/*
+const staticDepartmentsByFunction_OLD: Record<string, string[]> = {
+  'Regulatory Affairs': ['Regulatory Strategy', 'Submissions & Filings', 'Compliance & Quality'],
+  'regulatory-affairs': ['Regulatory Strategy', 'Submissions & Filings', 'Compliance & Quality'],
+  'Regulatory': ['Regulatory Strategy', 'Submissions & Filings', 'Compliance & Quality'],
+
+  'Clinical Development': ['Clinical Operations', 'Clinical Strategy', 'Medical Monitoring'],
+  'clinical-development': ['Clinical Operations', 'Clinical Strategy', 'Medical Monitoring'],
+  'Clinical': ['Clinical Operations', 'Clinical Strategy', 'Medical Monitoring'],
+
+  'Market Access': ['Health Economics', 'Payer Relations', 'Market Strategy'],
+  'market-access': ['Health Economics', 'Payer Relations', 'Market Strategy'],
+  'Market': ['Health Economics', 'Payer Relations', 'Market Strategy'],
+
+  'Information Technology': ['IT Operations', 'Software Development', 'Data Management'],
+  'information-technology': ['IT Operations', 'Software Development', 'Data Management'],
+  'IT': ['IT Operations', 'Software Development', 'Data Management'],
+
+  'Business Development': ['Corporate Strategy', 'Partnerships', 'M&A'],
+  'business-development': ['Corporate Strategy', 'Partnerships', 'M&A'],
+  'Business': ['Corporate Strategy', 'Partnerships', 'M&A'],
+
+  'Medical Affairs': ['Medical Information', 'Medical Communications', 'Medical Science Liaison'],
+  'medical-affairs': ['Medical Information', 'Medical Communications', 'Medical Science Liaison'],
+  'Medical': ['Medical Information', 'Medical Communications', 'Medical Science Liaison'],
+
+  'Human Resources': ['Talent Acquisition', 'Learning & Development', 'Compensation & Benefits'],
+  'human-resources': ['Talent Acquisition', 'Learning & Development', 'Compensation & Benefits'],
+  'HR': ['Talent Acquisition', 'Learning & Development', 'Compensation & Benefits'],
+
+  'Quality Assurance': ['Quality Management Systems', 'Quality Control', 'Compliance & Auditing'],
+  'quality-assurance': ['Quality Management Systems', 'Quality Control', 'Compliance & Auditing'],
+  'Quality': ['Quality Management Systems', 'Quality Control', 'Compliance & Auditing'],
+
+  'Manufacturing': ['Production', 'Quality Control', 'Supply Chain'],
+  'manufacturing': ['Production', 'Quality Control', 'Supply Chain'],
+
+  'Finance': ['Financial Planning', 'Accounting', 'Treasury'],
+  'finance': ['Financial Planning', 'Accounting', 'Treasury'],
+
+  'Legal': ['Corporate Law', 'Compliance', 'Intellectual Property'],
+  'legal': ['Corporate Law', 'Compliance', 'Intellectual Property'],
+
+  'Marketing': ['Brand Management', 'Market Research', 'Communications'],
+  'marketing': ['Brand Management', 'Market Research', 'Communications'],
+};
+
+// Static role mapping by function and department
+// Support multiple function key variations for fuzzy matching
+const qaDepartmentRoles = {
+  'Quality Management Systems': ['QMS Architect', 'ISO 13485 Specialist', 'Design Controls Lead', 'Quality Systems Manager'],
+  'Quality Control': ['Quality Analyst', 'Testing Specialist', 'Validation Engineer', 'QC Manager'],
+  'Compliance & Auditing': ['Compliance Officer', 'Internal Auditor', 'Regulatory Compliance Specialist', 'Audit Manager'],
+};
+
+const regAffairsDepartmentRoles = {
+  'Regulatory Strategy': ['Regulatory Strategist', 'Global Strategy Lead', 'Regulatory Project Manager'],
+  'Submissions & Filings': ['Submission Specialist', '510(k) Expert', 'PMA Specialist', 'Filing Manager'],
+  'Compliance & Quality': ['Compliance Specialist', 'Quality Compliance Lead', 'GCP Specialist'],
+};
+
+const clinicalDevDepartmentRoles = {
+  'Clinical Operations': ['Clinical Operations Manager', 'CRA', 'Site Manager', 'Clinical Coordinator'],
+  'Clinical Strategy': ['Clinical Strategist', 'Protocol Designer', 'Endpoint Specialist'],
+  'Medical Monitoring': ['Medical Monitor', 'Safety Physician', 'Data Safety Manager'],
+};
+
+const marketAccessDepartmentRoles = {
+  'Health Economics': ['Health Economist', 'HEOR Specialist', 'Outcomes Researcher'],
+  'Payer Relations': ['Payer Strategy Lead', 'Contracting Specialist', 'Market Access Manager'],
+  'Market Strategy': ['Market Strategist', 'Pricing Specialist', 'Launch Planning Lead'],
+};
+
+const medicalAffairsDepartmentRoles = {
+  'Medical Information': ['Medical Information Specialist', 'Medical Writer', 'Scientific Communications'],
+  'Medical Communications': ['Medical Communications Manager', 'Publication Specialist', 'Content Strategist'],
+  'Medical Science Liaison': ['MSL', 'Field Medical Director', 'KOL Manager'],
+};
+
+const staticRolesByDepartment: Record<string, Record<string, string[]>> = {
+  'Quality Assurance': qaDepartmentRoles,
+  'quality-assurance': qaDepartmentRoles,
+  'Quality': qaDepartmentRoles,
+
+  'Regulatory Affairs': regAffairsDepartmentRoles,
+  'regulatory-affairs': regAffairsDepartmentRoles,
+  'Regulatory': regAffairsDepartmentRoles,
+
+  'Clinical Development': clinicalDevDepartmentRoles,
+  'clinical-development': clinicalDevDepartmentRoles,
+  'Clinical': clinicalDevDepartmentRoles,
+
+  'Market Access': marketAccessDepartmentRoles,
+  'market-access': marketAccessDepartmentRoles,
+  'Market': marketAccessDepartmentRoles,
+
+  'Medical Affairs': medicalAffairsDepartmentRoles,
+  'medical-affairs': medicalAffairsDepartmentRoles,
+  'Medical': medicalAffairsDepartmentRoles,
+};
+*/
 
 interface AgentsBoard {
   onAgentSelect?: (agent: Agent) => void;
@@ -44,7 +152,7 @@ interface AgentsBoard {
   selectedCapability?: string;
   selectedBusinessFunction?: string;
   selectedRole?: string;
-  onFilterChange?: (filters: any) => void;
+  onFilterChange?: (filters: unknown) => void;
   viewMode?: 'grid' | 'list';
   onViewModeChange?: (mode: 'grid' | 'list') => void;
 }
@@ -64,96 +172,51 @@ export function AgentsBoard({
   onFilterChange: externalOnFilterChange,
   viewMode: externalViewMode,
   onViewModeChange: externalOnViewModeChange,
-}: AgentsBoard) {
+}: AgentsBoardProps) {
   const { agents, createCustomAgent, updateAgent, deleteAgent, loadAgents } = useAgentsStore();
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedDomain, setSelectedDomain] = useState('all');
-  const [selectedCapability, setSelectedCapability] = useState('all');
   const [selectedBusinessFunction, setSelectedBusinessFunction] = useState('all');
-  const [selectedRole, setSelectedRole] = useState('all');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingAgent, setEditingAgent] = useState<Agent | null>(null);
   const [savedAgents, setSavedAgents] = useState<Set<string>>(new Set());
-  const [showFileUpload, setShowFileUpload] = useState(false);
+  const [dbBusinessFunctions, setDbBusinessFunctions] = useState<HealthcareBusinessFunction[]>([]);
+
+  // Helper function to get function name by ID
+  const getFunctionName = (functionId?: string | null) => {
+    if (!functionId) return null;
+    const func = dbBusinessFunctions.find(f => f.id === functionId);
+    return func?.department_name || null;
+  };
 
   // Load agents on component mount only if not already loaded
   useEffect(() => {
     if (agents.length === 0) {
-      console.log('🎯 AgentsBoard: No agents found, loading from database...');
       loadAgents();
-    } else {
-      console.log('🎯 AgentsBoard: Agents already loaded, skipping fetch');
     }
   }, [loadAgents, agents.length]);
 
-  // Dynamic filter options based on actual agent data
-  const availableDomains = useMemo(() => {
-    const uniqueDomains = new Set<string>();
-    agents.forEach(agent => {
-      agent.knowledge_domains?.forEach(domain => uniqueDomains.add(domain));
-    });
-    return Array.from(uniqueDomains).sort();
-  }, [agents]);
+  // Load business functions from API (bypasses RLS)
+  useEffect(() => {
+    async function loadBusinessFunctions() {
+      try {
+        const response = await fetch('/api/organizational-structure');
+        const result = await response.json();
 
-  const availableCapabilities = useMemo(() => {
-    const uniqueCapabilities = new Set<string>();
-    agents.forEach(agent => {
-      agent.capabilities.forEach(cap => uniqueCapabilities.add(cap));
-    });
-    return Array.from(uniqueCapabilities).sort();
-  }, [agents]);
-
-  const availableBusinessFunctions = useMemo(() => {
-    const uniqueBusinessFunctions = new Set<string>();
-    agents.forEach(agent => {
-      if (agent.business_function) {
-        uniqueBusinessFunctions.add(agent.business_function);
+        if (result.success && result.data) {
+          const { functions } = result.data;
+          console.log('[Agents Board] Loaded business functions:', functions?.length || 0);
+          setDbBusinessFunctions(functions || []);
+        } else {
+          console.error('[Agents Board] Failed to load business functions:', result.error);
+        }
+      } catch (error) {
+        console.error('[Agents Board] Error loading business functions:', error);
       }
-    });
-    return Array.from(uniqueBusinessFunctions).sort();
-  }, [agents]);
+    }
 
-  const availableRoles = useMemo(() => {
-    const uniqueRoles = new Set<string>();
-    agents.forEach(agent => {
-      if (agent.role) {
-        uniqueRoles.add(agent.role);
-      }
-    });
-    return Array.from(uniqueRoles).sort();
-  }, [agents]);
-
-  const domains = [
-    { value: 'all', label: 'All RAG Domains' },
-    ...availableDomains.map(domain => ({
-      value: domain,
-      label: {
-        'digital-health': 'Digital Health',
-        'clinical-research': 'Clinical Research',
-        'market-access': 'Market Access',
-        'regulatory': 'Regulatory',
-        'quality-assurance': 'Quality Assurance',
-        'health-economics': 'Health Economics'
-      }[domain] || domain
-    }))
-  ];
-
-  const capabilities = [
-    { value: 'all', label: 'All Capabilities' },
-    ...availableCapabilities.map(cap => ({ value: cap, label: cap }))
-  ];
-
-  const businessFunctions = [
-    { value: 'all', label: 'All Business Functions' },
-    ...availableBusinessFunctions.map(bf => ({ value: bf, label: bf }))
-  ];
-
-  const roles = [
-    { value: 'all', label: 'All Roles' },
-    ...availableRoles.map(role => ({ value: role, label: role }))
-  ];
-
+    loadBusinessFunctions();
+  }, []);
 
   const handleSaveToLibrary = (agentId: string) => {
     setSavedAgents(prev => {
@@ -257,7 +320,7 @@ export function AgentsBoard({
 
   const parseMarkdownToAgent = (content: string) => {
     const lines = content.split('\n');
-    const agent: any = {};
+    const agent: Record<string, any> = {};
     let currentSection = '';
     let currentContent: string[] = [];
 
@@ -267,20 +330,23 @@ export function AgentsBoard({
       // Check for headers
       if (trimmedLine.startsWith('# ')) {
         agent.display_name = trimmedLine.substring(2).trim();
-      } else if (trimmedLine.startsWith('## Description')) {
+      } else       if (trimmedLine.startsWith('## Description')) {
         if (currentSection) {
+          // eslint-disable-next-line security/detect-object-injection
           agent[currentSection] = currentContent.join('\n').trim();
         }
         currentSection = 'description';
         currentContent = [];
       } else if (trimmedLine.startsWith('## System Prompt') || trimmedLine.startsWith('## Prompt')) {
         if (currentSection) {
+          // eslint-disable-next-line security/detect-object-injection
           agent[currentSection] = currentContent.join('\n').trim();
         }
         currentSection = 'systemPrompt';
         currentContent = [];
       } else if (trimmedLine.startsWith('## Capabilities')) {
         if (currentSection) {
+          // eslint-disable-next-line security/detect-object-injection
           agent[currentSection] = currentContent.join('\n').trim();
         }
         currentSection = 'capabilities';
@@ -299,6 +365,7 @@ export function AgentsBoard({
 
     // Add final section
     if (currentSection && currentContent.length > 0) {
+      // eslint-disable-next-line security/detect-object-injection
       agent[currentSection] = currentContent.join('\n').trim();
     }
 
@@ -320,37 +387,42 @@ export function AgentsBoard({
     return colors[primaryDomain as keyof typeof colors] || 'bg-gray-100 text-gray-800';
   };
 
-  // Use external state when available, otherwise use internal state
-  const actualSearchQuery = externalSearchQuery !== undefined ? externalSearchQuery : searchQuery;
-  const actualSelectedDomain = externalSelectedDomain !== undefined ? externalSelectedDomain : selectedDomain;
-  const actualSelectedCapability = externalSelectedCapability !== undefined ? externalSelectedCapability : selectedCapability;
-  const actualSelectedBusinessFunction = externalSelectedBusinessFunction !== undefined ? externalSelectedBusinessFunction : selectedBusinessFunction;
-  const actualSelectedRole = externalSelectedRole !== undefined ? externalSelectedRole : selectedRole;
-  const actualViewMode = externalViewMode !== undefined ? externalViewMode : viewMode;
-
-  // Filtered agents based on actual search and filters
+  // Simple filter: search + business function only
   const filteredAgents = useMemo(() => {
-    return agents.filter(agent => {
-      const matchesSearch = !actualSearchQuery ||
-        agent.display_name.toLowerCase().includes(actualSearchQuery.toLowerCase()) ||
-        agent.description.toLowerCase().includes(actualSearchQuery.toLowerCase()) ||
-        agent.capabilities.some(cap => cap.toLowerCase().includes(actualSearchQuery.toLowerCase()));
-
-      const matchesDomain = actualSelectedDomain === 'all' ||
-        (agent.knowledge_domains && agent.knowledge_domains.includes(actualSelectedDomain));
-
-      const matchesCapability = actualSelectedCapability === 'all' ||
-        agent.capabilities.includes(actualSelectedCapability);
-
-      const matchesBusinessFunction = actualSelectedBusinessFunction === 'all' ||
-        agent.business_function === actualSelectedBusinessFunction;
-
-      const matchesRole = actualSelectedRole === 'all' ||
-        agent.role === actualSelectedRole;
-
-      return matchesSearch && matchesDomain && matchesCapability && matchesBusinessFunction && matchesRole;
+    console.log('[Agents Board] Filtering:', {
+      searchQuery,
+      selectedFunction: selectedBusinessFunction,
+      totalAgents: agents.length,
+      sampleAgent: agents[0] ? {
+        name: agents[0].display_name,
+        function_id: agents[0].function_id
+      } : null
     });
-  }, [agents, actualSearchQuery, actualSelectedDomain, actualSelectedCapability, actualSelectedBusinessFunction, actualSelectedRole]);
+
+    return agents.filter(agent => {
+      // Search filter
+      const matchesSearch = !searchQuery ||
+        agent.display_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        agent.description.toLowerCase().includes(searchQuery.toLowerCase());
+
+      // Business function filter
+      const matchesFunction = selectedBusinessFunction === 'all' ||
+        agent.function_id === selectedBusinessFunction;
+
+      const matches = matchesSearch && matchesFunction;
+
+      // Debug first match
+      if (matches && selectedBusinessFunction !== 'all') {
+        console.log('[Agents Board] Matched agent:', {
+          name: agent.display_name,
+          function_id: agent.function_id,
+          selectedFunction: selectedBusinessFunction
+        });
+      }
+
+      return matches;
+    });
+  }, [agents, searchQuery, selectedBusinessFunction]);
 
   return (
     <div className="space-y-6">
@@ -388,7 +460,7 @@ export function AgentsBoard({
                       const input = document.createElement('input');
                       input.type = 'file';
                       input.accept = '.json,.md,.markdown';
-                      input.onchange = handleFileUpload as any;
+                      input.onchange = handleFileUpload as unknown;
                       input.click();
                     }}
                   >
@@ -406,9 +478,9 @@ export function AgentsBoard({
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-medical-gray" />
               <Input
-                placeholder="Search agents by name, description, or capabilities..."
-                value={actualSearchQuery}
-                onChange={(e) => externalOnSearchChange ? externalOnSearchChange(e.target.value) : setSearchQuery(e.target.value)}
+                placeholder="Search agents by name or description..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-10 pr-4"
               />
             </div>
@@ -418,97 +490,19 @@ export function AgentsBoard({
               <div className="flex flex-wrap gap-4 items-center">
                 <div className="flex items-center gap-2">
                   <Filter className="h-4 w-4 text-medical-gray" />
-                  <span className="text-sm text-medical-gray">Filters:</span>
+                  <span className="text-sm text-medical-gray">Filter by:</span>
                 </div>
 
+                {/* Business Function Filter */}
                 <select
-                  value={actualSelectedDomain}
-                  onChange={(e) => {
-                    if (externalOnFilterChange) {
-                      externalOnFilterChange({
-                        selectedDomain: e.target.value,
-                        selectedCapability: actualSelectedCapability,
-                        selectedBusinessFunction: actualSelectedBusinessFunction,
-                        selectedRole: actualSelectedRole,
-                      });
-                    } else {
-                      setSelectedDomain(e.target.value);
-                    }
-                  }}
-                  className="px-3 py-1 border border-gray-300 rounded-md text-sm"
+                  value={selectedBusinessFunction}
+                  onChange={(e) => setSelectedBusinessFunction(e.target.value)}
+                  className="px-4 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-progress-teal"
                 >
-                  {domains.map(domain => (
-                    <option key={domain.value} value={domain.value}>
-                      {domain.label}
-                    </option>
-                  ))}
-                </select>
-
-                <select
-                  value={actualSelectedCapability}
-                  onChange={(e) => {
-                    if (externalOnFilterChange) {
-                      externalOnFilterChange({
-                        selectedDomain: actualSelectedDomain,
-                        selectedCapability: e.target.value,
-                        selectedBusinessFunction: actualSelectedBusinessFunction,
-                        selectedRole: actualSelectedRole,
-                      });
-                    } else {
-                      setSelectedCapability(e.target.value);
-                    }
-                  }}
-                  className="px-3 py-1 border border-gray-300 rounded-md text-sm"
-                >
-                  {capabilities.map(cap => (
-                    <option key={cap.value} value={cap.value}>
-                      {cap.label}
-                    </option>
-                  ))}
-                </select>
-
-                <select
-                  value={actualSelectedBusinessFunction}
-                  onChange={(e) => {
-                    if (externalOnFilterChange) {
-                      externalOnFilterChange({
-                        selectedDomain: actualSelectedDomain,
-                        selectedCapability: actualSelectedCapability,
-                        selectedBusinessFunction: e.target.value,
-                        selectedRole: actualSelectedRole,
-                      });
-                    } else {
-                      setSelectedBusinessFunction(e.target.value);
-                    }
-                  }}
-                  className="px-3 py-1 border border-gray-300 rounded-md text-sm"
-                >
-                  {businessFunctions.map(bf => (
-                    <option key={bf.value} value={bf.value}>
-                      {bf.label}
-                    </option>
-                  ))}
-                </select>
-
-                <select
-                  value={actualSelectedRole}
-                  onChange={(e) => {
-                    if (externalOnFilterChange) {
-                      externalOnFilterChange({
-                        selectedDomain: actualSelectedDomain,
-                        selectedCapability: actualSelectedCapability,
-                        selectedBusinessFunction: actualSelectedBusinessFunction,
-                        selectedRole: e.target.value,
-                      });
-                    } else {
-                      setSelectedRole(e.target.value);
-                    }
-                  }}
-                  className="px-3 py-1 border border-gray-300 rounded-md text-sm"
-                >
-                  {roles.map(role => (
-                    <option key={role.value} value={role.value}>
-                      {role.label}
+                  <option value="all">All Business Functions</option>
+                  {dbBusinessFunctions.map(func => (
+                    <option key={func.id} value={func.id}>
+                      {func.department_name}
                     </option>
                   ))}
                 </select>
@@ -516,16 +510,16 @@ export function AgentsBoard({
 
               <div className="flex items-center gap-2">
                 <Button
-                  variant={actualViewMode === 'grid' ? 'default' : 'outline'}
+                  variant={viewMode === 'grid' ? 'default' : 'outline'}
                   size="sm"
-                  onClick={() => externalOnViewModeChange ? externalOnViewModeChange('grid') : setViewMode('grid')}
+                  onClick={() => setViewMode('grid')}
                 >
                   <Grid className="h-4 w-4" />
                 </Button>
                 <Button
-                  variant={actualViewMode === 'list' ? 'default' : 'outline'}
+                  variant={viewMode === 'list' ? 'default' : 'outline'}
                   size="sm"
-                  onClick={() => externalOnViewModeChange ? externalOnViewModeChange('list') : setViewMode('list')}
+                  onClick={() => setViewMode('list')}
                 >
                   <List className="h-4 w-4" />
                 </Button>
@@ -544,7 +538,7 @@ export function AgentsBoard({
 
       {/* Agents Grid/List */}
       <div className={cn(
-        actualViewMode === 'grid'
+        viewMode === 'grid'
           ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6'
           : 'space-y-4'
       )}>
@@ -553,16 +547,25 @@ export function AgentsBoard({
             key={agent.id}
             className={cn(
               'hover:shadow-lg transition-all cursor-pointer group',
-              actualViewMode === 'list' && 'hover:bg-gray-50'
+              viewMode === 'list' && 'hover:bg-gray-50'
             )}
             onClick={() => onAgentSelect?.(agent)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                onAgentSelect?.(agent);
+              }
+            }}
+            role="button"
+            tabIndex={0}
+            aria-label={`Select agent ${agent.display_name}`}
           >
             <CardContent className={cn(
               'p-4',
-              actualViewMode === 'list' && 'flex items-center gap-4'
+              viewMode === 'list' && 'flex items-center gap-4'
             )}>
               {/* Grid View Layout */}
-              {actualViewMode === 'grid' && (
+              {viewMode === 'grid' && (
                 <div className="space-y-3">
                   {/* Header */}
                   <div className="flex items-start justify-between">
@@ -647,6 +650,17 @@ export function AgentsBoard({
                     {agent.description}
                   </p>
 
+                  {/* Business Function Badge */}
+                  {(() => {
+                    const functionName = getFunctionName(agent.function_id) ||
+                                        agent.business_function?.replace(/_/g, ' ');
+                    return functionName ? (
+                      <Badge variant="outline" className="text-xs bg-purple-50 text-purple-700 border-purple-200">
+                        {functionName.toUpperCase()}
+                      </Badge>
+                    ) : null;
+                  })()}
+
                   {/* Knowledge Domains */}
                   {agent.knowledge_domains && agent.knowledge_domains.length > 0 && (
                     <div className="flex flex-wrap gap-1">
@@ -655,7 +669,7 @@ export function AgentsBoard({
                           key={domain}
                           className={cn('text-xs', getDomainColor([domain]))}
                         >
-                          {domains.find(d => d.value === domain)?.label || domain}
+                          {domain}
                         </Badge>
                       ))}
                       {agent.knowledge_domains.length > 2 && (
@@ -694,7 +708,7 @@ export function AgentsBoard({
               )}
 
               {/* List View Layout */}
-              {actualViewMode === 'list' && (
+              {viewMode === 'list' && (
                 <>
                   <AgentAvatar avatar={agent.avatar} name={agent.name} size="sm" />
                   <div className="flex-1 min-w-0">
@@ -713,9 +727,19 @@ export function AgentsBoard({
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
+                    {/* Business Function Badge */}
+                    {(() => {
+                      const functionName = getFunctionName(agent.function_id) ||
+                                          agent.business_function?.replace(/_/g, ' ');
+                      return functionName ? (
+                        <Badge variant="outline" className="text-xs bg-purple-50 text-purple-700 border-purple-200">
+                          {functionName.toUpperCase()}
+                        </Badge>
+                      ) : null;
+                    })()}
                     {agent.knowledge_domains && agent.knowledge_domains.length > 0 && (
                       <Badge className={cn('text-xs', getDomainColor(agent.knowledge_domains))}>
-                        {domains.find(d => d.value === agent.knowledge_domains![0])?.label || agent.knowledge_domains[0]}
+                        {agent.knowledge_domains[0]}
                       </Badge>
                     )}
                     {savedAgents.has(agent.id) && (

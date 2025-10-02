@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { agentService, type Agent as DbAgent, type AgentWithCategories, type AgentWithCapabilities } from '@/lib/agents/agent-service';
+
+import { agentService, type Agent as DbAgent } from '@/features/agents/services/agent-service';
 
 export interface Agent {
   id: string;
@@ -27,7 +28,8 @@ export interface Agent {
   priority: number;
   implementation_phase: number;
   knowledge_domains?: string[];
-  business_function?: string | null; // UUID foreign key to business_functions table
+  business_function?: string | null; // Legacy string field (deprecated)
+  function_id?: string | null; // UUID foreign key to org_functions table
   role?: string | null; // UUID foreign key to roles table
   categories?: string[];
   domain_expertise?: string;
@@ -47,7 +49,7 @@ export interface Agent {
   medical_reviewer_id?: string;
   cost_per_query?: number;
   average_latency_ms?: number;
-  audit_trail?: Record<string, any>;
+  audit_trail?: Record<string, unknown>;
 
   created_at?: string;
   updated_at?: string;
@@ -94,7 +96,7 @@ export interface AgentsStore {
 
   // Legacy format conversion (for backwards compatibility)
   convertToLegacyFormat: (agent: Agent) => any;
-  convertFromLegacyFormat: (legacyAgent: any) => Agent;
+  convertFromLegacyFormat: (legacyAgent: unknown) => Agent;
 
   // Global synchronization
   syncAcrossViews: () => void;
@@ -133,7 +135,7 @@ const convertDbAgentToStoreFormat = (dbAgent: DbAgent): Agent => {
     temperature: dbAgent.temperature ?? 0.7,
     max_tokens: dbAgent.max_tokens ?? 2000,
     is_custom: dbAgent.is_custom ?? false,
-    is_public: (dbAgent as any).is_public ?? true,
+    is_public: (dbAgent as unknown).is_public ?? true,
     status: (dbAgent.status as "development" | "testing" | "active" | "deprecated") || "active",
     tier: dbAgent.tier ?? 1,
     priority: dbAgent.priority ?? 1,
@@ -185,25 +187,16 @@ export const useAgentsStore = create<AgentsStore>()(
 
       // Load agents from database
       loadAgents: async () => {
-        console.log('🚀 AgentsStore: Starting to load agents...');
         set({ isLoading: true, error: null });
 
         try {
-          console.log('📡 AgentsStore: Calling agentService.getActiveAgents()...');
           const dbAgents = await agentService.getActiveAgents();
-          console.log(`🔄 AgentsStore: Received ${dbAgents.length} agents from service`);
-
           const agents = dbAgents.map(convertDbAgentToStoreFormat);
-          console.log(`✅ AgentsStore: Converted to store format, final count: ${agents.length}`);
-
           set({
             agents,
             isLoading: false,
             lastUpdated: new Date(),
           });
-
-          console.log('💾 AgentsStore: State updated with agents');
-
           // Emit change event for global synchronization
           agentEventEmitter.emit(agents);
 
@@ -323,7 +316,7 @@ export const useAgentsStore = create<AgentsStore>()(
         };
 
         try {
-          const dbAgent = await agentService.createCustomAgent(fullAgentData as any);
+          const dbAgent = await agentService.createCustomAgent(fullAgentData as unknown);
           const newAgent = convertDbAgentToStoreFormat(dbAgent);
 
           set(state => ({
@@ -344,21 +337,10 @@ export const useAgentsStore = create<AgentsStore>()(
 
       // Update agent
       updateAgent: async (id: string, updates: Partial<Agent>) => {
-        console.log('🔧 AgentsStore.updateAgent: Starting update...');
-        console.log('- Agent ID:', id);
-        console.log('- Agent ID type:', typeof id);
-        console.log('- Updates received:', updates);
-        console.log('- Updates keys:', Object.keys(updates));
-
         const dbUpdates = convertStoreAgentToDbFormat(updates as Agent);
-        console.log('- Converted DB updates:', dbUpdates);
-        console.log('- DB updates keys:', Object.keys(dbUpdates));
 
         try {
-          console.log('🚀 Calling agentService.updateAgent...');
           await agentService.updateAgent(id, dbUpdates);
-          console.log('✅ agentService.updateAgent completed successfully');
-
           set(state => ({
             agents: state.agents.map(agent =>
               agent.id === id ? { ...agent, ...updates } : agent
@@ -369,14 +351,12 @@ export const useAgentsStore = create<AgentsStore>()(
           // Emit change event
           const { agents } = get();
           agentEventEmitter.emit(agents);
-          console.log('✅ AgentsStore.updateAgent: Update completed successfully');
-
         } catch (error) {
           console.error('❌ AgentsStore.updateAgent: Failed to update agent');
           console.error('- Error:', error);
           console.error('- Error type:', typeof error);
-          console.error('- Error message:', (error as any)?.message);
-          console.error('- Error stack:', (error as any)?.stack);
+          console.error('- Error message:', (error as unknown)?.message);
+          console.error('- Error stack:', (error as unknown)?.stack);
           throw error;
         }
       },
@@ -429,7 +409,7 @@ export const useAgentsStore = create<AgentsStore>()(
       },
 
       // Convert from legacy format
-      convertFromLegacyFormat: (legacyAgent: any) => {
+      convertFromLegacyFormat: (legacyAgent: unknown) => {
         return {
           id: legacyAgent.id,
           name: legacyAgent.id,
@@ -457,8 +437,6 @@ export const useAgentsStore = create<AgentsStore>()(
 
       // Create user copy of an agent
       createUserCopy: async (originalAgent: Agent) => {
-        console.log('🔄 Creating user copy of agent:', originalAgent.display_name);
-
         const userCopyData: Partial<Agent> = {
           ...originalAgent,
           name: `${originalAgent.name}_user_copy_${Date.now()}`, // Add timestamp to ensure uniqueness
@@ -471,10 +449,7 @@ export const useAgentsStore = create<AgentsStore>()(
         const dbUpdates = convertStoreAgentToDbFormat(userCopyData as Agent);
 
         try {
-          console.log('📡 Calling agentService.createCustomAgent...');
-          const dbAgent = await agentService.createCustomAgent(dbUpdates as any);
-          console.log('✅ Created custom agent:', dbAgent.id);
-
+          const dbAgent = await agentService.createCustomAgent(dbUpdates as unknown);
           const newUserCopy = convertDbAgentToStoreFormat(dbAgent);
 
           // Add user copy metadata to the converted agent
@@ -490,8 +465,6 @@ export const useAgentsStore = create<AgentsStore>()(
           // Emit change event
           const { agents } = get();
           agentEventEmitter.emit(agents);
-
-          console.log('✅ User copy created successfully:', newUserCopy.display_name);
           return newUserCopy;
         } catch (error) {
           console.error('❌ Failed to create user copy:', error);
@@ -542,4 +515,4 @@ export const useAgentsStore = create<AgentsStore>()(
 );
 
 // Export the global agents store instance
-export const agentsStore = useAgentsStore;
+export const _agentsStore = useAgentsStore;

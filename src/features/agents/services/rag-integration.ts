@@ -1,12 +1,13 @@
-import { agentService, type Capability, type AgentWithCapabilities } from './agent-service';
 import { supabaseRAGService, type RAGQuery, type SearchResult } from '@/lib/rag/supabase-rag-service';
+
+import { agentService, type Capability, type AgentWithCapabilities } from './agent-service';
 
 export interface RAGConfig {
   primaryIndexes: string[];
   embeddingModel: string;
   retrievalStrategy: 'semantic' | 'hybrid' | 'keyword';
   knowledgeDomains: string[];
-  filterConfig: Record<string, any>;
+  filterConfig: Record<string, unknown>;
 }
 
 export interface KnowledgeDomain {
@@ -197,8 +198,8 @@ export class RAGIntegrationService {
   /**
    * Build filter configuration for precise retrieval
    */
-  private buildFilterConfig(agent: AgentWithCapabilities): Record<string, any> {
-    const config: Record<string, any> = {
+  private buildFilterConfig(agent: AgentWithCapabilities): Record<string, unknown> {
+    const config: Record<string, unknown> = {
       // Default filters
       confidence_threshold: 0.8,
       max_age_days: 730, // 2 years
@@ -409,6 +410,7 @@ export class RAGIntegrationService {
       'business-intelligence': 'openai'
     };
 
+    // eslint-disable-next-line security/detect-object-injection
     return domainModelMap[domain] || 'openai';
   }
 
@@ -525,6 +527,7 @@ export class RAGIntegrationService {
       'research': 'article'
     };
 
+    // eslint-disable-next-line security/detect-object-injection
     return domainCategoryMap[domain] || 'document';
   }
 
@@ -583,4 +586,4 @@ export class RAGIntegrationService {
   }
 }
 
-export const ragIntegrationService = new RAGIntegrationService();
+export const _ragIntegrationService = new RAGIntegrationService();

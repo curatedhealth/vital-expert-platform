@@ -1,5 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 // Validation schema for agent batch upload
@@ -59,11 +59,8 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const validatedData = AgentBatchSchema.parse(body);
 
-    const { agents, options = {} } = validatedData;
+    const { agents, options = { /* TODO: implement */ } } = validatedData;
     const { validate_only = false, skip_duplicates = true, update_existing = false } = options;
-
-    console.log(`🚀 Batch agent upload: ${agents.length} agents, validate_only: ${validate_only}`);
-
     // Validation results
     const results = {
       total: agents.length,
@@ -90,8 +87,6 @@ export async function POST(request: NextRequest) {
     // Process each agent
     for (const agent of agents) {
       try {
-        console.log(`Processing agent: ${agent.name}`);
-
         // Check if agent already exists
         const { data: existing, error: checkError } = await supabase
           .from('agents')
@@ -105,7 +100,6 @@ export async function POST(request: NextRequest) {
 
         if (existing) {
           if (skip_duplicates && !update_existing) {
-            console.log(`Skipping duplicate agent: ${agent.name}`);
             results.skipped++;
             results.warnings.push({
               agent: agent.name,
@@ -157,8 +151,6 @@ export async function POST(request: NextRequest) {
             if (updateError) {
               throw new Error(`Update failed: ${updateError.message}`);
             }
-
-            console.log(`✅ Updated agent: ${agent.name}`);
             results.updated++;
           }
         } else {
@@ -203,8 +195,6 @@ export async function POST(request: NextRequest) {
           if (insertError) {
             throw new Error(`Insert failed: ${insertError.message}`);
           }
-
-          console.log(`✅ Created agent: ${agent.name}`);
           results.created++;
         }
 

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
+
 import { createClient } from '@/lib/supabase/server';
 
 const feedbackSchema = z.object({
@@ -66,7 +67,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Store detailed feedback metrics for analytics
-    const feedbackMetrics = {
+
       query_id: queryId,
       user_id: user.id,
       rating,
@@ -79,8 +80,6 @@ export async function POST(request: NextRequest) {
 
     // You could store this in a separate feedback table for analytics
     // For now, we'll log it for monitoring
-    console.log('User feedback received:', feedbackMetrics);
-
     // Create audit log entry
     await supabase
       .from('audit_logs')

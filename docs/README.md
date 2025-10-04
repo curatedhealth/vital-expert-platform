@@ -25,9 +25,21 @@ System design, technical architecture, and implementation details:
 
 How-to guides, tutorials, and best practices:
 
+- **[quick-start.md](guides/quick-start.md)** - Quick start guide for new users
 - **[ADDING_AGENTS_GUIDE.md](guides/ADDING_AGENTS_GUIDE.md)** - Complete guide to adding new agents
 - **[BATCH_UPLOAD_GUIDE.md](guides/BATCH_UPLOAD_GUIDE.md)** - Batch uploading agents and capabilities
 - **[Executive_Implementation_Report.md](guides/Executive_Implementation_Report.md)** - Executive summary and implementation report
+
+#### Setup Guides (`guides/setup/`)
+
+Step-by-step setup instructions for specific features:
+
+- **[langsmith-integration.md](guides/setup/langsmith-integration.md)** - LangSmith integration setup
+- **[phase1-creation.md](guides/setup/phase1-creation.md)** - Phase 1 system creation guide
+- **[phase1-ui-integration.md](guides/setup/phase1-ui-integration.md)** - Phase 1 UI integration guide
+- **[rag-setup.md](guides/setup/rag-setup.md)** - RAG (Retrieval-Augmented Generation) setup
+- **[testing-setup.md](guides/setup/testing-setup.md)** - Testing environment setup
+- **[tool-calling-setup.md](guides/setup/tool-calling-setup.md)** - Tool calling configuration
 
 ### API Documentation (`api/`)
 
@@ -58,19 +70,73 @@ Agent specifications, capabilities, and configuration:
 - Agent configuration templates
 - Specialized agent libraries
 
+### Implementation Documentation (`implementation/`)
+
+Detailed implementation summaries and technical reports:
+
+#### Core Features
+- **[agent-enhancement-plan.md](implementation/agent-enhancement-plan.md)** - Agent enhancement implementation plan
+- **[agent-enhancement-complete.md](implementation/agent-enhancement-complete.md)** - Completed agent enhancements
+- **[agent-tool-ui-integration.md](implementation/agent-tool-ui-integration.md)** - Agent tool UI integration
+- **[orchestrator-integration.md](implementation/orchestrator-integration.md)** - Master orchestrator integration
+- **[orchestration-complete.md](implementation/orchestration-complete.md)** - Orchestration implementation complete
+
+#### Advanced Features
+- **[checkpointing-summary.md](implementation/checkpointing-summary.md)** - Checkpointing implementation
+- **[hitl-complete.md](implementation/hitl-complete.md)** - Human-in-the-loop (HITL) complete
+- **[hitl-progress.md](implementation/hitl-progress.md)** - HITL implementation progress
+- **[hitl-status.md](implementation/hitl-status.md)** - HITL implementation status
+- **[langgraph-summary.md](implementation/langgraph-summary.md)** - LangGraph implementation
+- **[langgraph-migration-plan.md](implementation/langgraph-migration-plan.md)** - Full LangGraph migration plan
+- **[memory-history.md](implementation/memory-history.md)** - Memory and history implementation
+- **[streaming-summary.md](implementation/streaming-summary.md)** - Streaming implementation
+- **[tool-registry-complete.md](implementation/tool-registry-complete.md)** - Tool registry system complete
+
+#### Virtual Advisory Board (VAB)
+- **[vab-roadmap.md](implementation/vab-roadmap.md)** - VAB implementation roadmap
+- **[vab-summary.md](implementation/vab-summary.md)** - VAB implementation summary
+- **[vab-file-map.md](implementation/vab-file-map.md)** - VAB file mapping
+
+#### Phased Implementations
+- **[phase1-complete.md](implementation/phase1-complete.md)** - Phase 1 completion report
+- **[phases-2-3-4-complete.md](implementation/phases-2-3-4-complete.md)** - Phases 2-4 completion
+- **[roadmap-complete.md](implementation/roadmap-complete.md)** - Implementation roadmap complete
+- **[remaining-features-plan.md](implementation/remaining-features-plan.md)** - Remaining features plan
+- **[remaining-roadmap.md](implementation/remaining-roadmap.md)** - Remaining implementation roadmap
+
+#### Integration & Status
+- **[complete-summary.md](implementation/complete-summary.md)** - Complete implementation summary
+- **[integration-complete.md](implementation/integration-complete.md)** - Integration complete summary
+- **[integration-edits-required.md](implementation/integration-edits-required.md)** - Integration edits required
+- **[status.md](implementation/status.md)** - Current implementation status
+- **[ui-integration-complete.md](implementation/ui-integration-complete.md)** - UI integration complete
+
+### Operational Documentation (`docs/`)
+
+- **[prevent-background-processes.md](prevent-background-processes.md)** - Guide to prevent background processes
+- **[todo-comprehensive.md](todo-comprehensive.md)** - Comprehensive TODO list
+
 ### Archive (`archive/`)
 
 Historical documentation and reference materials:
 
 - **[README.md](archive/README.md)** - Archive index and guide
-- **[CHANGELOG.md](archive/CHANGELOG.md)** - Project changelog and version history
-- **[CONTRIBUTING.md](archive/CONTRIBUTING.md)** - Contributing guidelines
-- **[SECURITY.md](archive/SECURITY.md)** - Security policy
+- **[reorganization-summary-2025-10-02.md](archive/reorganization-summary-2025-10-02.md)** - Previous reorganization details
 - **[AGENTS_QUICK_REFERENCE.md](archive/AGENTS_QUICK_REFERENCE.md)** - Quick reference guide for agents
 - **[VITAL_AI_PLATFORM_PRD.md](archive/VITAL_AI_PLATFORM_PRD.md)** - Original Product Requirements Document
 - Historical architecture and planning documents
 
-**Note**: Temporary implementation reports have been removed. See git history for details on past migrations, fixes, and implementations.
+#### Session Archives (`archive/2025-10-03-session/`)
+
+Documentation from October 3, 2025 implementation session:
+
+- **[final-implementation-status.md](archive/2025-10-03-session/final-implementation-status.md)** - Final implementation status
+- **[final-implementation-summary.md](archive/2025-10-03-session/final-implementation-summary.md)** - Final implementation summary
+- **[final-next-steps.md](archive/2025-10-03-session/final-next-steps.md)** - Next steps from session
+- **[final-session-summary.md](archive/2025-10-03-session/final-session-summary.md)** - Complete session summary
+- **[next-steps-implementation.md](archive/2025-10-03-session/next-steps-implementation.md)** - Implementation next steps
+- **[session-complete-summary.md](archive/2025-10-03-session/session-complete-summary.md)** - Session completion summary
+- **[session-summary.md](archive/2025-10-03-session/session-summary.md)** - Session summary
 
 ## Quick Start Guides
 
@@ -168,18 +234,56 @@ When adding or updating documentation:
 
 ## Documentation Changelog
 
-### October 2025 Reorganization
+### October 4, 2025 - Comprehensive Reorganization & Versioning
+
+**Major Changes:**
+- Reorganized 43+ root-level markdown files into structured directories
+- Moved implementation summaries to `implementation/` (27 files)
+- Created `guides/setup/` for setup documentation (7 files)
+- Archived session summaries to `archive/2025-10-03-session/` (7 files)
+- Established naming conventions: kebab-case for all documentation files
+- Reduced root directory to 4 essential files (README, CHANGELOG, CONTRIBUTING, SECURITY)
+
+**Naming Convention:**
+- All documentation files use kebab-case (lowercase with hyphens)
+- Implementation files: `{feature}-{type}.md` (e.g., `langgraph-summary.md`)
+- Guide files: `{topic}-{type}.md` (e.g., `rag-setup.md`)
+- Archive files include date: `{name}-YYYY-MM-DD.md` (e.g., `reorganization-summary-2025-10-02.md`)
+
+**Directory Structure:**
+```
+docs/
+├── architecture/        (13 files) - System architecture & design
+├── guides/             (4 files) - User & developer guides
+│   └── setup/          (7 files) - Setup instructions
+├── implementation/     (27 files) - Implementation summaries & reports
+├── api/                (2 files) - API documentation
+├── compliance/         - HIPAA & regulatory docs
+├── prompt-library/     - AI prompt templates
+├── Agents_Cap_Libraries/ - Agent capabilities
+└── archive/            - Historical documentation
+    └── 2025-10-03-session/ (7 files) - Session archives
+```
+
+**Files Moved:**
+- Implementation documentation: 27 files → `docs/implementation/`
+- Setup guides: 7 files → `docs/guides/setup/`
+- Session summaries: 7 files → `docs/archive/2025-10-03-session/`
+- Operational docs: 2 files → `docs/`
+- Previous reorganization summary → `docs/archive/`
+
+### October 2, 2025 - Initial Reorganization
 
 Major documentation reorganization completed:
 - Created structured subdirectories (architecture, guides, api, compliance, archive)
 - Moved 70+ documentation files to appropriate locations
 - Archived outdated MA001 PRD ARD documentation
 - Consolidated CSV data files
-- Created this comprehensive index
 
-See [archive/REORGANIZATION_SUMMARY.md](archive/REORGANIZATION_SUMMARY.md) for previous reorganization details.
+See [archive/reorganization-summary-2025-10-02.md](archive/reorganization-summary-2025-10-02.md) for details.
 
 ---
 
-**Last Updated**: October 2, 2025
+**Last Updated**: October 4, 2025
 **Maintained By**: VITAL Path Development Team
+**Version**: 2.0

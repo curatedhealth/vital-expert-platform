@@ -24,7 +24,7 @@ interface RAGSearchRequest {
 
 export async function POST(request: NextRequest) {
   try {
-
+    const supabase = createClient();
     // Get user session
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
@@ -48,13 +48,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // ,
-    //   max_results: body.max_results,
-    //   user_id: user.id
-    // });
-
     // Prepare request for Python AI service
-
+    const pythonRequest = {
       query: body.query,
       filters: {
         ...body.filters,
@@ -74,7 +69,8 @@ export async function POST(request: NextRequest) {
     };
 
     // Call Python AI service
-
+    const PYTHON_AI_SERVICE_URL = process.env.PYTHON_AI_SERVICE_URL || 'http://localhost:8000';
+    const response = await fetch(`${PYTHON_AI_SERVICE_URL}/api/rag/search`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -85,7 +81,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (!response.ok) {
-
+      const errorData = await response.json().catch(() => ({}));
       // console.error('❌ Python RAG service error:', {
       //   status: response.status,
       //   statusText: response.statusText,
@@ -103,7 +99,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Enhance response with hybrid architecture metadata
-
+    const ragResponse = await response.json();
+    const enhancedResponse = {
       ...ragResponse,
       search_metadata: {
         ...ragResponse.search_metadata,
@@ -126,7 +123,7 @@ export async function POST(request: NextRequest) {
       }
     };
 
-    // return NextResponse.json(enhancedResponse, { status: 200 });
+    return NextResponse.json(enhancedResponse, { status: 200 });
 
   } catch (error) {
     // console.error('❌ Hybrid RAG search error:', error);
@@ -146,7 +143,7 @@ export async function POST(request: NextRequest) {
 // GET endpoint for RAG search capabilities and statistics
 export async function GET(request: NextRequest) {
   try {
-
+    const supabase = createClient();
     // Get user session
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
@@ -154,7 +151,10 @@ export async function GET(request: NextRequest) {
     }
 
     // Call Python AI service for RAG capabilities
-
+    const { searchParams } = new URL(request.url);
+    const includeStats = searchParams.get('include_stats') === 'true';
+    const PYTHON_AI_SERVICE_URL = process.env.PYTHON_AI_SERVICE_URL || 'http://localhost:8000';
+    const response = await fetch(
       `${PYTHON_AI_SERVICE_URL}/api/rag/capabilities?include_stats=${includeStats}`,
       {
         method: 'GET',
@@ -169,8 +169,10 @@ export async function GET(request: NextRequest) {
       throw new Error(`Python RAG service error: ${response.statusText}`);
     }
 
-    // Get additional statistics from Supabase if requested
+    const capabilities = await response.json();
 
+    // Get additional statistics from Supabase if requested
+    let supabaseStats = {};
     if (includeStats) {
       try {
         // Get document counts by organization
@@ -180,14 +182,15 @@ export async function GET(request: NextRequest) {
           .eq('organization_id', user.id); // This should be organization_id from user profile
 
         if (!orgError && orgDocs) {
-
+          const specialtyCounts = orgDocs.reduce((acc: any, doc: any) => {
             acc[doc.medical_specialty] = (acc[doc.medical_specialty] || 0) + 1;
             return acc;
-          }, { /* TODO: implement */ });
+          }, {});
 
+          const typeCounts = orgDocs.reduce((acc: any, doc: any) => {
             acc[doc.document_type] = (acc[doc.document_type] || 0) + 1;
             return acc;
-          }, { /* TODO: implement */ });
+          }, {});
 
           supabaseStats = {
             organization_documents: orgDocs.length,

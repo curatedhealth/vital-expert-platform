@@ -22,10 +22,40 @@ export function AgentAvatar({ agent, avatar: avatarProp, name: nameProp, size = 
   const avatar = agent?.avatar || avatarProp || '🤖';
   const name = agent?.name || nameProp || 'Agent';
 
-  // Check if avatar is a file path or URL
-  const isImagePath = avatar && (avatar.startsWith('/') || avatar.startsWith('http'));
+  // Function to get the proper icon URL with simplified PNG naming
+  const getIconUrl = (iconUrl: string) => {
+    // If it's already a local PNG path, use it
+    if (iconUrl.startsWith('/icons/png/')) {
+      return iconUrl;
+    }
+
+    // For avatar names that match our database icons, use them directly
+    if (iconUrl.match(/^avatar_\d{4}$/)) {
+      // Use 4-digit PNG filenames
+      return `/icons/png/avatars/${iconUrl}.png`;
+    }
+
+    // Support legacy 3-digit format by converting to 4-digit
+    if (iconUrl.match(/^avatar_\d{3}$/)) {
+      const num = iconUrl.replace('avatar_', '');
+      const paddedNum = num.padStart(4, '0');
+      return `/icons/png/avatars/avatar_${paddedNum}.png`;
+    }
+
+    return iconUrl;
+  };
+
+  // Check if avatar is a file path, URL, or our avatar naming pattern
+  const isImagePath = avatar && (
+    avatar.startsWith('/') ||
+    avatar.startsWith('http') ||
+    avatar.match(/^avatar_\d{3,4}$/) // Support both 3-digit and 4-digit avatar patterns
+  );
 
   if (isImagePath) {
+    const iconUrl = getIconUrl(avatar);
+    const fallbackAvatar = '/icons/png/avatars/avatar_0001.png';
+
     return (
       <div className={cn(
         'flex items-center justify-center rounded-lg overflow-hidden bg-white border border-gray-200',
@@ -33,18 +63,22 @@ export function AgentAvatar({ agent, avatar: avatarProp, name: nameProp, size = 
         className
       )}>
         <img
-          src={avatar}
+          src={iconUrl}
           alt={name}
           className="w-full h-full object-cover"
           onError={(e) => {
-            // Fallback to a default emoji if image fails to load
             const target = e.target as HTMLImageElement;
-            target.style.display = 'none';
-            if (target.parentNode) {
-              const fallback = document.createElement('span');
-              fallback.textContent = '🤖';
-              fallback.className = 'text-2xl';
-              target.parentNode.appendChild(fallback);
+            if (target.src !== fallbackAvatar) {
+              target.src = fallbackAvatar;
+            } else {
+              // If fallback also fails, show emoji
+              target.style.display = 'none';
+              if (target.parentNode) {
+                const fallback = document.createElement('span');
+                fallback.textContent = '🤖';
+                fallback.className = 'text-2xl';
+                target.parentNode.appendChild(fallback);
+              }
             }
           }}
         />

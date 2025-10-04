@@ -6,6 +6,7 @@
 import { createClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
 
+const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
@@ -34,7 +35,7 @@ interface SystemHealthResponse {
 }
 
 // Service endpoints to check
-
+const SERVICE_ENDPOINTS = [
   {
     name: 'orchestrator',
     url: process.env.ORCHESTRATOR_SERVICE_URL || 'http://localhost:8001',
@@ -70,31 +71,36 @@ interface SystemHealthResponse {
 // GET /api/health - Comprehensive system health check
 export async function GET(request: NextRequest) {
   try {
-
     const healthChecks: ServiceHealthCheck[] = []
 
     // Check database connectivity
-
+    const dbHealth = await checkDatabaseHealth()
     healthChecks.push(dbHealth)
 
     // Check external services
+    const { searchParams } = new URL(request.url)
+    const services = searchParams.get('services')?.split(',')
+    const servicesToCheck = services
+      ? SERVICE_ENDPOINTS.filter(s => services.includes(s.name))
+      : SERVICE_ENDPOINTS
 
-      ? SERVICES_TO_CHECK.filter(s => services.includes(s.name))
-      : SERVICES_TO_CHECK
-
+    const serviceHealthResults = await Promise.all(servicesToCheck.map(service =>
       checkServiceHealth(service.name, `${service.url}${service.path}`)
-    )
+    ))
 
     healthChecks.push(...serviceHealthResults)
 
     // Check internal API endpoints
-
+    const detailed = searchParams.get('detailed') === 'true'
+    const internalHealth = await checkInternalAPIHealth(detailed)
     healthChecks.push(...internalHealth)
 
     // Calculate overall status
+    const overallStatus = determineOverallStatus(healthChecks);
 
     // System metrics
-
+    const startTime = Date.now()
+    const systemMetrics = {
       uptime_seconds: Math.floor((Date.now() - startTime) / 1000),
       active_connections: await getActiveConnectionsCount(),
       environment: process.env.NODE_ENV || 'development'
@@ -108,6 +114,7 @@ export async function GET(request: NextRequest) {
       environment: process.env.NODE_ENV || 'development'
     }
 
+    const statusCode = overallStatus === 'healthy' ? 200 :
                       overallStatus === 'degraded' ? 207 : 503
 
     return NextResponse.json(response, { status: statusCode })
@@ -124,13 +131,15 @@ export async function GET(request: NextRequest) {
 }
 
 async function checkDatabaseHealth(): Promise<ServiceHealthCheck> {
-
+  const startTime = Date.now()
   try {
     // Test database connectivity with a simple query
     const { data, error } = await supabase
       .from('agents')
       .select('id')
       .limit(1)
+
+    const responseTime = Date.now() - startTime
 
     if (error) {
       return {
@@ -144,6 +153,7 @@ async function checkDatabaseHealth(): Promise<ServiceHealthCheck> {
     }
 
     // Check for slow database response
+    const status = responseTime > 2000 ? 'degraded' : 'healthy'
 
     return {
       service_name: 'database',
@@ -168,20 +178,24 @@ async function checkDatabaseHealth(): Promise<ServiceHealthCheck> {
 }
 
 async function checkServiceHealth(serviceName: string, healthUrl: string): Promise<ServiceHealthCheck> {
-
+  const startTime = Date.now()
   try {
-
+    const response = await fetch(healthUrl, {
       method: 'GET',
       signal: AbortSignal.timeout(5000) // 5 second timeout
     })
 
+    const responseTime = Date.now() - startTime
+
     if (response.ok) {
-      let healthData: unknown = { /* TODO: implement */ }
+      let healthData: any = {}
       try {
         healthData = await response.json()
       } catch {
         // If response is not JSON, that's fine
       }
+
+      const status = responseTime > 3000 ? 'degraded' : 'healthy'
 
       return {
         service_name: serviceName,
@@ -220,6 +234,7 @@ async function checkInternalAPIHealth(detailed: boolean = false): Promise<Servic
     return []
   }
 
+  const internalEndpoints = [
     { name: 'rag_enhanced', path: '/api/rag/enhanced' },
     { name: 'llm_query', path: '/api/llm/query' },
     { name: 'knowledge_upload', path: '/api/knowledge/upload' },
@@ -229,15 +244,16 @@ async function checkInternalAPIHealth(detailed: boolean = false): Promise<Servic
   const healthChecks: ServiceHealthCheck[] = []
 
   for (const endpoint of internalEndpoints) {
-
+    const startTime = Date.now()
     try {
       // Test with HEAD request to avoid side effects
-
+      const response = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}${endpoint.path}`, {
         method: 'HEAD',
         signal: AbortSignal.timeout(3000)
       })
 
-                    response.ok ? 'healthy' :
+      const responseTime = Date.now() - startTime
+      const status = response.ok ? 'healthy' :
                     responseTime > 1000 ? 'degraded' : 'unhealthy'
 
       healthChecks.push({
@@ -277,9 +293,12 @@ async function getActiveConnectionsCount(): Promise<number> {
 }
 
 function determineOverallStatus(healthChecks: ServiceHealthCheck[]): 'healthy' | 'degraded' | 'unhealthy' {
+  const criticalServices = ['database', 'orchestrator', 'agent_registry']
+  const unhealthyCount = healthChecks.filter(h => h.status === 'unhealthy').length
+  const degradedCount = healthChecks.filter(h => h.status === 'degraded').length
 
   // Check if any critical service is unhealthy
-
+  const criticalUnhealthy = healthChecks.some(h =>
     criticalServices.includes(h.service_name) && h.status === 'unhealthy'
   )
 

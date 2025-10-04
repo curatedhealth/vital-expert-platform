@@ -6,6 +6,7 @@
 import { createClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
 
+const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
@@ -219,7 +220,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Get active safety signals
-
+    let signalQuery = supabase
       .from('safety_signal_detection')
       .select('*')
       .eq('organization_id', userProfile.organization_id)
@@ -262,7 +263,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Generate safety dashboard summary
-
+    const dashboardSummary = {
       overall_risk_level: signalAnalysis?.risk_level || 'minimal',
       total_active_signals: activeSignals?.length || 0,
       critical_signals: activeSignals?.filter(s => s.clinical_significance === 'critical').length || 0,

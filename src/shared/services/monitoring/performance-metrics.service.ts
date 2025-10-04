@@ -168,17 +168,23 @@ class PerformanceMetricsService {
 
   // Analytics methods
   getPerformanceSnapshot(timeWindow: number = 3600000): PerformanceSnapshot {
+    const cutoff = Date.now() - timeWindow;
+    const recentMetrics = this.metrics.filter(m => m.timestamp >= cutoff);
 
     // Agent performance analysis
+    const agentMetrics = recentMetrics.filter(m => m.type === 'agent_execution');
+    const agentStats = new Map<string, { count: number; totalTime: number }>();
 
     agentMetrics.forEach(m => {
-
+      const agentId = m.metadata?.agentId || 'unknown';
+      const current = agentStats.get(agentId) || { count: 0, totalTime: 0 };
       agentStats.set(agentId, {
         count: current.count + 1,
         totalTime: current.totalTime + m.duration
       });
     });
 
+    const topAgents = Array.from(agentStats.entries())
       .map(([agentId, stats]) => ({
         agentId,
         requests: stats.count,
@@ -188,11 +194,21 @@ class PerformanceMetricsService {
       .slice(0, 5);
 
     // RAG performance analysis
+    const ragMetrics = recentMetrics.filter(m => m.type === 'rag_query');
+    const ragQueries = ragMetrics.length;
+    const ragAvgTime = ragMetrics.reduce((sum, m) => sum + m.duration, 0) / ragQueries || 0;
+    const ragSuccessRate = ragMetrics.filter(m => !m.error).length / ragQueries || 0;
 
     // Orchestrator performance analysis
-
+    const orchestratorMetrics = recentMetrics.filter(m => m.type === 'orchestration');
+    const orchestratorDecisions = orchestratorMetrics.length;
+    const multiAgentRate = orchestratorMetrics.filter(m =>
       m.metadata?.agentCount > 1
     ).length / orchestratorDecisions || 0;
+
+    const totalRequests = recentMetrics.length;
+    const averageResponseTime = recentMetrics.reduce((sum, m) => sum + m.duration, 0) / totalRequests || 0;
+    const errorRate = recentMetrics.filter(m => m.error).length / totalRequests || 0;
 
     return {
       timestamp: Date.now(),
@@ -260,6 +276,7 @@ class PerformanceMetricsService {
           return;
       }
 
+      const shouldAlert = threshold.direction === 'above'
         ? value > threshold.threshold
         : value < threshold.threshold;
 
@@ -326,13 +343,14 @@ class PerformanceMetricsService {
   // Utility methods
   exportMetrics(format: 'json' | 'csv' = 'json'): string {
     if (format === 'csv') {
-
+      const headers = ['timestamp', 'sessionId', 'eventType', 'operation', 'duration', 'success', 'error'];
+      const rows = this.metrics.map(m => [
         m.timestamp,
         m.sessionId,
         m.eventType,
         m.operation,
-        m.duration,
-        m.success,
+        m.duration?.toString() || '',
+        m.success?.toString() || '',
         m.error || ''
       ]);
 

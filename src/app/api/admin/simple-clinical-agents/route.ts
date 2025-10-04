@@ -3,9 +3,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase/client';
 
 export async function POST(request: NextRequest) {
-  // try {
+  try {
     // Minimal clinical agents with only essential fields
-
+    const simpleAgents = [
       {
         name: 'clinical-trial-designer',
         display_name: 'Clinical Trial Designer',
@@ -79,7 +79,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // return NextResponse.json({
+    return NextResponse.json({
       success: true,
       message: `Clinical intelligence agents added successfully`,
       inserted: successCount,

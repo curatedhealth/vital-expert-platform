@@ -17,18 +17,23 @@ interface ToastContextValue {
 export function useToast() {
   const [toasts, setToasts] = useState<Toast[]>([]);
 
-    setToasts((currentToasts) => [...currentToasts, newToast]);
+  const dismiss = useCallback((toastId: string) => {
+    setToasts((currentToasts) =>
+      currentToasts.filter((toast) => toast.id !== toastId)
+    );
+  }, []);
+
+  const toast = useCallback((newToast: Toast) => {
+    const id = newToast.id || Math.random().toString(36).substring(7);
+    const toastWithId = { ...newToast, id };
+
+    setToasts((currentToasts) => [...currentToasts, toastWithId]);
 
     // Auto dismiss after 5 seconds
     setTimeout(() => {
       dismiss(id);
     }, 5000);
-  }, []);
-
-    setToasts((currentToasts) =>
-      currentToasts.filter((toast) => toast.id !== toastId)
-    );
-  }, []);
+  }, [dismiss]);
 
   return {
     toast,

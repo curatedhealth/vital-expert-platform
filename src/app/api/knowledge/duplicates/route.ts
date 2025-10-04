@@ -202,7 +202,7 @@ export async function DELETE(request: NextRequest) {
       }
     }
 
-    `);
+    // console.log('Duplicate removal completed');
 
     if (toRemove.length > 0) {
       // Remove from document_chunks first

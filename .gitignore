@@ -182,3 +182,8 @@ ESLINT_*.json
 
 # HTML files in root (should be in public/)
 /*.html
+
+# LangGraph checkpoints database
+checkpoints.sqlite
+checkpoints.sqlite-shm
+checkpoints.sqlite-wal

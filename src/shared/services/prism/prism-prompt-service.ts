@@ -6,7 +6,7 @@
 
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
-export type PRISMSuite = 'RULES' | 'TRIALS' | 'GUARD' | 'VALUE' | 'BRIDGE' | 'PROOF' | 'CRAFT' | 'SCOUT';
+export type PRISMSuite = 'RULES' | 'TRIALS' | 'GUARD' | 'VALUE' | 'BRIDGE' | 'PROOF' | 'CRAFT' | 'SCOUT' | 'PROJECT' | 'FORGE';
 export type KnowledgeDomain = 'medical_affairs' | 'regulatory_compliance' | 'clinical_research' | 'digital_health' | 'market_access' | 'commercial_strategy' | 'methodology_frameworks' | 'technology_platforms';
 
 export interface PRISMPrompt {
@@ -124,6 +124,18 @@ export class PRISMPromptService {
       primaryDomain: 'commercial_strategy' as KnowledgeDomain,
       useCases: ['competitive analysis', 'market intelligence', 'landscape assessment'],
       keyWords: ['competitive', 'intelligence', 'market', 'landscape', 'analysis']
+    },
+    'PROJECT': {
+      description: 'Project Management Excellence',
+      primaryDomain: 'methodology_frameworks' as KnowledgeDomain,
+      useCases: ['project planning', 'resource allocation', 'timeline management', 'stakeholder coordination', 'risk mitigation', 'agile execution'],
+      keyWords: ['project', 'management', 'planning', 'milestone', 'deliverable', 'resource', 'timeline', 'gantt', 'agile', 'sprint', 'backlog', 'coordination']
+    },
+    'FORGE': {
+      description: 'Digital Health Development',
+      primaryDomain: 'technology_platforms' as KnowledgeDomain,
+      useCases: ['SaMD development', 'DTx platform design', 'API integration', 'data architecture', 'cybersecurity', 'interoperability'],
+      keyWords: ['digital', 'health', 'SaMD', 'DTx', 'software', 'development', 'architecture', 'API', 'cloud', 'security', 'FHIR', 'HL7', 'interoperability', 'platform']
     }
   };
 
@@ -629,6 +641,26 @@ export class PRISMPromptService {
           'market_factors': 'Orphan drug incentives'
         },
         expectedOutcome: 'Opportunity assessment with strategic recommendations'
+      }],
+      'PROJECT': [{
+        scenario: 'Planning digital health product launch',
+        parameters: {
+          'project_scope': 'DTx platform for chronic disease management',
+          'timeline': '18-month development and launch cycle',
+          'resources': 'Cross-functional team of 15 (engineering, clinical, regulatory)',
+          'constraints': 'Budget $2M, regulatory submission Q4 target'
+        },
+        expectedOutcome: 'Comprehensive project plan with milestones, resource allocation, and risk mitigation strategies'
+      }],
+      'FORGE': [{
+        scenario: 'Developing SaMD architecture for FDA submission',
+        parameters: {
+          'product_type': 'AI-powered diagnostic decision support',
+          'technical_stack': 'Cloud-native microservices, FHIR API',
+          'regulatory_class': 'Class II medical device',
+          'security_requirements': 'HIPAA, SOC 2, ISO 27001'
+        },
+        expectedOutcome: 'Technical architecture design with regulatory compliance mapping and security framework'
       }]
     };
 

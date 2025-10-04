@@ -67,11 +67,15 @@ export interface RAGSearchOptions {
 }
 
 class RAGService {
+  private supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL || '',
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
+  );
   private defaultTenantId: string | null = null;
 
   async initialize() {
     if (!this.defaultTenantId) {
-      const { data, error } = await supabase.rpc('get_default_rag_tenant_id');
+      const { data, error } = await this.supabase.rpc('get_default_rag_tenant_id');
       if (error) {
         // console.error('Failed to get default tenant ID:', error);
         throw error;
@@ -88,6 +92,7 @@ class RAGService {
   } = { /* TODO: implement */ }): Promise<RAGKnowledgeSource[]> {
     await this.initialize();
 
+    let query = this.supabase
       .from('rag_knowledge_sources')
       .select('*')
       .order('created_at', { ascending: false });
@@ -121,7 +126,7 @@ class RAGService {
   async createKnowledgeSource(source: Partial<RAGKnowledgeSource>): Promise<RAGKnowledgeSource> {
     await this.initialize();
 
-    const { data, error } = await supabase
+    const { data, error } = await this.supabase
       .from('rag_knowledge_sources')
       .insert([{
         ...source,
@@ -139,7 +144,7 @@ class RAGService {
   }
 
   async updateKnowledgeSource(id: string, updates: Partial<RAGKnowledgeSource>): Promise<RAGKnowledgeSource> {
-    const { data, error } = await supabase
+    const { data, error } = await this.supabase
       .from('rag_knowledge_sources')
       .update(updates)
       .eq('id', id)
@@ -155,7 +160,7 @@ class RAGService {
   }
 
   async deleteKnowledgeSource(id: string): Promise<void> {
-    const { error } = await supabase
+    const { error } = await this.supabase
       .from('rag_knowledge_sources')
       .delete()
       .eq('id', id);
@@ -167,7 +172,7 @@ class RAGService {
   }
 
   async addKnowledgeChunk(chunk: Partial<RAGKnowledgeChunk>): Promise<RAGKnowledgeChunk> {
-    const { data, error } = await supabase
+    const { data, error } = await this.supabase
       .from('rag_knowledge_chunks')
       .insert([chunk])
       .select()
@@ -182,7 +187,7 @@ class RAGService {
   }
 
   async addKnowledgeChunks(chunks: Partial<RAGKnowledgeChunk>[]): Promise<RAGKnowledgeChunk[]> {
-    const { data, error } = await supabase
+    const { data, error } = await this.supabase
       .from('rag_knowledge_chunks')
       .insert(chunks)
       .select();
@@ -207,7 +212,7 @@ class RAGService {
       prism_suite
     } = options;
 
-    const { data, error } = await supabase.rpc('search_rag_knowledge_chunks', {
+    const { data, error } = await this.supabase.rpc('search_rag_knowledge_chunks', {
       query_embedding: queryEmbedding,
       match_threshold: threshold,
       match_count: limit,
@@ -235,7 +240,7 @@ class RAGService {
     try {
       await this.initialize();
 
-      await supabase
+      await this.supabase
         .from('rag_search_analytics')
         .insert([{
           tenant_id: this.defaultTenantId,
@@ -258,6 +263,7 @@ class RAGService {
   } = { /* TODO: implement */ }): Promise<unknown[]> {
     await this.initialize();
 
+    let query = this.supabase
       .from('rag_search_analytics')
       .select('*')
       .eq('tenant_id', this.defaultTenantId)
@@ -286,7 +292,7 @@ class RAGService {
   }
 
   async getKnowledgeChunks(sourceId: string): Promise<RAGKnowledgeChunk[]> {
-    const { data, error } = await supabase
+    const { data, error } = await this.supabase
       .from('rag_knowledge_chunks')
       .select('*')
       .eq('source_id', sourceId)
@@ -304,7 +310,7 @@ class RAGService {
     sourceId: string,
     status: 'pending' | 'processing' | 'completed' | 'failed' | 'archived'
   ): Promise<void> {
-    const updates: unknown = {
+    const updates: Record<string, string> = {
       processing_status: status,
       updated_at: new Date().toISOString()
     };
@@ -313,7 +319,7 @@ class RAGService {
       updates.processed_at = new Date().toISOString();
     }
 
-    const { error } = await supabase
+    const { error } = await this.supabase
       .from('rag_knowledge_sources')
       .update(updates)
       .eq('id', sourceId);
@@ -335,9 +341,11 @@ class RAGService {
   // Helper method to chunk text content
   chunkText(text: string, chunkSize: number = 1000, overlap: number = 200): string[] {
     const chunks: string[] = [];
+    let start = 0;
 
     while (start < text.length) {
-
+      const end = Math.min(start + chunkSize, text.length);
+      const chunk = text.slice(start, end);
       chunks.push(chunk);
       start = end - overlap;
     }
@@ -372,10 +380,15 @@ class RAGService {
       await this.updateProcessingStatus(sourceId, 'processing');
 
       // Chunk the content
+      const chunks = this.chunkText(content, chunkSize, overlap);
 
       // Process chunks in batches
-
-      for (let __i = 0; i < chunks.length; i += batchSize) {
+      const batchSize = 10;
+      for (let i = 0; i < chunks.length; i += batchSize) {
+        const batch = chunks.slice(i, i + batchSize);
+        const processedChunks = await Promise.all(batch.map(async (chunkContent, batchIndex) => {
+          const chunkIndex = i + batchIndex;
+          const embedding = await this.generateEmbedding(chunkContent);
 
           return {
             source_id: sourceId,
@@ -391,7 +404,7 @@ class RAGService {
             quality_score: this.calculateQualityScore(chunkContent),
             semantic_density: this.calculateSemanticDensity(chunkContent)
           };
-        });
+        }));
 
         await this.addKnowledgeChunks(processedChunks);
       }
@@ -408,18 +421,21 @@ class RAGService {
 
   private calculateQualityScore(content: string): number {
     // Simple quality score based on content length and structure
+    const lengthScore = Math.min(content.length / 1000, 1);
+    const hasStructure = /[.!?]/.test(content);
+    const structureScore = hasStructure ? 1 : 0.5;
 
     // Normalize to 0-1 scale
-
     return (lengthScore + structureScore) / 2;
   }
 
   private calculateSemanticDensity(content: string): number {
     // Simple semantic density calculation
-
+    const words = content.toLowerCase().split(/\s+/);
+    const uniqueWords = new Set(words);
     return uniqueWords.size / words.length;
   }
 }
 
-export const __ragService = new RAGService();
+export const ragService = new RAGService();
 export default ragService;

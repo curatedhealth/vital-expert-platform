@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 import { NextRequest, NextResponse } from 'next/server';
 
+const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
@@ -8,7 +9,13 @@ import { NextRequest, NextResponse } from 'next/server';
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
+    const domain = searchParams.get('domain');
+    const search = searchParams.get('search');
+    const suite = searchParams.get('suite');
+    const userOnly = searchParams.get('userOnly') === 'true';
+    const userId = searchParams.get('userId');
 
+    let query = supabase
       .from('prompts')
       .select('*')
       .order('created_at', { ascending: false });
@@ -29,37 +36,21 @@ export async function GET(request: NextRequest) {
     const { data: prompts, error } = await query;
 
     if (error) {
-      // console.error('Error fetching prompts:', error);
+      console.error('Error fetching prompts:', error);
       return NextResponse.json({ error: 'Failed to fetch prompts' }, { status: 500 });
     }
 
     // Post-process to add derived fields
-
-      // Extract acronym from name
-
-      // Determine suite based on acronym
-
-      if (acronym) {
-        if (['DRAFT', 'RADAR', 'REPLY', 'GUIDE'].includes(acronym)) suite = 'RULES™';
-        else if (['DESIGN', 'QUALIFY', 'MONITOR', 'ENROLL'].includes(acronym)) suite = 'TRIALS™';
-        else if (['DETECT', 'ASSESS', 'REPORT', 'SIGNAL'].includes(acronym)) suite = 'GUARD™';
-        else if (['WORTH', 'PITCH', 'JUSTIFY', 'BUDGET'].includes(acronym)) suite = 'VALUE™';
-        else if (['CONNECT', 'RESPOND', 'EDUCATE', 'ALIGN'].includes(acronym)) suite = 'BRIDGE™';
-        else if (['STUDY', 'COMPARE', 'ANALYZE', 'PUBLISH'].includes(acronym)) suite = 'PROOF™';
-        else if (['WRITE', 'PLAN', 'REVIEW', 'STYLE'].includes(acronym)) suite = 'CRAFT™';
-        else if (['WATCH', 'TRACK', 'ASSESS', 'BRIEF'].includes(acronym)) suite = 'SCOUT™';
-      }
-
+    const enrichedPrompts = prompts?.map(prompt => {
       return {
         ...prompt,
-        acronym,
-        suite,
+        suite: prompt.prism_suite || null,
         is_user_created: prompt.created_by !== null
       };
     }) || [];
 
-    // Apply suite filter after enrichment
-
+    // Apply suite filter
+    const filteredPrompts = suite
       ? enrichedPrompts.filter(p => p.suite === suite)
       : enrichedPrompts;
 
@@ -72,6 +63,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const body = await request.json();
 
     const {
       name,

@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 
 import { useAgentsStore, type Agent as AgentsStoreAgent } from '@/lib/stores/agents-store';
 import { ragService } from '@/shared/services/rag/rag-service';
+import { AgentAvatar } from '@/components/ui/agent-avatar';
 
 interface ExpertPanelSelectorProps {
   isOpen: boolean;
@@ -28,54 +29,230 @@ interface PanelTemplate {
   prismSuite?: string;
 }
 
-const PANEL_TEMPLATES: PanelTemplate[] = [
+interface PanelDomain {
+  id: string;
+  name: string;
+  icon: string;
+  description: string;
+  useCases: PanelTemplate[];
+}
+
+const PANEL_DOMAINS: PanelDomain[] = [
   {
-    id: 'regulatory-advisory',
-    name: 'Regulatory Advisory Board',
-    description: 'FDA guidance, regulatory strategy, and compliance review',
-    expertiseAreas: ['Regulatory Affairs', 'FDA Compliance', 'Quality Assurance'],
-    recommendedExperts: ['regulatory', 'compliance', 'quality'],
-    domain: 'regulatory_compliance',
-    prismSuite: 'RULES'
+    id: 'regulatory',
+    name: 'Regulatory Affairs',
+    icon: '⚖️',
+    description: 'FDA guidance, regulatory strategy, and compliance',
+    useCases: [
+      {
+        id: 'fda-submission',
+        name: 'FDA Submission Strategy',
+        description: '510(k), PMA, and De Novo pathway selection and submission support',
+        expertiseAreas: ['FDA Regulations', 'Regulatory Strategy', 'Submission Documentation'],
+        recommendedExperts: ['regulatory', 'fda', 'submission'],
+        domain: 'regulatory_compliance',
+        prismSuite: 'RULES'
+      },
+      {
+        id: 'global-regulatory',
+        name: 'Global Regulatory Strategy',
+        description: 'Multi-market regulatory planning (FDA, EMA, PMDA, Health Canada)',
+        expertiseAreas: ['Global Regulations', 'International Compliance', 'Multi-Market Strategy'],
+        recommendedExperts: ['regulatory', 'global', 'international'],
+        domain: 'regulatory_compliance',
+        prismSuite: 'RULES'
+      },
+      {
+        id: 'quality-compliance',
+        name: 'Quality & Compliance Review',
+        description: 'QMS implementation, ISO 13485, and compliance audits',
+        expertiseAreas: ['Quality Management', 'ISO Standards', 'Compliance Auditing'],
+        recommendedExperts: ['quality', 'compliance', 'audit'],
+        domain: 'regulatory_compliance',
+        prismSuite: 'RULES'
+      },
+      {
+        id: 'post-market-surveillance',
+        name: 'Post-Market Surveillance',
+        description: 'Pharmacovigilance, adverse event monitoring, and safety reporting',
+        expertiseAreas: ['Pharmacovigilance', 'Safety Monitoring', 'Adverse Events'],
+        recommendedExperts: ['safety', 'pharmacovigilance', 'surveillance'],
+        domain: 'regulatory_compliance',
+        prismSuite: 'RULES'
+      }
+    ]
   },
   {
-    id: 'clinical-experts',
-    name: 'Clinical Expert Panel',
-    description: 'Clinical strategy, patient safety, and medical guidance',
-    expertiseAreas: ['Clinical Medicine', 'Patient Safety', 'Medical Research'],
-    recommendedExperts: ['clinical', 'medical', 'safety'],
-    domain: 'clinical_research',
-    prismSuite: 'TRIALS'
+    id: 'clinical',
+    name: 'Clinical Research',
+    icon: '🔬',
+    description: 'Clinical trial design, patient safety, and medical research',
+    useCases: [
+      {
+        id: 'trial-design',
+        name: 'Clinical Trial Design',
+        description: 'Protocol development, endpoint selection, and statistical planning',
+        expertiseAreas: ['Clinical Protocol', 'Trial Design', 'Biostatistics'],
+        recommendedExperts: ['clinical', 'trial', 'biostatistics'],
+        domain: 'clinical_research',
+        prismSuite: 'TRIALS'
+      },
+      {
+        id: 'patient-safety',
+        name: 'Patient Safety & Ethics',
+        description: 'IRB submissions, informed consent, and patient safety protocols',
+        expertiseAreas: ['Patient Safety', 'Ethics', 'IRB Compliance'],
+        recommendedExperts: ['safety', 'ethics', 'patient'],
+        domain: 'clinical_research',
+        prismSuite: 'TRIALS'
+      },
+      {
+        id: 'evidence-generation',
+        name: 'Clinical Evidence Generation',
+        description: 'Real-world evidence, observational studies, and data collection',
+        expertiseAreas: ['Real-World Evidence', 'Data Collection', 'Clinical Outcomes'],
+        recommendedExperts: ['clinical', 'evidence', 'outcomes'],
+        domain: 'clinical_research',
+        prismSuite: 'TRIALS'
+      },
+      {
+        id: 'medical-writing',
+        name: 'Medical Writing & Publications',
+        description: 'Clinical study reports, manuscripts, and scientific communications',
+        expertiseAreas: ['Medical Writing', 'Scientific Publications', 'Clinical Reporting'],
+        recommendedExperts: ['medical', 'writing', 'publications'],
+        domain: 'clinical_research',
+        prismSuite: 'TRIALS'
+      }
+    ]
   },
   {
     id: 'market-access',
-    name: 'Market Access Panel',
-    description: 'Market access strategy, health economics, and value demonstration',
-    expertiseAreas: ['Market Access', 'Health Economics', 'Payer Relations'],
-    recommendedExperts: ['market', 'economics', 'payer'],
-    domain: 'market_access',
-    prismSuite: 'VALUE'
+    name: 'Market Access',
+    icon: '💼',
+    description: 'Pricing, reimbursement, and payer strategy',
+    useCases: [
+      {
+        id: 'pricing-strategy',
+        name: 'Pricing & Reimbursement',
+        description: 'Value-based pricing, payer negotiations, and reimbursement strategy',
+        expertiseAreas: ['Pricing Strategy', 'Reimbursement', 'Payer Relations'],
+        recommendedExperts: ['pricing', 'reimbursement', 'payer'],
+        domain: 'market_access',
+        prismSuite: 'VALUE'
+      },
+      {
+        id: 'heor',
+        name: 'Health Economics & Outcomes Research',
+        description: 'Cost-effectiveness analysis, budget impact models, and HEOR studies',
+        expertiseAreas: ['Health Economics', 'Outcomes Research', 'Cost-Effectiveness'],
+        recommendedExperts: ['heor', 'economics', 'outcomes'],
+        domain: 'market_access',
+        prismSuite: 'VALUE'
+      },
+      {
+        id: 'value-dossier',
+        name: 'Value Dossier Development',
+        description: 'HTA submissions, value propositions, and evidence synthesis',
+        expertiseAreas: ['Value Dossier', 'HTA', 'Evidence Synthesis'],
+        recommendedExperts: ['value', 'hta', 'dossier'],
+        domain: 'market_access',
+        prismSuite: 'VALUE'
+      },
+      {
+        id: 'payer-engagement',
+        name: 'Payer Engagement Strategy',
+        description: 'Stakeholder mapping, payer outreach, and partnership development',
+        expertiseAreas: ['Payer Engagement', 'Stakeholder Management', 'Partnerships'],
+        recommendedExperts: ['payer', 'engagement', 'stakeholder'],
+        domain: 'market_access',
+        prismSuite: 'VALUE'
+      }
+    ]
   },
   {
-    id: 'strategic-advisory',
-    name: 'Strategic Advisory Board',
-    description: 'Business strategy, market analysis, and strategic planning',
-    expertiseAreas: ['Business Strategy', 'Market Analysis', 'Strategic Planning'],
-    recommendedExperts: ['strategy', 'market', 'business'],
-    domain: 'commercial_strategy',
-    prismSuite: 'SCOUT'
+    id: 'commercial',
+    name: 'Commercial Strategy',
+    icon: '📊',
+    description: 'Market analysis, competitive intelligence, and go-to-market',
+    useCases: [
+      {
+        id: 'market-analysis',
+        name: 'Market Analysis & Sizing',
+        description: 'Market research, competitive landscape, and opportunity assessment',
+        expertiseAreas: ['Market Research', 'Competitive Analysis', 'Market Sizing'],
+        recommendedExperts: ['market', 'competitive', 'research'],
+        domain: 'commercial_strategy',
+        prismSuite: 'SCOUT'
+      },
+      {
+        id: 'launch-strategy',
+        name: 'Product Launch Strategy',
+        description: 'Go-to-market planning, positioning, and launch execution',
+        expertiseAreas: ['Product Launch', 'Go-to-Market', 'Brand Positioning'],
+        recommendedExperts: ['launch', 'marketing', 'brand'],
+        domain: 'commercial_strategy',
+        prismSuite: 'SCOUT'
+      },
+      {
+        id: 'sales-strategy',
+        name: 'Sales & Distribution Strategy',
+        description: 'Channel strategy, sales force design, and distribution planning',
+        expertiseAreas: ['Sales Strategy', 'Distribution', 'Channel Management'],
+        recommendedExperts: ['sales', 'distribution', 'channel'],
+        domain: 'commercial_strategy',
+        prismSuite: 'SCOUT'
+      }
+    ]
   },
   {
-    id: 'custom-panel',
-    name: 'Custom Expert Panel',
-    description: 'Build your own panel by selecting specific experts',
-    expertiseAreas: [],
-    recommendedExperts: []
+    id: 'digital-health',
+    name: 'Digital Health',
+    icon: '📱',
+    description: 'Digital therapeutics, SaMD, and health technology',
+    useCases: [
+      {
+        id: 'samd-classification',
+        name: 'SaMD Classification & Regulatory',
+        description: 'Software as Medical Device classification and regulatory pathway',
+        expertiseAreas: ['SaMD', 'Digital Health Regulatory', 'Software Classification'],
+        recommendedExperts: ['digital', 'samd', 'software'],
+        domain: 'digital_health',
+        prismSuite: 'DIGITAL'
+      },
+      {
+        id: 'dtx-validation',
+        name: 'Digital Therapeutics Validation',
+        description: 'Clinical validation, evidence generation, and efficacy studies',
+        expertiseAreas: ['Digital Therapeutics', 'Clinical Validation', 'Efficacy Studies'],
+        recommendedExperts: ['digital', 'therapeutics', 'validation'],
+        domain: 'digital_health',
+        prismSuite: 'DIGITAL'
+      },
+      {
+        id: 'data-privacy',
+        name: 'Data Privacy & Cybersecurity',
+        description: 'HIPAA compliance, data security, and privacy by design',
+        expertiseAreas: ['Data Privacy', 'Cybersecurity', 'HIPAA Compliance'],
+        recommendedExperts: ['privacy', 'security', 'hipaa'],
+        domain: 'digital_health',
+        prismSuite: 'DIGITAL'
+      }
+    ]
   }
 ];
 
+const CUSTOM_PANEL: PanelTemplate = {
+  id: 'custom-panel',
+  name: 'Custom Expert Panel',
+  description: 'Build your own panel by selecting specific experts',
+  expertiseAreas: [],
+  recommendedExperts: []
+};
+
 export function ExpertPanelSelector({ isOpen, onClose, onCreatePanel }: ExpertPanelSelectorProps) {
   const { agents, loadAgents } = useAgentsStore();
+  const [selectedDomain, setSelectedDomain] = useState<PanelDomain | null>(null);
   const [selectedTemplate, setSelectedTemplate] = useState<PanelTemplate | null>(null);
   const [selectedExperts, setSelectedExperts] = useState<AgentsStoreAgent[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -93,20 +270,53 @@ export function ExpertPanelSelector({ isOpen, onClose, onCreatePanel }: ExpertPa
   }, [isOpen, agents.length, loadAgents]);
 
   useEffect(() => {
-    if (searchTerm) {
+    let filtered = agents;
 
+    // First filter by template domain/expertise if a template is selected
+    if (selectedTemplate && selectedTemplate.id !== 'custom-panel') {
+      filtered = agents.filter(agent => {
+        // Match by knowledge domains
+        const domainMatch = (agent.knowledge_domains || []).some(domain =>
+          selectedTemplate.recommendedExperts.some(expertise =>
+            domain.toLowerCase().includes(expertise.toLowerCase()) ||
+            expertise.toLowerCase().includes(domain.toLowerCase())
+          ) ||
+          (selectedTemplate.domain && domain.toLowerCase().includes(selectedTemplate.domain.replace('_', ' ').toLowerCase()))
+        );
+
+        // Match by description or name
+        const nameMatch = selectedTemplate.recommendedExperts.some(expertise =>
+          agent.display_name.toLowerCase().includes(expertise.toLowerCase()) ||
+          agent.description.toLowerCase().includes(expertise.toLowerCase())
+        );
+
+        // Match by expertise areas
+        const expertiseMatch = selectedTemplate.expertiseAreas.some(area =>
+          agent.description.toLowerCase().includes(area.toLowerCase()) ||
+          (agent.knowledge_domains || []).some(domain =>
+            domain.toLowerCase().includes(area.toLowerCase())
+          )
+        );
+
+        return domainMatch || nameMatch || expertiseMatch;
+      });
+    }
+
+    // Then apply search filter on top
+    if (searchTerm) {
+      filtered = filtered.filter(agent =>
         agent.display_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         agent.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
         (agent.knowledge_domains || []).some(domain =>
           domain.toLowerCase().includes(searchTerm.toLowerCase())
         )
       );
-      setFilteredAgents(filtered);
-    } else {
-      setFilteredAgents(agents);
     }
-  }, [searchTerm, agents]);
 
+    setFilteredAgents(filtered);
+  }, [searchTerm, agents, selectedTemplate]);
+
+  const loadKnowledgeSources = async (template: PanelTemplate) => {
     if (!template.domain && !template.prismSuite) {
       setKnowledgeConfig(prev => ({ ...prev, knowledgeSourcesCount: 0 }));
       return;
@@ -114,7 +324,7 @@ export function ExpertPanelSelector({ isOpen, onClose, onCreatePanel }: ExpertPa
 
     setLoadingKnowledgeSources(true);
     try {
-
+      const sources = await ragService.getKnowledgeSources({
         domain: template.domain,
         prism_suite: template.prismSuite,
         processing_status: 'completed',
@@ -135,6 +345,7 @@ export function ExpertPanelSelector({ isOpen, onClose, onCreatePanel }: ExpertPa
     }
   };
 
+  const handleTemplateSelect = (template: PanelTemplate) => {
     setSelectedTemplate(template);
 
     // Load knowledge sources for this template
@@ -142,7 +353,7 @@ export function ExpertPanelSelector({ isOpen, onClose, onCreatePanel }: ExpertPa
 
     if (template.id !== 'custom-panel') {
       // Auto-select recommended experts based on template
-
+      const recommendedAgents = agents.filter(agent =>
         template.recommendedExperts.some(expertise =>
           agent.display_name.toLowerCase().includes(expertise) ||
           agent.description.toLowerCase().includes(expertise) ||
@@ -158,8 +369,9 @@ export function ExpertPanelSelector({ isOpen, onClose, onCreatePanel }: ExpertPa
     }
   };
 
+  const handleExpertToggle = (agent: AgentsStoreAgent) => {
     setSelectedExperts(prev => {
-
+      const exists = prev.find(expert => expert.id === agent.id);
       if (exists) {
         return prev.filter(expert => expert.id !== agent.id);
       } else {
@@ -168,6 +380,7 @@ export function ExpertPanelSelector({ isOpen, onClose, onCreatePanel }: ExpertPa
     });
   };
 
+  const handleCreatePanel = () => {
     if (selectedExperts.length > 0) {
       onCreatePanel(selectedExperts, knowledgeConfig);
       onClose();
@@ -195,54 +408,110 @@ export function ExpertPanelSelector({ isOpen, onClose, onCreatePanel }: ExpertPa
         </div>
 
         <div className="p-6 overflow-y-auto max-h-[calc(90vh-200px)]">
-          {/* Panel Templates */}
-          <div className="mb-8">
-            <h3 className="text-lg font-semibold mb-4">Panel Templates</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {PANEL_TEMPLATES.map((template) => (
+          {/* Breadcrumb navigation */}
+          {selectedDomain && (
+            <div className="mb-4 flex items-center gap-2 text-sm">
+              <button
+                onClick={() => {
+                  setSelectedDomain(null);
+                  setSelectedTemplate(null);
+                }}
+                className="text-blue-600 hover:text-blue-700"
+              >
+                ← Back to Domains
+              </button>
+              <span className="text-gray-400">/</span>
+              <span className="font-medium">{selectedDomain.name}</span>
+            </div>
+          )}
+
+          {/* Show Domain Categories if no domain selected */}
+          {!selectedDomain && (
+            <div className="mb-8">
+              <h3 className="text-lg font-semibold mb-4">Select Panel Domain</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {PANEL_DOMAINS.map((domain) => (
+                  <button
+                    key={domain.id}
+                    onClick={() => setSelectedDomain(domain)}
+                    className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg text-left hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all"
+                  >
+                    <div className="flex items-center gap-3 mb-2">
+                      <span className="text-3xl">{domain.icon}</span>
+                      <h4 className="font-semibold text-foreground">{domain.name}</h4>
+                    </div>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      {domain.description}
+                    </p>
+                    <div className="mt-3 text-xs text-blue-600 dark:text-blue-400">
+                      {domain.useCases.length} use cases →
+                    </div>
+                  </button>
+                ))}
+                {/* Custom Panel Option */}
                 <button
-                  key={template.id}
-                  onClick={() => handleTemplateSelect(template)}
+                  onClick={() => handleTemplateSelect(CUSTOM_PANEL)}
                   className={`p-4 border rounded-lg text-left transition-all ${
-                    selectedTemplate?.id === template.id
+                    selectedTemplate?.id === 'custom-panel'
                       ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
                       : 'border-gray-200 dark:border-gray-700 hover:border-gray-300'
                   }`}
                 >
-                  <h4 className="font-semibold text-foreground">{template.name}</h4>
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                    {template.description}
+                  <div className="flex items-center gap-3 mb-2">
+                    <span className="text-3xl">🎯</span>
+                    <h4 className="font-semibold text-foreground">Custom Expert Panel</h4>
+                  </div>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Build your own panel by selecting specific experts
                   </p>
-                  {template.expertiseAreas.length > 0 && (
-                    <div className="mt-2 flex flex-wrap gap-1">
-                      {template.expertiseAreas.map((area) => (
-                        <span
-                          key={area}
-                          className="px-2 py-1 bg-gray-100 dark:bg-gray-800 text-xs rounded"
-                        >
-                          {area}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                  {(template.domain || template.prismSuite) && (
-                    <div className="mt-2 flex gap-1">
-                      {template.domain && (
-                        <span className="px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 text-xs rounded font-medium">
-                          {template.domain.replace('_', ' ')}
-                        </span>
-                      )}
-                      {template.prismSuite && (
-                        <span className="px-2 py-1 bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 text-xs rounded font-medium">
-                          {template.prismSuite}™
-                        </span>
-                      )}
-                    </div>
-                  )}
                 </button>
-              ))}
+              </div>
             </div>
-          </div>
+          )}
+
+          {/* Show Use Cases when domain is selected */}
+          {selectedDomain && (
+            <div className="mb-8">
+              <h3 className="text-lg font-semibold mb-4">
+                {selectedDomain.name} - Select Use Case
+              </h3>
+              <div className="grid grid-cols-1 gap-3">
+                {selectedDomain.useCases.map((useCase) => (
+                  <button
+                    key={useCase.id}
+                    onClick={() => handleTemplateSelect(useCase)}
+                    className={`p-4 border rounded-lg text-left transition-all ${
+                      selectedTemplate?.id === useCase.id
+                        ? 'border-green-500 bg-green-50 dark:bg-green-900/20'
+                        : 'border-gray-200 dark:border-gray-700 hover:border-gray-300'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <h4 className="font-semibold text-foreground">{useCase.name}</h4>
+                      {selectedTemplate?.id === useCase.id && (
+                        <span className="text-green-500">✓ Selected</span>
+                      )}
+                    </div>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                      {useCase.description}
+                    </p>
+                    {useCase.expertiseAreas.length > 0 && (
+                      <div className="mt-2 flex flex-wrap gap-1">
+                        {useCase.expertiseAreas.slice(0, 3).map((area) => (
+                          <span
+                            key={area}
+                            className="px-2 py-1 bg-gray-100 dark:bg-gray-800 text-xs rounded"
+                          >
+                            {area}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Expert Selection */}
           {selectedTemplate && (
@@ -272,7 +541,7 @@ export function ExpertPanelSelector({ isOpen, onClose, onCreatePanel }: ExpertPa
                     onClick={() => handleExpertToggle(agent)}
                   >
                     <div className="flex items-center gap-2">
-                      <span className="text-2xl">{agent.avatar || '🤖'}</span>
+                      <AgentAvatar avatar={agent.avatar} name={agent.display_name} size="sm" />
                       <div className="flex-1 min-w-0">
                         <h4 className="font-medium text-sm text-foreground truncate">
                           {agent.display_name}

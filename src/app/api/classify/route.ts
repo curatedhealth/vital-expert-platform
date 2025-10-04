@@ -18,7 +18,7 @@ interface IntentClassificationResult {
 }
 
 // 🎯 Intent Pattern Definitions
-
+const INTENT_PATTERNS: Record<string, any> = {
   regulatory: {
     keywords: ['fda', 'regulatory', 'approval', 'submission', '510k', 'nda', 'bla', 'pma', 'ide', 'guidance'],
     patterns: [/\b(regulatory|approval|submission)\b/i, /\bfda\b/i, /\b510\(?k\)?\b/i, /\bnda\b/i],
@@ -60,7 +60,7 @@ function calculateComplexity(query: string, category: string): number {
   else if (query.length > 50) complexity += 0.1;
 
   // Technical terms
-
+  const technicalTerms = [
     'protocol', 'endpoint', 'biomarker', 'stratification', 'randomization',
     'pharmacokinetics', 'pharmacodynamics', 'bioequivalence', 'companion diagnostic'
   ];
@@ -165,6 +165,7 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    return {
       category: 'general',
       confidence: 0.3,
       complexity: 0.1,

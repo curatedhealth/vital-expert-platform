@@ -6,6 +6,7 @@
 import { createClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
 
+const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
@@ -89,7 +90,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Create orchestration request
-
+    const orchestrationPayload = {
       request_id: `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       user_id: user.user.id,
       organization_id: userProfile.organization_id,
@@ -110,7 +111,7 @@ export async function POST(request: NextRequest) {
     let orchestrationResult: OrchestrationResponse
 
     try {
-
+      const response = await fetch(`${process.env.PYTHON_ORCHESTRATOR_URL}/api/orchestrate`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -121,6 +122,7 @@ export async function POST(request: NextRequest) {
       })
 
       if (response.ok) {
+        const result = await response.json();
 
         orchestrationResult = {
           success: true,
@@ -194,20 +196,20 @@ export async function GET(request: NextRequest) {
     }
 
     // Check orchestrator service health
-
+    let orchestratorHealth = {
       available: false,
       version: 'unknown',
       components: { /* TODO: implement */ }
     }
 
     try {
-
+      const healthResponse = await fetch(`${process.env.ORCHESTRATOR_SERVICE_URL}/health`, {
         headers: { 'Authorization': `Bearer ${token}` },
         signal: AbortSignal.timeout(5000)
       })
 
       if (healthResponse.ok) {
-
+        const healthData = await healthResponse.json()
         orchestratorHealth = {
           available: true,
           version: healthData.version || '2.0.0',
@@ -215,7 +217,8 @@ export async function GET(request: NextRequest) {
         }
       }
     } catch (healthError) {
-      // }
+      // Service unavailable, use fallback
+    }
 
     return NextResponse.json({
       success: true,
@@ -294,7 +297,7 @@ async function processWithIntegratedOrchestrator(
 }
 
 async function processVITALFramework(request: unknown, supabase: unknown, organizationId: string) {
-
+  return {
     value: async () => ({
       clinical_value: 0.85,
       business_value: 0.72,
@@ -304,7 +307,7 @@ async function processVITALFramework(request: unknown, supabase: unknown, organi
     }),
     intelligence: async () => {
       // Perform enhanced search
-
+      const searchResponse = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/enhanced-search`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -313,6 +316,7 @@ async function processVITALFramework(request: unknown, supabase: unknown, organi
           max_results: 5
         })
       })
+      const searchData = await searchResponse.json()
 
       return {
         knowledge_sources: searchData.results?.length || 0,

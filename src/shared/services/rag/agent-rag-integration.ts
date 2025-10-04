@@ -10,6 +10,7 @@ import { langchainRAGService } from '@/features/chat/services/langchain-service'
 
 import { medicalRAGService, MedicalSearchFilters } from './medical-rag-service';
 
+const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
@@ -222,14 +223,15 @@ export class AgentRAGIntegrationService {
         throw new Error(`No RAG configuration found for agent: ${params.agentId}`);
       }
 
-      // let combinedResults: unknown[] = [];
+      let combinedResults: unknown[] = [];
       let ragSystemsUsed: string[] = [];
+      let totalConfidence = 0;
 
       // Query multiple RAG systems if enabled
       if (params.useMultiRAG && agentConfig.ragSystems.length > 1) {
-        // for (const ragSystem of agentConfig.ragSystems) {
+        for (const ragSystem of agentConfig.ragSystems) {
           try {
-
+            const systemResults = await this.queryRAGSystem(
               ragSystem,
               params.query,
               params.context,
@@ -239,7 +241,7 @@ export class AgentRAGIntegrationService {
 
             if (systemResults.results.length > 0) {
               // Weight the results based on system configuration
-
+              const weightedResults = systemResults.results.map(result => ({
                 ...result,
                 weightedScore: (result.similarity || result.relevanceScore || 0.8) * ragSystem.weight,
                 ragSystemId: ragSystem.systemId
@@ -259,9 +261,10 @@ export class AgentRAGIntegrationService {
 
       } else {
         // Use default RAG system
-        // const __defaultSystem = agentConfig.ragSystems.find(s => s.systemId === agentConfig.defaultRAG)
+        const defaultSystem = agentConfig.ragSystems.find(s => s.systemId === agentConfig.defaultRAG)
           || agentConfig.ragSystems[0];
 
+        const defaultResults = await this.queryRAGSystem(
           defaultSystem,
           params.query,
           params.context,

@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-import { agentService, type Agent as DbAgent } from '@/lib/agents/agent-service';
+import { agentService, type Agent as DbAgent } from '@/features/agents/services/agent-service';
 
 export interface Agent {
   id: string;
@@ -189,7 +189,7 @@ export const useAgentsStore = create<AgentsStore>()(
         set({ isLoading: true, error: null });
 
         try {
-          ...');
+          console.log('🔄 AgentsStore: Loading agents from database...');
           const dbAgents = await agentService.getActiveAgents();
           const agents = dbAgents.map(convertDbAgentToStoreFormat);
           set({
@@ -337,10 +337,10 @@ export const useAgentsStore = create<AgentsStore>()(
 
       // Update agent
       updateAgent: async (id: string, updates: Partial<Agent>) => {
-        );
+        console.log('🔄 AgentsStore.updateAgent: Updating agent:', id);
 
         const dbUpdates = convertStoreAgentToDbFormat(updates as Agent);
-        );
+        console.log('📝 AgentsStore.updateAgent: DB updates:', dbUpdates);
 
         try {
           await agentService.updateAgent(id, dbUpdates);

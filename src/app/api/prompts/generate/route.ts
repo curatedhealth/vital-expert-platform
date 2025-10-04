@@ -41,10 +41,21 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    .length,
-      medicalSpecialty: body.medicalContext.medicalSpecialty,
-      pharmaEnabled: body.pharmaProtocolRequired,
-      verifyEnabled: body.verifyProtocolRequired
+    // Log prompt generation request
+    const agentCapabilities = body.capabilities || [];
+    await supabase.from('usage_analytics').insert({
+      organization_id: userProfile.organization_id,
+      user_id: user.user.id,
+      event_type: 'prompt_generation_requested',
+      resource_type: 'prompt_generation',
+      metrics: {
+        businessFunction: body.medicalContext.businessFunction,
+        role: body.medicalContext.role,
+        capabilitiesCount: agentCapabilities.length,
+        medicalSpecialty: body.medicalContext.medicalSpecialty,
+        pharmaEnabled: body.pharmaProtocolRequired,
+        verifyEnabled: body.verifyProtocolRequired
+      }
     });
 
     // Generate the system prompt

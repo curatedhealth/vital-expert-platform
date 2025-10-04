@@ -6,12 +6,13 @@
 import { createClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
 
+const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
 
 // Advisory Board Session Types
-
+const SESSION_TYPES = [
   'clinical_review', 'safety_review', 'efficacy_assessment', 'regulatory_guidance',
   'treatment_protocol', 'diagnostic_consensus', 'risk_assessment', 'quality_assurance',
   'research_oversight', 'ethics_review', 'policy_development', 'case_consultation'
@@ -20,7 +21,7 @@ import { NextRequest, NextResponse } from 'next/server'
 type SessionType = typeof SESSION_TYPES[number]
 
 // Consensus Algorithms supported
-
+const CONSENSUS_ALGORITHMS = [
   'simple_majority', 'weighted_voting', 'delphi_method', 'nominal_group_technique',
   'consensus_threshold', 'bayesian_consensus', 'fuzzy_consensus', 'expert_weighted'
 ] as const
@@ -28,7 +29,7 @@ type SessionType = typeof SESSION_TYPES[number]
 type ConsensusAlgorithm = typeof CONSENSUS_ALGORITHMS[number]
 
 // Decision Types
-
+const DECISION_TYPES = [
   'approval_decision', 'risk_classification', 'treatment_recommendation',
   'diagnostic_confirmation', 'protocol_validation', 'safety_determination',
   'efficacy_rating', 'priority_ranking', 'resource_allocation', 'policy_recommendation'
@@ -88,8 +89,11 @@ interface VoteSubmissionRequest {
 // POST /api/advisory - Create advisory session, join session, or submit vote
 export async function POST(request: NextRequest) {
   try {
+    const body = await request.json();
+    const { action } = body;
 
     // Get authentication context
+    const token = request.headers.get('authorization')?.replace('Bearer ', '');
 
     if (!token) {
       return NextResponse.json({
@@ -146,6 +150,9 @@ export async function POST(request: NextRequest) {
 // GET /api/advisory - Get advisory board status and active sessions
 export async function GET(request: NextRequest) {
   try {
+    const { searchParams } = new URL(request.url);
+    const sessionId = searchParams.get('session_id');
+    const token = request.headers.get('authorization')?.replace('Bearer ', '');
 
     if (!token) {
       return NextResponse.json({
@@ -220,7 +227,7 @@ async function handleCreateSession(
 
   try {
     // Try Python service first
-
+    const response = await fetch(`${process.env.REALTIME_ADVISORY_BOARD_URL}/api/sessions/create`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -238,6 +245,7 @@ async function handleCreateSession(
     })
 
     if (response.ok) {
+      const result = await response.json();
 
       // Log session creation
       await supabase
@@ -270,7 +278,8 @@ async function handleCreateSession(
       throw new Error(`Advisory service error: ${response.status}`)
     }
   } catch (error) {
-    // // Fallback session creation
+    // Fallback session creation
+    const sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
     // Store session in database as fallback
     const { data: session, error: dbError } = await supabase
@@ -326,7 +335,7 @@ async function handleJoinSession(
   }
 
   try {
-
+    const response = await fetch(`${process.env.REALTIME_ADVISORY_BOARD_URL}/api/sessions/join`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -342,6 +351,7 @@ async function handleJoinSession(
     })
 
     if (response.ok) {
+      const result = await response.json();
 
       return NextResponse.json({
         success: true,
@@ -381,7 +391,7 @@ async function handleSubmitVote(
   }
 
   try {
-
+    const response = await fetch(`${process.env.REALTIME_ADVISORY_BOARD_URL}/api/sessions/vote`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -397,6 +407,7 @@ async function handleSubmitVote(
     })
 
     if (response.ok) {
+      const result = await response.json();
 
       return NextResponse.json({
         success: true,
@@ -439,12 +450,13 @@ async function handleSubmitVote(
 
 async function getSessionDetails(sessionId: string, organizationId: string, token: string) {
   try {
-
+    const response = await fetch(`${process.env.REALTIME_ADVISORY_BOARD_URL}/api/sessions/${sessionId}`, {
       headers: { 'Authorization': `Bearer ${token}` },
       signal: AbortSignal.timeout(10000)
     })
 
     if (response.ok) {
+      const sessionData = await response.json();
 
       return NextResponse.json({
         success: true,
@@ -483,7 +495,7 @@ async function getSessionDetails(sessionId: string, organizationId: string, toke
 }
 
 async function getAdvisoryBoardStatus(organizationId: string, token: string) {
-
+  let advisoryStatus = {
     available: false,
     active_sessions: 0,
     total_experts: 0,
@@ -491,12 +503,13 @@ async function getAdvisoryBoardStatus(organizationId: string, token: string) {
   }
 
   try {
-
+    const statusResponse = await fetch(`${process.env.REALTIME_ADVISORY_BOARD_URL}/api/status`, {
       headers: { 'Authorization': `Bearer ${token}` },
       signal: AbortSignal.timeout(5000)
     })
 
     if (statusResponse.ok) {
+      const statusData = await statusResponse.json();
 
       advisoryStatus = {
         available: true,
@@ -506,7 +519,8 @@ async function getAdvisoryBoardStatus(organizationId: string, token: string) {
       }
     }
   } catch (error) {
-    // }
+    // Service not available
+  }
 
   // Get fallback data from database
   const { data: fallbackSessions } = await supabase

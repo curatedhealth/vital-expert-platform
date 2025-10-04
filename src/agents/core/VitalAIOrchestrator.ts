@@ -173,11 +173,13 @@ export class VitalAIOrchestrator extends ComplianceAwareOrchestrator {
       await this.ensureAgentsReady();
 
       // Step 1: Ultra-intelligent intent classification with contextual analysis (<50ms target)
+      const intent = await this.classifyIntent(query, context);
 
-      // // Step 2: Adaptive agent selection with pharmaceutical expertise mapping
+      // Step 2: Adaptive agent selection with pharmaceutical expertise mapping
+      const agentSelection = await this.selectAgentsForIntent(intent, context);
 
       // Step 3: Dynamic collaboration strategy determination
-
+      const collaborationType = this.determineCollaborationType(
         intent,
         agentSelection.collaborators.length,
         context
@@ -270,9 +272,8 @@ export class VitalAIOrchestrator extends ComplianceAwareOrchestrator {
     query: string,
     context: ExecutionContext
   ): Promise<IntentClassificationResult> {
-
     // Enhanced pharmaceutical intelligence patterns
-
+    let bestMatch: IntentClassificationResult = {
       category: 'general',
       confidence: 0.3,
       subcategories: [],
@@ -338,8 +339,12 @@ export class VitalAIOrchestrator extends ComplianceAwareOrchestrator {
       };
 
       // Get relevant capability keywords for this intent
+      const relevantCapabilities = capabilityKeywords[intent.category as keyof typeof capabilityKeywords] || [];
 
       // Score agents based on capability match and query keywords
+      const agentScores = this.agents.map(agent => {
+        const agentCapabilities = agent.metadata?.capabilities || [];
+        let score = 0;
 
         // Base capability matching
         relevantCapabilities.forEach(capability => {
@@ -352,9 +357,8 @@ export class VitalAIOrchestrator extends ComplianceAwareOrchestrator {
         });
 
         // Query-specific keyword matching
-
         agentCapabilities.forEach((agentCap: string) => {
-
+          const capLower = agentCap.toLowerCase();
           if (queryLower.includes(capLower) || capLower.includes(queryLower.split(' ')[0])) {
             score += 5;
           }
@@ -375,6 +379,7 @@ export class VitalAIOrchestrator extends ComplianceAwareOrchestrator {
       }).sort((a, b) => b.score - a.score);
 
       // Select primary agent (highest score)
+      const primaryAgent = agentScores[0]?.agent.name || 'medical-writer';
 
       // Select collaborators (next 1-2 highest scoring agents if they have meaningful scores)
       const collaborators: string[] = [];
@@ -425,10 +430,11 @@ export class VitalAIOrchestrator extends ComplianceAwareOrchestrator {
   ): Promise<UnifiedResponse> {
 
     try {
-      // // Step 1: Find the best prompt for this agent based on intent and capabilities
+      // Step 1: Find the best prompt for this agent based on intent and capabilities
+      const promptTitle = this.findBestPrompt(agentName, intent.category);
 
       // Step 2: Execute agent with core capabilities first (RAG-independent)
-
+      const agentResponse = await this.executeAgent(
         agentName,
         promptTitle,
         { query },
@@ -448,8 +454,9 @@ export class VitalAIOrchestrator extends ComplianceAwareOrchestrator {
         // `);
 
         if (ragResponse && ragResponse.sources.length > 0) {
-          // // Add RAG context as supplementary information (not replacing agent response)
-
+          // Add RAG context as supplementary information (not replacing agent response)
+          const ragSupplement = ragResponse.sources.slice(0, 5).map((source, index) => {
+            const relevance = source.similarity || source.relevance || 0.85;
             return `${index + 1}. ${source.title || 'Knowledge Source'} (${(relevance * 100).toFixed(0)}% relevance)`;
           }).join('\n');
 
@@ -469,9 +476,7 @@ export class VitalAIOrchestrator extends ComplianceAwareOrchestrator {
             ragConfidence: ragResponse.confidence,
             agentKnowledgeDomains: ragResponse.agentContext.knowledgeDomains
           };
-        } else {
-          // }
-
+        }
       } catch (ragError) {
         // console.warn(`⚠️ RAG enhancement failed for ${agentName}, continuing with core agent response:`, ragError);
         // Agent response remains unaffected by RAG failure
@@ -531,12 +536,11 @@ export class VitalAIOrchestrator extends ComplianceAwareOrchestrator {
 
     try {
       // Execute all agents in parallel based on their core capabilities
-
+      const agentPromises = selection.selectedAgents.map(async (agentName: string) => {
+        const promptTitle = this.selectBestPrompt(agentName, intent);
         try {
-          // const _promptTitle = this.selectBestPrompt(agentName, intent);
-
           // Step 1: Execute agent with core capabilities
-
+          const response = await this.agents.executeAgent(
             agentName,
             promptTitle,
             {
@@ -547,7 +551,7 @@ export class VitalAIOrchestrator extends ComplianceAwareOrchestrator {
           );
 
           // Step 2: Optional RAG enhancement (conservative approach)
-
+          let ragResponse: any = null;
           try {
             const ragQuery: AgentRAGQuery = {
               query,
@@ -557,23 +561,25 @@ export class VitalAIOrchestrator extends ComplianceAwareOrchestrator {
               maxResults: 3 // Minimal supplementary context
             };
 
-            // const _ragResponse = await agentRAGIntegration.queryAgentKnowledge(ragQuery);
+            ragResponse = await agentRAGIntegration.queryAgentKnowledge(ragQuery);
 
             if (ragResponse && ragResponse.sources.length > 0) {
-              // ragMetadata = {
-                sources: ragResponse.sources.length,
-                systems: ragResponse.ragSystemsUsed,
-                confidence: ragResponse.confidence,
-                domains: ragResponse.agentContext.knowledgeDomains
-              };
+              // Optionally enhance response with RAG data
             }
           } catch (ragError) {
             // console.warn(`⚠️ RAG enhancement failed for ${agentName}, continuing with core response:`, ragError);
           }
 
+          const ragMetadata = ragResponse ? {
+            sources: ragResponse.sources.length,
+            systems: ragResponse.ragSystemsUsed,
+            confidence: ragResponse.confidence,
+            domains: ragResponse.agentContext.knowledgeDomains
+          } : undefined;
+
           return {
             agent: agentName,
-            response: result,
+            response: response,
             success: true,
             ragMetadata
           };
@@ -588,12 +594,15 @@ export class VitalAIOrchestrator extends ComplianceAwareOrchestrator {
         }
       });
 
+      const results = await Promise.all(agentPromises);
+      const successfulResults = results.filter((r: any) => r.success);
+
       if (successfulResults.length === 0) {
         throw new Error('All agents failed to execute');
       }
 
       // Synthesize responses into unified output
-
+      const unifiedResponse = this.synthesizeMultiAgentResponse(
         successfulResults,
         selection.primaryAgent,
         intent
@@ -814,7 +823,7 @@ export class VitalAIOrchestrator extends ComplianceAwareOrchestrator {
 
   private selectPromptByIntent(prompts: string[], intent: IntentClassificationResult): string {
     // Intent-based prompt selection mapping
-
+    const intentKeywords: Record<string, string[]> = {
       clinical: ['trial', 'protocol', 'study', 'recruitment', 'sample'],
       regulatory: ['regulatory', 'submission', 'approval', 'safety'],
       market_access: ['reimbursement', 'coverage', 'pricing'],
@@ -823,7 +832,8 @@ export class VitalAIOrchestrator extends ComplianceAwareOrchestrator {
 
     // Find the best matching prompt based on intent
     for (const prompt of prompts) {
-
+      const promptLower = prompt.toLowerCase();
+      const keywords = intentKeywords[intent.primaryIntent as keyof typeof intentKeywords] || [];
       for (const keyword of keywords) {
         if (promptLower.includes(keyword)) {
           return prompt;
@@ -847,9 +857,10 @@ export class VitalAIOrchestrator extends ComplianceAwareOrchestrator {
     return rule.condition(intent, query);
   }
 
-  private calculateCollaborationConfidence(results: unknown[]): number {
+  private calculateCollaborationConfidence(results: any[]): number {
     if (results.length === 0) return 0;
 
+    const confidences = results
       .map(r => r.response?.confidence || 0.7)
       .filter(c => c > 0);
 
@@ -1020,9 +1031,10 @@ export class VitalAIOrchestrator extends ComplianceAwareOrchestrator {
    * 🧮 Advanced Query Complexity Calculation
    */
   private calculateQueryComplexityAdvanced(query: string, category?: string): number {
+    let complexity = 0.5; // Base complexity
 
     // Advanced pharmaceutical complexity factors
-
+    const advancedTerms = [
       'biomarker', 'pharmacokinetics', 'pharmacodynamics', 'bioequivalence',
       'real-world-evidence', 'companion-diagnostic', 'personalized-medicine'
     ];
@@ -1032,6 +1044,8 @@ export class VitalAIOrchestrator extends ComplianceAwareOrchestrator {
     ).length * 0.1;
 
     // Multi-stakeholder complexity
+    const stakeholderTerms = ['patient', 'physician', 'payer', 'regulator', 'investor'];
+    const stakeholderCount = stakeholderTerms.filter(term => query.toLowerCase().includes(term)).length;
 
     if (stakeholderCount > 1) {
       complexity += stakeholderCount * 0.05;

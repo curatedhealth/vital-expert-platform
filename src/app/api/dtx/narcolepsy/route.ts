@@ -5,12 +5,12 @@
 
 import { createClient } from '@supabase/supabase-js';
 import { NextRequest, NextResponse } from 'next/server';
-
 import { NarcolepsyDTxOrchestrator, NarcolepsyPatientData } from '../../../../dtx/narcolepsy/orchestrator';
 
+const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+)
 
 interface APIResponse {
   success: boolean;
@@ -159,7 +159,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<APIRespons
     }
 
     // Get DTx status and capabilities
-
+    const dtxStatus = {
       name: 'Narcolepsy Digital Therapeutic',
       version: '1.0.0',
       status: 'production_ready',

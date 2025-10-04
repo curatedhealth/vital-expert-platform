@@ -7,7 +7,7 @@ interface HuggingFaceResponse {
 
 export async function POST(request: NextRequest) {
   try {
-
+    const body = await request.json();
     const { message, model } = body;
 
     if (!message) {
@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Get token from environment or request
-
+    const accessToken = process.env.HUGGINGFACE_API_KEY || request.headers.get('x-huggingface-token');
     if (!accessToken) {
       return NextResponse.json(
         { error: 'Hugging Face API token is required' },
@@ -26,8 +26,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // + '...');
-    // // 🚀 Medical AI System Prompt for Hugging Face models
+    // Medical AI System Prompt for Hugging Face models
+    const systemPrompt = `🚀 Medical AI System Prompt for Hugging Face models
 
 ## Core Medical Expertise:
 - Clinical diagnosis and treatment protocols
@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
 This AI provides educational information only and should not replace professional medical advice, diagnosis, or treatment. Always consult qualified healthcare providers for medical decisions.`;
 
     // Use new Hugging Face Router API (OpenAI-compatible)
-
+    const response = await fetch('https://api.huggingface.co/models/router', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${accessToken}`,
@@ -74,7 +74,7 @@ This AI provides educational information only and should not replace professiona
     });
 
     if (!response.ok) {
-
+      const errorText = await response.text();
       // console.error('🚨 Hugging Face API error:', response.status, errorText);
 
       if (response.status === 401) {
@@ -98,7 +98,8 @@ This AI provides educational information only and should not replace professiona
     }
 
     // Extract the response text from OpenAI-compatible format
-
+    const result = await response.json();
+    let aiResponse = '';
     if (result.choices && result.choices.length > 0) {
       aiResponse = result.choices[0].message?.content || '';
     }

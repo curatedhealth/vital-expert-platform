@@ -29,11 +29,13 @@ export default function BatchUploadPanel({
   const [results, setResults] = useState<unknown[]>([]);
   const [error, setError] = useState<string>('');
 
+  const handleFileSelect = (selectedFiles: FileList | null) => {
     setFiles(selectedFiles);
     setError('');
     setResults([]);
   };
 
+  const handleUpload = async () => {
     if (!files || files.length === 0) {
       setError('Please select files to upload');
       return;
@@ -43,14 +45,16 @@ export default function BatchUploadPanel({
     setError('');
 
     try {
-
+      const formData = new FormData();
       Array.from(files).forEach((file, index) => {
         formData.append(`file_${index}`, file);
       });
 
+      const response = await fetch(apiEndpoint, {
         method: 'POST',
         body: formData,
       });
+      const result = await response.json();
 
       if (response.ok) {
         setResults(result.results || [result]);

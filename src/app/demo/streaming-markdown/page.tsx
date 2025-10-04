@@ -22,14 +22,17 @@ export default function StreamingMarkdownDemo() {
   }>>([]);
   const [isStreaming, setIsStreaming] = useState(false);
 
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim()) return;
 
+    const userMessage = {
       id: Date.now().toString(),
       role: 'user' as const,
       content: input.trim(),
     };
 
+    const assistantMessage = {
       id: (Date.now() + 1).toString(),
       role: 'assistant' as const,
       content: '',
@@ -41,8 +44,7 @@ export default function StreamingMarkdownDemo() {
     setIsStreaming(true);
 
     // Simulate streaming response
-
-## Overview
+    const mockResponse = `## Overview
 For your novel oncology therapeutic, here's a comprehensive **FDA breakthrough therapy strategy**:
 
 ### 1. **Pre-Clinical Foundation**
@@ -89,7 +91,11 @@ interface ClinicalTrial {
 For more detailed guidance, consider engaging our **Regulatory Strategy Expert** for personalized consultation.`;
 
     // Simulate streaming by revealing content progressively
+    const characters = mockResponse.split('');
+    let charIndex = 0;
+    let currentContent = '';
 
+    const streamInterval = setInterval(() => {
       if (charIndex < characters.length) {
         // eslint-disable-next-line security/detect-object-injection
         currentContent += characters[charIndex];

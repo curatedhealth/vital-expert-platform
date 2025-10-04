@@ -6,12 +6,13 @@
 import { createClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
 
+const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
 
 // Medical Specialties supported by the Clinical Agent Registry
-
+const MEDICAL_SPECIALTIES = [
   'cardiology', 'oncology', 'neurology', 'psychiatry', 'endocrinology',
   'gastroenterology', 'pulmonology', 'nephrology', 'rheumatology', 'dermatology',
   'ophthalmology', 'otolaryngology', 'urology', 'orthopedics', 'pediatrics',
@@ -72,8 +73,11 @@ interface AgentRoutingRequest {
 // POST /api/agents/registry - Register new clinical agent or route to existing agents
 export async function POST(request: NextRequest) {
   try {
+    const body = await request.json();
+    const { action } = body;
 
     // Get authentication context
+    const token = request.headers.get('authorization')?.replace('Bearer ', '');
 
     if (!token) {
       return NextResponse.json({
@@ -127,6 +131,7 @@ export async function POST(request: NextRequest) {
 // GET /api/agents/registry - Get agent registry status and available agents
 export async function GET(request: NextRequest) {
   try {
+    const token = request.headers.get('authorization')?.replace('Bearer ', '');
 
     if (!token) {
       return NextResponse.json({
@@ -157,7 +162,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Try to get registry status from Python service
-
+    let registryStatus = {
       available: false,
       total_agents: 0,
       active_agents: 0,
@@ -165,13 +170,13 @@ export async function GET(request: NextRequest) {
     }
 
     try {
-
+      const statusResponse = await fetch(`${process.env.PYTHON_AI_SERVICE_URL}/api/agents/registry/status`, {
         headers: { 'Authorization': `Bearer ${token}` },
         signal: AbortSignal.timeout(5000)
       })
 
       if (statusResponse.ok) {
-
+        const statusData = await statusResponse.json();
         registryStatus = {
           available: true,
           total_agents: statusData.total_agents || 0,
@@ -180,7 +185,9 @@ export async function GET(request: NextRequest) {
         }
       }
     } catch (error) {
-      // }
+      // Python service not available, will use fallback
+      // console.warn('Python AI service not available:', error);
+    }
 
     // Get agents from database as fallback
     const { data: agents } = await supabase
@@ -234,7 +241,7 @@ async function handleAgentRegistration(
 
   try {
     // Try Python service first
-
+    const response = await fetch(`${process.env.PYTHON_AI_SERVICE_URL}/api/agents/register`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -250,6 +257,7 @@ async function handleAgentRegistration(
     })
 
     if (response.ok) {
+      const result = await response.json();
 
       // Log registration
       await supabase
@@ -279,7 +287,8 @@ async function handleAgentRegistration(
       throw new Error(`Registration service error: ${response.status}`)
     }
   } catch (error) {
-    // // Fallback registration to database
+    // Fallback registration to database
+    // console.warn('Using fallback registration:', error);
     const { data: agent, error: dbError } = await supabase
       .from('agents')
       .insert({
@@ -343,7 +352,7 @@ async function handleAgentRouting(
 
   try {
     // Try Python service first
-
+    const response = await fetch(`${process.env.PYTHON_AI_SERVICE_URL}/api/agents/route`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -360,6 +369,7 @@ async function handleAgentRouting(
     })
 
     if (response.ok) {
+      const result = await response.json();
 
       // Log routing request
       await supabase
@@ -391,7 +401,8 @@ async function handleAgentRouting(
       throw new Error(`Routing service error: ${response.status}`)
     }
   } catch (error) {
-    // // Fallback routing using database
+    // Fallback routing using database
+    // console.warn('Using fallback routing:', error);
     const { data: agents } = await supabase
       .from('agents')
       .select('*')
@@ -399,6 +410,8 @@ async function handleAgentRouting(
       .eq('enabled', true)
       .limit(routingData.max_agents || 5)
 
+    const matchedAgents = (agents || []).filter(agent => {
+      const metadata = agent.metadata as any;
       return metadata.primary_specialty === routingData.primary_specialty_needed ||
              metadata.secondary_specialties?.includes(routingData.primary_specialty_needed)
     }) || []

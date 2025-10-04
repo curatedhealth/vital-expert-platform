@@ -9,23 +9,25 @@ const supabaseAdmin = createClient(
 
 export async function POST(request: NextRequest) {
   try {
-    // // First, clear existing agents (optional - can be controlled by query param)
+    // First, clear existing agents (optional - can be controlled by query param)
     const { searchParams } = new URL(request.url);
+    const clearExisting = searchParams.get('clear') === 'true';
 
     if (clearExisting) {
-      // const { error: deleteError } = await supabaseAdmin
+      const { error: deleteError } = await supabaseAdmin
         .from('agents')
         .delete()
         .neq('id', '00000000-0000-0000-0000-000000000000'); // Delete all agents
 
       if (deleteError) {
-        // console.error('Error clearing agents:', deleteError);
+        console.error('Error clearing agents:', deleteError);
       } else {
-        // }
+        console.log('Existing agents cleared');
+      }
     }
 
     // Comprehensive 21-agent system based on the actual agent types
-
+    const comprehensiveAgents = [
       // Tier 1 - Essential (5 agents)
       {
         name: 'fda-regulatory-strategist',
@@ -934,13 +936,15 @@ Provide comprehensive analysis of patient populations with focus on health outco
       }
     ];
 
-    // // Insert agents in batches to avoid timeout
-
+    // Insert agents in batches to avoid timeout
+    const batchSize = 5;
+    const results = {
       successful: [] as unknown[],
       failed: [] as unknown[]
     };
 
-    for (let __i = 0; i < comprehensiveAgents.length; i += batchSize) {
+    for (let i = 0; i < comprehensiveAgents.length; i += batchSize) {
+      const batch = comprehensiveAgents.slice(i, i + batchSize);
 
       try {
         const { data: insertData, error: insertError } = await supabaseAdmin
@@ -949,21 +953,21 @@ Provide comprehensive analysis of patient populations with focus on health outco
           .select();
 
         if (insertError) {
-          // console.error(`❌ Batch ${Math.floor(i/batchSize) + 1} error:`, insertError);
+          console.error(`❌ Batch ${Math.floor(i/batchSize) + 1} error:`, insertError);
           results.failed.push({
             batch: Math.floor(i/batchSize) + 1,
             error: insertError.message,
             agents: batch.map(a => a.name)
           });
         } else {
-          // + 1} successful: ${insertData.length} agents inserted`);
+          console.log(`✅ Batch ${Math.floor(i/batchSize) + 1} successful: ${insertData.length} agents inserted`);
           results.successful.push({
             batch: Math.floor(i/batchSize) + 1,
             agents: insertData.map(a => a.name)
           });
         }
       } catch (error) {
-        // console.error(`❌ Batch ${Math.floor(i/batchSize) + 1} exception:`, error);
+        console.error(`❌ Batch ${Math.floor(i/batchSize) + 1} exception:`, error);
         results.failed.push({
           batch: Math.floor(i/batchSize) + 1,
           error: error instanceof Error ? error.message : 'Unknown error',
@@ -972,7 +976,7 @@ Provide comprehensive analysis of patient populations with focus on health outco
       }
     }
 
-    // // // return NextResponse.json({
+    return NextResponse.json({
       success: true,
       message: 'Comprehensive agents system seeded successfully',
       summary: {

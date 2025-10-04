@@ -75,12 +75,15 @@ export const MeditronSetup: React.FC = () => {
     }
   };
 
+  useEffect(() => {
+    const storedKey = localStorage.getItem('huggingface_api_key');
     if (storedKey) {
       setApiKey(storedKey);
       setIsConfigured(true);
     }
-  };
+  }, []);
 
+  const handleSaveApiKey = async () => {
     if (!apiKey.trim()) return;
 
     setIsLoading(true);
@@ -88,7 +91,7 @@ export const MeditronSetup: React.FC = () => {
       localStorage.setItem('huggingface_api_key', apiKey);
 
       // Update environment configuration
-
+      const response = await fetch('/api/config/huggingface', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -109,6 +112,7 @@ export const MeditronSetup: React.FC = () => {
     }
   };
 
+  const handleTestConnection = async () => {
     if (!isConfigured) return;
 
     setIsLoading(true);
@@ -120,12 +124,12 @@ export const MeditronSetup: React.FC = () => {
     }));
     setConnectionTests(tests);
 
-    for (let __i = 0; i < models.length; i++) {
-
+    for (let i = 0; i < models.length; i++) {
+      const model = models[i];
       setTestProgress(((i + 1) / models.length) * 100);
 
       try {
-
+        const response = await fetch('/api/chat/huggingface-local/test', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -160,8 +164,9 @@ export const MeditronSetup: React.FC = () => {
     setIsLoading(false);
   };
 
+  const toggleModelStatus = async (modelId: string, currentStatus: boolean) => {
     try {
-
+      const response = await fetch(`/api/llm-providers/${modelId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ is_active: !currentStatus })
@@ -177,7 +182,7 @@ export const MeditronSetup: React.FC = () => {
         );
       }
     } catch (error) {
-      // console.error('Error toggling model status:', error);
+      console.error('Error toggling model status:', error);
     }
   };
 

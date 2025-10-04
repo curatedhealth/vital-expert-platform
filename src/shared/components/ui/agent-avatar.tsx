@@ -58,9 +58,9 @@ export function AgentAvatar({ agent, avatar: avatarProp, name: nameProp, size = 
         hash = ((hash << 5) - hash) + char;
         hash = hash & hash; // Convert to 32bit integer
       }
-      // Use available avatar files from our database: avatar_0001 through avatar_0021
+      // Use available avatar files from our database: avatar_0001 through avatar_0119
       const availableAvatars = [];
-      for (let i = 1; i <= 21; i++) {
+      for (let i = 1; i <= 119; i++) {
         const num = i.toString().padStart(4, '0');
         availableAvatars.push(`avatar_${num}`);
       }

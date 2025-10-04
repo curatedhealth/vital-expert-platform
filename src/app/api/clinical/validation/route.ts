@@ -6,6 +6,7 @@
 import { createClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
 
+const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
@@ -187,7 +188,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check compliance status
-
+    const complianceStatus = {
       hipaa_compliant: true, // Would implement actual HIPAA checks
       fda_compliant: validationResult.critical_failures === 0,
       regulatory_notes: validationResult.critical_failures > 0

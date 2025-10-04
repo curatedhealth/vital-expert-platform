@@ -6,6 +6,7 @@
 import { createClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
 
+const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
@@ -145,7 +146,7 @@ export async function GET(
     }
 
     // Safety assessment
-
+    const safetyAssessment = {
       total_events: safetyEvents?.length || 0,
       high_severity_events: safetyEvents?.filter(e => ['severe', 'life_threatening'].includes(e.severity)).length || 0,
       recent_events_7d: safetyEvents?.filter(e =>
@@ -421,12 +422,17 @@ export async function DELETE(
 }
 
 // Helper functions
-function calculateLifecycleMetrics(lifecyclePhases: unknown[]) {
-
+function calculateLifecycleMetrics(lifecyclePhases: any[]) {
+  const totalPhases = lifecyclePhases.length;
+  const completedPhases = lifecyclePhases.filter((p: any) => p.status === 'completed').length;
+  const activePhases = lifecyclePhases.filter((p: any) => p.status === 'active').length;
+  const blockedPhases = lifecyclePhases.filter((p: any) => p.status === 'blocked').length;
+  const currentPhase = lifecyclePhases.find((p: any) => p.status === 'active');
+  const overdueMilestones = lifecyclePhases.filter((p: any) =>
     p.target_completion_date &&
     new Date(p.target_completion_date) < new Date() &&
     p.status !== 'completed'
-  ).length
+  ).length;
 
   return {
     total_phases: totalPhases,
@@ -441,11 +447,14 @@ function calculateLifecycleMetrics(lifecyclePhases: unknown[]) {
   }
 }
 
-function calculateRiskLevel(safetyEvents: unknown[]): 'low' | 'medium' | 'high' | 'critical' {
+function calculateRiskLevel(safetyEvents: any[]): 'low' | 'medium' | 'high' | 'critical' {
   if (safetyEvents.length === 0) return 'low'
 
+  const criticalEvents = safetyEvents.filter((e: any) => e.severity === 'life_threatening').length;
+  const severeEvents = safetyEvents.filter((e: any) => e.severity === 'severe').length;
+  const recentEvents = safetyEvents.filter((e: any) =>
     new Date(e.created_at) > new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) // Last 30 days
-  )
+  );
 
   if (criticalEvents > 0) return 'critical'
   if (severeEvents > 2 || recentEvents.length > 10) return 'high'
@@ -455,17 +464,21 @@ function calculateRiskLevel(safetyEvents: unknown[]): 'low' | 'medium' | 'high' 
 
 function estimateCompletion(lifecyclePhases: unknown[]): string | null {
   // Simple estimation based on current progress and average phase duration
+  const activePhase = lifecyclePhases.find((p: any) => p.status === 'active');
+  const completedPhases = lifecyclePhases.filter((p: any) => p.status === 'completed');
 
   if (!activePhase || completedPhases.length === 0) return null
 
   // Calculate average phase duration from completed phases
-
+  const avgPhaseDuration = completedPhases.reduce((sum: number, phase: any) => {
     if (phase.actual_completion_date && phase.start_date) {
-
+      const duration = new Date(phase.actual_completion_date).getTime() - new Date(phase.start_date).getTime();
       return sum + duration
     }
     return sum + (30 * 24 * 60 * 60 * 1000) // Default 30 days if no data
-  }, 0) / Math.max(completedPhases.length, 1)
+  }, 0) / Math.max(completedPhases.length, 1);
+
+  const estimatedCompletionTime = new Date(Date.now() + avgPhaseDuration * (lifecyclePhases.length - completedPhases.length));
 
   return estimatedCompletionTime.toISOString()
 }

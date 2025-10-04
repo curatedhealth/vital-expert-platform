@@ -22,6 +22,7 @@ interface AgentQueryRequest {
 
 export async function POST(request: NextRequest) {
   try {
+    const supabase = createClient();
 
     // Get user session
     const { data: { user }, error: authError } = await supabase.auth.getUser();
@@ -46,8 +47,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // // Prepare request for Python AI service
-
+    // Prepare request for Python AI service
+    const requestPayload = {
       agent_id: body.agent_id,
       agent_type: body.agent_type,
       query: body.query,
@@ -67,17 +68,18 @@ export async function POST(request: NextRequest) {
     };
 
     // Call Python AI service
-
+    const response = await fetch(`${process.env.PYTHON_AI_SERVICE_URL}/api/query/hybrid`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'X-Request-ID': request.headers.get('x-request-id') || generateRequestId(),
         'Authorization': request.headers.get('authorization') || ''
       },
-      body: JSON.stringify(pythonRequest)
+      body: JSON.stringify(requestPayload)
     });
 
     if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ error: response.statusText }));
 
       // console.error('❌ Python AI service error:', {
       //   status: response.status,
@@ -96,7 +98,9 @@ export async function POST(request: NextRequest) {
     }
 
     // Enhance response with additional metadata
+    const aiResponse = await response.json();
 
+    const enhancedResponse = {
       ...aiResponse,
       hybrid_architecture: {
         frontend: 'Next.js TypeScript',
@@ -108,12 +112,12 @@ export async function POST(request: NextRequest) {
       compliance: {
         hipaa_compliant: true,
         fda_21cfr11_compliant: true,
-        pharma_protocol_applied: pythonRequest.pharma_protocol_required,
-        verify_protocol_applied: pythonRequest.verify_protocol_required
+        pharma_protocol_applied: requestPayload.pharma_protocol_required,
+        verify_protocol_applied: requestPayload.verify_protocol_required
       }
     };
 
-    // return NextResponse.json(enhancedResponse, { status: 200 });
+    return NextResponse.json(enhancedResponse, { status: 200 });
 
   } catch (error) {
     // console.error('❌ Hybrid agent query error:', error);
@@ -133,9 +137,13 @@ export async function POST(request: NextRequest) {
 // GET endpoint for agent query templates and examples
 export async function GET(request: NextRequest) {
   try {
+    const { searchParams } = new URL(request.url);
+    const agentType = searchParams.get('agent_type') || 'general';
+    const includeExamples = searchParams.get('include_examples') || 'true';
+    const PYTHON_AI_SERVICE_URL = process.env.PYTHON_AI_SERVICE_URL || 'http://localhost:8000';
 
     // Call Python AI service for templates
-
+    const response = await fetch(
       `${PYTHON_AI_SERVICE_URL}/api/agents/templates?agent_type=${agentType}&include_examples=${includeExamples}`,
       {
         method: 'GET',
@@ -148,6 +156,8 @@ export async function GET(request: NextRequest) {
     if (!response.ok) {
       throw new Error(`Python AI service error: ${response.statusText}`);
     }
+
+    const templates = await response.json();
 
     return NextResponse.json({
       ...templates,

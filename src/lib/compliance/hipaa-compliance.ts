@@ -257,7 +257,7 @@ export class HIPAAComplianceManager {
    * Get PHI type based on pattern index
    */
   private getPhiType(patternIndex: number): string {
-
+    const phiTypes = [
       "Social Security Number",
       "Social Security Number",
       "Phone Number",

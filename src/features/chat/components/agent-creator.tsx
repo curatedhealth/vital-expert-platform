@@ -11,7 +11,12 @@ import {
   Star,
   Trash2,
   CheckCircle,
-  MessageSquare
+  MessageSquare,
+  User,
+  Building2,
+  Wrench,
+  BookOpen,
+  Cpu
 } from 'lucide-react';
 import Image from 'next/image';
 import { useState, useEffect } from 'react';
@@ -226,16 +231,21 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
   const [competencies, setCompetencies] = useState<Record<string, MedicalCompetency[]>>({ /* TODO: implement */ });
   const [businessFunctions, setBusinessFunctions] = useState<HealthcareBusinessFunction[]>([]);
   const [healthcareRoles, setHealthcareRoles] = useState<HealthcareRole[]>([]);
+  const [departments, setDepartments] = useState<any[]>([]);
+  const [departmentsByFunction, setDepartmentsByFunction] = useState<Record<string, any[]>>({});
   const [loadingMedicalData, setLoadingMedicalData] = useState(true);
 
   // Filtered options for conditional dropdowns
-  const [availableDepartments, setAvailableDepartments] = useState<string[]>([]);
-  const [availableRoles, setAvailableRoles] = useState<HealthcareRole[]>([]);
+  const [availableDepartments, setAvailableDepartments] = useState<any[]>([]);
+  const [availableRoles, setAvailableRoles] = useState<any[]>([]);
 
   // Dynamic Prompt Generation State
   const [generatedPrompt, setGeneratedPrompt] = useState<SystemPromptGenerationResponse | null>(null);
   const [isGeneratingPrompt, setIsGeneratingPrompt] = useState(false);
   const [showPromptPreview, setShowPromptPreview] = useState(false);
+
+  // Tab state for multi-step form
+  const [activeTab, setActiveTab] = useState<'basic' | 'organization' | 'capabilities' | 'prompts' | 'knowledge' | 'tools' | 'models'>('basic');
 
   // Fetch available LLM models dynamically
   useEffect(() => {
@@ -329,22 +339,47 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
 
       const defaultPromptStarters = createDefaultPromptStarters(availableIcons);
 
-      // Map function_id to department_name for the dropdown
-      let businessFunctionName = editingAgent.business_function || '';
-      if ((editingAgent as any).function_id && businessFunctions.length > 0) {
-        const matchedFunction = businessFunctions.find(f => f.id === (editingAgent as any).function_id);
+      // Convert names to UUIDs if necessary
+      let businessFunctionValue = (editingAgent as any).function_id || '';
+      let departmentValue = (editingAgent as any).department_id || '';
+      let roleValue = (editingAgent as any).role_id || '';
+
+      // If no UUID but has name, try to find UUID from loaded data
+      if (!businessFunctionValue && editingAgent.business_function && businessFunctions.length > 0) {
+        const matchedFunction = businessFunctions.find(f =>
+          (f.department_name || f.name) === editingAgent.business_function
+        );
         if (matchedFunction) {
-          businessFunctionName = matchedFunction.department_name || matchedFunction.name || businessFunctionName;
-          console.log('[Agent Creator] Mapped function_id to:', businessFunctionName, 'for agent:', editingAgent.display_name);
-        } else {
-          console.warn('[Agent Creator] No match found for function_id:', (editingAgent as any).function_id);
+          businessFunctionValue = matchedFunction.id;
         }
-      } else {
-        console.log('[Agent Creator] businessFunctions not loaded yet or no function_id. Count:', businessFunctions.length);
       }
 
-      // Debug logging
-      console.log('[Agent Creator] Setting formData.businessFunction to:', businessFunctionName);
+      if (!departmentValue && editingAgent.department && departments.length > 0) {
+        const matchedDept = departments.find(d =>
+          d.department_name === editingAgent.department
+        );
+        if (matchedDept) {
+          departmentValue = matchedDept.id;
+        }
+      }
+
+      if (!roleValue && editingAgent.role && healthcareRoles.length > 0) {
+        const matchedRole = healthcareRoles.find(r =>
+          (r.role_name || r.name) === editingAgent.role
+        );
+        if (matchedRole) {
+          roleValue = matchedRole.id;
+        }
+      }
+
+      console.log('[Agent Creator] Loading editing agent with:', {
+        originalFunction: editingAgent.business_function,
+        resolvedFunctionId: businessFunctionValue,
+        originalDepartment: editingAgent.department,
+        resolvedDepartmentId: departmentValue,
+        originalRole: editingAgent.role,
+        resolvedRoleId: roleValue
+      });
 
       setFormData({
         name: editingAgent.display_name || editingAgent.name || 'Unnamed Agent',
@@ -360,9 +395,9 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
         knowledgeFiles: [] as File[],
         tools: [],
         knowledgeDomains: knowledgeDomains,
-        businessFunction: businessFunctionName,
-        role: editingAgent.role || '',
-        department: editingAgent.department || '',
+        businessFunction: businessFunctionValue,
+        role: roleValue,
+        department: departmentValue,
         promptStarters: defaultPromptStarters,
         // Medical Compliance Fields (with safe property access)
         medicalSpecialty: (editingAgent as unknown)?.medical_specialty || '',
@@ -416,42 +451,73 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
   // Load medical capabilities and healthcare data
   useEffect(() => {
     const loadMedicalData = async () => {
-      if (!isOpen) return;
+      if (!isOpen) {
+        console.log('[Agent Creator] Modal not open, skipping data load');
+        return;
+      }
 
+      console.log('[Agent Creator] Starting data load...');
       setLoadingMedicalData(true);
       try {
-        // Load medical capabilities from Supabase
+        console.log('[Agent Creator] Loading capabilities from Supabase...');
+        // Load medical capabilities from Supabase (without competencies join - relationship not configured)
         const { data: capabilities, error: capError } = await supabase
           .from('capabilities')
-          .select(`
-            *,
-            competencies (*)
-          `)
-          .eq('medical_domain', 'NOT NULL')
+          .select('*')
+          .not('medical_domain', 'is', null)
           .eq('status', 'active');
 
-        if (capError) throw capError;
+        if (capError) {
+          console.error('[Agent Creator] Supabase error:', capError);
+          // Don't throw - continue loading organizational data even if capabilities fail
+          console.warn('[Agent Creator] Continuing without capabilities...');
+        }
+
+        console.log('[Agent Creator] Capabilities loaded:', capabilities?.length || 0);
 
         // Load organizational structure from API
+        console.log('[Agent Creator] Fetching organizational structure...');
         const response = await fetch('/api/organizational-structure');
         if (!response.ok) throw new Error('Failed to load organizational structure');
 
         const orgData = await response.json();
         if (!orgData.success) throw new Error(orgData.error || 'Failed to load organizational structure');
 
+        console.log('[Agent Creator] API response:', orgData);
+
         const functions = orgData.data.functions;
         const roles = orgData.data.roles;
-        const departments = orgData.data.departments;
+        const depts = orgData.data.departments;
+        const deptsByFunction = orgData.data.departmentsByFunction;
 
-        // Set state
+        console.log('[Agent Creator] About to set state with functions:', functions?.length);
+
+        // Set state with fallback to static data
         setMedicalCapabilities(capabilities || []);
-        setBusinessFunctions(functions || []);
-        setHealthcareRoles(roles || []);
 
-        console.log('[Agent Creator] Loaded organizational data:', {
-          functions: functions?.length || 0,
-          departments: departments?.length || 0,
-          roles: roles?.length || 0
+        // If API returned no functions, use static data as fallback
+        if (!functions || functions.length === 0) {
+          console.warn('[Agent Creator] No functions from API, using static data');
+          const staticFunctionsArray = staticBusinessFunctions.map((bf, index) => ({
+            id: bf.value,
+            name: bf.label,
+            department_name: bf.label,
+            created_at: new Date().toISOString()
+          }));
+          setBusinessFunctions(staticFunctionsArray);
+        } else {
+          setBusinessFunctions(functions);
+        }
+
+        setHealthcareRoles(roles || []);
+        setDepartments(depts || []);
+        setDepartmentsByFunction(deptsByFunction || {});
+
+        console.log('[Agent Creator] State set complete. Loaded organizational data:', {
+          functions: (functions?.length || staticBusinessFunctions.length),
+          departments: depts?.length || 0,
+          roles: roles?.length || 0,
+          departmentsByFunction: Object.keys(deptsByFunction || {}).length
         });
 
         // Organize competencies by capability
@@ -481,34 +547,20 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
     }
 
     // If database has data, use it
-    if (businessFunctions.length > 0 && healthcareRoles.length > 0) {
-      // Find the selected business function
-      const selectedFunction = businessFunctions.find(bf =>
-        (bf.department_name || bf.name) === formData.businessFunction
-      );
+    if (businessFunctions.length > 0 && Object.keys(departmentsByFunction).length > 0) {
+      // formData.businessFunction now stores the function ID (UUID)
+      const deptsForFunction = departmentsByFunction[formData.businessFunction] || [];
 
-      if (selectedFunction) {
-        // Get unique departments from roles that belong to this function
-        const rolesInFunction = healthcareRoles.filter(role =>
-          role.function_id === selectedFunction.id
-        );
+      setAvailableDepartments(deptsForFunction);
 
-        const uniqueDepartments = Array.from(
-          new Set(
-            rolesInFunction
-              .map(role => role.department_name)
-              .filter((dept): dept is string => Boolean(dept))
-          )
-        ).sort();
+      console.log('[Agent Creator] Filtered departments for function ID', formData.businessFunction, ':', deptsForFunction.length, 'departments');
 
-        setAvailableDepartments(uniqueDepartments);
-
-        // If current department is not in available departments, reset it
-        if (formData.department && uniqueDepartments.length > 0 && !uniqueDepartments.includes(formData.department)) {
-          setFormData(prev => ({ ...prev, department: '', role: '' }));
-        }
-        return;
+      // If current department is not in available departments, reset it
+      const deptIds = deptsForFunction.map(d => d.id);
+      if (formData.department && deptsForFunction.length > 0 && !deptIds.includes(formData.department)) {
+        setFormData(prev => ({ ...prev, department: '', role: '' }));
       }
+      return;
     }
 
     // Fallback to static data
@@ -517,17 +569,17 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
     );
 
     if (selectedStaticFunction) {
-      const departments = staticDepartmentsByFunction[selectedStaticFunction.value] || [];
-      setAvailableDepartments(departments);
+      const depts = staticDepartmentsByFunction[selectedStaticFunction.value] || [];
+      setAvailableDepartments(depts);
 
       // If current department is not in available departments, reset it
-      if (formData.department && departments.length > 0 && !departments.includes(formData.department)) {
+      if (formData.department && depts.length > 0 && !depts.includes(formData.department)) {
         setFormData(prev => ({ ...prev, department: '', role: '' }));
       }
     } else {
       setAvailableDepartments([]);
     }
-  }, [formData.businessFunction, businessFunctions, healthcareRoles]);
+  }, [formData.businessFunction, businessFunctions, departmentsByFunction]);
 
   // Filter roles based on selected business function and department
   useEffect(() => {
@@ -538,39 +590,45 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
 
     // If database has data, use it
     if (businessFunctions.length > 0 && healthcareRoles.length > 0) {
-      const selectedFunction = businessFunctions.find(bf =>
-        (bf.department_name || bf.name) === formData.businessFunction
+      // formData.businessFunction and formData.department now store IDs (UUIDs)
+      let filteredRoles = healthcareRoles.filter(role =>
+        role.function_id === formData.businessFunction
       );
 
-      if (selectedFunction) {
-        let filteredRoles = healthcareRoles.filter(role =>
-          role.function_id === selectedFunction.id
+      // Further filter by department if selected
+      if (formData.department) {
+        filteredRoles = filteredRoles.filter(role =>
+          role.department_id === formData.department
         );
-
-        // Further filter by department if selected
-        if (formData.department) {
-          filteredRoles = filteredRoles.filter(role =>
-            role.department_name === formData.department
-          );
-        }
-
-        setAvailableRoles(filteredRoles);
-
-        // If current role is not in available roles, reset it
-        const currentRoleInAvailable = filteredRoles.some(role =>
-          (role.role_name || role.name) === formData.role
-        );
-        if (formData.role && filteredRoles.length > 0 && !currentRoleInAvailable) {
-          setFormData(prev => ({ ...prev, role: '' }));
-        }
-        return;
       }
+
+      setAvailableRoles(filteredRoles);
+
+      console.log('[Agent Creator] Filtered roles:', filteredRoles.length, 'for function:', formData.businessFunction, 'dept:', formData.department);
+
+      // If current role is not in available roles, reset it
+      const roleIds = filteredRoles.map(r => r.id);
+      if (formData.role && filteredRoles.length > 0 && !roleIds.includes(formData.role)) {
+        setFormData(prev => ({ ...prev, role: '' }));
+      }
+      return;
     }
 
     // Fallback to static data - roles are conditional on department
     // Don't show any roles until department is selected
     setAvailableRoles([]);
   }, [formData.businessFunction, formData.department, businessFunctions, healthcareRoles]);
+
+  // Debug logging for businessFunctions
+  useEffect(() => {
+    if (activeTab === 'organization') {
+      console.log('[Agent Creator] Organization tab active - businessFunctions:', {
+        length: businessFunctions.length,
+        data: businessFunctions,
+        sample: businessFunctions.slice(0, 3)
+      });
+    }
+  }, [activeTab, businessFunctions]);
 
   const handleCapabilityAdd = (capability: string) => {
     if (capability && !formData.capabilities.includes(capability)) {
@@ -1060,6 +1118,19 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
           };
           await createUserCopy(userCopyData as unknown);
         } else {
+          // Look up names from UUIDs for display
+          const selectedFunction = businessFunctions.find(f => f.id === formData.businessFunction);
+          const selectedDept = availableDepartments.find(d => d.id === formData.department);
+          const selectedRole = availableRoles.find(r => r.id === formData.role);
+
+          console.log('[Agent Creator] Save - Looking up names from UUIDs:');
+          console.log('  Business Function UUID:', formData.businessFunction);
+          console.log('  Found function:', selectedFunction);
+          console.log('  Department UUID:', formData.department);
+          console.log('  Found dept:', selectedDept);
+          console.log('  Role UUID:', formData.role);
+          console.log('  Found role:', selectedRole);
+
           // Update existing agent - Only send updateable fields
           const updates = {
             display_name: formData.name,
@@ -1073,9 +1144,14 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
             temperature: formData.temperature,
             max_tokens: formData.maxTokens,
             knowledge_domains: formData.knowledgeDomains,
-            business_function: formData.businessFunction || null, // Store the name, not UUID
-            department: formData.department || null, // Store the department name
-            role: formData.role || null, // Store the name, not UUID
+            // Store NAMES for display (backwards compatibility)
+            business_function: selectedFunction?.department_name || selectedFunction?.name || formData.businessFunction || null,
+            department: selectedDept?.department_name || formData.department || null,
+            role: selectedRole?.role_name || selectedRole?.name || formData.role || null,
+            // Store UUIDs for relationships
+            function_id: formData.businessFunction || null,
+            department_id: formData.department || null,
+            role_id: formData.role || null,
             // Medical Compliance Fields
             medical_specialty: formData.medicalSpecialty,
             clinical_validation_status: formData.clinicalValidationStatus,
@@ -1086,6 +1162,15 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
             medical_accuracy_score: formData.accuracyThreshold,
             citation_accuracy: formData.citationRequired ? 1.0 : 0.0,
           };
+
+          console.log('[Agent Creator] Save - Updates object:', {
+            business_function: updates.business_function,
+            department: updates.department,
+            role: updates.role,
+            function_id: updates.function_id,
+            department_id: updates.department_id,
+            role_id: updates.role_id
+          });
 
           // Call API to update agent
           const response = await fetch(`/api/agents/${editingAgent.id}`, {
@@ -1144,6 +1229,8 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
     }
   };
 
+  if (!isOpen) return null;
+
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] flex flex-col">
@@ -1165,6 +1252,103 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
           <Button variant="ghost" size="icon" onClick={onClose}>
             <X className="h-5 w-5" />
           </Button>
+        </div>
+
+        {/* Tabs Navigation */}
+        <div className="border-b border-gray-200 px-6 bg-white">
+          <nav className="flex gap-6" aria-label="Form sections">
+            <button
+              type="button"
+              onClick={() => setActiveTab('basic')}
+              className={cn(
+                "py-4 px-2 border-b-2 font-medium text-sm transition-colors flex items-center gap-2",
+                activeTab === 'basic'
+                  ? "border-market-purple text-market-purple"
+                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+              )}
+            >
+              <User className="h-4 w-4" />
+              Basic Info
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab('organization')}
+              className={cn(
+                "py-4 px-2 border-b-2 font-medium text-sm transition-colors flex items-center gap-2",
+                activeTab === 'organization'
+                  ? "border-market-purple text-market-purple"
+                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+              )}
+            >
+              <Building2 className="h-4 w-4" />
+              Organization
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab('capabilities')}
+              className={cn(
+                "py-4 px-2 border-b-2 font-medium text-sm transition-colors flex items-center gap-2",
+                activeTab === 'capabilities'
+                  ? "border-market-purple text-market-purple"
+                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+              )}
+            >
+              <Zap className="h-4 w-4" />
+              Capabilities
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab('prompts')}
+              className={cn(
+                "py-4 px-2 border-b-2 font-medium text-sm transition-colors flex items-center gap-2",
+                activeTab === 'prompts'
+                  ? "border-market-purple text-market-purple"
+                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+              )}
+            >
+              <MessageSquare className="h-4 w-4" />
+              Prompt Starters
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab('knowledge')}
+              className={cn(
+                "py-4 px-2 border-b-2 font-medium text-sm transition-colors flex items-center gap-2",
+                activeTab === 'knowledge'
+                  ? "border-market-purple text-market-purple"
+                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+              )}
+            >
+              <BookOpen className="h-4 w-4" />
+              Knowledge
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab('tools')}
+              className={cn(
+                "py-4 px-2 border-b-2 font-medium text-sm transition-colors flex items-center gap-2",
+                activeTab === 'tools'
+                  ? "border-market-purple text-market-purple"
+                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+              )}
+            >
+              <Wrench className="h-4 w-4" />
+              Tools
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab('models')}
+              className={cn(
+                "py-4 px-2 border-b-2 font-medium text-sm transition-colors flex items-center gap-2",
+                activeTab === 'models'
+                  ? "border-market-purple text-market-purple"
+                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+              )}
+            >
+              <Cpu className="h-4 w-4" />
+              Models
+            </button>
+          </nav>
         </div>
 
         <div className="overflow-y-auto flex-1">
@@ -1255,6 +1439,7 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
               !editingAgent && "lg:col-span-2"
             )}>
               {/* Basic Info */}
+              {activeTab === 'basic' && (
               <Card>
                 <CardHeader>
                   <CardTitle className="text-lg">Basic Information</CardTitle>
@@ -1305,119 +1490,6 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
                     />
                   </div>
 
-                  <div className="space-y-4">
-                    <div>
-                      <Label htmlFor="businessFunction">Business Function</Label>
-                      <select
-                        id="businessFunction"
-                        value={formData.businessFunction}
-                        onChange={(e) => {
-                          setFormData(prev => ({
-                            ...prev,
-                            businessFunction: e.target.value
-                          }));
-                        }}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-progress-teal"
-                      >
-                        <option value="">Select Business Function</option>
-                        {businessFunctions.map(bf => (
-                          <option key={bf.id} value={bf.id}>
-                            {bf.department_name}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div>
-                      <Label htmlFor="department">Department</Label>
-                      <select
-                        id="department"
-                        value={formData.department}
-                        onChange={(e) => {
-                          setFormData(prev => ({
-                            ...prev,
-                            department: e.target.value,
-                            role: '' // Reset role when department changes
-                          }));
-                        }}
-                        disabled={!formData.businessFunction}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
-                      >
-                        <option value="">
-                          {!formData.businessFunction
-                            ? 'Select Business Function first'
-                            : availableDepartments.length === 0
-                            ? 'Not available'
-                            : 'Select Department (Optional)'}
-                        </option>
-                        {availableDepartments.map(dept => (
-                          <option key={dept} value={dept}>
-                            {dept}
-                          </option>
-                        ))}
-                      </select>
-                      <p className="text-xs text-gray-500 mt-1">
-                        Optional: Filter roles by department
-                      </p>
-                    </div>
-
-                    <div>
-                      <Label htmlFor="role">Role *</Label>
-                      <select
-                        id="role"
-                        value={formData.role}
-                        onChange={(e) => setFormData(prev => ({ ...prev, role: e.target.value }))}
-                        disabled={!formData.businessFunction || (!formData.department && businessFunctions.length === 0)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
-                      >
-                        <option value="">
-                          {!formData.businessFunction
-                            ? 'Select Business Function first'
-                            : !formData.department && businessFunctions.length === 0
-                            ? 'Select Department first'
-                            : 'Select Role'}
-                        </option>
-                        {loadingMedicalData ? (
-                          <option disabled>Loading...</option>
-                        ) : (
-                          // Database data available
-                          healthcareRoles.length > 0 && availableRoles.length > 0 ? (
-                            availableRoles.map(role => (
-                              <option key={role.id} value={role.role_name || role.name}>
-                                {role.role_title || role.role_name || role.clinical_title || role.name}
-                                {role.seniority_level ? ` - ${role.seniority_level}` : ''}
-                              </option>
-                            ))
-                          ) : formData.businessFunction && formData.department ? (
-                            // Static data - show roles for selected department
-                            (() => {
-                              const selectedStaticFunction = staticBusinessFunctions.find(bf =>
-                                bf.value === formData.businessFunction || bf.label === formData.businessFunction
-                              );
-                              const functionKey = selectedStaticFunction?.value || '';
-                              const rolesForDepartment = staticRolesByDepartment[functionKey]?.[formData.department] || [];
-
-                              return rolesForDepartment.length > 0 ? (
-                                rolesForDepartment.map(role => (
-                                  <option key={role} value={role}>
-                                    {role}
-                                  </option>
-                                ))
-                              ) : (
-                                <option disabled>No roles available for this department</option>
-                              );
-                            })()
-                          ) : null
-                        )}
-                      </select>
-                      <p className="text-xs text-gray-500 mt-1">
-                        {formData.department
-                          ? `Showing roles for ${formData.department}`
-                          : 'Select a department to see available roles'}
-                      </p>
-                    </div>
-                  </div>
-
                   <div>
                     <Label htmlFor="systemPrompt">System Prompt *</Label>
                     <textarea
@@ -1431,8 +1503,132 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
                   </div>
                 </CardContent>
               </Card>
+              )}
+
+              {/* Organization */}
+              {activeTab === 'organization' && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Organization</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <Label htmlFor="businessFunction">Business Function</Label>
+                    <select
+                      id="businessFunction"
+                      value={formData.businessFunction}
+                      onChange={(e) => {
+                        console.log('[Agent Creator] Business Function changed to:', e.target.value);
+                        setFormData(prev => ({
+                          ...prev,
+                          businessFunction: e.target.value,
+                          department: '', // Reset department when function changes
+                          role: '' // Reset role when function changes
+                        }));
+                      }}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-progress-teal"
+                    >
+                      <option value="">Select Business Function</option>
+                      {businessFunctions.map(bf => (
+                        <option key={bf.id} value={bf.id}>
+                          {bf.department_name || bf.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="department">Department *</Label>
+                    <select
+                      id="department"
+                      value={formData.department}
+                      onChange={(e) => {
+                        setFormData(prev => ({
+                          ...prev,
+                          department: e.target.value,
+                          role: '' // Reset role when department changes
+                        }));
+                      }}
+                      disabled={!formData.businessFunction}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                      required
+                    >
+                      <option value="">
+                        {!formData.businessFunction
+                          ? 'Select Business Function first'
+                          : availableDepartments.length === 0
+                          ? 'Not available'
+                          : 'Select Department...'}
+                      </option>
+                      {availableDepartments.map(dept => (
+                        <option key={dept.id} value={dept.id}>
+                          {dept.department_name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="role">Role *</Label>
+                    <select
+                      id="role"
+                      value={formData.role}
+                      onChange={(e) => setFormData(prev => ({ ...prev, role: e.target.value }))}
+                      disabled={!formData.businessFunction || (!formData.department && businessFunctions.length === 0)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                    >
+                      <option value="">
+                        {!formData.businessFunction
+                          ? 'Select Business Function first'
+                          : !formData.department && businessFunctions.length === 0
+                          ? 'Select Department first'
+                          : 'Select Role'}
+                      </option>
+                      {loadingMedicalData ? (
+                        <option disabled>Loading...</option>
+                      ) : (
+                        // Database data available
+                        healthcareRoles.length > 0 && availableRoles.length > 0 ? (
+                          availableRoles.map(role => (
+                            <option key={role.id} value={role.id}>
+                              {role.role_name || role.name}
+                              {role.seniority_level ? ` - ${role.seniority_level}` : ''}
+                            </option>
+                          ))
+                        ) : formData.businessFunction && formData.department ? (
+                          // Static data - show roles for selected department
+                          (() => {
+                            const selectedStaticFunction = staticBusinessFunctions.find(bf =>
+                              bf.value === formData.businessFunction || bf.label === formData.businessFunction
+                            );
+                            const functionKey = selectedStaticFunction?.value || '';
+                            const rolesForDepartment = staticRolesByDepartment[functionKey]?.[formData.department] || [];
+
+                            return rolesForDepartment.length > 0 ? (
+                              rolesForDepartment.map(role => (
+                                <option key={role} value={role}>
+                                  {role}
+                                </option>
+                              ))
+                            ) : (
+                              <option disabled>No roles available for this department</option>
+                            );
+                          })()
+                        ) : null
+                      )}
+                    </select>
+                    <p className="text-xs text-gray-500 mt-1">
+                      {formData.department
+                        ? `Showing roles for ${formData.department}`
+                        : 'Select a department to see available roles'}
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+              )}
 
               {/* Capabilities */}
+              {activeTab === 'capabilities' && (
               <Card>
                 <CardHeader>
                   <CardTitle className="text-lg">Capabilities</CardTitle>
@@ -1501,8 +1697,10 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
                   </div>
                 </CardContent>
               </Card>
+              )}
 
               {/* Prompt Starters */}
+              {activeTab === 'prompts' && (
               <Card>
                 <CardHeader>
                   <CardTitle className="text-lg flex items-center gap-2">
@@ -1629,8 +1827,11 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
                   )}
                 </CardContent>
               </Card>
+              )}
 
               {/* Knowledge Base / RAG */}
+              {activeTab === 'knowledge' && (
+              <>
               <Card>
                 <CardHeader>
                   <CardTitle className="text-lg flex items-center gap-2">
@@ -1847,8 +2048,11 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
                   </div>
                 </CardContent>
               </Card>
+              </>
+              )}
 
               {/* Tools & Integrations */}
+              {activeTab === 'tools' && (
               <Card>
                 <CardHeader>
                   <CardTitle className="text-lg flex items-center gap-2">
@@ -1902,8 +2106,11 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
                   </div>
                 </CardContent>
               </Card>
+              )}
 
               {/* Advanced Settings */}
+              {activeTab === 'models' && (
+              <>
               <Card>
                 <CardHeader>
                   <CardTitle className="text-lg flex items-center gap-2">
@@ -2420,6 +2627,8 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
                   </div>
                 </CardContent>
               </Card>
+              </>
+              )}
             </div>
           </div>
         </div>

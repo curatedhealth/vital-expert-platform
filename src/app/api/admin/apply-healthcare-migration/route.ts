@@ -3,9 +3,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase/client';
 
 export async function POST(request: NextRequest) {
-  // try {
+  try {
     // Step 1: Add healthcare-specific fields to agents table
+    let fieldsExist = false;
 
+    // SQL migration script (for reference only - needs manual execution)
+    const migrationSQL = `
       -- Add healthcare-specific fields to agents table for medical AI compliance
       ALTER TABLE agents ADD COLUMN IF NOT EXISTS medical_specialty text;
       ALTER TABLE agents ADD COLUMN IF NOT EXISTS clinical_validation_status varchar(20) DEFAULT 'pending'
@@ -69,9 +72,10 @@ export async function POST(request: NextRequest) {
 
       if (!testError) {
         fieldsExist = true;
-        // }
+      }
     } catch (err) {
-      // }
+      // Fields don't exist yet
+    }
 
     if (!fieldsExist) {
       return NextResponse.json({

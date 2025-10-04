@@ -142,13 +142,13 @@ export default function AppLayout({
                 Ask Panel
               </Link>
               <Link
-                href="/ask-team"
+                href="/jobs-to-be-done"
                 className={cn(
                   "transition-colors hover:text-foreground/80",
-                  pathname.startsWith("/ask-team") ? "text-foreground" : "text-foreground/60"
+                  pathname.startsWith("/jobs-to-be-done") ? "text-foreground" : "text-foreground/60"
                 )}
               >
-                Ask Team
+                Jobs-to-be-Done
               </Link>
               <Link
                 href="/solution-builder"
@@ -178,10 +178,10 @@ export default function AppLayout({
                 Knowledge
               </Link>
               <Link
-                href="/prompts"
+                href="/prism"
                 className={cn(
                   "transition-colors hover:text-foreground/80",
-                  pathname.startsWith("/prompts") ? "text-foreground" : "text-foreground/60"
+                  pathname.startsWith("/prism") ? "text-foreground" : "text-foreground/60"
                 )}
               >
                 Prompt PRISM

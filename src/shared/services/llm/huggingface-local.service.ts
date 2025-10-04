@@ -82,19 +82,20 @@ export class HuggingFaceLocalService {
     systemPrompt?: string,
     options?: Partial<LocalModelConfig>
   ): Promise<LocalModelResponse> {
-
+    const startTime = Date.now();
     try {
-
+      const config = this.modelConfigs.get(modelId);
       if (!config) {
         throw new Error(`Model configuration not found for: ${modelId}`);
       }
 
       // For now, we'll use the Hugging Face Inference API as a fallback
       // In a real implementation, this would load the model locally
-
+      const fullPrompt = systemPrompt
         ? `${systemPrompt}\n\nUser: ${prompt}\nAssistant:`
         : prompt;
 
+      const requestBody = {
         model: config.baseModel || modelId,
         inputs: fullPrompt,
         parameters: {
@@ -105,7 +106,10 @@ export class HuggingFaceLocalService {
           return_full_text: false,
           do_sample: true
         }
-      });
+      };
+
+      const response = await this.callHuggingFaceAPI(requestBody);
+      const processingTime = Date.now() - startTime;
 
       return {
         content: response.generated_text || '',
@@ -212,6 +216,7 @@ export class HuggingFaceLocalService {
     context?: string,
     domain?: string
   ): Promise<LocalModelResponse> {
+    const systemPrompt = `You are a medical AI assistant specialized in ${domain || 'general medicine'}.
 
     Instructions:
     - Provide evidence-based medical information
@@ -233,12 +238,12 @@ export class HuggingFaceLocalService {
     question: string,
     systemPrompt?: string
   ): Promise<Record<string, LocalModelResponse>> {
-    const responses: Record<string, LocalModelResponse> = { /* TODO: implement */ };
+    const responses: Record<string, LocalModelResponse> = {};
 
     // Generate responses in parallel
-
+    const promises = modelIds.map(async (modelId) => {
       try {
-
+        const response = await this.generateResponse(modelId, question, systemPrompt);
         responses[modelId] = response;
       } catch (error) {
         // console.error(`Error with model ${modelId}:`, error);

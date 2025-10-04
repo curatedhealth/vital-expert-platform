@@ -4,10 +4,10 @@ import { huggingFaceLocalService } from '@/shared/services/llm/huggingface-local
 
 export async function POST(request: NextRequest) {
   try {
-
-    const { 
-      message, 
-      model = 'CuratedHealth/base_7b', 
+    const body = await request.json();
+    const {
+      message,
+      model = 'CuratedHealth/base_7b',
       context,
       domain,
       systemPrompt,
@@ -21,8 +21,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // // Check if model is available
-
+    // Check if model is available
+    const availableModels = huggingFaceLocalService.getAvailableModels();
     if (!availableModels.includes(model)) {
       return NextResponse.json(
         { error: `Model ${model} is not available. Available models: ${availableModels.join(', ')}` },
@@ -34,10 +34,11 @@ export async function POST(request: NextRequest) {
 
     if (compareModels) {
       // Generate responses from multiple models for comparison
-
-        modelsToCompare,
-        message,
-        systemPrompt
+      const modelsToCompare = availableModels.slice(0, 3);
+      const responses = await Promise.all(
+        modelsToCompare.map(m =>
+          huggingFaceLocalService.generateResponse(message, { model: m, systemPrompt })
+        )
       );
 
       response = {
@@ -51,27 +52,27 @@ export async function POST(request: NextRequest) {
       };
     } else {
       // Single model response
-
+      const modelResponse = await huggingFaceLocalService.generateResponse(message, {
         model,
-        message,
         context,
-        domain
-      );
+        domain,
+        systemPrompt
+      });
 
       response = {
         success: true,
         response: modelResponse.content,
         metadata: {
-          model: modelResponse.metadata.model,
-          adapter: modelResponse.metadata.adapter,
+          model: modelResponse.metadata?.model || model,
+          adapter: modelResponse.metadata?.adapter,
           usage: modelResponse.usage,
-          processing_time_ms: modelResponse.metadata.processing_time_ms,
+          processing_time_ms: modelResponse.metadata?.processing_time_ms,
           finish_reason: modelResponse.finish_reason
         }
       };
     }
 
-    // return NextResponse.json(response);
+    return NextResponse.json(response);
 
   } catch (error) {
     // console.error('Hugging Face local API error:', error);
@@ -89,7 +90,8 @@ export async function POST(request: NextRequest) {
 // GET endpoint for health check and model status
 export async function GET() {
   try {
-
+    const availableModels = huggingFaceLocalService.getAvailableModels();
+    const modelStatus = availableModels.map((modelId: string) => ({
       modelId,
       loaded: huggingFaceLocalService.isModelLoaded(modelId),
       config: huggingFaceLocalService.getModelConfig(modelId)

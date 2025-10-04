@@ -6,6 +6,7 @@
 import { createClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
 
+const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
@@ -44,6 +45,8 @@ export async function POST(request: NextRequest) {
       filters = { /* TODO: implement */ }
     } = body
 
+    const token = request.headers.get('authorization')?.replace('Bearer ', '');
+
     if (!token) {
       return NextResponse.json({
         success: false,
@@ -73,23 +76,31 @@ export async function POST(request: NextRequest) {
     }
 
     // Calculate time range
+    const timeRanges = calculateTimeRange(time_range, start_date, end_date);
 
     // Get core platform metrics
+    const platformMetrics = await getPlatformMetrics(userProfile.organization_id, timeRanges);
 
     // Get clinical metrics
+    const clinicalMetrics = await getClinicalMetrics(userProfile.organization_id, timeRanges);
 
     // Get intervention metrics
+    const interventionMetrics = await getInterventionMetrics(userProfile.organization_id, timeRanges);
 
     // Get RAG system metrics
+    const ragMetrics = await getRAGMetrics(userProfile.organization_id, timeRanges);
 
     // Get safety metrics
+    const safetyMetrics = await getSafetyMetrics(userProfile.organization_id, timeRanges);
 
     // Get user engagement metrics
+    const engagementMetrics = await getEngagementMetrics(userProfile.organization_id, timeRanges);
 
     // Get system performance metrics
+    const performanceMetrics = await getPerformanceMetrics(userProfile.organization_id, timeRanges);
 
     // Build comprehensive dashboard
-
+    const dashboardData = {
       organization_id: userProfile.organization_id,
       time_range: {
         period: time_range,
@@ -162,6 +173,8 @@ export async function PUT(request: NextRequest) {
       data_sources = [],
       time_window
     } = body
+
+    const token = request.headers.get('authorization')?.replace('Bearer ', '');
 
     if (!token) {
       return NextResponse.json({
@@ -243,6 +256,10 @@ export async function PUT(request: NextRequest) {
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
+    const timeRange = searchParams.get('time_range') || 'last_30d';
+    const format = searchParams.get('format') || 'json';
+
+    const token = request.headers.get('authorization')?.replace('Bearer ', '');
 
     if (!token) {
       return NextResponse.json({
@@ -273,9 +290,10 @@ export async function GET(request: NextRequest) {
     }
 
     // Get comprehensive analytics data for export
+    const timeRanges = calculateTimeRange(timeRange);
 
     // Get all analytics tables data
-
+    const exportData = {
       organization_id: userProfile.organization_id,
       exported_at: new Date().toISOString(),
       time_range: timeRanges,
@@ -290,6 +308,7 @@ export async function GET(request: NextRequest) {
 
     // Format based on requested format
     if (format === 'csv') {
+      const csvData = convertToCSV(exportData);
 
       return new NextResponse(csvData, {
         headers: {
@@ -320,7 +339,8 @@ function calculateTimeRange(
   startDate?: string,
   endDate?: string
 ): { startDate: string; endDate: string } {
-
+  const now = new Date();
+  const end = endDate ? new Date(endDate) : now;
   let start: Date
 
   switch (timeRange) {
@@ -381,7 +401,11 @@ async function getClinicalMetrics(organizationId: string, timeRange: unknown) {
     .gte('executed_at', timeRange.startDate)
     .lte('executed_at', timeRange.endDate)
 
-    validations?.some((rule: unknown) => rule.severity_level === 'critical')).length || 0
+  const totalValidations = validations?.length || 0;
+  const passedValidations = validations?.filter((v: any) => v.validation_result === 'pass').length || 0;
+  const criticalFailures = validations?.filter((v: any) =>
+    v.validation_result === 'fail' &&
+    validations?.some((rule: any) => rule.severity_level === 'critical')).length || 0
 
   return {
     total_validations: totalValidations,
@@ -481,6 +505,7 @@ async function getEngagementMetrics(organizationId: string, timeRange: unknown) 
     .gte('timestamp', timeRange.startDate)
     .lte('timestamp', timeRange.endDate)
 
+  const eventsByType = analytics?.reduce((acc: any, e: any) => {
     acc[e.event_type] = (acc[e.event_type] || 0) + 1
     return acc
   }, { /* TODO: implement */ }) || { /* TODO: implement */ }
@@ -507,6 +532,8 @@ async function getPerformanceMetrics(organizationId: string, timeRange: unknown)
     .gte('timestamp', timeRange.startDate)
     .lte('timestamp', timeRange.endDate)
 
+  const healthScore = systemHealth?.reduce((sum: number, h: any) => sum + (h.health_score || 0), 0) / Math.max(systemHealth?.length || 1, 1) || 0;
+
   return {
     overall_health_score: healthScore,
     uptime_percentage: 99.9, // Would calculate from actual uptime monitoring
@@ -520,9 +547,10 @@ async function getPerformanceMetrics(organizationId: string, timeRange: unknown)
 }
 
 // Additional helper functions for data processing
-function calculateAverageSessionDuration(sessions: unknown[]): number {
+function calculateAverageSessionDuration(sessions: any[]): number {
   if (sessions.length === 0) return 0
 
+  const durations = sessions
     .filter(s => s.last_activity_at)
     .map(s => new Date(s.last_activity_at).getTime() - new Date(s.created_at).getTime())
 
@@ -632,13 +660,14 @@ async function getSystemMetricsData(organizationId: string, timeRange: unknown) 
   return data || []
 }
 
-function convertToCSV(data: unknown): string {
+function convertToCSV(data: any): string {
   // Simple CSV conversion - would implement proper CSV formatting
+  const rows = ['timestamp,category,event_type,count,dimensions'];
 
   // Flatten complex analytics data into CSV format
   // This is a simplified implementation
   if (data.data && data.data.usage_analytics) {
-    data.data.usage_analytics.forEach((item: unknown) => {
+    data.data.usage_analytics.forEach((item: any) => {
       rows.push([
         item.timestamp,
         'usage',

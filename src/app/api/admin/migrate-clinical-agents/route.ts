@@ -3,9 +3,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase/client';
 
 export async function POST(request: NextRequest) {
-  // try {
+  try {
     // Clinical intelligence agents data
-
+    const clinicalAgents = [
       {
         name: 'clinical-trial-designer',
         display_name: 'Clinical Trial Designer',
@@ -314,7 +314,7 @@ Ensure all analyses comply with privacy regulations. Provide detailed cohort cha
       }
     }
 
-    // return NextResponse.json({
+    return NextResponse.json({
       success: true,
       message: `Clinical intelligence agents migration completed`,
       inserted: successCount,

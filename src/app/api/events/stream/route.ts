@@ -6,6 +6,7 @@
 import { createClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
 
+const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
@@ -150,7 +151,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Trigger workflows if applicable
-
+    await triggerEventWorkflows(
       userProfile.organization_id,
       event_type,
       publishedEvent.id,
@@ -245,7 +246,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Get recent events
-
+    let eventsQuery = supabase
       .from('event_log')
       .select(`
         *,
@@ -253,7 +254,7 @@ export async function GET(request: NextRequest) {
       `)
       .eq('organization_id', userProfile.organization_id)
       .order('timestamp_occurred', { ascending: false })
-      .limit(limit)
+      .limit(limit);
 
     if (streamName) {
       eventsQuery = eventsQuery.eq('event_streams.stream_name', streamName)
@@ -270,13 +271,17 @@ export async function GET(request: NextRequest) {
     }
 
     // Get stream statistics
-
-      (streams || []).map(async (stream: unknown) => {
+    const streamStats = await Promise.all(
+      (streams || []).map(async (stream: any) => {
         const { data: stats } = await supabase
           .from('event_log')
           .select('processing_status')
           .eq('stream_id', stream.id)
-          .gte('timestamp_occurred', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()) // Last 24 hours
+          .gte('timestamp_occurred', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()); // Last 24 hours
+
+        const totalEvents = stats?.length || 0;
+        const pendingEvents = stats?.filter((e: any) => e.processing_status === 'pending').length || 0;
+        const failedEvents = stats?.filter((e: any) => e.processing_status === 'failed').length || 0;
 
         return {
           stream_id: stream.id,
@@ -288,7 +293,7 @@ export async function GET(request: NextRequest) {
           success_rate: totalEvents > 0 ? ((totalEvents - failedEvents) / totalEvents) : 1.0
         }
       })
-    )
+    );
 
     return NextResponse.json({
       success: true,

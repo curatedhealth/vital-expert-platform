@@ -6,6 +6,7 @@
 import { createClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
 
+const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
@@ -107,7 +108,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Create processing request for Python service
-
+    const processingRequest = {
       request_id: requestId,
       user_id: user.user.id,
       organization_id: userProfile.organization_id,
@@ -124,7 +125,7 @@ export async function POST(request: NextRequest) {
 
     try {
       // Call Python Advanced Prompt Management Service
-
+      const response = await fetch(`${process.env.PROMPT_SERVICE_URL}/api/process`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -135,6 +136,7 @@ export async function POST(request: NextRequest) {
       })
 
       if (response.ok) {
+        const data = await response.json()
 
         processingResult = {
           success: true,
@@ -250,20 +252,20 @@ export async function GET(request: NextRequest) {
       .order('effectiveness_score', { ascending: false })
 
     // Check prompt service health
-
+    let promptServiceHealth = {
       available: false,
       version: 'unknown',
       features: { /* TODO: implement */ }
     }
 
     try {
-
+      const healthResponse = await fetch(`${process.env.PROMPT_SERVICE_URL}/health`, {
         headers: { 'Authorization': `Bearer ${token}` },
         signal: AbortSignal.timeout(5000)
       })
 
       if (healthResponse.ok) {
-
+        const healthData = await healthResponse.json()
         promptServiceHealth = {
           available: true,
           version: healthData.version || '2.0.0',
@@ -271,7 +273,8 @@ export async function GET(request: NextRequest) {
         }
       }
     } catch (healthError) {
-      // }
+      // Service unavailable, use fallback
+    }
 
     return NextResponse.json({
       success: true,
@@ -320,7 +323,6 @@ export async function GET(request: NextRequest) {
         }
       }
     })
-
   } catch (error) {
     // console.error('Advanced Prompt config API error:', error)
     return NextResponse.json({
@@ -369,14 +371,14 @@ async function processWithIntegratedPromptManager(
     }
 
     // 5. Generate recommendations
-
+    const recommendations = await generateRecommendations(
       category,
       complianceStatus,
       clinicalWarnings
     )
 
     // 6. Calculate confidence score
-
+    const confidenceScore = calculateConfidenceScore(
       category,
       safetyLevel,
       complianceStatus,
@@ -415,6 +417,7 @@ async function processWithIntegratedPromptManager(
 function classifyPromptCategory(promptText: string, suggestedCategory?: string) {
   if (suggestedCategory) return suggestedCategory
 
+  const keywords: Record<string, string[]> = {
     clinical_assessment: ['assess', 'evaluate', 'examine', 'clinical', 'history'],
     diagnostic_reasoning: ['diagnose', 'differential', 'rule out', 'diagnostic'],
     treatment_planning: ['treatment', 'therapy', 'manage', 'plan', 'intervention'],
@@ -422,8 +425,11 @@ function classifyPromptCategory(promptText: string, suggestedCategory?: string) 
     patient_education: ['explain', 'educate', 'patient', 'information']
   }
 
-  for (const [category, categoryKeywords] of Object.entries(keywords)) {
+  let bestScore = 0
+  let bestCategory = 'general'
 
+  for (const [category, categoryKeywords] of Object.entries(keywords)) {
+    const score = categoryKeywords.filter(kw => promptText.toLowerCase().includes(kw)).length
     if (score > bestScore) {
       bestScore = score
       bestCategory = category
@@ -438,12 +444,13 @@ async function assessClinicalSafety(promptText: string, medicalContext: unknown)
   let safetyLevel: 'safe' | 'cautionary' | 'restricted' | 'prohibited' = 'safe'
 
   // Check for high-risk patterns
-
+  const highRiskPatterns = [
     /\b(suicide|self-harm|kill)\b/,
     /\b(overdose|lethal|fatal)\b/,
     /\b(emergency|urgent|critical|life-threatening)\b/
   ]
 
+  const text = promptText.toLowerCase()
   for (const pattern of highRiskPatterns) {
     if (pattern.test(text)) {
       safetyLevel = 'cautionary'
@@ -453,7 +460,7 @@ async function assessClinicalSafety(promptText: string, medicalContext: unknown)
 
   // Check medication safety with context
   if (medicalContext?.medications?.length > 0) {
-
+    const hasWarfarin = medicalContext.medications.some((med: string) =>
       med.toLowerCase().includes('warfarin')
     )
     if (hasWarfarin && text.includes('bleeding')) {
@@ -466,7 +473,7 @@ async function assessClinicalSafety(promptText: string, medicalContext: unknown)
 }
 
 async function validateCompliance(promptText: string, requirement: string) {
-
+  const complianceChecks: Record<string, {patterns: RegExp[], violations: string[], recommendations: string[]}> = {
     hipaa_compliant: {
       patterns: [/\b\d{3}-\d{2}-\d{4}\b/, /\b\d{4}[-\s]?\d{4}[-\s]?\d{4}[-\s]?\d{4}\b/],
       violations: [] as string[],

@@ -24,6 +24,7 @@ async function getOrchestrator(): Promise<VitalAIOrchestrator> {
 
 export async function POST(request: NextRequest) {
   try {
+    const body = await request.json();
 
     const {
       message,
@@ -49,17 +50,20 @@ export async function POST(request: NextRequest) {
     };
 
     // Get orchestrator and process query
-
-    // }..."`);
-    // // || 'auto-select'}`);
+    const orch = await getOrchestrator();
 
     // Process with VitalAI orchestrator
+    const response = await orch.processQuery(message, executionContext, {
+      preferredAgents,
+      mode
+    });
 
-    // // // }`);
-    // // Create streaming response compatible with existing chat interface
-
+    // Create streaming response compatible with existing chat interface
+    const stream = new ReadableStream({
       async start(controller) {
+        let isClosed = false;
 
+        const safeEnqueue = (data: string) => {
           if (!isClosed) {
             try {
               controller.enqueue(new TextEncoder().encode(data));
@@ -69,6 +73,7 @@ export async function POST(request: NextRequest) {
           }
         };
 
+        const safeClose = () => {
           if (!isClosed) {
             isClosed = true;
             try {
@@ -81,13 +86,16 @@ export async function POST(request: NextRequest) {
 
         try {
           // Stream the response content word by word
+          const words = response.content.split(' ');
+          let currentText = '';
 
-          for (let __i = 0; i < words.length; i++) {
+          for (let i = 0; i < words.length; i++) {
             if (isClosed) break;
             
             // eslint-disable-next-line security/detect-object-injection
             currentText += (i > 0 ? ' ' : '') + words[i];
 
+            const data = JSON.stringify({
               type: 'content',
               // eslint-disable-next-line security/detect-object-injection
               content: (i > 0 ? ' ' : '') + words[i],
@@ -97,12 +105,12 @@ export async function POST(request: NextRequest) {
             safeEnqueue(`data: ${data}\n\n`);
 
             // Adaptive streaming speed based on response length
-
+            const delay = words.length > 100 ? 30 : words.length > 50 ? 50 : 80;
             await new Promise(resolve => setTimeout(resolve, delay + Math.random() * 10));
           }
 
           // Generate metadata
-
+          const metadata = {
             type: 'metadata',
             metadata: {
               // VitalAI specific metadata
@@ -141,7 +149,7 @@ export async function POST(request: NextRequest) {
 
         } catch (error) {
           // console.error('Enhanced chat streaming error:', error);
-
+          const errorData = JSON.stringify({
             type: 'error',
             error: 'Failed to generate response',
             details: error instanceof Error ? error.message : 'Unknown error'
@@ -241,9 +249,10 @@ function getAgentDisplayName(agentName: string): string {
  */
 export async function GET() {
   try {
+    const orch = await getOrchestrator();
 
     // Get performance metrics
-
+    const performanceMetrics = {
       averageProcessingTime: orch['performanceMetrics']?.getAverageProcessingTime() || 0,
       classificationMetrics: orch['performanceMetrics']?.getClassificationMetrics() || { /* TODO: implement */ }
     };

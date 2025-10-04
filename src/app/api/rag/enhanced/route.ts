@@ -6,6 +6,7 @@
 import { createClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
 
+const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
@@ -167,7 +168,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Enrich results with additional metadata
-
+    const enrichedResults = await Promise.all(
       searchResults.map(async (result: unknown) => {
         // Get collection information
         const { data: collectionInfo } = await supabase
@@ -184,7 +185,7 @@ export async function POST(request: NextRequest) {
           .limit(5)
 
         // Get validation status if clinical validation is enabled
-
+        let validationStatus = null
         if (use_clinical_validation) {
           const { data: validation } = await supabase
             .from('clinical_evidence_validation')

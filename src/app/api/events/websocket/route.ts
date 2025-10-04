@@ -6,6 +6,7 @@
 import { createClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
 
+const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
@@ -386,7 +387,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Calculate connection statistics
-
+    const connectionStats = {
       total_active_connections: activeConnections?.length || 0,
       user_active_connections: userConnections.length,
       user_active_subscriptions: subscriptions.length,

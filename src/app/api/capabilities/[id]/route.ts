@@ -56,7 +56,7 @@ export async function GET(
       );
     }
 
-    ?.name || 'Unknown');
+    console.log('✅ Capability found:', data?.name || 'Unknown');
 
     // Calculate capability metrics
     const metrics = await calculateCapabilityMetrics(id);

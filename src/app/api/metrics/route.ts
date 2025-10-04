@@ -6,6 +6,7 @@
 import { createClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
 
+const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
@@ -150,16 +151,16 @@ async function collectAPIUsageMetrics(): Promise<MetricValue[]> {
 
     if (usageData) {
       // Group by event type
-
-        acc[event.event_type] = (acc[event.event_type] || 0) + 1
-        return acc
-      }, { /* TODO: implement */ } as Record<string, number>)
+      const eventsByType = usageData.reduce((acc: Record<string, number>, event: any) => {
+        acc[event.event_type] = (acc[event.event_type] || 0) + 1;
+        return acc;
+      }, {});
 
       // Group by resource type
-
-        acc[event.resource_type] = (acc[event.resource_type] || 0) + 1
-        return acc
-      }, { /* TODO: implement */ } as Record<string, number>)
+      const eventsByResource = usageData.reduce((acc: Record<string, number>, event: any) => {
+        acc[event.resource_type] = (acc[event.resource_type] || 0) + 1;
+        return acc;
+      }, {});
 
       // Add metrics for each event type
       Object.entries(eventCounts).forEach(([eventType, count]) => {
@@ -199,17 +200,18 @@ async function collectAPIUsageMetrics(): Promise<MetricValue[]> {
 }
 
 async function collectHealthMetrics(): Promise<MetricValue[]> {
-  const metrics: MetricValue[] = []
-
+  const metrics: MetricValue[] = [];
+  const services = [
     'orchestrator', 'prompt_management', 'agent_registry',
     'advisory_board', 'clinical_safety', 'monitoring_service'
-  ]
+  ];
 
   for (const service of services) {
     try {
+      const serviceUrl = process.env[`${service.toUpperCase()}_SERVICE_URL`];
+      if (!serviceUrl) continue;
 
-      if (!serviceUrl) continue
-
+      const response = await fetch(`${serviceUrl}/health`, {
         signal: AbortSignal.timeout(5000)
       })
 
@@ -265,7 +267,8 @@ async function collectBusinessMetrics(): Promise<MetricValue[]> {
       })
 
       // Group by triage level
-
+      const triageCounts = orchestrationData.reduce((acc: Record<string, number>, item: any) => {
+        const triageLevel = item.metadata?.triage_level || 'unknown';
         // eslint-disable-next-line security/detect-object-injection
         acc[triageLevel] = (acc[triageLevel] || 0) + 1
         return acc
@@ -355,7 +358,7 @@ function formatPrometheusMetrics(metrics: MetricValue[]): string {
   const output: string[] = []
 
   // Group metrics by name for proper formatting
-
+  const metricGroups = metrics.reduce((acc: Record<string, MetricValue[]>, metric: MetricValue) => {
     if (!acc[metric.name]) {
       acc[metric.name] = []
     }
@@ -375,7 +378,7 @@ function formatPrometheusMetrics(metrics: MetricValue[]): string {
 
       // Add labels if present
       if (metric.labels && Object.keys(metric.labels).length > 0) {
-
+        const labelPairs = Object.entries(metric.labels)
           .map(([key, value]) => `${key}="${value}"`)
           .join(',')
         metricLine += `{${labelPairs}}`

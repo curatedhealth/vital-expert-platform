@@ -24,12 +24,13 @@ import {
 // Global orchestrator instance (in production, use proper dependency injection)
 let orchestrator: ComplianceAwareOrchestrator | null = null;
 
+async function getOrchestrator(): Promise<ComplianceAwareOrchestrator> {
   if (!orchestrator) {
     orchestrator = new ComplianceAwareOrchestrator();
     await orchestrator.initializeWithCompliance();
   }
   return orchestrator;
-};
+}
 
 // Healthcare agent mapping to orchestrator agent names
 const AGENT_NAME_MAPPING: Record<string, string> = {
@@ -61,11 +62,13 @@ export async function POST(request: NextRequest) {
     }
 
     // Initialize orchestrator
+    const orch = await getOrchestrator();
 
     // Default to contextual agents based on stakeholder type
+    const selectedAgents = requestedAgents || getContextualAgents(context);
 
     // Map UI agent types to orchestrator agent names
-
+    const orchestratorAgents = selectedAgents
       // eslint-disable-next-line security/detect-object-injection
       .map((agentType: string) => AGENT_NAME_MAPPING[agentType])
       .filter(Boolean);
@@ -77,13 +80,14 @@ export async function POST(request: NextRequest) {
     // });
 
     // Determine contextual workflow based on stakeholder type, message content and selected agents
+    const workflow = determineWorkflow(stakeholderType, message, orchestratorAgents);
 
     // Create a streaming response
-
+    const stream = new ReadableStream({
       async start(controller) {
         try {
           // Send contextual thinking indicator
-
+          const thinkingData = JSON.stringify({
             type: 'thinking',
             content: getContextualThinkingMessage(stakeholderType),
             agents: orchestratorAgents
@@ -91,7 +95,7 @@ export async function POST(request: NextRequest) {
           controller.enqueue(new TextEncoder().encode(`data: ${thinkingData}\n\n`));
 
           // Execute workflow with compliance
-
+          const executionContext: ExecutionContext = {
             user_id: context?.userId || 'anonymous',
             session_id: conversationId || `session-${Date.now()}`,
             timestamp: new Date().toISOString(),
@@ -99,6 +103,7 @@ export async function POST(request: NextRequest) {
             audit_required: true
           };
 
+          const queryRequest: QueryRequest = {
             user_query: message,
             selected_agents: orchestratorAgents,
             conversation_context: context?.previousMessages || [],
@@ -109,16 +114,16 @@ export async function POST(request: NextRequest) {
             }
           };
 
-          // const __execution = await orch.executeWorkflowWithCompliance(
+          const execution = await orch.executeWorkflowWithCompliance(
             workflowId,
             workflowInputs,
             executionContext
           );
 
           // Generate healthcare response based on execution results
-
+          let finalResponse = '';
           if (execution.interactions && execution.interactions.length > 0) {
-
+            const lastInteraction = execution.interactions[execution.interactions.length - 1];
             if (lastInteraction.outputs?.content) {
               finalResponse = lastInteraction.outputs.content;
             }
@@ -130,11 +135,14 @@ export async function POST(request: NextRequest) {
           }
 
           // Stream the response word by word
+          const words = finalResponse.split(' ');
+          let currentText = '';
 
-          for (let __i = 0; i < words.length; i++) {
+          for (let i = 0; i < words.length; i++) {
             // eslint-disable-next-line security/detect-object-injection
             currentText += (i > 0 ? ' ' : '') + words[i];
 
+            const data = JSON.stringify({
               type: 'content',
               // eslint-disable-next-line security/detect-object-injection
               content: (i > 0 ? ' ' : '') + words[i],
@@ -146,7 +154,7 @@ export async function POST(request: NextRequest) {
           }
 
           // Send final metadata
-
+          const finalMetadata = JSON.stringify({
             type: 'metadata',
             metadata: {
               citations: generateContextualCitations(selectedAgents, stakeholderType),
@@ -172,7 +180,7 @@ export async function POST(request: NextRequest) {
 
         } catch (error) {
           // console.error('❌ Orchestrator streaming error:', error);
-
+          const errorData = JSON.stringify({
             type: 'error',
             error: 'Failed to process your request with our healthcare AI experts',
             details: error instanceof Error ? error.message : 'Unknown error'

@@ -9,6 +9,7 @@ import { OpenAI } from 'openai';
 import { prismPromptService, PRISMSuite, KnowledgeDomain } from '@/shared/services/prism/prism-prompt-service';
 import { medicalRAGService, MedicalSearchFilters } from '@/shared/services/rag/medical-rag-service';
 
+const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY!,
 });
 
@@ -91,7 +92,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     let prismContext: { promptUsed: string; suite: PRISMSuite; domain: KnowledgeDomain; } | undefined = undefined;
 
     if (body.useOptimalPrompt || body.prismSuite) {
-      // const __promptSelectionCriteria = {
+      const promptSelectionCriteria = {
         domain: body.filters?.domain,
         prismSuite: body.prismSuite,
         query: body.query,
@@ -116,7 +117,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     }
 
     // Step 3: Prepare context from search results
-
+    const contextFromResults = searchResults
       .map((result, index) =>
         `[${index + 1}] ${result.content}\n` +
         `Source: ${result.sourceMetadata.title}\n` +
@@ -127,6 +128,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
     // Step 4: Generate response using LLM
     // const __llmStartTime = Date.now();
+    let systemPrompt = `You are a clinical AI assistant with expertise in evidence-based medicine.
 
 Your responses should:
 - Be evidence-based and cite relevant sources
@@ -137,7 +139,7 @@ Your responses should:
 
 Always maintain scientific rigor and acknowledge uncertainties.`;
 
-**User Question:** ${body.query}
+    let userPrompt = `**User Question:** ${body.query}
 
 **Context:** ${body.context || 'General medical inquiry'}
 
@@ -163,7 +165,7 @@ Use citation numbers [1], [2], etc. to reference the sources provided above.`;
     if (prismPrompt) {
       try {
         // Extract context parameters for prompt compilation
-
+        const contextParameters = {
           query: body.query,
           context: body.context || '',
           knowledge_base_results: ragContext,
@@ -171,6 +173,7 @@ Use citation numbers [1], [2], etc. to reference the sources provided above.`;
           quality_insights: JSON.stringify(searchResponse.qualityInsights)
         };
 
+        const compiledPrompt = await prismPromptService.compilePrompt(
           prismPrompt.id,
           contextParameters,
           body.tenantId
@@ -181,11 +184,14 @@ Use citation numbers [1], [2], etc. to reference the sources provided above.`;
 
         // } catch (promptError) {
         // console.warn('Failed to compile PRISM prompt, using default:', promptError);
+      } catch (promptError) {
+        // Use default prompts if compilation fails
+        console.warn('Failed to compile PRISM prompt, using default:', promptError);
       }
     }
 
     // Generate response
-
+    const completion = await openai.chat.completions.create({
       model: 'gpt-4',
       messages: [
         { role: 'system', content: systemPrompt },
@@ -196,7 +202,7 @@ Use citation numbers [1], [2], etc. to reference the sources provided above.`;
     });
 
     // // Step 5: Extract medical insights
-
+    const medicalInsights = {
       therapeuticAreas: [...new Set(searchResponse.results.flatMap(r => r.medicalContext.therapeuticAreas))],
       evidenceLevels: [...new Set(searchResponse.results.map(r => r.sourceMetadata.evidenceLevel))],
       studyTypes: [...new Set(searchResponse.results.flatMap(r => r.medicalContext.studyTypes))],
@@ -204,7 +210,7 @@ Use citation numbers [1], [2], etc. to reference the sources provided above.`;
     };
 
     // Step 6: Prepare response sources
-
+    const sources = searchResponse.results.map((result) => ({
       id: result.chunkId,
       title: result.sourceMetadata.title,
       excerpt: result.content.substring(0, 200) + '...',
@@ -237,7 +243,7 @@ Use citation numbers [1], [2], etc. to reference the sources provided above.`;
       }
     }
 
-    // const response: MedicalRAGApiResponse = {
+    const response: MedicalRAGApiResponse = {
       success: true,
       answer,
       sources,

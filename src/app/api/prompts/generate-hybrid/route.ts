@@ -34,7 +34,7 @@ interface PromptGenerationRequest {
 
 export async function POST(request: NextRequest) {
   try {
-
+    const supabase = createClient();
     // Get user session
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
@@ -72,8 +72,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // // Prepare request for Python AI service
-
+    // Prepare request for Python AI service
+    const pythonRequest = {
       agent_id: body.agent_id,
       selected_capabilities: body.selected_capabilities,
       competency_selection: body.competency_selection || { /* TODO: implement */ },
@@ -98,7 +98,8 @@ export async function POST(request: NextRequest) {
     };
 
     // Call Python AI service
-
+    const PYTHON_AI_SERVICE_URL = process.env.PYTHON_AI_SERVICE_URL || 'http://localhost:8000';
+    const response = await fetch(`${PYTHON_AI_SERVICE_URL}/api/prompts/generate`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -111,7 +112,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (!response.ok) {
-
+      const errorData = await response.json().catch(() => ({}));
       // console.error('❌ Python prompt generation service error:', {
       //   status: response.status,
       //   statusText: response.statusText,
@@ -127,6 +128,8 @@ export async function POST(request: NextRequest) {
         { status: response.status === 503 ? 503 : 500 }
       );
     }
+
+    const promptResponse = await response.json();
 
     // Store generated prompt in Supabase for audit trail
     try {
@@ -158,7 +161,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Enhance response with hybrid architecture metadata
-
+    const enhancedResponse = {
       ...promptResponse,
       hybrid_generation: {
         architecture: '3-tier hybrid',
@@ -185,7 +188,7 @@ export async function POST(request: NextRequest) {
       }
     };
 
-    // return NextResponse.json(enhancedResponse, { status: 200 });
+    return NextResponse.json(enhancedResponse, { status: 200 });
 
   } catch (error) {
     // console.error('❌ Hybrid prompt generation error:', error);
@@ -205,12 +208,17 @@ export async function POST(request: NextRequest) {
 // GET endpoint for prompt generation templates and capabilities
 export async function GET(request: NextRequest) {
   try {
+    const { searchParams } = new URL(request.url);
+    const includeExamples = searchParams.get('include_examples') === 'true';
+    const specialty = searchParams.get('specialty');
 
     // Call Python AI service for templates
-
+    const PYTHON_AI_SERVICE_URL = process.env.PYTHON_AI_SERVICE_URL || 'http://localhost:8000';
+    const queryParams = new URLSearchParams();
     if (includeExamples) queryParams.set('include_examples', 'true');
     if (specialty) queryParams.set('specialty', specialty);
 
+    const response = await fetch(
       `${PYTHON_AI_SERVICE_URL}/api/prompts/templates?${queryParams.toString()}`,
       {
         method: 'GET',
@@ -224,8 +232,10 @@ export async function GET(request: NextRequest) {
       throw new Error(`Python prompt service error: ${response.statusText}`);
     }
 
-    // Enhance with hybrid-specific information
+    const templates = await response.json();
 
+    // Enhance with hybrid-specific information
+    const enhancedTemplates = {
       ...templates,
       hybrid_architecture: {
         generation_engine: 'Python FastAPI + LangChain',

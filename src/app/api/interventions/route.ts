@@ -6,6 +6,7 @@
 import { createClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
 
+const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
@@ -160,7 +161,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Initialize lifecycle phases
-
+    const initialLifecyclePhases = [
       {
         phase: 'design',
         stage: 'requirements',
@@ -320,7 +321,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Build query with filters
-
+    let query = supabase
       .from('digital_interventions')
       .select(`
         *,
@@ -366,13 +367,14 @@ export async function GET(request: NextRequest) {
     const { data: stats, error: statsError } = await supabase
       .from('digital_interventions')
       .select('intervention_type, development_stage, regulatory_status')
-      .eq('organization_id', userProfile.organization_id)
+      .eq('organization_id', userProfile.organization_id);
 
+    const interventionStats = {
       total_interventions: 0,
-      by_type: { /* TODO: implement */ },
-      by_development_stage: { /* TODO: implement */ },
-      by_regulatory_status: { /* TODO: implement */ }
-    }
+      by_type: {} as Record<string, number>,
+      by_development_stage: {} as Record<string, number>,
+      by_regulatory_status: {} as Record<string, number>
+    };
 
     if (!statsError && stats) {
       interventionStats.total_interventions = stats.length
@@ -391,6 +393,11 @@ export async function GET(request: NextRequest) {
     }
 
     // Process interventions with lifecycle summary
+    const processedInterventions = (interventions || []).map((intervention: any) => {
+      const lifecyclePhases = intervention.intervention_lifecycle || [];
+      const completedPhases = lifecyclePhases.filter((p: any) => p.status === 'completed').length;
+      const totalPhases = lifecyclePhases.length;
+      const currentPhase = lifecyclePhases.find((p: any) => p.status === 'active');
 
       return {
         id: intervention.id,
@@ -416,7 +423,7 @@ export async function GET(request: NextRequest) {
         delivery_modalities: intervention.delivery_modalities,
         safety_profile: intervention.safety_profile
       }
-    })
+    });
 
     return NextResponse.json({
       success: true,

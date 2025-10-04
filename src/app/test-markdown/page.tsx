@@ -3,8 +3,7 @@
 import { StreamingResponse } from "@/shared/components/ui/ai";
 
 export default function TestMarkdown() {
-
-## Overview
+  const testContent = `## Overview
 For your novel oncology therapeutic, here's a comprehensive **FDA breakthrough therapy strategy**:
 
 ### 1. **Pre-Clinical Foundation**

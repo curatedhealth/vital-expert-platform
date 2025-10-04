@@ -67,7 +67,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Store detailed feedback metrics for analytics
-
+    const feedbackMetrics = {
       query_id: queryId,
       user_id: user.id,
       rating,

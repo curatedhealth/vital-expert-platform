@@ -8,6 +8,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { agentRAGIntegration } from '@/shared/services/rag/agent-rag-integration';
 
+const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
@@ -28,10 +29,13 @@ interface AgentRAGConfigRequest {
 // GET /api/agents/rag-config - Get RAG configurations for all agents or specific agent
 export async function GET(request: NextRequest) {
   try {
+    const { searchParams } = new URL(request.url);
+    const agentId = searchParams.get('agentId');
 
     if (agentId) {
       // Get specific agent configuration
-      // // Try to get from integration service first
+      // Try to get from integration service first
+      const config = await agentRAGIntegration.getAgentConfiguration(agentId);
 
       if (config) {
         return NextResponse.json({
@@ -72,9 +76,10 @@ export async function GET(request: NextRequest) {
       }
 
       // Get configurations for each agent
-
+      const configurations = await Promise.all(
         (agents || []).map(async (agent) => {
           try {
+            const config = await agentRAGIntegration.getAgentConfiguration(agent.id);
 
             return {
               agentId: agent.id,
@@ -140,7 +145,9 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
 
-    // // // Validate RAG systems
+    // Validate RAG systems
+    const availableSystems = agentRAGIntegration.getAvailableRAGSystems();
+    const availableSystemIds = availableSystems.map(s => s.id);
 
     for (const ragSystem of body.ragSystems) {
       if (!availableSystemIds.includes(ragSystem.systemId)) {
@@ -159,6 +166,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate total weights
+    const totalWeight = body.ragSystems.reduce((sum, s) => sum + s.weight, 0);
 
     if (Math.abs(totalWeight - 1.0) > 0.01) {
       return NextResponse.json({
@@ -184,8 +192,9 @@ export async function POST(request: NextRequest) {
     });
 
     // Get updated configuration to return
+    const updatedConfig = await agentRAGIntegration.getAgentConfiguration(body.agentId);
 
-    // return NextResponse.json({
+    return NextResponse.json({
       success: true,
       message: 'Agent RAG configuration updated successfully',
       agentId: body.agentId,
@@ -206,7 +215,7 @@ export async function POST(request: NextRequest) {
 // PUT /api/agents/rag-config - Test agent RAG system
 export async function PUT(request: NextRequest) {
   try {
-
+    const body = await request.json();
     const { agentId, testQuery, useMultiRAG = false } = body;
 
     if (!agentId || !testQuery) {
@@ -216,18 +225,18 @@ export async function PUT(request: NextRequest) {
       }, { status: 400 });
     }
 
-    // // }..."`);
-
     // Test the agent's RAG system
-
+    const testStart = Date.now();
+    const ragResponse = await agentRAGIntegration.queryAgentRAG({
       query: testQuery,
       agentId,
       context: 'RAG system test',
       useMultiRAG,
       maxResults: 5
     });
+    const testTime = Date.now() - testStart;
 
-    // // return NextResponse.json({
+    return NextResponse.json({
       success: true,
       testResults: {
         agentId,
@@ -263,6 +272,8 @@ export async function PUT(request: NextRequest) {
 // DELETE /api/agents/rag-config - Reset agent RAG configuration to default
 export async function DELETE(request: NextRequest) {
   try {
+    const { searchParams } = new URL(request.url);
+    const agentId = searchParams.get('agentId');
 
     if (!agentId) {
       return NextResponse.json({
@@ -271,8 +282,8 @@ export async function DELETE(request: NextRequest) {
       }, { status: 400 });
     }
 
-    // // Reset to default configuration
-
+    // Reset to default configuration
+    const defaultConfig = {
       ragSystems: [
         { systemId: 'langchain-general', systemType: 'langchain' as const, weight: 1.0 }
       ],
@@ -283,7 +294,7 @@ export async function DELETE(request: NextRequest) {
 
     await agentRAGIntegration.updateAgentRAGConfig(agentId, defaultConfig);
 
-    // return NextResponse.json({
+    return NextResponse.json({
       success: true,
       message: 'Agent RAG configuration reset to default',
       agentId,

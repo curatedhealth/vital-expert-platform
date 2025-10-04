@@ -10,10 +10,13 @@ import { performanceMetricsService } from '@/shared/services/monitoring/performa
 // GET /api/monitoring/performance - Get performance metrics
 export async function GET(request: NextRequest) {
   try {
+    const { searchParams } = new URL(request.url);
+    const type = searchParams.get('type');
+    const timeWindow = parseInt(searchParams.get('timeWindow') || '3600000'); // Default 1 hour
 
-    // if (type) {
+    if (type) {
       // Get specific metric type
-
+      const metrics = await performanceMetricsService.getMetricsByType(type, timeWindow);
       return NextResponse.json({
         success: true,
         eventType: type,
@@ -23,7 +26,9 @@ export async function GET(request: NextRequest) {
       });
     } else {
       // Get comprehensive performance snapshot
-
+      const snapshot = await performanceMetricsService.getPerformanceSnapshot(timeWindow);
+      const healthStatus = performanceMetricsService.calculateHealthStatus(snapshot);
+      const errorMetrics = await performanceMetricsService.getErrorMetrics(timeWindow);
       return NextResponse.json({
         success: true,
         snapshot,

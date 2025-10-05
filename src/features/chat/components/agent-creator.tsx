@@ -297,33 +297,40 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
     fetchAvailableModels();
   }, []);
 
-  // Fetch available tools from database
+  // Load available tools from tool registry (not database)
   useEffect(() => {
-    const fetchAvailableTools = async () => {
-      try {
-        setLoadingTools(true);
-        const { data, error } = await supabase
-          .from('tools')
-          .select('*')
-          .eq('is_active', true)
-          .order('name');
+    try {
+      setLoadingTools(true);
 
-        if (error) {
-          console.error('❌ Error fetching tools:', error);
-          setAvailableToolsFromDB([]);
-        } else {
-          setAvailableToolsFromDB(data || []);
-          console.log(`✅ Loaded ${data?.length || 0} tools from database`);
-        }
-      } catch (error) {
-        console.error('❌ Exception fetching tools:', error);
-        setAvailableToolsFromDB([]);
-      } finally {
+      // Import tool registry and get available tools
+      import('@/features/chat/tools/tool-registry').then(({ listAvailableTools, TOOL_STATUS }) => {
+        const toolNames = listAvailableTools();
+        const tools = toolNames.map((name, index) => ({
+          id: `tool_${index}`,
+          name: name,
+          description: `LangChain tool: ${name}`,
+          type: 'langchain',
+          category: 'tool',
+          api_endpoint: null,
+          configuration: {},
+          authentication_required: false,
+          rate_limit: null,
+          cost_model: null,
+          documentation_url: null,
+          is_active: TOOL_STATUS[name] === 'available',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        }));
+
+        setAvailableToolsFromDB(tools);
+        console.log(`✅ Loaded ${tools.length} tools from registry`);
         setLoadingTools(false);
-      }
-    };
-
-    fetchAvailableTools();
+      });
+    } catch (error) {
+      console.error('❌ Exception loading tools:', error);
+      setAvailableToolsFromDB([]);
+      setLoadingTools(false);
+    }
   }, []);
 
   // Load editing agent data
@@ -467,40 +474,21 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
     }
   }, [editingAgent, availableIcons, businessFunctions]);
 
-  // Load agent's tools when editing
+  // Load agent's tools when editing (tools are stored in agents.tools JSON column)
   useEffect(() => {
-    const loadAgentTools = async () => {
-      if (!editingAgent?.id) {
-        console.log('🔧 No editing agent, skipping tool load');
-        return;
-      }
+    if (!editingAgent) {
+      return;
+    }
 
-      try {
-        console.log('🔧 Loading tools for agent:', editingAgent.id);
-        const { data, error } = await supabase
-          .from('agent_tools')
-          .select('tool_id')
-          .eq('agent_id', editingAgent.id);
+    // Tools are already in the agent object as a JSON array
+    const agentTools = (editingAgent as any).tools || [];
+    console.log(`🔧 Loaded ${agentTools.length} tools for ${editingAgent.display_name}:`, agentTools);
 
-        if (error) {
-          console.error('❌ Error fetching agent tools:', error);
-          return;
-        }
-
-        const toolIds = (data || []).map(at => at.tool_id);
-        console.log(`✅ Loaded ${toolIds.length} tools for agent ${editingAgent.id}:`, toolIds);
-
-        setFormData(prev => ({
-          ...prev,
-          tools: toolIds
-        }));
-      } catch (error) {
-        console.error('❌ Exception fetching agent tools:', error);
-      }
-    };
-
-    loadAgentTools();
-  }, [editingAgent?.id]);
+    setFormData(prev => ({
+      ...prev,
+      tools: agentTools
+    }));
+  }, [editingAgent]);
 
   // Load agent templates, avatars, and icons from database
   useEffect(() => {
@@ -2251,12 +2239,12 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
                     ) : (
                       <div className="grid grid-cols-1 gap-2 max-h-96 overflow-y-auto">
                         {availableToolsFromDB.map((tool) => {
-                          const isSelected = formData.tools.includes(tool.id);
+                          const isSelected = formData.tools.includes(tool.name);
                           return (
                             <button
                               key={tool.id}
                               type="button"
-                              onClick={() => handleToolToggle(tool.id)}
+                              onClick={() => handleToolToggle(tool.name)}
                               className={cn(
                                 "flex items-start gap-3 p-3 rounded-lg border-2 text-left transition-all",
                                 isSelected
@@ -2309,15 +2297,16 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
                     <Label>Selected Tools ({formData.tools.length})</Label>
                     <div className="flex flex-wrap gap-2 mt-2">
                       {formData.tools.length > 0 ? (
-                        formData.tools.map((toolId) => {
-                          const tool = availableToolsFromDB.find(t => t.id === toolId);
+                        formData.tools.map((toolName) => {
+                          // Tools are stored by name, not ID
+                          const tool = availableToolsFromDB.find(t => t.name === toolName);
                           return (
                             <Badge
-                              key={toolId}
+                              key={toolName}
                               variant="secondary"
                               className="text-xs bg-progress-teal/10 text-progress-teal"
                             >
-                              {tool?.name || toolId}
+                              {toolName}
                             </Badge>
                           );
                         })

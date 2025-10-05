@@ -82,15 +82,29 @@ export const AgentCard: React.FC<AgentCardProps> = ({
     return displays[status || 'pending'];
   };
 
-  // Get status color
+  // Get status color (lifecycle stage)
   const getStatusColor = (status?: string) => {
     const colors: Record<string, string> = {
       active: 'bg-green-100 text-green-800',
       development: 'bg-blue-100 text-blue-800',
       testing: 'bg-yellow-100 text-yellow-800',
-      deprecated: 'bg-red-100 text-red-800'
+      deprecated: 'bg-red-100 text-red-800',
+      inactive: 'bg-gray-100 text-gray-800',
+      planned: 'bg-purple-100 text-purple-800',
+      pipeline: 'bg-indigo-100 text-indigo-800'
     };
     return colors[status || 'development'] || colors.development;
+  };
+
+  // Get tier label and color
+  const getTierDisplay = (tier?: number) => {
+    const displays: Record<number, { label: string; color: string }> = {
+      0: { label: 'Core', color: 'bg-gradient-to-r from-purple-100 to-pink-100 text-purple-900 border-purple-300' },
+      1: { label: 'Tier 1', color: 'bg-blue-100 text-blue-800 border-blue-300' },
+      2: { label: 'Tier 2', color: 'bg-green-100 text-green-800 border-green-300' },
+      3: { label: 'Tier 3', color: 'bg-orange-100 text-orange-800 border-orange-300' }
+    };
+    return displays[tier ?? 1] || displays[1];
   };
 
   // Format accuracy for display
@@ -200,10 +214,29 @@ export const AgentCard: React.FC<AgentCardProps> = ({
 
             {/* Status Badges */}
             <div className="flex flex-col gap-1 items-end">
-              {agent.tier && (
-                <Badge variant="outline" className="text-xs">
-                  Tier {agent.tier}
-                </Badge>
+              {agent.tier !== undefined && (
+                <Tooltip>
+                  <TooltipTrigger>
+                    <Badge variant="outline" className={`text-xs font-semibold ${getTierDisplay(agent.tier).color}`}>
+                      {getTierDisplay(agent.tier).label}
+                    </Badge>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    Agent Tier: {getTierDisplay(agent.tier).label}
+                  </TooltipContent>
+                </Tooltip>
+              )}
+              {agent.status && (
+                <Tooltip>
+                  <TooltipTrigger>
+                    <Badge className={`text-xs font-medium ${getStatusColor(agent.status)}`}>
+                      {agent.status.toUpperCase()}
+                    </Badge>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    Lifecycle Stage: {agent.status}
+                  </TooltipContent>
+                </Tooltip>
               )}
               <div className="flex items-center gap-1">
                 <ValidationIcon className="h-3 w-3" />
@@ -242,11 +275,6 @@ export const AgentCard: React.FC<AgentCardProps> = ({
               {agent.medical_specialty && (
                 <Badge variant="outline" className="text-xs">
                   {agent.medical_specialty}
-                </Badge>
-              )}
-              {agent.status && (
-                <Badge className={`text-xs ${getStatusColor(agent.status)}`}>
-                  {agent.status.toUpperCase()}
                 </Badge>
               )}
             </div>

@@ -1,6 +1,6 @@
 'use client';
 
-import { Bot, Users } from 'lucide-react';
+import { Bot, Users, Zap } from 'lucide-react';
 import { Button } from '@/shared/components/button';
 import { Card, CardContent } from '@/shared/components/card';
 import { Badge } from '@/shared/components/badge';
@@ -8,10 +8,10 @@ import { useChatStore } from '@/lib/stores/chat-store';
 import { cn } from '@/lib/utils';
 
 export function InteractionModeSelector() {
-  const { interactionMode, setInteractionMode, currentTier, escalationHistory } = useChatStore();
+  const { interactionMode, setInteractionMode, autonomousMode, setAutonomousMode, currentTier, escalationHistory } = useChatStore();
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4">
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4">
       {/* Mode 1: Automatic Orchestration */}
       <Card
         className={cn(
@@ -167,6 +167,82 @@ export function InteractionModeSelector() {
                   >
                     Browse Experts
                   </Button>
+                </div>
+              )}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Mode 3: Autonomous Agent */}
+      <Card
+        className={cn(
+          'cursor-pointer transition-all hover:shadow-lg',
+          autonomousMode && 'ring-2 ring-blue-500 bg-blue-500/5'
+        )}
+        onClick={() => {
+          console.log('⚡ Switching to AUTONOMOUS mode');
+          setAutonomousMode(true);
+          // Keep manual mode for agent selection, but enable autonomous research
+          setInteractionMode('manual');
+        }}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            setAutonomousMode(true);
+            setInteractionMode('manual');
+          }
+        }}
+        role="button"
+        tabIndex={0}
+      >
+        <CardContent className="p-6">
+          <div className="flex items-start gap-4">
+            <div className="flex-shrink-0">
+              <div className={cn(
+                "w-12 h-12 rounded-lg flex items-center justify-center",
+                interactionMode === 'autonomous'
+                  ? "bg-blue-500 text-white"
+                  : "bg-background-gray text-medical-gray"
+              )}>
+                <Zap className="h-6 w-6" />
+              </div>
+            </div>
+
+            <div className="flex-1">
+              <div className="flex items-center gap-2 mb-2">
+                <h3 className="font-semibold text-deep-charcoal">
+                  ⚡ Autonomous Research
+                </h3>
+                {autonomousMode && (
+                  <Badge className="bg-blue-500 text-white">Active</Badge>
+                )}
+              </div>
+
+              <p className="text-sm text-medical-gray mb-4">
+                AI agent autonomously researches using 15+ specialized tools (FDA, ClinicalTrials, PubMed) with long-term memory.
+              </p>
+
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-xs">
+                  <span className="font-medium text-deep-charcoal">Tools:</span>
+                  <span className="text-medical-gray">15+ (FDA, Clinical, Research)</span>
+                </div>
+                <div className="flex items-center gap-2 text-xs">
+                  <span className="font-medium text-deep-charcoal">Best for:</span>
+                  <span className="text-medical-gray">Complex research, multi-step analysis</span>
+                </div>
+                <div className="flex items-center gap-2 text-xs">
+                  <span className="font-medium text-deep-charcoal">Memory:</span>
+                  <span className="text-medical-gray">Learns across all sessions</span>
+                </div>
+              </div>
+
+              {interactionMode === 'autonomous' && (
+                <div className="mt-4">
+                  <Badge variant="outline" className="text-xs bg-blue-500/10 text-blue-500 border-blue-500">
+                    Structured outputs available
+                  </Badge>
                 </div>
               )}
             </div>

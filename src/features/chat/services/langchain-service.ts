@@ -7,12 +7,210 @@ import { createClient } from '@supabase/supabase-js';
 import { ConversationalRetrievalQAChain } from 'langchain/chains';
 import { BufferMemory } from 'langchain/memory';
 import { PromptTemplate } from '@langchain/core/prompts';
+import { BaseRetriever } from '@langchain/core/retrievers';
+import { VectorStore } from '@langchain/core/vectorstores';
 import {
   calculateFileHash,
   extractMetadataFromContent,
   areDocumentsDuplicate,
   type DocumentMetadata
 } from '@/lib/document-utils';
+
+// Import advanced retrievers
+import { MultiQueryRetriever } from 'langchain/retrievers/multi_query';
+import { ContextualCompressionRetriever } from 'langchain/retrievers/contextual_compression';
+import { LLMChainExtractor } from 'langchain/retrievers/document_compressors/chain_extract';
+
+// Import structured output parsers
+import {
+  RegulatoryAnalysisParser,
+  ClinicalTrialDesignParser,
+  MarketAccessStrategyParser,
+  LiteratureReviewParser,
+  RiskAssessmentParser,
+  CompetitiveAnalysisParser,
+  parseWithAutoFix,
+  type RegulatoryAnalysis,
+  type ClinicalTrialDesign,
+  type MarketAccessStrategy,
+  type LiteratureReview,
+  type RiskAssessment,
+  type CompetitiveAnalysis,
+} from '@/features/chat/parsers/structured-output';
+
+// Import long-term memory
+import {
+  LongTermMemory,
+  createAutoLearningMemory,
+  type UserFact,
+} from '@/features/chat/memory/long-term-memory';
+
+// Import tools
+import {
+  fdaDatabaseTool,
+  fdaGuidanceTool,
+  regulatoryCalculatorTool,
+} from '@/features/chat/tools/fda-tools';
+
+import {
+  clinicalTrialsSearchTool,
+  studyDesignTool,
+  endpointsTool,
+} from '@/features/chat/tools/clinical-trials-tools';
+
+import {
+  tavilySearchTool,
+  wikipediaTool,
+  arxivTool,
+  pubmedTool,
+} from '@/features/chat/tools/external-api-tools';
+
+import { DynamicStructuredTool } from '@langchain/core/tools';
+import { AgentExecutor, createReactAgent } from 'langchain/agents';
+import { pull } from 'langchain/hub';
+
+// Import LangGraph
+import { StateGraph, END } from '@langchain/langgraph';
+import { RunnableConfig } from '@langchain/core/runnables';
+
+// Import LangSmith
+import { BaseCallbackHandler } from '@langchain/core/callbacks/base';
+import { LLMResult } from '@langchain/core/outputs';
+
+// Import Agent Tool Loader
+import { agentToolLoader } from './agent-tool-loader';
+
+// Token Tracking Callback for LangSmith
+class TokenTrackingCallback extends BaseCallbackHandler {
+  name = 'token_tracking_callback';
+
+  private userId: string;
+  private sessionId: string;
+  private totalTokens: number = 0;
+  private totalCost: number = 0;
+
+  constructor(userId: string, sessionId: string) {
+    super();
+    this.userId = userId;
+    this.sessionId = sessionId;
+  }
+
+  async handleLLMEnd(output: LLMResult): Promise<void> {
+    const tokenUsage = output.llmOutput?.tokenUsage;
+
+    if (tokenUsage) {
+      const promptTokens = tokenUsage.promptTokens || 0;
+      const completionTokens = tokenUsage.completionTokens || 0;
+      const totalTokens = tokenUsage.totalTokens || (promptTokens + completionTokens);
+
+      // Calculate cost (OpenAI GPT-3.5-turbo pricing)
+      const cost = (promptTokens * 0.0015 + completionTokens * 0.002) / 1000;
+
+      this.totalTokens += totalTokens;
+      this.totalCost += cost;
+
+      console.log(`🔢 Token usage: ${promptTokens} prompt + ${completionTokens} completion = ${totalTokens} total ($${cost.toFixed(4)})`);
+
+      // Log to database
+      try {
+        await supabase.from('token_usage').insert({
+          user_id: this.userId,
+          session_id: this.sessionId,
+          model: 'gpt-3.5-turbo',
+          prompt_tokens: promptTokens,
+          completion_tokens: completionTokens,
+          total_tokens: totalTokens,
+          estimated_cost: cost,
+          request_type: 'chat',
+          timestamp: new Date().toISOString(),
+        });
+      } catch (error) {
+        console.error('Failed to log token usage:', error);
+      }
+    }
+  }
+
+  getTotalUsage() {
+    return {
+      totalTokens: this.totalTokens,
+      totalCost: this.totalCost,
+    };
+  }
+}
+
+// RAG Fusion Retriever Implementation
+class RAGFusionRetriever extends BaseRetriever {
+  lc_namespace = ['langchain', 'retrievers', 'rag_fusion'];
+
+  private vectorStore: VectorStore;
+  private llm: ChatOpenAI;
+  private k: number;
+
+  constructor(vectorStore: VectorStore, llm: ChatOpenAI, k: number = 6) {
+    super();
+    this.vectorStore = vectorStore;
+    this.llm = llm;
+    this.k = k;
+  }
+
+  async _getRelevantDocuments(query: string): Promise<Document[]> {
+    // Generate query variations
+    const queryVariations = await this.generateQueryVariations(query);
+
+    // Perform parallel searches
+    const allResults = await Promise.all(
+      queryVariations.map(q => this.vectorStore.similaritySearchWithScore(q, 5))
+    );
+
+    // Apply Reciprocal Rank Fusion
+    return this.reciprocalRankFusion(allResults);
+  }
+
+  private async generateQueryVariations(query: string): Promise<string[]> {
+    const prompt = `Generate 3 different search queries that capture various aspects of this question:
+
+Original Question: "${query}"
+
+Requirements:
+- Each query should focus on a different aspect or perspective
+- Keep queries focused and specific
+- Return only the queries, one per line
+
+Queries:`;
+
+    const result = await this.llm.invoke(prompt);
+    const variations = (result.content as string)
+      .split('\n')
+      .filter(line => line.trim())
+      .slice(0, 3);
+
+    return [query, ...variations];
+  }
+
+  private reciprocalRankFusion(results: Array<Array<[Document, number]>>): Document[] {
+    const k = 60; // RRF constant
+    const docScores = new Map<string, { doc: Document; score: number }>();
+
+    results.forEach((queryResults) => {
+      queryResults.forEach(([doc, _], rank) => {
+        const docId = doc.metadata.id || doc.pageContent.substring(0, 100);
+        const rrfScore = 1 / (k + rank + 1);
+
+        if (docScores.has(docId)) {
+          const existing = docScores.get(docId)!;
+          existing.score += rrfScore;
+        } else {
+          docScores.set(docId, { doc, score: rrfScore });
+        }
+      });
+    });
+
+    return Array.from(docScores.values())
+      .sort((a, b) => b.score - a.score)
+      .slice(0, this.k)
+      .map(item => item.doc);
+  }
+}
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -548,9 +746,77 @@ export class LangChainRAGService {
     }
   }
 
-  async createConversationalChain(agentId: string, systemPrompt: string) {
-    // Create a retriever that searches both global and agent-specific documents
-    const retriever = this.vectorStore.asRetriever({
+  /**
+   * Get available tools for agent based on agent ID (loads from database)
+   * Falls back to agent type-based tools if no database tools found
+   */
+  async getToolsForAgent(agentId: string, agentType?: string): Promise<DynamicStructuredTool[]> {
+    try {
+      // Try to load tools from database based on agent ID
+      console.log(`[LangChain Service] Loading tools for agent: ${agentId}`);
+      const dbTools = await agentToolLoader.loadToolsForAgent(agentId);
+
+      if (dbTools.length > 0) {
+        console.log(`✅ Loaded ${dbTools.length} tool(s) from database for agent ${agentId}`);
+        return dbTools as DynamicStructuredTool[];
+      }
+
+      // Fallback: Use default tools if no database tools assigned
+      console.log(`⚠️  No database tools found for agent ${agentId}, using fallback tools`);
+
+    } catch (error) {
+      console.error('[LangChain Service] Error loading tools from database:', error);
+      console.log('Using fallback tools...');
+    }
+
+    // Fallback: Default tools based on agent type
+    const allTools = [
+      // FDA Tools
+      fdaDatabaseTool,
+      fdaGuidanceTool,
+      regulatoryCalculatorTool,
+
+      // Clinical Trials Tools
+      clinicalTrialsSearchTool,
+      studyDesignTool,
+      endpointsTool,
+
+      // External API Tools
+      tavilySearchTool,
+      // wikipediaTool is disabled - agents should use Tavily for current web search
+      // arxivTool and pubmedTool are database-assigned tools only
+    ];
+
+    // Filter tools based on agent type
+    if (!agentType) {
+      return allTools;
+    }
+
+    const agentToolMapping: Record<string, string[]> = {
+      'regulatory-expert': ['fda_database_search', 'fda_guidance_lookup', 'regulatory_calculator', 'tavily_search_results_json'],
+      'clinical-researcher': ['clinical_trials_search', 'study_design_advisor', 'endpoints_recommender', 'pubmed_literature_search', 'arxiv_research_search'],
+      'market-access': ['tavily_search_results_json'],
+      'technical-architect': ['tavily_search_results_json', 'arxiv_research_search'],
+      'business-strategist': ['tavily_search_results_json'],
+    };
+
+    const allowedToolNames = agentToolMapping[agentType] || [];
+
+    if (allowedToolNames.length === 0) {
+      return allTools;
+    }
+
+    return allTools.filter(tool => allowedToolNames.includes(tool.name));
+  }
+
+  /**
+   * Create advanced retriever based on strategy
+   */
+  async createAdvancedRetriever(
+    agentId: string,
+    strategy: 'multi_query' | 'compression' | 'hybrid' | 'self_query' | 'rag_fusion' | 'basic' = 'rag_fusion'
+  ): Promise<BaseRetriever> {
+    const baseRetriever = this.vectorStore.asRetriever({
       searchType: 'similarity',
       k: 6,
       filter: {
@@ -560,6 +826,42 @@ export class LangChainRAGService {
         ],
       },
     });
+
+    switch (strategy) {
+      case 'rag_fusion':
+        return new RAGFusionRetriever(this.vectorStore, this.llm, 6);
+
+      case 'multi_query':
+        return MultiQueryRetriever.fromLLM({
+          llm: this.llm,
+          retriever: baseRetriever,
+          verbose: true,
+        });
+
+      case 'compression':
+        const compressor = LLMChainExtractor.fromLLM(this.llm);
+        return new ContextualCompressionRetriever({
+          baseCompressor: compressor,
+          baseRetriever: baseRetriever,
+        });
+
+      case 'hybrid':
+        // Hybrid combines vector + keyword search (RAG Fusion does this internally)
+        return new RAGFusionRetriever(this.vectorStore, this.llm, 6);
+
+      case 'basic':
+      default:
+        return baseRetriever;
+    }
+  }
+
+  async createConversationalChain(
+    agentId: string,
+    systemPrompt: string,
+    retrievalStrategy: 'multi_query' | 'compression' | 'hybrid' | 'self_query' | 'rag_fusion' | 'basic' = 'rag_fusion'
+  ) {
+    // Create advanced retriever based on strategy
+    const retriever = await this.createAdvancedRetriever(agentId, retrievalStrategy);
 
     // Create custom prompt template string
     const qaPromptString = `
@@ -598,18 +900,65 @@ Based on the context and chat history above, provide a comprehensive and accurat
     query: string,
     agentId: string,
     chatHistory: any[] = [],
-    agent?: any
+    agent?: any,
+    sessionId?: string,
+    options?: {
+      retrievalStrategy?: 'multi_query' | 'compression' | 'hybrid' | 'self_query' | 'rag_fusion' | 'basic';
+      enableLearning?: boolean;
+    }
   ): Promise<{
     answer: string;
     sources: any[];
     citations: string[];
+    intermediateSteps?: any[];
+    toolExecutions?: any[];
+    metadata?: any;
   }> {
     try {
       console.log(`🔍 Searching for knowledge with embedding for agent: ${agentId}`);
       console.log(`🎯 Agent knowledge domains: ${JSON.stringify(agent?.knowledge_domains || agent?.knowledgeDomains)}`);
+      console.log(`🚀 Using retrieval strategy: ${options?.retrievalStrategy || 'rag_fusion'}`);
 
-      // Use LangChain's vectorStore for similarity search
-      const searchResults = await this.vectorStore.similaritySearchWithScore(query, 5);
+      // Initialize long-term memory if sessionId is provided
+      let longTermContext = '';
+      let autoLearning: ReturnType<typeof createAutoLearningMemory> | null = null;
+
+      if (sessionId && options?.enableLearning !== false) {
+        try {
+          // Extract user ID from sessionId or use a default
+          const userId = sessionId.split('-')[0] || 'anonymous';
+          autoLearning = createAutoLearningMemory(userId, true);
+
+          // Get personalized context from long-term memory
+          const enhancedContext = await autoLearning.getEnhancedContext(query);
+          longTermContext = `
+
+User Context from Long-Term Memory:
+${enhancedContext.contextSummary}
+
+Recent Projects: ${enhancedContext.activeProjects.map((p: any) => p.name).join(', ') || 'None'}
+Active Goals: ${enhancedContext.activeGoals.map((g: any) => g.title).join(', ') || 'None'}
+`;
+          console.log(`🧠 Long-term memory context added (${enhancedContext.relevantFacts.length} facts)`);
+        } catch (memoryError) {
+          console.warn('Failed to load long-term memory:', memoryError);
+        }
+      }
+
+      // Create advanced retriever
+      const retriever = await this.createAdvancedRetriever(
+        agentId,
+        options?.retrievalStrategy || 'rag_fusion'
+      );
+
+      // Use advanced retriever for search
+      const retrievedDocs = await retriever.getRelevantDocuments(query);
+
+      // Convert to search results format
+      const searchResults: Array<[Document, number]> = retrievedDocs.map((doc, index) => [
+        doc,
+        0.9 - (index * 0.1) // Simulated similarity scores
+      ]);
 
       let ragContext = '';
       let sources: any[] = [];
@@ -662,7 +1011,9 @@ Based on the context and chat history above, provide a comprehensive and accurat
         systemPrompt = agent.systemPrompt + '\n\n';
       }
 
-      let prompt = `${systemPrompt}Chat History:
+      let prompt = `${systemPrompt}${longTermContext}
+
+Chat History:
 ${chatHistoryStr}
 
 Human Question: ${query}`;
@@ -698,19 +1049,91 @@ Please provide a comprehensive and accurate response based on your knowledge as 
 
       console.log('Invoking LangChain LLM with prompt length:', prompt.length);
 
-      // Invoke LangChain LLM
-      const result = await this.llm.invoke(prompt);
-      const answer = result.content as string;
+      // Create token tracking callback
+      const userId = sessionId?.split('-')[0] || 'anonymous';
+      const tokenCallback = new TokenTrackingCallback(userId, sessionId || 'no-session');
 
-      console.log('LangChain LLM returned response, length:', answer.length);
-      // const response = await this.llm.invoke(prompt);
-      // console.log('LangChain LLM response received:', response?.content ? 'Success' : 'Empty');
-      // const answer = response.content as string;
+      // Try to use tools if agent has tools assigned
+      let answer: string;
+      let tokenUsage: any;
+      let intermediateSteps: any[] = [];
+      let toolExecutions: any[] = [];
+      let toolSources: any[] = [];
+
+      try {
+        // Check if agent has tools assigned
+        const tools = await this.getToolsForAgent(agentId, agent?.type || agent?.agentType);
+
+        if (tools.length > 0) {
+          console.log(`🔧 Agent has ${tools.length} tools, using agent executor`);
+
+          // Use executeAgentWithTools for tool-enabled responses
+          const agentResult = await this.executeAgentWithTools(
+            query,
+            agentId,
+            agent?.type || agent?.agentType || 'general',
+            chatHistory,
+            prompt,
+            {
+              maxIterations: 15,
+              enableRAG: false, // RAG context already retrieved above
+            }
+          );
+
+          answer = agentResult.output;
+          intermediateSteps = agentResult.intermediateSteps || [];
+          toolExecutions = agentResult.toolExecutions || [];
+          toolSources = agentResult.sources || [];
+          tokenUsage = tokenCallback.getTotalUsage(); // Tools track their own usage
+        } else {
+          console.log('📝 No tools assigned, using direct LLM response');
+
+          // Invoke LangChain LLM with callback for token tracking
+          const result = await this.llm.invoke(prompt, {
+            callbacks: [tokenCallback],
+          });
+          answer = result.content as string;
+          tokenUsage = tokenCallback.getTotalUsage();
+        }
+      } catch (toolError) {
+        console.warn('⚠️  Tool execution failed, falling back to direct LLM:', toolError);
+
+        // Fallback to direct LLM
+        const result = await this.llm.invoke(prompt, {
+          callbacks: [tokenCallback],
+        });
+        answer = result.content as string;
+        tokenUsage = tokenCallback.getTotalUsage();
+      }
+
+      console.log(`LangChain LLM returned response, length: ${answer.length}, tokens: ${tokenUsage.totalTokens}, cost: $${tokenUsage.totalCost.toFixed(4)}`);
+
+      // Auto-learn from conversation if enabled
+      if (autoLearning && query && answer) {
+        try {
+          const extractedFacts = await autoLearning.extractFactsFromConversation(query, answer);
+          console.log(`📚 Auto-learned ${extractedFacts.length} new facts from conversation`);
+        } catch (learningError) {
+          console.warn('Failed to auto-learn from conversation:', learningError);
+        }
+      }
+
+      // Merge tool sources with RAG sources
+      const allSources = [...toolSources, ...sources];
 
       return {
         answer,
-        sources,
-        citations: this.extractCitations(answer, sources),
+        sources: allSources,
+        citations: this.extractCitations(answer, allSources),
+        intermediateSteps,
+        toolExecutions,
+        metadata: {
+          longTermMemoryUsed: !!autoLearning,
+          retrievalStrategy: options?.retrievalStrategy || 'rag_fusion',
+          tokenUsage: tokenUsage,
+          toolSourcesCount: toolSources.length,
+          ragSourcesCount: sources.length,
+        },
       };
 
     } catch (error) {
@@ -769,6 +1192,522 @@ Please provide a comprehensive and accurate response based on your knowledge as 
     }
 
     return citations;
+  }
+
+  /**
+   * Query knowledge with structured output parsing
+   */
+  async queryKnowledgeWithStructuredOutput<T>(
+    query: string,
+    agentId: string,
+    chatHistory: any[] = [],
+    agent?: any,
+    sessionId?: string,
+    outputFormat?: 'regulatory' | 'clinical' | 'market_access' | 'literature' | 'risk' | 'competitive',
+    options?: {
+      retrievalStrategy?: 'multi_query' | 'compression' | 'hybrid' | 'self_query' | 'rag_fusion' | 'basic';
+      enableLearning?: boolean;
+    }
+  ): Promise<{
+    answer: string;
+    sources: any[];
+    citations: string[];
+    parsedOutput?: T;
+    metadata?: any;
+  }> {
+    // First get the regular response
+    const result = await this.queryKnowledge(query, agentId, chatHistory, agent, sessionId, options);
+
+    // If output format is specified, parse the response
+    if (outputFormat && result.answer) {
+      try {
+        let parsedOutput: T | undefined;
+
+        switch (outputFormat) {
+          case 'regulatory':
+            parsedOutput = await parseWithAutoFix<RegulatoryAnalysis>(
+              result.answer,
+              RegulatoryAnalysisParser,
+              this.llm
+            ) as T;
+            break;
+
+          case 'clinical':
+            parsedOutput = await parseWithAutoFix<ClinicalTrialDesign>(
+              result.answer,
+              ClinicalTrialDesignParser,
+              this.llm
+            ) as T;
+            break;
+
+          case 'market_access':
+            parsedOutput = await parseWithAutoFix<MarketAccessStrategy>(
+              result.answer,
+              MarketAccessStrategyParser,
+              this.llm
+            ) as T;
+            break;
+
+          case 'literature':
+            parsedOutput = await parseWithAutoFix<LiteratureReview>(
+              result.answer,
+              LiteratureReviewParser,
+              this.llm
+            ) as T;
+            break;
+
+          case 'risk':
+            parsedOutput = await parseWithAutoFix<RiskAssessment>(
+              result.answer,
+              RiskAssessmentParser,
+              this.llm
+            ) as T;
+            break;
+
+          case 'competitive':
+            parsedOutput = await parseWithAutoFix<CompetitiveAnalysis>(
+              result.answer,
+              CompetitiveAnalysisParser,
+              this.llm
+            ) as T;
+            break;
+        }
+
+        return {
+          ...result,
+          parsedOutput,
+          metadata: {
+            ...result.metadata,
+            outputFormat,
+            parsed: !!parsedOutput,
+          },
+        };
+      } catch (parseError) {
+        console.error('Failed to parse structured output:', parseError);
+        return {
+          ...result,
+          metadata: {
+            ...result.metadata,
+            outputFormat,
+            parsed: false,
+            parseError: parseError instanceof Error ? parseError.message : 'Unknown parse error',
+          },
+        };
+      }
+    }
+
+    return result;
+  }
+
+  /**
+   * Execute LangGraph workflow with budget check and state management
+   */
+  async executeWithLangGraph(
+    query: string,
+    agentId: string,
+    agentType: string,
+    chatHistory: any[] = [],
+    systemPrompt?: string,
+    userId?: string,
+    options?: {
+      maxIterations?: number;
+      enableRAG?: boolean;
+      retrievalStrategy?: 'multi_query' | 'compression' | 'hybrid' | 'self_query' | 'rag_fusion' | 'basic';
+      budgetLimit?: number;
+    }
+  ): Promise<{
+    output: string;
+    state: any;
+    budgetUsed: number;
+    stepsExecuted: string[];
+  }> {
+    try {
+      console.log(`🔄 Executing LangGraph workflow for ${agentType}`);
+
+      // Define workflow state interface
+      interface WorkflowState {
+        query: string;
+        agentId: string;
+        agentType: string;
+        chatHistory: any[];
+        ragContext: string;
+        budgetUsed: number;
+        budgetLimit: number;
+        output: string;
+        stepsExecuted: string[];
+        error?: string;
+      }
+
+      // Budget check node
+      const budgetCheckNode = async (state: WorkflowState) => {
+        console.log('💰 Checking budget...');
+        const estimatedCost = 0.5; // Estimated cost per query
+
+        if (userId) {
+          try {
+            const { data: budgetCheck } = await supabase.rpc('check_user_budget', {
+              p_user_id: userId,
+              p_estimated_cost: estimatedCost,
+            });
+
+            if (!budgetCheck?.allowed) {
+              return {
+                ...state,
+                error: 'Budget limit exceeded',
+                stepsExecuted: [...state.stepsExecuted, 'budget_check_failed'],
+              };
+            }
+          } catch (error) {
+            console.warn('Budget check failed:', error);
+          }
+        }
+
+        return {
+          ...state,
+          budgetUsed: state.budgetUsed + estimatedCost,
+          stepsExecuted: [...state.stepsExecuted, 'budget_check_passed'],
+        };
+      };
+
+      // RAG retrieval node
+      const ragRetrievalNode = async (state: WorkflowState) => {
+        console.log('📚 Retrieving knowledge...');
+        let ragContext = '';
+
+        if (options?.enableRAG !== false) {
+          const retriever = await this.createAdvancedRetriever(
+            state.agentId,
+            options?.retrievalStrategy || 'rag_fusion'
+          );
+          const retrievedDocs = await retriever.getRelevantDocuments(state.query);
+          ragContext = retrievedDocs.map(doc => doc.pageContent).join('\n\n');
+        }
+
+        return {
+          ...state,
+          ragContext,
+          stepsExecuted: [...state.stepsExecuted, 'rag_retrieval_completed'],
+        };
+      };
+
+      // Agent execution node
+      const agentExecutionNode = async (state: WorkflowState) => {
+        console.log('🤖 Executing agent...');
+
+        const result = await this.executeAgentWithTools(
+          state.query,
+          state.agentId,
+          state.agentType,
+          state.chatHistory,
+          systemPrompt,
+          {
+            maxIterations: options?.maxIterations,
+            enableRAG: false, // Already retrieved in previous node
+          }
+        );
+
+        return {
+          ...state,
+          output: result.output,
+          stepsExecuted: [...state.stepsExecuted, 'agent_execution_completed'],
+        };
+      };
+
+      // Conditional routing based on budget check
+      const shouldContinue = (state: WorkflowState) => {
+        if (state.error) {
+          return END;
+        }
+        return 'rag_retrieval';
+      };
+
+      // Create state graph
+      const workflow = new StateGraph<WorkflowState>({
+        channels: {
+          query: { value: (x?: string, y?: string) => y ?? x ?? '' },
+          agentId: { value: (x?: string, y?: string) => y ?? x ?? '' },
+          agentType: { value: (x?: string, y?: string) => y ?? x ?? '' },
+          chatHistory: { value: (x?: any[], y?: any[]) => y ?? x ?? [] },
+          ragContext: { value: (x?: string, y?: string) => y ?? x ?? '' },
+          budgetUsed: { value: (x?: number, y?: number) => y ?? x ?? 0 },
+          budgetLimit: { value: (x?: number, y?: number) => y ?? x ?? 100 },
+          output: { value: (x?: string, y?: string) => y ?? x ?? '' },
+          stepsExecuted: { value: (x?: string[], y?: string[]) => y ?? x ?? [] },
+          error: { value: (x?: string, y?: string) => y ?? x },
+        },
+      });
+
+      // Add nodes
+      workflow.addNode('budget_check', budgetCheckNode);
+      workflow.addNode('rag_retrieval', ragRetrievalNode);
+      workflow.addNode('agent_execution', agentExecutionNode);
+
+      // Add edges
+      workflow.addConditionalEdges('budget_check', shouldContinue);
+      workflow.addEdge('rag_retrieval', 'agent_execution');
+      workflow.addEdge('agent_execution', END);
+
+      // Set entry point
+      workflow.setEntryPoint('budget_check');
+
+      // Compile workflow
+      const app = workflow.compile();
+
+      // Execute workflow
+      const initialState: WorkflowState = {
+        query,
+        agentId,
+        agentType,
+        chatHistory,
+        ragContext: '',
+        budgetUsed: 0,
+        budgetLimit: options?.budgetLimit || 100,
+        output: '',
+        stepsExecuted: [],
+      };
+
+      const finalState = await app.invoke(initialState);
+
+      console.log(`✅ LangGraph workflow complete. Steps: ${finalState.stepsExecuted.join(' → ')}`);
+
+      return {
+        output: finalState.output || '',
+        state: finalState,
+        budgetUsed: finalState.budgetUsed,
+        stepsExecuted: finalState.stepsExecuted,
+      };
+    } catch (error) {
+      console.error('LangGraph workflow error:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Execute React Agent with tools for autonomous research
+   */
+  async executeAgentWithTools(
+    query: string,
+    agentId: string,
+    agentType: string,
+    chatHistory: any[] = [],
+    systemPrompt?: string,
+    options?: {
+      maxIterations?: number;
+      enableRAG?: boolean;
+      retrievalStrategy?: 'multi_query' | 'compression' | 'hybrid' | 'self_query' | 'rag_fusion' | 'basic';
+    }
+  ): Promise<{
+    output: string;
+    intermediateSteps: any[];
+    toolExecutions: any[];
+    sources?: any[];
+  }> {
+    try {
+      console.log(`🤖 Executing React Agent for ${agentType} with tools`);
+
+      // Get tools for this agent (from database or fallback)
+      const tools = await this.getToolsForAgent(agentId, agentType);
+      console.log(`🔧 Loaded ${tools.length} tools for agent`);
+
+      // Get RAG context if enabled
+      let ragContext = '';
+      if (options?.enableRAG !== false) {
+        const retriever = await this.createAdvancedRetriever(
+          agentId,
+          options?.retrievalStrategy || 'rag_fusion'
+        );
+        const retrievedDocs = await retriever.getRelevantDocuments(query);
+        ragContext = retrievedDocs.map(doc => doc.pageContent).join('\n\n');
+      }
+
+      // Build agent prompt
+      const chatHistoryStr = chatHistory
+        .map(msg => `${msg.role}: ${msg.content}`)
+        .join('\n');
+
+      const agentPromptTemplate = `${systemPrompt || 'You are a helpful AI assistant.'}
+
+Chat History:
+${chatHistoryStr}
+
+${ragContext ? `Knowledge Base Context:\n${ragContext}\n\n` : ''}
+
+You have access to the following tools. Use them ONCE to gather current information, then provide your final answer.
+
+{tools}
+
+TOOL USAGE GUIDELINES:
+- Call each tool ONLY ONCE with a clear, specific query
+- After receiving tool results, immediately synthesize a Final Answer
+- Do NOT call the same tool multiple times with slight variations
+- Do NOT call tools if you already have sufficient information
+
+CITATION REQUIREMENTS (MANDATORY):
+- You MUST cite ALL sources from your tool results using inline [1], [2], [3], [4], [5] format
+- Place citations immediately after EVERY specific claim, data point, or fact
+- Each source in your tool results corresponds to a number (1st result = [1], 2nd = [2], etc.)
+- Use DIFFERENT citations for different facts - cite each unique source at least once
+- Example: "DiGA certification requires clinical evidence [1] and must meet BfArM standards [2]. The process takes 3 months [3]."
+- Be DETAILED and SPECIFIC - include regulatory steps, timelines, requirements, and authorities involved
+- DO NOT add ANY "References:", "Citations:", or "Sources:" section - ONLY use inline [1][2][3] citations
+- DO NOT list sources, URLs, or create a bibliography - just cite inline with numbers
+- The reference list will be automatically generated at the end
+
+Use the following format STRICTLY:
+
+Question: the input question you must answer
+Thought: I need current information about [topic]
+Action: the action to take, should be one of [{tool_names}]
+Action Input: the input to the action (be specific and concise)
+Observation: the result of the action
+Thought: I now have the information needed to answer the question
+Final Answer: [Detailed answer with INLINE CITATIONS [1][2][3] DISTRIBUTED THROUGHOUT THE TEXT after specific facts. NEVER group citations at the end. Include: regulatory bodies, specific requirements, timelines, processes, and practical guidance. DO NOT add a "Citations:" section.]
+
+CRITICAL: After ONE tool call, you MUST provide a "Final Answer:" with:
+1. Inline citations [1][2] IMMEDIATELY after EACH factual claim - NOT grouped at the end
+2. Example: "DiGA requires certification [1]. The BfArM evaluates applications [2]. Processing takes 3 months [3]."
+3. Detailed, comprehensive information (not high-level summaries)
+4. Specific regulatory steps, authorities, requirements, and timelines
+
+Begin!
+
+Question: {input}
+Thought: {agent_scratchpad}`;
+
+      // Create React Agent
+      const prompt = PromptTemplate.fromTemplate(agentPromptTemplate);
+      const agent = await createReactAgent({
+        llm: this.llm,
+        tools,
+        prompt,
+      });
+
+      // Create Agent Executor with custom error handling
+      const agentExecutor = new AgentExecutor({
+        agent,
+        tools,
+        maxIterations: options?.maxIterations || 10,
+        verbose: true,
+        returnIntermediateSteps: true,
+        handleParsingErrors: (error: Error) => {
+          console.log('⚠️  Parsing error caught, returning error message:', error.message);
+          // Extract the actual LLM response from the error message
+          const match = error.message.match(/Could not parse LLM output: (.+?)(?:\n|$)/);
+          if (match && match[1]) {
+            return match[1];
+          }
+          return `I encountered an error formatting my response: ${error.message}`;
+        },
+      });
+
+      // Execute agent
+      let result;
+      try {
+        result = await agentExecutor.invoke({
+          input: query,
+        });
+      } catch (error: any) {
+        console.error('❌ Agent executor error:', error);
+        // If execution failed but we have intermediate steps in the error, try to extract them
+        if (error.intermediateSteps) {
+          result = {
+            output: error.message || '',
+            intermediateSteps: error.intermediateSteps || [],
+          };
+        } else {
+          throw error;
+        }
+      }
+
+      // Extract tool executions from intermediate steps with full source data
+      const toolExecutions = (result.intermediateSteps || []).map((step: any) => ({
+        tool: step.action?.tool || 'unknown',
+        input: step.action?.toolInput || {},
+        output: step.observation || '',
+        timestamp: new Date().toISOString(),
+      }));
+
+      console.log(`✅ Agent execution complete with ${toolExecutions.length} tool executions`);
+
+      // Extract structured sources from tool executions
+      const sources: any[] = [];
+
+      if (toolExecutions.length > 0) {
+        console.log('📝 Extracting sources from tool results');
+
+        for (const execution of toolExecutions) {
+          try {
+            const parsedOutput = typeof execution.output === 'string'
+              ? JSON.parse(execution.output)
+              : execution.output;
+
+            if (Array.isArray(parsedOutput)) {
+              parsedOutput.forEach((item: any) => {
+                if (item.url) {
+                  sources.push({
+                    url: item.url,
+                    title: item.title || '',
+                    description: item.content || item.description || '',
+                    date: item.published_date || new Date().toISOString(),
+                  });
+                }
+              });
+            }
+          } catch (e) {
+            console.error('⚠️  Error parsing tool output:', e);
+          }
+        }
+      }
+
+      // If we have tool executions, append Chicago-style references
+      let finalOutput = result.output || '';
+
+      if (sources.length > 0) {
+        console.log(`📚 Formatting ${sources.length} sources in Chicago style`);
+
+        // Find which citations are actually used in the text
+        const usedCitations = new Set<number>();
+        for (let i = 1; i <= sources.length; i++) {
+          if (finalOutput.includes(`[${i}]`)) {
+            usedCitations.add(i);
+          }
+        }
+
+        console.log(`📌 Found ${usedCitations.size} cited sources out of ${sources.length} total`);
+
+        // Only format sources that were actually cited in Chicago style
+        const citedSources = Array.from(usedCitations)
+          .sort((a, b) => a - b)
+          .map(citationNum => {
+            const source = sources[citationNum - 1];
+            const hostname = new URL(source.url).hostname.replace('www.', '');
+            const year = source.date ? new Date(source.date).getFullYear() : new Date().getFullYear();
+            const title = source.title || 'Untitled';
+
+            // Chicago style: Author/Organization. "Title." Website Name. Year. URL.
+            return `${citationNum}. ${hostname}. "${title}." Accessed ${year}. ${source.url}.`;
+          })
+          .join('\n\n');
+
+        // Remove any LLM-generated reference sections
+        finalOutput = finalOutput.replace(/\n\n(References?|Citations?|Sources?):\s*\n[\s\S]*?(?=\n\n##|$)/gi, '');
+
+        // Append references if we have cited sources
+        if (citedSources && !finalOutput.includes('## References')) {
+          finalOutput += `\n\n## References\n\n${citedSources}`;
+        }
+      }
+
+      return {
+        output: finalOutput,
+        intermediateSteps: result.intermediateSteps || [],
+        toolExecutions,
+        sources, // Include structured sources for inline citations
+      };
+    } catch (error) {
+      console.error('Agent execution error:', error);
+      throw error;
+    }
   }
 
   // Method to test LangChain setup

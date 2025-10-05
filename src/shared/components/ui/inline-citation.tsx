@@ -1,7 +1,10 @@
 'use client';
 
+import * as React from 'react';
 import { FileText, ExternalLink } from 'lucide-react';
 import { useState } from 'react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { cn } from '@/lib/utils';
 
 export interface CitationSource {
@@ -21,11 +24,14 @@ interface InlineCitationProps {
 
 export function InlineCitation({ sources, citationNumber, className }: InlineCitationProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [currentIndex, setCurrentIndex] = useState(0);
 
   if (!sources || sources.length === 0) return null;
 
-  const currentSource = sources[currentIndex];
+  // Get the source matching this citation number (citationNumber 1 = sources[0])
+  const sourceIndex = citationNumber - 1;
+  if (sourceIndex < 0 || sourceIndex >= sources.length) return null;
+
+  const currentSource = sources[sourceIndex];
 
   return (
     <span className="relative inline-block">
@@ -65,33 +71,9 @@ export function InlineCitation({ sources, citationNumber, className }: InlineCit
             <div className="flex items-center gap-2">
               <FileText className="h-4 w-4 text-trust-blue" />
               <span className="text-xs font-semibold text-gray-900">
-                Source {currentIndex + 1} of {sources.length}
+                Citation [{citationNumber}]
               </span>
             </div>
-            {sources.length > 1 && (
-              <div className="flex gap-1">
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setCurrentIndex((prev) => (prev > 0 ? prev - 1 : sources.length - 1));
-                  }}
-                  className="p-1 hover:bg-gray-100 rounded text-gray-600"
-                  aria-label="Previous source"
-                >
-                  ←
-                </button>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setCurrentIndex((prev) => (prev < sources.length - 1 ? prev + 1 : 0));
-                  }}
-                  className="p-1 hover:bg-gray-100 rounded text-gray-600"
-                  aria-label="Next source"
-                >
-                  →
-                </button>
-              </div>
-            )}
           </div>
 
           {/* Content */}
@@ -143,51 +125,114 @@ export function InlineCitation({ sources, citationNumber, className }: InlineCit
   );
 }
 
-// Utility function to parse citations in text and render them
+// Utility function to parse citations in text and render them with markdown support
 export function renderTextWithCitations(
   text: string,
   sources: CitationSource[]
-): React.ReactNode[] {
+): React.ReactNode {
   if (!text || !sources || sources.length === 0) {
-    return [text];
+    return <ReactMarkdown remarkPlugins={[remarkGfm]}>{text}</ReactMarkdown>;
   }
 
-  // Match citation patterns like [1], [2], etc.
-  const citationRegex = /\[(\d+)\]/g;
-  const parts: React.ReactNode[] = [];
-  let lastIndex = 0;
-  let match;
+  // Helper function to process text nodes and replace citation patterns
+  const processCitations = (children: React.ReactNode): React.ReactNode => {
+    return React.Children.map(children, (child) => {
+      if (typeof child === 'string') {
+        // Match citation patterns like [1], [2], etc.
+        const citationRegex = /\[(\d+)\]/g;
+        const parts: React.ReactNode[] = [];
+        let lastIndex = 0;
+        let match;
 
-  while ((match = citationRegex.exec(text)) !== null) {
-    // Add text before citation
-    if (match.index > lastIndex) {
-      parts.push(text.slice(lastIndex, match.index));
-    }
+        while ((match = citationRegex.exec(child)) !== null) {
+          // Add text before citation
+          if (match.index > lastIndex) {
+            parts.push(child.slice(lastIndex, match.index));
+          }
 
-    // Add citation component
-    const citationNum = parseInt(match[1], 10);
-    const citationSources = sources.filter((s, idx) => idx + 1 === citationNum);
+          // Add citation component
+          const citationNum = parseInt(match[1], 10);
 
-    if (citationSources.length > 0) {
-      parts.push(
-        <InlineCitation
-          key={`citation-${match.index}`}
-          sources={citationSources}
-          citationNumber={citationNum}
-        />
-      );
-    } else {
-      // If no matching source, keep the original text
-      parts.push(match[0]);
-    }
+          if (citationNum > 0 && citationNum <= sources.length) {
+            parts.push(
+              <InlineCitation
+                key={`citation-${match.index}`}
+                sources={sources}
+                citationNumber={citationNum}
+              />
+            );
+          } else {
+            parts.push(match[0]);
+          }
 
-    lastIndex = match.index + match[0].length;
-  }
+          lastIndex = match.index + match[0].length;
+        }
 
-  // Add remaining text
-  if (lastIndex < text.length) {
-    parts.push(text.slice(lastIndex));
-  }
+        // Add remaining text
+        if (lastIndex < child.length) {
+          parts.push(child.slice(lastIndex));
+        }
 
-  return parts.length > 0 ? parts : [text];
+        return parts.length > 0 ? parts : child;
+      }
+      return child;
+    });
+  };
+
+  // Create a custom component to handle citations within markdown
+  return (
+    <ReactMarkdown
+      remarkPlugins={[remarkGfm]}
+      components={{
+        p({ children }) {
+          return <p>{processCitations(children)}</p>;
+        },
+        h1({ children }) {
+          return <h1>{processCitations(children)}</h1>;
+        },
+        h2({ children }) {
+          return <h2 className="mt-8">{processCitations(children)}</h2>;
+        },
+        h3({ children }) {
+          return <h3>{processCitations(children)}</h3>;
+        },
+        h4({ children }) {
+          return <h4>{processCitations(children)}</h4>;
+        },
+        h5({ children }) {
+          return <h5>{processCitations(children)}</h5>;
+        },
+        h6({ children }) {
+          return <h6>{processCitations(children)}</h6>;
+        },
+        strong({ children }) {
+          return <strong>{processCitations(children)}</strong>;
+        },
+        em({ children }) {
+          return <em>{processCitations(children)}</em>;
+        },
+        a({ href, children }) {
+          return (
+            <a href={href} target="_blank" rel="noopener noreferrer">
+              {processCitations(children)}
+            </a>
+          );
+        },
+        li({ children }) {
+          return <li className="ml-6">{processCitations(children)}</li>;
+        },
+        ul({ children }) {
+          return <ul className="list-disc list-outside ml-4">{children}</ul>;
+        },
+        ol({ children }) {
+          return <ol className="list-decimal list-outside ml-4 space-y-2">{children}</ol>;
+        },
+        blockquote({ children }) {
+          return <blockquote>{processCitations(children)}</blockquote>;
+        },
+      }}
+    >
+      {text}
+    </ReactMarkdown>
+  );
 }

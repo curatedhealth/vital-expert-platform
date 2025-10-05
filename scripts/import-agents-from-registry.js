@@ -137,7 +137,7 @@ async function importAgents() {
 
   try {
     // Read the registry file
-    const registryPath = path.join(__dirname, '../docs/vital_agents_complete_registry.json');
+    const registryPath = path.join(__dirname, '../vital_agents_registry_250_complete.json');
     const registryData = JSON.parse(fs.readFileSync(registryPath, 'utf8'));
 
     console.log(`📊 Found ${registryData.agents.length} agents in registry\n`);

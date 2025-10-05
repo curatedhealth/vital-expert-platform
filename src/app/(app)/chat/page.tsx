@@ -27,7 +27,6 @@ import { AgentCreator } from '@/features/chat/components/agent-creator';
 import { ChatInput } from '@/features/chat/components/chat-input';
 import { ChatMessages } from '@/features/chat/components/chat-messages';
 import { ChatSidebar } from '@/features/chat/components/chat-sidebar';
-import { InteractionModeSelector } from '@/features/chat/components/interaction-mode-selector';
 import { AgentsBoard } from '@/features/agents/components/agents-board';
 import type { AgentWithCategories } from '@/lib/agents/agent-service';
 import { useAuth } from '@/lib/auth/auth-context';
@@ -126,10 +125,12 @@ export default function ChatPage() {
     liveReasoning,
     isReasoningActive,
     interactionMode,
+    autonomousMode,
     currentTier,
     escalationHistory,
     selectedExpert,
     setInteractionMode,
+    setAutonomousMode,
     setSelectedExpert,
     createNewChat,
     selectChat,
@@ -842,10 +843,11 @@ export default function ChatPage() {
           mounted={mounted}
           interactionMode={interactionMode}
           onToggleMode={setInteractionMode}
+          autonomousMode={autonomousMode}
+          onToggleAutonomous={setAutonomousMode}
         />
 
         <SidebarInset className="flex flex-col flex-1 overflow-hidden">
-
           {/* Content - Show initial welcome, agent selection, or chat interface */}
           <div className="flex-1 overflow-hidden">
             {(() => {

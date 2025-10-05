@@ -102,7 +102,7 @@ export default function AppLayout({
 
       <div className="flex flex-col">
         {/* Internal Navigation Header */}
-        <header className="flex h-14 items-center gap-4 border-b bg-muted/40 px-4 lg:h-[60px] lg:px-6">
+        <header className="sticky top-0 z-50 flex h-14 items-center gap-4 border-b bg-muted/40 px-4 lg:h-[60px] lg:px-6 backdrop-blur-sm bg-background/95">
           <Button
             variant="outline"
             size="icon"

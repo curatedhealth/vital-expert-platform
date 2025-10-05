@@ -28,6 +28,7 @@ import {
 import { ChatMessage, useChatStore } from '@/lib/stores/chat-store';
 import { cn } from '@/lib/utils';
 import { renderTextWithCitations, type CitationSource } from '@/shared/components/ui/inline-citation';
+import { Response } from '@/components/ai/response';
 
 interface ChatMessagesProps {
   messages: ChatMessage[];
@@ -375,35 +376,37 @@ export function ChatMessages({ messages, liveReasoning, isReasoningActive }: Cha
                   </div>
                 ) : (
                   // Normal view mode
-                  <div className="prose prose-sm max-w-none">
+                  <div>
                     {message.isLoading && !message.content ? (
                       // Show nothing - reasoning component will display below
                       <div className="h-4"></div>
                     ) : (
-                      <p className={cn(
-                        'whitespace-pre-wrap',
-                        isUser ? 'text-white' : 'text-deep-charcoal'
-                      )}>
-                        {message.role === 'assistant' && message.metadata?.sources ? (
-                          // Render message with inline citations
-                          renderTextWithCitations(
-                            message.content,
-                            (message.metadata.sources || []).map((src: any, idx: number) => ({
-                              id: src.id || `source-${idx}`,
-                              title: src.title || src.name || 'Unknown Source',
-                              category: src.category || src.domain,
-                              excerpt: src.excerpt || src.content?.substring(0, 200),
-                              score: src.score || src.similarity,
-                              url: src.url
-                            }))
-                          )
-                        ) : (
-                          message.content
-                        )}
-                        {message.isLoading && message.content && (
-                          <span className="inline-block w-2 h-4 bg-current animate-pulse ml-1"></span>
-                        )}
-                      </p>
+                      <div className={cn(isUser ? 'text-white' : 'text-deep-charcoal')}>
+                        <div className="relative">
+                          <Response>
+                            {message.role === 'assistant' && message.metadata?.sources ? (
+                              // Render message with inline citations
+                              <>{renderTextWithCitations(
+                                message.content,
+                                (message.metadata.sources || []).map((src: any, idx: number) => ({
+                                  id: src.id || `source-${idx}`,
+                                  title: src.title || src.name || 'Unknown Source',
+                                  category: src.category || src.domain,
+                                  excerpt: src.excerpt || src.content?.substring(0, 200),
+                                  score: src.score || src.similarity,
+                                  url: src.url
+                                }))
+                              )}</>
+                            ) : (
+                              // Regular message content
+                              message.content
+                            )}
+                          </Response>
+                          {message.isLoading && message.content && (
+                            <span className="inline-block w-2 h-4 bg-current animate-pulse ml-1"></span>
+                          )}
+                        </div>
+                      </div>
                     )}
                   </div>
                 )}

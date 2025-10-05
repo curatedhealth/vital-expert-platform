@@ -8,6 +8,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { ComplianceAwareOrchestrator } from '@/agents/core/ComplianceAwareOrchestrator';
 import { ComplianceLevel } from '@/types/digital-health-agent.types';
+import { langchainRAGService } from '@/features/chat/services/langchain-service';
 
 import {
   detectStakeholderType,
@@ -130,8 +131,25 @@ export async function POST(request: NextRequest) {
           }
 
           // Fallback response if execution didn't produce content
+          // Use enhanced LangChain service with RAG Fusion and long-term memory
           if (!finalResponse) {
-            finalResponse = generateContextualResponse(message, selectedAgents, execution, stakeholderType);
+            try {
+              const ragResult = await langchainRAGService.queryKnowledge(
+                message,
+                selectedAgents[0] || 'default',
+                context?.previousMessages || [],
+                { id: selectedAgents[0], name: selectedAgents[0] },
+                conversationId,
+                {
+                  retrievalStrategy: 'rag_fusion',
+                  enableLearning: true,
+                }
+              );
+              finalResponse = ragResult.answer || generateContextualResponse(message, selectedAgents, execution, stakeholderType);
+            } catch (error) {
+              console.error('Enhanced LangChain query failed, using fallback:', error);
+              finalResponse = generateContextualResponse(message, selectedAgents, execution, stakeholderType);
+            }
           }
 
           // Stream the response word by word

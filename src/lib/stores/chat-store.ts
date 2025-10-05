@@ -70,7 +70,7 @@ export interface Chat {
   agentId: string;
   messageCount: number;
   lastMessage?: string;
-  mode?: 'automatic' | 'manual'; // Track which mode was used for this chat
+  mode?: 'automatic' | 'manual' | 'autonomous'; // Track which mode was used for this chat
 }
 
 export interface AIModel {
@@ -97,7 +97,8 @@ export interface ChatStore {
   abortController: AbortController | null;
 
   // Dual-Mode State
-  interactionMode: 'automatic' | 'manual';
+  interactionMode: 'automatic' | 'manual'; // Agent selection mode
+  autonomousMode: boolean; // Chat mode: normal (false) vs autonomous with tools (true)
   currentTier: 1 | 2 | 3 | 'human';
   escalationHistory: unknown[];
   selectedExpert: Agent | null;
@@ -125,6 +126,7 @@ export interface ChatStore {
 
   // Dual-Mode Actions
   setInteractionMode: (mode: 'automatic' | 'manual') => void;
+  setAutonomousMode: (enabled: boolean) => void;
   setSelectedExpert: (expert: Agent | null) => void;
   escalateToNextTier: (reason: string) => void;
   resetEscalation: () => void;
@@ -166,6 +168,7 @@ const _useChatStore = create<ChatStore>()(
 
       // Dual-Mode Initial State
       interactionMode: 'automatic',
+      autonomousMode: false,
       currentTier: 1,
       escalationHistory: [],
       selectedExpert: null,
@@ -324,12 +327,15 @@ const _useChatStore = create<ChatStore>()(
           const controller = new AbortController();
           set({ abortController: controller });
 
-          // Get interaction mode to determine if we use intelligent routing
-          const { interactionMode } = get();
+          // Get interaction mode to determine routing
+          const { interactionMode, autonomousMode } = get();
           const useAutomaticRouting = interactionMode === 'automatic';
 
-          // Call the actual chat API with streaming support
-          const response = await fetch('/api/chat', {
+          // Determine API endpoint based on autonomous mode
+          const apiEndpoint = autonomousMode ? '/api/chat/autonomous' : '/api/chat';
+
+          // Call the appropriate chat API with streaming support
+          const response = await fetch(apiEndpoint, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -338,14 +344,15 @@ const _useChatStore = create<ChatStore>()(
             body: JSON.stringify({
               message: content,
               agent: selectedAgent,
+              userId: 'hicham.naim@curated.health', // TODO: Get from auth context
+              sessionId: currentChat.id,
               model: get().selectedModel, // Include selected model
               chatHistory: messages.map(msg => ({
                 role: msg.role,
                 content: msg.content
               })),
               ragEnabled: selectedAgent.ragEnabled || false,
-              sessionId: currentChat.id, // Pass chat ID as session ID for memory persistence
-              automaticRouting: useAutomaticRouting, // Enable intelligent agent routing
+              automaticRouting: useAutomaticRouting, // Enable intelligent agent routing for automatic mode
               useIntelligentRouting: useAutomaticRouting
             })
           });
@@ -539,6 +546,17 @@ const _useChatStore = create<ChatStore>()(
           // Reset tier when switching to manual mode
           currentTier: mode === 'manual' ? 1 : state.currentTier,
           // Update conversation context
+          conversationContext: {
+            ...state.conversationContext,
+            lastActivity: new Date(),
+          },
+        });
+      },
+
+      setAutonomousMode: (enabled: boolean) => {
+        const state = get();
+        set({
+          autonomousMode: enabled,
           conversationContext: {
             ...state.conversationContext,
             lastActivity: new Date(),

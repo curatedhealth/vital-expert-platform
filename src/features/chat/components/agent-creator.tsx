@@ -30,6 +30,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { BUSINESS_FUNCTIONS, DEPARTMENTS_BY_FUNCTION, ROLES_BY_DEPARTMENT } from '@/config/organizational-structure';
 import { AgentService, type AgentWithCategories } from '@/features/agents/services/agent-service';
+import { TOOL_STATUS } from '@/features/chat/tools/tool-registry';
 import { promptGenerationService } from '@/lib/services/prompt-generation-service';
 import { useAgentsStore } from '@/lib/stores/agents-store';
 import { useChatStore } from '@/lib/stores/chat-store';
@@ -113,6 +114,23 @@ interface PromptStarter {
   iconUrl?: string; // Full URL to the icon
 }
 
+interface Tool {
+  id: string;
+  name: string;
+  description: string | null;
+  type: string | null;
+  category: string | null;
+  api_endpoint: string | null;
+  configuration: any;
+  authentication_required: boolean | null;
+  rate_limit: string | null;
+  cost_model: string | null;
+  documentation_url: string | null;
+  is_active: boolean | null;
+  created_at: string | null;
+  updated_at: string | null;
+}
+
 const knowledgeDomains = [
   { value: 'digital-health', label: 'Digital Health' },
   { value: 'clinical-research', label: 'Clinical Research' },
@@ -187,6 +205,10 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
   const [modelOptions, setModelOptions] = useState<ModelOption[]>(defaultModelOptions);
   const [loadingModels, setLoadingModels] = useState(true);
   const [modelFitnessScore, setModelFitnessScore] = useState<FitnessScore | null>(null);
+
+  // Tools state
+  const [availableToolsFromDB, setAvailableToolsFromDB] = useState<Tool[]>([]);
+  const [loadingTools, setLoadingTools] = useState(true);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -273,6 +295,35 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
     };
 
     fetchAvailableModels();
+  }, []);
+
+  // Fetch available tools from database
+  useEffect(() => {
+    const fetchAvailableTools = async () => {
+      try {
+        setLoadingTools(true);
+        const { data, error } = await supabase
+          .from('tools')
+          .select('*')
+          .eq('is_active', true)
+          .order('name');
+
+        if (error) {
+          console.error('❌ Error fetching tools:', error);
+          setAvailableToolsFromDB([]);
+        } else {
+          setAvailableToolsFromDB(data || []);
+          console.log(`✅ Loaded ${data?.length || 0} tools from database`);
+        }
+      } catch (error) {
+        console.error('❌ Exception fetching tools:', error);
+        setAvailableToolsFromDB([]);
+      } finally {
+        setLoadingTools(false);
+      }
+    };
+
+    fetchAvailableTools();
   }, []);
 
   // Load editing agent data
@@ -381,7 +432,8 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
         resolvedRoleId: roleValue
       });
 
-      setFormData({
+      setFormData(prev => ({
+        ...prev,
         name: editingAgent.display_name || editingAgent.name || 'Unnamed Agent',
         description: editingAgent.description || 'Agent description not provided',
         systemPrompt: editingAgent.system_prompt || 'You are a helpful AI assistant.',
@@ -393,7 +445,8 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
         maxTokens: editingAgent.max_tokens || 2000,
         knowledgeUrls: [],
         knowledgeFiles: [] as File[],
-        tools: [],
+        // DON'T reset tools here - they are loaded separately in another useEffect
+        // tools: [],
         knowledgeDomains: knowledgeDomains,
         businessFunction: businessFunctionValue,
         role: roleValue,
@@ -410,9 +463,44 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
         citationRequired: true,
         selectedMedicalCapabilities: [] as string[], // TODO: Load from agent capabilities
         competencySelection: { /* TODO: implement */ } as Record<string, string[]>, // TODO: Load from agent competencies
-      });
+      }));
     }
   }, [editingAgent, availableIcons, businessFunctions]);
+
+  // Load agent's tools when editing
+  useEffect(() => {
+    const loadAgentTools = async () => {
+      if (!editingAgent?.id) {
+        console.log('🔧 No editing agent, skipping tool load');
+        return;
+      }
+
+      try {
+        console.log('🔧 Loading tools for agent:', editingAgent.id);
+        const { data, error } = await supabase
+          .from('agent_tools')
+          .select('tool_id')
+          .eq('agent_id', editingAgent.id);
+
+        if (error) {
+          console.error('❌ Error fetching agent tools:', error);
+          return;
+        }
+
+        const toolIds = (data || []).map(at => at.tool_id);
+        console.log(`✅ Loaded ${toolIds.length} tools for agent ${editingAgent.id}:`, toolIds);
+
+        setFormData(prev => ({
+          ...prev,
+          tools: toolIds
+        }));
+      } catch (error) {
+        console.error('❌ Exception fetching agent tools:', error);
+      }
+    };
+
+    loadAgentTools();
+  }, [editingAgent?.id]);
 
   // Load agent templates, avatars, and icons from database
   useEffect(() => {
@@ -630,6 +718,11 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
     }
   }, [activeTab, businessFunctions]);
 
+  // Debug logging for tools changes
+  useEffect(() => {
+    console.log('🔧 formData.tools changed:', formData.tools);
+  }, [formData.tools]);
+
   const handleCapabilityAdd = (capability: string) => {
     if (capability && !formData.capabilities.includes(capability)) {
       setFormData(prev => ({
@@ -665,12 +758,21 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
   };
 
   const handleToolToggle = (tool: string) => {
-    setFormData(prev => ({
-      ...prev,
-      tools: prev.tools.includes(tool)
+    console.log('🔧 Tool toggle clicked:', tool);
+    console.log('🔧 Current tools before toggle:', formData.tools);
+
+    setFormData(prev => {
+      const newTools = prev.tools.includes(tool)
         ? prev.tools.filter(t => t !== tool)
-        : [...prev.tools, tool]
-    }));
+        : [...prev.tools, tool];
+
+      console.log('🔧 New tools after toggle:', newTools);
+
+      return {
+        ...prev,
+        tools: newTools
+      };
+    });
   };
 
   const handleKnowledgeDomainToggle = (domain: string) => {
@@ -1037,6 +1139,76 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
     }
   };
 
+  /**
+   * Sync agent tools - delete removed tools and add new tools
+   */
+  const syncAgentTools = async (agentId: string, selectedToolIds: string[]) => {
+    try {
+      // First, get current tools for this agent
+      const { data: currentTools, error: fetchError } = await supabase
+        .from('agent_tools')
+        .select('tool_id')
+        .eq('agent_id', agentId);
+
+      if (fetchError) {
+        console.error('❌ Error fetching current agent tools:', fetchError);
+        throw fetchError;
+      }
+
+      const currentToolIds = (currentTools || []).map(at => at.tool_id);
+
+      // Determine tools to add and remove
+      const toolsToAdd = selectedToolIds.filter(id => !currentToolIds.includes(id));
+      const toolsToRemove = currentToolIds.filter(id => !selectedToolIds.includes(id));
+
+      console.log('[Agent Tools] Syncing tools for agent:', agentId);
+      console.log('  Current tools:', currentToolIds);
+      console.log('  Selected tools:', selectedToolIds);
+      console.log('  Tools to add:', toolsToAdd);
+      console.log('  Tools to remove:', toolsToRemove);
+
+      // Remove tools
+      if (toolsToRemove.length > 0) {
+        const { error: deleteError } = await supabase
+          .from('agent_tools')
+          .delete()
+          .eq('agent_id', agentId)
+          .in('tool_id', toolsToRemove);
+
+        if (deleteError) {
+          console.error('❌ Error removing agent tools:', deleteError);
+          throw deleteError;
+        }
+        console.log(`✅ Removed ${toolsToRemove.length} tools from agent`);
+      }
+
+      // Add new tools
+      if (toolsToAdd.length > 0) {
+        const toolsToInsert = toolsToAdd.map(toolId => ({
+          agent_id: agentId,
+          tool_id: toolId
+        }));
+
+        const { error: insertError } = await supabase
+          .from('agent_tools')
+          .insert(toolsToInsert);
+
+        if (insertError) {
+          console.error('❌ Error adding agent tools:', insertError);
+          throw insertError;
+        }
+        console.log(`✅ Added ${toolsToAdd.length} tools to agent`);
+      }
+
+      if (toolsToAdd.length === 0 && toolsToRemove.length === 0) {
+        console.log('ℹ️ No tools changes needed');
+      }
+    } catch (error) {
+      console.error('❌ Error syncing agent tools:', error);
+      throw error;
+    }
+  };
+
   const handleSave = async () => {
     if (!formData.name || !formData.description || !formData.systemPrompt) {
       alert('Please fill in all required fields');
@@ -1070,13 +1242,11 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
       department: formData.department || null,
       // Medical Compliance Fields
       medical_specialty: formData.medicalSpecialty,
-      clinical_validation_status: formData.clinicalValidationStatus,
+      validation_status: formData.clinicalValidationStatus,
       hipaa_compliant: formData.hipaaCompliant,
       pharma_enabled: formData.pharmaEnabled,
       verify_enabled: formData.verifyEnabled,
-      fda_samd_class: formData.fdaSamdClass,
-      medical_accuracy_score: formData.accuracyThreshold,
-      citation_accuracy: formData.citationRequired ? 1.0 : 0.0,
+      accuracy_score: formData.accuracyThreshold,
       // Required fields for agents-store
       status: 'active' as const,
       tier: 1,
@@ -1154,13 +1324,11 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
             role_id: formData.role || null,
             // Medical Compliance Fields
             medical_specialty: formData.medicalSpecialty,
-            clinical_validation_status: formData.clinicalValidationStatus,
+            validation_status: formData.clinicalValidationStatus,
             hipaa_compliant: formData.hipaaCompliant,
             pharma_enabled: formData.pharmaEnabled,
             verify_enabled: formData.verifyEnabled,
-            fda_samd_class: formData.fdaSamdClass,
-            medical_accuracy_score: formData.accuracyThreshold,
-            citation_accuracy: formData.citationRequired ? 1.0 : 0.0,
+            accuracy_score: formData.accuracyThreshold,
           };
 
           console.log('[Agent Creator] Save - Updates object:', {
@@ -1189,6 +1357,12 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
 
           // Update the agent in the agents store
           updateAgent(editingAgent.id, result.agent);
+
+          // Update agent tools
+          console.log('🔧 Syncing tools for agent:', editingAgent.id);
+          console.log('🔧 Selected tools in formData:', formData.tools);
+          await syncAgentTools(editingAgent.id, formData.tools);
+          console.log('✅ Agent tools synced successfully');
         }
       } else {
         // Create new agent - convert to chat store format
@@ -1208,6 +1382,10 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
           role: selectedRole?.role_name || selectedRole?.name || '',
         };
         createCustomAgent(chatStoreAgentData);
+
+        // Note: Cannot sync tools for new agents created through chat store
+        // as they don't have a database ID. Tools should be synced when the
+        // agent is properly created in the database through the agents store.
       }
 
       onSave();
@@ -2056,7 +2234,7 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
               <Card>
                 <CardHeader>
                   <CardTitle className="text-lg flex items-center gap-2">
-                    <Settings className="h-4 w-4" />
+                    <Wrench className="h-4 w-4" />
                     Tools & Integrations
                   </CardTitle>
                 </CardHeader>
@@ -2066,40 +2244,84 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
                     <p className="text-xs text-medical-gray mb-3">
                       Select tools and integrations this agent can use
                     </p>
-                    <div className="grid grid-cols-2 gap-2">
-                      {availableTools.map((tool) => (
-                        <Button
-                          key={tool}
-                          type="button"
-                          variant={formData.tools.includes(tool) ? "default" : "outline"}
-                          size="sm"
-                          className="h-auto py-2 px-3 text-xs justify-start"
-                          onClick={() => handleToolToggle(tool)}
-                        >
-                          <div className="flex items-center gap-2">
-                            {formData.tools.includes(tool) && (
-                              <CheckCircle className="h-3 w-3" />
-                            )}
-                            {tool}
-                          </div>
-                        </Button>
-                      ))}
-                    </div>
+                    {loadingTools ? (
+                      <div className="text-sm text-medical-gray py-4">Loading tools...</div>
+                    ) : availableToolsFromDB.length === 0 ? (
+                      <div className="text-sm text-medical-gray py-4">No tools available. Add tools to the database first.</div>
+                    ) : (
+                      <div className="grid grid-cols-1 gap-2 max-h-96 overflow-y-auto">
+                        {availableToolsFromDB.map((tool) => {
+                          const isSelected = formData.tools.includes(tool.id);
+                          return (
+                            <button
+                              key={tool.id}
+                              type="button"
+                              onClick={() => handleToolToggle(tool.id)}
+                              className={cn(
+                                "flex items-start gap-3 p-3 rounded-lg border-2 text-left transition-all",
+                                isSelected
+                                  ? "border-progress-teal bg-progress-teal/5"
+                                  : "border-gray-200 hover:border-gray-300 bg-white"
+                              )}
+                            >
+                              <div className="flex-shrink-0 mt-0.5">
+                                {isSelected ? (
+                                  <CheckCircle className="h-5 w-5 text-progress-teal" />
+                                ) : (
+                                  <div className="h-5 w-5 rounded-full border-2 border-gray-300" />
+                                )}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <h4 className="font-medium text-sm text-deep-charcoal">{tool.name}</h4>
+                                  {tool.category && (
+                                    <Badge variant="outline" className="text-xs">
+                                      {tool.category}
+                                    </Badge>
+                                  )}
+                                  {TOOL_STATUS[tool.name] === 'available' ? (
+                                    <Badge className="text-xs bg-green-100 text-green-700 hover:bg-green-100">
+                                      ✓ Available
+                                    </Badge>
+                                  ) : TOOL_STATUS[tool.name] === 'coming_soon' ? (
+                                    <Badge variant="outline" className="text-xs border-amber-300 text-amber-700 bg-amber-50">
+                                      🚧 Coming Soon
+                                    </Badge>
+                                  ) : null}
+                                </div>
+                                {tool.description && (
+                                  <p className="text-xs text-medical-gray mt-1">{tool.description}</p>
+                                )}
+                                {tool.authentication_required && (
+                                  <div className="flex items-center gap-1 mt-1">
+                                    <span className="text-xs text-amber-600">🔒 Authentication required</span>
+                                  </div>
+                                )}
+                              </div>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
                   </div>
 
                   <div>
-                    <Label>Selected Tools</Label>
+                    <Label>Selected Tools ({formData.tools.length})</Label>
                     <div className="flex flex-wrap gap-2 mt-2">
-                      {formData.tools.map((tool) => (
-                        <Badge
-                          key={tool}
-                          variant="secondary"
-                          className="text-xs bg-progress-teal/10 text-progress-teal"
-                        >
-                          {tool}
-                        </Badge>
-                      ))}
-                      {formData.tools.length === 0 && (
+                      {formData.tools.length > 0 ? (
+                        formData.tools.map((toolId) => {
+                          const tool = availableToolsFromDB.find(t => t.id === toolId);
+                          return (
+                            <Badge
+                              key={toolId}
+                              variant="secondary"
+                              className="text-xs bg-progress-teal/10 text-progress-teal"
+                            >
+                              {tool?.name || toolId}
+                            </Badge>
+                          );
+                        })
+                      ) : (
                         <p className="text-xs text-medical-gray italic">No tools selected</p>
                       )}
                     </div>

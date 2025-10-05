@@ -186,4 +186,4 @@ ESLINT_*.json
 # LangGraph checkpoints database
 checkpoints.sqlite
 checkpoints.sqlite-shm
-checkpoints.sqlite-wal
+checkpoints.sqlite-waldatabase/backups/*.sql

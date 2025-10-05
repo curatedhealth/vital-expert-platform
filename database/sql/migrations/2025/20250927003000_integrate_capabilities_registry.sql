@@ -214,6 +214,15 @@ SELECT
     a.id as agent_id,
     a.name as agent_name,
     a.display_name as agent_display_name,
+    a.tier,
+    CASE
+        WHEN a.tier = 0 THEN 'Core'
+        WHEN a.tier = 1 THEN 'Tier 1'
+        WHEN a.tier = 2 THEN 'Tier 2'
+        WHEN a.tier = 3 THEN 'Tier 3'
+        ELSE 'Unknown'
+    END as tier_label,
+    a.status as lifecycle_stage,
     c.id as capability_id,
     c.name as capability_name,
     c.display_name as capability_display_name,

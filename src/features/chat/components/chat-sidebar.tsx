@@ -47,6 +47,8 @@ interface ChatSidebarProps extends React.ComponentProps<typeof Sidebar> {
   mounted?: boolean;
   interactionMode?: 'automatic' | 'manual';
   onToggleMode?: (mode: 'automatic' | 'manual') => void;
+  autonomousMode?: boolean;
+  onToggleAutonomous?: (enabled: boolean) => void;
 }
 
 export function ChatSidebar({
@@ -68,6 +70,8 @@ export function ChatSidebar({
   mounted = true,
   interactionMode,
   onToggleMode,
+  autonomousMode = false,
+  onToggleAutonomous,
   ...props
 }: ChatSidebarProps) {
   return (
@@ -96,21 +100,40 @@ export function ChatSidebar({
             )}
           </div>
 
-          {/* Interaction Mode Toggle */}
-          {!isCollapsed && onToggleMode && (
-            <div className="mt-3 flex items-center gap-2 px-2 py-1.5 border border-vital-gray-80 rounded-lg bg-vital-gray-95">
-              <div className="flex items-center gap-1">
-                <Zap className={`h-3 w-3 ${interactionMode === 'automatic' ? 'text-clinical-green' : 'text-vital-gray-60'}`} />
-                <span className="text-xs font-medium text-vital-black">Auto</span>
-              </div>
-              <Switch
-                checked={interactionMode === 'manual'}
-                onCheckedChange={(checked) => onToggleMode(checked ? 'manual' : 'automatic')}
-              />
-              <div className="flex items-center gap-1">
-                <User className={`h-3 w-3 ${interactionMode === 'manual' ? 'text-data-purple' : 'text-vital-gray-60'}`} />
-                <span className="text-xs font-medium text-vital-black">Manual</span>
-              </div>
+          {/* Interaction Mode Toggles */}
+          {!isCollapsed && (
+            <div className="mt-3 space-y-2">
+              {/* Agent Selection: Auto vs Manual */}
+              {onToggleMode && (
+                <div className="flex items-center gap-2 px-2 py-1.5 border border-vital-gray-80 rounded-lg bg-vital-gray-95">
+                  <div className="flex items-center gap-1">
+                    <Zap className={`h-3 w-3 ${interactionMode === 'automatic' ? 'text-clinical-green' : 'text-vital-gray-60'}`} />
+                    <span className="text-xs font-medium text-vital-black">Auto</span>
+                  </div>
+                  <Switch
+                    checked={interactionMode === 'manual'}
+                    onCheckedChange={(checked) => onToggleMode(checked ? 'manual' : 'automatic')}
+                  />
+                  <div className="flex items-center gap-1">
+                    <User className={`h-3 w-3 ${interactionMode === 'manual' ? 'text-data-purple' : 'text-vital-gray-60'}`} />
+                    <span className="text-xs font-medium text-vital-black">Manual</span>
+                  </div>
+                </div>
+              )}
+
+              {/* Autonomous Mode Toggle */}
+              {onToggleAutonomous && (
+                <div className="flex items-center justify-between px-2 py-1.5 border border-vital-gray-80 rounded-lg bg-vital-gray-95">
+                  <div className="flex items-center gap-1">
+                    <Zap className={`h-3 w-3 ${autonomousMode ? 'text-blue-500' : 'text-vital-gray-60'}`} />
+                    <span className="text-xs font-medium text-vital-black">Autonomous</span>
+                  </div>
+                  <Switch
+                    checked={autonomousMode}
+                    onCheckedChange={onToggleAutonomous}
+                  />
+                </div>
+              )}
             </div>
           )}
         </div>

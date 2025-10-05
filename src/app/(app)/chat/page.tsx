@@ -705,89 +705,92 @@ export default function ChatPage() {
 
   // Agent-specific interface with avatar and prompt starters
   const renderChatInterface = () => (
-    <div className="flex-1 flex flex-col h-full bg-white overflow-hidden">
+    <div className="flex flex-col h-full bg-white">
       {/* Expert Profile Header - Show when in manual mode */}
       {interactionMode === 'manual' && selectedExpert && (
-        <div className="border-b p-4 bg-gray-50">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-full flex items-center justify-center text-2xl bg-white border-2 border-gray-200 overflow-hidden relative">
-              {selectedExpert.avatar && selectedExpert.avatar.startsWith('/') || selectedExpert.avatar?.includes('avatar_') ? (
+        <div className="border-b px-6 py-3 bg-gray-50 flex-shrink-0">
+          <div className="max-w-4xl mx-auto flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full flex items-center justify-center bg-white border-2 border-gray-200 overflow-hidden flex-shrink-0">
+              {selectedExpert.avatar && (selectedExpert.avatar.startsWith('/') || selectedExpert.avatar?.includes('avatar_')) ? (
                 <Image
                   src={selectedExpert.avatar}
                   alt={selectedExpert.display_name || selectedExpert.name}
-                  width={48}
-                  height={48}
-                  className="object-cover"
+                  width={40}
+                  height={40}
+                  className="object-cover w-full h-full"
                 />
               ) : (
-                selectedExpert.avatar || '🤖'
+                <span className="text-xl">{selectedExpert.avatar || '🤖'}</span>
               )}
             </div>
-            <div className="flex-1">
-              <h3 className="font-semibold text-gray-900">{selectedExpert.display_name || selectedExpert.name}</h3>
-              <p className="text-sm text-gray-600">{selectedExpert.description}</p>
+            <div className="flex-1 min-w-0">
+              <h3 className="font-semibold text-gray-900 text-sm truncate">{selectedExpert.display_name || selectedExpert.name}</h3>
+              <p className="text-xs text-gray-600 truncate">{selectedExpert.description}</p>
             </div>
             <Button
               variant="ghost"
               size="sm"
               onClick={() => setSelectedExpert(null)}
+              className="flex-shrink-0"
             >
-              Change Expert
+              Change
             </Button>
           </div>
         </div>
       )}
+
       {messages.length === 0 ? (
-        // No messages - show agent profile with prompt starters
-        <div className="flex-1 overflow-y-auto">
-          <div className="flex flex-col items-center justify-center h-full px-6">
+        // No messages - show centered agent profile with prompt starters
+        <div className="flex-1 flex items-center justify-center overflow-y-auto py-8">
+          <div className="w-full max-w-4xl px-6">
             {/* Agent Avatar and Info */}
-            <div className="text-center mb-6">
-              <div className="w-20 h-20 rounded-full flex items-center justify-center text-4xl bg-gray-100 mx-auto mb-4 overflow-hidden relative">
+            <div className="text-center mb-8">
+              <div className="w-24 h-24 rounded-full flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-50 mx-auto mb-4 overflow-hidden border-4 border-white shadow-lg">
                 {selectedAgent?.avatar && (selectedAgent.avatar.startsWith('/') || selectedAgent.avatar.includes('avatar_')) ? (
                   <Image
                     src={selectedAgent.avatar}
-                    alt={selectedAgent.name || "AI Assistant"}
-                    width={80}
-                    height={80}
-                    className="object-cover"
+                    alt={selectedAgent.display_name || selectedAgent.name || "AI Assistant"}
+                    width={96}
+                    height={96}
+                    className="object-cover w-full h-full"
                   />
                 ) : (
-                  selectedAgent?.avatar || '🤖'
+                  <span className="text-5xl">{selectedAgent?.avatar || '🤖'}</span>
                 )}
               </div>
-              <h1 className="text-2xl font-semibold text-gray-900 mb-2">
-                {selectedAgent?.name || "AI Assistant"}
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                {selectedAgent?.display_name || selectedAgent?.name || "AI Assistant"}
               </h1>
-              <p className="text-sm text-gray-600 mb-1">
-                By {selectedAgent?.name || "AI Assistant"}
-              </p>
-              <p className="text-sm text-gray-600 max-w-xl mx-auto">
+              <p className="text-base text-gray-600 max-w-2xl mx-auto">
                 {selectedAgent?.description || "Your AI assistant"}
               </p>
             </div>
 
-            {/* 4 Dynamic Prompt Starters */}
-            <div className="w-full max-w-4xl grid grid-cols-4 gap-3 mb-8">
-              {promptStarters.slice(0, 4).map((prompt, index) => (
-                <button
-                  key={index}
-                  onClick={() => {
-                    setInput(prompt.text);
-                    setTimeout(() => handleSendMessage(), 100);
-                  }}
-                  className="p-4 text-left border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
-                >
-                  <div className="text-sm text-gray-900 line-clamp-3">{prompt.text}</div>
-                </button>
-              ))}
-            </div>
+            {/* 4 Prompt Starters Grid */}
+            {promptStarters.length > 0 && (
+              <div className="grid grid-cols-2 gap-3">
+                {promptStarters.slice(0, 4).map((prompt, index) => (
+                  <button
+                    key={index}
+                    onClick={() => {
+                      setInput(prompt.text);
+                      setTimeout(() => handleSendMessage(), 100);
+                    }}
+                    className="p-4 text-left border-2 border-gray-200 rounded-xl hover:border-blue-300 hover:bg-blue-50/50 transition-all duration-200 group"
+                  >
+                    <div className="text-sm text-gray-700 group-hover:text-gray-900 line-clamp-3 font-medium">
+                      {prompt.text}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       ) : (
         // Has messages - show messages area
         <div className="flex-1 overflow-y-auto">
-          <div className="max-w-6xl mx-auto px-6 py-6">
+          <div className="max-w-4xl mx-auto px-6 py-6">
             <ChatMessages
               messages={messages}
               liveReasoning={liveReasoning}
@@ -798,9 +801,9 @@ export default function ChatPage() {
         </div>
       )}
 
-      {/* Input component always at bottom */}
-      <div className="px-6 py-4 border-t bg-white">
-        <div className="w-full max-w-6xl mx-auto">
+      {/* Input component at bottom with proper spacing */}
+      <div className="flex-shrink-0 border-t bg-white">
+        <div className="max-w-4xl mx-auto px-6 py-4">
           <ChatInput
             value={input}
             onChange={setInput}

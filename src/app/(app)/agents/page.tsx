@@ -2,14 +2,18 @@
 
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useState, useEffect } from 'react';
+import { LayoutGrid, List, Table as TableIcon, BarChart3 } from 'lucide-react';
 
 import { AgentDetailsModal } from '@/features/agents/components/agent-details-modal';
 import { AgentsBoard } from '@/features/agents/components/agents-board';
 import { AgentCreator } from '@/features/chat/components/agent-creator';
+import { AgentsOverview } from '@/features/agents/components/agents-overview';
+import { AgentsTable } from '@/features/agents/components/agents-table';
 import { useAgentsFilter } from '@/contexts/agents-filter-context';
 import { useAuth } from '@/lib/auth/auth-context';
 import { type Agent as AgentsStoreAgent, useAgentsStore } from '@/lib/stores/agents-store';
 import { type Agent } from '@/lib/stores/chat-store';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 export default function AgentsPage() {
   const router = useRouter();
@@ -20,6 +24,7 @@ export default function AgentsPage() {
   const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
   const [editingAgent, setEditingAgent] = useState<AgentsStoreAgent | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [activeTab, setActiveTab] = useState<'overview' | 'grid' | 'list' | 'table'>('overview');
 
   // Handle query parameters for opening create modal
   useEffect(() => {
@@ -218,18 +223,67 @@ export default function AgentsPage() {
 
   return (
     <div className="space-y-6">
-      <AgentsBoard
-        onAgentSelect={handleAgentSelect}
-        onAddToChat={handleAddAgentToChat}
-        showCreateButton={true}
-        hiddenControls={false}
-        searchQuery={searchQuery}
-        onSearchChange={setSearchQuery}
-        filters={filters}
-        onFilterChange={setFilters}
-        viewMode={viewMode}
-        onViewModeChange={setViewMode}
-      />
+      <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as typeof activeTab)} className="w-full">
+        <TabsList className="grid w-full max-w-md grid-cols-4">
+          <TabsTrigger value="overview" className="flex items-center gap-2">
+            <BarChart3 className="h-4 w-4" />
+            Overview
+          </TabsTrigger>
+          <TabsTrigger value="grid" className="flex items-center gap-2">
+            <LayoutGrid className="h-4 w-4" />
+            Grid
+          </TabsTrigger>
+          <TabsTrigger value="list" className="flex items-center gap-2">
+            <List className="h-4 w-4" />
+            List
+          </TabsTrigger>
+          <TabsTrigger value="table" className="flex items-center gap-2">
+            <TableIcon className="h-4 w-4" />
+            Table
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="overview" className="mt-6">
+          <AgentsOverview />
+        </TabsContent>
+
+        <TabsContent value="grid" className="mt-6">
+          <AgentsBoard
+            onAgentSelect={handleAgentSelect}
+            onAddToChat={handleAddAgentToChat}
+            showCreateButton={true}
+            hiddenControls={false}
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+            filters={filters}
+            onFilterChange={setFilters}
+            viewMode="grid"
+            onViewModeChange={setViewMode}
+          />
+        </TabsContent>
+
+        <TabsContent value="list" className="mt-6">
+          <AgentsBoard
+            onAgentSelect={handleAgentSelect}
+            onAddToChat={handleAddAgentToChat}
+            showCreateButton={true}
+            hiddenControls={false}
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+            filters={filters}
+            onFilterChange={setFilters}
+            viewMode="list"
+            onViewModeChange={setViewMode}
+          />
+        </TabsContent>
+
+        <TabsContent value="table" className="mt-6">
+          <AgentsTable
+            onAgentSelect={handleAgentSelect}
+            onAddToChat={handleAddAgentToChat}
+          />
+        </TabsContent>
+      </Tabs>
 
       {selectedAgent && (
         <AgentDetailsModal

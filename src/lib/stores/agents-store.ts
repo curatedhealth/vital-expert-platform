@@ -79,7 +79,7 @@ export interface AgentsStore {
   lastUpdated: Date | null;
 
   // Actions
-  loadAgents: () => Promise<void>;
+  loadAgents: (showAll?: boolean) => Promise<void>;
   loadCategories: () => Promise<void>;
   refreshAgents: () => Promise<void>;
   searchAgents: (searchTerm: string) => Promise<Agent[]>;
@@ -523,9 +523,10 @@ export const useAgentsStore = create<AgentsStore>()(
     }),
     {
       name: 'vitalpath-agents-store',
-      version: 1,
+      version: 2, // Incremented to clear old cache
       partialize: (state) => ({
-        agents: state.agents,
+        // Don't persist agents array - always fetch fresh from API
+        // agents: state.agents,
         categories: state.categories,
         selectedAgent: state.selectedAgent,
         lastUpdated: state.lastUpdated,
@@ -533,6 +534,10 @@ export const useAgentsStore = create<AgentsStore>()(
       onRehydrateStorage: () => (state) => {
         if (state?.lastUpdated) {
           state.lastUpdated = new Date(state.lastUpdated);
+        }
+        // Force agents to empty array on rehydration so they'll be loaded fresh
+        if (state) {
+          state.agents = [];
         }
       },
     }

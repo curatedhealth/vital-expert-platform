@@ -200,7 +200,7 @@ export function AgentsBoard({
   // Load agents on component mount only if not already loaded
   useEffect(() => {
     if (agents.length === 0) {
-      loadAgents();
+      loadAgents(true); // Load all agents including inactive ones
     }
   }, [loadAgents, agents.length]);
 
@@ -845,7 +845,7 @@ export function AgentsBoard({
             setShowCreateModal(false);
             setEditingAgent(null);
             // Reload agents from database to show the newly created/edited agent
-            loadAgents();
+            loadAgents(true);
           }}
           editingAgent={editingAgent ? {
             ...editingAgent,

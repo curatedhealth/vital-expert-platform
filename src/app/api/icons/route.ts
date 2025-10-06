@@ -13,6 +13,43 @@ export async function GET(request: NextRequest) {
     const categories = searchParams.get('categories')?.split(',');
     const search = searchParams.get('search');
 
+    // Special handling for avatar category - query avatars table
+    if (category === 'avatar') {
+      const { data: avatars, error: avatarsError } = await supabase
+        .from('avatars')
+        .select('id, icon, name, category, description, sort_order')
+        .eq('is_active', true)
+        .order('sort_order')
+        .order('name');
+
+      if (avatarsError) {
+        console.error('Database error:', avatarsError);
+        return NextResponse.json(
+          { error: 'Failed to fetch avatars', details: avatarsError.message },
+          { status: 500 }
+        );
+      }
+
+      // Transform avatars to match expected format
+      const transformedAvatars = (avatars || []).map(avatar => ({
+        id: avatar.id,
+        name: avatar.name,
+        display_name: avatar.name,
+        icon: avatar.icon,
+        category: avatar.category,
+        description: avatar.description,
+        sort_order: avatar.sort_order,
+        is_active: true
+      }));
+
+      return NextResponse.json({
+        success: true,
+        icons: transformedAvatars,
+        total: transformedAvatars.length
+      });
+    }
+
+    // For all other categories, query icons table (fallback to empty if table doesn't exist)
     let query = supabase
       .from('icons')
       .select('*')
@@ -40,6 +77,14 @@ export async function GET(request: NextRequest) {
 
     if (error) {
       console.error('Database error:', error);
+      // If icons table doesn't exist, return empty array instead of error
+      if (error.message?.includes("Could not find the table 'public.icons'")) {
+        return NextResponse.json({
+          success: true,
+          icons: [],
+          total: 0
+        });
+      }
       return NextResponse.json(
         { error: 'Failed to fetch icons', details: error.message },
         { status: 500 }

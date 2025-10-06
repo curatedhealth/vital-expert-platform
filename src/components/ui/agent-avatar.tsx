@@ -66,7 +66,7 @@ export function AgentAvatar({ agent, avatar: avatarProp, name: nameProp, size = 
     return (
       <div
         className={cn(
-          'flex items-center justify-center rounded-lg overflow-hidden bg-gradient-to-br from-blue-50 to-indigo-100 border border-indigo-200 flex-shrink-0',
+          'flex items-center justify-center rounded-lg overflow-hidden flex-shrink-0',
           sizeClasses[size as keyof typeof sizeClasses] || sizeClasses.md,
           className
         )}
@@ -80,7 +80,7 @@ export function AgentAvatar({ agent, avatar: avatarProp, name: nameProp, size = 
         <img
           src={iconUrl}
           alt={name}
-          className="w-full h-full object-contain opacity-70"
+          className="w-full h-full object-contain"
           onError={(e) => {
             const target = e.target as HTMLImageElement;
             if (target.src !== fallbackAvatar) {

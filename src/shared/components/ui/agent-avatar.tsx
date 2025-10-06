@@ -71,7 +71,7 @@ export function AgentAvatar({ agent, avatar: avatarProp, name: nameProp, size = 
 
     return (
       <div
-        className={cn('rounded-lg overflow-hidden bg-gradient-to-br from-blue-50 to-indigo-100 border border-indigo-200', sizeClasses[size], className)}
+        className={cn('rounded-lg overflow-hidden', sizeClasses[size], className)}
         style={{
           minWidth: size === 'card' ? '50px' : size === 'list' ? '30px' : undefined,
           minHeight: size === 'card' ? '50px' : size === 'list' ? '30px' : undefined,
@@ -82,7 +82,7 @@ export function AgentAvatar({ agent, avatar: avatarProp, name: nameProp, size = 
         <img
           src={iconUrl}
           alt={name}
-          className="w-full h-full object-contain opacity-70"
+          className="w-full h-full object-contain"
           onError={(e) => {
             const target = e.target as HTMLImageElement;
             if (target.src !== fallbackAvatar) {

@@ -72,7 +72,7 @@ export function IconSelectionModal({
     const filtered = icons.filter(icon =>
       icon.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       icon.display_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      icon.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()))
+      (icon.tags && icon.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase())))
     );
     setFilteredIcons(filtered);
   };
@@ -83,8 +83,9 @@ export function IconSelectionModal({
   };
 
   const getIconUrl = (icon: Icon) => {
-    // Simply return the file_url from the database
-    return icon.file_url;
+    // For avatars, use the icon field which contains Supabase Storage URL
+    // For other icons, use file_url if available
+    return icon.icon || icon.file_url;
   };
 
   const getIconUrlOld = (icon: Icon) => {
@@ -205,7 +206,7 @@ export function IconSelectionModal({
                   className={`
                     w-12 h-12 rounded-lg border-2 flex items-center justify-center
                     transition-all duration-200 hover:scale-105 hover:shadow-md
-                    ${selectedIcon === icon.file_url
+                    ${selectedIcon === (icon.icon || icon.file_url)
                       ? 'border-blue-500 bg-blue-50'
                       : 'border-gray-200 hover:border-gray-300'
                     }

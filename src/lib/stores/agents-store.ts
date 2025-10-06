@@ -17,7 +17,6 @@ export interface Agent {
   temperature: number;
   max_tokens: number;
   is_custom?: boolean;
-  is_public?: boolean;
   // User ownership fields
   user_id?: string;
   is_user_copy?: boolean;
@@ -121,7 +120,7 @@ const agentEventEmitter = new AgentEventEmitter();
 
 // Convert database agent to store format
 const convertDbAgentToStoreFormat = (dbAgent: DbAgent): Agent => {
-  return {
+  const converted = {
     id: dbAgent.id,
     name: dbAgent.name,
     display_name: dbAgent.display_name,
@@ -135,7 +134,6 @@ const convertDbAgentToStoreFormat = (dbAgent: DbAgent): Agent => {
     temperature: dbAgent.temperature ?? 0.7,
     max_tokens: dbAgent.max_tokens ?? 2000,
     is_custom: dbAgent.is_custom ?? false,
-    is_public: (dbAgent as unknown).is_public ?? true,
     status: (dbAgent.status as "development" | "testing" | "active" | "deprecated") || "active",
     tier: dbAgent.tier ?? 1,
     priority: dbAgent.priority ?? 1,
@@ -146,6 +144,9 @@ const convertDbAgentToStoreFormat = (dbAgent: DbAgent): Agent => {
     created_at: dbAgent.created_at || new Date().toISOString(),
     updated_at: dbAgent.updated_at || new Date().toISOString(),
   };
+
+  console.log(`🔄 Converted agent "${dbAgent.display_name}": tier=${converted.tier}, status=${converted.status}`);
+  return converted;
 };
 
 // Convert store agent to database format
@@ -186,17 +187,27 @@ export const useAgentsStore = create<AgentsStore>()(
       lastUpdated: null,
 
       // Load agents from database
-      loadAgents: async () => {
+      // Set showAll=true to load all agents regardless of status (for agents management page)
+      // Set showAll=false to load only active/testing agents (for chat/services)
+      loadAgents: async (showAll: boolean = true) => {
+        console.log(`📦 AgentsStore: loadAgents(showAll=${showAll}) called`);
         set({ isLoading: true, error: null });
 
         try {
-          const dbAgents = await agentService.getActiveAgents();
+          const dbAgents = await agentService.getActiveAgents(showAll);
+          console.log(`📦 AgentsStore: Received ${dbAgents.length} agents from service`);
+
           const agents = dbAgents.map(convertDbAgentToStoreFormat);
+          console.log(`📦 AgentsStore: Converted to ${agents.length} store-format agents`);
+
           set({
             agents,
             isLoading: false,
             lastUpdated: new Date(),
           });
+
+          console.log(`📦 AgentsStore: State updated with ${agents.length} agents`);
+
           // Emit change event for global synchronization
           agentEventEmitter.emit(agents);
 
@@ -424,7 +435,6 @@ export const useAgentsStore = create<AgentsStore>()(
           temperature: legacyAgent.temperature,
           max_tokens: legacyAgent.maxTokens,
           is_custom: legacyAgent.isCustom,
-          is_public: true,
           status: 'active' as const,
           tier: 1,
           priority: 100,

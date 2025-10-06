@@ -25,9 +25,9 @@ export async function GET(request: NextRequest) {
 
     // Fetch all business functions
     const { data: functions, error: functionsError } = await supabaseAdmin
-      .from('org_functions')
-      .select('id, unique_id, department_name, description')
-      .order('department_name');
+      .from('business_functions')
+      .select('id, code, name, description')
+      .order('name');
 
     if (functionsError) {
       console.error('[Org Structure API] Error fetching functions:', functionsError);
@@ -36,26 +36,25 @@ export async function GET(request: NextRequest) {
 
     console.log('[Org Structure API] Fetched', functions?.length || 0, 'functions');
     if (functions && functions.length > 0) {
-      console.log('[Org Structure API] Sample:', functions.slice(0, 3).map(f => f.department_name));
+      console.log('[Org Structure API] Sample:', functions.slice(0, 3).map(f => f.name));
     }
 
     // Fetch all departments
     const { data: departments, error: departmentsError } = await supabaseAdmin
-      .from('org_departments')
-      .select('id, unique_id, department_name, description, function_id')
-      .order('department_name');
+      .from('departments')
+      .select('id, name, description, business_function_id')
+      .order('name');
 
     if (departmentsError) {
       console.error('[Org Structure API] Error fetching departments:', departmentsError);
       throw departmentsError;
     }
 
-    // Fetch all active roles
+    // Fetch all organizational roles
     const { data: roles, error: rolesError } = await supabaseAdmin
-      .from('org_roles')
-      .select('id, unique_id, role_name, description, department_id, function_id')
-      .eq('is_active', true)
-      .order('role_name');
+      .from('organizational_roles')
+      .select('id, name, description, department_id, business_function_id, level')
+      .order('name');
 
     if (rolesError) {
       console.error('[Org Structure API] Error fetching roles:', rolesError);
@@ -65,11 +64,11 @@ export async function GET(request: NextRequest) {
     // Group departments by function
     const departmentsByFunction: Record<string, any[]> = {};
     departments?.forEach(dept => {
-      if (dept.function_id) {
-        if (!departmentsByFunction[dept.function_id]) {
-          departmentsByFunction[dept.function_id] = [];
+      if (dept.business_function_id) {
+        if (!departmentsByFunction[dept.business_function_id]) {
+          departmentsByFunction[dept.business_function_id] = [];
         }
-        departmentsByFunction[dept.function_id].push(dept);
+        departmentsByFunction[dept.business_function_id].push(dept);
       }
     });
 
@@ -87,11 +86,11 @@ export async function GET(request: NextRequest) {
       }
 
       // Group by function
-      if (role.function_id) {
-        if (!rolesByFunction[role.function_id]) {
-          rolesByFunction[role.function_id] = [];
+      if (role.business_function_id) {
+        if (!rolesByFunction[role.business_function_id]) {
+          rolesByFunction[role.business_function_id] = [];
         }
-        rolesByFunction[role.function_id].push(role);
+        rolesByFunction[role.business_function_id].push(role);
       }
     });
 

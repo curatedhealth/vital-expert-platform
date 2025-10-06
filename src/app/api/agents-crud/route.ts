@@ -12,45 +12,84 @@ export async function GET(request: NextRequest) {
     // Check for special action parameter
     const { searchParams } = new URL(request.url);
     const action = searchParams.get('action');
+    const showAll = searchParams.get('showAll') === 'true'; // New parameter for showing all agents
 
     // Get organizational structure for filters
     if (action === 'get_org_structure') {
-      // Fetch unique departments and roles from agents
-      const { data: agentsData } = await supabaseAdmin
-        .from('agents')
-        .select('department, role')
-        .eq('status', 'active');
-
       // Fetch business functions
       const { data: functionsData } = await supabaseAdmin
         .from('business_functions')
-        .select('id, name, description');
+        .select('id, name, description, code, icon, color');
 
-      // Extract unique departments and roles
-      const departments = [...new Set(
-        (agentsData || [])
-          .map(a => a.department)
-          .filter(Boolean)
-      )].sort();
+      // Fetch departments
+      const { data: departmentsData } = await supabaseAdmin
+        .from('departments')
+        .select('id, name, description, business_function_id');
 
-      const roles = [...new Set(
-        (agentsData || [])
-          .map(a => a.role)
-          .filter(Boolean)
-      )].sort();
+      // Fetch agent roles
+      const { data: agentRolesData } = await supabaseAdmin
+        .from('agent_roles')
+        .select('id, name, description, category');
+
+      // Fetch organizational roles
+      const { data: orgRolesData } = await supabaseAdmin
+        .from('organizational_roles')
+        .select('id, name, description, level, business_function_id, department_id');
 
       return NextResponse.json({
         success: true,
         organizationalStructure: {
           businessFunctions: functionsData || [],
-          departments,
-          roles
+          departments: departmentsData || [],
+          agentRoles: agentRolesData || [],
+          organizationalRoles: orgRolesData || []
         }
       });
     }
 
-    // Regular agent fetch - explicitly select columns to avoid schema cache issues
-    const { data, error } = await supabaseAdmin
+    // Get agent with supported organizational roles
+    if (action === 'get_agent_org_roles') {
+      const agentId = searchParams.get('agentId');
+
+      if (!agentId) {
+        return NextResponse.json(
+          { error: 'agentId parameter required' },
+          { status: 400 }
+        );
+      }
+
+      const { data, error } = await supabaseAdmin
+        .from('agent_organizational_role_support')
+        .select(`
+          id,
+          support_type,
+          proficiency_level,
+          organizational_roles (
+            id,
+            name,
+            description,
+            level,
+            business_function_id,
+            department_id
+          )
+        `)
+        .eq('agent_id', agentId);
+
+      if (error) {
+        return NextResponse.json(
+          { error: 'Failed to fetch agent organizational roles', details: error.message },
+          { status: 500 }
+        );
+      }
+
+      return NextResponse.json({
+        success: true,
+        supportedRoles: data || []
+      });
+    }
+
+    // Build query for agent fetch
+    let query = supabaseAdmin
       .from('agents')
       .select(`
         id,
@@ -66,24 +105,40 @@ export async function GET(request: NextRequest) {
         temperature,
         max_tokens,
         is_custom,
+        is_library_agent,
+        created_by,
         status,
         tier,
         priority,
         implementation_phase,
         knowledge_domains,
-        specializations,
-        tools,
-        use_cases,
-        target_users,
-        data_sources,
-        compliance_requirements,
-        required_integrations,
-        security_level,
-        roi_metrics,
+        business_function,
+        business_function_id,
+        role,
+        role_id,
+        domain_expertise,
+        medical_specialty,
+        department,
+        department_id,
+        validation_status,
+        hipaa_compliant,
+        gdpr_compliant,
+        pharma_enabled,
+        verify_enabled,
+        regulatory_context,
+        metadata,
         created_at,
         updated_at
-      `)
-      .eq('status', 'active')
+      `);
+
+    // Apply status filter based on showAll parameter
+    // If showAll=true: return all agents (for agents management page)
+    // If showAll=false: return only active/testing agents (for chat/services)
+    if (!showAll) {
+      query = query.in('status', ['active', 'testing']);
+    }
+
+    const { data, error } = await query
       .order('tier', { ascending: true })
       .order('priority', { ascending: true })
       .limit(1000);

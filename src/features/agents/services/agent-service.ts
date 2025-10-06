@@ -31,10 +31,12 @@ export class AgentService {
   private supabase = supabase;
 
   // Get all active agents
-  async getActiveAgents(): Promise<AgentWithCategories[]> {
+  async getActiveAgents(showAll: boolean = false): Promise<AgentWithCategories[]> {
     try {
+      console.log(`🔍 AgentService: Fetching ${showAll ? 'all' : 'active/testing'} agents from /api/agents-crud...`);
       // Use API route to bypass RLS issues
-      const response = await fetch('/api/agents-crud', {
+      const url = showAll ? '/api/agents-crud?showAll=true' : '/api/agents-crud';
+      const response = await fetch(url, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -53,21 +55,30 @@ export class AgentService {
       const result = await response.json();
       const data = result.agents || [];
 
+      console.log(`✅ AgentService: Received ${data.length} agents from API`);
+      if (data.length > 0) {
+        console.log('📊 Sample agent:', data[0]?.display_name, '| Tier:', data[0]?.tier, '| Status:', data[0]?.status);
+      }
+
       // Transform the data to include empty categories array since categories tables don't exist yet
-      return data.map((agent: unknown) => ({
+      const transformedAgents = data.map((agent: unknown) => ({
         ...agent,
         categories: []
       }));
+
+      console.log(`🔄 AgentService: Returning ${transformedAgents.length} transformed agents to store`);
+      return transformedAgents;
 
     } catch (error) {
       console.error('❌ AgentService: Request error');
       console.error('- Error:', error);
 
       // Fallback to direct Supabase call (might fail due to RLS but worth trying)
+      // Only fetch agents with status 'active' or 'testing' (ready for use)
       const { data, error: dbError } = await this.supabase
         .from('agents')
         .select('*')
-        .eq('status', 'active')
+        .in('status', ['active', 'testing'])
         .order('tier', { ascending: true })
         .order('priority', { ascending: true })
         .limit(1000);
@@ -93,7 +104,7 @@ export class AgentService {
           agent_categories(*)
         )
       `)
-      .eq('status', 'active')
+      .in('status', ['active', 'testing'])
       .eq('tier', tier)
       .order('priority', { ascending: true });
 
@@ -118,7 +129,7 @@ export class AgentService {
           agent_categories(*)
         )
       `)
-      .eq('status', 'active')
+      .in('status', ['active', 'testing'])
       .eq('implementation_phase', phase)
       .order('priority', { ascending: true });
 
@@ -143,7 +154,7 @@ export class AgentService {
           agent_categories!inner(*)
         )
       `)
-      .eq('status', 'active')
+      .in('status', ['active', 'testing'])
       .eq('agent_category_mapping.agent_categories.name', categoryName)
       .order('priority', { ascending: true });
 
@@ -244,7 +255,7 @@ export class AgentService {
         *,
         agent_performance_metrics(*)
       `)
-      .eq('status', 'active')
+      .in('status', ['active', 'testing'])
       .eq(userId ? 'agent_performance_metrics.user_id' : 'agent_performance_metrics.user_id', userId || null)
       .order('tier', { ascending: true })
       .order('priority', { ascending: true });
@@ -391,7 +402,7 @@ export class AgentService {
           agent_categories(*)
         )
       `)
-      .eq('status', 'active')
+      .in('status', ['active', 'testing'])
       .or(`display_name.ilike.%${searchTerm}%,description.ilike.%${searchTerm}%,capabilities.cs.["${searchTerm}"]`)
       .order('tier', { ascending: true })
       .order('priority', { ascending: true });
@@ -505,7 +516,7 @@ export class AgentService {
           capability:capabilities!inner(*)
         )
       `)
-      .eq('status', 'active')
+      .in('status', ['active', 'testing'])
       .eq('agent_capabilities.capability.name', capabilityName)
       .order('tier', { ascending: true })
       .order('priority', { ascending: true });

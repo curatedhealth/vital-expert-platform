@@ -33,6 +33,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { useBusinessFunctionMap } from '@/hooks/useBusinessFunctionMap';
+import { useUserRole } from '@/hooks/useUserRole';
 import { AgentAvatar } from '@/shared/components/ui/agent-avatar';
 import { Agent, DomainExpertise, ValidationStatus, DOMAIN_COLORS } from '@/types/agent.types';
 
@@ -63,6 +64,7 @@ export const AgentCard: React.FC<AgentCardProps> = ({
 }) => {
   // Get business function name from function_id
   const { getFunctionName } = useBusinessFunctionMap();
+  const { canEditAgent, canDeleteAgent, isSuperAdmin } = useUserRole();
 
   // Get domain-specific color
   const getDomainColor = (domain: DomainExpertise) => {
@@ -212,12 +214,12 @@ export const AgentCard: React.FC<AgentCardProps> = ({
               </div>
             </div>
 
-            {/* Status Badges */}
-            <div className="flex flex-col gap-1 items-end">
+            {/* Status Badges - More Prominent */}
+            <div className="flex flex-col gap-2 items-end flex-shrink-0">
               {agent.tier !== undefined && (
                 <Tooltip>
                   <TooltipTrigger>
-                    <Badge variant="outline" className={`text-xs font-semibold ${getTierDisplay(agent.tier).color}`}>
+                    <Badge variant="outline" className={`text-sm font-bold px-3 py-1 border-2 ${getTierDisplay(agent.tier).color}`}>
                       {getTierDisplay(agent.tier).label}
                     </Badge>
                   </TooltipTrigger>
@@ -229,7 +231,7 @@ export const AgentCard: React.FC<AgentCardProps> = ({
               {agent.status && (
                 <Tooltip>
                   <TooltipTrigger>
-                    <Badge className={`text-xs font-medium ${getStatusColor(agent.status)}`}>
+                    <Badge className={`text-sm font-semibold px-3 py-1 ${getStatusColor(agent.status)}`}>
                       {agent.status.toUpperCase()}
                     </Badge>
                   </TooltipTrigger>
@@ -238,12 +240,6 @@ export const AgentCard: React.FC<AgentCardProps> = ({
                   </TooltipContent>
                 </Tooltip>
               )}
-              <div className="flex items-center gap-1">
-                <ValidationIcon className="h-3 w-3" />
-                <Badge className={`text-xs ${validationDisplay.color}`}>
-                  {validationDisplay.label}
-                </Badge>
-              </div>
             </div>
           </div>
 
@@ -375,8 +371,14 @@ export const AgentCard: React.FC<AgentCardProps> = ({
                   {agent.model}
                 </span>
               )}
-              {agent.is_custom && (
-                <Badge variant="outline" className="text-xs">Custom</Badge>
+              {agent.is_library_agent ? (
+                <Badge variant="outline" className="text-xs bg-purple-50 text-purple-700 border-purple-200">
+                  Library
+                </Badge>
+              ) : agent.is_custom && (
+                <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
+                  Custom
+                </Badge>
               )}
             </div>
 
@@ -397,40 +399,48 @@ export const AgentCard: React.FC<AgentCardProps> = ({
                     View Details
                   </DropdownMenuItem>
 
-                  <DropdownMenuItem onClick={(e) => {
-                    e.stopPropagation();
-                    onEdit?.(agent);
-                  }}>
-                    <Edit className="h-4 w-4 mr-2" />
-                    Configure
-                  </DropdownMenuItem>
-
-                  {agent.status === 'active' ? (
+                  {/* Edit - only for agents user can edit */}
+                  {canEditAgent(agent) && (
                     <DropdownMenuItem onClick={(e) => {
                       e.stopPropagation();
-                      onDeactivate?.(agent);
+                      onEdit?.(agent);
                     }}>
-                      <Pause className="h-4 w-4 mr-2" />
-                      Deactivate
-                    </DropdownMenuItem>
-                  ) : (
-                    <DropdownMenuItem onClick={(e) => {
-                      e.stopPropagation();
-                      onActivate?.(agent);
-                    }}>
-                      <Play className="h-4 w-4 mr-2" />
-                      Activate
+                      <Edit className="h-4 w-4 mr-2" />
+                      Configure
                     </DropdownMenuItem>
                   )}
 
+                  {/* Activate/Deactivate - only for super admin or own agents */}
+                  {canEditAgent(agent) && (
+                    agent.status === 'active' ? (
+                      <DropdownMenuItem onClick={(e) => {
+                        e.stopPropagation();
+                        onDeactivate?.(agent);
+                      }}>
+                        <Pause className="h-4 w-4 mr-2" />
+                        Deactivate
+                      </DropdownMenuItem>
+                    ) : (
+                      <DropdownMenuItem onClick={(e) => {
+                        e.stopPropagation();
+                        onActivate?.(agent);
+                      }}>
+                        <Play className="h-4 w-4 mr-2" />
+                        Activate
+                      </DropdownMenuItem>
+                    )
+                  )}
+
+                  {/* Copy/Duplicate - available for all agents */}
                   <DropdownMenuItem onClick={(e) => {
                     e.stopPropagation();
                     onDuplicate?.(agent);
                   }}>
                     <Copy className="h-4 w-4 mr-2" />
-                    Duplicate
+                    {agent.is_library_agent ? 'Copy to My Agents' : 'Duplicate'}
                   </DropdownMenuItem>
 
+                  {/* Export - available for all */}
                   <DropdownMenuItem onClick={(e) => {
                     e.stopPropagation();
                     onExport?.(agent);
@@ -439,7 +449,8 @@ export const AgentCard: React.FC<AgentCardProps> = ({
                     Export
                   </DropdownMenuItem>
 
-                  {agent.is_custom && (
+                  {/* Delete - only for agents user can delete */}
+                  {canDeleteAgent(agent) && (
                     <DropdownMenuItem
                       onClick={(e) => {
                         e.stopPropagation();

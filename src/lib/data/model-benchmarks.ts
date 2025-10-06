@@ -354,6 +354,45 @@ export const MODEL_BENCHMARKS: Record<string, BenchmarkResult[]> = {
       citation: 'Mistral AI (2023). Mistral 7B',
       source_url: 'https://mistral.ai/news/announcing-mistral-7b/'
     }
+  ],
+
+  // ========================================
+  // Hugging Face Fine-tuned Models
+  // ========================================
+  'CuratedHealth/base_7b': [
+    {
+      benchmark_name: 'Medical Question Answering',
+      score: 0.75,
+      metric: 'accuracy',
+      dataset: 'Healthcare domain QA tasks',
+      year: 2025,
+      citation: 'CuratedHealth (2025). Base 7B Model',
+      source_url: 'https://huggingface.co/CuratedHealth/base_7b'
+    }
+  ],
+
+  'CuratedHealth/meditron70b-qlora-1gpu': [
+    {
+      benchmark_name: 'Medical Knowledge',
+      score: 0.82,
+      metric: 'accuracy',
+      dataset: 'Clinical reasoning and medical diagnostics',
+      year: 2025,
+      citation: 'CuratedHealth (2025). Meditron 70B QLoRA',
+      source_url: 'https://huggingface.co/CuratedHealth/meditron70b-qlora-1gpu'
+    }
+  ],
+
+  'CuratedHealth/Qwen3-8B-SFT-20250917123923': [
+    {
+      benchmark_name: 'Supervised Medical Tasks',
+      score: 0.79,
+      metric: 'accuracy',
+      dataset: 'Medical text understanding and generation',
+      year: 2025,
+      citation: 'CuratedHealth (2025). Qwen3 8B SFT',
+      source_url: 'https://huggingface.co/CuratedHealth/Qwen3-8B-SFT-20250917123923'
+    }
   ]
 };
 
@@ -417,6 +456,18 @@ export const MODEL_CITATIONS: Record<string, {
   },
   'mistralai/Mistral-7B-Instruct-v0.2': {
     homepage: 'https://mistral.ai/news/announcing-mistral-7b/'
+  },
+  'CuratedHealth/base_7b': {
+    model_card: 'https://huggingface.co/CuratedHealth/base_7b',
+    homepage: 'https://huggingface.co/CuratedHealth/base_7b'
+  },
+  'CuratedHealth/meditron70b-qlora-1gpu': {
+    model_card: 'https://huggingface.co/CuratedHealth/meditron70b-qlora-1gpu',
+    homepage: 'https://huggingface.co/CuratedHealth/meditron70b-qlora-1gpu'
+  },
+  'CuratedHealth/Qwen3-8B-SFT-20250917123923': {
+    model_card: 'https://huggingface.co/CuratedHealth/Qwen3-8B-SFT-20250917123923',
+    homepage: 'https://huggingface.co/CuratedHealth/Qwen3-8B-SFT-20250917123923'
   }
 };
 

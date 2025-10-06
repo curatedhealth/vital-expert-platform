@@ -60,6 +60,9 @@ const defaultModelOptions = [
   { id: 'claude-3-opus', name: 'Claude 3 Opus', description: 'Most powerful Claude model for complex tasks' },
   { id: 'claude-3-sonnet', name: 'Claude 3 Sonnet', description: 'Balanced performance and speed' },
   { id: 'claude-3-haiku', name: 'Claude 3 Haiku', description: 'Fastest Claude model for quick responses' },
+  { id: 'CuratedHealth/base_7b', name: 'CuratedHealth Base 7B', description: 'Hugging Face fine-tuned 7B parameter base model' },
+  { id: 'CuratedHealth/meditron70b-qlora-1gpu', name: 'Meditron 70B QLoRA', description: 'Medical-focused 70B model optimized for single GPU' },
+  { id: 'CuratedHealth/Qwen3-8B-SFT-20250917123923', name: 'Qwen3 8B SFT', description: 'Supervised fine-tuned Qwen3 8B model for medical tasks' },
 ];
 
 interface ModelOption {
@@ -228,6 +231,11 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
     role: '',
     department: '',
     promptStarters: [] as PromptStarter[],
+
+    // Agent Classification Fields
+    tier: 1 as 1 | 2 | 3,
+    status: 'active' as 'active' | 'inactive' | 'testing' | 'development' | 'deprecated',
+    priority: 1,
 
     // Medical Compliance Fields
     medicalSpecialty: '',
@@ -1224,24 +1232,16 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
       temperature: formData.temperature,
       max_tokens: formData.maxTokens, // Convert to snake_case
       knowledge_domains: formData.knowledgeDomains, // Convert to snake_case
-      function_id: formData.businessFunction || null, // Store UUID
-      business_function: null, // Deprecated field
-      role: formData.role || null,
-      department: formData.department || null,
-      // Medical Compliance Fields
-      medical_specialty: formData.medicalSpecialty,
-      validation_status: formData.clinicalValidationStatus,
-      hipaa_compliant: formData.hipaaCompliant,
-      pharma_enabled: formData.pharmaEnabled,
-      verify_enabled: formData.verifyEnabled,
-      accuracy_score: formData.accuracyThreshold,
+      // Organization relationships (UUIDs to org tables)
+      function_id: formData.businessFunction || null,
+      department_id: formData.department || null,
+      role_id: formData.role || null,
       // Required fields for agents-store
       status: 'active' as const,
       tier: 1,
       priority: 1,
       implementation_phase: 1,
       is_custom: true,
-      is_public: false,
     };
 
     try {
@@ -1265,10 +1265,7 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
             temperature: formData.temperature,
             max_tokens: formData.maxTokens,
             knowledge_domains: formData.knowledgeDomains,
-            business_function: selectedBusinessFunction?.name || '',
-            role: selectedRole?.name || '',
             is_custom: true,
-            is_public: false,
             status: 'active' as const,
             tier: 1,
             priority: 1,
@@ -1296,37 +1293,18 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
             system_prompt: formData.systemPrompt,
             model: formData.model,
             avatar: formData.avatar,
+            tier: formData.tier,
+            status: formData.status,
+            priority: formData.priority,
             // Don't update color - keep existing value
             capabilities: formData.capabilities,
             rag_enabled: formData.ragEnabled,
             temperature: formData.temperature,
             max_tokens: formData.maxTokens,
             knowledge_domains: formData.knowledgeDomains,
-            // Store NAMES for display (backwards compatibility)
-            business_function: selectedFunction?.department_name || selectedFunction?.name || formData.businessFunction || null,
-            department: selectedDept?.department_name || formData.department || null,
-            role: selectedRole?.role_name || selectedRole?.name || formData.role || null,
-            // Store UUIDs for relationships
-            function_id: formData.businessFunction || null,
-            department_id: formData.department || null,
-            role_id: formData.role || null,
-            // Medical Compliance Fields
-            medical_specialty: formData.medicalSpecialty,
-            validation_status: formData.clinicalValidationStatus,
-            hipaa_compliant: formData.hipaaCompliant,
-            pharma_enabled: formData.pharmaEnabled,
-            verify_enabled: formData.verifyEnabled,
-            accuracy_score: formData.accuracyThreshold,
           };
 
-          console.log('[Agent Creator] Save - Updates object:', {
-            business_function: updates.business_function,
-            department: updates.department,
-            role: updates.role,
-            function_id: updates.function_id,
-            department_id: updates.department_id,
-            role_id: updates.role_id
-          });
+          console.log('[Agent Creator] Updating agent:', editingAgent.id);
 
           // Call API to update agent
           const response = await fetch(`/api/agents/${editingAgent.id}`, {
@@ -1349,8 +1327,13 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
           // Update agent tools
           console.log('🔧 Syncing tools for agent:', editingAgent.id);
           console.log('🔧 Selected tools in formData:', formData.tools);
-          await syncAgentTools(editingAgent.id, formData.tools);
-          console.log('✅ Agent tools synced successfully');
+          try {
+            await syncAgentTools(editingAgent.id, formData.tools);
+            console.log('✅ Agent tools synced successfully');
+          } catch (toolError) {
+            console.warn('⚠️ Failed to sync agent tools (non-critical):', toolError);
+            // Don't throw - agent was saved successfully, tool sync is optional
+          }
         }
       } else {
         // Create new agent - convert to chat store format
@@ -1642,6 +1625,68 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
                           Choose Icon
                         </Button>
                       </div>
+                    </div>
+                  </div>
+
+                  {/* Agent Classification */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                    <div>
+                      <Label htmlFor="tier">Tier *</Label>
+                      <select
+                        id="tier"
+                        value={formData.tier}
+                        onChange={(e) => setFormData(prev => ({ ...prev, tier: parseInt(e.target.value) as 1 | 2 | 3 }))}
+                        className="w-full p-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-market-purple"
+                      >
+                        <option value={1}>Tier 1 - Foundational</option>
+                        <option value={2}>Tier 2 - Specialist</option>
+                        <option value={3}>Tier 3 - Ultra-Specialist</option>
+                      </select>
+                      <p className="text-xs text-gray-500 mt-1">
+                        {formData.tier === 1 && 'General purpose, broad knowledge'}
+                        {formData.tier === 2 && 'Domain-specific expertise'}
+                        {formData.tier === 3 && 'Highly specialized, niche expertise'}
+                      </p>
+                    </div>
+
+                    <div>
+                      <Label htmlFor="status">Status *</Label>
+                      <select
+                        id="status"
+                        value={formData.status}
+                        onChange={(e) => setFormData(prev => ({ ...prev, status: e.target.value as typeof formData.status }))}
+                        className="w-full p-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-market-purple"
+                      >
+                        <option value="active">Active</option>
+                        <option value="inactive">Inactive</option>
+                        <option value="testing">Testing</option>
+                        <option value="development">Development</option>
+                        <option value="deprecated">Deprecated</option>
+                      </select>
+                      <p className="text-xs text-gray-500 mt-1">
+                        {formData.status === 'active' && 'Ready for production use'}
+                        {formData.status === 'inactive' && 'Not currently available'}
+                        {formData.status === 'testing' && 'Under quality assurance'}
+                        {formData.status === 'development' && 'Still being built'}
+                        {formData.status === 'deprecated' && 'No longer supported'}
+                      </p>
+                    </div>
+
+                    <div>
+                      <Label htmlFor="priority">Priority</Label>
+                      <Input
+                        id="priority"
+                        type="number"
+                        min="1"
+                        max="10"
+                        value={formData.priority}
+                        onChange={(e) => setFormData(prev => ({ ...prev, priority: parseInt(e.target.value) || 1 }))}
+                        placeholder="1-10"
+                        className="w-full"
+                      />
+                      <p className="text-xs text-gray-500 mt-1">
+                        Display priority (1-10, higher = more prominent)
+                      </p>
                     </div>
                   </div>
 
@@ -2878,7 +2923,8 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
         isOpen={showIconModal}
         onClose={() => setShowIconModal(false)}
         onSelect={(icon) => {
-          setFormData(prev => ({ ...prev, avatar: icon.file_url }));
+          // Use icon.icon for avatars (Supabase Storage URL), fallback to file_url
+          setFormData(prev => ({ ...prev, avatar: icon.icon || icon.file_url }));
         }}
         selectedIcon={formData.avatar}
         category="avatar"

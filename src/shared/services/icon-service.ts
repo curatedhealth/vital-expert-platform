@@ -5,13 +5,15 @@ export interface Icon {
   category: 'avatar' | 'prompt' | 'process' | 'medical' | 'regulatory' | 'general';
   subcategory?: string;
   description?: string;
-  file_path: string;
-  file_url: string;
+  icon?: string; // Supabase Storage URL for avatars
+  file_path?: string;
+  file_url?: string;
   svg_content?: string;
-  tags: string[];
+  tags?: string[];
   is_active: boolean;
-  created_at: string;
-  updated_at: string;
+  created_at?: string;
+  updated_at?: string;
+  sort_order?: number;
 }
 
 export class IconService {

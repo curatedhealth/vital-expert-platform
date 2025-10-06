@@ -72,47 +72,191 @@ export async function GET() {
  */
 function getDefaultModels() {
   return [
+    // GPT-5 Family (Featured - NEW October 2025!)
+    {
+      id: 'gpt-5',
+      name: 'GPT-5',
+      description: 'Best model for coding and agentic tasks across domains',
+      provider: 'openai',
+      maxTokens: 128000,
+      tier: 3
+    },
+    {
+      id: 'gpt-5-mini',
+      name: 'GPT-5 mini',
+      description: 'Faster, cost-efficient GPT-5 for well-defined tasks',
+      provider: 'openai',
+      maxTokens: 128000,
+      tier: 2
+    },
+    {
+      id: 'gpt-5-nano',
+      name: 'GPT-5 nano',
+      description: 'Fastest, most cost-efficient GPT-5 variant',
+      provider: 'openai',
+      maxTokens: 64000,
+      tier: 1
+    },
+    // GPT-4.1 Family
+    {
+      id: 'gpt-4.1',
+      name: 'GPT-4.1',
+      description: 'Best for coding with 1M token context, improved instruction following',
+      provider: 'openai',
+      maxTokens: 1000000,
+      tier: 3
+    },
+    {
+      id: 'gpt-4.1-mini',
+      name: 'GPT-4.1 mini',
+      description: 'Replaces GPT-4o mini with better performance',
+      provider: 'openai',
+      maxTokens: 128000,
+      tier: 2
+    },
+    {
+      id: 'gpt-4.1-nano',
+      name: 'GPT-4.1 nano',
+      description: 'Smallest, fastest GPT-4.1 variant',
+      provider: 'openai',
+      maxTokens: 64000,
+      tier: 1
+    },
+    // GPT-4 Legacy
     {
       id: 'gpt-4',
       name: 'GPT-4',
       description: 'Most capable, best for complex reasoning',
       provider: 'openai',
-      maxTokens: 8192
+      maxTokens: 8192,
+      tier: 3
     },
     {
       id: 'gpt-4-turbo',
       name: 'GPT-4 Turbo',
       description: 'Faster GPT-4 with 128K context window',
       provider: 'openai',
-      maxTokens: 128000
+      maxTokens: 128000,
+      tier: 3
     },
     {
       id: 'gpt-3.5-turbo',
       name: 'GPT-3.5 Turbo',
       description: 'Fast and efficient for most tasks',
       provider: 'openai',
-      maxTokens: 16385
+      maxTokens: 16385,
+      tier: 1
+    },
+    // Voice/Image Models
+    {
+      id: 'gpt-4o-mini-tts',
+      name: 'GPT-4o mini TTS',
+      description: 'Text-to-speech with voice instructability',
+      provider: 'openai',
+      maxTokens: 16000,
+      tier: 2,
+      capabilities: ['voice', 'tts']
+    },
+    {
+      id: 'gpt-image-1',
+      name: 'GPT Image 1',
+      description: 'Latest image generation model',
+      provider: 'openai',
+      maxTokens: 4000,
+      tier: 2,
+      capabilities: ['image-generation']
+    },
+    {
+      id: 'gpt-realtime',
+      name: 'GPT Realtime',
+      description: 'Speech-to-speech for voice agents',
+      provider: 'openai',
+      maxTokens: 16000,
+      tier: 2,
+      capabilities: ['voice', 'realtime']
+    },
+    // Claude Family
+    {
+      id: 'claude-opus-4',
+      name: 'Claude Opus 4',
+      description: 'Best-in-class reasoning and complex analysis',
+      provider: 'anthropic',
+      maxTokens: 128000,
+      tier: 3
+    },
+    {
+      id: 'claude-sonnet-4.5',
+      name: 'Claude Sonnet 4.5',
+      description: 'Best balance with 200K context and multimodal',
+      provider: 'anthropic',
+      maxTokens: 200000,
+      tier: 2
     },
     {
       id: 'claude-3-opus',
       name: 'Claude 3 Opus',
       description: 'Most powerful Claude model for complex tasks',
       provider: 'anthropic',
-      maxTokens: 200000
+      maxTokens: 200000,
+      tier: 3
     },
     {
       id: 'claude-3-sonnet',
       name: 'Claude 3 Sonnet',
       description: 'Balanced performance and speed',
       provider: 'anthropic',
-      maxTokens: 200000
+      maxTokens: 200000,
+      tier: 2
     },
     {
       id: 'claude-3-haiku',
       name: 'Claude 3 Haiku',
       description: 'Fastest Claude model for quick responses',
       provider: 'anthropic',
-      maxTokens: 200000
+      maxTokens: 200000,
+      tier: 1
+    },
+    // Gemini Family
+    {
+      id: 'gemini-2.5-pro',
+      name: 'Gemini 2.5 Pro',
+      description: 'Excellent value with 1M context and multimodal',
+      provider: 'google',
+      maxTokens: 1000000,
+      tier: 2
+    },
+    {
+      id: 'gemini-flash',
+      name: 'Gemini Flash',
+      description: 'Ultra-fast and cost-effective for high-volume',
+      provider: 'google',
+      maxTokens: 32000,
+      tier: 1
+    },
+    // HuggingFace CuratedHealth (Your fine-tuned models!)
+    {
+      id: 'CuratedHealth/meditron70b-qlora-1gpu',
+      name: 'Meditron 70B QLoRA',
+      description: 'Medical fine-tuned 70B for clinical decision support',
+      provider: 'huggingface',
+      maxTokens: 16384,
+      tier: 3
+    },
+    {
+      id: 'CuratedHealth/Qwen3-8B-SFT-20250917123923',
+      name: 'Qwen3 8B SFT',
+      description: 'Medical SFT for clinical workflows and documentation',
+      provider: 'huggingface',
+      maxTokens: 8192,
+      tier: 2
+    },
+    {
+      id: 'CuratedHealth/base_7b',
+      name: 'CuratedHealth Base 7B',
+      description: 'Medical foundational for triage and high-volume',
+      provider: 'huggingface',
+      maxTokens: 4096,
+      tier: 1
     }
   ];
 }

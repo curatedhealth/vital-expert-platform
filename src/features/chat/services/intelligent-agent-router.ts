@@ -236,9 +236,11 @@ export async function loadAvailableAgents(): Promise<Agent[]> {
     return agentsCache.agents;
   }
 
+  // Only load agents with status 'active' or 'testing' (ready for use in chat/services)
   const { data, error } = await supabase
     .from('agents')
     .select('*')
+    .in('status', ['active', 'testing'])
     .order('tier', { ascending: true });
 
   if (error) {

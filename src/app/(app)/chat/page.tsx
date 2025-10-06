@@ -740,9 +740,9 @@ export default function ChatPage() {
       )}
 
       {messages.length === 0 ? (
-        // No messages - show centered agent profile with prompt starters
-        <div className="flex-1 flex items-center justify-center overflow-y-auto py-8">
-          <div className="w-full max-w-4xl px-6">
+        // No messages - show centered agent profile with prompt starters and input
+        <div className="flex-1 flex items-center justify-center overflow-y-auto px-6">
+          <div className="w-full max-w-4xl mx-auto py-8">
             {/* Agent Avatar and Info */}
             <div className="text-center mb-8">
               <div className="w-24 h-24 rounded-full flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-50 mx-auto mb-4 overflow-hidden border-4 border-white shadow-lg">
@@ -768,7 +768,7 @@ export default function ChatPage() {
 
             {/* 4 Prompt Starters Grid */}
             {promptStarters.length > 0 && (
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-3 mb-6">
                 {promptStarters.slice(0, 4).map((prompt, index) => (
                   <button
                     key={index}
@@ -785,39 +785,57 @@ export default function ChatPage() {
                 ))}
               </div>
             )}
+
+            {/* Input component centered with content */}
+            <div className="mt-6">
+              <ChatInput
+                value={input}
+                onChange={setInput}
+                onSend={handleSendMessage}
+                onKeyPress={handleKeyPress}
+                isLoading={isLoading}
+                selectedAgent={selectedAgent}
+                enableVoice={true}
+                selectedModel={selectedModel || undefined}
+                onModelChange={setSelectedModel}
+                onStop={stopGeneration}
+              />
+            </div>
           </div>
         </div>
       ) : (
-        // Has messages - show messages area
-        <div className="flex-1 overflow-y-auto">
-          <div className="max-w-4xl mx-auto px-6 py-6">
-            <ChatMessages
-              messages={messages}
-              liveReasoning={liveReasoning}
-              isReasoningActive={isReasoningActive}
-            />
+        // Has messages - show messages area with input at bottom
+        <>
+          <div className="flex-1 overflow-y-auto">
+            <div className="max-w-4xl mx-auto px-6 py-6">
+              <ChatMessages
+                messages={messages}
+                liveReasoning={liveReasoning}
+                isReasoningActive={isReasoningActive}
+              />
+            </div>
+            <div ref={messagesEndRef} />
           </div>
-          <div ref={messagesEndRef} />
-        </div>
-      )}
 
-      {/* Input component at bottom with proper spacing */}
-      <div className="flex-shrink-0 border-t bg-white">
-        <div className="max-w-4xl mx-auto px-6 py-4">
-          <ChatInput
-            value={input}
-            onChange={setInput}
-            onSend={handleSendMessage}
-            onKeyPress={handleKeyPress}
-            isLoading={isLoading}
-            selectedAgent={selectedAgent}
-            enableVoice={true}
-            selectedModel={selectedModel || undefined}
-            onModelChange={setSelectedModel}
-            onStop={stopGeneration}
-          />
-        </div>
-      </div>
+          {/* Input component at bottom when there are messages */}
+          <div className="flex-shrink-0 border-t bg-white">
+            <div className="max-w-4xl mx-auto px-6 py-3">
+              <ChatInput
+                value={input}
+                onChange={setInput}
+                onSend={handleSendMessage}
+                onKeyPress={handleKeyPress}
+                isLoading={isLoading}
+                selectedAgent={selectedAgent}
+                enableVoice={true}
+                selectedModel={selectedModel || undefined}
+                onModelChange={setSelectedModel}
+                onStop={stopGeneration}
+              />
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 

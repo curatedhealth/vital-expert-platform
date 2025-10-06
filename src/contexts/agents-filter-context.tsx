@@ -6,6 +6,8 @@ interface AgentFilters {
   selectedTier: string;
   selectedStatus: string;
   selectedBusinessFunction: string;
+  selectedDepartment: string;
+  selectedRole: string;
 }
 
 interface AgentsFilterContextType {
@@ -25,6 +27,8 @@ export function AgentsFilterProvider({ children }: { children: ReactNode }) {
     selectedTier: 'all',
     selectedStatus: 'all',
     selectedBusinessFunction: 'all',
+    selectedDepartment: 'all',
+    selectedRole: 'all',
   });
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 

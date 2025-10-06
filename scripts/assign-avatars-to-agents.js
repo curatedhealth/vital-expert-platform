@@ -4,12 +4,12 @@
  * Assign Unique Avatars to Agents
  *
  * This script assigns avatars from Supabase Storage to all agents,
- * ensuring no avatar is used more than 3 times.
+ * ensuring no avatar is used more than 2 times.
  *
  * Strategy:
  * - Get all 201 avatars from the avatars table
  * - Get all agents from the agents table
- * - Distribute avatars evenly, max 3 agents per avatar
+ * - Distribute avatars evenly, max 2 agents per avatar
  * - Update agents with their assigned avatars
  *
  * Usage: NEXT_PUBLIC_SUPABASE_URL=... SUPABASE_SERVICE_ROLE_KEY=... node scripts/assign-avatars-to-agents.js
@@ -22,7 +22,7 @@ const { createClient } = require('@supabase/supabase-js');
 // =====================================================
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
-const MAX_USES_PER_AVATAR = 3;
+const MAX_USES_PER_AVATAR = 2;
 
 if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
   console.error('❌ Missing environment variables!');
@@ -80,7 +80,7 @@ async function getAllAgents() {
 
 /**
  * Create avatar assignment pool
- * Each avatar can be used up to MAX_USES_PER_AVATAR times
+ * Each avatar can be used up to MAX_USES_PER_AVATAR times (max 2)
  */
 function createAvatarPool(avatars) {
   const pool = [];
@@ -106,7 +106,7 @@ function createAvatarPool(avatars) {
 function assignAvatars(agents, avatars) {
   console.log('\n🎯 Assigning avatars to agents...');
 
-  // Create avatar pool (each avatar appears 3 times)
+  // Create avatar pool (each avatar appears 2 times)
   const avatarPool = createAvatarPool(avatars);
 
   // Group agents by tier and status for smart assignment

@@ -43,16 +43,20 @@ function AppLayoutContent({
   // Use agents filter context
   const { searchQuery, setSearchQuery, filters, setFilters, viewMode, setViewMode } = useAgentsFilter();
 
-  const [businessFunctions, setBusinessFunctions] = useState<Array<{ id: string; department_name: string }>>([]);
+  const [businessFunctions, setBusinessFunctions] = useState<Array<{ id: string; name: string }>>([]);
+  const [departments, setDepartments] = useState<Array<{ id: string; name: string; business_function_id?: string }>>([]);
+  const [roles, setRoles] = useState<Array<{ id: string; name: string; department_id?: string; business_function_id?: string }>>([]);
 
-  // Load business functions for agents view
+  // Load organizational structure for agents view
   useEffect(() => {
     if (pathname.includes('/agents')) {
       fetch('/api/organizational-structure')
         .then(res => res.json())
         .then(result => {
-          if (result.success && result.data?.functions) {
-            setBusinessFunctions(result.data.functions);
+          if (result.success && result.data) {
+            if (result.data.functions) setBusinessFunctions(result.data.functions);
+            if (result.data.departments) setDepartments(result.data.departments);
+            if (result.data.roles) setRoles(result.data.roles);
           }
         })
         .catch(console.error);
@@ -118,7 +122,9 @@ function AppLayoutContent({
             onFilterChange={setFilters}
             viewMode={viewMode}
             onViewModeChange={setViewMode}
-            availableBusinessFunctions={businessFunctions.map(f => f.department_name)}
+            businessFunctions={businessFunctions}
+            departments={departments}
+            organizationalRoles={roles}
           />
         </div>
       </div>
@@ -291,6 +297,15 @@ function AppLayoutContent({
                 currentView={getCurrentView()}
                 onCreateAgent={getCurrentView() === 'agents' ? handleCreateAgent : undefined}
                 onUploadAgent={getCurrentView() === 'agents' ? handleUploadAgent : undefined}
+                searchQuery={searchQuery}
+                onSearchChange={setSearchQuery}
+                filters={filters}
+                onFilterChange={setFilters}
+                viewMode={viewMode}
+                onViewModeChange={setViewMode}
+                businessFunctions={businessFunctions}
+                departments={departments}
+                organizationalRoles={roles}
               />
             </div>
           </div>

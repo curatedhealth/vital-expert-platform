@@ -144,6 +144,8 @@ interface AgentFilters {
   selectedTier: string;
   selectedStatus: string;
   selectedBusinessFunction: string;
+  selectedDepartment: string;
+  selectedRole: string;
 }
 
 interface AgentsBoardProps {
@@ -180,6 +182,8 @@ export function AgentsBoard({
   const selectedTier = externalFilters?.selectedTier ?? 'all';
   const selectedStatus = externalFilters?.selectedStatus ?? 'all';
   const selectedBusinessFunction = externalFilters?.selectedBusinessFunction ?? 'all';
+  const selectedDepartment = externalFilters?.selectedDepartment ?? 'all';
+  const selectedRole = externalFilters?.selectedRole ?? 'all';
   const viewMode = externalViewMode ?? 'grid';
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingAgent, setEditingAgent] = useState<Agent | null>(null);
@@ -391,17 +395,21 @@ export function AgentsBoard({
     return colors[primaryDomain as keyof typeof colors] || 'bg-gray-100 text-gray-800';
   };
 
-  // Filter: search + business function + tier + status
+  // Filter: search + business function + department + role + tier + status
   const filteredAgents = useMemo(() => {
     console.log('[Agents Board] Filtering:', {
       searchQuery,
       selectedFunction: selectedBusinessFunction,
+      selectedDepartment,
+      selectedRole,
       selectedTier,
       selectedStatus,
       totalAgents: agents.length,
       sampleAgent: agents[0] ? {
         name: agents[0].display_name,
-        function_id: agents[0].function_id
+        business_function: agents[0].business_function,
+        department: agents[0].department,
+        role: agents[0].role
       } : null
     });
 
@@ -411,9 +419,17 @@ export function AgentsBoard({
         agent.display_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         agent.description.toLowerCase().includes(searchQuery.toLowerCase());
 
-      // Business function filter
+      // Business function filter - match by name, not ID
       const matchesFunction = selectedBusinessFunction === 'all' ||
-        agent.function_id === selectedBusinessFunction;
+        agent.business_function === selectedBusinessFunction;
+
+      // Department filter
+      const matchesDepartment = selectedDepartment === 'all' ||
+        agent.department === selectedDepartment;
+
+      // Role filter
+      const matchesRole = selectedRole === 'all' ||
+        agent.role === selectedRole;
 
       // Tier filter
       const matchesTier = selectedTier === 'all' ||
@@ -424,20 +440,9 @@ export function AgentsBoard({
       const matchesStatus = selectedStatus === 'all' ||
         agent.status === selectedStatus;
 
-      const matches = matchesSearch && matchesFunction && matchesTier && matchesStatus;
-
-      // Debug first match
-      if (matches && selectedBusinessFunction !== 'all') {
-        console.log('[Agents Board] Matched agent:', {
-          name: agent.display_name,
-          function_id: agent.function_id,
-          selectedFunction: selectedBusinessFunction
-        });
-      }
-
-      return matches;
+      return matchesSearch && matchesFunction && matchesDepartment && matchesRole && matchesTier && matchesStatus;
     });
-  }, [agents, searchQuery, selectedBusinessFunction, selectedTier, selectedStatus]);
+  }, [agents, searchQuery, selectedBusinessFunction, selectedDepartment, selectedRole, selectedTier, selectedStatus]);
 
   return (
     <div className="space-y-6">

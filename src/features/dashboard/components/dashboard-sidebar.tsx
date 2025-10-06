@@ -1,5 +1,6 @@
 'use client';
 
+import { useMemo } from 'react';
 import {
   FileText,
   Settings,
@@ -256,14 +257,17 @@ interface DashboardSidebarProps {
   viewMode?: 'grid' | 'list';
   availableDomains?: string[];
   availableCapabilities?: string[];
-  availableBusinessFunctions?: string[];
-  availableRoles?: string[];
+  businessFunctions?: Array<{ id: string; name: string }>;
+  departments?: Array<{ id: string; name: string; business_function_id?: string }>;
+  organizationalRoles?: Array<{ id: string; name: string; department_id?: string; business_function_id?: string }>;
 }
 
 interface AgentFilters {
   selectedTier: string;
   selectedStatus: string;
   selectedBusinessFunction: string;
+  selectedDepartment: string;
+  selectedRole: string;
 }
 
 export function DashboardSidebar({
@@ -281,11 +285,43 @@ export function DashboardSidebar({
   viewMode = 'grid',
   availableDomains = [],
   availableCapabilities = [],
-  availableBusinessFunctions = [],
-  availableRoles = [],
+  businessFunctions = [],
+  departments = [],
+  organizationalRoles = [],
 }: DashboardSidebarProps) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
+
+  // Cascading filter logic for agents view
+  // Get selected function ID from name
+  const selectedFunctionId = useMemo(() => {
+    if (!filters?.selectedBusinessFunction || filters.selectedBusinessFunction === 'all') return null;
+    return businessFunctions.find(f => f.name === filters.selectedBusinessFunction)?.id;
+  }, [filters?.selectedBusinessFunction, businessFunctions]);
+
+  // Get selected department ID from name
+  const selectedDepartmentId = useMemo(() => {
+    if (!filters?.selectedDepartment || filters.selectedDepartment === 'all') return null;
+    return departments.find(d => d.name === filters.selectedDepartment)?.id;
+  }, [filters?.selectedDepartment, departments]);
+
+  // Filter departments based on selected function
+  const filteredDepartments = useMemo(() => {
+    if (!selectedFunctionId) return departments;
+    return departments.filter(d => d.business_function_id === selectedFunctionId);
+  }, [selectedFunctionId, departments]);
+
+  // Filter roles based on selected function and department
+  const filteredRoles = useMemo(() => {
+    if (selectedDepartmentId) {
+      // Filter by department
+      return organizationalRoles.filter(r => r.department_id === selectedDepartmentId);
+    } else if (selectedFunctionId) {
+      // Filter by function
+      return organizationalRoles.filter(r => r.business_function_id === selectedFunctionId);
+    }
+    return organizationalRoles;
+  }, [selectedFunctionId, selectedDepartmentId, organizationalRoles]);
 
   const renderKnowledgeNavigation = () => (
     <>
@@ -709,14 +745,61 @@ export function DashboardSidebar({
                   value={filters.selectedBusinessFunction}
                   onChange={(e) => onFilterChange?.({
                     ...filters,
-                    selectedBusinessFunction: e.target.value
+                    selectedBusinessFunction: e.target.value,
+                    // Reset dependent filters when function changes
+                    selectedDepartment: 'all',
+                    selectedRole: 'all'
                   })}
                   className="w-full px-3 py-2 text-sm border border-input rounded-md bg-background hover:bg-accent focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
                 >
                   <option value="all">All Functions</option>
-                  {availableBusinessFunctions.map(func => (
-                    <option key={func} value={func}>
-                      {func}
+                  {businessFunctions.map(func => (
+                    <option key={func.id} value={func.name}>
+                      {func.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label htmlFor="department-select" className="text-xs font-medium text-muted-foreground mb-1 block">
+                  Department
+                </label>
+                <select
+                  id="department-select"
+                  value={filters.selectedDepartment}
+                  onChange={(e) => onFilterChange?.({
+                    ...filters,
+                    selectedDepartment: e.target.value,
+                    // Reset role when department changes
+                    selectedRole: 'all'
+                  })}
+                  className="w-full px-3 py-2 text-sm border border-input rounded-md bg-background hover:bg-accent focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                >
+                  <option value="all">All Departments</option>
+                  {filteredDepartments.map(dept => (
+                    <option key={dept.id} value={dept.name}>
+                      {dept.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label htmlFor="role-select" className="text-xs font-medium text-muted-foreground mb-1 block">
+                  Role
+                </label>
+                <select
+                  id="role-select"
+                  value={filters.selectedRole}
+                  onChange={(e) => onFilterChange?.({
+                    ...filters,
+                    selectedRole: e.target.value
+                  })}
+                  className="w-full px-3 py-2 text-sm border border-input rounded-md bg-background hover:bg-accent focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                >
+                  <option value="all">All Roles</option>
+                  {filteredRoles.map(role => (
+                    <option key={role.id} value={role.name}>
+                      {role.name}
                     </option>
                   ))}
                 </select>

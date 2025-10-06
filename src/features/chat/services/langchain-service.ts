@@ -21,6 +21,13 @@ import { MultiQueryRetriever } from 'langchain/retrievers/multi_query';
 import { ContextualCompressionRetriever } from 'langchain/retrievers/contextual_compression';
 import { LLMChainExtractor } from 'langchain/retrievers/document_compressors/chain_extract';
 
+// Import BM25 for hybrid search
+import natural from 'natural';
+const { TfIdf } = natural;
+
+// Import Cohere for re-ranking
+import { CohereClient } from 'cohere-ai';
+
 // Import structured output parsers
 import {
   RegulatoryAnalysisParser,
@@ -209,6 +216,161 @@ Queries:`;
       .sort((a, b) => b.score - a.score)
       .slice(0, this.k)
       .map(item => item.doc);
+  }
+}
+
+// Hybrid Search Retriever (Vector + BM25)
+class HybridSearchRetriever extends BaseRetriever {
+  lc_namespace = ['langchain', 'retrievers', 'hybrid_search'];
+
+  private vectorStore: VectorStore;
+  private documents: Document[];
+  private tfidf: any;
+  private k: number;
+  private vectorWeight: number;
+  private bm25Weight: number;
+
+  constructor(
+    vectorStore: VectorStore,
+    documents: Document[],
+    k: number = 6,
+    vectorWeight: number = 0.6,
+    bm25Weight: number = 0.4
+  ) {
+    super();
+    this.vectorStore = vectorStore;
+    this.documents = documents;
+    this.k = k;
+    this.vectorWeight = vectorWeight;
+    this.bm25Weight = bm25Weight;
+
+    // Initialize TF-IDF for BM25-like search
+    this.tfidf = new TfIdf();
+    documents.forEach(doc => {
+      this.tfidf.addDocument(doc.pageContent);
+    });
+  }
+
+  async _getRelevantDocuments(query: string): Promise<Document[]> {
+    // 1. Vector search
+    const vectorResults = await this.vectorStore.similaritySearchWithScore(query, this.k * 2);
+
+    // 2. BM25 keyword search
+    const bm25Results = this.bm25Search(query, this.k * 2);
+
+    // 3. Combine scores using weighted fusion
+    const combinedScores = this.weightedFusion(vectorResults, bm25Results);
+
+    // 4. Return top k documents
+    return combinedScores
+      .sort((a, b) => b.score - a.score)
+      .slice(0, this.k)
+      .map(item => item.doc);
+  }
+
+  private bm25Search(query: string, k: number): Array<{ doc: Document; score: number }> {
+    const scores: Array<{ doc: Document; score: number; index: number }> = [];
+
+    this.tfidf.tfidfs(query, (i: number, measure: number) => {
+      if (i < this.documents.length) {
+        scores.push({
+          doc: this.documents[i],
+          score: measure,
+          index: i
+        });
+      }
+    });
+
+    return scores
+      .sort((a, b) => b.score - a.score)
+      .slice(0, k)
+      .map(({ doc, score }) => ({ doc, score }));
+  }
+
+  private weightedFusion(
+    vectorResults: Array<[Document, number]>,
+    bm25Results: Array<{ doc: Document; score: number }>
+  ): Array<{ doc: Document; score: number }> {
+    const docScores = new Map<string, { doc: Document; score: number }>();
+
+    // Normalize and add vector scores
+    const maxVectorScore = Math.max(...vectorResults.map(([_, score]) => score), 1);
+    vectorResults.forEach(([doc, score]) => {
+      const docId = doc.metadata.id || doc.pageContent.substring(0, 100);
+      const normalizedScore = (score / maxVectorScore) * this.vectorWeight;
+      docScores.set(docId, { doc, score: normalizedScore });
+    });
+
+    // Normalize and add BM25 scores
+    const maxBM25Score = Math.max(...bm25Results.map(r => r.score), 1);
+    bm25Results.forEach(({ doc, score }) => {
+      const docId = doc.metadata.id || doc.pageContent.substring(0, 100);
+      const normalizedScore = (score / maxBM25Score) * this.bm25Weight;
+
+      if (docScores.has(docId)) {
+        const existing = docScores.get(docId)!;
+        existing.score += normalizedScore;
+      } else {
+        docScores.set(docId, { doc, score: normalizedScore });
+      }
+    });
+
+    return Array.from(docScores.values());
+  }
+}
+
+// Cohere Re-ranking Retriever
+class CohereRerankRetriever extends BaseRetriever {
+  lc_namespace = ['langchain', 'retrievers', 'cohere_rerank'];
+
+  private baseRetriever: BaseRetriever;
+  private cohereClient: CohereClient | null = null;
+  private topN: number;
+  private enabled: boolean = false;
+
+  constructor(baseRetriever: BaseRetriever, topN: number = 5) {
+    super();
+    this.baseRetriever = baseRetriever;
+    this.topN = topN;
+
+    // Initialize Cohere client if API key is available
+    if (process.env.COHERE_API_KEY) {
+      this.cohereClient = new CohereClient({
+        token: process.env.COHERE_API_KEY,
+      });
+      this.enabled = true;
+      console.log('✅ Cohere re-ranking enabled');
+    } else {
+      console.log('⚠️ Cohere re-ranking disabled (no API key)');
+    }
+  }
+
+  async _getRelevantDocuments(query: string): Promise<Document[]> {
+    // Get initial results from base retriever
+    const docs = await this.baseRetriever.invoke(query);
+
+    // If Cohere is not enabled, return base results
+    if (!this.enabled || !this.cohereClient) {
+      return docs;
+    }
+
+    try {
+      // Re-rank with Cohere
+      const reranked = await this.cohereClient.rerank({
+        query,
+        documents: docs.map(doc => doc.pageContent),
+        topN: Math.min(this.topN, docs.length),
+        model: 'rerank-english-v3.0',
+      });
+
+      // Return re-ranked documents
+      return reranked.results
+        .sort((a, b) => b.relevanceScore - a.relevanceScore)
+        .map(result => docs[result.index]);
+    } catch (error) {
+      console.error('Cohere re-ranking failed, falling back to base results:', error);
+      return docs.slice(0, this.topN);
+    }
   }
 }
 
@@ -814,7 +976,7 @@ export class LangChainRAGService {
    */
   async createAdvancedRetriever(
     agentId: string,
-    strategy: 'multi_query' | 'compression' | 'hybrid' | 'self_query' | 'rag_fusion' | 'basic' = 'rag_fusion'
+    strategy: 'multi_query' | 'compression' | 'hybrid' | 'hybrid_rerank' | 'self_query' | 'rag_fusion' | 'rag_fusion_rerank' | 'basic' = 'rag_fusion'
   ): Promise<BaseRetriever> {
     const baseRetriever = this.vectorStore.asRetriever({
       searchType: 'similarity',
@@ -831,6 +993,22 @@ export class LangChainRAGService {
       case 'rag_fusion':
         return new RAGFusionRetriever(this.vectorStore, this.llm, 6);
 
+      case 'rag_fusion_rerank':
+        // RAG Fusion + Cohere re-ranking (best quality)
+        const ragFusion = new RAGFusionRetriever(this.vectorStore, this.llm, 12);
+        return new CohereRerankRetriever(ragFusion, 6);
+
+      case 'hybrid':
+        // True hybrid search: Vector + BM25
+        const docs = await this.loadDocumentsForHybrid(agentId);
+        return new HybridSearchRetriever(this.vectorStore, docs, 6, 0.6, 0.4);
+
+      case 'hybrid_rerank':
+        // Hybrid + Cohere re-ranking (production-grade)
+        const hybridDocs = await this.loadDocumentsForHybrid(agentId);
+        const hybridRetriever = new HybridSearchRetriever(this.vectorStore, hybridDocs, 12, 0.6, 0.4);
+        return new CohereRerankRetriever(hybridRetriever, 6);
+
       case 'multi_query':
         return MultiQueryRetriever.fromLLM({
           llm: this.llm,
@@ -845,20 +1023,46 @@ export class LangChainRAGService {
           baseRetriever: baseRetriever,
         });
 
-      case 'hybrid':
-        // Hybrid combines vector + keyword search (RAG Fusion does this internally)
-        return new RAGFusionRetriever(this.vectorStore, this.llm, 6);
-
       case 'basic':
       default:
         return baseRetriever;
     }
   }
 
+  /**
+   * Load documents for hybrid search BM25 index
+   */
+  private async loadDocumentsForHybrid(agentId: string): Promise<Document[]> {
+    try {
+      // Load all relevant documents from the database
+      const { data, error } = await supabase
+        .from('rag_knowledge_chunks')
+        .select('content, metadata')
+        .or(`isGlobal.eq.true,agentId.eq.${agentId}`)
+        .limit(1000); // Limit for performance
+
+      if (error) {
+        console.error('Failed to load documents for hybrid search:', error);
+        return [];
+      }
+
+      return (data || []).map(
+        (row: any) =>
+          new Document({
+            pageContent: row.content,
+            metadata: row.metadata || {},
+          })
+      );
+    } catch (error) {
+      console.error('Error loading documents for hybrid search:', error);
+      return [];
+    }
+  }
+
   async createConversationalChain(
     agentId: string,
     systemPrompt: string,
-    retrievalStrategy: 'multi_query' | 'compression' | 'hybrid' | 'self_query' | 'rag_fusion' | 'basic' = 'rag_fusion'
+    retrievalStrategy: 'multi_query' | 'compression' | 'hybrid' | 'hybrid_rerank' | 'self_query' | 'rag_fusion' | 'rag_fusion_rerank' | 'basic' = 'rag_fusion'
   ) {
     // Create advanced retriever based on strategy
     const retriever = await this.createAdvancedRetriever(agentId, retrievalStrategy);

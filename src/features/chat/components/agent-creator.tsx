@@ -16,10 +16,13 @@ import {
   Building2,
   Wrench,
   BookOpen,
-  Cpu
+  Cpu,
+  Eye,
+  Edit3
 } from 'lucide-react';
 import Image from 'next/image';
 import { useState, useEffect } from 'react';
+import ReactMarkdown from 'react-markdown';
 
 import { AgentAvatar } from '@/components/ui/agent-avatar';
 import { Badge } from '@/components/ui/badge';
@@ -255,6 +258,7 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
   const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
   const [isProcessingKnowledge, setIsProcessingKnowledge] = useState(false);
   const [knowledgeProcessingStatus, setKnowledgeProcessingStatus] = useState<string | null>(null);
+  const [promptViewMode, setPromptViewMode] = useState<'edit' | 'preview'>('preview');
 
   // Medical Capability State
   const [medicalCapabilities, setMedicalCapabilities] = useState<MedicalCapability[]>([]);
@@ -1734,15 +1738,56 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
                   </div>
 
                   <div>
-                    <Label htmlFor="systemPrompt">System Prompt *</Label>
-                    <textarea
-                      id="systemPrompt"
-                      value={formData.systemPrompt}
-                      onChange={(e) => setFormData(prev => ({ ...prev, systemPrompt: e.target.value }))}
-                      placeholder="Define the agent's role, expertise, and behavior..."
-                      className="w-full min-h-[120px] p-3 border border-gray-200 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-market-purple"
-                      required
-                    />
+                    <div className="flex items-center justify-between mb-2">
+                      <Label htmlFor="systemPrompt">System Prompt *</Label>
+                      <div className="flex gap-2">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setPromptViewMode('preview')}
+                          className={cn(
+                            "h-8 px-3 text-xs",
+                            promptViewMode === 'preview' && "bg-progress-teal/10 text-progress-teal"
+                          )}
+                        >
+                          <Eye className="h-3 w-3 mr-1" />
+                          Preview
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setPromptViewMode('edit')}
+                          className={cn(
+                            "h-8 px-3 text-xs",
+                            promptViewMode === 'edit' && "bg-progress-teal/10 text-progress-teal"
+                          )}
+                        >
+                          <Edit3 className="h-3 w-3 mr-1" />
+                          Edit
+                        </Button>
+                      </div>
+                    </div>
+
+                    {promptViewMode === 'edit' ? (
+                      <textarea
+                        id="systemPrompt"
+                        value={formData.systemPrompt}
+                        onChange={(e) => setFormData(prev => ({ ...prev, systemPrompt: e.target.value }))}
+                        placeholder="Define the agent's role, expertise, and behavior..."
+                        className="w-full min-h-[400px] p-3 border border-gray-200 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-market-purple font-mono text-sm"
+                        required
+                      />
+                    ) : (
+                      <div className="w-full min-h-[400px] max-h-[600px] overflow-y-auto p-4 border border-gray-200 rounded-lg bg-gray-50">
+                        <ReactMarkdown
+                          className="prose prose-sm max-w-none prose-headings:font-semibold prose-h1:text-2xl prose-h2:text-xl prose-h3:text-lg prose-h4:text-base prose-p:text-gray-700 prose-li:text-gray-700 prose-strong:text-gray-900 prose-code:text-progress-teal prose-code:bg-progress-teal/10 prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-pre:bg-gray-900 prose-pre:text-gray-100"
+                        >
+                          {formData.systemPrompt || '*No system prompt defined*'}
+                        </ReactMarkdown>
+                      </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>

@@ -22,6 +22,10 @@ export interface Agent {
   knowledgeDomains?: string[]; // Knowledge domains this agent can access
   businessFunction?: string; // Business function (HR, Medical Affairs, etc.)
   role?: string; // Pharma value chain role
+  // Organizational structure
+  department?: string; // Department name
+  organizationalRole?: string; // Organizational role name
+  tier?: number; // Agent tier (1, 2, 3)
 }
 
 export interface ChatMessage {

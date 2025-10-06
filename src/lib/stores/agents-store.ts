@@ -27,9 +27,15 @@ export interface Agent {
   priority: number;
   implementation_phase: number;
   knowledge_domains?: string[];
-  business_function?: string | null; // Legacy string field (deprecated)
-  function_id?: string | null; // UUID foreign key to org_functions table
-  role?: string | null; // UUID foreign key to roles table
+  business_function?: string | null; // Business function name
+  department?: string | null; // Department name
+  role?: string | null; // Role name or UUID
+  organizational_role?: string | null; // Organizational role name (mapped from role_id)
+  // Foreign key IDs
+  business_function_id?: string | null; // UUID foreign key to business_functions table
+  department_id?: string | null; // UUID foreign key to departments table
+  role_id?: string | null; // UUID foreign key to organizational_roles table
+  function_id?: string | null; // UUID foreign key to org_functions table (legacy)
   categories?: string[];
   domain_expertise?: string;
 
@@ -140,7 +146,13 @@ const convertDbAgentToStoreFormat = (dbAgent: DbAgent): Agent => {
     implementation_phase: dbAgent.implementation_phase ?? 1,
     knowledge_domains: Array.isArray(dbAgent.knowledge_domains) ? dbAgent.knowledge_domains as string[] : [],
     business_function: dbAgent.business_function ?? '',
+    department: dbAgent.department ?? '',
     role: dbAgent.role ?? '',
+    organizational_role: (dbAgent as any).organizational_role ?? '',
+    // Foreign key IDs
+    business_function_id: dbAgent.business_function_id ?? null,
+    department_id: dbAgent.department_id ?? null,
+    role_id: dbAgent.role_id ?? null,
     created_at: dbAgent.created_at || new Date().toISOString(),
     updated_at: dbAgent.updated_at || new Date().toISOString(),
   };
@@ -416,6 +428,9 @@ export const useAgentsStore = create<AgentsStore>()(
           knowledgeDomains: agent.knowledge_domains,
           businessFunction: agent.business_function,
           role: agent.role,
+          department: agent.department,
+          organizationalRole: (agent as any).organizational_role || agent.role,
+          tier: agent.tier,
         };
       },
 

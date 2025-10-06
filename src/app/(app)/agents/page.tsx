@@ -40,6 +40,15 @@ export default function AgentsPage() {
   }, [searchParams, router]);
 
   const handleAgentSelect = (agent: AgentsStoreAgent) => {
+    // Debug: Log the incoming agent data
+    console.log('🔍 Agent selected:', {
+      name: agent.name,
+      business_function: agent.business_function,
+      department: agent.department,
+      role: agent.role,
+      organizational_role: (agent as any).organizational_role,
+    });
+
     // Convert agents-store Agent to chat-store Agent format
     const chatStoreAgent: Agent = {
       id: agent.id,
@@ -55,8 +64,19 @@ export default function AgentsPage() {
       maxTokens: agent.max_tokens || 2000,
       isCustom: agent.is_custom || false,
       tools: [],
-      knowledgeDomains: Array.isArray(agent.knowledge_domains) ? agent.knowledge_domains : []
+      knowledgeDomains: Array.isArray(agent.knowledge_domains) ? agent.knowledge_domains : [],
+      businessFunction: agent.business_function || undefined,
+      department: agent.department || undefined,
+      organizationalRole: (agent as any).organizational_role || agent.role || undefined,
+      tier: agent.tier || undefined,
     };
+
+    console.log('✅ Chat store agent:', {
+      businessFunction: chatStoreAgent.businessFunction,
+      department: chatStoreAgent.department,
+      organizationalRole: chatStoreAgent.organizationalRole,
+    });
+
     setSelectedAgent(chatStoreAgent);
   };
 
@@ -114,6 +134,9 @@ export default function AgentsPage() {
           isCustom: userCopy.is_custom,
           knowledgeDomains: userCopy.knowledge_domains,
           businessFunction: userCopy.business_function || undefined,
+          department: userCopy.department || undefined,
+          organizationalRole: (userCopy as any).organizational_role || userCopy.role || undefined,
+          tier: userCopy.tier || undefined,
           role: userCopy.role || undefined,
         };
 
@@ -149,6 +172,9 @@ export default function AgentsPage() {
           isCustom: agent.is_custom,
           knowledgeDomains: agent.knowledge_domains,
           businessFunction: agent.business_function || undefined,
+          department: agent.department || undefined,
+          organizationalRole: (agent as any).organizational_role || agent.role || undefined,
+          tier: agent.tier || undefined,
           role: agent.role || undefined,
         };
 

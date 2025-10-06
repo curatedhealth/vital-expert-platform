@@ -12,6 +12,9 @@ import {
   Copy,
   Heart,
   Play,
+  Building2,
+  Briefcase,
+  UserCircle,
 } from 'lucide-react';
 
 import { AgentAvatar } from '@/components/ui/agent-avatar';
@@ -168,6 +171,52 @@ export function AgentDetailsModal({
                   </CardContent>
                 </Card>
               </div>
+
+              {/* Organizational Structure */}
+              {(agent.businessFunction || agent.department || agent.organizationalRole) && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">Organizational Structure</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      {agent.businessFunction && (
+                        <div className="flex items-start gap-3">
+                          <div className="w-10 h-10 bg-clinical-green/10 rounded-lg flex items-center justify-center flex-shrink-0">
+                            <Briefcase className="h-5 w-5 text-clinical-green" />
+                          </div>
+                          <div>
+                            <p className="text-xs font-medium text-medical-gray mb-1">Business Function</p>
+                            <p className="text-sm text-deep-charcoal font-medium">{agent.businessFunction}</p>
+                          </div>
+                        </div>
+                      )}
+                      {agent.department && (
+                        <div className="flex items-start gap-3">
+                          <div className="w-10 h-10 bg-trust-blue/10 rounded-lg flex items-center justify-center flex-shrink-0">
+                            <Building2 className="h-5 w-5 text-trust-blue" />
+                          </div>
+                          <div>
+                            <p className="text-xs font-medium text-medical-gray mb-1">Department</p>
+                            <p className="text-sm text-deep-charcoal font-medium">{agent.department}</p>
+                          </div>
+                        </div>
+                      )}
+                      {agent.organizationalRole && (
+                        <div className="flex items-start gap-3">
+                          <div className="w-10 h-10 bg-market-purple/10 rounded-lg flex items-center justify-center flex-shrink-0">
+                            <UserCircle className="h-5 w-5 text-market-purple" />
+                          </div>
+                          <div>
+                            <p className="text-xs font-medium text-medical-gray mb-1">Role</p>
+                            <p className="text-sm text-deep-charcoal font-medium">{agent.organizationalRole}</p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
 
               {/* Knowledge Domains */}
               {agent.knowledgeDomains && agent.knowledgeDomains.length > 0 && (

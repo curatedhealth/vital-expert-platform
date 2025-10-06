@@ -70,13 +70,20 @@ export interface Agent {
 
   // Business Context
   business_function?: string;
+  department?: string;
   role?: string;
+  organizational_role?: string; // Mapped from role_id
   tier?: 1 | 2 | 3;
   priority?: number;
   implementation_phase?: 1 | 2 | 3;
   is_custom?: boolean;
   cost_per_query?: number;
   target_users?: string[];
+
+  // Foreign key IDs for organizational structure
+  business_function_id?: string;
+  department_id?: string;
+  role_id?: string;
 
   // Validation & Performance
   validation_status?: ValidationStatus;
@@ -304,6 +311,8 @@ export interface AgentFilters {
   domain_expertise?: DomainExpertise[];
   tier?: number[];
   business_function?: string[];
+  department?: string[];
+  organizational_role?: string[];
   validation_status?: ValidationStatus[];
   search?: string;
   compliance_tags?: string[];

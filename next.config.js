@@ -6,13 +6,27 @@ const nextConfig = {
     domains: [
       'images.unsplash.com',
       'avatars.githubusercontent.com',
-      'xazinxsiglqokwfmogyk.supabase.co'
+      'xazinxsiglqokwfmogyk.supabase.co',
+      'localhost',
+      '127.0.0.1'
     ],
     remotePatterns: [
       {
         protocol: 'https',
         hostname: 'xazinxsiglqokwfmogyk.supabase.co',
         port: '',
+        pathname: '/storage/**',
+      },
+      {
+        protocol: 'http',
+        hostname: '127.0.0.1',
+        port: '54321',
+        pathname: '/storage/**',
+      },
+      {
+        protocol: 'http',
+        hostname: 'localhost',
+        port: '54321',
         pathname: '/storage/**',
       },
     ],

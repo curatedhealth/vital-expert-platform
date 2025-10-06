@@ -29,9 +29,14 @@ export function AgentAvatar({ agent, avatar: avatarProp, name: nameProp, size = 
   const avatar = agent?.avatar || avatarProp || '🤖';
   const name = agent?.name || agent?.display_name || nameProp || 'Agent';
 
-  // Function to get the proper icon URL with simplified PNG naming
+  // Function to get the proper icon URL - now uses Supabase Storage URLs directly
   const getIconUrl = (iconUrl: string) => {
-    // If it's already a local PNG path, use it
+    // Handle full URLs (Supabase storage or any external URLs)
+    if (iconUrl.startsWith('http://') || iconUrl.startsWith('https://')) {
+      return iconUrl;
+    }
+
+    // If it's already a local PNG path, use it (legacy support)
     if (iconUrl.startsWith('/icons/png/')) {
       return iconUrl;
     }
@@ -49,31 +54,7 @@ export function AgentAvatar({ agent, avatar: avatarProp, name: nameProp, size = 
       return `/icons/png/avatars/avatar_${paddedNum}.png`;
     }
 
-    // For any external URL or old Supabase URL, use a default avatar
-    // We'll assign avatars based on a hash of the URL for consistency
-    const getAvatarId = (url: string) => {
-      let hash = 0;
-      for (let i = 0; i < url.length; i++) {
-        const char = url.charCodeAt(i);
-        hash = ((hash << 5) - hash) + char;
-        hash = hash & hash; // Convert to 32bit integer
-      }
-      // Use available avatar files from our database: avatar_0001 through avatar_0119
-      const availableAvatars = [];
-      for (let i = 1; i <= 119; i++) {
-        const num = i.toString().padStart(4, '0');
-        availableAvatars.push(`avatar_${num}`);
-      }
-
-      const index = Math.abs(hash % availableAvatars.length);
-      return availableAvatars[index];
-    };
-
-    if (iconUrl.startsWith('http') || iconUrl.includes('supabase.co') || iconUrl.includes('storage/')) {
-      const avatarName = getAvatarId(iconUrl);
-      return `/icons/png/avatars/${avatarName}.png`;
-    }
-
+    // Default fallback
     return iconUrl;
   };
 
@@ -89,11 +70,19 @@ export function AgentAvatar({ agent, avatar: avatarProp, name: nameProp, size = 
     const fallbackAvatar = '/icons/png/avatars/avatar_0001.png';
 
     return (
-      <div className={cn('rounded-lg overflow-hidden bg-white border border-gray-200', sizeClasses[size], className)}>
+      <div
+        className={cn('rounded-lg overflow-hidden bg-gradient-to-br from-blue-50 to-indigo-100 border border-indigo-200', sizeClasses[size], className)}
+        style={{
+          minWidth: size === 'card' ? '50px' : size === 'list' ? '30px' : undefined,
+          minHeight: size === 'card' ? '50px' : size === 'list' ? '30px' : undefined,
+          maxWidth: size === 'card' ? '50px' : size === 'list' ? '30px' : undefined,
+          maxHeight: size === 'card' ? '50px' : size === 'list' ? '30px' : undefined,
+        }}
+      >
         <img
           src={iconUrl}
           alt={name}
-          className="object-cover w-full h-full"
+          className="w-full h-full object-contain opacity-70"
           onError={(e) => {
             const target = e.target as HTMLImageElement;
             if (target.src !== fallbackAvatar) {

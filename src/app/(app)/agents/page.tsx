@@ -6,6 +6,7 @@ import { useState, useEffect } from 'react';
 import { AgentDetailsModal } from '@/features/agents/components/agent-details-modal';
 import { AgentsBoard } from '@/features/agents/components/agents-board';
 import { AgentCreator } from '@/features/chat/components/agent-creator';
+import { useAgentsFilter } from '@/contexts/agents-filter-context';
 import { useAuth } from '@/lib/auth/auth-context';
 import { type Agent as AgentsStoreAgent, useAgentsStore } from '@/lib/stores/agents-store';
 import { type Agent } from '@/lib/stores/chat-store';
@@ -15,6 +16,7 @@ export default function AgentsPage() {
   const searchParams = useSearchParams();
   const { user } = useAuth();
   const { createUserCopy } = useAgentsStore();
+  const { searchQuery, setSearchQuery, filters, setFilters, viewMode, setViewMode } = useAgentsFilter();
   const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
   const [editingAgent, setEditingAgent] = useState<AgentsStoreAgent | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -195,6 +197,12 @@ export default function AgentsPage() {
         onAddToChat={handleAddAgentToChat}
         showCreateButton={true}
         hiddenControls={false}
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+        filters={filters}
+        onFilterChange={setFilters}
+        viewMode={viewMode}
+        onViewModeChange={setViewMode}
       />
 
       {selectedAgent && (

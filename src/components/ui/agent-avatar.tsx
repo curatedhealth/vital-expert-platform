@@ -6,7 +6,7 @@ interface AgentAvatarProps {
   agent?: Agent;
   avatar?: string;
   name?: string;
-  size?: 'sm' | 'md' | 'lg' | 'xl';
+  size?: 'sm' | 'md' | 'lg' | 'xl' | 'list' | 'card';
   className?: string;
 }
 
@@ -14,7 +14,9 @@ const sizeClasses = {
   sm: 'w-6 h-6',
   md: 'w-10 h-10',
   lg: 'w-12 h-12',
-  xl: 'w-16 h-16'
+  xl: 'w-16 h-16',
+  list: 'w-[30px] h-[30px]',
+  card: 'w-[50px] h-[50px]'
 };
 
 export function AgentAvatar({ agent, avatar: avatarProp, name: nameProp, size = 'md', className }: AgentAvatarProps) {
@@ -24,6 +26,11 @@ export function AgentAvatar({ agent, avatar: avatarProp, name: nameProp, size = 
 
   // Function to get the proper icon URL with simplified PNG naming
   const getIconUrl = (iconUrl: string) => {
+    // Handle full URLs (Supabase storage or external URLs)
+    if (iconUrl.startsWith('http://') || iconUrl.startsWith('https://')) {
+      return iconUrl;
+    }
+
     // If it's already a local PNG path, use it
     if (iconUrl.startsWith('/icons/png/')) {
       return iconUrl;
@@ -57,15 +64,23 @@ export function AgentAvatar({ agent, avatar: avatarProp, name: nameProp, size = 
     const fallbackAvatar = '/icons/png/avatars/avatar_0001.png';
 
     return (
-      <div className={cn(
-        'flex items-center justify-center rounded-lg overflow-hidden bg-white border border-gray-200',
-        sizeClasses[size as keyof typeof sizeClasses] || sizeClasses.md,
-        className
-      )}>
+      <div
+        className={cn(
+          'flex items-center justify-center rounded-lg overflow-hidden bg-gradient-to-br from-blue-50 to-indigo-100 border border-indigo-200 flex-shrink-0',
+          sizeClasses[size as keyof typeof sizeClasses] || sizeClasses.md,
+          className
+        )}
+        style={{
+          minWidth: size === 'card' ? '50px' : size === 'list' ? '30px' : undefined,
+          minHeight: size === 'card' ? '50px' : size === 'list' ? '30px' : undefined,
+          maxWidth: size === 'card' ? '50px' : size === 'list' ? '30px' : undefined,
+          maxHeight: size === 'card' ? '50px' : size === 'list' ? '30px' : undefined,
+        }}
+      >
         <img
           src={iconUrl}
           alt={name}
-          className="w-full h-full object-cover"
+          className="w-full h-full object-contain opacity-70"
           onError={(e) => {
             const target = e.target as HTMLImageElement;
             if (target.src !== fallbackAvatar) {
@@ -98,7 +113,9 @@ export function AgentAvatar({ agent, avatar: avatarProp, name: nameProp, size = 
         size === 'sm' && 'text-xs',
         size === 'md' && 'text-sm',
         size === 'lg' && 'text-base',
-        size === 'xl' && 'text-lg'
+        size === 'xl' && 'text-lg',
+        size === 'list' && 'text-xs',
+        size === 'card' && 'text-sm'
       )}>
         {avatar || '🤖'}
       </span>

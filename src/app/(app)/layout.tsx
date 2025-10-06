@@ -11,7 +11,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -24,31 +24,47 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { DashboardSidebar } from '@/features/dashboard/components/dashboard-sidebar';
+import { AgentsFilterProvider, useAgentsFilter } from '@/contexts/agents-filter-context';
 import { useAuth } from '@/lib/auth/auth-context';
 import { cn } from '@/lib/utils';
 
-export default function AppLayout({
+function AppLayoutContent({
   children,
 }: {
   children: React.ReactNode;
 }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
-  // Removed agent state management - filters now handled directly in agents page
 
   const pathname = usePathname();
   const router = useRouter();
   const { user, loading, signOut, userProfile } = useAuth();
-  // Removed useAgentFilters - no longer needed in layout
+
+  // Use agents filter context
+  const { searchQuery, setSearchQuery, filters, setFilters, viewMode, setViewMode } = useAgentsFilter();
+
+  const [businessFunctions, setBusinessFunctions] = useState<Array<{ id: string; department_name: string }>>([]);
+
+  // Load business functions for agents view
+  useEffect(() => {
+    if (pathname.includes('/agents')) {
+      fetch('/api/organizational-structure')
+        .then(res => res.json())
+        .then(result => {
+          if (result.success && result.data?.functions) {
+            setBusinessFunctions(result.data.functions);
+          }
+        })
+        .catch(console.error);
+    }
+  }, [pathname]);
 
   // Agent management callbacks
   const handleCreateAgent = () => {
-    // Always navigate to agents page with create parameter
     router.push('/agents?create=true');
   };
 
   const handleUploadAgent = () => {
-    // Navigate to agents page with upload parameter
     router.push('/agents?upload=true');
   };
 
@@ -96,6 +112,13 @@ export default function AppLayout({
             currentView={getCurrentView()}
             onCreateAgent={getCurrentView() === 'agents' ? handleCreateAgent : undefined}
             onUploadAgent={getCurrentView() === 'agents' ? handleUploadAgent : undefined}
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+            filters={filters}
+            onFilterChange={setFilters}
+            viewMode={viewMode}
+            onViewModeChange={setViewMode}
+            availableBusinessFunctions={businessFunctions.map(f => f.department_name)}
           />
         </div>
       </div>
@@ -282,5 +305,17 @@ export default function AppLayout({
         </main>
       </div>
     </div>
+  );
+}
+
+export default function AppLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <AgentsFilterProvider>
+      <AppLayoutContent>{children}</AppLayoutContent>
+    </AgentsFilterProvider>
   );
 }

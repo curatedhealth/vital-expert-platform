@@ -261,10 +261,9 @@ interface DashboardSidebarProps {
 }
 
 interface AgentFilters {
-  selectedDomain: string;
-  selectedCapability: string;
+  selectedTier: string;
+  selectedStatus: string;
   selectedBusinessFunction: string;
-  selectedRole: string;
 }
 
 export function DashboardSidebar({
@@ -661,45 +660,44 @@ export function DashboardSidebar({
           {!isCollapsed && filters && (
             <div className="px-4 space-y-3">
               <div>
-                <label htmlFor="domain-select" className="text-xs font-medium text-muted-foreground mb-1 block">
-                  Domain
+                <label htmlFor="tier-select" className="text-xs font-medium text-muted-foreground mb-1 block">
+                  Tier
                 </label>
                 <select
-                  id="domain-select"
-                  value={filters.selectedDomain}
+                  id="tier-select"
+                  value={filters.selectedTier}
                   onChange={(e) => onFilterChange?.({
                     ...filters,
-                    selectedDomain: e.target.value
+                    selectedTier: e.target.value
                   })}
                   className="w-full px-3 py-2 text-sm border border-input rounded-md bg-background hover:bg-accent focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
                 >
-                  <option value="all">All Domains</option>
-                  {availableDomains.map(domain => (
-                    <option key={domain} value={domain}>
-                      {domain}
-                    </option>
-                  ))}
+                  <option value="all">All Tiers</option>
+                  <option value="core">Core</option>
+                  <option value="1">Tier 1</option>
+                  <option value="2">Tier 2</option>
+                  <option value="3">Tier 3</option>
                 </select>
               </div>
               <div>
-                <label htmlFor="capability-select" className="text-xs font-medium text-muted-foreground mb-1 block">
-                  Capability
+                <label htmlFor="status-select" className="text-xs font-medium text-muted-foreground mb-1 block">
+                  Status
                 </label>
                 <select
-                  id="capability-select"
-                  value={filters.selectedCapability}
+                  id="status-select"
+                  value={filters.selectedStatus}
                   onChange={(e) => onFilterChange?.({
                     ...filters,
-                    selectedCapability: e.target.value
+                    selectedStatus: e.target.value
                   })}
                   className="w-full px-3 py-2 text-sm border border-input rounded-md bg-background hover:bg-accent focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
                 >
-                  <option value="all">All Capabilities</option>
-                  {availableCapabilities.map(capability => (
-                    <option key={capability} value={capability}>
-                      {capability}
-                    </option>
-                  ))}
+                  <option value="all">All Status</option>
+                  <option value="active">Active</option>
+                  <option value="development">Development</option>
+                  <option value="testing">Testing</option>
+                  <option value="inactive">Inactive</option>
+                  <option value="deprecated">Deprecated</option>
                 </select>
               </div>
               <div>
@@ -719,27 +717,6 @@ export function DashboardSidebar({
                   {availableBusinessFunctions.map(func => (
                     <option key={func} value={func}>
                       {func}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label htmlFor="role-select" className="text-xs font-medium text-muted-foreground mb-1 block">
-                  Role
-                </label>
-                <select
-                  id="role-select"
-                  value={filters.selectedRole}
-                  onChange={(e) => onFilterChange?.({
-                    ...filters,
-                    selectedRole: e.target.value
-                  })}
-                  className="w-full px-3 py-2 text-sm border border-input rounded-md bg-background hover:bg-accent focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-                >
-                  <option value="all">All Roles</option>
-                  {availableRoles.map(role => (
-                    <option key={role} value={role}>
-                      {role}
                     </option>
                   ))}
                 </select>

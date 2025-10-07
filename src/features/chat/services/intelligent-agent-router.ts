@@ -16,11 +16,6 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
-
 export interface Agent {
   id: string;
   name: string;
@@ -230,6 +225,17 @@ const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
  * Load all active agents from database (with caching)
  */
 export async function loadAvailableAgents(): Promise<Agent[]> {
+  // Create Supabase client inside the function to avoid build-time validation
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  
+  if (!supabaseUrl || !supabaseServiceKey) {
+    console.error('❌ Supabase configuration missing');
+    return agentsCache?.agents || [];
+  }
+
+  const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
   // Check cache first
   if (agentsCache && Date.now() - agentsCache.timestamp < CACHE_DURATION) {
     console.log('✅ Using cached agents');

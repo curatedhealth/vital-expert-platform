@@ -1,11 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-
-const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
-
 const KNOWLEDGE_DOMAINS = [
   // TIER 1: CORE DOMAINS (15)
   {
@@ -359,11 +354,10 @@ export async function POST() {
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-
     console.log('[Knowledge Domains API] Initializing 30 domains...');
 
     // First, check if the table exists by trying to query it
-    const { data: existing, error: tableError } = await supabaseAdmin
+    const { data: existing, error: tableError } = await supabase
       .from('knowledge_domains')
       .select('slug')
       .limit(1);
@@ -410,7 +404,7 @@ CREATE POLICY "Allow service role all" ON public.knowledge_domains FOR ALL USING
     }
 
     // Get all existing domains
-    const { data: allExisting } = await supabaseAdmin
+    const { data: allExisting } = await supabase
       .from('knowledge_domains')
       .select('slug');
 
@@ -427,7 +421,7 @@ CREATE POLICY "Allow service role all" ON public.knowledge_domains FOR ALL USING
         continue;
       }
 
-      const { error } = await supabaseAdmin.from('knowledge_domains').insert({
+      const { error } = await supabase.from('knowledge_domains').insert({
         ...domain,
         is_active: true,
         recommended_models: {

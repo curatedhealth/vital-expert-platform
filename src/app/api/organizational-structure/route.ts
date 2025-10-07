@@ -18,26 +18,7 @@ export async function GET(request: NextRequest) {
 
 
     // Create a fresh Supabase client on each request to avoid schema caching
-    const supabaseAdmin = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!,
-      {
-        auth: {
-          autoRefreshToken: false,
-          persistSession: false
-        },
-        db: {
-          schema: 'public'
-        },
-        global: {
-          headers: {
-            'Prefer': 'return=representation'
-          }
-        }
-      }
-    );
-
-    // Fetch all business functions
+        // Fetch all business functions
     const { data: functions, error: functionsError } = await supabaseAdmin
       .from('business_functions')
       .select('id, code, name, description')

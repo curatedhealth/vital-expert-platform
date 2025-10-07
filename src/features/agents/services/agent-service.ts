@@ -28,7 +28,14 @@ export interface CapabilityWithProficiency extends Capability {
 }
 
 export class AgentService {
-  private supabase = supabase;
+  private supabase: typeof supabase | null = null;
+
+  private getSupabaseClient() {
+    if (!this.supabase) {
+      this.supabase = supabase;
+    }
+    return this.supabase;
+  }
 
   // Get all active agents
   async getActiveAgents(showAll: boolean = false): Promise<AgentWithCategories[]> {
@@ -75,7 +82,7 @@ export class AgentService {
 
       // Fallback to direct Supabase call (might fail due to RLS but worth trying)
       // Only fetch agents with status 'active' or 'testing' (ready for use)
-      const { data, error: dbError } = await this.supabase
+      const { data, error: dbError } = await this.getSupabaseClient()
         .from('agents')
         .select('*')
         .in('status', ['active', 'testing'])
@@ -96,7 +103,7 @@ export class AgentService {
 
   // Get agents by tier
   async getAgentsByTier(tier: number): Promise<AgentWithCategories[]> {
-    const { data, error } = await this.supabase
+    const { data, error } = await this.getSupabaseClient()
       .from('agents')
       .select(`
         *,
@@ -121,7 +128,7 @@ export class AgentService {
 
   // Get agents by implementation phase
   async getAgentsByPhase(phase: number): Promise<AgentWithCategories[]> {
-    const { data, error } = await this.supabase
+    const { data, error } = await this.getSupabaseClient()
       .from('agents')
       .select(`
         *,
@@ -146,7 +153,7 @@ export class AgentService {
 
   // Get agents by category
   async getAgentsByCategory(categoryName: string): Promise<AgentWithCategories[]> {
-    const { data, error } = await this.supabase
+    const { data, error } = await this.getSupabaseClient()
       .from('agents')
       .select(`
         *,
@@ -171,7 +178,7 @@ export class AgentService {
 
   // Get single agent by ID
   async getAgentById(id: string): Promise<AgentWithCategories | null> {
-    const { data, error } = await this.supabase
+    const { data, error } = await this.getSupabaseClient()
       .from('agents')
       .select(`
         *,
@@ -195,7 +202,7 @@ export class AgentService {
 
   // Get single agent by name
   async getAgentByName(name: string): Promise<AgentWithCategories | null> {
-    const { data, error } = await this.supabase
+    const { data, error } = await this.getSupabaseClient()
       .from('agents')
       .select(`
         *,
@@ -219,7 +226,7 @@ export class AgentService {
 
   // Get all categories
   async getCategories(): Promise<AgentCategory[]> {
-    const { data, error } = await this.supabase
+    const { data, error } = await this.getSupabaseClient()
       .from('agent_categories')
       .select('*')
       .order('sort_order', { ascending: true });
@@ -234,7 +241,7 @@ export class AgentService {
 
   // Get agent collaborations
   async getCollaborations(): Promise<AgentCollaboration[]> {
-    const { data, error } = await this.supabase
+    const { data, error } = await this.getSupabaseClient()
       .from('agent_collaborations')
       .select('*')
       .eq('is_active', true);
@@ -249,7 +256,7 @@ export class AgentService {
 
   // Get agents with performance metrics
   async getAgentsWithMetrics(userId?: string): Promise<AgentWithMetrics[]> {
-    const { data, error } = await this.supabase
+    const { data, error } = await this.getSupabaseClient()
       .from('agents')
       .select(`
         *,
@@ -276,7 +283,7 @@ export class AgentService {
     agentData: Database['public']['Tables']['agents']['Insert'],
     categoryIds: string[] = []
   ): Promise<AgentWithCategories> {
-    const { data, error } = await this.supabase
+    const { data, error } = await this.getSupabaseClient()
       .from('agents')
       .insert({
         ...agentData,
@@ -297,7 +304,7 @@ export class AgentService {
         category_id: categoryId
       }));
 
-      await this.supabase
+      await this.getSupabaseClient()
         .from('agent_category_mapping')
         .insert(mappings);
     }
@@ -358,7 +365,7 @@ export class AgentService {
 
   // Delete agent (soft delete by setting status to 'deprecated')
   async deleteAgent(id: string): Promise<void> {
-    const { error } = await this.supabase
+    const { error } = await this.getSupabaseClient()
       .from('agents')
       .update({ status: 'deprecated' })
       .eq('id', id);
@@ -375,7 +382,7 @@ export class AgentService {
     userId: string,
     metrics: Partial<Database['public']['Tables']['agent_performance_metrics']['Insert']>
   ): Promise<void> {
-    const { error } = await this.supabase
+    const { error } = await this.getSupabaseClient()
       .from('agent_performance_metrics')
       .upsert({
         agent_id: agentId,
@@ -394,7 +401,7 @@ export class AgentService {
 
   // Search agents by text
   async searchAgents(searchTerm: string): Promise<AgentWithCategories[]> {
-    const { data, error } = await this.supabase
+    const { data, error } = await this.getSupabaseClient()
       .from('agents')
       .select(`
         *,
@@ -422,7 +429,7 @@ export class AgentService {
 
   // Get all capabilities
   async getCapabilities(): Promise<Capability[]> {
-    const { data, error } = await this.supabase
+    const { data, error } = await this.getSupabaseClient()
       .from('capabilities')
       .select('*')
       .eq('status', 'active')
@@ -439,7 +446,7 @@ export class AgentService {
 
   // Get capabilities by category
   async getCapabilitiesByCategory(category: string): Promise<Capability[]> {
-    const { data, error } = await this.supabase
+    const { data, error } = await this.getSupabaseClient()
       .from('capabilities')
       .select('*')
       .eq('status', 'active')
@@ -456,7 +463,7 @@ export class AgentService {
 
   // Get capability categories
   async getCapabilityCategories(): Promise<CapabilityCategory[]> {
-    const { data, error } = await this.supabase
+    const { data, error } = await this.getSupabaseClient()
       .from('capability_categories')
       .select('*')
       .eq('is_active', true)
@@ -472,7 +479,7 @@ export class AgentService {
 
   // Get agent with detailed capabilities
   async getAgentWithCapabilities(agentId: string): Promise<AgentWithCapabilities | null> {
-    const { data, error } = await this.supabase
+    const { data, error } = await this.getSupabaseClient()
       .from('agents')
       .select(`
         *,
@@ -505,7 +512,7 @@ export class AgentService {
 
   // Get agents by capability
   async getAgentsByCapability(capabilityName: string): Promise<AgentWithCategories[]> {
-    const { data, error } = await this.supabase
+    const { data, error } = await this.getSupabaseClient()
       .from('agents')
       .select(`
         *,
@@ -539,7 +546,7 @@ export class AgentService {
     proficiencyLevel: 'basic' | 'intermediate' | 'advanced' | 'expert' = 'intermediate',
     isPrimary: boolean = false
   ): Promise<void> {
-    const { error } = await this.supabase
+    const { error } = await this.getSupabaseClient()
       .from('agent_capabilities')
       .insert({
         agent_id: agentId,
@@ -556,7 +563,7 @@ export class AgentService {
 
   // Remove capability from agent
   async removeCapabilityFromAgent(agentId: string, capabilityId: string): Promise<void> {
-    const { error } = await this.supabase
+    const { error } = await this.getSupabaseClient()
       .from('agent_capabilities')
       .delete()
       .eq('agent_id', agentId)
@@ -574,7 +581,7 @@ export class AgentService {
     capabilityId: string,
     proficiencyLevel: 'basic' | 'intermediate' | 'advanced' | 'expert'
   ): Promise<void> {
-    const { error } = await this.supabase
+    const { error } = await this.getSupabaseClient()
       .from('agent_capabilities')
       .update({ proficiency_level: proficiencyLevel })
       .eq('agent_id', agentId)
@@ -588,7 +595,7 @@ export class AgentService {
 
   // Search capabilities
   async searchCapabilities(searchTerm: string): Promise<Capability[]> {
-    const { data, error } = await this.supabase
+    const { data, error } = await this.getSupabaseClient()
       .from('capabilities')
       .select('*')
       .eq('status', 'active')
@@ -610,7 +617,7 @@ export class AgentService {
     usage_count: number;
     success_rate: number;
   }> {
-    const { data, error } = await this.supabase
+    const { data, error } = await this.getSupabaseClient()
       .from('agent_capabilities')
       .select('proficiency_level, usage_count, success_rate')
       .eq('capability_id', capabilityId);

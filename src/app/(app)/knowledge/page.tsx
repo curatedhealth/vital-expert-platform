@@ -39,6 +39,8 @@ import {
 import { KnowledgeAnalyticsDashboard } from '@/features/knowledge/components/knowledge-analytics-dashboard';
 import { KnowledgeUploader } from '@/features/knowledge/components/knowledge-uploader';
 import { KnowledgeViewer } from '@/features/knowledge/components/knowledge-viewer';
+import { createClient } from '@/lib/supabase/client';
+import type { KnowledgeDomain } from '@/lib/services/model-selector';
 
 interface Document {
   id: string;
@@ -56,8 +58,11 @@ interface Document {
 
 export default function KnowledgePage() {
   const [documents, setDocuments] = useState<Document[]>([]);
+  const [domains, setDomains] = useState<KnowledgeDomain[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const supabase = createClient();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedDomain, setSelectedDomain] = useState('all');
@@ -103,10 +108,32 @@ export default function KnowledgePage() {
     }
   }, [selectedDomain]);
 
+  // Fetch knowledge domains
+  const fetchDomains = useCallback(async () => {
+    try {
+      const { data, error } = await supabase
+        .from('knowledge_domains')
+        .select('*')
+        .eq('is_active', true)
+        .order('priority');
+
+      if (error) throw error;
+      setDomains(data || []);
+    } catch (err) {
+      console.error('Error fetching knowledge domains:', err);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // Fetch documents on component mount and when domain changes
   useEffect(() => {
     fetchDocuments();
   }, [fetchDocuments]);
+
+  // Fetch domains only once on mount
+  useEffect(() => {
+    fetchDomains();
+  }, [fetchDomains]);
 
   const handleUploadComplete = useCallback((newDocs: unknown[]) => {
     // Refresh the documents list to show newly uploaded documents
@@ -204,15 +231,33 @@ export default function KnowledgePage() {
               <select
                 value={selectedDomain}
                 onChange={(e) => setSelectedDomain(e.target.value)}
-                className="flex h-9 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                className="flex h-9 w-[280px] items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                <option value="all">All Domains</option>
-                <option value="digital_health">Digital Health</option>
-                <option value="clinical_research">Clinical Research</option>
-                <option value="market_access">Market Access</option>
-                <option value="regulatory_compliance">Regulatory</option>
-                <option value="quality_assurance">Quality Assurance</option>
-                <option value="health_economics">Health Economics</option>
+                <option value="all">All Domains ({domains.length})</option>
+
+                {/* Tier 1: Core Domains */}
+                <option disabled>━━━ TIER 1: CORE ({domains.filter(d => d.tier === 1).length}) ━━━</option>
+                {domains.filter(d => d.tier === 1).map(domain => (
+                  <option key={domain.id} value={domain.slug}>
+                    {domain.name}
+                  </option>
+                ))}
+
+                {/* Tier 2: Specialized Domains */}
+                <option disabled>━━━ TIER 2: SPECIALIZED ({domains.filter(d => d.tier === 2).length}) ━━━</option>
+                {domains.filter(d => d.tier === 2).map(domain => (
+                  <option key={domain.id} value={domain.slug}>
+                    {domain.name}
+                  </option>
+                ))}
+
+                {/* Tier 3: Emerging Domains */}
+                <option disabled>━━━ TIER 3: EMERGING ({domains.filter(d => d.tier === 3).length}) ━━━</option>
+                {domains.filter(d => d.tier === 3).map(domain => (
+                  <option key={domain.id} value={domain.slug}>
+                    {domain.name}
+                  </option>
+                ))}
               </select>
             </div>
           </div>

@@ -9,14 +9,22 @@ import { useAgentsStore } from '@/lib/stores/agents-store';
 import { cn } from '@/lib/utils';
 
 export function AgentsOverview() {
-  const { agents, loadAgents } = useAgentsStore();
+  const { agents, loadAgents, isLoading, error } = useAgentsStore();
 
   // Load all agents on mount
   useEffect(() => {
+    console.log('AgentsOverview mounted, agents.length:', agents.length);
     if (agents.length === 0) {
-      loadAgents(true);
+      console.log('Loading agents...');
+      loadAgents(true).then(() => {
+        console.log('Agents loaded successfully');
+      }).catch(err => {
+        console.error('Failed to load agents:', err);
+      });
     }
-  }, [loadAgents, agents.length]);
+  }, []);
+
+  console.log('AgentsOverview render - agents count:', agents.length, 'isLoading:', isLoading, 'error:', error);
 
   const statistics = useMemo(() => {
     const total = agents.length;
@@ -44,6 +52,16 @@ export function AgentsOverview() {
       .sort(([, a], [, b]) => b - a)
       .slice(0, 5);
 
+    const byDepartment = agents.reduce((acc, agent) => {
+      const dept = agent.department || 'Unassigned';
+      acc[dept] = (acc[dept] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+
+    const topDepartments = Object.entries(byDepartment)
+      .sort(([, a], [, b]) => b - a)
+      .slice(0, 5);
+
     return {
       total,
       active,
@@ -51,8 +69,31 @@ export function AgentsOverview() {
       byTier,
       byStatus,
       topFunctions,
+      topDepartments,
     };
   }, [agents]);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="text-center">
+          <div className="w-8 h-8 border-4 border-progress-teal border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-medical-gray">Loading agents...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="text-center text-red-600">
+          <p className="font-semibold">Error loading agents</p>
+          <p className="text-sm">{error}</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -274,35 +315,68 @@ export function AgentsOverview() {
         </Card>
       </div>
 
-      {/* Top Business Functions */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Top Business Functions</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {statistics.topFunctions.map(([func, count], index) => (
-              <div key={func} className="flex items-center gap-4">
-                <div className="flex items-center justify-center w-8 h-8 rounded-full bg-indigo-100 text-indigo-700 font-bold text-sm">
-                  {index + 1}
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="font-medium text-sm">{func.replace(/_/g, ' ')}</span>
-                    <span className="text-sm font-semibold">{count} agents</span>
+      {/* Top Business Functions and Departments */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Top Business Functions */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Top Business Functions</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {statistics.topFunctions.map(([func, count], index) => (
+                <div key={func} className="flex items-center gap-4">
+                  <div className="flex items-center justify-center w-8 h-8 rounded-full bg-indigo-100 text-indigo-700 font-bold text-sm">
+                    {index + 1}
                   </div>
-                  <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-indigo-500"
-                      style={{ width: `${(count / statistics.total) * 100}%` }}
-                    />
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="font-medium text-sm">{func.replace(/_/g, ' ')}</span>
+                      <span className="text-sm font-semibold">{count} agents</span>
+                    </div>
+                    <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-indigo-500"
+                        style={{ width: `${(count / statistics.total) * 100}%` }}
+                      />
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Top Departments */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Top Departments</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {statistics.topDepartments.map(([dept, count], index) => (
+                <div key={dept} className="flex items-center gap-4">
+                  <div className="flex items-center justify-center w-8 h-8 rounded-full bg-teal-100 text-teal-700 font-bold text-sm">
+                    {index + 1}
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="font-medium text-sm">{dept.replace(/_/g, ' ')}</span>
+                      <span className="text-sm font-semibold">{count} agents</span>
+                    </div>
+                    <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-teal-500"
+                        style={{ width: `${(count / statistics.total) * 100}%` }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }

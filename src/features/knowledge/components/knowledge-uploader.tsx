@@ -22,6 +22,8 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { useAgentsStore } from '@/lib/stores/agents-store';
 import { cn } from '@/lib/utils';
+import { createClient } from '@/lib/supabase/client';
+import type { KnowledgeDomain } from '@/lib/services/model-selector';
 
 interface UploadFile {
   file: File;
@@ -32,6 +34,9 @@ interface UploadFile {
   domain: string;
   isGlobal: boolean;
   selectedAgents: string[];
+  embeddingModel: string;
+  chatModel: string;
+  duplicate?: boolean;
 }
 
 interface KnowledgeUploaderProps {
@@ -40,13 +45,19 @@ interface KnowledgeUploaderProps {
 
 export function KnowledgeUploader({ onUploadComplete }: KnowledgeUploaderProps) {
   const { agents, loadAgents } = useAgentsStore();
+  const supabase = createClient();
   const [files, setFiles] = useState<UploadFile[]>([]);
+  const [domains, setDomains] = useState<KnowledgeDomain[]>([]);
   const [dragActive, setDragActive] = useState(false);
+  const [selectedTier, setSelectedTier] = useState<number>(1); // Default to Tier 1
   const [uploadSettings, setUploadSettings] = useState({
-    domain: 'digital-health',
+    domain: 'digital_health',
     isGlobal: true,
     selectedAgents: [] as string[],
+    embeddingModel: 'text-embedding-3-large', // Default embedding model
+    chatModel: 'gpt-4-turbo-preview', // Default chat model
   });
+  const [domainInitialized, setDomainInitialized] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const acceptedTypes = [
@@ -59,15 +70,6 @@ export function KnowledgeUploader({ onUploadComplete }: KnowledgeUploaderProps) 
     'text/csv',
   ];
 
-  const domains = [
-    { value: 'digital-health', label: 'Digital Health' },
-    { value: 'clinical-research', label: 'Clinical Research' },
-    { value: 'market-access', label: 'Market Access' },
-    { value: 'regulatory', label: 'Regulatory' },
-    { value: 'quality-assurance', label: 'Quality Assurance' },
-    { value: 'health-economics', label: 'Health Economics' },
-  ];
-
   const formatFileSize = (bytes: number) => {
     if (bytes === 0) return '0 Bytes';
     const k = 1024;
@@ -76,6 +78,109 @@ export function KnowledgeUploader({ onUploadComplete }: KnowledgeUploaderProps) 
     // eslint-disable-next-line security/detect-object-injection
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
+
+  // Get domains filtered by selected tier
+  const filteredDomains = domains.filter(d => d.tier === selectedTier);
+
+  // Get current domain's information
+  const currentDomain = domains.find(d => d.slug === uploadSettings.domain);
+
+  // Get recommended models for current domain
+  const getRecommendedModels = () => {
+    if (!currentDomain?.recommended_models) {
+      return {
+        embedding: {
+          primary: 'text-embedding-3-large',
+          alternatives: ['text-embedding-ada-002'],
+        },
+        chat: {
+          primary: 'gpt-4-turbo-preview',
+          alternatives: ['gpt-3.5-turbo'],
+        },
+      };
+    }
+    return currentDomain.recommended_models;
+  };
+
+  const recommendedModels = getRecommendedModels();
+
+  // Get tier labels
+  const getTierLabel = (tier: number) => {
+    switch (tier) {
+      case 1:
+        return 'TIER 1: CORE';
+      case 2:
+        return 'TIER 2: SPECIALIZED';
+      case 3:
+        return 'TIER 3: EMERGING';
+      default:
+        return `TIER ${tier}`;
+    }
+  };
+
+  // Load knowledge domains from database
+  useEffect(() => {
+    const fetchDomains = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('knowledge_domains')
+          .select('*')
+          .eq('is_active', true)
+          .order('priority');
+
+        if (error) throw error;
+
+        if (data && data.length > 0) {
+          setDomains(data);
+          // Only set default domain on first load
+          if (!domainInitialized) {
+            const tier1Domains = data.filter(d => d.tier === 1);
+            if (tier1Domains.length > 0) {
+              setUploadSettings(prev => ({
+                ...prev,
+                domain: tier1Domains[0].slug
+              }));
+            }
+            setDomainInitialized(true);
+          }
+        }
+      } catch (err) {
+        console.error('Error fetching knowledge domains:', err);
+      }
+    };
+
+    fetchDomains();
+  }, [supabase, domainInitialized]);
+
+  // Update domain when tier changes
+  useEffect(() => {
+    if (domains.length > 0 && domainInitialized) {
+      const tierDomains = domains.filter(d => d.tier === selectedTier);
+      if (tierDomains.length > 0) {
+        // Check if current domain is in the selected tier
+        const currentDomainInTier = tierDomains.find(d => d.slug === uploadSettings.domain);
+        if (!currentDomainInTier) {
+          // Set to first domain of the new tier
+          setUploadSettings(prev => ({
+            ...prev,
+            domain: tierDomains[0].slug
+          }));
+        }
+      }
+    }
+  }, [selectedTier, domains, domainInitialized, uploadSettings.domain]);
+
+  // Update recommended models when domain changes
+  useEffect(() => {
+    if (currentDomain?.recommended_models) {
+      const models = currentDomain.recommended_models as any;
+      setUploadSettings(prev => ({
+        ...prev,
+        embeddingModel: models.embedding?.primary || 'text-embedding-3-large',
+        chatModel: models.chat?.primary || 'gpt-4-turbo-preview',
+      }));
+    }
+  }, [uploadSettings.domain, currentDomain]);
 
   // Load agents on component mount
   useEffect(() => {
@@ -109,6 +214,8 @@ export function KnowledgeUploader({ onUploadComplete }: KnowledgeUploaderProps) 
           domain: uploadSettings.domain,
           isGlobal: uploadSettings.isGlobal,
           selectedAgents: [...uploadSettings.selectedAgents],
+          embeddingModel: uploadSettings.embeddingModel,
+          chatModel: uploadSettings.chatModel,
         });
       }
     });
@@ -160,6 +267,8 @@ export function KnowledgeUploader({ onUploadComplete }: KnowledgeUploaderProps) 
       formData.append('files', file.file);
       formData.append('domain', file.domain);
       formData.append('isGlobal', file.isGlobal.toString());
+      formData.append('embeddingModel', file.embeddingModel);
+      formData.append('chatModel', file.chatModel);
       if (file.selectedAgents.length > 0) {
         formData.append('selectedAgents', JSON.stringify(file.selectedAgents));
       }
@@ -167,10 +276,36 @@ export function KnowledgeUploader({ onUploadComplete }: KnowledgeUploaderProps) 
       // Simulate upload progress
       updateProgress(25, 'uploading');
 
-      const response = await fetch('/api/knowledge/upload', {
-        method: 'POST',
-        body: formData,
-      });
+      // Create an AbortController for timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 120000); // 2 minute timeout
+
+      let response;
+      try {
+        console.log('📤 Starting upload for:', file.file.name, {
+          size: file.file.size,
+          type: file.file.type,
+          domain: file.domain,
+          embeddingModel: file.embeddingModel,
+          chatModel: file.chatModel,
+        });
+
+        response = await fetch('/api/knowledge/upload', {
+          method: 'POST',
+          body: formData,
+          signal: controller.signal,
+        });
+
+        clearTimeout(timeoutId);
+        console.log('✅ Fetch completed:', response.status, response.statusText);
+      } catch (fetchError) {
+        clearTimeout(timeoutId);
+        console.error('❌ Fetch error:', fetchError);
+        if (fetchError instanceof Error && fetchError.name === 'AbortError') {
+          throw new Error('Upload timed out. The file might be too large or processing is taking too long.');
+        }
+        throw fetchError;
+      }
 
       updateProgress(75, 'uploading');
 
@@ -185,7 +320,22 @@ export function KnowledgeUploader({ onUploadComplete }: KnowledgeUploaderProps) 
       // Wait a bit to show processing state
       await new Promise(resolve => setTimeout(resolve, 1000));
 
-      if (result.success && result.totalProcessed > 0) {
+      // Check if file was processed or is a duplicate
+      const fileResult = result.results?.[0];
+
+      if (fileResult?.status === 'duplicate') {
+        // File is a duplicate - show as completed with info
+        updateProgress(100, 'completed');
+        return {
+          name: file.file.name,
+          type: file.file.type,
+          size: file.file.size,
+          domain: file.domain,
+          isGlobal: file.isGlobal,
+          selectedAgents: file.selectedAgents,
+          duplicate: true,
+        };
+      } else if (result.success && result.totalProcessed > 0) {
         updateProgress(100, 'completed');
         return {
           name: file.file.name,
@@ -196,7 +346,8 @@ export function KnowledgeUploader({ onUploadComplete }: KnowledgeUploaderProps) 
           selectedAgents: file.selectedAgents,
         };
       } else {
-        throw new Error(result.details || 'Processing failed');
+        const errorMsg = fileResult?.error || result.message || 'Processing failed';
+        throw new Error(errorMsg);
       }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Upload failed. Please try again.';
@@ -258,6 +409,20 @@ export function KnowledgeUploader({ onUploadComplete }: KnowledgeUploaderProps) 
         <CardContent className="p-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
+              <Label htmlFor="tier">Domain Tier</Label>
+              <select
+                id="tier"
+                value={selectedTier}
+                onChange={(e) => setSelectedTier(Number(e.target.value))}
+                className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md"
+              >
+                <option value={1}>Tier 1: Core ({domains.filter(d => d.tier === 1).length})</option>
+                <option value={2}>Tier 2: Specialized ({domains.filter(d => d.tier === 2).length})</option>
+                <option value={3}>Tier 3: Emerging ({domains.filter(d => d.tier === 3).length})</option>
+              </select>
+            </div>
+
+            <div>
               <Label htmlFor="domain">Knowledge Domain</Label>
               <select
                 id="domain"
@@ -265,11 +430,15 @@ export function KnowledgeUploader({ onUploadComplete }: KnowledgeUploaderProps) 
                 onChange={(e) => setUploadSettings(prev => ({ ...prev, domain: e.target.value }))}
                 className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md"
               >
-                {domains.map(domain => (
-                  <option key={domain.value} value={domain.value}>
-                    {domain.label}
-                  </option>
-                ))}
+                {filteredDomains.length > 0 ? (
+                  filteredDomains.map(domain => (
+                    <option key={domain.id} value={domain.slug}>
+                      {domain.name}
+                    </option>
+                  ))
+                ) : (
+                  <option disabled>No domains available</option>
+                )}
               </select>
             </div>
 
@@ -292,7 +461,96 @@ export function KnowledgeUploader({ onUploadComplete }: KnowledgeUploaderProps) 
                 <option value="agent">Agent-Specific</option>
               </select>
             </div>
+          </div>
 
+          {/* Model Selection Section */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+            <div>
+              <Label htmlFor="embedding-model" className="flex items-center gap-2">
+                Embedding Model
+                <span className="text-xs text-muted-foreground font-normal">
+                  (Recommended for {currentDomain?.name || 'this domain'})
+                </span>
+              </Label>
+              <select
+                id="embedding-model"
+                value={uploadSettings.embeddingModel}
+                onChange={(e) => setUploadSettings(prev => ({ ...prev, embeddingModel: e.target.value }))}
+                className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md"
+              >
+                <optgroup label="Primary (Recommended)">
+                  <option value={recommendedModels.embedding.primary}>
+                    ⭐ {recommendedModels.embedding.primary}
+                  </option>
+                </optgroup>
+                {recommendedModels.embedding.specialized && (
+                  <optgroup label="Specialized">
+                    <option value={recommendedModels.embedding.specialized}>
+                      🎯 {recommendedModels.embedding.specialized}
+                    </option>
+                  </optgroup>
+                )}
+                {recommendedModels.embedding.alternatives && recommendedModels.embedding.alternatives.length > 0 && (
+                  <optgroup label="Alternatives">
+                    {recommendedModels.embedding.alternatives.map((model: string) => (
+                      <option key={model} value={model}>
+                        {model}
+                      </option>
+                    ))}
+                  </optgroup>
+                )}
+              </select>
+              {recommendedModels.embedding.rationale && (
+                <p className="text-xs text-muted-foreground mt-1">
+                  💡 {recommendedModels.embedding.rationale}
+                </p>
+              )}
+            </div>
+
+            <div>
+              <Label htmlFor="chat-model" className="flex items-center gap-2">
+                Chat Model
+                <span className="text-xs text-muted-foreground font-normal">
+                  (Recommended for {currentDomain?.name || 'this domain'})
+                </span>
+              </Label>
+              <select
+                id="chat-model"
+                value={uploadSettings.chatModel}
+                onChange={(e) => setUploadSettings(prev => ({ ...prev, chatModel: e.target.value }))}
+                className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md"
+              >
+                <optgroup label="Primary (Recommended)">
+                  <option value={recommendedModels.chat.primary}>
+                    ⭐ {recommendedModels.chat.primary}
+                  </option>
+                </optgroup>
+                {recommendedModels.chat.specialized && (
+                  <optgroup label="Specialized">
+                    <option value={recommendedModels.chat.specialized}>
+                      🎯 {recommendedModels.chat.specialized}
+                    </option>
+                  </optgroup>
+                )}
+                {recommendedModels.chat.alternatives && recommendedModels.chat.alternatives.length > 0 && (
+                  <optgroup label="Alternatives">
+                    {recommendedModels.chat.alternatives.map((model: string) => (
+                      <option key={model} value={model}>
+                        {model}
+                      </option>
+                    ))}
+                  </optgroup>
+                )}
+              </select>
+              {recommendedModels.chat.rationale && (
+                <p className="text-xs text-muted-foreground mt-1">
+                  💡 {recommendedModels.chat.rationale}
+                </p>
+              )}
+            </div>
+          </div>
+
+          <div className="mt-4">
             {!uploadSettings.isGlobal && (
               <div>
                 <Label className="mb-4 text-sm font-medium">Target Agents</Label>

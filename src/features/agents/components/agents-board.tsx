@@ -199,10 +199,14 @@ export function AgentsBoard({
 
   // Load agents on component mount only if not already loaded
   useEffect(() => {
+    console.log('AgentsBoard mounted, agents.length:', agents.length);
     if (agents.length === 0) {
-      loadAgents(true); // Load all agents including inactive ones
+      console.log('AgentsBoard: Loading agents with showAll=true...');
+      loadAgents(true).catch(err => {
+        console.error('AgentsBoard: Failed to load agents:', err);
+      });
     }
-  }, [loadAgents, agents.length]);
+  }, []);
 
   // Load business functions from API (bypasses RLS)
   useEffect(() => {

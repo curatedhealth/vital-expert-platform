@@ -1,7 +1,7 @@
 'use client';
 
 import { Eye, MessageSquare, Edit, Copy, Heart, Trash2, MoreVertical, Brain } from 'lucide-react';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 
 import { AgentAvatar } from '@/components/ui/agent-avatar';
 import { Badge } from '@/components/ui/badge';
@@ -37,6 +37,16 @@ export function AgentsTable({ onAgentSelect, onAddToChat }: AgentsTableProps) {
   const [editingAgent, setEditingAgent] = useState<Agent | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [savedAgents, setSavedAgents] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    console.log('AgentsTable mounted, agents.length:', agents.length);
+    if (agents.length === 0) {
+      console.log('AgentsTable: Loading agents with showAll=true...');
+      loadAgents(true).catch(err => {
+        console.error('AgentsTable: Failed to load agents:', err);
+      });
+    }
+  }, []);
 
   const handleSaveToLibrary = (agentId: string) => {
     setSavedAgents((prev) => {

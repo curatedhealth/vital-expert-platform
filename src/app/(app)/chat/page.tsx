@@ -152,8 +152,14 @@ export default function ChatPage() {
   const [editingAgent, setEditingAgent] = useState<AgentWithCategories | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [showAgentCreator, setShowAgentCreator] = useState(false);
+  const [isSelectingAgent, setIsSelectingAgent] = useState(false);
   const [showAgentSelector, setShowAgentSelector] = useState(false);
   const [userAgents, setUserAgents] = useState<Agent[]>([]); // User's selected agents for chat
+  const [recommendedAgents, setRecommendedAgents] = useState<any[]>([]);
+  const [pendingMessage, setPendingMessage] = useState<string>('');
+
+  // Auto-agent selection is controlled by interactionMode (automatic = enabled)
+  const autoAgentSelection = interactionMode === 'automatic';
   const [mounted, setMounted] = useState(false);
   const [collapsedSections, setCollapsedSections] = useState({
     chatManagement: false,
@@ -312,11 +318,105 @@ export default function ChatPage() {
   }, [selectedAgent?.id, agentPromptStarters]);
 
   const handleSendMessage = async () => {
+    console.log('🚀 handleSendMessage called! input:', input);
     if (!input.trim()) return;
 
     const message = input.trim();
-    setInput('');
+    console.log('📝 Message:', message);
+    console.log('🤖 autoAgentSelection:', autoAgentSelection);
+    console.log('👤 selectedAgent:', selectedAgent);
 
+    // Step 1: Show agent recommendations if auto-selection is enabled and no agent selected
+    if (autoAgentSelection && !selectedAgent) {
+      console.log('✅ Entering recommendation flow');
+      setIsSelectingAgent(true);
+      setPendingMessage(message);
+      setInput(''); // Clear input immediately
+
+      try {
+        const response = await fetch('/api/agents/recommend', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ query: message }),
+        });
+
+        console.log('📡 Response status:', response.status, response.ok);
+
+        if (response.ok) {
+          const data = await response.json();
+          console.log('📥 Received recommendation data:', JSON.stringify(data, null, 2));
+          console.log('📥 data.success:', data.success);
+          console.log('📥 data.agents:', data.agents);
+          console.log('📥 data.agents?.length:', data.agents?.length);
+
+          if (data.success && data.agents && data.agents.length > 0) {
+            // Show top 2-3 recommendations for user to choose
+            const topAgents = data.agents.slice(0, 3);
+            console.log('📦 Top agents slice:', topAgents.length);
+
+            const enrichedAgents = topAgents.map((agent: any, index: number) => ({
+              ...agent,
+              reasoning: data.recommendations?.[index]?.reasoning || 'Best match for your query',
+              score: data.recommendations?.[index]?.score || 100
+            }));
+
+            console.log('🎯 About to set recommendations:', enrichedAgents.length, 'agents');
+            console.log('🎯 Enriched agents:', JSON.stringify(enrichedAgents.map(a => ({ id: a.id, name: a.name })), null, 2));
+            setRecommendedAgents(enrichedAgents);
+            console.log('✅ setRecommendedAgents called');
+          } else {
+            console.warn('⚠️ No agents in response or invalid data structure');
+            console.warn('⚠️ data.success:', data.success);
+            console.warn('⚠️ data.agents:', data.agents);
+          }
+        } else {
+          console.error('❌ API response not OK:', response.status, response.statusText);
+        }
+      } catch (error) {
+        console.error('❌ Error fetching recommendations:', error);
+        // If recommendation fails, send message without agent selection
+        setIsSelectingAgent(false);
+        setInput('');
+        await sendMessage(message);
+        return;
+      }
+
+      setIsSelectingAgent(false);
+
+      // IMPORTANT: Return early to prevent sending message
+      // The message will be sent after user selects an agent
+      console.log('⏸️ Waiting for user to select agent from recommendations');
+      return;
+    }
+
+    // Step 2: Send message if agent is already selected
+    setInput('');
+    await sendMessage(message);
+  };
+
+  // Handle agent selection from recommendations
+  const handleSelectRecommendedAgent = async (recommendedAgent: any) => {
+    // Convert to Agent type and set as selected
+    const agent: Agent = {
+      id: recommendedAgent.id,
+      name: recommendedAgent.name,
+      display_name: recommendedAgent.display_name,
+      description: recommendedAgent.description,
+      avatar: recommendedAgent.avatar,
+      systemPrompt: recommendedAgent.system_prompt,
+      tier: recommendedAgent.tier,
+      capabilities: recommendedAgent.capabilities || [],
+      model: selectedModel || recommendedAgent.model || 'gpt-4-turbo-preview', // Use selected model from dropdown
+    };
+
+    setSelectedAgent(agent);
+
+    // Clear recommendations and send the pending message
+    setRecommendedAgents([]);
+    const message = pendingMessage;
+    setPendingMessage('');
+
+    console.log('✅ User selected agent:', agent.display_name || agent.name, 'with model:', agent.model);
     await sendMessage(message);
   };
 
@@ -595,8 +695,8 @@ export default function ChatPage() {
                 key={index}
                 className="group p-5 cursor-pointer hover:shadow-lg transition-all duration-200 hover:border-blue-300 border-gray-200 bg-white hover:-translate-y-0.5"
                 onClick={() => {
-                  // Make sure we have an agent selected before sending message
-                  if (!selectedAgent && agents.length > 0) {
+                  // In automatic mode, don't pre-select agent - let recommendation flow handle it
+                  if (!autoAgentSelection && !selectedAgent && agents.length > 0) {
                     setSelectedAgent(agents[0]);
                   }
                   // Use fullPrompt if available (from PRISM library), otherwise use display text
@@ -681,23 +781,111 @@ export default function ChatPage() {
             <p className="text-gray-600 mb-6">
               Ask me anything about digital health, clinical trials, regulatory compliance, and more.
             </p>
+            {isSelectingAgent && (
+              <div className="flex items-center justify-center gap-2 text-sm text-blue-600 mb-4">
+                <Zap className="w-4 h-4 animate-pulse" />
+                <span>Finding the best experts for your question...</span>
+              </div>
+            )}
           </div>
 
+          {/* Agent Recommendations - Step 1 */}
+          {console.log('🔍 Rendering check - recommendedAgents.length:', recommendedAgents.length)}
+          {recommendedAgents.length > 0 ? (
+            <div className="w-full max-w-3xl mb-6">
+              <div className="mb-4">
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  Which expert would you like to consult?
+                </h3>
+                <p className="text-sm text-gray-600">
+                  Your question: &quot;{pendingMessage}&quot;
+                </p>
+              </div>
+
+              <div className="space-y-3">
+                {recommendedAgents.map((agent, index) => (
+                  <Card
+                    key={agent.id}
+                    className="p-4 cursor-pointer hover:shadow-lg hover:border-blue-300 transition-all duration-200"
+                    onClick={() => handleSelectRecommendedAgent(agent)}
+                  >
+                    <div className="flex items-start gap-4">
+                      <div className="w-12 h-12 rounded-full flex items-center justify-center bg-gradient-to-br from-blue-50 to-purple-50 border-2 border-blue-200 flex-shrink-0 overflow-hidden">
+                        {agent.avatar && (agent.avatar.startsWith('/') || agent.avatar.includes('avatar_')) ? (
+                          <Image
+                            src={agent.avatar}
+                            alt={agent.display_name || agent.name}
+                            width={48}
+                            height={48}
+                            className="object-cover w-full h-full"
+                          />
+                        ) : (
+                          <span className="text-2xl">{agent.avatar || '🤖'}</span>
+                        )}
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <h4 className="font-semibold text-gray-900">
+                            {agent.display_name || agent.name}
+                          </h4>
+                          {index === 0 && (
+                            <Badge variant="default" className="bg-blue-600">
+                              Best Match
+                            </Badge>
+                          )}
+                          {agent.tier && (
+                            <Badge variant="outline">
+                              Tier {agent.tier}
+                            </Badge>
+                          )}
+                        </div>
+                        <p className="text-sm text-gray-600 mb-2">
+                          {agent.description}
+                        </p>
+                        <p className="text-xs text-gray-500 italic">
+                          {agent.reasoning}
+                        </p>
+                      </div>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+
+              <div className="mt-4 text-center">
+                <Button
+                  variant="ghost"
+                  onClick={() => {
+                    setRecommendedAgents([]);
+                    setPendingMessage('');
+                    setInput(pendingMessage);
+                  }}
+                  className="text-sm text-gray-600"
+                >
+                  Cancel and edit question
+                </Button>
+              </div>
+            </div>
+          ) : (
+            console.log('❌ Not rendering recommendations - length is 0')
+          )}
+
           {/* Single chat input - always visible */}
-          <div className="w-full max-w-3xl">
-            <ChatInput
-              value={input}
-              onChange={setInput}
-              onSend={handleSendMessage}
-              onKeyPress={handleKeyPress}
-              isLoading={isLoading}
-              selectedAgent={null}
-              enableVoice={true}
-              selectedModel={selectedModel || undefined}
-              onModelChange={setSelectedModel}
-              onStop={stopGeneration}
-            />
-          </div>
+          {recommendedAgents.length === 0 && (
+            <div className="w-full max-w-3xl">
+              <ChatInput
+                value={input}
+                onChange={setInput}
+                onSend={handleSendMessage}
+                onKeyPress={handleKeyPress}
+                isLoading={isLoading || isSelectingAgent}
+                selectedAgent={null}
+                enableVoice={true}
+                selectedModel={selectedModel || undefined}
+                onModelChange={setSelectedModel}
+                onStop={stopGeneration}
+              />
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -817,15 +1005,101 @@ export default function ChatPage() {
             <div ref={messagesEndRef} />
           </div>
 
+          {/* Agent Recommendations overlay - Step 1 */}
+          {console.log('🎨 Chat interface - recommendedAgents.length:', recommendedAgents.length)}
+          {recommendedAgents.length > 0 && (
+            <div className="absolute inset-0 bg-white/95 backdrop-blur-sm z-50 flex items-center justify-center p-6">
+              <div className="w-full max-w-3xl">
+                <div className="mb-4">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                    Which expert would you like to consult?
+                  </h3>
+                  <p className="text-sm text-gray-600">
+                    Your question: &quot;{pendingMessage}&quot;
+                  </p>
+                </div>
+
+                <div className="space-y-3">
+                  {recommendedAgents.map((agent, index) => (
+                    <Card
+                      key={agent.id}
+                      className="p-4 cursor-pointer hover:shadow-lg hover:border-blue-300 transition-all duration-200"
+                      onClick={() => handleSelectRecommendedAgent(agent)}
+                    >
+                      <div className="flex items-start gap-4">
+                        <div className="w-12 h-12 rounded-full flex items-center justify-center bg-gradient-to-br from-blue-50 to-purple-50 border-2 border-blue-200 flex-shrink-0 overflow-hidden">
+                          {agent.avatar && (agent.avatar.startsWith('/') || agent.avatar.includes('avatar_')) ? (
+                            <Image
+                              src={agent.avatar}
+                              alt={agent.display_name || agent.name}
+                              width={48}
+                              height={48}
+                              className="object-cover w-full h-full"
+                            />
+                          ) : (
+                            <span className="text-2xl">{agent.avatar || '🤖'}</span>
+                          )}
+                        </div>
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <h4 className="font-semibold text-gray-900">
+                              {agent.display_name || agent.name}
+                            </h4>
+                            {index === 0 && (
+                              <Badge variant="default" className="bg-blue-600">
+                                Best Match
+                              </Badge>
+                            )}
+                            {agent.tier && (
+                              <Badge variant="outline">
+                                Tier {agent.tier}
+                              </Badge>
+                            )}
+                          </div>
+                          <p className="text-sm text-gray-600 mb-2">
+                            {agent.description}
+                          </p>
+                          <p className="text-xs text-gray-500 italic">
+                            {agent.reasoning}
+                          </p>
+                        </div>
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+
+                <div className="mt-4 text-center">
+                  <Button
+                    variant="ghost"
+                    onClick={() => {
+                      setRecommendedAgents([]);
+                      setPendingMessage('');
+                      setInput(pendingMessage);
+                    }}
+                    className="text-sm text-gray-600"
+                  >
+                    Cancel and edit question
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Input component at bottom when there are messages */}
           <div className="flex-shrink-0 border-t bg-white">
             <div className="max-w-4xl mx-auto px-6 py-3">
+              {isSelectingAgent && (
+                <div className="flex items-center justify-center gap-2 text-sm text-blue-600 mb-2">
+                  <Zap className="w-4 h-4 animate-pulse" />
+                  <span>Finding the best experts for your question...</span>
+                </div>
+              )}
               <ChatInput
                 value={input}
                 onChange={setInput}
                 onSend={handleSendMessage}
                 onKeyPress={handleKeyPress}
-                isLoading={isLoading}
+                isLoading={isLoading || isSelectingAgent}
                 selectedAgent={selectedAgent}
                 enableVoice={true}
                 selectedModel={selectedModel || undefined}

@@ -62,6 +62,13 @@ const nextConfig = {
   experimental: {
     serverComponentsExternalPackages: ['@supabase/supabase-js'],
   },
+  // Increase API route body size limit for file uploads
+  api: {
+    bodyParser: {
+      sizeLimit: '50mb',
+    },
+    responseLimit: '50mb',
+  },
 }
 
 module.exports = nextConfig

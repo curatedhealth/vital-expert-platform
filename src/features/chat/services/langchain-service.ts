@@ -16,6 +16,9 @@ import {
   type DocumentMetadata
 } from '@/lib/document-utils';
 
+// Import domain-based model selector
+import { modelSelector } from '@/lib/services/model-selector';
+
 // Import advanced retrievers
 import { MultiQueryRetriever } from 'langchain/retrievers/multi_query';
 import { ContextualCompressionRetriever } from 'langchain/retrievers/contextual_compression';
@@ -379,18 +382,43 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-const embeddings = new OpenAIEmbeddings({
+// Default embeddings (will be overridden by domain-specific models)
+const defaultEmbeddings = new OpenAIEmbeddings({
   openAIApiKey: process.env.OPENAI_API_KEY!,
-  modelName: 'text-embedding-ada-002',
+  modelName: 'text-embedding-3-large', // Upgraded from ada-002
 });
 
 export class LangChainRAGService {
+  /**
+   * Get embedding model based on knowledge domains
+   */
+  private async getEmbeddingsForDomains(knowledgeDomains?: string[]) {
+    if (!knowledgeDomains || knowledgeDomains.length === 0) {
+      return defaultEmbeddings;
+    }
+
+    try {
+      const recommendedModel = await modelSelector.getEmbeddingModel({
+        knowledgeDomains,
+        useSpecialized: true, // Prefer specialized models for medical domains
+      });
+
+      // Create embeddings instance based on recommended model
+      return new OpenAIEmbeddings({
+        openAIApiKey: process.env.OPENAI_API_KEY!,
+        modelName: recommendedModel,
+      });
+    } catch (error) {
+      console.error('Failed to get domain-specific embeddings, using default:', error);
+      return defaultEmbeddings;
+    }
+  }
   private vectorStore: SupabaseVectorStore;
   private textSplitter: RecursiveCharacterTextSplitter;
   private llm: ChatOpenAI;
 
   constructor() {
-    this.vectorStore = new SupabaseVectorStore(embeddings, {
+    this.vectorStore = new SupabaseVectorStore(defaultEmbeddings, {
       client: supabase,
       tableName: 'rag_knowledge_chunks',
       // Don't specify queryName - let LangChain use its own similaritySearchVectorWithScore
@@ -413,6 +441,8 @@ export class LangChainRAGService {
     agentId?: string;
     isGlobal: boolean;
     domain: string;
+    embeddingModel?: string;
+    chatModel?: string;
   }): Promise<{
     success: boolean;
     results: Array<{
@@ -524,6 +554,8 @@ export class LangChainRAGService {
           agentId: metadata.agentId,
           isGlobal: metadata.isGlobal,
           uploadedAt: new Date().toISOString(),
+          embeddingModel: metadata.embeddingModel || 'text-embedding-3-large',
+          chatModel: metadata.chatModel || 'gpt-4-turbo-preview',
           ...extractedMetadata,
         };
 
@@ -597,7 +629,25 @@ export class LangChainRAGService {
   }
 
   private async loadDocument(file: File): Promise<Document[]> {
-    if (file.type === 'application/pdf' || file.name.endsWith('.pdf')) {
+    // Check file extension first (more reliable than MIME type for uploaded files)
+    const fileName = file.name.toLowerCase();
+    const isPDF = fileName.endsWith('.pdf') || file.type === 'application/pdf';
+    const isText = fileName.endsWith('.txt') ||
+                   fileName.endsWith('.md') ||
+                   fileName.endsWith('.csv') ||
+                   fileName.endsWith('.json') ||
+                   file.type.startsWith('text/') ||
+                   file.type === 'application/json';
+    const isWord = fileName.endsWith('.doc') ||
+                   fileName.endsWith('.docx') ||
+                   file.type === 'application/msword' ||
+                   file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+    const isExcel = fileName.endsWith('.xls') ||
+                    fileName.endsWith('.xlsx') ||
+                    file.type === 'application/vnd.ms-excel' ||
+                    file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+
+    if (isPDF) {
       try {
         // Create a Blob from the file for WebPDFLoader
         const blob = new Blob([file], { type: 'application/pdf' });
@@ -620,12 +670,7 @@ export class LangChainRAGService {
           }),
         ];
       }
-    } else if (
-      file.type.startsWith('text/') ||
-      file.type === 'application/json' ||
-      file.name.endsWith('.md') ||
-      file.name.endsWith('.txt')
-    ) {
+    } else if (isText) {
       // Handle text files
       const buffer = await file.arrayBuffer();
       const text = new TextDecoder().decode(buffer);
@@ -638,8 +683,21 @@ export class LangChainRAGService {
           },
         }),
       ];
+    } else if (isWord || isExcel) {
+      // For Word/Excel files, create a placeholder document
+      // TODO: Implement proper Word/Excel parsing with appropriate loaders
+      return [
+        new Document({
+          pageContent: `Document: ${file.name}\nType: ${file.type}\nSize: ${file.size} bytes\nUploaded: ${new Date().toISOString()}\n\n[Word/Excel parsing not yet implemented - file processed as metadata only]`,
+          metadata: {
+            source: file.name,
+            type: isWord ? 'word' : 'excel',
+            size: file.size,
+          },
+        }),
+      ];
     } else {
-      throw new Error(`Unsupported file type: ${file.type}`);
+      throw new Error(`Unsupported file type: ${file.type} (${file.name})`);
     }
   }
 
@@ -647,8 +705,18 @@ export class LangChainRAGService {
     agentId?: string;
     isGlobal: boolean;
     domain: string;
+    embeddingModel?: string;
+    chatModel?: string;
   }, knowledgeSourceId: string) {
     console.log(`Storing ${chunks.length} chunks manually with batch processing...`);
+    console.log(`Using embedding model: ${metadata.embeddingModel || 'text-embedding-3-large'}`);
+
+    // Create embeddings instance based on selected model
+    const embeddingModelName = metadata.embeddingModel || 'text-embedding-3-large';
+    const embeddings = new OpenAIEmbeddings({
+      openAIApiKey: process.env.OPENAI_API_KEY!,
+      modelName: embeddingModelName,
+    });
 
     const BATCH_SIZE = 10; // Process 10 chunks at a time for optimal performance
     const batches = [];
@@ -780,29 +848,19 @@ export class LangChainRAGService {
   }
 
   private async createKnowledgeSourceWithMetadata(metadata: any) {
-    // Get default tenant ID
+    // Get super admin tenant ID
     const { data: tenant } = await supabase
       .from('rag_tenants')
       .select('id')
-      .eq('domain', 'default.vitalpath.com')
+      .eq('tenant_type', 'super_admin')
       .single();
 
     if (!tenant) {
-      throw new Error('Default tenant not found');
+      throw new Error('Super admin tenant not found');
     }
 
-    // Map UI domain values to database enum values
-    const domainMap: Record<string, string> = {
-      'regulatory': 'regulatory_compliance',
-      'digital-health': 'digital_health',
-      'clinical': 'clinical_research',
-      'market-access': 'market_access',
-      'commercial': 'commercial_strategy',
-      'methodology': 'methodology_frameworks',
-      'technology': 'technology_platforms',
-    };
-
-    const mappedDomain = domainMap[metadata.domain] || metadata.domain || 'medical_affairs';
+    // Use domain directly (we're using VARCHAR now instead of ENUM)
+    const domain = metadata.domain || 'digital_health';
 
     const insertData = {
       tenant_id: tenant.id,
@@ -814,14 +872,17 @@ export class LangChainRAGService {
       file_size: metadata.fileSize,
       content_hash: metadata.fileHash,
       mime_type: metadata.mimeType,
-      domain: mappedDomain,
+      domain: domain,
+      is_global: metadata.isGlobal !== false, // Default to global
+      agent_id: metadata.agentId || null, // NULL if global, agent ID if specific
       processing_status: 'completed',
       processed_at: new Date().toISOString(),
       tags: metadata.topics || [],
       metadata: {
-        isGlobal: metadata.isGlobal,
         author: metadata.author,
         publishedDate: metadata.publishedDate,
+        documentType: metadata.documentType,
+        researchType: metadata.researchType,
       },
     };
 
@@ -1918,7 +1979,7 @@ Thought: {agent_scratchpad}`;
   async testSetup(): Promise<boolean> {
     try {
       // Test embedding generation
-      const testEmbedding = await embeddings.embedQuery('test query');
+      const testEmbedding = await defaultEmbeddings.embedQuery('test query');
       console.log('✅ Embeddings working, dimension:', testEmbedding.length);
 
       // Test LLM

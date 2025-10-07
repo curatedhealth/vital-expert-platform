@@ -292,36 +292,72 @@ export function DashboardSidebar({
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
+  // Deduplicate business functions, departments, and roles by name
+  const uniqueBusinessFunctions = useMemo(() => {
+    const seen = new Set<string>();
+    return businessFunctions.filter(func => {
+      if (seen.has(func.name)) {
+        return false;
+      }
+      seen.add(func.name);
+      return true;
+    });
+  }, [businessFunctions]);
+
+  const uniqueDepartments = useMemo(() => {
+    const seen = new Set<string>();
+    return departments.filter(dept => {
+      const key = `${dept.name}_${dept.business_function_id || 'none'}`;
+      if (seen.has(key)) {
+        return false;
+      }
+      seen.add(key);
+      return true;
+    });
+  }, [departments]);
+
+  const uniqueRoles = useMemo(() => {
+    const seen = new Set<string>();
+    return organizationalRoles.filter(role => {
+      const key = `${role.name}_${role.department_id || 'none'}`;
+      if (seen.has(key)) {
+        return false;
+      }
+      seen.add(key);
+      return true;
+    });
+  }, [organizationalRoles]);
+
   // Cascading filter logic for agents view
   // Get selected function ID from name
   const selectedFunctionId = useMemo(() => {
     if (!filters?.selectedBusinessFunction || filters.selectedBusinessFunction === 'all') return null;
-    return businessFunctions.find(f => f.name === filters.selectedBusinessFunction)?.id;
-  }, [filters?.selectedBusinessFunction, businessFunctions]);
+    return uniqueBusinessFunctions.find(f => f.name === filters.selectedBusinessFunction)?.id;
+  }, [filters?.selectedBusinessFunction, uniqueBusinessFunctions]);
 
   // Get selected department ID from name
   const selectedDepartmentId = useMemo(() => {
     if (!filters?.selectedDepartment || filters.selectedDepartment === 'all') return null;
-    return departments.find(d => d.name === filters.selectedDepartment)?.id;
-  }, [filters?.selectedDepartment, departments]);
+    return uniqueDepartments.find(d => d.name === filters.selectedDepartment)?.id;
+  }, [filters?.selectedDepartment, uniqueDepartments]);
 
   // Filter departments based on selected function
   const filteredDepartments = useMemo(() => {
-    if (!selectedFunctionId) return departments;
-    return departments.filter(d => d.business_function_id === selectedFunctionId);
-  }, [selectedFunctionId, departments]);
+    if (!selectedFunctionId) return uniqueDepartments;
+    return uniqueDepartments.filter(d => d.business_function_id === selectedFunctionId);
+  }, [selectedFunctionId, uniqueDepartments]);
 
   // Filter roles based on selected function and department
   const filteredRoles = useMemo(() => {
     if (selectedDepartmentId) {
       // Filter by department
-      return organizationalRoles.filter(r => r.department_id === selectedDepartmentId);
+      return uniqueRoles.filter(r => r.department_id === selectedDepartmentId);
     } else if (selectedFunctionId) {
       // Filter by function
-      return organizationalRoles.filter(r => r.business_function_id === selectedFunctionId);
+      return uniqueRoles.filter(r => r.business_function_id === selectedFunctionId);
     }
-    return organizationalRoles;
-  }, [selectedFunctionId, selectedDepartmentId, organizationalRoles]);
+    return uniqueRoles;
+  }, [selectedFunctionId, selectedDepartmentId, uniqueRoles]);
 
   const renderKnowledgeNavigation = () => (
     <>
@@ -753,7 +789,7 @@ export function DashboardSidebar({
                   className="w-full px-3 py-2 text-sm border border-input rounded-md bg-background hover:bg-accent focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
                 >
                   <option value="all">All Functions</option>
-                  {businessFunctions.map(func => (
+                  {uniqueBusinessFunctions.map(func => (
                     <option key={func.id} value={func.name}>
                       {func.name}
                     </option>

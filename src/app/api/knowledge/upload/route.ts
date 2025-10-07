@@ -2,6 +2,11 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { langchainRAGService } from '@/features/chat/services/langchain-service';
 
+// Configure route for large file uploads
+export const runtime = 'nodejs';
+export const maxDuration = 300; // 5 minutes
+export const dynamic = 'force-dynamic';
+
 export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData();
@@ -9,6 +14,8 @@ export async function POST(request: NextRequest) {
     const agentId = formData.get('agentId') as string;
     const isGlobal = formData.get('isGlobal') === 'true';
     const domain = formData.get('domain') as string || 'digital-health';
+    const embeddingModel = formData.get('embeddingModel') as string || 'text-embedding-3-large';
+    const chatModel = formData.get('chatModel') as string || 'gpt-4-turbo-preview';
 
     if (!files || files.length === 0) {
       return NextResponse.json(
@@ -22,6 +29,8 @@ export async function POST(request: NextRequest) {
       agentId,
       isGlobal,
       domain,
+      embeddingModel,
+      chatModel,
     });
 
     return NextResponse.json({

@@ -26,6 +26,11 @@ export default function AgentsPage() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [activeTab, setActiveTab] = useState<'overview' | 'grid' | 'list' | 'table'>('overview');
 
+  const handleTabChange = (value: string) => {
+    console.log('Tab changed to:', value);
+    setActiveTab(value as typeof activeTab);
+  };
+
   // Handle query parameters for opening create modal
   useEffect(() => {
     const createParam = searchParams.get('create');
@@ -223,21 +228,21 @@ export default function AgentsPage() {
 
   return (
     <div className="space-y-6">
-      <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as typeof activeTab)} className="w-full">
-        <TabsList className="grid w-full max-w-md grid-cols-4">
-          <TabsTrigger value="overview" className="flex items-center gap-2">
+      <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full relative z-10">
+        <TabsList className="grid w-full max-w-md grid-cols-4 relative z-10 pointer-events-auto">
+          <TabsTrigger value="overview" className="flex items-center gap-2 cursor-pointer">
             <BarChart3 className="h-4 w-4" />
             Overview
           </TabsTrigger>
-          <TabsTrigger value="grid" className="flex items-center gap-2">
+          <TabsTrigger value="grid" className="flex items-center gap-2 cursor-pointer">
             <LayoutGrid className="h-4 w-4" />
             Grid
           </TabsTrigger>
-          <TabsTrigger value="list" className="flex items-center gap-2">
+          <TabsTrigger value="list" className="flex items-center gap-2 cursor-pointer">
             <List className="h-4 w-4" />
             List
           </TabsTrigger>
-          <TabsTrigger value="table" className="flex items-center gap-2">
+          <TabsTrigger value="table" className="flex items-center gap-2 cursor-pointer">
             <TableIcon className="h-4 w-4" />
             Table
           </TabsTrigger>

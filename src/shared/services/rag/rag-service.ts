@@ -67,15 +67,12 @@ export interface RAGSearchOptions {
 }
 
 class RAGService {
-  private supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL || '',
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
-  );
+  private supabase: ReturnType<typeof createClient> | null = null;
   private defaultTenantId: string | null = null;
 
   async initialize() {
     if (!this.defaultTenantId) {
-      const { data, error } = await this.supabase.rpc('get_default_rag_tenant_id');
+      const { data, error } = await this.getSupabaseClient().rpc('get_default_rag_tenant_id');
       if (error) {
         // console.error('Failed to get default tenant ID:', error);
         throw error;
@@ -92,7 +89,7 @@ class RAGService {
   } = { /* TODO: implement */ }): Promise<RAGKnowledgeSource[]> {
     await this.initialize();
 
-    let query = this.supabase
+    let query = this.getSupabaseClient()
       .from('rag_knowledge_sources')
       .select('*')
       .order('created_at', { ascending: false });
@@ -126,7 +123,7 @@ class RAGService {
   async createKnowledgeSource(source: Partial<RAGKnowledgeSource>): Promise<RAGKnowledgeSource> {
     await this.initialize();
 
-    const { data, error } = await this.supabase
+    const { data, error } = await this.getSupabaseClient()
       .from('rag_knowledge_sources')
       .insert([{
         ...source,
@@ -144,7 +141,7 @@ class RAGService {
   }
 
   async updateKnowledgeSource(id: string, updates: Partial<RAGKnowledgeSource>): Promise<RAGKnowledgeSource> {
-    const { data, error } = await this.supabase
+    const { data, error } = await this.getSupabaseClient()
       .from('rag_knowledge_sources')
       .update(updates)
       .eq('id', id)
@@ -160,7 +157,7 @@ class RAGService {
   }
 
   async deleteKnowledgeSource(id: string): Promise<void> {
-    const { error } = await this.supabase
+    const { error } = await this.getSupabaseClient()
       .from('rag_knowledge_sources')
       .delete()
       .eq('id', id);
@@ -172,7 +169,7 @@ class RAGService {
   }
 
   async addKnowledgeChunk(chunk: Partial<RAGKnowledgeChunk>): Promise<RAGKnowledgeChunk> {
-    const { data, error } = await this.supabase
+    const { data, error } = await this.getSupabaseClient()
       .from('rag_knowledge_chunks')
       .insert([chunk])
       .select()
@@ -187,7 +184,7 @@ class RAGService {
   }
 
   async addKnowledgeChunks(chunks: Partial<RAGKnowledgeChunk>[]): Promise<RAGKnowledgeChunk[]> {
-    const { data, error } = await this.supabase
+    const { data, error } = await this.getSupabaseClient()
       .from('rag_knowledge_chunks')
       .insert(chunks)
       .select();
@@ -212,7 +209,7 @@ class RAGService {
       prism_suite
     } = options;
 
-    const { data, error } = await this.supabase.rpc('search_rag_knowledge_chunks', {
+    const { data, error } = await this.getSupabaseClient().rpc('search_rag_knowledge_chunks', {
       query_embedding: queryEmbedding,
       match_threshold: threshold,
       match_count: limit,
@@ -240,7 +237,7 @@ class RAGService {
     try {
       await this.initialize();
 
-      await this.supabase
+      await this.getSupabaseClient()
         .from('rag_search_analytics')
         .insert([{
           tenant_id: this.defaultTenantId,
@@ -263,7 +260,7 @@ class RAGService {
   } = { /* TODO: implement */ }): Promise<unknown[]> {
     await this.initialize();
 
-    let query = this.supabase
+    let query = this.getSupabaseClient()
       .from('rag_search_analytics')
       .select('*')
       .eq('tenant_id', this.defaultTenantId)
@@ -292,7 +289,7 @@ class RAGService {
   }
 
   async getKnowledgeChunks(sourceId: string): Promise<RAGKnowledgeChunk[]> {
-    const { data, error } = await this.supabase
+    const { data, error } = await this.getSupabaseClient()
       .from('rag_knowledge_chunks')
       .select('*')
       .eq('source_id', sourceId)
@@ -319,7 +316,7 @@ class RAGService {
       updates.processed_at = new Date().toISOString();
     }
 
-    const { error } = await this.supabase
+    const { error } = await this.getSupabaseClient()
       .from('rag_knowledge_sources')
       .update(updates)
       .eq('id', sourceId);

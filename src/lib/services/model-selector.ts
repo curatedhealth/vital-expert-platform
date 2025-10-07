@@ -202,8 +202,15 @@ export const AVAILABLE_CHAT_MODELS = {
 // ============================================================================
 
 export class ModelSelector {
+
+  private getSupabaseClient() {
+    if (!this.supabase) {
+      this.supabase = createClient();
+    }
+    return this.supabase;
+  }
   private static instance: ModelSelector;
-  private supabase = createClient();
+  private supabase: ReturnType<typeof createClient> | null = null;
   private domainCache: Map<string, KnowledgeDomain> = new Map();
 
   private constructor() {}
@@ -359,7 +366,7 @@ export class ModelSelector {
     }
 
     // Fetch from database
-    const { data, error } = await this.supabase
+    const { data, error } = await this.getSupabaseClient()
       .from('knowledge_domains')
       .select('*')
       .eq('slug', slug)

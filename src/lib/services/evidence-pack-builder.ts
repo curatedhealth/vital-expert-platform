@@ -31,7 +31,14 @@ export interface EvidencePack {
 }
 
 export class EvidencePackBuilder {
-  private supabase = createClient();
+
+  private getSupabaseClient() {
+    if (!this.supabase) {
+      this.supabase = createClient();
+    }
+    return this.supabase;
+  }
+  private supabase: ReturnType<typeof createClient> | null = null;
 
   /**
    * Create a new evidence pack for a specific agenda
@@ -51,7 +58,7 @@ export class EvidencePackBuilder {
     // 4. Retrieve HTA summaries
     // 5. Search PubMed
 
-    const { data, error } = await this.supabase
+    const { data, error } = await this.getSupabaseClient()
       .from('evidence_pack')
       .insert([{
         name,
@@ -84,7 +91,7 @@ export class EvidencePackBuilder {
    * Retrieve evidence pack by ID
    */
   async getPack(packId: string): Promise<EvidencePack | null> {
-    const { data, error } = await this.supabase
+    const { data, error } = await this.getSupabaseClient()
       .from('evidence_pack')
       .select('*')
       .eq('id', packId)
@@ -117,7 +124,7 @@ export class EvidencePackBuilder {
 
     const updatedSources = [...pack.sources, ...sources];
 
-    const { error } = await this.supabase
+    const { error } = await this.getSupabaseClient()
       .from('evidence_pack')
       .update({
         sources: updatedSources,

@@ -94,7 +94,14 @@ export interface ToolUsageLog {
 }
 
 class ToolRegistryService {
-  private supabase = createClient();
+  private supabase: ReturnType<typeof createClient> | null = null;
+
+  private getSupabaseClient() {
+    if (!this.supabase) {
+      this.supabase = createClient();
+    }
+    return this.supabase;
+  }
 
   // ============================================================================
   // Tool Management
@@ -104,7 +111,7 @@ class ToolRegistryService {
    * Get all available tools
    */
   async getAllTools(includeInactive = false): Promise<Tool[]> {
-    let query = this.supabase
+    let query = this.getSupabaseClient()
       .from('tools')
       .select(`
         *,
@@ -132,7 +139,7 @@ class ToolRegistryService {
    * Get tool by key
    */
   async getToolByKey(toolKey: string): Promise<Tool | null> {
-    const { data, error } = await this.supabase
+    const { data, error } = await this.getSupabaseClient()
       .from('tools')
       .select(`
         *,
@@ -157,7 +164,7 @@ class ToolRegistryService {
    * Get tools by category
    */
   async getToolsByCategory(categoryName: string): Promise<Tool[]> {
-    const { data, error } = await this.supabase
+    const { data, error } = await this.getSupabaseClient()
       .from('tools')
       .select(`
         *,
@@ -179,7 +186,7 @@ class ToolRegistryService {
    * Get tools by tags
    */
   async getToolsByTags(tagNames: string[]): Promise<Tool[]> {
-    const { data, error } = await this.supabase
+    const { data, error } = await this.getSupabaseClient()
       .from('tool_tag_assignments')
       .select(`
         tool:tools(
@@ -211,7 +218,7 @@ class ToolRegistryService {
    * Get all tool categories
    */
   async getToolCategories(): Promise<ToolCategory[]> {
-    const { data, error } = await this.supabase
+    const { data, error } = await this.getSupabaseClient()
       .from('tool_categories')
       .select('*')
       .order('display_order');
@@ -228,7 +235,7 @@ class ToolRegistryService {
    * Get tools assigned to an agent
    */
   async getAgentTools(agentId: string, enabledOnly = true): Promise<AgentToolAssignment[]> {
-    let query = this.supabase
+    let query = this.getSupabaseClient()
       .from('agent_tool_assignments')
       .select(`
         *,
@@ -274,7 +281,7 @@ class ToolRegistryService {
       notes?: string;
     } = {}
   ): Promise<AgentToolAssignment> {
-    const { data, error } = await this.supabase
+    const { data, error } = await this.getSupabaseClient()
       .from('agent_tool_assignments')
       .upsert({
         agent_id: agentId,
@@ -316,7 +323,7 @@ class ToolRegistryService {
       priority: options.priority ?? 0
     }));
 
-    const { error } = await this.supabase
+    const { error } = await this.getSupabaseClient()
       .from('agent_tool_assignments')
       .upsert(assignments);
 
@@ -361,7 +368,7 @@ class ToolRegistryService {
    * Remove tool assignment from agent
    */
   async removeToolFromAgent(agentId: string, toolId: string): Promise<void> {
-    const { error } = await this.supabase
+    const { error } = await this.getSupabaseClient()
       .from('agent_tool_assignments')
       .delete()
       .eq('agent_id', agentId)
@@ -377,7 +384,7 @@ class ToolRegistryService {
     assignmentId: string,
     updates: Partial<AgentToolAssignment>
   ): Promise<AgentToolAssignment> {
-    const { data, error } = await this.supabase
+    const { data, error } = await this.getSupabaseClient()
       .from('agent_tool_assignments')
       .update(updates)
       .eq('id', assignmentId)
@@ -396,7 +403,7 @@ class ToolRegistryService {
    * Log tool usage
    */
   async logToolUsage(log: ToolUsageLog): Promise<void> {
-    const { error } = await this.supabase
+    const { error } = await this.getSupabaseClient()
       .from('tool_usage_logs')
       .insert(log);
 
@@ -413,7 +420,7 @@ class ToolRegistryService {
     const since = new Date();
     since.setDate(since.getDate() - days);
 
-    const { data, error } = await this.supabase
+    const { data, error } = await this.getSupabaseClient()
       .from('tool_usage_logs')
       .select(`
         tool_id,
@@ -486,7 +493,7 @@ class ToolRegistryService {
    * Check if agent can use a tool (respects usage limits)
    */
   async canAgentUseTool(agentId: string, toolId: string, conversationId?: string): Promise<boolean> {
-    const { data: assignment } = await this.supabase
+    const { data: assignment } = await this.getSupabaseClient()
       .from('agent_tool_assignments')
       .select('*')
       .eq('agent_id', agentId)
@@ -503,7 +510,7 @@ class ToolRegistryService {
 
       if (lastUsed !== today) {
         // Reset daily usage
-        await this.supabase
+        await this.getSupabaseClient()
           .from('agent_tool_assignments')
           .update({ current_day_usage: 0 })
           .eq('id', assignment.id);
@@ -514,7 +521,7 @@ class ToolRegistryService {
 
     // Check conversation limit
     if (assignment.max_uses_per_conversation && conversationId) {
-      const { count } = await this.supabase
+      const { count } = await this.getSupabaseClient()
         .from('tool_usage_logs')
         .select('*', { count: 'exact', head: true })
         .eq('agent_id', agentId)
@@ -534,18 +541,18 @@ class ToolRegistryService {
    */
   async incrementToolUsage(agentId: string, toolId: string, success: boolean): Promise<void> {
     const updateData: any = {
-      times_used: this.supabase.rpc('increment_times_used'),
+      times_used: this.getSupabaseClient().rpc('increment_times_used'),
       last_used_at: new Date().toISOString(),
-      current_day_usage: this.supabase.rpc('increment_current_day_usage')
+      current_day_usage: this.getSupabaseClient().rpc('increment_current_day_usage')
     };
 
     if (success) {
-      updateData.success_count = this.supabase.rpc('increment_success_count');
+      updateData.success_count = this.getSupabaseClient().rpc('increment_success_count');
     } else {
-      updateData.failure_count = this.supabase.rpc('increment_failure_count');
+      updateData.failure_count = this.getSupabaseClient().rpc('increment_failure_count');
     }
 
-    await this.supabase
+    await this.getSupabaseClient()
       .from('agent_tool_assignments')
       .update(updateData)
       .eq('agent_id', agentId)

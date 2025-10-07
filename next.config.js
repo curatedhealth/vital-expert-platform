@@ -42,6 +42,34 @@ const nextConfig = {
       };
     }
 
+    // Ignore problematic native modules
+    config.externals = config.externals || [];
+    config.externals.push({
+      'webworker-threads': 'commonjs webworker-threads',
+    });
+
+    // Ignore webworker-threads module resolution
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      'webworker-threads': false,
+    };
+
+    // Suppress Buffer deprecation warnings and provide location polyfill
+    config.plugins = config.plugins || [];
+    config.plugins.push(
+      new (require('webpack')).DefinePlugin({
+        'process.env.NODE_NO_WARNINGS': JSON.stringify('1'),
+        'typeof window': JSON.stringify('undefined'),
+        'typeof location': JSON.stringify('undefined'),
+      })
+    );
+
+    // Provide location polyfill for server-side rendering
+    config.resolve.fallback = {
+      ...config.resolve.fallback,
+      'location': false,
+    };
+
     return config;
   },
   // Exclude backend directories from TypeScript checking
@@ -59,7 +87,22 @@ const nextConfig = {
   },
   // Experimental features for better performance
   experimental: {
-    serverComponentsExternalPackages: ['@supabase/supabase-js'],
+    serverComponentsExternalPackages: ['@supabase/supabase-js', '@supabase/realtime-js'],
+  },
+  
+  // Configure runtime for API routes to avoid Edge Runtime warnings
+  async headers() {
+    return [
+      {
+        source: '/api/:path*',
+        headers: [
+          {
+            key: 'x-runtime',
+            value: 'nodejs',
+          },
+        ],
+      },
+    ];
   },
 }
 

@@ -39,7 +39,7 @@ export function useRealTimeCollaboration(options: UseRealTimeCollaborationOption
     try {
 
         ? 'ws://localhost:3000'
-        : `wss://${window.location.host}`;
+        : typeof window !== 'undefined' ? `wss://${window.location.host}` : 'wss://localhost:3000';
 
       ws.onopen = () => {
         // setIsConnected(true);

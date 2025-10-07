@@ -482,4 +482,8 @@ export class UsageTracker {
 
 // Export singleton instance
 export const _usageTracker = UsageTracker.getInstance();
+
+// Export the service instance with the expected name
+export const usageTracker = _usageTracker;
+
 export default UsageTracker;

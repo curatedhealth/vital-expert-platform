@@ -303,4 +303,8 @@ class OpenAIUsageService {
 }
 
 export const _openAIUsageService = new OpenAIUsageService();
+
+// Export the service instance with the expected name
+export const openAIUsageService = _openAIUsageService;
+
 export default OpenAIUsageService;

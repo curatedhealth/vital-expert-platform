@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, Suspense } from 'react';
 import {
   FileText,
   Settings,
@@ -1047,5 +1047,14 @@ export function DashboardSidebar({
         {currentView === 'default' && renderDefaultNavigation()}
       </div>
     </div>
+  );
+}
+
+// Wrapper component with Suspense boundary
+export function DashboardSidebarWithSuspense(props: DashboardSidebarProps) {
+  return (
+    <Suspense fallback={<div className="w-64 h-screen bg-background border-r animate-pulse" />}>
+      <DashboardSidebar {...props} />
+    </Suspense>
   );
 }

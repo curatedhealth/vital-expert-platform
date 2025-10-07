@@ -697,3 +697,6 @@ export class PRISMPromptService {
 
 // Export singleton instance
 export const __prismPromptService = new PRISMPromptService();
+
+// Export the service instance with the expected name
+export const prismPromptService = __prismPromptService;

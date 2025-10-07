@@ -1,5 +1,6 @@
 // LLM Provider Registry and Management Service
 import { createClient } from '@/lib/supabase/client';
+import { databaseService } from '@/lib/database/database-service';
 import {
   LLMProvider,
   LLMProviderConfig,
@@ -845,27 +846,41 @@ export class LLMProviderService {
 
   // Helper methods
   private async loadProvidersFromDB(): Promise<void> {
-    const { data, error } = await this.supabase
-      .from('llm_providers')
-      .select('*')
-      .eq('is_active', true);
+    try {
+      const { data, error } = await databaseService.getLLMProviders();
 
-    if (error) {
-      // Handle the case where LLM tables don't exist yet (e.g., in remote database)
-      if (error.message.includes('relation "public.llm_providers" does not exist')) {
-        // console.warn('LLM providers table not found - skipping provider loading. Run migrations to enable LLM management.');
+      if (error) {
+        console.log('⚠️ Using mock LLM providers due to database error:', error.message);
+        // Load mock providers instead of throwing error
+        const mockProviders = (await databaseService.query('llm_providers', 'select')).data;
+        
+        if (mockProviders) {
+          mockProviders.forEach(dbProvider => {
+            const provider = this.transformDBProvider(dbProvider);
+            this.providers.set(provider.id, provider);
+          });
+        }
         return;
       }
-      throw new Error(`Failed to load providers: ${error.message}`);
-    }
 
-    if (data) {
-      // eslint-disable-next-line security/detect-object-injection
-      data.forEach(dbProvider => {
-        const provider = this.transformDBProvider(dbProvider);
+      if (data) {
         // eslint-disable-next-line security/detect-object-injection
-        this.providers.set(provider.id, provider);
-      });
+        data.forEach(dbProvider => {
+          const provider = this.transformDBProvider(dbProvider);
+          // eslint-disable-next-line security/detect-object-injection
+          this.providers.set(provider.id, provider);
+        });
+      }
+    } catch (error) {
+      console.log('⚠️ Using mock LLM providers due to initialization error:', error);
+      // Load mock providers as fallback
+      const mockProviders = (await databaseService.query('llm_providers', 'select')).data;
+      if (mockProviders) {
+        mockProviders.forEach(dbProvider => {
+          const provider = this.transformDBProvider(dbProvider);
+          this.providers.set(provider.id, provider);
+        });
+      }
     }
   }
 
@@ -999,3 +1014,6 @@ export class LLMProviderService {
 
 // Singleton instance
 export const __llmProviderService = new LLMProviderService();
+
+// Export the service instance with the expected name
+export const llmProviderService = __llmProviderService;

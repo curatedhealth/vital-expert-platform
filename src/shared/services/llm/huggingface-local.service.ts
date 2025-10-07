@@ -265,3 +265,6 @@ export class HuggingFaceLocalService {
 
 // Export singleton instance
 export const __huggingFaceLocalService = new HuggingFaceLocalService();
+
+// Export the service instance with the expected name
+export const huggingFaceLocalService = __huggingFaceLocalService;

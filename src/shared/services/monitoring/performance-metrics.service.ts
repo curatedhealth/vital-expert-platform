@@ -396,4 +396,8 @@ class PerformanceMetricsService {
 }
 
 export const __performanceMetricsService = new PerformanceMetricsService();
+
+// Export the service instance with the expected name
+export const performanceMetricsService = __performanceMetricsService;
+
 export type { MetricEvent, PerformanceSnapshot, AlertThreshold };

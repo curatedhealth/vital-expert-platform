@@ -1,6 +1,7 @@
 import { Inter } from 'next/font/google'
 
 import { AuthProvider } from '@/lib/auth/auth-context'
+import '@/lib/polyfills/location-polyfill'
 
 import type { Metadata } from 'next'
 import './globals.css'

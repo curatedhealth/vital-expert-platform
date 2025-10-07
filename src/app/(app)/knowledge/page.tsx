@@ -14,7 +14,7 @@ import {
   Copy
 } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, Suspense } from 'react';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -56,7 +56,7 @@ interface Document {
   summary?: string;
 }
 
-export default function KnowledgePage() {
+function KnowledgePageContent() {
   const [documents, setDocuments] = useState<Document[]>([]);
   const [domains, setDomains] = useState<KnowledgeDomain[]>([]);
   const [loading, setLoading] = useState(true);
@@ -525,5 +525,13 @@ export default function KnowledgePage() {
         />
       )}
     </div>
+  );
+}
+
+export default function KnowledgePage() {
+  return (
+    <Suspense fallback={<div className="p-6 animate-pulse">Loading knowledge management...</div>}>
+      <KnowledgePageContent />
+    </Suspense>
   );
 }

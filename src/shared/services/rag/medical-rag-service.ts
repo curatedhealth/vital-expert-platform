@@ -501,3 +501,6 @@ export class MedicalRAGService {
 
 // Export singleton instance
 export const __medicalRAGService = new MedicalRAGService();
+
+// Export the service instance with the expected name
+export const medicalRAGService = __medicalRAGService;

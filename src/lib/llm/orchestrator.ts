@@ -493,3 +493,6 @@ class LLMOrchestrator {
 }
 
 export const _llmOrchestrator = new LLMOrchestrator();
+
+// Export the service instance with the expected name
+export const llmOrchestrator = _llmOrchestrator;

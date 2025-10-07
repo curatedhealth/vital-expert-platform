@@ -255,7 +255,6 @@ Use citation numbers [1], [2], etc. to reference the sources provided above.`;
     };
 
     return NextResponse.json(response);
-
   } catch (error) {
     console.error('=== MEDICAL RAG API ERROR ===');
     console.error('Error details:', error);

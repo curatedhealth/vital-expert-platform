@@ -672,7 +672,11 @@ export default function ChatPage() {
               Visit the Agent Store to add AI experts to your chat interface
             </p>
             <Button
-              onClick={() => window.location.href = '/agents'}
+              onClick={() => {
+                if (typeof window !== 'undefined') {
+                  window.location.href = '/agents';
+                }
+              }}
               className="bg-blue-600 hover:bg-blue-700"
             >
               Browse Agent Store

@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { LayoutGrid, List, Table as TableIcon, BarChart3 } from 'lucide-react';
 
 import { AgentDetailsModal } from '@/features/agents/components/agent-details-modal';
@@ -15,7 +15,7 @@ import { type Agent as AgentsStoreAgent, useAgentsStore } from '@/lib/stores/age
 import { type Agent } from '@/lib/stores/chat-store';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
-export default function AgentsPage() {
+function AgentsPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user } = useAuth();
@@ -309,11 +309,21 @@ export default function AgentsPage() {
             setShowCreateModal(false);
             setEditingAgent(null);
             // Force refresh of the agents board
-            window.location.reload();
+            if (typeof window !== 'undefined') {
+              window.location.reload();
+            }
           }}
           editingAgent={editingAgent as unknown}
         />
       )}
     </div>
+  );
+}
+
+export default function AgentsPage() {
+  return (
+    <Suspense fallback={<div className="p-6 animate-pulse">Loading agents...</div>}>
+      <AgentsPageContent />
+    </Suspense>
   );
 }

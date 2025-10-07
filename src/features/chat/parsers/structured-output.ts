@@ -365,10 +365,18 @@ export async function parseCompetitiveAnalysis(llmOutput: string) {
   return await parseWithAutoFix(llmOutput, competitiveAnalysisParser);
 }
 
+// Export parsers with expected names
+export const RegulatoryAnalysisParser = regulatoryAnalysisParser;
+export const ClinicalTrialDesignParser = clinicalStudyParser;
+export const MarketAccessStrategyParser = marketAccessParser;
+export const LiteratureReviewParser = literatureReviewParser;
+export const RiskAssessmentParser = riskAssessmentParser;
+export const CompetitiveAnalysisParser = competitiveAnalysisParser;
+
 // Export all schemas for type inference
 export type RegulatoryAnalysis = z.infer<typeof RegulatoryAnalysisSchema>;
-export type ClinicalStudy = z.infer<typeof ClinicalStudySchema>;
-export type MarketAccess = z.infer<typeof MarketAccessSchema>;
+export type ClinicalTrialDesign = z.infer<typeof ClinicalStudySchema>;
+export type MarketAccessStrategy = z.infer<typeof MarketAccessSchema>;
 export type LiteratureReview = z.infer<typeof LiteratureReviewSchema>;
 export type RiskAssessment = z.infer<typeof RiskAssessmentSchema>;
 export type CompetitiveAnalysis = z.infer<typeof CompetitiveAnalysisSchema>;

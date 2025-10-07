@@ -172,3 +172,7 @@ export const _useProviderUsage = (providerId: string, startDate: Date, endDate: 
     refresh: fetchUsage
   };
 };
+
+// Export the hooks with the expected names
+export const useUsageMetrics = _useUsageMetrics;
+export const useCostBreakdown = _useCostBreakdown;

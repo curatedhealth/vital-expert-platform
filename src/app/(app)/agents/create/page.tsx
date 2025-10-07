@@ -17,7 +17,9 @@ export default function CreateAgentPage() {
         onClose={() => window.history.back()}
         onSave={() => {
           // Redirect to agents list after creation
-          window.location.href = '/agents';
+          if (typeof window !== 'undefined') {
+            window.location.href = '/agents';
+          }
         }}
       />
     </div>

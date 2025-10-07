@@ -278,7 +278,11 @@ export default function JobsToBeDonePage() {
                 Choose a pre-built workflow template or build a custom workflow with your own agent orchestration
               </p>
               <div className="flex gap-3">
-                <Button variant="outline" size="sm" onClick={() => window.location.href = '/solution-builder'}>
+                <Button variant="outline" size="sm" onClick={() => {
+                  if (typeof window !== 'undefined') {
+                    window.location.href = '/solution-builder';
+                  }
+                }}>
                   View Solution Builder
                 </Button>
                 <Button size="sm">
@@ -355,7 +359,11 @@ export default function JobsToBeDonePage() {
                 <Button variant="outline" onClick={() => window.alert('Customization coming soon!')}>
                   Customize
                 </Button>
-                <Button variant="outline" onClick={() => window.location.href = '/solution-builder'}>
+                <Button variant="outline" onClick={() => {
+                  if (typeof window !== 'undefined') {
+                    window.location.href = '/solution-builder';
+                  }
+                }}>
                   Add to Solution
                 </Button>
               </div>

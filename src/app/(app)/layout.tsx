@@ -23,7 +23,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { DashboardSidebar } from '@/features/dashboard/components/dashboard-sidebar';
+import { DashboardSidebarWithSuspense } from '@/features/dashboard/components/dashboard-sidebar';
 import { AgentsFilterProvider, useAgentsFilter } from '@/contexts/agents-filter-context';
 import { useAuth } from '@/lib/auth/auth-context';
 import { cn } from '@/lib/utils';
@@ -109,7 +109,7 @@ function AppLayoutContent({
       {/* Desktop Sidebar */}
       <div className="hidden border-r bg-muted/40 md:block">
         <div className="flex h-full max-h-screen flex-col gap-2">
-          <DashboardSidebar
+          <DashboardSidebarWithSuspense
             className="flex-1"
             isCollapsed={isCollapsed}
             onToggleCollapse={() => setIsCollapsed(!isCollapsed)}
@@ -292,7 +292,7 @@ function AppLayoutContent({
                   <X className="h-5 w-5" />
                 </Button>
               </div>
-              <DashboardSidebar
+              <DashboardSidebarWithSuspense
                 className="p-4"
                 currentView={getCurrentView()}
                 onCreateAgent={getCurrentView() === 'agents' ? handleCreateAgent : undefined}

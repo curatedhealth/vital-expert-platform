@@ -1,6 +1,6 @@
 export { StreamingMarkdown, StreamingMarkdownEnhanced } from './streaming-markdown'
 export { StreamingResponse, AgentResponse, StreamingMessage } from './streaming-response'
-export { Response } from './response'
+export { _Response as Response } from './response'
 export { Conversation, ConversationContent } from './conversation'
 export { Message, MessageContent } from './message'
 export { PromptInput, PromptInputTextarea, PromptInputSubmit } from './prompt-input'

@@ -17,7 +17,7 @@ import {
   TrendingUp
 } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
-import React from 'react';
+import React, { Suspense } from 'react';
 
 import { LLMProviderDashboard } from '@/components/llm/LLMProviderDashboard';
 import { MedicalModelsDashboard } from '@/components/llm/MedicalModelsDashboard';
@@ -27,7 +27,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
-export default function LLMManagementPage() {
+function LLMManagementPageContent() {
   const searchParams = useSearchParams();
   const currentView = searchParams.get('view') || 'providers';
   const currentProvider = searchParams.get('provider');
@@ -404,5 +404,13 @@ export default function LLMManagementPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function LLMManagementPage() {
+  return (
+    <Suspense fallback={<div className="p-6 animate-pulse">Loading LLM management...</div>}>
+      <LLMManagementPageContent />
+    </Suspense>
   );
 }

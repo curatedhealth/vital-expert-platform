@@ -364,3 +364,6 @@ export const clinicalTrialsTools = [
   studyDesignTool,
   endpointSelectorTool,
 ];
+
+// Export individual tools with expected names
+export const endpointsTool = endpointSelectorTool;

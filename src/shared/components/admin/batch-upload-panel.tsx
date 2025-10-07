@@ -86,7 +86,7 @@ export default function BatchUploadPanel({
               type="file"
               multiple
               accept={acceptedFormats.join(',')}
-              onChange={handleFileChange}
+              onChange={(e) => handleFileSelect(e.target.files)}
               className="mt-1"
             />
             <p className="text-sm text-muted-foreground mt-1">

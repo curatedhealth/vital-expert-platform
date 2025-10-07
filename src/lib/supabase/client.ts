@@ -1,8 +1,9 @@
 import { createClient as createSupabaseClient } from '@supabase/supabase-js';
 
 // Use environment variables for Supabase configuration
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co';
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-key';
+
 // Create a function that returns a new Supabase client
 export const createClient = () => {
   return createSupabaseClient(supabaseUrl, supabaseAnonKey);

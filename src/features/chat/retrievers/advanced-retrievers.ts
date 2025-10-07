@@ -13,3 +13,6 @@ export class AdvancedRetrieverService {
 }
 
 export const advancedRetrieverService = new AdvancedRetrieverService();
+
+// Export the missing function that other files are trying to import
+export const createAdvancedRetriever = () => new AdvancedRetrieverService();

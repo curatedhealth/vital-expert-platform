@@ -15,3 +15,6 @@ export class LongTermMemoryService {
 }
 
 export const longTermMemoryService = new LongTermMemoryService();
+
+// Export the missing function that other files are trying to import
+export const createAutoLearningMemory = () => new LongTermMemoryService();

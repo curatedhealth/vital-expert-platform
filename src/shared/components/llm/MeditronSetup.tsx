@@ -64,24 +64,26 @@ export const MeditronSetup: React.FC = () => {
     checkApiKeyConfiguration();
   }, []);
 
+  const fetchMeditronModels = async () => {
     try {
+      const response = await fetch('/api/llm-providers?type=huggingface');
+      const data = await response.json();
 
       if (response.ok) {
-
         setModels(data.providers || []);
       }
     } catch (error) {
-      // console.error('Error fetching Meditron models:', error);
+      console.error('Error fetching Meditron models:', error);
     }
   };
 
-  useEffect(() => {
+  const checkApiKeyConfiguration = async () => {
     const storedKey = localStorage.getItem('huggingface_api_key');
     if (storedKey) {
       setApiKey(storedKey);
       setIsConfigured(true);
     }
-  }, []);
+  };
 
   const handleSaveApiKey = async () => {
     if (!apiKey.trim()) return;
@@ -103,7 +105,7 @@ export const MeditronSetup: React.FC = () => {
 
       if (response.ok) {
         setIsConfigured(true);
-        await testAllConnections();
+        await handleTestConnection();
       }
     } catch (error) {
       // console.error('Error saving API key:', error);
@@ -138,6 +140,9 @@ export const MeditronSetup: React.FC = () => {
           })
         });
 
+        const data = await response.json();
+        const latency = Date.now() - Date.now(); // Mock latency
+
         setConnectionTests(prev =>
           prev.map(test =>
             test.model === model.provider_name
@@ -145,7 +150,7 @@ export const MeditronSetup: React.FC = () => {
                   ...test,
                   status: response.ok ? 'success' : 'error',
                   latency: response.ok ? latency : undefined,
-                  error: !response.ok ? result.error : undefined
+                  error: !response.ok ? data.error : undefined
                 }
               : test
           )
@@ -235,7 +240,7 @@ export const MeditronSetup: React.FC = () => {
 
               <div className="flex items-center space-x-3">
                 <Button
-                  onClick={saveApiKey}
+                  onClick={handleSaveApiKey}
                   disabled={!apiKey.trim() || isLoading}
                   className="flex items-center space-x-2"
                 >
@@ -354,7 +359,7 @@ export const MeditronSetup: React.FC = () => {
             <CardContent className="space-y-4">
               <div className="flex items-center space-x-3">
                 <Button
-                  onClick={testAllConnections}
+                  onClick={handleTestConnection}
                   disabled={!isConfigured || isLoading}
                   className="flex items-center space-x-2"
                 >

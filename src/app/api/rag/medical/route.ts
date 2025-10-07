@@ -46,13 +46,8 @@ interface MedicalRAGApiResponse {
 }
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
-  // try {
+  try {
     const body: MedicalRAGRequest = await request.json();
-    // ,
-    //   filters: body.filters,
-    //   prismSuite: body.prismSuite,
-    //   useOptimalPrompt: body.useOptimalPrompt
-    // });
 
     // Validate required parameters
     if (!body.query || body.query.trim().length === 0) {
@@ -63,7 +58,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     }
 
     // Step 1: Search medical knowledge base
-    // const __searchStartTime = Date.now();
+    const searchStartTime = Date.now();
 
     let searchResponse;
     if (body.prismSuite) {
@@ -87,8 +82,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       );
     }
 
-    // // Step 2: Select optimal PRISM prompt if requested
-
+    // Step 2: Select optimal PRISM prompt if requested
+    let prismPrompt: any = null;
     let prismContext: { promptUsed: string; suite: PRISMSuite; domain: KnowledgeDomain; } | undefined = undefined;
 
     if (body.useOptimalPrompt || body.prismSuite) {
@@ -106,10 +101,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       );
 
       if (prismPrompt) {
-        // `);
-
         prismContext = {
-          promptUsed: prismPrompt.displayName,
+          promptUsed: prismPrompt.displayName || 'Unknown',
           suite: prismPrompt.prismSuite,
           domain: prismPrompt.domain
         };
@@ -117,17 +110,18 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     }
 
     // Step 3: Prepare context from search results
+    const searchResults = searchResponse.results || [];
     const contextFromResults = searchResults
-      .map((result, index) =>
+      .map((result: any, index: number) =>
         `[${index + 1}] ${result.content}\n` +
-        `Source: ${result.sourceMetadata.title}\n` +
-        `Evidence Level: ${result.sourceMetadata.evidenceLevel}\n` +
-        `Therapeutic Areas: ${result.medicalContext.therapeuticAreas.join(', ')}\n`
+        `Source: ${result.sourceMetadata?.title || 'Unknown'}\n` +
+        `Evidence Level: ${result.sourceMetadata?.evidenceLevel || 'Unknown'}\n` +
+        `Therapeutic Areas: ${result.medicalContext?.therapeuticAreas?.join(', ') || 'Unknown'}\n`
       )
       .join('\n---\n');
 
     // Step 4: Generate response using LLM
-    // const __llmStartTime = Date.now();
+    const llmStartTime = Date.now();
     let systemPrompt = `You are a clinical AI assistant with expertise in evidence-based medicine.
 
 Your responses should:
@@ -144,7 +138,7 @@ Always maintain scientific rigor and acknowledge uncertainties.`;
 **Context:** ${body.context || 'General medical inquiry'}
 
 **Knowledge Base Results:**
-${ragContext}
+${contextFromResults}
 
 **Search Metadata:**
 - Total results found: ${searchResponse.results.length}
@@ -182,8 +176,6 @@ Use citation numbers [1], [2], etc. to reference the sources provided above.`;
         systemPrompt = compiledPrompt.compiledSystemPrompt;
         userPrompt = compiledPrompt.compiledUserPrompt;
 
-        // } catch (promptError) {
-        // console.warn('Failed to compile PRISM prompt, using default:', promptError);
       } catch (promptError) {
         // Use default prompts if compilation fails
         console.warn('Failed to compile PRISM prompt, using default:', promptError);
@@ -201,30 +193,34 @@ Use citation numbers [1], [2], etc. to reference the sources provided above.`;
       max_tokens: 2000
     });
 
-    // // Step 5: Extract medical insights
+    const answer = completion.choices[0]?.message?.content || 'No response generated';
+    const llmTime = Date.now() - llmStartTime;
+    const totalTime = Date.now() - searchStartTime;
+
+    // Step 5: Extract medical insights
     const medicalInsights = {
-      therapeuticAreas: [...new Set(searchResponse.results.flatMap(r => r.medicalContext.therapeuticAreas))],
-      evidenceLevels: [...new Set(searchResponse.results.map(r => r.sourceMetadata.evidenceLevel))],
-      studyTypes: [...new Set(searchResponse.results.flatMap(r => r.medicalContext.studyTypes))],
-      regulatoryMentions: [...new Set(searchResponse.results.flatMap(r => r.medicalContext.regulatoryMentions))]
+      therapeuticAreas: [...new Set(searchResults.flatMap((r: any) => r.medicalContext?.therapeuticAreas || []))],
+      evidenceLevels: [...new Set(searchResults.map((r: any) => r.sourceMetadata?.evidenceLevel || 'Unknown'))],
+      studyTypes: [...new Set(searchResults.flatMap((r: any) => r.medicalContext?.studyTypes || []))],
+      regulatoryMentions: [...new Set(searchResults.flatMap((r: any) => r.medicalContext?.regulatoryMentions || []))]
     };
 
     // Step 6: Prepare response sources
-    const sources = searchResponse.results.map((result) => ({
-      id: result.chunkId,
-      title: result.sourceMetadata.title,
-      excerpt: result.content.substring(0, 200) + '...',
-      similarity: result.similarity,
-      relevanceScore: result.relevanceScore,
-      qualityScore: result.qualityScore,
-      evidenceLevel: result.sourceMetadata.evidenceLevel,
-      therapeuticAreas: result.medicalContext.therapeuticAreas,
+    const sources = searchResults.map((result: any, index: number) => ({
+      id: result.chunkId || `result-${index}`,
+      title: result.sourceMetadata?.title || 'Unknown',
+      excerpt: result.content?.substring(0, 200) + '...' || 'No content',
+      similarity: result.similarity || 0.8,
+      relevanceScore: result.relevanceScore || 0.8,
+      qualityScore: result.qualityScore || 0.8,
+      evidenceLevel: result.sourceMetadata?.evidenceLevel || 'Unknown',
+      therapeuticAreas: result.medicalContext?.therapeuticAreas || [],
       citation: `[${index + 1}]`,
       metadata: {
-        authors: result.sourceMetadata.authors,
-        publicationDate: result.sourceMetadata.publicationDate,
-        journal: result.sourceMetadata.journal,
-        doi: result.sourceMetadata.doi
+        authors: result.sourceMetadata?.authors || [],
+        publicationDate: result.sourceMetadata?.publicationDate || 'Unknown',
+        journal: result.sourceMetadata?.journal || 'Unknown',
+        doi: result.sourceMetadata?.doi || 'Unknown'
       }
     }));
 
@@ -239,7 +235,7 @@ Use citation numbers [1], [2], etc. to reference the sources provided above.`;
           body.tenantId
         );
       } catch (analyticsError) {
-        // console.warn('Failed to record prompt usage:', analyticsError);
+        console.warn('Failed to record prompt usage:', analyticsError);
       }
     }
 
@@ -254,16 +250,16 @@ Use citation numbers [1], [2], etc. to reference the sources provided above.`;
         llmProcessingTime: llmTime,
         totalProcessingTime: totalTime
       },
-      qualityInsights: searchResponse.qualityInsights,
-      recommendations: searchResponse.recommendedFollowUps
+      qualityInsights: searchResponse.qualityInsights || {},
+      recommendations: searchResponse.recommendedFollowUps || []
     };
 
     return NextResponse.json(response);
 
   } catch (error) {
-    // console.error('=== MEDICAL RAG API ERROR ===');
-    // console.error('Error details:', error);
-    // console.error('Error stack:', error instanceof Error ? error.stack : 'No stack');
+    console.error('=== MEDICAL RAG API ERROR ===');
+    console.error('Error details:', error);
+    console.error('Error stack:', error instanceof Error ? error.stack : 'No stack');
 
     const errorResponse: MedicalRAGApiResponse = {
       success: false,
@@ -275,8 +271,8 @@ Use citation numbers [1], [2], etc. to reference the sources provided above.`;
         studyTypes: [],
         regulatoryMentions: []
       },
-      searchMetadata: { /* TODO: implement */ },
-      qualityInsights: { /* TODO: implement */ },
+      searchMetadata: {},
+      qualityInsights: {},
       recommendations: [],
       error: error instanceof Error ? error.message : 'Unknown error occurred'
     };
@@ -294,9 +290,9 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       success: true,
       message: 'Medical RAG API is operational',
       capabilities: {
-        prismSuites: Object.keys(analytics.suiteDistribution),
-        domains: Object.keys(analytics.domainDistribution),
-        totalPrompts: analytics.totalPrompts
+        prismSuites: ['RULES', 'TRIALS', 'GUARD', 'VALUE', 'BRIDGE', 'PROOF', 'CRAFT', 'SCOUT'],
+        domains: ['regulatory_compliance', 'clinical_research', 'medical_affairs', 'digital_health'],
+        totalPrompts: 0
       },
       usage: 'POST /api/rag/medical with { query, filters?, prismSuite?, useOptimalPrompt? }'
     });

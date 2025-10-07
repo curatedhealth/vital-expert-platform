@@ -516,20 +516,21 @@ async function validateCompliance(promptText: string, requirement: string) {
 }
 
 async function optimizePrompt(promptText: string, category: string, medicalContext: unknown) {
-
   // Clinical precision optimization
-
+  const clinicalTerms = {
     'probably': 'likely (>70% probability)',
     'possibly': 'possibly (30-70% probability)',
     'always': 'in most cases',
     'never': 'rarely'
-  }
+  };
 
-  for (const [vague, precise] of Object.entries(precisionReplacements)) {
+  let optimizedPrompt = promptText;
+
+  for (const [vague, precise] of Object.entries(clinicalTerms)) {
     optimizedPrompt = optimizedPrompt.replace(
       new RegExp(`\\b${vague}\\b`, 'gi'),
       precise
-    )
+    );
   }
 
   // Add clinical context if available
@@ -541,7 +542,7 @@ async function optimizePrompt(promptText: string, category: string, medicalConte
   if (category === 'medication_management') {
     optimizedPrompt += ' Consider contraindications, drug interactions, and patient allergies.'
   }
-
+  
   return {
     original_prompt: promptText,
     optimized_prompt: optimizedPrompt,
@@ -553,7 +554,7 @@ async function optimizePrompt(promptText: string, category: string, medicalConte
     clinical_enhancements: ['Added clinical context', 'Improved precision qualifiers'],
     safety_improvements: category === 'medication_management' ?
       ['Added medication safety considerations'] : []
-  }
+  };
 }
 
 function generatePromptRecommendations(
@@ -612,12 +613,12 @@ function calculatePromptConfidence(
 }
 
 function extractMedicalEntities(promptText: string): string[] {
-
+  const medicalTerms = [
     'diabetes', 'hypertension', 'aspirin', 'warfarin', 'blood pressure',
     'heart rate', 'temperature', 'diagnosis', 'treatment', 'medication'
-  ]
+  ];
 
-  return medicalTerms.filter(term => text.includes(term))
+  return medicalTerms.filter(term => promptText.includes(term));
 }
 
 function getCategoryConfidence(category: string): number {

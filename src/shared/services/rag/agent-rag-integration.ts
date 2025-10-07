@@ -213,11 +213,11 @@ export class AgentRAGIntegrationService {
    * Query knowledge using agent-specific RAG configuration
    */
   async queryAgentKnowledge(params: AgentRAGQuery): Promise<AgentRAGResponse> {
+    const startTime = Date.now();
 
     try {
-      // }..."`);
-
       // Get agent configuration
+      const agentConfig = await this.getAgentRAGConfig(params.agentId);
 
       if (!agentConfig) {
         throw new Error(`No RAG configuration found for agent: ${params.agentId}`);
@@ -231,7 +231,7 @@ export class AgentRAGIntegrationService {
       if (params.useMultiRAG && agentConfig.ragSystems.length > 1) {
         for (const ragSystem of agentConfig.ragSystems) {
           try {
-            const systemResults = await this.queryRAGSystem(
+            const systemResults = await this.querySpecificRAGSystem(
               ragSystem,
               params.query,
               params.context,
@@ -264,7 +264,7 @@ export class AgentRAGIntegrationService {
         const defaultSystem = agentConfig.ragSystems.find(s => s.systemId === agentConfig.defaultRAG)
           || agentConfig.ragSystems[0];
 
-        const defaultResults = await this.queryRAGSystem(
+        const defaultResults = await this.querySpecificRAGSystem(
           defaultSystem,
           params.query,
           params.context,
@@ -272,7 +272,7 @@ export class AgentRAGIntegrationService {
           params.maxResults
         );
 
-        combinedResults = systemResults.results.map((result: unknown) => ({
+        combinedResults = defaultResults.results.map((result: unknown) => ({
           ...result,
           ragSystemId: defaultSystem.systemId
         }));
@@ -281,7 +281,7 @@ export class AgentRAGIntegrationService {
       }
 
       // Generate contextual response using best results
-
+      const response = await this.generateAgentResponse(
         params.query,
         combinedResults,
         agentConfig,
@@ -289,7 +289,7 @@ export class AgentRAGIntegrationService {
         params.context
       );
 
-      // } in ${processingTime}ms`);
+      const processingTime = Date.now() - startTime;
 
       return {
         answer: response.answer,
@@ -308,7 +308,7 @@ export class AgentRAGIntegrationService {
       };
 
     } catch (error) {
-      // console.error('❌ Agent-RAG Integration Error:', error);
+      console.error('❌ Agent-RAG Integration Error:', error);
 
       // Fallback to basic agent response
       return this.getFallbackResponse(params, Date.now() - startTime);
@@ -335,7 +335,7 @@ export class AgentRAGIntegrationService {
 
       case 'enhanced':
         // Call enhanced RAG API
-
+        const enhancedResponse = await fetch('/api/rag/enhanced', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -346,14 +346,14 @@ export class AgentRAGIntegrationService {
         });
 
         if (enhancedResponse.ok) {
-
+          const data = await enhancedResponse.json();
           return { results: data.results || [] };
         }
         throw new Error('Enhanced RAG system unavailable');
 
       case 'hybrid':
         // Call hybrid RAG API
-
+        const hybridResponse = await fetch('/api/rag/hybrid', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -365,13 +365,13 @@ export class AgentRAGIntegrationService {
         });
 
         if (hybridResponse.ok) {
-
+          const data = await hybridResponse.json();
           return { results: data.results || [] };
         }
         throw new Error('Hybrid RAG system unavailable');
 
       case 'langchain':
-
+        const langchainResult = await langchainRAGService.queryRAGSystem(
           query,
           ragSystem.systemId, // Use as agentId fallback
           [],
@@ -398,7 +398,7 @@ export class AgentRAGIntegrationService {
    */
   private deduplicateAndRankResults(results: unknown[], maxResults: number) {
     // Simple deduplication based on content similarity
-
+    const unique = results.filter((result: any, index, arr) => {
       return !arr.slice(0, index).some(prev =>
         this.calculateContentSimilarity(result.content, prev.content) > 0.8
       );
@@ -414,7 +414,10 @@ export class AgentRAGIntegrationService {
    * Calculate simple content similarity (Jaccard similarity)
    */
   private calculateContentSimilarity(content1: string, content2: string): number {
-
+    const words1 = new Set(content1.toLowerCase().split(/\s+/));
+    const words2 = new Set(content2.toLowerCase().split(/\s+/));
+    const intersection = new Set([...words1].filter(x => words2.has(x)));
+    const union = new Set([...words1, ...words2]);
     return intersection.size / union.size;
   }
 
@@ -429,11 +432,12 @@ export class AgentRAGIntegrationService {
     context?: string
   ) {
     // Prepare context from RAG results
-
+    const ragContext = results.map((result: any, index: number) =>
       `[${index + 1}] ${result.content}\nSource: ${result.title || result.sourceMetadata?.title || 'Unknown'}`
     ).join('\n\n---\n\n');
 
     // Build agent-specific system prompt
+    const systemPrompt = `You are an expert in ${agentConfig.knowledgeDomains.join(' and ')}.
 
 Based on the knowledge base search results below, provide a comprehensive and accurate response that:
 1. Directly answers the user's question
@@ -452,20 +456,21 @@ Provide your expert analysis and recommendations:`;
 
     // For now, return a structured mock response
     // In production, this would call the LLM with the prepared prompt
+    const mockAnswer = `${results.length > 0 ?
+      `From the knowledge base search (${results.length} relevant sources found), I can provide the following insights:
 
-${results.length > 0 ?
-  `From the knowledge base search (${results.length} relevant sources found), I can provide the following insights:
-
-${results.slice(0, 3).map((result, index) =>
-  `**Point ${index + 1}**: ${result.content.substring(0, 200)}... [${index + 1}]`
+${results.slice(0, 3).map((result: any, index: number) =>
+  `**Point ${index + 1}**: ${result.content?.substring(0, 200)}... [${index + 1}]`
 ).join('\n\n')}
 
 **Expert Recommendation**: Based on these findings and my specialized knowledge, I recommend focusing on the evidence-based approaches outlined in the sources above.` :
-  `Drawing from my specialized knowledge in ${agentConfig.knowledgeDomains.join(' and ')}, I can provide guidance on this topic, though I don't have specific knowledge base matches for this query.`
+      `Drawing from my specialized knowledge in ${agentConfig.knowledgeDomains.join(' and ')}, I can provide guidance on this topic, though I don't have specific knowledge base matches for this query.`
 }
 
 Would you like me to elaborate on any specific aspect or explore related considerations?`;
 
+    const citations = results.slice(0, 3).map((_, index) => `[${index + 1}]`);
+    const followupSuggestions = [
       `What are the specific implementation steps for ${agentConfig.knowledgeDomains[0]}?`,
       `How does this relate to current industry best practices?`,
       `What are the potential risks or challenges to consider?`
@@ -566,9 +571,10 @@ Would you like me to elaborate on any specific aspect or explore related conside
    * Update agent RAG configuration
    */
   async updateAgentRAGConfig(agentId: string, config: Partial<AgentRAGConfig>) {
+    const existingConfig = this.agentConfigurations.get(agentId);
 
     if (existingConfig) {
-
+      const updatedConfig = { ...existingConfig, ...config };
       this.agentConfigurations.set(agentId, updatedConfig);
 
       // Persist to database
@@ -583,7 +589,7 @@ Would you like me to elaborate on any specific aspect or explore related conside
           })
           .eq('id', agentId);
       } catch (error) {
-        // console.warn('Failed to persist agent RAG config:', error);
+        console.warn('Failed to persist agent RAG config:', error);
       }
     }
   }
@@ -605,4 +611,4 @@ Would you like me to elaborate on any specific aspect or explore related conside
 }
 
 // Export singleton instance
-export const __agentRAGIntegration = new AgentRAGIntegrationService();
+export const agentRAGIntegration = new AgentRAGIntegrationService();

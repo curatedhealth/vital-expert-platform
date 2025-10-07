@@ -129,11 +129,13 @@ export class MedicalRAGService {
 
     try {
       // Extract medical entities from query
+      const medicalEntities = await this.extractMedicalEntities(query);
 
       // Generate embedding for query
+      const queryEmbedding = await this.generateEmbedding(query);
 
       // Build search parameters
-
+      const searchParams = {
         p_tenant_id: options.tenantId || this.defaultTenantId,
         p_query_embedding: `[${queryEmbedding.join(',')}]`,
         p_domain: filters.domain || null,
@@ -186,7 +188,7 @@ export class MedicalRAGService {
       // Calculate quality insights
 
       // Generate follow-up recommendations
-
+      const recommendedFollowUps = await this.generateFollowUpRecommendations(
         query,
         results,
         medicalEntities
@@ -220,7 +222,7 @@ export class MedicalRAGService {
     prismSuite: 'RULES' | 'TRIALS' | 'GUARD' | 'VALUE' | 'BRIDGE' | 'PROOF' | 'CRAFT' | 'SCOUT',
     additionalFilters: Partial<MedicalSearchFilters> = { /* TODO: implement */ }
   ): Promise<MedicalRAGResponse> {
-
+    const prismDomainMapping = {
       'RULES': 'regulatory_compliance',
       'TRIALS': 'clinical_research',
       'GUARD': 'regulatory_compliance',
@@ -274,7 +276,7 @@ export class MedicalRAGService {
    * Extract drug names using common pharmaceutical patterns
    */
   private extractDrugNames(text: string): string[] {
-
+    const drugPatterns = [
       /\b[A-Z][a-z]+mab\b/g, // Monoclonal antibodies
       /\b[A-Z][a-z]+nib\b/g, // Kinase inhibitors
       /\b[A-Z][a-z]+stat\b/g, // HMG-CoA reductase inhibitors
@@ -284,7 +286,7 @@ export class MedicalRAGService {
 
     const drugs: string[] = [];
     drugPatterns.forEach(pattern => {
-
+      const matches = text.match(pattern);
       if (matches) {
         drugs.push(...matches);
       }
@@ -297,14 +299,14 @@ export class MedicalRAGService {
    * Extract medical indications from text
    */
   private extractIndications(text: string): string[] {
-
+    const indicationPatterns = [
       /\b(?:treatment|therapy|indication|indicated|prescribed) (?:for|of) ([^.]+)/gi,
       /\b(?:patients with|diagnosis of|suffering from) ([^.]+)/gi
     ];
 
     const indications: string[] = [];
     indicationPatterns.forEach(pattern => {
-
+      const matches = text.matchAll(pattern);
       for (const match of matches) {
         if (match[1]) {
           indications.push(match[1].trim());
@@ -359,7 +361,7 @@ export class MedicalRAGService {
     });
 
     // Boost for high evidence levels
-
+    const evidenceBoosts: Record<string, number> = {
       'systematic review': 0.2,
       'meta-analysis': 0.2,
       'rct': 0.15,
@@ -417,7 +419,8 @@ export class MedicalRAGService {
     evidenceLevelDistribution: Record<string, number>;
     sourceTypeDistribution: Record<string, number>;
   } {
-
+    const qualityScores = results.map(r => r.qualityScore || 0.5);
+    const averageQualityScore = qualityScores.length > 0
       ? qualityScores.reduce((a, b) => a + b, 0) / qualityScores.length
       : 0;
 

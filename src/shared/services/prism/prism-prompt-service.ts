@@ -156,7 +156,7 @@ export class PRISMPromptService {
     tenantId?: string
   ): Promise<PRISMPrompt[]> {
     try {
-
+      let query = supabase
         .from('prism_prompts')
         .select('*')
         .eq('tenant_id', tenantId || this.defaultTenantId)
@@ -216,7 +216,7 @@ export class PRISMPromptService {
       }
 
       // Score prompts based on relevance
-
+      const scoredPrompts = data.map(prompt => ({
         prompt,
         score: this.calculatePromptRelevanceScore(prompt, query, context, analysisResult)
       }));
@@ -302,7 +302,7 @@ export class PRISMPromptService {
       });
 
       // Top used prompts
-
+      const topUsedPrompts = data
         .sort((a, b) => b.usageCount - a.usageCount)
         .slice(0, 10)
         .map(prompt => ({
@@ -313,7 +313,8 @@ export class PRISMPromptService {
         }));
 
       // Quality metrics
-
+      const ratings = data.map(p => p.averageRating).filter(r => r > 0);
+      const averageRating = ratings.length > 0
         ? ratings.reduce((a, b) => a + b, 0) / ratings.length
         : 0;
 
@@ -486,8 +487,7 @@ export class PRISMPromptService {
     if (prompt.prismSuite === analysis.suggestedSuite) score += 0.3;
 
     // Tag relevance
-    // eslint-disable-next-line security/detect-object-injection
-
+    const matchingTags = prompt.tags.filter(tag =>
       // eslint-disable-next-line security/detect-object-injection
       analysis.relevantTags.includes(tag)
     );

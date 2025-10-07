@@ -83,6 +83,20 @@ interface SafetySignalResponse {
 // POST /api/clinical/validation - Execute clinical validation
 export async function POST(request: NextRequest) {
   try {
+    // Create Supabase client inside the function to avoid build-time validation
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    
+    if (!supabaseUrl || !supabaseServiceKey) {
+      return NextResponse.json(
+        { error: 'Supabase configuration missing' },
+        { status: 500 }
+      );
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+
     const body: ValidationRequest = await request.json()
     const {
       content_data,
@@ -267,6 +281,20 @@ export async function POST(request: NextRequest) {
 // GET /api/clinical/validation?session_id=... - Get validation results
 export async function GET(request: NextRequest) {
   try {
+    // Create Supabase client inside the function to avoid build-time validation
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    
+    if (!supabaseUrl || !supabaseServiceKey) {
+      return NextResponse.json(
+        { error: 'Supabase configuration missing' },
+        { status: 500 }
+      );
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+
     const { searchParams } = new URL(request.url)
 
     if (!sessionId) {

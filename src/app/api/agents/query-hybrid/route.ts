@@ -22,7 +22,18 @@ interface AgentQueryRequest {
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = createClient();
+    // Create Supabase client inside the function to avoid build-time validation
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    
+    if (!supabaseUrl || !supabaseServiceKey) {
+      return NextResponse.json(
+        { error: 'Supabase configuration missing' },
+        { status: 500 }
+      );
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     // Get user session
     const { data: { user }, error: authError } = await supabase.auth.getUser();
@@ -137,6 +148,20 @@ export async function POST(request: NextRequest) {
 // GET endpoint for agent query templates and examples
 export async function GET(request: NextRequest) {
   try {
+    // Create Supabase client inside the function to avoid build-time validation
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    
+    if (!supabaseUrl || !supabaseServiceKey) {
+      return NextResponse.json(
+        { error: 'Supabase configuration missing' },
+        { status: 500 }
+      );
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+
     const { searchParams } = new URL(request.url);
     const agentType = searchParams.get('agent_type') || 'general';
     const includeExamples = searchParams.get('include_examples') || 'true';

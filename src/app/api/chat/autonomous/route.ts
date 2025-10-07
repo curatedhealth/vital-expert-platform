@@ -3,10 +3,7 @@ import { createAutonomousAgent, executeAutonomousQuery } from '@/features/chat/a
 import { createAutoLearningMemory } from '@/features/chat/memory/long-term-memory';
 import { createClient } from '@supabase/supabase-js';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+
 
 /**
  * POST /api/chat/autonomous
@@ -25,6 +22,20 @@ export async function POST(request: NextRequest) {
     // Parse request body with error handling
     let body;
     try {
+    // Create Supabase client inside the function to avoid build-time validation
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    
+    if (!supabaseUrl || !supabaseServiceKey) {
+      return NextResponse.json(
+        { error: 'Supabase configuration missing' },
+        { status: 500 }
+      );
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+
       body = await request.json();
     } catch (parseError) {
       console.error('Failed to parse request body:', parseError);
@@ -340,6 +351,20 @@ async function saveChatMessages(
  */
 export async function GET(request: NextRequest) {
   try {
+    // Create Supabase client inside the function to avoid build-time validation
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    
+    if (!supabaseUrl || !supabaseServiceKey) {
+      return NextResponse.json(
+        { error: 'Supabase configuration missing' },
+        { status: 500 }
+      );
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+
     const { searchParams } = new URL(request.url);
     const userId = searchParams.get('userId');
 

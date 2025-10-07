@@ -8,10 +8,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { agentRAGIntegration } from '@/shared/services/rag/agent-rag-integration';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+
 
 interface AgentRAGConfigRequest {
   agentId: string;
@@ -29,6 +26,20 @@ interface AgentRAGConfigRequest {
 // GET /api/agents/rag-config - Get RAG configurations for all agents or specific agent
 export async function GET(request: NextRequest) {
   try {
+    // Create Supabase client inside the function to avoid build-time validation
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    
+    if (!supabaseUrl || !supabaseServiceKey) {
+      return NextResponse.json(
+        { error: 'Supabase configuration missing' },
+        { status: 500 }
+      );
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+
     const { searchParams } = new URL(request.url);
     const agentId = searchParams.get('agentId');
 
@@ -135,6 +146,20 @@ export async function GET(request: NextRequest) {
 // POST /api/agents/rag-config - Update RAG configuration for an agent
 export async function POST(request: NextRequest) {
   try {
+    // Create Supabase client inside the function to avoid build-time validation
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    
+    if (!supabaseUrl || !supabaseServiceKey) {
+      return NextResponse.json(
+        { error: 'Supabase configuration missing' },
+        { status: 500 }
+      );
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+
     const body: AgentRAGConfigRequest = await request.json();
 
     // Validate required fields
@@ -215,6 +240,20 @@ export async function POST(request: NextRequest) {
 // PUT /api/agents/rag-config - Test agent RAG system
 export async function PUT(request: NextRequest) {
   try {
+    // Create Supabase client inside the function to avoid build-time validation
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    
+    if (!supabaseUrl || !supabaseServiceKey) {
+      return NextResponse.json(
+        { error: 'Supabase configuration missing' },
+        { status: 500 }
+      );
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+
     const body = await request.json();
     const { agentId, testQuery, useMultiRAG = false } = body;
 
@@ -272,6 +311,20 @@ export async function PUT(request: NextRequest) {
 // DELETE /api/agents/rag-config - Reset agent RAG configuration to default
 export async function DELETE(request: NextRequest) {
   try {
+    // Create Supabase client inside the function to avoid build-time validation
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    
+    if (!supabaseUrl || !supabaseServiceKey) {
+      return NextResponse.json(
+        { error: 'Supabase configuration missing' },
+        { status: 500 }
+      );
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+
     const { searchParams } = new URL(request.url);
     const agentId = searchParams.get('agentId');
 

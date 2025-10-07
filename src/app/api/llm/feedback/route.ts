@@ -14,12 +14,22 @@ const feedbackSchema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
+    // Create Supabase client inside the function to avoid build-time validation
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    
+    if (!supabaseUrl || !supabaseServiceKey) {
+      return NextResponse.json(
+        { error: 'Supabase configuration missing' },
+        { status: 500 }
+      );
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
     const body = await request.json();
     const { queryId, rating, feedback, helpful, accurate, complete } =
       feedbackSchema.parse(body);
-
-    // Initialize Supabase client
-    const supabase = createClient();
 
     // Get user from session
     const { data: { user }, error: authError } = await supabase.auth.getUser();
@@ -123,14 +133,24 @@ export async function POST(request: NextRequest) {
 // GET endpoint to retrieve query history with feedback
 export async function GET(request: NextRequest) {
   try {
+    // Create Supabase client inside the function to avoid build-time validation
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    
+    if (!supabaseUrl || !supabaseServiceKey) {
+      return NextResponse.json(
+        { error: 'Supabase configuration missing' },
+        { status: 500 }
+      );
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
     const { searchParams } = new URL(request.url);
     const projectId = searchParams.get('projectId');
     const phase = searchParams.get('phase');
     const limit = parseInt(searchParams.get('limit') || '20');
     const offset = parseInt(searchParams.get('offset') || '0');
-
-    // Initialize Supabase client
-    const supabase = createClient();
 
     // Get user from session
     const { data: { user }, error: authError } = await supabase.auth.getUser();

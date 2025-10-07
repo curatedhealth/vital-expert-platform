@@ -6,11 +6,6 @@
 import { createClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
-
 // Advisory Board Session Types
 const SESSION_TYPES = [
   'clinical_review', 'safety_review', 'efficacy_assessment', 'regulatory_guidance',
@@ -89,6 +84,19 @@ interface VoteSubmissionRequest {
 // POST /api/advisory - Create advisory session, join session, or submit vote
 export async function POST(request: NextRequest) {
   try {
+    // Create Supabase client inside the function to avoid build-time validation
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    
+    if (!supabaseUrl || !supabaseServiceKey) {
+      return NextResponse.json(
+        { error: 'Supabase configuration missing' },
+        { status: 500 }
+      );
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
     const body = await request.json();
     const { action } = body;
 
@@ -150,6 +158,19 @@ export async function POST(request: NextRequest) {
 // GET /api/advisory - Get advisory board status and active sessions
 export async function GET(request: NextRequest) {
   try {
+    // Create Supabase client inside the function to avoid build-time validation
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    
+    if (!supabaseUrl || !supabaseServiceKey) {
+      return NextResponse.json(
+        { error: 'Supabase configuration missing' },
+        { status: 500 }
+      );
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
     const { searchParams } = new URL(request.url);
     const sessionId = searchParams.get('session_id');
     const token = request.headers.get('authorization')?.replace('Bearer ', '');

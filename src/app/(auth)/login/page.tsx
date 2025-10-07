@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { supabase } from '@/lib/supabase/client';
+import { useAuth } from '@/lib/auth/auth-context';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -18,6 +18,7 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const router = useRouter();
+  const { login } = useAuth();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -25,34 +26,18 @@ export default function LoginPage() {
     setError('');
 
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (error) {
-        setError(error.message);
-      } else {
-        router.push('/dashboard');
-      }
+      await login(email, password);
+      router.push('/dashboard');
     } catch (err) {
-      setError('An unexpected error occurred');
+      setError('Invalid email or password');
     } finally {
       setLoading(false);
     }
   };
 
   const handleGoogleLogin = async () => {
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: typeof window !== 'undefined' ? `${window.location.origin}/dashboard` : '/dashboard',
-      },
-    });
-
-    if (error) {
-      setError(error.message);
-    }
+    // Mock Google login - just use email/password for now
+    setError('Please use email and password to sign in');
   };
 
   return (

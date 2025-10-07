@@ -7,11 +7,6 @@ import { createClient } from '@supabase/supabase-js';
 import { NextRequest, NextResponse } from 'next/server';
 import { NarcolepsyDTxOrchestrator, NarcolepsyPatientData } from '../../../../dtx/narcolepsy/orchestrator';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
-
 interface APIResponse {
   success: boolean;
   data?: any;
@@ -23,8 +18,21 @@ interface APIResponse {
 // POST /api/dtx/narcolepsy - Process patient data
 export async function POST(request: NextRequest): Promise<NextResponse<APIResponse>> {
   try {
+    // Create Supabase client inside the function to avoid build-time validation
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    
+    if (!supabaseUrl || !supabaseServiceKey) {
+      return NextResponse.json(
+        { success: false, error: 'Supabase configuration missing' },
+        { status: 500 }
+      );
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     // Authentication check
+    const token = request.headers.get('authorization')?.replace('Bearer ', '');
 
     if (!token) {
       return NextResponse.json({
@@ -141,7 +149,21 @@ export async function POST(request: NextRequest): Promise<NextResponse<APIRespon
 // GET /api/dtx/narcolepsy - Get DTx status and capabilities
 export async function GET(request: NextRequest): Promise<NextResponse<APIResponse>> {
   try {
+    // Create Supabase client inside the function to avoid build-time validation
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    
+    if (!supabaseUrl || !supabaseServiceKey) {
+      return NextResponse.json(
+        { success: false, error: 'Supabase configuration missing' },
+        { status: 500 }
+      );
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
     // Authentication check
+    const token = request.headers.get('authorization')?.replace('Bearer ', '');
 
     if (!token) {
       return NextResponse.json({
@@ -223,6 +245,21 @@ export async function GET(request: NextRequest): Promise<NextResponse<APIRespons
 // PUT /api/dtx/narcolepsy - Update patient treatment plan
 export async function PUT(request: NextRequest): Promise<NextResponse<APIResponse>> {
   try {
+    // Create Supabase client inside the function to avoid build-time validation
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    
+    if (!supabaseUrl || !supabaseServiceKey) {
+      return NextResponse.json(
+        { success: false, error: 'Supabase configuration missing' },
+        { status: 500 }
+      );
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    // Authentication check
+    const token = request.headers.get('authorization')?.replace('Bearer ', '');
 
     if (!token) {
       return NextResponse.json({
@@ -307,6 +344,21 @@ export async function PUT(request: NextRequest): Promise<NextResponse<APIRespons
 // DELETE /api/dtx/narcolepsy - Remove patient from DTx program
 export async function DELETE(request: NextRequest): Promise<NextResponse<APIResponse>> {
   try {
+    // Create Supabase client inside the function to avoid build-time validation
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    
+    if (!supabaseUrl || !supabaseServiceKey) {
+      return NextResponse.json(
+        { success: false, error: 'Supabase configuration missing' },
+        { status: 500 }
+      );
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    // Authentication check
+    const token = request.headers.get('authorization')?.replace('Bearer ', '');
 
     if (!token) {
       return NextResponse.json({

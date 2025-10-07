@@ -6,11 +6,6 @@
 import { createClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
-
 interface AnalyticsRequest {
   time_range?: 'last_24h' | 'last_7d' | 'last_30d' | 'last_90d' | 'custom'
   start_date?: string

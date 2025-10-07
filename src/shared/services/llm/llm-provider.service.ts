@@ -23,13 +23,20 @@ import {
 } from '@/types/llm-provider.types';
 
 export class LLMProviderService {
-  private supabase = createClient();
+  private supabase: ReturnType<typeof createClient> | null = null;
   private providers: Map<string, LLMProvider> = new Map();
   private healthCheckInterval: NodeJS.Timeout | null = null;
   private initialized = false;
 
   constructor() {
     this.initializeService();
+  }
+
+  private getSupabaseClient(): ReturnType<typeof createClient> {
+    if (!this.supabase) {
+      this.supabase = createClient();
+    }
+    return this.supabase;
   }
 
   async initializeService(): Promise<void> {
@@ -96,7 +103,7 @@ export class LLMProviderService {
       status: ProviderStatus.INITIALIZING
     };
 
-    const { data, error } = await this.supabase
+    const { data, error } = await this.getSupabaseClient()
       .from('llm_providers')
       .insert([providerData])
       .select()
@@ -139,7 +146,7 @@ export class LLMProviderService {
     // Update timestamp
     (updateData as { updated_at: string }).updated_at = new Date().toISOString();
 
-    const { error } = await this.supabase
+    const { error } = await this.getSupabaseClient()
       .from('llm_providers')
       .update(updateData)
       .eq('id', providerId);
@@ -168,7 +175,7 @@ export class LLMProviderService {
     }
 
     // Check if provider is being used by any agents
-    const { data: agents, error: agentsError } = await this.supabase
+    const { data: agents, error: agentsError } = await this.getSupabaseClient()
       .from('agents')
       .select('id, name')
       .or(`primary_llm_id.eq.${providerId},fallback_llm_ids.cs.{${providerId}}`);
@@ -192,7 +199,7 @@ export class LLMProviderService {
 
     if (!provider) {
       // Load from database
-      const { data, error } = await this.supabase
+      const { data, error } = await this.getSupabaseClient()
         .from('llm_providers')
         .select('*')
         .eq('id', providerId)
@@ -216,7 +223,7 @@ export class LLMProviderService {
     page: number = 1,
     limit: number = 20
   ): Promise<ProviderListResponse> {
-    let query = this.supabase
+    let query = this.getSupabaseClient()
       .from('llm_providers')
       .select('*', { count: 'exact' });
 
@@ -811,7 +818,7 @@ export class LLMProviderService {
       metadata: healthData.metadata || { /* TODO: implement */ }
     };
 
-    const { error } = await this.supabase
+    const { error } = await this.getSupabaseClient()
       .from('llm_provider_health_checks')
       .insert([healthCheck]);
 
@@ -940,7 +947,7 @@ export class LLMProviderService {
   }
 
   private async updateProviderStatus(providerId: string, status: ProviderStatus): Promise<void> {
-    const { error } = await this.supabase
+    const { error } = await this.getSupabaseClient()
       .from('llm_providers')
       .update({ status, updated_at: new Date().toISOString() })
       .eq('id', providerId);
@@ -959,7 +966,7 @@ export class LLMProviderService {
   }
 
   private async logUsage(usage: UsageLogCreateInput): Promise<void> {
-    const { error } = await this.supabase
+    const { error } = await this.getSupabaseClient()
       .from('llm_usage_logs')
       .insert([usage]);
 

@@ -8,12 +8,12 @@ import { mockDatabase } from './mock-database';
 
 export class DatabaseService {
   private static instance: DatabaseService;
-  private supabase: any;
+  private supabase: any = null;
   private isConnected: boolean = false;
   private useMockData: boolean = true;
 
   constructor() {
-    this.initializeSupabase();
+    // Lazy initialization - don't create Supabase client in constructor
   }
 
   static getInstance(): DatabaseService {
@@ -24,6 +24,8 @@ export class DatabaseService {
   }
 
   private initializeSupabase() {
+    if (this.supabase) return; // Already initialized
+    
     try {
       const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
       const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -44,6 +46,8 @@ export class DatabaseService {
   }
 
   async query(table: string, operation: string = 'select', data?: any) {
+    this.initializeSupabase(); // Ensure Supabase client is initialized
+    
     if (this.useMockData || !this.isConnected) {
       return await mockDatabase.query(table, operation, data);
     }

@@ -98,17 +98,24 @@ export interface CostBreakdown {
 
 export class UsageTracker {
   private static instance: UsageTracker;
-  private supabase: ReturnType<typeof createClient>;
+  private supabase: ReturnType<typeof createClient> | null = null;
 
   private constructor() {
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    // Lazy initialization - don't create Supabase client in constructor
+  }
 
-    if (!supabaseUrl || !supabaseKey) {
-      throw new Error('Supabase configuration missing');
+  private getSupabaseClient(): ReturnType<typeof createClient> {
+    if (!this.supabase) {
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+      const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+      if (!supabaseUrl || !supabaseKey) {
+        throw new Error('Supabase configuration missing');
+      }
+
+      this.supabase = createClient(supabaseUrl, supabaseKey);
     }
-
-    this.supabase = createClient(supabaseUrl, supabaseKey);
+    return this.supabase;
   }
 
   static getInstance(): UsageTracker {
@@ -123,7 +130,7 @@ export class UsageTracker {
    */
   async recordUsage(usage: UsageRecord): Promise<string> {
     try {
-      const { data, error } = await this.supabase
+      const { data, error } = await this.getSupabaseClient()
         .from('llm_usage_logs' as unknown)
         .insert({
           provider_id: usage.provider_id,
@@ -174,7 +181,7 @@ export class UsageTracker {
     endDate: Date
   ): Promise<ProviderUsageSummary> {
     try {
-      const { data, error } = await this.supabase
+      const { data, error } = await this.getSupabaseClient()
         .from('llm_usage_logs')
         .select(`
           *,
@@ -209,7 +216,7 @@ export class UsageTracker {
     userId?: string
   ): Promise<CostBreakdown> {
     try {
-      let query = this.supabase
+      let query = this.getSupabaseClient()
         .from('llm_usage_logs')
         .select(`
           *,
@@ -253,7 +260,7 @@ export class UsageTracker {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
 
-      const { data, error } = await this.supabase
+      const { data, error } = await this.getSupabaseClient()
         .from('llm_usage_logs')
         .select('*')
         .gte('created_at', today.toISOString());
@@ -294,7 +301,7 @@ export class UsageTracker {
   private async updateProviderMetrics(providerId: string, usage: UsageRecord): Promise<void> {
     try {
       // Get last 100 requests for this provider to calculate rolling averages
-      const { data: recentUsage } = await this.supabase
+      const { data: recentUsage } = await this.getSupabaseClient()
         .from('llm_usage_logs')
         .select('latency_ms, success')
         .eq('provider_id', providerId)
@@ -305,7 +312,7 @@ export class UsageTracker {
         const avgLatency = recentUsage.reduce((sum: number, u: unknown) => sum + u.latency_ms, 0) / recentUsage.length;
         const successRate = (recentUsage.filter((u: unknown) => u.success).length / recentUsage.length) * 100;
 
-        await (this.supabase as unknown)
+        await (this.getSupabaseClient() as unknown)
           .from('llm_providers')
           .update({
             average_latency_ms: Math.round(avgLatency),

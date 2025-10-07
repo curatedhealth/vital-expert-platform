@@ -69,94 +69,39 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         body.filters
       );
     } else {
-      // Use general medical search
-      searchResponse = await medicalRAGService.searchMedicalKnowledge(
+      // Use standard medical search
+      searchResponse = await medicalRAGService.search(
         body.query,
-        body.filters || { /* TODO: implement */ },
-        {
-          maxResults: body.maxResults || 10,
-          similarityThreshold: body.similarityThreshold || 0.7,
-          tenantId: body.tenantId,
-          includeMetadata: true
-        }
+        body.filters,
+        body.maxResults,
+        body.similarityThreshold
       );
     }
 
-    // Step 2: Select optimal PRISM prompt if requested
-    let prismPrompt: any = null;
-    let prismContext: { promptUsed: string; suite: PRISMSuite; domain: KnowledgeDomain; } | undefined = undefined;
+    const searchTime = Date.now() - searchStartTime;
 
-    if (body.useOptimalPrompt || body.prismSuite) {
-      const promptSelectionCriteria = {
-        domain: body.filters?.domain,
-        prismSuite: body.prismSuite,
-        query: body.query,
-        context: body.context || ''
-      };
+    // Step 2: Extract medical insights from search results
+    const medicalInsights = {
+      therapeuticAreas: searchResponse.medicalInsights?.therapeuticAreas || [],
+      evidenceLevels: searchResponse.medicalInsights?.evidenceLevels || [],
+      studyTypes: searchResponse.medicalInsights?.studyTypes || [],
+      regulatoryMentions: searchResponse.medicalInsights?.regulatoryMentions || []
+    };
 
-      prismPrompt = await prismPromptService.selectOptimalPrompt(
-        body.query,
-        body.context || '',
-        promptSelectionCriteria
-      );
+    // Step 3: Prepare context for LLM
+    const sources = searchResponse.results || [];
+    const ragContext = sources.map((result: any) => ({
+      content: result.content,
+      metadata: result.metadata,
+      score: result.score
+    }));
 
-      if (prismPrompt) {
-        prismContext = {
-          promptUsed: prismPrompt.displayName || 'Unknown',
-          suite: prismPrompt.prismSuite,
-          domain: prismPrompt.domain
-        };
-      }
-    }
-
-    // Step 3: Prepare context from search results
-    const searchResults = searchResponse.results || [];
-    const contextFromResults = searchResults
-      .map((result: any, index: number) =>
-        `[${index + 1}] ${result.content}\n` +
-        `Source: ${result.sourceMetadata?.title || 'Unknown'}\n` +
-        `Evidence Level: ${result.sourceMetadata?.evidenceLevel || 'Unknown'}\n` +
-        `Therapeutic Areas: ${result.medicalContext?.therapeuticAreas?.join(', ') || 'Unknown'}\n`
-      )
-      .join('\n---\n');
-
-    // Step 4: Generate response using LLM
+    // Step 4: Generate response using LLM with PRISM prompts
     const llmStartTime = Date.now();
-    let systemPrompt = `You are a clinical AI assistant with expertise in evidence-based medicine.
+    let answer = '';
+    let prismContext;
 
-Your responses should:
-- Be evidence-based and cite relevant sources
-- Include clinical relevance and practical implications
-- Address regulatory and safety considerations when applicable
-- Highlight evidence quality and limitations
-- Provide actionable recommendations where appropriate
-
-Always maintain scientific rigor and acknowledge uncertainties.`;
-
-    let userPrompt = `**User Question:** ${body.query}
-
-**Context:** ${body.context || 'General medical inquiry'}
-
-**Knowledge Base Results:**
-${contextFromResults}
-
-**Search Metadata:**
-- Total results found: ${searchResponse.results.length}
-- Average quality score: ${searchResponse.qualityInsights.averageQualityScore.toFixed(2)}
-- Evidence level distribution: ${Object.entries(searchResponse.qualityInsights.evidenceLevelDistribution).map(([level, count]) => `${level}: ${count}`).join(', ')}
-
-Please provide a detailed response that:
-1. Directly answers the user's question
-2. Synthesizes information from multiple sources
-3. Highlights the strength of evidence
-4. Includes relevant citations [1], [2], etc.
-5. Notes any limitations or gaps in the evidence
-6. Provides actionable insights when appropriate
-
-Use citation numbers [1], [2], etc. to reference the sources provided above.`;
-
-    // Use PRISM prompt if available
-    if (prismPrompt) {
+    if (body.prismSuite && body.useOptimalPrompt) {
       try {
         // Extract context parameters for prompt compilation
         const contextParameters = {
@@ -168,76 +113,102 @@ Use citation numbers [1], [2], etc. to reference the sources provided above.`;
         };
 
         const compiledPrompt = await prismPromptService.compilePrompt(
-          prismPrompt.id,
-          contextParameters,
-          body.tenantId
+          body.prismSuite,
+          'medical_query_analysis',
+          contextParameters
         );
 
-        systemPrompt = compiledPrompt.compiledSystemPrompt;
-        userPrompt = compiledPrompt.compiledUserPrompt;
+        const systemPrompt = compiledPrompt.compiledSystemPrompt;
+        const userPrompt = compiledPrompt.compiledUserPrompt;
+
+        prismContext = {
+          promptUsed: compiledPrompt.promptId,
+          suite: body.prismSuite,
+          domain: 'medical_affairs' as KnowledgeDomain
+        };
+
+        const completion = await openai.chat.completions.create({
+          model: 'gpt-4',
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: userPrompt }
+          ],
+          temperature: 0.1,
+          max_tokens: 2000
+        });
+
+        answer = completion.choices[0]?.message?.content || 'No response generated';
+
+        // Record prompt usage for analytics
+        try {
+          await prismPromptService.recordPromptUsage(
+            compiledPrompt.promptId,
+            body.query,
+            undefined, // Rating will be provided by user later
+            Date.now() - llmStartTime,
+            body.tenantId
+          );
+        } catch (analyticsError) {
+          console.warn('Failed to record prompt usage:', analyticsError);
+        }
 
       } catch (promptError) {
         // Use default prompts if compilation fails
         console.warn('Failed to compile PRISM prompt, using default:', promptError);
+        
+        const defaultSystemPrompt = `You are a medical AI assistant specialized in healthcare and clinical research. 
+        Provide accurate, evidence-based responses using the provided medical knowledge base.`;
+        
+        const defaultUserPrompt = `Query: ${body.query}
+        
+        Context: ${body.context || 'No additional context provided'}
+        
+        Medical Knowledge Base Results:
+        ${ragContext.map((result: any) => `- ${result.content}`).join('\n')}
+        
+        Please provide a comprehensive medical response based on the available information.`;
+
+        const completion = await openai.chat.completions.create({
+          model: 'gpt-4',
+          messages: [
+            { role: 'system', content: defaultSystemPrompt },
+            { role: 'user', content: defaultUserPrompt }
+          ],
+          temperature: 0.1,
+          max_tokens: 2000
+        });
+
+        answer = completion.choices[0]?.message?.content || 'No response generated';
       }
+    } else {
+      // Use standard medical prompt
+      const systemPrompt = `You are a medical AI assistant specialized in healthcare and clinical research. 
+      Provide accurate, evidence-based responses using the provided medical knowledge base.`;
+      
+      const userPrompt = `Query: ${body.query}
+      
+      Context: ${body.context || 'No additional context provided'}
+      
+      Medical Knowledge Base Results:
+      ${ragContext.map((result: any) => `- ${result.content}`).join('\n')}
+      
+      Please provide a comprehensive medical response based on the available information.`;
+
+      const completion = await openai.chat.completions.create({
+        model: 'gpt-4',
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt }
+        ],
+        temperature: 0.1,
+        max_tokens: 2000
+      });
+
+      answer = completion.choices[0]?.message?.content || 'No response generated';
     }
 
-    // Generate response
-    const completion = await openai.chat.completions.create({
-      model: 'gpt-4',
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: userPrompt }
-      ],
-      temperature: 0.3,
-      max_tokens: 2000
-    });
-
-    const answer = completion.choices[0]?.message?.content || 'No response generated';
     const llmTime = Date.now() - llmStartTime;
     const totalTime = Date.now() - searchStartTime;
-
-    // Step 5: Extract medical insights
-    const medicalInsights = {
-      therapeuticAreas: [...new Set(searchResults.flatMap((r: any) => r.medicalContext?.therapeuticAreas || []))],
-      evidenceLevels: [...new Set(searchResults.map((r: any) => r.sourceMetadata?.evidenceLevel || 'Unknown'))],
-      studyTypes: [...new Set(searchResults.flatMap((r: any) => r.medicalContext?.studyTypes || []))],
-      regulatoryMentions: [...new Set(searchResults.flatMap((r: any) => r.medicalContext?.regulatoryMentions || []))]
-    };
-
-    // Step 6: Prepare response sources
-    const sources = searchResults.map((result: any, index: number) => ({
-      id: result.chunkId || `result-${index}`,
-      title: result.sourceMetadata?.title || 'Unknown',
-      excerpt: result.content?.substring(0, 200) + '...' || 'No content',
-      similarity: result.similarity || 0.8,
-      relevanceScore: result.relevanceScore || 0.8,
-      qualityScore: result.qualityScore || 0.8,
-      evidenceLevel: result.sourceMetadata?.evidenceLevel || 'Unknown',
-      therapeuticAreas: result.medicalContext?.therapeuticAreas || [],
-      citation: `[${index + 1}]`,
-      metadata: {
-        authors: result.sourceMetadata?.authors || [],
-        publicationDate: result.sourceMetadata?.publicationDate || 'Unknown',
-        journal: result.sourceMetadata?.journal || 'Unknown',
-        doi: result.sourceMetadata?.doi || 'Unknown'
-      }
-    }));
-
-    // Step 7: Record usage analytics
-    if (prismPrompt) {
-      try {
-        await prismPromptService.recordPromptUsage(
-          prismPrompt.id,
-          body.query,
-          undefined, // Rating will be provided by user later
-          llmTime,
-          body.tenantId
-        );
-      } catch (analyticsError) {
-        console.warn('Failed to record prompt usage:', analyticsError);
-      }
-    }
 
     const response: MedicalRAGApiResponse = {
       success: true,
@@ -298,8 +269,8 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   } catch (error) {
     return NextResponse.json({
       success: false,
-      error: 'Service unavailable',
-      details: error instanceof Error ? error.message : 'Unknown error'
-    }, { status: 503 });
+      error: 'Health check failed',
+      message: error instanceof Error ? error.message : 'Unknown error'
+    }, { status: 500 });
   }
 }

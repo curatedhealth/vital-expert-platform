@@ -142,7 +142,7 @@ function AppLayoutContent({
             <span className="sr-only">Toggle navigation menu</span>
           </Button>
           <div className="w-full flex-1">
-            <nav className="flex items-center space-x-6 text-sm font-medium">
+            <nav className="hidden md:flex items-center space-x-6 text-sm font-medium">
               <Link
                 href="/dashboard"
                 className={cn(
@@ -291,6 +291,112 @@ function AppLayoutContent({
                 <Button variant="ghost" size="icon" onClick={() => setSidebarOpen(false)}>
                   <X className="h-5 w-5" />
                 </Button>
+              </div>
+              
+              {/* Mobile Navigation Links */}
+              <div className="p-4 border-b">
+                <nav className="flex flex-col space-y-2">
+                  <Link
+                    href="/dashboard"
+                    className={cn(
+                      "px-3 py-2 rounded-md text-sm font-medium transition-colors",
+                      pathname === "/dashboard" ? "bg-primary text-primary-foreground" : "text-foreground/60 hover:text-foreground hover:bg-muted"
+                    )}
+                    onClick={() => setSidebarOpen(false)}
+                  >
+                    Dashboard
+                  </Link>
+                  <Link
+                    href="/chat"
+                    className={cn(
+                      "px-3 py-2 rounded-md text-sm font-medium transition-colors",
+                      pathname.startsWith("/chat") ? "bg-primary text-primary-foreground" : "text-foreground/60 hover:text-foreground hover:bg-muted"
+                    )}
+                    onClick={() => setSidebarOpen(false)}
+                  >
+                    Ask Expert
+                  </Link>
+                  <Link
+                    href="/ask-panel"
+                    className={cn(
+                      "px-3 py-2 rounded-md text-sm font-medium transition-colors",
+                      pathname.startsWith("/ask-panel") ? "bg-primary text-primary-foreground" : "text-foreground/60 hover:text-foreground hover:bg-muted"
+                    )}
+                    onClick={() => setSidebarOpen(false)}
+                  >
+                    Ask Panel
+                  </Link>
+                  <Link
+                    href="/jobs-to-be-done"
+                    className={cn(
+                      "px-3 py-2 rounded-md text-sm font-medium transition-colors",
+                      pathname.startsWith("/jobs-to-be-done") ? "bg-primary text-primary-foreground" : "text-foreground/60 hover:text-foreground hover:bg-muted"
+                    )}
+                    onClick={() => setSidebarOpen(false)}
+                  >
+                    Jobs-to-be-Done
+                  </Link>
+                  <Link
+                    href="/solution-builder"
+                    className={cn(
+                      "px-3 py-2 rounded-md text-sm font-medium transition-colors",
+                      pathname.startsWith("/solution-builder") ? "bg-primary text-primary-foreground" : "text-foreground/60 hover:text-foreground hover:bg-muted"
+                    )}
+                    onClick={() => setSidebarOpen(false)}
+                  >
+                    Build Solution
+                  </Link>
+                  <Link
+                    href="/agents"
+                    className={cn(
+                      "px-3 py-2 rounded-md text-sm font-medium transition-colors",
+                      pathname.startsWith("/agents") ? "bg-primary text-primary-foreground" : "text-foreground/60 hover:text-foreground hover:bg-muted"
+                    )}
+                    onClick={() => setSidebarOpen(false)}
+                  >
+                    Agents
+                  </Link>
+                  <Link
+                    href="/knowledge"
+                    className={cn(
+                      "px-3 py-2 rounded-md text-sm font-medium transition-colors",
+                      pathname.startsWith("/knowledge") ? "bg-primary text-primary-foreground" : "text-foreground/60 hover:text-foreground hover:bg-muted"
+                    )}
+                    onClick={() => setSidebarOpen(false)}
+                  >
+                    Knowledge
+                  </Link>
+                  <Link
+                    href="/prism"
+                    className={cn(
+                      "px-3 py-2 rounded-md text-sm font-medium transition-colors",
+                      pathname.startsWith("/prism") ? "bg-primary text-primary-foreground" : "text-foreground/60 hover:text-foreground hover:bg-muted"
+                    )}
+                    onClick={() => setSidebarOpen(false)}
+                  >
+                    Prompt PRISM
+                  </Link>
+                  <Link
+                    href="/capabilities"
+                    className={cn(
+                      "px-3 py-2 rounded-md text-sm font-medium transition-colors",
+                      pathname.startsWith("/capabilities") ? "bg-primary text-primary-foreground" : "text-foreground/60 hover:text-foreground hover:bg-muted"
+                    )}
+                    onClick={() => setSidebarOpen(false)}
+                  >
+                    Capabilities
+                  </Link>
+                  <Link
+                    href="/workflows"
+                    className={cn(
+                      "px-3 py-2 rounded-md text-sm font-medium transition-colors",
+                      pathname.startsWith("/workflows") ? "bg-primary text-primary-foreground" : "text-foreground/60 hover:text-foreground hover:bg-muted"
+                    )}
+                    onClick={() => setSidebarOpen(false)}
+                  >
+                    Workflows
+                  </Link>
+                </nav>
               </div>
               <DashboardSidebarWithSuspense
                 className="p-4"

@@ -6,9 +6,18 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholde
 
 // Create a function that returns a new Supabase client
 export const createClient = () => {
-  return createSupabaseClient(supabaseUrl, supabaseAnonKey);
+  // Validate URL format to prevent Supabase validation errors
+  const validUrl = supabaseUrl.startsWith('https://') ? supabaseUrl : 'https://placeholder.supabase.co';
+  return createSupabaseClient(validUrl, supabaseAnonKey);
 };
 
-// Export the default instance for backward compatibility
-const _supabase = createClient();
-export const supabase = _supabase;
+// Export a lazy-loaded default instance for backward compatibility
+let _supabase: any = null;
+export const supabase = new Proxy({} as any, {
+  get(target, prop) {
+    if (!_supabase) {
+      _supabase = createClient();
+    }
+    return _supabase[prop];
+  }
+});

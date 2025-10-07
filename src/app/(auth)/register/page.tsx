@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useAuth } from '@/lib/auth/auth-context';
+import { supabase } from '@/lib/supabase/client';
 
 export default function RegisterPage() {
   const [email, setEmail] = useState('');
@@ -22,7 +22,6 @@ export default function RegisterPage() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
   const router = useRouter();
-  const { signup } = useAuth();
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,11 +41,28 @@ export default function RegisterPage() {
     }
 
     try {
-      await signup(email, password, fullName);
-      setSuccess(true);
-      setTimeout(() => {
-        router.push('/dashboard');
-      }, 2000);
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            full_name: fullName,
+            organization: organization,
+          },
+        },
+      });
+
+      if (error) {
+        setError(error.message);
+      } else {
+        setSuccess(true);
+        // If email confirmation is disabled, redirect to dashboard
+        if (data.user && !data.user.email_confirmed_at) {
+          setTimeout(() => {
+            router.push('/dashboard');
+          }, 2000);
+        }
+      }
     } catch (err) {
       setError('An unexpected error occurred');
     } finally {
@@ -55,8 +71,16 @@ export default function RegisterPage() {
   };
 
   const handleGoogleSignup = async () => {
-    // Mock Google signup - just use email/password for now
-    setError('Please use email and password to sign up');
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: typeof window !== 'undefined' ? `${window.location.origin}/dashboard` : '/dashboard',
+      },
+    });
+
+    if (error) {
+      setError(error.message);
+    }
   };
 
   if (success) {

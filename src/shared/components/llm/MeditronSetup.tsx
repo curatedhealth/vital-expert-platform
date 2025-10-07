@@ -1,21 +1,7 @@
 'use client';
 
-import {
-  TestTube,
-  Settings,
-  Activity,
-  CheckCircle,
-  XCircle,
-  Clock,
-  Shield,
-  Zap,
-  Brain,
-  FileText,
-  Users,
-  Heart
-} from 'lucide-react';
-import React, { useState, useEffect } from 'react';
-
+import React, { useState } from 'react';
+import { TestTube, Settings, Activity, CheckCircle, XCircle, Clock, Shield, Zap, Brain, FileText, Users, Heart } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -25,94 +11,16 @@ import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
-interface MeditronModel {
-  id: string;
-  provider_name: string;
-  model_id: string;
-  model_version: string;
-  is_active: boolean;
-  medical_accuracy_score: number;
-  capabilities: {
-    medical_specialties: string[];
-    supports_phi: boolean;
-    context_window: number;
-  };
-  cost_per_1k_input_tokens: number;
-  cost_per_1k_output_tokens: number;
-  average_latency_ms: number;
-  uptime_percentage: number;
-}
-
-interface ConnectionTest {
-  model: string;
-  status: 'pending' | 'success' | 'error';
-  latency?: number;
-  error?: string;
-}
-
 const MeditronSetup: React.FC = () => {
   const [apiKey, setApiKey] = useState('');
   const [isConfigured, setIsConfigured] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [models, setModels] = useState<MeditronModel[]>([]);
-  const [connectionTests, setConnectionTests] = useState<ConnectionTest[]>([]);
-  const [testProgress, setTestProgress] = useState(0);
-
-  useEffect(() => {
-    // Load existing configuration
-    const savedApiKey = localStorage.getItem('huggingface_api_key');
-    if (savedApiKey) {
-      setApiKey(savedApiKey);
-      setIsConfigured(true);
-    }
-
-    // Load mock models for demonstration
-    setModels([
-      {
-        id: 'meditron-7b',
-        provider_name: 'Meditron 7B',
-        model_id: 'meditron-7b',
-        model_version: '1.0.0',
-        is_active: true,
-        medical_accuracy_score: 85,
-        capabilities: {
-          medical_specialties: ['internal_medicine', 'cardiology', 'oncology', 'pediatrics'],
-          supports_phi: true,
-          context_window: 4096
-        },
-        cost_per_1k_input_tokens: 0.002,
-        cost_per_1k_output_tokens: 0.006,
-        average_latency_ms: 1200,
-        uptime_percentage: 99.5
-      },
-      {
-        id: 'meditron-70b',
-        provider_name: 'Meditron 70B',
-        model_id: 'meditron-70b',
-        model_version: '1.0.0',
-        is_active: true,
-        medical_accuracy_score: 92,
-        capabilities: {
-          medical_specialties: ['internal_medicine', 'cardiology', 'oncology', 'pediatrics', 'neurology', 'surgery'],
-          supports_phi: true,
-          context_window: 8192
-        },
-        cost_per_1k_input_tokens: 0.008,
-        cost_per_1k_output_tokens: 0.024,
-        average_latency_ms: 2500,
-        uptime_percentage: 99.8
-      }
-    ]);
-  }, []);
 
   const saveApiKey = async () => {
     if (!apiKey.trim()) return;
-
     setIsLoading(true);
     try {
-      // Simulate API key validation
       await new Promise(resolve => setTimeout(resolve, 1000));
-      
       localStorage.setItem('huggingface_api_key', apiKey);
       setIsConfigured(true);
     } catch (error) {
@@ -120,76 +28,6 @@ const MeditronSetup: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const toggleModelStatus = async (modelId: string, currentStatus: boolean) => {
-    try {
-      const response = await fetch(`/api/llm/providers/${modelId}/toggle`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ is_active: !currentStatus })
-      });
-
-      if (response.ok) {
-        setModels(prev =>
-          prev.map(model =>
-            model.id === modelId
-              ? { ...model, is_active: !currentStatus }
-              : model
-          )
-        );
-      }
-    } catch (error) {
-      console.error('Error toggling model status:', error);
-    }
-  };
-
-  const testAllConnections = async () => {
-    if (!isConfigured) return;
-
-    setIsLoading(true);
-    setTestProgress(0);
-    setConnectionTests([]);
-
-    const testModels = models.filter(model => model.is_active);
-    const tests: ConnectionTest[] = testModels.map(model => ({
-      model: model.model_id,
-      status: 'pending'
-    }));
-
-    setConnectionTests(tests);
-
-    for (let i = 0; i < testModels.length; i++) {
-      const model = testModels[i];
-      try {
-        const startTime = Date.now();
-        
-        // Simulate connection test
-        await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 2000));
-        
-        const latency = Date.now() - startTime;
-        
-        setConnectionTests(prev =>
-          prev.map(test =>
-            test.model === model.model_id
-              ? { ...test, status: 'success', latency }
-              : test
-          )
-        );
-      } catch (error) {
-        setConnectionTests(prev =>
-          prev.map(test =>
-            test.model === model.model_id
-              ? { ...test, status: 'error', error: 'Connection failed' }
-              : test
-          )
-        );
-      }
-
-      setTestProgress(((i + 1) / testModels.length) * 100);
-    }
-
-    setIsLoading(false);
   };
 
   return (
@@ -271,78 +109,20 @@ const MeditronSetup: React.FC = () => {
    
         <TabsContent value="models">
           <div className="grid gap-4">
-            {models.map((model) => (
-              <Card key={model.id}>
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-3">
-                      <Brain className="h-6 w-6 text-purple-600" />
-                      <div>
-                        <CardTitle className="text-lg">{model.provider_name}</CardTitle>
-                        <CardDescription>{model.model_id}</CardDescription>
-                      </div>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Badge variant={model.is_active ? "default" : "secondary"}>
-                        {model.is_active ? "Active" : "Inactive"}
-                      </Badge>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => toggleModelStatus(model.id, model.is_active)}
-                      >
-                        {model.is_active ? "Disable" : "Enable"}
-                      </Button>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div className="space-y-1">
-                      <p className="text-sm font-medium">Medical Accuracy</p>
-                      <div className="flex items-center space-x-2">
-                        <Progress value={model.medical_accuracy_score} className="flex-1" />
-                        <span className="text-sm font-medium">{model.medical_accuracy_score}%</span>
-                      </div>
-                    </div>
-                    <div className="space-y-1">
-                      <p className="text-sm font-medium">Context Window</p>
-                      <p className="text-lg font-semibold">{model.capabilities.context_window.toLocaleString()}</p>
-                    </div>
-                    <div className="space-y-1">
-                      <p className="text-sm font-medium">Avg Latency</p>
-                      <p className="text-lg font-semibold">{model.average_latency_ms}ms</p>
-                    </div>
-                    <div className="space-y-1">
-                      <p className="text-sm font-medium">Uptime</p>
-                      <p className="text-lg font-semibold">{model.uptime_percentage}%</p>
-                    </div>
-                  </div>
-   
-                  <div className="mt-4 space-y-2">
-                    <p className="text-sm font-medium">Medical Specialties</p>
-                    <div className="flex flex-wrap gap-2">
-                      {model.capabilities.medical_specialties.map((specialty) => (
-                        <Badge key={specialty} variant="outline" className="text-xs">
-                          {specialty.replace('_', ' ')}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-   
-                  <div className="mt-4 grid grid-cols-2 gap-4 text-sm">
-                    <div className="flex items-center space-x-2">
-                      <Shield className="h-4 w-4 text-green-600" />
-                      <span>PHI Compliant: {model.capabilities.supports_phi ? 'Yes' : 'No'}</span>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Zap className="h-4 w-4 text-yellow-600" />
-                      <span>Cost: ${model.cost_per_1k_input_tokens}/1K tokens</span>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <Brain className="h-5 w-5" />
+                  <span>Meditron Models</span>
+                </CardTitle>
+                <CardDescription>
+                  Available medical-grade AI models
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground">Model configuration will be available here.</p>
+              </CardContent>
+            </Card>
           </div>
         </TabsContent>
    
@@ -360,51 +140,13 @@ const MeditronSetup: React.FC = () => {
             <CardContent className="space-y-4">
               <div className="flex items-center space-x-3">
                 <Button
-                  onClick={testAllConnections}
                   disabled={!isConfigured || isLoading}
                   className="flex items-center space-x-2"
                 >
                   {isLoading ? <Clock className="h-4 w-4 animate-spin" /> : <Activity className="h-4 w-4" />}
                   <span>Test All Models</span>
                 </Button>
-   
-                {isLoading && (
-                  <div className="flex-1">
-                    <Progress value={testProgress} className="w-full" />
-                  </div>
-                )}
               </div>
-   
-              {connectionTests.length > 0 && (
-                <div className="space-y-3">
-                  {connectionTests.map((test) => (
-                    <div key={test.model} className="flex items-center justify-between p-3 border rounded-lg">
-                      <div className="flex items-center space-x-3">
-                        {test.status === 'pending' && <Clock className="h-4 w-4 animate-spin text-yellow-600" />}
-                        {test.status === 'success' && <CheckCircle className="h-4 w-4 text-green-600" />}
-                        {test.status === 'error' && <XCircle className="h-4 w-4 text-red-600" />}
-                        <span className="font-medium">{test.model}</span>
-                      </div>
-   
-                      <div className="flex items-center space-x-4">
-                        {test.latency && (
-                          <span className="text-sm text-muted-foreground">{test.latency}ms</span>
-                        )}
-                        {test.error && (
-                          <span className="text-sm text-red-600">{test.error}</span>
-                        )}
-                        <Badge variant={
-                          test.status === 'success' ? 'default' :
-                          test.status === 'error' ? 'destructive' :
-                          'secondary'
-                        }>
-                          {test.status}
-                        </Badge>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
    
               {!isConfigured && (
                 <Alert>
@@ -452,28 +194,6 @@ const MeditronSetup: React.FC = () => {
                       Trained on medical literature and clinical datasets
                     </p>
                     <Badge variant="default">Validated</Badge>
-                  </div>
-   
-                  <div className="p-4 border rounded-lg">
-                    <div className="flex items-center space-x-2 mb-2">
-                      <Users className="h-5 w-5 text-green-600" />
-                      <h4 className="font-semibold">Clinical Trials</h4>
-                    </div>
-                    <p className="text-sm text-muted-foreground mb-2">
-                      Undergoing clinical validation studies
-                    </p>
-                    <Badge variant="secondary">In Progress</Badge>
-                  </div>
-   
-                  <div className="p-4 border rounded-lg">
-                    <div className="flex items-center space-x-2 mb-2">
-                      <Shield className="h-5 w-5 text-purple-600" />
-                      <h4 className="font-semibold">Data Security</h4>
-                    </div>
-                    <p className="text-sm text-muted-foreground mb-2">
-                      End-to-end encryption and secure processing
-                    </p>
-                    <Badge variant="default">Secure</Badge>
                   </div>
                 </div>
    

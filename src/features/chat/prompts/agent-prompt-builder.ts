@@ -19,11 +19,6 @@ import {
 } from '../tools/external-api-tools';
 import { getFormatInstructions } from '../parsers/structured-output';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
-
 /**
  * Agent Prompt Builder
  * Builds comprehensive prompts by combining:

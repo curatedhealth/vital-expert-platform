@@ -6,11 +6,6 @@
 import { createClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
-
 interface PromptProcessingRequest {
   prompt_text: string
   category?: 'clinical_assessment' | 'diagnostic_reasoning' | 'treatment_planning' | 'medication_management' | 'patient_education' | 'clinical_documentation' | 'research_query' | 'regulatory_compliance' | 'clinical_decision_support' | 'pharmacovigilance'

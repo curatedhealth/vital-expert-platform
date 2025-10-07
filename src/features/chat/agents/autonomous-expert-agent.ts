@@ -47,11 +47,6 @@ import {
 // Import memory
 import { MemoryManager, selectMemoryStrategy } from '../memory/advanced-memory';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
-
 /**
  * Token Tracking Callback for Autonomous Agent
  */

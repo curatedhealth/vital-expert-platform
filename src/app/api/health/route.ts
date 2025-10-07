@@ -9,11 +9,6 @@ import { NextRequest, NextResponse } from 'next/server'
 // Force dynamic rendering for this route
 export const dynamic = 'force-dynamic'
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
-
 interface ServiceHealthCheck {
   service_name: string
   status: 'healthy' | 'degraded' | 'unhealthy' | 'unknown'

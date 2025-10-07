@@ -34,6 +34,8 @@ export async function GET(
     }
 
     // Enrich with derived fields
+    const acronym = prompt.acronym || '';
+    let suite = '';
 
     if (acronym) {
       if (['DRAFT', 'RADAR', 'REPLY', 'GUIDE'].includes(acronym)) suite = 'RULES™';

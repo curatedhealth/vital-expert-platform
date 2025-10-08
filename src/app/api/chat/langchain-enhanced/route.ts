@@ -11,11 +11,11 @@ import {
 
 
 /**
- * Enhanced LangChain Chat API with:
- * - ✅ Conversational Chains
- * - ✅ Buffer Memory
+ * Ask Expert API - Dedicated endpoint for Ask Expert functionality
  * - ✅ LangGraph Workflow
- * - ✅ Active LangSmith Tracing
+ * - ✅ Enhanced LangChain Service
+ * - ✅ Streaming Support
+ * - ✅ Budget Checking
  * - ✅ Token Tracking
  */
 export async function POST(request: NextRequest) {

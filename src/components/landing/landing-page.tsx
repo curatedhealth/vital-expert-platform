@@ -1,9 +1,15 @@
 'use client';
 
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useState } from 'react';
+import { Menu, X } from 'lucide-react';
 import { VitalLogo } from '@/shared/components/vital-logo';
 
 export function LandingPage() {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const router = useRouter();
+
   return (
     <div className="font-medium antialiased">
       {/* Navigation */}
@@ -11,30 +17,94 @@ export function LandingPage() {
         <div className="max-w-[1200px] mx-auto px-10 py-5 flex justify-between items-center">
           <VitalLogo size="sm" serviceLine="regulatory" animated="static" />
 
+          {/* Desktop Navigation */}
           <div className="hidden md:flex gap-8 items-center">
-            <Link href="/platform" className="text-vital-gray-60 no-underline text-sm font-semibold transition-colors duration-200 hover:text-vital-black">
+            <Link href="/platform" onClick={(e) => { e.preventDefault(); router.push('/platform'); }} className="text-vital-gray-60 no-underline text-sm font-semibold transition-colors duration-200 hover:text-vital-black">
               Platform
             </Link>
-            <Link href="/services" className="text-vital-gray-60 no-underline text-sm font-semibold transition-colors duration-200 hover:text-vital-black">
+            <Link href="/services" onClick={(e) => { e.preventDefault(); router.push('/services'); }} className="text-vital-gray-60 no-underline text-sm font-semibold transition-colors duration-200 hover:text-vital-black">
               Services
             </Link>
-            <Link href="/framework" className="text-vital-gray-60 no-underline text-sm font-semibold transition-colors duration-200 hover:text-vital-black">
+            <Link href="/framework" onClick={(e) => { e.preventDefault(); router.push('/framework'); }} className="text-vital-gray-60 no-underline text-sm font-semibold transition-colors duration-200 hover:text-vital-black">
               Framework
             </Link>
             <Link href="#pricing" className="text-vital-gray-60 no-underline text-sm font-semibold transition-colors duration-200 hover:text-vital-black">
               Pricing
             </Link>
-            <Link href="/login" className="text-vital-gray-60 no-underline text-sm font-semibold transition-colors duration-200 hover:text-vital-black">
+            <Link href="/login" onClick={(e) => { e.preventDefault(); router.push('/login'); }} className="text-vital-gray-60 no-underline text-sm font-semibold transition-colors duration-200 hover:text-vital-black">
               Sign In
             </Link>
             <Link
               href="/register"
+              onClick={(e) => { e.preventDefault(); router.push('/register'); }}
               className="px-5 py-2.5 bg-vital-black text-vital-white no-underline text-sm font-semibold rounded-md transition-all duration-200 hover:bg-regulatory-blue hover:-translate-y-px"
             >
               Get Started
             </Link>
           </div>
+
+          {/* Mobile Menu Button */}
+          <button
+            className="md:hidden p-2"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          >
+            {mobileMenuOpen ? (
+              <X className="h-6 w-6 text-vital-gray-60" />
+            ) : (
+              <Menu className="h-6 w-6 text-vital-gray-60" />
+            )}
+          </button>
         </div>
+
+        {/* Mobile Navigation Menu */}
+        {mobileMenuOpen && (
+          <div className="md:hidden bg-vital-white border-t border-vital-gray-80">
+            <div className="px-10 py-4 space-y-4">
+              <Link 
+                href="/platform" 
+                onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false); router.push('/platform'); }}
+                className="block text-vital-gray-60 no-underline text-sm font-semibold transition-colors duration-200 hover:text-vital-black"
+              >
+                Platform
+              </Link>
+              <Link 
+                href="/services" 
+                onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false); router.push('/services'); }}
+                className="block text-vital-gray-60 no-underline text-sm font-semibold transition-colors duration-200 hover:text-vital-black"
+              >
+                Services
+              </Link>
+              <Link 
+                href="/framework" 
+                onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false); router.push('/framework'); }}
+                className="block text-vital-gray-60 no-underline text-sm font-semibold transition-colors duration-200 hover:text-vital-black"
+              >
+                Framework
+              </Link>
+              <Link 
+                href="#pricing" 
+                className="block text-vital-gray-60 no-underline text-sm font-semibold transition-colors duration-200 hover:text-vital-black"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                Pricing
+              </Link>
+              <Link 
+                href="/login" 
+                onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false); router.push('/login'); }}
+                className="block text-vital-gray-60 no-underline text-sm font-semibold transition-colors duration-200 hover:text-vital-black"
+              >
+                Sign In
+              </Link>
+              <Link
+                href="/register"
+                onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false); router.push('/register'); }}
+                className="block px-5 py-2.5 bg-vital-black text-vital-white no-underline text-sm font-semibold rounded-md transition-all duration-200 hover:bg-regulatory-blue text-center"
+              >
+                Get Started
+              </Link>
+            </div>
+          </div>
+        )}
       </nav>
 
       {/* Hero Section */}
@@ -59,13 +129,13 @@ export function LandingPage() {
 
           <div className="flex gap-4 justify-center mb-12 flex-col md:flex-row items-center">
             <Link
-              href="#"
+              href="/register"
               className="px-8 py-3.5 text-base font-semibold no-underline rounded-lg transition-all duration-200 cursor-pointer border-none bg-vital-black text-vital-white hover:bg-regulatory-blue hover:-translate-y-0.5 hover:shadow-[0_4px_16px_rgba(0,0,0,0.10)]"
             >
               Enter Sandbox
             </Link>
             <Link
-              href="#"
+              href="/login"
               className="px-8 py-3.5 text-base font-semibold no-underline rounded-lg transition-all duration-200 cursor-pointer bg-vital-white text-vital-black border-2 border-vital-gray-80 hover:border-vital-black hover:-translate-y-0.5"
             >
               View Demo
@@ -182,7 +252,7 @@ export function LandingPage() {
 
           <div className="text-center mt-[60px]">
             <Link
-              href="#"
+              href="/register"
               className="px-8 py-3.5 text-base font-semibold no-underline rounded-lg transition-all duration-200 cursor-pointer border-none bg-vital-black text-vital-white hover:bg-regulatory-blue hover:-translate-y-0.5 hover:shadow-[0_4px_16px_rgba(0,0,0,0.10)]"
             >
               Try It Now - No Login Required
@@ -256,9 +326,12 @@ export function LandingPage() {
                 <li className="py-2 text-sm text-vital-gray-60 relative pl-6 before:content-['✓'] before:absolute before:left-0 before:text-clinical-green before:font-bold">1,000 queries</li>
                 <li className="py-2 text-sm text-vital-gray-60 relative pl-6 before:content-['✓'] before:absolute before:left-0 before:text-clinical-green before:font-bold">Sandbox access</li>
               </ul>
-              <button className="w-full py-3 bg-vital-black text-vital-white border-none rounded-md font-semibold cursor-pointer transition-all duration-200 hover:bg-regulatory-blue">
+              <Link
+                href="/register"
+                className="w-full py-3 bg-vital-black text-vital-white border-none rounded-md font-semibold cursor-pointer transition-all duration-200 hover:bg-regulatory-blue inline-block text-center no-underline"
+              >
                 Start Free Trial
-              </button>
+              </Link>
             </div>
 
             <div className="p-8 pt-10 bg-vital-white rounded-xl border-2 border-regulatory-blue text-center relative transition-all duration-300 scale-105 shadow-[0_16px_48px_rgba(0,0,0,0.15)] before:content-['MOST_POPULAR'] before:absolute before:-top-3 before:left-1/2 before:-translate-x-1/2 before:px-4 before:py-1 before:bg-regulatory-blue before:text-vital-white before:text-[11px] before:font-bold before:tracking-[0.05em] before:rounded-xl">
@@ -272,9 +345,12 @@ export function LandingPage() {
                 <li className="py-2 text-sm text-vital-gray-60 relative pl-6 before:content-['✓'] before:absolute before:left-0 before:text-clinical-green before:font-bold">5,000 queries</li>
                 <li className="py-2 text-sm text-vital-gray-60 relative pl-6 before:content-['✓'] before:absolute before:left-0 before:text-clinical-green before:font-bold">Priority support</li>
               </ul>
-              <button className="w-full py-3 bg-vital-black text-vital-white border-none rounded-md font-semibold cursor-pointer transition-all duration-200 hover:bg-regulatory-blue">
+              <Link
+                href="/register"
+                className="w-full py-3 bg-vital-black text-vital-white border-none rounded-md font-semibold cursor-pointer transition-all duration-200 hover:bg-regulatory-blue inline-block text-center no-underline"
+              >
                 Start Free Trial
-              </button>
+              </Link>
             </div>
 
             <div className="p-8 pt-10 bg-vital-white rounded-xl border-2 border-vital-gray-80 text-center relative transition-all duration-300 hover:border-regulatory-blue hover:-translate-y-1 hover:shadow-[0_8px_32px_rgba(0,0,0,0.12)]">
@@ -288,9 +364,12 @@ export function LandingPage() {
                 <li className="py-2 text-sm text-vital-gray-60 relative pl-6 before:content-['✓'] before:absolute before:left-0 before:text-clinical-green before:font-bold">Unlimited queries</li>
                 <li className="py-2 text-sm text-vital-gray-60 relative pl-6 before:content-['✓'] before:absolute before:left-0 before:text-clinical-green before:font-bold">Dedicated success manager</li>
               </ul>
-              <button className="w-full py-3 bg-vital-black text-vital-white border-none rounded-md font-semibold cursor-pointer transition-all duration-200 hover:bg-regulatory-blue">
+              <Link
+                href="/register"
+                className="w-full py-3 bg-vital-black text-vital-white border-none rounded-md font-semibold cursor-pointer transition-all duration-200 hover:bg-regulatory-blue inline-block text-center no-underline"
+              >
                 Start Free Trial
-              </button>
+              </Link>
             </div>
 
             <div className="p-8 pt-10 bg-vital-white rounded-xl border-2 border-vital-gray-80 text-center relative transition-all duration-300 hover:border-regulatory-blue hover:-translate-y-1 hover:shadow-[0_8px_32px_rgba(0,0,0,0.12)]">
@@ -302,9 +381,12 @@ export function LandingPage() {
                 <li className="py-2 text-sm text-vital-gray-60 relative pl-6 before:content-['✓'] before:absolute before:left-0 before:text-clinical-green before:font-bold">Custom integrations</li>
                 <li className="py-2 text-sm text-vital-gray-60 relative pl-6 before:content-['✓'] before:absolute before:left-0 before:text-clinical-green before:font-bold">Unlimited everything</li>
               </ul>
-              <button className="w-full py-3 bg-vital-black text-vital-white border-none rounded-md font-semibold cursor-pointer transition-all duration-200 hover:bg-regulatory-blue">
+              <Link
+                href="/register"
+                className="w-full py-3 bg-vital-black text-vital-white border-none rounded-md font-semibold cursor-pointer transition-all duration-200 hover:bg-regulatory-blue inline-block text-center no-underline"
+              >
                 Contact Sales
-              </button>
+              </Link>
             </div>
           </div>
 
@@ -321,7 +403,7 @@ export function LandingPage() {
           <p className="text-xl mb-10 opacity-90">Join healthcare leaders already using VITAL Expert to scale their strategic capacity.</p>
 
           <Link
-            href="#"
+            href="/register"
             className="inline-block px-10 py-4 bg-vital-white text-vital-black no-underline text-lg font-bold rounded-lg transition-all duration-200 hover:bg-regulatory-blue hover:text-vital-white hover:-translate-y-0.5"
           >
             Enter Your Sandbox

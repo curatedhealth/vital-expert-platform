@@ -74,10 +74,24 @@ export async function GET(request: NextRequest) {
     const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
     
     if (!supabaseUrl || !supabaseServiceKey) {
-      return NextResponse.json(
-        { error: 'Supabase configuration missing' },
-        { status: 500 }
-      );
+      console.log('⚠️ Supabase configuration missing, returning mock health status');
+      return NextResponse.json({
+        overall_status: 'degraded',
+        timestamp: new Date().toISOString(),
+        services: [
+          {
+            name: 'database',
+            status: 'degraded',
+            message: 'Supabase not configured - using mock data',
+            response_time_ms: 0
+          }
+        ],
+        system_metrics: {
+          uptime_seconds: 0,
+          active_connections: 0,
+          environment: process.env.NODE_ENV || 'development'
+        }
+      });
     }
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);

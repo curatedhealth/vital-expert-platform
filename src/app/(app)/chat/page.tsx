@@ -29,7 +29,7 @@ import { ChatMessages } from '@/features/chat/components/chat-messages';
 import { ChatSidebar } from '@/features/chat/components/chat-sidebar';
 import { AgentsBoard } from '@/features/agents/components/agents-board';
 import type { AgentWithCategories } from '@/lib/agents/agent-service';
-import { useAuth } from '@/lib/auth/auth-context';
+import { useAuth } from '@/lib/auth/supabase-auth-context';
 import { IconService, type Icon } from '@/lib/services/icon-service';
 import { useAgentsStore } from '@/lib/stores/agents-store';
 import { useChatStore, Agent, type AIModel } from '@/lib/stores/chat-store';

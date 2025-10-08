@@ -1,0 +1,142 @@
+{
+  "passed": 24,
+  "failed": 0,
+  "warnings": 3,
+  "tests": [
+    {
+      "name": "Environment: OPENAI_API_KEY",
+      "status": "PASS",
+      "message": "Variable is set"
+    },
+    {
+      "name": "Environment: NEXT_PUBLIC_SUPABASE_URL",
+      "status": "WARN",
+      "message": "Variable not set or too short"
+    },
+    {
+      "name": "Environment: SUPABASE_SERVICE_ROLE_KEY",
+      "status": "PASS",
+      "message": "Variable is set"
+    },
+    {
+      "name": "LangSmith Tracing",
+      "status": "WARN",
+      "message": "LangSmith tracing disabled"
+    },
+    {
+      "name": "OpenAI API Connection",
+      "status": "PASS",
+      "message": "API connection successful"
+    },
+    {
+      "name": "OpenAI Response",
+      "status": "PASS",
+      "message": "Response: Test successful"
+    },
+    {
+      "name": "LangChain Imports",
+      "status": "PASS",
+      "message": "Successfully imported LangChain modules"
+    },
+    {
+      "name": "LangChain LLM",
+      "status": "PASS",
+      "message": "Response: LangChain test successful"
+    },
+    {
+      "name": "LangGraph Imports",
+      "status": "PASS",
+      "message": "Successfully imported LangGraph modules"
+    },
+    {
+      "name": "LangGraph Execution",
+      "status": "PASS",
+      "message": "Result: LangGraph test successful"
+    },
+    {
+      "name": "Supabase Connection",
+      "status": "WARN",
+      "message": "Skipped - Supabase not configured"
+    },
+    {
+      "name": "Enhanced Service File",
+      "status": "PASS",
+      "message": "Service file exists"
+    },
+    {
+      "name": "Enhanced Service Class",
+      "status": "PASS",
+      "message": "Service class is defined"
+    },
+    {
+      "name": "Enhanced Service Methods",
+      "status": "PASS",
+      "message": "Required methods are implemented"
+    },
+    {
+      "name": "API Route: src/app/api/chat/langchain-enhanced/route.ts",
+      "status": "PASS",
+      "message": "Route file exists"
+    },
+    {
+      "name": "POST Method: src/app/api/chat/langchain-enhanced/route.ts",
+      "status": "PASS",
+      "message": "POST method implemented"
+    },
+    {
+      "name": "Next.js Integration: src/app/api/chat/langchain-enhanced/route.ts",
+      "status": "PASS",
+      "message": "Next.js integration present"
+    },
+    {
+      "name": "API Route: src/app/api/chat/enhanced/route.ts",
+      "status": "PASS",
+      "message": "Route file exists"
+    },
+    {
+      "name": "POST Method: src/app/api/chat/enhanced/route.ts",
+      "status": "PASS",
+      "message": "POST method implemented"
+    },
+    {
+      "name": "Next.js Integration: src/app/api/chat/enhanced/route.ts",
+      "status": "PASS",
+      "message": "Next.js integration present"
+    },
+    {
+      "name": "Memory Imports",
+      "status": "PASS",
+      "message": "Successfully imported memory modules"
+    },
+    {
+      "name": "Memory Operations",
+      "status": "PASS",
+      "message": "Memory save/load working"
+    },
+    {
+      "name": "Error Handling: src/features/chat/services/ask-expert-graph.ts",
+      "status": "PASS",
+      "message": "3 try-catch blocks found"
+    },
+    {
+      "name": "Error Handling: src/features/chat/services/enhanced-langchain-service.ts",
+      "status": "PASS",
+      "message": "4 try-catch blocks found"
+    },
+    {
+      "name": "Error Handling: src/app/api/chat/langchain-enhanced/route.ts",
+      "status": "PASS",
+      "message": "5 try-catch blocks found"
+    },
+    {
+      "name": "Singleton Pattern: src/features/chat/services/enhanced-langchain-service.ts",
+      "status": "PASS",
+      "message": "Singleton pattern implemented"
+    },
+    {
+      "name": "Caching: src/features/chat/services/enhanced-langchain-service.ts",
+      "status": "PASS",
+      "message": "Caching mechanisms found"
+    }
+  ]
+}

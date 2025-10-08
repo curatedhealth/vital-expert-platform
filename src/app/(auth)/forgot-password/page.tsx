@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useAuth } from '@/lib/supabase/auth-context';
+import { useAuth } from '@/lib/auth/supabase-auth-context';
 
 const forgotPasswordSchema = z.object({
   email: z.string().email('Invalid email address'),

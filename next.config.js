@@ -5,9 +5,7 @@ const nextConfig = {
     domains: [
       'images.unsplash.com',
       'avatars.githubusercontent.com',
-      'xazinxsiglqokwfmogyk.supabase.co',
-      'localhost',
-      '127.0.0.1'
+      'xazinxsiglqokwfmogyk.supabase.co'
     ],
     remotePatterns: [
       {
@@ -15,19 +13,7 @@ const nextConfig = {
         hostname: 'xazinxsiglqokwfmogyk.supabase.co',
         port: '',
         pathname: '/storage/**',
-      },
-      {
-        protocol: 'http',
-        hostname: '127.0.0.1',
-        port: '54321',
-        pathname: '/storage/**',
-      },
-      {
-        protocol: 'http',
-        hostname: 'localhost',
-        port: '54321',
-        pathname: '/storage/**',
-      },
+      }
     ],
   },
   // Exclude backend directories from Next.js compilation
@@ -59,8 +45,9 @@ const nextConfig = {
     config.plugins.push(
       new (require('webpack')).DefinePlugin({
         'process.env.NODE_NO_WARNINGS': JSON.stringify('1'),
-        'typeof window': JSON.stringify('undefined'),
-        'typeof location': JSON.stringify('undefined'),
+        'typeof window': isServer ? JSON.stringify('undefined') : JSON.stringify('object'),
+        'typeof document': isServer ? JSON.stringify('undefined') : JSON.stringify('object'),
+        'typeof location': isServer ? JSON.stringify('undefined') : JSON.stringify('object'),
       })
     );
 
@@ -89,6 +76,15 @@ const nextConfig = {
   experimental: {
     serverComponentsExternalPackages: ['@supabase/supabase-js', '@supabase/realtime-js'],
   },
+  
+  // Configure compiler options
+  compiler: {
+    styledComponents: true,
+  },
+  
+  // Disable styled-jsx to avoid SSR issues
+  swcMinify: true,
+  
   
   // Configure runtime for API routes to avoid Edge Runtime warnings
   async headers() {

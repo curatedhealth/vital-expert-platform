@@ -1,3 +1,7 @@
+# VITAL Path - Cloud-Only Configuration
+# Local Supabase services deprecated - using cloud instance
+# Generated: 2025-10-08T20:05:32.299Z
+
 # VITAL Path - Hybrid 3-Tier Architecture
 # Docker Compose configuration for production deployment
 
@@ -207,8 +211,8 @@ services:
     restart: unless-stopped
 
   # PostgreSQL Database for Platform Data
-  postgres:
-    image: postgres:15-alpine
+  # postgres: # DEPRECATED - Using cloud instance
+    image: # postgres: # DEPRECATED - Using cloud instance15-alpine
     ports:
       - "5432:5432"
     environment:

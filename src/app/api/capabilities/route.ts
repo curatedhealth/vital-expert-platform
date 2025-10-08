@@ -11,6 +11,39 @@ import { supabase } from '@/lib/supabase/client';
 // GET /api/capabilities - Fetch medical capabilities
 export async function GET(request: NextRequest) {
   try {
+    // Check if Supabase is configured
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    
+    if (!supabaseUrl || !supabaseServiceKey) {
+      console.log('⚠️ Supabase configuration missing, returning mock capabilities');
+      return NextResponse.json({
+        capabilities: [
+          {
+            id: 'mock-cap-1',
+            name: 'Clinical Trial Design',
+            display_name: 'Clinical Trial Design',
+            medical_domain: 'Clinical Research',
+            status: 'active',
+            clinical_validation_status: 'validated',
+            description: 'Expertise in designing robust clinical trials'
+          },
+          {
+            id: 'mock-cap-2',
+            name: 'Regulatory Strategy',
+            display_name: 'Regulatory Strategy',
+            medical_domain: 'Regulatory Affairs',
+            status: 'active',
+            clinical_validation_status: 'validated',
+            description: 'FDA and global regulatory strategy development'
+          }
+        ],
+        count: 2,
+        filters: { domain: null, status: 'active', validationStatus: null },
+        timestamp: new Date().toISOString()
+      });
+    }
+
     const searchParams = request.nextUrl.searchParams;
     const domain = searchParams.get('domain');
     const status = searchParams.get('status') || 'active';

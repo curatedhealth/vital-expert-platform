@@ -1,10 +1,10 @@
 import { Inter } from 'next/font/google'
 
-import { AuthProvider } from '@/lib/auth/auth-context'
 import '@/lib/polyfills/location-polyfill'
 
 import type { Metadata } from 'next'
 import './globals.css'
+import { SupabaseAuthProvider } from '@/lib/auth/supabase-auth-context'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -21,9 +21,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-        <AuthProvider>
+        <SupabaseAuthProvider>
           {children}
-        </AuthProvider>
+        </SupabaseAuthProvider>
       </body>
     </html>
   )

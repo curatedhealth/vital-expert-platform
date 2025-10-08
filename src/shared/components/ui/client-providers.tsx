@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 
-import { AuthProvider } from '@/features/auth/services/auth-context';
+import { SupabaseAuthProvider } from '@/lib/auth/supabase-auth-context';
 
 export function ClientProviders({ children }: { children: React.ReactNode }) {
   const [mounted, setMounted] = useState(false);
@@ -22,8 +22,8 @@ export function ClientProviders({ children }: { children: React.ReactNode }) {
   // }
 
   return (
-    <AuthProvider>
+    <SupabaseAuthProvider>
       {children}
-    </AuthProvider>
+    </SupabaseAuthProvider>
   );
 }

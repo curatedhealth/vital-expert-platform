@@ -41,26 +41,54 @@ export default function RegisterPage() {
     }
 
     try {
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
-            full_name: fullName,
-            organization: organization,
-          },
-        },
-      });
-
-      if (error) {
-        setError(error.message);
-      } else {
+      // Check if Supabase is configured
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://xazinxsiglqokwfmogyk.supabase.co';
+      
+      if (!supabaseUrl || supabaseUrl === 'undefined') {
+        // Development mode - use mock registration
+        console.log('🔧 Development mode: Using mock registration');
+        
+        // Create mock user
+        const mockUser = {
+          id: 'mock-user-' + Date.now(),
+          email: email,
+          user_metadata: { 
+            name: fullName,
+            organization: organization
+          }
+        };
+        
+        // Store in localStorage for development
+        localStorage.setItem('vital-mock-user', JSON.stringify(mockUser));
+        localStorage.setItem('vital-mock-session', JSON.stringify({ user: mockUser }));
+        
         setSuccess(true);
-        // If email confirmation is disabled, redirect to dashboard
-        if (data.user && !data.user.email_confirmed_at) {
-          setTimeout(() => {
-            router.push('/dashboard');
-          }, 2000);
+        setTimeout(() => {
+          router.push('/dashboard');
+        }, 2000);
+      } else {
+        // Production mode - use real Supabase
+        const { data, error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            data: {
+              full_name: fullName,
+              organization: organization,
+            },
+          },
+        });
+
+        if (error) {
+          setError(error.message);
+        } else {
+          setSuccess(true);
+          // If email confirmation is disabled, redirect to dashboard
+          if (data.user && !data.user.email_confirmed_at) {
+            setTimeout(() => {
+              router.push('/dashboard');
+            }, 2000);
+          }
         }
       }
     } catch (err) {
@@ -71,51 +99,68 @@ export default function RegisterPage() {
   };
 
   const handleGoogleSignup = async () => {
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: typeof window !== 'undefined' ? `${window.location.origin}/dashboard` : '/dashboard',
-      },
-    });
-
-    if (error) {
-      setError(error.message);
-    }
+    // Google OAuth is temporarily disabled - enable in Supabase dashboard
+    setError('Google OAuth is not enabled. Please use email/password registration.');
   };
 
   if (success) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-trust-blue/5 to-progress-teal/5 flex items-center justify-center p-4">
-        <Card className="w-full max-w-md text-center">
-          <CardHeader>
-            <div className="w-16 h-16 bg-clinical-green/10 rounded-full flex items-center justify-center mx-auto mb-4">
-              <CheckCircle className="h-8 w-8 text-clinical-green" />
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-teal-50 flex items-center justify-center p-4">
+        <div className="w-full max-w-md">
+          {/* Enhanced Logo Section */}
+          <div className="text-center mb-8">
+            <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-blue-600 to-teal-600 rounded-2xl shadow-lg mb-4">
+              <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
             </div>
-            <CardTitle className="text-2xl">Welcome to VITALpath!</CardTitle>
-            <CardDescription>
-              Your account has been created successfully. You're being redirected to your dashboard.
-            </CardDescription>
-          </CardHeader>
-        </Card>
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-teal-600 bg-clip-text text-transparent mb-2">
+              VITAL Expert
+            </h1>
+            <p className="text-gray-600 text-sm">Strategic Intelligence Platform</p>
+          </div>
+
+          <Card className="shadow-xl border-0 bg-white/80 backdrop-blur-sm text-center">
+            <CardHeader className="pb-6">
+              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <CheckCircle className="h-8 w-8 text-green-600" />
+              </div>
+              <CardTitle className="text-2xl font-semibold text-gray-900">Welcome to VITAL Expert!</CardTitle>
+              <CardDescription className="text-gray-600">
+                Your account has been created successfully. You're being redirected to your dashboard.
+              </CardDescription>
+            </CardHeader>
+          </Card>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-trust-blue/5 to-progress-teal/5 flex items-center justify-center p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <div className="flex items-center justify-center gap-2 mb-4">
-            <span className="text-3xl">🧩</span>
-            <span className="text-2xl font-bold text-deep-charcoal">VITALpath</span>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-teal-50 flex items-center justify-center p-4">
+      <div className="w-full max-w-md">
+        {/* Enhanced Logo Section */}
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-blue-600 to-teal-600 rounded-2xl shadow-lg mb-4">
+            <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
           </div>
-          <CardTitle className="text-2xl">Create your account</CardTitle>
-          <CardDescription>
-            Join thousands of healthcare professionals transforming their organizations
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleRegister} className="space-y-4">
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-teal-600 bg-clip-text text-transparent mb-2">
+            VITAL Expert
+          </h1>
+          <p className="text-gray-600 text-sm">Strategic Intelligence Platform</p>
+        </div>
+
+        <Card className="shadow-xl border-0 bg-white/80 backdrop-blur-sm">
+          <CardHeader className="text-center pb-6">
+            <CardTitle className="text-2xl font-semibold text-gray-900">Create your account</CardTitle>
+            <CardDescription className="text-gray-600">
+              Join thousands of healthcare professionals transforming their organizations
+            </CardDescription>
+          </CardHeader>
+        <CardContent className="px-6 pb-6">
+          <form onSubmit={handleRegister} className="space-y-6">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="fullName">Full Name</Label>
@@ -265,7 +310,8 @@ export default function RegisterPage() {
             </Link>
           </div>
         </CardContent>
-      </Card>
+        </Card>
+      </div>
     </div>
   );
 }

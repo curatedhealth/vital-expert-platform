@@ -10,6 +10,41 @@ import { supabase } from '@/lib/supabase/client';
 // GET /api/roles - Fetch healthcare roles
 export async function GET(request: NextRequest) {
   try {
+    // Check if Supabase is configured
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    
+    if (!supabaseUrl || !supabaseServiceKey) {
+      console.log('⚠️ Supabase configuration missing, returning mock roles');
+      return NextResponse.json({
+        roles: [
+          {
+            id: 'mock-role-1',
+            name: 'Senior Regulatory Specialist',
+            department: 'Compliance',
+            seniority_level: 'Senior',
+            requires_medical_license: false,
+            description: 'Expert in FDA regulations and compliance'
+          },
+          {
+            id: 'mock-role-2',
+            name: 'Clinical Research Director',
+            department: 'Research',
+            seniority_level: 'Director',
+            requires_medical_license: true,
+            description: 'Oversees clinical trial design and execution'
+          }
+        ],
+        count: 2,
+        filters: {
+          availableDepartments: ['Compliance', 'Research'],
+          availableSeniorityLevels: ['Senior', 'Director'],
+          applied: { department: null, seniorityLevel: null, requiresMedicalLicense: null }
+        },
+        timestamp: new Date().toISOString()
+      });
+    }
+
     const searchParams = request.nextUrl.searchParams;
     const department = searchParams.get('department');
     const seniorityLevel = searchParams.get('seniorityLevel');

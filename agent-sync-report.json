@@ -1,0 +1,56 @@
+{
+  "timestamp": "2025-10-08T19:56:14.005Z",
+  "environment": "all",
+  "statistics": {
+    "total": 372,
+    "byStatus": {
+      "inactive": 243,
+      "active": 124,
+      "testing": 3,
+      "development": 2
+    },
+    "byTier": {
+      "Tier 2": 208,
+      "Tier 1": 54,
+      "Tier 3": 110
+    },
+    "byBusinessFunction": {
+      "IT/Digital": 100,
+      "Digital Health - Product Development": 2,
+      "Digital Health - Market Access": 1,
+      "Digital Health - Information Security": 1,
+      "Clinical Development": 31,
+      "Regulatory Affairs": 22,
+      "Digital Health - Marketing": 1,
+      "Legal": 10,
+      "Commercial": 54,
+      "Quality": 19,
+      "Pharmacovigilance": 12,
+      "Medical Affairs": 36,
+      "Manufacturing": 17,
+      "Business Development": 8,
+      "Research & Development": 19,
+      "Digital Health": 2,
+      "Digital Health - Digital Therapeutics": 3,
+      "Digital Health - Remote Monitoring": 5,
+      "Digital Health - Data Analytics": 5,
+      "Digital Health - Patient Engagement": 5,
+      "Digital Health - Telehealth": 5,
+      "Digital Health - Strategy": 5,
+      "Digital Health - Regulatory Affairs": 2,
+      "Digital Health - Clinical Operations": 2,
+      "Digital Health - Clinical Informatics": 2,
+      "Digital Health - Patient Experience": 1,
+      "Digital Health - Legal Compliance": 1,
+      "Digital Health - Healthcare IT": 1
+    },
+    "byDepartment": {},
+    "recentlyCreated": 372
+  },
+  "summary": {
+    "totalAgents": 372,
+    "activeAgents": 124,
+    "recentlyAdded": 372,
+    "topBusinessFunction": "IT/Digital"
+  }
+}

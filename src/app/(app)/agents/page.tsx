@@ -10,7 +10,7 @@ import { AgentCreator } from '@/features/chat/components/agent-creator';
 import { AgentsOverview } from '@/features/agents/components/agents-overview';
 import { AgentsTable } from '@/features/agents/components/agents-table';
 import { useAgentsFilter } from '@/contexts/agents-filter-context';
-import { useAuth } from '@/lib/auth/auth-context';
+import { useAuth } from '@/lib/auth/supabase-auth-context';
 import { type Agent as AgentsStoreAgent, useAgentsStore } from '@/lib/stores/agents-store';
 import { type Agent } from '@/lib/stores/chat-store';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';

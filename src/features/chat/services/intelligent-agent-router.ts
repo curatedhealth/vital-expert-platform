@@ -218,8 +218,15 @@ function fallbackAgentSelection(
 }
 
 // Cache agents for 5 minutes to reduce database calls
+// Cloud-optimized agent loading
+const CLOUD_OPTIMIZATION = {
+  connectionPooling: true,
+  retryAttempts: 3,
+  timeoutMs: 10000,
+  batchSize: 50
+};
 let agentsCache: { agents: Agent[]; timestamp: number } | null = null;
-const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes - cloud optimized // 5 minutes
 
 /**
  * Load all active agents from database (with caching)

@@ -1,3 +1,7 @@
+# VITAL Path - Cloud-Only Configuration
+# Local Supabase services deprecated - using cloud instance
+# Generated: 2025-10-08T20:05:32.300Z
+
 # ===================================================================
 # VITAL Path - Phase 2 Enhanced Complete System
 # Docker Compose configuration with all Phase 2 Enhanced services
@@ -55,8 +59,8 @@ services:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - REDIS_PASSWORD=${REDIS_PASSWORD}
-      - POSTGRES_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
-      - MONGODB_URL=mongodb://mongodb:27017
+      - POSTGRES_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@# postgres: # DEPRECATED - Using cloud instance5432/${POSTGRES_DB}
+      - MONGODB_URL=mongo# db: # DEPRECATED - Using cloud instance//mongo# db: # DEPRECATED - Using cloud instance27017
       - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
       - FHIR_BASE_URL=http://fhir-server:8080/fhir
       - OPENTELEMETRY_ENDPOINT=http://jaeger:14268
@@ -92,7 +96,7 @@ services:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - REDIS_PASSWORD=${REDIS_PASSWORD}
-      - POSTGRES_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      - POSTGRES_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@# postgres: # DEPRECATED - Using cloud instance5432/${POSTGRES_DB}
       - LICENSE_VERIFICATION_API=${LICENSE_VERIFICATION_API}
       - BOARD_CERTIFICATION_API=${BOARD_CERTIFICATION_API}
       - DEA_VERIFICATION_API=${DEA_VERIFICATION_API}
@@ -126,7 +130,7 @@ services:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - REDIS_PASSWORD=${REDIS_PASSWORD}
-      - POSTGRES_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      - POSTGRES_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@# postgres: # DEPRECATED - Using cloud instance5432/${POSTGRES_DB}
       - HIPAA_COMPLIANCE_ENABLED=true
       - FDA_COMPLIANCE_ENABLED=true
       - GDPR_COMPLIANCE_ENABLED=true
@@ -161,7 +165,7 @@ services:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - REDIS_PASSWORD=${REDIS_PASSWORD}
-      - POSTGRES_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      - POSTGRES_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@# postgres: # DEPRECATED - Using cloud instance5432/${POSTGRES_DB}
       - WEBSOCKET_ENABLED=true
       - CONSENSUS_ALGORITHMS_ENABLED=true
       - SESSION_RECORDING_ENABLED=true
@@ -224,8 +228,8 @@ services:
       retries: 3
 
   # PostgreSQL Database
-  postgres:
-    image: postgres:15-alpine
+  # postgres: # DEPRECATED - Using cloud instance
+    image: # postgres: # DEPRECATED - Using cloud instance15-alpine
     ports:
       - "5432:5432"
     environment:
@@ -266,7 +270,7 @@ services:
       retries: 3
 
   # MongoDB - Event Store
-  mongodb:
+  mongo# db: # DEPRECATED - Using cloud instance
     image: mongo:7.0
     ports:
       - "27017:27017"
@@ -452,7 +456,7 @@ services:
       dockerfile: Dockerfile.worker
     environment:
       - ENVIRONMENT=production
-      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@# postgres: # DEPRECATED - Using cloud instance5432/${POSTGRES_DB}
       - REDIS_URL=redis://redis:6379
       - SECRET_KEY=${SECRET_KEY}
       - WORKER_CONCURRENCY=4
@@ -490,7 +494,7 @@ services:
       context: ./scripts/backup
       dockerfile: Dockerfile
     environment:
-      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@# postgres: # DEPRECATED - Using cloud instance5432/${POSTGRES_DB}
       - BACKUP_SCHEDULE="0 2 * * *"  # Daily at 2 AM
       - BACKUP_RETENTION_DAYS=30
       - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}

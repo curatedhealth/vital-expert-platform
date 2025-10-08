@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Navigation } from '@/components/Navigation';
+import { Navigation } from '@/shared/components/Navigation';
 
 export default function PlatformPage() {
   return (

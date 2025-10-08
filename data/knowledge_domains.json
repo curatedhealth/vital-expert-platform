@@ -1,0 +1,74 @@
+[
+  {
+    "name": "Regulatory Affairs",
+    "slug": "regulatory-affairs",
+    "description": "FDA, EMA, and global regulatory requirements",
+    "is_active": true,
+    "metadata": {},
+    "created_at": "2025-10-07T23:02:48.067Z",
+    "updated_at": "2025-10-07T23:02:48.067Z"
+  },
+  {
+    "name": "Clinical Development",
+    "slug": "clinical-development",
+    "description": "Clinical trial design and execution",
+    "is_active": true,
+    "metadata": {},
+    "created_at": "2025-10-07T23:02:48.067Z",
+    "updated_at": "2025-10-07T23:02:48.067Z"
+  },
+  {
+    "name": "Quality Assurance",
+    "slug": "quality-assurance",
+    "description": "Quality management systems and compliance",
+    "is_active": true,
+    "metadata": {},
+    "created_at": "2025-10-07T23:02:48.067Z",
+    "updated_at": "2025-10-07T23:02:48.067Z"
+  },
+  {
+    "name": "Market Access",
+    "slug": "market-access",
+    "description": "Reimbursement and market access strategies",
+    "is_active": true,
+    "metadata": {},
+    "created_at": "2025-10-07T23:02:48.067Z",
+    "updated_at": "2025-10-07T23:02:48.067Z"
+  },
+  {
+    "name": "Digital Health",
+    "slug": "digital-health",
+    "description": "Digital therapeutics and health technologies",
+    "is_active": true,
+    "metadata": {},
+    "created_at": "2025-10-07T23:02:48.067Z",
+    "updated_at": "2025-10-07T23:02:48.067Z"
+  },
+  {
+    "name": "Medical Devices",
+    "slug": "medical-devices",
+    "description": "Medical device development and regulation",
+    "is_active": true,
+    "metadata": {},
+    "created_at": "2025-10-07T23:02:48.067Z",
+    "updated_at": "2025-10-07T23:02:48.067Z"
+  },
+  {
+    "name": "Pharmacovigilance",
+    "slug": "pharmacovigilance",
+    "description": "Drug safety and adverse event monitoring",
+    "is_active": true,
+    "metadata": {},
+    "created_at": "2025-10-07T23:02:48.067Z",
+    "updated_at": "2025-10-07T23:02:48.067Z"
+  },
+  {
+    "name": "Health Economics",
+    "slug": "health-economics",
+    "description": "Economic evaluation and outcomes research",
+    "is_active": true,
+    "metadata": {},
+    "created_at": "2025-10-07T23:02:48.067Z",
+    "updated_at": "2025-10-07T23:02:48.067Z"
+  }
+]

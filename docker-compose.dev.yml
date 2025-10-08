@@ -1,3 +1,7 @@
+# VITAL Path - Cloud-Only Configuration
+# Local Supabase services deprecated - using cloud instance
+# Generated: 2025-10-08T20:05:32.300Z
+
 # VITAL Path - Development Override
 # Docker Compose configuration for local development
 
@@ -63,7 +67,7 @@ services:
 
   # PostgreSQL for local development (if not using Supabase)
   postgres-dev:
-    image: postgres:15-alpine
+    image: # postgres: # DEPRECATED - Using cloud instance15-alpine
     ports:
       - "5432:5432"
     environment:
@@ -77,8 +81,8 @@ services:
       - vital-path-network
 
   # Supabase Local (Alternative to cloud Supabase)
-  supabase-db:
-    image: supabase/postgres:15.1.0.117
+  supabase-# db: # DEPRECATED - Using cloud instance
+    image: supabase/# postgres: # DEPRECATED - Using cloud instance15.1.0.117
     ports:
       - "54322:5432"
     environment:

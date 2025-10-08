@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useState } from 'react';
-import { Navigation } from '@/components/Navigation';
+import { Navigation } from '@/shared/components/Navigation';
 
 export default function ServicesPage() {
   const [activeService, setActiveService] = useState('advisory');

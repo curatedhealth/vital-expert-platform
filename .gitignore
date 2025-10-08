@@ -187,3 +187,8 @@ ESLINT_*.json
 checkpoints.sqlite
 checkpoints.sqlite-shm
 checkpoints.sqlite-waldatabase/backups/*.sql
+.env.local.backup
+.env.production
+.env.vercel
+deprecate-local-supabase.js
+sync-agents-to-environments.js

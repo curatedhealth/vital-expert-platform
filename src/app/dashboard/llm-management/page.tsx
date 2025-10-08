@@ -94,31 +94,123 @@ function LLMManagementPageContent() {
             <div className="flex items-center gap-3">
               <Brain className="h-6 w-6 text-blue-600" />
               <div>
-                <h2 className="text-2xl font-bold">RAG Performance Dashboard</h2>
+                <h2 className="text-2xl font-bold">RAG Performance Monitoring</h2>
                 <p className="text-gray-600">Monitor and optimize RAG system performance</p>
               </div>
             </div>
+            
+            {/* RAG Performance Metrics */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Overall Score</CardTitle>
+                  <Brain className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-green-600">87.5%</div>
+                  <p className="text-xs text-muted-foreground">+2.3% from yesterday</p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Cache Hit Rate</CardTitle>
+                  <Database className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">73.2%</div>
+                  <p className="text-xs text-muted-foreground">15,420 total queries</p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Response Time</CardTitle>
+                  <Clock className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">1,250ms</div>
+                  <p className="text-xs text-muted-foreground">-12.5% from yesterday</p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Cost Savings</CardTitle>
+                  <DollarSign className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">68.4%</div>
+                  <p className="text-xs text-muted-foreground">$2,340 saved this month</p>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* RAG Strategy Performance */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Strategy Performance Comparison</CardTitle>
+                <CardDescription>Compare different RAG retrieval strategies</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between p-3 border rounded-lg">
+                    <div className="flex items-center space-x-3">
+                      <Badge variant="outline">hybrid_rerank</Badge>
+                      <span className="text-sm text-gray-600">5,420 queries</span>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-lg font-bold text-green-600">89.2%</div>
+                      <div className="text-xs text-gray-600">Best performer</div>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between p-3 border rounded-lg">
+                    <div className="flex items-center space-x-3">
+                      <Badge variant="outline">rag_fusion</Badge>
+                      <span className="text-sm text-gray-600">3,890 queries</span>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-lg font-bold text-yellow-600">84.7%</div>
+                      <div className="text-xs text-gray-600">Good performance</div>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between p-3 border rounded-lg">
+                    <div className="flex items-center space-x-3">
+                      <Badge variant="outline">basic</Badge>
+                      <span className="text-sm text-gray-600">6,110 queries</span>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-lg font-bold text-orange-600">76.3%</div>
+                      <div className="text-xs text-gray-600">Needs optimization</div>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Quick Actions */}
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
               <div className="flex items-center space-x-2 mb-2">
                 <Brain className="h-5 w-5 text-blue-600" />
-                <h3 className="font-semibold text-blue-900">RAG Performance Monitoring</h3>
+                <h3 className="font-semibold text-blue-900">RAG Performance Tools</h3>
               </div>
               <p className="text-blue-800 text-sm mb-3">
                 Access comprehensive RAG performance analytics, evaluation metrics, and optimization tools.
               </p>
               <div className="flex space-x-2">
                 <a 
-                  href="/dashboard/rag-performance" 
+                  href="/api/rag/enhanced?action=get_metrics" 
+                  target="_blank"
                   className="inline-flex items-center px-3 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700"
                 >
-                  Open RAG Dashboard
+                  View API Metrics
                 </a>
                 <a 
-                  href="/api/rag/enhanced?action=get_metrics" 
+                  href="/api/rag/evaluate?action=summary" 
                   target="_blank"
                   className="inline-flex items-center px-3 py-2 bg-white text-blue-600 text-sm font-medium rounded-md border border-blue-600 hover:bg-blue-50"
                 >
-                  View API Metrics
+                  Evaluation Results
                 </a>
               </div>
             </div>

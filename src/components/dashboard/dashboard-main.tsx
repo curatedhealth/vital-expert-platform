@@ -22,7 +22,7 @@ import { Button } from '@/shared/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/components/ui/card';
 import { Progress } from '@/shared/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/components/ui/tabs';
-import { RAGPerformanceWidget } from '@/components/rag/RAGPerformanceWidget';
+import { RAGPerformanceSummary } from '@/components/rag/RAGPerformanceSummary';
 
 interface KPIMetric {
   id: string;
@@ -482,7 +482,7 @@ const DashboardMain: React.FC = () => {
             </div>
             <div className="space-y-6">
               <SystemHealthPanel health={systemHealth} />
-              <RAGPerformanceWidget />
+              <RAGPerformanceSummary />
             </div>
           </div>
         </TabsContent>

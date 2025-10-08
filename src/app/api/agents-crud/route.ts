@@ -151,7 +151,6 @@ export async function GET(request: NextRequest) {
         temperature,
         max_tokens,
         is_custom,
-        is_library_agent,
         created_by,
         status,
         tier,
@@ -159,13 +158,9 @@ export async function GET(request: NextRequest) {
         implementation_phase,
         knowledge_domains,
         business_function,
-        business_function_id,
         role,
-        role_id,
         domain_expertise,
         medical_specialty,
-        department,
-        department_id,
         validation_status,
         hipaa_compliant,
         gdpr_compliant,
@@ -197,37 +192,11 @@ export async function GET(request: NextRequest) {
       }, { status: 500 });
     }
 
-    // Get organizational structure to map UUIDs to names
-    const { data: businessFunctions } = await supabaseAdmin
-      .from('business_functions')
-      .select('id, name');
-
-    const { data: departments } = await supabaseAdmin
-      .from('departments')
-      .select('id, name');
-
-    const { data: organizationalRoles } = await supabaseAdmin
-      .from('organizational_roles')
-      .select('id, name');
-
-    const functionMap = new Map(
-      (businessFunctions || []).map(f => [f.id, f.name])
-    );
-
-    const departmentMap = new Map(
-      (departments || []).map(d => [d.id, d.name])
-    );
-
-    const roleMap = new Map(
-      (organizationalRoles || []).map(r => [r.id, r.name])
-    );
-
-    // Transform agents to include readable organizational structure names
+    // Transform agents (no organizational structure mapping needed since columns don't exist)
     const transformedAgents = (data || []).map(agent => ({
       ...agent,
-      business_function: functionMap.get(agent.business_function_id) || agent.business_function,
-      department: departmentMap.get(agent.department_id) || agent.department,
-      organizational_role: roleMap.get(agent.role_id) || agent.role
+      department: null, // Column doesn't exist
+      organizational_role: agent.role // Use existing role field
     }));
 
     return NextResponse.json({

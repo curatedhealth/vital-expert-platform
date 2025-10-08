@@ -1,7 +1,20 @@
 import { StateGraph, END, START } from '@langchain/langgraph';
 import { BaseMessage, HumanMessage, AIMessage } from '@langchain/core/messages';
 import { MemorySaver } from '@langchain/langgraph';
+import { createClient } from '@supabase/supabase-js';
 import { enhancedLangChainService } from './enhanced-langchain-service';
+
+// Initialize Supabase client
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+if (!supabaseUrl || !supabaseServiceKey) {
+  console.warn('⚠️ Supabase configuration missing - budget checking will be disabled');
+}
+
+const supabase = supabaseUrl && supabaseServiceKey 
+  ? createClient(supabaseUrl, supabaseServiceKey)
+  : null;
 
 /**
  * State definition for Ask Expert workflow
@@ -27,6 +40,12 @@ interface AskExpertState {
  */
 async function checkBudget(state: AskExpertState): Promise<Partial<AskExpertState>> {
   console.log('💰 Checking user budget...');
+
+  // Skip budget check if Supabase not configured
+  if (!supabase) {
+    console.log('⚠️ Supabase not configured - skipping budget check');
+    return {};
+  }
 
   try {
     const { data, error } = await supabase.rpc('check_user_budget', {
@@ -331,6 +350,4 @@ export async function updateWorkflowState(
   );
 }
 
-// Import supabase client
-import { createClient } from '@supabase/supabase-js';
 

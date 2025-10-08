@@ -18,6 +18,7 @@ import { useState, useEffect, useRef, useMemo } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { EnhancedAgentCard, AgentCardGrid } from '@/components/ui/enhanced-agent-card';
 import {
   SidebarInset,
   SidebarProvider
@@ -1023,54 +1024,19 @@ export default function ChatPage() {
                   </p>
                 </div>
 
-                <div className="space-y-3">
+                <AgentCardGrid columns={1} className="space-y-3">
                   {recommendedAgents.map((agent, index) => (
-                    <Card
+                    <EnhancedAgentCard
                       key={agent.id}
-                      className="p-4 cursor-pointer hover:shadow-lg hover:border-blue-300 transition-all duration-200"
+                      agent={agent}
+                      isBestMatch={index === 0}
                       onClick={() => handleSelectRecommendedAgent(agent)}
-                    >
-                      <div className="flex items-start gap-4">
-                        <div className="w-12 h-12 rounded-full flex items-center justify-center bg-gradient-to-br from-blue-50 to-purple-50 border-2 border-blue-200 flex-shrink-0 overflow-hidden">
-                          {agent.avatar && (agent.avatar.startsWith('/') || agent.avatar.includes('avatar_')) ? (
-                            <Image
-                              src={agent.avatar}
-                              alt={agent.display_name || agent.name}
-                              width={48}
-                              height={48}
-                              className="object-cover w-full h-full"
-                            />
-                          ) : (
-                            <span className="text-2xl">{agent.avatar || '🤖'}</span>
-                          )}
-                        </div>
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-1">
-                            <h4 className="font-semibold text-gray-900">
-                              {agent.display_name || agent.name}
-                            </h4>
-                            {index === 0 && (
-                              <Badge variant="default" className="bg-blue-600">
-                                Best Match
-                              </Badge>
-                            )}
-                            {agent.tier && (
-                              <Badge variant="outline">
-                                Tier {agent.tier}
-                              </Badge>
-                            )}
-                          </div>
-                          <p className="text-sm text-gray-600 mb-2">
-                            {agent.description}
-                          </p>
-                          <p className="text-xs text-gray-500 italic">
-                            {agent.reasoning}
-                          </p>
-                        </div>
-                      </div>
-                    </Card>
+                      showReasoning={true}
+                      showTier={true}
+                      size="md"
+                    />
                   ))}
-                </div>
+                </AgentCardGrid>
 
                 <div className="mt-4 text-center">
                   <Button

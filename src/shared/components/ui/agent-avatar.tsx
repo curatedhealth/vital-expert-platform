@@ -12,7 +12,7 @@ interface AgentAvatarProps {
   agent?: FlexibleAgent;
   avatar?: string;
   name?: string;
-  size?: 'sm' | 'md' | 'lg' | 'xl' | '2xl';
+  size?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | 'list' | 'card';
   className?: string;
 }
 
@@ -21,7 +21,9 @@ const sizeClasses = {
   md: 'w-10 h-10',
   lg: 'w-12 h-12',
   xl: 'w-20 h-20',
-  '2xl': 'w-24 h-24'
+  '2xl': 'w-24 h-24',
+  list: 'w-[30px] h-[30px]',
+  card: 'w-[50px] h-[50px]'
 };
 
 export function AgentAvatar({ agent, avatar: avatarProp, name: nameProp, size = 'md', className }: AgentAvatarProps) {

@@ -14,7 +14,8 @@ import {
   Key,
   Monitor,
   FileText,
-  TrendingUp
+  TrendingUp,
+  Clock
 } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
 import React, { Suspense } from 'react';
@@ -26,7 +27,7 @@ import { UsageAnalyticsDashboard } from '@/components/llm/UsageAnalyticsDashboar
 import { PromptCRUDManager } from '@/components/admin/PromptCRUDManager';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 
 function LLMManagementPageContent() {
   const searchParams = useSearchParams();
@@ -77,6 +78,7 @@ function LLMManagementPageContent() {
       alerts: { title: 'System Alerts', icon: AlertTriangle, description: 'System alerts and notifications' },
       performance: { title: 'Performance Tuning', icon: TrendingUp, description: 'Performance optimization and tuning' },
       rag: { title: 'RAG Performance', icon: Brain, description: 'RAG system performance monitoring and analytics' },
+      prompts: { title: 'Prompt Management', icon: FileText, description: 'Create, edit, and manage PRISM prompts and templates' },
     };
 
     const current = adminViews[currentAdmin as keyof typeof adminViews] || adminViews.security;
@@ -216,6 +218,8 @@ function LLMManagementPageContent() {
               </div>
             </div>
           </div>
+        ) : currentAdmin === 'prompts' ? (
+          <PromptCRUDManager />
         ) : (
           <Card>
             <CardContent className="pt-6">

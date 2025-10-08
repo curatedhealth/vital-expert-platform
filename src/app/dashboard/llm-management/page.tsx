@@ -23,6 +23,7 @@ import { LLMProviderDashboard } from '@/components/llm/LLMProviderDashboard';
 import { MedicalModelsDashboard } from '@/components/llm/MedicalModelsDashboard';
 import { OpenAIUsageDashboard } from '@/components/llm/OpenAIUsageDashboard';
 import { UsageAnalyticsDashboard } from '@/components/llm/UsageAnalyticsDashboard';
+import { PromptCRUDManager } from '@/components/admin/PromptCRUDManager';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';

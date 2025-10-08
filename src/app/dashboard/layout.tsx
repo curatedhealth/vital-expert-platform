@@ -82,7 +82,7 @@ const globalNavItems = [
   },
   {
     title: 'Admin',
-    href: '/dashboard/llm-management?view=admin',
+    href: '/admin',
     icon: Shield,
     badge: 'Admin',
   },

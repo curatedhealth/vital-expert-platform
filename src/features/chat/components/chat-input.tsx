@@ -11,6 +11,7 @@ import {
   Image,
   Code,
   ChevronDown,
+  Sparkles,
 } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 
@@ -30,8 +31,10 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Agent } from '@/lib/stores/chat-store';
 import { cn } from '@/lib/utils';
+import { PromptEnhancementModal } from '@/components/chat/PromptEnhancementModal';
 
 // Voice Recognition Types
 declare global {
@@ -223,6 +226,7 @@ export function ChatInput({
   const [availableModels, setAvailableModels] = useState<AIModel[]>(AI_MODELS);
   const [loadingModels, setLoadingModels] = useState(false);
   const [internalSelectedModel, setInternalSelectedModel] = useState(AI_MODELS[0]);
+  const [showPromptEnhancement, setShowPromptEnhancement] = useState(false);
   const recognitionRef = useRef<any>(null);
 
   // Use external model if provided, otherwise use internal state
@@ -349,6 +353,11 @@ export function ChatInput({
     }
   };
 
+  const handleApplyEnhancedPrompt = (enhancedPrompt: string) => {
+    onChange(enhancedPrompt);
+    setShowPromptEnhancement(false);
+  };
+
   return (
     <div className="relative">
       {/* Attachment Options */}
@@ -393,6 +402,23 @@ export function ChatInput({
 
         <PromptInputToolbar>
           <div className="flex items-center gap-2">
+            {/* Prompt Enhancement Button */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8"
+                  onClick={() => setShowPromptEnhancement(true)}
+                  disabled={isLoading}
+                >
+                  <Sparkles className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Enhance prompt with PRISM library</TooltipContent>
+            </Tooltip>
+
             {/* Attachment Button */}
             <Button
               type="button"
@@ -593,6 +619,14 @@ export function ChatInput({
           </div>
         </div>
       )}
+
+      {/* Prompt Enhancement Modal */}
+      <PromptEnhancementModal
+        isOpen={showPromptEnhancement}
+        onClose={() => setShowPromptEnhancement(false)}
+        onApplyPrompt={handleApplyEnhancedPrompt}
+        currentInput={value}
+      />
     </div>
   );
 }

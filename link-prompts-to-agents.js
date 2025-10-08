@@ -120,8 +120,8 @@ async function linkPromptsToAgents() {
           a.business_function?.includes(keyword) ||
           a.display_name?.includes(keyword) ||
           a.name?.includes(keyword.toLowerCase()) ||
-          a.specializations?.some(s => s?.includes(keyword)) ||
-          a.domain_expertise?.some(d => d?.includes(keyword))
+          (Array.isArray(a.specializations) && a.specializations.some(s => s?.includes(keyword))) ||
+          (Array.isArray(a.domain_expertise) && a.domain_expertise.some(d => d?.includes(keyword)))
         ) || [];
 
         for (const agent of matchingAgents.slice(0, 3)) { // Limit to top 3 matches per keyword
@@ -207,7 +207,7 @@ async function linkPromptsToAgents() {
         id,
         is_default,
         customizations,
-        agents!inner(display_name, primary_function),
+        agents!inner(display_name, business_function),
         prompts!inner(display_name, domain)
       `)
       .limit(10);

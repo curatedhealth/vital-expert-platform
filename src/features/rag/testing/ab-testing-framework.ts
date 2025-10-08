@@ -4,7 +4,7 @@
  */
 
 import { createClient } from '@supabase/supabase-js';
-import { CloudRAGService } from '../services/cloud-rag-service';
+import { CloudRAGService } from '../../chat/services/cloud-rag-service';
 import { CachedRAGService } from '../services/cached-rag-service';
 import { RAGASEvaluator, RAGEvaluationInput } from '../evaluation/ragas-evaluator';
 

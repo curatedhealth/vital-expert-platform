@@ -3,7 +3,7 @@
  * Integrates RAGAs evaluation, Redis caching, semantic chunking, and A/B testing
  */
 
-import { CloudRAGService } from './cloud-rag-service';
+import { CloudRAGService } from '../../chat/services/cloud-rag-service';
 import { CachedRAGService } from './cached-rag-service';
 import { semanticChunkingService } from '../chunking/semantic-chunking-service';
 import { RAGASEvaluator, RAGEvaluationInput } from '../evaluation/ragas-evaluator';

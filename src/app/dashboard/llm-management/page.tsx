@@ -75,6 +75,7 @@ function LLMManagementPageContent() {
       compliance: { title: 'Compliance Reports', icon: FileText, description: 'HIPAA and regulatory compliance reports' },
       alerts: { title: 'System Alerts', icon: AlertTriangle, description: 'System alerts and notifications' },
       performance: { title: 'Performance Tuning', icon: TrendingUp, description: 'Performance optimization and tuning' },
+      rag: { title: 'RAG Performance', icon: Brain, description: 'RAG system performance monitoring and analytics' },
     };
 
     const current = adminViews[currentAdmin as keyof typeof adminViews] || adminViews.security;
@@ -88,17 +89,53 @@ function LLMManagementPageContent() {
             <p className="text-gray-600">{current.description}</p>
           </div>
         </div>
-        <Card>
-          <CardContent className="pt-6">
-            <div className="text-center py-12">
-              <current.icon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Admin Tools</h3>
-              <p className="text-gray-600">
-                {current.title} interface will be implemented here
-              </p>
+        {currentAdmin === 'rag' ? (
+          <div className="space-y-6">
+            <div className="flex items-center gap-3">
+              <Brain className="h-6 w-6 text-blue-600" />
+              <div>
+                <h2 className="text-2xl font-bold">RAG Performance Dashboard</h2>
+                <p className="text-gray-600">Monitor and optimize RAG system performance</p>
+              </div>
             </div>
-          </CardContent>
-        </Card>
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <div className="flex items-center space-x-2 mb-2">
+                <Brain className="h-5 w-5 text-blue-600" />
+                <h3 className="font-semibold text-blue-900">RAG Performance Monitoring</h3>
+              </div>
+              <p className="text-blue-800 text-sm mb-3">
+                Access comprehensive RAG performance analytics, evaluation metrics, and optimization tools.
+              </p>
+              <div className="flex space-x-2">
+                <a 
+                  href="/dashboard/rag-performance" 
+                  className="inline-flex items-center px-3 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700"
+                >
+                  Open RAG Dashboard
+                </a>
+                <a 
+                  href="/api/rag/enhanced?action=get_metrics" 
+                  target="_blank"
+                  className="inline-flex items-center px-3 py-2 bg-white text-blue-600 text-sm font-medium rounded-md border border-blue-600 hover:bg-blue-50"
+                >
+                  View API Metrics
+                </a>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <Card>
+            <CardContent className="pt-6">
+              <div className="text-center py-12">
+                <current.icon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">Admin Tools</h3>
+                <p className="text-gray-600">
+                  {current.title} interface will be implemented here
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
     );
   };

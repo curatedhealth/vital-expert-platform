@@ -22,6 +22,7 @@ import { Button } from '@/shared/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/components/ui/card';
 import { Progress } from '@/shared/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/components/ui/tabs';
+import { RAGPerformanceWidget } from '@/components/rag/RAGPerformanceWidget';
 
 interface KPIMetric {
   id: string;
@@ -479,7 +480,10 @@ const DashboardMain: React.FC = () => {
             <div className="lg:col-span-2">
               <ChartWidget data={mockChartData[3]} />
             </div>
-            <SystemHealthPanel health={systemHealth} />
+            <div className="space-y-6">
+              <SystemHealthPanel health={systemHealth} />
+              <RAGPerformanceWidget />
+            </div>
           </div>
         </TabsContent>
 

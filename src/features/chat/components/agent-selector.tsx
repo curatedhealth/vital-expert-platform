@@ -19,6 +19,7 @@ import { AgentAvatar } from '@/components/ui/agent-avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { EnhancedAgentCard, AgentCardGrid } from '@/components/ui/enhanced-agent-card';
 import { useChatStore } from '@/lib/stores/chat-store';
 import { cn } from '@/lib/utils';
 
@@ -140,27 +141,12 @@ export function AgentSelector({ compact = false, onEditAgent }: AgentSelectorPro
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <AgentCardGrid columns={3} className="gap-4">
         {agents.map((agent) => {
           const isSelected = selectedAgent?.id === agent.id;
 
           return (
-            <Card
-              key={agent.id}
-              className={cn(
-                'cursor-pointer transition-all hover:shadow-md relative group',
-                isSelected && 'ring-2 ring-progress-teal bg-progress-teal/5'
-              )}
-              onClick={() => setSelectedAgent(agent)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault();
-                  setSelectedAgent(agent);
-                }
-              }}
-              role="button"
-              tabIndex={0}
-            >
+            <div key={agent.id} className="relative group">
               {/* Edit Button */}
               {onEditAgent && (
                 <Button
@@ -176,74 +162,18 @@ export function AgentSelector({ compact = false, onEditAgent }: AgentSelectorPro
                 </Button>
               )}
 
-              <CardContent className="p-4">
-                <div className="flex items-start gap-3">
-                  <AgentAvatar
-                    avatar={agent.avatar}
-                    name={agent.name}
-                    size="lg"
-                  />
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <h4 className="font-semibold text-deep-charcoal text-sm">
-                        {agent.name}
-                      </h4>
-                      {isSelected && (
-                        <CheckCircle className="h-4 w-4 text-progress-teal flex-shrink-0" />
-                      )}
-                    </div>
-
-                    <p className="text-xs text-medical-gray mb-3 line-clamp-2">
-                      {agent.description}
-                    </p>
-
-                    {/* Capabilities */}
-                    <div className="flex flex-wrap gap-1 mb-3">
-                      {agent.capabilities.slice(0, 2).map((capability) => (
-                        <Badge
-                          key={capability}
-                          variant="outline"
-                          className={cn(
-                            'text-xs',
-                            isSelected ? 'border-progress-teal/30 text-progress-teal' : ''
-                          )}
-                        >
-                          {capability}
-                        </Badge>
-                      ))}
-                      {agent.capabilities.length > 2 && (
-                        <Badge variant="outline" className="text-xs">
-                          +{agent.capabilities.length - 2}
-                        </Badge>
-                      )}
-                    </div>
-
-                    {/* Features */}
-                    <div className="flex items-center gap-3 text-xs text-medical-gray">
-                      <div className="flex items-center gap-1">
-                        <Brain className="h-3 w-3" />
-                        {agent.model}
-                      </div>
-                      {agent.ragEnabled && (
-                        <div className="flex items-center gap-1 text-regulatory-gold">
-                          <Zap className="h-3 w-3" />
-                          RAG
-                        </div>
-                      )}
-                      {agent.isCustom && (
-                        <div className="flex items-center gap-1 text-market-purple">
-                          <Star className="h-3 w-3" />
-                          Custom
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+              <EnhancedAgentCard
+                agent={agent}
+                isSelected={isSelected}
+                onClick={() => setSelectedAgent(agent)}
+                showReasoning={false}
+                showTier={true}
+                size="md"
+              />
+            </div>
           );
         })}
-      </div>
+      </AgentCardGrid>
 
       {/* Selected Agent Details */}
       {selectedAgent && (

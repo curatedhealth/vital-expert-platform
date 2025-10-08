@@ -116,7 +116,9 @@ export function AgentAvatar({ agent, avatar: avatarProp, name: nameProp, size = 
         size === 'md' && 'text-sm',
         size === 'lg' && 'text-base',
         size === 'xl' && 'text-4xl',
-        size === '2xl' && 'text-5xl'
+        size === '2xl' && 'text-5xl',
+        size === 'list' && 'text-xs',
+        size === 'card' && 'text-sm'
       )}>
         {avatar || '🤖'}
       </span>

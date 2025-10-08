@@ -23,6 +23,7 @@ import { AgentAvatar } from '@/components/ui/agent-avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { EnhancedAgentCard, AgentCardGrid } from '@/components/ui/enhanced-agent-card';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { AgentCreator } from '@/features/chat/components/agent-creator';
@@ -507,29 +508,36 @@ export function AgentsBoard({
       </div>
 
       {/* Agents Grid/List */}
-      <div className={cn(
-        viewMode === 'grid'
-          ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4'
-          : 'space-y-3'
-      )}>
-        {filteredAgents.map((agent) => (
-          <Card
-            key={agent.id}
-            className={cn(
-              'hover:shadow-lg transition-all cursor-pointer group',
-              viewMode === 'list' && 'hover:bg-gray-50'
-            )}
-            onClick={() => onAgentSelect?.(agent)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                onAgentSelect?.(agent);
-              }
-            }}
-            role="button"
-            tabIndex={0}
-            aria-label={`Select agent ${agent.display_name}`}
-          >
+      {viewMode === 'grid' ? (
+        <AgentCardGrid columns={4} className="gap-4">
+          {filteredAgents.map((agent) => (
+            <EnhancedAgentCard
+              key={agent.id}
+              agent={agent}
+              onClick={() => onAgentSelect?.(agent)}
+              showReasoning={false}
+              showTier={true}
+              size="md"
+            />
+          ))}
+        </AgentCardGrid>
+      ) : (
+        <div className="space-y-3">
+          {filteredAgents.map((agent) => (
+            <Card
+              key={agent.id}
+              className="hover:shadow-lg transition-all cursor-pointer group hover:bg-gray-50"
+              onClick={() => onAgentSelect?.(agent)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  onAgentSelect?.(agent);
+                }
+              }}
+              role="button"
+              tabIndex={0}
+              aria-label={`Select agent ${agent.display_name}`}
+            >
             <CardContent className={cn(
               'p-4',
               viewMode === 'list' && 'flex items-center gap-4'
@@ -808,7 +816,8 @@ export function AgentsBoard({
             </CardContent>
           </Card>
         ))}
-      </div>
+        </div>
+      )}
 
       {/* Empty State */}
       {filteredAgents.length === 0 && (

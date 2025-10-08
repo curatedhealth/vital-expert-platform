@@ -248,6 +248,18 @@ function AppLayoutContent({
               >
                 Workflows
               </Link>
+              <Link
+                href="/dashboard/llm-management?view=admin"
+                className={cn(
+                  "transition-colors hover:text-foreground/80 flex items-center gap-1",
+                  pathname.startsWith("/dashboard/llm-management") ? "text-foreground" : "text-foreground/60"
+                )}
+              >
+                Admin
+                <span className="bg-red-100 text-red-800 text-xs px-1.5 py-0.5 rounded-full font-medium">
+                  Admin
+                </span>
+              </Link>
             </nav>
           </div>
 
@@ -410,6 +422,19 @@ function AppLayoutContent({
                     onClick={() => setSidebarOpen(false)}
                   >
                     Workflows
+                  </Link>
+                  <Link
+                    href="/dashboard/llm-management?view=admin"
+                    className={cn(
+                      "px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center gap-2",
+                      pathname.startsWith("/dashboard/llm-management") ? "bg-primary text-primary-foreground" : "text-foreground/60 hover:text-foreground hover:bg-muted"
+                    )}
+                    onClick={() => setSidebarOpen(false)}
+                  >
+                    Admin
+                    <span className="bg-red-100 text-red-800 text-xs px-1.5 py-0.5 rounded-full font-medium">
+                      Admin
+                    </span>
                   </Link>
                 </nav>
               </div>

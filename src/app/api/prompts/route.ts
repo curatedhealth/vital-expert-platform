@@ -51,11 +51,37 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to fetch prompts' }, { status: 500 });
     }
 
-    // Post-process to add derived fields
+    // Post-process to add derived fields and map PRISM suites
     const enrichedPrompts = prompts?.map(prompt => {
+      // Map domain to PRISM suite
+      let suite = null;
+      if (prompt.name?.toLowerCase().includes('prism')) {
+        if (prompt.name.toLowerCase().includes('rules') || prompt.domain === 'regulatory_affairs') {
+          suite = 'RULES™';
+        } else if (prompt.name.toLowerCase().includes('trials') || prompt.domain === 'clinical_research') {
+          suite = 'TRIALS™';
+        } else if (prompt.name.toLowerCase().includes('guard') || prompt.domain === 'pharmacovigilance') {
+          suite = 'GUARD™';
+        } else if (prompt.name.toLowerCase().includes('value') || prompt.domain === 'market_access') {
+          suite = 'VALUE™';
+        } else if (prompt.name.toLowerCase().includes('bridge') || prompt.domain === 'digital_health') {
+          suite = 'BRIDGE™';
+        } else if (prompt.name.toLowerCase().includes('proof') || prompt.domain === 'clinical_validation') {
+          suite = 'PROOF™';
+        } else if (prompt.name.toLowerCase().includes('craft') || prompt.domain === 'medical_writing') {
+          suite = 'CRAFT™';
+        } else if (prompt.name.toLowerCase().includes('scout') || prompt.domain === 'data_analytics') {
+          suite = 'SCOUT™';
+        } else if (prompt.name.toLowerCase().includes('project') || prompt.domain === 'project_management') {
+          suite = 'PROJECT™';
+        } else {
+          suite = 'RULES™'; // Default to RULES for PRISM prompts
+        }
+      }
+      
       return {
         ...prompt,
-        suite: prompt.prism_suite || null,
+        suite: suite,
         is_user_created: prompt.created_by !== null
       };
     }) || [];

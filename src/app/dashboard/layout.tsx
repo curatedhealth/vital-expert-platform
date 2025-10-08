@@ -16,6 +16,7 @@ import {
   Database,
   Settings,
   Zap,
+  Shield,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
@@ -78,6 +79,12 @@ const globalNavItems = [
     title: 'Workflows',
     href: '/ask-team',
     icon: Zap,
+  },
+  {
+    title: 'Admin',
+    href: '/dashboard/llm-management?view=admin',
+    icon: Shield,
+    badge: 'Admin',
   },
 ];
 

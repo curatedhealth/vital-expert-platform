@@ -18,6 +18,7 @@ import {
 import Link from 'next/link';
 
 import { Button } from '@/components/ui/button';
+import { ClientAuthWrapper } from '@/components/auth/client-auth-wrapper';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 
@@ -103,7 +104,7 @@ const recentActivities = [
   },
 ];
 
-export default function DashboardPage() {
+function DashboardPageContent() {
   return (
     <div className="space-y-8">
       {/* Welcome Section */}
@@ -273,5 +274,13 @@ export default function DashboardPage() {
         </Card>
       </div>
     </div>
+  );
+}
+
+export default function DashboardPage() {
+  return (
+    <ClientAuthWrapper requireAuth={true}>
+      <DashboardPageContent />
+    </ClientAuthWrapper>
   );
 }

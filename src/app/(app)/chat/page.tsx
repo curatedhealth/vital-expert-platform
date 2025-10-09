@@ -31,6 +31,7 @@ import { ChatSidebar } from '@/features/chat/components/chat-sidebar';
 import { AgentsBoard } from '@/features/agents/components/agents-board';
 import type { AgentWithCategories } from '@/lib/agents/agent-service';
 import { useAuth } from '@/lib/auth/supabase-auth-context';
+import { ClientAuthWrapper } from '@/components/auth/client-auth-wrapper';
 import { IconService, type Icon } from '@/lib/services/icon-service';
 import { useAgentsStore } from '@/lib/stores/agents-store';
 import { useChatStore, Agent, type AIModel } from '@/lib/stores/chat-store';
@@ -110,7 +111,7 @@ const getDefaultPrompts = () => [
   { text: 'Expert guidance', description: 'Get expert recommendations', color: 'orange' }
 ];
 
-export default function ChatPage() {
+function ChatPageContent() {
   const router = useRouter();
   const pathname = usePathname();
 
@@ -1270,5 +1271,13 @@ export default function ChatPage() {
 
       </SidebarProvider>
     </div>
+  );
+}
+
+export default function ChatPage() {
+  return (
+    <ClientAuthWrapper requireAuth={true}>
+      <ChatPageContent />
+    </ClientAuthWrapper>
   );
 }

@@ -10,6 +10,8 @@ interface AuthContextType {
   loading: boolean;
   signOut: () => Promise<void>;
   userProfile: any;
+  error: string | null;
+  isInitialized: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -23,6 +25,8 @@ export function SupabaseAuthProvider({ children }: AuthProviderProps) {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [userProfile, setUserProfile] = useState<any>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [isInitialized, setIsInitialized] = useState(false);
 
   useEffect(() => {
     // Get initial session
@@ -38,7 +42,7 @@ export function SupabaseAuthProvider({ children }: AuthProviderProps) {
                            localStorage.getItem('vital-use-mock-auth') === 'true';
         
         if (useMockAuth) {
-          console.log('⚠️ Supabase not configured, checking for mock user in localStorage');
+          console.log('⚠️ Using mock authentication for development');
           
           // Check for existing mock user in localStorage
           const mockUserData = localStorage.getItem('vital-mock-user');
@@ -53,6 +57,7 @@ export function SupabaseAuthProvider({ children }: AuthProviderProps) {
               console.log('✅ Mock user loaded from localStorage:', mockUser.email);
             } catch (error) {
               console.error('Error parsing mock user data:', error);
+              setError('Failed to load mock user data');
               // Fallback to default mock user
               const mockUser = {
                 id: 'mock-user-1',
@@ -73,23 +78,29 @@ export function SupabaseAuthProvider({ children }: AuthProviderProps) {
             setUser(defaultUser);
             setSession({ user: defaultUser } as Session);
           }
+          setIsInitialized(true);
           setLoading(false);
           return;
         }
 
+        console.log('🌐 Using Supabase authentication');
         const { data: { session }, error } = await supabase.auth.getSession();
         if (error) {
           console.error('Error getting session:', error);
+          setError(`Authentication error: ${error.message}`);
         } else {
           setSession(session);
           setUser(session?.user ?? null);
           if (session?.user) {
             await fetchUserProfile(session.user.id);
           }
+          console.log('✅ Supabase session loaded:', session?.user?.email || 'No user');
         }
       } catch (error) {
         console.error('Error in getInitialSession:', error);
+        setError(`Initialization error: ${error instanceof Error ? error.message : 'Unknown error'}`);
       } finally {
+        setIsInitialized(true);
         setLoading(false);
       }
     };
@@ -104,6 +115,7 @@ export function SupabaseAuthProvider({ children }: AuthProviderProps) {
       const { data: { subscription: authSubscription } } = supabase.auth.onAuthStateChange(
         async (event, session) => {
           console.log('Auth state changed:', event, session?.user?.email);
+          setError(null); // Clear any previous errors
           setSession(session);
           setUser(session?.user ?? null);
           
@@ -197,7 +209,9 @@ export function SupabaseAuthProvider({ children }: AuthProviderProps) {
     session,
     loading,
     signOut,
-    userProfile
+    userProfile,
+    error,
+    isInitialized
   };
 
   return (
@@ -216,7 +230,9 @@ export function useAuth() {
       session: null,
       loading: true,
       signOut: async () => {},
-      userProfile: null
+      userProfile: null,
+      error: null,
+      isInitialized: false
     };
   }
   return context;

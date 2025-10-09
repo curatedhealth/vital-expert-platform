@@ -34,8 +34,8 @@ export async function GET(request: NextRequest) {
     // Fetch all business functions
     const { data: functions, error: functionsError } = await supabase
       .from('org_functions')
-      .select('id, name, department_name, description')
-      .order('name');
+      .select('id, unique_id, department_name, description')
+      .order('department_name');
 
     if (functionsError) {
       console.error('[Org Structure API] Error fetching functions:', functionsError);
@@ -94,14 +94,14 @@ export async function GET(request: NextRequest) {
 
     console.log('[Org Structure API] Fetched', functions?.length || 0, 'functions');
     if (functions && functions.length > 0) {
-      console.log('[Org Structure API] Sample:', functions.slice(0, 3).map(f => f.name));
+      console.log('[Org Structure API] Sample:', functions.slice(0, 3).map(f => f.department_name));
     }
 
     // Fetch all departments
     const { data: departments, error: departmentsError } = await supabase
       .from('org_departments')
       .select('id, name, department_name, description, function_id')
-      .order('name');
+      .order('department_name');
 
     if (departmentsError) {
       console.error('[Org Structure API] Error fetching departments:', departmentsError);
@@ -112,7 +112,7 @@ export async function GET(request: NextRequest) {
     const { data: roles, error: rolesError } = await supabase
       .from('org_roles')
       .select('id, name, role_name, description, department_id, function_id, competency_level')
-      .order('name');
+      .order('role_name');
 
     if (rolesError) {
       console.error('[Org Structure API] Error fetching roles:', rolesError);

@@ -186,9 +186,30 @@ ESLINT_*.json
 # LangGraph checkpoints database
 checkpoints.sqlite
 checkpoints.sqlite-shm
+checkpoints.sqlite-wal
 checkpoints.sqlite-waldatabase/backups/*.sql
 .env.local.backup
 .env.production
 .env.vercel
 deprecate-local-supabase.js
 sync-agents-to-environments.js
+
+# Monorepo artifacts
+.pnpm-store/
+.pnpm-debug.log*
+
+# Database artifacts
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
+
+# Large data files
+data_dump.sql
+exports/
+backups/
+archive/
+coverage/
+
+# Generated files
+*.tgz
+*.tar.gz

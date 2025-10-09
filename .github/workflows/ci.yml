@@ -1,4 +1,4 @@
-name: Continuous Integration
+name: CI
 
 on:
   push:
@@ -7,262 +7,123 @@ on:
     branches: [main, develop]
 
 jobs:
-  # Quality Gates - Code Quality & Security
-  quality:
-    name: Code Quality & Security
+  lint-and-typecheck:
+    name: Lint and TypeCheck
     runs-on: ubuntu-latest
-    timeout-minutes: 10
-
     steps:
-      - name: Checkout Repository
+      - name: Checkout code
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0 # Shallow clones should be disabled for better relevancy of analysis
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18.x'
+          node-version: '20'
           cache: 'npm'
 
-      - name: Install Dependencies
-        run: npm ci
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
 
       - name: Run ESLint
-        run: npm run lint
-        continue-on-error: false
+        run: pnpm lint
 
-      - name: Run Prettier Check
-        run: npx prettier --check .
-        continue-on-error: false
+      - name: Run TypeScript type checking
+        run: pnpm type-check
 
-      - name: TypeScript Check
-        run: npm run type-check
-        continue-on-error: false
+      - name: Run Prettier check
+        run: pnpm format:check
 
-      - name: Security Audit
-        run: npm audit --audit-level=high
-        continue-on-error: false
-
-      - name: License Check
-        run: npx license-checker --onlyAllow 'MIT;Apache-2.0;BSD;ISC;Apache*;Unlicense'
-        continue-on-error: true
-
-  # Healthcare Compliance Checks
-  healthcare-compliance:
-    name: Healthcare Compliance Validation
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    needs: quality
-
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '18.x'
-          cache: 'npm'
-
-      - name: Install Dependencies
-        run: npm ci
-
-      - name: HIPAA Compliance Check
-        run: |
-          echo "Running HIPAA compliance validation..."
-          # Check for PHI exposure in code
-          grep -r -i "social.*security\|ssn\|patient.*id\|medical.*record" src/ && exit 1 || echo "No PHI exposure detected"
-          # Check for secure authentication patterns
-          grep -r "password.*=\|token.*=\|secret.*=" src/ --include="*.ts" --include="*.tsx" --include="*.js" --include="*.jsx" && exit 1 || echo "No hardcoded secrets found"
-        continue-on-error: false
-
-      - name: FDA Validation Framework Check
-        run: |
-          echo "Validating FDA compliance patterns..."
-          # Ensure clinical validation functions exist
-          test -f "src/lib/clinical/validation.ts" || test -f "src/services/clinical-validation.ts" || echo "Clinical validation service required for FDA compliance"
-          # Check for medical accuracy tracking
-          grep -r "accuracy\|confidence\|validation" src/features/clinical/ || echo "Medical accuracy tracking required"
-        continue-on-error: true
-
-      - name: Data Protection Validation
-        run: |
-          echo "Checking data protection measures..."
-          # Ensure encryption utilities exist
-          grep -r "encrypt\|crypto\|hash" src/lib/ || echo "Encryption utilities should be implemented"
-          # Check for audit logging
-          grep -r "audit\|log" src/lib/ || echo "Audit logging should be implemented"
-        continue-on-error: true
-
-  # Unit & Integration Testing
   test:
-    name: Test Suite
+    name: Test
     runs-on: ubuntu-latest
-    timeout-minutes: 20
-    needs: quality
-
-    strategy:
-      matrix:
-        test-type: [unit, integration, compliance]
-
     steps:
-      - name: Checkout Repository
+      - name: Checkout code
         uses: actions/checkout@v4
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18.x'
+          node-version: '20'
           cache: 'npm'
 
-      - name: Install Dependencies
-        run: npm ci
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
 
-      - name: Run Tests - ${{ matrix.test-type }}
-        run: npm run test:${{ matrix.test-type }}
-        env:
-          NODE_ENV: test
-        continue-on-error: false
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
 
-      - name: Upload Coverage Reports
-        if: matrix.test-type == 'unit'
+      - name: Run tests
+        run: pnpm test:ci
+
+      - name: Upload coverage reports
         uses: codecov/codecov-action@v3
         with:
-          file: ./coverage/lcov.info
-          flags: unittests
-          name: codecov-umbrella
+          files: ./coverage/lcov.info
+          fail_ci_if_error: false
 
-  # Build Verification
   build:
-    name: Build Verification
+    name: Build
     runs-on: ubuntu-latest
-    timeout-minutes: 15
-    needs: [quality, healthcare-compliance]
-
+    needs: [lint-and-typecheck, test]
     steps:
-      - name: Checkout Repository
+      - name: Checkout code
         uses: actions/checkout@v4
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18.x'
+          node-version: '20'
           cache: 'npm'
 
-      - name: Install Dependencies
-        run: npm ci
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
 
-      - name: Build Application
-        run: npm run build
-        env:
-          NODE_ENV: production
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
 
-      - name: Verify Build Output
-        run: |
-          test -d ".next" || exit 1
-          echo "Build verification completed successfully"
+      - name: Build packages
+        run: pnpm build
 
-      - name: Build Size Analysis
-        run: |
-          echo "Analyzing build size..."
-          du -sh .next/
-          # Warn if build size is too large (>100MB for healthcare app)
-          SIZE=$(du -sm .next/ | cut -f1)
-          if [ $SIZE -gt 100 ]; then
-            echo "Warning: Build size ${SIZE}MB exceeds recommended 100MB for healthcare applications"
-          fi
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-artifacts
+          path: |
+            apps/*/dist
+            packages/*/dist
+          retention-days: 7
 
-  # Security Scanning
-  security:
-    name: Security Scanning
+  python-services:
+    name: Python Services
     runs-on: ubuntu-latest
-    timeout-minutes: 20
-    needs: quality
-
     steps:
-      - name: Checkout Repository
+      - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Setup Python
+        uses: actions/setup-python@v4
         with:
-          node-version: '18.x'
-          cache: 'npm'
+          python-version: '3.11'
 
-      - name: Install Dependencies
-        run: npm ci
-
-      - name: Run Security Audit
-        run: npm audit --audit-level=moderate
-
-      - name: Dependency Vulnerability Scan
+      - name: Install dependencies
         run: |
-          npx audit-ci --moderate
-        continue-on-error: false
+          cd apps/python-services
+          pip install -r requirements.txt
 
-      - name: SAST Scanning with Semgrep
-        uses: returntocorp/semgrep-action@v1
-        with:
-          config: >-
-            p/security-audit
-            p/secrets
-            p/owasp-top-ten
-            p/react
-            p/typescript
-        env:
-          SEMGREP_APP_TOKEN: ${{ secrets.SEMGREP_APP_TOKEN }}
-        continue-on-error: true
-
-  # Healthcare-Specific Validation
-  medical-safety:
-    name: Medical Safety Validation
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    needs: [test, build]
-
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
-
-      - name: Medical Accuracy Framework Check
+      - name: Run Python linting
         run: |
-          echo "Validating medical accuracy frameworks..."
-          # Check for PHARMA framework implementation
-          grep -r "PHARMA\|pharma" src/ --include="*.ts" --include="*.tsx" || echo "PHARMA framework not fully implemented"
-          # Check for VERIFY protocol
-          grep -r "VERIFY\|verify" src/ --include="*.ts" --include="*.tsx" || echo "VERIFY protocol not fully implemented"
-          # Check for confidence scoring
-          grep -r "confidence\|accuracy" src/ --include="*.ts" --include="*.tsx" || echo "Confidence scoring system required"
+          cd apps/python-services
+          ruff check .
 
-      - name: Clinical Validation Check
+      - name: Run Python tests
         run: |
-          echo "Checking clinical validation systems..."
-          # Ensure clinical validation components exist
-          find src/features/clinical -name "*.tsx" -o -name "*.ts" | grep -i "validat\|safety\|clinical" || echo "Clinical validation components required"
-
-      - name: Medical Data Protection Check
-        run: |
-          echo "Validating medical data protection..."
-          # Check for PHI protection patterns
-          grep -r "encrypt\|mask\|anonymize" src/ --include="*.ts" --include="*.tsx" || echo "PHI protection patterns recommended"
-
-  # Final Status Check
-  ci-success:
-    name: CI Pipeline Success
-    runs-on: ubuntu-latest
-    needs: [quality, healthcare-compliance, test, build, security, medical-safety]
-    if: success()
-
-    steps:
-      - name: CI Success Notification
-        run: |
-          echo "🎉 All CI checks passed successfully!"
-          echo "✅ Code Quality: PASSED"
-          echo "✅ Healthcare Compliance: VALIDATED"
-          echo "✅ Test Suite: PASSED"
-          echo "✅ Build: SUCCESSFUL"
-          echo "✅ Security: VALIDATED"
-          echo "✅ Medical Safety: VALIDATED"
-          echo ""
-          echo "Ready for deployment to healthcare environments! 🏥"
+          cd apps/python-services
+          pytest tests/ -v

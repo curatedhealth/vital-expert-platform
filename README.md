@@ -1,206 +1,245 @@
-# VITAL Path Platform
+# VITAL Path Digital Health Platform
 
-A Digital Health Transformation Platform that guides healthcare organizations through the VITAL Framework: **Vision, Integrate, Test, Activate, Learn**.
+A comprehensive digital health intelligence platform with 50+ healthcare AI agents, built as a modern monorepo.
 
-## Overview
+## 🏗️ Architecture
 
-VITAL Path orchestrates multiple LLMs to provide expert-level guidance across clinical development, regulatory affairs, and market access. The platform helps healthcare organizations reduce development time by 40% and accelerate regulatory approval by 6-8 months.
+This is a monorepo containing multiple applications and shared packages:
 
-## Tech Stack
+### Applications (`apps/`)
+- **`frontend/`** - Next.js React application with healthcare UI components
+- **`node-gateway/`** - Node.js API gateway and orchestration service
+- **`python-services/`** - Python AI services and machine learning components
 
-- **Frontend**: Next.js 14 with App Router, TypeScript, Tailwind CSS
-- **UI Components**: shadcn/ui
-- **Backend**: Supabase (PostgreSQL, Auth, Realtime, Edge Functions)
-- **Vector DB**: Pinecone for RAG (Retrieval Augmented Generation)
-- **LLM Orchestration**: OpenAI, Anthropic, custom models via API
-- **Workflow Automation**: n8n (self-hosted)
-- **Deployment**: Vercel (frontend) + Supabase Cloud + Pinecone Cloud
+### Packages (`packages/`)
+- **`ui/`** - Shared React UI components and design system
+- **`core/`** - Shared business logic, types, and utilities
+- **`configs/`** - Shared configuration files (ESLint, Prettier, TypeScript)
 
-## Quick Start
+### Database (`db/`)
+- **`migrations/`** - Database schema migrations
+- **`seeds/`** - Database seed data
+
+## 🚀 Quick Start
 
 ### Prerequisites
-
-- Node.js 18+ and npm
-- Supabase account and project
-- Pinecone account and index
-- OpenAI API key
-- Anthropic API key
+- Node.js 20+
+- pnpm 8+
+- Python 3.11+
+- PostgreSQL 14+
+- Supabase CLI (optional)
 
 ### Installation
 
-1. **Clone the repository**
-   ```bash
-   git clone <repository-url>
-   cd vital-path
-   ```
-
-2. **Install dependencies**
-   ```bash
-   npm install
-   ```
-
-3. **Set up environment variables**
-   ```bash
-   cp .env.local.template .env.local
-   # Edit .env.local with your actual values
-   ```
-
-4. **Start the development server**
-   ```bash
-   npm run dev
-   ```
-
-   Open [http://localhost:3000](http://localhost:3000) in your browser.
-
-## Project Structure
-
-```
-VITAL path/
-├── src/                      # Source code
-│   ├── app/                  # Next.js 14 App Router
-│   ├── components/           # React components
-│   ├── lib/                  # Utilities and integrations
-│   ├── types/                # TypeScript definitions
-│   └── hooks/                # Custom React hooks
-│
-├── docs/                     # Documentation
-│   ├── architecture/         # System architecture docs
-│   ├── guides/               # User and developer guides
-│   ├── api/                  # API documentation
-│   ├── compliance/           # HIPAA, regulatory docs
-│   ├── prompt-library/       # AI prompt templates
-│   ├── Agents_Cap_Libraries/ # Agent capabilities
-│   └── archive/              # Historical documentation
-│
-├── database/                 # Database files
-│   └── sql/
-│       ├── migrations/       # Database migrations
-│       │   ├── 2024/        # 2024 migrations
-│       │   ├── 2025/        # 2025 migrations
-│       │   └── fixes/       # Bug fixes
-│       ├── schema/          # Schema definitions
-│       ├── seeds/           # Seed data
-│       ├── functions/       # Stored procedures
-│       ├── policies/        # RLS policies
-│       └── setup/           # Setup scripts
-│
-├── supabase/                # Supabase configuration
-│   └── migrations/          # Supabase-specific migrations
-│
-├── config/                  # Configuration files
-│   ├── environments/        # Environment configs
-│   └── compliance/          # HIPAA compliance configs
-│
-├── scripts/                 # Utility scripts
-│   ├── setup/              # Setup scripts
-│   ├── migration/          # Migration utilities
-│   ├── testing/            # Test scripts
-│   └── archive/            # Archived scripts
-│
-├── data/                    # Data files
-│   └── batch-uploads/      # Batch upload templates
-│
-└── tests/                   # Test suites
-```
-
-## Key Features
-
-### Multi-Tenant SaaS
-- Complete data isolation between organizations
-- Role-based access control (RBAC)
-- Usage-based billing
-- White-label options for enterprise
-
-### HIPAA Compliance
-- End-to-end encryption
-- Audit logging
-- Access controls
-- Data retention policies
-
-### AI-Powered Guidance
-- Multi-LLM orchestration for specialized expertise
-- 250+ expert AI agents across healthcare domains
-- Regulatory expert models for FDA/EMA guidance
-- Clinical specialist models for trial design
-- Market analyst models for reimbursement pathways
-
-### Real-time Collaboration
-- Live updates using Supabase Realtime
-- Team collaboration features
-- Progress tracking across the VITAL journey
-
-## Documentation
-
-For comprehensive documentation, see the `/docs` folder:
-
-- **[Architecture Documentation](docs/architecture/)** - System design and architecture
-- **[User Guides](docs/guides/)** - How-to guides and tutorials
-- **[API Documentation](docs/api/)** - API reference and schemas
-- **[Prompt Library](docs/prompt-library/)** - AI prompt templates
-- **[Agent Capabilities](docs/Agents_Cap_Libraries/)** - Agent specifications
-
-## Scripts
-
-- `npm run dev` - Start development server
-- `npm run build` - Build for production
-- `npm run start` - Start production server
-- `npm run lint` - Run ESLint
-- `npm run type-check` - Run TypeScript type checking
-- `npm run test` - Run unit tests
-- `npm run test:e2e` - Run e2e tests
-
-## Environment Variables
-
-See `.env.local.template` for the complete list of required environment variables.
-
-Key variables:
-- `NEXT_PUBLIC_SUPABASE_URL` - Your Supabase project URL
-- `NEXT_PUBLIC_SUPABASE_ANON_KEY` - Supabase anonymous key
-- `PINECONE_API_KEY` - Pinecone API key for vector search
-- `OPENAI_API_KEY` - OpenAI API key for LLM
-- `ANTHROPIC_API_KEY` - Anthropic API key for Claude
-
-## Database Management
-
-### Migrations
-
-Migrations are organized by year in `database/sql/migrations/`:
-- `2024/` - All 2024 migrations
-- `2025/` - All 2025 migrations
-- `fixes/` - Bug fixes and patches
-
-To run migrations:
 ```bash
-npx supabase db push
+# Install dependencies
+make bootstrap
+# or
+pnpm install
+
+# Setup database
+make db-setup
+# or
+pnpm db:setup
+
+# Start development servers
+make dev
+# or
+pnpm dev
 ```
 
-### Seeds
+### Individual Services
 
-Seed data is in `database/sql/seeds/`:
 ```bash
-npx supabase db seed
+# Frontend only
+make dev-frontend
+pnpm dev:frontend
+
+# Node Gateway only
+make dev-gateway
+pnpm dev:gateway
+
+# Python Services only
+make dev-python
+pnpm dev:python
 ```
 
-## Contributing
+## 📁 Project Structure
+
+```
+├── apps/                    # Applications
+│   ├── frontend/           # Next.js React app
+│   ├── node-gateway/       # Node.js API gateway
+│   └── python-services/    # Python AI services
+├── packages/               # Shared packages
+│   ├── ui/                # React UI components
+│   ├── core/              # Business logic & types
+│   └── configs/           # Shared configurations
+├── db/                    # Database
+│   ├── migrations/        # Schema migrations
+│   └── seeds/            # Seed data
+├── infra/                 # Infrastructure
+│   ├── k8s/              # Kubernetes manifests
+│   └── terraform/        # Terraform configurations
+├── docs/                  # Documentation
+└── scripts/              # Utility scripts
+```
+
+## 🛠️ Development
+
+### Available Commands
+
+```bash
+# Development
+make dev                  # Start all services
+make dev-frontend        # Start frontend only
+make dev-gateway         # Start gateway only
+make dev-python          # Start Python services only
+
+# Building
+make build               # Build all packages
+make build-frontend      # Build frontend only
+make build-gateway       # Build gateway only
+
+# Testing
+make test                # Run all tests
+make test-unit           # Run unit tests
+make test-integration    # Run integration tests
+make test-coverage       # Run tests with coverage
+
+# Code Quality
+make lint                # Run linting
+make lint-fix            # Fix linting issues
+make format              # Format code
+make type-check          # TypeScript type checking
+
+# Database
+make db-migrate          # Run migrations
+make db-status           # Check migration status
+make db-setup            # Setup database
+
+# Healthcare Compliance
+make health-check        # Run compliance checks
+make pre-commit          # Run pre-commit checks
+make pre-deploy          # Run pre-deployment checks
+```
+
+### Environment Variables
+
+Create `.env.local` files in each app directory:
+
+#### Frontend (`apps/frontend/.env.local`)
+```env
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+NEXT_PUBLIC_API_URL=http://localhost:3001
+```
+
+#### Node Gateway (`apps/node-gateway/.env.local`)
+```env
+DATABASE_URL=postgresql://user:password@localhost:5432/vital_path
+SUPABASE_URL=your_supabase_url
+SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+PORT=3001
+```
+
+#### Python Services (`apps/python-services/.env.local`)
+```env
+OPENAI_API_KEY=your_openai_key
+ANTHROPIC_API_KEY=your_anthropic_key
+DATABASE_URL=postgresql://user:password@localhost:5432/vital_path
+```
+
+## 🧪 Testing
+
+```bash
+# Run all tests
+make test
+
+# Run specific test suites
+make test-unit
+make test-integration
+make test-coverage
+
+# Run tests for specific app
+pnpm --filter frontend test
+pnpm --filter node-gateway test
+```
+
+## 🚀 Deployment
+
+### Docker
+
+```bash
+# Build all services
+docker-compose build
+
+# Start all services
+docker-compose up
+
+# Start specific service
+docker-compose up frontend
+docker-compose up node-gateway
+docker-compose up python-services
+```
+
+### Kubernetes
+
+```bash
+# Apply Kubernetes manifests
+kubectl apply -f infra/k8s/
+
+# Check deployment status
+kubectl get pods
+kubectl get services
+```
+
+## 📊 Monitoring
+
+- **Frontend**: Built-in Next.js analytics
+- **Backend**: OpenTelemetry instrumentation
+- **Database**: Supabase dashboard
+- **Infrastructure**: Kubernetes metrics
+
+## 🔒 Security
+
+- HIPAA compliance scanning
+- Medical data validation
+- Security audit tools
+- Dependency vulnerability scanning
+
+## 🤝 Contributing
 
 1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+2. Create a feature branch
+3. Make your changes
+4. Run tests and linting
+5. Submit a pull request
 
-## License
+### Code Review
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+- Frontend changes: `@vital-path/frontend-team`
+- Backend changes: `@vital-path/backend-team`
+- Database changes: `@vital-path/database-team`
+- Infrastructure changes: `@vital-path/devops-team`
 
-## Support
+## 📚 Documentation
 
-For support and questions:
-- Create an issue in this repository
-- Check the documentation in the `/docs` folder
-- Use the [Prompt Library](docs/prompt-library/) for AI-assisted development
+- [Architecture Overview](docs/architecture/)
+- [API Documentation](docs/api/)
+- [Deployment Guide](docs/deployment/)
+- [Contributing Guidelines](CONTRIBUTING.md)
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🆘 Support
+
+- Create an issue for bugs or feature requests
+- Check the [documentation](docs/) for common questions
+- Contact the team for urgent issues
 
 ---
 
-**VITAL Path** - Transforming Digital Health, One Journey at a Time.
-# Force rebuild Tue Oct  7 20:06:34 +01 2025
+**VITAL Path** - Transforming healthcare through intelligent AI agents

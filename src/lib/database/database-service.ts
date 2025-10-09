@@ -27,14 +27,15 @@ export class DatabaseService {
     if (this.supabase) return; // Already initialized
     
     try {
-      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-      const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+      // Always use cloud instance - local Supabase is deprecated
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://xazinxsiglqokwfmogyk.supabase.co';
+      const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhhemlueHNpZ2xxb2t3Zm1vZ3lrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzQ2ODkzNzgsImV4cCI6MjA1MDI2NTM3OH0.5qrfkThPewEuFize6meh47xngCvg_9FRKcepFZ7IxsY';
 
-      if (supabaseUrl && supabaseKey && !supabaseUrl.includes('localhost')) {
+      if (supabaseUrl && supabaseKey) {
         this.supabase = createClient(supabaseUrl, supabaseKey);
         this.isConnected = true;
         this.useMockData = false;
-        console.log('✅ Database connected successfully');
+        console.log('✅ Database connected to cloud instance:', supabaseUrl);
       } else {
         console.log('🔧 Using mock database for development');
         this.useMockData = true;

@@ -18,8 +18,8 @@ const { createClient } = require('@supabase/supabase-js');
 const remoteUrl = process.env.REMOTE_SUPABASE_URL;
 const remoteKey = process.env.REMOTE_SUPABASE_KEY || process.env.REMOTE_SUPABASE_SERVICE_ROLE_KEY;
 
-// Local Supabase (destination)
-const localUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'http://127.0.0.1:54321';
+// Cloud Supabase (destination) - Local Supabase deprecated
+const localUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://xazinxsiglqokwfmogyk.supabase.co';
 const localKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 if (!remoteUrl || !remoteKey) {
@@ -32,7 +32,7 @@ if (!remoteUrl || !remoteKey) {
 }
 
 if (!localKey) {
-  console.error('❌ Missing local Supabase service role key!');
+  console.error('❌ Missing cloud Supabase service role key!');
   console.error('   Set SUPABASE_SERVICE_ROLE_KEY in your .env.local\n');
   process.exit(1);
 }

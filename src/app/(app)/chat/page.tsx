@@ -397,6 +397,8 @@ export default function ChatPage() {
 
   // Handle agent selection from recommendations
   const handleSelectRecommendedAgent = async (recommendedAgent: any) => {
+    console.log('🎯 handleSelectRecommendedAgent called with:', recommendedAgent);
+    
     // Convert to Agent type and set as selected
     const agent: Agent = {
       id: recommendedAgent.id,
@@ -404,11 +406,26 @@ export default function ChatPage() {
       display_name: recommendedAgent.display_name,
       description: recommendedAgent.description,
       avatar: recommendedAgent.avatar,
-      systemPrompt: recommendedAgent.system_prompt,
+      systemPrompt: recommendedAgent.system_prompt || recommendedAgent.systemPrompt || '',
       tier: recommendedAgent.tier,
       capabilities: recommendedAgent.capabilities || [],
       model: selectedModel || recommendedAgent.model || 'gpt-4-turbo-preview', // Use selected model from dropdown
+      color: recommendedAgent.color || 'text-blue-600',
+      ragEnabled: recommendedAgent.rag_enabled || false,
+      temperature: recommendedAgent.temperature || 0.7,
+      maxTokens: recommendedAgent.max_tokens || 2000,
+      isCustom: recommendedAgent.is_custom || false,
+      knowledgeDomains: recommendedAgent.knowledge_domains || [],
+      businessFunction: recommendedAgent.business_function,
+      role: recommendedAgent.role,
+      department: recommendedAgent.department,
+      organizationalRole: recommendedAgent.organizational_role,
     };
+
+    console.log('🤖 Converted agent object:', agent);
+    console.log('📊 Current state - selectedModel:', selectedModel);
+    console.log('📊 Current state - interactionMode:', interactionMode);
+    console.log('📊 Current state - autonomousMode:', autonomousMode);
 
     setSelectedAgent(agent);
 
@@ -418,7 +435,16 @@ export default function ChatPage() {
     setPendingMessage('');
 
     console.log('✅ User selected agent:', agent.display_name || agent.name, 'with model:', agent.model);
-    await sendMessage(message);
+    console.log('📝 About to send message:', message);
+    
+    try {
+      await sendMessage(message);
+      console.log('✅ Message sent successfully');
+    } catch (error) {
+      console.error('❌ Error sending message:', error);
+      // Set error state to show user
+      setError(error instanceof Error ? error.message : 'Failed to send message');
+    }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -1014,7 +1040,7 @@ export default function ChatPage() {
           {console.log('🎨 Chat interface - recommendedAgents.length:', recommendedAgents.length)}
           {recommendedAgents.length > 0 && (
             <div className="absolute inset-0 bg-white/95 backdrop-blur-sm z-50 flex items-center justify-center p-6">
-              <div className="w-full max-w-3xl">
+              <div className="w-full max-w-5xl">
                 <div className="mb-4">
                   <h3 className="text-lg font-semibold text-gray-900 mb-2">
                     Which expert would you like to consult?
@@ -1024,16 +1050,16 @@ export default function ChatPage() {
                   </p>
                 </div>
 
-                <AgentCardGrid columns={1} className="space-y-3">
+                <AgentCardGrid columns={3} layout="horizontal" className="gap-4">
                   {recommendedAgents.map((agent, index) => (
                     <EnhancedAgentCard
                       key={agent.id}
                       agent={agent}
                       isBestMatch={index === 0}
                       onClick={() => handleSelectRecommendedAgent(agent)}
-                      showReasoning={true}
+                      showReasoning={false}
                       showTier={true}
-                      size="md"
+                      size="sm"
                     />
                   ))}
                 </AgentCardGrid>

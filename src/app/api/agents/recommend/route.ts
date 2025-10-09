@@ -80,6 +80,12 @@ export async function POST(request: NextRequest) {
     // Note: knowledge_domains in DB contains descriptive strings like "FDA regulations"
     // So we'll let GPT-4 do the semantic matching instead of .overlaps()
     const supabase = await createClient();
+    
+    // Log Supabase configuration to confirm cloud instance usage
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://xazinxsiglqokwfmogyk.supabase.co';
+    console.log('🌐 Agent Recommendation API - Using Supabase URL:', supabaseUrl);
+    console.log('🔑 Agent Recommendation API - Using Supabase Service Key:', process.env.SUPABASE_SERVICE_ROLE_KEY ? 'Present' : 'Missing');
+    
     const { data: agents, error } = await supabase
       .from('agents')
       .select('id, name, display_name, description, capabilities, tier, system_prompt, avatar, knowledge_domains, model')

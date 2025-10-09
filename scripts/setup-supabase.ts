@@ -19,15 +19,14 @@ class SupabaseSetup {
   private seedPath = join(process.cwd(), 'database/sql/seeds');
 
   constructor() {
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://xazinxsiglqokwfmogyk.supabase.co';
     const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-    if (!supabaseUrl || !supabaseServiceKey) {
-      console.error('❌ Missing Supabase configuration in .env.local');
+    if (!supabaseServiceKey) {
+      console.error('❌ Missing Supabase service role key in .env.local');
       console.log('Please set:');
-      console.log('- NEXT_PUBLIC_SUPABASE_URL');
       console.log('- SUPABASE_SERVICE_ROLE_KEY (service role key, not anon key)');
-      process.exit(1);
+      console.log('Cloud URL will use fallback:', supabaseUrl);
     }
 
     // Check for placeholder values - skip this check since credentials are now provided

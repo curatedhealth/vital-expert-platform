@@ -47,7 +47,8 @@ const sizeConfig = {
     title: 'text-sm font-semibold',
     description: 'text-xs',
     reasoning: 'text-xs',
-    badge: 'text-xs px-2 py-1'
+    badge: 'text-xs px-2 py-1',
+    score: 'text-xs'
   },
   md: {
     card: 'p-4',
@@ -55,7 +56,8 @@ const sizeConfig = {
     title: 'text-base font-semibold',
     description: 'text-sm',
     reasoning: 'text-xs',
-    badge: 'text-xs px-2 py-1'
+    badge: 'text-xs px-2 py-1',
+    score: 'text-sm'
   },
   lg: {
     card: 'p-5',
@@ -63,7 +65,8 @@ const sizeConfig = {
     title: 'text-lg font-semibold',
     description: 'text-sm',
     reasoning: 'text-sm',
-    badge: 'text-sm px-3 py-1'
+    badge: 'text-sm px-3 py-1',
+    score: 'text-base'
   }
 };
 
@@ -103,7 +106,7 @@ export function EnhancedAgentCard({
       aria-label={`Select agent ${agent.display_name || agent.name}`}
     >
       <CardContent className="p-0">
-        <div className="flex items-start gap-4">
+        <div className="flex items-start gap-3">
           {/* Enhanced Avatar */}
           <div className="flex-shrink-0 relative">
             <div className={cn(
@@ -150,8 +153,18 @@ export function EnhancedAgentCard({
                 )}
               </div>
 
-              {/* Badges */}
+              {/* Badges and Score */}
               <div className="flex flex-col gap-1 items-end">
+                {/* Matching Score */}
+                {agent.score !== undefined && (
+                  <div className={cn(
+                    'bg-blue-100 text-blue-800 px-2 py-1 rounded-md font-semibold',
+                    config.score
+                  )}>
+                    {Math.round(agent.score)}% match
+                  </div>
+                )}
+                
                 {isBestMatch && (
                   <Badge 
                     className={cn(
@@ -182,7 +195,7 @@ export function EnhancedAgentCard({
 
             {/* Description */}
             <p className={cn(
-              'text-gray-600 mb-2 line-clamp-2',
+              'text-gray-600 mb-2 line-clamp-1',
               config.description
             )}>
               {agent.description}
@@ -256,12 +269,14 @@ interface AgentCardGridProps {
   children: React.ReactNode;
   className?: string;
   columns?: 1 | 2 | 3 | 4;
+  layout?: 'vertical' | 'horizontal';
 }
 
 export function AgentCardGrid({ 
   children, 
   className,
-  columns = 1 
+  columns = 1,
+  layout = 'vertical'
 }: AgentCardGridProps) {
   const gridCols = {
     1: 'grid-cols-1',
@@ -269,6 +284,25 @@ export function AgentCardGrid({
     3: 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3',
     4: 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'
   };
+
+  const flexLayout = {
+    1: 'flex-col',
+    2: 'flex-col sm:flex-row',
+    3: 'flex-col sm:flex-row lg:flex-row',
+    4: 'flex-col sm:flex-row lg:flex-row xl:flex-row'
+  };
+
+  if (layout === 'horizontal') {
+    return (
+      <div className={cn(
+        'flex gap-4',
+        flexLayout[columns],
+        className
+      )}>
+        {children}
+      </div>
+    );
+  }
 
   return (
     <div className={cn(

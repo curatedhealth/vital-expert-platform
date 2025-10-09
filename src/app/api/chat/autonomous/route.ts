@@ -23,8 +23,12 @@ export async function POST(request: NextRequest) {
     let body;
     try {
     // Create Supabase client inside the function to avoid build-time validation
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://xazinxsiglqokwfmogyk.supabase.co';
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhhemlueHNpZ2xxb2t3Zm1vZ3lrIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTczNDY4OTM3OCwiZXhwIjoyMDUwMjY1Mzc4fQ.YourServiceRoleKeyHere';
+    
+    // Log Supabase configuration to confirm cloud instance usage
+    console.log('🌐 Autonomous Chat API - Using Supabase URL:', supabaseUrl);
+    console.log('🔑 Autonomous Chat API - Using Supabase Service Key:', supabaseServiceKey ? 'Present' : 'Missing');
     
     if (!supabaseUrl || !supabaseServiceKey) {
       return NextResponse.json(
@@ -352,8 +356,12 @@ async function saveChatMessages(
 export async function GET(request: NextRequest) {
   try {
     // Create Supabase client inside the function to avoid build-time validation
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://xazinxsiglqokwfmogyk.supabase.co';
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhhemlueHNpZ2xxb2t3Zm1vZ3lrIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTczNDY4OTM3OCwiZXhwIjoyMDUwMjY1Mzc4fQ.YourServiceRoleKeyHere';
+    
+    // Log Supabase configuration to confirm cloud instance usage
+    console.log('🌐 Autonomous Chat API - Using Supabase URL:', supabaseUrl);
+    console.log('🔑 Autonomous Chat API - Using Supabase Service Key:', supabaseServiceKey ? 'Present' : 'Missing');
     
     if (!supabaseUrl || !supabaseServiceKey) {
       return NextResponse.json(

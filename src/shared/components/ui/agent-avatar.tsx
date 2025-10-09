@@ -31,16 +31,16 @@ export function AgentAvatar({ agent, avatar: avatarProp, name: nameProp, size = 
   const avatar = agent?.avatar || avatarProp || '🤖';
   const name = agent?.name || agent?.display_name || nameProp || 'Agent';
 
-  // Function to get the proper icon URL - now uses Supabase Storage URLs directly
+  // Function to get the proper icon URL - prioritize local icons over Supabase storage
   const getIconUrl = (iconUrl: string) => {
     // Handle full URLs (Supabase storage or any external URLs)
     if (iconUrl.startsWith('http://') || iconUrl.startsWith('https://')) {
-      // For Supabase storage URLs, add a fallback to local icons
+      // For Supabase storage URLs, convert to local icons to avoid 403 errors
       if (iconUrl.includes('supabase.co/storage')) {
-        // Extract filename from Supabase URL for fallback
         const filename = iconUrl.split('/').pop();
         if (filename && filename.match(/^avatar_\d{4}\.png$/)) {
-          return iconUrl; // Use Supabase URL first
+          // Use local icon instead of Supabase URL to avoid 403 errors
+          return `/icons/png/avatars/${filename}`;
         }
       }
       return iconUrl;

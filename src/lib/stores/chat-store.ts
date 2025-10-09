@@ -340,6 +340,25 @@ const _useChatStore = create<ChatStore>()(
           // Determine API endpoint based on autonomous mode
           const apiEndpoint = autonomousMode ? '/api/chat/autonomous' : '/api/chat';
 
+          // Prepare request body
+          const requestBody = {
+            message: content,
+            agent: selectedAgent || null, // Allow null agent in automatic mode
+            userId: 'hicham.naim@curated.health', // TODO: Get from auth context
+            sessionId: currentChat.id,
+            model: get().selectedModel, // Include selected model
+            chatHistory: messages.map(msg => ({
+              role: msg.role,
+              content: msg.content
+            })),
+            ragEnabled: selectedAgent?.ragEnabled || false,
+            automaticRouting: useAutomaticRouting, // Enable intelligent agent routing for automatic mode
+            useIntelligentRouting: useAutomaticRouting
+          };
+
+          console.log('📤 Sending request to:', apiEndpoint);
+          console.log('📤 Request body:', JSON.stringify(requestBody, null, 2));
+
           // Call the appropriate chat API with streaming support
           const response = await fetch(apiEndpoint, {
             method: 'POST',
@@ -347,24 +366,17 @@ const _useChatStore = create<ChatStore>()(
               'Content-Type': 'application/json',
             },
             signal: controller.signal,
-            body: JSON.stringify({
-              message: content,
-              agent: selectedAgent || null, // Allow null agent in automatic mode
-              userId: 'hicham.naim@curated.health', // TODO: Get from auth context
-              sessionId: currentChat.id,
-              model: get().selectedModel, // Include selected model
-              chatHistory: messages.map(msg => ({
-                role: msg.role,
-                content: msg.content
-              })),
-              ragEnabled: selectedAgent?.ragEnabled || false,
-              automaticRouting: useAutomaticRouting, // Enable intelligent agent routing for automatic mode
-              useIntelligentRouting: useAutomaticRouting
-            })
+            body: JSON.stringify(requestBody)
           });
 
           if (!response.ok) {
-            throw new Error(`API error: ${response.status}`);
+            const errorText = await response.text();
+            console.error('❌ API Error Response:', {
+              status: response.status,
+              statusText: response.statusText,
+              body: errorText
+            });
+            throw new Error(`API error: ${response.status} - ${errorText}`);
           }
 
           // Handle streaming response

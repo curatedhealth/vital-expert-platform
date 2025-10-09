@@ -6,7 +6,7 @@ export async function middleware(request: NextRequest) {
 
   // Public routes that don't require authentication
   const publicRoutes = ['/', '/login', '/register', '/forgot-password', '/platform', '/services', '/framework'];
-  const isPublicRoute = publicRoutes.includes(url.pathname);
+  const isPublicRoute = publicRoutes.includes(url.pathname) || url.pathname.startsWith('/api/');
 
   // Redirect old dashboard routes to new structure
   const redirectMap: Record<string, string> = {

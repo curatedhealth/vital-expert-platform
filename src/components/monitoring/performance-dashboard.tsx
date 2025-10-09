@@ -14,12 +14,14 @@ import {
   TrendingUp,
   RefreshCw
 } from 'lucide-react';
+import { VercelAnalyticsDashboard } from './vercel-analytics-dashboard';
 
 interface SystemStatus {
   redis: 'connected' | 'disconnected' | 'unknown';
   supabase: 'connected' | 'disconnected' | 'unknown';
   langsmith: 'enabled' | 'disabled' | 'unknown';
   openai: 'connected' | 'disconnected' | 'unknown';
+  vercelAnalytics: 'enabled' | 'disabled' | 'unknown';
   lastUpdate: string;
 }
 
@@ -37,6 +39,7 @@ export function PerformanceDashboard() {
     supabase: 'unknown',
     langsmith: 'unknown',
     openai: 'unknown',
+    vercelAnalytics: 'unknown',
     lastUpdate: new Date().toISOString()
   });
 
@@ -65,12 +68,17 @@ export function PerformanceDashboard() {
       
       // Check OpenAI status
       const openaiStatus = process.env.OPENAI_API_KEY ? 'connected' : 'disconnected';
+      
+      // Check Vercel Analytics status (check if @vercel/analytics is installed and configured)
+      const vercelAnalyticsStatus = typeof window !== 'undefined' && 
+        (window as any).__VERCEL_ANALYTICS__ ? 'enabled' : 'disabled';
 
       setStatus({
         redis: redisStatus,
         supabase: supabaseStatus,
         langsmith: langsmithStatus,
         openai: openaiStatus,
+        vercelAnalytics: vercelAnalyticsStatus,
         lastUpdate: new Date().toISOString()
       });
 
@@ -140,7 +148,7 @@ export function PerformanceDashboard() {
       </div>
 
       {/* System Status */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Redis Cache</CardTitle>
@@ -197,6 +205,21 @@ export function PerformanceDashboard() {
             </Badge>
             <p className="text-xs text-muted-foreground mt-1">
               AI provider
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Vercel Analytics</CardTitle>
+            {getStatusIcon(status.vercelAnalytics)}
+          </CardHeader>
+          <CardContent>
+            <Badge className={getStatusColor(status.vercelAnalytics)}>
+              {status.vercelAnalytics}
+            </Badge>
+            <p className="text-xs text-muted-foreground mt-1">
+              Web analytics
             </p>
           </CardContent>
         </Card>
@@ -301,12 +324,23 @@ export function PerformanceDashboard() {
               <Database className="h-4 w-4 mr-2" />
               Supabase Dashboard
             </Button>
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => window.open('https://vercel.com/dashboard', '_blank')}
+            >
+              <Activity className="h-4 w-4 mr-2" />
+              Vercel Analytics
+            </Button>
           </div>
           <p className="text-xs text-muted-foreground">
             Last updated: {new Date(status.lastUpdate).toLocaleString()}
           </p>
         </CardContent>
       </Card>
+
+      {/* Vercel Analytics Dashboard */}
+      <VercelAnalyticsDashboard />
     </div>
   );
 }

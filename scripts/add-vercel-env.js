@@ -56,8 +56,8 @@ async function addEnvironmentVariable(name, value, description) {
     console.log(`\n📝 Adding ${name}...`);
     console.log(`   Description: ${description}`);
     
-    // Use echo to pipe the value to vercel env add
-    const command = `echo "${value}" | vercel env add ${name}`;
+    // Use the correct Vercel CLI syntax: vercel env add <name> <environment>
+    const command = `echo "${value}" | vercel env add ${name} production`;
     execSync(command, { stdio: 'inherit' });
     
     console.log(`✅ ${name} added successfully`);

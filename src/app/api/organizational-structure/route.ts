@@ -33,8 +33,8 @@ export async function GET(request: NextRequest) {
 
     // Fetch all business functions
     const { data: functions, error: functionsError } = await supabase
-      .from('business_functions')
-      .select('id, code, name, description')
+      .from('org_functions')
+      .select('id, name, department_name, description')
       .order('name');
 
     if (functionsError) {
@@ -99,8 +99,8 @@ export async function GET(request: NextRequest) {
 
     // Fetch all departments
     const { data: departments, error: departmentsError } = await supabase
-      .from('departments')
-      .select('id, name, description, business_function_id')
+      .from('org_departments')
+      .select('id, name, department_name, description, function_id')
       .order('name');
 
     if (departmentsError) {
@@ -110,8 +110,8 @@ export async function GET(request: NextRequest) {
 
     // Fetch all organizational roles
     const { data: roles, error: rolesError } = await supabase
-      .from('organizational_roles')
-      .select('id, name, description, department_id, business_function_id, level')
+      .from('org_roles')
+      .select('id, name, role_name, description, department_id, function_id, competency_level')
       .order('name');
 
     if (rolesError) {
@@ -122,11 +122,15 @@ export async function GET(request: NextRequest) {
     // Group departments by function
     const departmentsByFunction: Record<string, any[]> = {};
     departments?.forEach(dept => {
-      if (dept.business_function_id) {
-        if (!departmentsByFunction[dept.business_function_id]) {
-          departmentsByFunction[dept.business_function_id] = [];
+      if (dept.function_id) {
+        if (!departmentsByFunction[dept.function_id]) {
+          departmentsByFunction[dept.function_id] = [];
         }
-        departmentsByFunction[dept.business_function_id].push(dept);
+        departmentsByFunction[dept.function_id].push({
+          id: dept.id,
+          name: dept.department_name || dept.name,
+          function_id: dept.function_id
+        });
       }
     });
 
@@ -140,15 +144,25 @@ export async function GET(request: NextRequest) {
         if (!rolesByDepartment[role.department_id]) {
           rolesByDepartment[role.department_id] = [];
         }
-        rolesByDepartment[role.department_id].push(role);
+        rolesByDepartment[role.department_id].push({
+          id: role.id,
+          name: role.role_name || role.name,
+          department_id: role.department_id,
+          function_id: role.function_id
+        });
       }
 
       // Group by function
-      if (role.business_function_id) {
-        if (!rolesByFunction[role.business_function_id]) {
-          rolesByFunction[role.business_function_id] = [];
+      if (role.function_id) {
+        if (!rolesByFunction[role.function_id]) {
+          rolesByFunction[role.function_id] = [];
         }
-        rolesByFunction[role.business_function_id].push(role);
+        rolesByFunction[role.function_id].push({
+          id: role.id,
+          name: role.role_name || role.name,
+          department_id: role.department_id,
+          function_id: role.function_id
+        });
       }
     });
 

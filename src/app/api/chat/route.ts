@@ -32,24 +32,50 @@ export async function POST(request: NextRequest) {
 
 
     const body = await request.json();
-    const { message, agent, model, chatHistory, ragEnabled, sessionId } = body;
+    const { message, agent, model, chatHistory, ragEnabled, sessionId, automaticRouting } = body;
 
-    if (!message || !agent) {
+    if (!message) {
       return NextResponse.json(
-        { error: 'Message and agent are required' },
+        { error: 'Message is required' },
+        { status: 400 }
+      );
+    }
+
+    // In automatic mode, agent can be null - we'll select one automatically
+    if (!agent && !automaticRouting) {
+      return NextResponse.json(
+        { error: 'Agent is required when not in automatic mode' },
         { status: 400 }
       );
     }
 
     const startTime = Date.now();
 
+    // If no agent provided in automatic mode, select one automatically
+    let selectedAgent = agent;
+    if (!agent && automaticRouting) {
+      try {
+        const agents = await loadAvailableAgents();
+        const selectionResult = await selectAgentWithReasoning(message, agents, null, chatHistory);
+        selectedAgent = selectionResult.selectedAgent;
+        console.log('🤖 Auto-selected agent:', selectedAgent?.name || 'Unknown');
+      } catch (error) {
+        console.error('Failed to auto-select agent:', error);
+        // Fallback to a default agent or return error
+        return NextResponse.json(
+          { error: 'Failed to select appropriate agent' },
+          { status: 500 }
+        );
+      }
+    }
+
     // Determine which provider to use based on model
-    const modelId = model?.id || agent.model || 'gpt-4';
+    const modelId = model?.id || selectedAgent?.model || 'gpt-4';
     const modelProvider = getModelProvider(modelId);
 
     // If in demo mode (no API keys), return a mock response
     if (process.env.OPENAI_API_KEY === 'demo-key' || !process.env.OPENAI_API_KEY) {
-      return getDemoStreamingResponse(message, agent, ragEnabled, startTime);
+      return getDemoStreamingResponse(message, selectedAgent, ragEnabled, startTime);
     }
     // Prepare messages for LLM (system prompt will be handled by LangChain service)
     const messages = [
@@ -70,10 +96,10 @@ export async function POST(request: NextRequest) {
     // - Structured output parsing (if needed)
     const ragResult = await langchainRAGService.queryKnowledge(
       message,
-      agent.id,
+      selectedAgent.id,
       chatHistory,
-      agent,
-      sessionId || agent.id, // Use sessionId for memory persistence
+      selectedAgent,
+      sessionId || selectedAgent.id, // Use sessionId for memory persistence
       {
         retrievalStrategy: 'rag_fusion', // Use best retrieval strategy by default
         enableLearning: true, // Enable auto-learning from conversations
@@ -82,13 +108,13 @@ export async function POST(request: NextRequest) {
     const fullResponse = ragResult.answer || 'I apologize, but I encountered an issue generating a response. Please try again.';
 
     // Capture alternative agents for recommendations (only in automatic mode)
-    let alternativeAgents: Array<{ agent: typeof agent; score: number; reason?: string }> = [];
+    let alternativeAgents: Array<{ agent: typeof selectedAgent; score: number; reason?: string }> = [];
     let selectedAgentConfidence = 100;
 
     if (body.useIntelligentRouting || body.automaticRouting) {
       try {
         const agents = await loadAvailableAgents();
-        const selectionResult = await selectAgentWithReasoning(message, agents, agent, chatHistory);
+        const selectionResult = await selectAgentWithReasoning(message, agents, selectedAgent, chatHistory);
         alternativeAgents = selectionResult.alternativeAgents;
         selectedAgentConfidence = selectionResult.confidence;
       } catch (error) {
@@ -108,9 +134,9 @@ export async function POST(request: NextRequest) {
             // Pass current agent and chat history to maintain conversation continuity
             console.log('🧠 Using intelligent agent routing...');
             console.log(`📊 Chat history length: ${chatHistory.length} messages`);
-            console.log(`🤖 Current agent: ${agent.display_name || agent.name}`);
+            console.log(`🤖 Current agent: ${selectedAgent?.display_name || selectedAgent?.name}`);
 
-            for await (const reasoningStep of streamAgentSelection(message, agent, chatHistory)) {
+            for await (const reasoningStep of streamAgentSelection(message, selectedAgent, chatHistory)) {
               const reasoningData = JSON.stringify({
                 type: 'reasoning',
                 content: reasoningStep.step,
@@ -121,13 +147,13 @@ export async function POST(request: NextRequest) {
             }
           } else {
             // Use LangChain's actual intermediate steps to show real agent reasoning
-            const knowledgeDomains = agent?.knowledge_domains || agent?.knowledgeDomains || [];
+            const knowledgeDomains = selectedAgent?.knowledge_domains || selectedAgent?.knowledgeDomains || [];
             const domainText = knowledgeDomains.length > 0
               ? knowledgeDomains.map((d: string) => d.replace(/_/g, ' ')).join(', ')
               : 'general knowledge base';
 
             const reasoningSteps: string[] = [
-              `🤖 Agent: ${agent.display_name || agent.name}`,
+              `🤖 Agent: ${selectedAgent?.display_name || selectedAgent?.name}`,
               `📚 Domains: ${domainText}`,
             ];
 
@@ -248,14 +274,14 @@ export async function POST(request: NextRequest) {
                 completionTokens: 0,
                 totalTokens: 0,
               },
-              workflow_step: agent?.capabilities?.[0] || 'General',
+              workflow_step: selectedAgent?.capabilities?.[0] || 'General',
               metadata_model: {
-                name: agent.name,
-                display_name: agent.name,
-                description: agent.description,
+                name: selectedAgent?.name || 'Unknown',
+                display_name: selectedAgent?.name || 'Unknown',
+                description: selectedAgent?.description || 'AI Assistant',
                 image_url: null,
-                brain_id: agent.id,
-                brain_name: agent.name,
+                brain_id: selectedAgent?.id || 'default',
+                brain_name: selectedAgent?.name || 'Unknown',
               },
               alternativeAgents: alternativeAgents,
               selectedAgentConfidence: selectedAgentConfidence,

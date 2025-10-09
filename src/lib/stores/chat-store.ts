@@ -245,21 +245,23 @@ const _useChatStore = create<ChatStore>()(
       sendMessage: async (content: string, attachments?: unknown[]) => {
         let { currentChat, selectedAgent, messages, interactionMode } = get();
 
-        // If no agent selected, return early
-        if (!selectedAgent) {
+        // In automatic mode, allow sending messages without pre-selected agent
+        // The API will handle agent selection automatically
+        if (!selectedAgent && interactionMode !== 'automatic') {
           console.warn('⚠️  No agent selected. Please select an agent before sending a message.');
           return;
         }
 
         // Auto-create a chat if one doesn't exist
         if (!currentChat) {
-          console.log('📝 Auto-creating new chat for selected agent:', selectedAgent.display_name || selectedAgent.name);
+          const agentName = selectedAgent?.display_name || selectedAgent?.name || 'AI Assistant';
+          console.log('📝 Auto-creating new chat for selected agent:', agentName);
           const newChat: Chat = {
             id: `chat-${Date.now()}`,
-            title: `New conversation with ${selectedAgent.name || 'AI Assistant'}`,
+            title: `New conversation with ${agentName}`,
             createdAt: new Date(),
             updatedAt: new Date(),
-            agentId: selectedAgent.id || 'default',
+            agentId: selectedAgent?.id || 'default',
             messageCount: 0,
             mode: interactionMode, // Track the mode for this chat
           };
@@ -280,7 +282,7 @@ const _useChatStore = create<ChatStore>()(
           content,
           role: 'user',
           timestamp: new Date(),
-          agentId: selectedAgent.id || 'default',
+          agentId: selectedAgent?.id || 'default',
           attachments,
         };
 
@@ -290,7 +292,7 @@ const _useChatStore = create<ChatStore>()(
           content: '',
           role: 'assistant',
           timestamp: new Date(),
-          agentId: selectedAgent.id || 'default',
+          agentId: selectedAgent?.id || 'default',
           isLoading: true,
           metadata: {
             citations: [],
@@ -347,7 +349,7 @@ const _useChatStore = create<ChatStore>()(
             signal: controller.signal,
             body: JSON.stringify({
               message: content,
-              agent: selectedAgent,
+              agent: selectedAgent || null, // Allow null agent in automatic mode
               userId: 'hicham.naim@curated.health', // TODO: Get from auth context
               sessionId: currentChat.id,
               model: get().selectedModel, // Include selected model
@@ -355,7 +357,7 @@ const _useChatStore = create<ChatStore>()(
                 role: msg.role,
                 content: msg.content
               })),
-              ragEnabled: selectedAgent.ragEnabled || false,
+              ragEnabled: selectedAgent?.ragEnabled || false,
               automaticRouting: useAutomaticRouting, // Enable intelligent agent routing for automatic mode
               useIntelligentRouting: useAutomaticRouting
             })

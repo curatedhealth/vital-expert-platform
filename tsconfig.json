@@ -25,7 +25,7 @@
       "@/core/*": ["./src/core/*"],
       "@/features/*": ["./src/features/*"],
       "@/shared/*": ["./src/shared/*"],
-      "@/components/*": ["./src/shared/components/*"],
+      "@/components/*": ["./src/components/*"],
       "@/lib/*": ["./src/lib/*"],
       "@/services/*": ["./src/shared/services/*"],
       "@/types/*": ["./src/shared/types/*"],

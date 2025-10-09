@@ -36,9 +36,9 @@ export default function LoginPage() {
           try {
             console.log('Fetching user profile for user ID:', session.user.id);
             const { data: profile, error } = await supabase
-              .from('user_profiles')
+              .from('profiles')
               .select('role')
-              .eq('user_id', session.user.id)
+              .eq('id', session.user.id)
               .single();
 
             console.log('Profile fetch result:', { profile, error });
@@ -49,9 +49,9 @@ export default function LoginPage() {
               if (error.code === 'PGRST116') {
                 console.log('User profile not found, creating default profile...');
                 const { data: newProfile, error: createError } = await supabase
-                  .from('user_profiles')
+                  .from('profiles')
                   .insert({
-                    user_id: session.user.id,
+                    id: session.user.id,
                     email: session.user.email,
                     full_name: session.user.user_metadata?.full_name || session.user.email,
                     role: 'super_admin' // Default to super_admin for hn@vitalexpert.com

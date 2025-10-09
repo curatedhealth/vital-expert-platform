@@ -35,6 +35,14 @@ export function AgentAvatar({ agent, avatar: avatarProp, name: nameProp, size = 
   const getIconUrl = (iconUrl: string) => {
     // Handle full URLs (Supabase storage or any external URLs)
     if (iconUrl.startsWith('http://') || iconUrl.startsWith('https://')) {
+      // For Supabase storage URLs, add a fallback to local icons
+      if (iconUrl.includes('supabase.co/storage')) {
+        // Extract filename from Supabase URL for fallback
+        const filename = iconUrl.split('/').pop();
+        if (filename && filename.match(/^avatar_\d{4}\.png$/)) {
+          return iconUrl; // Use Supabase URL first
+        }
+      }
       return iconUrl;
     }
 
@@ -87,14 +95,30 @@ export function AgentAvatar({ agent, avatar: avatarProp, name: nameProp, size = 
           className="w-full h-full object-contain"
           onError={(e) => {
             const target = e.target as HTMLImageElement;
-            if (target.src !== fallbackAvatar) {
+            const currentSrc = target.src;
+            
+            // If it's a Supabase URL that failed, try local fallback
+            if (currentSrc.includes('supabase.co/storage')) {
+              const filename = currentSrc.split('/').pop();
+              if (filename && filename.match(/^avatar_\d{4}\.png$/)) {
+                target.src = `/icons/png/avatars/${filename}`;
+                return;
+              }
+            }
+            
+            // If it's not the fallback avatar yet, try the fallback
+            if (currentSrc !== fallbackAvatar) {
               target.src = fallbackAvatar;
             } else {
-              // If fallback also fails, show emoji
+              // If fallback also fails, show emoji without innerHTML
               target.style.display = 'none';
               const parent = target.parentNode as HTMLElement;
               if (parent) {
-                parent.innerHTML = '<span class="text-4xl">🤖</span>';
+                // Create a span element instead of using innerHTML
+                const emojiSpan = document.createElement('span');
+                emojiSpan.className = 'text-4xl';
+                emojiSpan.textContent = '🤖';
+                parent.appendChild(emojiSpan);
               }
             }
           }}

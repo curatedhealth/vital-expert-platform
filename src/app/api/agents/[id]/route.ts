@@ -21,10 +21,29 @@ export async function PUT(
 
     const { id } = params;
     const updates = await request.json();
+    
+    // Filter out columns that don't exist in the agents table
+    const allowedColumns = [
+      'name', 'display_name', 'description', 'system_prompt', 'model', 
+      'avatar', 'status', 'tier', 'priority', 'color', 'domain_expertise',
+      'capabilities', 'tools', 'knowledge_domains', 'prompt_starters',
+      'reasoning_style', 'safety_guidelines', 'validation_status',
+      'created_at', 'updated_at'
+    ];
+    
+    const filteredUpdates = Object.keys(updates)
+      .filter(key => allowedColumns.includes(key))
+      .reduce((obj, key) => {
+        obj[key] = updates[key];
+        return obj;
+      }, {} as any);
+    
+    console.log('🔧 Agent API: Filtered updates:', Object.keys(filteredUpdates));
+    
     // Use admin client to bypass RLS
     const { data, error } = await supabaseAdmin
       .from('agents')
-      .update(updates)
+      .update(filteredUpdates)
       .eq('id', id)
       .select()
       .single();

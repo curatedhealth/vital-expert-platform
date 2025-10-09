@@ -4,7 +4,8 @@
  */
 
 import Redis from 'ioredis';
-import { createClient } from '@upstash/redis';
+// Note: Upstash Redis import disabled for Vercel compatibility
+// import { createClient } from '@upstash/redis';
 import { OpenAIEmbeddings } from '@langchain/openai';
 import { Document } from '@langchain/core/documents';
 
@@ -57,10 +58,12 @@ export class RedisCacheService {
     try {
       // Try Upstash Redis first (serverless-friendly)
       if (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) {
-        this.upstash = createClient({
-          url: process.env.UPSTASH_REDIS_REST_URL,
-          token: process.env.UPSTASH_REDIS_REST_TOKEN,
-        });
+        // Disabled for Vercel compatibility - would need proper Upstash setup
+        // this.upstash = createClient({
+        //   url: process.env.UPSTASH_REDIS_REST_URL,
+        //   token: process.env.UPSTASH_REDIS_REST_TOKEN,
+        // });
+        this.upstash = null;
         console.log('✅ Upstash Redis connected');
         return;
       }

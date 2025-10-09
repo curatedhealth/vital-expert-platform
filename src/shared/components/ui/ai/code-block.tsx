@@ -1,8 +1,9 @@
 import { Check, Copy } from "lucide-react";
 import { useTheme } from "next-themes";
 import { forwardRef, useState } from "react";
-import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
-import { oneLight, oneDark } from "react-syntax-highlighter/dist/esm/styles/prism";
+// Temporarily disabled for Vercel build compatibility
+// import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
+// import { oneLight, oneDark } from "react-syntax-highlighter/dist/esm/styles/prism";
 
 import { Button } from "@/shared/components/ui/button";
 import { cn } from "@/shared/services/utils";
@@ -29,6 +30,7 @@ const CodeBlock = forwardRef<HTMLDivElement, CodeBlockProps>(
   }, ref) => {
     const [copied, setCopied] = useState(false);
     const { theme } = useTheme();
+    const _isDark = theme === 'dark';
 
     const handleCopy = async () => {
       try {
@@ -78,25 +80,9 @@ const CodeBlock = forwardRef<HTMLDivElement, CodeBlockProps>(
           className="overflow-auto"
           style={{ maxHeight }}
         >
-          <SyntaxHighlighter
-            language={language}
-            style={_isDark ? oneDark : oneLight}
-            showLineNumbers={showLineNumbers}
-            customStyle={{
-              margin: 0,
-              borderRadius: 0,
-              background: "transparent",
-              fontSize: "0.875rem",
-            }}
-            codeTagProps={{
-              style: {
-                fontSize: "0.875rem",
-                fontFamily: "ui-monospace, SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace",
-              },
-            }}
-          >
-            {code.trim()}
-          </SyntaxHighlighter>
+          <pre className={`p-4 text-sm font-mono ${_isDark ? 'bg-gray-900 text-gray-100' : 'bg-gray-50 text-gray-900'}`}>
+            <code>{code.trim()}</code>
+          </pre>
         </div>
       </div>
     );

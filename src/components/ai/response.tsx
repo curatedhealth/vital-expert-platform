@@ -5,8 +5,9 @@ import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
 import remarkMath from "remark-math"
 import rehypeKatex from "rehype-katex"
-import { Prism as SyntaxHighlighter } from "react-syntax-highlighter"
-import { oneDark } from "react-syntax-highlighter/dist/esm/styles/prism"
+// Temporarily disabled for Vercel build compatibility
+// import { Prism as SyntaxHighlighter } from "react-syntax-highlighter"
+// import { oneDark } from "react-syntax-highlighter/dist/esm/styles/prism"
 import { Check, Copy } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -109,17 +110,9 @@ function CodeBlock({ language, children, ...props }: CodeBlockProps) {
           )}
         </Button>
       </div>
-      <SyntaxHighlighter
-        language={language}
-        style={oneDark}
-        customStyle={{
-          margin: 0,
-          borderRadius: "0.5rem",
-          fontSize: "0.875rem",
-        }}
-      >
-        {children}
-      </SyntaxHighlighter>
+      <pre className="p-4 text-sm font-mono bg-gray-900 text-gray-100 rounded-lg">
+        <code>{children}</code>
+      </pre>
     </div>
   )
 }

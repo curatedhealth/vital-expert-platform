@@ -32,66 +32,27 @@ export default function LoginPage() {
             router.push('/dashboard');
           }, 5000);
           
-          // Fetch user profile to check role
+          // For now, let's use a simple approach based on email
+          // TODO: Implement proper profile management later
           try {
-            console.log('Fetching user profile for user ID:', session.user.id);
-            const { data: profile, error } = await supabase
-              .from('profiles')
-              .select('role')
-              .eq('id', session.user.id)
-              .single();
-
-            console.log('Profile fetch result:', { profile, error });
-
-            if (error) {
-              console.error('Error fetching user profile:', error);
-              // If user profile doesn't exist, create a default one
-              if (error.code === 'PGRST116') {
-                console.log('User profile not found, creating default profile...');
-                const { data: newProfile, error: createError } = await supabase
-                  .from('profiles')
-                  .insert({
-                    id: session.user.id,
-                    email: session.user.email,
-                    full_name: session.user.user_metadata?.full_name || session.user.email,
-                    role: 'super_admin' // Default to super_admin for hn@vitalexpert.com
-                  })
-                  .select()
-                  .single();
-
-                if (createError) {
-                  console.error('Error creating user profile:', createError);
-                  clearTimeout(timeoutId);
-                  router.push('/dashboard');
-                  return;
-                }
-                console.log('Created new profile:', newProfile);
-                clearTimeout(timeoutId);
-                router.push('/admin');
-                return;
-              }
-              // Default to dashboard if profile fetch fails
-              clearTimeout(timeoutId);
-              router.push('/dashboard');
-              return;
-            }
-
-            // Clear timeout since we got a response
+            console.log('Checking user role based on email...');
+            
+            // Clear timeout since we're handling this
             clearTimeout(timeoutId);
             
-            // Redirect based on user role
-            if (profile?.role === 'super_admin') {
-              console.log('Super admin detected, redirecting to admin dashboard');
+            // Simple role detection based on email
+            if (session.user.email === 'hn@vitalexpert.com') {
+              console.log('Super admin email detected, redirecting to admin dashboard');
               router.push('/admin');
-            } else if (profile?.role === 'admin') {
-              console.log('Admin detected, redirecting to admin dashboard');
+            } else if (session.user.email?.includes('admin') || session.user.email?.includes('manager')) {
+              console.log('Admin email detected, redirecting to admin dashboard');
               router.push('/admin');
             } else {
               console.log('Regular user, redirecting to platform dashboard');
               router.push('/dashboard');
             }
           } catch (error) {
-            console.error('Error checking user role:', error);
+            console.error('Error in role check:', error);
             // Clear timeout since we got an error
             clearTimeout(timeoutId);
             // Default to dashboard if role check fails

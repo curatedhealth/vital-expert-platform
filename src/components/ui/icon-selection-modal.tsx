@@ -92,32 +92,33 @@ export function IconSelectionModal({
     const iconUrl = getIconUrl(icon);
     const isImagePath = iconUrl?.startsWith('/') || iconUrl?.startsWith('http');
 
+    // Fixed-size, overflow-hidden container to prevent layout glitches
+    const cellClass = "w-full h-full flex items-center justify-center p-1 overflow-hidden";
+
     if (isImagePath) {
       return (
-        <div className="w-full h-full flex items-center justify-center p-1">
+        <div className={cellClass}>
           <img
             src={iconUrl}
             alt={icon.display_name}
             className="w-full h-full object-cover rounded"
             onError={(e) => {
-              console.error(`Failed to load icon: ${iconUrl}`);
-              const target = e.target as HTMLImageElement;
-              target.style.display = 'none';
-              const parent = target.parentElement;
-              if (parent) {
-                parent.innerHTML = '<span class="text-2xl">🤖</span>';
-              }
-            }}
-            onLoad={() => {
-              console.log(`Successfully loaded icon: ${iconUrl}`);
+              // Swap to a known-good local fallback icon, no innerHTML
+              const target = e.currentTarget as HTMLImageElement;
+              target.onerror = null;
+              target.src = "/icons/png/general/Robot Head.png";
+              target.alt = "Fallback Icon";
             }}
           />
         </div>
       );
     }
 
+    // Non-image values: show emoji fallback only
     return (
-      <span className="text-2xl">{icon.file_url || '🤖'}</span>
+      <div className={cellClass}>
+        <span className="text-2xl" aria-label="Fallback icon">🤖</span>
+      </div>
     );
   };
 
@@ -174,7 +175,7 @@ export function IconSelectionModal({
                   key={icon.id}
                   onClick={() => handleIconSelect(icon)}
                   className={`
-                    w-12 h-12 rounded-lg border-2 flex items-center justify-center
+                    w-12 h-12 rounded-lg border-2 flex items-center justify-center overflow-hidden
                     transition-all duration-200 hover:scale-105 hover:shadow-md
                     ${selectedIcon === (icon.icon || icon.file_url)
                       ? 'border-blue-500 bg-blue-50'

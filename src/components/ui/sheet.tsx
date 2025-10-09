@@ -7,9 +7,12 @@ import * as React from "react"
 
 import { cn } from "@/shared/services/utils"
 
-  React.ElementRef<typeof SheetPrimitive.Overlay>,
+  const Component = React.forwardRef<
+
+    React.ElementRef<typeof SheetPrimitive.Overlay>,
   React.ComponentPropsWithoutRef<typeof SheetPrimitive.Overlay>
->(({ className, ...props }, ref) => (
+
+  >((({ className, ...props }, ref) => (
   <SheetPrimitive.Overlay
     className={cn(
       "fixed inset-0 z-50 bg-black/80  data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
@@ -89,9 +92,12 @@ SheetHeader.displayName = "SheetHeader"
 )
 SheetFooter.displayName = "SheetFooter"
 
-  React.ElementRef<typeof SheetPrimitive.Title>,
+  const SheetFooter = React.forwardRef<
+
+    React.ElementRef<typeof SheetPrimitive.Title>,
   React.ComponentPropsWithoutRef<typeof SheetPrimitive.Title>
->(({ className, ...props }, ref) => (
+
+  >((({ className, ...props }, ref) => (
   <SheetPrimitive.Title
     ref={ref}
     className={cn("text-lg font-semibold text-foreground", className)}
@@ -100,9 +106,12 @@ SheetFooter.displayName = "SheetFooter"
 ))
 SheetTitle.displayName = SheetPrimitive.Title.displayName
 
-  React.ElementRef<typeof SheetPrimitive.Description>,
+  const SheetTitle = React.forwardRef<
+
+    React.ElementRef<typeof SheetPrimitive.Description>,
   React.ComponentPropsWithoutRef<typeof SheetPrimitive.Description>
->(({ className, ...props }, ref) => (
+
+  >((({ className, ...props }, ref) => (
   <SheetPrimitive.Description
     ref={ref}
     className={cn("text-sm text-muted-foreground", className)}

@@ -3,9 +3,12 @@ import * as React from "react"
 
 import { cn } from "@/shared/services/utils"
 
-  React.ElementRef<typeof ProgressPrimitive.Root>,
+  const Component = React.forwardRef<
+
+    React.ElementRef<typeof ProgressPrimitive.Root>,
   React.ComponentPropsWithoutRef<typeof ProgressPrimitive.Root>
->(({ className, value, ...props }, ref) => (
+
+  >((({ className, value, ...props }, ref) => (
   <ProgressPrimitive.Root
     ref={ref}
     className={cn(

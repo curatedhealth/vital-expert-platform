@@ -5,9 +5,12 @@ import * as React from "react"
 
 import { cn } from "@/shared/services/utils"
 
-  React.ElementRef<typeof SeparatorPrimitive.Root>,
+  const Component = React.forwardRef<
+
+    React.ElementRef<typeof SeparatorPrimitive.Root>,
   React.ComponentPropsWithoutRef<typeof SeparatorPrimitive.Root>
->(
+
+  >((
   (
     { className, orientation = "horizontal", decorative = true, ...props },
     ref

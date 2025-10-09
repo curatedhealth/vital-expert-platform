@@ -7,7 +7,13 @@
   },
   "functions": {
     "src/app/api/**/*.ts": {
-      "maxDuration": 30
+      "maxDuration": 60
+    },
+    "src/app/api/chat/**/*.ts": {
+      "maxDuration": 120
+    },
+    "src/app/api/rag/**/*.ts": {
+      "maxDuration": 90
     }
   },
   "headers": [

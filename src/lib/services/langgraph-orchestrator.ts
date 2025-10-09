@@ -6,6 +6,7 @@
 import { StateGraph, END, START, Annotation } from "@langchain/langgraph";
 // Note: SqliteSaver disabled for Vercel compatibility
 // import { SqliteSaver } from "@langchain/langgraph-checkpoint-sqlite";
+import { sessionStore } from './supabase-session-store';
 import { ChatOpenAI } from "@langchain/openai";
 import { HumanMessage, SystemMessage } from "@langchain/core/messages";
 import { AgentExecutor, createOpenAIFunctionsAgent } from "langchain/agents";
@@ -164,9 +165,9 @@ export class LangGraphOrchestrator {
       temperature: 0.7,
     });
 
-    // Use in-memory checkpointer for Vercel compatibility
-    // In production, consider using Supabase or another cloud database
-    this.checkpointer = null; // Disabled for Vercel deployment
+    // Use Supabase session store for Vercel compatibility
+    // This provides persistent session storage without SQLite dependencies
+    this.checkpointer = sessionStore;
 
     this.builtInPatterns = this.initializeBuiltInPatterns();
   }
@@ -265,7 +266,7 @@ export class LangGraphOrchestrator {
    */
   async resumeSession(threadId: string, additionalInput?: any): Promise<any> {
     // Get the last checkpoint for this thread
-    const checkpoint = this.checkpointer ? await this.checkpointer.get({ configurable: { thread_id: threadId } }) : null;
+    const checkpoint = this.checkpointer ? await this.checkpointer.load(threadId) : null;
 
     if (!checkpoint) {
       throw new Error(`No session found with thread ID: ${threadId}`);
@@ -426,7 +427,7 @@ export class LangGraphOrchestrator {
     const history: any[] = [];
 
     // Get all checkpoints for this thread
-    const checkpoints = this.checkpointer ? this.checkpointer.list({ configurable: { thread_id: threadId } }) : [];
+    const checkpoints = this.checkpointer ? await this.checkpointer.list() : [];
 
     for await (const checkpoint of checkpoints) {
       history.push({
@@ -447,7 +448,7 @@ export class LangGraphOrchestrator {
     const sessions = new Map<string, any>();
 
     // Get all checkpoints across all threads
-    const allCheckpoints = this.checkpointer ? this.checkpointer.list({}) : [];
+    const allCheckpoints = this.checkpointer ? await this.checkpointer.list() : [];
 
     for await (const checkpoint of allCheckpoints) {
       const threadId = checkpoint.config?.configurable?.thread_id;
@@ -517,9 +518,7 @@ export class LangGraphOrchestrator {
     updates: Partial<OrchestrationState>;
   }): Promise<void> {
     // Get the pattern to rebuild the workflow
-    const checkpoint = this.checkpointer ? await this.checkpointer.getTuple({
-      configurable: { thread_id: params.threadId }
-    }) : null;
+    const checkpoint = this.checkpointer ? await this.checkpointer.load(params.threadId) : null;
 
     if (!checkpoint) {
       throw new Error(`No session found with thread ID: ${params.threadId}`);

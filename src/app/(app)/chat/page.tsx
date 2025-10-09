@@ -67,7 +67,7 @@ const navItems = [
 ];
 
 // Helper functions for dynamic prompt generation
-const generateDynamicPrompts = (capabilities: string[]) => {
+const generateDynamicPrompts = (capabilities: unknown) => {
   const capabilityPrompts: Record<string, {text: string, description: string, color: string}[]> = {
     'regulatory': [
       { text: 'Regulatory pathway guidance', description: 'Get guidance on regulatory submissions', color: 'blue' },
@@ -88,7 +88,13 @@ const generateDynamicPrompts = (capabilities: string[]) => {
   };
 
   const prompts: {text: string, description: string, color: string}[] = [];
-  capabilities.forEach(capability => {
+  const normalizedCapabilities = Array.isArray(capabilities)
+    ? capabilities
+    : typeof capabilities === 'string'
+      ? [capabilities]
+      : [];
+
+  normalizedCapabilities.forEach((capability) => {
     const capabilityKey = capability.toLowerCase().replace(/[^a-z0-9]/g, '-');
     // Validate key before accessing object
     if (Object.prototype.hasOwnProperty.call(capabilityPrompts, capabilityKey)) {
@@ -458,9 +464,11 @@ export default function ChatPage() {
   };
 
   const groupChatsByDate = (chats: typeof filteredChats) => {
-    const groups: Record<string, typeof filteredChats> = { /* TODO: implement */ };
+    const groups: Record<string, typeof filteredChats> = {};
 
-    chats.forEach((chat) => {
+    const normalizedChats = Array.isArray(chats) ? chats : [];
+
+    normalizedChats.forEach((chat) => {
       const dateKey = formatDate(chat.createdAt);
       // Validate key before accessing object
       if (!Object.prototype.hasOwnProperty.call(groups, dateKey)) {

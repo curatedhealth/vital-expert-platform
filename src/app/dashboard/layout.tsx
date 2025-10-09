@@ -255,7 +255,7 @@ export default function DashboardLayout({
                       <p className="text-xs text-muted-foreground">{user?.email}</p>
                     </div>
                     <Link
-                      href="/dashboard/settings"
+                      href="/profile"
                       className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-muted"
                       onClick={() => setUserDropdownOpen(false)}
                     >
@@ -275,8 +275,14 @@ export default function DashboardLayout({
                         className="flex items-center gap-2 px-3 py-2 text-sm text-destructive hover:bg-muted w-full text-left"
                         onClick={async () => {
                           setUserDropdownOpen(false);
-                          await signOut();
-                          router.push('/');
+                          try {
+                            await signOut();
+                            // The signOut function will handle the redirect
+                          } catch (error) {
+                            console.error('Logout error:', error);
+                            // Force redirect even if there's an error
+                            router.push('/');
+                          }
                         }}
                       >
                         <LogOut className="h-4 w-4" />

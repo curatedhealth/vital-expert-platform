@@ -119,14 +119,36 @@ export function SupabaseAuthProvider({ children }: AuthProviderProps) {
   const signOut = async () => {
     try {
       setLoading(true);
+      console.log('🔐 Signing out user...');
+      
+      // Clear local state immediately
+      setUser(null);
+      setSession(null);
+      setUserProfile(null);
+      setError(null);
+      
+      // Sign out from Supabase
       const { error } = await supabase.auth.signOut();
       if (error) {
         console.error('Error signing out:', error);
-        throw error;
+        // Don't throw error, just log it
+      } else {
+        console.log('✅ Successfully signed out');
+      }
+      
+      // Force redirect to home page
+      if (typeof window !== 'undefined') {
+        window.location.href = '/';
       }
     } catch (error) {
       console.error('Sign out error:', error);
-      throw error;
+      // Even if there's an error, clear local state and redirect
+      setUser(null);
+      setSession(null);
+      setUserProfile(null);
+      if (typeof window !== 'undefined') {
+        window.location.href = '/';
+      }
     } finally {
       setLoading(false);
     }

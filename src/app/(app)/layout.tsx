@@ -288,7 +288,7 @@ function AppLayoutContent({
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => router.push('/dashboard')}>
+              <DropdownMenuItem onClick={() => router.push('/profile')}>
                 <User className="mr-2 h-4 w-4" />
                 <span>Profile</span>
               </DropdownMenuItem>
@@ -297,7 +297,19 @@ function AppLayoutContent({
                 <span>Settings</span>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={signOut} className="text-red-600">
+              <DropdownMenuItem 
+                onClick={async () => {
+                  try {
+                    await signOut();
+                    // The signOut function will handle the redirect
+                  } catch (error) {
+                    console.error('Logout error:', error);
+                    // Force redirect even if there's an error
+                    router.push('/');
+                  }
+                }} 
+                className="text-red-600"
+              >
                 <LogOut className="mr-2 h-4 w-4" />
                 <span>Log out</span>
               </DropdownMenuItem>

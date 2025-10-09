@@ -130,8 +130,10 @@ export const MinimalChatInterface: React.FC<MinimalChatProps> = ({
       digital: ['digital therapeutic', 'SaMD', 'app', 'software', 'AI/ML']
     };
 
-    Object.entries(domains).forEach(([domain, keywords]) => {
-
+    // Ensure domains is an object
+    const safeDomains = domains && typeof domains === 'object' ? domains : {};
+    Object.entries(safeDomains).forEach(([domain, keywords]) => {
+      const matches = (keywords as string[]).filter(keyword =>
         lowerText.includes(keyword.toLowerCase())
       ).length;
 

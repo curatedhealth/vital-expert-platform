@@ -64,7 +64,9 @@ export const RagKnowledgeBaseSelector: React.FC<RagKnowledgeBaseSelectorProps> =
     );
   };
 
-    selectedRag.forEach(ragId => {
+    // Ensure selectedRag is an array
+    const safeSelectedRag = Array.isArray(selectedRag) ? selectedRag : [];
+    safeSelectedRag.forEach(ragId => {
       onAssignRag(ragId, assignmentPriority);
     });
     setSelectedRag([]);

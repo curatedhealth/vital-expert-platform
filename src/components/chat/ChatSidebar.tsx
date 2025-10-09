@@ -63,7 +63,10 @@ interface ChatSidebarProps {
     Older: []
   };
 
-  conversations.forEach(conv => {
+  // Ensure conversations is an array
+  const safeConversations = Array.isArray(conversations) ? conversations : [];
+  
+  safeConversations.forEach(conv => {
 
     if (diffDays === 0) groups.Today.push(conv);
     else if (diffDays === 1) groups.Yesterday.push(conv);

@@ -122,7 +122,7 @@ export async function POST(request: NextRequest) {
     }
     // Limit chat history to prevent context length exceeded errors
     // Keep only the last 10 messages to stay within token limits
-    const limitedChatHistory = chatHistory.slice(-10);
+    const limitedChatHistory = (chatHistory || []).slice(-10);
     
     // Prepare messages for LLM (system prompt will be handled by LangChain service)
     const messages = [

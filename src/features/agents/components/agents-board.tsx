@@ -522,7 +522,7 @@ export function AgentsBoard({
                   <div className="w-10 h-10 rounded-full flex items-center justify-center bg-gradient-to-br from-blue-50 to-purple-50 border-2 border-blue-200 flex-shrink-0 overflow-hidden">
                     {agent.avatar && (agent.avatar.startsWith('/') || agent.avatar.includes('avatar_')) ? (
                       <img
-                        src={agent.avatar.startsWith('http') ? agent.avatar : `/icons/png/avatars/${agent.avatar}.png`}
+                        src={agent.avatar.startsWith('http') ? agent.avatar : agent.avatar.startsWith('/icons/png/') ? agent.avatar : `/icons/png/avatars/${agent.avatar}${agent.avatar.includes('.png') ? '' : '.png'}`}
                         alt={agent.display_name || agent.name}
                         className="object-cover w-full h-full"
                         onError={(e) => {

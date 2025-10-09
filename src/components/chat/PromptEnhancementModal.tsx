@@ -160,7 +160,9 @@ Context: Healthcare professional seeking expert guidance.`;
     if (variables.length > 0) {
       // Create a form for variable input
       let template = prompt.user_prompt_template;
-      variables.forEach(variable => {
+      // Ensure variables is an array
+      const safeVariables = Array.isArray(variables) ? variables : [];
+      safeVariables.forEach(variable => {
         const varName = variable.slice(1, -1);
         template = template.replace(variable, `[${varName}]`);
       });

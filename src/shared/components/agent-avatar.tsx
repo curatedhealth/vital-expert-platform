@@ -24,25 +24,36 @@ export function AgentAvatar({ agent, avatar: avatarProp, name: nameProp, size = 
 
   // Function to get the proper icon URL with simplified PNG naming
   const getIconUrl = (iconUrl: string) => {
-    // If it's already a local PNG path, use it
+    // If it's already a local PNG path, use it directly (this handles our new database format)
     if (iconUrl.startsWith('/icons/png/')) {
       return iconUrl;
     }
 
+    // Clean up double .png extensions
+    let cleanIconUrl = iconUrl;
+    while (cleanIconUrl.includes('.png.png')) {
+      cleanIconUrl = cleanIconUrl.replace('.png.png', '.png');
+    }
+
     // For avatar names that match our database icons, use them directly
-    if (iconUrl.match(/^avatar_\d{4}$/)) {
+    if (cleanIconUrl.match(/^avatar_\d{4}$/)) {
       // Use 4-digit PNG filenames
-      return `/icons/png/avatars/${iconUrl}.png`;
+      return `/icons/png/avatars/${cleanIconUrl}.png`;
     }
 
     // Support legacy 3-digit format by converting to 4-digit
-    if (iconUrl.match(/^avatar_\d{3}$/)) {
-      const num = iconUrl.replace('avatar_', '');
+    if (cleanIconUrl.match(/^avatar_\d{3}$/)) {
+      const num = cleanIconUrl.replace('avatar_', '');
       const paddedNum = num.padStart(4, '0');
       return `/icons/png/avatars/avatar_${paddedNum}.png`;
     }
 
-    return iconUrl;
+    // For filenames that already have .png extension, use them directly
+    if (cleanIconUrl.match(/\.png$/)) {
+      return `/icons/png/avatars/${cleanIconUrl}`;
+    }
+
+    return cleanIconUrl;
   };
 
   // Check if avatar is a file path, URL, or our avatar naming pattern

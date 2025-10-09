@@ -1,0 +1,349 @@
+{
+  "summary": {
+    "total_agents": 372,
+    "agents_with_png_avatars": 372,
+    "agents_with_supabase_avatars": 0,
+    "agents_with_emoji_avatars": 0,
+    "agents_with_uuid_avatars": 0,
+    "agents_without_avatars": 0,
+    "unique_png_avatars": 201,
+    "max_uses_per_avatar": 2,
+    "min_uses_per_avatar": 1,
+    "average_uses_per_avatar": 1.85,
+    "overused_avatars": 0,
+    "png_avatar_coverage_percentage": 100,
+    "compliance_status": "✅ PASS"
+  },
+  "avatar_usage": {
+    "noun-male-7845946.png": 2,
+    "noun-man-5757364.png": 2,
+    "avatar_0034.png": 2,
+    "avatar_0064.png": 2,
+    "avatar_0029.png": 2,
+    "avatar_0002.png": 2,
+    "noun-man-5757356.png": 2,
+    "avatar_0023.png": 2,
+    "avatar_0033.png": 2,
+    "avatar_0001.png": 2,
+    "avatar_0088.png": 2,
+    "avatar_0091.png": 2,
+    "avatar_0024.png": 2,
+    "avatar_0083.png": 2,
+    "avatar_0084.png": 2,
+    "avatar_0028.png": 2,
+    "avatar_0090.png": 2,
+    "avatar_0095.png": 2,
+    "avatar_0089.png": 2,
+    "noun-man-5757365.png": 2,
+    "noun-man-5757375.png": 2,
+    "avatar_0099.png": 2,
+    "avatar_0096.png": 2,
+    "noun-man-5757377.png": 2,
+    "avatar_0098.png": 2,
+    "avatar_0097.png": 2,
+    "noun-man-5757371.png": 2,
+    "noun-man-5757380.png": 2,
+    "noun-man-5757384.png": 2,
+    "noun-man-5757385.png": 2,
+    "noun-man-7815635.png": 2,
+    "noun-man-7815636.png": 2,
+    "noun-man-7845944.png": 2,
+    "avatar_0110.png": 2,
+    "avatar_0107.png": 2,
+    "noun-man-5757382.png": 2,
+    "avatar_0111.png": 2,
+    "avatar_0105.png": 2,
+    "avatar_0102.png": 2,
+    "avatar_0109.png": 2,
+    "avatar_0101.png": 2,
+    "avatar_0108.png": 2,
+    "avatar_0104.png": 2,
+    "avatar_0103.png": 2,
+    "avatar_0106.png": 2,
+    "avatar_0100.png": 2,
+    "avatar_0112.png": 2,
+    "noun-woman-5757372.png": 1,
+    "noun-woman-5757374.png": 1,
+    "noun-woman-5757376.png": 1,
+    "noun-woman-5757378.png": 1,
+    "noun-woman-5757381.png": 1,
+    "noun-woman-5757383.png": 1,
+    "noun-woman-5757386.png": 1,
+    "noun-guy-7845962.png": 2,
+    "noun-girl-7845959.png": 2,
+    "avatar_0048.png": 2,
+    "avatar_0044.png": 2,
+    "avatar_0042.png": 2,
+    "avatar_0041.png": 2,
+    "avatar_0052.png": 2,
+    "noun-girl-7845948.png": 2,
+    "noun-woman-7815637.png": 1,
+    "noun-woman-7845951.png": 1,
+    "avatar_0005.png": 2,
+    "avatar_0010.png": 2,
+    "avatar_0011.png": 2,
+    "avatar_0013.png": 2,
+    "avatar_0014.png": 2,
+    "avatar_0018.png": 2,
+    "avatar_0019.png": 2,
+    "avatar_0020.png": 2,
+    "avatar_0021.png": 2,
+    "avatar_0022.png": 2,
+    "avatar_0025.png": 2,
+    "avatar_0026.png": 2,
+    "avatar_0027.png": 2,
+    "avatar_0050.png": 2,
+    "avatar_0030.png": 2,
+    "avatar_0031.png": 2,
+    "avatar_0032.png": 2,
+    "avatar_0040.png": 2,
+    "avatar_0035.png": 2,
+    "avatar_0036.png": 2,
+    "avatar_0046.png": 2,
+    "avatar_0047.png": 2,
+    "avatar_0037.png": 2,
+    "avatar_0049.png": 2,
+    "noun-girl-7815632.png": 2,
+    "avatar_0038.png": 2,
+    "avatar_0039.png": 2,
+    "noun-female-7845971.png": 2,
+    "avatar_0051.png": 2,
+    "noun-woman-7815634.png": 1,
+    "avatar_0053.png": 2,
+    "avatar_0054.png": 2,
+    "avatar_0055.png": 2,
+    "noun-backpacker-5840190.png": 2,
+    "noun-woman-7845955.png": 1,
+    "avatar_0012.png": 2,
+    "avatar_0006.png": 2,
+    "avatar_0007.png": 2,
+    "avatar_0043.png": 2,
+    "avatar_0045.png": 2,
+    "avatar_0056.png": 2,
+    "noun-man-5757362.png": 2,
+    "noun-man-5757357.png": 2,
+    "avatar_0009.png": 2,
+    "avatar_0065.png": 2,
+    "avatar_0066.png": 2,
+    "avatar_0070.png": 2,
+    "avatar_0072.png": 2,
+    "avatar_0073.png": 2,
+    "avatar_0074.png": 2,
+    "avatar_0075.png": 2,
+    "avatar_0017.png": 2,
+    "avatar_0071.png": 2,
+    "noun-lady-7845953.png": 2,
+    "avatar_0114.png": 2,
+    "avatar_0115.png": 2,
+    "avatar_0116.png": 2,
+    "avatar_0118.png": 2,
+    "avatar_0068.png": 2,
+    "avatar_0003.png": 2,
+    "avatar_0008.png": 2,
+    "avatar_0069.png": 2,
+    "noun-housewife-7845973.png": 2,
+    "noun-housewife-7845952.png": 2,
+    "noun-housewife-7845945.png": 2,
+    "avatar_0117.png": 2,
+    "avatar_0015.png": 2,
+    "noun-avatar-5840192.png": 2,
+    "noun-avatar-5840189.png": 2,
+    "noun-arabic-woman-7845949.png": 2,
+    "noun-arabic-7845964.png": 2,
+    "noun-african-girl-7845961.png": 2,
+    "avatar_0067.png": 2,
+    "avatar_0119.png": 2,
+    "avatar_0057.png": 2,
+    "noun-female-7845968.png": 2,
+    "avatar_0058.png": 2,
+    "avatar_0059.png": 2,
+    "avatar_0060.png": 2,
+    "avatar_0061.png": 2,
+    "noun-female-7845967.png": 2,
+    "noun-father-7845956.png": 2,
+    "noun-employ-7845947.png": 2,
+    "avatar_0113.png": 2,
+    "avatar_0004.png": 2,
+    "noun-cowboy-7845963.png": 2,
+    "noun-businessman-7845943.png": 2,
+    "noun-boy-5757369.png": 2,
+    "noun-avatar-7845970.png": 2,
+    "avatar_0016.png": 2,
+    "noun-man-5757361.png": 2,
+    "avatar_0092.png": 2,
+    "avatar_0093.png": 2,
+    "avatar_0086.png": 2,
+    "avatar_0085.png": 2,
+    "noun-boy-7815633.png": 2,
+    "noun-boy-7845976.png": 2,
+    "noun-boy-7845975.png": 2,
+    "noun-man-7845957.png": 2,
+    "noun-man-7845965.png": 2,
+    "noun-man-7845974.png": 2,
+    "noun-old-man-7845966.png": 2,
+    "noun-people-5840188.png": 2,
+    "noun-people-5840194.png": 1,
+    "noun-boy-7845950.png": 2,
+    "noun-people-5840193.png": 1,
+    "noun-boy-7845969.png": 2,
+    "noun-boy-5757373.png": 2,
+    "noun-people-5840185.png": 2,
+    "noun-portrait-7845960.png": 1,
+    "noun-people-7845958.png": 1,
+    "noun-player-7845978.png": 1,
+    "noun-punk-5840186.png": 1,
+    "noun-schoolboy-7845954.png": 1,
+    "noun-woman-5757379.png": 1,
+    "avatar_0094.png": 2,
+    "avatar_0087.png": 2,
+    "avatar_0082.png": 2,
+    "avatar_0078.png": 2,
+    "avatar_0076.png": 2,
+    "avatar_0081.png": 2,
+    "avatar_0080.png": 2,
+    "avatar_0077.png": 2,
+    "avatar_0063.png": 2,
+    "avatar_0062.png": 2,
+    "noun-woman-5757358.png": 1,
+    "avatar_0079.png": 2,
+    "noun-wife-7845972.png": 1,
+    "noun-user-5840191.png": 1,
+    "noun-user-5840187.png": 1,
+    "noun-teenager-7845977.png": 1,
+    "noun-woman-5757363.png": 1,
+    "noun-woman-5757360.png": 1,
+    "noun-woman-5757359.png": 1,
+    "noun-woman-5757366.png": 1,
+    "noun-woman-5757367.png": 1,
+    "noun-woman-5757370.png": 1
+  },
+  "business_function_distribution": {
+    "Digital Health - Strategy": {
+      "total": 5,
+      "with_png_avatars": 5
+    },
+    "Medical Affairs": {
+      "total": 36,
+      "with_png_avatars": 36
+    },
+    "Clinical Development": {
+      "total": 31,
+      "with_png_avatars": 31
+    },
+    "Quality": {
+      "total": 19,
+      "with_png_avatars": 19
+    },
+    "Digital Health - Data Analytics": {
+      "total": 5,
+      "with_png_avatars": 5
+    },
+    "Regulatory Affairs": {
+      "total": 22,
+      "with_png_avatars": 22
+    },
+    "Digital Health - Telehealth": {
+      "total": 5,
+      "with_png_avatars": 5
+    },
+    "Digital Health": {
+      "total": 2,
+      "with_png_avatars": 2
+    },
+    "Digital Health - Remote Monitoring": {
+      "total": 5,
+      "with_png_avatars": 5
+    },
+    "Digital Health - Patient Engagement": {
+      "total": 5,
+      "with_png_avatars": 5
+    },
+    "Commercial": {
+      "total": 54,
+      "with_png_avatars": 54
+    },
+    "Digital Health - Patient Experience": {
+      "total": 1,
+      "with_png_avatars": 1
+    },
+    "Digital Health - Legal Compliance": {
+      "total": 1,
+      "with_png_avatars": 1
+    },
+    "Digital Health - Healthcare IT": {
+      "total": 1,
+      "with_png_avatars": 1
+    },
+    "Digital Health - Product Development": {
+      "total": 2,
+      "with_png_avatars": 2
+    },
+    "Digital Health - Market Access": {
+      "total": 1,
+      "with_png_avatars": 1
+    },
+    "Digital Health - Information Security": {
+      "total": 1,
+      "with_png_avatars": 1
+    },
+    "Digital Health - Marketing": {
+      "total": 1,
+      "with_png_avatars": 1
+    },
+    "Research & Development": {
+      "total": 19,
+      "with_png_avatars": 19
+    },
+    "IT/Digital": {
+      "total": 100,
+      "with_png_avatars": 100
+    },
+    "Manufacturing": {
+      "total": 17,
+      "with_png_avatars": 17
+    },
+    "Pharmacovigilance": {
+      "total": 12,
+      "with_png_avatars": 12
+    },
+    "Business Development": {
+      "total": 8,
+      "with_png_avatars": 8
+    },
+    "Legal": {
+      "total": 10,
+      "with_png_avatars": 10
+    },
+    "Digital Health - Digital Therapeutics": {
+      "total": 3,
+      "with_png_avatars": 3
+    },
+    "Digital Health - Clinical Informatics": {
+      "total": 2,
+      "with_png_avatars": 2
+    },
+    "Digital Health - Clinical Operations": {
+      "total": 2,
+      "with_png_avatars": 2
+    },
+    "Digital Health - Regulatory Affairs": {
+      "total": 2,
+      "with_png_avatars": 2
+    }
+  },
+  "tier_distribution": {
+    "1": {
+      "total": 54,
+      "with_png_avatars": 54
+    },
+    "2": {
+      "total": 208,
+      "with_png_avatars": 208
+    },
+    "3": {
+      "total": 110,
+      "with_png_avatars": 110
+    }
+  },
+  "overused_avatars": []
+}

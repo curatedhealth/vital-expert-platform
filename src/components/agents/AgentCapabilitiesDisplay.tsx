@@ -85,7 +85,10 @@ export const AgentCapabilitiesDisplay: React.FC<AgentCapabilitiesDisplayProps> =
   // Group capabilities by category using Map for safer access
   const capabilitiesByCategoryMap = new Map<string, Capability[]>();
   
-  capabilities.forEach(capability => {
+  // Ensure capabilities is an array
+  const safeCapabilities = Array.isArray(capabilities) ? capabilities : [];
+  
+  safeCapabilities.forEach(capability => {
     const category = capability.category || 'general';
     // Validate category to prevent object injection
     if (typeof category !== 'string' || category.length === 0) {

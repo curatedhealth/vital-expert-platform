@@ -833,53 +833,86 @@ export default function ChatPage() {
                 </p>
               </div>
 
-              <div className="space-y-3">
-                {recommendedAgents.map((agent, index) => (
-                  <Card
-                    key={agent.id}
-                    className="p-4 cursor-pointer hover:shadow-lg hover:border-blue-300 transition-all duration-200"
-                    onClick={() => handleSelectRecommendedAgent(agent)}
-                  >
-                    <div className="flex items-start gap-4">
-                      <div className="w-12 h-12 rounded-full flex items-center justify-center bg-gradient-to-br from-blue-50 to-purple-50 border-2 border-blue-200 flex-shrink-0 overflow-hidden">
-                        {agent.avatar && (agent.avatar.startsWith('/') || agent.avatar.includes('avatar_')) ? (
-                          <Image
-                            src={agent.avatar}
-                            alt={agent.display_name || agent.name}
-                            width={48}
-                            height={48}
-                            className="object-cover w-full h-full"
-                          />
-                        ) : (
-                          <span className="text-2xl">{agent.avatar || '🤖'}</span>
-                        )}
-                      </div>
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
-                          <h4 className="font-semibold text-gray-900">
-                            {agent.display_name || agent.name}
-                          </h4>
-                          {index === 0 && (
-                            <Badge variant="default" className="bg-blue-600">
-                              Best Match
-                            </Badge>
-                          )}
-                          {agent.tier && (
-                            <Badge variant="outline">
-                              Tier {agent.tier}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {recommendedAgents.map((agent, index) => {
+                  const getRankingTag = (index: number) => {
+                    switch (index) {
+                      case 0: return { label: 'Best Match', variant: 'default' as const, className: 'bg-blue-600 text-white' };
+                      case 1: return { label: '2nd Choice', variant: 'secondary' as const, className: 'bg-green-100 text-green-800' };
+                      case 2: return { label: '3rd Choice', variant: 'outline' as const, className: 'bg-orange-100 text-orange-800' };
+                      default: return null;
+                    }
+                  };
+
+                  const rankingTag = getRankingTag(index);
+
+                  return (
+                    <Card
+                      key={agent.id}
+                      className="p-4 cursor-pointer hover:shadow-lg hover:border-blue-300 transition-all duration-200 h-full"
+                      onClick={() => handleSelectRecommendedAgent(agent)}
+                    >
+                      <div className="flex flex-col h-full">
+                        {/* Header with Avatar and Ranking */}
+                        <div className="flex items-start gap-3 mb-3">
+                          <div className="w-10 h-10 rounded-full flex items-center justify-center bg-gradient-to-br from-blue-50 to-purple-50 border-2 border-blue-200 flex-shrink-0 overflow-hidden">
+                            {agent.avatar && (agent.avatar.startsWith('/') || agent.avatar.includes('avatar_')) ? (
+                              <Image
+                                src={agent.avatar}
+                                alt={agent.display_name || agent.name}
+                                width={40}
+                                height={40}
+                                className="object-cover w-full h-full"
+                              />
+                            ) : (
+                              <span className="text-lg">{agent.avatar || '🤖'}</span>
+                            )}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <h4 className="font-semibold text-gray-900 text-sm truncate">
+                              {agent.display_name || agent.name}
+                            </h4>
+                            {agent.tier && (
+                              <Badge variant="outline" className="text-xs mt-1">
+                                Tier {agent.tier}
+                              </Badge>
+                            )}
+                          </div>
+                          {rankingTag && (
+                            <Badge 
+                              variant={rankingTag.variant}
+                              className={`text-xs ${rankingTag.className}`}
+                            >
+                              {rankingTag.label}
                             </Badge>
                           )}
                         </div>
-                        <p className="text-sm text-gray-600 mb-2">
+
+                        {/* Description */}
+                        <p className="text-sm text-gray-600 mb-3 line-clamp-2 flex-1">
                           {agent.description}
                         </p>
-                        <p className="text-xs text-gray-500 italic">
-                          {agent.reasoning}
-                        </p>
+
+                        {/* Score and Reasoning */}
+                        <div className="space-y-2">
+                          {agent.score !== undefined && (
+                            <div className="flex items-center justify-between">
+                              <span className="text-xs text-gray-500">Match Score:</span>
+                              <div className="bg-blue-100 text-blue-800 px-2 py-1 rounded-md font-semibold text-xs">
+                                {Math.round(agent.score)}%
+                              </div>
+                            </div>
+                          )}
+                          {agent.reasoning && (
+                            <p className="text-xs text-gray-500 italic line-clamp-2">
+                              {agent.reasoning}
+                            </p>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  </Card>
-                ))}
+                    </Card>
+                  );
+                })}
               </div>
 
               <div className="mt-4 text-center">

@@ -5,12 +5,10 @@ import * as React from "react"
 
 import { cn } from "@/shared/services/utils"
 
-  const Component = React.forwardRef<
-
-    React.ElementRef<typeof ScrollAreaPrimitive.Root>,
+const ScrollArea = React.forwardRef<
+  React.ElementRef<typeof ScrollAreaPrimitive.Root>,
   React.ComponentPropsWithoutRef<typeof ScrollAreaPrimitive.Root>
-
-  >((({ className, children, ...props }, ref) => (
+>(({ className, children, ...props }, ref) => (
   <ScrollAreaPrimitive.Root
     ref={ref}
     className={cn("relative overflow-hidden", className)}
@@ -25,12 +23,10 @@ import { cn } from "@/shared/services/utils"
 ))
 ScrollArea.displayName = ScrollAreaPrimitive.Root.displayName
 
-  const ScrollArea = React.forwardRef<
-
-    React.ElementRef<typeof ScrollAreaPrimitive.ScrollAreaScrollbar>,
+const ScrollBar = React.forwardRef<
+  React.ElementRef<typeof ScrollAreaPrimitive.ScrollAreaScrollbar>,
   React.ComponentPropsWithoutRef<typeof ScrollAreaPrimitive.ScrollAreaScrollbar>
-
-  >((({ className, orientation = "vertical", ...props }, ref) => (
+>(({ className, orientation = "vertical", ...props }, ref) => (
   <ScrollAreaPrimitive.ScrollAreaScrollbar
     ref={ref}
     orientation={orientation}

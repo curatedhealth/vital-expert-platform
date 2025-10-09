@@ -19,6 +19,31 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const router = useRouter();
 
+  // Check if user is already authenticated on page load
+  useEffect(() => {
+    const checkExistingSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        console.log('User already authenticated, redirecting...');
+        setLoading(true); // Show loading state during redirect
+        
+        // Simple role detection based on email
+        if (session.user.email === 'hn@vitalexpert.com') {
+          console.log('Super admin email detected, redirecting to admin dashboard');
+          router.push('/admin');
+        } else if (session.user.email?.includes('admin') || session.user.email?.includes('manager')) {
+          console.log('Admin email detected, redirecting to admin dashboard');
+          router.push('/admin');
+        } else {
+          console.log('Regular user, redirecting to platform dashboard');
+          router.push('/dashboard');
+        }
+      }
+    };
+
+    checkExistingSession();
+  }, [router]);
+
   // Listen for authentication state changes
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -29,6 +54,7 @@ export default function LoginPage() {
           // Set a timeout fallback in case profile fetch takes too long
           const timeoutId = setTimeout(() => {
             console.log('Profile fetch timeout, redirecting to dashboard');
+            setLoading(false); // Reset loading state before redirect
             router.push('/dashboard');
           }, 5000);
           
@@ -39,6 +65,9 @@ export default function LoginPage() {
             
             // Clear timeout since we're handling this
             clearTimeout(timeoutId);
+            
+            // Reset loading state before redirect
+            setLoading(false);
             
             // Simple role detection based on email
             if (session.user.email === 'hn@vitalexpert.com') {
@@ -55,6 +84,8 @@ export default function LoginPage() {
             console.error('Error in role check:', error);
             // Clear timeout since we got an error
             clearTimeout(timeoutId);
+            // Reset loading state before redirect
+            setLoading(false);
             // Default to dashboard if role check fails
             router.push('/dashboard');
           }
@@ -78,12 +109,12 @@ export default function LoginPage() {
 
       if (error) {
         setError(error.message);
+        setLoading(false); // Reset loading state on error
       }
-      // Redirect will be handled by the auth state change listener
+      // If successful, loading state will be reset by the auth state change listener
     } catch (err) {
       setError('An unexpected error occurred');
-    } finally {
-      setLoading(false);
+      setLoading(false); // Reset loading state on error
     }
   };
 

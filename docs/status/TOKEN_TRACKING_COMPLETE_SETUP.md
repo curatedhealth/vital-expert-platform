@@ -128,7 +128,7 @@ from vital_langchain_tracker_complete import VitalTokenTracker
 
 # Initialize tracker
 tracker = VitalTokenTracker(
-    supabase_url="http://127.0.0.1:54321",
+    supabase_url="https://xazinxsiglqokwfmogyk.supabase.co",
     supabase_key="your-service-role-key",
     service_type="1:1_conversation",
     user_id="user-uuid"
@@ -180,7 +180,7 @@ Create a sync script to push data from PostgreSQL to Notion databases for visual
 ### Environment Variables Required
 ```bash
 # Supabase
-SUPABASE_URL=http://127.0.0.1:54321
+SUPABASE_URL=https://xazinxsiglqokwfmogyk.supabase.co
 SUPABASE_SERVICE_KEY=your-service-role-key
 
 # AI Providers

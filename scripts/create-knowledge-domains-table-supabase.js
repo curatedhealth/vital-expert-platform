@@ -62,7 +62,7 @@ console.log('══════════════════════�
 console.log(CREATE_TABLE_SQL);
 console.log('\n═══════════════════════════════════════════════════════════════');
 console.log('After creating the table, run:');
-console.log('  NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321 \\');
+console.log('  NEXT_PUBLIC_SUPABASE_URL=https://xazinxsiglqokwfmogyk.supabase.co \\');
 console.log('  SUPABASE_SERVICE_ROLE_KEY=<your-key> \\');
 console.log('  node scripts/seed-knowledge-domains.js');
 console.log('═══════════════════════════════════════════════════════════════\n');

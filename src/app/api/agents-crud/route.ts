@@ -5,9 +5,13 @@ export async function GET(request: NextRequest) {
   try {
     // Create Supabase client inside the function to avoid build-time validation
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
     const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
     
-    if (!supabaseUrl || !supabaseServiceKey) {
+    // Use anon key for read operations (RLS allows public read access)
+    const supabaseKey = supabaseServiceKey || supabaseAnonKey;
+    
+    if (!supabaseUrl || !supabaseKey) {
       console.log('⚠️ Supabase configuration missing, returning comprehensive mock data');
       
       // Load comprehensive mock data
@@ -54,7 +58,7 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+    const supabaseAdmin = createClient(supabaseUrl, supabaseKey);
     // Check for special action parameter
     const { searchParams } = new URL(request.url);
     const action = searchParams.get('action');
@@ -312,7 +316,7 @@ export async function POST(request: NextRequest) {
       });
     }
     
-    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+    const supabaseAdmin = createClient(supabaseUrl, supabaseKey);
     const { data, error } = await supabaseAdmin
       .from('agents')
       .insert([{

@@ -147,7 +147,7 @@ $$ language 'plpgsql';
 
 ### 2. Verify Database Functions
 ```bash
-curl -s "http://127.0.0.1:54321/rest/v1/rpc/match_user_memory" \
+curl -s "https://xazinxsiglqokwfmogyk.supabase.co/rest/v1/rpc/match_user_memory" \
   -H "apikey: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." \
   -H "Content-Type: application/json" \
   --data '{

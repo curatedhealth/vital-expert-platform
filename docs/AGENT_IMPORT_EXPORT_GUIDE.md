@@ -453,7 +453,7 @@ ajv validate -s docs/AGENT_DATA_MODEL_SCHEMA_V2.1.json -d my-agent.json
 ### 3. Import via Script
 
 ```bash
-NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321 \
+NEXT_PUBLIC_SUPABASE_URL=https://xazinxsiglqokwfmogyk.supabase.co \
 SUPABASE_SERVICE_ROLE_KEY=your-key \
 node scripts/import-agent.js my-agent.json
 ```
@@ -462,7 +462,7 @@ node scripts/import-agent.js my-agent.json
 
 ```bash
 # Check agent was created
-curl "http://127.0.0.1:54321/rest/v1/agents?name=eq.my-agent" \
+curl "https://xazinxsiglqokwfmogyk.supabase.co/rest/v1/agents?name=eq.my-agent" \
   -H "apikey: your-anon-key"
 ```
 

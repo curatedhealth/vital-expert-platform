@@ -324,7 +324,7 @@ const embeddings = await this.getEmbeddingsForDomains(knowledgeDomains);
 npx supabase db push
 
 # 2. Verify knowledge domains loaded
-curl http://127.0.0.1:54321/rest/v1/knowledge_domains?select=slug,name,recommended_models \
+curl https://xazinxsiglqokwfmogyk.supabase.co/rest/v1/knowledge_domains?select=slug,name,recommended_models \
   -H "apikey: YOUR_ANON_KEY"
 
 # 3. Test in UI

@@ -1,0 +1,273 @@
+# Database Avatar Update Report
+
+## Summary
+- **Total Agents**: 254
+- **Agents Updated**: 254
+- **SQL Statements**: 254
+
+## Avatar Updates
+- **Anticoagulation Specialist**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0009.png` → `/icons/png/avatars/avatar_0009.png`
+- **Clinical Trial Designer**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0021.png` → `/icons/png/avatars/avatar_0021.png`
+- **HIPAA Compliance Officer**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0059.png` → `/icons/png/avatars/avatar_0059.png`
+- **Reimbursement Strategist**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0002.png` → `/icons/png/avatars/avatar_0002.png`
+- **formulation_development_scientist**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-female-7845971.png` → `/icons/png/avatars/noun-female-7845971.png`
+- **Pediatric Dosing Specialist**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-woman-5757378.png` → `/icons/png/avatars/noun-woman-5757378.png`
+- **Accelerated Approval Strategist**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0113.png` → `/icons/png/avatars/avatar_0113.png`
+- **comparability_study_designer**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-boy-7845950.png` → `/icons/png/avatars/noun-boy-7845950.png`
+- **Drug Information Specialist**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0118.png` → `/icons/png/avatars/avatar_0118.png`
+- **oligonucleotide_therapy_specialist**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-woman-7815634.png` → `/icons/png/avatars/noun-woman-7815634.png`
+- **Pharmacokinetics Advisor**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0062.png` → `/icons/png/avatars/avatar_0062.png`
+- **NDA/BLA Coordinator**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-woman-5757358.png` → `/icons/png/avatars/noun-woman-5757358.png`
+- **Dosing Calculator**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-man-7845974.png` → `/icons/png/avatars/noun-man-7845974.png`
+- **Mass Spectrometry Imaging Expert**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-father-7845956.png` → `/icons/png/avatars/noun-father-7845956.png`
+- **Infectious Disease Pharmacist**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0100.png` → `/icons/png/avatars/avatar_0100.png`
+- **Promotional Material Developer**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0025.png` → `/icons/png/avatars/avatar_0025.png`
+- **Regulatory Intelligence Analyst**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0065.png` → `/icons/png/avatars/avatar_0065.png`
+- **Medication Reconciliation Assistant**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0076.png` → `/icons/png/avatars/avatar_0076.png`
+- **Validation Specialist**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-woman-5757381.png` → `/icons/png/avatars/noun-woman-5757381.png`
+- **GMP Compliance Advisor**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-housewife-7845973.png` → `/icons/png/avatars/noun-housewife-7845973.png`
+- **Geriatric Medication Specialist**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0010.png` → `/icons/png/avatars/avatar_0010.png`
+- **Quality Systems Auditor**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0083.png` → `/icons/png/avatars/avatar_0083.png`
+- **PSUR/PBRER Writer**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0068.png` → `/icons/png/avatars/avatar_0068.png`
+- **Immunosuppression Specialist**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0046.png` → `/icons/png/avatars/avatar_0046.png`
+- **Pediatric Regulatory Advisor**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0112.png` → `/icons/png/avatars/avatar_0112.png`
+- **Clinical Trial Budget Estimator**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0051.png` → `/icons/png/avatars/avatar_0051.png`
+- **Pain Management Specialist**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-housewife-7845945.png` → `/icons/png/avatars/noun-housewife-7845945.png`
+- **CMC Regulatory Specialist**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0090.png` → `/icons/png/avatars/avatar_0090.png`
+- **Supplier Quality Manager**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-father-7845956.png` → `/icons/png/avatars/noun-father-7845956.png`
+- **Breakthrough Therapy Advisor**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0071.png` → `/icons/png/avatars/avatar_0071.png`
+- **Clinical Protocol Writer**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0051.png` → `/icons/png/avatars/avatar_0051.png`
+- **Document Control Specialist**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0062.png` → `/icons/png/avatars/avatar_0062.png`
+- **Regulatory Strategy Advisor**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-woman-5757386.png` → `/icons/png/avatars/noun-woman-5757386.png`
+- **Study Closeout Specialist**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0104.png` → `/icons/png/avatars/avatar_0104.png`
+- **Investigator-Initiated Study Reviewer**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-arabic-woman-7845949.png` → `/icons/png/avatars/noun-arabic-woman-7845949.png`
+- **Safety Reporting Coordinator**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0025.png` → `/icons/png/avatars/avatar_0025.png`
+- **Post-Marketing Surveillance Coordinator**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0061.png` → `/icons/png/avatars/avatar_0061.png`
+- **Equipment Qualification Specialist**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-man-5757357.png` → `/icons/png/avatars/noun-man-5757357.png`
+- **Clinical Data Manager**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0070.png` → `/icons/png/avatars/avatar_0070.png`
+- **Pricing Strategy Advisor**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-punk-5840186.png` → `/icons/png/avatars/noun-punk-5840186.png`
+- **Patient-Reported Outcomes Specialist**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-woman-7845951.png` → `/icons/png/avatars/noun-woman-7845951.png`
+- **Companion Diagnostic Regulatory Specialist**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0054.png` → `/icons/png/avatars/avatar_0054.png`
+- **Safety Database Manager**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0031.png` → `/icons/png/avatars/avatar_0031.png`
+- **Congress Planning Specialist**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-arabic-7845964.png` → `/icons/png/avatars/noun-arabic-7845964.png`
+- **Patient Access Coordinator**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-man-7815636.png` → `/icons/png/avatars/noun-man-7815636.png`
+- **Vaccine Clinical Specialist**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0033.png` → `/icons/png/avatars/avatar_0033.png`
+- **Aggregate Report Coordinator**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0097.png` → `/icons/png/avatars/avatar_0097.png`
+- **Medical Science Liaison Coordinator**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-man-5757371.png` → `/icons/png/avatars/noun-man-5757371.png`
+- **Reimbursement Analyst**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0044.png` → `/icons/png/avatars/avatar_0044.png`
+- **Oncology Clinical Specialist**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-man-5757375.png` → `/icons/png/avatars/noun-man-5757375.png`
+- **Gene Therapy Clinical Expert**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0116.png` → `/icons/png/avatars/avatar_0116.png`
+- **Stability Study Designer**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0051.png` → `/icons/png/avatars/avatar_0051.png`
+- **Impurity Assessment Expert**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0098.png` → `/icons/png/avatars/avatar_0098.png`
+- **Sterile Manufacturing Specialist**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-woman-5757370.png` → `/icons/png/avatars/noun-woman-5757370.png`
+- **Market Research Analyst**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-man-5757364.png` → `/icons/png/avatars/noun-man-5757364.png`
+- **Omnichannel Strategist**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0052.png` → `/icons/png/avatars/avatar_0052.png`
+- **Contract Manufacturing Manager**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-arabic-7845964.png` → `/icons/png/avatars/noun-arabic-7845964.png`
+- **Database Architect**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-boy-7815633.png` → `/icons/png/avatars/noun-boy-7815633.png`
+- **Stem Cell Therapy Expert**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0033.png` → `/icons/png/avatars/avatar_0033.png`
+- **Oncolytic Virus Expert**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-people-5840193.png` → `/icons/png/avatars/noun-people-5840193.png`
+- **Clinical Operations Coordinator**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-boy-7845975.png` → `/icons/png/avatars/noun-boy-7845975.png`
+- **Companion Diagnostic Developer**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-woman-5757381.png` → `/icons/png/avatars/noun-woman-5757381.png`
+- **Digital Therapeutic Specialist**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0067.png` → `/icons/png/avatars/avatar_0067.png`
+- **Intranasal Delivery Expert**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-woman-7845951.png` → `/icons/png/avatars/noun-woman-7845951.png`
+- **Formulary Strategy Specialist**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0091.png` → `/icons/png/avatars/avatar_0091.png`
+- **AI Drug Discovery Specialist**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-man-5757380.png` → `/icons/png/avatars/noun-man-5757380.png`
+- **Genotoxicity Specialist**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-backpacker-5840190.png` → `/icons/png/avatars/noun-backpacker-5840190.png`
+- **Distribution Network Designer**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0086.png` → `/icons/png/avatars/avatar_0086.png`
+- **Clinical Trial Simulation Expert**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-woman-5757370.png` → `/icons/png/avatars/noun-woman-5757370.png`
+- **Peptide Therapeutics Specialist**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0100.png` → `/icons/png/avatars/avatar_0100.png`
+- **Antibody-Drug Conjugate Specialist**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0071.png` → `/icons/png/avatars/avatar_0071.png`
+- **Radiopharmaceutical Specialist**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0070.png` → `/icons/png/avatars/avatar_0070.png`
+- **Senolytic Therapy Specialist**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0088.png` → `/icons/png/avatars/avatar_0088.png`
+- **FDA Guidance Interpreter**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0008.png` → `/icons/png/avatars/avatar_0008.png`
+- **Site Selection Advisor**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-people-5840193.png` → `/icons/png/avatars/noun-people-5840193.png`
+- **Patient Recruitment Strategist**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0029.png` → `/icons/png/avatars/avatar_0029.png`
+- **Quality Metrics Analyst**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-man-5757365.png` → `/icons/png/avatars/noun-man-5757365.png`
+- **Evidence Generation Planner**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0112.png` → `/icons/png/avatars/avatar_0112.png`
+- **Materials Management Coordinator**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-schoolboy-7845954.png` → `/icons/png/avatars/noun-schoolboy-7845954.png`
+- **Payer Strategy Advisor**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-woman-7815637.png` → `/icons/png/avatars/noun-woman-7815637.png`
+- **Biomarker Strategy Advisor**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0069.png` → `/icons/png/avatars/avatar_0069.png`
+- **Regulatory Lifecycle Manager**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0072.png` → `/icons/png/avatars/avatar_0072.png`
+- **Regulatory Dossier Architect**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-businessman-7845943.png` → `/icons/png/avatars/noun-businessman-7845943.png`
+- **Excipient Compatibility Expert**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0085.png` → `/icons/png/avatars/avatar_0085.png`
+- **Carcinogenicity Study Designer**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-man-5757362.png` → `/icons/png/avatars/noun-man-5757362.png`
+- **Pharmacology Study Planner**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-man-7845957.png` → `/icons/png/avatars/noun-man-7845957.png`
+- **3Rs Implementation Specialist**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0023.png` → `/icons/png/avatars/avatar_0023.png`
+- **In Vitro Model Specialist**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0017.png` → `/icons/png/avatars/avatar_0017.png`
+- **Digital Marketing Strategist**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0074.png` → `/icons/png/avatars/avatar_0074.png`
+- **Inventory Optimization Specialist**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-woman-7815637.png` → `/icons/png/avatars/noun-woman-7815637.png`
+- **Benefit-Risk Assessor**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0078.png` → `/icons/png/avatars/avatar_0078.png`
+- **Machine Learning Engineer**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0115.png` → `/icons/png/avatars/avatar_0115.png`
+- **In Silico Clinical Trial Expert**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-woman-5757366.png` → `/icons/png/avatars/noun-woman-5757366.png`
+- **Safety Labeling Specialist**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0041.png` → `/icons/png/avatars/avatar_0041.png`
+- **Data Visualization Specialist**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0037.png` → `/icons/png/avatars/avatar_0037.png`
+- **ETL Developer**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0105.png` → `/icons/png/avatars/avatar_0105.png`
+- **Gene Therapy Expert**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0016.png` → `/icons/png/avatars/avatar_0016.png`
+- **Ethics Committee Liaison**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-people-7845958.png` → `/icons/png/avatars/noun-people-7845958.png`
+- **FDA Regulatory Strategist**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0037.png` → `/icons/png/avatars/avatar_0037.png`
+- **Medical Information Specialist**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0042.png` → `/icons/png/avatars/avatar_0042.png`
+- **Production Scheduler**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0018.png` → `/icons/png/avatars/avatar_0018.png`
+- **RNA Interference Specialist**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-girl-7815632.png` → `/icons/png/avatars/noun-girl-7815632.png`
+- **Cancer Vaccine Expert**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-man-7845957.png` → `/icons/png/avatars/noun-man-7845957.png`
+- **Endpoint Committee Coordinator**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-man-5757384.png` → `/icons/png/avatars/noun-man-5757384.png`
+- **Safety Communication Specialist**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0088.png` → `/icons/png/avatars/avatar_0088.png`
+- **Organoid Platform Expert**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-housewife-7845945.png` → `/icons/png/avatars/noun-housewife-7845945.png`
+- **3D Bioprinting Expert**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0028.png` → `/icons/png/avatars/avatar_0028.png`
+- **Medical Writer**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0040.png` → `/icons/png/avatars/avatar_0040.png`
+- **CRISPR Therapeutic Specialist**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0006.png` → `/icons/png/avatars/avatar_0006.png`
+- **Drug Interaction Checker**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-old-man-7845966.png` → `/icons/png/avatars/noun-old-man-7845966.png`
+- **Neurodegenerative Disease Specialist**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-woman-5757386.png` → `/icons/png/avatars/noun-woman-5757386.png`
+- **DNA-Encoded Library Expert**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0109.png` → `/icons/png/avatars/avatar_0109.png`
+- **Manufacturing Capacity Planner**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0065.png` → `/icons/png/avatars/avatar_0065.png`
+- **Multi-Omics Integration Specialist**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-schoolboy-7845954.png` → `/icons/png/avatars/noun-schoolboy-7845954.png`
+- **Managed Care Contracting Specialist**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0003.png` → `/icons/png/avatars/avatar_0003.png`
+- **Biostatistician**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0105.png` → `/icons/png/avatars/avatar_0105.png`
+- **Medical Affairs Metrics Analyst**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0053.png` → `/icons/png/avatars/avatar_0053.png`
+- **Clinical Pharmacologist**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0102.png` → `/icons/png/avatars/avatar_0102.png`
+- **Regulatory Submissions Quality Lead**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0019.png` → `/icons/png/avatars/avatar_0019.png`
+- **Dissolution Testing Expert**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0026.png` → `/icons/png/avatars/avatar_0026.png`
+- **KOL Engagement Coordinator**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0014.png` → `/icons/png/avatars/avatar_0014.png`
+- **PROTAC Expert**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0027.png` → `/icons/png/avatars/avatar_0027.png`
+- **Process Optimization Analyst**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0022.png` → `/icons/png/avatars/avatar_0022.png`
+- **Clinical Imaging Specialist**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-old-man-7845966.png` → `/icons/png/avatars/noun-old-man-7845966.png`
+- **Global Regulatory Strategist**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0094.png` → `/icons/png/avatars/avatar_0094.png`
+- **Publication Planner**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0057.png` → `/icons/png/avatars/avatar_0057.png`
+- **Scale-Up Specialist**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-businessman-7845943.png` → `/icons/png/avatars/noun-businessman-7845943.png`
+- **Value Dossier Developer**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-man-5757361.png` → `/icons/png/avatars/noun-man-5757361.png`
+- **Combination Product Specialist**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-woman-5757367.png` → `/icons/png/avatars/noun-woman-5757367.png`
+- **Cleaning Validation Specialist**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-woman-5757367.png` → `/icons/png/avatars/noun-woman-5757367.png`
+- **Pediatric Clinical Specialist**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-backpacker-5840190.png` → `/icons/png/avatars/noun-backpacker-5840190.png`
+- **Regulatory Risk Assessment Specialist**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-woman-5757370.png` → `/icons/png/avatars/noun-woman-5757370.png`
+- **Translational Medicine Specialist**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0076.png` → `/icons/png/avatars/avatar_0076.png`
+- **Manufacturing Deviation Handler**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-player-7845978.png` → `/icons/png/avatars/noun-player-7845978.png`
+- **Prior Authorization Navigator**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-man-5757385.png` → `/icons/png/avatars/noun-man-5757385.png`
+- **Adaptive Trial Designer**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0085.png` → `/icons/png/avatars/avatar_0085.png`
+- **Risk-Benefit Assessment Expert**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-user-5840187.png` → `/icons/png/avatars/noun-user-5840187.png`
+- **Basket/Umbrella Trial Specialist**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-woman-5757376.png` → `/icons/png/avatars/noun-woman-5757376.png`
+- **Regulatory Deficiency Response Lead**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0005.png` → `/icons/png/avatars/avatar_0005.png`
+- **Brand Strategy Director**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-user-5840187.png` → `/icons/png/avatars/noun-user-5840187.png`
+- **Demand Forecaster**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0035.png` → `/icons/png/avatars/avatar_0035.png`
+- **Adverse Event Reporter**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0004.png` → `/icons/png/avatars/avatar_0004.png`
+- **Agency Meeting Strategist**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0110.png` → `/icons/png/avatars/avatar_0110.png`
+- **Analytical Method Developer**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0033.png` → `/icons/png/avatars/avatar_0033.png`
+- **Medication Therapy Advisor**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-woman-5757358.png` → `/icons/png/avatars/noun-woman-5757358.png`
+- **Advanced Therapy Regulatory Expert**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0118.png` → `/icons/png/avatars/avatar_0118.png`
+- **Quality by Design Specialist**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0064.png` → `/icons/png/avatars/avatar_0064.png`
+- **Signal Detection Analyst**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-man-5757357.png` → `/icons/png/avatars/noun-man-5757357.png`
+- **Expedited Program Expert**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0050.png` → `/icons/png/avatars/avatar_0050.png`
+- **Territory Design Specialist**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0030.png` → `/icons/png/avatars/avatar_0030.png`
+- **Post-Marketing Commitment Coordinator**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0094.png` → `/icons/png/avatars/avatar_0094.png`
+- **Organ-on-Chip Specialist**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-wife-7845972.png` → `/icons/png/avatars/noun-wife-7845972.png`
+- **Quantum Chemistry Expert**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-man-7845974.png` → `/icons/png/avatars/noun-man-7845974.png`
+- **Process Development Engineer**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-man-5757365.png` → `/icons/png/avatars/noun-man-5757365.png`
+- **Toxicology Study Designer**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0097.png` → `/icons/png/avatars/avatar_0097.png`
+- **Orphan Drug Designator**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0081.png` → `/icons/png/avatars/avatar_0081.png`
+- **Supplier Relationship Manager**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-female-7845968.png` → `/icons/png/avatars/noun-female-7845968.png`
+- **Medical Affairs Commercial Liaison**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-man-5757377.png` → `/icons/png/avatars/noun-man-5757377.png`
+- **Biomarker Validation Expert**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0106.png` → `/icons/png/avatars/avatar_0106.png`
+- **Drug Substance Characterization Specialist**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-businessman-7845943.png` → `/icons/png/avatars/noun-businessman-7845943.png`
+- **Immunotoxicology Expert**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0035.png` → `/icons/png/avatars/avatar_0035.png`
+- **IND-Enabling Study Coordinator**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-man-5757356.png` → `/icons/png/avatars/noun-man-5757356.png`
+- **Transportation Manager**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-man-5757357.png` → `/icons/png/avatars/noun-man-5757357.png`
+- **Continuous Manufacturing Expert**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0041.png` → `/icons/png/avatars/avatar_0041.png`
+- **Reproductive Toxicology Specialist**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0032.png` → `/icons/png/avatars/avatar_0032.png`
+- **Payor Account Strategist**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-man-7815635.png` → `/icons/png/avatars/noun-man-7815635.png`
+- **Returns & Recall Coordinator**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-man-5757356.png` → `/icons/png/avatars/noun-man-5757356.png`
+- **DMPK Specialist**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-people-5840185.png` → `/icons/png/avatars/noun-people-5840185.png`
+- **Clinical Trial Transparency Officer**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0096.png` → `/icons/png/avatars/avatar_0096.png`
+- **Product Launch Strategist**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-arabic-7845964.png` → `/icons/png/avatars/noun-arabic-7845964.png`
+- **Key Account Manager Support**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0117.png` → `/icons/png/avatars/avatar_0117.png`
+- **Import/Export Compliance Specialist**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0045.png` → `/icons/png/avatars/avatar_0045.png`
+- **CAR-T Cell Therapy Specialist**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0008.png` → `/icons/png/avatars/avatar_0008.png`
+- **Sales Force Effectiveness Analyst**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-user-5840191.png` → `/icons/png/avatars/noun-user-5840191.png`
+- **Serialization & Track-Trace Expert**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0007.png` → `/icons/png/avatars/avatar_0007.png`
+- **Evidence Synthesis Specialist**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0109.png` → `/icons/png/avatars/avatar_0109.png`
+- **Base/Prime Editing Expert**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0038.png` → `/icons/png/avatars/avatar_0038.png`
+- **Customer Insights Analyst**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0063.png` → `/icons/png/avatars/avatar_0063.png`
+- **Supply Chain Risk Manager**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0027.png` → `/icons/png/avatars/avatar_0027.png`
+- **Natural Language Processing Expert**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0056.png` → `/icons/png/avatars/avatar_0056.png`
+- **AI/ML Model Validator**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0045.png` → `/icons/png/avatars/avatar_0045.png`
+- **Warehouse Operations Specialist**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0056.png` → `/icons/png/avatars/avatar_0056.png`
+- **Statistical Programmer**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0104.png` → `/icons/png/avatars/avatar_0104.png`
+- **Batch Record Reviewer**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0082.png` → `/icons/png/avatars/avatar_0082.png`
+- **Pharmacogenomics Expert**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-woman-5757378.png` → `/icons/png/avatars/noun-woman-5757378.png`
+- **Targeted Protein Degradation Expert**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-girl-7845948.png` → `/icons/png/avatars/noun-girl-7845948.png`
+- **Predictive Modeling Specialist**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0044.png` → `/icons/png/avatars/avatar_0044.png`
+- **Compliance Officer**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0108.png` → `/icons/png/avatars/avatar_0108.png`
+- **Clinical Data Scientist**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-female-7845968.png` → `/icons/png/avatars/noun-female-7845968.png`
+- **Personalized Medicine Specialist**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-old-man-7845966.png` → `/icons/png/avatars/noun-old-man-7845966.png`
+- **Anti-Corruption Specialist**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0092.png` → `/icons/png/avatars/avatar_0092.png`
+- **Structure-Based Design Expert**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0043.png` → `/icons/png/avatars/avatar_0043.png`
+- **Global Trade Compliance Specialist**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0011.png` → `/icons/png/avatars/avatar_0011.png`
+- **Metabolic Reprogramming Specialist**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-man-5757380.png` → `/icons/png/avatars/noun-man-5757380.png`
+- **Business Intelligence Analyst**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0007.png` → `/icons/png/avatars/avatar_0007.png`
+- **Privacy Officer**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0001.png` → `/icons/png/avatars/avatar_0001.png`
+- **Mitochondrial Medicine Expert**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-woman-5757383.png` → `/icons/png/avatars/noun-woman-5757383.png`
+- **Immunometabolism Expert**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0021.png` → `/icons/png/avatars/avatar_0021.png`
+- **Macrocycle Therapeutics Specialist**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0004.png` → `/icons/png/avatars/avatar_0004.png`
+- **Spatial Transcriptomics Specialist**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-male-7845946.png` → `/icons/png/avatars/noun-male-7845946.png`
+- **Formulary Advisor**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0094.png` → `/icons/png/avatars/avatar_0094.png`
+- **Oncology Medication Specialist**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0026.png` → `/icons/png/avatars/avatar_0026.png`
+- **IND Application Specialist**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0055.png` → `/icons/png/avatars/avatar_0055.png`
+- **Informed Consent Developer**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0113.png` → `/icons/png/avatars/avatar_0113.png`
+- **Monitoring Plan Developer**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0091.png` → `/icons/png/avatars/avatar_0091.png`
+- **Deviation Investigator**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0064.png` → `/icons/png/avatars/avatar_0064.png`
+- **CAPA Coordinator**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-woman-5757374.png` → `/icons/png/avatars/noun-woman-5757374.png`
+- **Change Control Manager**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0114.png` → `/icons/png/avatars/avatar_0114.png`
+- **Training Coordinator**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0011.png` → `/icons/png/avatars/avatar_0011.png`
+- **Risk Management Plan Developer**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0040.png` → `/icons/png/avatars/avatar_0040.png`
+- **Safety Signal Evaluator**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-female-7845967.png` → `/icons/png/avatars/noun-female-7845967.png`
+- **Advisory Board Organizer**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0096.png` → `/icons/png/avatars/avatar_0096.png`
+- **Needs Assessment Coordinator**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0062.png` → `/icons/png/avatars/avatar_0062.png`
+- **Technology Transfer Coordinator**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0045.png` → `/icons/png/avatars/avatar_0045.png`
+- **Health Economics Modeler**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-woman-5757366.png` → `/icons/png/avatars/noun-woman-5757366.png`
+- **HTA Submission Specialist**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0087.png` → `/icons/png/avatars/avatar_0087.png`
+- **Medical Monitor**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0038.png` → `/icons/png/avatars/avatar_0038.png`
+- **DSMB Liaison**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-man-7815635.png` → `/icons/png/avatars/noun-man-7815635.png`
+- **Real-World Evidence Analyst**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0105.png` → `/icons/png/avatars/avatar_0105.png`
+- **Geriatric Clinical Specialist**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-housewife-7845952.png` → `/icons/png/avatars/noun-housewife-7845952.png`
+- **Rare Disease Clinical Expert**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-people-5840188.png` → `/icons/png/avatars/noun-people-5840188.png`
+- **Cell Therapy Clinical Specialist**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0039.png` → `/icons/png/avatars/avatar_0039.png`
+- **Post-Approval Change Manager**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0016.png` → `/icons/png/avatars/avatar_0016.png`
+- **Biosimilar Regulatory Specialist**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0080.png` → `/icons/png/avatars/avatar_0080.png`
+- **International Regulatory Harmonization Expert**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0036.png` → `/icons/png/avatars/avatar_0036.png`
+- **Pharmaceutical Technology Specialist**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0032.png` → `/icons/png/avatars/avatar_0032.png`
+- **Container Closure Specialist**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-man-5757375.png` → `/icons/png/avatars/noun-man-5757375.png`
+- **Lyophilization Specialist**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-employ-7845947.png` → `/icons/png/avatars/noun-employ-7845947.png`
+- **Safety Pharmacology Expert**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0060.png` → `/icons/png/avatars/avatar_0060.png`
+- **Bioanalytical Method Developer**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0080.png` → `/icons/png/avatars/avatar_0080.png`
+- **In Vivo Model Specialist**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0079.png` → `/icons/png/avatars/avatar_0079.png`
+- **Competitive Intelligence Specialist**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0008.png` → `/icons/png/avatars/avatar_0008.png`
+- **Patient Journey Mapper**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-punk-5840186.png` → `/icons/png/avatars/noun-punk-5840186.png`
+- **Patient Advocacy Relations**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0102.png` → `/icons/png/avatars/avatar_0102.png`
+- **Cold Chain Specialist**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0069.png` → `/icons/png/avatars/avatar_0069.png`
+- **Procurement Strategist**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0023.png` → `/icons/png/avatars/avatar_0023.png`
+- **Supply Planning Analyst**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0080.png` → `/icons/png/avatars/avatar_0080.png`
+- **Real-World Data Analyst**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0028.png` → `/icons/png/avatars/avatar_0028.png`
+- **Data Quality Analyst**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0001.png` → `/icons/png/avatars/avatar_0001.png`
+- **Population Health Analyst**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-man-5757377.png` → `/icons/png/avatars/noun-man-5757377.png`
+- **Rare Disease Specialist**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-avatar-7845970.png` → `/icons/png/avatars/noun-avatar-7845970.png`
+- **Bispecific Antibody Expert**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0061.png` → `/icons/png/avatars/avatar_0061.png`
+- **mRNA Vaccine Expert**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0009.png` → `/icons/png/avatars/avatar_0009.png`
+- **Tissue Engineering Specialist**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-girl-7845959.png` → `/icons/png/avatars/noun-girl-7845959.png`
+- **Nanomedicine Expert**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0081.png` → `/icons/png/avatars/avatar_0081.png`
+- **Microbiome Therapeutics Expert**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0019.png` → `/icons/png/avatars/avatar_0019.png`
+- **Exosome Therapy Specialist**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-man-7815635.png` → `/icons/png/avatars/noun-man-7815635.png`
+- **Immune Checkpoint Inhibitor Specialist**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0084.png` → `/icons/png/avatars/avatar_0084.png`
+- **Liquid Biopsy Specialist**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-punk-5840186.png` → `/icons/png/avatars/noun-punk-5840186.png`
+- **Artificial Organ Developer**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-girl-7845959.png` → `/icons/png/avatars/noun-girl-7845959.png`
+- **Epigenetic Therapy Expert**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0026.png` → `/icons/png/avatars/avatar_0026.png`
+- **Blood-Brain Barrier Specialist**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0024.png` → `/icons/png/avatars/avatar_0024.png`
+- **Fragment-Based Drug Design Specialist**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0001.png` → `/icons/png/avatars/avatar_0001.png`
+- **Single-Cell Analysis Expert**: `https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0101.png` → `/icons/png/avatars/avatar_0101.png`
+
+## Next Steps
+1. Review the SQL file: `reports/database-avatar-updates.sql`
+2. Execute the SQL updates in your database
+3. Verify avatar assignments in the application
+4. Test avatar display functionality
+
+## Files Generated
+- `reports/database-avatar-update-report.json` - Detailed report
+- `reports/database-avatar-updates.sql` - SQL update statements
+- `reports/database-avatar-update-summary.md` - This summary

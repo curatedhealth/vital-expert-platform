@@ -499,7 +499,7 @@ LANGCHAIN_ENDPOINT=https://api.smith.langchain.com
 OPENAI_API_KEY=sk-...
 
 # Required for database
-NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321
+NEXT_PUBLIC_SUPABASE_URL=https://xazinxsiglqokwfmogyk.supabase.co
 SUPABASE_SERVICE_ROLE_KEY=eyJhbG...
 ```
 

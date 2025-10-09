@@ -52,7 +52,7 @@ langsmith
 ### 4. Environment Variables Configured
 
 ✅ `.env.local` updated with:
-- `SUPABASE_URL` - http://127.0.0.1:54321
+- `SUPABASE_URL` - https://xazinxsiglqokwfmogyk.supabase.co
 - `SUPABASE_SERVICE_KEY` - Service role key for Python access
 - `ANTHROPIC_API_KEY` - **⚠️ You need to add your key**
 - `OPENAI_API_KEY` - Already configured

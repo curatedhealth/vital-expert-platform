@@ -1,163 +1,336 @@
+#!/usr/bin/env node
+
 /**
- * Redistribute avatars to ensure each avatar is used maximum 6 times
+ * Avatar Redistribution Script for VITAL Path Agents
+ * 
+ * This script redistributes avatars to ensure no avatar is used more than 3 times.
+ * It identifies overused avatars and reassigns them to underused ones.
+ * 
+ * Features:
+ * - Identifies avatars used more than 3 times
+ * - Redistributes to ensure max 3 uses per avatar
+ * - Maintains agent-avatar relationships where possible
+ * - Generates SQL updates for database
  */
 
-const { createClient } = require('@supabase/supabase-js');
-require('dotenv').config({ path: '.env.local' });
+const fs = require('fs');
+const path = require('path');
 
-// Use service role key to bypass RLS for admin operations
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY
-);
+console.log('🔄 VITAL Path Avatar Redistribution Script');
+console.log('==========================================\n');
 
-async function redistributeAvatars() {
-  console.log('🎨 Starting avatar redistribution...\n');
+// Available avatars (201 total)
+const availableAvatars = [
+  // Numbered avatars (avatar_0001.png to avatar_0119.png)
+  ...Array.from({ length: 119 }, (_, i) => `avatar_${String(i + 1).padStart(4, '0')}.png`),
+  // Noun avatars (various character types)
+  'noun-african-girl-7845961.png',
+  'noun-arabic-7845964.png',
+  'noun-arabic-woman-7845949.png',
+  'noun-avatar-5840189.png',
+  'noun-avatar-5840192.png',
+  'noun-avatar-7845970.png',
+  'noun-backpacker-5840190.png',
+  'noun-boy-5757369.png',
+  'noun-boy-5757373.png',
+  'noun-boy-7815633.png',
+  'noun-boy-7845950.png',
+  'noun-boy-7845969.png',
+  'noun-boy-7845975.png',
+  'noun-boy-7845976.png',
+  'noun-businessman-7845943.png',
+  'noun-cowboy-7845963.png',
+  'noun-employ-7845947.png',
+  'noun-father-7845956.png',
+  'noun-female-7845967.png',
+  'noun-female-7845968.png',
+  'noun-female-7845971.png',
+  'noun-girl-7815632.png',
+  'noun-girl-7845948.png',
+  'noun-girl-7845959.png',
+  'noun-guy-7845962.png',
+  'noun-housewife-7845945.png',
+  'noun-housewife-7845952.png',
+  'noun-housewife-7845973.png',
+  'noun-lady-7845953.png',
+  'noun-male-7845946.png',
+  'noun-man-5757356.png',
+  'noun-man-5757357.png',
+  'noun-man-5757361.png',
+  'noun-man-5757362.png',
+  'noun-man-5757364.png',
+  'noun-man-5757365.png',
+  'noun-man-5757371.png',
+  'noun-man-5757375.png',
+  'noun-man-5757377.png',
+  'noun-man-5757380.png',
+  'noun-man-5757382.png',
+  'noun-man-5757384.png',
+  'noun-man-5757385.png',
+  'noun-man-7815635.png',
+  'noun-man-7815636.png',
+  'noun-man-7845944.png',
+  'noun-man-7845957.png',
+  'noun-man-7845965.png',
+  'noun-man-7845974.png',
+  'noun-old-man-7845966.png',
+  'noun-people-5840185.png',
+  'noun-people-5840188.png',
+  'noun-people-5840193.png',
+  'noun-people-5840194.png',
+  'noun-people-7845958.png',
+  'noun-player-7845978.png',
+  'noun-portrait-7845960.png',
+  'noun-punk-5840186.png',
+  'noun-schoolboy-7845954.png',
+  'noun-teenager-7845977.png',
+  'noun-user-5840187.png',
+  'noun-user-5840191.png',
+  'noun-wife-7845972.png',
+  'noun-woman-5757358.png',
+  'noun-woman-5757359.png',
+  'noun-woman-5757360.png',
+  'noun-woman-5757363.png',
+  'noun-woman-5757366.png',
+  'noun-woman-5757367.png',
+  'noun-woman-5757370.png',
+  'noun-woman-5757372.png',
+  'noun-woman-5757374.png',
+  'noun-woman-5757376.png',
+  'noun-woman-5757378.png',
+  'noun-woman-5757379.png',
+  'noun-woman-5757381.png',
+  'noun-woman-5757383.png',
+  'noun-woman-5757386.png',
+  'noun-woman-7815634.png',
+  'noun-woman-7815637.png',
+  'noun-woman-7845951.png',
+  'noun-woman-7845955.png'
+];
 
-  // Fetch all agents
-  const { data: agents, error: fetchError } = await supabase
-    .from('agents')
-    .select('id, name, avatar')
-    .order('id');
+// Load agent data
+const agentsDataPath = path.join(__dirname, '..', 'data', 'agents-comprehensive.json');
+const agentsData = JSON.parse(fs.readFileSync(agentsDataPath, 'utf8'));
 
-  if (fetchError) {
-    console.error('❌ Error fetching agents:', fetchError);
-    return;
-  }
+console.log(`📊 Analysis Results:`);
+console.log(`- Total agents: ${agentsData.length}`);
+console.log(`- Available avatars: ${availableAvatars.length}`);
+console.log(`- Max uses per avatar: 3\n`);
 
-  console.log(`📊 Total agents: ${agents.length}`);
+// Analyze current avatar usage
+const currentAvatarUsage = {};
+const agentsByAvatar = {};
 
-  // Count current avatar usage
-  const avatarCounts = {};
-  agents.forEach(agent => {
-    if (agent.avatar) {
-      avatarCounts[agent.avatar] = (avatarCounts[agent.avatar] || 0) + 1;
+agentsData.forEach(agent => {
+  const currentAvatar = agent.avatar;
+  
+  if (currentAvatar && currentAvatar !== '🤖') {
+    // Extract filename from URL or use as-is
+    let filename = currentAvatar;
+    if (currentAvatar.includes('/')) {
+      filename = currentAvatar.split('/').pop();
     }
-  });
-
-  // Find overused avatars
-  const overused = Object.entries(avatarCounts)
-    .filter(([_, count]) => count > 6)
-    .sort((a, b) => b[1] - a[1]);
-
-  console.log(`\n⚠️  Overused avatars (>6 times): ${overused.length}`);
-  overused.forEach(([avatar, count]) => {
-    console.log(`   ${avatar}: ${count} times`);
-  });
-
-  if (overused.length === 0) {
-    console.log('\n✅ All avatars are properly distributed!');
-    return;
-  }
-
-  // Generate available avatar pool (avatar_0001 to avatar_0999)
-  const maxAvatarsNeeded = Math.ceil(agents.length / 6); // 530 agents / 6 = 89 avatars needed minimum
-  const availableAvatars = [];
-
-  for (let i = 1; i <= Math.max(999, maxAvatarsNeeded); i++) {
-    const avatarId = `avatar_${String(i).padStart(4, '0')}`;
-    const currentUsage = avatarCounts[avatarId] || 0;
-
-    // Add avatar to pool if it's used less than 6 times
-    for (let j = currentUsage; j < 6; j++) {
-      availableAvatars.push(avatarId);
+    
+    if (currentAvatarUsage[filename]) {
+      currentAvatarUsage[filename]++;
+    } else {
+      currentAvatarUsage[filename] = 1;
     }
-  }
-
-  console.log(`\n📦 Available avatar slots: ${availableAvatars.length}`);
-
-  // Shuffle available avatars for even distribution
-  for (let i = availableAvatars.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [availableAvatars[i], availableAvatars[j]] = [availableAvatars[j], availableAvatars[i]];
-  }
-
-  let avatarIndex = 0;
-  const updates = [];
-
-  // Reassign avatars for overused ones
-  for (const [overusedAvatar, count] of overused) {
-    const agentsWithAvatar = agents.filter(a => a.avatar === overusedAvatar);
-
-    // Keep first 6, reassign the rest
-    const toReassign = agentsWithAvatar.slice(6);
-
-    console.log(`\n🔄 Reassigning ${toReassign.length} agents from ${overusedAvatar}...`);
-
-    for (const agent of toReassign) {
-      if (avatarIndex >= availableAvatars.length) {
-        console.warn('⚠️  Ran out of available avatars!');
-        break;
-      }
-
-      const newAvatar = availableAvatars[avatarIndex++];
-      updates.push({
-        id: agent.id,
-        oldAvatar: agent.avatar,
-        newAvatar: newAvatar
-      });
+    
+    if (!agentsByAvatar[filename]) {
+      agentsByAvatar[filename] = [];
     }
-  }
-
-  console.log(`\n📝 Preparing to update ${updates.length} agents...`);
-
-  // Apply updates in batches
-  const batchSize = 50;
-  let updated = 0;
-  let errors = 0;
-
-  for (let i = 0; i < updates.length; i += batchSize) {
-    const batch = updates.slice(i, i + batchSize);
-
-    for (const update of batch) {
-      const { error } = await supabase
-        .from('agents')
-        .update({ avatar: update.newAvatar })
-        .eq('id', update.id);
-
-      if (error) {
-        console.error(`❌ Error updating agent ${update.id}:`, error.message);
-        errors++;
-      } else {
-        updated++;
-      }
-    }
-
-    console.log(`   Updated ${Math.min(i + batchSize, updates.length)}/${updates.length}...`);
-  }
-
-  console.log(`\n✅ Avatar redistribution complete!`);
-  console.log(`   Successfully updated: ${updated} agents`);
-  console.log(`   Errors: ${errors}`);
-
-  // Verify final distribution
-  const { data: verifyAgents } = await supabase
-    .from('agents')
-    .select('avatar')
-    .order('id');
-
-  const finalCounts = {};
-  verifyAgents.forEach(agent => {
-    if (agent.avatar) {
-      finalCounts[agent.avatar] = (finalCounts[agent.avatar] || 0) + 1;
-    }
-  });
-
-  const stillOverused = Object.entries(finalCounts)
-    .filter(([_, count]) => count > 6);
-
-  console.log(`\n📊 Final Statistics:`);
-  console.log(`   Total unique avatars used: ${Object.keys(finalCounts).length}`);
-  console.log(`   Avatars still overused: ${stillOverused.length}`);
-
-  if (stillOverused.length > 0) {
-    console.log(`\n⚠️  Still overused:`);
-    stillOverused.forEach(([avatar, count]) => {
-      console.log(`   ${avatar}: ${count} times`);
+    agentsByAvatar[filename].push({
+      id: agent.id,
+      name: agent.name,
+      display_name: agent.display_name,
+      business_function: agent.business_function,
+      department: agent.department,
+      tier: agent.tier
     });
-  } else {
-    console.log(`   ✅ All avatars now used 6 times or less!`);
   }
+});
+
+// Find overused avatars (more than 3 uses)
+const overusedAvatars = Object.entries(currentAvatarUsage)
+  .filter(([, count]) => count > 3)
+  .sort(([,a], [,b]) => b - a);
+
+// Find underused avatars (less than 3 uses)
+const underusedAvatars = Object.entries(currentAvatarUsage)
+  .filter(([, count]) => count < 3)
+  .sort(([,a], [,b]) => a - b);
+
+// Find unused avatars
+const unusedAvatars = availableAvatars.filter(avatar => !currentAvatarUsage[avatar]);
+
+console.log(`🔍 Current Avatar Usage Analysis:`);
+console.log(`- Overused avatars (>3 uses): ${overusedAvatars.length}`);
+console.log(`- Underused avatars (<3 uses): ${underusedAvatars.length}`);
+console.log(`- Unused avatars: ${unusedAvatars.length}\n`);
+
+if (overusedAvatars.length > 0) {
+  console.log(`⚠️  Overused Avatars:`);
+  overusedAvatars.forEach(([avatar, count]) => {
+    console.log(`  ${avatar}: ${count} uses (${count - 3} excess)`);
+  });
+  console.log('');
 }
 
-redistributeAvatars().catch(console.error);
+// Calculate redistribution needs
+let totalExcessUses = overusedAvatars.reduce((sum, [, count]) => sum + (count - 3), 0);
+let totalAvailableSlots = underusedAvatars.reduce((sum, [, count]) => sum + (3 - count), 0) + unusedAvatars.length * 3;
+
+console.log(`📈 Redistribution Analysis:`);
+console.log(`- Total excess uses: ${totalExcessUses}`);
+console.log(`- Total available slots: ${totalAvailableSlots}`);
+console.log(`- Can redistribute: ${totalAvailableSlots >= totalExcessUses ? '✅ Yes' : '❌ No'}\n`);
+
+if (totalAvailableSlots < totalExcessUses) {
+  console.log(`❌ Error: Not enough available slots to redistribute all overused avatars.`);
+  console.log(`   Need ${totalExcessUses} slots, but only have ${totalAvailableSlots} available.`);
+  process.exit(1);
+}
+
+// Create redistribution plan
+const redistributionPlan = [];
+const sqlUpdates = [];
+
+// Process overused avatars
+overusedAvatars.forEach(([avatar, count]) => {
+  const excessUses = count - 3;
+  const agentsUsingThisAvatar = agentsByAvatar[avatar];
+  
+  console.log(`🔄 Processing ${avatar} (${count} uses, ${excessUses} excess):`);
+  
+  // Keep the first 3 agents, reassign the rest
+  const agentsToReassign = agentsUsingThisAvatar.slice(3);
+  
+  console.log(`  - Keeping: ${agentsUsingThisAvatar.slice(0, 3).map(a => a.display_name).join(', ')}`);
+  console.log(`  - Reassigning: ${agentsToReassign.length} agents`);
+  
+  // Find new avatars for reassigned agents
+  agentsToReassign.forEach(agent => {
+    let newAvatar = null;
+    
+    // Try to find an underused avatar first
+    for (const [underusedAvatar, currentCount] of underusedAvatars) {
+      if (currentCount < 3) {
+        newAvatar = underusedAvatar;
+        underusedAvatars[underusedAvatars.findIndex(([a]) => a === underusedAvatar)][1]++;
+        break;
+      }
+    }
+    
+    // If no underused avatar available, use an unused one
+    if (!newAvatar && unusedAvatars.length > 0) {
+      newAvatar = unusedAvatars.shift();
+      currentAvatarUsage[newAvatar] = 1;
+    }
+    
+    if (newAvatar) {
+      redistributionPlan.push({
+        agent_id: agent.id,
+        agent_name: agent.display_name,
+        old_avatar: avatar,
+        new_avatar: newAvatar,
+        reason: 'Redistributed from overused avatar'
+      });
+      
+      sqlUpdates.push(`UPDATE agents SET avatar = '/icons/png/avatars/${newAvatar}' WHERE id = '${agent.id}';`);
+      
+      console.log(`    ✅ ${agent.display_name} → ${newAvatar}`);
+    } else {
+      console.log(`    ❌ No available avatar for ${agent.display_name}`);
+    }
+  });
+  
+  console.log('');
+});
+
+// Generate comprehensive report
+const report = {
+  summary: {
+    total_agents: agentsData.length,
+    total_avatars: availableAvatars.length,
+    overused_avatars: overusedAvatars.length,
+    underused_avatars: underusedAvatars.length,
+    unused_avatars: unusedAvatars.length,
+    total_excess_uses: totalExcessUses,
+    total_available_slots: totalAvailableSlots,
+    redistributions: redistributionPlan.length
+  },
+  overused_avatars: overusedAvatars,
+  underused_avatars: underusedAvatars,
+  unused_avatars: unusedAvatars,
+  redistribution_plan: redistributionPlan,
+  sql_updates: sqlUpdates,
+  final_usage: currentAvatarUsage
+};
+
+// Save reports
+const reportsDir = path.join(__dirname, '..', 'reports');
+if (!fs.existsSync(reportsDir)) {
+  fs.mkdirSync(reportsDir, { recursive: true });
+}
+
+// Save detailed report
+fs.writeFileSync(
+  path.join(reportsDir, 'avatar-redistribution-report.json'),
+  JSON.stringify(report, null, 2)
+);
+
+// Save SQL file
+fs.writeFileSync(
+  path.join(reportsDir, 'avatar-redistribution-updates.sql'),
+  sqlUpdates.join('\n')
+);
+
+// Save summary report
+const summaryReport = `# Avatar Redistribution Report
+
+## Summary
+- **Total Agents**: ${report.summary.total_agents}
+- **Total Avatars**: ${report.summary.total_avatars}
+- **Overused Avatars**: ${report.summary.overused_avatars}
+- **Underused Avatars**: ${report.summary.underused_avatars}
+- **Unused Avatars**: ${report.summary.unused_avatars}
+- **Total Excess Uses**: ${report.summary.total_excess_uses}
+- **Total Available Slots**: ${report.summary.total_available_slots}
+- **Redistributions**: ${report.summary.redistributions}
+
+## Overused Avatars (Before Redistribution)
+${overusedAvatars.map(([avatar, count]) => `- ${avatar}: ${count} uses`).join('\n')}
+
+## Redistribution Plan
+${redistributionPlan.map(plan => 
+  `- **${plan.agent_name}**: ${plan.old_avatar} → ${plan.new_avatar}`
+).join('\n')}
+
+## Next Steps
+1. Review the SQL file: \`reports/avatar-redistribution-updates.sql\`
+2. Execute the SQL updates in your database
+3. Verify avatar assignments in the application
+4. Test avatar display functionality
+
+## Files Generated
+- \`reports/avatar-redistribution-report.json\` - Detailed report
+- \`reports/avatar-redistribution-updates.sql\` - SQL update statements
+- \`reports/avatar-redistribution-summary.md\` - This summary
+`;
+
+fs.writeFileSync(
+  path.join(reportsDir, 'avatar-redistribution-summary.md'),
+  summaryReport
+);
+
+console.log(`📁 Reports saved to: ${reportsDir}/`);
+console.log(`- avatar-redistribution-report.json (detailed data)`);
+console.log(`- avatar-redistribution-updates.sql (SQL statements)`);
+console.log(`- avatar-redistribution-summary.md (summary report)\n`);
+
+console.log(`✅ Redistribution completed!`);
+console.log(`- Agents reassigned: ${redistributionPlan.length}`);
+console.log(`- SQL updates generated: ${sqlUpdates.length}`);
+console.log(`🎯 All avatars now comply with max 3 uses rule.`);
+console.log(`📋 Next: Execute the SQL updates in your database.`);

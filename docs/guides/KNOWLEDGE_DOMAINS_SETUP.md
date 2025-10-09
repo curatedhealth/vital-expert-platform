@@ -67,7 +67,7 @@ Run the creation script:
 ```bash
 cd "/Users/hichamnaim/Downloads/Cursor/VITAL path"
 
-NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321 \
+NEXT_PUBLIC_SUPABASE_URL=https://xazinxsiglqokwfmogyk.supabase.co \
 SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImV4cCI6MTk4MzgxMjk5Nn0.EGIM96RAZx35lJzdJsyH-qQwv8Hdp7fsn3W0YpN81IU \
 node scripts/create-knowledge-domains.js
 ```
@@ -107,7 +107,7 @@ Breakdown by Tier:
 ### Check Domain Count
 
 ```bash
-curl -s "http://127.0.0.1:54321/rest/v1/knowledge_domains?select=count" \
+curl -s "https://xazinxsiglqokwfmogyk.supabase.co/rest/v1/knowledge_domains?select=count" \
   -H "apikey: YOUR_ANON_KEY" \
   -H "Prefer: count=exact"
 ```
@@ -115,7 +115,7 @@ curl -s "http://127.0.0.1:54321/rest/v1/knowledge_domains?select=count" \
 ### View All Domains
 
 ```bash
-curl -s "http://127.0.0.1:54321/rest/v1/knowledge_domains?select=*&order=priority" \
+curl -s "https://xazinxsiglqokwfmogyk.supabase.co/rest/v1/knowledge_domains?select=*&order=priority" \
   -H "apikey: YOUR_ANON_KEY" | jq '.'
 ```
 
@@ -123,15 +123,15 @@ curl -s "http://127.0.0.1:54321/rest/v1/knowledge_domains?select=*&order=priorit
 
 ```bash
 # Tier 1 (Core)
-curl -s "http://127.0.0.1:54321/rest/v1/knowledge_domains?select=name,slug&tier=eq.1&order=priority" \
+curl -s "https://xazinxsiglqokwfmogyk.supabase.co/rest/v1/knowledge_domains?select=name,slug&tier=eq.1&order=priority" \
   -H "apikey: YOUR_ANON_KEY" | jq '.'
 
 # Tier 2 (Specialized)
-curl -s "http://127.0.0.1:54321/rest/v1/knowledge_domains?select=name,slug&tier=eq.2&order=priority" \
+curl -s "https://xazinxsiglqokwfmogyk.supabase.co/rest/v1/knowledge_domains?select=name,slug&tier=eq.2&order=priority" \
   -H "apikey: YOUR_ANON_KEY" | jq '.'
 
 # Tier 3 (Emerging)
-curl -s "http://127.0.0.1:54321/rest/v1/knowledge_domains?select=name,slug&tier=eq.3&order=priority" \
+curl -s "https://xazinxsiglqokwfmogyk.supabase.co/rest/v1/knowledge_domains?select=name,slug&tier=eq.3&order=priority" \
   -H "apikey: YOUR_ANON_KEY" | jq '.'
 ```
 
@@ -336,7 +336,7 @@ for (const [slug, count] of Object.entries(domainCounts)) {
 **Solution**: Domain already exists, check with:
 
 ```bash
-curl -s "http://127.0.0.1:54321/rest/v1/knowledge_domains?slug=eq.regulatory_affairs" \
+curl -s "https://xazinxsiglqokwfmogyk.supabase.co/rest/v1/knowledge_domains?slug=eq.regulatory_affairs" \
   -H "apikey: YOUR_ANON_KEY"
 ```
 

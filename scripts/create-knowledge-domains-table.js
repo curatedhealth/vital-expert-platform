@@ -1,7 +1,7 @@
 /**
  * Create knowledge_domains table
  *
- * Run: NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321 SUPABASE_SERVICE_ROLE_KEY=<key> node scripts/create-knowledge-domains-table.js
+ * Run: NEXT_PUBLIC_SUPABASE_URL=https://xazinxsiglqokwfmogyk.supabase.co SUPABASE_SERVICE_ROLE_KEY=<key> node scripts/create-knowledge-domains-table.js
  */
 
 const { createClient } = require('@supabase/supabase-js');

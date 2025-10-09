@@ -113,7 +113,7 @@
 **Activation Script:**
 ```bash
 # Activate specific agents by ID or name
-curl -X PUT "http://127.0.0.1:54321/rest/v1/agents?name=eq.clinical-data-manager" \
+curl -X PUT "https://xazinxsiglqokwfmogyk.supabase.co/rest/v1/agents?name=eq.clinical-data-manager" \
   -H "apikey: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." \
   -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." \
   -H "Content-Type: application/json" \
@@ -251,7 +251,7 @@ npm run dev
 
 **View all active agents:**
 ```bash
-curl -s "http://127.0.0.1:54321/rest/v1/agents?select=display_name,tier,model,status&status=eq.active&order=tier" -H "apikey: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0"
+curl -s "https://xazinxsiglqokwfmogyk.supabase.co/rest/v1/agents?select=display_name,tier,model,status&status=eq.active&order=tier" -H "apikey: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0"
 ```
 
 **Test agent transformation:**

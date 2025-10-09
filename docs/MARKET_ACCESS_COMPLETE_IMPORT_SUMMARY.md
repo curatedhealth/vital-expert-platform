@@ -592,7 +592,7 @@ ORDER BY department;
 ## SUPPORT & CONTACT
 
 ### Technical Support
-- **Database**: Supabase local instance (http://127.0.0.1:54321)
+- **Database**: Supabase local instance (https://xazinxsiglqokwfmogyk.supabase.co)
 - **Service Role Key**: Configured in environment
 - **Business Function ID**: `3f5af499-747d-4763-a227-8b2d57940507`
 

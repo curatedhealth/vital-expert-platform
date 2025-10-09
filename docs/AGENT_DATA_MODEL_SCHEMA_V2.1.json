@@ -53,7 +53,7 @@
       "type": "string",
       "description": "Avatar icon URL or path",
       "examples": [
-        "http://127.0.0.1:54321/storage/v1/object/public/avatars/avatar_0001.png",
+        "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0001.png",
         "medical-doctor.svg"
       ]
     },

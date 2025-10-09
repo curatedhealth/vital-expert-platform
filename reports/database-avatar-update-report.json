@@ -1,0 +1,2043 @@
+{
+  "summary": {
+    "total_agents": 254,
+    "agents_updated": 254,
+    "sql_statements": 254
+  },
+  "updates": [
+    {
+      "id": "ed83433a-c04d-4789-9fde-5bf4310a8f73",
+      "name": "anticoagulation_specialist",
+      "display_name": "Anticoagulation Specialist",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0009.png",
+      "new_avatar": "/icons/png/avatars/avatar_0009.png"
+    },
+    {
+      "id": "ce89d15c-4795-4e2d-8a87-5e19d2742cc5",
+      "name": "clinical-trial-designer",
+      "display_name": "Clinical Trial Designer",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0021.png",
+      "new_avatar": "/icons/png/avatars/avatar_0021.png"
+    },
+    {
+      "id": "ef7a19e5-25b1-48cb-b2cf-1a4d6f9af29c",
+      "name": "hipaa-compliance-officer",
+      "display_name": "HIPAA Compliance Officer",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0059.png",
+      "new_avatar": "/icons/png/avatars/avatar_0059.png"
+    },
+    {
+      "id": "567ae6c9-12b6-4098-9f61-df6312fb48be",
+      "name": "reimbursement-strategist",
+      "display_name": "Reimbursement Strategist",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0002.png",
+      "new_avatar": "/icons/png/avatars/avatar_0002.png"
+    },
+    {
+      "id": "78dcebbb-963b-47d8-9608-73ddbf3f6b85",
+      "name": "formulation_development_scientist",
+      "display_name": "formulation_development_scientist",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-female-7845971.png",
+      "new_avatar": "/icons/png/avatars/noun-female-7845971.png"
+    },
+    {
+      "id": "665cb20b-a5e3-4066-a5bf-b233bda868ab",
+      "name": "pediatric_dosing_specialist",
+      "display_name": "Pediatric Dosing Specialist",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-woman-5757378.png",
+      "new_avatar": "/icons/png/avatars/noun-woman-5757378.png"
+    },
+    {
+      "id": "73999e4a-9e43-4ce9-8886-7fb326efd1bd",
+      "name": "accelerated_approval_strategist",
+      "display_name": "Accelerated Approval Strategist",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0113.png",
+      "new_avatar": "/icons/png/avatars/avatar_0113.png"
+    },
+    {
+      "id": "b7d310fe-63e1-4f24-97c9-4f2ced05c8f0",
+      "name": "comparability_study_designer",
+      "display_name": "comparability_study_designer",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-boy-7845950.png",
+      "new_avatar": "/icons/png/avatars/noun-boy-7845950.png"
+    },
+    {
+      "id": "03a72def-ea09-4b21-8b44-fb4c204b8b79",
+      "name": "drug_information_specialist",
+      "display_name": "Drug Information Specialist",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0118.png",
+      "new_avatar": "/icons/png/avatars/avatar_0118.png"
+    },
+    {
+      "id": "a148d4e4-c8eb-46b6-8e4c-3848d689e7c1",
+      "name": "oligonucleotide_therapy_specialist",
+      "display_name": "oligonucleotide_therapy_specialist",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-woman-7815634.png",
+      "new_avatar": "/icons/png/avatars/noun-woman-7815634.png"
+    },
+    {
+      "id": "87e66e33-5d40-4cdf-b082-795839dc04fd",
+      "name": "pharmacokinetics_advisor",
+      "display_name": "Pharmacokinetics Advisor",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0062.png",
+      "new_avatar": "/icons/png/avatars/avatar_0062.png"
+    },
+    {
+      "id": "4cab8cb4-1120-4b19-8420-a28c48cdfced",
+      "name": "nda_bla_coordinator",
+      "display_name": "NDA/BLA Coordinator",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-woman-5757358.png",
+      "new_avatar": "/icons/png/avatars/noun-woman-5757358.png"
+    },
+    {
+      "id": "69a2beda-608e-4a55-a3ab-56f9256e931d",
+      "name": "dosing_calculator",
+      "display_name": "Dosing Calculator",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-man-7845974.png",
+      "new_avatar": "/icons/png/avatars/noun-man-7845974.png"
+    },
+    {
+      "id": "10db0789-7deb-4ee8-b5bb-aa8e1ccf99e3",
+      "name": "mass_spectrometry_imaging_expert",
+      "display_name": "Mass Spectrometry Imaging Expert",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-father-7845956.png",
+      "new_avatar": "/icons/png/avatars/noun-father-7845956.png"
+    },
+    {
+      "id": "c4af4265-a926-4dd8-8536-3493acce7ba2",
+      "name": "infectious_disease_pharmacist",
+      "display_name": "Infectious Disease Pharmacist",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0100.png",
+      "new_avatar": "/icons/png/avatars/avatar_0100.png"
+    },
+    {
+      "id": "cc4dc946-4c5b-4b97-9ae0-88b56f724204",
+      "name": "promotional_material_developer",
+      "display_name": "Promotional Material Developer",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0025.png",
+      "new_avatar": "/icons/png/avatars/avatar_0025.png"
+    },
+    {
+      "id": "9eacab2d-fa8f-4856-aad0-d1475f1b0fe5",
+      "name": "regulatory_intelligence_analyst",
+      "display_name": "Regulatory Intelligence Analyst",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0065.png",
+      "new_avatar": "/icons/png/avatars/avatar_0065.png"
+    },
+    {
+      "id": "f5738977-ff04-46fe-b45e-b73897dae6dc",
+      "name": "medication_reconciliation_assistant",
+      "display_name": "Medication Reconciliation Assistant",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0076.png",
+      "new_avatar": "/icons/png/avatars/avatar_0076.png"
+    },
+    {
+      "id": "73607605-4f66-4a79-86c4-72fdc53b07d8",
+      "name": "validation_specialist",
+      "display_name": "Validation Specialist",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-woman-5757381.png",
+      "new_avatar": "/icons/png/avatars/noun-woman-5757381.png"
+    },
+    {
+      "id": "f7712428-adbd-4f50-9e42-7c7a67932819",
+      "name": "gmp_compliance_advisor",
+      "display_name": "GMP Compliance Advisor",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-housewife-7845973.png",
+      "new_avatar": "/icons/png/avatars/noun-housewife-7845973.png"
+    },
+    {
+      "id": "c5d1ce7d-dd7d-4967-b09b-1e7281a8b67d",
+      "name": "geriatric_medication_specialist",
+      "display_name": "Geriatric Medication Specialist",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0010.png",
+      "new_avatar": "/icons/png/avatars/avatar_0010.png"
+    },
+    {
+      "id": "3df91dea-6759-475d-bfac-adada842f4cc",
+      "name": "quality_systems_auditor",
+      "display_name": "Quality Systems Auditor",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0083.png",
+      "new_avatar": "/icons/png/avatars/avatar_0083.png"
+    },
+    {
+      "id": "a56390ae-418f-46ac-9484-2e095211a2e6",
+      "name": "psur_pbrer_writer",
+      "display_name": "PSUR/PBRER Writer",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0068.png",
+      "new_avatar": "/icons/png/avatars/avatar_0068.png"
+    },
+    {
+      "id": "57f14ea1-3a2e-4a33-8c87-52101d30d984",
+      "name": "immunosuppression_specialist",
+      "display_name": "Immunosuppression Specialist",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0046.png",
+      "new_avatar": "/icons/png/avatars/avatar_0046.png"
+    },
+    {
+      "id": "2a5e1b9e-e263-4e7e-a7f6-984c7e44dc02",
+      "name": "pediatric_regulatory_advisor",
+      "display_name": "Pediatric Regulatory Advisor",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0112.png",
+      "new_avatar": "/icons/png/avatars/avatar_0112.png"
+    },
+    {
+      "id": "6a54be17-848d-4b09-bd47-8a4affb2377d",
+      "name": "clinical_trial_budget_estimator",
+      "display_name": "Clinical Trial Budget Estimator",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0051.png",
+      "new_avatar": "/icons/png/avatars/avatar_0051.png"
+    },
+    {
+      "id": "cf950982-20f9-4f97-b394-eb8e66420968",
+      "name": "pain_management_specialist",
+      "display_name": "Pain Management Specialist",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-housewife-7845945.png",
+      "new_avatar": "/icons/png/avatars/noun-housewife-7845945.png"
+    },
+    {
+      "id": "847adbd8-a798-4113-97b1-ddce5e1478da",
+      "name": "cmc_regulatory_specialist",
+      "display_name": "CMC Regulatory Specialist",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0090.png",
+      "new_avatar": "/icons/png/avatars/avatar_0090.png"
+    },
+    {
+      "id": "198aec17-d539-4dba-8540-71c10506aa00",
+      "name": "supplier_quality_manager",
+      "display_name": "Supplier Quality Manager",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-father-7845956.png",
+      "new_avatar": "/icons/png/avatars/noun-father-7845956.png"
+    },
+    {
+      "id": "45d7f3d4-dcaa-4528-9496-c1b8ee44b779",
+      "name": "breakthrough_therapy_advisor",
+      "display_name": "Breakthrough Therapy Advisor",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0071.png",
+      "new_avatar": "/icons/png/avatars/avatar_0071.png"
+    },
+    {
+      "id": "ee5f8ad9-8452-4ff7-a9d7-dd12c0ad26ec",
+      "name": "clinical_protocol_writer",
+      "display_name": "Clinical Protocol Writer",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0051.png",
+      "new_avatar": "/icons/png/avatars/avatar_0051.png"
+    },
+    {
+      "id": "366e2422-7810-4b96-8223-0488d21fbd49",
+      "name": "document_control_specialist",
+      "display_name": "Document Control Specialist",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0062.png",
+      "new_avatar": "/icons/png/avatars/avatar_0062.png"
+    },
+    {
+      "id": "ced3de98-888d-42c9-b710-b5b18234ae68",
+      "name": "regulatory_strategy_advisor",
+      "display_name": "Regulatory Strategy Advisor",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-woman-5757386.png",
+      "new_avatar": "/icons/png/avatars/noun-woman-5757386.png"
+    },
+    {
+      "id": "693665d9-3df8-485a-afb8-1848f643c4a4",
+      "name": "study_closeout_specialist",
+      "display_name": "Study Closeout Specialist",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0104.png",
+      "new_avatar": "/icons/png/avatars/avatar_0104.png"
+    },
+    {
+      "id": "8b177a15-0d6a-4a3d-ae98-6c68ec0ddf1b",
+      "name": "investigator_initiated_study_reviewer",
+      "display_name": "Investigator-Initiated Study Reviewer",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-arabic-woman-7845949.png",
+      "new_avatar": "/icons/png/avatars/noun-arabic-woman-7845949.png"
+    },
+    {
+      "id": "6a125e4b-6d18-4489-9bca-9280a799da0f",
+      "name": "safety_reporting_coordinator",
+      "display_name": "Safety Reporting Coordinator",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0025.png",
+      "new_avatar": "/icons/png/avatars/avatar_0025.png"
+    },
+    {
+      "id": "e590f2e4-9dac-4a7e-992e-0c590b74ded6",
+      "name": "post_marketing_surveillance_coordinator",
+      "display_name": "Post-Marketing Surveillance Coordinator",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0061.png",
+      "new_avatar": "/icons/png/avatars/avatar_0061.png"
+    },
+    {
+      "id": "9be4e73f-a8dc-4a45-934f-d1760c83876b",
+      "name": "equipment_qualification_specialist",
+      "display_name": "Equipment Qualification Specialist",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-man-5757357.png",
+      "new_avatar": "/icons/png/avatars/noun-man-5757357.png"
+    },
+    {
+      "id": "a8cc26a0-c790-4a04-9ad3-0082a9124e09",
+      "name": "clinical_data_manager",
+      "display_name": "Clinical Data Manager",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0070.png",
+      "new_avatar": "/icons/png/avatars/avatar_0070.png"
+    },
+    {
+      "id": "83823fa4-06e8-40f3-bbba-a4c9530be2a8",
+      "name": "pricing_strategy_advisor",
+      "display_name": "Pricing Strategy Advisor",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-punk-5840186.png",
+      "new_avatar": "/icons/png/avatars/noun-punk-5840186.png"
+    },
+    {
+      "id": "7af61460-768e-4936-88ca-76466c26549a",
+      "name": "pro_specialist",
+      "display_name": "Patient-Reported Outcomes Specialist",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-woman-7845951.png",
+      "new_avatar": "/icons/png/avatars/noun-woman-7845951.png"
+    },
+    {
+      "id": "60729aea-faaf-4273-b9c6-1ee70cf63447",
+      "name": "companion_diagnostic_regulatory_specialist",
+      "display_name": "Companion Diagnostic Regulatory Specialist",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0054.png",
+      "new_avatar": "/icons/png/avatars/avatar_0054.png"
+    },
+    {
+      "id": "98cd3f75-4765-457a-a7c5-d7170214afd1",
+      "name": "safety_database_manager",
+      "display_name": "Safety Database Manager",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0031.png",
+      "new_avatar": "/icons/png/avatars/avatar_0031.png"
+    },
+    {
+      "id": "1d2b9d3a-0c52-4ae2-9050-804e644f3e7c",
+      "name": "congress_planning_specialist",
+      "display_name": "Congress Planning Specialist",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-arabic-7845964.png",
+      "new_avatar": "/icons/png/avatars/noun-arabic-7845964.png"
+    },
+    {
+      "id": "a4658063-043c-4300-bce7-640ce8f6546b",
+      "name": "patient_access_coordinator",
+      "display_name": "Patient Access Coordinator",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-man-7815636.png",
+      "new_avatar": "/icons/png/avatars/noun-man-7815636.png"
+    },
+    {
+      "id": "33d06e5d-a9de-476d-9fcc-3be670851be9",
+      "name": "vaccine_clinical_specialist",
+      "display_name": "Vaccine Clinical Specialist",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0033.png",
+      "new_avatar": "/icons/png/avatars/avatar_0033.png"
+    },
+    {
+      "id": "4f1577f7-08df-4656-a354-54d7dbb02ab2",
+      "name": "aggregate_report_coordinator",
+      "display_name": "Aggregate Report Coordinator",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0097.png",
+      "new_avatar": "/icons/png/avatars/avatar_0097.png"
+    },
+    {
+      "id": "6a97d9fd-b071-4c78-9702-a1700cf436d1",
+      "name": "medical_science_liaison_coordinator",
+      "display_name": "Medical Science Liaison Coordinator",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-man-5757371.png",
+      "new_avatar": "/icons/png/avatars/noun-man-5757371.png"
+    },
+    {
+      "id": "484a93dd-9c38-4414-ba58-f94938adb793",
+      "name": "reimbursement_analyst",
+      "display_name": "Reimbursement Analyst",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0044.png",
+      "new_avatar": "/icons/png/avatars/avatar_0044.png"
+    },
+    {
+      "id": "d1967fb1-edd5-4341-8d5a-cbdc442c4404",
+      "name": "oncology_clinical_specialist",
+      "display_name": "Oncology Clinical Specialist",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-man-5757375.png",
+      "new_avatar": "/icons/png/avatars/noun-man-5757375.png"
+    },
+    {
+      "id": "a4def93e-81d5-4143-b329-bda1d0131008",
+      "name": "gene_therapy_clinical_expert",
+      "display_name": "Gene Therapy Clinical Expert",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0116.png",
+      "new_avatar": "/icons/png/avatars/avatar_0116.png"
+    },
+    {
+      "id": "94c7beef-0c29-4180-8834-60c84ce681c7",
+      "name": "stability_study_designer",
+      "display_name": "Stability Study Designer",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0051.png",
+      "new_avatar": "/icons/png/avatars/avatar_0051.png"
+    },
+    {
+      "id": "5d6521bf-7d4d-4a12-8700-5684eb3bfe0a",
+      "name": "impurity_assessment_expert",
+      "display_name": "Impurity Assessment Expert",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0098.png",
+      "new_avatar": "/icons/png/avatars/avatar_0098.png"
+    },
+    {
+      "id": "614cac2d-1240-4341-9587-3e27437d794e",
+      "name": "sterile_manufacturing_specialist",
+      "display_name": "Sterile Manufacturing Specialist",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-woman-5757370.png",
+      "new_avatar": "/icons/png/avatars/noun-woman-5757370.png"
+    },
+    {
+      "id": "929180b6-34e4-4fcf-b8a9-e93fd260ffdf",
+      "name": "market_research_analyst",
+      "display_name": "Market Research Analyst",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-man-5757364.png",
+      "new_avatar": "/icons/png/avatars/noun-man-5757364.png"
+    },
+    {
+      "id": "c2318edf-330b-49a8-8ee5-47787a2d36bd",
+      "name": "omnichannel_strategist",
+      "display_name": "Omnichannel Strategist",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0052.png",
+      "new_avatar": "/icons/png/avatars/avatar_0052.png"
+    },
+    {
+      "id": "8e5f8423-9dcb-4a05-b395-0c75922db1c9",
+      "name": "contract_manufacturing_manager",
+      "display_name": "Contract Manufacturing Manager",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-arabic-7845964.png",
+      "new_avatar": "/icons/png/avatars/noun-arabic-7845964.png"
+    },
+    {
+      "id": "db0d54cc-1d81-412e-810e-c948521773c7",
+      "name": "database_architect",
+      "display_name": "Database Architect",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-boy-7815633.png",
+      "new_avatar": "/icons/png/avatars/noun-boy-7815633.png"
+    },
+    {
+      "id": "0a6a008c-a7a8-43cb-80b6-7aaeb0fa19d5",
+      "name": "stem_cell_therapy_expert",
+      "display_name": "Stem Cell Therapy Expert",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0033.png",
+      "new_avatar": "/icons/png/avatars/avatar_0033.png"
+    },
+    {
+      "id": "1f7215af-fd61-4089-a166-d6801f0cba8f",
+      "name": "oncolytic_virus_expert",
+      "display_name": "Oncolytic Virus Expert",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-people-5840193.png",
+      "new_avatar": "/icons/png/avatars/noun-people-5840193.png"
+    },
+    {
+      "id": "a87f0642-1267-4de0-a6b1-ae9285f0a6ba",
+      "name": "clinical_operations_coordinator",
+      "display_name": "Clinical Operations Coordinator",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-boy-7845975.png",
+      "new_avatar": "/icons/png/avatars/noun-boy-7845975.png"
+    },
+    {
+      "id": "9ce0d0b3-bf26-41d4-a792-934950dfcde4",
+      "name": "companion_diagnostic_developer",
+      "display_name": "Companion Diagnostic Developer",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-woman-5757381.png",
+      "new_avatar": "/icons/png/avatars/noun-woman-5757381.png"
+    },
+    {
+      "id": "89167a66-8ac8-4969-a651-6d5ab1ac10f0",
+      "name": "digital_therapeutic_specialist",
+      "display_name": "Digital Therapeutic Specialist",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0067.png",
+      "new_avatar": "/icons/png/avatars/avatar_0067.png"
+    },
+    {
+      "id": "e420c40e-7d34-4d9d-a836-c0a359906a3a",
+      "name": "intranasal_delivery_expert",
+      "display_name": "Intranasal Delivery Expert",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-woman-7845951.png",
+      "new_avatar": "/icons/png/avatars/noun-woman-7845951.png"
+    },
+    {
+      "id": "f5423b31-b846-415d-acf7-22334b0cf760",
+      "name": "formulary_strategy_specialist",
+      "display_name": "Formulary Strategy Specialist",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0091.png",
+      "new_avatar": "/icons/png/avatars/avatar_0091.png"
+    },
+    {
+      "id": "5060f959-a011-4cbe-b038-8f7308a5ffe5",
+      "name": "ai_drug_discovery_specialist",
+      "display_name": "AI Drug Discovery Specialist",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-man-5757380.png",
+      "new_avatar": "/icons/png/avatars/noun-man-5757380.png"
+    },
+    {
+      "id": "63324ce5-d79e-4fda-aed0-a45fd59749f0",
+      "name": "genotoxicity_specialist",
+      "display_name": "Genotoxicity Specialist",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-backpacker-5840190.png",
+      "new_avatar": "/icons/png/avatars/noun-backpacker-5840190.png"
+    },
+    {
+      "id": "aa85f164-c5de-4fb9-a10b-0f5dece75e8c",
+      "name": "distribution_network_designer",
+      "display_name": "Distribution Network Designer",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0086.png",
+      "new_avatar": "/icons/png/avatars/avatar_0086.png"
+    },
+    {
+      "id": "a10d91af-6890-4fbc-a6fa-bff056e602b1",
+      "name": "clinical_trial_simulation_expert",
+      "display_name": "Clinical Trial Simulation Expert",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-woman-5757370.png",
+      "new_avatar": "/icons/png/avatars/noun-woman-5757370.png"
+    },
+    {
+      "id": "1b075440-64c4-40fe-aac3-396e44a962cb",
+      "name": "peptide_therapeutics_specialist",
+      "display_name": "Peptide Therapeutics Specialist",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0100.png",
+      "new_avatar": "/icons/png/avatars/avatar_0100.png"
+    },
+    {
+      "id": "6c4a277a-cc8f-4f0b-a5c8-1e7c8938ae66",
+      "name": "antibody_drug_conjugate_specialist",
+      "display_name": "Antibody-Drug Conjugate Specialist",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0071.png",
+      "new_avatar": "/icons/png/avatars/avatar_0071.png"
+    },
+    {
+      "id": "082eaceb-631e-40b2-a5c1-1b5041b92923",
+      "name": "radiopharmaceutical_specialist",
+      "display_name": "Radiopharmaceutical Specialist",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0070.png",
+      "new_avatar": "/icons/png/avatars/avatar_0070.png"
+    },
+    {
+      "id": "3dcdf11f-1fce-40d2-87a6-7b7941ae1057",
+      "name": "senolytic_therapy_specialist",
+      "display_name": "Senolytic Therapy Specialist",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0088.png",
+      "new_avatar": "/icons/png/avatars/avatar_0088.png"
+    },
+    {
+      "id": "076618d7-6b3d-4369-bc14-ae6740d53693",
+      "name": "fda_guidance_interpreter",
+      "display_name": "FDA Guidance Interpreter",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0008.png",
+      "new_avatar": "/icons/png/avatars/avatar_0008.png"
+    },
+    {
+      "id": "a657982b-ba1e-4549-8245-6f0b77ad1622",
+      "name": "site_selection_advisor",
+      "display_name": "Site Selection Advisor",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-people-5840193.png",
+      "new_avatar": "/icons/png/avatars/noun-people-5840193.png"
+    },
+    {
+      "id": "1991ca0a-e478-4170-894c-dd29af3edaee",
+      "name": "patient_recruitment_strategist",
+      "display_name": "Patient Recruitment Strategist",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0029.png",
+      "new_avatar": "/icons/png/avatars/avatar_0029.png"
+    },
+    {
+      "id": "8d3219dc-3d14-41fe-b9e3-65b1d8d1c3c3",
+      "name": "quality_metrics_analyst",
+      "display_name": "Quality Metrics Analyst",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-man-5757365.png",
+      "new_avatar": "/icons/png/avatars/noun-man-5757365.png"
+    },
+    {
+      "id": "df1abd6b-9259-422f-b28e-1c3775d92829",
+      "name": "evidence_generation_planner",
+      "display_name": "Evidence Generation Planner",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0112.png",
+      "new_avatar": "/icons/png/avatars/avatar_0112.png"
+    },
+    {
+      "id": "59647674-6f7c-4b65-a510-c02e044a6e47",
+      "name": "materials_management_coordinator",
+      "display_name": "Materials Management Coordinator",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-schoolboy-7845954.png",
+      "new_avatar": "/icons/png/avatars/noun-schoolboy-7845954.png"
+    },
+    {
+      "id": "1c80e497-0cd9-4802-b143-1bdb519d7de3",
+      "name": "payer_strategy_advisor",
+      "display_name": "Payer Strategy Advisor",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-woman-7815637.png",
+      "new_avatar": "/icons/png/avatars/noun-woman-7815637.png"
+    },
+    {
+      "id": "8a75445b-f3f8-4cf8-9a6b-0265aeab9caa",
+      "name": "biomarker_strategy_advisor",
+      "display_name": "Biomarker Strategy Advisor",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0069.png",
+      "new_avatar": "/icons/png/avatars/avatar_0069.png"
+    },
+    {
+      "id": "5bf9d856-97d7-4c4a-8003-92d898c0e795",
+      "name": "regulatory_lifecycle_manager",
+      "display_name": "Regulatory Lifecycle Manager",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0072.png",
+      "new_avatar": "/icons/png/avatars/avatar_0072.png"
+    },
+    {
+      "id": "2fcc283f-678c-40af-9c98-d325ad065860",
+      "name": "regulatory_dossier_architect",
+      "display_name": "Regulatory Dossier Architect",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-businessman-7845943.png",
+      "new_avatar": "/icons/png/avatars/noun-businessman-7845943.png"
+    },
+    {
+      "id": "c0124faf-c5ae-4ac8-84af-7a2980c4d088",
+      "name": "excipient_compatibility_expert",
+      "display_name": "Excipient Compatibility Expert",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0085.png",
+      "new_avatar": "/icons/png/avatars/avatar_0085.png"
+    },
+    {
+      "id": "b2bccaf9-4b6a-4297-8ecd-c10112557c33",
+      "name": "carcinogenicity_study_designer",
+      "display_name": "Carcinogenicity Study Designer",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-man-5757362.png",
+      "new_avatar": "/icons/png/avatars/noun-man-5757362.png"
+    },
+    {
+      "id": "7325387a-3fb6-41c9-a1d6-ec386521f0f1",
+      "name": "pharmacology_study_planner",
+      "display_name": "Pharmacology Study Planner",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-man-7845957.png",
+      "new_avatar": "/icons/png/avatars/noun-man-7845957.png"
+    },
+    {
+      "id": "e77bb027-1474-46e5-b01e-a1e81ef15e6f",
+      "name": "three_rs_implementation_specialist",
+      "display_name": "3Rs Implementation Specialist",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0023.png",
+      "new_avatar": "/icons/png/avatars/avatar_0023.png"
+    },
+    {
+      "id": "f08eb25c-daf7-4ba4-ba71-fcd0af26dbd4",
+      "name": "in_vitro_model_specialist",
+      "display_name": "In Vitro Model Specialist",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0017.png",
+      "new_avatar": "/icons/png/avatars/avatar_0017.png"
+    },
+    {
+      "id": "843b86eb-9a7b-4b25-8f30-c96ef0d4a59d",
+      "name": "digital_marketing_strategist",
+      "display_name": "Digital Marketing Strategist",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0074.png",
+      "new_avatar": "/icons/png/avatars/avatar_0074.png"
+    },
+    {
+      "id": "28f27715-b33d-4cae-a2d2-1072082eece8",
+      "name": "inventory_optimization_specialist",
+      "display_name": "Inventory Optimization Specialist",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-woman-7815637.png",
+      "new_avatar": "/icons/png/avatars/noun-woman-7815637.png"
+    },
+    {
+      "id": "f7b92cda-505a-4e06-abf2-58cf902d2e00",
+      "name": "benefit_risk_assessor",
+      "display_name": "Benefit-Risk Assessor",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0078.png",
+      "new_avatar": "/icons/png/avatars/avatar_0078.png"
+    },
+    {
+      "id": "ddff5f3e-000a-4ebd-bb96-a3ba8b5f5a2b",
+      "name": "machine_learning_engineer",
+      "display_name": "Machine Learning Engineer",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0115.png",
+      "new_avatar": "/icons/png/avatars/avatar_0115.png"
+    },
+    {
+      "id": "e7006619-a87a-46e1-8da5-1ac6cbeeede1",
+      "name": "in_silico_clinical_trial_expert",
+      "display_name": "In Silico Clinical Trial Expert",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-woman-5757366.png",
+      "new_avatar": "/icons/png/avatars/noun-woman-5757366.png"
+    },
+    {
+      "id": "a0bf03fb-7210-41e7-8afe-2fdadf8ec42f",
+      "name": "safety_labeling_specialist",
+      "display_name": "Safety Labeling Specialist",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0041.png",
+      "new_avatar": "/icons/png/avatars/avatar_0041.png"
+    },
+    {
+      "id": "578b6283-47d1-4a34-928f-658f6f8b29b5",
+      "name": "data_visualization_specialist",
+      "display_name": "Data Visualization Specialist",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0037.png",
+      "new_avatar": "/icons/png/avatars/avatar_0037.png"
+    },
+    {
+      "id": "5022b19f-b8ba-4c06-b59b-9b3d881c8a8c",
+      "name": "etl_developer",
+      "display_name": "ETL Developer",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0105.png",
+      "new_avatar": "/icons/png/avatars/avatar_0105.png"
+    },
+    {
+      "id": "6cd2e2ec-6aff-4202-8a45-c893d78e8e32",
+      "name": "gene_therapy_expert",
+      "display_name": "Gene Therapy Expert",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0016.png",
+      "new_avatar": "/icons/png/avatars/avatar_0016.png"
+    },
+    {
+      "id": "902c9fe8-3f10-4cb4-8ff4-d063929c7e67",
+      "name": "ethics_committee_liaison",
+      "display_name": "Ethics Committee Liaison",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-people-7845958.png",
+      "new_avatar": "/icons/png/avatars/noun-people-7845958.png"
+    },
+    {
+      "id": "bdedb696-b865-42ca-ad52-01ad8a53638d",
+      "name": "fda-regulatory-strategist",
+      "display_name": "FDA Regulatory Strategist",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0037.png",
+      "new_avatar": "/icons/png/avatars/avatar_0037.png"
+    },
+    {
+      "id": "97d204d1-3fb0-4268-b1fd-dafd86f81f0c",
+      "name": "medical_information_specialist",
+      "display_name": "Medical Information Specialist",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0042.png",
+      "new_avatar": "/icons/png/avatars/avatar_0042.png"
+    },
+    {
+      "id": "6ded7040-993a-4d02-9038-70e5ba3a62aa",
+      "name": "production_scheduler",
+      "display_name": "Production Scheduler",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0018.png",
+      "new_avatar": "/icons/png/avatars/avatar_0018.png"
+    },
+    {
+      "id": "d584620c-93c6-4cf8-adcb-da8b6151f1ac",
+      "name": "rna_interference_specialist",
+      "display_name": "RNA Interference Specialist",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-girl-7815632.png",
+      "new_avatar": "/icons/png/avatars/noun-girl-7815632.png"
+    },
+    {
+      "id": "f3895eaf-b140-4eaf-a75e-c0ae15b26428",
+      "name": "cancer_vaccine_expert",
+      "display_name": "Cancer Vaccine Expert",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-man-7845957.png",
+      "new_avatar": "/icons/png/avatars/noun-man-7845957.png"
+    },
+    {
+      "id": "a9345d18-85ba-4c83-9ce8-a1995192315f",
+      "name": "endpoint_committee_coordinator",
+      "display_name": "Endpoint Committee Coordinator",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-man-5757384.png",
+      "new_avatar": "/icons/png/avatars/noun-man-5757384.png"
+    },
+    {
+      "id": "ef645582-450d-4ac7-842b-4fb38ae4a75a",
+      "name": "safety_communication_specialist",
+      "display_name": "Safety Communication Specialist",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0088.png",
+      "new_avatar": "/icons/png/avatars/avatar_0088.png"
+    },
+    {
+      "id": "3f0db2de-f4eb-40d5-ad43-b38871731d10",
+      "name": "organoid_platform_expert",
+      "display_name": "Organoid Platform Expert",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-housewife-7845945.png",
+      "new_avatar": "/icons/png/avatars/noun-housewife-7845945.png"
+    },
+    {
+      "id": "d8f3e9d5-9894-4265-a142-5b4b7671b421",
+      "name": "three_d_bioprinting_expert",
+      "display_name": "3D Bioprinting Expert",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0028.png",
+      "new_avatar": "/icons/png/avatars/avatar_0028.png"
+    },
+    {
+      "id": "8bbbe43f-799b-4b78-988b-b0c31b22d3ad",
+      "name": "medical-writer",
+      "display_name": "Medical Writer",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0040.png",
+      "new_avatar": "/icons/png/avatars/avatar_0040.png"
+    },
+    {
+      "id": "206c2ccb-f3ab-4744-bab7-d3c791cd0e9d",
+      "name": "crispr_therapeutic_specialist",
+      "display_name": "CRISPR Therapeutic Specialist",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0006.png",
+      "new_avatar": "/icons/png/avatars/avatar_0006.png"
+    },
+    {
+      "id": "78cf6aef-780a-4816-803d-25a16efe80ad",
+      "name": "drug_interaction_checker",
+      "display_name": "Drug Interaction Checker",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-old-man-7845966.png",
+      "new_avatar": "/icons/png/avatars/noun-old-man-7845966.png"
+    },
+    {
+      "id": "7858a622-7e94-441f-9068-d91078445a71",
+      "name": "neurodegenerative_disease_specialist",
+      "display_name": "Neurodegenerative Disease Specialist",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-woman-5757386.png",
+      "new_avatar": "/icons/png/avatars/noun-woman-5757386.png"
+    },
+    {
+      "id": "129d58e6-3e6c-4209-a1d2-879393ddc4ac",
+      "name": "dna_encoded_library_expert",
+      "display_name": "DNA-Encoded Library Expert",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0109.png",
+      "new_avatar": "/icons/png/avatars/avatar_0109.png"
+    },
+    {
+      "id": "83137f9a-2e26-4cad-967b-9c2a66c63d2f",
+      "name": "manufacturing_capacity_planner",
+      "display_name": "Manufacturing Capacity Planner",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0065.png",
+      "new_avatar": "/icons/png/avatars/avatar_0065.png"
+    },
+    {
+      "id": "46bf9023-2204-436f-84d9-583f160b24af",
+      "name": "multi_omics_integration_specialist",
+      "display_name": "Multi-Omics Integration Specialist",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-schoolboy-7845954.png",
+      "new_avatar": "/icons/png/avatars/noun-schoolboy-7845954.png"
+    },
+    {
+      "id": "d8e31fe1-8c8e-4059-b07f-9b8b99b45488",
+      "name": "managed_care_contracting_specialist",
+      "display_name": "Managed Care Contracting Specialist",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0003.png",
+      "new_avatar": "/icons/png/avatars/avatar_0003.png"
+    },
+    {
+      "id": "773821f5-0350-496c-91e0-a6387a6a163b",
+      "name": "biostatistician",
+      "display_name": "Biostatistician",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0105.png",
+      "new_avatar": "/icons/png/avatars/avatar_0105.png"
+    },
+    {
+      "id": "02a906c0-f0fe-4169-b94b-6443aa350e00",
+      "name": "medical_affairs_metrics_analyst",
+      "display_name": "Medical Affairs Metrics Analyst",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0053.png",
+      "new_avatar": "/icons/png/avatars/avatar_0053.png"
+    },
+    {
+      "id": "f6b5ebdd-32ca-49de-84e4-c52551fcad42",
+      "name": "clinical_pharmacologist",
+      "display_name": "Clinical Pharmacologist",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0102.png",
+      "new_avatar": "/icons/png/avatars/avatar_0102.png"
+    },
+    {
+      "id": "498ed742-e136-4ccd-a95e-493d8af20f8d",
+      "name": "regulatory_submissions_quality_lead",
+      "display_name": "Regulatory Submissions Quality Lead",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0019.png",
+      "new_avatar": "/icons/png/avatars/avatar_0019.png"
+    },
+    {
+      "id": "212f652f-a613-4c53-8aad-f4196a419471",
+      "name": "dissolution_testing_expert",
+      "display_name": "Dissolution Testing Expert",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0026.png",
+      "new_avatar": "/icons/png/avatars/avatar_0026.png"
+    },
+    {
+      "id": "eb71e904-163e-4860-ba4d-f5023e61524b",
+      "name": "kol_engagement_coordinator",
+      "display_name": "KOL Engagement Coordinator",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0014.png",
+      "new_avatar": "/icons/png/avatars/avatar_0014.png"
+    },
+    {
+      "id": "ee7ec098-631a-46be-bce6-ed060e7c6be4",
+      "name": "protac_expert",
+      "display_name": "PROTAC Expert",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0027.png",
+      "new_avatar": "/icons/png/avatars/avatar_0027.png"
+    },
+    {
+      "id": "48333aa2-d707-4ffe-9bc3-1baa60afbbe0",
+      "name": "process_optimization_analyst",
+      "display_name": "Process Optimization Analyst",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0022.png",
+      "new_avatar": "/icons/png/avatars/avatar_0022.png"
+    },
+    {
+      "id": "3dcedd4e-2860-4557-af15-c98bf7256eea",
+      "name": "clinical_imaging_specialist",
+      "display_name": "Clinical Imaging Specialist",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-old-man-7845966.png",
+      "new_avatar": "/icons/png/avatars/noun-old-man-7845966.png"
+    },
+    {
+      "id": "1c6cb791-7c5a-45ba-a135-c216a09148ec",
+      "name": "global_regulatory_strategist",
+      "display_name": "Global Regulatory Strategist",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0094.png",
+      "new_avatar": "/icons/png/avatars/avatar_0094.png"
+    },
+    {
+      "id": "a0219561-ef62-47dc-905c-6307e6614e1d",
+      "name": "publication_planner",
+      "display_name": "Publication Planner",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0057.png",
+      "new_avatar": "/icons/png/avatars/avatar_0057.png"
+    },
+    {
+      "id": "dec2c8fb-7c5c-4e66-b2fd-6bda9e44df71",
+      "name": "scale_up_specialist",
+      "display_name": "Scale-Up Specialist",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-businessman-7845943.png",
+      "new_avatar": "/icons/png/avatars/noun-businessman-7845943.png"
+    },
+    {
+      "id": "974a1f7e-a1f1-4b73-9c0b-33e1475cbf23",
+      "name": "value_dossier_developer",
+      "display_name": "Value Dossier Developer",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-man-5757361.png",
+      "new_avatar": "/icons/png/avatars/noun-man-5757361.png"
+    },
+    {
+      "id": "9c0a9068-2675-47e4-a2fc-40334f85a7e8",
+      "name": "combination_product_specialist",
+      "display_name": "Combination Product Specialist",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-woman-5757367.png",
+      "new_avatar": "/icons/png/avatars/noun-woman-5757367.png"
+    },
+    {
+      "id": "0106460e-d9be-469e-9ed2-8d17231ea5ba",
+      "name": "cleaning_validation_specialist",
+      "display_name": "Cleaning Validation Specialist",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-woman-5757367.png",
+      "new_avatar": "/icons/png/avatars/noun-woman-5757367.png"
+    },
+    {
+      "id": "11a1ac8d-e35a-459d-aa65-9da64f99827b",
+      "name": "pediatric_clinical_specialist",
+      "display_name": "Pediatric Clinical Specialist",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-backpacker-5840190.png",
+      "new_avatar": "/icons/png/avatars/noun-backpacker-5840190.png"
+    },
+    {
+      "id": "736d4987-8d74-4f50-af0a-133ca5f12f85",
+      "name": "regulatory_risk_assessment_specialist",
+      "display_name": "Regulatory Risk Assessment Specialist",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-woman-5757370.png",
+      "new_avatar": "/icons/png/avatars/noun-woman-5757370.png"
+    },
+    {
+      "id": "3aa0ee16-a10c-44a6-995d-9d541cda660a",
+      "name": "translational_medicine_specialist",
+      "display_name": "Translational Medicine Specialist",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0076.png",
+      "new_avatar": "/icons/png/avatars/avatar_0076.png"
+    },
+    {
+      "id": "fcc89d6c-d7da-4e59-aa00-7b484ce91509",
+      "name": "manufacturing_deviation_handler",
+      "display_name": "Manufacturing Deviation Handler",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-player-7845978.png",
+      "new_avatar": "/icons/png/avatars/noun-player-7845978.png"
+    },
+    {
+      "id": "5ac5ad05-e64a-4ed4-9b87-2b3433d3e8d9",
+      "name": "prior_authorization_navigator",
+      "display_name": "Prior Authorization Navigator",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-man-5757385.png",
+      "new_avatar": "/icons/png/avatars/noun-man-5757385.png"
+    },
+    {
+      "id": "c9ba4f33-4dea-4044-8471-8ec651ca4134",
+      "name": "adaptive_trial_designer",
+      "display_name": "Adaptive Trial Designer",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0085.png",
+      "new_avatar": "/icons/png/avatars/avatar_0085.png"
+    },
+    {
+      "id": "c52d506e-e676-48a5-a49b-49a9171b18e9",
+      "name": "risk_benefit_assessment_expert",
+      "display_name": "Risk-Benefit Assessment Expert",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-user-5840187.png",
+      "new_avatar": "/icons/png/avatars/noun-user-5840187.png"
+    },
+    {
+      "id": "6dc27eb3-0139-4dd5-b779-8526f9acbaf2",
+      "name": "basket_umbrella_trial_specialist",
+      "display_name": "Basket/Umbrella Trial Specialist",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-woman-5757376.png",
+      "new_avatar": "/icons/png/avatars/noun-woman-5757376.png"
+    },
+    {
+      "id": "5335f0fc-2a1e-4a0c-9133-f7501bd85e8a",
+      "name": "regulatory_deficiency_response_lead",
+      "display_name": "Regulatory Deficiency Response Lead",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0005.png",
+      "new_avatar": "/icons/png/avatars/avatar_0005.png"
+    },
+    {
+      "id": "cacbf019-0c28-4c67-9d70-223c0b3b4074",
+      "name": "brand_strategy_director",
+      "display_name": "Brand Strategy Director",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-user-5840187.png",
+      "new_avatar": "/icons/png/avatars/noun-user-5840187.png"
+    },
+    {
+      "id": "0cb37e50-6cad-4202-a9f2-42ec3f09940c",
+      "name": "demand_forecaster",
+      "display_name": "Demand Forecaster",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0035.png",
+      "new_avatar": "/icons/png/avatars/avatar_0035.png"
+    },
+    {
+      "id": "699c8345-c68e-4e3e-876b-686c412641a7",
+      "name": "adverse_event_reporter",
+      "display_name": "Adverse Event Reporter",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0004.png",
+      "new_avatar": "/icons/png/avatars/avatar_0004.png"
+    },
+    {
+      "id": "d3d53328-1296-4429-99d7-cf982bb6acbe",
+      "name": "agency_meeting_strategist",
+      "display_name": "Agency Meeting Strategist",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0110.png",
+      "new_avatar": "/icons/png/avatars/avatar_0110.png"
+    },
+    {
+      "id": "d3376031-13bc-40ca-be99-c1bb287cf8d6",
+      "name": "analytical_method_developer",
+      "display_name": "Analytical Method Developer",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0033.png",
+      "new_avatar": "/icons/png/avatars/avatar_0033.png"
+    },
+    {
+      "id": "28abc9b6-db09-4b7f-9db5-67c4b2032dc5",
+      "name": "medication_therapy_advisor",
+      "display_name": "Medication Therapy Advisor",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-woman-5757358.png",
+      "new_avatar": "/icons/png/avatars/noun-woman-5757358.png"
+    },
+    {
+      "id": "c934e9bf-19e0-4952-a46e-a7460ae43418",
+      "name": "advanced_therapy_regulatory_expert",
+      "display_name": "Advanced Therapy Regulatory Expert",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0118.png",
+      "new_avatar": "/icons/png/avatars/avatar_0118.png"
+    },
+    {
+      "id": "ed49e322-769e-4603-b884-d99e4e58437a",
+      "name": "quality_by_design_specialist",
+      "display_name": "Quality by Design Specialist",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0064.png",
+      "new_avatar": "/icons/png/avatars/avatar_0064.png"
+    },
+    {
+      "id": "c13326da-2808-4a06-bacf-2134b27f058d",
+      "name": "signal_detection_analyst",
+      "display_name": "Signal Detection Analyst",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-man-5757357.png",
+      "new_avatar": "/icons/png/avatars/noun-man-5757357.png"
+    },
+    {
+      "id": "34dde670-54ea-4eb7-9b1c-5c759a43d106",
+      "name": "expedited_program_expert",
+      "display_name": "Expedited Program Expert",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0050.png",
+      "new_avatar": "/icons/png/avatars/avatar_0050.png"
+    },
+    {
+      "id": "318fcb64-c0f8-4169-b2b0-6cedbf00c91a",
+      "name": "territory_design_specialist",
+      "display_name": "Territory Design Specialist",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0030.png",
+      "new_avatar": "/icons/png/avatars/avatar_0030.png"
+    },
+    {
+      "id": "4b0bd101-bdeb-46b9-9719-b79905bead5b",
+      "name": "post_marketing_commitment_coordinator",
+      "display_name": "Post-Marketing Commitment Coordinator",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0094.png",
+      "new_avatar": "/icons/png/avatars/avatar_0094.png"
+    },
+    {
+      "id": "dd1fa9d0-364b-48eb-8356-d607ef97a821",
+      "name": "organ_on_chip_specialist",
+      "display_name": "Organ-on-Chip Specialist",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-wife-7845972.png",
+      "new_avatar": "/icons/png/avatars/noun-wife-7845972.png"
+    },
+    {
+      "id": "e486ad45-249f-4fb1-9917-321f38809cee",
+      "name": "quantum_chemistry_expert",
+      "display_name": "Quantum Chemistry Expert",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-man-7845974.png",
+      "new_avatar": "/icons/png/avatars/noun-man-7845974.png"
+    },
+    {
+      "id": "91e45120-1d28-4153-b2fc-b0401710f53a",
+      "name": "process_development_engineer",
+      "display_name": "Process Development Engineer",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-man-5757365.png",
+      "new_avatar": "/icons/png/avatars/noun-man-5757365.png"
+    },
+    {
+      "id": "295961fd-8250-438e-be28-0d5cff3704e1",
+      "name": "toxicology_study_designer",
+      "display_name": "Toxicology Study Designer",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0097.png",
+      "new_avatar": "/icons/png/avatars/avatar_0097.png"
+    },
+    {
+      "id": "8ab59ac5-482a-42af-a3bc-43e501e3daca",
+      "name": "orphan_drug_designator",
+      "display_name": "Orphan Drug Designator",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0081.png",
+      "new_avatar": "/icons/png/avatars/avatar_0081.png"
+    },
+    {
+      "id": "ab317acd-75f6-4779-b25e-60dec80ebcfc",
+      "name": "supplier_relationship_manager",
+      "display_name": "Supplier Relationship Manager",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-female-7845968.png",
+      "new_avatar": "/icons/png/avatars/noun-female-7845968.png"
+    },
+    {
+      "id": "3f075968-e271-49ca-8aef-172592f24cf6",
+      "name": "medical_affairs_commercial_liaison",
+      "display_name": "Medical Affairs Commercial Liaison",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-man-5757377.png",
+      "new_avatar": "/icons/png/avatars/noun-man-5757377.png"
+    },
+    {
+      "id": "482bcb2b-5fa6-42eb-9e41-ecba756d9bdf",
+      "name": "biomarker_validation_expert",
+      "display_name": "Biomarker Validation Expert",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0106.png",
+      "new_avatar": "/icons/png/avatars/avatar_0106.png"
+    },
+    {
+      "id": "533d813b-cd30-434a-b720-b7f1f1985663",
+      "name": "drug_substance_characterization_specialist",
+      "display_name": "Drug Substance Characterization Specialist",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-businessman-7845943.png",
+      "new_avatar": "/icons/png/avatars/noun-businessman-7845943.png"
+    },
+    {
+      "id": "a6dc7bfe-741c-45ce-b922-158ba0bec20b",
+      "name": "immunotoxicology_expert",
+      "display_name": "Immunotoxicology Expert",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0035.png",
+      "new_avatar": "/icons/png/avatars/avatar_0035.png"
+    },
+    {
+      "id": "148d921b-8a1a-471c-9171-5313fa3aeafc",
+      "name": "ind_enabling_study_coordinator",
+      "display_name": "IND-Enabling Study Coordinator",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-man-5757356.png",
+      "new_avatar": "/icons/png/avatars/noun-man-5757356.png"
+    },
+    {
+      "id": "8fd0bf56-05fc-4104-9955-001d646917fc",
+      "name": "transportation_manager",
+      "display_name": "Transportation Manager",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-man-5757357.png",
+      "new_avatar": "/icons/png/avatars/noun-man-5757357.png"
+    },
+    {
+      "id": "4e73b646-9e98-45e1-8711-40440dd045fc",
+      "name": "continuous_manufacturing_expert",
+      "display_name": "Continuous Manufacturing Expert",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0041.png",
+      "new_avatar": "/icons/png/avatars/avatar_0041.png"
+    },
+    {
+      "id": "b21464b3-c465-4cc2-8832-68db0acb2de3",
+      "name": "reproductive_toxicology_specialist",
+      "display_name": "Reproductive Toxicology Specialist",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0032.png",
+      "new_avatar": "/icons/png/avatars/avatar_0032.png"
+    },
+    {
+      "id": "e9a93a75-8ce0-4416-9a40-f39021440e18",
+      "name": "payor_account_strategist",
+      "display_name": "Payor Account Strategist",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-man-7815635.png",
+      "new_avatar": "/icons/png/avatars/noun-man-7815635.png"
+    },
+    {
+      "id": "65868d26-0b7c-4f34-b9c3-5f2eee23ad3e",
+      "name": "returns_recall_coordinator",
+      "display_name": "Returns & Recall Coordinator",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-man-5757356.png",
+      "new_avatar": "/icons/png/avatars/noun-man-5757356.png"
+    },
+    {
+      "id": "1dc0cb7c-745a-436f-84a9-7b7436ffd98b",
+      "name": "dmpk_specialist",
+      "display_name": "DMPK Specialist",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-people-5840185.png",
+      "new_avatar": "/icons/png/avatars/noun-people-5840185.png"
+    },
+    {
+      "id": "1ef1b9dd-5b68-4ed4-b56f-4c876af4ef15",
+      "name": "clinical_trial_transparency_officer",
+      "display_name": "Clinical Trial Transparency Officer",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0096.png",
+      "new_avatar": "/icons/png/avatars/avatar_0096.png"
+    },
+    {
+      "id": "a4416d55-6088-4531-b39b-f9eae883d121",
+      "name": "product_launch_strategist",
+      "display_name": "Product Launch Strategist",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-arabic-7845964.png",
+      "new_avatar": "/icons/png/avatars/noun-arabic-7845964.png"
+    },
+    {
+      "id": "7eba08ee-c720-4e7d-9cce-e3dd233f0523",
+      "name": "key_account_manager_support",
+      "display_name": "Key Account Manager Support",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0117.png",
+      "new_avatar": "/icons/png/avatars/avatar_0117.png"
+    },
+    {
+      "id": "229e934a-7255-4ef0-8e46-d440c86f2905",
+      "name": "import_export_compliance_specialist",
+      "display_name": "Import/Export Compliance Specialist",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0045.png",
+      "new_avatar": "/icons/png/avatars/avatar_0045.png"
+    },
+    {
+      "id": "acd14421-a639-4efd-8f5d-5235b0c3596d",
+      "name": "car_t_cell_therapy_specialist",
+      "display_name": "CAR-T Cell Therapy Specialist",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0008.png",
+      "new_avatar": "/icons/png/avatars/avatar_0008.png"
+    },
+    {
+      "id": "2a6f4b45-1e37-47f0-b000-8a654c0cd1fa",
+      "name": "sales_force_effectiveness_analyst",
+      "display_name": "Sales Force Effectiveness Analyst",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-user-5840191.png",
+      "new_avatar": "/icons/png/avatars/noun-user-5840191.png"
+    },
+    {
+      "id": "68d6d14f-71b5-4b24-a943-f5605af5c2a9",
+      "name": "serialization_track_trace_expert",
+      "display_name": "Serialization & Track-Trace Expert",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0007.png",
+      "new_avatar": "/icons/png/avatars/avatar_0007.png"
+    },
+    {
+      "id": "ae8d72c6-5f70-4af1-b1e6-a3127edd327b",
+      "name": "evidence_synthesis_specialist",
+      "display_name": "Evidence Synthesis Specialist",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0109.png",
+      "new_avatar": "/icons/png/avatars/avatar_0109.png"
+    },
+    {
+      "id": "75985e2b-275b-4904-9ce8-fe7edbe1aab5",
+      "name": "base_prime_editing_expert",
+      "display_name": "Base/Prime Editing Expert",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0038.png",
+      "new_avatar": "/icons/png/avatars/avatar_0038.png"
+    },
+    {
+      "id": "83b78411-80ee-43b7-879d-d5309629ab9d",
+      "name": "customer_insights_analyst",
+      "display_name": "Customer Insights Analyst",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0063.png",
+      "new_avatar": "/icons/png/avatars/avatar_0063.png"
+    },
+    {
+      "id": "490af4b2-6bc2-4238-b5a4-8c5c1506b19f",
+      "name": "supply_chain_risk_manager",
+      "display_name": "Supply Chain Risk Manager",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0027.png",
+      "new_avatar": "/icons/png/avatars/avatar_0027.png"
+    },
+    {
+      "id": "0f85ff09-e901-41dc-b85e-35ae3ec17543",
+      "name": "nlp_expert",
+      "display_name": "Natural Language Processing Expert",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0056.png",
+      "new_avatar": "/icons/png/avatars/avatar_0056.png"
+    },
+    {
+      "id": "c3ed2a7f-c328-43b6-9d0b-64db910a39d0",
+      "name": "ai_ml_model_validator",
+      "display_name": "AI/ML Model Validator",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0045.png",
+      "new_avatar": "/icons/png/avatars/avatar_0045.png"
+    },
+    {
+      "id": "8c898d68-a0ce-4022-8fd2-6b06c0b737c7",
+      "name": "warehouse_operations_specialist",
+      "display_name": "Warehouse Operations Specialist",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0056.png",
+      "new_avatar": "/icons/png/avatars/avatar_0056.png"
+    },
+    {
+      "id": "cea8b345-2007-4108-9d93-519b25222d85",
+      "name": "statistical_programmer",
+      "display_name": "Statistical Programmer",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0104.png",
+      "new_avatar": "/icons/png/avatars/avatar_0104.png"
+    },
+    {
+      "id": "619bd5f5-b654-43e2-bbef-8dd2022987b2",
+      "name": "batch_record_reviewer",
+      "display_name": "Batch Record Reviewer",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0082.png",
+      "new_avatar": "/icons/png/avatars/avatar_0082.png"
+    },
+    {
+      "id": "a2220734-ccb4-42b0-9857-7d1a6804934a",
+      "name": "pharmacogenomics_expert",
+      "display_name": "Pharmacogenomics Expert",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-woman-5757378.png",
+      "new_avatar": "/icons/png/avatars/noun-woman-5757378.png"
+    },
+    {
+      "id": "37cd421f-f2cf-4d7e-9fb0-eb9277a4540b",
+      "name": "targeted_protein_degradation_expert",
+      "display_name": "Targeted Protein Degradation Expert",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-girl-7845948.png",
+      "new_avatar": "/icons/png/avatars/noun-girl-7845948.png"
+    },
+    {
+      "id": "3143d076-00f8-4ce0-a14e-ac858ba06de7",
+      "name": "predictive_modeling_specialist",
+      "display_name": "Predictive Modeling Specialist",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0044.png",
+      "new_avatar": "/icons/png/avatars/avatar_0044.png"
+    },
+    {
+      "id": "c67f63ad-3894-45e1-9104-95efda430831",
+      "name": "compliance_officer",
+      "display_name": "Compliance Officer",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0108.png",
+      "new_avatar": "/icons/png/avatars/avatar_0108.png"
+    },
+    {
+      "id": "00b3854f-318a-48a7-a37d-6ab02b6e8c7b",
+      "name": "clinical_data_scientist",
+      "display_name": "Clinical Data Scientist",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-female-7845968.png",
+      "new_avatar": "/icons/png/avatars/noun-female-7845968.png"
+    },
+    {
+      "id": "312c106f-a66a-4b3d-b1f4-06ce3e0c0536",
+      "name": "personalized_medicine_specialist",
+      "display_name": "Personalized Medicine Specialist",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-old-man-7845966.png",
+      "new_avatar": "/icons/png/avatars/noun-old-man-7845966.png"
+    },
+    {
+      "id": "d9db6d95-3eea-4799-9b7f-01d0ffb8b3e4",
+      "name": "anti_corruption_specialist",
+      "display_name": "Anti-Corruption Specialist",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0092.png",
+      "new_avatar": "/icons/png/avatars/avatar_0092.png"
+    },
+    {
+      "id": "53de8d82-8834-4aba-a655-598cd5eb7d9d",
+      "name": "structure_based_design_expert",
+      "display_name": "Structure-Based Design Expert",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0043.png",
+      "new_avatar": "/icons/png/avatars/avatar_0043.png"
+    },
+    {
+      "id": "88870184-8355-49a0-b91e-1ef72df133c2",
+      "name": "global_trade_compliance_specialist",
+      "display_name": "Global Trade Compliance Specialist",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0011.png",
+      "new_avatar": "/icons/png/avatars/avatar_0011.png"
+    },
+    {
+      "id": "75239d57-a98c-4b0a-a627-8fbd7e7c5551",
+      "name": "metabolic_reprogramming_specialist",
+      "display_name": "Metabolic Reprogramming Specialist",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-man-5757380.png",
+      "new_avatar": "/icons/png/avatars/noun-man-5757380.png"
+    },
+    {
+      "id": "de0e1960-43ef-41b2-ab41-235a276fb996",
+      "name": "business_intelligence_analyst",
+      "display_name": "Business Intelligence Analyst",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0007.png",
+      "new_avatar": "/icons/png/avatars/avatar_0007.png"
+    },
+    {
+      "id": "9894f81b-d9b6-46ed-8007-773a3ad37fe9",
+      "name": "privacy_officer",
+      "display_name": "Privacy Officer",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0001.png",
+      "new_avatar": "/icons/png/avatars/avatar_0001.png"
+    },
+    {
+      "id": "022a9889-816b-4d40-b2d7-474e7bd95099",
+      "name": "mitochondrial_medicine_expert",
+      "display_name": "Mitochondrial Medicine Expert",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-woman-5757383.png",
+      "new_avatar": "/icons/png/avatars/noun-woman-5757383.png"
+    },
+    {
+      "id": "4431a6e2-a19c-437d-866c-1c8d1a9220f3",
+      "name": "immunometabolism_expert",
+      "display_name": "Immunometabolism Expert",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0021.png",
+      "new_avatar": "/icons/png/avatars/avatar_0021.png"
+    },
+    {
+      "id": "c24ab0d2-dba2-48c8-a25d-736c1251a0a7",
+      "name": "macrocycle_therapeutics_specialist",
+      "display_name": "Macrocycle Therapeutics Specialist",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0004.png",
+      "new_avatar": "/icons/png/avatars/avatar_0004.png"
+    },
+    {
+      "id": "bf105024-5c22-40a1-82e1-2dd8ab3ad705",
+      "name": "spatial_transcriptomics_specialist",
+      "display_name": "Spatial Transcriptomics Specialist",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-male-7845946.png",
+      "new_avatar": "/icons/png/avatars/noun-male-7845946.png"
+    },
+    {
+      "id": "f2d91a39-4f0b-469f-bcec-d8c0268360ee",
+      "name": "formulary_advisor",
+      "display_name": "Formulary Advisor",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0094.png",
+      "new_avatar": "/icons/png/avatars/avatar_0094.png"
+    },
+    {
+      "id": "122e94c1-d5f4-4241-a859-bd26ba9b2f07",
+      "name": "oncology_medication_specialist",
+      "display_name": "Oncology Medication Specialist",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0026.png",
+      "new_avatar": "/icons/png/avatars/avatar_0026.png"
+    },
+    {
+      "id": "bea1e660-052b-4061-b977-733526b24276",
+      "name": "ind_application_specialist",
+      "display_name": "IND Application Specialist",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0055.png",
+      "new_avatar": "/icons/png/avatars/avatar_0055.png"
+    },
+    {
+      "id": "819cd882-9d73-4225-9b47-46b5c3f0dc41",
+      "name": "informed_consent_developer",
+      "display_name": "Informed Consent Developer",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0113.png",
+      "new_avatar": "/icons/png/avatars/avatar_0113.png"
+    },
+    {
+      "id": "423b743e-1af0-49da-966e-b95589ac6846",
+      "name": "monitoring_plan_developer",
+      "display_name": "Monitoring Plan Developer",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0091.png",
+      "new_avatar": "/icons/png/avatars/avatar_0091.png"
+    },
+    {
+      "id": "172f995a-e331-4cc2-8e44-887692597c71",
+      "name": "deviation_investigator",
+      "display_name": "Deviation Investigator",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0064.png",
+      "new_avatar": "/icons/png/avatars/avatar_0064.png"
+    },
+    {
+      "id": "21df494f-48fc-457e-add0-146e926586ca",
+      "name": "capa_coordinator",
+      "display_name": "CAPA Coordinator",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-woman-5757374.png",
+      "new_avatar": "/icons/png/avatars/noun-woman-5757374.png"
+    },
+    {
+      "id": "adf5bec2-bf4f-4357-ab69-7e8e00a02850",
+      "name": "change_control_manager",
+      "display_name": "Change Control Manager",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0114.png",
+      "new_avatar": "/icons/png/avatars/avatar_0114.png"
+    },
+    {
+      "id": "d87ce32a-10ac-463b-ae7a-eb91ecbdf908",
+      "name": "training_coordinator",
+      "display_name": "Training Coordinator",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0011.png",
+      "new_avatar": "/icons/png/avatars/avatar_0011.png"
+    },
+    {
+      "id": "63990464-b89e-4de6-8ab8-d8d95a02ddbf",
+      "name": "risk_management_plan_developer",
+      "display_name": "Risk Management Plan Developer",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0040.png",
+      "new_avatar": "/icons/png/avatars/avatar_0040.png"
+    },
+    {
+      "id": "dba7ef26-abe3-407a-8f50-965876666403",
+      "name": "safety_signal_evaluator",
+      "display_name": "Safety Signal Evaluator",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-female-7845967.png",
+      "new_avatar": "/icons/png/avatars/noun-female-7845967.png"
+    },
+    {
+      "id": "c9dbb305-1e8b-4f7f-b831-e717c28f033d",
+      "name": "advisory_board_organizer",
+      "display_name": "Advisory Board Organizer",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0096.png",
+      "new_avatar": "/icons/png/avatars/avatar_0096.png"
+    },
+    {
+      "id": "acb74b22-f265-43fa-b04f-1f9e54996bcc",
+      "name": "needs_assessment_coordinator",
+      "display_name": "Needs Assessment Coordinator",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0062.png",
+      "new_avatar": "/icons/png/avatars/avatar_0062.png"
+    },
+    {
+      "id": "a35fbd20-636d-4f3c-b2fb-804ee81f05e0",
+      "name": "technology_transfer_coordinator",
+      "display_name": "Technology Transfer Coordinator",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0045.png",
+      "new_avatar": "/icons/png/avatars/avatar_0045.png"
+    },
+    {
+      "id": "26391c1f-4414-487b-a8f6-8704881f25ad",
+      "name": "health_economics_modeler",
+      "display_name": "Health Economics Modeler",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-woman-5757366.png",
+      "new_avatar": "/icons/png/avatars/noun-woman-5757366.png"
+    },
+    {
+      "id": "b9acda3d-a2fe-4252-a025-e8a284385c54",
+      "name": "hta_submission_specialist",
+      "display_name": "HTA Submission Specialist",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0087.png",
+      "new_avatar": "/icons/png/avatars/avatar_0087.png"
+    },
+    {
+      "id": "9f6e9092-0273-4633-b042-41aed68e7907",
+      "name": "medical_monitor",
+      "display_name": "Medical Monitor",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0038.png",
+      "new_avatar": "/icons/png/avatars/avatar_0038.png"
+    },
+    {
+      "id": "b9b8f781-7ad4-440d-97e5-21b0d6e80523",
+      "name": "dsmb_liaison",
+      "display_name": "DSMB Liaison",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-man-7815635.png",
+      "new_avatar": "/icons/png/avatars/noun-man-7815635.png"
+    },
+    {
+      "id": "d4464045-30c6-4bc6-a955-c67877555a2e",
+      "name": "real_world_evidence_analyst",
+      "display_name": "Real-World Evidence Analyst",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0105.png",
+      "new_avatar": "/icons/png/avatars/avatar_0105.png"
+    },
+    {
+      "id": "40e05f9b-a92d-46df-a487-f517ded28765",
+      "name": "geriatric_clinical_specialist",
+      "display_name": "Geriatric Clinical Specialist",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-housewife-7845952.png",
+      "new_avatar": "/icons/png/avatars/noun-housewife-7845952.png"
+    },
+    {
+      "id": "e624e6f2-e747-4b58-b22e-a7dd95a457cd",
+      "name": "rare_disease_clinical_expert",
+      "display_name": "Rare Disease Clinical Expert",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-people-5840188.png",
+      "new_avatar": "/icons/png/avatars/noun-people-5840188.png"
+    },
+    {
+      "id": "77bde8ba-f0b0-466b-8e30-e2a0ccf99efc",
+      "name": "cell_therapy_clinical_specialist",
+      "display_name": "Cell Therapy Clinical Specialist",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0039.png",
+      "new_avatar": "/icons/png/avatars/avatar_0039.png"
+    },
+    {
+      "id": "ba7d1493-a3ee-4bd3-b7b8-63e695b029ab",
+      "name": "post_approval_change_manager",
+      "display_name": "Post-Approval Change Manager",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0016.png",
+      "new_avatar": "/icons/png/avatars/avatar_0016.png"
+    },
+    {
+      "id": "edfa4260-6432-41ab-b363-6ae51e359d84",
+      "name": "biosimilar_regulatory_specialist",
+      "display_name": "Biosimilar Regulatory Specialist",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0080.png",
+      "new_avatar": "/icons/png/avatars/avatar_0080.png"
+    },
+    {
+      "id": "263b5cfb-2b90-4eae-8991-922a889d7448",
+      "name": "international_regulatory_harmonization_expert",
+      "display_name": "International Regulatory Harmonization Expert",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0036.png",
+      "new_avatar": "/icons/png/avatars/avatar_0036.png"
+    },
+    {
+      "id": "a827dbb9-fc60-4605-8fbe-5a51ba752e23",
+      "name": "pharmaceutical_technology_specialist",
+      "display_name": "Pharmaceutical Technology Specialist",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0032.png",
+      "new_avatar": "/icons/png/avatars/avatar_0032.png"
+    },
+    {
+      "id": "5dc65208-e9fa-4451-9e85-8fad0293d0a6",
+      "name": "container_closure_specialist",
+      "display_name": "Container Closure Specialist",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-man-5757375.png",
+      "new_avatar": "/icons/png/avatars/noun-man-5757375.png"
+    },
+    {
+      "id": "fc57ba89-570e-453f-a6cc-b72629a553f3",
+      "name": "lyophilization_specialist",
+      "display_name": "Lyophilization Specialist",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-employ-7845947.png",
+      "new_avatar": "/icons/png/avatars/noun-employ-7845947.png"
+    },
+    {
+      "id": "272e6f54-5785-46ab-8439-61b9cb29648f",
+      "name": "safety_pharmacology_expert",
+      "display_name": "Safety Pharmacology Expert",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0060.png",
+      "new_avatar": "/icons/png/avatars/avatar_0060.png"
+    },
+    {
+      "id": "b9131d87-8584-40d9-9a78-7e253c303508",
+      "name": "bioanalytical_method_developer",
+      "display_name": "Bioanalytical Method Developer",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0080.png",
+      "new_avatar": "/icons/png/avatars/avatar_0080.png"
+    },
+    {
+      "id": "7283c932-2b9f-4d80-b0e0-8c6a8a7b6d31",
+      "name": "in_vivo_model_specialist",
+      "display_name": "In Vivo Model Specialist",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0079.png",
+      "new_avatar": "/icons/png/avatars/avatar_0079.png"
+    },
+    {
+      "id": "8d3888f5-6f8b-411b-81b6-9e21ebdd99f3",
+      "name": "competitive_intelligence_specialist",
+      "display_name": "Competitive Intelligence Specialist",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0008.png",
+      "new_avatar": "/icons/png/avatars/avatar_0008.png"
+    },
+    {
+      "id": "cb014d85-c34c-41b2-a22a-38813c21d809",
+      "name": "patient_journey_mapper",
+      "display_name": "Patient Journey Mapper",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-punk-5840186.png",
+      "new_avatar": "/icons/png/avatars/noun-punk-5840186.png"
+    },
+    {
+      "id": "1482129f-fb49-4639-82a0-74c412628856",
+      "name": "patient_advocacy_relations",
+      "display_name": "Patient Advocacy Relations",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0102.png",
+      "new_avatar": "/icons/png/avatars/avatar_0102.png"
+    },
+    {
+      "id": "8884073e-e848-482f-946e-683e091c28d7",
+      "name": "cold_chain_specialist",
+      "display_name": "Cold Chain Specialist",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0069.png",
+      "new_avatar": "/icons/png/avatars/avatar_0069.png"
+    },
+    {
+      "id": "bc9c6eb4-cfc9-4cd1-9333-16fe034739a7",
+      "name": "procurement_strategist",
+      "display_name": "Procurement Strategist",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0023.png",
+      "new_avatar": "/icons/png/avatars/avatar_0023.png"
+    },
+    {
+      "id": "c1717200-8d2d-46e9-839f-0a88cb2b9473",
+      "name": "supply_planning_analyst",
+      "display_name": "Supply Planning Analyst",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0080.png",
+      "new_avatar": "/icons/png/avatars/avatar_0080.png"
+    },
+    {
+      "id": "cf57d9cf-944e-4315-a77a-0b674f3b4ce8",
+      "name": "real_world_data_analyst",
+      "display_name": "Real-World Data Analyst",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0028.png",
+      "new_avatar": "/icons/png/avatars/avatar_0028.png"
+    },
+    {
+      "id": "451891b9-3b53-47dd-89a9-a8d963446c47",
+      "name": "data_quality_analyst",
+      "display_name": "Data Quality Analyst",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0001.png",
+      "new_avatar": "/icons/png/avatars/avatar_0001.png"
+    },
+    {
+      "id": "3f8d211f-c2c2-4a69-b174-f32ff1c89a50",
+      "name": "population_health_analyst",
+      "display_name": "Population Health Analyst",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-man-5757377.png",
+      "new_avatar": "/icons/png/avatars/noun-man-5757377.png"
+    },
+    {
+      "id": "d48d7869-f181-455d-81b2-9b4d32f41a82",
+      "name": "rare_disease_specialist",
+      "display_name": "Rare Disease Specialist",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-avatar-7845970.png",
+      "new_avatar": "/icons/png/avatars/noun-avatar-7845970.png"
+    },
+    {
+      "id": "df6ef36d-5fc0-45b5-ad6e-db35355b3b08",
+      "name": "bispecific_antibody_expert",
+      "display_name": "Bispecific Antibody Expert",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0061.png",
+      "new_avatar": "/icons/png/avatars/avatar_0061.png"
+    },
+    {
+      "id": "d7deda4e-14f8-467c-8f7b-d745a1630769",
+      "name": "mrna_vaccine_expert",
+      "display_name": "mRNA Vaccine Expert",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0009.png",
+      "new_avatar": "/icons/png/avatars/avatar_0009.png"
+    },
+    {
+      "id": "7e6bc6c6-0152-4e5f-b3b4-d742910f5ccc",
+      "name": "tissue_engineering_specialist",
+      "display_name": "Tissue Engineering Specialist",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-girl-7845959.png",
+      "new_avatar": "/icons/png/avatars/noun-girl-7845959.png"
+    },
+    {
+      "id": "3bc8ca48-68ed-4338-ba19-865a8b7010e8",
+      "name": "nanomedicine_expert",
+      "display_name": "Nanomedicine Expert",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0081.png",
+      "new_avatar": "/icons/png/avatars/avatar_0081.png"
+    },
+    {
+      "id": "0ba04613-e492-425f-956c-f7d540febcf1",
+      "name": "microbiome_therapeutics_expert",
+      "display_name": "Microbiome Therapeutics Expert",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0019.png",
+      "new_avatar": "/icons/png/avatars/avatar_0019.png"
+    },
+    {
+      "id": "472f4167-b06e-42a3-a10c-b71a2d1dab84",
+      "name": "exosome_therapy_specialist",
+      "display_name": "Exosome Therapy Specialist",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-man-7815635.png",
+      "new_avatar": "/icons/png/avatars/noun-man-7815635.png"
+    },
+    {
+      "id": "8f4b31dd-2d66-441e-b50b-a6fecac83fdd",
+      "name": "immune_checkpoint_inhibitor_specialist",
+      "display_name": "Immune Checkpoint Inhibitor Specialist",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0084.png",
+      "new_avatar": "/icons/png/avatars/avatar_0084.png"
+    },
+    {
+      "id": "f137625f-eb91-4d03-a5c0-67540d8f11d9",
+      "name": "liquid_biopsy_specialist",
+      "display_name": "Liquid Biopsy Specialist",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-punk-5840186.png",
+      "new_avatar": "/icons/png/avatars/noun-punk-5840186.png"
+    },
+    {
+      "id": "2d1a99ba-b4c0-46a7-903f-06bba98c3515",
+      "name": "artificial_organ_developer",
+      "display_name": "Artificial Organ Developer",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/noun-girl-7845959.png",
+      "new_avatar": "/icons/png/avatars/noun-girl-7845959.png"
+    },
+    {
+      "id": "2878bc11-c7e7-493c-b0c4-14ae7051eca3",
+      "name": "epigenetic_therapy_expert",
+      "display_name": "Epigenetic Therapy Expert",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0026.png",
+      "new_avatar": "/icons/png/avatars/avatar_0026.png"
+    },
+    {
+      "id": "5f217d0a-736d-44db-bb9f-596952b62949",
+      "name": "blood_brain_barrier_specialist",
+      "display_name": "Blood-Brain Barrier Specialist",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0024.png",
+      "new_avatar": "/icons/png/avatars/avatar_0024.png"
+    },
+    {
+      "id": "21a9eaff-d5bc-4d81-969a-4a9b86f50dd7",
+      "name": "fragment_based_drug_design_specialist",
+      "display_name": "Fragment-Based Drug Design Specialist",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0001.png",
+      "new_avatar": "/icons/png/avatars/avatar_0001.png"
+    },
+    {
+      "id": "5aa5fea7-310f-4282-8b35-a5dfc75d9ffa",
+      "name": "single_cell_analysis_expert",
+      "display_name": "Single-Cell Analysis Expert",
+      "old_avatar": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0101.png",
+      "new_avatar": "/icons/png/avatars/avatar_0101.png"
+    }
+  ],
+  "sql_updates": [
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0009.png' WHERE id = 'ed83433a-c04d-4789-9fde-5bf4310a8f73';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0021.png' WHERE id = 'ce89d15c-4795-4e2d-8a87-5e19d2742cc5';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0059.png' WHERE id = 'ef7a19e5-25b1-48cb-b2cf-1a4d6f9af29c';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0002.png' WHERE id = '567ae6c9-12b6-4098-9f61-df6312fb48be';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/noun-female-7845971.png' WHERE id = '78dcebbb-963b-47d8-9608-73ddbf3f6b85';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/noun-woman-5757378.png' WHERE id = '665cb20b-a5e3-4066-a5bf-b233bda868ab';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0113.png' WHERE id = '73999e4a-9e43-4ce9-8886-7fb326efd1bd';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/noun-boy-7845950.png' WHERE id = 'b7d310fe-63e1-4f24-97c9-4f2ced05c8f0';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0118.png' WHERE id = '03a72def-ea09-4b21-8b44-fb4c204b8b79';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/noun-woman-7815634.png' WHERE id = 'a148d4e4-c8eb-46b6-8e4c-3848d689e7c1';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0062.png' WHERE id = '87e66e33-5d40-4cdf-b082-795839dc04fd';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/noun-woman-5757358.png' WHERE id = '4cab8cb4-1120-4b19-8420-a28c48cdfced';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/noun-man-7845974.png' WHERE id = '69a2beda-608e-4a55-a3ab-56f9256e931d';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/noun-father-7845956.png' WHERE id = '10db0789-7deb-4ee8-b5bb-aa8e1ccf99e3';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0100.png' WHERE id = 'c4af4265-a926-4dd8-8536-3493acce7ba2';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0025.png' WHERE id = 'cc4dc946-4c5b-4b97-9ae0-88b56f724204';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0065.png' WHERE id = '9eacab2d-fa8f-4856-aad0-d1475f1b0fe5';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0076.png' WHERE id = 'f5738977-ff04-46fe-b45e-b73897dae6dc';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/noun-woman-5757381.png' WHERE id = '73607605-4f66-4a79-86c4-72fdc53b07d8';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/noun-housewife-7845973.png' WHERE id = 'f7712428-adbd-4f50-9e42-7c7a67932819';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0010.png' WHERE id = 'c5d1ce7d-dd7d-4967-b09b-1e7281a8b67d';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0083.png' WHERE id = '3df91dea-6759-475d-bfac-adada842f4cc';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0068.png' WHERE id = 'a56390ae-418f-46ac-9484-2e095211a2e6';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0046.png' WHERE id = '57f14ea1-3a2e-4a33-8c87-52101d30d984';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0112.png' WHERE id = '2a5e1b9e-e263-4e7e-a7f6-984c7e44dc02';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0051.png' WHERE id = '6a54be17-848d-4b09-bd47-8a4affb2377d';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/noun-housewife-7845945.png' WHERE id = 'cf950982-20f9-4f97-b394-eb8e66420968';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0090.png' WHERE id = '847adbd8-a798-4113-97b1-ddce5e1478da';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/noun-father-7845956.png' WHERE id = '198aec17-d539-4dba-8540-71c10506aa00';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0071.png' WHERE id = '45d7f3d4-dcaa-4528-9496-c1b8ee44b779';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0051.png' WHERE id = 'ee5f8ad9-8452-4ff7-a9d7-dd12c0ad26ec';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0062.png' WHERE id = '366e2422-7810-4b96-8223-0488d21fbd49';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/noun-woman-5757386.png' WHERE id = 'ced3de98-888d-42c9-b710-b5b18234ae68';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0104.png' WHERE id = '693665d9-3df8-485a-afb8-1848f643c4a4';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/noun-arabic-woman-7845949.png' WHERE id = '8b177a15-0d6a-4a3d-ae98-6c68ec0ddf1b';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0025.png' WHERE id = '6a125e4b-6d18-4489-9bca-9280a799da0f';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0061.png' WHERE id = 'e590f2e4-9dac-4a7e-992e-0c590b74ded6';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/noun-man-5757357.png' WHERE id = '9be4e73f-a8dc-4a45-934f-d1760c83876b';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0070.png' WHERE id = 'a8cc26a0-c790-4a04-9ad3-0082a9124e09';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/noun-punk-5840186.png' WHERE id = '83823fa4-06e8-40f3-bbba-a4c9530be2a8';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/noun-woman-7845951.png' WHERE id = '7af61460-768e-4936-88ca-76466c26549a';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0054.png' WHERE id = '60729aea-faaf-4273-b9c6-1ee70cf63447';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0031.png' WHERE id = '98cd3f75-4765-457a-a7c5-d7170214afd1';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/noun-arabic-7845964.png' WHERE id = '1d2b9d3a-0c52-4ae2-9050-804e644f3e7c';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/noun-man-7815636.png' WHERE id = 'a4658063-043c-4300-bce7-640ce8f6546b';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0033.png' WHERE id = '33d06e5d-a9de-476d-9fcc-3be670851be9';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0097.png' WHERE id = '4f1577f7-08df-4656-a354-54d7dbb02ab2';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/noun-man-5757371.png' WHERE id = '6a97d9fd-b071-4c78-9702-a1700cf436d1';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0044.png' WHERE id = '484a93dd-9c38-4414-ba58-f94938adb793';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/noun-man-5757375.png' WHERE id = 'd1967fb1-edd5-4341-8d5a-cbdc442c4404';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0116.png' WHERE id = 'a4def93e-81d5-4143-b329-bda1d0131008';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0051.png' WHERE id = '94c7beef-0c29-4180-8834-60c84ce681c7';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0098.png' WHERE id = '5d6521bf-7d4d-4a12-8700-5684eb3bfe0a';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/noun-woman-5757370.png' WHERE id = '614cac2d-1240-4341-9587-3e27437d794e';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/noun-man-5757364.png' WHERE id = '929180b6-34e4-4fcf-b8a9-e93fd260ffdf';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0052.png' WHERE id = 'c2318edf-330b-49a8-8ee5-47787a2d36bd';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/noun-arabic-7845964.png' WHERE id = '8e5f8423-9dcb-4a05-b395-0c75922db1c9';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/noun-boy-7815633.png' WHERE id = 'db0d54cc-1d81-412e-810e-c948521773c7';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0033.png' WHERE id = '0a6a008c-a7a8-43cb-80b6-7aaeb0fa19d5';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/noun-people-5840193.png' WHERE id = '1f7215af-fd61-4089-a166-d6801f0cba8f';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/noun-boy-7845975.png' WHERE id = 'a87f0642-1267-4de0-a6b1-ae9285f0a6ba';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/noun-woman-5757381.png' WHERE id = '9ce0d0b3-bf26-41d4-a792-934950dfcde4';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0067.png' WHERE id = '89167a66-8ac8-4969-a651-6d5ab1ac10f0';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/noun-woman-7845951.png' WHERE id = 'e420c40e-7d34-4d9d-a836-c0a359906a3a';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0091.png' WHERE id = 'f5423b31-b846-415d-acf7-22334b0cf760';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/noun-man-5757380.png' WHERE id = '5060f959-a011-4cbe-b038-8f7308a5ffe5';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/noun-backpacker-5840190.png' WHERE id = '63324ce5-d79e-4fda-aed0-a45fd59749f0';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0086.png' WHERE id = 'aa85f164-c5de-4fb9-a10b-0f5dece75e8c';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/noun-woman-5757370.png' WHERE id = 'a10d91af-6890-4fbc-a6fa-bff056e602b1';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0100.png' WHERE id = '1b075440-64c4-40fe-aac3-396e44a962cb';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0071.png' WHERE id = '6c4a277a-cc8f-4f0b-a5c8-1e7c8938ae66';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0070.png' WHERE id = '082eaceb-631e-40b2-a5c1-1b5041b92923';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0088.png' WHERE id = '3dcdf11f-1fce-40d2-87a6-7b7941ae1057';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0008.png' WHERE id = '076618d7-6b3d-4369-bc14-ae6740d53693';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/noun-people-5840193.png' WHERE id = 'a657982b-ba1e-4549-8245-6f0b77ad1622';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0029.png' WHERE id = '1991ca0a-e478-4170-894c-dd29af3edaee';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/noun-man-5757365.png' WHERE id = '8d3219dc-3d14-41fe-b9e3-65b1d8d1c3c3';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0112.png' WHERE id = 'df1abd6b-9259-422f-b28e-1c3775d92829';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/noun-schoolboy-7845954.png' WHERE id = '59647674-6f7c-4b65-a510-c02e044a6e47';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/noun-woman-7815637.png' WHERE id = '1c80e497-0cd9-4802-b143-1bdb519d7de3';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0069.png' WHERE id = '8a75445b-f3f8-4cf8-9a6b-0265aeab9caa';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0072.png' WHERE id = '5bf9d856-97d7-4c4a-8003-92d898c0e795';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/noun-businessman-7845943.png' WHERE id = '2fcc283f-678c-40af-9c98-d325ad065860';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0085.png' WHERE id = 'c0124faf-c5ae-4ac8-84af-7a2980c4d088';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/noun-man-5757362.png' WHERE id = 'b2bccaf9-4b6a-4297-8ecd-c10112557c33';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/noun-man-7845957.png' WHERE id = '7325387a-3fb6-41c9-a1d6-ec386521f0f1';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0023.png' WHERE id = 'e77bb027-1474-46e5-b01e-a1e81ef15e6f';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0017.png' WHERE id = 'f08eb25c-daf7-4ba4-ba71-fcd0af26dbd4';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0074.png' WHERE id = '843b86eb-9a7b-4b25-8f30-c96ef0d4a59d';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/noun-woman-7815637.png' WHERE id = '28f27715-b33d-4cae-a2d2-1072082eece8';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0078.png' WHERE id = 'f7b92cda-505a-4e06-abf2-58cf902d2e00';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0115.png' WHERE id = 'ddff5f3e-000a-4ebd-bb96-a3ba8b5f5a2b';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/noun-woman-5757366.png' WHERE id = 'e7006619-a87a-46e1-8da5-1ac6cbeeede1';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0041.png' WHERE id = 'a0bf03fb-7210-41e7-8afe-2fdadf8ec42f';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0037.png' WHERE id = '578b6283-47d1-4a34-928f-658f6f8b29b5';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0105.png' WHERE id = '5022b19f-b8ba-4c06-b59b-9b3d881c8a8c';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0016.png' WHERE id = '6cd2e2ec-6aff-4202-8a45-c893d78e8e32';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/noun-people-7845958.png' WHERE id = '902c9fe8-3f10-4cb4-8ff4-d063929c7e67';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0037.png' WHERE id = 'bdedb696-b865-42ca-ad52-01ad8a53638d';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0042.png' WHERE id = '97d204d1-3fb0-4268-b1fd-dafd86f81f0c';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0018.png' WHERE id = '6ded7040-993a-4d02-9038-70e5ba3a62aa';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/noun-girl-7815632.png' WHERE id = 'd584620c-93c6-4cf8-adcb-da8b6151f1ac';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/noun-man-7845957.png' WHERE id = 'f3895eaf-b140-4eaf-a75e-c0ae15b26428';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/noun-man-5757384.png' WHERE id = 'a9345d18-85ba-4c83-9ce8-a1995192315f';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0088.png' WHERE id = 'ef645582-450d-4ac7-842b-4fb38ae4a75a';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/noun-housewife-7845945.png' WHERE id = '3f0db2de-f4eb-40d5-ad43-b38871731d10';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0028.png' WHERE id = 'd8f3e9d5-9894-4265-a142-5b4b7671b421';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0040.png' WHERE id = '8bbbe43f-799b-4b78-988b-b0c31b22d3ad';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0006.png' WHERE id = '206c2ccb-f3ab-4744-bab7-d3c791cd0e9d';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/noun-old-man-7845966.png' WHERE id = '78cf6aef-780a-4816-803d-25a16efe80ad';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/noun-woman-5757386.png' WHERE id = '7858a622-7e94-441f-9068-d91078445a71';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0109.png' WHERE id = '129d58e6-3e6c-4209-a1d2-879393ddc4ac';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0065.png' WHERE id = '83137f9a-2e26-4cad-967b-9c2a66c63d2f';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/noun-schoolboy-7845954.png' WHERE id = '46bf9023-2204-436f-84d9-583f160b24af';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0003.png' WHERE id = 'd8e31fe1-8c8e-4059-b07f-9b8b99b45488';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0105.png' WHERE id = '773821f5-0350-496c-91e0-a6387a6a163b';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0053.png' WHERE id = '02a906c0-f0fe-4169-b94b-6443aa350e00';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0102.png' WHERE id = 'f6b5ebdd-32ca-49de-84e4-c52551fcad42';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0019.png' WHERE id = '498ed742-e136-4ccd-a95e-493d8af20f8d';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0026.png' WHERE id = '212f652f-a613-4c53-8aad-f4196a419471';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0014.png' WHERE id = 'eb71e904-163e-4860-ba4d-f5023e61524b';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0027.png' WHERE id = 'ee7ec098-631a-46be-bce6-ed060e7c6be4';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0022.png' WHERE id = '48333aa2-d707-4ffe-9bc3-1baa60afbbe0';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/noun-old-man-7845966.png' WHERE id = '3dcedd4e-2860-4557-af15-c98bf7256eea';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0094.png' WHERE id = '1c6cb791-7c5a-45ba-a135-c216a09148ec';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0057.png' WHERE id = 'a0219561-ef62-47dc-905c-6307e6614e1d';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/noun-businessman-7845943.png' WHERE id = 'dec2c8fb-7c5c-4e66-b2fd-6bda9e44df71';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/noun-man-5757361.png' WHERE id = '974a1f7e-a1f1-4b73-9c0b-33e1475cbf23';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/noun-woman-5757367.png' WHERE id = '9c0a9068-2675-47e4-a2fc-40334f85a7e8';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/noun-woman-5757367.png' WHERE id = '0106460e-d9be-469e-9ed2-8d17231ea5ba';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/noun-backpacker-5840190.png' WHERE id = '11a1ac8d-e35a-459d-aa65-9da64f99827b';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/noun-woman-5757370.png' WHERE id = '736d4987-8d74-4f50-af0a-133ca5f12f85';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0076.png' WHERE id = '3aa0ee16-a10c-44a6-995d-9d541cda660a';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/noun-player-7845978.png' WHERE id = 'fcc89d6c-d7da-4e59-aa00-7b484ce91509';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/noun-man-5757385.png' WHERE id = '5ac5ad05-e64a-4ed4-9b87-2b3433d3e8d9';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0085.png' WHERE id = 'c9ba4f33-4dea-4044-8471-8ec651ca4134';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/noun-user-5840187.png' WHERE id = 'c52d506e-e676-48a5-a49b-49a9171b18e9';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/noun-woman-5757376.png' WHERE id = '6dc27eb3-0139-4dd5-b779-8526f9acbaf2';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0005.png' WHERE id = '5335f0fc-2a1e-4a0c-9133-f7501bd85e8a';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/noun-user-5840187.png' WHERE id = 'cacbf019-0c28-4c67-9d70-223c0b3b4074';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0035.png' WHERE id = '0cb37e50-6cad-4202-a9f2-42ec3f09940c';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0004.png' WHERE id = '699c8345-c68e-4e3e-876b-686c412641a7';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0110.png' WHERE id = 'd3d53328-1296-4429-99d7-cf982bb6acbe';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0033.png' WHERE id = 'd3376031-13bc-40ca-be99-c1bb287cf8d6';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/noun-woman-5757358.png' WHERE id = '28abc9b6-db09-4b7f-9db5-67c4b2032dc5';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0118.png' WHERE id = 'c934e9bf-19e0-4952-a46e-a7460ae43418';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0064.png' WHERE id = 'ed49e322-769e-4603-b884-d99e4e58437a';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/noun-man-5757357.png' WHERE id = 'c13326da-2808-4a06-bacf-2134b27f058d';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0050.png' WHERE id = '34dde670-54ea-4eb7-9b1c-5c759a43d106';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0030.png' WHERE id = '318fcb64-c0f8-4169-b2b0-6cedbf00c91a';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0094.png' WHERE id = '4b0bd101-bdeb-46b9-9719-b79905bead5b';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/noun-wife-7845972.png' WHERE id = 'dd1fa9d0-364b-48eb-8356-d607ef97a821';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/noun-man-7845974.png' WHERE id = 'e486ad45-249f-4fb1-9917-321f38809cee';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/noun-man-5757365.png' WHERE id = '91e45120-1d28-4153-b2fc-b0401710f53a';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0097.png' WHERE id = '295961fd-8250-438e-be28-0d5cff3704e1';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0081.png' WHERE id = '8ab59ac5-482a-42af-a3bc-43e501e3daca';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/noun-female-7845968.png' WHERE id = 'ab317acd-75f6-4779-b25e-60dec80ebcfc';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/noun-man-5757377.png' WHERE id = '3f075968-e271-49ca-8aef-172592f24cf6';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0106.png' WHERE id = '482bcb2b-5fa6-42eb-9e41-ecba756d9bdf';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/noun-businessman-7845943.png' WHERE id = '533d813b-cd30-434a-b720-b7f1f1985663';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0035.png' WHERE id = 'a6dc7bfe-741c-45ce-b922-158ba0bec20b';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/noun-man-5757356.png' WHERE id = '148d921b-8a1a-471c-9171-5313fa3aeafc';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/noun-man-5757357.png' WHERE id = '8fd0bf56-05fc-4104-9955-001d646917fc';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0041.png' WHERE id = '4e73b646-9e98-45e1-8711-40440dd045fc';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0032.png' WHERE id = 'b21464b3-c465-4cc2-8832-68db0acb2de3';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/noun-man-7815635.png' WHERE id = 'e9a93a75-8ce0-4416-9a40-f39021440e18';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/noun-man-5757356.png' WHERE id = '65868d26-0b7c-4f34-b9c3-5f2eee23ad3e';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/noun-people-5840185.png' WHERE id = '1dc0cb7c-745a-436f-84a9-7b7436ffd98b';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0096.png' WHERE id = '1ef1b9dd-5b68-4ed4-b56f-4c876af4ef15';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/noun-arabic-7845964.png' WHERE id = 'a4416d55-6088-4531-b39b-f9eae883d121';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0117.png' WHERE id = '7eba08ee-c720-4e7d-9cce-e3dd233f0523';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0045.png' WHERE id = '229e934a-7255-4ef0-8e46-d440c86f2905';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0008.png' WHERE id = 'acd14421-a639-4efd-8f5d-5235b0c3596d';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/noun-user-5840191.png' WHERE id = '2a6f4b45-1e37-47f0-b000-8a654c0cd1fa';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0007.png' WHERE id = '68d6d14f-71b5-4b24-a943-f5605af5c2a9';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0109.png' WHERE id = 'ae8d72c6-5f70-4af1-b1e6-a3127edd327b';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0038.png' WHERE id = '75985e2b-275b-4904-9ce8-fe7edbe1aab5';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0063.png' WHERE id = '83b78411-80ee-43b7-879d-d5309629ab9d';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0027.png' WHERE id = '490af4b2-6bc2-4238-b5a4-8c5c1506b19f';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0056.png' WHERE id = '0f85ff09-e901-41dc-b85e-35ae3ec17543';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0045.png' WHERE id = 'c3ed2a7f-c328-43b6-9d0b-64db910a39d0';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0056.png' WHERE id = '8c898d68-a0ce-4022-8fd2-6b06c0b737c7';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0104.png' WHERE id = 'cea8b345-2007-4108-9d93-519b25222d85';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0082.png' WHERE id = '619bd5f5-b654-43e2-bbef-8dd2022987b2';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/noun-woman-5757378.png' WHERE id = 'a2220734-ccb4-42b0-9857-7d1a6804934a';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/noun-girl-7845948.png' WHERE id = '37cd421f-f2cf-4d7e-9fb0-eb9277a4540b';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0044.png' WHERE id = '3143d076-00f8-4ce0-a14e-ac858ba06de7';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0108.png' WHERE id = 'c67f63ad-3894-45e1-9104-95efda430831';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/noun-female-7845968.png' WHERE id = '00b3854f-318a-48a7-a37d-6ab02b6e8c7b';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/noun-old-man-7845966.png' WHERE id = '312c106f-a66a-4b3d-b1f4-06ce3e0c0536';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0092.png' WHERE id = 'd9db6d95-3eea-4799-9b7f-01d0ffb8b3e4';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0043.png' WHERE id = '53de8d82-8834-4aba-a655-598cd5eb7d9d';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0011.png' WHERE id = '88870184-8355-49a0-b91e-1ef72df133c2';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/noun-man-5757380.png' WHERE id = '75239d57-a98c-4b0a-a627-8fbd7e7c5551';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0007.png' WHERE id = 'de0e1960-43ef-41b2-ab41-235a276fb996';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0001.png' WHERE id = '9894f81b-d9b6-46ed-8007-773a3ad37fe9';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/noun-woman-5757383.png' WHERE id = '022a9889-816b-4d40-b2d7-474e7bd95099';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0021.png' WHERE id = '4431a6e2-a19c-437d-866c-1c8d1a9220f3';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0004.png' WHERE id = 'c24ab0d2-dba2-48c8-a25d-736c1251a0a7';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/noun-male-7845946.png' WHERE id = 'bf105024-5c22-40a1-82e1-2dd8ab3ad705';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0094.png' WHERE id = 'f2d91a39-4f0b-469f-bcec-d8c0268360ee';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0026.png' WHERE id = '122e94c1-d5f4-4241-a859-bd26ba9b2f07';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0055.png' WHERE id = 'bea1e660-052b-4061-b977-733526b24276';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0113.png' WHERE id = '819cd882-9d73-4225-9b47-46b5c3f0dc41';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0091.png' WHERE id = '423b743e-1af0-49da-966e-b95589ac6846';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0064.png' WHERE id = '172f995a-e331-4cc2-8e44-887692597c71';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/noun-woman-5757374.png' WHERE id = '21df494f-48fc-457e-add0-146e926586ca';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0114.png' WHERE id = 'adf5bec2-bf4f-4357-ab69-7e8e00a02850';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0011.png' WHERE id = 'd87ce32a-10ac-463b-ae7a-eb91ecbdf908';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0040.png' WHERE id = '63990464-b89e-4de6-8ab8-d8d95a02ddbf';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/noun-female-7845967.png' WHERE id = 'dba7ef26-abe3-407a-8f50-965876666403';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0096.png' WHERE id = 'c9dbb305-1e8b-4f7f-b831-e717c28f033d';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0062.png' WHERE id = 'acb74b22-f265-43fa-b04f-1f9e54996bcc';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0045.png' WHERE id = 'a35fbd20-636d-4f3c-b2fb-804ee81f05e0';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/noun-woman-5757366.png' WHERE id = '26391c1f-4414-487b-a8f6-8704881f25ad';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0087.png' WHERE id = 'b9acda3d-a2fe-4252-a025-e8a284385c54';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0038.png' WHERE id = '9f6e9092-0273-4633-b042-41aed68e7907';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/noun-man-7815635.png' WHERE id = 'b9b8f781-7ad4-440d-97e5-21b0d6e80523';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0105.png' WHERE id = 'd4464045-30c6-4bc6-a955-c67877555a2e';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/noun-housewife-7845952.png' WHERE id = '40e05f9b-a92d-46df-a487-f517ded28765';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/noun-people-5840188.png' WHERE id = 'e624e6f2-e747-4b58-b22e-a7dd95a457cd';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0039.png' WHERE id = '77bde8ba-f0b0-466b-8e30-e2a0ccf99efc';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0016.png' WHERE id = 'ba7d1493-a3ee-4bd3-b7b8-63e695b029ab';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0080.png' WHERE id = 'edfa4260-6432-41ab-b363-6ae51e359d84';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0036.png' WHERE id = '263b5cfb-2b90-4eae-8991-922a889d7448';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0032.png' WHERE id = 'a827dbb9-fc60-4605-8fbe-5a51ba752e23';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/noun-man-5757375.png' WHERE id = '5dc65208-e9fa-4451-9e85-8fad0293d0a6';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/noun-employ-7845947.png' WHERE id = 'fc57ba89-570e-453f-a6cc-b72629a553f3';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0060.png' WHERE id = '272e6f54-5785-46ab-8439-61b9cb29648f';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0080.png' WHERE id = 'b9131d87-8584-40d9-9a78-7e253c303508';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0079.png' WHERE id = '7283c932-2b9f-4d80-b0e0-8c6a8a7b6d31';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0008.png' WHERE id = '8d3888f5-6f8b-411b-81b6-9e21ebdd99f3';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/noun-punk-5840186.png' WHERE id = 'cb014d85-c34c-41b2-a22a-38813c21d809';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0102.png' WHERE id = '1482129f-fb49-4639-82a0-74c412628856';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0069.png' WHERE id = '8884073e-e848-482f-946e-683e091c28d7';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0023.png' WHERE id = 'bc9c6eb4-cfc9-4cd1-9333-16fe034739a7';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0080.png' WHERE id = 'c1717200-8d2d-46e9-839f-0a88cb2b9473';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0028.png' WHERE id = 'cf57d9cf-944e-4315-a77a-0b674f3b4ce8';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0001.png' WHERE id = '451891b9-3b53-47dd-89a9-a8d963446c47';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/noun-man-5757377.png' WHERE id = '3f8d211f-c2c2-4a69-b174-f32ff1c89a50';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/noun-avatar-7845970.png' WHERE id = 'd48d7869-f181-455d-81b2-9b4d32f41a82';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0061.png' WHERE id = 'df6ef36d-5fc0-45b5-ad6e-db35355b3b08';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0009.png' WHERE id = 'd7deda4e-14f8-467c-8f7b-d745a1630769';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/noun-girl-7845959.png' WHERE id = '7e6bc6c6-0152-4e5f-b3b4-d742910f5ccc';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0081.png' WHERE id = '3bc8ca48-68ed-4338-ba19-865a8b7010e8';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0019.png' WHERE id = '0ba04613-e492-425f-956c-f7d540febcf1';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/noun-man-7815635.png' WHERE id = '472f4167-b06e-42a3-a10c-b71a2d1dab84';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0084.png' WHERE id = '8f4b31dd-2d66-441e-b50b-a6fecac83fdd';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/noun-punk-5840186.png' WHERE id = 'f137625f-eb91-4d03-a5c0-67540d8f11d9';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/noun-girl-7845959.png' WHERE id = '2d1a99ba-b4c0-46a7-903f-06bba98c3515';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0026.png' WHERE id = '2878bc11-c7e7-493c-b0c4-14ae7051eca3';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0024.png' WHERE id = '5f217d0a-736d-44db-bb9f-596952b62949';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0001.png' WHERE id = '21a9eaff-d5bc-4d81-969a-4a9b86f50dd7';",
+    "UPDATE agents SET avatar = '/icons/png/avatars/avatar_0101.png' WHERE id = '5aa5fea7-310f-4282-8b35-a5dfc75d9ffa';"
+  ]
+}

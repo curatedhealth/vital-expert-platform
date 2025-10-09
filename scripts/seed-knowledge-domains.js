@@ -2,7 +2,7 @@
  * Seed Knowledge Domains
  *
  * Creates and populates the knowledge_domains table with 30 healthcare domains
- * Run: NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321 SUPABASE_SERVICE_ROLE_KEY=<key> node scripts/seed-knowledge-domains.js
+ * Run: NEXT_PUBLIC_SUPABASE_URL=https://xazinxsiglqokwfmogyk.supabase.co SUPABASE_SERVICE_ROLE_KEY=<key> node scripts/seed-knowledge-domains.js
  */
 
 const { createClient } = require('@supabase/supabase-js');

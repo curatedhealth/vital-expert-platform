@@ -24,7 +24,7 @@ const notion = new Client({
 
 // Supabase client
 const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL || 'http://127.0.0.1:54321',
+  process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://xazinxsiglqokwfmogyk.supabase.co',
   process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 

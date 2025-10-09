@@ -38,7 +38,7 @@ export function AgentAvatar({ agent, avatar: avatarProp, name: nameProp, size = 
       // For Supabase storage URLs, convert to local icons to avoid 403 errors
       if (iconUrl.includes('supabase.co/storage')) {
         const filename = iconUrl.split('/').pop();
-        if (filename && filename.match(/^avatar_\d{4}\.png$/)) {
+        if (filename && (filename.match(/^avatar_\d{4}\.png$/) || filename.match(/^noun-.*\.png$/))) {
           // Use local icon instead of Supabase URL to avoid 403 errors
           return `/icons/png/avatars/${filename}`;
         }
@@ -100,7 +100,7 @@ export function AgentAvatar({ agent, avatar: avatarProp, name: nameProp, size = 
             // If it's a Supabase URL that failed, try local fallback
             if (currentSrc.includes('supabase.co/storage')) {
               const filename = currentSrc.split('/').pop();
-              if (filename && filename.match(/^avatar_\d{4}\.png$/)) {
+              if (filename && (filename.match(/^avatar_\d{4}\.png$/) || filename.match(/^noun-.*\.png$/))) {
                 target.src = `/icons/png/avatars/${filename}`;
                 return;
               }

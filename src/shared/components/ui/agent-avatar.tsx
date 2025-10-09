@@ -90,11 +90,15 @@ export function AgentAvatar({ agent, avatar: avatarProp, name: nameProp, size = 
             if (target.src !== fallbackAvatar) {
               target.src = fallbackAvatar;
             } else {
-              // If fallback also fails, show emoji
+              // If fallback also fails, show emoji without innerHTML
               target.style.display = 'none';
               const parent = target.parentNode as HTMLElement;
               if (parent) {
-                parent.innerHTML = '<span class="text-4xl">🤖</span>';
+                // Create a span element instead of using innerHTML
+                const emojiSpan = document.createElement('span');
+                emojiSpan.className = 'text-4xl';
+                emojiSpan.textContent = '🤖';
+                parent.appendChild(emojiSpan);
               }
             }
           }}

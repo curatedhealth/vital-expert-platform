@@ -106,7 +106,7 @@ export function IconSelectionModal({
               // Swap to a known-good local fallback icon, no innerHTML
               const target = e.currentTarget as HTMLImageElement;
               target.onerror = null;
-              target.src = "/icons/png/general/Robot Head.png";
+              target.src = "/icons/png/general/icon_0001.png";
               target.alt = "Fallback Icon";
             }}
           />

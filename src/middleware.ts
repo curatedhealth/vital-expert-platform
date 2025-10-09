@@ -10,6 +10,7 @@ export async function middleware(request: NextRequest) {
 
   // Redirect old dashboard routes to new structure
   const redirectMap: Record<string, string> = {
+    '/dashboard': '/',
     '/dashboard/agents': '/agents',
     '/dashboard/knowledge': '/knowledge',
     '/dashboard/workflows': '/workflows',

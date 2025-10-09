@@ -509,18 +509,74 @@ export function AgentsBoard({
 
       {/* Agents Grid/List */}
       {viewMode === 'grid' ? (
-        <AgentCardGrid columns={4} className="gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredAgents.map((agent) => (
-            <EnhancedAgentCard
+            <Card
               key={agent.id}
-              agent={agent}
+              className="p-4 cursor-pointer hover:shadow-lg hover:border-blue-300 transition-all duration-200 h-full"
               onClick={() => onAgentSelect?.(agent)}
-              showReasoning={false}
-              showTier={true}
-              size="md"
-            />
+            >
+              <div className="flex flex-col h-full">
+                {/* Header with Avatar and Tier Badge */}
+                <div className="flex items-start gap-3 mb-3">
+                  <div className="w-10 h-10 rounded-full flex items-center justify-center bg-gradient-to-br from-blue-50 to-purple-50 border-2 border-blue-200 flex-shrink-0 overflow-hidden">
+                    {agent.avatar && (agent.avatar.startsWith('/') || agent.avatar.includes('avatar_')) ? (
+                      <img
+                        src={agent.avatar.startsWith('http') ? agent.avatar : `/icons/png/avatars/${agent.avatar}.png`}
+                        alt={agent.display_name || agent.name}
+                        className="object-cover w-full h-full"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.style.display = 'none';
+                          if (target.parentNode) {
+                            const fallback = document.createElement('span');
+                            fallback.textContent = '🤖';
+                            fallback.className = 'text-lg';
+                            target.parentNode.appendChild(fallback);
+                          }
+                        }}
+                      />
+                    ) : (
+                      <span className="text-lg">{agent.avatar || '🤖'}</span>
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h4 className="font-semibold text-gray-900 text-sm truncate">
+                      {agent.display_name || agent.name}
+                    </h4>
+                    {agent.tier !== undefined && (
+                      <Badge variant="outline" className="text-xs mt-1">
+                        Tier {agent.tier}
+                      </Badge>
+                    )}
+                  </div>
+                </div>
+
+                {/* Description */}
+                <p className="text-sm text-gray-600 mb-3 line-clamp-2 flex-1">
+                  {agent.description}
+                </p>
+
+                {/* Footer with Status */}
+                <div className="mt-auto pt-3 border-t border-gray-100">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-gray-500">Status:</span>
+                    <Badge
+                      className={`text-xs ${
+                        agent.status === 'active' ? 'bg-green-100 text-green-800' :
+                        agent.status === 'development' ? 'bg-blue-100 text-blue-800' :
+                        agent.status === 'testing' ? 'bg-yellow-100 text-yellow-800' :
+                        'bg-gray-100 text-gray-800'
+                      }`}
+                    >
+                      {agent.status}
+                    </Badge>
+                  </div>
+                </div>
+              </div>
+            </Card>
           ))}
-        </AgentCardGrid>
+        </div>
       ) : (
         <div className="space-y-3">
           {filteredAgents.map((agent) => (

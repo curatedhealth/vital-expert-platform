@@ -3,7 +3,7 @@
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -19,6 +19,20 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const router = useRouter();
 
+  // Listen for authentication state changes
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        if (event === 'SIGNED_IN' && session?.user) {
+          console.log('Login successful, redirecting to home page');
+          router.push('/');
+        }
+      }
+    );
+
+    return () => subscription.unsubscribe();
+  }, [router]);
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -32,9 +46,8 @@ export default function LoginPage() {
 
       if (error) {
         setError(error.message);
-      } else {
-        router.push('/');
       }
+      // Redirect will be handled by the auth state change listener
     } catch (err) {
       setError('An unexpected error occurred');
     } finally {

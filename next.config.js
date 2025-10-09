@@ -87,11 +87,6 @@ const nextConfig = {
   // Disable styled-jsx to avoid SSR issues
   swcMinify: true,
   
-  // Configure styled-jsx for SSR
-  styledJsx: {
-    useLightningcss: false,
-  },
-  
   
   // Configure runtime for API routes to avoid Edge Runtime warnings
   async headers() {

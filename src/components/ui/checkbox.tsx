@@ -6,6 +6,7 @@ import * as React from "react"
 
 import { cn } from "@/shared/services/utils"
 
+const Checkbox = React.forwardRef<
   React.ElementRef<typeof CheckboxPrimitive.Root>,
   React.ComponentPropsWithoutRef<typeof CheckboxPrimitive.Root>
 >(({ className, ...props }, ref) => (

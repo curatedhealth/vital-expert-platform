@@ -5,6 +5,7 @@ import * as React from "react"
 
 import { cn } from "@/shared/services/utils"
 
+const Avatar = React.forwardRef<
   React.ElementRef<typeof AvatarPrimitive.Root>,
   React.ComponentPropsWithoutRef<typeof AvatarPrimitive.Root>
 >(({ className, ...props }, ref) => (
@@ -19,6 +20,7 @@ import { cn } from "@/shared/services/utils"
 ))
 Avatar.displayName = AvatarPrimitive.Root.displayName
 
+const AvatarImage = React.forwardRef<
   React.ElementRef<typeof AvatarPrimitive.Image>,
   React.ComponentPropsWithoutRef<typeof AvatarPrimitive.Image>
 >(({ className, ...props }, ref) => (
@@ -30,6 +32,7 @@ Avatar.displayName = AvatarPrimitive.Root.displayName
 ))
 AvatarImage.displayName = AvatarPrimitive.Image.displayName
 
+const AvatarFallback = React.forwardRef<
   React.ElementRef<typeof AvatarPrimitive.Fallback>,
   React.ComponentPropsWithoutRef<typeof AvatarPrimitive.Fallback>
 >(({ className, ...props }, ref) => (

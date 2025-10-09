@@ -22,7 +22,7 @@ import { EnhancedAgentCard, AgentCardGrid } from '@/components/ui/enhanced-agent
 import {
   SidebarInset,
   SidebarProvider
-} from '@/components/ui/sidebar';
+} from '@/shared/components/ui/sidebar';
 import { Switch } from '@/components/ui/switch';
 import { AgentCreator } from '@/features/chat/components/agent-creator';
 import { ChatInput } from '@/features/chat/components/chat-input';

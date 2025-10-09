@@ -39,7 +39,7 @@ import {
   TableRow
 } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { llmProviderService } from '@/services/llm-provider.service';
+import { llmProviderService } from '@/shared/services/llm/llm-provider.service';
 import {
   LLMProvider,
   ProviderStatus,

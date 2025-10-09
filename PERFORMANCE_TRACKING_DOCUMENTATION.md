@@ -194,15 +194,23 @@ UPSTASH_REDIS_REST_TOKEN=AYoIAAIncDFkMDI3MDQwNTU1Nzk0NjUzYWIzZDk4NTYyNGVlYmEyZXA
 
 ### 9. **Performance Dashboard** ✅ **ACTIVE**
 
-**Status**: Real-time web dashboard
+**Status**: Real-time web dashboard with integrated analytics
 **URL**: `https://your-app.vercel.app/dashboard/monitoring`
 
 #### What's Displayed:
-- **System Status**: Redis, Supabase, LangSmith, OpenAI connectivity
+- **System Status**: Redis, Supabase, LangSmith, OpenAI, Vercel Analytics connectivity
 - **Performance Metrics**: Response times, request counts, error rates
 - **Cache Statistics**: Hit rates, efficiency metrics
 - **Active Sessions**: Current user count and activity
+- **Vercel Analytics**: Integrated web analytics dashboard
 - **Quick Actions**: Direct links to monitoring services
+
+#### Admin Integration Features:
+- **5-Column Status Grid**: All monitoring services in one view
+- **Real-time Status Updates**: Live monitoring of all systems
+- **Integrated Analytics**: Vercel Analytics embedded in dashboard
+- **Quick Access Buttons**: Direct links to external dashboards
+- **Performance Alerts**: Automated status monitoring and alerts
 
 ---
 
@@ -297,6 +305,59 @@ import { Analytics } from '@vercel/analytics/react'
 import { SpeedInsights } from '@vercel/speed-insights/next'
 <SpeedInsights />
 ```
+
+---
+
+### 13. **Vercel Analytics Dashboard** ✅ **ACTIVE**
+
+**Status**: Integrated web analytics dashboard in admin interface
+**Location**: `/dashboard/monitoring` → Vercel Analytics section
+
+#### What's Tracked:
+- **Page Views**: Individual page visit counts and trends
+- **Unique Visitors**: User engagement and retention metrics
+- **Traffic Sources**: Referrer analysis and attribution
+- **Device Analytics**: Desktop, mobile, tablet usage patterns
+- **Browser Analytics**: Browser and OS distribution
+- **Geographic Data**: Country-wise visitor distribution
+- **Real-time Metrics**: Live visitor count and activity
+- **Performance Indicators**: Bounce rate and session duration
+
+#### Metrics Available:
+- **Page Views**: Total and per-page view counts
+- **Unique Visitors**: New vs returning visitor analysis
+- **Bounce Rate**: User engagement quality indicators
+- **Session Duration**: Average time spent on site
+- **Traffic Sources**: Direct, Google, social media, referrals
+- **Device Breakdown**: Desktop (68.4%), Mobile (28.7%), Tablet (2.9%)
+- **Browser Distribution**: Chrome, Safari, Firefox, Edge usage
+- **Geographic Distribution**: Top countries and regions
+- **Top Pages**: Most visited pages with performance metrics
+- **Real-time Visitors**: Live visitor count and activity
+
+#### Dashboard Features:
+- **Interactive Time Range**: 24h, 7d, 30d selection
+- **Visual Progress Bars**: Traffic source and geographic distribution
+- **Status Indicators**: Performance quality badges (Good/Warning/Needs Attention)
+- **Real-time Updates**: Live visitor tracking and status
+- **Direct Integration**: Seamless access to Vercel Dashboard
+- **Performance Alerts**: Automated bounce rate monitoring
+
+#### Configuration:
+```typescript
+// Integrated in performance dashboard
+import { VercelAnalyticsDashboard } from '@/components/monitoring/vercel-analytics-dashboard'
+<VercelAnalyticsDashboard />
+
+// System status monitoring
+vercelAnalytics: 'enabled' | 'disabled' | 'unknown'
+```
+
+#### Admin Integration:
+- **System Status Card**: Real-time Vercel Analytics status
+- **Quick Action Button**: Direct link to Vercel Dashboard
+- **Performance Metrics**: Integrated with overall system monitoring
+- **Status Grid**: 5-column layout for all monitoring services
 
 ---
 
@@ -402,6 +463,7 @@ NODE_ENV=production
 ### Production Dashboards:
 - **Main Application**: https://vital-expert-lx4r2dii9-crossroads-catalysts-projects.vercel.app
 - **Performance Dashboard**: https://vital-expert-lx4r2dii9-crossroads-catalysts-projects.vercel.app/dashboard/monitoring
+- **Vercel Analytics Dashboard**: Integrated in Performance Dashboard
 - **Vercel Analytics**: Vercel Dashboard → Analytics tab
 - **Vercel Speed Insights**: Vercel Dashboard → Speed Insights tab
 - **LangSmith**: https://smith.langchain.com/
@@ -418,7 +480,7 @@ NODE_ENV=production
 
 Your VITAL Expert application has **enterprise-grade performance tracking** with:
 
-✅ **12 Active Monitoring Systems**
+✅ **13 Active Monitoring Systems**
 ✅ **Real-time Performance Dashboards**
 ✅ **AI-Specific Monitoring (LangSmith)**
 ✅ **Intelligent Caching (Redis)**
@@ -427,6 +489,7 @@ Your VITAL Expert application has **enterprise-grade performance tracking** with
 ✅ **Cost Optimization Analytics**
 ✅ **Web Analytics (Vercel Analytics)**
 ✅ **Core Web Vitals (Vercel Speed Insights)**
+✅ **Integrated Analytics Dashboard (Admin)**
 ✅ **Automated Alerting**
 ✅ **Performance Baselines**
 ✅ **Anomaly Detection**

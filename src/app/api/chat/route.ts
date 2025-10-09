@@ -77,9 +77,13 @@ export async function POST(request: NextRequest) {
     if (process.env.OPENAI_API_KEY === 'demo-key' || !process.env.OPENAI_API_KEY) {
       return getDemoStreamingResponse(message, selectedAgent, ragEnabled, startTime);
     }
+    // Limit chat history to prevent context length exceeded errors
+    // Keep only the last 10 messages to stay within token limits
+    const limitedChatHistory = chatHistory.slice(-10);
+    
     // Prepare messages for LLM (system prompt will be handled by LangChain service)
     const messages = [
-      ...chatHistory.map((msg: unknown) => ({
+      ...limitedChatHistory.map((msg: unknown) => ({
         role: msg.role,
         content: msg.content,
       })),
@@ -94,17 +98,7 @@ export async function POST(request: NextRequest) {
     // - Long-term memory & auto-learning
     // - LangSmith token tracking
     // - Structured output parsing (if needed)
-    const ragResult = await langchainRAGService.queryKnowledge(
-      message,
-      selectedAgent.id,
-      chatHistory,
-      selectedAgent,
-      sessionId || selectedAgent.id, // Use sessionId for memory persistence
-      {
-        retrievalStrategy: 'rag_fusion', // Use best retrieval strategy by default
-        enableLearning: true, // Enable auto-learning from conversations
-      }
-    );
+    const ragResult = await langchainRAGService.processQuery(message);
     const fullResponse = ragResult.answer || 'I apologize, but I encountered an issue generating a response. Please try again.';
 
     // Capture alternative agents for recommendations (only in automatic mode)

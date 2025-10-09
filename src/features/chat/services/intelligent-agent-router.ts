@@ -79,38 +79,31 @@ export async function selectAgentWithReasoning(
     }
   }
 
-  // Build agent context for the reasoning model
-  const agentContext = availableAgents.map(agent => ({
+  // Build agent context for the reasoning model (limit to prevent context overflow)
+  // Only include essential information and limit to top 20 agents by tier
+  const limitedAgents = availableAgents
+    .sort((a, b) => (a.tier || 1) - (b.tier || 1))
+    .slice(0, 20);
+    
+  const agentContext = limitedAgents.map(agent => ({
     id: agent.id,
     name: agent.display_name,
-    description: agent.description,
+    description: agent.description.substring(0, 100) + '...', // Truncate description
     tier: agent.tier,
     domain: agent.domain || 'general',
-    expertise: agent.key_expertise || agent.description,
-    capabilities: agent.capabilities || [],
-    focus_areas: agent.focus_areas || [],
-    expert_level: agent.expert_level || 'specialist',
+    expertise: (agent.key_expertise || agent.description).substring(0, 50) + '...', // Truncate expertise
   }));
 
-  // Create reasoning prompt for agent selection (optimized for speed)
-  const systemPrompt = `You are an intelligent agent router. Analyze queries and select the best expert agent.
+  // Create reasoning prompt for agent selection (optimized for speed and token usage)
+  const systemPrompt = `Select the best expert agent for this query. Respond in JSON format.
 
-Agents:
-${JSON.stringify(agentContext, null, 2)}
+Available agents:
+${agentContext.map(a => `${a.id}: ${a.name} (Tier ${a.tier}, ${a.domain}) - ${a.expertise}`).join('\n')}
 
-Respond in JSON:
-{
-  "selectedAgentId": "agent-id",
-  "confidence": 95,
-  "reasoning": "Brief reason",
-  "alternatives": [{"agentId": "alt-1", "score": 85}],
-  "escalationPath": ["Tier X: Agent Name"],
-  "matchedCriteria": ["keyword1", "keyword2"]
-}`;
+JSON format:
+{"selectedAgentId": "agent-id", "confidence": 95, "reasoning": "Brief reason", "alternatives": [{"agentId": "alt-1", "score": 85}], "escalationPath": ["Tier X: Agent Name"], "matchedCriteria": ["keyword1", "keyword2"]}`;
 
-  const userPrompt = `Query: "${userQuery}"
-
-Select best agent.`;
+  const userPrompt = `Query: "${userQuery}"`;
 
   try {
     // Call OpenAI with faster model

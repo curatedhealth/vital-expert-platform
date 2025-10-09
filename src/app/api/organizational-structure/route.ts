@@ -111,7 +111,7 @@ export async function GET(request: NextRequest) {
     // Fetch all organizational roles
     const { data: roles, error: rolesError } = await supabase
       .from('org_roles')
-      .select('id, role_name, description, department_id, function_id, competency_level')
+      .select('id, role_name, description, department_id, function_id')
       .order('role_name');
 
     if (rolesError) {

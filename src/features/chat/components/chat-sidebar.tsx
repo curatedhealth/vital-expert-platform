@@ -8,7 +8,7 @@ import {
   Sidebar,
   SidebarContent,
   SidebarHeader,
-} from '@/components/ui/sidebar';
+} from '@/shared/components/ui/sidebar';
 import { Switch } from '@/components/ui/switch';
 import { cn } from '@/lib/utils';
 import { VitalLogo } from '@/shared/components/vital-logo';

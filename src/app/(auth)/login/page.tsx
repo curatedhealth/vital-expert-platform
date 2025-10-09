@@ -24,8 +24,39 @@ export default function LoginPage() {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         if (event === 'SIGNED_IN' && session?.user) {
-          console.log('Login successful, redirecting to home page');
-          router.push('/');
+          console.log('Login successful, checking user role...');
+          
+          // Fetch user profile to check role
+          try {
+            const { data: profile, error } = await supabase
+              .from('user_profiles')
+              .select('role')
+              .eq('user_id', session.user.id)
+              .single();
+
+            if (error) {
+              console.error('Error fetching user profile:', error);
+              // Default to home page if profile fetch fails
+              router.push('/');
+              return;
+            }
+
+            // Redirect based on user role
+            if (profile?.role === 'super_admin') {
+              console.log('Super admin detected, redirecting to admin dashboard');
+              router.push('/admin');
+            } else if (profile?.role === 'admin') {
+              console.log('Admin detected, redirecting to admin dashboard');
+              router.push('/admin');
+            } else {
+              console.log('Regular user, redirecting to home page');
+              router.push('/');
+            }
+          } catch (error) {
+            console.error('Error checking user role:', error);
+            // Default to home page if role check fails
+            router.push('/');
+          }
         }
       }
     );

@@ -100,7 +100,7 @@ export async function GET(request: NextRequest) {
     // Fetch all departments
     const { data: departments, error: departmentsError } = await supabase
       .from('org_departments')
-      .select('id, name, department_name, description, function_id')
+      .select('id, department_name, description, function_id')
       .order('department_name');
 
     if (departmentsError) {
@@ -128,7 +128,7 @@ export async function GET(request: NextRequest) {
         }
         departmentsByFunction[dept.function_id].push({
           id: dept.id,
-          name: dept.department_name || dept.name,
+          name: dept.department_name,
           function_id: dept.function_id
         });
       }

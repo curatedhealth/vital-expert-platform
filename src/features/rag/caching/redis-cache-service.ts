@@ -58,14 +58,19 @@ export class RedisCacheService {
     try {
       // Try Upstash Redis first (serverless-friendly)
       if (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) {
-        // Disabled for Vercel compatibility - would need proper Upstash setup
-        // this.upstash = createClient({
-        //   url: process.env.UPSTASH_REDIS_REST_URL,
-        //   token: process.env.UPSTASH_REDIS_REST_TOKEN,
-        // });
-        this.upstash = null;
-        console.log('✅ Upstash Redis connected');
-        return;
+        try {
+          // Re-enable Upstash Redis for production
+          const { createClient } = await import('@upstash/redis');
+          this.upstash = createClient({
+            url: process.env.UPSTASH_REDIS_REST_URL,
+            token: process.env.UPSTASH_REDIS_REST_TOKEN,
+          });
+          console.log('✅ Upstash Redis connected');
+          return;
+        } catch (error) {
+          console.warn('⚠️  Upstash Redis setup failed:', error);
+          this.upstash = null;
+        }
       }
 
       // Fallback to local Redis

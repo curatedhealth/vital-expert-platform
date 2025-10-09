@@ -43,10 +43,10 @@ export async function middleware(request: NextRequest) {
     return response;
   }
 
-  // Skip auth check if Supabase environment variables are not configured
+  // Validate Supabase environment variables
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-    console.warn('Supabase environment variables not configured, skipping auth check');
-    return response;
+    console.error('Supabase environment variables not configured');
+    return NextResponse.redirect(new URL('/login', request.url));
   }
 
   const supabase = createServerClient(
@@ -95,7 +95,12 @@ export async function middleware(request: NextRequest) {
     }
   );
 
-  await supabase.auth.getUser();
+  const { data: { user }, error } = await supabase.auth.getUser();
+
+  // If user is not authenticated, redirect to login
+  if (error || !user) {
+    return NextResponse.redirect(new URL('/login', request.url));
+  }
 
   return response;
 }

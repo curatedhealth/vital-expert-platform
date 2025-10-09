@@ -25,47 +25,15 @@ export default function LoginPage() {
     setError('');
 
     try {
-      // Check if Supabase is configured
-      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://xazinxsiglqokwfmogyk.supabase.co';
-      
-      // Temporary workaround: Use mock authentication if email confirmation is blocking
-      const useMockAuth = !supabaseUrl || supabaseUrl === 'undefined' || 
-                         localStorage.getItem('vital-use-mock-auth') === 'true';
-      
-      if (useMockAuth) {
-        // Development mode - use mock authentication
-        console.log('🔧 Development mode: Using mock authentication');
-        
-        // Simple mock validation
-        if (email && password) {
-          // Create mock user session
-          const mockUser = {
-            id: 'mock-user-1',
-            email: email,
-            user_metadata: { name: 'Development User' }
-          };
-          
-          // Store in localStorage for development
-          localStorage.setItem('vital-mock-user', JSON.stringify(mockUser));
-          localStorage.setItem('vital-mock-session', JSON.stringify({ user: mockUser }));
-          
-          // Redirect to dashboard
-          router.push('/dashboard');
-        } else {
-          setError('Please enter both email and password');
-        }
-      } else {
-        // Production mode - use real Supabase
-        const { data, error } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
-        if (error) {
-          setError(error.message);
-        } else {
-          router.push('/dashboard');
-        }
+      if (error) {
+        setError(error.message);
+      } else {
+        router.push('/dashboard');
       }
     } catch (err) {
       setError('An unexpected error occurred');
@@ -236,17 +204,6 @@ export default function LoginPage() {
             </Link>
           </div>
 
-          <div className="text-center mt-4">
-            <button
-              onClick={() => {
-                localStorage.setItem('vital-use-mock-auth', 'true');
-                window.location.reload();
-              }}
-              className="text-xs text-blue-600 hover:text-blue-700 underline"
-            >
-              Enable Development Mode (Bypass Email Confirmation)
-            </button>
-          </div>
         </CardContent>
         </Card>
       </div>

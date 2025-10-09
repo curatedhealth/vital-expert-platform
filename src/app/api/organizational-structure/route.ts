@@ -111,7 +111,7 @@ export async function GET(request: NextRequest) {
     // Fetch all organizational roles
     const { data: roles, error: rolesError } = await supabase
       .from('org_roles')
-      .select('id, name, role_name, description, department_id, function_id, competency_level')
+      .select('id, role_name, description, department_id, function_id, competency_level')
       .order('role_name');
 
     if (rolesError) {
@@ -146,7 +146,7 @@ export async function GET(request: NextRequest) {
         }
         rolesByDepartment[role.department_id].push({
           id: role.id,
-          name: role.role_name || role.name,
+          name: role.role_name,
           department_id: role.department_id,
           function_id: role.function_id
         });
@@ -159,7 +159,7 @@ export async function GET(request: NextRequest) {
         }
         rolesByFunction[role.function_id].push({
           id: role.id,
-          name: role.role_name || role.name,
+          name: role.role_name,
           department_id: role.department_id,
           function_id: role.function_id
         });

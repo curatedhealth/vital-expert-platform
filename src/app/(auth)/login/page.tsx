@@ -36,8 +36,8 @@ export default function LoginPage() {
 
             if (error) {
               console.error('Error fetching user profile:', error);
-              // Default to home page if profile fetch fails
-              router.push('/');
+              // Default to dashboard if profile fetch fails
+              router.push('/dashboard');
               return;
             }
 
@@ -49,13 +49,13 @@ export default function LoginPage() {
               console.log('Admin detected, redirecting to admin dashboard');
               router.push('/admin');
             } else {
-              console.log('Regular user, redirecting to home page');
-              router.push('/');
+              console.log('Regular user, redirecting to platform dashboard');
+              router.push('/dashboard');
             }
           } catch (error) {
             console.error('Error checking user role:', error);
-            // Default to home page if role check fails
-            router.push('/');
+            // Default to dashboard if role check fails
+            router.push('/dashboard');
           }
         }
       }

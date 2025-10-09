@@ -33,7 +33,8 @@ export function SupabaseAuthProvider({ children }: AuthProviderProps) {
         
         // Use mock authentication if Supabase is not properly configured
         const useMockAuth = !supabaseUrl || supabaseUrl === 'undefined' || 
-                           supabaseUrl.includes('xazinxsiglqokwfmogyk') ||
+                           supabaseUrl.includes('localhost') ||
+                           supabaseUrl.includes('127.0.0.1') ||
                            localStorage.getItem('vital-use-mock-auth') === 'true';
         
         if (useMockAuth) {

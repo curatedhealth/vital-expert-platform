@@ -93,9 +93,9 @@ export const _useAuthState = () => {
   const fetchUserProfile = useCallback(async (user: User): Promise<UserProfile | null> => {
     try {
       const { data, error } = await supabase
-        .from('user_profiles')
+        .from('profiles')
         .select('*')
-        .eq('user_id', user.id)
+        .eq('id', user.id)
         .single();
 
       if (error) {
@@ -149,9 +149,9 @@ export const _useAuthState = () => {
 
         // Update last login
         await supabase
-          .from('user_profiles')
-          .update({ last_login: new Date().toISOString() })
-          .eq('user_id', data.user.id);
+          .from('profiles')
+          .update({ updated_at: new Date().toISOString() })
+          .eq('id', data.user.id);
       }
     } catch (error) {
       setState(prev => ({

@@ -98,13 +98,30 @@ export function SupabaseAuthProvider({ children }: AuthProviderProps) {
             id: userId,
             email: user?.email,
             full_name: user?.user_metadata?.full_name || user?.email?.split('@')[0],
-            role: 'user'
+            role: 'user',
+            organization: null,
+            avatar_url: null,
+            phone: null,
+            timezone: 'UTC',
+            preferences: {}
           })
           .select()
           .single();
 
         if (createError) {
           console.error('Error creating user profile:', createError);
+          // Set a default profile even if creation fails
+          setUserProfile({
+            id: userId,
+            email: user?.email,
+            full_name: user?.user_metadata?.full_name || user?.email?.split('@')[0],
+            role: 'user',
+            organization: null,
+            avatar_url: null,
+            phone: null,
+            timezone: 'UTC',
+            preferences: {}
+          });
         } else {
           setUserProfile(newProfile);
         }
@@ -113,6 +130,18 @@ export function SupabaseAuthProvider({ children }: AuthProviderProps) {
       }
     } catch (error) {
       console.error('Error in fetchUserProfile:', error);
+      // Set a default profile even if there's an error
+      setUserProfile({
+        id: userId,
+        email: user?.email,
+        full_name: user?.user_metadata?.full_name || user?.email?.split('@')[0],
+        role: 'user',
+        organization: null,
+        avatar_url: null,
+        phone: null,
+        timezone: 'UTC',
+        preferences: {}
+      });
     }
   };
 

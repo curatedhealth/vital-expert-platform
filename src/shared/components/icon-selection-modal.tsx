@@ -85,8 +85,9 @@ export function IconSelectionModal({
 
   const renderIcon = (icon: Icon) => {
     const isImagePath = icon.file_url && (icon.file_url.startsWith('/') || icon.file_url.startsWith('http'));
+    const isBase64 = icon.file_url && icon.file_url.startsWith('data:image/');
 
-    if (isImagePath) {
+    if (isImagePath || isBase64) {
       return (
         <Image
           src={icon.file_url}
@@ -164,7 +165,7 @@ export function IconSelectionModal({
                   className={`
                     w-12 h-12 rounded-lg border-2 flex items-center justify-center
                     transition-all duration-200 hover:scale-105 hover:shadow-md
-                    ${selectedIcon === icon.file_url
+                    ${selectedIcon === icon.id || selectedIcon === icon.file_url
                       ? 'border-blue-500 bg-blue-50'
                       : 'border-gray-200 hover:border-gray-300'
                     }

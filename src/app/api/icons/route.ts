@@ -24,41 +24,8 @@ export async function GET(request: NextRequest) {
     const categories = searchParams.get('categories')?.split(',');
     const search = searchParams.get('search');
 
-    // Special handling for avatar category - query avatars table
-    if (category === 'avatar') {
-      const { data: avatars, error: avatarsError } = await supabase
-        .from('avatars')
-        .select('id, icon, name, category, description, sort_order')
-        .eq('is_active', true)
-        .order('sort_order')
-        .order('name');
-
-      if (avatarsError) {
-        console.error('Database error:', avatarsError);
-        return NextResponse.json(
-          { error: 'Failed to fetch avatars', details: avatarsError.message },
-          { status: 500 }
-        );
-      }
-
-      // Transform avatars to match expected format
-      const transformedAvatars = (avatars || []).map(avatar => ({
-        id: avatar.id,
-        name: avatar.name,
-        display_name: avatar.name,
-        icon: avatar.icon,
-        category: avatar.category,
-        description: avatar.description,
-        sort_order: avatar.sort_order,
-        is_active: true
-      }));
-
-      return NextResponse.json({
-        success: true,
-        icons: transformedAvatars,
-        total: transformedAvatars.length
-      });
-    }
+    // All categories now use the icons table (avatars are stored with category='avatar')
+    // No special handling needed - the main query below handles all categories
 
     // For all other categories, query icons table (fallback to empty if table doesn't exist)
     let query = supabase

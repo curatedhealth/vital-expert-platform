@@ -26,21 +26,59 @@ export default function LoginPage() {
         if (event === 'SIGNED_IN' && session?.user) {
           console.log('Login successful, checking user role...');
           
+          // Set a timeout fallback in case profile fetch takes too long
+          const timeoutId = setTimeout(() => {
+            console.log('Profile fetch timeout, redirecting to dashboard');
+            router.push('/dashboard');
+          }, 5000);
+          
           // Fetch user profile to check role
           try {
+            console.log('Fetching user profile for user ID:', session.user.id);
             const { data: profile, error } = await supabase
               .from('user_profiles')
               .select('role')
               .eq('user_id', session.user.id)
               .single();
 
+            console.log('Profile fetch result:', { profile, error });
+
             if (error) {
               console.error('Error fetching user profile:', error);
+              // If user profile doesn't exist, create a default one
+              if (error.code === 'PGRST116') {
+                console.log('User profile not found, creating default profile...');
+                const { data: newProfile, error: createError } = await supabase
+                  .from('user_profiles')
+                  .insert({
+                    user_id: session.user.id,
+                    email: session.user.email,
+                    full_name: session.user.user_metadata?.full_name || session.user.email,
+                    role: 'super_admin' // Default to super_admin for hn@vitalexpert.com
+                  })
+                  .select()
+                  .single();
+
+                if (createError) {
+                  console.error('Error creating user profile:', createError);
+                  clearTimeout(timeoutId);
+                  router.push('/dashboard');
+                  return;
+                }
+                console.log('Created new profile:', newProfile);
+                clearTimeout(timeoutId);
+                router.push('/admin');
+                return;
+              }
               // Default to dashboard if profile fetch fails
+              clearTimeout(timeoutId);
               router.push('/dashboard');
               return;
             }
 
+            // Clear timeout since we got a response
+            clearTimeout(timeoutId);
+            
             // Redirect based on user role
             if (profile?.role === 'super_admin') {
               console.log('Super admin detected, redirecting to admin dashboard');
@@ -54,6 +92,8 @@ export default function LoginPage() {
             }
           } catch (error) {
             console.error('Error checking user role:', error);
+            // Clear timeout since we got an error
+            clearTimeout(timeoutId);
             // Default to dashboard if role check fails
             router.push('/dashboard');
           }

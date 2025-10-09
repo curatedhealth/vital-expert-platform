@@ -64,6 +64,7 @@ export const MeditronSetup: React.FC = () => {
     checkApiKeyConfiguration();
   }, []);
 
+  const fetchMeditronModels = async () => {
     try {
       const response = await fetch('/api/llm-providers?provider_type=huggingface&search=meditron');
       if (response.ok) {
@@ -75,6 +76,7 @@ export const MeditronSetup: React.FC = () => {
     }
   };
 
+  const checkApiKeyConfiguration = () => {
     const storedKey = localStorage.getItem('huggingface_api_key');
     if (storedKey) {
       setApiKey(storedKey);

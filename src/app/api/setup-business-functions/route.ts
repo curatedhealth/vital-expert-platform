@@ -1,94 +1,188 @@
+import { createClient } from '@supabase/supabase-js';
 import { NextRequest, NextResponse } from 'next/server';
-
-import { supabase } from '@/lib/supabase/client';
 
 export async function POST(request: NextRequest) {
   try {
-    // First check if business_functions table exists by trying to query it
-    const { data: testData, error: testError } = await supabase
-      .from('business_functions')
-      .select('*')
-      .limit(1);
-
-    if (testError) {
-      // Table doesn't exist or has issues
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    
+    if (!supabaseUrl || !supabaseServiceKey) {
       return NextResponse.json({
-        error: 'business_functions table not found',
-        message: 'Please run the migration: 20250120000000_healthcare_compliance_enhancement.sql',
-        testError: testError.message
-      }, { status: 400 });
+        success: false,
+        error: 'Supabase configuration missing'
+      }, { status: 500 });
     }
 
-    // Check if the table has data
-    if (!testData || testData.length === 0) {
-      // Table exists but no data, let's add some basic business functions
-      const businessFunctions = [
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    // Create business_functions table if it doesn't exist
+    const createBusinessFunctionsTable = `
+      CREATE TABLE IF NOT EXISTS public.business_functions (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        code VARCHAR(20) UNIQUE NOT NULL,
+        name VARCHAR(100) NOT NULL,
+        description TEXT,
+        icon VARCHAR(50),
+        color VARCHAR(20),
+        sort_order INTEGER DEFAULT 0,
+        is_active BOOLEAN DEFAULT true,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+      );
+    `;
+
+    const createDepartmentsTable = `
+      CREATE TABLE IF NOT EXISTS public.departments (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        name VARCHAR(100) UNIQUE NOT NULL,
+        description TEXT,
+        business_function_id UUID REFERENCES public.business_functions(id) ON DELETE SET NULL,
+        parent_department_id UUID REFERENCES public.departments(id) ON DELETE SET NULL,
+        hipaa_required BOOLEAN DEFAULT false,
+        gdpr_required BOOLEAN DEFAULT false,
+        sort_order INTEGER DEFAULT 0,
+        is_active BOOLEAN DEFAULT true,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+      );
+    `;
+
+    const createRolesTable = `
+      CREATE TABLE IF NOT EXISTS public.roles (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        name VARCHAR(100) UNIQUE NOT NULL,
+        description TEXT,
+        department_id UUID REFERENCES public.departments(id) ON DELETE SET NULL,
+        business_function_id UUID REFERENCES public.business_functions(id) ON DELETE SET NULL,
+        level VARCHAR(50),
+        responsibilities TEXT[],
+        required_capabilities TEXT[],
+        sort_order INTEGER DEFAULT 0,
+        is_active BOOLEAN DEFAULT true,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+      );
+    `;
+
+    // Execute table creation
+    await supabase.rpc('exec_sql', { sql: createBusinessFunctionsTable });
+    await supabase.rpc('exec_sql', { sql: createDepartmentsTable });
+    await supabase.rpc('exec_sql', { sql: createRolesTable });
+
+    // Insert sample data
+    const sampleBusinessFunctions = [
+      {
+        code: 'REG',
+        name: 'Regulatory Affairs',
+        description: 'FDA compliance and regulatory strategy',
+        icon: 'shield-check',
+        color: 'blue',
+        sort_order: 1
+      },
+      {
+        code: 'CLIN',
+        name: 'Clinical Development',
+        description: 'Clinical trial design and execution',
+        icon: 'flask',
+        color: 'green',
+        sort_order: 2
+      },
+      {
+        code: 'QUAL',
+        name: 'Quality Assurance',
+        description: 'Quality management and compliance',
+        icon: 'check-circle',
+        color: 'purple',
+        sort_order: 3
+      },
+      {
+        code: 'MKT',
+        name: 'Market Access',
+        description: 'Reimbursement and market strategy',
+        icon: 'trending-up',
+        color: 'orange',
+        sort_order: 4
+      }
+    ];
+
+    // Insert business functions
+    for (const func of sampleBusinessFunctions) {
+      const { error } = await supabase
+        .from('business_functions')
+        .upsert(func, { onConflict: 'code' });
+      
+      if (error) {
+        console.error('Error inserting business function:', error);
+      }
+    }
+
+    // Get the inserted business functions to create departments
+    const { data: functions } = await supabase
+      .from('business_functions')
+      .select('id, code');
+
+    if (functions && functions.length > 0) {
+      const regFunction = functions.find(f => f.code === 'REG');
+      const clinFunction = functions.find(f => f.code === 'CLIN');
+      const qualFunction = functions.find(f => f.code === 'QUAL');
+      const mktFunction = functions.find(f => f.code === 'MKT');
+
+      const sampleDepartments = [
         {
-          name: 'regulatory_affairs',
-          department: 'Regulatory Affairs',
-          healthcare_category: 'Compliance',
-          description: 'FDA, EMA, and global regulatory guidance and submissions'
+          name: 'FDA Compliance',
+          description: 'FDA regulatory compliance and submissions',
+          business_function_id: regFunction?.id,
+          hipaa_required: true,
+          sort_order: 1
         },
         {
-          name: 'clinical_development',
-          department: 'Clinical Affairs',
-          healthcare_category: 'Research',
-          description: 'Clinical trial design, execution, and management'
+          name: 'Clinical Operations',
+          description: 'Clinical trial management and operations',
+          business_function_id: clinFunction?.id,
+          hipaa_required: true,
+          sort_order: 1
         },
         {
-          name: 'market_access',
-          department: 'Commercial',
-          healthcare_category: 'Business',
-          description: 'Reimbursement strategy and payer engagement'
+          name: 'Quality Control',
+          description: 'Quality control and testing',
+          business_function_id: qualFunction?.id,
+          hipaa_required: false,
+          sort_order: 1
         },
         {
-          name: 'medical_writing',
-          department: 'Medical Affairs',
-          healthcare_category: 'Documentation',
-          description: 'Clinical and regulatory document preparation'
-        },
-        {
-          name: 'safety_pharmacovigilance',
-          department: 'Safety',
-          healthcare_category: 'Patient Safety',
-          description: 'Adverse event monitoring and safety reporting'
-        },
-        {
-          name: 'quality_assurance',
-          department: 'Quality',
-          healthcare_category: 'Compliance',
-          description: 'GMP, quality systems, and compliance monitoring'
+          name: 'Reimbursement Strategy',
+          description: 'Payer relations and reimbursement',
+          business_function_id: mktFunction?.id,
+          hipaa_required: false,
+          sort_order: 1
         }
       ];
 
-      const { data: insertData, error: insertError } = await supabase
-        .from('business_functions')
-        .insert(businessFunctions);
-
-      if (insertError) {
-        console.error('Error inserting business functions:', insertError);
-        return NextResponse.json({
-          error: 'Failed to insert business functions',
-          details: insertError.message
-        }, { status: 500 });
+      // Insert departments
+      for (const dept of sampleDepartments) {
+        const { error } = await supabase
+          .from('departments')
+          .upsert(dept, { onConflict: 'name' });
+        
+        if (error) {
+          console.error('Error inserting department:', error);
+        }
       }
-
-      return NextResponse.json({
-        message: 'Business functions added successfully',
-        count: businessFunctions.length,
-        data: insertData
-      });
     }
 
     return NextResponse.json({
-      message: 'Business functions table exists and has data',
-      count: testData.length
+      success: true,
+      message: 'Business functions, departments, and roles tables created successfully'
     });
 
   } catch (error) {
-    console.error('Setup business functions error:', error);
+    console.error('Setup error:', error);
     return NextResponse.json(
-      { error: 'Failed to setup business functions', details: String(error) },
+      {
+        success: false,
+        error: 'Failed to setup business functions',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      },
       { status: 500 }
     );
   }

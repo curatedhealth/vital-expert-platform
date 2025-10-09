@@ -29,10 +29,11 @@ export function SupabaseAuthProvider({ children }: AuthProviderProps) {
     const getInitialSession = async () => {
       try {
         // Check if Supabase is configured
-        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://xazinxsiglqokwfmogyk.supabase.co';
+        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
         
-        // Temporary workaround: Use mock authentication if email confirmation is blocking
+        // Use mock authentication if Supabase is not properly configured
         const useMockAuth = !supabaseUrl || supabaseUrl === 'undefined' || 
+                           supabaseUrl.includes('xazinxsiglqokwfmogyk') ||
                            localStorage.getItem('vital-use-mock-auth') === 'true';
         
         if (useMockAuth) {

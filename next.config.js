@@ -48,6 +48,8 @@ const nextConfig = {
         'typeof window': isServer ? JSON.stringify('undefined') : JSON.stringify('object'),
         'typeof document': isServer ? JSON.stringify('undefined') : JSON.stringify('object'),
         'typeof location': isServer ? JSON.stringify('undefined') : JSON.stringify('object'),
+        'typeof navigator': isServer ? JSON.stringify('undefined') : JSON.stringify('object'),
+        'typeof global': isServer ? JSON.stringify('object') : JSON.stringify('undefined'),
       })
     );
 
@@ -84,6 +86,11 @@ const nextConfig = {
   
   // Disable styled-jsx to avoid SSR issues
   swcMinify: true,
+  
+  // Configure styled-jsx for SSR
+  styledJsx: {
+    useLightningcss: false,
+  },
   
   
   // Configure runtime for API routes to avoid Edge Runtime warnings

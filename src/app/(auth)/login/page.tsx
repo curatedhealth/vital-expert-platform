@@ -55,50 +55,19 @@ export default function LoginPage() {
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        if (event === 'SIGNED_IN' && session?.user && !isRedirectingRef.current) {
-          isRedirectingRef.current = true;
-          console.log('Login successful, checking user role...');
+        if (event === 'SIGNED_IN' && session?.user) {
+          console.log('Login successful, redirecting...');
+          setLoading(false);
           
-          // Set a timeout fallback in case profile fetch takes too long
-          const timeoutId = setTimeout(() => {
-            console.log('Profile fetch timeout, redirecting to dashboard');
-            setLoading(false); // Reset loading state before redirect
-            window.location.href = '/dashboard';
-          }, 5000);
-          
-          // For now, let's use a simple approach based on email
-          // TODO: Implement proper profile management later
-          try {
-            console.log('Checking user role based on email...');
-            
-            // Clear timeout since we're handling this
-            clearTimeout(timeoutId);
-            
-            // Reset loading state before redirect
-            setLoading(false);
-            
-            // Ensure auth cookies are flushed to the browser before protected navigation
-            await delay(300);
-            const { data: fresh } = await supabase.auth.getSession();
-
-            // Simple role detection based on email
-            if (fresh?.session?.user?.email === 'hn@vitalexpert.com') {
-              console.log('Super admin email detected, redirecting to admin dashboard');
-              window.location.href = '/admin';
-            } else if (fresh?.session?.user?.email?.includes('admin') || fresh?.session?.user?.email?.includes('manager')) {
-              console.log('Admin email detected, redirecting to admin dashboard');
-              window.location.href = '/admin';
-            } else {
-              console.log('Regular user, redirecting to platform dashboard');
-              window.location.href = '/dashboard';
-            }
-          } catch (error) {
-            console.error('Error in role check:', error);
-            // Clear timeout since we got an error
-            clearTimeout(timeoutId);
-            // Reset loading state before redirect
-            setLoading(false);
-            // Default to dashboard if role check fails
+          // Simple redirect based on email
+          if (session.user.email === 'hn@vitalexpert.com') {
+            console.log('Super admin detected, redirecting to admin');
+            window.location.href = '/admin';
+          } else if (session.user.email?.includes('admin') || session.user.email?.includes('manager')) {
+            console.log('Admin detected, redirecting to admin');
+            window.location.href = '/admin';
+          } else {
+            console.log('Regular user, redirecting to dashboard');
             window.location.href = '/dashboard';
           }
         }
@@ -122,8 +91,22 @@ export default function LoginPage() {
       if (error) {
         setError(error.message);
         setLoading(false); // Reset loading state on error
+      } else if (data.user) {
+        // Fallback redirect in case auth state change doesn't trigger
+        console.log('Login successful, setting up fallback redirect...');
+        setTimeout(() => {
+          if (data.user?.email === 'hn@vitalexpert.com') {
+            console.log('Fallback: Super admin redirect to admin');
+            window.location.href = '/admin';
+          } else if (data.user?.email?.includes('admin') || data.user?.email?.includes('manager')) {
+            console.log('Fallback: Admin redirect to admin');
+            window.location.href = '/admin';
+          } else {
+            console.log('Fallback: Regular user redirect to dashboard');
+            window.location.href = '/dashboard';
+          }
+        }, 1000);
       }
-      // If successful, loading state will be reset by the auth state change listener
     } catch (err) {
       setError('An unexpected error occurred');
       setLoading(false); // Reset loading state on error

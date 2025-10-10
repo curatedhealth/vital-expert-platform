@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { UserManagementService, UserFilters, UserProfile, UserPagination } from '@/services/user-management.service';
+import { UserManagementService, UserFilters as UserFiltersType, UserProfile, UserPagination } from '@/services/user-management.service';
 import UserFilters from './UserFilters';
 import UserTable from './UserTable';
 import UserRoleDialog from './UserRoleDialog';
@@ -30,7 +30,7 @@ export default function UserManagementViewer({
   initialStats,
   isSuperAdmin
 }: UserManagementViewerProps) {
-  const [filters, setFilters] = useState<UserFilters>({});
+  const [filters, setFilters] = useState<UserFiltersType>({});
   const [data, setData] = useState<UserProfile[]>([]);
   const [pagination, setPagination] = useState<UserPagination>({
     page: 1,

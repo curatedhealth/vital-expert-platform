@@ -11,12 +11,12 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 
-import { Avatar, AvatarFallback, AvatarImage } from '@/shared/components/ui/avatar';
-import { Badge } from '@/shared/components/ui/badge';
-import { Button } from '@/shared/components/ui/button';
-import { Card } from '@/shared/components/ui/card';
-import { Input } from '@/shared/components/ui/input';
-import { ScrollArea } from '@/shared/components/ui/scroll-area';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/shared/utils';
 
 import { usePanelStore } from '../services/panel-store';

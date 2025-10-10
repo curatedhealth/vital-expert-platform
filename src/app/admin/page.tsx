@@ -11,7 +11,9 @@ import {
   Activity,
   Shield,
   Building2,
-  Cog
+  Cog,
+  Database,
+  DollarSign
 } from 'lucide-react';
 
 export default async function AdminPage() {
@@ -80,6 +82,27 @@ export default async function AdminPage() {
       href: '/admin/audit-immutable',
       icon: FileText,
       color: 'bg-slate-500'
+    },
+    {
+      title: 'System Settings',
+      description: 'Feature flags, system config, and maintenance mode',
+      href: '/admin/settings',
+      icon: Cog,
+      color: 'bg-gray-500'
+    },
+    {
+      title: 'Backup & Recovery',
+      description: 'Database backups, restore operations, and scheduling',
+      href: '/admin/backup',
+      icon: Database,
+      color: 'bg-blue-500'
+    },
+    {
+      title: 'Cost Management',
+      description: 'Monitor costs, budgets, anomalies, and usage forecasting',
+      href: '/admin/costs',
+      icon: DollarSign,
+      color: 'bg-emerald-500'
     },
     {
       title: 'LLM Management',

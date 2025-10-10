@@ -260,8 +260,8 @@ function CreateAlertForm({ onSubmit, onCancel }: CreateAlertFormProps) {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="gt">Greater than (>)</SelectItem>
-              <SelectItem value="lt">Less than (<)</SelectItem>
+              <SelectItem value="gt">Greater than (&gt;)</SelectItem>
+              <SelectItem value="lt">Less than (&lt;)</SelectItem>
               <SelectItem value="eq">Equal to (=)</SelectItem>
               <SelectItem value="gte">Greater than or equal (≥)</SelectItem>
               <SelectItem value="lte">Less than or equal (≤)</SelectItem>

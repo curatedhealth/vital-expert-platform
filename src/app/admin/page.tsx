@@ -1,4 +1,3 @@
-import { requireAdmin } from '@/lib/auth/requireAdmin';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
@@ -16,8 +15,7 @@ import {
   DollarSign
 } from 'lucide-react';
 
-export default async function AdminPage() {
-  const { user, isSuperAdmin } = await requireAdmin();
+export default function AdminPage() {
 
   const adminFeatures = [
     {

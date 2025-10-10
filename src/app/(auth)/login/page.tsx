@@ -59,6 +59,9 @@ export default function LoginPage() {
           console.log('Login successful, redirecting...');
           setLoading(false);
           
+          // Wait a moment for session to be fully established
+          await new Promise(resolve => setTimeout(resolve, 500));
+          
           // Simple redirect based on email
           if (session.user.email === 'hn@vitalexpert.com') {
             console.log('Super admin detected, redirecting to admin');
@@ -92,20 +95,8 @@ export default function LoginPage() {
         setError(error.message);
         setLoading(false); // Reset loading state on error
       } else if (data.user) {
-        // Fallback redirect in case auth state change doesn't trigger
-        console.log('Login successful, setting up fallback redirect...');
-        setTimeout(() => {
-          if (data.user?.email === 'hn@vitalexpert.com') {
-            console.log('Fallback: Super admin redirect to admin');
-            window.location.href = '/admin';
-          } else if (data.user?.email?.includes('admin') || data.user?.email?.includes('manager')) {
-            console.log('Fallback: Admin redirect to admin');
-            window.location.href = '/admin';
-          } else {
-            console.log('Fallback: Regular user redirect to dashboard');
-            window.location.href = '/dashboard';
-          }
-        }, 1000);
+        console.log('Login successful, waiting for auth state change...');
+        // Don't redirect here - let the auth state change handler do it
       }
     } catch (err) {
       setError('An unexpected error occurred');

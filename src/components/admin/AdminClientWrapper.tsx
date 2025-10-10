@@ -17,13 +17,24 @@ export default function AdminClientWrapper({ children }: AdminClientWrapperProps
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
+        // Wait a bit for session to be available
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error('Session error:', error);
+          router.push('/login');
+          return;
+        }
         
         if (!session?.user) {
           console.log('No session found, redirecting to login');
           router.push('/login');
           return;
         }
+
+        console.log('Session found for user:', session.user.email);
 
         // Check if user is admin based on email
         const isAdmin = session.user.email === 'hn@vitalexpert.com' || 
@@ -46,7 +57,37 @@ export default function AdminClientWrapper({ children }: AdminClientWrapperProps
       }
     };
 
+    // Also listen for auth state changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        console.log('Auth state changed:', event, session?.user?.email);
+        
+        if (event === 'SIGNED_OUT' || !session) {
+          console.log('User signed out, redirecting to login');
+          router.push('/login');
+          return;
+        }
+        
+        if (session?.user) {
+          const isAdmin = session.user.email === 'hn@vitalexpert.com' || 
+                         session.user.email?.includes('admin') || 
+                         session.user.email?.includes('manager');
+          
+          if (isAdmin) {
+            console.log('User authorized via auth state change');
+            setIsAuthorized(true);
+            setIsLoading(false);
+          } else {
+            console.log('User not admin via auth state change');
+            router.push('/admin/forbidden');
+          }
+        }
+      }
+    );
+
     checkAuth();
+
+    return () => subscription.unsubscribe();
   }, [router]);
 
   if (isLoading) {

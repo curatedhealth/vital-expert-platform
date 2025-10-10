@@ -3,7 +3,7 @@
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -18,6 +18,9 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const router = useRouter();
+  const isRedirectingRef = useRef(false);
+
+  const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
   // Check if user is already authenticated on page load
   useEffect(() => {
@@ -27,16 +30,20 @@ export default function LoginPage() {
         console.log('User already authenticated, redirecting...');
         setLoading(true); // Show loading state during redirect
         
+        // Ensure session cookies are set before navigating to a protected route
+        await delay(300);
+        const { data: fresh } = await supabase.auth.getSession();
+
         // Simple role detection based on email
-        if (session.user.email === 'hn@vitalexpert.com') {
+        if (fresh?.session?.user?.email === 'hn@vitalexpert.com') {
           console.log('Super admin email detected, redirecting to admin dashboard');
-          router.push('/admin');
-        } else if (session.user.email?.includes('admin') || session.user.email?.includes('manager')) {
+          window.location.href = '/admin';
+        } else if (fresh?.session?.user?.email?.includes('admin') || fresh?.session?.user?.email?.includes('manager')) {
           console.log('Admin email detected, redirecting to admin dashboard');
-          router.push('/admin');
+          window.location.href = '/admin';
         } else {
           console.log('Regular user, redirecting to platform dashboard');
-          router.push('/dashboard');
+          window.location.href = '/dashboard';
         }
       }
     };
@@ -48,14 +55,15 @@ export default function LoginPage() {
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        if (event === 'SIGNED_IN' && session?.user) {
+        if (event === 'SIGNED_IN' && session?.user && !isRedirectingRef.current) {
+          isRedirectingRef.current = true;
           console.log('Login successful, checking user role...');
           
           // Set a timeout fallback in case profile fetch takes too long
           const timeoutId = setTimeout(() => {
             console.log('Profile fetch timeout, redirecting to dashboard');
             setLoading(false); // Reset loading state before redirect
-            router.push('/dashboard');
+            window.location.href = '/dashboard';
           }, 5000);
           
           // For now, let's use a simple approach based on email
@@ -69,16 +77,20 @@ export default function LoginPage() {
             // Reset loading state before redirect
             setLoading(false);
             
+            // Ensure auth cookies are flushed to the browser before protected navigation
+            await delay(300);
+            const { data: fresh } = await supabase.auth.getSession();
+
             // Simple role detection based on email
-            if (session.user.email === 'hn@vitalexpert.com') {
+            if (fresh?.session?.user?.email === 'hn@vitalexpert.com') {
               console.log('Super admin email detected, redirecting to admin dashboard');
-              router.push('/admin');
-            } else if (session.user.email?.includes('admin') || session.user.email?.includes('manager')) {
+              window.location.href = '/admin';
+            } else if (fresh?.session?.user?.email?.includes('admin') || fresh?.session?.user?.email?.includes('manager')) {
               console.log('Admin email detected, redirecting to admin dashboard');
-              router.push('/admin');
+              window.location.href = '/admin';
             } else {
               console.log('Regular user, redirecting to platform dashboard');
-              router.push('/dashboard');
+              window.location.href = '/dashboard';
             }
           } catch (error) {
             console.error('Error in role check:', error);
@@ -87,7 +99,7 @@ export default function LoginPage() {
             // Reset loading state before redirect
             setLoading(false);
             // Default to dashboard if role check fails
-            router.push('/dashboard');
+            window.location.href = '/dashboard';
           }
         }
       }

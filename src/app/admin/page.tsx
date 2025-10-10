@@ -60,6 +60,27 @@ export default async function AdminPage() {
       color: 'bg-amber-500'
     },
     {
+      title: 'LLM Governance',
+      description: 'Prompt policies, approval workflows, and change management',
+      href: '/admin/governance',
+      icon: FileText,
+      color: 'bg-indigo-500'
+    },
+    {
+      title: 'Identity & Access',
+      description: 'SSO, MFA, access reviews, and session security',
+      href: '/admin/identity',
+      icon: Shield,
+      color: 'bg-cyan-500'
+    },
+    {
+      title: 'Immutable Audit',
+      description: 'Hash-chained audit logs, WORM storage, and SIEM export',
+      href: '/admin/audit-immutable',
+      icon: FileText,
+      color: 'bg-slate-500'
+    },
+    {
       title: 'LLM Management',
       description: 'Configure LLM providers and models',
       href: '/dashboard/llm-management?view=admin',

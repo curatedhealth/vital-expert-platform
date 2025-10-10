@@ -32,6 +32,48 @@ export function SupabaseAuthProvider({ children }: AuthProviderProps) {
     // Get initial session
     const getInitialSession = async () => {
       try {
+        // In development mode, use mock user for testing
+        if (process.env.NODE_ENV === 'development') {
+          console.log('🧪 Development mode: Using mock user for testing');
+          const mockUser = {
+            id: 'dev-user-123',
+            email: 'admin@vitalexpert.com',
+            user_metadata: {
+              full_name: 'Development Admin'
+            }
+          } as User;
+          
+          const mockSession = {
+            user: mockUser,
+            access_token: 'dev-token',
+            refresh_token: 'dev-refresh-token',
+            expires_in: 3600,
+            expires_at: Date.now() + 3600000,
+            token_type: 'bearer'
+          } as Session;
+
+          setUser(mockUser);
+          setSession(mockSession);
+          
+          // Set mock user profile for admin testing
+          setUserProfile({
+            id: 'dev-user-123',
+            email: 'admin@vitalexpert.com',
+            full_name: 'Development Admin',
+            role: 'admin',
+            organization: 'Vital Expert',
+            avatar_url: null,
+            phone: null,
+            timezone: 'UTC',
+            preferences: {}
+          });
+          
+          console.log('✅ Mock user loaded for development');
+          setIsInitialized(true);
+          setLoading(false);
+          return;
+        }
+
         console.log('🌐 Using Supabase authentication');
         const { data: { session }, error } = await supabase.auth.getSession();
         if (error) {
@@ -55,6 +97,11 @@ export function SupabaseAuthProvider({ children }: AuthProviderProps) {
     };
 
     getInitialSession();
+
+    // Skip auth state changes in development mode
+    if (process.env.NODE_ENV === 'development') {
+      return;
+    }
 
     // Listen for auth changes
     const { data: { subscription: authSubscription } } = supabase.auth.onAuthStateChange(

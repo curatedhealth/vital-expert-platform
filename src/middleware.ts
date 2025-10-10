@@ -4,6 +4,15 @@ import { NextResponse, type NextRequest } from 'next/server';
 export async function middleware(request: NextRequest) {
   const url = request.nextUrl.clone();
 
+  // Skip authentication in development mode
+  if (process.env.NODE_ENV === 'development') {
+    return NextResponse.next({
+      request: {
+        headers: request.headers,
+      },
+    });
+  }
+
   // Public routes that don't require authentication
   const publicRoutes = ['/', '/login', '/register', '/forgot-password', '/platform', '/services', '/framework'];
   const isPublicRoute = publicRoutes.includes(url.pathname) || url.pathname.startsWith('/api/');

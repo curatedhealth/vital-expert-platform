@@ -117,14 +117,12 @@ export default function AdminPage() {
       <div className="border-b border-gray-200 pb-5">
         <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
         <p className="mt-2 text-sm text-gray-600">
-          Welcome back, {user.email}. Manage your platform settings and monitor system activity.
+          Welcome back! Manage your platform settings and monitor system activity.
         </p>
-        {isSuperAdmin && (
-          <div className="mt-2 flex items-center text-sm text-amber-600">
-            <Shield className="h-4 w-4 mr-1" />
-            Super Admin privileges active
-          </div>
-        )}
+        <div className="mt-2 flex items-center text-sm text-amber-600">
+          <Shield className="h-4 w-4 mr-1" />
+          Super Admin privileges active
+        </div>
       </div>
 
       {/* Quick Stats */}

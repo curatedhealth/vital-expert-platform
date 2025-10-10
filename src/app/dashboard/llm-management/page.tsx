@@ -18,7 +18,9 @@ import {
   Clock
 } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
-import React, { Suspense } from 'react';
+import React, { Suspense, useEffect, useState } from 'react';
+import { createClient } from '@supabase/supabase-js';
+import { useRouter } from 'next/navigation';
 
 import { LLMProviderDashboard } from '@/components/llm/LLMProviderDashboard';
 import { MedicalModelsDashboard } from '@/components/llm/MedicalModelsDashboard';
@@ -31,10 +33,70 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 
 function LLMManagementPageContent() {
   const searchParams = useSearchParams();
+  const router = useRouter();
+  const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  
   const currentView = searchParams.get('view') || 'providers';
   const currentProvider = searchParams.get('provider');
   const currentDB = searchParams.get('db');
   const currentAdmin = searchParams.get('admin');
+
+  // Check admin status when admin view is requested
+  useEffect(() => {
+    const checkAdminStatus = async () => {
+      if (currentView === 'admin' || currentAdmin) {
+        try {
+          const supabase = createClient(
+            process.env.NEXT_PUBLIC_SUPABASE_URL!,
+            process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+          );
+          
+          const { data: { user } } = await supabase.auth.getUser();
+          if (!user) {
+            router.push('/login');
+            return;
+          }
+
+          const { data: profile } = await supabase
+            .from('user_profiles')
+            .select('role, is_active')
+            .eq('user_id', user.id)
+            .single();
+
+          if (!profile || !profile.is_active || (profile.role !== 'admin' && profile.role !== 'super_admin')) {
+            router.push('/admin/forbidden');
+            return;
+          }
+
+          setIsAdmin(true);
+        } catch (error) {
+          console.error('Error checking admin status:', error);
+          router.push('/admin/forbidden');
+        }
+      } else {
+        setIsAdmin(true); // Non-admin views are allowed
+      }
+      setIsLoading(false);
+    };
+
+    checkAdminStatus();
+  }, [currentView, currentAdmin, router]);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (isAdmin === false) {
+    return null; // Will redirect
+  }
 
   const renderDatabaseView = () => {
     const dbViews = {

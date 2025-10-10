@@ -10,7 +10,8 @@ import {
   BarChart3,
   Activity,
   Shield,
-  Building2
+  Building2,
+  Cog
 } from 'lucide-react';
 
 export default async function AdminPage() {

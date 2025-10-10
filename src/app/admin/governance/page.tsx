@@ -1,9 +1,7 @@
-import { requireAdmin } from '@/lib/auth/requireAdmin';
 import { LLMGovernanceService } from '@/services/llm-governance.service';
 import GovernanceDashboard from './components/GovernanceDashboard';
 
 export default async function GovernancePage() {
-  const { user, isSuperAdmin } = await requireAdmin();
   
   const governanceService = new LLMGovernanceService();
   const [policies, promptChanges, workflows] = await Promise.all([

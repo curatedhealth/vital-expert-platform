@@ -4,6 +4,7 @@ import React, { Component, ReactNode } from 'react';
 import { AlertTriangle, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { authErrorRecovery } from '@/lib/auth/error-recovery';
 
 interface Props {
   children: ReactNode;
@@ -30,6 +31,8 @@ export class AuthErrorBoundary extends Component<Props, State> {
   }
 
   handleRetry = () => {
+    // Clear retry counts before retrying
+    authErrorRecovery.resetAllRetryCounts();
     this.setState({ hasError: false, error: undefined });
     // Reload the page to reinitialize auth
     window.location.reload();
@@ -57,7 +60,7 @@ export class AuthErrorBoundary extends Component<Props, State> {
               {this.state.error && (
                 <div className="rounded-md bg-red-50 p-3">
                   <p className="text-sm text-red-800">
-                    <strong>Error:</strong> {this.state.error.message}
+                    <strong>Error:</strong> {authErrorRecovery.getUserFriendlyMessage(this.state.error)}
                   </p>
                 </div>
               )}

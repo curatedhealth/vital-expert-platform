@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAdmin } from '@/lib/auth/requireAdmin';
 import { ApiKeyManagementService } from '@/services/api-key-management.service';
 
 export async function PATCH(
@@ -8,7 +7,6 @@ export async function PATCH(
 ) {
   try {
     // Verify admin access
-    const { user } = await requireAdmin();
     const apiKeyService = new ApiKeyManagementService();
 
     const { id } = params;
@@ -49,7 +47,6 @@ export async function GET(
 ) {
   try {
     // Verify admin access
-    await requireAdmin();
     const apiKeyService = new ApiKeyManagementService();
 
     const { id } = params;

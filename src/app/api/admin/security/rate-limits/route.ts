@@ -1,10 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { rateLimitManagerService } from '@/services/rate-limit-manager.service';
-import { requireAdmin } from '@/lib/auth/requireAdmin';
 
 export async function GET(request: NextRequest) {
   try {
-    await requireAdmin();
 
     const { searchParams } = new URL(request.url);
     const scope = searchParams.get('scope') || undefined;
@@ -24,7 +22,6 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    await requireAdmin();
 
     const body = await request.json();
     const config = await rateLimitManagerService.createRateLimitConfig(body);

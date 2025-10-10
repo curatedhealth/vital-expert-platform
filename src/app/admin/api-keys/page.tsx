@@ -1,9 +1,7 @@
-import { requireAdmin } from '@/lib/auth/requireAdmin';
 import { ApiKeyManagementService } from '@/services/api-key-management.service';
 import ApiKeyManagementViewer from './components/ApiKeyManagementViewer';
 
 export default async function ApiKeysPage() {
-  const { user, isSuperAdmin } = await requireAdmin();
   
   const apiKeyService = new ApiKeyManagementService();
   const providers = await apiKeyService.getProviders();

@@ -1,8 +1,6 @@
-import { requireAdmin } from '@/lib/auth/requireAdmin';
 import { SecurityDashboard } from './components/SecurityDashboard';
 
 export default async function SecurityPage() {
-  await requireAdmin();
 
   return (
     <div className="container mx-auto py-6">

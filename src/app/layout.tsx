@@ -6,7 +6,7 @@ import '@/lib/polyfills/location-polyfill'
 
 import type { Metadata } from 'next'
 import './globals.css'
-import { SupabaseAuthProvider } from '@/lib/auth/supabase-auth-context'
+import { AuthProvider } from '@/lib/auth/auth-provider'
 import { AuthErrorBoundary } from '@/components/auth/auth-error-boundary'
 
 const inter = Inter({ subsets: ['latin'] })
@@ -29,9 +29,9 @@ export default function RootLayout({
       </head>
       <body className={inter.className}>
         <AuthErrorBoundary>
-          <SupabaseAuthProvider>
+          <AuthProvider>
             {children}
-          </SupabaseAuthProvider>
+          </AuthProvider>
         </AuthErrorBoundary>
         <Analytics />
         <SpeedInsights />

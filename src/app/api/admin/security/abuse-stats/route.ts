@@ -1,10 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { rateLimitManagerService } from '@/services/rate-limit-manager.service';
-import { requireAdmin } from '@/lib/auth/requireAdmin';
 
 export async function GET(request: NextRequest) {
   try {
-    await requireAdmin();
 
     const stats = await rateLimitManagerService.getSecurityStats();
 

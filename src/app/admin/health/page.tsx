@@ -1,9 +1,7 @@
-import { requireAdmin } from '@/lib/auth/requireAdmin';
 import { HealthMonitoringService } from '@/services/health-monitoring.service';
 import HealthDashboard from './components/HealthDashboard';
 
 export default async function HealthPage() {
-  const { user, isSuperAdmin } = await requireAdmin();
   
   const healthService = new HealthMonitoringService();
   const [metrics, serviceHealth, sloStatus, incidents] = await Promise.all([

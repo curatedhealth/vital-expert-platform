@@ -1,13 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { alertManagerService } from '@/services/alert-manager.service';
-import { requireAdmin } from '@/lib/auth/requireAdmin';
 
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
-    await requireAdmin();
 
     const channels = await alertManagerService.getNotificationChannels();
     const channel = channels.find(c => c.id === params.id);
@@ -34,7 +32,6 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
-    await requireAdmin();
 
     const body = await request.json();
     const channel = await alertManagerService.updateNotificationChannel(params.id, body);
@@ -54,7 +51,6 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    await requireAdmin();
 
     await alertManagerService.deleteNotificationChannel(params.id);
 

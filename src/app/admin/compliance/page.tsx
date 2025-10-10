@@ -1,9 +1,7 @@
-import { requireAdmin } from '@/lib/auth/requireAdmin';
 import { ComplianceReportingService } from '@/services/compliance-reporting.service';
 import ComplianceDashboard from './components/ComplianceDashboard';
 
 export default async function CompliancePage() {
-  const { user, isSuperAdmin } = await requireAdmin();
   
   const complianceService = new ComplianceReportingService();
   

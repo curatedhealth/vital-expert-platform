@@ -1,5 +1,69 @@
 # 📖 VITAL Path Prompt Library Usage Guide
 
+## PRISM™ Suite Acronyms
+
+### RULES™ - Regulatory Excellence
+**RULES** = Regulatory Understanding & Legal Excellence Standards
+- **DRAFT** - Document Regulatory Authoring & Filing Tool
+- **RADAR** - Regulatory Activity Detection & Analysis Reporting
+- **REPLY** - Regulatory Expert Positioning for Letter Inquiry
+- **GUIDE** - Global Understanding of International Drug Evaluation
+
+### TRIALS™ - Clinical Development
+**TRIALS** = Therapeutic Research & Investigation Analysis & Leadership Standards
+- **DESIGN** - Development Excellence & Study Implementation Guidelines Network
+- **QUALIFY** - Quality Understanding & Assessment of Laboratory Infrastructure & Facility Yielding
+- **MONITOR** - Medical Oversight & New Intelligence Tracking Operations Review
+- **ENROLL** - Efficient Network Recruitment & Operations Leadership Logistics
+
+### GUARD™ - Safety Framework
+**GUARD** = Global Understanding & Assessment of Risk & Drug Safety
+- **DETECT** - Drug Event Tracking & Emergency Case Triage
+- **ASSESS** - Adverse Safety Signal Evaluation & Scientific Scrutiny
+- **REPORT** - Regulatory Expert Periodic Overview & Risk Tracking
+- **SIGNAL** - Safety Intelligence & Global Network Analysis Logistics
+
+### VALUE™ - Market Access
+**VALUE** = Value Assessment & Leadership Understanding & Economic Excellence
+- **WORTH** - Worldwide Outcomes Research & Treatment Health
+- **PITCH** - Payer Intelligence & Tailored Communication Hub
+- **JUSTIFY** - Joint Understanding & Strategic Therapeutic Investment Framework & Yielding
+- **BUDGET** - Business Understanding & Dynamic Global Economic Tracking
+
+### BRIDGE™ - Stakeholder Engagement
+**BRIDGE** = Building Relationships & Intelligence Development & Global Engagement
+- **CONNECT** - Communication Optimization & Network Nurturing Excellence Clinical Training
+- **RESPOND** - Regulatory Expert Scientific Professional Operations & New Data
+- **EDUCATE** - Expert Development & Understanding Clinical & Academic Training Excellence
+- **ALIGN** - Advisory Leadership & Intelligence Global Network
+
+### PROOF™ - Evidence Analytics
+**PROOF** = Professional Research & Outcomes Optimization & Framework
+- **STUDY** - Scientific & Therapeutic Understanding & Design Yielding
+- **COMPARE** - Comprehensive Outcomes & Medical Pharmaceutical Assessment & Research Excellence
+- **ANALYZE** - Advanced Network & Analysis of Longitudinal & Yielding Zone Excellence
+- **PUBLISH** - Professional Understanding & Business Literature & Intelligence Strategic Hub
+
+### CRAFT™ - Medical Writing
+**CRAFT** = Creative Regulatory & Academic Framework & Technical Excellence
+- **WRITE** - Worldwide Regulatory Intelligence & Technical Excellence
+- **PLAN** - Professional Literature & Analysis Network
+- **REVIEW** - Regulatory Excellence & Validation Intelligence Excellence Workflow
+- **STYLE** - Scientific & Technical Yielding Leadership Excellence
+
+### SCOUT™ - Competitive Intelligence
+**SCOUT** = Strategic Competitive & Operational Understanding & Tactical Intelligence
+- **WATCH** - Worldwide Assessment & Tactical Competitive Hub
+- **TRACK** - Tactical Research & Analysis Competitive Knowledge
+- **ASSESS** - Advanced Strategic & Scientific Excellence in Strategic Scrutiny
+- **BRIEF** - Business Regulatory Intelligence Excellence Framework
+
+### PROJECT™ - Project Management Excellence
+**PROJECT** = Planning Resources Objectives Justification Execution Control Tracking
+
+### FORGE™ - Digital Health Development
+**FORGE** = Foundation Optimization Regulatory Guidelines Engineering
+
 ## Getting Started
 
 ### 1. Choose Your Phase

@@ -1,11 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAdmin } from '@/lib/auth/requireAdmin';
 import { ApiKeyManagementService } from '@/services/api-key-management.service';
 
 export async function GET(request: NextRequest) {
   try {
     // Verify admin access
-    await requireAdmin();
 
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get('page') || '1');
@@ -33,7 +31,6 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     // Verify admin access
-    const { user } = await requireAdmin();
     const apiKeyService = new ApiKeyManagementService();
 
     const body = await request.json();

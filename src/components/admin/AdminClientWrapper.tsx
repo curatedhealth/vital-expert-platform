@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { supabase } from '@/lib/supabase/client';
+import { useAuth } from '@/lib/auth/auth-provider';
 import { Loader2 } from 'lucide-react';
 
 interface AdminClientWrapperProps {
@@ -10,87 +10,36 @@ interface AdminClientWrapperProps {
 }
 
 export default function AdminClientWrapper({ children }: AdminClientWrapperProps) {
-  const [isLoading, setIsLoading] = useState(true);
-  const [isAuthorized, setIsAuthorized] = useState(false);
+  const { user, loading, isInitialized } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        // Wait a bit for session to be available
-        await new Promise(resolve => setTimeout(resolve, 100));
-        
-        const { data: { session }, error } = await supabase.auth.getSession();
-        
-        if (error) {
-          console.error('Session error:', error);
-          router.push('/login');
-          return;
-        }
-        
-        if (!session?.user) {
-          console.log('No session found, redirecting to login');
-          router.push('/login');
-          return;
-        }
+    // Wait for auth to initialize
+    if (!isInitialized || loading) {
+      return;
+    }
 
-        console.log('Session found for user:', session.user.email);
+    // Check if user is authenticated
+    if (!user) {
+      console.log('No user found, redirecting to login');
+      router.push('/login');
+      return;
+    }
 
-        // Check if user is admin based on email
-        const isAdmin = session.user.email === 'hn@vitalexpert.com' || 
-                       session.user.email?.includes('admin') || 
-                       session.user.email?.includes('manager');
+    // Check if user has admin role
+    const isAdmin = user.role === 'admin' || user.role === 'super_admin';
+    
+    if (!isAdmin) {
+      console.log('User is not admin, redirecting to forbidden');
+      router.push('/admin/forbidden');
+      return;
+    }
 
-        if (!isAdmin) {
-          console.log('User is not admin, redirecting to forbidden');
-          router.push('/admin/forbidden');
-          return;
-        }
+    console.log('User authorized for admin access:', user.email, 'Role:', user.role);
+  }, [user, loading, isInitialized, router]);
 
-        console.log('User authorized for admin access');
-        setIsAuthorized(true);
-      } catch (error) {
-        console.error('Auth check error:', error);
-        router.push('/login');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    // Also listen for auth state changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        console.log('Auth state changed:', event, session?.user?.email);
-        
-        if (event === 'SIGNED_OUT' || !session) {
-          console.log('User signed out, redirecting to login');
-          router.push('/login');
-          return;
-        }
-        
-        if (session?.user) {
-          const isAdmin = session.user.email === 'hn@vitalexpert.com' || 
-                         session.user.email?.includes('admin') || 
-                         session.user.email?.includes('manager');
-          
-          if (isAdmin) {
-            console.log('User authorized via auth state change');
-            setIsAuthorized(true);
-            setIsLoading(false);
-          } else {
-            console.log('User not admin via auth state change');
-            router.push('/admin/forbidden');
-          }
-        }
-      }
-    );
-
-    checkAuth();
-
-    return () => subscription.unsubscribe();
-  }, [router]);
-
-  if (isLoading) {
+  // Show loading while auth is initializing
+  if (!isInitialized || loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
@@ -101,8 +50,16 @@ export default function AdminClientWrapper({ children }: AdminClientWrapperProps
     );
   }
 
-  if (!isAuthorized) {
-    return null; // Will redirect
+  // Show loading while checking authorization
+  if (!user || (user.role !== 'admin' && user.role !== 'super_admin')) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
+          <p className="text-gray-600">Checking permissions...</p>
+        </div>
+      </div>
+    );
   }
 
   return <>{children}</>;

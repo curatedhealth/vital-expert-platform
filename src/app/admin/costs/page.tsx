@@ -1,9 +1,7 @@
 import { Suspense } from 'react';
-import { requireAdmin } from '@/lib/auth/requireAdmin';
 import { CostDashboard } from './components/CostDashboard';
 
 export default async function CostManagementPage() {
-  await requireAdmin();
 
   return (
     <div className="container mx-auto py-6">

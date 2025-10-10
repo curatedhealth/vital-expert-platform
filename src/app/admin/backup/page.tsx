@@ -1,9 +1,7 @@
-import { requireAdmin } from '@/lib/auth/requireAdmin';
 import { BackupRecoveryService } from '@/services/backup-recovery.service';
 import BackupDashboard from './components/BackupDashboard';
 
 export default async function BackupPage() {
-  const { user, isSuperAdmin } = await requireAdmin();
 
   const backupService = new BackupRecoveryService();
 

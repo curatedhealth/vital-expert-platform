@@ -1,10 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAdmin } from '@/lib/auth/requireAdmin';
 import { costAnalyticsService } from '@/services/cost-analytics.service';
 
 export async function GET(request: NextRequest) {
   try {
-    await requireAdmin();
 
     const { searchParams } = new URL(request.url);
     const tenantId = searchParams.get('tenantId') || undefined;

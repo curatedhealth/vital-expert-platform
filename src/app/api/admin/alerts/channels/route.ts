@@ -1,10 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { alertManagerService } from '@/services/alert-manager.service';
-import { requireAdmin } from '@/lib/auth/requireAdmin';
 
 export async function GET(request: NextRequest) {
   try {
-    await requireAdmin();
 
     const channels = await alertManagerService.getNotificationChannels();
 
@@ -20,7 +18,6 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    await requireAdmin();
 
     const body = await request.json();
     const channel = await alertManagerService.createNotificationChannel(body);

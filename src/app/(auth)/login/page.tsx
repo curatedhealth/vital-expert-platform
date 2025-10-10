@@ -3,123 +3,72 @@
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { supabase } from '@/lib/supabase/client';
+import { useAuth } from '@/lib/auth/auth-provider';
+import { getPostLoginRedirect } from '@/lib/auth/redirect-handler';
+import { AUTH_CONFIG } from '@/lib/auth/config';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const router = useRouter();
-  const isRedirectingRef = useRef(false);
+  const { user, loading, signIn, clearError } = useAuth();
 
-  const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
-
-  // Check if user is already authenticated on page load
+  // Redirect if already authenticated
   useEffect(() => {
-    const checkExistingSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user) {
-        console.log('User already authenticated, redirecting...');
-        setLoading(true); // Show loading state during redirect
-        
-        // Ensure session cookies are set before navigating to a protected route
-        await delay(300);
-        const { data: fresh } = await supabase.auth.getSession();
+    if (user && !loading) {
+      const redirectPath = getPostLoginRedirect(user);
+      console.log('User already authenticated, redirecting to:', redirectPath);
+      router.push(redirectPath);
+    }
+  }, [user, loading, router]);
 
-        // Simple role detection based on email
-        if (fresh?.session?.user?.email === 'hn@vitalexpert.com') {
-          console.log('Super admin email detected, redirecting to admin dashboard');
-          window.location.href = '/admin';
-        } else if (fresh?.session?.user?.email?.includes('admin') || fresh?.session?.user?.email?.includes('manager')) {
-          console.log('Admin email detected, redirecting to admin dashboard');
-          window.location.href = '/admin';
-        } else {
-          console.log('Regular user, redirecting to platform dashboard');
-          window.location.href = '/dashboard';
-        }
-      }
-    };
-
-    checkExistingSession();
-  }, [router]);
-
-  // Listen for authentication state changes
+  // Handle successful login
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        if (event === 'SIGNED_IN' && session?.user) {
-          console.log('Login successful, redirecting...');
-          setLoading(false);
-          
-          // Wait a moment for session to be fully established
-          await new Promise(resolve => setTimeout(resolve, 500));
-          
-          // Simple redirect based on email
-          if (session.user.email === 'hn@vitalexpert.com') {
-            console.log('Super admin detected, redirecting to admin');
-            window.location.href = '/admin';
-          } else if (session.user.email?.includes('admin') || session.user.email?.includes('manager')) {
-            console.log('Admin detected, redirecting to admin');
-            window.location.href = '/admin';
-          } else {
-            console.log('Regular user, redirecting to dashboard');
-            window.location.href = '/dashboard';
-          }
-        }
-      }
-    );
-
-    return () => subscription.unsubscribe();
-  }, [router]);
+    if (user && !loading) {
+      const redirectPath = getPostLoginRedirect(user);
+      console.log('Login successful, redirecting to:', redirectPath);
+      
+      // Small delay to ensure session is fully established
+      setTimeout(() => {
+        router.push(redirectPath);
+      }, AUTH_CONFIG.sessionWaitTime);
+    }
+  }, [user, loading, router]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
     setError('');
+    clearError();
 
     // Client-side validation
     if (!email.trim()) {
       setError('Please enter your email address');
-      setLoading(false);
       return;
     }
 
     if (!password.trim()) {
       setError('Please enter your password');
-      setLoading(false);
       return;
     }
 
     if (!email.includes('@')) {
       setError('Please enter a valid email address');
-      setLoading(false);
       return;
     }
 
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: email.trim(),
-        password,
-      });
-
-      if (error) {
-        setError(error.message);
-        setLoading(false); // Reset loading state on error
-      } else if (data.user) {
-        console.log('Login successful, waiting for auth state change...');
-        // Don't redirect here - let the auth state change handler do it
-      }
+      await signIn(email.trim(), password);
+      // Redirect will be handled by useEffect
     } catch (err) {
-      setError('An unexpected error occurred');
-      setLoading(false); // Reset loading state on error
+      setError(err instanceof Error ? err.message : 'An unexpected error occurred');
     }
   };
 

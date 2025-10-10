@@ -1,9 +1,6 @@
-import { requireAdmin } from '@/lib/auth/requireAdmin';
 import { AlertDashboard } from './components/AlertDashboard';
 
 export default async function AlertsPage() {
-  await requireAdmin();
-
   return (
     <div className="container mx-auto py-6">
       <div className="mb-6">

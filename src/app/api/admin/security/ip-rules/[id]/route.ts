@@ -1,13 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { rateLimitManagerService } from '@/services/rate-limit-manager.service';
-import { requireAdmin } from '@/lib/auth/requireAdmin';
 
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
-    await requireAdmin();
 
     const rules = await rateLimitManagerService.getIPAccessRules();
     const rule = rules.find(r => r.id === params.id);
@@ -34,7 +32,6 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
-    await requireAdmin();
 
     const body = await request.json();
     const rule = await rateLimitManagerService.updateIPAccessRule(params.id, body);
@@ -54,7 +51,6 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    await requireAdmin();
 
     await rateLimitManagerService.deleteIPAccessRule(params.id);
 

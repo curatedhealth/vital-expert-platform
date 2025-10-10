@@ -28,7 +28,7 @@ interface RoleTest {
   error?: string;
 }
 
-export default function RBACTestPage() {
+export default async function RBACTestPage() {
   const { user, userProfile } = useAuth();
   const [permissionTests, setPermissionTests] = useState<PermissionTest[]>([]);
   const [roleTests, setRoleTests] = useState<RoleTest[]>([]);

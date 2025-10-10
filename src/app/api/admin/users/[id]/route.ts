@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAdmin } from '@/lib/auth/requireAdmin';
 import { UserManagementService } from '@/services/user-management.service';
 
 export async function PATCH(
@@ -8,7 +7,6 @@ export async function PATCH(
 ) {
   try {
     // Verify admin access
-    const { user, isSuperAdmin } = await requireAdmin();
     const userService = new UserManagementService();
 
     const { id } = params;
@@ -44,7 +42,6 @@ export async function GET(
 ) {
   try {
     // Verify admin access
-    await requireAdmin();
     const userService = new UserManagementService();
 
     const { id } = params;

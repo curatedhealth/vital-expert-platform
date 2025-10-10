@@ -1,10 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { alertManagerService } from '@/services/alert-manager.service';
-import { requireAdmin } from '@/lib/auth/requireAdmin';
 
 export async function GET(request: NextRequest) {
   try {
-    await requireAdmin();
 
     const { searchParams } = new URL(request.url);
     const isActive = searchParams.get('isActive');
@@ -27,7 +25,6 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    await requireAdmin();
 
     const body = await request.json();
     const rule = await alertManagerService.createAlertRule(body);

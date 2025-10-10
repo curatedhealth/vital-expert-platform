@@ -34,7 +34,7 @@ const testUsers = [
   }
 ];
 
-export default function DevUserSwitcher() {
+export default async function DevUserSwitcher() {
   const [selectedUser, setSelectedUser] = useState('hn@vitalexpert.com');
   const [isSwitching, setIsSwitching] = useState(false);
 

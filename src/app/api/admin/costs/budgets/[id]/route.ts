@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAdmin } from '@/lib/auth/requireAdmin';
 import { costAnalyticsService } from '@/services/cost-analytics.service';
 
 export async function PUT(
@@ -7,7 +6,6 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
-    await requireAdmin();
 
     const body = await request.json();
     const budget = await costAnalyticsService.updateBudgetConfiguration(params.id, body);
@@ -27,7 +25,6 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    await requireAdmin();
 
     await costAnalyticsService.deleteBudgetConfiguration(params.id);
 

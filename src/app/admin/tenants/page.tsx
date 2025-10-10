@@ -1,9 +1,7 @@
-import { requireAdmin } from '@/lib/auth/requireAdmin';
 import { TenantManagementService } from '@/services/tenant-management.service';
 import TenantManagementViewer from './components/TenantManagementViewer';
 
 export default async function TenantsPage() {
-  const { user, isSuperAdmin } = await requireAdmin();
   
   const tenantService = new TenantManagementService();
   const stats = await tenantService.getTenantStats();

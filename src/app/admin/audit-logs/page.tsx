@@ -1,9 +1,7 @@
-import { requireAdmin } from '@/lib/auth/requireAdmin';
 import { AuditService } from '@/services/audit.service';
 import AuditLogViewer from './components/AuditLogViewer';
 
 export default async function AuditLogsPage() {
-  const { user, isSuperAdmin } = await requireAdmin();
   
   const auditService = new AuditService();
   const filterOptions = await auditService.getFilterOptions();

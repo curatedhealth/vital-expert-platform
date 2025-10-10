@@ -17,7 +17,7 @@ import {
   Bell
 } from 'lucide-react';
 
-export default function AdminPage() {
+export default async function AdminPage() {
 
   const adminFeatures = [
     {

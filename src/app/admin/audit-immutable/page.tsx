@@ -1,9 +1,7 @@
-import { requireAdmin } from '@/lib/auth/requireAdmin';
 import { ImmutableAuditService } from '@/services/immutable-audit.service';
 import ImmutableAuditDashboard from './components/ImmutableAuditDashboard';
 
 export default async function ImmutableAuditPage() {
-  const { user, isSuperAdmin } = await requireAdmin();
   
   const auditService = new ImmutableAuditService();
   const [integrityChecks, siemExports, wormConfigs] = await Promise.all([

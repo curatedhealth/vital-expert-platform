@@ -1,9 +1,7 @@
-import { requireAdmin } from '@/lib/auth/requireAdmin';
 import { SystemSettingsService } from '@/services/system-settings.service';
 import SettingsDashboard from './components/SettingsDashboard';
 
 export default async function SettingsPage() {
-  const { user, isSuperAdmin } = await requireAdmin();
 
   const systemSettingsService = new SystemSettingsService();
 

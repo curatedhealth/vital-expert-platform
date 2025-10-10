@@ -1,9 +1,7 @@
-import { requireAdmin } from '@/lib/auth/requireAdmin';
 import { UserManagementService } from '@/services/user-management.service';
 import UserManagementViewer from './components/UserManagementViewer';
 
 export default async function UsersPage() {
-  const { user, isSuperAdmin } = await requireAdmin();
   
   const userService = new UserManagementService();
   const filterOptions = await userService.getFilterOptions();

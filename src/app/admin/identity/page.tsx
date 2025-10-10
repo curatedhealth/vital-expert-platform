@@ -1,9 +1,7 @@
-import { requireAdmin } from '@/lib/auth/requireAdmin';
 import { IdentityHardeningService } from '@/services/identity-hardening.service';
 import IdentityDashboard from './components/IdentityDashboard';
 
 export default async function IdentityPage() {
-  const { user, isSuperAdmin } = await requireAdmin();
   
   const identityService = new IdentityHardeningService();
   const [ssoProviders, mfaConfigs, accessReviews, impersonationSessions] = await Promise.all([

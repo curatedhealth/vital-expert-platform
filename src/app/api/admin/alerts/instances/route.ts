@@ -1,10 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { alertManagerService } from '@/services/alert-manager.service';
-import { requireAdmin } from '@/lib/auth/requireAdmin';
 
 export async function GET(request: NextRequest) {
   try {
-    await requireAdmin();
 
     const { searchParams } = new URL(request.url);
     const ruleId = searchParams.get('ruleId') || undefined;

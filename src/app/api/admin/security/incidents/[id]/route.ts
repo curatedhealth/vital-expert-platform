@@ -1,13 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { rateLimitManagerService } from '@/services/rate-limit-manager.service';
-import { requireAdmin } from '@/lib/auth/requireAdmin';
 
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
-    await requireAdmin();
 
     const incidents = await rateLimitManagerService.getSecurityIncidents();
     const incident = incidents.find(i => i.id === params.id);
@@ -34,7 +32,6 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
-    await requireAdmin();
 
     const body = await request.json();
     const incident = await rateLimitManagerService.updateSecurityIncident(params.id, body);

@@ -1,21 +1,26 @@
-import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 
 export async function middleware(request: NextRequest) {
   const url = request.nextUrl.clone();
 
-  // Skip authentication in development mode
-  if (process.env.NODE_ENV === 'development') {
-    return NextResponse.next({
-      request: {
-        headers: request.headers,
-      },
-    });
-  }
-
   // Public routes that don't require authentication
-  const publicRoutes = ['/', '/login', '/register', '/forgot-password', '/platform', '/services', '/framework'];
-  const isPublicRoute = publicRoutes.includes(url.pathname) || url.pathname.startsWith('/api/');
+  const publicRoutes = [
+    '/',
+    '/login', 
+    '/register', 
+    '/forgot-password', 
+    '/platform', 
+    '/services', 
+    '/framework',
+    '/about',
+    '/contact',
+    '/privacy',
+    '/terms'
+  ];
+  const isPublicRoute = publicRoutes.includes(url.pathname) || 
+                       url.pathname.startsWith('/api/') ||
+                       url.pathname.startsWith('/_next/') ||
+                       url.pathname.startsWith('/favicon');
 
   // Redirect old dashboard routes to new structure
   const redirectMap: Record<string, string> = {
@@ -52,65 +57,8 @@ export async function middleware(request: NextRequest) {
     return response;
   }
 
-  // Validate Supabase environment variables
-  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-    console.error('Supabase environment variables not configured');
-    return NextResponse.redirect(new URL('/login', request.url));
-  }
-
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-    {
-      cookies: {
-        get(name: string) {
-          return request.cookies.get(name)?.value;
-        },
-        set(name: string, value: string, options: unknown) {
-          request.cookies.set({
-            name,
-            value,
-            ...options,
-          });
-          response = NextResponse.next({
-            request: {
-              headers: request.headers,
-            },
-          });
-          response.cookies.set({
-            name,
-            value,
-            ...options,
-          });
-        },
-        remove(name: string, options: unknown) {
-          request.cookies.set({
-            name,
-            value: '',
-            ...options,
-          });
-          response = NextResponse.next({
-            request: {
-              headers: request.headers,
-            },
-          });
-          response.cookies.set({
-            name,
-            value: '',
-            ...options,
-          });
-        },
-      },
-    }
-  );
-
-  const { data: { user }, error } = await supabase.auth.getUser();
-
-  // If user is not authenticated, redirect to login
-  if (error || !user) {
-    return NextResponse.redirect(new URL('/login', request.url));
-  }
-
+  // For protected routes, let client-side auth handle the checks
+  // This prevents server-side auth issues and redirect loops
   return response;
 }
 

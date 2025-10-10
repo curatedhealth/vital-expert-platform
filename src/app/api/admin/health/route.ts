@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
         return NextResponse.json(alerts);
       
       default:
-        const [metrics, services, sloStatus, incidents] = await Promise.all([
+        const [allMetrics, allServices, allSloStatus, allIncidents] = await Promise.all([
           healthService.getHealthMetrics(),
           healthService.getServiceHealth(),
           healthService.getSLOStatus(),
@@ -38,10 +38,10 @@ export async function GET(request: NextRequest) {
         ]);
         
         return NextResponse.json({
-          metrics,
-          services,
-          sloStatus,
-          incidents
+          metrics: allMetrics,
+          services: allServices,
+          sloStatus: allSloStatus,
+          incidents: allIncidents
         });
     }
   } catch (error) {

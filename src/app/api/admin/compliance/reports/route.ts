@@ -22,16 +22,16 @@ export async function GET(request: NextRequest) {
         return NextResponse.json(fdaReport);
       
       default:
-        const [hipaaReport, soc2Report, fdaReport] = await Promise.all([
+        const [allHipaaReport, allSoc2Report, allFdaReport] = await Promise.all([
           complianceService.generateHIPAAReport(),
           complianceService.generateSOC2Report(),
           complianceService.generateFDAReport()
         ]);
         
         return NextResponse.json({
-          hipaa: hipaaReport,
-          soc2: soc2Report,
-          fda: fdaReport
+          hipaa: allHipaaReport,
+          soc2: allSoc2Report,
+          fda: allFdaReport
         });
     }
   } catch (error) {

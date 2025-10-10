@@ -12,7 +12,9 @@ import {
   Building2,
   Cog,
   Database,
-  DollarSign
+  DollarSign,
+  Lock,
+  Bell
 } from 'lucide-react';
 
 export default function AdminPage() {
@@ -101,6 +103,20 @@ export default function AdminPage() {
       href: '/admin/costs',
       icon: DollarSign,
       color: 'bg-emerald-500'
+    },
+    {
+      title: 'Security Controls',
+      description: 'Rate limiting, IP management, abuse detection, and security incidents',
+      href: '/admin/security',
+      icon: Lock,
+      color: 'bg-red-500'
+    },
+    {
+      title: 'Alerts & Monitoring',
+      description: 'Alert rules, notification channels, and alert history',
+      href: '/admin/alerts',
+      icon: Bell,
+      color: 'bg-yellow-500'
     },
     {
       title: 'LLM Management',

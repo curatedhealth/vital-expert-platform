@@ -1,4 +1,9 @@
-export default function SecurityPage() {
+import { requireAdmin } from '@/lib/auth/require-admin';
+import { SecurityDashboard } from './components/SecurityDashboard';
+
+export default async function SecurityPage() {
+  await requireAdmin();
+
   return (
     <div className="container mx-auto py-6">
       <div className="mb-6">
@@ -8,10 +13,7 @@ export default function SecurityPage() {
         </p>
       </div>
 
-      <div className="bg-white rounded-lg shadow p-6">
-        <h2 className="text-xl font-semibold mb-4">Security Dashboard</h2>
-        <p className="text-gray-600">Security controls and monitoring features will be available here.</p>
-      </div>
+      <SecurityDashboard />
     </div>
   );
 }

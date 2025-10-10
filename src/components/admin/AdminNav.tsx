@@ -9,7 +9,8 @@ import {
   Users, 
   Key, 
   Settings,
-  BarChart3
+  BarChart3,
+  TestTube
 } from 'lucide-react';
 
 const adminNavItems = [
@@ -42,6 +43,18 @@ const adminNavItems = [
     href: '/dashboard/llm-management?view=admin',
     icon: Settings,
     description: 'LLM provider administration'
+  },
+  {
+    title: 'RBAC Testing',
+    href: '/admin/rbac-test',
+    icon: TestTube,
+    description: 'Test RBAC permissions and roles'
+  },
+  {
+    title: 'User Switcher',
+    href: '/admin/dev-user-switcher',
+    icon: User,
+    description: 'Switch between different user roles (Dev only)'
   }
 ];
 

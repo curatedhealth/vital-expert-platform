@@ -275,8 +275,8 @@ export class AuditLogger {
     }));
 
     const { error } = await this.supabase
-      .from('security_audit_log' as unknown)
-      .insert(dbEntries as unknown);
+      .from('audit_logs')
+      .insert(dbEntries);
 
     if (error) {
       throw new Error(`Database write failed: ${error.message}`);

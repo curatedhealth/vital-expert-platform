@@ -39,9 +39,37 @@ export async function requireAdmin(): Promise<{ user: any; isSuperAdmin: boolean
     .eq('user_id', user.id)
     .single();
 
+  // If no profile exists, create one for super admin users
   if (profileError || !profile) {
-    await logUnauthorizedAccess(`User profile not found: ${user.email}`);
-    redirect('/login');
+    // Check if this is a known super admin email
+    const superAdminEmails = ['hn@vitalexpert.com'];
+    const isKnownSuperAdmin = superAdminEmails.includes(user.email || '');
+    
+    if (isKnownSuperAdmin) {
+      // Create a super admin profile
+      const { error: createError } = await supabase
+        .from('user_profiles')
+        .insert({
+          user_id: user.id,
+          email: user.email,
+          role: 'super_admin',
+          is_active: true,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        });
+
+      if (createError) {
+        console.error('Failed to create super admin profile:', createError);
+        await logUnauthorizedAccess(`Failed to create profile for super admin: ${user.email}`);
+        redirect('/login');
+      }
+
+      // Return with super admin privileges
+      return { user, isSuperAdmin: true };
+    } else {
+      await logUnauthorizedAccess(`User profile not found: ${user.email}`);
+      redirect('/login');
+    }
   }
 
   if (!profile.is_active) {

@@ -85,9 +85,28 @@ export default function LoginPage() {
     setLoading(true);
     setError('');
 
+    // Client-side validation
+    if (!email.trim()) {
+      setError('Please enter your email address');
+      setLoading(false);
+      return;
+    }
+
+    if (!password.trim()) {
+      setError('Please enter your password');
+      setLoading(false);
+      return;
+    }
+
+    if (!email.includes('@')) {
+      setError('Please enter a valid email address');
+      setLoading(false);
+      return;
+    }
+
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
-        email,
+        email: email.trim(),
         password,
       });
 
@@ -142,8 +161,8 @@ export default function LoginPage() {
                 placeholder="Enter your email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                required
                 className="h-12 border-gray-200 focus:border-blue-500 focus:ring-blue-500/20"
+                autoComplete="email"
               />
             </div>
             <div className="space-y-2">
@@ -155,8 +174,8 @@ export default function LoginPage() {
                   placeholder="Enter your password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  required
                   className="h-12 border-gray-200 focus:border-blue-500 focus:ring-blue-500/20 pr-12"
+                  autoComplete="current-password"
                 />
                 <Button
                   type="button"
@@ -186,7 +205,7 @@ export default function LoginPage() {
             <Button
               type="submit"
               className="w-full h-12 bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700 text-white font-medium shadow-lg hover:shadow-xl transition-all duration-200"
-              disabled={loading}
+              disabled={loading || !email.trim() || !password.trim()}
             >
               {loading ? (
                 <>

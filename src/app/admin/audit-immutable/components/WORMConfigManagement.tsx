@@ -26,14 +26,12 @@ interface WORMConfigManagementProps {
   wormConfigs: WORMConfig[];
   onWORMConfigUpdate: (config: WORMConfig) => void;
   onWORMConfigCreate: (config: WORMConfig) => void;
-  isSuperAdmin: boolean;
 }
 
 export default function WORMConfigManagement({
   wormConfigs,
   onWORMConfigUpdate,
   onWORMConfigCreate,
-  isSuperAdmin
 }: WORMConfigManagementProps) {
   const [selectedConfig, setSelectedConfig] = useState<WORMConfig | null>(null);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
@@ -116,7 +114,6 @@ export default function WORMConfigManagement({
             Configure Write-Once-Read-Many storage for immutable audit logs
           </p>
         </div>
-        {isSuperAdmin && (
           <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
             <DialogTrigger asChild>
               <Button>
@@ -190,7 +187,6 @@ export default function WORMConfigManagement({
                       <TableCell>
                         <div className="flex items-center gap-2">
                           {getStatusBadge(config.isActive)}
-                          {isSuperAdmin && (
                             <Button
                               variant="ghost"
                               size="sm"
@@ -232,7 +228,6 @@ export default function WORMConfigManagement({
                             </DialogContent>
                           </Dialog>
 
-                          {isSuperAdmin && (
                             <>
                               <Button
                                 variant="ghost"

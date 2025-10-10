@@ -21,12 +21,10 @@ interface TenantManagementViewerProps {
     totalRoles: number;
     subscriptionBreakdown: Record<string, number>;
   };
-  isSuperAdmin: boolean;
 }
 
 export default function TenantManagementViewer({
   initialStats,
-  isSuperAdmin
 }: TenantManagementViewerProps) {
   const [filters, setFilters] = useState<TenantFilters>({});
   const [data, setData] = useState<Organization[]>([]);
@@ -215,7 +213,6 @@ export default function TenantManagementViewer({
       {/* Actions */}
       <div className="flex justify-between items-center">
         <h2 className="text-lg font-medium text-gray-900">Organizations</h2>
-        {isSuperAdmin && (
           <Button onClick={() => setCreateDialogOpen(true)}>
             <Building2 className="h-4 w-4 mr-2" />
             Create Organization

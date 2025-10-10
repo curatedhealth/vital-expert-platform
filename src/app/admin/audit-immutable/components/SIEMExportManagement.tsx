@@ -24,14 +24,12 @@ interface SIEMExportManagementProps {
   siemExports: SIEMExport[];
   onSIEMExportUpdate: (export_: SIEMExport) => void;
   onSIEMExportCreate: (export_: SIEMExport) => void;
-  isSuperAdmin: boolean;
 }
 
 export default function SIEMExportManagement({
   siemExports,
   onSIEMExportUpdate,
   onSIEMExportCreate,
-  isSuperAdmin
 }: SIEMExportManagementProps) {
   const [selectedExport, setSelectedExport] = useState<SIEMExport | null>(null);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
@@ -149,7 +147,6 @@ export default function SIEMExportManagement({
             Export audit logs to external SIEM systems for security monitoring
           </p>
         </div>
-        {isSuperAdmin && (
           <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
             <DialogTrigger asChild>
               <Button disabled={isExporting}>
@@ -299,7 +296,6 @@ export default function SIEMExportManagement({
                                 <SIEMExportDetails 
                                   export_={export_}
                                   onRetry={handleRetryExport}
-                                  isSuperAdmin={isSuperAdmin}
                                 />
                               </ScrollArea>
                             </DialogContent>
@@ -318,7 +314,6 @@ export default function SIEMExportManagement({
                             </Button>
                           )}
 
-                          {export_.status === 'failed' && isSuperAdmin && (
                             <Button
                               variant="ghost"
                               size="sm"
@@ -345,10 +340,9 @@ export default function SIEMExportManagement({
 interface SIEMExportDetailsProps {
   export_: SIEMExport;
   onRetry: (exportId: string) => void;
-  isSuperAdmin: boolean;
 }
 
-function SIEMExportDetails({ export_, onRetry, isSuperAdmin }: SIEMExportDetailsProps) {
+function SIEMExportDetails({ export_, onRetry }: SIEMExportDetailsProps) {
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-2 gap-4">
@@ -409,7 +403,6 @@ function SIEMExportDetails({ export_, onRetry, isSuperAdmin }: SIEMExportDetails
         </div>
       )}
 
-      {export_.status === 'failed' && isSuperAdmin && (
         <div className="flex gap-2 pt-4 border-t">
           <Button
             onClick={() => onRetry(export_.id)}

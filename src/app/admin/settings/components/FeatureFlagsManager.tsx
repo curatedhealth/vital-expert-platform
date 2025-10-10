@@ -29,7 +29,6 @@ interface FeatureFlagsManagerProps {
   onFeatureFlagUpdate: (flag: FeatureFlag) => void;
   onFeatureFlagCreate: (flag: FeatureFlag) => void;
   onFeatureFlagDelete: (flagId: string) => void;
-  isSuperAdmin: boolean;
 }
 
 export default function FeatureFlagsManager({
@@ -37,7 +36,6 @@ export default function FeatureFlagsManager({
   onFeatureFlagUpdate,
   onFeatureFlagCreate,
   onFeatureFlagDelete,
-  isSuperAdmin
 }: FeatureFlagsManagerProps) {
   const [selectedFlag, setSelectedFlag] = useState<FeatureFlag | null>(null);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
@@ -161,7 +159,6 @@ export default function FeatureFlagsManager({
             Manage feature flags and rollout controls
           </p>
         </div>
-        {isSuperAdmin && (
           <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
             <DialogTrigger asChild>
               <Button>
@@ -261,7 +258,6 @@ export default function FeatureFlagsManager({
                       <TableCell>
                         <div className="flex items-center gap-2">
                           {getStatusBadge(flag.enabled)}
-                          {isSuperAdmin && (
                             <Switch
                               checked={flag.enabled}
                               onCheckedChange={(enabled) => handleToggleFlag(flag.id, enabled)}
@@ -307,7 +303,6 @@ export default function FeatureFlagsManager({
                             </DialogContent>
                           </Dialog>
 
-                          {isSuperAdmin && (
                             <>
                               <Button
                                 variant="ghost"

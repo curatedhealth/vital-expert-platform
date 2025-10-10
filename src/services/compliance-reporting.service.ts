@@ -106,4 +106,47 @@ export class ComplianceReportingService {
       throw error;
     }
   }
+
+  // Mock methods for missing functionality
+  async generateHIPAAReport(): Promise<ComplianceReport> {
+    return {
+      id: 'hipaa-mock-1',
+      type: 'HIPAA',
+      title: 'HIPAA Compliance Report',
+      status: 'draft',
+      generatedAt: new Date(),
+      generatedBy: 'system',
+      data: { findings: [], summary: 'Mock HIPAA report' },
+      findings: [],
+      recommendations: []
+    };
+  }
+
+  async generateSOC2Report(): Promise<ComplianceReport> {
+    return {
+      id: 'soc2-mock-1',
+      type: 'SOC2',
+      title: 'SOC2 Compliance Report',
+      status: 'draft',
+      generatedAt: new Date(),
+      generatedBy: 'system',
+      data: { findings: [], summary: 'Mock SOC2 report' },
+      findings: [],
+      recommendations: []
+    };
+  }
+
+  async generateFDAReport(): Promise<ComplianceReport> {
+    return {
+      id: 'fda-mock-1',
+      type: 'FDA',
+      title: 'FDA Compliance Report',
+      status: 'draft',
+      generatedAt: new Date(),
+      generatedBy: 'system',
+      data: { findings: [], summary: 'Mock FDA report' },
+      findings: [],
+      recommendations: []
+    };
+  }
 }

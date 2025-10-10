@@ -25,14 +25,12 @@ interface ApprovalWorkflowsProps {
   workflows: ApprovalWorkflow[];
   onWorkflowUpdate: (workflow: ApprovalWorkflow) => void;
   onWorkflowCreate: (workflow: ApprovalWorkflow) => void;
-  isSuperAdmin: boolean;
 }
 
 export default function ApprovalWorkflows({
   workflows,
   onWorkflowUpdate,
   onWorkflowCreate,
-  isSuperAdmin
 }: ApprovalWorkflowsProps) {
   const [selectedWorkflow, setSelectedWorkflow] = useState<ApprovalWorkflow | null>(null);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
@@ -102,7 +100,6 @@ export default function ApprovalWorkflows({
             Configure multi-step approval processes for prompt changes
           </p>
         </div>
-        {isSuperAdmin && (
           <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
             <DialogTrigger asChild>
               <Button>
@@ -170,7 +167,6 @@ export default function ApprovalWorkflows({
                       <TableCell>
                         <div className="flex items-center gap-2">
                           {getStatusBadge(workflow.isActive)}
-                          {isSuperAdmin && (
                             <Button
                               variant="ghost"
                               size="sm"
@@ -212,7 +208,6 @@ export default function ApprovalWorkflows({
                             </DialogContent>
                           </Dialog>
 
-                          {isSuperAdmin && (
                             <Button
                               variant="ghost"
                               size="sm"

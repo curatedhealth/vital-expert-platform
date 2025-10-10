@@ -29,7 +29,6 @@ interface IdentityDashboardProps {
   initialMFAConfigs: MFAConfig[];
   initialAccessReviews: AccessReview[];
   initialImpersonationSessions: ImpersonationSession[];
-  isSuperAdmin: boolean;
 }
 
 export default function IdentityDashboard({
@@ -37,7 +36,6 @@ export default function IdentityDashboard({
   initialMFAConfigs,
   initialAccessReviews,
   initialImpersonationSessions,
-  isSuperAdmin
 }: IdentityDashboardProps) {
   const [ssoProviders, setSSOProviders] = useState(initialSSOProviders);
   const [mfaConfigs, setMFAConfigs] = useState(initialMFAConfigs);
@@ -174,7 +172,6 @@ export default function IdentityDashboard({
             ssoProviders={ssoProviders}
             onSSOUpdate={handleSSOUpdate}
             onSSOCreate={handleSSOCreate}
-            isSuperAdmin={isSuperAdmin}
           />
         </TabsContent>
 
@@ -183,7 +180,6 @@ export default function IdentityDashboard({
             mfaConfigs={mfaConfigs}
             onMFAUpdate={handleMFAUpdate}
             onMFACreate={handleMFACreate}
-            isSuperAdmin={isSuperAdmin}
           />
         </TabsContent>
 
@@ -192,7 +188,6 @@ export default function IdentityDashboard({
             accessReviews={accessReviews}
             onAccessReviewUpdate={handleAccessReviewUpdate}
             onAccessReviewCreate={handleAccessReviewCreate}
-            isSuperAdmin={isSuperAdmin}
           />
         </TabsContent>
 
@@ -200,7 +195,6 @@ export default function IdentityDashboard({
           <ImpersonationManagement
             impersonationSessions={impersonationSessions}
             onImpersonationUpdate={handleImpersonationUpdate}
-            isSuperAdmin={isSuperAdmin}
           />
         </TabsContent>
       </Tabs>

@@ -26,14 +26,12 @@ interface SSOManagementProps {
   ssoProviders: SSOProvider[];
   onSSOUpdate: (provider: SSOProvider) => void;
   onSSOCreate: (provider: SSOProvider) => void;
-  isSuperAdmin: boolean;
 }
 
 export default function SSOManagement({
   ssoProviders,
   onSSOUpdate,
   onSSOCreate,
-  isSuperAdmin
 }: SSOManagementProps) {
   const [selectedProvider, setSelectedProvider] = useState<SSOProvider | null>(null);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
@@ -119,7 +117,6 @@ export default function SSOManagement({
             Configure SAML, OIDC, and SCIM providers for enterprise authentication
           </p>
         </div>
-        {isSuperAdmin && (
           <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
             <DialogTrigger asChild>
               <Button>
@@ -192,7 +189,6 @@ export default function SSOManagement({
                       <TableCell>
                         <div className="flex items-center gap-2">
                           {getStatusBadge(provider.isActive)}
-                          {isSuperAdmin && (
                             <Button
                               variant="ghost"
                               size="sm"
@@ -234,7 +230,6 @@ export default function SSOManagement({
                             </DialogContent>
                           </Dialog>
 
-                          {isSuperAdmin && (
                             <>
                               <Button
                                 variant="ghost"

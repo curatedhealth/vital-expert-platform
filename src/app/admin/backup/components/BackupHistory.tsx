@@ -27,14 +27,12 @@ interface BackupHistoryProps {
   backupHistory: BackupMetadata[];
   onBackupCreate: (backup: BackupMetadata) => void;
   onBackupDelete: (backupId: string) => void;
-  isSuperAdmin: boolean;
 }
 
 export default function BackupHistory({
   backupHistory,
   onBackupCreate,
   onBackupDelete,
-  isSuperAdmin
 }: BackupHistoryProps) {
   const [selectedBackup, setSelectedBackup] = useState<BackupMetadata | null>(null);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
@@ -132,7 +130,6 @@ export default function BackupHistory({
             View and manage database backups
           </p>
         </div>
-        {isSuperAdmin && (
           <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
             <DialogTrigger asChild>
               <Button>
@@ -293,7 +290,6 @@ export default function BackupHistory({
                             </DialogContent>
                           </Dialog>
 
-                          {isSuperAdmin && backup.status === 'completed' && (
                             <Button
                               variant="ghost"
                               size="sm"
@@ -306,7 +302,6 @@ export default function BackupHistory({
                             </Button>
                           )}
 
-                          {isSuperAdmin && (
                             <Button
                               variant="ghost"
                               size="sm"

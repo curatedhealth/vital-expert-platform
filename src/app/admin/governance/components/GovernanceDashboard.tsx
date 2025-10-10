@@ -14,14 +14,12 @@ interface GovernanceDashboardProps {
   initialPolicies: GovernancePolicy[];
   initialPromptChanges: PromptChange[];
   initialWorkflows: ApprovalWorkflow[];
-  isSuperAdmin: boolean;
 }
 
 export default function GovernanceDashboard({
   initialPolicies,
   initialPromptChanges,
   initialWorkflows,
-  isSuperAdmin
 }: GovernanceDashboardProps) {
   const [policies, setPolicies] = useState(initialPolicies);
   const [promptChanges, setPromptChanges] = useState(initialPromptChanges);
@@ -129,7 +127,6 @@ export default function GovernanceDashboard({
             policies={policies}
             onPolicyUpdate={handlePolicyUpdate}
             onPolicyCreate={handlePolicyCreate}
-            isSuperAdmin={isSuperAdmin}
           />
         </TabsContent>
 
@@ -138,7 +135,6 @@ export default function GovernanceDashboard({
             promptChanges={promptChanges}
             onChangeUpdate={handleChangeUpdate}
             onChangeCreate={handleChangeCreate}
-            isSuperAdmin={isSuperAdmin}
           />
         </TabsContent>
 
@@ -147,7 +143,6 @@ export default function GovernanceDashboard({
             workflows={workflows}
             onWorkflowUpdate={handleWorkflowUpdate}
             onWorkflowCreate={handleWorkflowCreate}
-            isSuperAdmin={isSuperAdmin}
           />
         </TabsContent>
       </Tabs>

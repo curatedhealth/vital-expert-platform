@@ -21,7 +21,6 @@ export default async function BackupPage() {
         <p className="mt-2 text-sm text-gray-600">
           Manage database backups, restore operations, and backup scheduling.
         </p>
-        {isSuperAdmin && (
           <div className="mt-2 flex items-center text-sm text-amber-600">
             <span className="mr-1">🔧</span>
             Super Admin privileges active
@@ -35,7 +34,6 @@ export default async function BackupPage() {
         initialRestoreHistory={restoreHistory}
         initialSchedules={schedules}
         initialHealth={health}
-        isSuperAdmin={isSuperAdmin}
       />
     </div>
   );

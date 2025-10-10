@@ -17,7 +17,6 @@ interface ComplianceDashboardProps {
   initialSOC2Report: ComplianceReport;
   initialFDAReport: ComplianceReport;
   initialPlaybooks: IncidentPlaybook[];
-  isSuperAdmin: boolean;
 }
 
 export default function ComplianceDashboard({
@@ -25,7 +24,6 @@ export default function ComplianceDashboard({
   initialSOC2Report,
   initialFDAReport,
   initialPlaybooks,
-  isSuperAdmin
 }: ComplianceDashboardProps) {
   const [hipaaReport, setHIPAAReport] = useState(initialHIPAAReport);
   const [soc2Report, setSOC2Report] = useState(initialSOC2Report);
@@ -180,7 +178,6 @@ export default function ComplianceDashboard({
         <TabsContent value="playbooks">
           <IncidentPlaybooks
             playbooks={playbooks}
-            isSuperAdmin={isSuperAdmin}
           />
         </TabsContent>
       </Tabs>

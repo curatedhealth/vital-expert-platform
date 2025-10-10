@@ -22,14 +22,12 @@ interface MaintenanceModeProps {
   isMaintenanceMode: boolean;
   onMaintenanceModeToggle: (enabled: boolean, reason?: string) => void;
   loading: boolean;
-  isSuperAdmin: boolean;
 }
 
 export default function MaintenanceMode({
   isMaintenanceMode,
   onMaintenanceModeToggle,
   loading,
-  isSuperAdmin
 }: MaintenanceModeProps) {
   const [reason, setReason] = useState('');
   const [showReasonInput, setShowReasonInput] = useState(false);
@@ -103,7 +101,6 @@ export default function MaintenanceMode({
       </Card>
 
       {/* Maintenance Controls */}
-      {isSuperAdmin && (
         <Card>
           <CardHeader>
             <CardTitle>Maintenance Controls</CardTitle>

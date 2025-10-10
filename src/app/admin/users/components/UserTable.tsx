@@ -28,7 +28,6 @@ interface UserTableProps {
   onRoleChange: (userId: string, newRole: string) => void;
   onStatusToggle: (userId: string, isActive: boolean) => void;
   isLoading?: boolean;
-  isSuperAdmin: boolean;
 }
 
 export default function UserTable({
@@ -38,7 +37,6 @@ export default function UserTable({
   onRoleChange,
   onStatusToggle,
   isLoading = false,
-  isSuperAdmin
 }: UserTableProps) {
   const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
 
@@ -73,7 +71,6 @@ export default function UserTable({
 
   const canModifyRole = (userRole: string) => {
     if (userRole === 'super_admin') {
-      return isSuperAdmin;
     }
     return true;
   };

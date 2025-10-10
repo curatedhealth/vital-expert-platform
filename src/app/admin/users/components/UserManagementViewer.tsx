@@ -22,13 +22,11 @@ interface UserManagementViewerProps {
     roleCounts: Record<string, number>;
     orgCounts: Record<string, number>;
   };
-  isSuperAdmin: boolean;
 }
 
 export default function UserManagementViewer({
   initialFilterOptions,
   initialStats,
-  isSuperAdmin
 }: UserManagementViewerProps) {
   const [filters, setFilters] = useState<UserFiltersType>({});
   const [data, setData] = useState<UserProfile[]>([]);
@@ -141,7 +139,6 @@ export default function UserManagementViewer({
         onRoleChange={handleRoleChange}
         onStatusToggle={handleStatusToggle}
         isLoading={isLoading}
-        isSuperAdmin={isSuperAdmin}
       />
 
       <UserRoleDialog
@@ -151,7 +148,6 @@ export default function UserManagementViewer({
         isOpen={roleDialog.isOpen}
         onOpenChange={(open) => setRoleDialog(prev => ({ ...prev, isOpen: open }))}
         onRoleChange={handleRoleUpdate}
-        isSuperAdmin={isSuperAdmin}
       />
     </div>
   );

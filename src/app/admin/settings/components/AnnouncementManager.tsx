@@ -30,7 +30,6 @@ interface AnnouncementManagerProps {
   onAnnouncementUpdate: (announcement: SystemAnnouncement) => void;
   onAnnouncementCreate: (announcement: SystemAnnouncement) => void;
   onAnnouncementDelete: (announcementId: string) => void;
-  isSuperAdmin: boolean;
 }
 
 export default function AnnouncementManager({
@@ -38,7 +37,6 @@ export default function AnnouncementManager({
   onAnnouncementUpdate,
   onAnnouncementCreate,
   onAnnouncementDelete,
-  isSuperAdmin
 }: AnnouncementManagerProps) {
   const [selectedAnnouncement, setSelectedAnnouncement] = useState<SystemAnnouncement | null>(null);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
@@ -176,7 +174,6 @@ export default function AnnouncementManager({
             Manage system-wide announcements and notifications
           </p>
         </div>
-        {isSuperAdmin && (
           <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
             <DialogTrigger asChild>
               <Button>
@@ -276,7 +273,6 @@ export default function AnnouncementManager({
                       <TableCell>
                         <div className="flex items-center gap-2">
                           {getStatusBadge(announcement.is_active, announcement.start_time, announcement.end_time)}
-                          {isSuperAdmin && (
                             <Switch
                               checked={announcement.is_active}
                               onCheckedChange={(isActive) => handleToggleAnnouncement(announcement.id, isActive)}
@@ -335,7 +331,6 @@ export default function AnnouncementManager({
                             </DialogContent>
                           </Dialog>
 
-                          {isSuperAdmin && (
                             <>
                               <Button
                                 variant="ghost"

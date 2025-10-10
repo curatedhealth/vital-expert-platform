@@ -29,7 +29,6 @@ interface BackupSchedulerProps {
   onScheduleCreate: (schedule: BackupSchedule) => void;
   onScheduleUpdate: (schedule: BackupSchedule) => void;
   onScheduleDelete: (scheduleId: string) => void;
-  isSuperAdmin: boolean;
 }
 
 export default function BackupScheduler({
@@ -37,7 +36,6 @@ export default function BackupScheduler({
   onScheduleCreate,
   onScheduleUpdate,
   onScheduleDelete,
-  isSuperAdmin
 }: BackupSchedulerProps) {
   const [selectedSchedule, setSelectedSchedule] = useState<BackupSchedule | null>(null);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
@@ -148,7 +146,6 @@ export default function BackupScheduler({
             Manage automated backup schedules
           </p>
         </div>
-        {isSuperAdmin && (
           <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
             <DialogTrigger asChild>
               <Button>
@@ -216,7 +213,6 @@ export default function BackupScheduler({
                       <TableCell>
                         <div className="flex items-center gap-2">
                           {getStatusBadge(schedule.is_enabled)}
-                          {isSuperAdmin && (
                             <Switch
                               checked={schedule.is_enabled}
                               onCheckedChange={(enabled) => handleToggleSchedule(schedule.id, enabled)}
@@ -267,7 +263,6 @@ export default function BackupScheduler({
                             </DialogContent>
                           </Dialog>
 
-                          {isSuperAdmin && (
                             <>
                               <Button
                                 variant="ghost"

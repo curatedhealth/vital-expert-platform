@@ -15,7 +15,6 @@ interface UserRoleDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   onRoleChange: (userId: string, newRole: string) => void;
-  isSuperAdmin: boolean;
 }
 
 const roleOptions = [
@@ -33,7 +32,6 @@ export default function UserRoleDialog({
   isOpen,
   onOpenChange,
   onRoleChange,
-  isSuperAdmin
 }: UserRoleDialogProps) {
   const [selectedRole, setSelectedRole] = useState(currentRole);
   const [isLoading, setIsLoading] = useState(false);
@@ -60,7 +58,6 @@ export default function UserRoleDialog({
 
   const canAssignRole = (role: string) => {
     if (role === 'super_admin') {
-      return isSuperAdmin;
     }
     return true;
   };
@@ -131,7 +128,6 @@ export default function UserRoleDialog({
             </Select>
           </div>
 
-          {selectedRole === 'super_admin' && !isSuperAdmin && (
             <Alert>
               <AlertTriangle className="h-4 w-4" />
               <AlertDescription>
@@ -150,7 +146,6 @@ export default function UserRoleDialog({
             </Button>
             <Button
               onClick={handleRoleChange}
-              disabled={isLoading || selectedRole === currentRole || (selectedRole === 'super_admin' && !isSuperAdmin)}
             >
               {isLoading ? 'Updating...' : 'Update Role'}
             </Button>

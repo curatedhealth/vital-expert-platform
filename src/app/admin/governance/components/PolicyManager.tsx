@@ -25,14 +25,12 @@ interface PolicyManagerProps {
   policies: GovernancePolicy[];
   onPolicyUpdate: (policy: GovernancePolicy) => void;
   onPolicyCreate: (policy: GovernancePolicy) => void;
-  isSuperAdmin: boolean;
 }
 
 export default function PolicyManager({
   policies,
   onPolicyUpdate,
   onPolicyCreate,
-  isSuperAdmin
 }: PolicyManagerProps) {
   const [selectedPolicy, setSelectedPolicy] = useState<GovernancePolicy | null>(null);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
@@ -121,7 +119,6 @@ export default function PolicyManager({
             Manage safety, compliance, performance, and cost policies for LLM operations
           </p>
         </div>
-        {isSuperAdmin && (
           <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
             <DialogTrigger asChild>
               <Button>
@@ -191,7 +188,6 @@ export default function PolicyManager({
                       <TableCell>
                         <div className="flex items-center gap-2">
                           {getStatusBadge(policy.isActive)}
-                          {isSuperAdmin && (
                             <Button
                               variant="ghost"
                               size="sm"
@@ -236,7 +232,6 @@ export default function PolicyManager({
                             </DialogContent>
                           </Dialog>
 
-                          {isSuperAdmin && (
                             <>
                               <Button
                                 variant="ghost"

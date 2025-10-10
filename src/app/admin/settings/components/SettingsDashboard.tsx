@@ -46,14 +46,12 @@ interface SettingsDashboardProps {
   initialFeatureFlags: FeatureFlag[];
   initialSystemSettings: SystemSetting[];
   initialAnnouncements: Announcement[];
-  isSuperAdmin: boolean;
 }
 
 export default function SettingsDashboard({
   initialFeatureFlags,
   initialSystemSettings,
   initialAnnouncements,
-  isSuperAdmin
 }: SettingsDashboardProps) {
   const [featureFlags, setFeatureFlags] = useState(initialFeatureFlags);
   const [systemSettings, setSystemSettings] = useState(initialSystemSettings);
@@ -61,11 +59,6 @@ export default function SettingsDashboard({
   const [isLoading, setIsLoading] = useState(false);
 
   const handleFeatureFlagToggle = async (flagId: string, enabled: boolean) => {
-    if (!isSuperAdmin) {
-      toast.error('Super admin privileges required');
-      return;
-    }
-
     setIsLoading(true);
     try {
       // Update local state
@@ -91,11 +84,6 @@ export default function SettingsDashboard({
   };
 
   const handleSystemSettingUpdate = async (settingId: string, value: string) => {
-    if (!isSuperAdmin) {
-      toast.error('Super admin privileges required');
-      return;
-    }
-
     setIsLoading(true);
     try {
       // Update local state
@@ -115,11 +103,6 @@ export default function SettingsDashboard({
   };
 
   const handleAnnouncementToggle = async (announcementId: string, active: boolean) => {
-    if (!isSuperAdmin) {
-      toast.error('Super admin privileges required');
-      return;
-    }
-
     setIsLoading(true);
     try {
       // Update local state
@@ -194,7 +177,6 @@ export default function SettingsDashboard({
                 <Switch
                   checked={flag.enabled}
                   onCheckedChange={(enabled) => handleFeatureFlagToggle(flag.id, enabled)}
-                  disabled={!isSuperAdmin || isLoading}
                 />
               </div>
             ))}
@@ -222,7 +204,6 @@ export default function SettingsDashboard({
                   id={setting.id}
                   value={setting.value}
                   onChange={(e) => handleSystemSettingUpdate(setting.id, e.target.value)}
-                  disabled={!isSuperAdmin || isLoading}
                 />
                 <p className="text-sm text-gray-600">{setting.description}</p>
               </div>
@@ -259,7 +240,6 @@ export default function SettingsDashboard({
                   <Switch
                     checked={announcement.active}
                     onCheckedChange={(active) => handleAnnouncementToggle(announcement.id, active)}
-                    disabled={!isSuperAdmin || isLoading}
                   />
                 </div>
               </div>
@@ -284,11 +264,9 @@ export default function SettingsDashboard({
             <CardContent className="space-y-4">
               <div className="space-y-2">
                 <Label>Session Timeout (minutes)</Label>
-                <Input defaultValue="60" disabled={!isSuperAdmin} />
               </div>
               <div className="space-y-2">
                 <Label>Max Login Attempts</Label>
-                <Input defaultValue="5" disabled={!isSuperAdmin} />
               </div>
             </CardContent>
           </Card>
@@ -306,11 +284,9 @@ export default function SettingsDashboard({
             <CardContent className="space-y-4">
               <div className="space-y-2">
                 <Label>Connection Pool Size</Label>
-                <Input defaultValue="10" disabled={!isSuperAdmin} />
               </div>
               <div className="space-y-2">
                 <Label>Query Timeout (seconds)</Label>
-                <Input defaultValue="30" disabled={!isSuperAdmin} />
               </div>
             </CardContent>
           </Card>

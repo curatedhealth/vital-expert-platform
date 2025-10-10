@@ -26,13 +26,11 @@ import { format } from 'date-fns';
 interface SystemConfigurationProps {
   systemSettings: SystemSetting[];
   onSystemSettingUpdate: (setting: SystemSetting) => void;
-  isSuperAdmin: boolean;
 }
 
 export default function SystemConfiguration({
   systemSettings,
   onSystemSettingUpdate,
-  isSuperAdmin
 }: SystemConfigurationProps) {
   const [selectedSetting, setSelectedSetting] = useState<SystemSetting | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -288,7 +286,6 @@ export default function SystemConfiguration({
                                 </DialogContent>
                               </Dialog>
 
-                              {isSuperAdmin && (
                                 <Button
                                   variant="ghost"
                                   size="sm"

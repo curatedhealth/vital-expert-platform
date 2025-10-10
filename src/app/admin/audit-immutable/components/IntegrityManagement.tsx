@@ -23,13 +23,11 @@ import { format } from 'date-fns';
 interface IntegrityManagementProps {
   integrityChecks: IntegrityCheck[];
   onIntegrityUpdate: (checks: IntegrityCheck[]) => void;
-  isSuperAdmin: boolean;
 }
 
 export default function IntegrityManagement({
   integrityChecks,
   onIntegrityUpdate,
-  isSuperAdmin
 }: IntegrityManagementProps) {
   const [selectedCheck, setSelectedCheck] = useState<IntegrityCheck | null>(null);
   const [isVerifying, setIsVerifying] = useState(false);

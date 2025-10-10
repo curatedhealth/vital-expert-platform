@@ -20,7 +20,6 @@ export default async function SettingsPage() {
         <p className="mt-2 text-sm text-gray-600">
           Manage global system configuration, feature flags, and announcements.
         </p>
-        {isSuperAdmin && (
           <div className="mt-2 flex items-center text-sm text-amber-600">
             <span className="mr-1">🔧</span>
             Super Admin privileges active
@@ -33,7 +32,6 @@ export default async function SettingsPage() {
         initialFeatureFlags={featureFlags}
         initialSystemSettings={systemSettings}
         initialAnnouncements={announcements}
-        isSuperAdmin={isSuperAdmin}
       />
     </div>
   );

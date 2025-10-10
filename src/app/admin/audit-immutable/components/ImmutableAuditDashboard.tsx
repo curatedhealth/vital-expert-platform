@@ -26,14 +26,12 @@ interface ImmutableAuditDashboardProps {
   initialIntegrityChecks: IntegrityCheck[];
   initialSIEMExports: SIEMExport[];
   initialWORMConfigs: WORMConfig[];
-  isSuperAdmin: boolean;
 }
 
 export default function ImmutableAuditDashboard({
   initialIntegrityChecks,
   initialSIEMExports,
   initialWORMConfigs,
-  isSuperAdmin
 }: ImmutableAuditDashboardProps) {
   const [integrityChecks, setIntegrityChecks] = useState(initialIntegrityChecks);
   const [siemExports, setSIEMExports] = useState(initialSIEMExports);
@@ -160,7 +158,6 @@ export default function ImmutableAuditDashboard({
           <IntegrityManagement
             integrityChecks={integrityChecks}
             onIntegrityUpdate={handleIntegrityUpdate}
-            isSuperAdmin={isSuperAdmin}
           />
         </TabsContent>
 
@@ -169,7 +166,6 @@ export default function ImmutableAuditDashboard({
             siemExports={siemExports}
             onSIEMExportUpdate={handleSIEMExportUpdate}
             onSIEMExportCreate={handleSIEMExportCreate}
-            isSuperAdmin={isSuperAdmin}
           />
         </TabsContent>
 
@@ -178,7 +174,6 @@ export default function ImmutableAuditDashboard({
             wormConfigs={wormConfigs}
             onWORMConfigUpdate={handleWORMConfigUpdate}
             onWORMConfigCreate={handleWORMConfigCreate}
-            isSuperAdmin={isSuperAdmin}
           />
         </TabsContent>
       </Tabs>

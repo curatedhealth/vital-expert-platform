@@ -37,7 +37,6 @@ interface BackupDashboardProps {
     storage_used: number;
     health_score: number;
   };
-  isSuperAdmin: boolean;
 }
 
 export default function BackupDashboard({
@@ -45,7 +44,6 @@ export default function BackupDashboard({
   initialRestoreHistory,
   initialSchedules,
   initialHealth,
-  isSuperAdmin
 }: BackupDashboardProps) {
   const [backupHistory, setBackupHistory] = useState<BackupMetadata[]>(initialBackupHistory);
   const [restoreHistory, setRestoreHistory] = useState<RestoreOperation[]>(initialRestoreHistory);
@@ -205,7 +203,6 @@ export default function BackupDashboard({
             backupHistory={backupHistory}
             onBackupCreate={handleBackupCreate}
             onBackupDelete={handleBackupDelete}
-            isSuperAdmin={isSuperAdmin}
           />
         </TabsContent>
 
@@ -215,7 +212,6 @@ export default function BackupDashboard({
             onScheduleCreate={handleScheduleCreate}
             onScheduleUpdate={handleScheduleUpdate}
             onScheduleDelete={handleScheduleDelete}
-            isSuperAdmin={isSuperAdmin}
           />
         </TabsContent>
 
@@ -224,7 +220,6 @@ export default function BackupDashboard({
             backupHistory={backupHistory}
             restoreHistory={restoreHistory}
             onRestoreCreate={handleRestoreCreate}
-            isSuperAdmin={isSuperAdmin}
           />
         </TabsContent>
 
@@ -232,7 +227,6 @@ export default function BackupDashboard({
           <BackupHealthMonitor
             health={health}
             onRefresh={refreshHealth}
-            isSuperAdmin={isSuperAdmin}
           />
         </TabsContent>
       </Tabs>

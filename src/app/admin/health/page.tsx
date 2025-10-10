@@ -116,7 +116,6 @@ export default async function HealthPage() {
         initialServiceHealth={serviceHealth}
         initialSLOStatus={sloStatus}
         initialIncidents={incidents}
-        isSuperAdmin={isSuperAdmin}
       />
     </div>
   );

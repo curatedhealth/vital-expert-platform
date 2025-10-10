@@ -28,13 +28,11 @@ interface BackupHealthMonitorProps {
     health_score: number;
   };
   onRefresh: () => void;
-  isSuperAdmin: boolean;
 }
 
 export default function BackupHealthMonitor({
   health,
   onRefresh,
-  isSuperAdmin
 }: BackupHealthMonitorProps) {
   const [loading, setLoading] = useState(false);
 
@@ -307,7 +305,6 @@ export default function BackupHealthMonitor({
       </Card>
 
       {/* Quick Actions */}
-      {isSuperAdmin && (
         <Card>
           <CardHeader>
             <CardTitle className="text-base">Quick Actions</CardTitle>

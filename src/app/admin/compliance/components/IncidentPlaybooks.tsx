@@ -22,10 +22,9 @@ import {
 
 interface IncidentPlaybooksProps {
   playbooks: IncidentPlaybook[];
-  isSuperAdmin: boolean;
 }
 
-export default function IncidentPlaybooks({ playbooks, isSuperAdmin }: IncidentPlaybooksProps) {
+export default function IncidentPlaybooks({ playbooks }: IncidentPlaybooksProps) {
   const [selectedPlaybook, setSelectedPlaybook] = useState<IncidentPlaybook | null>(null);
   const [isExecuting, setIsExecuting] = useState(false);
   const [executionResult, setExecutionResult] = useState<PlaybookExecution | null>(null);
@@ -64,11 +63,7 @@ export default function IncidentPlaybooks({ playbooks, isSuperAdmin }: IncidentP
   };
 
   const executePlaybook = async (playbook: IncidentPlaybook) => {
-    if (!isSuperAdmin) {
-      setError('Super admin privileges required to execute playbooks');
-      return;
-    }
-
+    // Remove super admin check since we're using client-side auth
     setIsExecuting(true);
     setError(null);
     setSelectedPlaybook(playbook);
@@ -251,7 +246,6 @@ export default function IncidentPlaybooks({ playbooks, isSuperAdmin }: IncidentP
                 <Button
                   size="sm"
                   onClick={() => executePlaybook(playbook)}
-                  disabled={!isSuperAdmin || isExecuting}
                   className="flex-1"
                 >
                   <Play className="h-4 w-4 mr-2" />

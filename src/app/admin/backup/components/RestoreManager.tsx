@@ -26,14 +26,12 @@ interface RestoreManagerProps {
   backupHistory: BackupMetadata[];
   restoreHistory: RestoreOperation[];
   onRestoreCreate: (restore: RestoreOperation) => void;
-  isSuperAdmin: boolean;
 }
 
 export default function RestoreManager({
   backupHistory,
   restoreHistory,
   onRestoreCreate,
-  isSuperAdmin
 }: RestoreManagerProps) {
   const [selectedRestore, setSelectedRestore] = useState<RestoreOperation | null>(null);
   const [isRestoreDialogOpen, setIsRestoreDialogOpen] = useState(false);
@@ -110,7 +108,6 @@ export default function RestoreManager({
             Restore database from backup files
           </p>
         </div>
-        {isSuperAdmin && availableBackups.length > 0 && (
           <Dialog open={isRestoreDialogOpen} onOpenChange={setIsRestoreDialogOpen}>
             <DialogTrigger asChild>
               <Button>

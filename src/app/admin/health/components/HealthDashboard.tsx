@@ -16,7 +16,6 @@ interface HealthDashboardProps {
   initialServiceHealth: HealthStatus[];
   initialSLOStatus: SLOConfig[];
   initialIncidents: Incident[];
-  isSuperAdmin: boolean;
 }
 
 export default function HealthDashboard({
@@ -24,7 +23,6 @@ export default function HealthDashboard({
   initialServiceHealth,
   initialSLOStatus,
   initialIncidents,
-  isSuperAdmin
 }: HealthDashboardProps) {
   const [metrics, setMetrics] = useState(initialMetrics);
   const [serviceHealth, setServiceHealth] = useState(initialServiceHealth);
@@ -129,7 +127,6 @@ export default function HealthDashboard({
       )}
 
       {/* Alert Configuration */}
-      {isSuperAdmin && (
         <div>
           <h2 className="text-lg font-medium text-gray-900 mb-4">Alert Configuration</h2>
           <AlertConfigPanel />

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { ApiKeyManagementService, ApiKeyFilters, ApiKey, ApiKeyPagination } from '@/services/api-key-management.service';
+import { ApiKeyManagementService, ApiKeyFilters as ApiKeyFiltersType, ApiKey, ApiKeyPagination } from '@/services/api-key-management.service';
 import ApiKeyFilters from './ApiKeyFilters';
 import ApiKeyTable from './ApiKeyTable';
 import CreateApiKeyDialog from './CreateApiKeyDialog';
@@ -25,7 +25,7 @@ export default function ApiKeyManagementViewer({
   initialProviders,
   initialStats
 }: ApiKeyManagementViewerProps) {
-  const [filters, setFilters] = useState<ApiKeyFilters>({});
+  const [filters, setFilters] = useState<ApiKeyFiltersType>({});
   const [data, setData] = useState<ApiKey[]>([]);
   const [pagination, setPagination] = useState<ApiKeyPagination>({
     page: 1,

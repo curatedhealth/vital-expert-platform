@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { AuditService, AuditLogFilters, AuditLogEntry, AuditLogPagination } from '@/services/audit.service';
+import { AuditService, AuditLogFilters as AuditLogFiltersType, AuditLogEntry, AuditLogPagination } from '@/services/audit.service';
 import AuditLogFilters from './AuditLogFilters';
 import AuditLogTable from './AuditLogTable';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -26,7 +26,7 @@ export default function AuditLogViewer({
   initialFilterOptions,
   initialStats
 }: AuditLogViewerProps) {
-  const [filters, setFilters] = useState<AuditLogFilters>({});
+  const [filters, setFilters] = useState<AuditLogFiltersType>({});
   const [data, setData] = useState<AuditLogEntry[]>([]);
   const [pagination, setPagination] = useState<AuditLogPagination>({
     page: 1,

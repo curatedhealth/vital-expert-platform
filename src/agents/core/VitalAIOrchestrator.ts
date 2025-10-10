@@ -17,6 +17,10 @@ import { agentRAGIntegration, AgentRAGQuery } from '@/shared/services/rag/agent-
 import {
   ExecutionContext
 } from '@/types/digital-health-agent.types';
+import { agentConflictResolver } from '../core/conflict-resolver';
+import { gracefulDegradationManager } from '@/lib/resilience/graceful-degradation';
+import { multiAgentCoordinator, type AgentInfo, type CoordinationResult } from '../collaboration/multi-agent-coordinator';
+import { responseSynthesizer, type SynthesisContext } from '../collaboration/response-synthesizer';
 
 import { ComplianceAwareOrchestrator } from './ComplianceAwareOrchestrator';
 
@@ -637,12 +641,43 @@ export class VitalAIOrchestrator extends ComplianceAwareOrchestrator {
         throw new Error('All agents failed to execute');
       }
 
-      // Synthesize responses into unified output
-      const unifiedResponse = this.synthesizeMultiAgentResponse(
-        successfulResults,
-        selection.primaryAgent,
-        intent
+      // Check for conflicts between agent responses
+      const agentResponses = successfulResults.map(r => ({
+        agent: this.agents.getAgent(r.agent),
+        response: r.response
+      })).filter(r => r.agent && r.response);
+
+      const conflicts = agentConflictResolver.detectConflicts(
+        agentResponses.map(r => r.agent!),
+        agentResponses.map(r => r.response!),
+        query,
+        context
       );
+
+      let unifiedResponse;
+      if (conflicts.length > 0) {
+        console.log(`🔧 Detected ${conflicts.length} conflicts, resolving...`);
+        
+        // Resolve conflicts
+        const resolutions = await agentConflictResolver.resolveConflicts(conflicts);
+        
+      // Use advanced response synthesis
+      unifiedResponse = await this.synthesizeWithAdvancedSynthesis(
+        successfulResults,
+        resolutions,
+        selection.primaryAgent,
+        intent,
+        query,
+        context
+      );
+      } else {
+        // No conflicts, proceed with normal synthesis
+        unifiedResponse = this.synthesizeMultiAgentResponse(
+          successfulResults,
+          selection.primaryAgent,
+          intent
+        );
+      }
 
       // Aggregate RAG metadata from all agents
 
@@ -694,6 +729,398 @@ export class VitalAIOrchestrator extends ComplianceAwareOrchestrator {
     }
 
     return synthesized;
+  }
+
+  /**
+   * Synthesize multi-agent responses with conflict resolutions
+   */
+  private async synthesizeMultiAgentResponseWithResolutions(
+    results: any[],
+    resolutions: any[],
+    primaryAgent: string,
+    intent: IntentClassificationResult
+  ): Promise<any> {
+    // Use resolved responses instead of original responses
+    const resolvedResults = results.map(result => {
+      const resolution = resolutions.find(r => 
+        r.participatingAgents.includes(result.agent)
+      );
+      
+      if (resolution) {
+        return {
+          ...result,
+          response: resolution.resolvedResponse
+        };
+      }
+      
+      return result;
+    });
+
+    // Synthesize using resolved responses
+    return this.synthesizeMultiAgentResponse(resolvedResults, primaryAgent, intent);
+  }
+
+  /**
+   * Execute advanced multi-agent coordination with multiple strategies
+   */
+  private async executeAdvancedMultiAgentCoordination(
+    selection: AgentSelectionResult,
+    query: string,
+    context: ExecutionContext,
+    intent: IntentClassificationResult
+  ): Promise<UnifiedResponse> {
+    const startTime = Date.now();
+    
+    try {
+      console.log('🤝 Starting advanced multi-agent coordination...');
+
+      // Convert selected agents to AgentInfo format
+      const agentInfos: AgentInfo[] = selection.rankedAgents.map(agent => ({
+        id: agent.id,
+        name: agent.name,
+        capabilities: agent.capabilities || [],
+        tier: agent.tier || 1,
+        specialization: agent.knowledgeDomains || [],
+        performance: {
+          accuracy: agent.confidence || 0.8,
+          responseTime: 1000, // Default response time
+          reliability: 0.9
+        },
+        status: 'available' as const
+      }));
+
+      // Determine coordination strategy based on query complexity and agent count
+      const strategy = this.selectCoordinationStrategy(query, agentInfos, intent);
+
+      // Execute coordination
+      const coordinationResult: CoordinationResult = await multiAgentCoordinator.coordinate(
+        agentInfos,
+        query,
+        {
+          ...context,
+          intent: intent.intent,
+          confidence: intent.confidence,
+          entities: intent.entities
+        },
+        strategy
+      );
+
+      console.log(`✅ Multi-agent coordination completed using ${coordinationResult.strategy} strategy`);
+
+      // Convert coordination result to UnifiedResponse format
+      const unifiedResponse: UnifiedResponse = {
+        id: coordinationResult.finalResponse.id,
+        content: coordinationResult.finalResponse.content,
+        agent: selection.primaryAgent,
+        confidence: coordinationResult.finalResponse.confidence,
+        reasoning: this.generateCoordinationReasoning(coordinationResult),
+        metadata: {
+          ...coordinationResult.finalResponse.metadata,
+          coordinationStrategy: coordinationResult.strategy,
+          participatingAgents: coordinationResult.metadata.participatingAgents,
+          conflictCount: coordinationResult.conflicts.length,
+          resolutionCount: coordinationResult.resolutions.length,
+          qualityScore: coordinationResult.metadata.qualityScore,
+          performance: coordinationResult.performance
+        },
+        timestamp: new Date(),
+        followUpQuestions: this.generateFollowUpQuestionsFromCoordination(coordinationResult, intent)
+      };
+
+      // Record performance metrics
+      performanceMetricsService.recordMetric('multi_agent_coordination_time', Date.now() - startTime);
+      performanceMetricsService.recordMetric('coordination_strategy', coordinationResult.strategy);
+      performanceMetricsService.recordMetric('coordination_quality_score', coordinationResult.metadata.qualityScore);
+
+      return unifiedResponse;
+
+    } catch (error) {
+      console.error('❌ Advanced multi-agent coordination failed:', error);
+      
+      // Fallback to standard multi-agent collaboration
+      return this.executeMultiAgentPharmaCollaboration(selection, query, context, intent);
+    }
+  }
+
+  /**
+   * Select optimal coordination strategy
+   */
+  private selectCoordinationStrategy(
+    query: string,
+    agents: AgentInfo[],
+    intent: IntentClassificationResult
+  ): string | undefined {
+    const queryLength = query.length;
+    const agentCount = agents.length;
+    const intentComplexity = this.analyzeIntentComplexity(intent);
+
+    // Simple strategy selection logic
+    if (agentCount <= 2) {
+      return 'parallel';
+    } else if (agentCount <= 4 && intentComplexity < 0.5) {
+      return 'parallel';
+    } else if (agentCount <= 6 && intentComplexity >= 0.5) {
+      return 'sequential';
+    } else if (agentCount > 6 && intentComplexity >= 0.7) {
+      return 'consensus';
+    } else if (agentCount > 8) {
+      return 'hierarchical';
+    } else {
+      return 'adaptive';
+    }
+  }
+
+  /**
+   * Analyze intent complexity
+   */
+  private analyzeIntentComplexity(intent: IntentClassificationResult): number {
+    const complexIntents = ['analysis', 'comparison', 'evaluation', 'synthesis', 'research'];
+    const isComplex = complexIntents.some(complexIntent => 
+      intent.intent.toLowerCase().includes(complexIntent)
+    );
+    
+    return isComplex ? 0.8 : 0.3;
+  }
+
+  /**
+   * Generate reasoning for coordination results
+   */
+  private generateCoordinationReasoning(result: CoordinationResult): string {
+    const strategy = result.strategy;
+    const agentCount = result.metadata.participatingAgents.length;
+    const conflictCount = result.conflicts.length;
+    const qualityScore = result.metadata.qualityScore;
+
+    let reasoning = `Multi-agent coordination completed using ${strategy} strategy with ${agentCount} agents. `;
+    
+    if (conflictCount > 0) {
+      reasoning += `${conflictCount} conflicts were detected and resolved. `;
+    }
+    
+    reasoning += `Quality score: ${(qualityScore * 100).toFixed(1)}%. `;
+    reasoning += `Total coordination time: ${result.performance.totalTime}ms.`;
+
+    return reasoning;
+  }
+
+  /**
+   * Generate follow-up questions from coordination results
+   */
+  private generateFollowUpQuestionsFromCoordination(
+    result: CoordinationResult,
+    intent: IntentClassificationResult
+  ): string[] {
+    const questions: string[] = [];
+
+    // Add strategy-specific follow-ups
+    if (result.strategy === 'consensus' && result.conflicts.length > 0) {
+      questions.push('Would you like me to elaborate on how the conflicting viewpoints were resolved?');
+    }
+
+    if (result.strategy === 'hierarchical') {
+      questions.push('Would you like to see the detailed analysis from the specialist agents?');
+    }
+
+    if (result.metadata.qualityScore < 0.7) {
+      questions.push('Would you like me to consult additional agents for a more comprehensive analysis?');
+    }
+
+    // Add intent-specific follow-ups
+    if (intent.intent.includes('analysis')) {
+      questions.push('Would you like me to perform a deeper analysis on any specific aspect?');
+    }
+
+    if (intent.intent.includes('comparison')) {
+      questions.push('Would you like me to compare additional criteria or factors?');
+    }
+
+    return questions.slice(0, 3); // Limit to 3 questions
+  }
+
+  /**
+   * Synthesize responses using advanced synthesis strategies
+   */
+  private async synthesizeWithAdvancedSynthesis(
+    results: any[],
+    resolutions: any[],
+    primaryAgent: string,
+    intent: IntentClassificationResult,
+    query: string,
+    context: ExecutionContext
+  ): Promise<UnifiedResponse> {
+    try {
+      console.log('🔄 Using advanced response synthesis...');
+
+      // Convert results to AgentResponse format
+      const agentResponses = results.map(result => ({
+        id: `response-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        agentId: result.agent,
+        content: result.response?.content || result.response || 'No response available',
+        confidence: result.response?.confidence || result.confidence || 0.8,
+        metadata: {
+          agentName: result.agent,
+          capabilities: result.capabilities || [],
+          responseTime: result.responseTime || 1000
+        },
+        timestamp: new Date()
+      }));
+
+      // Create synthesis context
+      const synthesisContext: SynthesisContext = {
+        query,
+        intent: intent.intent,
+        entities: intent.entities || [],
+        domain: context.domain || 'general',
+        userPreferences: {
+          detailLevel: 'detailed',
+          format: 'narrative',
+          focus: intent.entities || []
+        },
+        constraints: {
+          maxLength: 2000,
+          includeSources: true,
+          includeConfidence: true
+        }
+      };
+
+      // Apply conflict resolutions
+      const resolvedResponses = agentResponses.map(response => {
+        const resolution = resolutions.find(r => 
+          r.participatingAgents.includes(response.agentId)
+        );
+
+        if (resolution) {
+          return {
+            ...response,
+            content: `${response.content}\n\n[Resolution: ${resolution.resolvedResponse}]`
+          };
+        }
+
+        return response;
+      });
+
+      // Synthesize using response synthesizer
+      const synthesized = await responseSynthesizer.synthesize(
+        resolvedResponses,
+        synthesisContext,
+        'narrative' // Use narrative strategy for better readability
+      );
+
+      // Convert to UnifiedResponse format
+      const unifiedResponse: UnifiedResponse = {
+        id: synthesized.id,
+        content: synthesized.content,
+        agent: primaryAgent,
+        confidence: synthesized.confidence,
+        reasoning: `Advanced synthesis using ${synthesized.metadata.synthesisStrategy} strategy with ${synthesized.metadata.participantCount} participants. Quality score: ${(synthesized.metadata.qualityScore * 100).toFixed(1)}%.`,
+        metadata: {
+          ...synthesized.metadata,
+          synthesisStrategy: synthesized.metadata.synthesisStrategy,
+          participantCount: synthesized.metadata.participantCount,
+          conflictCount: synthesized.metadata.conflictCount,
+          resolutionCount: synthesized.metadata.resolutionCount,
+          qualityScore: synthesized.metadata.qualityScore,
+          sources: synthesized.sources
+        },
+        timestamp: synthesized.timestamp,
+        followUpQuestions: this.generateFollowUpQuestionsFromSynthesis(synthesized, intent)
+      };
+
+      console.log(`✅ Advanced synthesis completed with quality score: ${(synthesized.metadata.qualityScore * 100).toFixed(1)}%`);
+
+      return unifiedResponse;
+
+    } catch (error) {
+      console.error('❌ Advanced synthesis failed, falling back to standard synthesis:', error);
+      
+      // Fallback to standard synthesis
+      return this.synthesizeMultiAgentResponseWithResolutions(
+        results,
+        resolutions,
+        primaryAgent,
+        intent
+      );
+    }
+  }
+
+  /**
+   * Generate follow-up questions from synthesis results
+   */
+  private generateFollowUpQuestionsFromSynthesis(
+    synthesized: any,
+    intent: IntentClassificationResult
+  ): string[] {
+    const questions: string[] = [];
+
+    // Add synthesis-specific follow-ups
+    if (synthesized.metadata.conflictCount > 0) {
+      questions.push('Would you like me to explain how the conflicting viewpoints were resolved?');
+    }
+
+    if (synthesized.metadata.qualityScore < 0.7) {
+      questions.push('Would you like me to consult additional agents for a more comprehensive analysis?');
+    }
+
+    if (synthesized.sources && synthesized.sources.length > 1) {
+      questions.push('Would you like to see the detailed contributions from each agent?');
+    }
+
+    // Add intent-specific follow-ups
+    if (intent.intent.includes('analysis')) {
+      questions.push('Would you like me to perform a deeper analysis on any specific aspect?');
+    }
+
+    if (intent.intent.includes('comparison')) {
+      questions.push('Would you like me to compare additional criteria or factors?');
+    }
+
+    return questions.slice(0, 3); // Limit to 3 questions
+  }
+
+  /**
+   * Synthesize multi-agent responses (existing method)
+   */
+  private async synthesizeMultiAgentResponse(
+    results: any[],
+    primaryAgent: string,
+    intent: IntentClassificationResult
+  ): Promise<any> {
+    // Find primary agent response
+    const primaryResponse = results.find(r => r.agent === primaryAgent);
+    const collaboratorResponses = results.filter(r => r.agent !== primaryAgent);
+
+    if (!primaryResponse) {
+      // Fallback to first successful response
+      return {
+        content: results[0]?.response?.content || 'No valid response generated',
+        confidence: 0.5,
+        metadata: { fallback: true }
+      };
+    }
+
+    // Start with primary response
+    let synthesized = primaryResponse.response.content || '';
+
+    // Add collaborative insights
+    if (collaboratorResponses.length > 0) {
+      synthesized += '\n\n**Additional Expert Insights:**\n';
+
+      collaboratorResponses.forEach((collab, index) => {
+        if (collab.response?.content) {
+          synthesized += `\n${index + 1}. **${this.getAgentDisplayName(collab.agent)}**: ${this.extractKeyInsight(collab.response.content)}`;
+        }
+      });
+    }
+
+    return {
+      content: synthesized,
+      confidence: this.calculateCollaborationConfidence(results),
+      metadata: {
+        primaryAgent,
+        collaborators: collaboratorResponses.map(r => r.agent),
+        synthesisMethod: 'multi_agent'
+      }
+    };
   }
 
   /**

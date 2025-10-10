@@ -150,7 +150,7 @@ export class EnhancedConversationManager {
 
     try {
       // Route through orchestrator
-
+      const orchestrationResult = await this.orchestrator.routeQuery({
         user_id: userId || session.user_id,
         session_id: sessionId,
         compliance_level: session.context.complianceLevel,
@@ -190,7 +190,7 @@ export class EnhancedConversationManager {
       );
 
       // Add error response
-
+      const errorMessage = await this.addMessage(sessionId, {
         success: false,
         response: 'I apologize, but I encountered an issue processing your request. Please try again or contact support if the problem persists.',
         confidence: 0,
@@ -201,7 +201,7 @@ export class EnhancedConversationManager {
       });
 
       // Update failure metrics
-
+      this.metrics.trackFailure(sessionId, error instanceof Error ? error.message : 'Unknown error');
       updatedSession.metrics.successRate = this.calculateSuccessRate(updatedSession);
 
       return {

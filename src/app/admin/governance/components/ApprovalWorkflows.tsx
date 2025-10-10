@@ -100,27 +100,26 @@ export default function ApprovalWorkflows({
             Configure multi-step approval processes for prompt changes
           </p>
         </div>
-          <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-            <DialogTrigger asChild>
-              <Button>
-                <Plus className="h-4 w-4 mr-2" />
-                Create Workflow
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-2xl">
-              <DialogHeader>
-                <DialogTitle>Create Approval Workflow</DialogTitle>
-                <DialogDescription>
-                  Define a new approval workflow for prompt changes
-                </DialogDescription>
-              </DialogHeader>
-              <CreateWorkflowForm
-                onSubmit={handleCreateWorkflow}
-                onCancel={() => setIsCreateDialogOpen(false)}
-              />
-            </DialogContent>
-          </Dialog>
-        )}
+        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+          <DialogTrigger asChild>
+            <Button>
+              <Plus className="h-4 w-4 mr-2" />
+              Create Workflow
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Create Approval Workflow</DialogTitle>
+              <DialogDescription>
+                Define a new approval workflow for prompt changes
+              </DialogDescription>
+            </DialogHeader>
+            <CreateWorkflowForm
+              onSubmit={handleCreateWorkflow}
+              onCancel={() => setIsCreateDialogOpen(false)}
+            />
+          </DialogContent>
+        </Dialog>
       </div>
 
       {/* Workflows Table */}

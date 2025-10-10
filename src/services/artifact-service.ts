@@ -344,7 +344,7 @@ Date: {{generationDate}}`,
         return this.exportToHTML(content, artifact.title);
 
       case 'json':
-
+        const jsonData = {
           id: artifact.id,
           title: artifact.title,
           type: artifact.type,
@@ -371,7 +371,7 @@ Date: {{generationDate}}`,
   }
 
   private getFilename(artifact: Artifact, format: ExportFormat): string {
-
+    const sanitizedTitle = artifact.title
       .toLowerCase()
       .replace(/[^a-z0-9]/g, '-')
       .replace(/-+/g, '-')
@@ -383,7 +383,7 @@ Date: {{generationDate}}`,
   private async exportToPDF(content: string, filename: string): Promise<Blob> {
     // In a real implementation, you would use a PDF generation library
     // For now, return a mock PDF
-
+    const pdfContent = `%PDF-1.4
 1 0 obj
 << /Type /Catalog /Pages 2 0 R >>
 endobj

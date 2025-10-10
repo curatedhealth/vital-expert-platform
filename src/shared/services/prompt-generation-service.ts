@@ -27,7 +27,7 @@ export class PromptGenerationService {
       // 3. Fetch associated tools
 
       // 4. Generate prompt content
-
+      const promptContent = await this.generatePromptContent({
         capabilities,
         competencies: selectedCompetencies,
         tools,

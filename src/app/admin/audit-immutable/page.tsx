@@ -18,6 +18,7 @@ export default async function ImmutableAuditPage() {
         <p className="mt-2 text-sm text-gray-600">
           Manage hash-chained audit logs, WORM storage, and SIEM exports for compliance and security.
         </p>
+        {isSuperAdmin && (
           <div className="mt-2 flex items-center text-sm text-amber-600">
             <span className="font-medium">Super Admin:</span>
             <span className="ml-1">Full access to immutable audit configuration and SIEM management</span>

@@ -233,6 +233,7 @@ class LLMOrchestrator {
       messages.push({ role: 'user', content: question });
     }
 
+    const { content, tokensUsed } = await this.openai.chat.completions.create({
       model: config.model,
       messages,
       temperature: options.temperature ?? config.temperature,

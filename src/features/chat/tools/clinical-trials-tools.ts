@@ -42,8 +42,172 @@ export const clinicalTrialsSearchTool = new DynamicStructuredTool({
 });
 
 async function searchClinicalTrials(params: any) {
-  // Mock clinical trials data
-  const mockTrials = [
+  const baseUrl = 'https://clinicaltrials.gov/api/v2/studies';
+  const apiKey = process.env.CLINICAL_TRIALS_API_KEY;
+  
+  if (!apiKey) {
+    console.warn('⚠️ Clinical Trials API key not configured, using fallback data');
+    return getFallbackClinicalTrialsData(params);
+  }
+
+  try {
+    const url = buildClinicalTrialsURL(baseUrl, params, apiKey);
+    console.log(`🔬 Searching ClinicalTrials.gov: ${url}`);
+    
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        'User-Agent': 'VITAL-Path/1.0'
+      },
+      signal: AbortSignal.timeout(15000) // 15 second timeout
+    });
+
+    if (!response.ok) {
+      console.warn(`⚠️ Clinical Trials API error: ${response.status} ${response.statusText}`);
+      return getFallbackClinicalTrialsData(params);
+    }
+
+    const data = await response.json();
+    const processedTrials = processClinicalTrialsResults(data);
+    
+    return processedTrials.slice(0, 20); // Limit to 20 results
+
+  } catch (error) {
+    console.error('❌ Clinical Trials API search failed:', error);
+    return getFallbackClinicalTrialsData(params);
+  }
+}
+
+/**
+ * Build ClinicalTrials.gov API URL with parameters
+ */
+function buildClinicalTrialsURL(baseUrl: string, params: any, apiKey: string): string {
+  const url = new URL(baseUrl);
+  
+  // Add search parameters
+  const searchParams = new URLSearchParams();
+  
+  if (params.condition) {
+    searchParams.append('query.cond', params.condition);
+  }
+  
+  if (params.intervention) {
+    searchParams.append('query.intr', params.intervention);
+  }
+  
+  if (params.phase && params.phase.length > 0) {
+    searchParams.append('query.phase', params.phase.join(' '));
+  }
+  
+  if (params.status && params.status.length > 0) {
+    searchParams.append('query.overallStatus', params.status.join(' '));
+  }
+  
+  if (params.country) {
+    searchParams.append('query.locn', params.country);
+  }
+  
+  // Add API key
+  searchParams.append('api_key', apiKey);
+  
+  // Add format and limit
+  searchParams.append('format', 'json');
+  searchParams.append('minRank', '1');
+  searchParams.append('maxRank', '20');
+  
+  url.search = searchParams.toString();
+  return url.toString();
+}
+
+/**
+ * Process ClinicalTrials.gov API results into standardized format
+ */
+function processClinicalTrialsResults(data: any): any[] {
+  if (!data.studies || !Array.isArray(data.studies)) {
+    return [];
+  }
+
+  return data.studies.map((study: any) => ({
+    nctId: study.protocolSection?.identificationModule?.nctId || 'Unknown',
+    title: study.protocolSection?.identificationModule?.briefTitle || 'Unknown Title',
+    condition: study.protocolSection?.conditionsModule?.conditions?.[0] || 'Unknown Condition',
+    intervention: study.protocolSection?.conditionsModule?.interventions?.[0]?.name || 'Unknown Intervention',
+    phase: extractPhase(study.protocolSection?.designModule?.phases),
+    status: study.protocolSection?.statusModule?.overallStatus || 'Unknown',
+    location: extractLocation(study.protocolSection?.statusModule?.locations),
+    sponsor: study.protocolSection?.sponsorCollaboratorsModule?.leadSponsor?.name || 'Unknown Sponsor',
+    startDate: study.protocolSection?.statusModule?.startDateStruct?.date || 'Unknown',
+    completionDate: study.protocolSection?.statusModule?.completionDateStruct?.date || null,
+    estimatedCompletion: study.protocolSection?.statusModule?.completionDateStruct?.date || null,
+    enrollment: study.protocolSection?.designModule?.enrollmentInfo?.count || 0,
+    primaryOutcome: extractPrimaryOutcome(study.protocolSection?.outcomesModule),
+    secondaryOutcomes: extractSecondaryOutcomes(study.protocolSection?.outcomesModule),
+    inclusionCriteria: extractInclusionCriteria(study.protocolSection?.eligibilityModule),
+    exclusionCriteria: extractExclusionCriteria(study.protocolSection?.eligibilityModule),
+    source: 'ClinicalTrials.gov API',
+    rawData: study // Keep raw data for debugging
+  }));
+}
+
+/**
+ * Extract phase from study phases array
+ */
+function extractPhase(phases: any[]): string {
+  if (!phases || phases.length === 0) return 'Unknown';
+  return phases[0] || 'Unknown';
+}
+
+/**
+ * Extract location from study locations
+ */
+function extractLocation(locations: any[]): string {
+  if (!locations || locations.length === 0) return 'Unknown';
+  const location = locations[0];
+  return location?.city && location?.country 
+    ? `${location.city}, ${location.country}`
+    : location?.country || 'Unknown';
+}
+
+/**
+ * Extract primary outcome from outcomes module
+ */
+function extractPrimaryOutcome(outcomesModule: any): string {
+  if (!outcomesModule?.primaryOutcomeMeasures) return 'Unknown';
+  return outcomesModule.primaryOutcomeMeasures[0]?.measure || 'Unknown';
+}
+
+/**
+ * Extract secondary outcomes from outcomes module
+ */
+function extractSecondaryOutcomes(outcomesModule: any): string[] {
+  if (!outcomesModule?.secondaryOutcomeMeasures) return [];
+  return outcomesModule.secondaryOutcomeMeasures.map((outcome: any) => outcome.measure).filter(Boolean);
+}
+
+/**
+ * Extract inclusion criteria from eligibility module
+ */
+function extractInclusionCriteria(eligibilityModule: any): string[] {
+  if (!eligibilityModule?.inclusionCriteria) return [];
+  return eligibilityModule.inclusionCriteria.split('\n').filter((criteria: string) => criteria.trim());
+}
+
+/**
+ * Extract exclusion criteria from eligibility module
+ */
+function extractExclusionCriteria(eligibilityModule: any): string[] {
+  if (!eligibilityModule?.exclusionCriteria) return [];
+  return eligibilityModule.exclusionCriteria.split('\n').filter((criteria: string) => criteria.trim());
+}
+
+/**
+ * Fallback data when Clinical Trials API is unavailable
+ */
+function getFallbackClinicalTrialsData(params: any): any[] {
+  console.log('📋 Using fallback Clinical Trials data');
+  
+  const fallbackTrials = [
     {
       nctId: 'NCT04567890',
       title: 'Digital Cognitive Behavioral Therapy for Generalized Anxiety Disorder',
@@ -62,6 +226,7 @@ async function searchClinicalTrials(params: any) {
       sponsor: 'Digital Health Research Institute',
       startDate: '2022-03-01',
       completionDate: '2023-09-30',
+      source: 'Fallback Data'
     },
     {
       nctId: 'NCT05123456',
@@ -76,6 +241,7 @@ async function searchClinicalTrials(params: any) {
       sponsor: 'MindTech Solutions',
       startDate: '2024-01-15',
       estimatedCompletion: '2025-06-30',
+      source: 'Fallback Data'
     },
     {
       nctId: 'NCT03987654',
@@ -92,11 +258,12 @@ async function searchClinicalTrials(params: any) {
       },
       sponsor: 'Sleep Health Digital',
       completionDate: '2023-12-15',
-    },
+      source: 'Fallback Data'
+    }
   ];
 
-  // Filter based on search criteria
-  let filtered = mockTrials;
+  // Apply basic filtering
+  let filtered = fallbackTrials;
 
   if (params.condition) {
     filtered = filtered.filter(t =>
@@ -114,7 +281,6 @@ async function searchClinicalTrials(params: any) {
     );
   }
 
-  await new Promise(resolve => setTimeout(resolve, 400));
   return filtered;
 }
 

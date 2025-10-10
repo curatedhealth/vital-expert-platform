@@ -79,7 +79,7 @@ export class MultiModelOrchestrator extends EventEmitter {
 
   private initializeProviders(): void {
     // OpenAI GPT-4 and GPT-3.5
-    this.providers.set('openai', {
+    const openaiProvider = {
       id: 'openai',
       name: 'OpenAI',
       apiKey: this.config.openaiApiKey,
@@ -108,8 +108,14 @@ export class MultiModelOrchestrator extends EventEmitter {
       costPerToken: 0.01,
       averageLatency: 2000,
       reliability: 0.95,
-      healthStatus: 'healthy'
-    });
+      isActive: true,
+      lastUsed: new Date(),
+      totalRequests: 0,
+      totalTokens: 0,
+      errorCount: 0
+    };
+
+    this.providers.set('openai', openaiProvider);
 
     // Anthropic Claude
     this.providers.set('anthropic', {
@@ -169,11 +175,13 @@ export class MultiModelOrchestrator extends EventEmitter {
 
     try {
       // 1. Analyze query and determine routing strategy
+      const startTime = Date.now();
+      const routingDecision = await this.analyzeQuery(query, context);
 
       this.emit('routingDecision', { requestId, routingDecision });
 
       // 2. Execute with primary provider
-
+      const primaryResult = await this.executeWithProvider(
         requestId,
         query,
         context,
@@ -206,10 +214,13 @@ export class MultiModelOrchestrator extends EventEmitter {
     context: QueryContext
   ): Promise<RoutingDecision> {
     // Analyze query characteristics
+    const queryAnalysis = this.analyzeQuery(query, context);
 
     // Score providers based on context and capabilities
+    const providerScores = new Map<string, number>();
 
     for (const provider of this.providers.values()) {
+      let score = 0;
       if (provider.healthStatus === 'unhealthy') continue;
 
       // Base reliability score
@@ -238,9 +249,9 @@ export class MultiModelOrchestrator extends EventEmitter {
       }
 
       // Specialization matching
-
+      const bestModel = provider.models.find(m => m.name === context.preferredModel) || provider.models[0];
       if (bestModel) {
-
+        const specializationMatch = this.calculateSpecializationMatch(
           bestModel,
           context.domain,
           queryAnalysis.intent
@@ -249,32 +260,33 @@ export class MultiModelOrchestrator extends EventEmitter {
       }
 
       // Circuit breaker penalty
-
+      const circuitBreaker = this.circuitBreakers.get(provider.id);
       if (circuitBreaker?.isOpen()) {
         score -= 50;
       } else if (circuitBreaker?.isHalfOpen()) {
         score -= 20;
       }
 
-      providerScores.set(provider.id, Math.max(0, score));
+      providerScores.set(provider.id, score);
     }
 
-    // Select primary and fallback providers
+    // Select best provider
+    const sortedProviders = Array.from(providerScores.entries())
+      .sort(([,a], [,b]) => b - a);
 
-      .sort((a, b) => b[1] - a[1])
-      .map(([id]) => id);
-
-    if (!primaryProvider) {
-      throw new Error('No available providers for query processing');
+    if (sortedProviders.length === 0) {
+      throw new Error('No healthy providers available');
     }
+
+    const [providerId, score] = sortedProviders[0];
+    const provider = this.providers.get(providerId)!;
+    const selectedModel = provider.models.find(m => m.name === context.preferredModel) || provider.models[0];
 
     return {
-      primaryProvider,
-      primaryModel: model.name,
-      fallbackProviders,
-      reasoning: `Selected ${provider.name}/${model.name} based on ${providerScores.get(primaryProvider)}% match score`,
-      estimatedCost: this.estimateCost(provider, queryAnalysis.tokenEstimate),
-      estimatedLatency: provider.averageLatency
+      providerId,
+      model: selectedModel.name,
+      confidence: Math.min(score / 100, 1),
+      reasoning: `Selected ${provider.name} with score ${score}`
     };
   }
 
@@ -316,6 +328,7 @@ export class MultiModelOrchestrator extends EventEmitter {
         );
 
         // Success - record in circuit breaker
+        const circuitBreaker = this.circuitBreakers.get(providerId);
         circuitBreaker?.recordSuccess();
 
         this.emit('providerSuccess', { requestId, providerId, latency: result.latency });
@@ -397,7 +410,7 @@ export class MultiModelOrchestrator extends EventEmitter {
     context: QueryContext,
     signal: AbortSignal
   ): Promise<unknown> {
-
+    const response = await fetch(provider.endpoint, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${provider.apiKey}`,
@@ -450,7 +463,7 @@ export class MultiModelOrchestrator extends EventEmitter {
     context: QueryContext,
     signal: AbortSignal
   ): Promise<unknown> {
-
+    const response = await fetch(provider.endpoint, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${provider.apiKey}`,

@@ -98,9 +98,12 @@ export class MasterOrchestrator extends AgentOrchestrator {
   }
 
   private isDigitalHealthQuery(query: string, intent: IntentResult): boolean {
+    const lowerQuery = query.toLowerCase();
+    const digitalHealthKeywords = ['digital health', 'telemedicine', 'health tech', 'mhealth', 'ehealth'];
 
     // Check keywords with higher weight for exact matches
-
+    const hasKeywordMatch = digitalHealthKeywords.some(keyword => {
+      const keywordVariations = [
         keyword,
         keyword.replace(/\s+/g, ''),  // Remove spaces
         keyword.replace(/\s+/g, '-'), // Hyphenated
@@ -110,17 +113,15 @@ export class MasterOrchestrator extends AgentOrchestrator {
     });
 
     // Check intent classification
-
-                           intent.primaryDomain === 'digital_health' ||
+    const hasIntentMatch = intent.primaryDomain === 'digital_health' ||
                            intent.domains.includes('technology') ||
                            intent.domains.includes('innovation');
 
     // Additional context clues
-
+    const hasContextMatch = lowerQuery.includes('digital') &&
                            (['healthcare', 'medical', 'clinical', 'patient'].some(domain => lowerQuery.includes(domain)));
 
-    if (isDigitalHealth) {
-      // }
+    const isDigitalHealth = hasKeywordMatch || hasIntentMatch || hasContextMatch;
 
     return isDigitalHealth;
   }

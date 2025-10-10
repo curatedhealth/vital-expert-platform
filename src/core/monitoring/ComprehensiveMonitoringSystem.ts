@@ -6,6 +6,8 @@
  */
 
 import { EventEmitter } from 'events';
+import { alertTuner } from '../../monitoring/alert-tuner';
+import { alertCorrelationEngine, type AlertEvent } from '../../monitoring/alert-correlation';
 // OpenTelemetry imports simplified for compilation
 // import { NodeSDK } from '@opentelemetry/sdk-node';
 // import { Resource } from '@opentelemetry/resources';
@@ -528,13 +530,54 @@ export class ComprehensiveMonitoringSystem extends EventEmitter {
     rule.lastTriggered = new Date();
     this.alertRules.set(rule.id, rule);
 
+    // Convert to AlertEvent for correlation engine
+    const alertEvent: AlertEvent = {
+      id: alert.id,
+      timestamp: alert.timestamp,
+      metric: this.getMetricFromRule(rule),
+      value: alert.value,
+      threshold: alert.threshold,
+      severity: alert.severity,
+      source: 'monitoring_system',
+      metadata: {
+        ruleId: rule.id,
+        ruleName: rule.name,
+        condition: rule.condition
+      }
+    };
+
+    // Send to correlation engine
+    alertCorrelationEngine.addAlert(alertEvent);
+
     // Emit alert event
     this.emit('alert_triggered', alert);
 
     // Send webhook notification
     this.sendAlertNotification(alert);
+  }
 
-    // `);
+  /**
+   * Get metric name from alert rule
+   */
+  private getMetricFromRule(rule: AlertRule): string {
+    // Map rule IDs to metric names
+    const metricMap: Record<string, string> = {
+      'high_response_time': 'response_time',
+      'high_error_rate': 'error_rate',
+      'high_cpu_usage': 'cpu_usage',
+      'high_memory_usage': 'memory_usage',
+      'high_disk_usage': 'disk_usage',
+      'high_network_latency': 'network_latency',
+      'high_active_connections': 'active_connections',
+      'high_queue_depth': 'queue_depth',
+      'low_cache_hit_rate': 'cache_hit_rate',
+      'high_cost_per_query': 'cost_per_query',
+      'low_user_satisfaction': 'user_satisfaction_score',
+      'low_clinical_validation': 'clinical_validation_rate',
+      'low_compliance_rate': 'compliance_rate'
+    };
+
+    return metricMap[rule.id] || rule.id;
   }
 
   private async sendAlertNotification(alert: Alert): Promise<void> {
@@ -714,6 +757,98 @@ export class ComprehensiveMonitoringSystem extends EventEmitter {
     if (this.alertHistory.length > 1000) {
       this.alertHistory.splice(0, this.alertHistory.length - 1000);
     }
+  }
+
+  /**
+   * Get alert tuning statistics
+   */
+  getAlertTuningStatistics(): {
+    tuningStats: any;
+    correlationStats: any;
+    alertPatterns: any[];
+    tuningRecommendations: any[];
+    correlatedGroups: any[];
+  } {
+    return {
+      tuningStats: alertTuner.getTuningStatistics(),
+      correlationStats: alertCorrelationEngine.getCorrelationStatistics(),
+      alertPatterns: alertTuner.getAlertPatterns(),
+      tuningRecommendations: alertTuner.getTuningRecommendations(),
+      correlatedGroups: alertCorrelationEngine.getActiveGroups()
+    };
+  }
+
+  /**
+   * Apply alert tuning recommendation
+   */
+  async applyTuningRecommendation(metric: string): Promise<boolean> {
+    try {
+      const success = await alertTuner.applyRecommendation(metric);
+      if (success) {
+        console.log(`✅ Applied tuning recommendation for ${metric}`);
+        this.emit('tuning_applied', { metric, success: true });
+      } else {
+        console.warn(`⚠️ Failed to apply tuning recommendation for ${metric}`);
+        this.emit('tuning_applied', { metric, success: false });
+      }
+      return success;
+    } catch (error) {
+      console.error(`❌ Error applying tuning recommendation for ${metric}:`, error);
+      this.emit('tuning_applied', { metric, success: false, error });
+      return false;
+    }
+  }
+
+  /**
+   * Get alert correlation insights
+   */
+  getAlertCorrelationInsights(): {
+    topCorrelations: Array<{ metrics: string[]; strength: number }>;
+    frequentPatterns: Array<{ pattern: string; frequency: number }>;
+    suggestedActions: Array<{ action: string; priority: number }>;
+  } {
+    const correlations = alertCorrelationEngine.getAlertCorrelations();
+    const patterns = alertTuner.getAlertPatterns();
+
+    // Get top correlations
+    const topCorrelations = correlations
+      .sort((a, b) => b.correlationStrength - a.correlationStrength)
+      .slice(0, 5)
+      .map(corr => ({
+        metrics: [corr.primaryAlert, ...corr.relatedAlerts],
+        strength: corr.correlationStrength
+      }));
+
+    // Get frequent patterns
+    const frequentPatterns = patterns
+      .sort((a, b) => b.frequency - a.frequency)
+      .slice(0, 5)
+      .map(pattern => ({
+        pattern: pattern.pattern,
+        frequency: pattern.frequency
+      }));
+
+    // Generate suggested actions
+    const suggestedActions = [
+      {
+        action: 'Enable alert correlation for high-frequency patterns',
+        priority: patterns.filter(p => p.frequency > 0.1).length > 0 ? 1 : 3
+      },
+      {
+        action: 'Tune thresholds for high false-positive patterns',
+        priority: patterns.filter(p => p.falsePositiveRate > 0.2).length > 0 ? 1 : 3
+      },
+      {
+        action: 'Investigate root causes for correlated alerts',
+        priority: correlations.length > 0 ? 2 : 4
+      }
+    ].sort((a, b) => a.priority - b.priority);
+
+    return {
+      topCorrelations,
+      frequentPatterns,
+      suggestedActions
+    };
   }
 
   // Helper methods for business metrics

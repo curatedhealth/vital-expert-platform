@@ -130,28 +130,27 @@ export default function BackupHistory({
             View and manage database backups
           </p>
         </div>
-          <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-            <DialogTrigger asChild>
-              <Button>
-                <Plus className="h-4 w-4 mr-2" />
-                Create Backup
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Create New Backup</DialogTitle>
-                <DialogDescription>
-                  Trigger a manual database backup
-                </DialogDescription>
-              </DialogHeader>
-              <CreateBackupForm
-                onSubmit={handleCreateBackup}
-                onCancel={() => setIsCreateDialogOpen(false)}
-                loading={loading}
-              />
-            </DialogContent>
-          </Dialog>
-        )}
+        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+          <DialogTrigger asChild>
+            <Button>
+              <Plus className="h-4 w-4 mr-2" />
+              Create Backup
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Create New Backup</DialogTitle>
+              <DialogDescription>
+                Trigger a manual database backup
+              </DialogDescription>
+            </DialogHeader>
+            <CreateBackupForm
+              onSubmit={handleCreateBackup}
+              onCancel={() => setIsCreateDialogOpen(false)}
+              loading={loading}
+            />
+          </DialogContent>
+        </Dialog>
       </div>
 
       {/* Filters */}
@@ -290,27 +289,24 @@ export default function BackupHistory({
                             </DialogContent>
                           </Dialog>
 
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => {
-                                // TODO: Implement download functionality
-                                // TODO: Implement download functionality
-                              }}
-                            >
-                              <Download className="h-4 w-4" />
-                            </Button>
-                          )}
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              // TODO: Implement download functionality
+                            }}
+                          >
+                            <Download className="h-4 w-4" />
+                          </Button>
 
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleDeleteBackup(backup.id)}
-                              className="text-red-600 hover:text-red-700"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          )}
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDeleteBackup(backup.id)}
+                            className="text-red-600 hover:text-red-700"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
                         </div>
                       </TableCell>
                     </TableRow>

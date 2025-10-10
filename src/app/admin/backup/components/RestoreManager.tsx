@@ -108,29 +108,28 @@ export default function RestoreManager({
             Restore database from backup files
           </p>
         </div>
-          <Dialog open={isRestoreDialogOpen} onOpenChange={setIsRestoreDialogOpen}>
-            <DialogTrigger asChild>
-              <Button>
-                <RotateCcw className="h-4 w-4 mr-2" />
-                Start Restore
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-2xl">
-              <DialogHeader>
-                <DialogTitle>Start Restore Operation</DialogTitle>
-                <DialogDescription>
-                  Restore database from a backup file
-                </DialogDescription>
-              </DialogHeader>
-              <StartRestoreForm
-                availableBackups={availableBackups}
-                onSubmit={handleStartRestore}
-                onCancel={() => setIsRestoreDialogOpen(false)}
-                loading={loading}
-              />
-            </DialogContent>
-          </Dialog>
-        )}
+        <Dialog open={isRestoreDialogOpen} onOpenChange={setIsRestoreDialogOpen}>
+          <DialogTrigger asChild>
+            <Button>
+              <RotateCcw className="h-4 w-4 mr-2" />
+              Start Restore
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Start Restore Operation</DialogTitle>
+              <DialogDescription>
+                Restore database from a backup file
+              </DialogDescription>
+            </DialogHeader>
+            <StartRestoreForm
+              availableBackups={availableBackups}
+              onSubmit={handleStartRestore}
+              onCancel={() => setIsRestoreDialogOpen(false)}
+              loading={loading}
+            />
+          </DialogContent>
+        </Dialog>
       </div>
 
       {availableBackups.length === 0 && (

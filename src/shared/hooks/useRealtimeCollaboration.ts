@@ -72,10 +72,11 @@ export function useRealtimeCollaboration(options: UseRealtimeCollaborationOption
   }, []);
 
   // Typing indicators
-
+  const handleTyping = useCallback(() => {
     if (!enableTypingIndicators) return;
 
     // Throttle typing events (send at most once per second)
+    const now = Date.now();
     // eslint-disable-next-line security/detect-object-injection
     if (now - lastTypingEventRef.current < 1000) return;
 
@@ -99,6 +100,7 @@ export function useRealtimeCollaboration(options: UseRealtimeCollaborationOption
     }, typingTimeout);
   }, [enableTypingIndicators, typingTimeout]);
 
+  const stopTyping = useCallback(() => {
     if (!enableTypingIndicators) return;
 
     websocketService.stopTyping(userId || 'anonymous', conversationId);
@@ -120,7 +122,7 @@ export function useRealtimeCollaboration(options: UseRealtimeCollaborationOption
   }, [stopTyping]);
 
   // Collaboration state
-
+  const updateCollaborationState = useCallback((updates: Partial<CollaborationState>) => {
     setState(prev => ({
       ...prev,
       collaborationState: prev.collaborationState
@@ -131,7 +133,7 @@ export function useRealtimeCollaboration(options: UseRealtimeCollaborationOption
   }, []);
 
   // Artifact sharing
-
+  const shareArtifact = useCallback((artifact: Artifact) => {
     websocketService.shareArtifact(artifact);
   }, []);
 

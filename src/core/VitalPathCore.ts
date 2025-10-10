@@ -184,10 +184,14 @@ export class VitalPathCore extends EventEmitter {
       };
 
       // Step 1: Compliance Pre-Check
+      const complianceResults = await this.compliance.validateRequest(request, {
+        operation: 'compliance_check',
+        framework: 'compliance-framework',
+        traceId: traceId
+      });
 
-        'compliance_check', 'compliance-framework', traceId
-      );
-
+      const complianceViolations = complianceResults.violations || [];
+      const complianceStatus = {
         compliant: complianceViolations.length === 0,
         violations: complianceViolations,
         riskLevel: this.calculateRiskLevel(complianceResults)
@@ -196,7 +200,7 @@ export class VitalPathCore extends EventEmitter {
       this.observability.tracing.finishSpan(complianceSpan, 'ok');
 
       // Block critical compliance violations
-      if (overallCompliance.riskLevel === 'critical') {
+      if (complianceStatus.riskLevel === 'critical') {
         throw new Error(`Critical compliance violations detected: ${
           complianceViolations.filter(v => v.severity === 'critical')
             .map(v => v.description).join(', ')
@@ -326,9 +330,14 @@ export class VitalPathCore extends EventEmitter {
     let evidence: unknown[] = [];
 
     // Step 1: RAG Retrieval
+    const ragStart = Date.now();
+    const ragSpan = this.observability.tracing.startSpan('rag_retrieval', {
+      query: request.query,
+      domain: request.context?.domain
+    });
 
     try {
-
+      const retrievalResult = await this.ragSystem.search({
         text: request.query,
         limit: 10,
         options: {
@@ -336,8 +345,8 @@ export class VitalPathCore extends EventEmitter {
         }
       });
 
-      ragLatency = Date.now() - ragStart;
-      evidence = retrievalResult.chunks;
+      const ragLatency = Date.now() - ragStart;
+      const evidence = retrievalResult.chunks;
       this.observability.tracing.finishSpan(ragSpan, 'ok');
 
     } catch (error) {
@@ -354,7 +363,7 @@ export class VitalPathCore extends EventEmitter {
         complexity: request.context?.complexity || 'moderate'
       });
 
-      llmLatency = llmResponse.latency;
+      const llmLatency = llmResponse.latency;
       this.observability.tracing.finishSpan(llmSpan, 'ok');
 
       return {
@@ -386,10 +395,10 @@ export class VitalPathCore extends EventEmitter {
     traceId: string,
     compliance: unknown
   ): Promise<VitalPathResponse> {
-
     try {
       // Determine workflow based on request
-
+      const workflowId = this.determineWorkflowType(request);
+      const workflowResult = await this.workflowOrchestrator.executeWorkflow(
         workflowId,
         {
           query: request.query,

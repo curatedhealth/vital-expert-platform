@@ -8,6 +8,8 @@ import {
   loadAvailableAgents,
   selectAgentWithReasoning,
 } from '@/features/chat/services/intelligent-agent-router';
+import { serviceDiscovery } from '@/lib/services/service-discovery';
+import { gracefulDegradationManager } from '@/lib/resilience/graceful-degradation';
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY || 'demo-key',
@@ -68,6 +70,22 @@ export async function POST(request: NextRequest) {
     }
 
     const startTime = Date.now();
+
+    // Check service health and apply graceful degradation if needed
+    try {
+      const degradationResult = await gracefulDegradationManager.handleRequestWithDegradation(
+        'chat_service',
+        { message, agent, model, chatHistory, ragEnabled, sessionId, automaticRouting },
+        sessionId || 'anonymous',
+        { allowDegradedMode: true, maxDegradationLevel: 'moderate' }
+      );
+
+      if (!degradationResult.success) {
+        console.warn('⚠️ Graceful degradation failed, proceeding with degraded mode');
+      }
+    } catch (error) {
+      console.warn('⚠️ Graceful degradation check failed:', error);
+    }
 
     // If no agent provided in automatic mode, select one automatically
     let selectedAgent = agent;

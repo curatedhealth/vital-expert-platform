@@ -10,6 +10,7 @@ import {
   ExecutionContext,
   ComplianceError
 } from '@/types/digital-health-agent.types';
+import { breachResponseSystem, type BreachIncident } from './breach-response-system';
 
 export interface PHIDetectionResult {
   containsPHI: boolean;
@@ -554,5 +555,219 @@ export class HIPAAComplianceManager {
     this.auditLog = this.auditLog.filter(entry =>
       new Date(entry.timestamp) > cutoffDate
     );
+  }
+
+  /**
+   * Detect potential breach incidents
+   */
+  async detectBreachIncident(
+    request: DataProcessingRequest,
+    validationResult: ComplianceValidationResult
+  ): Promise<BreachIncident | null> {
+    // Check if this constitutes a potential breach
+    const isPotentialBreach = this.isPotentialBreach(validationResult, request);
+    
+    if (!isPotentialBreach) {
+      return null;
+    }
+
+    const incident: BreachIncident = {
+      id: `breach-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      timestamp: new Date(),
+      severity: this.determineBreachSeverity(validationResult),
+      type: this.determineBreachType(validationResult, request),
+      description: this.generateBreachDescription(validationResult, request),
+      affectedUsers: this.estimateAffectedUsers(request),
+      affectedDataTypes: this.identifyAffectedDataTypes(request),
+      source: 'automated',
+      status: 'detected',
+      riskScore: validationResult.riskScore,
+      metadata: {
+        requestId: request.user_id,
+        resourceType: request.resource_type,
+        resourceId: request.resource_id,
+        action: request.action,
+        violations: validationResult.violations
+      }
+    };
+
+    // Use breach response system to handle the incident
+    const detection = await breachResponseSystem.detectBreach(incident);
+    
+    if (detection.isBreach) {
+      // Update incident with detection results
+      incident.status = 'confirmed';
+      incident.riskScore = detection.riskScore;
+      incident.severity = detection.severity;
+      
+      // Log the breach incident
+      await this.logBreachIncident(incident);
+      
+      return incident;
+    }
+
+    return null;
+  }
+
+  /**
+   * Determine if validation result indicates potential breach
+   */
+  private isPotentialBreach(
+    validationResult: ComplianceValidationResult,
+    request: DataProcessingRequest
+  ): boolean {
+    // Critical violations always indicate potential breach
+    const hasCriticalViolations = validationResult.violations.some(
+      v => v.severity === 'critical'
+    );
+
+    // High risk score indicates potential breach
+    const hasHighRisk = validationResult.riskScore >= 80;
+
+    // PHI exposure indicates potential breach
+    const hasPHIExposure = validationResult.violations.some(
+      v => v.type === 'PHI_DETECTED' || v.type === 'PHI_EXPOSURE'
+    );
+
+    // Unauthorized access indicates potential breach
+    const hasUnauthorizedAccess = validationResult.violations.some(
+      v => v.type === 'UNAUTHORIZED_ACCESS'
+    );
+
+    return hasCriticalViolations || hasHighRisk || hasPHIExposure || hasUnauthorizedAccess;
+  }
+
+  /**
+   * Determine breach severity
+   */
+  private determineBreachSeverity(validationResult: ComplianceValidationResult): 'low' | 'medium' | 'high' | 'critical' {
+    if (validationResult.riskScore >= 90) return 'critical';
+    if (validationResult.riskScore >= 70) return 'high';
+    if (validationResult.riskScore >= 50) return 'medium';
+    return 'low';
+  }
+
+  /**
+   * Determine breach type
+   */
+  private determineBreachType(
+    validationResult: ComplianceValidationResult,
+    request: DataProcessingRequest
+  ): 'unauthorized_access' | 'data_loss' | 'system_compromise' | 'phishing' | 'malware' | 'other' {
+    if (validationResult.violations.some(v => v.type === 'UNAUTHORIZED_ACCESS')) {
+      return 'unauthorized_access';
+    }
+    if (validationResult.violations.some(v => v.type === 'DATA_LOSS')) {
+      return 'data_loss';
+    }
+    if (validationResult.violations.some(v => v.type === 'SYSTEM_COMPROMISE')) {
+      return 'system_compromise';
+    }
+    if (validationResult.violations.some(v => v.type === 'PHI_DETECTED')) {
+      return 'unauthorized_access'; // PHI exposure is unauthorized access
+    }
+    return 'other';
+  }
+
+  /**
+   * Generate breach description
+   */
+  private generateBreachDescription(
+    validationResult: ComplianceValidationResult,
+    request: DataProcessingRequest
+  ): string {
+    const violationTypes = validationResult.violations.map(v => v.type).join(', ');
+    return `Potential breach detected during ${request.action} operation on ${request.resource_type} ${request.resource_id}. Violations: ${violationTypes}. Risk Score: ${validationResult.riskScore}`;
+  }
+
+  /**
+   * Estimate affected users
+   */
+  private estimateAffectedUsers(request: DataProcessingRequest): number {
+    // Simple estimation based on resource type and action
+    if (request.resource_type === 'data' && request.action === 'read') {
+      return 1; // Single user data access
+    }
+    if (request.resource_type === 'agent' && request.action === 'execute') {
+      return 10; // Agent execution might affect multiple users
+    }
+    return 1;
+  }
+
+  /**
+   * Identify affected data types
+   */
+  private identifyAffectedDataTypes(request: DataProcessingRequest): string[] {
+    const dataTypes: string[] = [];
+    
+    if (request.data_content) {
+      // Check if data contains PHI
+      const phiDetection = this.detectPHI(JSON.stringify(request.data_content));
+      if (phiDetection.containsPHI) {
+        dataTypes.push('phi', 'pii');
+        dataTypes.push(...phiDetection.phiTypes);
+      }
+    }
+    
+    // Add based on resource type
+    if (request.resource_type === 'data') {
+      dataTypes.push('user_data');
+    }
+    if (request.resource_type === 'agent') {
+      dataTypes.push('system_data');
+    }
+    
+    return [...new Set(dataTypes)];
+  }
+
+  /**
+   * Log breach incident
+   */
+  private async logBreachIncident(incident: BreachIncident): Promise<void> {
+    const auditEntry: AuditLogEntry = {
+      id: `audit-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      timestamp: new Date().toISOString(),
+      user_id: incident.metadata.requestId,
+      action: 'BREACH_DETECTED',
+      resource_type: 'breach_incident',
+      resource_id: incident.id,
+      ip_address: 'system',
+      user_agent: 'HIPAAComplianceManager',
+      success: true,
+      details: {
+        incidentId: incident.id,
+        severity: incident.severity,
+        type: incident.type,
+        riskScore: incident.riskScore,
+        affectedUsers: incident.affectedUsers,
+        affectedDataTypes: incident.affectedDataTypes
+      },
+      compliance_level: ComplianceLevel.HIGH
+    };
+
+    this.auditLog.push(auditEntry);
+    
+    // Also create compliance record
+    const complianceRecord: HIPAAComplianceRecord = {
+      id: `compliance-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      user_id: incident.metadata.requestId,
+      resource_type: 'breach_incident',
+      resource_id: incident.id,
+      action: 'BREACH_DETECTED',
+      purpose: 'Breach detection and response',
+      data_content: incident,
+      context: {
+        user_id: incident.metadata.requestId,
+        session_id: 'system',
+        ip_address: 'system',
+        user_agent: 'HIPAAComplianceManager'
+      },
+      compliance_level: ComplianceLevel.HIGH,
+      risk_score: incident.riskScore,
+      violations: incident.metadata.violations,
+      timestamp: new Date().toISOString()
+    };
+
+    this.complianceRecords.push(complianceRecord);
   }
 }

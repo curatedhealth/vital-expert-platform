@@ -559,7 +559,11 @@ export class HIPAASecurityValidator {
   }
 
   private calculateComplianceScores(results: HIPAAComplianceResult[]) {
-
+    const calculateScore = (standard: string) => {
+      const standardResults = results.filter(r => r.category === standard);
+      const compliantCount = standardResults.filter(r => r.status === 'compliant').length;
+      const partialCount = standardResults.filter(r => r.status === 'partial').length;
+      
       if (standardResults.length === 0) return 0;
 
       return Math.round(((compliantCount + partialCount * 0.5) / standardResults.length) * 100);
@@ -583,13 +587,12 @@ export class HIPAASecurityValidator {
           id: `action_${index + 1}`,
           priority: result.severity === 'critical' ? 'critical' :
                    result.severity === 'high' ? 'high' : 'medium',
-          title: `Address ${result.requirement}`,
-          description: result.recommendations.join('; '),
-          owner: 'Compliance Team',
-          due_date: new Date(Date.now() + (result.severity === 'critical' ? 30 : 90) * 24 * 60 * 60 * 1000),
-          estimated_effort: result.severity === 'critical' ? '2-4 weeks' : '4-8 weeks',
-          dependencies: [],
-          compliance_impact: [result.standard]
+          title: result.requirement,
+          description: result.description,
+          status: 'pending',
+          dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
+          assignedTo: 'compliance-team',
+          category: result.category
         });
       });
 
@@ -614,39 +617,43 @@ export class HIPAASecurityValidator {
   }
 
   private logComplianceResults(report: HealthcareComplianceReport): void {
-    // // // // .split('T')[0]}`);
-    // // // // // // const __avgCompliance = Object.values(report.overall_compliance)
+    const avgCompliance = Object.values(report.overall_compliance)
       .reduce((sum, score) => sum + score, 0) / Object.keys(report.overall_compliance).length;
 
-    // }%`);
+    console.log(`Average compliance score: ${avgCompliance.toFixed(1)}%`);
 
     if (report.critical_findings.length > 0) {
-      // report.critical_findings.forEach(finding => {
-        // `);
+      report.critical_findings.forEach(finding => {
+        console.log(`Critical finding: ${finding.description}`);
       });
     }
 
-    // const __criticalActions = report.action_items.filter(a => a.priority === 'critical').length;
+    const criticalActions = report.action_items.filter(a => a.priority === 'critical').length;
     if (criticalActions > 0) {
-      // }
+      console.log(`Critical actions required: ${criticalActions}`);
+    }
 
     if (avgCompliance >= 90) {
-      // } else if (avgCompliance >= 75) {
-      // } else if (avgCompliance >= 50) {
-      // } else {
-      // }
+      console.log('Excellent compliance score!');
+    } else if (avgCompliance >= 75) {
+      console.log('Good compliance score, minor improvements needed');
+    } else if (avgCompliance >= 50) {
+      console.log('Moderate compliance score, significant improvements required');
+    } else {
+      console.log('Poor compliance score, immediate action required');
+    }
   }
 
   // Export compliance report
   async exportComplianceReport(outputPath: string, report: HealthcareComplianceReport): Promise<void> {
-
+    const exportData = {
       ...report,
       generated_by: 'VITAL Path Security Assessment Tool v1.0',
       export_date: new Date().toISOString()
     };
 
     await require('fs').promises.writeFile(outputPath, JSON.stringify(exportData, null, 2));
-    // }
+  }
 
   // Additional placeholder methods for comprehensive checks
   private async checkContingencyPlan(): Promise<HIPAAComplianceResult['status']> { return 'compliant'; }

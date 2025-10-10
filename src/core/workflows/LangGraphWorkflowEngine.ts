@@ -175,7 +175,7 @@ export class MultiModelQueryNode implements NodeExecutor {
       const { query, context } = state.data;
 
       // Use the MultiModelOrchestrator
-
+      const orchestrator = new MultiModelOrchestrator({
         openaiApiKey: process.env.OPENAI_API_KEY || '',
         anthropicApiKey: process.env.ANTHROPIC_API_KEY || '',
         fallbackStrategy: 'sequential',
@@ -208,12 +208,13 @@ export class RAGRetrievalNode implements NodeExecutor {
       const { query, domain } = state.data;
 
       // Use the EnhancedRAGSystem
-
+      const ragSystem = new EnhancedRAGSystem({
         supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL!,
         supabaseKey: process.env.SUPABASE_SERVICE_ROLE_KEY!,
         openaiApiKey: process.env.OPENAI_API_KEY!
       });
 
+      const searchResults = await ragSystem.search({
         text: query,
         limit: config.conditions?.limit || 10,
         options: {
@@ -376,10 +377,10 @@ export class LangGraphWorkflowEngine extends EventEmitter {
 
     try {
       // Execute node with timeout
-
+      const result = await Promise.race([
         node.executor.execute(state, node.config),
         timeout
-      );
+      ]);
 
       historyEntry.duration = Date.now() - startTime;
       historyEntry.output = result.data;
@@ -425,7 +426,7 @@ export class LangGraphWorkflowEngine extends EventEmitter {
 
   private async executeWithTimeout<T>(promise: Promise<T>, timeout: number): Promise<T> {
     return new Promise((resolve, reject) => {
-
+      const timer = setTimeout(() => {
         reject(new Error(`Operation timed out after ${timeout}ms`));
       }, timeout);
 

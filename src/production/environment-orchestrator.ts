@@ -811,12 +811,13 @@ export class EnvironmentOrchestrator {
     action.status = 'running';
     action.startTime = new Date();
 
-    // try {
+    try {
       // Simulate action execution based on type
-
+      const executionTime = this.getActionExecutionTime(action);
       await new Promise(resolve => setTimeout(resolve, executionTime));
 
       // Generate action-specific results
+      const result = await this.simulateActionExecution(action, stage, plan);
 
       action.status = result.success ? 'completed' : 'failed';
       action.endTime = new Date();
@@ -843,7 +844,10 @@ export class EnvironmentOrchestrator {
       'rollback': 45000, // 45 seconds
     };
 
+    const baseTime = baseTimes[action.type] || 30000; // Default 30 seconds
+
     // Healthcare-critical actions take longer
+    const healthcareMultiplier = action.healthcareCritical ? 1.5 : 1.0;
 
     return Math.round(baseTime * healthcareMultiplier * (0.8 + Math.random() * 0.4));
   }

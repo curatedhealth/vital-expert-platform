@@ -136,7 +136,7 @@ export class SupabaseRAGService {
     domain?: string,
     category?: string
   ): Promise<KnowledgeSource[]> {
-
+    let query = supabase
       .from('knowledge_sources')
       .select('*')
       .eq('status', 'active')
@@ -178,7 +178,7 @@ export class SupabaseRAGService {
     entities?: Record<string, string[]>;
     quality_score?: number;
   }[]): Promise<DocumentChunk[]> {
-
+    const chunkData = chunks.map(chunk => ({
       knowledge_source_id: chunk.knowledge_source_id,
       content: chunk.content,
       content_length: chunk.content.length,
@@ -315,13 +315,13 @@ export class SupabaseRAGService {
     contextWeight: number = 0.3
   ): Promise<SearchResult[]> {
     // Combine query with recent conversation context
-
+    const contextualQuery = [
       ...conversationHistory.slice(-3), // Last 3 messages
       query.text
     ].join(' ');
 
     // Perform search with enhanced context
-
+    const results = await this.search({
       ...query,
       text: contextualQuery
     });
@@ -483,7 +483,7 @@ export class SupabaseRAGService {
    */
   private async getQueryEmbedding(text: string, model: string): Promise<Partial<EmbeddingModels>> {
     // Mock implementation - in production, call actual embedding services
-
+    const mockEmbedding = {
       openai: Array.from({ length: 1536 }, () => Math.random()),
       clinical: Array.from({ length: 768 }, () => Math.random()),
       legal: Array.from({ length: 768 }, () => Math.random()),

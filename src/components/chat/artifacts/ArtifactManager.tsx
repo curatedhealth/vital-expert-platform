@@ -52,6 +52,7 @@ interface ArtifactManagerProps {
   generationProgress?: number;
 }
 
+const artifactTypes = {
   'clinical-protocol': {
     icon: FileText,
     label: 'Clinical Protocol',

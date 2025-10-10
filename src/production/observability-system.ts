@@ -350,7 +350,7 @@ export class ProductionObservabilitySystem {
     // }
 
   private startMetricsCollection(): void {
-    // setInterval(async () => {
+    setInterval(async () => {
       await this.collectSystemMetrics();
       if (this.config.metrics.healthcare.phiAccessMetrics) {
         await this.collectHealthcareMetrics();

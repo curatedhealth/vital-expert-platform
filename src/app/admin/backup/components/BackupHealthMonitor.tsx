@@ -305,6 +305,7 @@ export default function BackupHealthMonitor({
       </Card>
 
       {/* Quick Actions */}
+      {showQuickActions && (
         <Card>
           <CardHeader>
             <CardTitle className="text-base">Quick Actions</CardTitle>

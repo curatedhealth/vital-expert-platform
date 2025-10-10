@@ -114,27 +114,26 @@ export default function WORMConfigManagement({
             Configure Write-Once-Read-Many storage for immutable audit logs
           </p>
         </div>
-          <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-            <DialogTrigger asChild>
-              <Button>
-                <Plus className="h-4 w-4 mr-2" />
-                Add WORM Config
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-2xl">
-              <DialogHeader>
-                <DialogTitle>Add WORM Configuration</DialogTitle>
-                <DialogDescription>
-                  Configure immutable storage for audit logs
-                </DialogDescription>
-              </DialogHeader>
-              <CreateWORMConfigForm
-                onSubmit={handleCreateConfig}
-                onCancel={() => setIsCreateDialogOpen(false)}
-              />
-            </DialogContent>
-          </Dialog>
-        )}
+        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+          <DialogTrigger asChild>
+            <Button>
+              <Plus className="h-4 w-4 mr-2" />
+              Add WORM Config
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Add WORM Configuration</DialogTitle>
+              <DialogDescription>
+                Configure immutable storage for audit logs
+              </DialogDescription>
+            </DialogHeader>
+            <CreateWORMConfigForm
+              onSubmit={handleCreateConfig}
+              onCancel={() => setIsCreateDialogOpen(false)}
+            />
+          </DialogContent>
+        </Dialog>
       </div>
 
       {/* Configs Table */}
@@ -187,14 +186,13 @@ export default function WORMConfigManagement({
                       <TableCell>
                         <div className="flex items-center gap-2">
                           {getStatusBadge(config.isActive)}
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleToggleConfig(config.id, !config.isActive)}
-                            >
-                              {config.isActive ? 'Deactivate' : 'Activate'}
-                            </Button>
-                          )}
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleToggleConfig(config.id, !config.isActive)}
+                          >
+                            {config.isActive ? 'Deactivate' : 'Activate'}
+                          </Button>
                         </div>
                       </TableCell>
                       <TableCell className="text-sm text-muted-foreground">
@@ -228,29 +226,28 @@ export default function WORMConfigManagement({
                             </DialogContent>
                           </Dialog>
 
-                            <>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => {
-                                  setSelectedConfig(config);
-                                  setIsEditDialogOpen(true);
-                                }}
-                              >
-                                <Edit className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => {
-                                  // TODO: Implement delete
-                                  console.log('Delete config:', config.id);
-                                }}
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </>
-                          )}
+                          <>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                setSelectedConfig(config);
+                                setIsEditDialogOpen(true);
+                              }}
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                // TODO: Implement delete
+                                console.log('Delete config:', config.id);
+                              }}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </>
                         </div>
                       </TableCell>
                     </TableRow>

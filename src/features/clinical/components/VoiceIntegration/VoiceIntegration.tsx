@@ -64,6 +64,7 @@ interface VoiceSession {
   accuracy: number;
 }
 
+const voiceCommands = [
   {
     trigger: ['show patient timeline', 'open timeline', 'patient history'],
     action: 'navigate',
@@ -96,6 +97,7 @@ interface VoiceSession {
   }
 ];
 
+const medicalVocabulary: MedicalTerm[] = [
   { term: 'hypertension', type: 'condition', coding: { system: 'ICD-10', code: 'I10', display: 'Essential hypertension' }},
   { term: 'diabetes mellitus', type: 'condition', coding: { system: 'ICD-10', code: 'E11', display: 'Type 2 diabetes mellitus' }},
   { term: 'myocardial infarction', type: 'condition', coding: { system: 'ICD-10', code: 'I21', display: 'Acute myocardial infarction' }},

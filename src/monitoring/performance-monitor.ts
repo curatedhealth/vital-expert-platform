@@ -207,14 +207,13 @@ export class PerformanceMonitoringSystem {
     if (this.config.collection.realTimeEnabled) {
       this.startRealTimeMonitoring();
     }
-
-    // }
+  }
 
   private async setupMetricCollection(): Promise<void> {
-    // // Start metric collection interval
+    // Start metric collection interval
     setInterval(async () => {
       try {
-
+        const metrics = await this.collectMetrics();
         this.metrics.push(metrics);
 
         // Maintain retention policy
@@ -227,25 +226,21 @@ export class PerformanceMonitoringSystem {
         // console.error('Error collecting metrics:', error);
       }
     }, this.config.collection.intervalSeconds * 1000);
-
-    // `);
   }
 
   private async setupAlertingSystem(): Promise<void> {
-    // if (!this.config.alerts.enabled) {
-      // return;
+    if (!this.config.alerts.enabled) {
+      return;
     }
 
     // Initialize alert channels
     for (const channel of this.config.alerts.channels) {
       await this.initializeAlertChannel(channel);
     }
-
-    // }`);
   }
 
   private async setupMonitoringDashboards(): Promise<void> {
-    // if (this.config.dashboards.healthcareDashboard) {
+    if (this.config.dashboards.healthcareDashboard) {
       await this.createHealthcareDashboard();
     }
 
@@ -256,17 +251,20 @@ export class PerformanceMonitoringSystem {
     if (this.config.dashboards.operationalDashboard) {
       await this.createOperationalDashboard();
     }
-
-    // }
+  }
 
   private async collectSystemMetrics(): Promise<PerformanceMetrics> {
-
+    const timestamp = new Date();
+    
     // Simulate metric collection
     await new Promise(resolve => setTimeout(resolve, 10));
 
     // Generate realistic metrics with some variation
+    const baseResponseTime = 50 + Math.random() * 50;
+    const loadFactor = 0.8 + Math.random() * 0.4;
 
     return {
+      timestamp,
       responseTime: {
         avg: Math.round(baseResponseTime * loadFactor),
         p50: Math.round(baseResponseTime * loadFactor * 0.8),

@@ -140,7 +140,7 @@ export class ClinicalValidationFramework extends EventEmitter {
     await this.loadEvidenceDatabase();
 
     this.emit('initialized');
-    // }
+  }
 
   async validateClinicalContent(request: ValidationRequest): Promise<ValidationResult> {
 

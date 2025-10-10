@@ -295,9 +295,10 @@ export class ExpertOrchestrator {
   ): Promise<SessionOutput> {
     this.activePanel = panel;
 
+    const discussion = await this.facilitateDiscussion({
       panel,
       facilitationStrategy
-    );
+    });
 
     return await this.synthesizeOutputs(discussion);
   }
@@ -308,12 +309,14 @@ export class ExpertOrchestrator {
 
     try {
       // Use RAG to enhance domain understanding
-
+      const ragResults = await this.ragSystem.search({
+        text: query,
         threshold: 0.7,
         limit: 3
       });
 
       // Extract domain insights from RAG results
+      const ragDomains = ragResults.map(result => result.domain).filter(Boolean);
 
       // Map RAG domains to required expertise
       ragDomains.forEach(domain => {
@@ -399,13 +402,13 @@ export class ExpertOrchestrator {
     }
   ): VirtualPanel {
     // Sort by performance and select optimal mix
-
+    const selectedExperts = this.availableExperts
       .sort((a, b) => b.performance.avgRating - a.performance.avgRating)
       .slice(0, config.maxExperts);
 
     return {
       id: `panel-${Date.now()}`,
-      experts: sortedExperts,
+      experts: selectedExperts,
       sessionType: 'ADVISORY',
       facilitationStrategy
     };

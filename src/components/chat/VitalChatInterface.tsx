@@ -67,6 +67,7 @@ interface VitalChatInterfaceProps {
 
 // Chat modes configuration
 
+const chatModes = [
   {
     id: 'clinical',
     name: 'Clinical Advisory',
@@ -138,7 +139,7 @@ const SAMPLE_AGENTS: Agent[] = [
 ];
 
 // Mock function to generate sample messages
-
+const createMessage = (
   id: string,
   role: MessageType['role'],
   content: string,

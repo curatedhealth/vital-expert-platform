@@ -249,6 +249,7 @@ export class EnhancedWorkflowOrchestrator extends EventEmitter {
       urgency: state.urgencyLevel
     });
 
+    const complianceResults = {
       hipaa: await this.checkHIPAACompliance(state),
       gdpr: await this.checkGDPRCompliance(state),
       fdaPart11: await this.checkFDA21CFRPart11(state)
@@ -262,7 +263,7 @@ export class EnhancedWorkflowOrchestrator extends EventEmitter {
 
     // Retrieve relevant knowledge
     try {
-
+      const contextResults = await this.ragSystem.search({
         text: state.query,
         options: {
           max_results: 10,
@@ -289,13 +290,14 @@ export class EnhancedWorkflowOrchestrator extends EventEmitter {
       complexity: state.complexity
     });
 
-      state.query,
-      state.queryEmbedding || [],
-      state.intent || null
-    );
+    const candidates = await this.getCandidateAgents({
+      query: state.query,
+      embedding: state.queryEmbedding || [],
+      intent: state.intent || null
+    });
 
     // Score agents based on relevance and availability
-
+    const scoredAgents = await Promise.all(
       candidates.map(async (agentId) => ({
         agentId,
         score: await this.scoreAgentRelevance(agentId, state),
@@ -304,6 +306,11 @@ export class EnhancedWorkflowOrchestrator extends EventEmitter {
     );
 
     // Select top agents based on complexity
+    const numAgents = Math.min(
+      state.complexity === 'simple' ? 1 : 
+      state.complexity === 'moderate' ? 3 : 5,
+      scoredAgents.length
+    );
 
     state.selectedAgents = scoredAgents
       .filter(agent => agent.score >= state.agentConfidenceThreshold && agent.available)
@@ -319,29 +326,32 @@ export class EnhancedWorkflowOrchestrator extends EventEmitter {
   private async executeParallel(state: WorkflowState): Promise<void> {
     this.addAuditEntry(state, 'execute_parallel', { agents: state.selectedAgents });
 
-      try {
+    const results = await Promise.allSettled(
+      state.selectedAgents.map(async (agentId) => {
+        try {
+          const timeout = this.getAgentTimeout(state.complexity);
+          const [result] = await Promise.race([
+            this.executeAgent(agentId, state),
+            this.createTimeoutPromise(timeout)
+          ]);
+          return { agentId, result, error: null };
+        } catch (error) {
+          return {
+            agentId,
+            result: null,
+            error: error instanceof Error ? error.message : String(error)
+          };
+        }
+      })
+    );
 
-          this.executeAgent(agentId, state),
-          this.createTimeoutPromise(timeout)
-        ]);
-        return { agentId, result, error: null };
-      } catch (error) {
-        return {
-          agentId,
-          result: null,
-          error: error instanceof Error ? error.message : String(error)
-        };
-      }
-    });
-
-    results.forEach(({ agentId, result, error }) => {
-      if (result) {
-        // eslint-disable-next-line security/detect-object-injection
-        state.agentResponses[agentId] = result;
-      } else {
-        this.emit('agent_error', { agentId, error, queryId: state.queryId });
-      }
-    });
+    // Process results
+    state.agentResults = results.map((result, index) => ({
+      agentId: state.selectedAgents[index],
+      success: result.status === 'fulfilled',
+      data: result.status === 'fulfilled' ? result.value.result : null,
+      error: result.status === 'rejected' ? result.reason : null
+    }));
   }
 
   private async executeSequential(state: WorkflowState): Promise<void> {
@@ -373,6 +383,7 @@ export class EnhancedWorkflowOrchestrator extends EventEmitter {
       responseCount: Object.keys(state.agentResponses).length
     });
 
+    const validResponses = Object.entries(state.agentResponses)
       .filter(([_, response]) =>
         response &&
         response.response &&
@@ -396,6 +407,7 @@ export class EnhancedWorkflowOrchestrator extends EventEmitter {
       agentCount: Object.keys(state.agentResponses).length
     });
 
+    const agentResponses = Object.entries(state.agentResponses)
       .map(([agentId, response]) => ({
         agentId,
         response: response.response,
@@ -418,6 +430,7 @@ export class EnhancedWorkflowOrchestrator extends EventEmitter {
       evidenceLevel: state.consensusResult?.evidenceLevel
     });
 
+    const validationResults = await this.config.clinicalValidator.validate(
       state.consensusResult,
       state.clinicalContext
     );
@@ -441,12 +454,15 @@ export class EnhancedWorkflowOrchestrator extends EventEmitter {
       responseLength: state.finalResponse.length
     });
 
+    const qualityChecks = {
       responseCompleteness: this.checkResponseCompleteness(state.finalResponse, state.query),
       evidenceQuality: this.assessEvidenceQuality(state.evidenceLevel),
       clinicalSafety: state.requiresClinicalValidation ?
         await this.checkClinicalSafety(state.finalResponse) : true,
       complianceAdherence: this.checkComplianceAdherence(state)
     };
+
+    const overallQuality = Object.values(qualityChecks).every(check => check === true);
 
     if (!overallQuality && state.retryCount < state.maxRetries) {
       state.retryCount++;
@@ -459,7 +475,7 @@ export class EnhancedWorkflowOrchestrator extends EventEmitter {
   }
 
   private async auditAndLog(state: WorkflowState): Promise<void> {
-
+    const auditEntry = {
       step: 'workflow_complete',
       timestamp: new Date(),
       data: {
@@ -506,7 +522,7 @@ export class EnhancedWorkflowOrchestrator extends EventEmitter {
 
   private async classifyIntent(query: string): Promise<string> {
     // Simple intent classification - in production would use ML model
-
+    const intents = {
       'regulatory': /fda|regulation|approval|510k|compliance|guidance/i,
       'clinical': /treatment|diagnosis|patient|clinical|therapy/i,
       'digital_health': /digital|app|mhealth|telemedicine|remote/i,

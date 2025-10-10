@@ -146,28 +146,27 @@ export default function BackupScheduler({
             Manage automated backup schedules
           </p>
         </div>
-          <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-            <DialogTrigger asChild>
-              <Button>
-                <Plus className="h-4 w-4 mr-2" />
-                Create Schedule
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-2xl">
-              <DialogHeader>
-                <DialogTitle>Create Backup Schedule</DialogTitle>
-                <DialogDescription>
-                  Set up an automated backup schedule
-                </DialogDescription>
-              </DialogHeader>
-              <CreateScheduleForm
-                onSubmit={handleCreateSchedule}
-                onCancel={() => setIsCreateDialogOpen(false)}
-                loading={loading}
-              />
-            </DialogContent>
-          </Dialog>
-        )}
+        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+          <DialogTrigger asChild>
+            <Button>
+              <Plus className="h-4 w-4 mr-2" />
+              Create Schedule
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Create Backup Schedule</DialogTitle>
+              <DialogDescription>
+                Set up an automated backup schedule
+              </DialogDescription>
+            </DialogHeader>
+            <CreateScheduleForm
+              onSubmit={handleCreateSchedule}
+              onCancel={() => setIsCreateDialogOpen(false)}
+              loading={loading}
+            />
+          </DialogContent>
+        </Dialog>
       </div>
 
       {/* Schedules Table */}
@@ -213,12 +212,11 @@ export default function BackupScheduler({
                       <TableCell>
                         <div className="flex items-center gap-2">
                           {getStatusBadge(schedule.is_enabled)}
-                            <Switch
-                              checked={schedule.is_enabled}
-                              onCheckedChange={(enabled) => handleToggleSchedule(schedule.id, enabled)}
-                              disabled={loading}
-                            />
-                          )}
+                          <Switch
+                            checked={schedule.is_enabled}
+                            onCheckedChange={(enabled) => handleToggleSchedule(schedule.id, enabled)}
+                            disabled={loading}
+                          />
                         </div>
                       </TableCell>
                       <TableCell>
@@ -263,27 +261,26 @@ export default function BackupScheduler({
                             </DialogContent>
                           </Dialog>
 
-                            <>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => {
-                                  setSelectedSchedule(schedule);
-                                  setIsEditDialogOpen(true);
-                                }}
-                              >
-                                <Edit className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleDeleteSchedule(schedule.id)}
-                                className="text-red-600 hover:text-red-700"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </>
-                          )}
+                          <>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                setSelectedSchedule(schedule);
+                                setIsEditDialogOpen(true);
+                              }}
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleDeleteSchedule(schedule.id)}
+                              className="text-red-600 hover:text-red-700"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </>
                         </div>
                       </TableCell>
                     </TableRow>

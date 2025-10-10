@@ -132,7 +132,7 @@ export class EnhancedRAGSystem extends EventEmitter {
 
   private async createIndexes(): Promise<void> {
     // Create optimized indexes for vector search
-
+    const indexQueries = [
       `CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_document_chunks_embedding_cosine
        ON document_chunks USING ivfflat (embedding vector_cosine_ops) WITH (lists = 100);`,
 
@@ -224,7 +224,7 @@ export class EnhancedRAGSystem extends EventEmitter {
     queryEmbedding: number[],
     query: RetrievalQuery
   ): Promise<ScoredChunk[]> {
-
+    const dbQuery = this.supabase
       .from('document_chunks')
       .select(`
         *,
@@ -244,10 +244,10 @@ export class EnhancedRAGSystem extends EventEmitter {
     }
 
     // Set limit
-
+    const maxResults = query.limit || 10;
     dbQuery = dbQuery.limit(maxResults);
 
-    const { data, error } = await this.supabase.rpc('vector_similarity_search', {
+    const { data, error } = await dbQuery.rpc('vector_similarity_search', {
       query_embedding: queryEmbedding,
       match_count: maxResults,
       similarity_threshold: query.options?.similarity_threshold || 0.5
@@ -275,7 +275,7 @@ export class EnhancedRAGSystem extends EventEmitter {
    * Keyword-based search using full-text search
    */
   private async keywordSearch(query: RetrievalQuery): Promise<ScoredChunk[]> {
-
+    const dbQuery = this.supabase
       .from('document_chunks')
       .select(`
         *,
@@ -363,11 +363,9 @@ export class EnhancedRAGSystem extends EventEmitter {
     }
 
     // Sort by final score and return top results
-
+    return results
       .sort((a, b) => b.final_score - a.final_score)
       .slice(0, query.options?.max_results || 20);
-
-    return results;
   }
 
   /**
@@ -379,11 +377,12 @@ export class EnhancedRAGSystem extends EventEmitter {
   ): Promise<ScoredChunk[]> {
     try {
       // Batch process for efficiency
-
+      const batchSize = 10;
       const rerankedCandidates: ScoredChunk[] = [];
 
-      for (let _i = 0; i < candidates.length; i += batchSize) {
-
+      for (let i = 0; i < candidates.length; i += batchSize) {
+        const batch = candidates.slice(i, i + batchSize);
+        const rerankedBatch = await this.rerankBatch(queryText, batch);
         rerankedCandidates.push(...rerankedBatch);
       }
 
@@ -476,13 +475,15 @@ export class EnhancedRAGSystem extends EventEmitter {
 
   private applyRecencyBoost(candidates: ScoredChunk[]): ScoredChunk[] {
     return candidates.map(candidate => {
+      const createdAt = candidate.metadata?.created_at;
 
       if (createdAt) {
-
+        const daysSinceCreation = Math.floor(
           (Date.now() - new Date(createdAt).getTime()) / (1000 * 60 * 60 * 24)
         );
 
         // Boost more recent documents
+        const recencyBoost = Math.max(0, 1 - daysSinceCreation / 30);
 
         return {
           ...candidate,
@@ -494,11 +495,12 @@ export class EnhancedRAGSystem extends EventEmitter {
   }
 
   private deduplicateResults(candidates: ScoredChunk[]): ScoredChunk[] {
-
+    const seen = new Set<string>();
     const deduplicated: ScoredChunk[] = [];
 
     for (const candidate of candidates) {
       // Create a similarity hash for the content
+      const contentHash = this.createContentHash(candidate.content);
 
       if (!seen.has(contentHash)) {
         seen.add(contentHash);

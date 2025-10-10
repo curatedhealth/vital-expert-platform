@@ -472,6 +472,7 @@ export class RollbackRecoverySystem {
       throw new Error(`Rollback plan not found: ${planId}`);
     }
 
+    const trigger = {
       id: 'manual_trigger',
       name: 'Manual Trigger',
       type: 'manual' as const,

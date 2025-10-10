@@ -188,8 +188,7 @@ export class EnhancedVitalPathCore extends EventEmitter {
 
       this.initialized = true;
       this.emit('initialization_completed');
-
-      // } catch (error) {
+    } catch (error) {
       this.emit('initialization_failed', error);
       throw new Error(`Failed to initialize Enhanced VITAL Path Core: ${error instanceof Error ? error.message : String(error)}`);
     }
@@ -202,8 +201,7 @@ export class EnhancedVitalPathCore extends EventEmitter {
       this.emit('system_alert', alert);
       // console.warn(`🚨 System Alert: ${alert.title} (${alert.severity})`);
     });
-
-    // }
+  }
 
   private async initializeLLMOrchestrator(): Promise<void> {
     this.orchestrator = new MultiModelOrchestrator({
@@ -219,7 +217,7 @@ export class EnhancedVitalPathCore extends EventEmitter {
     if ('initialize' in this.orchestrator && typeof this.orchestrator.initialize === 'function') {
       await this.orchestrator.initialize();
     }
-    // }
+  }
 
   private async initializeRAGSystem(): Promise<void> {
     this.ragSystem = new EnhancedRAGSystem({
@@ -236,7 +234,7 @@ export class EnhancedVitalPathCore extends EventEmitter {
     if ('initialize' in this.ragSystem && typeof this.ragSystem.initialize === 'function') {
       await this.ragSystem.initialize();
     }
-    // }
+  }
 
   private async initializeConsensusBuilder(): Promise<void> {
     if (!this.config.enableAdvancedConsensus) {
@@ -256,8 +254,7 @@ export class EnhancedVitalPathCore extends EventEmitter {
         timestamp: new Date(),
       });
     });
-
-    // }
+  }
 
   private async initializeClinicalValidator(): Promise<void> {
     if (!this.config.enableClinicalValidation) {
@@ -269,8 +266,7 @@ export class EnhancedVitalPathCore extends EventEmitter {
     this.clinicalValidator.on('validation_completed', (result) => {
       this.emit('clinical_validation_completed', result);
     });
-
-    // }
+  }
 
   private async initializeComplianceFramework(): Promise<void> {
     if (!this.config.enableComplianceChecking) {
@@ -278,7 +274,7 @@ export class EnhancedVitalPathCore extends EventEmitter {
     }
 
     // Create Supabase client for compliance framework
-
+    const supabaseClient = createClient(
       this.config.supabaseUrl || '',
       this.config.supabaseServiceKey || '',
       {
@@ -288,13 +284,13 @@ export class EnhancedVitalPathCore extends EventEmitter {
         }
       }
     );
-    this.complianceFramework = new ComplianceFramework(complianceSupabase as unknown);
+    this.complianceFramework = new ComplianceFramework(supabaseClient as unknown);
 
     // Initialize if method exists
     if ('initialize' in this.complianceFramework && typeof this.complianceFramework.initialize === 'function') {
       await this.complianceFramework.initialize();
     }
-    // }
+  }
 
   private async initializeWorkflowOrchestrator(): Promise<void> {
     const workflowConfig: WorkflowConfig = {
@@ -317,8 +313,7 @@ export class EnhancedVitalPathCore extends EventEmitter {
     this.workflowOrchestrator.on('workflow_failed', (error) => {
       this.handleWorkflowFailed(error);
     });
-
-    // }
+  }
 
   private async setupEventHandlers(): Promise<void> {
     // Performance monitoring
@@ -352,13 +347,13 @@ export class EnhancedVitalPathCore extends EventEmitter {
       });
     });
 
-    // }
+  }
 
   private async setupHealthChecks(): Promise<void> {
     // Periodic health checks every 30 seconds
     setInterval(async () => {
       try {
-
+        const status = await this.performHealthCheck();
         this.emit('health_check', status);
 
         if (status.status === 'unhealthy') {
@@ -368,8 +363,7 @@ export class EnhancedVitalPathCore extends EventEmitter {
         // console.error('Health check failed:', error);
       }
     }, 30000);
-
-    // }
+  }
 
   // Public API
   async processQuery(request: QueryRequest): Promise<QueryResponse> {

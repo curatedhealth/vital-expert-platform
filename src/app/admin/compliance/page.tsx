@@ -21,6 +21,7 @@ export default async function CompliancePage() {
         <p className="mt-2 text-sm text-gray-600">
           Monitor compliance status, generate reports, and manage incident response playbooks.
         </p>
+        {isSuperAdmin && (
           <div className="mt-2 flex items-center text-sm text-amber-600">
             <span className="font-medium">Super Admin:</span>
             <span className="ml-1">Full access to compliance tools and incident playbooks</span>

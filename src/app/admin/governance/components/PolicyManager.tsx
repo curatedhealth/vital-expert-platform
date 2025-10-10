@@ -119,27 +119,26 @@ export default function PolicyManager({
             Manage safety, compliance, performance, and cost policies for LLM operations
           </p>
         </div>
-          <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-            <DialogTrigger asChild>
-              <Button>
-                <Plus className="h-4 w-4 mr-2" />
-                Create Policy
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-2xl">
-              <DialogHeader>
-                <DialogTitle>Create Governance Policy</DialogTitle>
-                <DialogDescription>
-                  Define a new policy to govern LLM operations and prompt changes
-                </DialogDescription>
-              </DialogHeader>
-              <CreatePolicyForm
-                onSubmit={handleCreatePolicy}
-                onCancel={() => setIsCreateDialogOpen(false)}
-              />
-            </DialogContent>
-          </Dialog>
-        )}
+        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+          <DialogTrigger asChild>
+            <Button>
+              <Plus className="h-4 w-4 mr-2" />
+              Create Policy
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Create Governance Policy</DialogTitle>
+              <DialogDescription>
+                Define a new policy to govern LLM operations and prompt changes
+              </DialogDescription>
+            </DialogHeader>
+            <CreatePolicyForm
+              onSubmit={handleCreatePolicy}
+              onCancel={() => setIsCreateDialogOpen(false)}
+            />
+          </DialogContent>
+        </Dialog>
       </div>
 
       {/* Policies Table */}

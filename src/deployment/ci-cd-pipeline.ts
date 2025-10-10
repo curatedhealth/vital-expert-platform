@@ -171,7 +171,7 @@ export class CICDPipeline {
       timestamp: Date;
     }
   ): Promise<PipelineExecution> {
-    // const execution: PipelineExecution = {
+    const execution: PipelineExecution = {
       id: `pipeline_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       number: this.executions.length + 1,
       status: 'pending',
@@ -655,8 +655,9 @@ export class CICDPipeline {
 
   private async executePipeline(execution: PipelineExecution): Promise<void> {
     execution.status = 'running';
-    // for (const stage of execution.stages) {
-      // const __stageResult = await this.executeStage(stage, execution);
+    
+    for (const stage of execution.stages) {
+      const stageResult = await this.executeStage(stage, execution);
 
       if (!stageResult.success) {
         execution.status = 'failed';
@@ -675,8 +676,6 @@ export class CICDPipeline {
 
     // Final healthcare compliance validation
     await this.validateFinalHealthcareCompliance(execution);
-
-    // }s`);
   }
 
   private async executeStage(stage: PipelineStage, execution: PipelineExecution): Promise<{success: boolean}> {
@@ -686,7 +685,7 @@ export class CICDPipeline {
     try {
       // Execute jobs in parallel or sequence based on configuration
       for (const job of stage.jobs) {
-
+        const jobResult = await this.executeJob(job, execution);
         if (!jobResult.success) {
           stage.status = 'failed';
           return { success: false };
@@ -710,9 +709,9 @@ export class CICDPipeline {
     job.status = 'running';
     job.startTime = new Date();
 
-    // try {
+    try {
       for (const step of job.steps) {
-
+        const stepResult = await this.executeStep(step, job, execution);
         if (!stepResult.success) {
           job.status = 'failed';
           return { success: false };

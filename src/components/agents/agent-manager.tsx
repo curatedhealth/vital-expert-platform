@@ -224,7 +224,7 @@ const AgentCard: React.FC<{
   onStop: (id: string) => void;
   onConfigure: (agent: Agent) => void;
 }> = ({ agent, onStart, onStop, onConfigure }) => {
-
+  const statusConfig = {
     active: { color: 'bg-green-100 text-green-800 border-green-200', icon: CheckCircle },
     idle: { color: 'bg-gray-100 text-gray-800 border-gray-200', icon: Clock },
     busy: { color: 'bg-blue-100 text-blue-800 border-blue-200', icon: Activity },

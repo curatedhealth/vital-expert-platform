@@ -127,6 +127,7 @@ export default function HealthDashboard({
       )}
 
       {/* Alert Configuration */}
+      {showAlertConfig && (
         <div>
           <h2 className="text-lg font-medium text-gray-900 mb-4">Alert Configuration</h2>
           <AlertConfigPanel />

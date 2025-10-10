@@ -54,8 +54,184 @@ async function searchFDADatabase(
   deviceClass?: string,
   yearFrom?: number
 ) {
-  // Mock FDA data for demonstration
-  const mockResults = [
+  const baseUrl = 'https://api.fda.gov';
+  const apiKey = process.env.FDA_API_KEY;
+  
+  if (!apiKey) {
+    console.warn('⚠️ FDA API key not configured, using fallback data');
+    return getFallbackFDAData(query, searchType, deviceClass, yearFrom);
+  }
+
+  try {
+    const results: any[] = [];
+    
+    // Search different FDA endpoints based on search type
+    const endpoints = getFDASearchEndpoints(searchType);
+    
+    for (const endpoint of endpoints) {
+      try {
+        const url = buildFDAURL(baseUrl, endpoint, query, deviceClass, yearFrom, apiKey);
+        console.log(`🔍 Searching FDA endpoint: ${endpoint}`);
+        
+        const response = await fetch(url, {
+          method: 'GET',
+          headers: {
+            'Accept': 'application/json',
+            'User-Agent': 'VITAL-Path/1.0'
+          },
+          signal: AbortSignal.timeout(10000) // 10 second timeout
+        });
+
+        if (!response.ok) {
+          console.warn(`⚠️ FDA API error for ${endpoint}: ${response.status} ${response.statusText}`);
+          continue;
+        }
+
+        const data = await response.json();
+        const processedResults = processFDAResults(data, endpoint);
+        results.push(...processedResults);
+        
+        // Rate limiting - FDA API has limits
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
+      } catch (error) {
+        console.error(`❌ Error searching FDA ${endpoint}:`, error);
+        continue;
+      }
+    }
+
+    // Deduplicate and sort results
+    const uniqueResults = deduplicateFDAResults(results);
+    return uniqueResults.slice(0, 20); // Limit to 20 results
+
+  } catch (error) {
+    console.error('❌ FDA API search failed:', error);
+    return getFallbackFDAData(query, searchType, deviceClass, yearFrom);
+  }
+}
+
+/**
+ * Get FDA search endpoints based on search type
+ */
+function getFDASearchEndpoints(searchType?: string): string[] {
+  if (searchType === '510k') {
+    return ['device/510k.json'];
+  } else if (searchType === 'pma') {
+    return ['device/pma.json'];
+  } else if (searchType === 'de_novo') {
+    return ['device/denovo.json'];
+  } else if (searchType === 'recall') {
+    return ['device/recall.json'];
+  } else if (searchType === 'guidance') {
+    return ['device/guidance.json'];
+  } else {
+    // Search all relevant endpoints
+    return ['device/510k.json', 'device/pma.json', 'device/denovo.json'];
+  }
+}
+
+/**
+ * Build FDA API URL with parameters
+ */
+function buildFDAURL(
+  baseUrl: string,
+  endpoint: string,
+  query: string,
+  deviceClass?: string,
+  yearFrom?: number,
+  apiKey?: string
+): string {
+  const url = new URL(`${baseUrl}/${endpoint}`);
+  
+  // Add search parameters
+  const searchParams = new URLSearchParams();
+  
+  if (query) {
+    searchParams.append('search', `device_name:"${query}" OR device_description:"${query}"`);
+  }
+  
+  if (deviceClass) {
+    searchParams.append('search', `device_class:"${deviceClass}"`);
+  }
+  
+  if (yearFrom) {
+    const yearParam = `date_received:[${yearFrom}0101 TO *]`;
+    searchParams.append('search', yearParam);
+  }
+  
+  // Add API key
+  if (apiKey) {
+    searchParams.append('api_key', apiKey);
+  }
+  
+  // Add limit
+  searchParams.append('limit', '10');
+  
+  url.search = searchParams.toString();
+  return url.toString();
+}
+
+/**
+ * Process FDA API results into standardized format
+ */
+function processFDAResults(data: any, endpoint: string): any[] {
+  if (!data.results || !Array.isArray(data.results)) {
+    return [];
+  }
+
+  return data.results.map((result: any) => ({
+    id: result.k_number || result.pma_number || result.denovo_number || result.recall_number || 'unknown',
+    type: getSubmissionTypeFromEndpoint(endpoint),
+    deviceName: result.device_name || result.device_description || 'Unknown Device',
+    applicant: result.manufacturer_name || result.manufacturer_d_name || 'Unknown Manufacturer',
+    decisionDate: result.date_received || result.decision_date || result.recall_initiation_date,
+    deviceClass: result.device_class || 'Unknown',
+    predicateDevice: result.predicate_device || null,
+    intendedUse: result.indications_for_use || result.intended_use || 'No indication specified',
+    summary: result.device_description || result.summary || 'No description available',
+    source: 'FDA API',
+    rawData: result // Keep raw data for debugging
+  }));
+}
+
+/**
+ * Get submission type from endpoint
+ */
+function getSubmissionTypeFromEndpoint(endpoint: string): string {
+  if (endpoint.includes('510k')) return '510k';
+  if (endpoint.includes('pma')) return 'pma';
+  if (endpoint.includes('denovo')) return 'de_novo';
+  if (endpoint.includes('recall')) return 'recall';
+  if (endpoint.includes('guidance')) return 'guidance';
+  return 'unknown';
+}
+
+/**
+ * Deduplicate FDA results by ID
+ */
+function deduplicateFDAResults(results: any[]): any[] {
+  const seen = new Set();
+  return results.filter(result => {
+    if (seen.has(result.id)) {
+      return false;
+    }
+    seen.add(result.id);
+    return true;
+  });
+}
+
+/**
+ * Fallback data when FDA API is unavailable
+ */
+function getFallbackFDAData(
+  query: string,
+  searchType?: string,
+  deviceClass?: string,
+  yearFrom?: number
+): any[] {
+  console.log('📋 Using fallback FDA data');
+  
+  const fallbackResults = [
     {
       id: 'K230123',
       type: '510k',
@@ -66,6 +242,7 @@ async function searchFDADatabase(
       predicateDevice: 'K192345',
       intendedUse: 'Adjunctive treatment for generalized anxiety disorder through cognitive behavioral therapy',
       summary: 'The device is a prescription digital therapeutic delivering CBT for adults with GAD.',
+      source: 'Fallback Data'
     },
     {
       id: 'K221456',
@@ -77,6 +254,7 @@ async function searchFDADatabase(
       predicateDevice: 'K201234',
       intendedUse: 'Aid in diagnosis of depression and anxiety disorders',
       summary: 'AI/ML software analyzing patient responses to standardized questionnaires.',
+      source: 'Fallback Data'
     },
     {
       id: 'P220045',
@@ -87,11 +265,12 @@ async function searchFDADatabase(
       deviceClass: 'III',
       intendedUse: 'Treatment of medication-resistant depression',
       summary: 'Implantable neurostimulation device with closed-loop feedback.',
-    },
+      source: 'Fallback Data'
+    }
   ];
 
-  // Filter by search type
-  let filtered = mockResults;
+  // Apply basic filtering
+  let filtered = fallbackResults;
   if (searchType) {
     filtered = filtered.filter(r => r.type === searchType);
   }
@@ -101,9 +280,14 @@ async function searchFDADatabase(
   if (yearFrom) {
     filtered = filtered.filter(r => new Date(r.decisionDate).getFullYear() >= yearFrom);
   }
-
-  // Simulate API delay
-  await new Promise(resolve => setTimeout(resolve, 500));
+  if (query) {
+    const queryLower = query.toLowerCase();
+    filtered = filtered.filter(r =>
+      r.deviceName.toLowerCase().includes(queryLower) ||
+      r.summary.toLowerCase().includes(queryLower) ||
+      r.intendedUse.toLowerCase().includes(queryLower)
+    );
+  }
 
   return filtered;
 }

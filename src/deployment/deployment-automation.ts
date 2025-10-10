@@ -158,7 +158,7 @@ export class DeploymentAutomation {
     environment: string,
     triggeredBy: string
   ): Promise<DeploymentResult> {
-    // const __pipelineId = `deployment_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const pipelineId = `deployment_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
     const pipeline: DeploymentPipeline = {
       id: pipelineId,
@@ -188,7 +188,7 @@ export class DeploymentAutomation {
 
     try {
       // Execute deployment pipeline
-
+      const result = await this.runDeploymentPipeline(pipeline);
       return result;
 
     } catch (error) {
@@ -313,8 +313,21 @@ export class DeploymentAutomation {
 
   private async runDeploymentPipeline(pipeline: DeploymentPipeline): Promise<DeploymentResult> {
     pipeline.status = 'running';
-    // for (const step of pipeline.steps) {
+    const metrics = {
+      totalSteps: pipeline.steps.length,
+      completedSteps: 0,
+      failedSteps: 0,
+      totalDuration: 0
+    };
+    const healthcareCompliance = {
+      validated: false,
+      complianceChecks: [],
+      auditLogs: []
+    };
 
+    for (const step of pipeline.steps) {
+      const stepResult = await this.executeStep(step, pipeline);
+      
       if (!stepResult.success) {
         pipeline.status = 'failed';
         throw new Error(`Step ${step.name} failed: ${stepResult.error}`);
@@ -330,8 +343,6 @@ export class DeploymentAutomation {
     pipeline.endTime = new Date();
     pipeline.totalDuration = pipeline.endTime.getTime() - pipeline.startTime.getTime();
 
-    // }s`);
-
     return {
       success: true,
       pipeline,
@@ -345,7 +356,7 @@ export class DeploymentAutomation {
     step.status = 'running';
     step.startTime = new Date();
 
-    // try {
+    try {
       switch (step.type) {
         case 'validate':
           await this.executeValidationStep(step, pipeline);
@@ -371,7 +382,6 @@ export class DeploymentAutomation {
       step.duration = step.endTime.getTime() - (step.startTime?.getTime() || 0);
       step.exitCode = 0;
 
-      // }s)`);
       return { success: true };
 
     } catch (error) {
@@ -381,7 +391,7 @@ export class DeploymentAutomation {
       step.exitCode = 1;
       step.logs.push(`ERROR: ${error}`);
 
-      // return { success: false, error: String(error) };
+      return { success: false, error: String(error) };
     }
   }
 

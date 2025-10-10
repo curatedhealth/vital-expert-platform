@@ -76,7 +76,7 @@ export class NarcolepsyDTxOrchestrator extends ComplianceAwareOrchestrator {
     nextActions: string[];
   }> {
     // Initialize processing context
-
+    const context = {
       patientId: data.patientId,
       therapeuticArea: 'narcolepsy',
       urgency: this.assessUrgency(data),
@@ -85,32 +85,36 @@ export class NarcolepsyDTxOrchestrator extends ComplianceAwareOrchestrator {
 
     try {
       // Step 1: Safety triage
+      const safetyTriage = await this.performSafetyTriage(data);
 
       // Step 2: Clinical analysis using specialized agents
+      const clinicalAnalysis = await this.performClinicalAnalysis(data);
 
       // Step 3: Generate evidence-based recommendations
-
+      const recommendations = await this.generateRecommendations({
         clinicalAnalysis,
         data
-      );
+      });
 
       // Step 4: Apply PHARMA validation
-
+      const validationResults = await this.validateRecommendations({
         recommendations,
         data
       );
 
       // Step 5: Apply VERIFY protocol
-
-        recommendations
-      );
+      const verifyResults = await this.applyVERIFYProtocol({
+        recommendations,
+        clinicalValidation: validationResults,
+        patientData: data
+      });
 
       // Step 6: Generate alerts and next actions
-
+      const { pharmaValidation, verifyValidation, alerts, nextActions } = await this.generateOutputs({
         recommendations,
-        alerts,
+        alerts: verifyResults.alerts,
         data
-      );
+      });
 
       return {
         recommendations: pharmaValidation.validatedRecommendations,
@@ -156,7 +160,7 @@ export class NarcolepsyDTxOrchestrator extends ComplianceAwareOrchestrator {
     medicationSafety: 'safe' | 'monitor' | 'contraindicated';
     immediateActions: string[];
   }> {
-
+    const safety = {
       drivingRisk: 'low' as 'low' | 'moderate' | 'high' | 'prohibited',
       fallRisk: 'low' as 'low' | 'moderate' | 'high',
       medicationSafety: 'safe' as 'safe' | 'monitor' | 'contraindicated',
@@ -198,7 +202,12 @@ export class NarcolepsyDTxOrchestrator extends ComplianceAwareOrchestrator {
     medicationResponse: unknown;
     behavioralFactors: unknown;
   }> {
-
+    const [
+      sleepAnalysis,
+      cataplexyAssessment,
+      medicationResponse,
+      behavioralFactors
+    ] = await Promise.all([
       // Sleep pattern analysis
       this.invokeAgent('sleep_analyzer', {
         patientData: data,
@@ -230,10 +239,10 @@ export class NarcolepsyDTxOrchestrator extends ComplianceAwareOrchestrator {
     ]);
 
     return {
-      sleepAnalysis: analyses[0],
-      cataplexyAssessment: analyses[1],
-      medicationResponse: analyses[2],
-      behavioralFactors: analyses[3]
+      sleepAnalysis,
+      cataplexyAssessment,
+      medicationResponse,
+      behavioralFactors
     };
   }
 
@@ -305,7 +314,7 @@ export class NarcolepsyDTxOrchestrator extends ComplianceAwareOrchestrator {
     score: number;
     details: unknown;
   }> {
-
+    const pharmaScores = {
       purpose: this.validatePurpose(recommendations),
       hypothesis: this.validateHypothesis(recommendations, data),
       audience: this.validateAudience(data),
@@ -313,6 +322,8 @@ export class NarcolepsyDTxOrchestrator extends ComplianceAwareOrchestrator {
       metrics: this.validateMetrics(recommendations),
       actionable: this.validateActionability(recommendations)
     };
+
+    const overallScore = Object.values(pharmaScores).reduce((sum, score) => sum + score, 0) / Object.keys(pharmaScores).length;
 
     return {
       validatedRecommendations: recommendations.filter(rec =>

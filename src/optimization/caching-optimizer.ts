@@ -148,8 +148,22 @@ export class CachingOptimizer {
   }
 
   async runCacheOptimizationSuite(): Promise<CacheOptimizationSuite> {
-    // // Run different caching optimizations
+    // Run different caching optimizations
+    const [
+      redisOptimization,
+      memoryCacheOptimization,
+      queryCacheOptimization,
+      apiCacheOptimization,
+      staticAssetOptimization
+    ] = await Promise.all([
+      this.optimizeRedisCache(),
+      this.optimizeMemoryCache(),
+      this.optimizeQueryCache(),
+      this.optimizeAPICache(),
+      this.optimizeStaticAssets()
+    ]);
 
+    const summary = this.calculateOptimizationSummary([
       redisOptimization,
       memoryCacheOptimization,
       queryCacheOptimization,
@@ -168,11 +182,14 @@ export class CachingOptimizer {
   }
 
   private async optimizeRedisCache(): Promise<CacheOptimizationResult> {
-    // const _beforeMetrics = await this.measureRedisCacheMetrics();
+    const beforeMetrics = await this.measureRedisCacheMetrics();
 
     // Apply Redis optimizations
     await this.applyRedisOptimizations();
 
+    const afterMetrics = await this.measureRedisCacheMetrics();
+
+    return {
       hitRate: afterMetrics.hitRate - beforeMetrics.hitRate,
       responseTime: this.calculateImprovement(beforeMetrics.averageResponseTime, afterMetrics.averageResponseTime),
       cacheEfficiency: afterMetrics.hitRate * (1 - afterMetrics.evictionRate / 100)
@@ -189,15 +206,15 @@ export class CachingOptimizer {
   }
 
   private async optimizeMemoryCache(): Promise<CacheOptimizationResult> {
-    // const _beforeMetrics = await this.measureMemoryCacheMetrics();
+    const beforeMetrics = await this.measureMemoryCacheMetrics();
 
     // Apply memory cache optimizations
     await this.applyMemoryCacheOptimizations();
 
-      hitRate: afterMetrics.hitRate - beforeMetrics.hitRate,
-      responseTime: this.calculateImprovement(beforeMetrics.averageResponseTime, afterMetrics.averageResponseTime),
-      cacheEfficiency: afterMetrics.hitRate * (1 - afterMetrics.evictionRate / 100)
-    };
+    const afterMetrics = await this.measureMemoryCacheMetrics();
+    const improvementPercentage = this.calculateImprovementPercentage(beforeMetrics, afterMetrics);
+    const healthcareCompliance = await this.validateHealthcareCompliance('memory_cache');
+    const recommendations = this.generateMemoryCacheRecommendations(beforeMetrics, afterMetrics);
 
     return {
       cacheType: 'Memory Cache',
@@ -210,15 +227,15 @@ export class CachingOptimizer {
   }
 
   private async optimizeQueryCache(): Promise<CacheOptimizationResult> {
-    // const _beforeMetrics = await this.measureQueryCacheMetrics();
+    const beforeMetrics = await this.measureQueryCacheMetrics();
 
     // Apply query cache optimizations
     await this.applyQueryCacheOptimizations();
 
-      hitRate: afterMetrics.hitRate - beforeMetrics.hitRate,
-      responseTime: this.calculateImprovement(beforeMetrics.averageResponseTime, afterMetrics.averageResponseTime),
-      cacheEfficiency: afterMetrics.hitRate * (1 - afterMetrics.evictionRate / 100)
-    };
+    const afterMetrics = await this.measureQueryCacheMetrics();
+    const improvementPercentage = this.calculateImprovementPercentage(beforeMetrics, afterMetrics);
+    const healthcareCompliance = await this.validateHealthcareCompliance('query_cache');
+    const recommendations = this.generateQueryCacheRecommendations(beforeMetrics, afterMetrics);
 
     return {
       cacheType: 'Query Cache',
@@ -231,15 +248,15 @@ export class CachingOptimizer {
   }
 
   private async optimizeApiCache(): Promise<CacheOptimizationResult> {
-    // const _beforeMetrics = await this.measureApiCacheMetrics();
+    const beforeMetrics = await this.measureApiCacheMetrics();
 
     // Apply API cache optimizations
     await this.applyApiCacheOptimizations();
 
-      hitRate: afterMetrics.hitRate - beforeMetrics.hitRate,
-      responseTime: this.calculateImprovement(beforeMetrics.averageResponseTime, afterMetrics.averageResponseTime),
-      cacheEfficiency: afterMetrics.hitRate * (1 - afterMetrics.evictionRate / 100)
-    };
+    const afterMetrics = await this.measureApiCacheMetrics();
+    const improvementPercentage = this.calculateImprovementPercentage(beforeMetrics, afterMetrics);
+    const healthcareCompliance = await this.validateHealthcareCompliance('api_cache');
+    const recommendations = this.generateApiCacheRecommendations(beforeMetrics, afterMetrics);
 
     return {
       cacheType: 'API Cache',
@@ -252,15 +269,15 @@ export class CachingOptimizer {
   }
 
   private async optimizeStaticAssets(): Promise<CacheOptimizationResult> {
-    // const _beforeMetrics = await this.measureStaticAssetMetrics();
+    const beforeMetrics = await this.measureStaticAssetMetrics();
 
     // Apply static asset optimizations
     await this.applyStaticAssetOptimizations();
 
-      hitRate: afterMetrics.hitRate - beforeMetrics.hitRate,
-      responseTime: this.calculateImprovement(beforeMetrics.averageResponseTime, afterMetrics.averageResponseTime),
-      cacheEfficiency: afterMetrics.hitRate * (1 - afterMetrics.evictionRate / 100)
-    };
+    const afterMetrics = await this.measureStaticAssetMetrics();
+    const improvementPercentage = this.calculateImprovementPercentage(beforeMetrics, afterMetrics);
+    const healthcareCompliance = await this.validateHealthcareCompliance('static_assets');
+    const recommendations = this.generateStaticAssetRecommendations(beforeMetrics, afterMetrics);
 
     return {
       cacheType: 'Static Assets',

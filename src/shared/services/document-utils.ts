@@ -102,7 +102,7 @@ export function extractMetadataFromContent(
   ];
 
   for (const pattern of journalPatterns) {
-
+    const match = text.match(pattern);
     if (match) {
       metadata.journal = match[1].trim();
       break;
@@ -110,7 +110,7 @@ export function extractMetadataFromContent(
   }
 
   // Extract date patterns
-
+  const datePatterns = [
     /Published:?\s*([A-Za-z]+ \d{1,2},? \d{4})/i,
     /Date:?\s*([A-Za-z]+ \d{1,2},? \d{4})/i,
     /(\d{4}-\d{2}-\d{2})/,
@@ -118,7 +118,7 @@ export function extractMetadataFromContent(
   ];
 
   for (const pattern of datePatterns) {
-
+    const match = text.match(pattern);
     if (match) {
       metadata.publishedDate = match[1];
       break;
@@ -174,35 +174,42 @@ function classifyDocumentType(content: string, fileName: string): DocumentMetada
   ];
 
   // Guideline indicators
-
+  const guidelineTerms = [
     'guidance', 'guideline', 'recommendation', 'best practice', 'standard',
     'protocol', 'framework', 'policy', 'procedure'
   ];
 
   // Regulation indicators
-
+  const regulationTerms = [
     'regulation', 'compliance', 'fda', 'ema', 'ich', 'gcp', 'law', 'legal',
     'requirement', 'mandate', 'directive', 'code of federal regulations'
   ];
 
   // Manual indicators
-
+  const manualTerms = [
     'manual', 'handbook', 'guide', 'tutorial', 'instruction', 'how-to',
     'user guide', 'implementation', 'toolkit'
   ];
 
+  const academicScore = academicTerms.filter(term =>
     lowerContent.includes(term) || lowerFileName.includes(term)
   ).length;
 
+  const guidelineScore = guidelineTerms.filter(term =>
     lowerContent.includes(term) || lowerFileName.includes(term)
   ).length;
 
+  const regulationScore = regulationTerms.filter(term =>
     lowerContent.includes(term) || lowerFileName.includes(term)
   ).length;
 
+  const manualScore = manualTerms.filter(term =>
     lowerContent.includes(term) || lowerFileName.includes(term)
   ).length;
 
+  const researchScore = academicScore; // Research papers are a subset of academic content
+
+  const typeScores = [
     { type: 'research-paper' as const, score: researchScore },
     { type: 'guideline' as const, score: guidelineScore },
     { type: 'regulation' as const, score: regulationScore },

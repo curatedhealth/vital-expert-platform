@@ -442,7 +442,7 @@ export class EnhancedConversationManager {
 
   // Public utility methods
   async getSessionMetrics(sessionId: string): Promise<SessionMetrics | null> {
-
+    const session = this.sessions.get(sessionId);
     return session?.metrics || null;
   }
 
@@ -453,7 +453,7 @@ export class EnhancedConversationManager {
     digitalHealthUsage: number;
     multiAgentUsage: number;
   }> {
-
+    const sessions = Array.from(this.sessions.values());
     return {
       activeSessions: sessions.length,
       totalMessages: sessions.reduce((sum, s) => sum + s.metrics.messageCount, 0),

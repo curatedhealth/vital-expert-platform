@@ -55,7 +55,7 @@ export class AgentSystemTestSuite {
     results: typeof this.testResults;
     recommendations: string[];
   }> {
-    console.log('🧪 Starting Digital Health Agent System Test Suite...\n');
+    // console.log('🧪 Starting Digital Health Agent System Test Suite...\n');
 
     // Initialize system
     await this.runTest('System Initialization', () => this.testSystemInitialization());
@@ -95,7 +95,7 @@ export class AgentSystemTestSuite {
   private async runTest(testName: string, testFunction: () => Promise<void>): Promise<void> {
     const startTime = Date.now();
     try {
-      console.log(`   🔄 ${testName}...`);
+      // console.log(`   🔄 ${testName}...`);
       await Promise.race([
         testFunction(),
         new Promise((_, reject) =>
@@ -110,7 +110,7 @@ export class AgentSystemTestSuite {
         message: 'Test completed successfully',
         duration
       });
-      console.log(`   ✅ ${testName} - PASSED (${duration}ms)`);
+      // console.log(`   ✅ ${testName} - PASSED (${duration}ms)`);
 
     } catch (error) {
       const duration = Date.now() - startTime;
@@ -121,7 +121,7 @@ export class AgentSystemTestSuite {
         message,
         duration
       });
-      console.log(`   ❌ ${testName} - FAILED: ${message} (${duration}ms)`);
+      // console.log(`   ❌ ${testName} - FAILED: ${message} (${duration}ms)`);
     }
   }
 
@@ -596,7 +596,7 @@ export class AgentSystemTestSuite {
       );
       throw new Error('Should have thrown error for invalid agent');
     } catch (error) {
-      if (!error.message.includes('not found')) {
+      if (!(error instanceof Error) || !error.message.includes('not found')) {
         throw new Error('Unexpected error message for invalid agent');
       }
     }
@@ -618,7 +618,7 @@ export class AgentSystemTestSuite {
       );
       throw new Error('Should have thrown error for invalid workflow');
     } catch (error) {
-      if (!error.message.includes('not found')) {
+      if (!(error instanceof Error) || !error.message.includes('not found')) {
         throw new Error('Unexpected error message for invalid workflow');
       }
     }
@@ -656,12 +656,12 @@ export class AgentSystemTestSuite {
       recommendations.push(`Failed tests: ${failedTests.join(', ')}`);
     }
 
-    console.log('\n📊 Test Suite Summary:');
-    console.log(`   Total Tests: ${total}`);
-    console.log(`   Passed: ${passed} ✅`);
-    console.log(`   Failed: ${failed} ❌`);
-    console.log(`   Skipped: ${skipped} ⏭️`);
-    console.log(`   Success Rate: ${successRate.toFixed(1)}%`);
+    // console.log('\n📊 Test Suite Summary:');
+    // console.log(`   Total Tests: ${total}`);
+    // console.log(`   Passed: ${passed} ✅`);
+    // console.log(`   Failed: ${failed} ❌`);
+    // console.log(`   Skipped: ${skipped} ⏭️`);
+    // console.log(`   Success Rate: ${successRate.toFixed(1)}%`);
 
     return {
       summary: {

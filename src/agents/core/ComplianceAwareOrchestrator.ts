@@ -317,9 +317,9 @@ export class ComplianceAwareOrchestrator extends AgentOrchestrator {
   async initializeWithCompliance(): Promise<void> {
     await this.initialize();
     // Configuration initialized with compliance middleware
-    console.log(`PHI Detection: ${this.complianceMiddleware['config'].enablePHIDetection ? 'ENABLED' : 'DISABLED'}`);
-    console.log(`Audit Logging: ${this.complianceMiddleware['config'].enableAuditLogging ? 'ENABLED' : 'DISABLED'}`);
-    console.log(`Strict Mode: ${this.complianceMiddleware['config'].strictMode ? 'ENABLED' : 'DISABLED'}`);
-    console.log(`Alert Threshold: ${this.complianceMiddleware['config'].alertThreshold}`);
+    // console.log(`PHI Detection: ${this.complianceMiddleware['config'].enablePHIDetection ? 'ENABLED' : 'DISABLED'}`);
+    // console.log(`Audit Logging: ${this.complianceMiddleware['config'].enableAuditLogging ? 'ENABLED' : 'DISABLED'}`);
+    // console.log(`Strict Mode: ${this.complianceMiddleware['config'].strictMode ? 'ENABLED' : 'DISABLED'}`);
+    // console.log(`Alert Threshold: ${this.complianceMiddleware['config'].alertThreshold}`);
   }
 }

@@ -20,6 +20,7 @@ export function useStreamingResponse(options: UseStreamingResponseOptions = { /*
   const [isStreaming, setIsStreaming] = useState(false);
   const [currentMessage, setCurrentMessage] = useState<StreamingMessage | null>(null);
 
+  const startStreaming = async (
     query: string,
     agentType: string,
     additionalParams: Record<string, unknown> = { /* TODO: implement */ }

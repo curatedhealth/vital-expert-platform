@@ -20,6 +20,42 @@ import {
 
 import { ComplianceAwareOrchestrator } from './ComplianceAwareOrchestrator';
 
+class PerformanceTracker {
+  private metrics: unknown[] = [];
+
+  recordExecution(data: unknown): void {
+    this.metrics.push({
+      ...data,
+      timestamp: Date.now()
+    });
+
+    // Keep only last 1000 metrics
+    if (this.metrics.length > 1000) {
+      this.metrics = this.metrics.slice(-1000);
+    }
+  }
+
+  getAverageProcessingTime(): number {
+    if (this.metrics.length === 0) return 0;
+
+    const total = this.metrics.reduce((sum, metric) => {
+      return sum + ((metric as any)?.duration || 0);
+    }, 0);
+    return total / this.metrics.length;
+  }
+
+  getClassificationMetrics(): unknown {
+    const recentMetrics = this.metrics.slice(-100);
+    const avgClassificationTime = this.getAverageProcessingTime();
+    
+    return {
+      averageTime: avgClassificationTime,
+      underTarget: recentMetrics.filter(m => ((m as any)?.classificationTime || 0) < 100).length,
+      total: recentMetrics.length
+    };
+  }
+}
+
 // Phase 2 Enhanced Types
 interface IntentClassificationResult {
   category: string;
@@ -1158,35 +1194,4 @@ interface CachedResponse {
   response: UnifiedResponse;
   timestamp: number;
   expiresAt: number;
-}
-
-class PerformanceTracker {
-  private metrics: unknown[] = [];
-
-  recordExecution(data: unknown): void {
-    this.metrics.push({
-      ...data,
-      timestamp: Date.now()
-    });
-
-    // Keep only last 1000 metrics
-    if (this.metrics.length > 1000) {
-      this.metrics = this.metrics.slice(-1000);
-    }
-  }
-
-  getAverageProcessingTime(): number {
-    if (this.metrics.length === 0) return 0;
-
-    return total / this.metrics.length;
-  }
-
-  getClassificationMetrics(): unknown {
-
-    return {
-      averageTime: avgClassificationTime,
-      underTarget: recentMetrics.filter(m => (m.classificationTime || 0) < 100).length,
-      total: recentMetrics.length
-    };
-  }
 }

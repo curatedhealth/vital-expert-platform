@@ -161,7 +161,7 @@ export class MigrationRunner {
             appliedAt: new Date()
           });
         } catch (error) {
-          console.error(`❌ Migration ${migration.name} failed:`, error);
+          console.error(`Migration ${migration.name} failed:`, error);
 
           results.push({
             success: false,
@@ -176,7 +176,7 @@ export class MigrationRunner {
 
       return results;
     } catch (error) {
-      console.error('💥 Migration process failed:', error);
+      console.error('Migration process failed:', error);
       throw error;
     }
   }
@@ -197,7 +197,7 @@ export class MigrationRunner {
       for (const appliedId of appliedMigrations) {
         const migration = allMigrations.find(m => m.id === appliedId);
         if (!migration) {
-          console.warn(`⚠️  Applied migration ${appliedId} no longer exists in filesystem`);
+          console.warn(`Applied migration ${appliedId} no longer exists in filesystem`);
           return false;
         }
 

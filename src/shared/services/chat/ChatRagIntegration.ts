@@ -95,10 +95,11 @@ export class ChatRagIntegration {
         document_source: string;
       }> = [];
 
-      // Determine which RAG databases to query
-
-        ? context.rag_assignments
-        : context.rag_assignments
+      try {
+        // Determine which RAG databases to query
+        const ragAssignments = context.rag_assignments.length <= 3
+          ? context.rag_assignments
+          : context.rag_assignments
             .sort((a, b) => {
               // Sort by primary first, then by priority
               if (a.is_primary && !b.is_primary) return -1;
@@ -107,32 +108,36 @@ export class ChatRagIntegration {
             })
             .slice(0, 3); // Query top 3 RAGs by default
 
-      // ...`);
-
-      // Query each RAG database
-      for (const rag of ragsToQuery) {
-        try {
-
-            maxResults: options.maxRagResults || 5,
-            similarityThreshold: options.similarityThreshold || 0.7,
-            agentId: context.agent_id,
-            conversationId: context.conversation_id
-          });
-
-          // Add sources from this RAG
-          results.results.forEach(result => {
-            ragSources.push({
-              rag_id: rag.id,
-              rag_name: rag.name,
-              content: result.content,
-              relevance_score: result.score,
-              document_source: result.metadata.document_name || 'Unknown Document'
+        // Process each RAG assignment
+        for (const assignment of ragAssignments) {
+          try {
+            const ragResults = await this.ragService.queryRAG({
+              ragId: assignment.rag_id,
+              query: context.user_query,
+              maxResults: options.maxRagResults || 5,
+              similarityThreshold: options.similarityThreshold || 0.7,
+              agentId: context.agent_id,
+              conversationId: context.conversation_id
             });
-          });
 
-          // } catch (error) {
-          // console.error(`❌ Failed to query RAG ${rag.name}:`, error);
+            // Add sources from this RAG
+            ragResults.results.forEach(result => {
+              ragSources.push({
+                  rag_id: assignment.rag_id,
+                rag_name: assignment.rag_name,
+                content: result.content,
+                relevance_score: result.score,
+                document_source: result.metadata.document_name || 'Unknown Document'
+              });
+            });
+          } catch (error) {
+            // console.error(`Error querying RAG ${assignment.rag_id}:`, error);
+            // Continue with other RAGs
+          }
         }
+      } catch (error) {
+        // console.error('Error in RAG integration:', error);
+        // Return empty results on error
       }
 
       // Sort all sources by relevance score

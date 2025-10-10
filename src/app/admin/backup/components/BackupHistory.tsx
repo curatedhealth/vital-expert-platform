@@ -295,7 +295,7 @@ export default function BackupHistory({
                               size="sm"
                               onClick={() => {
                                 // TODO: Implement download functionality
-                                console.log('Download backup:', backup.id);
+                                // TODO: Implement download functionality
                               }}
                             >
                               <Download className="h-4 w-4" />

@@ -23,7 +23,7 @@ export class DirectSQLExecutor {
     });
   }
 
-  async executeSQL(sql: string): Promise<{ success: boolean; error?: Error; data?: any }> {
+  async executeSQL(sql: string): Promise<{ success: boolean; error?: Error; data?: unknown }> {
     const statements = this.parseSQLStatements(sql);
 
     try {
@@ -35,7 +35,10 @@ export class DirectSQLExecutor {
           throw new Error(`Invalid statement index: ${i}`);
         }
         const statement = statements.slice(i, i + 1)[0] || '';
-        }...`);
+        // Log statement execution for debugging
+        if (process.env.NODE_ENV === 'development') {
+          console.log(`Executing statement ${i + 1}: ${statement.substring(0, 100)}...`);
+        }
 
         try {
           const result = await this.executeStatement(statement);

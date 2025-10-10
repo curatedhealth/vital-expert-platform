@@ -239,7 +239,7 @@ export class AgentOrchestrator {
       execution.completed_at = new Date().toISOString();
 
       const duration = this.calculateExecutionDuration(execution);
-      console.log(`✅ Workflow completed: ${workflow.name} (${duration} minutes)`);
+      // console.log(`✅ Workflow completed: ${workflow.name} (${duration} minutes)`);
 
     } catch (error) {
       execution.status = 'failed';

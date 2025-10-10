@@ -63,8 +63,12 @@ export function useRealtimeCollaboration(options: UseRealtimeCollaborationOption
     }
   }, [conversationId]);
 
-    websocketService.disconnect();
-    setState(prev => ({ ...prev, connectionStatus: 'disconnected' }));
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      websocketService.disconnect();
+      setState(prev => ({ ...prev, connectionStatus: 'disconnected' }));
+    };
   }, []);
 
   // Typing indicators

@@ -143,7 +143,6 @@
     "react-markdown": "^10.1.0",
     "react-query": "^3.39.3",
     "react-resizable-panels": "^3.0.6",
-    "react-syntax-highlighter": "^15.6.6",
     "react-use-measure": "^2.1.7",
     "reactflow": "^11.11.4",
     "recharts": "^2.15.4",
@@ -162,6 +161,9 @@
     "ws": "^8.18.3",
     "zod": "^3.22.4",
     "zustand": "^5.0.8"
+  },
+  "resolutions": {
+    "prismjs": ">=1.30.0"
   },
   "devDependencies": {
     "@cypress/code-coverage": "^3.14.6",

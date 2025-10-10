@@ -118,13 +118,14 @@ export class IconService {
    */
   async addIcon(iconData: Omit<Icon, 'id' | 'created_at' | 'updated_at'>): Promise<Icon | null> {
     try {
-
+      const response = await fetch('/api/icons', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(iconData)
       });
+      const data = await response.json();
       // eslint-disable-next-line security/detect-object-injection
-      return response.icon || null;
+      return data.icon || null;
     } catch (error) {
       // console.error('Error in addIcon:', error);
       return null;

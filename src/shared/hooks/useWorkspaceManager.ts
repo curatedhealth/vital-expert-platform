@@ -198,15 +198,15 @@ export const __useWorkspaceManager = ({
       } catch (error) {
         // console.error('Error initializing workspaces:', error);
         // Fall back to creating default workspaces
-
+        const initializedWorkspaces = defaultWorkspaces.map((ws, index) => ({
           ...ws,
           id: `workspace-${ws.type}-${Date.now()}-${index}`,
           createdAt: now,
           updatedAt: now,
           conversationIds: []
         }));
-        setWorkspaces(fallbackWorkspaces);
-        setCurrentWorkspace(fallbackWorkspaces[0]);
+        setWorkspaces(initializedWorkspaces);
+        setCurrentWorkspace(initializedWorkspaces[0]);
       } finally {
         setIsLoading(false);
       }

@@ -82,7 +82,7 @@ export function AlertHistory() {
       if (!response.ok) throw new Error('Failed to fetch alert rules');
       
       const data = await response.json();
-      setRules(data.map((rule: any) => ({ id: rule.id, name: rule.name })));
+      setRules(data.map((rule: { id: string; name: string }) => ({ id: rule.id, name: rule.name })));
     } catch (error) {
       console.error('Error fetching alert rules:', error);
     }

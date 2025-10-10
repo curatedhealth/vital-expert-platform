@@ -45,27 +45,36 @@ export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
-  try {
-    // Verify admin access
-    const apiKeyService = new ApiKeyManagementService();
+  return withAuth(request, async (req, user) => {
+    try {
+      // Verify admin role
+      if (!['admin', 'super_admin'].includes(user.role)) {
+        return NextResponse.json(
+          { error: 'Forbidden - Admin access required' }, 
+          { status: 403 }
+        );
+      }
 
-    const { id } = params;
-    const response = await apiKeyService.getApiKeys({}, { page: 1, limit: 1 });
-    const apiKey = response.data.find(key => key.id === id);
+      const apiKeyService = new ApiKeyManagementService();
 
-    if (!apiKey) {
+      const { id } = params;
+      const response = await apiKeyService.getApiKeys({}, { page: 1, limit: 1 });
+      const apiKey = response.data.find(key => key.id === id);
+
+      if (!apiKey) {
+        return NextResponse.json(
+          { error: 'API key not found' },
+          { status: 404 }
+        );
+      }
+
+      return NextResponse.json(apiKey);
+    } catch (error) {
+      console.error('API key get error:', error);
       return NextResponse.json(
-        { error: 'API key not found' },
-        { status: 404 }
+        { error: 'Failed to fetch API key' },
+        { status: 500 }
       );
     }
-
-    return NextResponse.json(apiKey);
-  } catch (error) {
-    console.error('API key get error:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch API key' },
-      { status: 500 }
-    );
-  }
+  });
 }

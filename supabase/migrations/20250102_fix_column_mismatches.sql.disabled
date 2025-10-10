@@ -1,0 +1,130 @@
+-- Fix column mismatches identified in audit
+-- This migration addresses column name mismatches that are causing build failures
+
+-- Fix llm_providers table column name mismatch
+-- The code expects 'provider_name' but the table has 'name'
+DO $$ 
+BEGIN
+    -- Check if the column exists and rename it
+    IF EXISTS (
+        SELECT 1 FROM information_schema.columns 
+        WHERE table_name = 'llm_providers' 
+        AND column_name = 'name'
+    ) THEN
+        ALTER TABLE llm_providers RENAME COLUMN name TO provider_name;
+    END IF;
+    
+    -- If provider_name doesn't exist, create it
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.columns 
+        WHERE table_name = 'llm_providers' 
+        AND column_name = 'provider_name'
+    ) THEN
+        ALTER TABLE llm_providers ADD COLUMN provider_name TEXT;
+        
+        -- Copy data from name column if it exists
+        IF EXISTS (
+            SELECT 1 FROM information_schema.columns 
+            WHERE table_name = 'llm_providers' 
+            AND column_name = 'name'
+        ) THEN
+            UPDATE llm_providers SET provider_name = name;
+        END IF;
+        
+        -- Make it NOT NULL if we have data
+        ALTER TABLE llm_providers ALTER COLUMN provider_name SET NOT NULL;
+    END IF;
+END $$;
+
+-- Ensure all required columns exist in profiles table
+DO $$
+BEGIN
+    -- Add missing columns if they don't exist
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_name = 'profiles'
+        AND column_name = 'avatar_url'
+    ) THEN
+        ALTER TABLE profiles ADD COLUMN avatar_url TEXT;
+    END IF;
+    
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.columns 
+        WHERE table_name = 'profiles' 
+        AND column_name = 'job_title'
+    ) THEN
+        ALTER TABLE profiles ADD COLUMN job_title TEXT;
+    END IF;
+    
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.columns 
+        WHERE table_name = 'profiles' 
+        AND column_name = 'preferences'
+    ) THEN
+        ALTER TABLE profiles ADD COLUMN preferences JSONB DEFAULT '{}'::jsonb;
+    END IF;
+    
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.columns 
+        WHERE table_name = 'profiles' 
+        AND column_name = 'organization_id'
+    ) THEN
+        ALTER TABLE profiles ADD COLUMN organization_id UUID;
+    END IF;
+END $$;
+
+-- Ensure all required columns exist in agents table
+DO $$
+BEGIN
+    -- Add missing columns if they don't exist
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.columns 
+        WHERE table_name = 'agents' 
+        AND column_name = 'avatar_url'
+    ) THEN
+        ALTER TABLE agents ADD COLUMN avatar_url TEXT;
+    END IF;
+    
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.columns 
+        WHERE table_name = 'agents' 
+        AND column_name = 'capabilities'
+    ) THEN
+        ALTER TABLE agents ADD COLUMN capabilities JSONB DEFAULT '[]'::jsonb;
+    END IF;
+    
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.columns 
+        WHERE table_name = 'agents' 
+        AND column_name = 'metadata'
+    ) THEN
+        ALTER TABLE agents ADD COLUMN metadata JSONB DEFAULT '{}'::jsonb;
+    END IF;
+END $$;
+
+-- Ensure all required columns exist in knowledge_domains table
+DO $$
+BEGIN
+    -- Add missing columns if they don't exist
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.columns 
+        WHERE table_name = 'knowledge_domains' 
+        AND column_name = 'description'
+    ) THEN
+        ALTER TABLE knowledge_domains ADD COLUMN description TEXT;
+    END IF;
+    
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.columns 
+        WHERE table_name = 'knowledge_domains' 
+        AND column_name = 'metadata'
+    ) THEN
+        ALTER TABLE knowledge_domains ADD COLUMN metadata JSONB DEFAULT '{}'::jsonb;
+    END IF;
+END $$;
+
+-- Create indexes for the new columns
+CREATE INDEX IF NOT EXISTS idx_profiles_organization_id ON profiles(organization_id);
+CREATE INDEX IF NOT EXISTS idx_agents_capabilities ON agents USING GIN(capabilities);
+CREATE INDEX IF NOT EXISTS idx_agents_metadata ON agents USING GIN(metadata);
+CREATE INDEX IF NOT EXISTS idx_knowledge_domains_metadata ON knowledge_domains USING GIN(metadata);

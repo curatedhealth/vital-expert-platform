@@ -5,7 +5,7 @@ export interface ComplianceReport {
   status: 'draft' | 'in_review' | 'approved' | 'rejected';
   generatedAt: Date;
   generatedBy: string;
-  data: any;
+  data: Record<string, unknown>;
   findings: ComplianceFinding[];
   recommendations: string[];
 }
@@ -65,7 +65,7 @@ export class ComplianceReportingService {
     }
   }
 
-  async generateReport(type: string, data: any): Promise<ComplianceReport> {
+  async generateReport(type: string, data: Record<string, unknown>): Promise<ComplianceReport> {
     try {
       const response = await fetch(`${this.baseUrl}/reports`, {
         method: 'POST',
@@ -92,7 +92,7 @@ export class ComplianceReportingService {
     }
   }
 
-  async updateIncidentPlaybook(id: string, updates: any): Promise<void> {
+  async updateIncidentPlaybook(id: string, updates: Record<string, unknown>): Promise<void> {
     try {
       const response = await fetch(`${this.baseUrl}/playbooks/${id}`, {
         method: 'PUT',

@@ -61,13 +61,13 @@ const nextConfig = {
 
     return config;
   },
-  // Exclude backend directories from TypeScript checking
+  // Enable TypeScript checking for production builds
   typescript: {
-    ignoreBuildErrors: true,
+    ignoreBuildErrors: false,
   },
-  // Disable ESLint during build
+  // Enable ESLint during build
   eslint: {
-    ignoreDuringBuilds: true,
+    ignoreDuringBuilds: false,
   },
   // Skip build-time errors in development
   onDemandEntries: {

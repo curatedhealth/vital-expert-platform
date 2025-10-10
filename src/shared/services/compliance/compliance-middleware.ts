@@ -114,7 +114,7 @@ export class ComplianceMiddleware {
     }
 
     // Step 4: Execute agent with sanitized inputs
-    // let agentResponse: AgentResponse;
+    let agentResponse: AgentResponse;
     try {
       agentResponse = await agent.executePrompt(promptTitle, sanitizedInputs, context);
     } catch (error) {

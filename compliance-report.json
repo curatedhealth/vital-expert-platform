@@ -1,0 +1,3322 @@
+{
+  "timestamp": "2025-10-10T13:32:16.642Z",
+  "summary": {
+    "total": 367,
+    "violations": 295,
+    "warnings": 72
+  },
+  "violations": [
+    {
+      "type": "PHI_EXPOSURE",
+      "file": "src/__tests__/agents/test-agent-system.ts",
+      "line": 253,
+      "content": "phi_types_handled: ['Medical records', 'Patient identifiers'],",
+      "matches": [
+        "Medical records"
+      ],
+      "severity": "HIGH",
+      "description": "Potential PHI (Protected Health Information) detected"
+    },
+    {
+      "type": "PHI_EXPOSURE",
+      "file": "src/__tests__/agents/test-agent-system.ts",
+      "line": 253,
+      "content": "phi_types_handled: ['Medical records', 'Patient identifiers'],",
+      "matches": [
+        "Patient identifiers"
+      ],
+      "severity": "HIGH",
+      "description": "Potential PHI (Protected Health Information) detected"
+    },
+    {
+      "type": "PHI_EXPOSURE",
+      "file": "src/__tests__/agents/test-agent-system.ts",
+      "line": 452,
+      "content": "phi_data: 'Patient John Doe, SSN 123-45-6789, was treated on 01/15/2024 at john.doe@email.com.'",
+      "matches": [
+        "123-45-6789"
+      ],
+      "severity": "HIGH",
+      "description": "Potential PHI (Protected Health Information) detected"
+    },
+    {
+      "type": "PHI_EXPOSURE",
+      "file": "src/__tests__/agents/test-agent-system.ts",
+      "line": 452,
+      "content": "phi_data: 'Patient John Doe, SSN 123-45-6789, was treated on 01/15/2024 at john.doe@email.com.'",
+      "matches": [
+        "john.doe@email.com"
+      ],
+      "severity": "HIGH",
+      "description": "Potential PHI (Protected Health Information) detected"
+    },
+    {
+      "type": "PHI_EXPOSURE",
+      "file": "src/__tests__/agents/test-agent-system.ts",
+      "line": 452,
+      "content": "phi_data: 'Patient John Doe, SSN 123-45-6789, was treated on 01/15/2024 at john.doe@email.com.'",
+      "matches": [
+        "01/15/2024"
+      ],
+      "severity": "HIGH",
+      "description": "Potential PHI (Protected Health Information) detected"
+    },
+    {
+      "type": "PHI_EXPOSURE",
+      "file": "src/__tests__/agents/test-agent-system.ts",
+      "line": 471,
+      "content": "if (!phiResult.redactedContent || phiResult.redactedContent.includes('123-45-6789')) {",
+      "matches": [
+        "123-45-6789"
+      ],
+      "severity": "HIGH",
+      "description": "Potential PHI (Protected Health Information) detected"
+    },
+    {
+      "type": "PHI_EXPOSURE",
+      "file": "src/__tests__/agents/test-agent-system.ts",
+      "line": 505,
+      "content": "data_content: 'Patient John Doe, SSN 123-45-6789'",
+      "matches": [
+        "123-45-6789"
+      ],
+      "severity": "HIGH",
+      "description": "Potential PHI (Protected Health Information) detected"
+    },
+    {
+      "type": "PHI_EXPOSURE",
+      "file": "src/app/(app)/layout.tsx",
+      "line": 108,
+      "content": "email: 'dev@vitalexpert.com',",
+      "matches": [
+        "dev@vitalexpert.com"
+      ],
+      "severity": "HIGH",
+      "description": "Potential PHI (Protected Health Information) detected"
+    },
+    {
+      "type": "PHI_EXPOSURE",
+      "file": "src/app/(auth)/forgot-password/page.tsx",
+      "line": 116,
+      "content": "placeholder=\"name@organization.com\"",
+      "matches": [
+        "name@organization.com"
+      ],
+      "severity": "HIGH",
+      "description": "Potential PHI (Protected Health Information) detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/app/admin/alerts/components/NotificationChannels.tsx",
+      "line": 183,
+      "content": "{ key: 'email', label: 'Email Address', type: 'email' },",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/app/admin/alerts/components/NotificationChannels.tsx",
+      "line": 184,
+      "content": "{ key: 'subject', label: 'Subject Template', type: 'text' }",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/app/admin/alerts/components/NotificationChannels.tsx",
+      "line": 188,
+      "content": "{ key: 'webhookUrl', label: 'Webhook URL', type: 'url' },",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/app/admin/alerts/components/NotificationChannels.tsx",
+      "line": 189,
+      "content": "{ key: 'channel', label: 'Channel', type: 'text' },",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/app/admin/alerts/components/NotificationChannels.tsx",
+      "line": 190,
+      "content": "{ key: 'username', label: 'Username', type: 'text' }",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/app/admin/alerts/components/NotificationChannels.tsx",
+      "line": 194,
+      "content": "{ key: 'url', label: 'Webhook URL', type: 'url' },",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/app/admin/alerts/components/NotificationChannels.tsx",
+      "line": 195,
+      "content": "{ key: 'method', label: 'HTTP Method', type: 'select', options: ['POST', 'PUT', 'PATCH'] },",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/app/admin/alerts/components/NotificationChannels.tsx",
+      "line": 196,
+      "content": "{ key: 'headers', label: 'Headers (JSON)', type: 'textarea' }",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/app/admin/alerts/components/NotificationChannels.tsx",
+      "line": 200,
+      "content": "{ key: 'phoneNumber', label: 'Phone Number', type: 'tel' },",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/app/admin/alerts/components/NotificationChannels.tsx",
+      "line": 201,
+      "content": "{ key: 'provider', label: 'Provider', type: 'select', options: ['twilio', 'aws_sns'] },",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/app/admin/alerts/components/NotificationChannels.tsx",
+      "line": 202,
+      "content": "{ key: 'apiKey', label: 'API Key', type: 'password' }",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "PHI_EXPOSURE",
+      "file": "src/app/admin/audit-immutable/components/SIEMExportManagement.tsx",
+      "line": 448,
+      "content": "placeholder=\"block-1234567890\"",
+      "matches": [
+        "1234567890"
+      ],
+      "severity": "HIGH",
+      "description": "Potential PHI (Protected Health Information) detected"
+    },
+    {
+      "type": "PHI_EXPOSURE",
+      "file": "src/app/admin/dev-user-switcher/page.tsx",
+      "line": 18,
+      "content": "email: 'hn@vitalexpert.com',",
+      "matches": [
+        "hn@vitalexpert.com"
+      ],
+      "severity": "HIGH",
+      "description": "Potential PHI (Protected Health Information) detected"
+    },
+    {
+      "type": "PHI_EXPOSURE",
+      "file": "src/app/admin/dev-user-switcher/page.tsx",
+      "line": 24,
+      "content": "email: 'demo@vitalexpert.com',",
+      "matches": [
+        "demo@vitalexpert.com"
+      ],
+      "severity": "HIGH",
+      "description": "Potential PHI (Protected Health Information) detected"
+    },
+    {
+      "type": "PHI_EXPOSURE",
+      "file": "src/app/admin/dev-user-switcher/page.tsx",
+      "line": 30,
+      "content": "email: 'test@vitalexpert.com',",
+      "matches": [
+        "test@vitalexpert.com"
+      ],
+      "severity": "HIGH",
+      "description": "Potential PHI (Protected Health Information) detected"
+    },
+    {
+      "type": "PHI_EXPOSURE",
+      "file": "src/app/admin/dev-user-switcher/page.tsx",
+      "line": 38,
+      "content": "const [selectedUser, setSelectedUser] = useState('hn@vitalexpert.com');",
+      "matches": [
+        "hn@vitalexpert.com"
+      ],
+      "severity": "HIGH",
+      "description": "Potential PHI (Protected Health Information) detected"
+    },
+    {
+      "type": "PHI_EXPOSURE",
+      "file": "src/app/admin/identity/components/AccessReviewManagement.tsx",
+      "line": 12,
+      "content": "{ id: '1', user: 'john.doe@example.com', resource: 'Admin Panel', status: 'pending', requestedBy: 'admin@example.com', date: '2024-01-15' },",
+      "matches": [
+        "john.doe@example.com",
+        "admin@example.com"
+      ],
+      "severity": "HIGH",
+      "description": "Potential PHI (Protected Health Information) detected"
+    },
+    {
+      "type": "PHI_EXPOSURE",
+      "file": "src/app/admin/identity/components/AccessReviewManagement.tsx",
+      "line": 13,
+      "content": "{ id: '2', user: 'jane.smith@example.com', resource: 'API Access', status: 'approved', requestedBy: 'admin@example.com', date: '2024-01-14' },",
+      "matches": [
+        "jane.smith@example.com",
+        "admin@example.com"
+      ],
+      "severity": "HIGH",
+      "description": "Potential PHI (Protected Health Information) detected"
+    },
+    {
+      "type": "PHI_EXPOSURE",
+      "file": "src/app/admin/identity/components/AccessReviewManagement.tsx",
+      "line": 14,
+      "content": "{ id: '3', user: 'bob.wilson@example.com', resource: 'Database', status: 'rejected', requestedBy: 'admin@example.com', date: '2024-01-13' }",
+      "matches": [
+        "bob.wilson@example.com",
+        "admin@example.com"
+      ],
+      "severity": "HIGH",
+      "description": "Potential PHI (Protected Health Information) detected"
+    },
+    {
+      "type": "PHI_EXPOSURE",
+      "file": "src/app/admin/identity/components/ImpersonationManagement.tsx",
+      "line": 12,
+      "content": "{ id: '1', admin: 'admin@example.com', target: 'user@example.com', started: '2024-01-15 10:30', status: 'active' },",
+      "matches": [
+        "admin@example.com",
+        "user@example.com"
+      ],
+      "severity": "HIGH",
+      "description": "Potential PHI (Protected Health Information) detected"
+    },
+    {
+      "type": "PHI_EXPOSURE",
+      "file": "src/app/admin/identity/components/ImpersonationManagement.tsx",
+      "line": 13,
+      "content": "{ id: '2', admin: 'admin@example.com', target: 'test@example.com', started: '2024-01-14 14:20', status: 'ended' },",
+      "matches": [
+        "admin@example.com",
+        "test@example.com"
+      ],
+      "severity": "HIGH",
+      "description": "Potential PHI (Protected Health Information) detected"
+    },
+    {
+      "type": "PHI_EXPOSURE",
+      "file": "src/app/admin/identity/components/ImpersonationManagement.tsx",
+      "line": 14,
+      "content": "{ id: '3', admin: 'superadmin@example.com', target: 'demo@example.com', started: '2024-01-13 09:15', status: 'ended' }",
+      "matches": [
+        "superadmin@example.com",
+        "demo@example.com"
+      ],
+      "severity": "HIGH",
+      "description": "Potential PHI (Protected Health Information) detected"
+    },
+    {
+      "type": "PHI_EXPOSURE",
+      "file": "src/app/admin/rbac-test/page.tsx",
+      "line": 35,
+      "content": "const [testUser, setTestUser] = useState('hn@vitalexpert.com');",
+      "matches": [
+        "hn@vitalexpert.com"
+      ],
+      "severity": "HIGH",
+      "description": "Potential PHI (Protected Health Information) detected"
+    },
+    {
+      "type": "PHI_EXPOSURE",
+      "file": "src/app/admin/rbac-test/page.tsx",
+      "line": 48,
+      "content": "{ email: 'hn@vitalexpert.com', role: 'admin' },",
+      "matches": [
+        "hn@vitalexpert.com"
+      ],
+      "severity": "HIGH",
+      "description": "Potential PHI (Protected Health Information) detected"
+    },
+    {
+      "type": "PHI_EXPOSURE",
+      "file": "src/app/admin/rbac-test/page.tsx",
+      "line": 50,
+      "content": "{ email: 'demo@vitalexpert.com', role: 'user' },",
+      "matches": [
+        "demo@vitalexpert.com"
+      ],
+      "severity": "HIGH",
+      "description": "Potential PHI (Protected Health Information) detected"
+    },
+    {
+      "type": "PHI_EXPOSURE",
+      "file": "src/app/admin/rbac-test/page.tsx",
+      "line": 51,
+      "content": "{ email: 'test@vitalexpert.com', role: 'user' }",
+      "matches": [
+        "test@vitalexpert.com"
+      ],
+      "severity": "HIGH",
+      "description": "Potential PHI (Protected Health Information) detected"
+    },
+    {
+      "type": "PHI_EXPOSURE",
+      "file": "src/app/admin/rbac-test/page.tsx",
+      "line": 120,
+      "content": "{ user: 'hn@vitalexpert.com', scope: 'agents', action: 'read' },",
+      "matches": [
+        "hn@vitalexpert.com"
+      ],
+      "severity": "HIGH",
+      "description": "Potential PHI (Protected Health Information) detected"
+    },
+    {
+      "type": "PHI_EXPOSURE",
+      "file": "src/app/admin/rbac-test/page.tsx",
+      "line": 121,
+      "content": "{ user: 'hn@vitalexpert.com', scope: 'user_management', action: 'delete' },",
+      "matches": [
+        "hn@vitalexpert.com"
+      ],
+      "severity": "HIGH",
+      "description": "Potential PHI (Protected Health Information) detected"
+    },
+    {
+      "type": "PHI_EXPOSURE",
+      "file": "src/app/admin/rbac-test/page.tsx",
+      "line": 122,
+      "content": "{ user: 'demo@vitalexpert.com', scope: 'agents', action: 'read' },",
+      "matches": [
+        "demo@vitalexpert.com"
+      ],
+      "severity": "HIGH",
+      "description": "Potential PHI (Protected Health Information) detected"
+    },
+    {
+      "type": "PHI_EXPOSURE",
+      "file": "src/app/admin/rbac-test/page.tsx",
+      "line": 123,
+      "content": "{ user: 'demo@vitalexpert.com', scope: 'user_management', action: 'delete' },",
+      "matches": [
+        "demo@vitalexpert.com"
+      ],
+      "severity": "HIGH",
+      "description": "Potential PHI (Protected Health Information) detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/app/api/agents/recommend/route.ts",
+      "line": 87,
+      "content": "console.log('🔑 Agent Recommendation API - Using Supabase Service Key:', process.env.SUPABASE_SERVICE_ROLE_KEY ? 'Present' : 'Missing');",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/app/api/chat/autonomous/route.ts",
+      "line": 31,
+      "content": "console.log('🔑 Autonomous Chat API - Using Supabase Service Key:', supabaseServiceKey ? 'Present' : 'Missing');",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/app/api/chat/autonomous/route.ts",
+      "line": 364,
+      "content": "console.log('🔑 Autonomous Chat API - Using Supabase Service Key:', supabaseServiceKey ? 'Present' : 'Missing');",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/app/api/chat/route.ts",
+      "line": 26,
+      "content": "console.log('🔑 Chat API - Using Supabase Service Key:', supabaseServiceKey ? 'Present' : 'Missing');",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "PHI_EXPOSURE",
+      "file": "src/app/api/dtx/narcolepsy/route.ts",
+      "line": 100,
+      "content": "patient_id: patientData.patientId,",
+      "matches": [
+        "patient_id: patientData"
+      ],
+      "severity": "HIGH",
+      "description": "Potential PHI (Protected Health Information) detected"
+    },
+    {
+      "type": "PHI_EXPOSURE",
+      "file": "src/app/api/dtx/narcolepsy/route.ts",
+      "line": 284,
+      "content": "error: 'Patient ID and treatment plan required'",
+      "matches": [
+        "Patient ID and"
+      ],
+      "severity": "HIGH",
+      "description": "Potential PHI (Protected Health Information) detected"
+    },
+    {
+      "type": "PHI_EXPOSURE",
+      "file": "src/app/api/dtx/narcolepsy/route.ts",
+      "line": 292,
+      "content": "patient_id: patientId,",
+      "matches": [
+        "patient_id: patientId"
+      ],
+      "severity": "HIGH",
+      "description": "Potential PHI (Protected Health Information) detected"
+    },
+    {
+      "type": "PHI_EXPOSURE",
+      "file": "src/app/api/dtx/narcolepsy/route.ts",
+      "line": 327,
+      "content": "patient_id: patientId,",
+      "matches": [
+        "patient_id: patientId"
+      ],
+      "severity": "HIGH",
+      "description": "Potential PHI (Protected Health Information) detected"
+    },
+    {
+      "type": "PHI_EXPOSURE",
+      "file": "src/app/api/dtx/narcolepsy/route.ts",
+      "line": 381,
+      "content": "error: 'Patient ID required'",
+      "matches": [
+        "Patient ID required"
+      ],
+      "severity": "HIGH",
+      "description": "Potential PHI (Protected Health Information) detected"
+    },
+    {
+      "type": "PHI_EXPOSURE",
+      "file": "src/app/api/dtx/narcolepsy/route.ts",
+      "line": 419,
+      "content": "patient_id: patientId,",
+      "matches": [
+        "patient_id: patientId"
+      ],
+      "severity": "HIGH",
+      "description": "Potential PHI (Protected Health Information) detected"
+    },
+    {
+      "type": "PHI_EXPOSURE",
+      "file": "src/app/dashboard/layout.tsx",
+      "line": 102,
+      "content": "const user = { email: 'user@example.com', name: 'User' };",
+      "matches": [
+        "user@example.com"
+      ],
+      "severity": "HIGH",
+      "description": "Potential PHI (Protected Health Information) detected"
+    },
+    {
+      "type": "PHI_EXPOSURE",
+      "file": "src/dtx/narcolepsy/orchestrator.ts",
+      "line": 11,
+      "content": "patientId: string;",
+      "matches": [
+        "patientId: string"
+      ],
+      "severity": "HIGH",
+      "description": "Potential PHI (Protected Health Information) detected"
+    },
+    {
+      "type": "PHI_EXPOSURE",
+      "file": "src/dtx/narcolepsy/orchestrator.ts",
+      "line": 80,
+      "content": "patientId: data.patientId,",
+      "matches": [
+        "patientId: data"
+      ],
+      "severity": "HIGH",
+      "description": "Potential PHI (Protected Health Information) detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/features/agents/components/AgentCard.tsx",
+      "line": 129,
+      "content": "<Tooltip key=\"hipaa\">",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/features/agents/components/AgentCard.tsx",
+      "line": 141,
+      "content": "<Tooltip key=\"gdpr\">",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/features/agents/components/AgentCard.tsx",
+      "line": 153,
+      "content": "<Tooltip key=\"pharma\">",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/features/agents/components/AgentCard.tsx",
+      "line": 165,
+      "content": "<Tooltip key=\"verify\">",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "PHI_EXPOSURE",
+      "file": "src/features/agents/components/AgentImport.tsx",
+      "line": 133,
+      "content": "validated_by: \"clinical-reviewer@example.com\",",
+      "matches": [
+        "clinical-reviewer@example.com"
+      ],
+      "severity": "HIGH",
+      "description": "Potential PHI (Protected Health Information) detected"
+    },
+    {
+      "type": "PHI_EXPOSURE",
+      "file": "src/features/agents/components/AgentImport.tsx",
+      "line": 215,
+      "content": "created_by: \"your-email@example.com\",",
+      "matches": [
+        "your-email@example.com"
+      ],
+      "severity": "HIGH",
+      "description": "Potential PHI (Protected Health Information) detected"
+    },
+    {
+      "type": "PHI_EXPOSURE",
+      "file": "src/features/agents/components/AgentImport.tsx",
+      "line": 319,
+      "content": "created_by: \"example@domain.com\",",
+      "matches": [
+        "example@domain.com"
+      ],
+      "severity": "HIGH",
+      "description": "Potential PHI (Protected Health Information) detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/features/agents/components/enhanced-capability-management.tsx",
+      "line": 178,
+      "content": "capability_key: 'market_opportunity_assessment',",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/features/agents/components/enhanced-capability-management.tsx",
+      "line": 205,
+      "content": "capability_key: 'explainable_ai_architecture',",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/features/agents/components/enhanced-capability-management.tsx",
+      "line": 232,
+      "content": "capability_key: 'regulatory_strategy_development',",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "PHI_EXPOSURE",
+      "file": "src/features/analytics/components/AnalyticsDashboard/AnalyticsDashboard.tsx",
+      "line": 242,
+      "content": "{ type: 'email', target: 'executives@company.com', format: 'pdf' }",
+      "matches": [
+        "executives@company.com"
+      ],
+      "severity": "HIGH",
+      "description": "Potential PHI (Protected Health Information) detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/features/analytics/components/AnalyticsDashboard/AnalyticsDashboard.tsx",
+      "line": 271,
+      "content": "{ key: 'overview', label: 'Overview', icon: '📊' },",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/features/analytics/components/AnalyticsDashboard/AnalyticsDashboard.tsx",
+      "line": 272,
+      "content": "{ key: 'dashboards', label: 'Dashboards', icon: '📋' },",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/features/analytics/components/AnalyticsDashboard/AnalyticsDashboard.tsx",
+      "line": 273,
+      "content": "{ key: 'reports', label: 'Reports', icon: '📄' },",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/features/analytics/components/AnalyticsDashboard/AnalyticsDashboard.tsx",
+      "line": 274,
+      "content": "{ key: 'insights', label: 'Insights', icon: '💡' },",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/features/analytics/components/AnalyticsDashboard/AnalyticsDashboard.tsx",
+      "line": 275,
+      "content": "{ key: 'usage', label: 'Usage', icon: '📈' },",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/features/analytics/components/AnalyticsDashboard/AnalyticsDashboard.tsx",
+      "line": 276,
+      "content": "{ key: 'exports', label: 'Exports', icon: '📤' }",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/features/chat/memory/advanced-memory.ts",
+      "line": 100,
+      "content": "const memoryKey = `${config.sessionId}-${config.strategy}`;",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/features/chat/memory/advanced-memory.ts",
+      "line": 112,
+      "content": "memoryKey: 'chat_history',",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/features/chat/memory/advanced-memory.ts",
+      "line": 123,
+      "content": "memoryKey: 'chat_history',",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/features/chat/memory/advanced-memory.ts",
+      "line": 132,
+      "content": "memoryKey: 'chat_history',",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/features/chat/memory/advanced-memory.ts",
+      "line": 141,
+      "content": "memoryKey: 'chat_history',",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/features/chat/memory/advanced-memory.ts",
+      "line": 150,
+      "content": "memoryKey: 'chat_history',",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/features/chat/memory/advanced-memory.ts",
+      "line": 158,
+      "content": "memoryKey: 'chat_history',",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/features/chat/services/enhanced-langchain-service.ts",
+      "line": 168,
+      "content": "memoryKey: 'chat_history',",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/features/chat/services/enhanced-langchain-service.ts",
+      "line": 183,
+      "content": "const chainKey = `${agentId}-${sessionId}`;",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/features/chat/services/enhanced-langchain-service.ts",
+      "line": 286,
+      "content": "const chainKey = `${agentId}-${sessionId}`;",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "PHI_EXPOSURE",
+      "file": "src/features/clinical/components/ClinicalSafetyDashboard/ClinicalSafetyDashboard.tsx",
+      "line": 78,
+      "content": "patientId: string;",
+      "matches": [
+        "patientId: string"
+      ],
+      "severity": "HIGH",
+      "description": "Potential PHI (Protected Health Information) detected"
+    },
+    {
+      "type": "PHI_EXPOSURE",
+      "file": "src/features/clinical/components/ClinicalTrialMatcher/ClinicalTrialMatcher.tsx",
+      "line": 123,
+      "content": "email: 'sarah.johnson@mskcc.org'",
+      "matches": [
+        "sarah.johnson@mskcc.org"
+      ],
+      "severity": "HIGH",
+      "description": "Potential PHI (Protected Health Information) detected"
+    },
+    {
+      "type": "PHI_EXPOSURE",
+      "file": "src/features/clinical/components/ClinicalTrialMatcher/ClinicalTrialMatcher.tsx",
+      "line": 161,
+      "content": "email: 'michael.chen@dfci.harvard.edu'",
+      "matches": [
+        "michael.chen@dfci.harvard.edu"
+      ],
+      "severity": "HIGH",
+      "description": "Potential PHI (Protected Health Information) detected"
+    },
+    {
+      "type": "PHI_EXPOSURE",
+      "file": "src/features/clinical/components/PatientTimeline/PatientTimeline.tsx",
+      "line": 18,
+      "content": "patientId: string;",
+      "matches": [
+        "patientId: string"
+      ],
+      "severity": "HIGH",
+      "description": "Potential PHI (Protected Health Information) detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/features/clinical/components/SafetyMonitor/SafetyMonitor.tsx",
+      "line": 520,
+      "content": "dataKey=\"value\"",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/features/clinical/components/SafetyMonitor/SafetyMonitor.tsx",
+      "line": 547,
+      "content": "<XAxis dataKey=\"month\" />",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/features/clinical/components/SafetyMonitor/SafetyMonitor.tsx",
+      "line": 549,
+      "content": "<Line type=\"monotone\" dataKey=\"total\" stroke=\"#8884d8\" strokeWidth={2} />",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/features/clinical/components/SafetyMonitor/SafetyMonitor.tsx",
+      "line": 550,
+      "content": "<Line type=\"monotone\" dataKey=\"serious\" stroke=\"#ff4444\" strokeWidth={2} />",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "PHI_EXPOSURE",
+      "file": "src/features/clinical/types/index.ts",
+      "line": 34,
+      "content": "patientId: string;",
+      "matches": [
+        "patientId: string"
+      ],
+      "severity": "HIGH",
+      "description": "Potential PHI (Protected Health Information) detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/features/dashboard/components/dashboard-sidebar.tsx",
+      "line": 310,
+      "content": "const key = `${dept.name}_${dept.business_function_id || 'none'}`;",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/features/dashboard/components/dashboard-sidebar.tsx",
+      "line": 322,
+      "content": "const key = `${role.name}_${role.department_id || 'none'}`;",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "PHI_EXPOSURE",
+      "file": "src/features/digital-health/types/index.ts",
+      "line": 57,
+      "content": "patientId: string;",
+      "matches": [
+        "patientId: string"
+      ],
+      "severity": "HIGH",
+      "description": "Potential PHI (Protected Health Information) detected"
+    },
+    {
+      "type": "PHI_EXPOSURE",
+      "file": "src/features/digital-health/types/index.ts",
+      "line": 87,
+      "content": "patientId: string;",
+      "matches": [
+        "patientId: string"
+      ],
+      "severity": "HIGH",
+      "description": "Potential PHI (Protected Health Information) detected"
+    },
+    {
+      "type": "PHI_EXPOSURE",
+      "file": "src/features/digital-health/types/index.ts",
+      "line": 109,
+      "content": "patientId: string;",
+      "matches": [
+        "patientId: string"
+      ],
+      "severity": "HIGH",
+      "description": "Potential PHI (Protected Health Information) detected"
+    },
+    {
+      "type": "PHI_EXPOSURE",
+      "file": "src/features/digital-health/types/index.ts",
+      "line": 145,
+      "content": "patientId: string;",
+      "matches": [
+        "patientId: string"
+      ],
+      "severity": "HIGH",
+      "description": "Potential PHI (Protected Health Information) detected"
+    },
+    {
+      "type": "PHI_EXPOSURE",
+      "file": "src/features/digital-health/types/index.ts",
+      "line": 193,
+      "content": "patientId: string;",
+      "matches": [
+        "patientId: string"
+      ],
+      "severity": "HIGH",
+      "description": "Potential PHI (Protected Health Information) detected"
+    },
+    {
+      "type": "PHI_EXPOSURE",
+      "file": "src/features/digital-health/types/index.ts",
+      "line": 237,
+      "content": "patientId: string;",
+      "matches": [
+        "patientId: string"
+      ],
+      "severity": "HIGH",
+      "description": "Potential PHI (Protected Health Information) detected"
+    },
+    {
+      "type": "PHI_EXPOSURE",
+      "file": "src/features/digital-health/types/index.ts",
+      "line": 312,
+      "content": "patientId: string;",
+      "matches": [
+        "patientId: string"
+      ],
+      "severity": "HIGH",
+      "description": "Potential PHI (Protected Health Information) detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/features/industry-templates/components/IndustryTemplateLibrary/IndustryTemplateLibrary.tsx",
+      "line": 153,
+      "content": "{ key: 'all', label: 'All Templates', count: templates.length },",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/features/industry-templates/components/IndustryTemplateLibrary/IndustryTemplateLibrary.tsx",
+      "line": 154,
+      "content": "{ key: 'chronic_disease', label: 'Chronic Disease', count: templates.filter(t => t.category === 'chronic_disease').length },",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/features/industry-templates/components/IndustryTemplateLibrary/IndustryTemplateLibrary.tsx",
+      "line": 155,
+      "content": "{ key: 'mental_health', label: 'Mental Health', count: templates.filter(t => t.category === 'mental_health').length },",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/features/industry-templates/components/IndustryTemplateLibrary/IndustryTemplateLibrary.tsx",
+      "line": 156,
+      "content": "{ key: 'medication_adherence', label: 'Medication Adherence', count: templates.filter(t => t.category === 'medication_adherence').length },",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/features/industry-templates/components/IndustryTemplateLibrary/IndustryTemplateLibrary.tsx",
+      "line": 157,
+      "content": "{ key: 'clinical_decision_support', label: 'Clinical Decision Support', count: 0 },",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/features/industry-templates/components/IndustryTemplateLibrary/IndustryTemplateLibrary.tsx",
+      "line": 158,
+      "content": "{ key: 'population_health', label: 'Population Health', count: 0 },",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/features/industry-templates/components/IndustryTemplateLibrary/IndustryTemplateLibrary.tsx",
+      "line": 159,
+      "content": "{ key: 'telemedicine', label: 'Telemedicine', count: 0 }",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/features/industry-templates/components/IndustryTemplateLibrary/IndustryTemplateLibrary.tsx",
+      "line": 162,
+      "content": "{ key: 'browse', label: 'Browse Templates', icon: '📚' },",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/features/industry-templates/components/IndustryTemplateLibrary/IndustryTemplateLibrary.tsx",
+      "line": 163,
+      "content": "{ key: 'my-templates', label: 'My Templates', icon: '🏠' },",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/features/industry-templates/components/IndustryTemplateLibrary/IndustryTemplateLibrary.tsx",
+      "line": 164,
+      "content": "{ key: 'custom', label: 'Custom Builder', icon: '🔧' },",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/features/industry-templates/components/IndustryTemplateLibrary/IndustryTemplateLibrary.tsx",
+      "line": 165,
+      "content": "{ key: 'security', label: 'Security Center', icon: '🔒' }",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "PHI_EXPOSURE",
+      "file": "src/features/integration-marketplace/components/IntegrationMarketplace/IntegrationMarketplace.tsx",
+      "line": 33,
+      "content": "contactEmail: 'contact@epic.com',",
+      "matches": [
+        "contact@epic.com"
+      ],
+      "severity": "HIGH",
+      "description": "Potential PHI (Protected Health Information) detected"
+    },
+    {
+      "type": "PHI_EXPOSURE",
+      "file": "src/features/integration-marketplace/components/IntegrationMarketplace/IntegrationMarketplace.tsx",
+      "line": 34,
+      "content": "supportEmail: 'support@epic.com',",
+      "matches": [
+        "support@epic.com"
+      ],
+      "severity": "HIGH",
+      "description": "Potential PHI (Protected Health Information) detected"
+    },
+    {
+      "type": "PHI_EXPOSURE",
+      "file": "src/features/integration-marketplace/components/IntegrationMarketplace/IntegrationMarketplace.tsx",
+      "line": 102,
+      "content": "contact: 'support@epic.com',",
+      "matches": [
+        "support@epic.com"
+      ],
+      "severity": "HIGH",
+      "description": "Potential PHI (Protected Health Information) detected"
+    },
+    {
+      "type": "PHI_EXPOSURE",
+      "file": "src/features/integration-marketplace/components/IntegrationMarketplace/IntegrationMarketplace.tsx",
+      "line": 180,
+      "content": "contactEmail: 'contact@cerner.com',",
+      "matches": [
+        "contact@cerner.com"
+      ],
+      "severity": "HIGH",
+      "description": "Potential PHI (Protected Health Information) detected"
+    },
+    {
+      "type": "PHI_EXPOSURE",
+      "file": "src/features/integration-marketplace/components/IntegrationMarketplace/IntegrationMarketplace.tsx",
+      "line": 181,
+      "content": "supportEmail: 'support@cerner.com',",
+      "matches": [
+        "support@cerner.com"
+      ],
+      "severity": "HIGH",
+      "description": "Potential PHI (Protected Health Information) detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/features/integration-marketplace/components/IntegrationMarketplace/IntegrationMarketplace.tsx",
+      "line": 372,
+      "content": "{ key: 'all', label: 'All Categories', count: integrations.length },",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/features/integration-marketplace/components/IntegrationMarketplace/IntegrationMarketplace.tsx",
+      "line": 373,
+      "content": "{ key: 'ehr_systems', label: 'EHR Systems', count: integrations.filter(i => i.category === 'ehr_systems').length },",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/features/integration-marketplace/components/IntegrationMarketplace/IntegrationMarketplace.tsx",
+      "line": 374,
+      "content": "{ key: 'laboratory_systems', label: 'Laboratory', count: 0 },",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/features/integration-marketplace/components/IntegrationMarketplace/IntegrationMarketplace.tsx",
+      "line": 375,
+      "content": "{ key: 'imaging_systems', label: 'Medical Imaging', count: 0 },",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/features/integration-marketplace/components/IntegrationMarketplace/IntegrationMarketplace.tsx",
+      "line": 376,
+      "content": "{ key: 'wearables_iot', label: 'Wearables & IoT', count: 0 },",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/features/integration-marketplace/components/IntegrationMarketplace/IntegrationMarketplace.tsx",
+      "line": 377,
+      "content": "{ key: 'analytics_bi', label: 'Analytics & BI', count: 0 },",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/features/integration-marketplace/components/IntegrationMarketplace/IntegrationMarketplace.tsx",
+      "line": 378,
+      "content": "{ key: 'cloud_services', label: 'Cloud Services', count: 0 }",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/features/integration-marketplace/components/IntegrationMarketplace/IntegrationMarketplace.tsx",
+      "line": 381,
+      "content": "{ key: 'browse', label: 'Browse', icon: '🔍' },",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/features/integration-marketplace/components/IntegrationMarketplace/IntegrationMarketplace.tsx",
+      "line": 382,
+      "content": "{ key: 'installed', label: 'Installed', icon: '✅' },",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/features/integration-marketplace/components/IntegrationMarketplace/IntegrationMarketplace.tsx",
+      "line": 383,
+      "content": "{ key: 'custom', label: 'Custom', icon: '🔧' },",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/features/integration-marketplace/components/IntegrationMarketplace/IntegrationMarketplace.tsx",
+      "line": 384,
+      "content": "{ key: 'builder', label: 'Builder', icon: '🏗️' }",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/features/knowledge/components/knowledge-analytics-dashboard.tsx",
+      "line": 407,
+      "content": "dataKey=\"day\"",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/features/knowledge/components/knowledge-analytics-dashboard.tsx",
+      "line": 418,
+      "content": "dataKey=\"uploads\"",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/features/knowledge/components/knowledge-analytics-dashboard.tsx",
+      "line": 426,
+      "content": "dataKey=\"chunks\"",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/features/knowledge/components/knowledge-analytics-dashboard.tsx",
+      "line": 467,
+      "content": "dataKey=\"name\"",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/features/knowledge/components/knowledge-analytics-dashboard.tsx",
+      "line": 475,
+      "content": "dataKey=\"chunks\"",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/features/knowledge/components/knowledge-analytics-dashboard.tsx",
+      "line": 527,
+      "content": "dataKey=\"documents\"",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/features/learning-management/components/LearningManagementSystem/LearningManagementSystem.tsx",
+      "line": 126,
+      "content": "{ key: 'all', label: 'All Courses', count: courses.length },",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/features/learning-management/components/LearningManagementSystem/LearningManagementSystem.tsx",
+      "line": 127,
+      "content": "{ key: 'platform', label: 'Platform Training', count: courses.filter(c => c.category === 'platform').length },",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/features/learning-management/components/LearningManagementSystem/LearningManagementSystem.tsx",
+      "line": 128,
+      "content": "{ key: 'healthcare', label: 'Healthcare', count: courses.filter(c => c.category === 'healthcare').length },",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/features/learning-management/components/LearningManagementSystem/LearningManagementSystem.tsx",
+      "line": 129,
+      "content": "{ key: 'compliance', label: 'Compliance', count: courses.filter(c => c.category === 'compliance').length },",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/features/learning-management/components/LearningManagementSystem/LearningManagementSystem.tsx",
+      "line": 130,
+      "content": "{ key: 'technical', label: 'Technical', count: courses.filter(c => c.category === 'technical').length }",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/features/learning-management/components/LearningManagementSystem/LearningManagementSystem.tsx",
+      "line": 133,
+      "content": "{ key: 'courses', label: 'Courses', icon: '📚' },",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/features/learning-management/components/LearningManagementSystem/LearningManagementSystem.tsx",
+      "line": 134,
+      "content": "{ key: 'my-learning', label: 'My Learning', icon: '🎓' },",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/features/learning-management/components/LearningManagementSystem/LearningManagementSystem.tsx",
+      "line": 135,
+      "content": "{ key: 'certifications', label: 'Certifications', icon: '🏆' },",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/features/learning-management/components/LearningManagementSystem/LearningManagementSystem.tsx",
+      "line": 136,
+      "content": "{ key: 'analytics', label: 'Analytics', icon: '📊' }",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/features/rag/caching/redis-cache-service.ts",
+      "line": 202,
+      "content": "key: `${semanticKey}:${Date.now()}`,",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/features/rag/caching/redis-cache-service.ts",
+      "line": 237,
+      "content": "const cacheKey = `embeddings:${strategy}:${this.hashDocuments(documents)}`;",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/features/rag/caching/redis-cache-service.ts",
+      "line": 262,
+      "content": "const cacheKey = `embeddings:${strategy}:${this.hashDocuments(documents)}`;",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/features/rag/caching/redis-cache-service.ts",
+      "line": 289,
+      "content": "const key = `llm:${model}:${this.hashString(prompt)}`;",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/features/rag/caching/redis-cache-service.ts",
+      "line": 314,
+      "content": "const key = `llm:${model}:${this.hashString(prompt)}`;",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/features/solution-builder/components/ClinicalTrialDesigner/ClinicalTrialDesigner.tsx",
+      "line": 305,
+      "content": "{ key: 'design', label: '🎨 Design', desc: 'Protocol Development' },",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/features/solution-builder/components/ClinicalTrialDesigner/ClinicalTrialDesigner.tsx",
+      "line": 306,
+      "content": "{ key: 'simulate', label: '📊 Simulate', desc: 'Predictive Modeling' },",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/features/solution-builder/components/ClinicalTrialDesigner/ClinicalTrialDesigner.tsx",
+      "line": 307,
+      "content": "{ key: 'optimize', label: '⚡ Optimize', desc: 'AI Recommendations' },",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/features/solution-builder/components/ClinicalTrialDesigner/ClinicalTrialDesigner.tsx",
+      "line": 308,
+      "content": "{ key: 'market_access', label: '💰 Market Access', desc: 'Reimbursement Strategy' },",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/features/solution-builder/components/ClinicalTrialDesigner/ClinicalTrialDesigner.tsx",
+      "line": 309,
+      "content": "{ key: 'export', label: '📄 Export', desc: 'Protocol & Documentation' }",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/features/solution-builder/components/ComplianceTestingSuite/ComplianceTestingSuite.tsx",
+      "line": 405,
+      "content": "{ key: 'standards', label: '📋 Standards', desc: 'Compliance frameworks' },",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/features/solution-builder/components/ComplianceTestingSuite/ComplianceTestingSuite.tsx",
+      "line": 406,
+      "content": "{ key: 'testing', label: '🧪 Testing', desc: 'Run compliance tests' },",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/features/solution-builder/components/ComplianceTestingSuite/ComplianceTestingSuite.tsx",
+      "line": 407,
+      "content": "{ key: 'evidence', label: '📁 Evidence', desc: 'Supporting documentation' },",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/features/solution-builder/components/ComplianceTestingSuite/ComplianceTestingSuite.tsx",
+      "line": 408,
+      "content": "{ key: 'reports', label: '📊 Reports', desc: 'Compliance reports' },",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/features/solution-builder/components/ComplianceTestingSuite/ComplianceTestingSuite.tsx",
+      "line": 409,
+      "content": "{ key: 'regulatory_intelligence', label: '🧠 Intelligence', desc: 'Regulatory insights' }",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "PHI_EXPOSURE",
+      "file": "src/features/solution-builder/components/DTxDevelopmentFramework/DTxDevelopmentFramework.tsx",
+      "line": 190,
+      "content": "patientId: this.patientProfile.id,",
+      "matches": [
+        "patientId: this"
+      ],
+      "severity": "HIGH",
+      "description": "Potential PHI (Protected Health Information) detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/features/solution-builder/components/DTxDevelopmentFramework/DTxDevelopmentFramework.tsx",
+      "line": 297,
+      "content": "{ key: 'design', label: '🎨 Design', desc: 'Architecture & Components' },",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/features/solution-builder/components/DTxDevelopmentFramework/DTxDevelopmentFramework.tsx",
+      "line": 298,
+      "content": "{ key: 'develop', label: '💻 Develop', desc: 'Code Generation & Templates' },",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/features/solution-builder/components/DTxDevelopmentFramework/DTxDevelopmentFramework.tsx",
+      "line": 299,
+      "content": "{ key: 'test', label: '🧪 Test', desc: 'Clinical & Technical Testing' },",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/features/solution-builder/components/DTxDevelopmentFramework/DTxDevelopmentFramework.tsx",
+      "line": 300,
+      "content": "{ key: 'validate', label: '✅ Validate', desc: 'FDA & HIPAA Compliance' },",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/features/solution-builder/components/DTxDevelopmentFramework/DTxDevelopmentFramework.tsx",
+      "line": 301,
+      "content": "{ key: 'regulatory_optimizer', label: '🚀 Regulatory AI', desc: 'Pathway Optimization' }",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/features/solution-builder/components/DigitalBiomarkerSDK/DigitalBiomarkerSDK.tsx",
+      "line": 649,
+      "content": "{ key: 'discover', label: '🔍 Discover', desc: 'Biomarker library' },",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/features/solution-builder/components/DigitalBiomarkerSDK/DigitalBiomarkerSDK.tsx",
+      "line": 650,
+      "content": "{ key: 'develop', label: '⚗️ Develop', desc: 'Algorithm development' },",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/features/solution-builder/components/DigitalBiomarkerSDK/DigitalBiomarkerSDK.tsx",
+      "line": 651,
+      "content": "{ key: 'validate', label: '✅ Validate', desc: 'Clinical validation' },",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/features/solution-builder/components/DigitalBiomarkerSDK/DigitalBiomarkerSDK.tsx",
+      "line": 652,
+      "content": "{ key: 'deploy', label: '🚀 Deploy', desc: 'SDK generation' }",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/features/solution-builder/components/RemoteMonitoringBuilder/RemoteMonitoringBuilder.tsx",
+      "line": 298,
+      "content": "{ key: 'devices', label: '📱 Device Selection', desc: 'Choose FDA-cleared devices' },",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/features/solution-builder/components/RemoteMonitoringBuilder/RemoteMonitoringBuilder.tsx",
+      "line": 299,
+      "content": "{ key: 'pipeline', label: '⚡ Data Pipeline', desc: 'Configure data processing' },",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/features/solution-builder/components/RemoteMonitoringBuilder/RemoteMonitoringBuilder.tsx",
+      "line": 300,
+      "content": "{ key: 'alerts', label: '🚨 Alert System', desc: 'Set up clinical alerts' },",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/features/solution-builder/components/RemoteMonitoringBuilder/RemoteMonitoringBuilder.tsx",
+      "line": 301,
+      "content": "{ key: 'dashboard', label: '📊 Dashboard', desc: 'Design monitoring UI' },",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/features/solution-builder/components/RemoteMonitoringBuilder/RemoteMonitoringBuilder.tsx",
+      "line": 302,
+      "content": "{ key: 'deploy', label: '🚀 Deploy', desc: 'Cloud deployment config' }",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/features/tenant-management/components/TenantManagementDashboard/TenantManagementDashboard.tsx",
+      "line": 181,
+      "content": "{ key: 'overview', label: 'Overview', icon: '📊' },",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/features/tenant-management/components/TenantManagementDashboard/TenantManagementDashboard.tsx",
+      "line": 182,
+      "content": "{ key: 'members', label: 'Members', icon: '👥' },",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/features/tenant-management/components/TenantManagementDashboard/TenantManagementDashboard.tsx",
+      "line": 183,
+      "content": "{ key: 'billing', label: 'Billing', icon: '💳' },",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/features/tenant-management/components/TenantManagementDashboard/TenantManagementDashboard.tsx",
+      "line": 184,
+      "content": "{ key: 'settings', label: 'Settings', icon: '⚙️' },",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/features/tenant-management/components/TenantManagementDashboard/TenantManagementDashboard.tsx",
+      "line": 185,
+      "content": "{ key: 'security', label: 'Security', icon: '🔐' },",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/features/tenant-management/components/TenantManagementDashboard/TenantManagementDashboard.tsx",
+      "line": 186,
+      "content": "{ key: 'usage', label: 'Usage', icon: '📈' }",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/features/tenant-management/components/TenantManagementDashboard/TenantManagementDashboard.tsx",
+      "line": 693,
+      "content": "{ key: 'requireUppercase', label: 'Uppercase letters' },",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/features/tenant-management/components/TenantManagementDashboard/TenantManagementDashboard.tsx",
+      "line": 694,
+      "content": "{ key: 'requireLowercase', label: 'Lowercase letters' },",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/features/tenant-management/components/TenantManagementDashboard/TenantManagementDashboard.tsx",
+      "line": 695,
+      "content": "{ key: 'requireNumbers', label: 'Numbers' },",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/features/tenant-management/components/TenantManagementDashboard/TenantManagementDashboard.tsx",
+      "line": 696,
+      "content": "{ key: 'requireSpecialChars', label: 'Special characters' }",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "PHI_EXPOSURE",
+      "file": "src/features/testing/components/ClinicalDecisionSupport/ClinicalDecisionSupport.tsx",
+      "line": 100,
+      "content": "patientId: string;",
+      "matches": [
+        "patientId: string"
+      ],
+      "severity": "HIGH",
+      "description": "Potential PHI (Protected Health Information) detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/features/testing/components/ClinicalDecisionSupport/ClinicalDecisionSupport.tsx",
+      "line": 650,
+      "content": "{ key: 'overview', label: 'CDS Overview', icon: Brain },",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/features/testing/components/ClinicalDecisionSupport/ClinicalDecisionSupport.tsx",
+      "line": 651,
+      "content": "{ key: 'rules', label: 'Decision Rules', icon: FileText },",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/features/testing/components/ClinicalDecisionSupport/ClinicalDecisionSupport.tsx",
+      "line": 652,
+      "content": "{ key: 'alerts', label: 'Active Alerts', icon: Bell },",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/features/testing/components/ClinicalDecisionSupport/ClinicalDecisionSupport.tsx",
+      "line": 653,
+      "content": "{ key: 'performance', label: 'Performance Analytics', icon: BarChart3 },",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/features/testing/components/ClinicalDecisionSupport/ClinicalDecisionSupport.tsx",
+      "line": 654,
+      "content": "{ key: 'integrations', label: 'System Integrations', icon: Database }",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "PHI_EXPOSURE",
+      "file": "src/features/testing/components/DecentralizedTrialPlatform/DecentralizedTrialPlatform.tsx",
+      "line": 685,
+      "content": "recipients: ['inventory-manager@vitalpath.com']",
+      "matches": [
+        "inventory-manager@vitalpath.com"
+      ],
+      "severity": "HIGH",
+      "description": "Potential PHI (Protected Health Information) detected"
+    },
+    {
+      "type": "PHI_EXPOSURE",
+      "file": "src/features/testing/components/DecentralizedTrialPlatform/DecentralizedTrialPlatform.tsx",
+      "line": 690,
+      "content": "recipients: ['quality-assurance@vitalpath.com']",
+      "matches": [
+        "quality-assurance@vitalpath.com"
+      ],
+      "severity": "HIGH",
+      "description": "Potential PHI (Protected Health Information) detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/features/testing/components/DecentralizedTrialPlatform/DecentralizedTrialPlatform.tsx",
+      "line": 912,
+      "content": "{ key: 'overview', label: 'DCT Overview', icon: Globe },",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/features/testing/components/DecentralizedTrialPlatform/DecentralizedTrialPlatform.tsx",
+      "line": 913,
+      "content": "{ key: 'trials', label: 'Virtual Trials', icon: Wifi },",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/features/testing/components/DecentralizedTrialPlatform/DecentralizedTrialPlatform.tsx",
+      "line": 914,
+      "content": "{ key: 'logistics', label: 'Care Logistics', icon: Truck },",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/features/testing/components/DecentralizedTrialPlatform/DecentralizedTrialPlatform.tsx",
+      "line": 915,
+      "content": "{ key: 'telehealth', label: 'Telehealth Platform', icon: Video },",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/features/testing/components/DecentralizedTrialPlatform/DecentralizedTrialPlatform.tsx",
+      "line": 916,
+      "content": "{ key: 'analytics', label: 'DCT Analytics', icon: TrendingUp }",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "PHI_EXPOSURE",
+      "file": "src/features/testing/components/DigitalTherapeuticPlatform/DigitalTherapeuticPlatform.tsx",
+      "line": 337,
+      "content": "recipients: ['clinical-team@vitalpath.com', 'emergency-contact'],",
+      "matches": [
+        "clinical-team@vitalpath.com"
+      ],
+      "severity": "HIGH",
+      "description": "Potential PHI (Protected Health Information) detected"
+    },
+    {
+      "type": "PHI_EXPOSURE",
+      "file": "src/features/testing/components/DigitalTherapeuticPlatform/DigitalTherapeuticPlatform.tsx",
+      "line": 351,
+      "content": "recipients: ['care-team@vitalpath.com'],",
+      "matches": [
+        "care-team@vitalpath.com"
+      ],
+      "severity": "HIGH",
+      "description": "Potential PHI (Protected Health Information) detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/features/testing/components/DigitalTherapeuticPlatform/DigitalTherapeuticPlatform.tsx",
+      "line": 763,
+      "content": "{ key: 'overview', label: 'Platform Overview', icon: BarChart3 },",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/features/testing/components/DigitalTherapeuticPlatform/DigitalTherapeuticPlatform.tsx",
+      "line": 764,
+      "content": "{ key: 'trials', label: 'DTx Trials', icon: Smartphone },",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/features/testing/components/DigitalTherapeuticPlatform/DigitalTherapeuticPlatform.tsx",
+      "line": 765,
+      "content": "{ key: 'monitoring', label: 'Real-time Monitoring', icon: Activity },",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/features/testing/components/DigitalTherapeuticPlatform/DigitalTherapeuticPlatform.tsx",
+      "line": 766,
+      "content": "{ key: 'interventions', label: 'Smart Interventions', icon: Zap },",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/features/testing/components/DigitalTherapeuticPlatform/DigitalTherapeuticPlatform.tsx",
+      "line": 767,
+      "content": "{ key: 'analytics', label: 'Advanced Analytics', icon: TrendingUp }",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/features/testing/components/PatientEngagementPlatform/PatientEngagementPlatform.tsx",
+      "line": 589,
+      "content": "{ key: 'overview', label: 'Engagement Overview', icon: Activity },",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/features/testing/components/PatientEngagementPlatform/PatientEngagementPlatform.tsx",
+      "line": 590,
+      "content": "{ key: 'cohorts', label: 'Patient Cohorts', icon: Users },",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/features/testing/components/PatientEngagementPlatform/PatientEngagementPlatform.tsx",
+      "line": 591,
+      "content": "{ key: 'interventions', label: 'Smart Interventions', icon: Zap },",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/features/testing/components/PatientEngagementPlatform/PatientEngagementPlatform.tsx",
+      "line": 592,
+      "content": "{ key: 'content', label: 'Engagement Content', icon: BookOpen },",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/features/testing/components/PatientEngagementPlatform/PatientEngagementPlatform.tsx",
+      "line": 593,
+      "content": "{ key: 'analytics', label: 'Behavioral Analytics', icon: TrendingUp }",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/features/testing/components/RealWorldEvidencePlatform/RealWorldEvidencePlatform.tsx",
+      "line": 553,
+      "content": "{ key: 'overview', label: 'RWE Overview', icon: BarChart3 },",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/features/testing/components/RealWorldEvidencePlatform/RealWorldEvidencePlatform.tsx",
+      "line": 554,
+      "content": "{ key: 'studies', label: 'Active Studies', icon: FileText },",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/features/testing/components/RealWorldEvidencePlatform/RealWorldEvidencePlatform.tsx",
+      "line": 555,
+      "content": "{ key: 'data-sources', label: 'Data Sources', icon: Database },",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/features/testing/components/RealWorldEvidencePlatform/RealWorldEvidencePlatform.tsx",
+      "line": 556,
+      "content": "{ key: 'analytics', label: 'Analytics & Insights', icon: Brain },",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/features/testing/components/RealWorldEvidencePlatform/RealWorldEvidencePlatform.tsx",
+      "line": 557,
+      "content": "{ key: 'outcomes', label: 'Real-World Outcomes', icon: Target }",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "PHI_EXPOSURE",
+      "file": "src/features/testing/components/UniversalTestingPlatform/UniversalTestingPlatform.tsx",
+      "line": 282,
+      "content": "recipients: ['clinical-team@vitalpath.com'],",
+      "matches": [
+        "clinical-team@vitalpath.com"
+      ],
+      "severity": "HIGH",
+      "description": "Potential PHI (Protected Health Information) detected"
+    },
+    {
+      "type": "PHI_EXPOSURE",
+      "file": "src/features/testing/components/UniversalTestingPlatform/UniversalTestingPlatform.tsx",
+      "line": 286,
+      "content": "recipient: 'emergency-team@vitalpath.com',",
+      "matches": [
+        "emergency-team@vitalpath.com"
+      ],
+      "severity": "HIGH",
+      "description": "Potential PHI (Protected Health Information) detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/features/testing/components/UniversalTestingPlatform/UniversalTestingPlatform.tsx",
+      "line": 618,
+      "content": "{ key: 'overview', label: 'Overview', icon: BarChart3 },",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/features/testing/components/UniversalTestingPlatform/UniversalTestingPlatform.tsx",
+      "line": 619,
+      "content": "{ key: 'protocols', label: 'Protocols', icon: FileText },",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/features/testing/components/UniversalTestingPlatform/UniversalTestingPlatform.tsx",
+      "line": 620,
+      "content": "{ key: 'trials', label: 'Digital Trials', icon: Smartphone },",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/features/testing/components/UniversalTestingPlatform/UniversalTestingPlatform.tsx",
+      "line": 621,
+      "content": "{ key: 'participants', label: 'Participants', icon: Users },",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/features/testing/components/UniversalTestingPlatform/UniversalTestingPlatform.tsx",
+      "line": 622,
+      "content": "{ key: 'analytics', label: 'Analytics', icon: BarChart3 }",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "PHI_EXPOSURE",
+      "file": "src/features/testing/components/WorkflowAutomationEngine/WorkflowAutomationEngine.tsx",
+      "line": 225,
+      "content": "recipients: ['clinical-coordinator@vitalpath.com'],",
+      "matches": [
+        "clinical-coordinator@vitalpath.com"
+      ],
+      "severity": "HIGH",
+      "description": "Potential PHI (Protected Health Information) detected"
+    },
+    {
+      "type": "PHI_EXPOSURE",
+      "file": "src/features/testing/components/WorkflowAutomationEngine/WorkflowAutomationEngine.tsx",
+      "line": 297,
+      "content": "approver: 'regulatory-manager@vitalpath.com',",
+      "matches": [
+        "regulatory-manager@vitalpath.com"
+      ],
+      "severity": "HIGH",
+      "description": "Potential PHI (Protected Health Information) detected"
+    },
+    {
+      "type": "PHI_EXPOSURE",
+      "file": "src/features/testing/components/WorkflowAutomationEngine/WorkflowAutomationEngine.tsx",
+      "line": 492,
+      "content": "description: 'Automate patient identification and recruitment for clinical trials',",
+      "matches": [
+        "patient identification"
+      ],
+      "severity": "HIGH",
+      "description": "Potential PHI (Protected Health Information) detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/features/testing/components/WorkflowAutomationEngine/WorkflowAutomationEngine.tsx",
+      "line": 747,
+      "content": "{ key: 'overview', label: 'Automation Overview', icon: Workflow },",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/features/testing/components/WorkflowAutomationEngine/WorkflowAutomationEngine.tsx",
+      "line": 748,
+      "content": "{ key: 'workflows', label: 'Active Workflows', icon: GitBranch },",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/features/testing/components/WorkflowAutomationEngine/WorkflowAutomationEngine.tsx",
+      "line": 749,
+      "content": "{ key: 'executions', label: 'Live Executions', icon: Activity },",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/features/testing/components/WorkflowAutomationEngine/WorkflowAutomationEngine.tsx",
+      "line": 750,
+      "content": "{ key: 'templates', label: 'Automation Templates', icon: Code },",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/features/testing/components/WorkflowAutomationEngine/WorkflowAutomationEngine.tsx",
+      "line": 751,
+      "content": "{ key: 'analytics', label: 'Performance Analytics', icon: BarChart3 }",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/hooks/useAuth.ts",
+      "line": 220,
+      "content": "const permissionKey = `${scope}:${action}`;",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "PHI_EXPOSURE",
+      "file": "src/lib/auth/__tests__/auth-flow.test.ts",
+      "line": 75,
+      "content": "email: 'test@example.com',",
+      "matches": [
+        "test@example.com"
+      ],
+      "severity": "HIGH",
+      "description": "Potential PHI (Protected Health Information) detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/lib/auth/__tests__/auth-flow.test.ts",
+      "line": 81,
+      "content": "access_token: 'test-token',",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/lib/auth/__tests__/auth-flow.test.ts",
+      "line": 82,
+      "content": "refresh_token: 'test-refresh-token',",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "PHI_EXPOSURE",
+      "file": "src/lib/auth/__tests__/auth-flow.test.ts",
+      "line": 131,
+      "content": "expect(result.current.user?.email).toBe('test@example.com');",
+      "matches": [
+        "test@example.com"
+      ],
+      "severity": "HIGH",
+      "description": "Potential PHI (Protected Health Information) detected"
+    },
+    {
+      "type": "PHI_EXPOSURE",
+      "file": "src/lib/auth/__tests__/auth-flow.test.ts",
+      "line": 142,
+      "content": "email: 'test@example.com'",
+      "matches": [
+        "test@example.com"
+      ],
+      "severity": "HIGH",
+      "description": "Potential PHI (Protected Health Information) detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/lib/auth/__tests__/auth-flow.test.ts",
+      "line": 147,
+      "content": "access_token: 'test-token'",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "PHI_EXPOSURE",
+      "file": "src/lib/auth/__tests__/auth-flow.test.ts",
+      "line": 161,
+      "content": "await result.current.signIn('test@example.com', 'password123');",
+      "matches": [
+        "test@example.com"
+      ],
+      "severity": "HIGH",
+      "description": "Potential PHI (Protected Health Information) detected"
+    },
+    {
+      "type": "PHI_EXPOSURE",
+      "file": "src/lib/auth/__tests__/auth-flow.test.ts",
+      "line": 165,
+      "content": "email: 'test@example.com',",
+      "matches": [
+        "test@example.com"
+      ],
+      "severity": "HIGH",
+      "description": "Potential PHI (Protected Health Information) detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/lib/auth/__tests__/auth-flow.test.ts",
+      "line": 166,
+      "content": "password: 'password123'",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "PHI_EXPOSURE",
+      "file": "src/lib/auth/__tests__/auth-flow.test.ts",
+      "line": 184,
+      "content": "await result.current.signIn('test@example.com', 'wrongpassword');",
+      "matches": [
+        "test@example.com"
+      ],
+      "severity": "HIGH",
+      "description": "Potential PHI (Protected Health Information) detected"
+    },
+    {
+      "type": "PHI_EXPOSURE",
+      "file": "src/lib/auth/__tests__/auth-flow.test.ts",
+      "line": 217,
+      "content": "email: 'test@example.com'",
+      "matches": [
+        "test@example.com"
+      ],
+      "severity": "HIGH",
+      "description": "Potential PHI (Protected Health Information) detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/lib/auth/__tests__/auth-flow.test.ts",
+      "line": 222,
+      "content": "access_token: 'new-token'",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "PHI_EXPOSURE",
+      "file": "src/lib/auth/config.ts",
+      "line": 2,
+      "content": "superAdminEmails: ['hn@vitalexpert.com'],",
+      "matches": [
+        "hn@vitalexpert.com"
+      ],
+      "severity": "HIGH",
+      "description": "Potential PHI (Protected Health Information) detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/lib/auth/session-sync.ts",
+      "line": 109,
+      "content": "key: 'supabase-sync',",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "PHI_EXPOSURE",
+      "file": "src/lib/auth/supabase-auth-context.tsx",
+      "line": 40,
+      "content": "email: 'admin@vitalexpert.com',",
+      "matches": [
+        "admin@vitalexpert.com"
+      ],
+      "severity": "HIGH",
+      "description": "Potential PHI (Protected Health Information) detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/lib/auth/supabase-auth-context.tsx",
+      "line": 48,
+      "content": "access_token: 'dev-token',",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/lib/auth/supabase-auth-context.tsx",
+      "line": 49,
+      "content": "refresh_token: 'dev-refresh-token',",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "PHI_EXPOSURE",
+      "file": "src/lib/auth/supabase-auth-context.tsx",
+      "line": 61,
+      "content": "email: 'admin@vitalexpert.com',",
+      "matches": [
+        "admin@vitalexpert.com"
+      ],
+      "severity": "HIGH",
+      "description": "Potential PHI (Protected Health Information) detected"
+    },
+    {
+      "type": "PHI_EXPOSURE",
+      "file": "src/lib/compliance/hipaa-compliance.ts",
+      "line": 76,
+      "content": "// Medical Record Numbers (common formats)",
+      "matches": [
+        "Medical Record Numbers"
+      ],
+      "severity": "HIGH",
+      "description": "Potential PHI (Protected Health Information) detected"
+    },
+    {
+      "type": "PHI_EXPOSURE",
+      "file": "src/lib/compliance/hipaa-compliance.ts",
+      "line": 266,
+      "content": "\"Medical Record Number\",",
+      "matches": [
+        "Medical Record Number"
+      ],
+      "severity": "HIGH",
+      "description": "Potential PHI (Protected Health Information) detected"
+    },
+    {
+      "type": "PHI_EXPOSURE",
+      "file": "src/lib/compliance/hipaa-compliance.ts",
+      "line": 267,
+      "content": "\"Medical Record Number\",",
+      "matches": [
+        "Medical Record Number"
+      ],
+      "severity": "HIGH",
+      "description": "Potential PHI (Protected Health Information) detected"
+    },
+    {
+      "type": "PHI_EXPOSURE",
+      "file": "src/lib/compliance/hipaa-compliance.ts",
+      "line": 285,
+      "content": "case 6: return \"Medical Record Number\";",
+      "matches": [
+        "Medical Record Number"
+      ],
+      "severity": "HIGH",
+      "description": "Potential PHI (Protected Health Information) detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/lib/services/expert-tools.ts",
+      "line": 262,
+      "content": "check_openai_key: 'Verify OPENAI_API_KEY in .env.local',",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/lib/services/minority-opinion-analyzer.ts",
+      "line": 131,
+      "content": "const uniqueKey = `position_${reply.persona}`;",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "PHI_EXPOSURE",
+      "file": "src/lib/services/model-selector.ts",
+      "line": 126,
+      "content": "suitable_for: ['clinical', 'medical_records'],",
+      "matches": [
+        "medical_records"
+      ],
+      "severity": "HIGH",
+      "description": "Potential PHI (Protected Health Information) detected"
+    },
+    {
+      "type": "PHI_EXPOSURE",
+      "file": "src/lib/supabase/types.ts",
+      "line": 2330,
+      "content": "patient_id_hash: string | null",
+      "matches": [
+        "patient_id_hash"
+      ],
+      "severity": "HIGH",
+      "description": "Potential PHI (Protected Health Information) detected"
+    },
+    {
+      "type": "PHI_EXPOSURE",
+      "file": "src/lib/supabase/types.ts",
+      "line": 2343,
+      "content": "patient_id_hash?: string | null",
+      "matches": [
+        "patient_id_hash"
+      ],
+      "severity": "HIGH",
+      "description": "Potential PHI (Protected Health Information) detected"
+    },
+    {
+      "type": "PHI_EXPOSURE",
+      "file": "src/lib/supabase/types.ts",
+      "line": 2356,
+      "content": "patient_id_hash?: string | null",
+      "matches": [
+        "patient_id_hash"
+      ],
+      "severity": "HIGH",
+      "description": "Potential PHI (Protected Health Information) detected"
+    },
+    {
+      "type": "PHI_EXPOSURE",
+      "file": "src/middleware/audit-logger.middleware.ts",
+      "line": 307,
+      "content": "patientId: data.patientId,",
+      "matches": [
+        "patientId: data"
+      ],
+      "severity": "HIGH",
+      "description": "Potential PHI (Protected Health Information) detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/middleware/auth.ts",
+      "line": 120,
+      "content": "const permissionKey = `${permission.scope}:${permission.action}`;",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "PHI_EXPOSURE",
+      "file": "src/middleware/healthcare-api.middleware.ts",
+      "line": 47,
+      "content": "/\\bMRN[:\\s]*\\d+\\b/i, // Medical Record Number",
+      "matches": [
+        "Medical Record Number"
+      ],
+      "severity": "HIGH",
+      "description": "Potential PHI (Protected Health Information) detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/middleware/healthcare-api.middleware.ts",
+      "line": 213,
+      "content": "key: `${ip}:${ruleKey}`,",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "PHI_EXPOSURE",
+      "file": "src/middleware/hipaa-validator.middleware.ts",
+      "line": 142,
+      "content": "MRN: 'Medical Record Number detected - direct HIPAA identifier',",
+      "matches": [
+        "Medical Record Number"
+      ],
+      "severity": "HIGH",
+      "description": "Potential PHI (Protected Health Information) detected"
+    },
+    {
+      "type": "PHI_EXPOSURE",
+      "file": "src/middleware/hipaa-validator.middleware.ts",
+      "line": 163,
+      "content": "MRN: 'Replace with anonymized patient identifier',",
+      "matches": [
+        "patient identifier"
+      ],
+      "severity": "HIGH",
+      "description": "Potential PHI (Protected Health Information) detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/middleware/rate-limiter.middleware.ts",
+      "line": 93,
+      "content": "key: `healthcare:${pattern}:${identifier}`,",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "PHI_EXPOSURE",
+      "file": "src/security/security-monitor.ts",
+      "line": 461,
+      "content": "endpoint: 'security@vital-path.com',",
+      "matches": [
+        "security@vital-path.com"
+      ],
+      "severity": "HIGH",
+      "description": "Potential PHI (Protected Health Information) detected"
+    },
+    {
+      "type": "PHI_EXPOSURE",
+      "file": "src/services/artifact-service.ts",
+      "line": 411,
+      "content": "0000000000 65535 f",
+      "matches": [
+        "0000000000"
+      ],
+      "severity": "HIGH",
+      "description": "Potential PHI (Protected Health Information) detected"
+    },
+    {
+      "type": "PHI_EXPOSURE",
+      "file": "src/services/artifact-service.ts",
+      "line": 412,
+      "content": "0000000010 00000 n",
+      "matches": [
+        "0000000010"
+      ],
+      "severity": "HIGH",
+      "description": "Potential PHI (Protected Health Information) detected"
+    },
+    {
+      "type": "PHI_EXPOSURE",
+      "file": "src/services/artifact-service.ts",
+      "line": 413,
+      "content": "0000000053 00000 n",
+      "matches": [
+        "0000000053"
+      ],
+      "severity": "HIGH",
+      "description": "Potential PHI (Protected Health Information) detected"
+    },
+    {
+      "type": "PHI_EXPOSURE",
+      "file": "src/services/artifact-service.ts",
+      "line": 414,
+      "content": "0000000110 00000 n",
+      "matches": [
+        "0000000110"
+      ],
+      "severity": "HIGH",
+      "description": "Potential PHI (Protected Health Information) detected"
+    },
+    {
+      "type": "PHI_EXPOSURE",
+      "file": "src/services/artifact-service.ts",
+      "line": 415,
+      "content": "0000000252 00000 n",
+      "matches": [
+        "0000000252"
+      ],
+      "severity": "HIGH",
+      "description": "Potential PHI (Protected Health Information) detected"
+    },
+    {
+      "type": "PHI_EXPOSURE",
+      "file": "src/services/artifact-service.ts",
+      "line": 416,
+      "content": "0000000320 00000 n",
+      "matches": [
+        "0000000320"
+      ],
+      "severity": "HIGH",
+      "description": "Potential PHI (Protected Health Information) detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/services/rate-limit-manager.service.ts",
+      "line": 165,
+      "content": "const key = `${scope}:${scopeId || 'global'}:${endpoint}:${ipAddress}`;",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "PHI_EXPOSURE",
+      "file": "src/shared/components/top-nav.tsx",
+      "line": 103,
+      "content": "// const user = // Unused variable pathname?.startsWith('/dashboard') ? { email: 'demo@vitalpath.com' } : null;",
+      "matches": [
+        "demo@vitalpath.com"
+      ],
+      "severity": "HIGH",
+      "description": "Potential PHI (Protected Health Information) detected"
+    },
+    {
+      "type": "PHI_EXPOSURE",
+      "file": "src/shared/components/top-nav.tsx",
+      "line": 262,
+      "content": "{user?.email || 'demo@vitalpath.com'}",
+      "matches": [
+        "demo@vitalpath.com"
+      ],
+      "severity": "HIGH",
+      "description": "Potential PHI (Protected Health Information) detected"
+    },
+    {
+      "type": "PHI_EXPOSURE",
+      "file": "src/shared/components/ui/top-nav.tsx",
+      "line": 257,
+      "content": "{user?.email || 'demo@vitalpath.com'}",
+      "matches": [
+        "demo@vitalpath.com"
+      ],
+      "severity": "HIGH",
+      "description": "Potential PHI (Protected Health Information) detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/shared/hooks/useAuth.ts",
+      "line": 220,
+      "content": "const permissionKey = `${scope}:${action}`;",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "PHI_EXPOSURE",
+      "file": "src/shared/services/compliance/hipaa-compliance.ts",
+      "line": 76,
+      "content": "// Medical Record Numbers (common formats)",
+      "matches": [
+        "Medical Record Numbers"
+      ],
+      "severity": "HIGH",
+      "description": "Potential PHI (Protected Health Information) detected"
+    },
+    {
+      "type": "PHI_EXPOSURE",
+      "file": "src/shared/services/compliance/hipaa-compliance.ts",
+      "line": 261,
+      "content": "\"Medical Record Number\",",
+      "matches": [
+        "Medical Record Number"
+      ],
+      "severity": "HIGH",
+      "description": "Potential PHI (Protected Health Information) detected"
+    },
+    {
+      "type": "PHI_EXPOSURE",
+      "file": "src/shared/services/compliance/hipaa-compliance.ts",
+      "line": 262,
+      "content": "\"Medical Record Number\",",
+      "matches": [
+        "Medical Record Number"
+      ],
+      "severity": "HIGH",
+      "description": "Potential PHI (Protected Health Information) detected"
+    },
+    {
+      "type": "PHI_EXPOSURE",
+      "file": "src/shared/services/supabase/types.ts",
+      "line": 2330,
+      "content": "patient_id_hash: string | null",
+      "matches": [
+        "patient_id_hash"
+      ],
+      "severity": "HIGH",
+      "description": "Potential PHI (Protected Health Information) detected"
+    },
+    {
+      "type": "PHI_EXPOSURE",
+      "file": "src/shared/services/supabase/types.ts",
+      "line": 2343,
+      "content": "patient_id_hash?: string | null",
+      "matches": [
+        "patient_id_hash"
+      ],
+      "severity": "HIGH",
+      "description": "Potential PHI (Protected Health Information) detected"
+    },
+    {
+      "type": "PHI_EXPOSURE",
+      "file": "src/shared/services/supabase/types.ts",
+      "line": 2356,
+      "content": "patient_id_hash?: string | null",
+      "matches": [
+        "patient_id_hash"
+      ],
+      "severity": "HIGH",
+      "description": "Potential PHI (Protected Health Information) detected"
+    },
+    {
+      "type": "PHI_EXPOSURE",
+      "file": "src/shared/types/database-generated.types.ts",
+      "line": 2330,
+      "content": "patient_id_hash: string | null",
+      "matches": [
+        "patient_id_hash"
+      ],
+      "severity": "HIGH",
+      "description": "Potential PHI (Protected Health Information) detected"
+    },
+    {
+      "type": "PHI_EXPOSURE",
+      "file": "src/shared/types/database-generated.types.ts",
+      "line": 2343,
+      "content": "patient_id_hash?: string | null",
+      "matches": [
+        "patient_id_hash"
+      ],
+      "severity": "HIGH",
+      "description": "Potential PHI (Protected Health Information) detected"
+    },
+    {
+      "type": "PHI_EXPOSURE",
+      "file": "src/shared/types/database-generated.types.ts",
+      "line": 2356,
+      "content": "patient_id_hash?: string | null",
+      "matches": [
+        "patient_id_hash"
+      ],
+      "severity": "HIGH",
+      "description": "Potential PHI (Protected Health Information) detected"
+    },
+    {
+      "type": "PHI_EXPOSURE",
+      "file": "src/shared/types/database.types.ts",
+      "line": 2360,
+      "content": "patient_id_hash: string | null",
+      "matches": [
+        "patient_id_hash"
+      ],
+      "severity": "HIGH",
+      "description": "Potential PHI (Protected Health Information) detected"
+    },
+    {
+      "type": "PHI_EXPOSURE",
+      "file": "src/shared/types/database.types.ts",
+      "line": 2373,
+      "content": "patient_id_hash?: string | null",
+      "matches": [
+        "patient_id_hash"
+      ],
+      "severity": "HIGH",
+      "description": "Potential PHI (Protected Health Information) detected"
+    },
+    {
+      "type": "PHI_EXPOSURE",
+      "file": "src/shared/types/database.types.ts",
+      "line": 2386,
+      "content": "patient_id_hash?: string | null",
+      "matches": [
+        "patient_id_hash"
+      ],
+      "severity": "HIGH",
+      "description": "Potential PHI (Protected Health Information) detected"
+    },
+    {
+      "type": "PHI_EXPOSURE",
+      "file": "src/shared/types/healthcare-compliance.ts",
+      "line": 229,
+      "content": "patient_id_hash?: string; // Hashed patient ID if applicable",
+      "matches": [
+        "patient_id_hash",
+        "patient ID if"
+      ],
+      "severity": "HIGH",
+      "description": "Potential PHI (Protected Health Information) detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/shared/types/llm-provider.types.ts",
+      "line": 51,
+      "content": "API_KEY = 'api_key'",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    },
+    {
+      "type": "PHI_EXPOSURE",
+      "file": "src/shared/types/prism.types.ts",
+      "line": 52,
+      "content": "patientId: string;",
+      "matches": [
+        "patientId: string"
+      ],
+      "severity": "HIGH",
+      "description": "Potential PHI (Protected Health Information) detected"
+    },
+    {
+      "type": "PHI_EXPOSURE",
+      "file": "src/types/database-generated.types.ts",
+      "line": 2330,
+      "content": "patient_id_hash: string | null",
+      "matches": [
+        "patient_id_hash"
+      ],
+      "severity": "HIGH",
+      "description": "Potential PHI (Protected Health Information) detected"
+    },
+    {
+      "type": "PHI_EXPOSURE",
+      "file": "src/types/database-generated.types.ts",
+      "line": 2343,
+      "content": "patient_id_hash?: string | null",
+      "matches": [
+        "patient_id_hash"
+      ],
+      "severity": "HIGH",
+      "description": "Potential PHI (Protected Health Information) detected"
+    },
+    {
+      "type": "PHI_EXPOSURE",
+      "file": "src/types/database-generated.types.ts",
+      "line": 2356,
+      "content": "patient_id_hash?: string | null",
+      "matches": [
+        "patient_id_hash"
+      ],
+      "severity": "HIGH",
+      "description": "Potential PHI (Protected Health Information) detected"
+    },
+    {
+      "type": "PHI_EXPOSURE",
+      "file": "src/types/database.types.ts",
+      "line": 2360,
+      "content": "patient_id_hash: string | null",
+      "matches": [
+        "patient_id_hash"
+      ],
+      "severity": "HIGH",
+      "description": "Potential PHI (Protected Health Information) detected"
+    },
+    {
+      "type": "PHI_EXPOSURE",
+      "file": "src/types/database.types.ts",
+      "line": 2373,
+      "content": "patient_id_hash?: string | null",
+      "matches": [
+        "patient_id_hash"
+      ],
+      "severity": "HIGH",
+      "description": "Potential PHI (Protected Health Information) detected"
+    },
+    {
+      "type": "PHI_EXPOSURE",
+      "file": "src/types/database.types.ts",
+      "line": 2386,
+      "content": "patient_id_hash?: string | null",
+      "matches": [
+        "patient_id_hash"
+      ],
+      "severity": "HIGH",
+      "description": "Potential PHI (Protected Health Information) detected"
+    },
+    {
+      "type": "PHI_EXPOSURE",
+      "file": "src/types/healthcare-compliance.ts",
+      "line": 254,
+      "content": "patient_id_hash?: string; // Hashed patient ID if applicable",
+      "matches": [
+        "patient_id_hash",
+        "patient ID if"
+      ],
+      "severity": "HIGH",
+      "description": "Potential PHI (Protected Health Information) detected"
+    },
+    {
+      "type": "HARDCODED_SECRET",
+      "file": "src/types/llm-provider.types.ts",
+      "line": 51,
+      "content": "API_KEY = 'api_key'",
+      "severity": "HIGH",
+      "description": "Hardcoded secret or credential detected"
+    }
+  ],
+  "warnings": [
+    {
+      "type": "UNSAFE_LOGGING",
+      "file": "src/agents/core/ComplianceAwareOrchestrator.ts",
+      "line": 320,
+      "content": "console.log(`PHI Detection: ${this.complianceMiddleware['config'].enablePHIDetection ? 'ENABLED' : 'DISABLED'}`);",
+      "severity": "MEDIUM",
+      "description": "Potential logging of sensitive data containing: phi"
+    },
+    {
+      "type": "STORAGE_WITHOUT_ENCRYPTION",
+      "file": "src/app/(app)/agents/page.tsx",
+      "line": 153,
+      "content": "// Get existing user agents from localStorage",
+      "severity": "MEDIUM",
+      "description": "Local/session storage usage detected - ensure sensitive data is encrypted"
+    },
+    {
+      "type": "STORAGE_WITHOUT_ENCRYPTION",
+      "file": "src/app/(app)/agents/page.tsx",
+      "line": 154,
+      "content": "const existingAgents = localStorage.getItem('user-chat-agents');",
+      "severity": "MEDIUM",
+      "description": "Local/session storage usage detected - ensure sensitive data is encrypted"
+    },
+    {
+      "type": "STORAGE_WITHOUT_ENCRYPTION",
+      "file": "src/app/(app)/agents/page.tsx",
+      "line": 161,
+      "content": "// Add user copy to localStorage",
+      "severity": "MEDIUM",
+      "description": "Local/session storage usage detected - ensure sensitive data is encrypted"
+    },
+    {
+      "type": "STORAGE_WITHOUT_ENCRYPTION",
+      "file": "src/app/(app)/agents/page.tsx",
+      "line": 163,
+      "content": "localStorage.setItem('user-chat-agents', JSON.stringify(newUserAgents));",
+      "severity": "MEDIUM",
+      "description": "Local/session storage usage detected - ensure sensitive data is encrypted"
+    },
+    {
+      "type": "STORAGE_WITHOUT_ENCRYPTION",
+      "file": "src/app/(app)/agents/page.tsx",
+      "line": 191,
+      "content": "// Get existing user agents from localStorage",
+      "severity": "MEDIUM",
+      "description": "Local/session storage usage detected - ensure sensitive data is encrypted"
+    },
+    {
+      "type": "STORAGE_WITHOUT_ENCRYPTION",
+      "file": "src/app/(app)/agents/page.tsx",
+      "line": 192,
+      "content": "const existingAgents = localStorage.getItem('user-chat-agents');",
+      "severity": "MEDIUM",
+      "description": "Local/session storage usage detected - ensure sensitive data is encrypted"
+    },
+    {
+      "type": "STORAGE_WITHOUT_ENCRYPTION",
+      "file": "src/app/(app)/agents/page.tsx",
+      "line": 199,
+      "content": "// Add existing user copy to localStorage",
+      "severity": "MEDIUM",
+      "description": "Local/session storage usage detected - ensure sensitive data is encrypted"
+    },
+    {
+      "type": "STORAGE_WITHOUT_ENCRYPTION",
+      "file": "src/app/(app)/agents/page.tsx",
+      "line": 201,
+      "content": "localStorage.setItem('user-chat-agents', JSON.stringify(newUserAgents));",
+      "severity": "MEDIUM",
+      "description": "Local/session storage usage detected - ensure sensitive data is encrypted"
+    },
+    {
+      "type": "STORAGE_WITHOUT_ENCRYPTION",
+      "file": "src/app/(app)/agents/page.tsx",
+      "line": 216,
+      "content": "const existingAgents = localStorage.getItem('user-chat-agents');",
+      "severity": "MEDIUM",
+      "description": "Local/session storage usage detected - ensure sensitive data is encrypted"
+    },
+    {
+      "type": "STORAGE_WITHOUT_ENCRYPTION",
+      "file": "src/app/(app)/agents/page.tsx",
+      "line": 222,
+      "content": "localStorage.setItem('user-chat-agents', JSON.stringify(newUserAgents));",
+      "severity": "MEDIUM",
+      "description": "Local/session storage usage detected - ensure sensitive data is encrypted"
+    },
+    {
+      "type": "STORAGE_WITHOUT_ENCRYPTION",
+      "file": "src/app/(app)/chat/page.tsx",
+      "line": 182,
+      "content": "// Load userAgents from localStorage after component mounts to prevent hydration issues",
+      "severity": "MEDIUM",
+      "description": "Local/session storage usage detected - ensure sensitive data is encrypted"
+    },
+    {
+      "type": "STORAGE_WITHOUT_ENCRYPTION",
+      "file": "src/app/(app)/chat/page.tsx",
+      "line": 186,
+      "content": "const saved = localStorage.getItem('user-chat-agents');",
+      "severity": "MEDIUM",
+      "description": "Local/session storage usage detected - ensure sensitive data is encrypted"
+    },
+    {
+      "type": "STORAGE_WITHOUT_ENCRYPTION",
+      "file": "src/app/(app)/chat/page.tsx",
+      "line": 198,
+      "content": "console.error('Failed to parse user agents from localStorage:', error);",
+      "severity": "MEDIUM",
+      "description": "Local/session storage usage detected - ensure sensitive data is encrypted"
+    },
+    {
+      "type": "STORAGE_WITHOUT_ENCRYPTION",
+      "file": "src/app/(app)/chat/page.tsx",
+      "line": 573,
+      "content": "// Persist to localStorage",
+      "severity": "MEDIUM",
+      "description": "Local/session storage usage detected - ensure sensitive data is encrypted"
+    },
+    {
+      "type": "STORAGE_WITHOUT_ENCRYPTION",
+      "file": "src/app/(app)/chat/page.tsx",
+      "line": 574,
+      "content": "localStorage.setItem('user-chat-agents', JSON.stringify(newUserAgents));",
+      "severity": "MEDIUM",
+      "description": "Local/session storage usage detected - ensure sensitive data is encrypted"
+    },
+    {
+      "type": "STORAGE_WITHOUT_ENCRYPTION",
+      "file": "src/app/(app)/chat/page.tsx",
+      "line": 582,
+      "content": "// Persist to localStorage",
+      "severity": "MEDIUM",
+      "description": "Local/session storage usage detected - ensure sensitive data is encrypted"
+    },
+    {
+      "type": "STORAGE_WITHOUT_ENCRYPTION",
+      "file": "src/app/(app)/chat/page.tsx",
+      "line": 583,
+      "content": "localStorage.setItem('user-chat-agents', JSON.stringify(newUserAgents));",
+      "severity": "MEDIUM",
+      "description": "Local/session storage usage detected - ensure sensitive data is encrypted"
+    },
+    {
+      "type": "STORAGE_WITHOUT_ENCRYPTION",
+      "file": "src/app/(app)/chat/page.tsx",
+      "line": 593,
+      "content": "localStorage.setItem('user-chat-agents', JSON.stringify(newUserAgents));",
+      "severity": "MEDIUM",
+      "description": "Local/session storage usage detected - ensure sensitive data is encrypted"
+    },
+    {
+      "type": "STORAGE_WITHOUT_ENCRYPTION",
+      "file": "src/app/(app)/chat/page.tsx",
+      "line": 617,
+      "content": "localStorage.setItem('user-chat-agents', JSON.stringify(updatedAgents));",
+      "severity": "MEDIUM",
+      "description": "Local/session storage usage detected - ensure sensitive data is encrypted"
+    },
+    {
+      "type": "STORAGE_WITHOUT_ENCRYPTION",
+      "file": "src/app/(app)/chat/page.tsx",
+      "line": 682,
+      "content": "localStorage.setItem('user-chat-agents', JSON.stringify(updatedAgents));",
+      "severity": "MEDIUM",
+      "description": "Local/session storage usage detected - ensure sensitive data is encrypted"
+    },
+    {
+      "type": "STORAGE_WITHOUT_ENCRYPTION",
+      "file": "src/app/(app)/chat/page.tsx",
+      "line": 1256,
+      "content": "// Also refresh userAgents from localStorage",
+      "severity": "MEDIUM",
+      "description": "Local/session storage usage detected - ensure sensitive data is encrypted"
+    },
+    {
+      "type": "STORAGE_WITHOUT_ENCRYPTION",
+      "file": "src/app/(app)/chat/page.tsx",
+      "line": 1257,
+      "content": "const saved = localStorage.getItem('user-chat-agents');",
+      "severity": "MEDIUM",
+      "description": "Local/session storage usage detected - ensure sensitive data is encrypted"
+    },
+    {
+      "type": "UNSAFE_LOGGING",
+      "file": "src/app/api/admin/api-keys/[id]/route.ts",
+      "line": 36,
+      "content": "console.error('API key update error:', error);",
+      "severity": "MEDIUM",
+      "description": "Potential logging of sensitive data containing: key"
+    },
+    {
+      "type": "UNSAFE_LOGGING",
+      "file": "src/app/api/admin/api-keys/[id]/route.ts",
+      "line": 65,
+      "content": "console.error('API key get error:', error);",
+      "severity": "MEDIUM",
+      "description": "Potential logging of sensitive data containing: key"
+    },
+    {
+      "type": "UNSAFE_LOGGING",
+      "file": "src/app/api/admin/api-keys/route.ts",
+      "line": 23,
+      "content": "console.error('API keys API error:', error);",
+      "severity": "MEDIUM",
+      "description": "Potential logging of sensitive data containing: key"
+    },
+    {
+      "type": "UNSAFE_LOGGING",
+      "file": "src/app/api/admin/api-keys/route.ts",
+      "line": 55,
+      "content": "console.error('Create API key error:', error);",
+      "severity": "MEDIUM",
+      "description": "Potential logging of sensitive data containing: key"
+    },
+    {
+      "type": "UNSAFE_LOGGING",
+      "file": "src/app/api/agents/[id]/route.ts",
+      "line": 41,
+      "content": "console.log('🔧 Agent API: Filtered updates:', Object.keys(filteredUpdates));",
+      "severity": "MEDIUM",
+      "description": "Potential logging of sensitive data containing: key"
+    },
+    {
+      "type": "UNSAFE_LOGGING",
+      "file": "src/app/api/agents/recommend/route.ts",
+      "line": 87,
+      "content": "console.log('🔑 Agent Recommendation API - Using Supabase Service Key:', process.env.SUPABASE_SERVICE_ROLE_KEY ? 'Present' : 'Missing');",
+      "severity": "MEDIUM",
+      "description": "Potential logging of sensitive data containing: key"
+    },
+    {
+      "type": "UNSAFE_LOGGING",
+      "file": "src/app/api/chat/autonomous/route.ts",
+      "line": 31,
+      "content": "console.log('🔑 Autonomous Chat API - Using Supabase Service Key:', supabaseServiceKey ? 'Present' : 'Missing');",
+      "severity": "MEDIUM",
+      "description": "Potential logging of sensitive data containing: key"
+    },
+    {
+      "type": "UNSAFE_LOGGING",
+      "file": "src/app/api/chat/autonomous/route.ts",
+      "line": 364,
+      "content": "console.log('🔑 Autonomous Chat API - Using Supabase Service Key:', supabaseServiceKey ? 'Present' : 'Missing');",
+      "severity": "MEDIUM",
+      "description": "Potential logging of sensitive data containing: key"
+    },
+    {
+      "type": "UNSAFE_LOGGING",
+      "file": "src/app/api/chat/route.ts",
+      "line": 26,
+      "content": "console.log('🔑 Chat API - Using Supabase Service Key:', supabaseServiceKey ? 'Present' : 'Missing');",
+      "severity": "MEDIUM",
+      "description": "Potential logging of sensitive data containing: key"
+    },
+    {
+      "type": "STORAGE_WITHOUT_ENCRYPTION",
+      "file": "src/components/llm/MeditronSetup.tsx",
+      "line": 80,
+      "content": "const storedKey = localStorage.getItem('huggingface_api_key');",
+      "severity": "MEDIUM",
+      "description": "Local/session storage usage detected - ensure sensitive data is encrypted"
+    },
+    {
+      "type": "STORAGE_WITHOUT_ENCRYPTION",
+      "file": "src/components/llm/MeditronSetup.tsx",
+      "line": 92,
+      "content": "localStorage.setItem('huggingface_api_key', apiKey);",
+      "severity": "MEDIUM",
+      "description": "Local/session storage usage detected - ensure sensitive data is encrypted"
+    },
+    {
+      "type": "UNSAFE_LOGGING",
+      "file": "src/components/llm/MeditronSetup.tsx",
+      "line": 110,
+      "content": "console.error('Error saving API key:', error);",
+      "severity": "MEDIUM",
+      "description": "Potential logging of sensitive data containing: key"
+    },
+    {
+      "type": "STORAGE_WITHOUT_ENCRYPTION",
+      "file": "src/features/chat/components/agent-creator.tsx",
+      "line": 1259,
+      "content": "// If it's a localStorage-only agent, just remove it from localStorage",
+      "severity": "MEDIUM",
+      "description": "Local/session storage usage detected - ensure sensitive data is encrypted"
+    },
+    {
+      "type": "STORAGE_WITHOUT_ENCRYPTION",
+      "file": "src/features/chat/components/agent-creator.tsx",
+      "line": 1263,
+      "content": "// Remove from localStorage",
+      "severity": "MEDIUM",
+      "description": "Local/session storage usage detected - ensure sensitive data is encrypted"
+    },
+    {
+      "type": "STORAGE_WITHOUT_ENCRYPTION",
+      "file": "src/features/chat/components/agent-creator.tsx",
+      "line": 1264,
+      "content": "const saved = localStorage.getItem('user-chat-agents');",
+      "severity": "MEDIUM",
+      "description": "Local/session storage usage detected - ensure sensitive data is encrypted"
+    },
+    {
+      "type": "STORAGE_WITHOUT_ENCRYPTION",
+      "file": "src/features/chat/components/agent-creator.tsx",
+      "line": 1268,
+      "content": "localStorage.setItem('user-chat-agents', JSON.stringify(filteredAgents));",
+      "severity": "MEDIUM",
+      "description": "Local/session storage usage detected - ensure sensitive data is encrypted"
+    },
+    {
+      "type": "STORAGE_WITHOUT_ENCRYPTION",
+      "file": "src/features/chat/components/agent-creator.tsx",
+      "line": 1405,
+      "content": "// Check if this is a user copy from localStorage that doesn't exist in DB yet",
+      "severity": "MEDIUM",
+      "description": "Local/session storage usage detected - ensure sensitive data is encrypted"
+    },
+    {
+      "type": "UNSAFE_LOGGING",
+      "file": "src/features/chat/memory/advanced-memory.ts",
+      "line": 41,
+      "content": "console.log(`Storing memory (fallback): ${key}`);",
+      "severity": "MEDIUM",
+      "description": "Potential logging of sensitive data containing: key"
+    },
+    {
+      "type": "UNSAFE_LOGGING",
+      "file": "src/features/chat/memory/advanced-memory.ts",
+      "line": 61,
+      "content": "console.log(`✅ Stored memory: ${key} (${config.strategy})`);",
+      "severity": "MEDIUM",
+      "description": "Potential logging of sensitive data containing: key"
+    },
+    {
+      "type": "UNSAFE_LOGGING",
+      "file": "src/features/chat/memory/long-term-memory.ts",
+      "line": 84,
+      "content": "console.log(`Storing long-term memory (fallback): ${key}`);",
+      "severity": "MEDIUM",
+      "description": "Potential logging of sensitive data containing: key"
+    },
+    {
+      "type": "UNSAFE_LOGGING",
+      "file": "src/features/chat/memory/long-term-memory.ts",
+      "line": 100,
+      "content": "console.log(`✅ Stored long-term memory: ${key}`);",
+      "severity": "MEDIUM",
+      "description": "Potential logging of sensitive data containing: key"
+    },
+    {
+      "type": "UNSAFE_LOGGING",
+      "file": "src/features/chat/services/cloud-rag-service.ts",
+      "line": 433,
+      "content": "console.log('⚠️ Cohere API key not found, skipping re-ranking');",
+      "severity": "MEDIUM",
+      "description": "Potential logging of sensitive data containing: key"
+    },
+    {
+      "type": "UNSAFE_LOGGING",
+      "file": "src/features/chat/services/supabase-rag-service.ts",
+      "line": 184,
+      "content": "console.error('Keyword search error:', error);",
+      "severity": "MEDIUM",
+      "description": "Potential logging of sensitive data containing: key"
+    },
+    {
+      "type": "UNSAFE_LOGGING",
+      "file": "src/lib/services/dynamic-tool-loader.ts",
+      "line": 64,
+      "content": "console.error(`Failed to load tool ${toolKey}:`, error);",
+      "severity": "MEDIUM",
+      "description": "Potential logging of sensitive data containing: key"
+    },
+    {
+      "type": "UNSAFE_LOGGING",
+      "file": "src/lib/services/dynamic-tool-loader.ts",
+      "line": 95,
+      "content": "console.error(`Failed to instantiate tool ${tool.tool_key}:`, error);",
+      "severity": "MEDIUM",
+      "description": "Potential logging of sensitive data containing: key"
+    },
+    {
+      "type": "UNSAFE_LOGGING",
+      "file": "src/lib/services/dynamic-tool-loader.ts",
+      "line": 218,
+      "content": "console.error(`Failed to get metadata for tool ${toolKey}:`, error);",
+      "severity": "MEDIUM",
+      "description": "Potential logging of sensitive data containing: key"
+    },
+    {
+      "type": "UNSAFE_LOGGING",
+      "file": "src/lib/services/redis-config.ts",
+      "line": 63,
+      "content": "console.log('   To enable Redis caching, set UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN');",
+      "severity": "MEDIUM",
+      "description": "Potential logging of sensitive data containing: token"
+    },
+    {
+      "type": "STORAGE_WITHOUT_ENCRYPTION",
+      "file": "src/lib/stores/chat-store.ts",
+      "line": 215,
+      "content": "localStorage.getItem(`chat-messages-${chatId}`) || '[]'",
+      "severity": "MEDIUM",
+      "description": "Local/session storage usage detected - ensure sensitive data is encrypted"
+    },
+    {
+      "type": "STORAGE_WITHOUT_ENCRYPTION",
+      "file": "src/lib/stores/chat-store.ts",
+      "line": 235,
+      "content": "localStorage.removeItem(`chat-messages-${chatId}`);",
+      "severity": "MEDIUM",
+      "description": "Local/session storage usage detected - ensure sensitive data is encrypted"
+    },
+    {
+      "type": "STORAGE_WITHOUT_ENCRYPTION",
+      "file": "src/lib/stores/chat-store.ts",
+      "line": 486,
+      "content": "// Save messages to localStorage",
+      "severity": "MEDIUM",
+      "description": "Local/session storage usage detected - ensure sensitive data is encrypted"
+    },
+    {
+      "type": "STORAGE_WITHOUT_ENCRYPTION",
+      "file": "src/lib/stores/chat-store.ts",
+      "line": 488,
+      "content": "localStorage.setItem(",
+      "severity": "MEDIUM",
+      "description": "Local/session storage usage detected - ensure sensitive data is encrypted"
+    },
+    {
+      "type": "STORAGE_WITHOUT_ENCRYPTION",
+      "file": "src/lib/stores/chat-store.ts",
+      "line": 755,
+      "content": "// Update localStorage",
+      "severity": "MEDIUM",
+      "description": "Local/session storage usage detected - ensure sensitive data is encrypted"
+    },
+    {
+      "type": "STORAGE_WITHOUT_ENCRYPTION",
+      "file": "src/lib/stores/chat-store.ts",
+      "line": 758,
+      "content": "localStorage.setItem(",
+      "severity": "MEDIUM",
+      "description": "Local/session storage usage detected - ensure sensitive data is encrypted"
+    },
+    {
+      "type": "STORAGE_WITHOUT_ENCRYPTION",
+      "file": "src/security/vulnerability-scanner.ts",
+      "line": 75,
+      "content": "/localStorage\\.setItem.*patient/gi,",
+      "severity": "MEDIUM",
+      "description": "Local/session storage usage detected - ensure sensitive data is encrypted"
+    },
+    {
+      "type": "STORAGE_WITHOUT_ENCRYPTION",
+      "file": "src/security/vulnerability-scanner.ts",
+      "line": 76,
+      "content": "/sessionStorage\\.setItem.*medical/gi",
+      "severity": "MEDIUM",
+      "description": "Local/session storage usage detected - ensure sensitive data is encrypted"
+    },
+    {
+      "type": "STORAGE_WITHOUT_ENCRYPTION",
+      "file": "src/security/vulnerability-scanner.ts",
+      "line": 121,
+      "content": "/medical.*record.*localStorage/gi,",
+      "severity": "MEDIUM",
+      "description": "Local/session storage usage detected - ensure sensitive data is encrypted"
+    },
+    {
+      "type": "STORAGE_WITHOUT_ENCRYPTION",
+      "file": "src/security/vulnerability-scanner.ts",
+      "line": 122,
+      "content": "/ssn.*sessionStorage/gi,",
+      "severity": "MEDIUM",
+      "description": "Local/session storage usage detected - ensure sensitive data is encrypted"
+    },
+    {
+      "type": "STORAGE_WITHOUT_ENCRYPTION",
+      "file": "src/shared/components/ui/model-selector.tsx",
+      "line": 377,
+      "content": "// Load from localStorage on mount",
+      "severity": "MEDIUM",
+      "description": "Local/session storage usage detected - ensure sensitive data is encrypted"
+    },
+    {
+      "type": "STORAGE_WITHOUT_ENCRYPTION",
+      "file": "src/shared/components/ui/model-selector.tsx",
+      "line": 385,
+      "content": "// Save to localStorage when changed",
+      "severity": "MEDIUM",
+      "description": "Local/session storage usage detected - ensure sensitive data is encrypted"
+    },
+    {
+      "type": "STORAGE_WITHOUT_ENCRYPTION",
+      "file": "src/shared/components/ui/model-selector.tsx",
+      "line": 388,
+      "content": "localStorage.setItem('vital-ai-selected-model', modelId);",
+      "severity": "MEDIUM",
+      "description": "Local/session storage usage detected - ensure sensitive data is encrypted"
+    },
+    {
+      "type": "STORAGE_WITHOUT_ENCRYPTION",
+      "file": "src/shared/hooks/useWorkspaceManager.ts",
+      "line": 167,
+      "content": "// Load from localStorage if persist is enabled",
+      "severity": "MEDIUM",
+      "description": "Local/session storage usage detected - ensure sensitive data is encrypted"
+    },
+    {
+      "type": "STORAGE_WITHOUT_ENCRYPTION",
+      "file": "src/shared/hooks/useWorkspaceManager.ts",
+      "line": 218,
+      "content": "// Save workspaces to localStorage when they change",
+      "severity": "MEDIUM",
+      "description": "Local/session storage usage detected - ensure sensitive data is encrypted"
+    },
+    {
+      "type": "STORAGE_WITHOUT_ENCRYPTION",
+      "file": "src/shared/hooks/useWorkspaceManager.ts",
+      "line": 222,
+      "content": "localStorage.setItem('vital-workspaces', JSON.stringify(workspaces));",
+      "severity": "MEDIUM",
+      "description": "Local/session storage usage detected - ensure sensitive data is encrypted"
+    },
+    {
+      "type": "STORAGE_WITHOUT_ENCRYPTION",
+      "file": "src/shared/services/stores/chat-store.ts",
+      "line": 145,
+      "content": "localStorage.getItem(`chat-messages-${chatId}`) || '[]'",
+      "severity": "MEDIUM",
+      "description": "Local/session storage usage detected - ensure sensitive data is encrypted"
+    },
+    {
+      "type": "STORAGE_WITHOUT_ENCRYPTION",
+      "file": "src/shared/services/stores/chat-store.ts",
+      "line": 165,
+      "content": "localStorage.removeItem(`chat-messages-${chatId}`);",
+      "severity": "MEDIUM",
+      "description": "Local/session storage usage detected - ensure sensitive data is encrypted"
+    },
+    {
+      "type": "STORAGE_WITHOUT_ENCRYPTION",
+      "file": "src/shared/services/stores/chat-store.ts",
+      "line": 286,
+      "content": "// Save messages to localStorage",
+      "severity": "MEDIUM",
+      "description": "Local/session storage usage detected - ensure sensitive data is encrypted"
+    },
+    {
+      "type": "STORAGE_WITHOUT_ENCRYPTION",
+      "file": "src/shared/services/stores/chat-store.ts",
+      "line": 288,
+      "content": "localStorage.setItem(",
+      "severity": "MEDIUM",
+      "description": "Local/session storage usage detected - ensure sensitive data is encrypted"
+    },
+    {
+      "type": "STORAGE_WITHOUT_ENCRYPTION",
+      "file": "src/shared/services/stores/chat-store.ts",
+      "line": 423,
+      "content": "// Update localStorage",
+      "severity": "MEDIUM",
+      "description": "Local/session storage usage detected - ensure sensitive data is encrypted"
+    },
+    {
+      "type": "STORAGE_WITHOUT_ENCRYPTION",
+      "file": "src/shared/services/stores/chat-store.ts",
+      "line": 426,
+      "content": "localStorage.setItem(",
+      "severity": "MEDIUM",
+      "description": "Local/session storage usage detected - ensure sensitive data is encrypted"
+    }
+  ]
+}

@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from 'next/server';
+import { createServerClient } from '@supabase/ssr';
 
 export async function middleware(request: NextRequest) {
   const url = request.nextUrl.clone();
@@ -17,8 +18,16 @@ export async function middleware(request: NextRequest) {
     '/privacy',
     '/terms'
   ];
+
+  // Public API routes that don't require authentication
+  const publicApiRoutes = [
+    '/api/auth/',
+    '/api/health',
+    '/api/public/'
+  ];
+
   const isPublicRoute = publicRoutes.includes(url.pathname) || 
-                       url.pathname.startsWith('/api/') ||
+                       publicApiRoutes.some(route => url.pathname.startsWith(route)) ||
                        url.pathname.startsWith('/_next/') ||
                        url.pathname.startsWith('/favicon');
 
@@ -46,20 +55,71 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  let response = NextResponse.next({
-    request: {
-      headers: request.headers,
-    },
-  });
-
   // Skip auth check for public routes
   if (isPublicRoute) {
-    return response;
+    return NextResponse.next();
   }
 
-  // For protected routes, let client-side auth handle the checks
-  // This prevents server-side auth issues and redirect loops
-  return response;
+  // For protected routes, check authentication
+  try {
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      {
+        cookies: {
+          get(name: string) {
+            return request.cookies.get(name)?.value;
+          },
+          set() {
+            // Not implemented for middleware
+          },
+          remove() {
+            // Not implemented for middleware
+          }
+        }
+      }
+    );
+
+    const { data: { user }, error } = await supabase.auth.getUser();
+
+    if (error || !user) {
+      // Redirect to login for protected routes
+      if (url.pathname.startsWith('/api/')) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      }
+      
+      const loginUrl = new URL('/login', request.url);
+      loginUrl.searchParams.set('redirectTo', url.pathname);
+      return NextResponse.redirect(loginUrl);
+    }
+
+    // Check user role for admin routes
+    if (url.pathname.startsWith('/admin/')) {
+      const { data: profile } = await supabase
+        .from('user_profiles')
+        .select('role')
+        .eq('user_id', user.id)
+        .single();
+
+      if (!profile || !['admin', 'super_admin'].includes(profile.role)) {
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      }
+    }
+
+    // User is authenticated, continue
+    return NextResponse.next();
+
+  } catch (error) {
+    console.error('Authentication error:', error);
+    
+    if (url.pathname.startsWith('/api/')) {
+      return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    }
+    
+    const loginUrl = new URL('/login', request.url);
+    loginUrl.searchParams.set('redirectTo', url.pathname);
+    return NextResponse.redirect(loginUrl);
+  }
 }
 
 export const config = {

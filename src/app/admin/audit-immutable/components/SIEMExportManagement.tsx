@@ -22,8 +22,8 @@ import { format } from 'date-fns';
 
 interface SIEMExportManagementProps {
   siemExports: SIEMExport[];
-  onSIEMExportUpdate: (export_: SIEMExport) => void;
-  onSIEMExportCreate: (export_: SIEMExport) => void;
+  onSIEMExportUpdate: (exportData: SIEMExport) => void;
+  onSIEMExportCreate: (exportData: SIEMExport) => void;
 }
 
 export default function SIEMExportManagement({
@@ -107,15 +107,15 @@ export default function SIEMExportManagement({
       setIsExporting(true);
       setError(null);
       
-      const export_ = siemExports.find(e => e.id === exportId);
-      if (!export_) {
+      const exportData = siemExports.find(e => e.id === exportId);
+      if (!exportData) {
         throw new Error('Export not found');
       }
 
       const newExport = await auditService.exportToSIEM(
-        export_.blockId,
-        export_.destination,
-        export_.format
+        exportData.blockId,
+        exportData.destination,
+        exportData.format
       );
       
       onSIEMExportUpdate(newExport);
@@ -147,6 +147,7 @@ export default function SIEMExportManagement({
             Export audit logs to external SIEM systems for security monitoring
           </p>
         </div>
+        {!isExporting && (
           <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
             <DialogTrigger asChild>
               <Button disabled={isExporting}>
@@ -233,42 +234,42 @@ export default function SIEMExportManagement({
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {siemExports.map((export_) => (
-                    <TableRow key={export_.id}>
+                  {siemExports.map((exportData) => (
+                    <TableRow key={exportData.id}>
                       <TableCell>
                         <div className="space-y-1">
                           <div className="font-medium flex items-center gap-2">
-                            {getStatusIcon(export_.status)}
-                            {export_.id}
+                            {getStatusIcon(exportData.status)}
+                            {exportData.id}
                           </div>
                           <div className="text-sm text-muted-foreground">
-                            {export_.exportType} export
+                            {exportData.exportType} export
                           </div>
                         </div>
                       </TableCell>
                       <TableCell>
                         <code className="text-xs bg-muted px-2 py-1 rounded">
-                          {export_.blockId}
+                          {exportData.blockId}
                         </code>
                       </TableCell>
                       <TableCell>
                         <div className="text-sm">
-                          {export_.destination}
+                          {exportData.destination}
                         </div>
                       </TableCell>
                       <TableCell>
-                        {getFormatBadge(export_.format)}
+                        {getFormatBadge(exportData.format)}
                       </TableCell>
                       <TableCell>
-                        {getStatusBadge(export_.status)}
+                        {getStatusBadge(exportData.status)}
                       </TableCell>
                       <TableCell>
                         <div className="text-sm">
-                          {export_.recordCount.toLocaleString()}
+                          {exportData.recordCount.toLocaleString()}
                         </div>
                       </TableCell>
                       <TableCell className="text-sm text-muted-foreground">
-                        {format(export_.startedAt, 'MMM dd, HH:mm')}
+                        {format(exportData.startedAt, 'MMM dd, HH:mm')}
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
@@ -277,7 +278,7 @@ export default function SIEMExportManagement({
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                onClick={() => setSelectedExport(export_)}
+                                onClick={() => setSelectedExport(exportData)}
                               >
                                 <Eye className="h-4 w-4" />
                               </Button>
@@ -285,8 +286,8 @@ export default function SIEMExportManagement({
                             <DialogContent className="max-w-4xl">
                               <DialogHeader>
                                 <DialogTitle className="flex items-center gap-2">
-                                  {getStatusIcon(export_.status)}
-                                  SIEM Export: {export_.id}
+                                  {getStatusIcon(exportData.status)}
+                                  SIEM Export: {exportData.id}
                                 </DialogTitle>
                                 <DialogDescription>
                                   Export details and status
@@ -294,30 +295,31 @@ export default function SIEMExportManagement({
                               </DialogHeader>
                               <ScrollArea className="max-h-[600px]">
                                 <SIEMExportDetails 
-                                  export_={export_}
+                                  exportData={exportData}
                                   onRetry={handleRetryExport}
                                 />
                               </ScrollArea>
                             </DialogContent>
                           </Dialog>
 
-                          {export_.status === 'completed' && (
+                          {exportData.status === 'completed' && (
                             <Button
                               variant="ghost"
                               size="sm"
                               onClick={() => {
                                 // TODO: Implement download
-                                console.log('Download export:', export_.id);
+                                // TODO: Implement download functionality
                               }}
                             >
                               <Download className="h-4 w-4" />
                             </Button>
                           )}
 
+                          {exportData.status === 'failed' && (
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => handleRetryExport(export_.id)}
+                              onClick={() => handleRetryExport(exportData.id)}
                               disabled={isExporting}
                             >
                               <RefreshCw className="h-4 w-4" />
@@ -338,74 +340,75 @@ export default function SIEMExportManagement({
 }
 
 interface SIEMExportDetailsProps {
-  export_: SIEMExport;
+  exportData: SIEMExport;
   onRetry: (exportId: string) => void;
 }
 
-function SIEMExportDetails({ export_, onRetry }: SIEMExportDetailsProps) {
+function SIEMExportDetails({ exportData, onRetry }: SIEMExportDetailsProps) {
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-2 gap-4">
         <div>
           <label className="text-sm font-medium">Export ID</label>
-          <p className="text-sm text-muted-foreground font-mono">{export_.id}</p>
+          <p className="text-sm text-muted-foreground font-mono">{exportData.id}</p>
         </div>
         <div>
           <label className="text-sm font-medium">Status</label>
-          <p className="text-sm text-muted-foreground capitalize">{export_.status}</p>
+          <p className="text-sm text-muted-foreground capitalize">{exportData.status}</p>
         </div>
         <div>
           <label className="text-sm font-medium">Block ID</label>
-          <p className="text-sm text-muted-foreground font-mono">{export_.blockId}</p>
+          <p className="text-sm text-muted-foreground font-mono">{exportData.blockId}</p>
         </div>
         <div>
           <label className="text-sm font-medium">Destination</label>
-          <p className="text-sm text-muted-foreground">{export_.destination}</p>
+          <p className="text-sm text-muted-foreground">{exportData.destination}</p>
         </div>
         <div>
           <label className="text-sm font-medium">Format</label>
-          <p className="text-sm text-muted-foreground uppercase">{export_.format}</p>
+          <p className="text-sm text-muted-foreground uppercase">{exportData.format}</p>
         </div>
         <div>
           <label className="text-sm font-medium">Type</label>
-          <p className="text-sm text-muted-foreground capitalize">{export_.exportType}</p>
+          <p className="text-sm text-muted-foreground capitalize">{exportData.exportType}</p>
         </div>
         <div>
           <label className="text-sm font-medium">Record Count</label>
-          <p className="text-sm text-muted-foreground">{export_.recordCount.toLocaleString()}</p>
+          <p className="text-sm text-muted-foreground">{exportData.recordCount.toLocaleString()}</p>
         </div>
         <div>
           <label className="text-sm font-medium">Checksum</label>
           <p className="text-sm text-muted-foreground font-mono">
-            {export_.checksum || 'Not available'}
+            {exportData.checksum || 'Not available'}
           </p>
         </div>
         <div>
           <label className="text-sm font-medium">Started At</label>
           <p className="text-sm text-muted-foreground">
-            {format(export_.startedAt, 'PPpp')}
+            {format(exportData.startedAt, 'PPpp')}
           </p>
         </div>
         <div>
           <label className="text-sm font-medium">Completed At</label>
           <p className="text-sm text-muted-foreground">
-            {export_.completedAt ? format(export_.completedAt, 'PPpp') : 'Not completed'}
+            {exportData.completedAt ? format(exportData.completedAt, 'PPpp') : 'Not completed'}
           </p>
         </div>
       </div>
 
-      {export_.errorMessage && (
+      {exportData.errorMessage && (
         <div>
           <label className="text-sm font-medium">Error Message</label>
           <div className="mt-1 p-3 bg-red-50 border border-red-200 rounded-md">
-            <p className="text-sm text-red-800">{export_.errorMessage}</p>
+            <p className="text-sm text-red-800">{exportData.errorMessage}</p>
           </div>
         </div>
       )}
 
+      {exportData.status === 'failed' && (
         <div className="flex gap-2 pt-4 border-t">
           <Button
-            onClick={() => onRetry(export_.id)}
+            onClick={() => onRetry(exportData.id)}
             className="flex-1"
           >
             <RefreshCw className="h-4 w-4 mr-2" />

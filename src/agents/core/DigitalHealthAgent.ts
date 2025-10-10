@@ -216,7 +216,8 @@ export class DigitalHealthAgent {
 
     // Replace all {{variable}} placeholders
     for (const [key, value] of Object.entries(userInputs)) {
-      const placeholder = new RegExp(`\\{\\{${key}\\}\\}`, 'g');
+      const escapedKey = key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const placeholder = new RegExp(`\\{\\{${escapedKey}\\}\\}`, 'g');
       prepared = prepared.replace(placeholder, String(value));
     }
 
@@ -245,7 +246,7 @@ export class DigitalHealthAgent {
   /**
    * Generate mock responses for testing (to be replaced with real AI calls)
    */
-  private generateMockResponse(_prompt: string): { content: string; data: Record<string, unknown> } {
+  private generateMockResponse(): { content: string; data: Record<string, unknown> } {
     const agentType = this.config.name;
 
     switch (agentType) {
@@ -403,8 +404,7 @@ Please review the analysis and let me know if you need any clarification or addi
    * Validate response meets success criteria
    */
   private validateResponse(
-    response: { content: string; data?: Record<string, unknown> },
-    _prompt: PromptTemplate
+    response: { content: string; data?: Record<string, unknown> }
   ): { content: string; data?: Record<string, unknown> } {
     // Basic validation - ensure content is present and meaningful
     if (!response.content || response.content.trim().length < 100) {

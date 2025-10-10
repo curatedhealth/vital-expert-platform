@@ -254,9 +254,9 @@ export const __useContextualQuickActions = ({
   }, [allContextualActions, detectedStakeholder, currentTime, maxActions]);
 
   // Get stakeholder-specific welcome message
-
-      pharma: {
-        title: 'Pharmaceutical Development Intelligence',
+  const stakeholderWelcomeMessages = {
+    pharma: {
+      title: 'Pharmaceutical Development Intelligence',
         subtitle: 'Expert guidance for drug development, regulatory strategy, and clinical research',
         description: 'Navigate complex pharmaceutical development with AI experts specializing in regulatory pathways, clinical trial design, and market access strategy.'
       },

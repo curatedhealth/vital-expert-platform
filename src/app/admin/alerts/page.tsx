@@ -1,4 +1,4 @@
-import { requireAdmin } from '@/lib/auth/require-admin';
+import { requireAdmin } from '@/lib/auth/requireAdmin';
 import { AlertDashboard } from './components/AlertDashboard';
 
 export default async function AlertsPage() {

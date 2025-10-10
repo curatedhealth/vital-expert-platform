@@ -1,4 +1,4 @@
-import { requireAdmin } from '@/lib/auth/require-admin';
+import { requireAdmin } from '@/lib/auth/requireAdmin';
 import { SecurityDashboard } from './components/SecurityDashboard';
 
 export default async function SecurityPage() {

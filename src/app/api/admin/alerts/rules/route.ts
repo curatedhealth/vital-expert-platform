@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { alertManagerService } from '@/services/alert-manager.service';
-import { requireAdmin } from '@/lib/auth/require-admin';
+import { requireAdmin } from '@/lib/auth/requireAdmin';
 
 export async function GET(request: NextRequest) {
   try {

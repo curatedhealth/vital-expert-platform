@@ -316,10 +316,12 @@ export class EnhancedConversationManager {
   }
 
   private async updateSessionContext(sessionId: string, query: string, result: unknown): Promise<void> {
+    const session = this.sessions.get(sessionId);
+    if (!session) return;
 
     // Update domains
     if (result.orchestration?.intent?.domains) {
-
+      const newDomains = result.orchestration.intent.domains;
       session.context.domains = Array.from(new Set([...session.context.domains, ...newDomains]));
     }
 
@@ -330,7 +332,7 @@ export class EnhancedConversationManager {
 
     // Update active agents
     if (result.orchestration?.agents) {
-
+      const newAgents = result.orchestration.agents;
       session.context.activeAgents = Array.from(new Set([...session.context.activeAgents, ...newAgents]));
     }
 
@@ -345,19 +347,24 @@ export class EnhancedConversationManager {
     }
 
     // Extract and update key topics
-
-    session.context.keyTopics = Array.from(new Set([...session.context.keyTopics, ...newTopics]));
+    if (result.orchestration?.intent?.keyTopics) {
+      const newTopics = result.orchestration.intent.keyTopics;
+      session.context.keyTopics = Array.from(new Set([...session.context.keyTopics, ...newTopics]));
+    }
   }
 
   private async updateSessionMetrics(sessionId: string, result: unknown, responseTime: number): Promise<void> {
+    const session = this.sessions.get(sessionId);
+    if (!session) return;
 
     // Update response time
-
+    const currentAvg = session.metrics.avgResponseTime;
+    const messageCount = session.messages.length;
     session.metrics.avgResponseTime = ((currentAvg * (messageCount - 1)) + responseTime) / messageCount;
 
     // Update confidence
     if (result.confidence) {
-
+      const currentConfAvg = session.metrics.avgConfidence;
       session.metrics.avgConfidence = ((currentConfAvg * (messageCount - 1)) + result.confidence) / messageCount;
     }
 

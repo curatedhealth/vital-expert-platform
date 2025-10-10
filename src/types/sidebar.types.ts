@@ -36,7 +36,7 @@ export interface SmartSuggestion {
   confidence: number; // 0-1
   type: 'action' | 'query' | 'document' | 'expert';
   icon: string;
-  metadata?: any;
+  metadata?: Record<string, unknown>;
 }
 
 export interface ComplianceStatus {
@@ -194,7 +194,7 @@ export interface PredictedAction {
   type: string;
   confidence: number;
   endpoint?: string;
-  data?: any;
+  data?: Record<string, unknown>;
 }
 
 export interface ContextualSuggestion {

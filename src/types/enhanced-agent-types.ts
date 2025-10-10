@@ -331,7 +331,7 @@ export interface EnhancedAgentMetadata {
   version_control?: VersionControl;
 
   // Allow any additional metadata
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 // ============================================================================

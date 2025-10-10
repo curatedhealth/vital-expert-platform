@@ -346,7 +346,7 @@ export interface LLMRequest {
   temperature?: number;
   stream?: boolean;
   functions?: unknown[]; // Function calling definitions
-  function_call?: any;
+  function_call?: Record<string, unknown>;
 
   // Context
   user_id?: string;

@@ -137,13 +137,14 @@ export class IconService {
    */
   async updateIcon(id: string, updates: Partial<Omit<Icon, 'id' | 'created_at' | 'updated_at'>>): Promise<Icon | null> {
     try {
-
+      const response = await fetch(`/api/icons/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updates)
       });
+      const data = await response.json();
       // eslint-disable-next-line security/detect-object-injection
-      return response.icon || null;
+      return data.icon || null;
     } catch (error) {
       // console.error('Error in updateIcon:', error);
       return null;

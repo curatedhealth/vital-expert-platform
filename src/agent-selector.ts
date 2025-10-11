@@ -15,6 +15,8 @@ interface AgentMatch {
 
 export class AgentSelector {
   private agents: Map<string, DigitalHealthAgent> = new Map();
+  private intentAgentMap: Record<string, string[]> = {};
+  private domainAgentMap: Record<string, string[]> = {};
 
   // Domain to agent mapping
   private domainMappings = {
@@ -55,7 +57,7 @@ export class AgentSelector {
     candidates.sort((a, b) => b.score - a.score);
 
     // Determine how many agents to return
-    let selectedAgents: DigitalHealthAgent[];
+    let selectedAgents: DigitalHealthAgent[] = [];
 
     if (intent.requiresMultiAgent || intent.complexity === 'very-high') {
       // Multi-agent selection - take top 2-3 agents with score > 60
@@ -63,19 +65,19 @@ export class AgentSelector {
         .filter(c => c.score > 60)
         .slice(0, 3)
         .map(c => c.agent);
-
-      // } else {
+    } else {
       // Single agent selection - take best match if score > 70
       if (candidates[0].score > 70) {
         selectedAgents = [candidates[0].agent];
-        // } else {
-        // selectedAgents = [];
+      } else {
+        selectedAgents = [];
       }
     }
 
     // Log reasoning
     selectedAgents.forEach((agent, index) => {
-      const match = agent.metadata?.specializations?.some(spec =>
+      const config = agent.getConfig();
+      const match = config.capabilities?.some(spec =>
         query.toLowerCase().includes(spec.toLowerCase())
       );
       if (match) {
@@ -90,11 +92,12 @@ export class AgentSelector {
     const candidates: AgentMatch[] = [];
 
     // 1. Intent-based matching (highest priority)
-
+    const intentAgents = this.intentAgentMap[intent.intent] || [];
+    
     for (const agentId of intentAgents) {
-
+      const agent = this.agents.get(agentId);
       if (agent) {
-
+        const score = this.calculateAgentScore(agent, query, intent);
         if (score > 0) {
           candidates.push({
             agent,
@@ -108,11 +111,12 @@ export class AgentSelector {
 
     // 2. Domain-based matching
     for (const domain of intent.domains.slice(0, 3)) { // Top 3 domains
-
+      const domainAgents = this.domainAgentMap[domain] || [];
+      
       for (const agentId of domainAgents) {
-
+        const agent = this.agents.get(agentId);
         if (agent && !candidates.some(c => c.agent.getConfig().name === agentId)) {
-
+          const score = this.calculateAgentScore(agent, query, intent);
           if (score > 0) {
             candidates.push({
               agent,
@@ -128,7 +132,7 @@ export class AgentSelector {
     // 3. Keyword and capability matching
     for (const [agentId, agent] of this.agents.entries()) {
       if (!candidates.some(c => c.agent.getConfig().name === agentId)) {
-
+        const score = this.calculateAgentScore(agent, query, intent);
         if (score > 40) { // Only include if reasonably relevant
           candidates.push({
             agent,
@@ -143,23 +147,51 @@ export class AgentSelector {
     return candidates;
   }
 
-  private calculateIntentScore(agent: DigitalHealthAgent, intent: IntentResult, query: string): number {
+  private calculateAgentScore(agent: DigitalHealthAgent, query: string, intent: IntentResult): number {
+    let score = 0;
 
     // Capability alignment
-
+    const capabilities = agent.getCapabilities();
+    const capabilityBonus = capabilities.filter(cap => 
+      query.toLowerCase().includes(cap.toLowerCase())
+    ).length * 5;
     score += capabilityBonus;
 
     // Tier priority
-    if (agent.getConfig().metadata?.tier === 1) {
+    if (agent.getConfig().tier === 1) {
       score += 10;
-    } else if (agent.getConfig().metadata?.tier === 2) {
+    } else if (agent.getConfig().tier === 2) {
       score += 5;
     }
 
-    // Status check - removed as status is not in the config interface
+    // Domain expertise alignment
+    const agentDomain = agent.getConfig().domain;
+    if (agentDomain && intent.domains.includes(agentDomain)) {
+      score += 15;
+    }
+
+    return Math.min(100, Math.max(0, score));
+  }
+
+  private calculateIntentScore(agent: DigitalHealthAgent, intent: IntentResult, query: string): number {
+    let score = 0;
+
+    // Capability alignment
+    const capabilities = agent.getCapabilities();
+    const capabilityBonus = capabilities.filter(cap => 
+      query.toLowerCase().includes(cap.toLowerCase())
+    ).length * 5;
+    score += capabilityBonus;
+
+    // Tier priority
+    if (agent.getConfig().tier === 1) {
+      score += 10;
+    } else if (agent.getConfig().tier === 2) {
+      score += 5;
+    }
 
     // Domain expertise alignment
-
+    const agentDomain = agent.getConfig().domain;
     if (agentDomain && intent.domains.includes(agentDomain)) {
       score += 15;
     }

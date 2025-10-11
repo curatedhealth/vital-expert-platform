@@ -57,7 +57,6 @@ export class AgentOrchestrator {
    * Register an agent with the orchestrator
    */
   private async registerAgent(agent: DigitalHealthAgent): Promise<void> {
-    await agent.initialize();
     const config = agent.getConfig();
     this.agents.set(config.name, agent);
   }

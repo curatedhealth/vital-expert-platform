@@ -3,7 +3,7 @@
  * Integrates RAG knowledge bases with chat functionality
  */
 
-import { RagService } from '../rag/RagService';
+import { RagService } from '@/rag-service';
 
 
 // Local AgentResponse interface for this file

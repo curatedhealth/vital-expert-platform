@@ -150,7 +150,7 @@ export class DigitalHealthAgent {
       const response = await this.callAIModel(preparedPrompt);
 
       // Validate response
-      const validatedResponse = this.validateResponse(response, prompt);
+      const validatedResponse = this.validateResponse(response);
 
       const executionTime = Date.now() - startTime;
 

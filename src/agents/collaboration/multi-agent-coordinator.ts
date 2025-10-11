@@ -3,9 +3,22 @@
  * Manages coordination strategies and communication between agents
  */
 
-import type { AgentResponse } from '@/types/agent.types';
 import { agentConflictResolver } from '../core/conflict-resolver';
 import { DigitalHealthAgent } from '../core/DigitalHealthAgent';
+
+// Local response type for multi-agent coordination
+interface AgentResponse {
+  id: string;
+  agentId: string;
+  content: string;
+  confidence: number;
+  metadata: {
+    agentName: string;
+    capabilities: string[];
+    responseTime: number;
+  };
+  timestamp: Date;
+}
 
 export interface CoordinationStrategy {
   name: 'sequential' | 'parallel' | 'hierarchical' | 'consensus' | 'adaptive';

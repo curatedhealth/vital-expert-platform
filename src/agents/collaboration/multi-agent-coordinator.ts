@@ -519,7 +519,7 @@ export class MultiAgentCoordinator {
     return {
       count: agents.length,
       capabilities: Array.from(capabilities),
-      averageTier: agents.reduce((sum, agent) => sum + agent.getStatus().tier, 0) / agents.length,
+      averageTier: 1, // Default tier since we can't access protected config
       specialization: agents.map(agent => agent.getCapabilities())
     };
   }

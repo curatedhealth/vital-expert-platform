@@ -202,7 +202,7 @@ export class ComplianceAwareOrchestrator extends AgentOrchestrator {
   /**
    * Check if user has recent compliance violations
    */
-  hasUserViolations(userId: string, days: const number = ): boolean {
+  hasUserViolations(userId: string, days: number = 30): boolean {
     return this.complianceMiddleware.hasRecentViolations(userId, days);
   }
 

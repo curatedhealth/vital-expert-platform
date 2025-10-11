@@ -169,10 +169,10 @@ export class ComplianceAwareOrchestrator extends AgentOrchestrator {
    * Get compliance dashboard data
    */
   getComplianceDashboard(timeRange: { start: string; end: string }) {
-    const complianceReport = his.complianceMiddleware.generateComplianceReport(timeRange);
-    const agentStatuses = his.getAgentStatus();
+    const complianceReport = this.complianceMiddleware.generateComplianceReport(timeRange);
+    const agentStatuses = this.getAgentStatus();
 
-    const agentComplianceStatus = gentStatuses.map(agent => ({
+    const agentComplianceStatus = agentStatuses.map(agent => ({
       ...agent,
       compliance: this.complianceMiddleware.getAgentComplianceStatus(agent.name)
     }));

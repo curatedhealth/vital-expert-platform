@@ -3,7 +3,7 @@
  * Integrates RAG knowledge bases with chat functionality
  */
 
-import { RagService } from '@/rag-service';
+import { ragService } from '@/rag-service';
 
 
 // Local AgentResponse interface for this file
@@ -61,7 +61,7 @@ export class ChatRagIntegration {
    */
   static async initializeChatContext(agentName: string, conversationId: string): Promise<AgentChatContext | null> {
     try {
-      // const _ragContext = await RagService.getAgentRagContext(agentName);
+      // const _ragContext = await ragService.getAgentRagContext(agentName);
 
       if (ragContext.assigned_rags.length === 0) {
         // return null;

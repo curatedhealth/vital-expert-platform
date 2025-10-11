@@ -55,8 +55,9 @@ interface ChatContainerProps {
 }
 
 // Clear chat handler helper
-
+const clearChatHandler = () => {
   // Clear chat implementation
+  console.log('Clearing chat');
 };
 
 export const ChatContainer: React.FC<ChatContainerProps> = ({
@@ -103,9 +104,10 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({
   });
 
   // Refs
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Auto-scroll to bottom
-
+  const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, []);
 
@@ -115,7 +117,7 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({
 
   // Load agent-specific prompt starters when agent is selected
   useEffect(() => {
-
+    const loadAgentPromptStarters = async () => {
       if (!selectedAgent?.name) {
         setAgentPromptStarters([]);
         return;
@@ -123,9 +125,11 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({
 
       try {
         const { DatabaseLibraryLoader } = await import('@/shared/services/utils/database-library-loader');
+        const loader = new DatabaseLibraryLoader();
+        const starters = await loader.getPromptStartersByAgent(selectedAgent.name);
 
         // Convert database format to display format
-
+        const formattedStarters = starters.map(starter => ({
           id: starter.id,
           text: starter.prompt_starter,
           prompt_starter: starter.prompt_starter,
@@ -137,7 +141,7 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({
         }));
 
         setAgentPromptStarters(formattedStarters);
-        // } catch (error) {
+      } catch (error) {
         // console.warn('⚠️ Failed to load agent prompt starters:', error);
         setAgentPromptStarters([]);
       }
@@ -147,11 +151,12 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({
   }, [selectedAgent]);
 
   // Start new conversation in workspace
-
+  const startNewConversation = useCallback(() => {
     if (!currentWorkspace) return;
 
     // Create workspace conversation
-
+    const newConversation: Conversation = {
+      id: `conv_${Date.now()}`,
       title: `New ${currentWorkspace.type} conversation`,
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -235,7 +240,7 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({
   }, [activeConversationId, handleStartNewConversation]);
 
   // Handle message submission with real ComplianceAwareOrchestrator integration
-
+  const handleSubmit = useCallback(async () => {
     if (!inputValue.trim() || isLoading) return;
 
     setInputValue('');

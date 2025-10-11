@@ -84,7 +84,7 @@ export const __useChatStore = create<ChatState>()(
       },
 
       selectChat: (chatId: string) => {
-
+        const chat = get().chats.find(c => c.id === chatId);
         if (chat) {
           set({
             currentChat: chat,
@@ -158,33 +158,40 @@ export const __useChatStore = create<ChatState>()(
           }));
 
           try {
-            while (true) {
-              const { done, value } = await reader.read();
+            let done = false;
+            while (!done) {
+              const result = await reader.read();
+              done = result.done;
+              const value = result.value;
+              
+              if (value) {
+                const chunk = new TextDecoder().decode(value);
+                const lines = chunk.split('\n');
 
-              if (done) break;
+                for (const line of lines) {
+                  if (line.startsWith('data: ')) {
+                    try {
+                      const data = JSON.parse(line.slice(6));
 
-              for (const line of lines) {
-                if (line.startsWith('data: ')) {
-                  try {
+                      if (data.type === 'content') {
+                        fullContent = data.fullContent;
 
-                    if (data.type === 'content') {
-                      fullContent = data.fullContent;
-
-                      // Update message content in real-time
-                      set(state => ({
-                        messages: state.messages.map(msg =>
-                          msg.id === assistantMessage.id
-                            ? { ...msg, content: fullContent }
-                            : msg
-                        )
-                      }));
-                    } else if (data.type === 'metadata') {
-                      finalMetadata = data.metadata;
-                    } else if (data.type === 'error') {
-                      throw new Error(data.error);
+                        // Update message content in real-time
+                        set(state => ({
+                          messages: state.messages.map(msg =>
+                            msg.id === assistantMessage.id
+                              ? { ...msg, content: fullContent }
+                              : msg
+                          )
+                        }));
+                      } else if (data.type === 'metadata') {
+                        finalMetadata = data.metadata;
+                      } else if (data.type === 'error') {
+                        throw new Error(data.error);
+                      }
+                    } catch (parseError) {
+                      // console.warn('Failed to parse SSE data:', parseError);
                     }
-                  } catch (parseError) {
-                    // console.warn('Failed to parse SSE data:', parseError);
                   }
                 }
               }

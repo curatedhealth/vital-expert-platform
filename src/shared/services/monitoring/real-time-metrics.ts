@@ -159,47 +159,56 @@ export class RealTimeMetrics {
 
   // Metrics calculation
   private calculateCurrentMetrics(): SystemMetrics {
+    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
 
     // Filter recent events (last hour)
-
+    const recentEvents = this.events.filter(event =>
       new Date(event.timestamp) > oneHourAgo
     );
 
     // Response time calculation
-
+    const responseTimes = recentEvents
       .map(e => e.data.responseTime)
       .filter(Boolean) as number[];
 
+    const averageResponseTime = responseTimes.length > 0
       ? responseTimes.reduce((sum, time) => sum + time, 0) / responseTimes.length
       : 0;
 
     // Confidence calculation
-
+    const confidences = recentEvents
       .map(e => e.data.confidence)
       .filter(Boolean) as number[];
 
+    const averageConfidence = confidences.length > 0
       ? confidences.reduce((sum, conf) => sum + conf, 0) / confidences.length
       : 0;
 
     // Success rate
-
+    const responseEvents = recentEvents.filter(e => e.type === 'response');
+    const successfulResponses = responseEvents.filter(e => !e.data.error).length;
+    const successRate = responseEvents.length > 0
       ? (successfulResponses / responseEvents.length) * 100
       : 100;
 
     // Digital health usage
-
+    const queryEvents = recentEvents.filter(e => e.type === 'query');
+    const digitalHealthQueries = queryEvents.filter(e => e.data.domain === 'digital_health').length;
+    const digitalHealthUsage = queryEvents.length > 0
       ? (digitalHealthQueries / queryEvents.length) * 100
       : 0;
 
     // Multi-agent usage
-
+    const multiAgentQueries = recentEvents
       .filter(e => e.type === 'agent_selection' && (e.data.agentCount || 0) > 1).length;
 
+    const multiAgentUsage = queryEvents.length > 0
       ? (multiAgentQueries / queryEvents.length) * 100
       : 0;
 
     // Error rate
-
+    const errorEvents = recentEvents.filter(e => e.type === 'error');
+    const errorRate = recentEvents.length > 0
       ? (errorEvents.length / recentEvents.length) * 100
       : 0;
 
@@ -221,18 +230,18 @@ export class RealTimeMetrics {
 
     // System health assessment
     let systemHealth: 'healthy' | 'degraded' | 'critical' = 'healthy';
-    if (errorRate > 20 || avgResponseTime > 5000 || avgConfidence < 60) {
+    if (errorRate > 20 || averageResponseTime > 5000 || averageConfidence < 60) {
       systemHealth = 'critical';
-    } else if (errorRate > 10 || avgResponseTime > 3000 || avgConfidence < 75) {
+    } else if (errorRate > 10 || averageResponseTime > 3000 || averageConfidence < 75) {
       systemHealth = 'degraded';
     }
 
     return {
-      timestamp: now.toISOString(),
-      activeSessions,
+      timestamp: new Date().toISOString(),
+      activeSessions: this.activeSessions.size,
       totalQueries: queryEvents.length,
-      avgResponseTime: Math.round(avgResponseTime),
-      avgConfidence: Math.round(avgConfidence),
+      avgResponseTime: Math.round(averageResponseTime),
+      avgConfidence: Math.round(averageConfidence),
       successRate: Math.round(successRate),
       digitalHealthUsage: Math.round(digitalHealthUsage),
       multiAgentUsage: Math.round(multiAgentUsage),
@@ -324,8 +333,7 @@ export class RealTimeMetrics {
       }
 
       this.emit('metrics', metrics);
-
-      // }, this.METRICS_INTERVAL);
+    }, this.METRICS_INTERVAL);
   }
 
   private stopMetricsCollection(): void {
@@ -337,7 +345,10 @@ export class RealTimeMetrics {
 
   // Utility methods
   private assessQueryComplexity(query: string): string {
-
+    const length = query.length;
+    const wordCount = query.split(/\s+/).length;
+    const domains = ['regulatory', 'clinical', 'digital_health', 'compliance'];
+    const hasMultipleDomains = domains.filter(domain =>
       query.toLowerCase().includes(domain)
     ).length;
 
@@ -377,10 +388,10 @@ export class RealTimeMetrics {
   }
 
   resolveAlert(alertId: string): void {
-
+    const alert = this.alerts.get(alertId);
     if (alert) {
       alert.resolved = true;
-      // }
+    }
   }
 
   // Health check
@@ -414,11 +425,13 @@ export class RealTimeMetrics {
   }
 
   private exportMetricsAsCSV(): string {
-
+    const metrics = this.getCurrentMetrics();
+    const headers = [
       'timestamp', 'activeSessions', 'totalQueries', 'avgResponseTime',
       'avgConfidence', 'successRate', 'errorRate', 'systemHealth'
     ];
 
+    const row = [
       metrics.timestamp,
       metrics.activeSessions,
       metrics.totalQueries,
@@ -427,14 +440,14 @@ export class RealTimeMetrics {
       metrics.successRate,
       metrics.errorRate,
       metrics.systemHealth
-    ]);
+    ];
 
-    return [headers, ...rows].map(row => row.join(',')).join('\n');
+    return [headers, row].map(row => row.join(',')).join('\n');
   }
 
   // Cleanup
   destroy(): void {
     this.stopMetricsCollection();
     this.listeners.clear();
-    // }
+  }
 }

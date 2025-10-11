@@ -783,15 +783,12 @@ export class CICDPipeline {
       'npm run deploy:healthcare-safe': 180000, // 3 minutes
     };
 
-    // Find matching base time or use default
-    // eslint-disable-next-line security/detect-object-injection
-
-    // eslint-disable-next-line security/detect-object-injection
-
+    const baseTime = baseTimes[step.name] || 30000;
+    
     // Add some randomness (±20%)
-
-    // eslint-disable-next-line security/detect-object-injection
-    return Math.round(baseTime * (1 + variation));
+    const randomFactor = 1 + (Math.random() - 0.5) * 0.4; // ±20%
+    
+    return Math.round(baseTime * randomFactor);
   }
 
   private async simulateStepExecution(
@@ -806,13 +803,17 @@ export class CICDPipeline {
       logs.push('📦 Installing dependencies...');
       logs.push('🔨 Compiling TypeScript...');
       logs.push('📄 Generating build artifacts...');
+      
+      const success = Math.random() > 0.1; // 90% success rate
       if (success) {
         logs.push('✅ Build completed successfully');
       } else {
         logs.push('❌ Build failed: TypeScript compilation errors');
       }
     } else if (step.command.includes('test')) {
-
+      const testCount = Math.floor(Math.random() * 50) + 10;
+      const passedTests = Math.floor(testCount * (0.8 + Math.random() * 0.2));
+      
       logs.push(`🧪 Running ${testCount} tests...`);
       logs.push(`✅ ${passedTests}/${testCount} tests passed`);
 

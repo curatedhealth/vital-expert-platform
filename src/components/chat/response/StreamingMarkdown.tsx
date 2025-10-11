@@ -168,11 +168,12 @@ const CitationLink: React.FC<{ citationNumber: number; citations?: Citation[] }>
   });
 };
 
+const processCitations = (text: string, citations: Citation[]): React.ReactNode => {
   if (!citations || citations.length === 0) return text;
 
   return text.split(citationPattern).map((part, index) => {
     if (index % 2 === 1) { // This is a citation number
-
+      const citationNumber = parseInt(part, 10);
       return (
         <CitationLink key={index} citationNumber={citationNumber} citations={citations} />
       );

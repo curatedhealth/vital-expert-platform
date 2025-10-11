@@ -22,6 +22,7 @@ interface RegulatoryTrackerProps {
   className?: string;
 }
 
+const pathwayColors = {
   '510k': 'bg-blue-100 text-blue-800 border-blue-200',
   'PMA': 'bg-purple-100 text-purple-800 border-purple-200',
   'IDE': 'bg-green-100 text-green-800 border-green-200',
@@ -31,6 +32,7 @@ interface RegulatoryTrackerProps {
   'ANDA': 'bg-gray-100 text-gray-800 border-gray-200'
 };
 
+const statusColors = {
   draft: 'bg-gray-100 text-gray-800',
   submitted: 'bg-blue-100 text-blue-800',
   under_review: 'bg-yellow-100 text-yellow-800',
@@ -39,11 +41,13 @@ interface RegulatoryTrackerProps {
   denied: 'bg-red-100 text-red-800'
 };
 
+const statusIcons = {
   completed: CheckCircle,
   pending: Clock,
   overdue: AlertTriangle
 };
 
+const statusStyles = {
   completed: 'text-green-600',
   pending: 'text-blue-600',
   overdue: 'text-red-600'

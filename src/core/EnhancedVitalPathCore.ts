@@ -510,9 +510,8 @@ export class EnhancedVitalPathCore extends EventEmitter {
   }
 
   async getSystemStatus(): Promise<SystemStatus> {
-
     // Get component health
-
+    const componentStatuses = {
       orchestrator: await this.getOrchestratorStatus(),
       ragSystem: await this.getRAGSystemStatus(),
       consensus: await this.getConsensusStatus(),
@@ -522,14 +521,15 @@ export class EnhancedVitalPathCore extends EventEmitter {
     };
 
     // Calculate overall status
-
+    const statusValues = Object.values(componentStatuses);
+    const overallStatus = statusValues.includes('unhealthy')
       ? 'unhealthy'
-      : componentStatuses.includes('degraded')
+      : statusValues.includes('degraded')
         ? 'degraded'
         : 'healthy';
 
     // Performance metrics
-
+    const performanceMetrics = {
       queriesPerSecond: this.performanceMetrics.totalQueries / uptime,
       averageResponseTime: this.performanceMetrics.averageResponseTime,
       successRate: this.performanceMetrics.totalQueries > 0
@@ -541,7 +541,8 @@ export class EnhancedVitalPathCore extends EventEmitter {
     };
 
     // Resource metrics
-
+    const memUsage = process.memoryUsage();
+    const resourceMetrics = {
       cpuUsage: process.cpuUsage().user / 1000000, // Convert to seconds
       memoryUsage: (memUsage.heapUsed / memUsage.heapTotal) * 100,
       activeConnections: this.activeQueries.size,

@@ -99,7 +99,7 @@ const lifecycleStages: Record<string, LifecycleStage> = {
 };
 
 // Priority levels
-
+const priorityLevels = {
   'critical_immediate': { label: 'Critical (Immediate)', color: 'bg-red-100 text-red-800', priority: 1 },
   'near_term_90_days': { label: 'Near-term (90 days)', color: 'bg-orange-100 text-orange-800', priority: 2 },
   'strategic_180_days': { label: 'Strategic (180 days)', color: 'bg-yellow-100 text-yellow-800', priority: 3 },
@@ -107,7 +107,7 @@ const lifecycleStages: Record<string, LifecycleStage> = {
 };
 
 // Maturity levels
-
+const maturityLevels = {
   'level_1_initial': { label: 'Level 1: Initial', progress: 20 },
   'level_2_developing': { label: 'Level 2: Developing', progress: 40 },
   'level_3_advanced': { label: 'Level 3: Advanced', progress: 60 },

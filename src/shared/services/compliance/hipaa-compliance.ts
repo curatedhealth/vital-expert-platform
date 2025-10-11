@@ -252,7 +252,7 @@ export class HIPAAComplianceManager {
    * Get PHI type based on pattern index
    */
   private getPhiType(patternIndex: number): string {
-
+    const phiTypeMap = [
       "Social Security Number",
       "Social Security Number",
       "Phone Number",
@@ -321,7 +321,7 @@ export class HIPAAComplianceManager {
    * Validate if purpose is legitimate
    */
   private isValidPurpose(purpose: string): boolean {
-
+    const validPurposes = [
       'treatment',
       'payment',
       'healthcare operations',
@@ -449,10 +449,12 @@ export class HIPAAComplianceManager {
     phiExposureEvents: number;
     recommendations: string[];
   } {
-
+    const filteredRecords = this.accessRecords.filter(record => {
+      const recordDate = new Date(record.timestamp);
       return recordDate >= startDate && recordDate <= endDate;
     });
 
+    const compliantAccesses = filteredRecords.filter(r =>
       r.authorization_basis === "HIPAA Compliant Access"
     ).length;
 

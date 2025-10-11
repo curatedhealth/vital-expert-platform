@@ -209,7 +209,7 @@ export class ResponseSynthesizer {
     const themes: string[] = [];
 
     // Common healthcare themes
-
+    const themeKeywords = {
       'regulatory': ['regulatory', 'fda', 'compliance', 'approval', 'submission'],
       'clinical': ['clinical', 'trial', 'study', 'patient', 'safety'],
       'technical': ['technical', 'implementation', 'system', 'technology'],
@@ -231,7 +231,7 @@ export class ResponseSynthesizer {
     const recommendations: string[] = [];
 
     // Simple pattern matching for common recommendation structures
-
+    const patterns = [
       /recommend(?:ed|ing|s)?\s+([^.!?]*)/gi,
       /suggest(?:ed|ing|s)?\s+([^.!?]*)/gi,
       /should\s+([^.!?]*)/gi,
@@ -241,8 +241,8 @@ export class ResponseSynthesizer {
     patterns.forEach(pattern => {
       let match;
       while ((match = pattern.exec(responseText)) !== null) {
-
-        if (rec.length > 10 && rec.length < 200) { // Reasonable length
+        const rec = match[1]?.trim();
+        if (rec && rec.length > 10 && rec.length < 200) { // Reasonable length
           recommendations.push(rec);
         }
       }

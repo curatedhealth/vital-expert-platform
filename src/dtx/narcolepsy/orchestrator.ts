@@ -349,14 +349,15 @@ export class NarcolepsyDTxOrchestrator extends ComplianceAwareOrchestrator {
     data: NarcolepsyPatientData
   ): number {
     // Validate clinical hypothesis based on evidence
+    let hypothesisScore = 0;
 
     for (const rec of recommendations) {
       if (rec.evidenceLevel === 'A' || rec.evidenceLevel === 'B') {
-        validHypotheses++;
+        hypothesisScore++;
       }
     }
 
-    return validHypotheses / recommendations.length;
+    return hypothesisScore / recommendations.length;
   }
 
   private validateAudience(data: NarcolepsyPatientData): number {
@@ -372,7 +373,7 @@ export class NarcolepsyDTxOrchestrator extends ComplianceAwareOrchestrator {
 
   private validateRequirements(recommendations: NarcolepsyRecommendation[]): number {
     // Validate regulatory and clinical requirements
-
+    const requiredMonitoring = recommendations.filter(rec =>
       rec.monitoring && rec.monitoring.length > 0
     );
 
@@ -381,13 +382,13 @@ export class NarcolepsyDTxOrchestrator extends ComplianceAwareOrchestrator {
 
   private validateMetrics(recommendations: NarcolepsyRecommendation[]): number {
     // Validate measurable outcomes
-
+    const measurableOutcomes = recommendations.filter(rec =>
       rec.monitoring && rec.monitoring.some(m =>
         m.includes('ess') || m.includes('cataplexy') || m.includes('adherence')
       )
     );
 
-    return measurableRecs.length / recommendations.length;
+    return measurableOutcomes.length / recommendations.length;
   }
 
   private validateActionability(recommendations: NarcolepsyRecommendation[]): number {

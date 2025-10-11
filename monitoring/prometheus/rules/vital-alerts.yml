@@ -1,0 +1,162 @@
+groups:
+  - name: vital-ai-critical
+    rules:
+      # High Error Rate
+      - alert: HighErrorRate
+        expr: rate(http_requests_total{status=~"5.."}[5m]) > 0.1
+        for: 2m
+        labels:
+          severity: critical
+          service: vital-ai
+        annotations:
+          summary: "High error rate detected"
+          description: "Error rate is {{ $value }} errors per second for the last 5 minutes"
+
+      # High Response Time
+      - alert: HighResponseTime
+        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m])) > 2
+        for: 3m
+        labels:
+          severity: warning
+          service: vital-ai
+        annotations:
+          summary: "High response time detected"
+          description: "95th percentile response time is {{ $value }}s"
+
+      # Memory Usage High
+      - alert: HighMemoryUsage
+        expr: (node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes > 0.9
+        for: 5m
+        labels:
+          severity: warning
+          service: system
+        annotations:
+          summary: "High memory usage"
+          description: "Memory usage is {{ $value | humanizePercentage }}"
+
+      # CPU Usage High
+      - alert: HighCPUUsage
+        expr: 100 - (avg by(instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
+        for: 5m
+        labels:
+          severity: warning
+          service: system
+        annotations:
+          summary: "High CPU usage"
+          description: "CPU usage is {{ $value }}%"
+
+  - name: vital-ai-healthcare
+    rules:
+      # PHI Access Violation
+      - alert: PHIAccessViolation
+        expr: increase(phi_access_violations_total[5m]) > 0
+        for: 0m
+        labels:
+          severity: critical
+          service: compliance
+        annotations:
+          summary: "PHI access violation detected"
+          description: "{{ $value }} PHI access violations in the last 5 minutes"
+
+      # HIPAA Compliance Breach
+      - alert: HIPAAComplianceBreach
+        expr: increase(hipaa_compliance_violations_total[5m]) > 0
+        for: 0m
+        labels:
+          severity: critical
+          service: compliance
+        annotations:
+          summary: "HIPAA compliance breach detected"
+          description: "{{ $value }} HIPAA violations in the last 5 minutes"
+
+      # Agent Response Time Degradation
+      - alert: AgentResponseTimeDegradation
+        expr: histogram_quantile(0.95, rate(agent_response_duration_seconds_bucket[5m])) > 5
+        for: 2m
+        labels:
+          severity: warning
+          service: agents
+        annotations:
+          summary: "Agent response time degraded"
+          description: "95th percentile agent response time is {{ $value }}s"
+
+      # Low Agent Confidence
+      - alert: LowAgentConfidence
+        expr: avg(agent_confidence_score) < 0.7
+        for: 5m
+        labels:
+          severity: warning
+          service: agents
+        annotations:
+          summary: "Low agent confidence detected"
+          description: "Average agent confidence is {{ $value }}"
+
+  - name: vital-ai-business
+    rules:
+      # Low User Engagement
+      - alert: LowUserEngagement
+        expr: rate(user_sessions_total[1h]) < 10
+        for: 10m
+        labels:
+          severity: warning
+          service: business
+        annotations:
+          summary: "Low user engagement"
+          description: "User session rate is {{ $value }} per hour"
+
+      # High API Cost
+      - alert: HighAPICost
+        expr: rate(api_cost_total[1h]) > 100
+        for: 5m
+        labels:
+          severity: warning
+          service: business
+        annotations:
+          summary: "High API costs detected"
+          description: "API cost rate is ${{ $value }} per hour"
+
+      # RAG Performance Degradation
+      - alert: RAGPerformanceDegradation
+        expr: histogram_quantile(0.95, rate(rag_query_duration_seconds_bucket[5m])) > 3
+        for: 3m
+        labels:
+          severity: warning
+          service: rag
+        annotations:
+          summary: "RAG performance degraded"
+          description: "95th percentile RAG query time is {{ $value }}s"
+
+  - name: vital-ai-security
+    rules:
+      # Failed Authentication Attempts
+      - alert: HighFailedAuthAttempts
+        expr: rate(failed_authentication_attempts_total[5m]) > 10
+        for: 2m
+        labels:
+          severity: warning
+          service: security
+        annotations:
+          summary: "High failed authentication attempts"
+          description: "{{ $value }} failed auth attempts per second"
+
+      # Suspicious Activity
+      - alert: SuspiciousActivity
+        expr: rate(suspicious_activity_total[5m]) > 5
+        for: 1m
+        labels:
+          severity: critical
+          service: security
+        annotations:
+          summary: "Suspicious activity detected"
+          description: "{{ $value }} suspicious activities per second"
+
+      # Data Breach Attempt
+      - alert: DataBreachAttempt
+        expr: increase(data_breach_attempts_total[5m]) > 0
+        for: 0m
+        labels:
+          severity: critical
+          service: security
+        annotations:
+          summary: "Data breach attempt detected"
+          description: "{{ $value }} data breach attempts in the last 5 minutes"

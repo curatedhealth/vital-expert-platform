@@ -41,6 +41,7 @@ interface SourcesProps {
   maxInitialShow?: number;
 }
 
+const sourceTypes = {
   'fda-guidance': {
     icon: Shield,
     label: 'FDA Guidance',

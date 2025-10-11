@@ -153,24 +153,28 @@ export class ComprehensiveMonitoringSystem extends EventEmitter {
   private createSimplifiedTracer(): SimplifiedTracer {
     return {
       startSpan: (name: string, options?: unknown): SimplifiedSpan => {
-
+        const spanId = `span_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        
         return {
           setStatus: (status) => {
             // Log status for debugging
             if (this.config.logLevel === 'debug') {
-              // }
+              // console.log(`Span ${name} status:`, status);
+            }
           },
           recordException: (error) => {
             // console.error(`Span ${name} exception:`, error);
           },
           setAttributes: (attributes) => {
             if (this.config.logLevel === 'debug') {
-              // }
+              // console.log(`Span ${name} attributes:`, attributes);
+            }
           },
           end: () => {
-
+            // console.log(`Span ${name} ended`);
             if (this.config.logLevel === 'debug') {
-              // }
+              // console.log(`Span ${name} ended`);
+            }
           }
         };
       }

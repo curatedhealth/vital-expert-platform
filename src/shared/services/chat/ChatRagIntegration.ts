@@ -88,12 +88,12 @@ export class ChatRagIntegration {
   }> {
     try {
       // const ragSources: Array<{
-        rag_id: string;
-        rag_name: string;
-        content: string;
-        relevance_score: number;
-        document_source: string;
-      }> = [];
+      //   rag_id: string;
+      //   rag_name: string;
+      //   content: string;
+      //   relevance_score: number;
+      //   document_source: string;
+      // }> = [];
 
       try {
         // Determine which RAG databases to query
@@ -150,7 +150,7 @@ export class ChatRagIntegration {
         context
       );
 
-      // return {
+      return {
         enhanced_message,
         system_context,
         rag_sources: ragSources
@@ -272,7 +272,7 @@ export class ChatRagIntegration {
     try {
 
       // Extract domains from RAG descriptions (would be actual data in real implementation)
-
+      const domains = [
         'regulatory',
         'clinical_trials',
         'pharmacovigilance',

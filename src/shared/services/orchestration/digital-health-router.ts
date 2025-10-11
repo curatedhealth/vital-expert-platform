@@ -216,12 +216,12 @@ export class DigitalHealthRouter {
   private async initializeAgents() {
     // This would be populated by the main orchestrator
     // For now, we'll simulate the initialization
-    // }
+  }
 
   // Method to register digital health agents
   registerAgent(agent: DigitalHealthAgent) {
     this.digitalHealthAgents.set(agent.getConfig().name, agent);
-    // .name}`);
+    // console.log(`Registered digital health agent: ${agent.getConfig().name}`);
   }
 
   // Method to get routing statistics
@@ -240,5 +240,5 @@ export class DigitalHealthRouter {
   // Method to update specialization mappings
   updateSpecializations(customMappings: Record<string, unknown>) {
     Object.assign(this.specializations, customMappings);
-    // }
+  }
 }

@@ -65,7 +65,7 @@ export class IntentClassifier {
     }
 
     // Determine primary domain and confidence
-
+    const sortedDomains = Array.from(domainScores.entries())
       .sort((a, b) => b[1] - a[1])
       .filter(([_, score]) => score > 0);
 
@@ -311,7 +311,7 @@ export class IntentClassifier {
     if (complexity === 'very-high') return true;
 
     // 3. Query contains coordination keywords
-
+    const coordinationKeywords = [
       'strategy', 'comprehensive', 'end-to-end', 'full', 'complete',
       'integrated', 'holistic', 'across', 'multiple', 'various'
     ];
@@ -321,7 +321,7 @@ export class IntentClassifier {
     }
 
     // 4. Cross-functional queries
-
+    const crossFunctionalPairs = [
       ['regulatory', 'clinical'],
       ['clinical', 'market_access'],
       ['regulatory', 'business'],
@@ -347,7 +347,7 @@ export class IntentClassifier {
     });
 
     // Return most frequent intent, or first one related to primary domain
-
+    const sortedIntents = Array.from(intentCounts.entries())
       .sort((a, b) => b[1] - a[1]);
 
     return sortedIntents[0]?.[0] || 'general_inquiry';

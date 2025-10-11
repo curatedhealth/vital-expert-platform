@@ -158,7 +158,7 @@ export class MetricsCollector extends EventEmitter {
   }
 
   private createMetricKey(name: string, labels: Record<string, string>): string {
-
+    const labelString = Object.entries(labels)
       .sort(([a], [b]) => a.localeCompare(b))
       .map(([k, v]) => `${k}="${v}"`)
       .join(',');

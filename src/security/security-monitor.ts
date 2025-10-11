@@ -217,6 +217,7 @@ export class SecurityMonitoringSystem {
   }
 
   private async createIncident(alert: SecurityAlert): Promise<IncidentResponse> {
+    const incidentId = `INC-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
     const incident: IncidentResponse = {
       incident_id: incidentId,
@@ -260,23 +261,28 @@ export class SecurityMonitoringSystem {
 
   private async initiateIncidentResponse(incident: unknown, alert: SecurityAlert): Promise<void> {
     // Implementation for incident response initiation
-    // }
+    console.log('Initiating incident response for alert:', alert.id);
+  }
 
   private async startHIPAABreachAssessment(alert: SecurityAlert): Promise<void> {
     // Implementation for HIPAA breach assessment
-    // }
+    console.log('Starting HIPAA breach assessment for alert:', alert.id);
+  }
 
   private async notifyComplianceTeam(alert: SecurityAlert): Promise<void> {
     // Implementation for compliance team notification
-    // }
+    console.log('Notifying compliance team for alert:', alert.id);
+  }
 
   private async documentHIPAAIncident(alert: SecurityAlert): Promise<void> {
     // Implementation for HIPAA incident documentation
-    // }
+    console.log('Documenting HIPAA incident for alert:', alert.id);
+  }
 
   private async implementHIPAAContainment(alert: SecurityAlert): Promise<void> {
     // Implementation for HIPAA containment measures
-    // }
+    console.log('Implementing HIPAA containment for alert:', alert.id);
+  }
 
   private async handlePatientSafetyIncident(alert: SecurityAlert): Promise<void> {
     // // Immediate notifications
@@ -293,18 +299,22 @@ export class SecurityMonitoringSystem {
   private async alertClinicalStaff(alert: SecurityAlert): Promise<void> {
     // Implementation for clinical staff alerting
     // }
+  }
 
   private async notifyPatientSafetyOfficer(alert: SecurityAlert): Promise<void> {
     // Implementation for patient safety officer notification
-    // }
+    console.log('Notifying patient safety officer for alert:', alert.id);
+  }
 
   private async activateEmergencyResponse(alert: SecurityAlert): Promise<void> {
     // Implementation for emergency response activation
-    // }
+    console.log('Activating emergency response for alert:', alert.id);
+  }
 
   private async implementPatientSafetyMeasures(alert: SecurityAlert): Promise<void> {
     // Implementation for patient safety measures
-    // }
+    console.log('Implementing patient safety measures for alert:', alert.id);
+  }
 
   private startSecurityMonitoring(): void {
     // Real-time log monitoring
@@ -323,6 +333,7 @@ export class SecurityMonitoringSystem {
     setInterval(() => this.cleanupExpiredAlerts(), 3600000); // Every hour
 
     // }
+  }
 
   private async monitorSecurityLogs(): Promise<void> {
     try {
@@ -537,7 +548,7 @@ export class SecurityMonitoringSystem {
   }
 
   private mapAlertSeverityToIncidentSeverity(severity: SecurityAlert['severity']): IncidentResponse['severity'] {
-
+    const mapping: Record<SecurityAlert['severity'], IncidentResponse['severity']> = {
       'info': 'low' as const,
       'warning': 'medium' as const,
       'critical': 'high' as const,

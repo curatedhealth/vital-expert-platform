@@ -106,9 +106,12 @@ declare global {
     recognition.start();
   }, []);
 
-    if (recognitionRef.current) {
-      recognitionRef.current.stop();
-    }
+  useEffect(() => {
+    return () => {
+      if (recognitionRef.current) {
+        recognitionRef.current.stop();
+      }
+    };
   }, []);
 
   return { isListening, transcript, startListening, stopListening };

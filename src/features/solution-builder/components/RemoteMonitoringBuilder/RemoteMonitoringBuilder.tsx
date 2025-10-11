@@ -232,9 +232,10 @@ const RemoteMonitoringBuilder: React.FC = () => {
     return JSON.stringify(config, null, 2);
   };
 
-      infrastructure: {
-        provider: 'aws',
-        services: {
+  const generateInfrastructureConfig = (): string => {
+    const infrastructure = {
+      provider: 'aws',
+      services: {
           iot_core: 'device_connectivity',
           lambda: 'data_processing',
           dynamodb: 'patient_data_storage',

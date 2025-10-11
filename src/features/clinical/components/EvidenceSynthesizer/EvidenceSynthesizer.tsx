@@ -23,6 +23,7 @@ interface EvidenceSynthesizerProps {
   className?: string;
 }
 
+const studyTypeColors = {
   rct: 'bg-green-100 text-green-800 border-green-200',
   cohort: 'bg-blue-100 text-blue-800 border-blue-200',
   case_control: 'bg-purple-100 text-purple-800 border-purple-200',
@@ -31,18 +32,21 @@ interface EvidenceSynthesizerProps {
   case_series: 'bg-gray-100 text-gray-800 border-gray-200'
 };
 
+const evidenceLevels = {
   A: 'bg-green-100 text-green-800',
   B: 'bg-blue-100 text-blue-800',
   C: 'bg-yellow-100 text-yellow-800',
   D: 'bg-red-100 text-red-800'
 };
 
+const evidenceLevelStyles = {
   high: 'text-green-600',
   moderate: 'text-blue-600',
   low: 'text-yellow-600',
   very_low: 'text-red-600'
 };
 
+const qualityBadgeStyles = {
   high: 'bg-green-100 text-green-800',
   moderate: 'bg-yellow-100 text-yellow-800',
   low: 'bg-red-100 text-red-800'

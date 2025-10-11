@@ -206,7 +206,7 @@ export class UsageTracker {
     userId?: string
   ): Promise<CostBreakdown> {
     try {
-
+      let query = this.supabaseClient
         .from('llm_usage_logs')
         .select(`
           *,
@@ -259,7 +259,7 @@ export class UsageTracker {
         throw error;
       }
 
-        (data as unknown).reduce((sum: number, d: unknown) => sum + (d.latency_ms || 0), 0) / (data as unknown).length : 0;
+        (data as unknown[]).reduce((sum: number, d: unknown) => sum + ((d as any).latency_ms || 0), 0) / (data as unknown[]).length : 0;
 
       return {
         activeProviders,

@@ -122,7 +122,10 @@ type ExportFormat = 'PDF' | 'DOCX' | 'FHIR' | 'HL7';
     'FDA requirements for [indication] approval',
     'Primary endpoints for [disease] studies',
     'Statistical plan for [trial type]'
-  ],
+  ]
+};
+
+const queryTemplates = {
   diagnostic: [
     'Differential diagnosis for [symptoms]',
     'Sensitivity/specificity of [test]',
@@ -139,6 +142,7 @@ type ExportFormat = 'PDF' | 'DOCX' | 'FHIR' | 'HL7';
   ]
 };
 
+const medicalTerms = [
   { term: 'myocardial infarction', synonyms: ['heart attack', 'MI', 'STEMI', 'NSTEMI'], type: 'condition' },
   { term: 'hypertension', synonyms: ['high blood pressure', 'HTN'], type: 'condition' },
   { term: 'diabetes mellitus', synonyms: ['diabetes', 'DM', 'T2DM', 'T1DM'], type: 'condition' },

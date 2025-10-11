@@ -22,6 +22,7 @@ interface SafetyMonitorProps {
   className?: string;
 }
 
+const severityColors = {
   mild: 'bg-green-100 text-green-800 border-green-200',
   moderate: 'bg-yellow-100 text-yellow-800 border-yellow-200',
   severe: 'bg-orange-100 text-orange-800 border-orange-200',
@@ -29,6 +30,7 @@ interface SafetyMonitorProps {
   fatal: 'bg-purple-100 text-purple-800 border-purple-200'
 };
 
+const causalityLevels = {
   unrelated: 'bg-gray-100 text-gray-800',
   unlikely: 'bg-blue-100 text-blue-800',
   possible: 'bg-yellow-100 text-yellow-800',

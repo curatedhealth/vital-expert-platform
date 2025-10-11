@@ -280,7 +280,8 @@ export const __useWorkspaceManager = ({
   }, [autoDetectWorkspace]);
 
   // Create new workspace
-
+  const createWorkspace = useCallback((workspaceData: Omit<Workspace, 'id' | 'createdAt' | 'updatedAt' | 'conversationIds'>) => {
+    const now = new Date();
     const newWorkspace: Workspace = {
       ...workspaceData,
       id: `workspace-${workspaceData.type}-${Date.now()}`,
@@ -303,11 +304,11 @@ export const __useWorkspaceManager = ({
   }, [workspaces]);
 
   // Create conversation in workspace
-
+  const createConversation = useCallback((
     workspaceId: string,
     conversation: Omit<WorkspaceConversation, 'id' | 'workspaceId' | 'workspaceType'>
   ): WorkspaceConversation | null => {
-
+    const workspace = workspaces.find(w => w.id === workspaceId);
     if (!workspace) return null;
 
     const newConversation: WorkspaceConversation = {
@@ -344,12 +345,12 @@ export const __useWorkspaceManager = ({
   }, [workspaces]);
 
   // Get conversations for workspace
-
+  const getWorkspaceConversations = useCallback((workspaceId: string) => {
     return workspaceConversations.get(workspaceId) || [];
   }, [workspaceConversations]);
 
   // Update workspace metadata
-
+  const updateWorkspaceMetadata = useCallback((workspaceId: string, updates: Partial<WorkspaceMetadata>) => {
     setWorkspaces(prev => prev.map(w =>
       w.id === workspaceId
         ? {
@@ -362,12 +363,13 @@ export const __useWorkspaceManager = ({
   }, []);
 
   // Get contextual agents for current workspace
-
+  const getContextualAgents = useCallback(() => {
     return currentWorkspace?.defaultAgents || ['clinical-trial'];
   }, [currentWorkspace]);
 
   // Get workspace-specific settings
-
+  const getWorkspaceSettings = useCallback((workspaceId?: string) => {
+    const workspace = workspaceId
       ? workspaces.find(w => w.id === workspaceId)
       : currentWorkspace;
     return workspace?.customSettings;
@@ -392,7 +394,13 @@ export const __useWorkspaceManager = ({
     // Utilities
     getWorkspaceById: (id: string) => workspaces.find(w => w.id === id),
     getWorkspaceByType: (type: WorkspaceType) => workspaces.find(w => w.type === type),
-    getDefaultWorkspace: () => workspaces.find(w => w.type === 'general') || workspaces[0]
+    getDefaultWorkspace: () => workspaces.find(w => w.type === 'general') || workspaces[0],
+    createWorkspace,
+    createConversation,
+    getWorkspaceConversations,
+    updateWorkspaceMetadata,
+    getContextualAgents,
+    getWorkspaceSettings
   };
 };
 

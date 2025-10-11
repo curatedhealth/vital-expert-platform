@@ -956,7 +956,7 @@ export class EnvironmentOrchestrator {
   }
 
   private async executeEmergencyRollback(plan: OrchestrationPlan): Promise<void> {
-    // const rollbackStage: OrchestrationStage = {
+    const rollbackStage: OrchestrationStage = {
       id: 'emergency-rollback',
       name: 'Emergency Rollback',
       type: 'cleanup',

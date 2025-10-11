@@ -37,15 +37,16 @@ import { cn } from '@/shared/services/utils';
 
 // import { useAuth } from '@/lib/supabase/auth-context';
 
+const navigationItems = [
   {
     title: 'Overview',
     href: '/dashboard',
-    icon: Home,
+    icon: Home
   },
   {
     title: 'Projects',
     href: '/dashboard/projects',
-    icon: FolderOpen,
+    icon: FolderOpen
   },
   {
     title: 'AI Queries',
@@ -64,13 +65,13 @@ import { cn } from '@/shared/services/utils';
     title: 'Vision',
     href: '/dashboard/vision',
     icon: Brain,
-    color: 'text-trust-blue',
+    color: 'text-trust-blue'
   },
   {
     title: 'Integrate',
     href: '/dashboard/integrate',
     icon: Target,
-    color: 'text-progress-teal',
+    color: 'text-progress-teal'
   },
   {
     title: 'Test',

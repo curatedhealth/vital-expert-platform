@@ -433,6 +433,7 @@ export class EnhancedRAGSystem extends EventEmitter {
     );
 
     // Cache results
+    const scores = rerankedCandidates.map(candidate => candidate.rerank_score);
 
     this.crossEncoderCache.set(cacheKey, scores as unknown);
 
@@ -563,22 +564,24 @@ export class EnhancedRAGSystem extends EventEmitter {
       );
 
       // 4. Generate embeddings for chunks
+      const chunkPromises = chunks.map(async (chunk, index) => ({
+        document_id: insertedDoc.id,
+        chunk_index: index,
+        content: chunk.content,
+        metadata: {
+          ...chunk.metadata,
+          quality_score: this.calculateChunkQuality(chunk.content)
+        },
+        embedding: await this.generateEmbedding(chunk.content)
+      }));
 
-        chunks.map(async (chunk, index) => ({
-          document_id: insertedDoc.id,
-          chunk_index: index,
-          content: chunk.content,
-          metadata: {
-            ...chunk.metadata,
-            quality_score: this.calculateChunkQuality(chunk.content)
-          },
-          embedding: await this.generateEmbedding(chunk.content)
-        }))
-      );
+      const chunkData = await Promise.all(chunkPromises);
 
       // 5. Insert chunks in batches
+      const batchSize = 100;
 
-      for (let _i = 0; i < chunksWithEmbeddings.length; i += batchSize) {
+      for (let _i = 0; i < chunkData.length; i += batchSize) {
+        const batch = chunkData.slice(_i, _i + batchSize);
 
         const { error: chunkError } = await this.supabase
           .from('document_chunks')
@@ -702,6 +705,7 @@ export class EnhancedRAGSystem extends EventEmitter {
     ];
 
     // Split by sections first, then by paragraphs if sections are too long
+    const sections = this.splitIntoSections(content, sectionPatterns);
 
     const chunks: Array<{ content: string; metadata: ChunkMetadata }> = [];
 
@@ -758,7 +762,7 @@ export class EnhancedRAGSystem extends EventEmitter {
     }
 
     try {
-
+      const response = await fetch('https://api.openai.com/v1/embeddings', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${this.config.openaiApiKey}`,

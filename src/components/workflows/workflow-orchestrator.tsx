@@ -301,7 +301,7 @@ const WorkflowCard: React.FC<{
   onEdit: (workflow: Workflow) => void;
   onDelete: (id: string) => void;
 }> = ({ workflow, onStart, onPause, onStop, onView, onEdit, onDelete }) => {
-
+  const statusConfig = {
     draft: { color: 'bg-gray-100 text-gray-800', icon: Edit },
     active: { color: 'bg-green-100 text-green-800', icon: Play },
     paused: { color: 'bg-yellow-100 text-yellow-800', icon: Pause },
@@ -310,6 +310,7 @@ const WorkflowCard: React.FC<{
     cancelled: { color: 'bg-gray-100 text-gray-800', icon: Square }
   };
 
+  const priorityConfig = {
     low: 'bg-gray-100 text-gray-800',
     medium: 'bg-blue-100 text-blue-800',
     high: 'bg-orange-100 text-orange-800',

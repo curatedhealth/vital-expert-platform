@@ -158,7 +158,7 @@ export class MasterOrchestrator extends AgentOrchestrator {
       // .display_name}`);
 
       // Execute agent with primary prompt and query
-
+      const result = await agent.execute(
         agent.getConfig().prompt_starters[0] || 'general-analysis',
         { query },
         {
@@ -204,8 +204,8 @@ export class MasterOrchestrator extends AgentOrchestrator {
     query: string,
     context: QueryContext
   ): Promise<OrchestrationResult> {
-    // // Execute agents in parallel
-
+    // Execute agents in parallel
+    const responses = await Promise.allSettled(
       agents.map(agent =>
         agent.executePrompt(
           agent.getConfig().prompt_starters[0] || 'general-analysis',

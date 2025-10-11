@@ -45,7 +45,8 @@ class WebSocketServiceImpl implements WebSocketService {
         };
         
         this.ws.onclose = () => {
-          // };
+          // console.log('WebSocket connection closed');
+        };
         
         this.ws.onerror = (error) => {
           // console.error('WebSocket error:', error);

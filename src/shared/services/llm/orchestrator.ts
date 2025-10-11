@@ -257,6 +257,7 @@ class LLMOrchestrator {
       content = question;
     }
 
+    const requestConfig = {
       model: config.model,
       max_tokens: options.maxTokens ?? config.maxTokens,
       temperature: options.temperature ?? config.temperature,
@@ -267,12 +268,15 @@ class LLMOrchestrator {
           content,
         },
       ],
-    });
+    };
 
-      ? message.content[0].text
+    const response = await this.anthropicClient.messages.create(requestConfig);
+    const responseContent = response.content[0].type === 'text'
+      ? response.content[0].text
       : '';
 
     // Anthropic doesn't provide token usage in the same format
+    const tokensUsed = response.usage?.input_tokens + response.usage?.output_tokens || 0;
 
     return { content: responseContent, tokensUsed };
   }
@@ -283,7 +287,7 @@ class LLMOrchestrator {
     context: string,
     models: ModelType[]
   ): Promise<ConsensusResponse> {
-
+    const responses = await Promise.all(
       models.map(model => this.query(question, context, model))
     );
 
@@ -299,13 +303,15 @@ class LLMOrchestrator {
 
   private analyzeConsensus(responses: LLMResponse[]): ConsensusAnalysis {
     // Find the response with highest confidence
-
+    const bestResponse = responses.reduce((best, current) =>
       current.confidence > best.confidence ? current : best
     );
 
     // Calculate agreement score based on content similarity
+    const agreementScore = this.calculateAgreementScore(responses);
 
     // Identify conflicting points
+    const conflicts = this.identifyConflicts(responses);
 
     return {
       bestResponse,
@@ -318,7 +324,7 @@ class LLMOrchestrator {
     if (responses.length < 2) return 1.0;
 
     // Simple agreement calculation based on shared keywords
-
+    const keywordSets = responses.map(response =>
       new Set(response.content.toLowerCase().match(/\b\w+\b/g) || [])
     );
 
@@ -346,7 +352,7 @@ class LLMOrchestrator {
     const conflicts: string[] = [];
 
     // Check for contradictory statements
-
+    const conflictIndicators = [
       ['recommend', 'not recommend'],
       ['required', 'not required'],
       ['compliant', 'non-compliant'],
@@ -354,10 +360,11 @@ class LLMOrchestrator {
     ];
 
     for (const [positive, negative] of conflictIndicators) {
-
+      const positiveCount = responses.filter(r =>
         r.content.toLowerCase().includes(positive)
       ).length;
 
+      const negativeCount = responses.filter(r =>
         r.content.toLowerCase().includes(negative)
       ).length;
 
@@ -373,7 +380,7 @@ class LLMOrchestrator {
     const citations: Citation[] = [...(existingCitations || [])];
 
     // Extract citations in various formats
-
+    const patterns = [
       /\[([^\]]+)\]/g, // [Source]
       /\(([^)]+),\s*(\d{4})\)/g, // (Author, Year)
       /\b(FDA|EMA|ISO|IEC)\s+(\d+(?:[.-]\d+)*)/g, // Regulatory standards
@@ -401,9 +408,8 @@ class LLMOrchestrator {
     citations: Citation[],
     modelType: ModelType
   ): number {
-
     // Base confidence by model type
-
+    const modelConfidence: Record<string, number> = {
       'regulatory-expert': 0.8,
       'clinical-specialist': 0.8,
       'market-analyst': 0.7,

@@ -1,0 +1,12 @@
+apiVersion: 1
+
+providers:
+  - name: 'VITAL AI Dashboards'
+    orgId: 1
+    folder: 'VITAL AI'
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 10
+    allowUiUpdates: true
+    options:
+      path: /var/lib/grafana/dashboards

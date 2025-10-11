@@ -53,6 +53,7 @@ export const Suggestion: React.FC<SuggestionProps> = ({
     }
   };
 
+  const getComplexityIndicator = (complexity: 'low' | 'medium' | 'high') => {
     switch (complexity) {
       case 'high':
         return <div className="w-1.5 h-1.5 bg-red-400 rounded-full" />;
@@ -115,6 +116,8 @@ export const Suggestions: React.FC<SuggestionsProps> = ({
   variant = 'horizontal',
   maxVisible = 6,
 }) => {
+  const [visibleCount, setVisibleCount] = React.useState(maxVisible);
+  const [showAll, setShowAll] = React.useState(false);
 
   if (variant === 'grid') {
     return (
@@ -206,6 +209,7 @@ export const __generateContextualSuggestions = (
     }
   ];
 
+  const regulatoryPrompts = [
     {
       suggestion: "What FDA guidance documents apply?",
       variant: 'expert' as const,

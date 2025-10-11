@@ -1,0 +1,86 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    cluster: 'vital-ai'
+    environment: 'production'
+
+rule_files:
+  - "rules/*.yml"
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+          - alertmanager:9093
+
+scrape_configs:
+  # Prometheus itself
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # Node Exporter - System metrics
+  - job_name: 'node-exporter'
+    static_configs:
+      - targets: ['node-exporter:9100']
+    scrape_interval: 5s
+    metrics_path: /metrics
+
+  # cAdvisor - Container metrics
+  - job_name: 'cadvisor'
+    static_configs:
+      - targets: ['cadvisor:8080']
+    scrape_interval: 5s
+    metrics_path: /metrics
+
+  # VITAL AI Application Metrics
+  - job_name: 'vital-ai-app'
+    static_configs:
+      - targets: ['host.docker.internal:3000']  # Next.js app
+    scrape_interval: 10s
+    metrics_path: /api/metrics
+    scrape_timeout: 10s
+
+  # Redis Metrics
+  - job_name: 'redis'
+    static_configs:
+      - targets: ['redis:6379']
+    scrape_interval: 10s
+
+  # Database Metrics (if using postgres_exporter)
+  - job_name: 'postgres'
+    static_configs:
+      - targets: ['postgres-exporter:9187']
+    scrape_interval: 10s
+
+  # Healthcare-specific metrics
+  - job_name: 'vital-healthcare-metrics'
+    static_configs:
+      - targets: ['host.docker.internal:3000']
+    scrape_interval: 15s
+    metrics_path: /api/healthcare-metrics
+    params:
+      include_phi_metrics: ['true']
+      include_compliance_metrics: ['true']
+
+  # Agent Performance Metrics
+  - job_name: 'vital-agent-metrics'
+    static_configs:
+      - targets: ['host.docker.internal:3000']
+    scrape_interval: 10s
+    metrics_path: /api/agent-metrics
+
+  # RAG System Metrics
+  - job_name: 'vital-rag-metrics'
+    static_configs:
+      - targets: ['host.docker.internal:3000']
+    scrape_interval: 15s
+    metrics_path: /api/rag-metrics
+
+  # Security and Compliance Metrics
+  - job_name: 'vital-security-metrics'
+    static_configs:
+      - targets: ['host.docker.internal:3000']
+    scrape_interval: 30s
+    metrics_path: /api/security-metrics

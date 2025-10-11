@@ -348,6 +348,7 @@ export class ProductionObservabilitySystem {
     await this.createDashboards();
 
     // }
+  }
 
   private startMetricsCollection(): void {
     setInterval(async () => {
@@ -536,16 +537,19 @@ export class ProductionObservabilitySystem {
   }
 
   private setupTracing(): void {
-    // // Healthcare-specific tracing configuration
-    // // // }
+    // Healthcare-specific tracing configuration
+    // console.log('Setting up healthcare tracing');
+  }
 
   private setupAlerting(): void {
-    // // Healthcare-specific alerts
+    // Healthcare-specific alerts
     if (this.config.alerting.healthcare.patientSafetyAlerts) {
-      // }
+      // console.log('Patient safety alerts enabled');
+    }
 
     if (this.config.alerting.healthcare.phiBreachAlerts) {
-      // }
+      // console.log('PHI breach alerts enabled');
+    }
 
     if (this.config.alerting.healthcare.complianceViolationAlerts) {
       // }
@@ -557,7 +561,7 @@ export class ProductionObservabilitySystem {
   }
 
   private async createDashboards(): Promise<void> {
-    // if (this.config.dashboards.healthcare) {
+    if (this.config.dashboards.healthcare) {
       await this.createHealthcareDashboard();
     }
 

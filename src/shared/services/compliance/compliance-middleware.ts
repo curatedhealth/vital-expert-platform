@@ -106,7 +106,7 @@ export class ComplianceMiddleware {
           // For critical compliance agents, redact PHI
           try {
             sanitizedInputs = JSON.parse(phiResult.redactedContent || '{ /* TODO: implement */ }');
-            // } catch {
+          } catch {
             sanitizedInputs = { ...inputs, _phi_redacted: true };
           }
         }
@@ -173,10 +173,6 @@ export class ComplianceMiddleware {
       recommendations: [...validationResult.recommendations, ...outputValidation.recommendations]
     };
 
-      preExecutionRequest,
-      finalValidationResult
-    );
-
     // Step 8: Generate alerts if needed
     if (finalValidationResult.riskScore >= this.config.alertThreshold) {
       await this.generateComplianceAlert(
@@ -211,7 +207,7 @@ export class ComplianceMiddleware {
     validationResult: ComplianceValidationResult,
     auditTrailId: string
   ): Promise<void> {
-
+    const alert = {
       timestamp: new Date().toISOString(),
       type: 'COMPLIANCE_RISK',
       severity: validationResult.riskScore >= 80 ? 'CRITICAL' : 'HIGH',
@@ -290,12 +286,12 @@ export class ComplianceMiddleware {
     averageRiskScore: number;
     lastViolation?: string;
   } {
-
+    const agentEntries = this.auditTrail.filter(entry =>
       entry.agent_name === agentName || entry.action.includes(agentName)
     );
 
     // Mock risk score calculation - in production, track actual risk scores
-
+    const lastViolation = entries
       .filter(entry => !entry.success)
       .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())[0];
 
@@ -312,7 +308,7 @@ export class ComplianceMiddleware {
    */
   updateConfig(newConfig: Partial<ComplianceMiddlewareConfig>): void {
     this.config = { ...this.config, ...newConfig };
-    // }
+  }
 
   /**
    * Get current compliance configuration

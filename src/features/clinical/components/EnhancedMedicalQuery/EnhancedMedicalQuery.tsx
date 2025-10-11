@@ -175,7 +175,7 @@ export const EnhancedMedicalQuery: React.FC = () => {
   const [highlightUncertainty, setHighlightUncertainty] = useState(true);
 
   // Medical terminology for autocomplete
-
+  const medicalTerms = [
     { term: 'myocardial infarction', synonyms: ['heart attack', 'MI', 'STEMI', 'NSTEMI'], type: 'condition' },
     { term: 'hypertension', synonyms: ['high blood pressure', 'HTN'], type: 'condition' },
     { term: 'diabetes mellitus', synonyms: ['diabetes', 'DM', 'T2DM', 'T1DM'], type: 'condition' },

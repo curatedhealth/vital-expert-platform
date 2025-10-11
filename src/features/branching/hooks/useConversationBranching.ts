@@ -44,10 +44,12 @@ export function useConversationBranching(
     activeBranchId: 'main'
   }));
 
+  const createBranch = useCallback((
     parentMessageId: string,
     initialMessage: string,
     title?: string
   ) => {
+    const branchId = `branch_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
     const newBranch: ConversationBranch = {
       id: branchId,
@@ -66,7 +68,7 @@ export function useConversationBranching(
     };
 
     setConversationTree(prev => {
-
+      const updated = {
         ...prev,
         branches: [...prev.branches, newBranch],
         activeBranchId: branchId
@@ -95,11 +97,12 @@ export function useConversationBranching(
 
     setConversationTree(prev => {
       // Update active status for all branches
-
+      const updatedBranches = prev.branches.map(branch => ({
         ...branch,
         isActive: branch.id === branchId
       }));
 
+      const updatedMainBranch = {
         ...prev.mainBranch,
         isActive: branchId === 'main'
       };

@@ -93,11 +93,12 @@ export const AgentRAGConfiguration: React.FC<AgentRAGConfigurationProps> = ({
     }
   };
 
+  const handleSaveConfiguration = async () => {
     if (!selectedAgent) return;
 
     setLoading(true);
     try {
-
+      const response = await fetch('/api/agents/configure', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

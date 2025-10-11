@@ -56,9 +56,9 @@ export class IconService {
    */
   async getIconsByCategory(category: Icon['category']): Promise<Icon[]> {
     try {
-
+      const response = await this.fetchIcons();
       // eslint-disable-next-line security/detect-object-injection
-      return response.icons || [];
+      return (response.icons || []).filter((icon: Icon) => icon.category === category);
     } catch (error) {
       // console.error('Error in getIconsByCategory:', error);
       return [];
@@ -70,9 +70,9 @@ export class IconService {
    */
   async getIconsByCategories(categories: Icon['category'][]): Promise<Icon[]> {
     try {
-
+      const response = await this.fetchIcons();
       // eslint-disable-next-line security/detect-object-injection
-      return response.icons || [];
+      return (response.icons || []).filter((icon: Icon) => categories.includes(icon.category));
     } catch (error) {
       // console.error('Error in getIconsByCategories:', error);
       return [];

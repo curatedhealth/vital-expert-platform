@@ -95,7 +95,7 @@ export function extractMetadataFromContent(
   }
 
   // Extract journal name (look for common patterns)
-
+  const journalPatterns = [
     /Published in:?\s*([^\n]{10,100})/i,
     /Journal:?\s*([^\n]{5,80})/i,
     /Source:?\s*([^\n]{5,80})/i,
@@ -126,7 +126,7 @@ export function extractMetadataFromContent(
   }
 
   // Extract authors (look for common patterns)
-
+  const authorPatterns = [
     /Authors?:?\s*([^\n]{10,200})/i,
     /By:?\s*([^\n]{10,200})/i,
     /Written by:?\s*([^\n]{10,200})/i,
@@ -167,7 +167,7 @@ export function extractMetadataFromContent(
 function classifyDocumentType(content: string, fileName: string): DocumentMetadata['documentType'] {
 
   // Research paper indicators
-
+  const researchTerms = [
     'abstract', 'introduction', 'methods', 'results', 'discussion', 'conclusion',
     'systematic review', 'meta-analysis', 'randomized controlled trial', 'rct',
     'peer review', 'citation', 'bibliography', 'references'
@@ -240,7 +240,7 @@ function extractTopics(content: string): string[] {
   const topics: string[] = [];
 
   // Health/medical topics
-
+  const healthTopics = [
     'digital health', 'telemedicine', 'telehealth', 'artificial intelligence',
     'machine learning', 'clinical decision support', 'electronic health records',
     'patient engagement', 'population health', 'precision medicine',
@@ -265,7 +265,8 @@ function extractTopics(content: string): string[] {
  */
 function extractMethodology(content: string): string[] {
   const methodology: string[] = [];
-
+  const lowerContent = content.toLowerCase();
+  const methodTerms = [
     'qualitative', 'quantitative', 'mixed methods', 'survey', 'interview',
     'focus group', 'ethnography', 'case study', 'cross-sectional',
     'longitudinal', 'prospective', 'retrospective', 'randomized',

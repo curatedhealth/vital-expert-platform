@@ -217,8 +217,10 @@ export class EnhancedConversationManager {
   }
 
   async getUserSessions(userId: string): Promise<ConversationSession[]> {
-
+    const activeSessions = Array.from(this.activeSessions.values())
       .filter(session => session.user_id === userId);
+
+    const historyForUser = await this.getSessionHistory(userId);
 
     return [...activeSessions, ...historyForUser]
       .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());
@@ -259,8 +261,7 @@ export class EnhancedConversationManager {
 
     // Remove from active sessions
     this.activeSessions.delete(sessionId);
-
-    // }
+  }
 
   // Private methods
   private async addUserMessage(sessionId: string, content: string): Promise<ConversationMessage> {
@@ -380,7 +381,7 @@ export class EnhancedConversationManager {
 
     // Update total agents used
     if (result.orchestration?.agents?.length) {
-
+      const newAgents = result.orchestration.agents.filter(
         (agent: string) => !session.context.activeAgents.includes(agent)
       );
       session.metrics.totalAgentsUsed += newAgents.length;
@@ -400,7 +401,7 @@ export class EnhancedConversationManager {
   private extractTopicsFromQuery(query: string): string[] {
     // Simple topic extraction - would be more sophisticated in production
     const topics: string[] = [];
-
+    const topicKeywords = {
       'FDA Regulation': ['fda', 'regulatory', 'approval', 'clearance', 'submission'],
       'Clinical Trials': ['clinical trial', 'study', 'protocol', 'endpoint'],
       'Digital Health': ['digital health', 'app', 'software', 'technology'],
@@ -419,12 +420,14 @@ export class EnhancedConversationManager {
   }
 
   private generateWelcomeMessage(mode: ConversationSession['mode'], options: ConversationOptions): string {
-
+    const modeDescriptions = {
       'single-agent': 'direct expert consultation with specialized AI advisors',
       'virtual-panel': 'collaborative consultation with multiple experts',
       'orchestrated-workflow': 'complex multi-step process execution',
       'jobs-framework': 'task-focused problem solving approach'
     };
+
+    let welcome = `Welcome to VITAL AI! You're now in ${modeDescriptions[mode]} mode. `;
 
     if (options.enableDigitalHealthPriority) {
       welcome += '🚀 Digital health priority routing is enabled for specialized technology guidance. ';

@@ -162,7 +162,7 @@ export function EnhancedChatInput({
   };
 
   // Agent-specific quick prompts
-
+  const getAgentPrompts = (): Record<string, string[]> => {
     const prompts: Record<string, string[]> = {
       'FDA Regulatory Strategist': [
         'What\'s the fastest FDA approval pathway for my device?',
@@ -193,7 +193,7 @@ export function EnhancedChatInput({
   };
 
   // User profile-specific quick prompts
-
+  const getRolePrompts = (): Record<string, string[]> => {
     const rolePrompts: Record<string, string[]> = {
       regulatory_affairs: [
         'What are the key regulatory risks I should assess?',
@@ -261,7 +261,7 @@ export function EnhancedChatInput({
   };
 
   // Intent Detection System
-
+  const detectIntent = (text: string) => {
     // Reset indicators for short text
     if (text.length < 20) {
       hideAllEnhancements();
@@ -273,6 +273,10 @@ export function EnhancedChatInput({
       clearTimeout(detectionTimeout);
     }
 
+    const timeout = setTimeout(() => {
+      const startTime = performance.now();
+      const analysis = analyzeTextComplexity(text);
+      const endTime = performance.now();
       setProcessingTime(endTime - startTime);
       updateInterface(analysis);
     }, 500);
@@ -284,7 +288,7 @@ export function EnhancedChatInput({
 
     try {
       // Call the backend classification API
-
+      const response = await fetch('/api/classify-intent', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -295,6 +299,8 @@ export function EnhancedChatInput({
       if (!response.ok) {
         throw new Error('Classification API failed');
       }
+
+      const apiResult = await response.json();
 
       return {
         complexity: apiResult.complexity || 0.5,
@@ -330,7 +336,7 @@ export function EnhancedChatInput({
   };
 
   // Agent Name Formatter
-
+  const formatAgentName = (agentId: string): string => {
     const nameMap: Record<string, string> = {
       'fda-regulatory-strategist': 'FDA Regulatory Strategist',
       'regulatory-affairs-expert': 'Regulatory Affairs Expert',
@@ -379,6 +385,7 @@ export function EnhancedChatInput({
       'GCP', 'GLP', 'GMP', 'Quality System', 'Risk Management'
     ];
 
+    const techTermCount = technicalTerms.filter(term =>
       lowerText.includes(term.toLowerCase())
     ).length;
 
@@ -388,9 +395,9 @@ export function EnhancedChatInput({
   };
 
   // Healthcare Domain Identification
-
-      regulatory: [
-        'FDA', 'EMA', 'regulatory', 'submission', 'approval', 'pathway',
+  const domainKeywords = {
+    regulatory: [
+      'FDA', 'EMA', 'regulatory', 'submission', 'approval', 'pathway',
         'IND', 'NDA', 'BLA', 'ANDA', '510(k)', 'PMA', 'De Novo',
         'guidance', 'guideline', 'regulation', 'compliance'
       ],

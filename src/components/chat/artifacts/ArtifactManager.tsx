@@ -97,6 +97,7 @@ const artifactTypes = {
   }
 } as const;
 
+const exportFormats = {
   'pdf': { label: 'PDF', icon: FileText },
   'docx': { label: 'Word', icon: FileText },
   'xlsx': { label: 'Excel', icon: FileSpreadsheet },

@@ -58,6 +58,7 @@ interface DragState {
   offset: { x: number; y: number };
 }
 
+const nodeTypes = [
   { type: 'start', label: 'Start', icon: Play, color: 'bg-green-100 border-green-500 text-green-800' },
   { type: 'end', label: 'End', icon: Square, color: 'bg-red-100 border-red-500 text-red-800' },
   { type: 'activity', label: 'Activity', icon: Circle, color: 'bg-blue-100 border-blue-500 text-blue-800' },
@@ -65,6 +66,7 @@ interface DragState {
   { type: 'event', label: 'Event', icon: AlertTriangle, color: 'bg-purple-100 border-purple-500 text-purple-800' }
 ];
 
+const workflowTypes = [
   'clinical_trial',
   'treatment_pathway',
   'diagnostic',
@@ -80,6 +82,33 @@ interface DragState {
   'Pulmonology',
   'Nephrology',
   'Rheumatology',
+  'Infectious Disease',
+  'Emergency Medicine'
+];
+
+const medicalSpecialties = [
+  'Cardiology',
+  'Neurology',
+  'Oncology',
+  'Pediatrics',
+  'Geriatrics',
+  'Psychiatry',
+  'Dermatology',
+  'Orthopedics',
+  'Radiology',
+  'Pathology',
+  'Anesthesiology',
+  'Emergency Medicine',
+  'Internal Medicine',
+  'Surgery',
+  'Obstetrics & Gynecology',
+  'Ophthalmology',
+  'Otolaryngology',
+  'Urology',
+  'Pulmonology',
+  'Endocrinology',
+  'Gastroenterology',
+  'Hematology',
   'Infectious Disease',
   'Emergency Medicine'
 ];

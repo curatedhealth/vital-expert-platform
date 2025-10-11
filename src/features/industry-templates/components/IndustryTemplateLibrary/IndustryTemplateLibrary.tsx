@@ -150,6 +150,7 @@ const IndustryTemplateLibrary: React.FC<Props> = ({ organizationId }) => {
     }
   ];
 
+  const categoryFilters = [
     { key: 'all', label: 'All Templates', count: templates.length },
     { key: 'chronic_disease', label: 'Chronic Disease', count: templates.filter(t => t.category === 'chronic_disease').length },
     { key: 'mental_health', label: 'Mental Health', count: templates.filter(t => t.category === 'mental_health').length },
@@ -159,6 +160,7 @@ const IndustryTemplateLibrary: React.FC<Props> = ({ organizationId }) => {
     { key: 'telemedicine', label: 'Telemedicine', count: 0 }
   ];
 
+  const viewModes = [
     { key: 'browse', label: 'Browse Templates', icon: '📚' },
     { key: 'my-templates', label: 'My Templates', icon: '🏠' },
     { key: 'custom', label: 'Custom Builder', icon: '🔧' },

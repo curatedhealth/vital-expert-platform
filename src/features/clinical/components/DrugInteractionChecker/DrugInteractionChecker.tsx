@@ -26,18 +26,20 @@ interface DrugInteractionCheckerProps {
   className?: string;
 }
 
+const severityStyles = {
   major: 'bg-red-100 text-red-800 border-red-200',
   moderate: 'bg-yellow-100 text-yellow-800 border-yellow-200',
   minor: 'bg-green-100 text-green-800 border-green-200'
 };
 
+const evidenceStyles = {
   established: 'bg-red-100 text-red-800',
   probable: 'bg-yellow-100 text-yellow-800',
   theoretical: 'bg-gray-100 text-gray-800'
 };
 
 // Mock drug database for autocomplete
-
+const drugDatabase = [
   { name: 'Warfarin', genericName: 'Warfarin', category: 'Anticoagulant' },
   { name: 'Aspirin', genericName: 'Acetylsalicylic acid', category: 'NSAID' },
   { name: 'Metformin', genericName: 'Metformin', category: 'Antidiabetic' },

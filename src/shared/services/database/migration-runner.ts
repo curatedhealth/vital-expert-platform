@@ -153,8 +153,6 @@ export class MigrationRunner {
 
           await this.recordMigration(migration, executionTime);
 
-          `);
-
           results.push({
             success: true,
             migration,

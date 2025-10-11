@@ -138,11 +138,14 @@ export function useRealtimeCollaboration(options: UseRealtimeCollaborationOption
   }, []);
 
   // Event handlers
-
+  const handleConnectionStatus = useCallback((data: { status: string }) => {
     setState(prev => ({ ...prev, connectionStatus: data.status }));
   }, []);
 
+  const handleUserJoined = useCallback((data: { user: User }) => {
     setState(prev => {
+      const updatedUsers = [...prev.activeUsers];
+      const existingIndex = updatedUsers.findIndex(user => user.id === data.user.id);
 
       // eslint-disable-next-line security/detect-object-injection
       if (existingIndex >= 0) {
@@ -179,10 +182,11 @@ export function useRealtimeCollaboration(options: UseRealtimeCollaborationOption
     }));
   }, []);
 
+  const handleUserTyping = useCallback((data: { userId: string }) => {
     if (data.userId === userId) return; // Ignore own typing events
 
     setState(prev => {
-
+      const updatedUsers = prev.activeUsers.map(user =>
         // eslint-disable-next-line security/detect-object-injection
         user.id === data.userId
           ? { ...user, status: 'typing' as const, lastSeen: new Date() }
@@ -190,7 +194,7 @@ export function useRealtimeCollaboration(options: UseRealtimeCollaborationOption
       );
 
       // eslint-disable-next-line security/detect-object-injection
-
+      const updatedTypingUsers = prev.typingUsers.includes(data.userId)
         ? prev.typingUsers
         : [...prev.typingUsers, data.userId];
 

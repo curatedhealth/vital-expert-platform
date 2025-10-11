@@ -369,6 +369,7 @@ const IntegrationMarketplace: React.FC<Props> = ({ organizationId }) => {
     setLoading(false);
   }, [organizationId]);
 
+  const categoryFilters = [
     { key: 'all', label: 'All Categories', count: integrations.length },
     { key: 'ehr_systems', label: 'EHR Systems', count: integrations.filter(i => i.category === 'ehr_systems').length },
     { key: 'laboratory_systems', label: 'Laboratory', count: 0 },
@@ -378,6 +379,7 @@ const IntegrationMarketplace: React.FC<Props> = ({ organizationId }) => {
     { key: 'cloud_services', label: 'Cloud Services', count: 0 }
   ];
 
+  const viewModes = [
     { key: 'browse', label: 'Browse', icon: '🔍' },
     { key: 'installed', label: 'Installed', icon: '✅' },
     { key: 'custom', label: 'Custom', icon: '🔧' },

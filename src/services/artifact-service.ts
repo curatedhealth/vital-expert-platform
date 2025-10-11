@@ -425,8 +425,7 @@ startxref
 
   private async exportToDocx(content: string, filename: string): Promise<Blob> {
     // Mock DOCX export - in production use docx library
-
-<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
+    const docxContent = `<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
   <w:body>
     <w:p>
       <w:r>
@@ -442,8 +441,7 @@ startxref
   }
 
   private async exportToHTML(content: string, title: string): Promise<Blob> {
-
-<html lang="en">
+    const htmlContent = `<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">

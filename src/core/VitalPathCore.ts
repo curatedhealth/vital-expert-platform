@@ -357,9 +357,22 @@ export class VitalPathCore extends EventEmitter {
     // Step 2: LLM Processing
 
     try {
+      const llmSpan = this.observability.tracing.startSpan('llm_processing', {
+        query: request.query,
+        domain: request.domain
+      });
 
+      const queryContext = {
         urgency: request.context?.urgency || 'normal',
         domain: request.domain,
+        complexity: request.context?.complexity || 'moderate'
+      };
+
+      const llmResponse = await this.orchestrator.processQuery({
+        query: request.query,
+        context: request.context,
+        domain: request.domain,
+        urgency: request.context?.urgency || 'normal',
         complexity: request.context?.complexity || 'moderate'
       });
 
@@ -408,15 +421,7 @@ export class VitalPathCore extends EventEmitter {
         {
           domain: request.domain,
           urgency: request.context?.urgency || 'normal',
-          userId: request.userId,
-          sessionId: request.context?.sessionId,
-          compliance: {
-            hipaa: compliance.violations.some((v: unknown) => v.type.includes('hipaa')),
-            gdpr: compliance.violations.some((v: unknown) => v.type.includes('gdpr')),
-            fda21cfr11: compliance.violations.some((v: unknown) => v.type.includes('fda')),
-            auditRequired: true
-          },
-          tags: [request.type, request.domain]
+          complexity: request.context?.complexity || 'moderate'
         }
       );
 

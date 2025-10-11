@@ -37,6 +37,7 @@ interface WelcomeScreenProps {
   welcomeMessage?: WelcomeMessage;
 }
 
+const features = [
   {
     icon: Bot,
     title: 'Multi-Agent Intelligence',
@@ -63,6 +64,7 @@ interface WelcomeScreenProps {
   }
 ];
 
+const systemStatus = [
   { label: 'FDA Regulatory', count: 3, status: 'online' },
   { label: 'Clinical Trial', count: 4, status: 'online' },
   { label: 'Digital Health', count: 5, status: 'online' },

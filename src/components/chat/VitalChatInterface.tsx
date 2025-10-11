@@ -239,9 +239,10 @@ How can I help you navigate the complex world of digital health today?`,
   const [generationProgress, setGenerationProgress] = useState(0);
 
   // Refs
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Real-time collaboration
-
+  const { collaborationState, updateCollaborationState } = useRealtimeCollaboration({
     conversationId: 'default-conversation', // In production, use dynamic conversation ID
     userId: 'current-user', // In production, use authenticated user ID
     enableTypingIndicators: true,
@@ -249,7 +250,7 @@ How can I help you navigate the complex world of digital health today?`,
   });
 
   // Auto-scroll to bottom
-
+  const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, []);
 
@@ -278,7 +279,7 @@ How can I help you navigate the complex world of digital health today?`,
 
     // Simulate AI response (in real implementation, this would come from WebSocket)
     setTimeout(() => {
-
+      const aiMessage = createMessage(
         `assistant-${Date.now()}`,
         'assistant',
         `Thank you for your ${selectedMode} question! I've analyzed your query using our specialized agents.
@@ -327,7 +328,7 @@ Would you like me to dive deeper into any of these areas? I can also generate sp
   }, [inputValue, isLoading, selectedMode, selectedAgents, onMessageSend, availableAgents]);
 
   // Handle input changes with typing indicators
-
+  const handleInputChange = useCallback((value: string) => {
     setInputValue(value);
 
     // Trigger typing indicator when user starts typing
@@ -339,7 +340,7 @@ Would you like me to dive deeper into any of these areas? I can also generate sp
   }, [inputValue, collaboration]);
 
   // Handle keyboard shortcuts
-
+  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSendMessage();

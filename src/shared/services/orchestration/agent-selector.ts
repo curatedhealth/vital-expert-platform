@@ -74,9 +74,12 @@ export class AgentSelector {
 
     // Log reasoning
     selectedAgents.forEach((agent, index) => {
-
+      const match = agent.metadata?.specializations?.some(spec =>
+        query.toLowerCase().includes(spec.toLowerCase())
+      );
       if (match) {
-        // }
+        // Log specialization match
+      }
     });
 
     return selectedAgents;
@@ -177,7 +180,7 @@ export class AgentSelector {
     }
 
     // Capability matching
-
+    const capabilityBonus = this.calculateCapabilityMatch(
       agent.getConfig().capabilities_list || [],
       intent,
       query
@@ -197,7 +200,8 @@ export class AgentSelector {
   }
 
   private calculateCapabilityScore(agent: DigitalHealthAgent, intent: IntentResult, query: string): number {
-
+    let score = 0;
+    const capabilityBonus = this.calculateCapabilityMatch(
       agent.getConfig().capabilities_list || [],
       intent,
       query

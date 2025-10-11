@@ -635,7 +635,7 @@ export class SupabaseRAGService {
   }> {
     try {
       // Use the existing searchKnowledge method
-
+      const results = await this.searchKnowledge({
         text: question,
         domain: options.agentType,
         max_results: options.maxResults || 5,
@@ -646,7 +646,7 @@ export class SupabaseRAGService {
       });
 
       // Build context from results
-
+      const context = results
         .map((result, index) =>
           `Source ${index + 1}: ${result.source_title}\n${result.content}\n`
         )

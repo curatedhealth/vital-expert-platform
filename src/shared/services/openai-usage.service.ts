@@ -55,8 +55,7 @@ class OpenAIUsageService {
     }
 
     try {
-
-      // const _response = await fetch(
+      const response = await fetch(
         `${this.baseURL}/usage?date=${startDateStr}`,
         {
           headers: {
@@ -89,7 +88,7 @@ class OpenAIUsageService {
     }
 
     try {
-
+      const response = await fetch(`${this.baseURL}/billing/usage`, {
         headers: {
           'Authorization': `Bearer ${this.apiKey}`,
           'Content-Type': 'application/json',
@@ -118,7 +117,7 @@ class OpenAIUsageService {
     }
 
     try {
-
+      const response = await fetch(`${this.baseURL}/models`, {
         headers: {
           'Authorization': `Bearer ${this.apiKey}`,
           'Content-Type': 'application/json',
@@ -204,11 +203,11 @@ class OpenAIUsageService {
    */
   private processUsageData(data: OpenAIUsageData): OpenAIUsageRecord[] {
     const records: OpenAIUsageRecord[] = [];
-
+    const dailyUsage = new Map<string, {
       requests: number;
       context_tokens: number;
       generated_tokens: number;
-    }>>();
+    }>();
 
     // Group data by date and operation (model)
     data.data.forEach(item => {

@@ -150,7 +150,7 @@ export class DatabaseLibraryLoader {
 
       // If no direct relationships found, try domain matching
       if (!data || data.length === 0) {
-        // const __result = await this.supabaseClient
+        const result = await this.supabaseClient
           .rpc('get_agent_prompt_starters_by_domain', { agent_name_param: agentName });
 
         data = result.data;

@@ -340,10 +340,8 @@ export class MultiAgentCoordinator {
   ): Promise<CoordinationResult> {
     const startTime = Date.now();
 
-    // Select master coordinator (highest tier agent)
-    const masterAgent = agents.reduce((master, agent) => 
-      agent.tier < master.tier ? agent : master
-    );
+    // Select master coordinator (first agent as fallback)
+    const masterAgent = agents[0];
 
     // Group other agents by specialization
     const specialistGroups = this.groupAgentsBySpecialization(

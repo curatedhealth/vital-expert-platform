@@ -144,7 +144,7 @@ export class MultiAgentCoordinator {
    * Coordinate multiple agents
    */
   async coordinate(
-    agents: AgentInfo[],
+    agents: DigitalHealthAgent[],
     query: string,
     context: any,
     strategyName?: string
@@ -180,7 +180,7 @@ export class MultiAgentCoordinator {
    * Select optimal strategy based on agents and query
    */
   private selectOptimalStrategy(
-    agents: AgentInfo[],
+    agents: DigitalHealthAgent[],
     query: string,
     context: any
   ): CoordinationStrategy | null {
@@ -504,7 +504,7 @@ export class MultiAgentCoordinator {
   }
 
   // Helper methods
-  private hasRequiredCapabilities(agents: AgentInfo[], requiredCapabilities: string[]): boolean {
+  private hasRequiredCapabilities(agents: DigitalHealthAgent[], requiredCapabilities: string[]): boolean {
     const availableCapabilities = new Set(
       agents.flatMap(agent => agent.capabilities)
     );
@@ -551,11 +551,11 @@ export class MultiAgentCoordinator {
     return Math.min(1, (length / 1000) + (keywordCount * 0.2));
   }
 
-  private analyzeAgentCapabilities(agents: AgentInfo[]): Set<string> {
+  private analyzeAgentCapabilities(agents: DigitalHealthAgent[]): Set<string> {
     return new Set(agents.flatMap(agent => agent.capabilities));
   }
 
-  private sortAgentsByRelevance(agents: AgentInfo[], query: string): AgentInfo[] {
+  private sortAgentsByRelevance(agents: DigitalHealthAgent[], query: string): DigitalHealthAgent[] {
     return agents.sort((a, b) => {
       // Sort by tier first (lower tier = higher priority)
       if (a.tier !== b.tier) return a.tier - b.tier;
@@ -568,7 +568,7 @@ export class MultiAgentCoordinator {
     });
   }
 
-  private calculateSpecializationRelevance(agent: AgentInfo, query: string): number {
+  private calculateSpecializationRelevance(agent: DigitalHealthAgent, query: string): number {
     const queryLower = query.toLowerCase();
     return agent.specialization.reduce((score, spec) => {
       if (queryLower.includes(spec.toLowerCase())) {

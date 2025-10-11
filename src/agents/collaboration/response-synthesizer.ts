@@ -3,7 +3,19 @@
  * Advanced response synthesis strategies for multi-agent collaboration
  */
 
-import type { AgentResponse } from '@/types/agent.types';
+// Response type for response synthesis
+interface AgentResponse {
+  id: string;
+  agentId: string;
+  content: string;
+  confidence: number;
+  metadata: {
+    agentName: string;
+    capabilities: string[];
+    responseTime: number;
+  };
+  timestamp: Date;
+}
 
 export interface SynthesisStrategy {
   name: string;

@@ -345,7 +345,7 @@ export class MultiAgentCoordinator {
 
     // Group other agents by specialization
     const specialistGroups = this.groupAgentsBySpecialization(
-      agents.filter(a => a.id !== masterAgent.id)
+      agents.filter(a => a.getStatus().name !== masterAgent.getStatus().name)
     );
 
     // Master agent coordinates specialists

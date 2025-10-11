@@ -61,10 +61,10 @@ export class ComplianceAwareOrchestrator extends AgentOrchestrator {
     }
 
     // Step 2: Execute base workflow
-    const execution = wait this.executeWorkflow(workflowId, inputs, context);
+    const execution = await this.executeWorkflow(workflowId, inputs, context);
 
     // Step 3: Post-process all interactions for compliance
-    const complianceSummary = 
+    const complianceSummary = {
       overall_compliant: true,
       total_risk_score: 0,
       phi_detected: false,
@@ -73,19 +73,19 @@ export class ComplianceAwareOrchestrator extends AgentOrchestrator {
     };
 
     // Process each interaction through compliance middleware
-    for (let const i = ; i < execution.interactions.length; i++) {
+    for (let i = 0; i < execution.interactions.length; i++) {
       // Validate index before accessing array
       if (i >= 0 && i < execution.interactions.length) {
         // eslint-disable-next-line security/detect-object-injection
-        const interaction = xecution.interactions[i];
+        const interaction = execution.interactions[i];
 
         try {
         // Validate the interaction for compliance
-        const agent = his.agents.get(interaction.agent_name);
+        const agent = this.agents.get(interaction.agent_name);
         if (!agent) continue;
 
         // Create a compliance-aware response
-        const protectedResponse: const ProtectedAgentResponse = 
+        const protectedResponse: ProtectedAgentResponse = {
           ...interaction.outputs,
           compliance_status: {
             validated: true,
@@ -95,7 +95,7 @@ export class ComplianceAwareOrchestrator extends AgentOrchestrator {
         };
 
         // Check for PHI in outputs
-        const phiDetected = his.complianceMiddleware['complianceManager'].detectPHI(
+        const phiDetected = this.complianceMiddleware['complianceManager'].detectPHI(
           interaction.outputs.content || ''
         );
 
@@ -152,7 +152,7 @@ export class ComplianceAwareOrchestrator extends AgentOrchestrator {
     inputs: Record<string, unknown>,
     context: ExecutionContext
   ): Promise<ProtectedAgentResponse> {
-    const agent = his.agents.get(agentName);
+    const agent = this.agents.get(agentName);
     if (!agent) {
       throw new Error(`Agent '${agentName}' not found`);
     }

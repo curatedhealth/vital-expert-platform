@@ -270,9 +270,8 @@ export class AgentOrchestrator {
     const stepInputs = this.prepareStepInputs(step, execution);
 
     // Execute the prompt
-    const response = await agent.executePrompt(
+    const response = await agent.execute(
       step.prompt_title,
-      stepInputs,
       execution.context
     );
 

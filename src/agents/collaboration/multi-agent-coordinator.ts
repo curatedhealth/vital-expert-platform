@@ -5,11 +5,12 @@
 
 import type { AgentResponse } from '@/types/agent.types';
 import { agentConflictResolver } from '../core/conflict-resolver';
+import { DigitalHealthAgent } from '../core/DigitalHealthAgent';
 
 export interface CoordinationStrategy {
   name: 'sequential' | 'parallel' | 'hierarchical' | 'consensus' | 'adaptive';
   description: string;
-  execute: (agents: AgentInfo[], query: string, context: any) => Promise<CoordinationResult>;
+  execute: (agents: DigitalHealthAgent[], query: string, context: any) => Promise<CoordinationResult>;
   requirements: {
     minAgents: number;
     maxAgents: number;
@@ -209,8 +210,8 @@ export class MultiAgentCoordinator {
   /**
    * Execute sequential coordination strategy
    */
-  private async executeSequentialStrategy(
-    agents: AgentInfo[],
+  private   async executeSequentialStrategy(
+    agents: DigitalHealthAgent[],
     query: string,
     context: any
   ): Promise<CoordinationResult> {
@@ -276,8 +277,8 @@ export class MultiAgentCoordinator {
   /**
    * Execute parallel coordination strategy
    */
-  private async executeParallelStrategy(
-    agents: AgentInfo[],
+  private   async executeParallelStrategy(
+    agents: DigitalHealthAgent[],
     query: string,
     context: any
   ): Promise<CoordinationResult> {
@@ -332,8 +333,8 @@ export class MultiAgentCoordinator {
   /**
    * Execute hierarchical coordination strategy
    */
-  private async executeHierarchicalStrategy(
-    agents: AgentInfo[],
+  private   async executeHierarchicalStrategy(
+    agents: DigitalHealthAgent[],
     query: string,
     context: any
   ): Promise<CoordinationResult> {
@@ -411,8 +412,8 @@ export class MultiAgentCoordinator {
   /**
    * Execute consensus coordination strategy
    */
-  private async executeConsensusStrategy(
-    agents: AgentInfo[],
+  private   async executeConsensusStrategy(
+    agents: DigitalHealthAgent[],
     query: string,
     context: any
   ): Promise<CoordinationResult> {
@@ -472,8 +473,8 @@ export class MultiAgentCoordinator {
   /**
    * Execute adaptive coordination strategy
    */
-  private async executeAdaptiveStrategy(
-    agents: AgentInfo[],
+  private   async executeAdaptiveStrategy(
+    agents: DigitalHealthAgent[],
     query: string,
     context: any
   ): Promise<CoordinationResult> {
@@ -577,14 +578,14 @@ export class MultiAgentCoordinator {
     }, 0);
   }
 
-  private async executeAgent(agent: AgentInfo, query: string, context: any): Promise<AgentResponse> {
+  private async executeAgent(agent: DigitalHealthAgent, query: string, context: any): Promise<AgentResponse> {
     // Simulate agent execution
     // In production, this would call the actual agent service
     return {
       id: `response-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       agentId: agent.id,
       content: `Response from ${agent.name} for query: ${query.substring(0, 50)}...`,
-      confidence: agent.performance.accuracy,
+      confidence: agent.config.confidence || 0.8,
       metadata: {
         agentName: agent.name,
         capabilities: agent.capabilities,

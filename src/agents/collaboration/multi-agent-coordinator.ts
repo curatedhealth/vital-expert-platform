@@ -516,7 +516,7 @@ export class MultiAgentCoordinator {
 
   private calculateStrategyScore(
     strategy: CoordinationStrategy,
-    agents: AgentInfo[],
+    agents: DigitalHealthAgent[],
     query: string,
     context: any
   ): number {

@@ -186,7 +186,7 @@ export const MedicalModelsDashboard: React.FC<MedicalModelsDashboardProps> = ({
     );
 
     if (model) {
-      const ModelIcon = getIconForSpecialty(model.specialties?.[0] || '');
+      const ModelIcon = getIconForSpecialty(model.medical_specialties?.[0] || '');
 
       return (
         <div className="space-y-6">

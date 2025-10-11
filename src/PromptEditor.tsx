@@ -147,6 +147,7 @@ export default function PromptEditor({ prompt, isOpen, onClose, onSave, mode }: 
     return Object.keys(newErrors).length === 0;
   };
 
+  const handleSave = () => {
     if (!validateForm()) {
       toast({
         title: "Validation Error",
@@ -164,6 +165,7 @@ export default function PromptEditor({ prompt, isOpen, onClose, onSave, mode }: 
     onClose();
   };
 
+  const handleDomainChange = (domain: string) => {
     setFormData(prev => ({
       ...prev,
       domain,
@@ -171,6 +173,7 @@ export default function PromptEditor({ prompt, isOpen, onClose, onSave, mode }: 
     }));
   };
 
+  const copyToClipboard = async (text: string) => {
     try {
       await navigator.clipboard.writeText(text);
       toast({
@@ -186,6 +189,7 @@ export default function PromptEditor({ prompt, isOpen, onClose, onSave, mode }: 
     }
   };
 
+  const getTitle = () => {
     switch (mode) {
       case 'create': return 'Create New Prompt';
       case 'edit': return 'Edit Prompt';

@@ -3,7 +3,7 @@
  * Manages coordination strategies and communication between agents
  */
 
-import type { AgentResponse } from '@/types/agent';
+import type { AgentResponse } from '@/types/agent.types';
 import { agentConflictResolver } from '../core/conflict-resolver';
 
 export interface CoordinationStrategy {

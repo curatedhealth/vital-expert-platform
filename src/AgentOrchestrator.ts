@@ -12,7 +12,7 @@ import {
   WorkflowExecution,
   AgentInteraction,
   ComplianceLevel
-} from '@/types/digital-health-agent.types';
+} from '@/digital-health-agent.types';
 
 // Import Tier 1 agents
 import { ClinicalTrialDesigner } from '../tier1/ClinicalTrialDesigner';

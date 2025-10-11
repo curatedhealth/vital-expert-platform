@@ -508,7 +508,7 @@ export class AgentOrchestrator {
    */
   getAgentPrompts(agentName: string): string[] {
     const agent = this.agents.get(agentName);
-    return agent ? agent.getPrompts() : [];
+    return agent ? agent.getCapabilities() : [];
   }
 
   /**

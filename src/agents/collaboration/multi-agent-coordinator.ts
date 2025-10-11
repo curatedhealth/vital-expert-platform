@@ -601,18 +601,18 @@ export class MultiAgentCoordinator {
     };
   }
 
-  private groupAgentsBySpecialization(agents: AgentInfo[]): AgentInfo[][] {
-    const groups: Map<string, AgentInfo[]> = new Map();
+  private groupAgentsBySpecialization(agents: DigitalHealthAgent[]): DigitalHealthAgent[][] {
+    const groups: Map<string, DigitalHealthAgent[]> = new Map();
     
     agents.forEach(agent => {
-      agent.specialization.forEach(spec => {
+      agent.getCapabilities().forEach(spec => {
         if (!groups.has(spec)) {
           groups.set(spec, []);
         }
         groups.get(spec)!.push(agent);
       });
     });
-
+    
     return Array.from(groups.values());
   }
 

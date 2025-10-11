@@ -12,7 +12,6 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
 import type { ComponentProps, HTMLAttributes, ReactNode } from 'react';
-import { createContext } from 'react';
 
 type CodeBlockContextType = {
   code: string;
@@ -119,6 +118,7 @@ export const __CodeBlockCopyButton = ({
   const [isCopied, setIsCopied] = useState(false);
   const { code } = useContext(CodeBlockContext);
 
+  const copyToClipboard = async () => {
     if (typeof window === 'undefined' || !navigator.clipboard.writeText) {
       onError?.(new Error('Clipboard API not available'));
       return;

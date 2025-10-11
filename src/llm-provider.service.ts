@@ -20,7 +20,7 @@ import {
   UsageStatus,
   ValidationStatus,
   UsageLogCreateInput
-} from '@/types/llm-provider.types';
+} from '@/llm-provider.types';
 
 export class LLMProviderService {
   private supabase: ReturnType<typeof createClient> | null = null;

@@ -8,10 +8,10 @@ import {
   Sidebar,
   SidebarContent,
   SidebarHeader,
-} from '@/shared/components/ui/sidebar';
+} from '@/components/ui/sidebar';
 import { Switch } from '@/components/ui/switch';
 import { cn } from '@/lib/utils';
-import { VitalLogo } from '@/shared/components/vital-logo';
+import { VitalLogo } from '@/vital-logo';
 
 import { NavAiAgents } from './nav-ai-agents';
 import { NavAskExpert } from './nav-ask-expert';

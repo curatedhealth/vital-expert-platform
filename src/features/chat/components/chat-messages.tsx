@@ -27,7 +27,7 @@ import {
 } from '@/components/ai/reasoning';
 import { ChatMessage, useChatStore } from '@/lib/stores/chat-store';
 import { cn } from '@/lib/utils';
-import { renderTextWithCitations, type CitationSource } from '@/shared/components/ui/inline-citation';
+import { renderTextWithCitations, type CitationSource } from '@/inline-citation';
 import { Response } from '@/components/ai/response';
 
 interface ChatMessagesProps {

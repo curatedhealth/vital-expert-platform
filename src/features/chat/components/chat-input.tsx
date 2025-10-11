@@ -20,7 +20,7 @@ import {
   PromptInputTextarea,
   PromptInputToolbar,
   PromptInputSubmit,
-} from '@/shared/components/ai/prompt-input';
+} from '@/components/ui/shadcn-io/ai/prompt-input';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {

@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Navigation } from '@/shared/components/Navigation';
+import { Navigation } from '@/Navigation';
 
 export default function FrameworkPage() {
   const pillars = [

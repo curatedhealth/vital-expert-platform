@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 
 import { useAgentsStore, type Agent as AgentsStoreAgent } from '@/lib/stores/agents-store';
-import { ragService } from '@/shared/services/rag/rag-service';
+import { ragService } from '@/rag-service';
 import { AgentAvatar } from '@/components/ui/agent-avatar';
 
 interface ExpertPanelSelectorProps {

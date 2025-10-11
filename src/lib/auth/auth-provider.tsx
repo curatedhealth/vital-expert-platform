@@ -3,10 +3,10 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { Session, User as SupabaseUser } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase/client';
-import { AUTH_CONFIG } from './config';
+import { AUTH_CONFIG } from '@/config';
 import { AuthContextType, AuthUser, UserRole, UserProfile } from './types';
 import { sessionSync } from './session-sync';
-import { authErrorRecovery } from './error-recovery';
+import { authErrorRecovery } from '@/error-recovery';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -36,7 +36,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         console.warn('Profile not found, creating default profile:', profileError.message);
         
         // Create default profile for new user
-        const defaultRole: const UserRole = TH_CONFIG.superAdminEmails.includes(supabaseUser.email || '') 
+        const defaultRole: UserRole = TH_CONFIG.superAdminEmails.includes(supabaseUser.email || '') 
           ? 'super_admin' 
           : 'user';
           
@@ -143,7 +143,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       }
 
       if (session?.user) {
-        const authUser = ait createAuthUser(session.user);
+        const authUser = await createAuthUser(session.user);
         setUser(authUser);
         setSession(session);
         console.log('✅ User authenticated:', authUser.email, 'Role:', authUser.role);
@@ -174,7 +174,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       }
 
       if (session?.user) {
-        const authUser = ait createAuthUser(session.user);
+        const authUser = await createAuthUser(session.user);
         setUser(authUser);
         setSession(session);
         console.log('✅ Session refreshed for:', authUser.email);
@@ -204,7 +204,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       }
 
       if (data.user) {
-        const authUser = ait createAuthUser(data.user);
+        const authUser = await createAuthUser(data.user);
         setUser(authUser);
         setSession(data.session);
         console.log('✅ User signed in:', authUser.email, 'Role:', authUser.role);
@@ -262,7 +262,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         setError(null);
 
         if (session?.user) {
-          const authUser = ait createAuthUser(session.user);
+          const authUser = await createAuthUser(session.user);
           setUser(authUser);
           setSession(session);
         } else {
@@ -299,7 +299,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   // Refresh session on window focus
   useEffect(() => {
-    const handleFocus =  => {
+    const handleFocus = () => {
       if (session && user) {
         refreshSession();
       }
@@ -309,7 +309,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
     return () => window.removeEventListener('focus', handleFocus);
   }, [session, user, refreshSession]);
 
-  const value: const AuthContextType = ser,
+  const value: AuthContextType = {
+    user,
     session,
     loading,
     error,
@@ -321,7 +322,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   };
 
   return (
-    <AuthContext.Provider const value = alue}>
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );

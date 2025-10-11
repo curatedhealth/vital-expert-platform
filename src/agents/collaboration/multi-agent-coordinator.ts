@@ -237,7 +237,7 @@ export class MultiAgentCoordinator {
         await new Promise(resolve => setTimeout(resolve, 100));
 
       } catch (error) {
-        console.error(`❌ Agent ${agent.name} failed:`, error);
+        console.error(`❌ Agent ${agent.getStatus().name} failed:`, error);
         // Continue with next agent
       }
     }
@@ -287,7 +287,7 @@ export class MultiAgentCoordinator {
     // Execute all agents in parallel
     const agentPromises = agents.map(agent => 
       this.executeAgent(agent, query, context).catch(error => {
-        console.error(`❌ Agent ${agent.name} failed:`, error);
+        console.error(`❌ Agent ${agent.getStatus().name} failed:`, error);
         return null;
       })
     );
@@ -423,7 +423,7 @@ export class MultiAgentCoordinator {
     const responses = await Promise.all(
       agents.map(agent => 
         this.executeAgent(agent, query, context).catch(error => {
-          console.error(`❌ Agent ${agent.name} failed:`, error);
+          console.error(`❌ Agent ${agent.getStatus().name} failed:`, error);
           return null;
         })
       )

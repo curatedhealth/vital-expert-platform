@@ -3,7 +3,7 @@
  * Advanced response synthesis strategies for multi-agent collaboration
  */
 
-import type { AgentResponse } from '@/types/agent';
+import type { AgentResponse } from '@/types/agent.types';
 
 export interface SynthesisStrategy {
   name: string;

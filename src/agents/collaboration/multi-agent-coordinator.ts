@@ -519,8 +519,8 @@ export class MultiAgentCoordinator {
     return {
       count: agents.length,
       capabilities: Array.from(capabilities),
-      averageTier: agents.reduce((sum, agent) => sum + agent.config.tier, 0) / agents.length,
-      specialization: agents.map(agent => agent.config.specialization)
+      averageTier: agents.reduce((sum, agent) => sum + agent.getStatus().tier, 0) / agents.length,
+      specialization: agents.map(agent => agent.getCapabilities())
     };
   }
 

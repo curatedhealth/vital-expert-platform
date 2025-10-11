@@ -598,7 +598,7 @@ export class MultiAgentCoordinator {
   private sortAgentsByRelevance(agents: DigitalHealthAgent[], query: string): DigitalHealthAgent[] {
     return agents.sort((a, b) => {
       // Sort by tier first (lower tier = higher priority)
-      if (a.config.tier !== b.config.tier) return a.config.tier - b.config.tier;
+      if (a.getStatus().name !== b.getStatus().name) return a.getStatus().name.localeCompare(b.getStatus().name);
       
       // Then by specialization relevance
       const aRelevance = this.calculateSpecializationRelevance(a, query);
@@ -627,7 +627,7 @@ export class MultiAgentCoordinator {
       id: `response-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       agentId: agent.getStatus().name,
       content: `Response from ${agent.getStatus().name} for query: ${query.substring(0, 50)}...`,
-      confidence: agent.config.confidence || 0.8,
+      confidence: 0.8,
       metadata: {
         agentName: agent.getStatus().name,
         capabilities: agent.getCapabilities(),

@@ -7,9 +7,9 @@ import {
   WorkflowExecution,
   ExecutionContext,
   ComplianceError
-} from '../../types/digital-health-agent.types';
+} from '@/digital-health-agent.types';
 
-import { ComplianceMiddleware, ProtectedAgentResponse } from '../../lib-disabled/compliance/compliance-middleware';
+import { ComplianceMiddleware, ProtectedAgentResponse } from '@/lib/compliance/compliance-middleware';
 
 import { AgentOrchestrator } from './AgentOrchestrator';
 

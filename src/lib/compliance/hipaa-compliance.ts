@@ -9,7 +9,7 @@ import {
   ComplianceLevel,
   ExecutionContext,
   ComplianceError
-} from '@/types/digital-health-agent.types';
+} from '@/digital-health-agent.types';
 import { breachResponseSystem, type BreachIncident } from './breach-response-system';
 
 export interface PHIDetectionResult {

@@ -9,7 +9,7 @@ import {
   AgentDomain,
   ComplianceLevel,
   ModelType
-} from '@/types/digital-health-agent.types';
+} from '@/digital-health-agent.types';
 
 import { DigitalHealthAgent } from '../core/DigitalHealthAgent';
 

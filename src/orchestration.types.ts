@@ -3,7 +3,7 @@
  * Ensures consistent type definitions across all orchestration components
  */
 
-import { ComplianceLevel } from '@/types/digital-health-agent.types';
+import { ComplianceLevel } from '@/digital-health-agent.types';
 
 export interface IntentResult {
   primaryDomain: string;

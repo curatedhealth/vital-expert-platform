@@ -10,7 +10,7 @@ import {
   DigitalHealthAgentConfig,
   Capability,
   PromptTemplate
-} from '@/types/digital-health-agent.types';
+} from '@/digital-health-agent.types';
 
 export class LibraryLoader {
   private readonly basePath: string;

@@ -8,7 +8,7 @@ import {
   ExecutionContext,
   ComplianceLevel,
   ComplianceError
-} from '@/types/digital-health-agent.types';
+} from '@/digital-health-agent.types';
 
 import { DigitalHealthAgent } from '../../agents/core/DigitalHealthAgent';
 

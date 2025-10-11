@@ -4,7 +4,7 @@
  */
 
 import { DigitalHealthAgent } from '@/agents/core/DigitalHealthAgent';
-import { IntentResult } from '@/shared/types/orchestration.types';
+import { IntentResult } from '@/orchestration.types';
 
 interface AgentMatch {
   agent: DigitalHealthAgent;

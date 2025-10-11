@@ -12,7 +12,7 @@
  * - Seamless integration with existing ComplianceAwareOrchestrator
  */
 
-import { performanceMetricsService } from '../../shared-disabled/services/monitoring/performance-metrics.service';
+import { performanceMetricsService } from '@/performance-metrics.service';
 
 // Local AgentResponse interface for this file
 interface AgentResponse {
@@ -31,7 +31,7 @@ interface AgentResponse {
 import { agentRAGIntegration, AgentRAGQuery } from '@/shared/services/rag/agent-rag-integration';
 import {
   ExecutionContext
-} from '@/types/digital-health-agent.types';
+} from '@/digital-health-agent.types';
 import { agentConflictResolver } from '../core/conflict-resolver';
 import { gracefulDegradationManager } from '@/lib/resilience/graceful-degradation';
 import { multiAgentCoordinator, type AgentInfo, type CoordinationResult } from '../collaboration/multi-agent-coordinator';

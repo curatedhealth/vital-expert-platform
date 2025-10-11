@@ -11,7 +11,7 @@ import {
   ModelType,
   AgentResponse,
   ExecutionContext
-} from '@/types/digital-health-agent.types';
+} from '@/digital-health-agent.types';
 
 import { DigitalHealthAgent } from '../core/DigitalHealthAgent';
 

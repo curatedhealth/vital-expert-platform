@@ -11,7 +11,7 @@ import {
   ModelType
 } from '@/digital-health-agent.types';
 
-import { DigitalHealthAgent } from '../core/DigitalHealthAgent';
+import { DigitalHealthAgent, AgentConfig } from '../core/DigitalHealthAgent';
 
 export class DiagnosticPathwayOptimizer extends DigitalHealthAgent {
   constructor() {
@@ -73,6 +73,18 @@ Use evidence-based approaches incorporating clinical practice guidelines, diagno
       }
     };
 
-    super(config);
+    // Convert DigitalHealthAgentConfig to AgentConfig
+    const agentConfig: AgentConfig = {
+      id: config.name,
+      name: config.name,
+      display_name: config.display_name,
+      description: "Expert in diagnostic pathway optimization for digital health products",
+      capabilities: config.capabilities_list,
+      model: config.model,
+      knowledge_domains: ["diagnostic_pathways", "optimization", "digital_health"],
+      tier: config.metadata.tier
+    };
+    
+    super(agentConfig);
   }
 }

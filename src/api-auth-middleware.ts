@@ -270,7 +270,7 @@ export class APIAuthMiddleware {
       success: false,
       error,
       timestamp: new Date().toISOString(),
-      ...(details && { details })
+      ...(details && typeof details === 'object' ? { details } : {})
     };
 
     return NextResponse.json(response, { status: statusCode });

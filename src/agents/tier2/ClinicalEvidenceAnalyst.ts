@@ -11,7 +11,7 @@ import {
   ModelType
 } from '@/digital-health-agent.types';
 
-import { DigitalHealthAgent } from '../core/DigitalHealthAgent';
+import { DigitalHealthAgent, AgentConfig } from '../core/DigitalHealthAgent';
 
 export class ClinicalEvidenceAnalyst extends DigitalHealthAgent {
   constructor() {
@@ -98,7 +98,19 @@ You have 12+ years conducting systematic reviews and meta-analyses with expertis
       }
     };
 
-    super(config);
+    // Convert DigitalHealthAgentConfig to AgentConfig
+    const agentConfig: AgentConfig = {
+      id: config.name,
+      name: config.name,
+      display_name: config.display_name,
+      description: "Expert in clinical evidence analysis for digital health products",
+      capabilities: config.capabilities_list,
+      model: config.model,
+      knowledge_domains: ["clinical_evidence", "data_analysis", "regulatory"],
+      tier: config.metadata.tier
+    };
+    
+    super(agentConfig);
   }
 
 }

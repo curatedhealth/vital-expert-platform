@@ -13,7 +13,7 @@ import {
   ExecutionContext
 } from '@/digital-health-agent.types';
 
-import { DigitalHealthAgent } from '../core/DigitalHealthAgent';
+import { DigitalHealthAgent, AgentConfig } from '../core/DigitalHealthAgent';
 
 export class FDARegulatoryStrategist extends DigitalHealthAgent {
   constructor() {
@@ -72,7 +72,19 @@ When users select a prompt starter, retrieve the full workflow from the Prompt L
       }
     };
 
-    super(config);
+    // Convert DigitalHealthAgentConfig to AgentConfig
+    const agentConfig: AgentConfig = {
+      id: config.name,
+      name: config.name,
+      display_name: config.display_name,
+      description: "Expert in FDA regulatory strategy for digital health products",
+      capabilities: config.capabilities_list,
+      model: config.model,
+      knowledge_domains: ["fda_regulatory", "medical_devices", "compliance"],
+      tier: config.metadata.tier
+    };
+    
+    super(agentConfig);
   }
 
   /**
@@ -92,10 +104,9 @@ When users select a prompt starter, retrieve the full workflow from the Prompt L
     },
     context?: ExecutionContext
   ): Promise<AgentResponse> {
-    return await this.executePrompt(
+    return await this.execute(
       "Create FDA Regulatory Strategy",
-      deviceInfo,
-      context
+      { ...deviceInfo, ...context }
     );
   }
 
@@ -114,10 +125,9 @@ When users select a prompt starter, retrieve the full workflow from the Prompt L
     },
     context?: ExecutionContext
   ): Promise<AgentResponse> {
-    return await this.executePrompt(
+    return await this.execute(
       "Prepare 510(k) Submission",
-      deviceData,
-      context
+      { ...deviceData, ...context }
     );
   }
 
@@ -134,10 +144,9 @@ When users select a prompt starter, retrieve the full workflow from the Prompt L
     },
     context?: ExecutionContext
   ): Promise<AgentResponse> {
-    return await this.executePrompt(
+    return await this.execute(
       "Plan Pre-Submission Meeting",
-      meetingData,
-      context
+      { ...meetingData, ...context }
     );
   }
 
@@ -155,10 +164,9 @@ When users select a prompt starter, retrieve the full workflow from the Prompt L
     },
     context?: ExecutionContext
   ): Promise<AgentResponse> {
-    return await this.executePrompt(
+    return await this.execute(
       "Respond to FDA AI Request",
-      requestData,
-      context
+      { ...requestData, ...context }
     );
   }
 
@@ -179,7 +187,7 @@ When users select a prompt starter, retrieve the full workflow from the Prompt L
     timeline_estimate: string;
     key_requirements: string[];
   }> {
-    const result = await this.executePrompt(
+    const result = await this.execute(
       "Create FDA Regulatory Strategy",
       deviceInfo
     );
@@ -187,10 +195,10 @@ When users select a prompt starter, retrieve the full workflow from the Prompt L
     // Extract structured data from response
     if (result.success && result.data) {
       return {
-        pathway: result.data.pathway || "510k",
-        confidence: result.data.success_probability || 0.8,
+        pathway: (result.data.pathway as "510k" | "PMA" | "De Novo" | "513g") || "510k",
+        confidence: (result.data.success_probability as number) || 0.8,
         rationale: result.content?.substring(0, 200) + "..." || "Regulatory analysis complete",
-        timeline_estimate: result.data.timeline_months ? `${result.data.timeline_months} months` : "6-12 months",
+        timeline_estimate: result.data.timeline_months ? `${result.data.timeline_months as number} months` : "6-12 months",
         key_requirements: [
           "Predicate device identification",
           "Substantial equivalence demonstration",
@@ -229,7 +237,7 @@ When users select a prompt starter, retrieve the full workflow from the Prompt L
     const validPathways = ['510k', 'De Novo', 'PMA'] as const;
     const validComplexities = ['simple', 'moderate', 'complex'] as const;
     
-    if (!validPathways.includes(pathway as unknown) || !validComplexities.includes(complexity as unknown)) {
+    if (!validPathways.includes(pathway as "510k" | "PMA" | "De Novo") || !validComplexities.includes(complexity as "simple" | "moderate" | "complex")) {
       throw new Error('Invalid pathway or complexity level');
     }
     

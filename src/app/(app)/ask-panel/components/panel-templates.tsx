@@ -15,9 +15,9 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { cn } from '@/shared/utils';
+import { cn } from '@/lib/utils';
 
-import { usePanelStore } from '../services/panel-store';
+import { __usePanelStore as usePanelStore } from '../services/panel-store';
 
 interface PanelTemplatesProps {
   onTemplateSelect: (template: unknown) => void;
@@ -94,7 +94,7 @@ export function PanelTemplates({ onTemplateSelect, onCreateExpertPanel }: PanelT
               <Input
                 placeholder="Search panel templates..."
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
                 className="pl-9"
               />
             </div>

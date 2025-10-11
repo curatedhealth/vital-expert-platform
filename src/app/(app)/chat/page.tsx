@@ -25,10 +25,11 @@ import { AgentCreator } from '@/features/chat/components/agent-creator';
 import { ChatInput } from '@/features/chat/components/chat-input';
 import { ChatMessages } from '@/features/chat/components/chat-messages';
 import { ChatSidebar } from '@/features/chat/components/chat-sidebar';
-import type { AgentWithCategories } from '@/lib/agents/agent-service';
+import type { AgentWithCategories } from '@/features/agents/services/agent-service';
 import { IconService, type Icon } from '@/lib/services/icon-service';
 import { useAgentsStore } from '@/lib/stores/agents-store';
-import { useChatStore, Agent } from '@/lib/stores/chat-store';
+import { useChatStore, Agent as ChatAgent } from '@/lib/stores/chat-store';
+import { Agent } from '@/lib/stores/agents-store';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/supabase-auth-context';
 
@@ -154,9 +155,10 @@ function ChatPageContent() {
   const [showAgentCreator, setShowAgentCreator] = useState(false);
   const [isSelectingAgent, setIsSelectingAgent] = useState(false);
   const [showAgentSelector, setShowAgentSelector] = useState(false);
-  const [userAgents, setUserAgents] = useState<Agent[]>([]); // User's selected agents for chat
+  const [userAgents, setUserAgents] = useState<ChatAgent[]>([]); // User's selected agents for chat
   const [recommendedAgents, setRecommendedAgents] = useState<any[]>([]);
   const [pendingMessage, setPendingMessage] = useState<string>('');
+  const [error, setError] = useState<string | null>(null);
 
   // Auto-agent selection is controlled by interactionMode (automatic = enabled)
   const autoAgentSelection = interactionMode === 'automatic';
@@ -318,17 +320,12 @@ function ChatPageContent() {
   }, [selectedAgent?.id, agentPromptStarters]);
 
   const handleSendMessage = async () => {
-    console.log('🚀 handleSendMessage called! input:', input);
     if (!input.trim()) return;
 
     const message = input.trim();
-    console.log('📝 Message:', message);
-    console.log('🤖 autoAgentSelection:', autoAgentSelection);
-    console.log('👤 selectedAgent:', selectedAgent);
 
     // Step 1: Show agent recommendations if auto-selection is enabled and no agent selected
     if (autoAgentSelection && !selectedAgent) {
-      console.log('✅ Entering recommendation flow');
       setIsSelectingAgent(true);
       setPendingMessage(message);
       setInput(''); // Clear input immediately
@@ -340,19 +337,12 @@ function ChatPageContent() {
           body: JSON.stringify({ query: message }),
         });
 
-        console.log('📡 Response status:', response.status, response.ok);
-
         if (response.ok) {
           const data = await response.json();
-          console.log('📥 Received recommendation data:', JSON.stringify(data, null, 2));
-          console.log('📥 data.success:', data.success);
-          console.log('📥 data.agents:', data.agents);
-          console.log('📥 data.agents?.length:', data.agents?.length);
 
           if (data.success && data.agents && data.agents.length > 0) {
             // Show top 2-3 recommendations for user to choose
             const topAgents = data.agents.slice(0, 3);
-            console.log('📦 Top agents slice:', topAgents.length);
 
             const enrichedAgents = topAgents.map((agent: any, index: number) => ({
               ...agent,
@@ -360,17 +350,8 @@ function ChatPageContent() {
               score: data.recommendations?.[index]?.score || 100
             }));
 
-            console.log('🎯 About to set recommendations:', enrichedAgents.length, 'agents');
-            console.log('🎯 Enriched agents:', JSON.stringify(enrichedAgents.map(a => ({ id: a.id, name: a.name })), null, 2));
             setRecommendedAgents(enrichedAgents);
-            console.log('✅ setRecommendedAgents called');
-          } else {
-            console.warn('⚠️ No agents in response or invalid data structure');
-            console.warn('⚠️ data.success:', data.success);
-            console.warn('⚠️ data.agents:', data.agents);
           }
-        } else {
-          console.error('❌ API response not OK:', response.status, response.statusText);
         }
       } catch (error) {
         console.error('❌ Error fetching recommendations:', error);
@@ -385,7 +366,6 @@ function ChatPageContent() {
 
       // IMPORTANT: Return early to prevent sending message
       // The message will be sent after user selects an agent
-      console.log('⏸️ Waiting for user to select agent from recommendations');
       return;
     }
 
@@ -396,13 +376,10 @@ function ChatPageContent() {
 
   // Handle agent selection from recommendations
   const handleSelectRecommendedAgent = async (recommendedAgent: any) => {
-    console.log('🎯 handleSelectRecommendedAgent called with:', recommendedAgent);
-    
     // Convert to Agent type and set as selected
-    const agent: Agent = {
+    const agent: ChatAgent = {
       id: recommendedAgent.id,
       name: recommendedAgent.name,
-      display_name: recommendedAgent.display_name,
       description: recommendedAgent.description,
       avatar: recommendedAgent.avatar,
       systemPrompt: recommendedAgent.system_prompt || recommendedAgent.systemPrompt || '',
@@ -421,24 +398,15 @@ function ChatPageContent() {
       organizationalRole: recommendedAgent.organizational_role,
     };
 
-    console.log('🤖 Converted agent object:', agent);
-    console.log('📊 Current state - selectedModel:', selectedModel);
-    console.log('📊 Current state - interactionMode:', interactionMode);
-    console.log('📊 Current state - autonomousMode:', autonomousMode);
-
     setSelectedAgent(agent);
 
     // Clear recommendations and send the pending message
     setRecommendedAgents([]);
     const message = pendingMessage;
     setPendingMessage('');
-
-    console.log('✅ User selected agent:', agent.display_name || agent.name, 'with model:', agent.model);
-    console.log('📝 About to send message:', message);
     
     try {
       await sendMessage(message);
-      console.log('✅ Message sent successfully');
     } catch (error) {
       console.error('❌ Error sending message:', error);
       // Set error state to show user
@@ -515,34 +483,12 @@ function ChatPageContent() {
     try {
       // Check if this is an admin agent that needs to be copied
       // Admin agents are not custom, so we need to create user copies
-      if (!agent.isCustom) {
+      if (!agent.is_custom) {
         // Create user copy through the store
-        const userCopy = await createUserCopy({
-          id: agent.id,
-          name: agent.name,
-          display_name: agent.name,
-          description: agent.description,
-          system_prompt: agent.systemPrompt || '',
-          model: agent.model || 'gpt-4',
-          avatar: agent.avatar || '🤖',
-          color: agent.color || '#3B82F6',
-          capabilities: agent.capabilities || [],
-          rag_enabled: agent.ragEnabled || false,
-          temperature: agent.temperature || 0.7,
-          max_tokens: agent.maxTokens || 2000,
-          is_custom: agent.isCustom || false,
-          is_public: true,
-          status: 'active' as const,
-          tier: 1,
-          priority: 1,
-          implementation_phase: 1,
-          knowledge_domains: agent.knowledgeDomains || [],
-          business_function: agent.businessFunction || '',
-          role: agent.role || '',
-        } as unknown);
+        const userCopy = await createUserCopy(agent as any);
 
         // Convert to chat store format and add to user's agents
-        const chatAgent: Agent = {
+        const chatAgent: ChatAgent = {
           id: userCopy.id,
           name: userCopy.display_name,
           description: userCopy.description,
@@ -558,6 +504,7 @@ function ChatPageContent() {
           knowledgeDomains: userCopy.knowledge_domains,
           businessFunction: userCopy.business_function || undefined,
           role: userCopy.role || undefined,
+          tier: userCopy.tier || 1,
         };
 
         // Check if agent is already in user's chat list
@@ -572,7 +519,25 @@ function ChatPageContent() {
         // This is already a user copy, just add it directly
         const isAlreadyAdded = userAgents.some(ua => ua.id === agent.id);
         if (!isAlreadyAdded) {
-          const newUserAgents = [...userAgents, agent];
+          const chatAgent: ChatAgent = {
+            id: agent.id,
+            name: agent.display_name,
+            description: agent.description,
+            systemPrompt: agent.system_prompt,
+            model: agent.model,
+            avatar: agent.avatar,
+            color: agent.color,
+            capabilities: agent.capabilities,
+            ragEnabled: agent.rag_enabled,
+            temperature: agent.temperature,
+            maxTokens: agent.max_tokens,
+            isCustom: agent.is_custom,
+            knowledgeDomains: agent.knowledge_domains,
+            businessFunction: agent.business_function || undefined,
+            role: agent.role || undefined,
+            tier: agent.tier,
+          };
+          const newUserAgents = [...userAgents, chatAgent];
           setUserAgents(newUserAgents);
           // Persist to localStorage
           localStorage.setItem('user-chat-agents', JSON.stringify(newUserAgents));
@@ -583,7 +548,25 @@ function ChatPageContent() {
       // Fallback to old behavior if copy fails
       const isAlreadyAdded = userAgents.some(ua => ua.id === agent.id);
       if (!isAlreadyAdded) {
-        const newUserAgents = [...userAgents, agent];
+        const chatAgent: ChatAgent = {
+          id: agent.id,
+          name: agent.display_name,
+          description: agent.description,
+          systemPrompt: agent.system_prompt,
+          model: agent.model,
+          avatar: agent.avatar,
+          color: agent.color,
+          capabilities: agent.capabilities,
+          ragEnabled: agent.rag_enabled,
+          temperature: agent.temperature,
+          maxTokens: agent.max_tokens,
+          isCustom: agent.is_custom,
+          knowledgeDomains: agent.knowledge_domains,
+          businessFunction: agent.business_function || undefined,
+          role: agent.role || undefined,
+          tier: agent.tier,
+        };
+        const newUserAgents = [...userAgents, chatAgent];
         setUserAgents(newUserAgents);
         localStorage.setItem('user-chat-agents', JSON.stringify(newUserAgents));
       }
@@ -669,7 +652,7 @@ function ChatPageContent() {
                       variant="ghost"
                       size="icon"
                       className="h-6 w-6"
-                      onClick={(e) => {
+                      onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
                         e.stopPropagation();
                         // Remove agent from user's collection
                         const updatedAgents = userAgents.filter(ua => ua.id !== agent.id);
@@ -773,40 +756,40 @@ function ChatPageContent() {
   );
 
   // Initial welcome view - no agent selected
-  const renderInitialWelcome = () => (
-    <div className="flex-1 flex flex-col h-full bg-white">
-      <div className="flex-1 overflow-y-auto">
-        <div className="flex flex-col items-center justify-center h-full px-6">
-          {/* Orchestrator Avatar and Info - Show when in automatic mode */}
-          {interactionMode === 'automatic' && (
-            <div className="text-center mb-6">
-              <div className="w-20 h-20 rounded-full flex items-center justify-center bg-gradient-to-br from-blue-50 to-purple-50 border-2 border-blue-200 mx-auto mb-4 overflow-hidden relative">
-                <Image
-                  src="/icons/png/general/AI Ethics.png"
-                  alt="AI Agent Orchestrator"
-                  width={48}
-                  height={48}
-                  className="object-contain"
-                />
-              </div>
-              <h2 className="text-lg font-semibold text-gray-900 mb-1">
-                AI Agent Orchestrator
-              </h2>
-              <p className="text-sm text-gray-600 mb-3">
-                Automatic agent selection and escalation
-              </p>
-              {escalationHistory.length > 0 && (
-                <div className="text-sm text-gray-600">
-                  <Badge variant="outline" className="mr-2">
-                    Tier {currentTier === 'human' ? 'Human Expert' : currentTier}
-                  </Badge>
-                  {escalationHistory.length} escalation(s)
+  const renderInitialWelcome = () => {
+    return (
+      <div className="flex-1 flex flex-col h-full bg-white">
+        <div className="flex-1 overflow-y-auto">
+          <div className="flex flex-col items-center justify-center h-full px-6">
+            {/* Orchestrator Avatar and Info - Show when in automatic mode */}
+            {interactionMode === 'automatic' ? (
+              <div className="text-center mb-6">
+                <div className="w-20 h-20 rounded-full flex items-center justify-center bg-gradient-to-br from-blue-50 to-purple-50 border-2 border-blue-200 mx-auto mb-4 overflow-hidden relative">
+                  <Image
+                    src="/icons/png/general/AI Ethics.png"
+                    alt="AI Agent Orchestrator"
+                    width={48}
+                    height={48}
+                    className="object-contain"
+                  />
                 </div>
-              )}
-            </div>
-          )}
+                <h2 className="text-lg font-semibold text-gray-900 mb-1">
+                  AI Agent Orchestrator
+                </h2>
+                <p className="text-sm text-gray-600 mb-3">
+                  Automatic agent selection and escalation
+                </p>
+                {escalationHistory.length > 0 && (
+                  <div className="text-sm text-gray-600">
+                    <Badge variant="outline" className="mr-2">
+                      Tier {currentTier === 'human' ? 'Human Expert' : currentTier}
+                    </Badge>
+                    {escalationHistory.length} escalation(s)
+                  </div>
+                )}
+              </div>
+            ) : null}
 
-          {/* Simple welcome message */}
           <div className="text-center mb-8">
             <h1 className="text-3xl font-normal text-gray-900 mb-4">
               What's on the agenda today?
@@ -823,7 +806,6 @@ function ChatPageContent() {
           </div>
 
           {/* Agent Recommendations - Step 1 */}
-          {console.log('🔍 Rendering check - recommendedAgents.length:', recommendedAgents.length)}
           {recommendedAgents.length > 0 ? (
             <div className="w-full max-w-3xl mb-6">
               <div className="mb-4">
@@ -861,7 +843,7 @@ function ChatPageContent() {
                             {agent.avatar && (agent.avatar.startsWith('/') || agent.avatar.includes('avatar_')) ? (
                               <Image
                                 src={agent.avatar}
-                                alt={agent.display_name || agent.name}
+                                alt={agent.name}
                                 width={40}
                                 height={40}
                                 className="object-cover w-full h-full"
@@ -872,7 +854,7 @@ function ChatPageContent() {
                           </div>
                           <div className="flex-1 min-w-0">
                             <h4 className="font-semibold text-gray-900 text-sm truncate">
-                              {agent.display_name || agent.name}
+                              {agent.name}
                             </h4>
                             {agent.tier && (
                               <Badge variant="outline" className="text-xs mt-1">
@@ -931,9 +913,7 @@ function ChatPageContent() {
                 </Button>
               </div>
             </div>
-          ) : (
-            console.log('❌ Not rendering recommendations - length is 0')
-          )}
+          ) : null}
 
           {/* Single chat input - always visible */}
           {recommendedAgents.length === 0 && (
@@ -956,193 +936,195 @@ function ChatPageContent() {
       </div>
     </div>
   );
+  };
 
   // Agent-specific interface with avatar and prompt starters
-  const renderChatInterface = () => (
-    <div className="flex flex-col h-full bg-white">
-      {/* Expert Profile Header - Show when in manual mode */}
-      {interactionMode === 'manual' && selectedExpert && (
-        <div className="border-b px-6 py-3 bg-gray-50 flex-shrink-0">
-          <div className="max-w-4xl mx-auto flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full flex items-center justify-center bg-white border-2 border-gray-200 overflow-hidden flex-shrink-0">
-              {selectedExpert.avatar && (selectedExpert.avatar.startsWith('/') || selectedExpert.avatar?.includes('avatar_')) ? (
-                <Image
-                  src={selectedExpert.avatar}
-                  alt={selectedExpert.display_name || selectedExpert.name}
-                  width={40}
-                  height={40}
-                  className="object-cover w-full h-full"
-                />
-              ) : (
-                <span className="text-xl">{selectedExpert.avatar || '🤖'}</span>
-              )}
-            </div>
-            <div className="flex-1 min-w-0">
-              <h3 className="font-semibold text-gray-900 text-sm truncate">{selectedExpert.display_name || selectedExpert.name}</h3>
-              <p className="text-xs text-gray-600 truncate">{selectedExpert.description}</p>
-            </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setSelectedExpert(null)}
-              className="flex-shrink-0"
-            >
-              Change
-            </Button>
-          </div>
-        </div>
-      )}
-
-      {messages.length === 0 ? (
-        // No messages - show centered agent profile with prompt starters and input
-        <div className="flex-1 flex items-center justify-center overflow-y-auto px-6">
-          <div className="w-full max-w-4xl mx-auto py-8">
-            {/* Agent Avatar and Info */}
-            <div className="text-center mb-8">
-              <div className="w-24 h-24 rounded-full flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-50 mx-auto mb-4 overflow-hidden border-4 border-white shadow-lg">
-                {selectedAgent?.avatar && (selectedAgent.avatar.startsWith('/') || selectedAgent.avatar.includes('avatar_')) ? (
+  const renderChatInterface = () => {
+    return (
+      <div className="flex flex-col h-full bg-white">
+        {/* Expert Profile Header - Show when in manual mode */}
+        {interactionMode === 'manual' && selectedExpert && (
+          <div className="border-b px-6 py-3 bg-gray-50 flex-shrink-0">
+            <div className="max-w-4xl mx-auto flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full flex items-center justify-center bg-white border-2 border-gray-200 overflow-hidden flex-shrink-0">
+                {selectedExpert.avatar && (selectedExpert.avatar.startsWith('/') || selectedExpert.avatar?.includes('avatar_')) ? (
                   <Image
-                    src={selectedAgent.avatar}
-                    alt={selectedAgent.display_name || selectedAgent.name || "AI Assistant"}
-                    width={96}
-                    height={96}
+                    src={selectedExpert.avatar}
+                    alt={selectedExpert.name}
+                    width={40}
+                    height={40}
                     className="object-cover w-full h-full"
                   />
                 ) : (
-                  <span className="text-5xl">{selectedAgent?.avatar || '🤖'}</span>
+                  <span className="text-xl">{selectedExpert.avatar || '🤖'}</span>
                 )}
               </div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                {selectedAgent?.display_name || selectedAgent?.name || "AI Assistant"}
-              </h1>
-              <p className="text-base text-gray-600 max-w-2xl mx-auto">
-                {selectedAgent?.description || "Your AI assistant"}
-              </p>
+              <div className="flex-1 min-w-0">
+                <h3 className="font-semibold text-gray-900 text-sm truncate">{selectedExpert.name}</h3>
+                <p className="text-xs text-gray-600 truncate">{selectedExpert.description}</p>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setSelectedExpert(null)}
+                className="flex-shrink-0"
+              >
+                Change
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {messages.length === 0 ? (
+          // No messages - show centered agent profile with prompt starters and input
+          <div className="flex-1 flex items-center justify-center overflow-y-auto px-6">
+            <div className="w-full max-w-4xl mx-auto py-8">
+              {/* Agent Avatar and Info */}
+              <div className="text-center mb-8">
+                <div className="w-24 h-24 rounded-full flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-50 mx-auto mb-4 overflow-hidden border-4 border-white shadow-lg">
+                  {selectedAgent?.avatar && (selectedAgent.avatar.startsWith('/') || selectedAgent.avatar.includes('avatar_')) ? (
+                    <Image
+                      src={selectedAgent.avatar}
+                      alt={selectedAgent.name || "AI Assistant"}
+                      width={96}
+                      height={96}
+                      className="object-cover w-full h-full"
+                    />
+                  ) : (
+                    <span className="text-5xl">{selectedAgent?.avatar || '🤖'}</span>
+                  )}
+                </div>
+                <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                  {selectedAgent?.name || "AI Assistant"}
+                </h1>
+                <p className="text-base text-gray-600 max-w-2xl mx-auto">
+                  {selectedAgent?.description || "Your AI assistant"}
+                </p>
+              </div>
+
+              {/* 4 Prompt Starters Grid */}
+              {promptStarters.length > 0 && (
+                <div className="grid grid-cols-2 gap-3 mb-6">
+                  {promptStarters.slice(0, 4).map((prompt, index) => (
+                    <button
+                      key={index}
+                      onClick={() => {
+                        setInput(prompt.text);
+                        setTimeout(() => handleSendMessage(), 100);
+                      }}
+                      className="p-4 text-left border-2 border-gray-200 rounded-xl hover:border-blue-300 hover:bg-blue-50/50 transition-all duration-200 group"
+                    >
+                      <div className="text-sm text-gray-700 group-hover:text-gray-900 line-clamp-3 font-medium">
+                        {prompt.text}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {/* Input component centered with content */}
+              <div className="mt-6">
+                <ChatInput
+                  value={input}
+                  onChange={setInput}
+                  onSend={handleSendMessage}
+                  onKeyPress={handleKeyPress}
+                  isLoading={isLoading}
+                  selectedAgent={selectedAgent}
+                  enableVoice={true}
+                  selectedModel={selectedModel || undefined}
+                  onModelChange={setSelectedModel}
+                  onStop={stopGeneration}
+                />
+              </div>
+            </div>
+          </div>
+        ) : (
+          // Has messages - show messages area with input at bottom
+          <>
+            <div className="flex-1 overflow-y-auto">
+              <div className="max-w-4xl mx-auto px-6 py-6">
+                <ChatMessages
+                  messages={messages}
+                  liveReasoning={liveReasoning}
+                  isReasoningActive={isReasoningActive}
+                />
+              </div>
+              <div ref={messagesEndRef} />
             </div>
 
-            {/* 4 Prompt Starters Grid */}
-            {promptStarters.length > 0 && (
-              <div className="grid grid-cols-2 gap-3 mb-6">
-                {promptStarters.slice(0, 4).map((prompt, index) => (
-                  <button
-                    key={index}
-                    onClick={() => {
-                      setInput(prompt.text);
-                      setTimeout(() => handleSendMessage(), 100);
-                    }}
-                    className="p-4 text-left border-2 border-gray-200 rounded-xl hover:border-blue-300 hover:bg-blue-50/50 transition-all duration-200 group"
-                  >
-                    <div className="text-sm text-gray-700 group-hover:text-gray-900 line-clamp-3 font-medium">
-                      {prompt.text}
-                    </div>
-                  </button>
-                ))}
+            {/* Agent Recommendations overlay - Step 1 */}
+            {recommendedAgents.length > 0 && (
+              <div className="absolute inset-0 bg-white/95 backdrop-blur-sm z-50 flex items-center justify-center p-6">
+                <div className="w-full max-w-5xl">
+                  <div className="mb-4">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                      Which expert would you like to consult?
+                    </h3>
+                    <p className="text-sm text-gray-600">
+                      Your question: &quot;{pendingMessage}&quot;
+                    </p>
+                  </div>
+
+                  <AgentCardGrid columns={3} layout="horizontal" className="gap-4">
+                    {recommendedAgents.map((agent, index) => (
+                      <EnhancedAgentCard
+                        key={agent.id}
+                        agent={agent}
+                        isBestMatch={index === 0}
+                        onClick={() => handleSelectRecommendedAgent(agent)}
+                        showReasoning={false}
+                        showTier={true}
+                        size="sm"
+                      />
+                    ))}
+                  </AgentCardGrid>
+
+                  <div className="mt-4 text-center">
+                    <Button
+                      variant="ghost"
+                      onClick={() => {
+                        setRecommendedAgents([]);
+                        setPendingMessage('');
+                        setInput(pendingMessage);
+                      }}
+                      className="text-sm text-gray-600"
+                    >
+                      Cancel and edit question
+                    </Button>
+                  </div>
+                </div>
               </div>
             )}
 
-            {/* Input component centered with content */}
-            <div className="mt-6">
-              <ChatInput
-                value={input}
-                onChange={setInput}
-                onSend={handleSendMessage}
-                onKeyPress={handleKeyPress}
-                isLoading={isLoading}
-                selectedAgent={selectedAgent}
-                enableVoice={true}
-                selectedModel={selectedModel || undefined}
-                onModelChange={setSelectedModel}
-                onStop={stopGeneration}
-              />
-            </div>
-          </div>
-        </div>
-      ) : (
-        // Has messages - show messages area with input at bottom
-        <>
-          <div className="flex-1 overflow-y-auto">
-            <div className="max-w-4xl mx-auto px-6 py-6">
-              <ChatMessages
-                messages={messages}
-                liveReasoning={liveReasoning}
-                isReasoningActive={isReasoningActive}
-              />
-            </div>
-            <div ref={messagesEndRef} />
-          </div>
-
-          {/* Agent Recommendations overlay - Step 1 */}
-          {console.log('🎨 Chat interface - recommendedAgents.length:', recommendedAgents.length)}
-          {recommendedAgents.length > 0 && (
-            <div className="absolute inset-0 bg-white/95 backdrop-blur-sm z-50 flex items-center justify-center p-6">
-              <div className="w-full max-w-5xl">
-                <div className="mb-4">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                    Which expert would you like to consult?
-                  </h3>
-                  <p className="text-sm text-gray-600">
-                    Your question: &quot;{pendingMessage}&quot;
-                  </p>
-                </div>
-
-                <AgentCardGrid columns={3} layout="horizontal" className="gap-4">
-                  {recommendedAgents.map((agent, index) => (
-                    <EnhancedAgentCard
-                      key={agent.id}
-                      agent={agent}
-                      isBestMatch={index === 0}
-                      onClick={() => handleSelectRecommendedAgent(agent)}
-                      showReasoning={false}
-                      showTier={true}
-                      size="sm"
-                    />
-                  ))}
-                </AgentCardGrid>
-
-                <div className="mt-4 text-center">
-                  <Button
-                    variant="ghost"
-                    onClick={() => {
-                      setRecommendedAgents([]);
-                      setPendingMessage('');
-                      setInput(pendingMessage);
-                    }}
-                    className="text-sm text-gray-600"
-                  >
-                    Cancel and edit question
-                  </Button>
-                </div>
+            {/* Input component at bottom when there are messages */}
+            <div className="flex-shrink-0 border-t bg-white">
+              <div className="max-w-4xl mx-auto px-6 py-3">
+                {isSelectingAgent && (
+                  <div className="flex items-center justify-center gap-2 text-sm text-blue-600 mb-2">
+                    <Zap className="w-4 h-4 animate-pulse" />
+                    <span>Finding the best experts for your question...</span>
+                  </div>
+                )}
+                <ChatInput
+                  value={input}
+                  onChange={setInput}
+                  onSend={handleSendMessage}
+                  onKeyPress={handleKeyPress}
+                  isLoading={isLoading || isSelectingAgent}
+                  selectedAgent={selectedAgent}
+                  enableVoice={true}
+                  selectedModel={selectedModel || undefined}
+                  onModelChange={setSelectedModel}
+                  onStop={stopGeneration}
+                />
               </div>
             </div>
-          )}
-
-          {/* Input component at bottom when there are messages */}
-          <div className="flex-shrink-0 border-t bg-white">
-            <div className="max-w-4xl mx-auto px-6 py-3">
-              {isSelectingAgent && (
-                <div className="flex items-center justify-center gap-2 text-sm text-blue-600 mb-2">
-                  <Zap className="w-4 h-4 animate-pulse" />
-                  <span>Finding the best experts for your question...</span>
-                </div>
-              )}
-              <ChatInput
-                value={input}
-                onChange={setInput}
-                onSend={handleSendMessage}
-                onKeyPress={handleKeyPress}
-                isLoading={isLoading || isSelectingAgent}
-                selectedAgent={selectedAgent}
-                enableVoice={true}
-                selectedModel={selectedModel || undefined}
-                onModelChange={setSelectedModel}
-                onStop={stopGeneration}
-              />
-            </div>
-          </div>
-        </>
-      )}
-    </div>
-  );
+          </>
+        )}
+      </div>
+    );
+  };
 
   return (
     <div className="flex flex-col h-full">
@@ -1177,58 +1159,39 @@ function ChatPageContent() {
           {/* Content - Show initial welcome, agent selection, or chat interface */}
           <div className="flex-1 overflow-hidden">
             {(() => {
-              // Debug logging
-              console.log('🔍 Render Decision:', {
-                interactionMode,
-                selectedExpert: !!selectedExpert,
-                messagesLength: messages.length,
-                useDirectLLM,
-                hasUserSelectedAgent,
-                selectedAgent: !!selectedAgent
-              });
-
               // Simplified dual-mode logic (prioritize new system)
               if (interactionMode === 'manual') {
                 // In manual mode, show agent profile when agent is selected
                 if (selectedAgent) {
-                  console.log('✅ Rendering: Manual mode with selected agent - Chat Interface with Agent Profile');
                   return renderChatInterface();
                 } else if (selectedExpert) {
-                  console.log('✅ Rendering: Manual mode with expert - Chat Interface');
                   return renderChatInterface();
                 } else {
-                  console.log('✅ Rendering: Manual mode no agent - Initial Welcome with Agents Board');
                   return renderInitialWelcome();
                 }
               }
 
               if (interactionMode === 'automatic') {
                 if (messages.length > 0) {
-                  console.log('✅ Rendering: Automatic mode with messages - Chat Interface');
                   return renderChatInterface();
                 } else {
-                  console.log('✅ Rendering: Automatic mode no messages - Initial Welcome');
                   return renderInitialWelcome();
                 }
               }
 
               // Legacy fallbacks (should rarely be hit now)
               if (!useDirectLLM && !hasUserSelectedAgent) {
-                console.log('⚠️ Legacy: Agent mode no agent - Initial Welcome');
                 return renderInitialWelcome();
               }
 
               if (messages.length > 0) {
-                console.log('⚠️ Legacy: Has messages - Chat Interface');
                 return renderChatInterface();
               }
 
               if (selectedAgent && hasUserSelectedAgent) {
-                console.log('⚠️ Legacy: Agent selected - Chat Interface');
                 return renderChatInterface();
               }
 
-              console.log('⚠️ Fallback: Agent Selection');
               return renderAgentSelection();
             })()}
           </div>

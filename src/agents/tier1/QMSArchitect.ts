@@ -13,7 +13,7 @@ import {
   ExecutionContext
 } from '@/digital-health-agent.types';
 
-import { DigitalHealthAgent } from '../core/DigitalHealthAgent';
+import { DigitalHealthAgent, AgentConfig } from '../core/DigitalHealthAgent';
 
 export class QMSArchitect extends DigitalHealthAgent {
   constructor() {
@@ -72,7 +72,19 @@ You have 15+ years implementing QMS for medical device companies, including FDA 
       }
     };
 
-    super(config);
+    // Convert DigitalHealthAgentConfig to AgentConfig
+    const agentConfig: AgentConfig = {
+      id: config.name,
+      name: config.name,
+      display_name: config.display_name,
+      description: "Expert in Quality Management Systems for digital health products",
+      capabilities: config.capabilities_list,
+      model: config.model,
+      knowledge_domains: ["qms", "quality", "iso_13485", "design_controls"],
+      tier: config.metadata.tier
+    };
+    
+    super(agentConfig);
   }
 
   /**
@@ -89,10 +101,9 @@ You have 15+ years implementing QMS for medical device companies, including FDA 
     },
     context?: ExecutionContext
   ): Promise<AgentResponse> {
-    return await this.executePrompt(
+    return await this.execute(
       "Design QMS Architecture",
-      qmsData,
-      context
+      { ...qmsData, ...context }
     );
   }
 
@@ -111,10 +122,9 @@ You have 15+ years implementing QMS for medical device companies, including FDA 
     },
     context?: ExecutionContext
   ): Promise<AgentResponse> {
-    return await this.executePrompt(
+    return await this.execute(
       "Create Risk Management Plan",
-      riskData,
-      context
+      { ...riskData, ...context }
     );
   }
 
@@ -132,10 +142,9 @@ You have 15+ years implementing QMS for medical device companies, including FDA 
     },
     context?: ExecutionContext
   ): Promise<AgentResponse> {
-    return await this.executePrompt(
+    return await this.execute(
       "Develop Design Controls",
-      designData,
-      context
+      { ...designData, ...context }
     );
   }
 
@@ -153,10 +162,9 @@ You have 15+ years implementing QMS for medical device companies, including FDA 
     },
     context?: ExecutionContext
   ): Promise<AgentResponse> {
-    return await this.executePrompt(
+    return await this.execute(
       "Build CAPA System",
-      capaData,
-      context
+      { ...capaData, ...context }
     );
   }
 

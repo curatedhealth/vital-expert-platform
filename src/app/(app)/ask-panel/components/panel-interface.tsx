@@ -14,10 +14,10 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ChatMessages } from '@/shared/components/chat/chat-messages';
-import { EnhancedChatInput } from '@/shared/components/chat/enhanced-chat-input';
+import { ChatMessages } from '@/features/chat/components/chat-messages';
+import { EnhancedChatInput } from '@/features/chat/components/enhanced-chat-input';
 
-import { usePanelStore } from '../services/panel-store';
+import { __usePanelStore as usePanelStore } from '../services/panel-store';
 
 interface PanelInterfaceProps {
   panel: unknown;
@@ -35,7 +35,7 @@ export function PanelInterface({
   const { sendMessageToPanel, isLoading } = usePanelStore();
 
   // Show welcome screen if no messages
-  const showWelcome = !panel.messages || panel.messages.length === 0;
+  const showWelcome = !(panel as any).messages || (panel as any).messages.length === 0;
 
   // Get agent avatar
   const getAgentAvatar = (expert: any) => {
@@ -84,8 +84,8 @@ export function PanelInterface({
                 <Users className="h-5 w-5 text-purple-600" />
               </div>
               <div>
-                <h1 className="text-xl font-semibold">{panel.name}</h1>
-                <p className="text-sm text-muted-foreground">{panel.description}</p>
+                <h1 className="text-xl font-semibold">{(panel as any).name}</h1>
+                <p className="text-sm text-muted-foreground">{(panel as any).description}</p>
               </div>
             </div>
           </div>
@@ -94,35 +94,35 @@ export function PanelInterface({
             {/* Panel Members */}
             <div className="flex items-center gap-2">
               <div className="flex -space-x-2">
-                {panel.members.slice(0, 4).map((member: unknown, index: number) => (
+                {(panel as any).members.slice(0, 4).map((member: unknown, index: number) => (
                   <Avatar key={index} className="h-8 w-8 border-2 border-background">
-                    <AvatarImage src={member.agent.avatar?.startsWith('http') ? member.agent.avatar : undefined} />
+                    <AvatarImage src={(member as any).agent.avatar?.startsWith('http') ? (member as any).agent.avatar : undefined} />
                     <AvatarFallback className="text-xs">
-                      {typeof getAgentAvatar(member.agent) === 'string' && getAgentAvatar(member.agent).length <= 2
-                        ? getAgentAvatar(member.agent)
-                        : member.agent.name.split(' ').map((n: string) => n[0]).join('')
+                      {typeof getAgentAvatar((member as any).agent) === 'string' && getAgentAvatar((member as any).agent).length <= 2
+                        ? getAgentAvatar((member as any).agent)
+                        : (member as any).agent.name.split(' ').map((n: string) => n[0]).join('')
                       }
                     </AvatarFallback>
                   </Avatar>
                 ))}
-                {panel.members.length > 4 && (
+                {(panel as any).members.length > 4 && (
                   <div className="h-8 w-8 rounded-full bg-muted border-2 border-background flex items-center justify-center">
                     <span className="text-xs text-muted-foreground">
-                      +{panel.members.length - 4}
+                      +{(panel as any).members.length - 4}
                     </span>
                   </div>
                 )}
               </div>
               <span className="text-sm text-muted-foreground">
-                {panel.members.length} experts
+                {(panel as any).members.length} experts
               </span>
             </div>
 
             <Badge
-              variant={panel.status === 'active' ? 'default' : 'secondary'}
+              variant={(panel as any).status === 'active' ? 'default' : 'secondary'}
               className="capitalize"
             >
-              {panel.status}
+              {(panel as any).status}
             </Badge>
 
             <Button variant="outline" size="icon">
@@ -156,28 +156,28 @@ export function PanelInterface({
                   <div>
                     <h4 className="font-semibold mb-3">Panel Members</h4>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      {panel.members.map((member: unknown, index: number) => (
+                      {(panel as any).members.map((member: unknown, index: number) => (
                         <div
                           key={index}
                           className="flex items-center gap-3 p-3 border rounded-lg"
                         >
                           <Avatar className="h-10 w-10">
-                            <AvatarImage src={member.agent.avatar?.startsWith('http') ? member.agent.avatar : undefined} />
+                            <AvatarImage src={(member as any).agent.avatar?.startsWith('http') ? (member as any).agent.avatar : undefined} />
                             <AvatarFallback>
-                              {typeof getAgentAvatar(member.agent) === 'string' && getAgentAvatar(member.agent).length <= 2
-                                ? getAgentAvatar(member.agent)
-                                : member.agent.name.split(' ').map((n: string) => n[0]).join('')
+                              {typeof getAgentAvatar((member as any).agent) === 'string' && getAgentAvatar((member as any).agent).length <= 2
+                                ? getAgentAvatar((member as any).agent)
+                                : (member as any).agent.name.split(' ').map((n: string) => n[0]).join('')
                               }
                             </AvatarFallback>
                           </Avatar>
                           <div className="flex-1 min-w-0">
-                            <p className="font-medium text-sm">{member.agent.name}</p>
+                            <p className="font-medium text-sm">{(member as any).agent.name}</p>
                             <p className="text-xs text-muted-foreground">
-                              {member.agent.businessFunction?.replace(/_/g, ' ')} • {member.role}
+                              {(member as any).agent.businessFunction?.replace(/_/g, ' ')} • {(member as any).role}
                             </p>
                           </div>
                           <Badge variant="outline" className="text-xs">
-                            Weight: {member.weight}
+                            Weight: {(member as any).weight}
                           </Badge>
                         </div>
                       ))}
@@ -185,18 +185,18 @@ export function PanelInterface({
                   </div>
 
                   {/* Panel Capabilities */}
-                  {panel.metadata && (
+                  {(panel as any).metadata && (
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-muted/50 rounded-lg">
                       <div className="text-center">
-                        <div className="text-2xl font-bold text-primary">{panel.members.length}</div>
+                        <div className="text-2xl font-bold text-primary">{(panel as any).members.length}</div>
                         <div className="text-xs text-muted-foreground">Expert Members</div>
                       </div>
                       <div className="text-center">
-                        <div className="text-2xl font-bold text-primary">{(panel.metadata.consensusThreshold * 100).toFixed(0)}%</div>
+                        <div className="text-2xl font-bold text-primary">{((panel as any).metadata.consensusThreshold * 100).toFixed(0)}%</div>
                         <div className="text-xs text-muted-foreground">Consensus Threshold</div>
                       </div>
                       <div className="text-center">
-                        <div className="text-2xl font-bold text-primary capitalize">{panel.metadata.complexity}</div>
+                        <div className="text-2xl font-bold text-primary capitalize">{(panel as any).metadata.complexity}</div>
                         <div className="text-xs text-muted-foreground">Complexity Level</div>
                       </div>
                     </div>
@@ -232,8 +232,7 @@ export function PanelInterface({
           /* Chat Messages */
           <div className="flex-1 overflow-hidden">
             <ChatMessages
-              messages={panel.messages}
-              isTyping={isLoading}
+              messages={(panel as any).messages}
             />
           </div>
         )}
@@ -253,7 +252,7 @@ export function PanelInterface({
               <div className="flex items-center gap-4">
                 <span className="flex items-center gap-1">
                   <Users className="h-3 w-3" />
-                  {panel.members.length} experts will collaborate on your response
+                  {(panel as any).members.length} experts will collaborate on your response
                 </span>
                 <span className="flex items-center gap-1">
                   <Clock className="h-3 w-3" />

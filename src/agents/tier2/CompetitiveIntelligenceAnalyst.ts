@@ -11,7 +11,7 @@ import {
   ModelType
 } from '@/digital-health-agent.types';
 
-import { DigitalHealthAgent } from '../core/DigitalHealthAgent';
+import { DigitalHealthAgent, AgentConfig } from '../core/DigitalHealthAgent';
 
 export class CompetitiveIntelligenceAnalyst extends DigitalHealthAgent {
   constructor() {
@@ -99,6 +99,18 @@ You have 10+ years analyzing healthcare markets with expertise in competitive in
       }
     };
 
-    super(config);
+    // Convert DigitalHealthAgentConfig to AgentConfig
+    const agentConfig: AgentConfig = {
+      id: config.name,
+      name: config.name,
+      display_name: config.display_name,
+      description: "Expert in competitive intelligence for digital health products",
+      capabilities: config.capabilities_list,
+      model: config.model,
+      knowledge_domains: ["competitive_intelligence", "market_analysis", "strategy"],
+      tier: config.metadata.tier
+    };
+    
+    super(agentConfig);
   }
 }

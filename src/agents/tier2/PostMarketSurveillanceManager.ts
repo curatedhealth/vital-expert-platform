@@ -11,7 +11,7 @@ import {
   ModelType
 } from '@/digital-health-agent.types';
 
-import { DigitalHealthAgent } from '../core/DigitalHealthAgent';
+import { DigitalHealthAgent, AgentConfig } from '../core/DigitalHealthAgent';
 
 export class PostMarketSurveillanceManager extends DigitalHealthAgent {
   constructor() {
@@ -98,6 +98,18 @@ You have 12+ years managing post-market surveillance programs with expertise in 
       }
     };
 
-    super(config);
+    // Convert DigitalHealthAgentConfig to AgentConfig
+    const agentConfig: AgentConfig = {
+      id: config.name,
+      name: config.name,
+      display_name: config.display_name,
+      description: "Expert in post-market surveillance for digital health products",
+      capabilities: config.capabilities_list,
+      model: config.model,
+      knowledge_domains: ["post_market_surveillance", "safety_monitoring", "regulatory"],
+      tier: config.metadata.tier
+    };
+    
+    super(agentConfig);
   }
 }

@@ -18,6 +18,7 @@ interface PopoverContentProps {
   align?: "start" | "center" | "end"
 }
 
+const PopoverContext = React.createContext<{
   isOpen: boolean
   setIsOpen: (open: boolean) => void
 } | null>(null)
@@ -35,9 +36,11 @@ export const __Popover = ({ children }: PopoverProps) => {
 }
 
 export const __PopoverTrigger = ({ children, asChild = false, onClick }: PopoverTriggerProps) => {
+  const context = React.useContext(PopoverContext)
 
   if (!context) throw new Error("PopoverTrigger must be used within Popover")
 
+  const handleClick = () => {
     context.setIsOpen(!context.isOpen)
     onClick?.()
   }

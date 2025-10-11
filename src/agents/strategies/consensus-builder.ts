@@ -3,7 +3,22 @@
  * Implements advanced consensus building algorithms for agent conflict resolution
  */
 
-import type { AgentResponse } from '../../types/agent.types';
+// Define AgentResponse interface locally for consensus building
+interface AgentResponse {
+  success: boolean;
+  content?: string;
+  data?: Record<string, unknown>;
+  error?: string;
+  execution_time: number;
+  validation_status: "passed" | "failed" | "warning";
+  confidence?: number; // Add confidence property
+  metadata?: {
+    agentName: string;
+    capabilities: string[];
+    responseTime: number;
+  };
+  timestamp: Date;
+}
 
 import type { Conflict } from '../core/conflict-resolver';
 
@@ -359,7 +374,7 @@ export class ConsensusBuilder {
     
     // Extract keywords from all responses
     const allKeywords = responses.flatMap(response => 
-      this.extractKeywords(response.content)
+      this.extractKeywords(response.content || '')
     );
     
     // Count keyword frequency
@@ -383,8 +398,8 @@ export class ConsensusBuilder {
     ];
     
     for (const [positive, negative] of opposites) {
-      const hasPositive = responses.some(r => r.content.toLowerCase().includes(positive));
-      const hasNegative = responses.some(r => r.content.toLowerCase().includes(negative));
+      const hasPositive = responses.some(r => (r.content || '').toLowerCase().includes(positive));
+      const hasNegative = responses.some(r => (r.content || '').toLowerCase().includes(negative));
       
       if (hasPositive && hasNegative) {
         contradictions.push(`${positive}/${negative}`);
@@ -415,7 +430,7 @@ export class ConsensusBuilder {
   }
 
   private extractKeyElements(response: AgentResponse): string[] {
-    return this.extractKeywords(response.content);
+    return this.extractKeywords(response.content || '');
   }
 
   private extractKeywords(text: string): string[] {
@@ -466,8 +481,8 @@ export class ConsensusBuilder {
 
   private calculateSemanticSimilarity(response1: AgentResponse, response2: AgentResponse): number {
     // Simple similarity calculation based on common words
-    const words1 = this.extractKeywords(response1.content);
-    const words2 = this.extractKeywords(response2.content);
+    const words1 = this.extractKeywords(response1.content || '');
+    const words2 = this.extractKeywords(response2.content || '');
     
     const set1 = new Set(words1);
     const set2 = new Set(words2);

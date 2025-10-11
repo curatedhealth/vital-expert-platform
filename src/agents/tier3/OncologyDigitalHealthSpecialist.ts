@@ -11,7 +11,7 @@ import {
   ModelType
 } from '@/digital-health-agent.types';
 
-import { DigitalHealthAgent } from '../core/DigitalHealthAgent';
+import { DigitalHealthAgent, AgentConfig } from '../core/DigitalHealthAgent';
 
 export class OncologyDigitalHealthSpecialist extends DigitalHealthAgent {
   constructor() {
@@ -99,6 +99,18 @@ You have 12+ years in oncology with combined expertise in clinical oncology, hea
       }
     };
 
-    super(config);
+    // Convert DigitalHealthAgentConfig to AgentConfig
+    const agentConfig: AgentConfig = {
+      id: config.name,
+      name: config.name,
+      display_name: config.display_name,
+      description: "Expert in oncology digital health products",
+      capabilities: config.capabilities_list,
+      model: config.model,
+      knowledge_domains: ["oncology", "digital_health", "cancer_care"],
+      tier: config.metadata.tier
+    };
+    
+    super(agentConfig);
   }
 }

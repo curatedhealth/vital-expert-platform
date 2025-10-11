@@ -376,17 +376,19 @@ export const __useModelSelection = (defaultModel = 'gpt-4o-mini') => {
 
   // Load from localStorage on mount
   useEffect(() => {
-
+    const saved = localStorage.getItem('vital-ai-selected-model');
     if (saved && AVAILABLE_MODELS.find(m => m.id === saved)) {
       setSelectedModel(saved);
     }
   }, []);
 
   // Save to localStorage when changed
-
+  const handleModelChange = (modelId: string) => {
     setSelectedModel(modelId);
     localStorage.setItem('vital-ai-selected-model', modelId);
   };
+
+  const currentModel = AVAILABLE_MODELS.find(m => m.id === selectedModel) || AVAILABLE_MODELS[0];
 
   return {
     selectedModel,

@@ -64,6 +64,7 @@ const nextConfig = {
   // Enable TypeScript checking for production builds
   typescript: {
     ignoreBuildErrors: false,
+    tsconfigPath: './tsconfig.deploy.json',
   },
   // Enable ESLint during build
   eslint: {

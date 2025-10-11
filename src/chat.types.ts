@@ -3,7 +3,7 @@
  * World-class chat system with medical specialization
  */
 
-export type const AgentType =  'digital-therapeutics-expert'
+export type AgentType =  'digital-therapeutics-expert'
   | 'mhealth-innovation-architect'
   | 'ai-ml-clinical-specialist'
   | 'fda-regulatory-strategist'
@@ -35,9 +35,9 @@ export type const AgentType =  'digital-therapeutics-expert'
   | 'digital-therapeutics'
   | 'biostatistics';
 
-export type const MessageRole = user' | 'assistant' | 'system' | AgentType;
+export type MessageRole = 'user' | 'assistant' | 'system' | AgentType;
 
-export type const MessageStatus =  'composing'
+export type MessageStatus =  'composing'
   | 'sending'
   | 'sent'
   | 'streaming'
@@ -46,7 +46,7 @@ export type const MessageStatus =  'composing'
   | 'error'
   | 'cancelled';
 
-export type const LoadingStage =  'routing'
+export type LoadingStage =  'routing'
   | 'analyzing'
   | 'researching'
   | 'synthesizing'
@@ -252,7 +252,7 @@ export interface ChatSettings {
   language?: string;
 }
 
-export type const ArtifactType =  'clinical-protocol'
+export type ArtifactType =  'clinical-protocol'
   | 'regulatory-document'
   | 'research-proposal'
   | 'data-analysis'
@@ -260,7 +260,7 @@ export type const ArtifactType =  'clinical-protocol'
   | 'visualization'
   | 'report';
 
-export type const ExportFormat =  'pdf'
+export type ExportFormat =  'pdf'
   | 'docx'
   | 'xlsx'
   | 'csv'
@@ -341,7 +341,7 @@ export interface PerformanceMetrics {
 }
 
 // Event types for WebSocket communication
-export type const ChatEvent =  'message.sent'
+export type ChatEvent =  'message.sent'
   | 'message.received'
   | 'agent.thinking'
   | 'agent.response'

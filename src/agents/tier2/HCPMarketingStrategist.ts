@@ -11,7 +11,7 @@ import {
   ModelType
 } from '@/digital-health-agent.types';
 
-import { DigitalHealthAgent } from '../core/DigitalHealthAgent';
+import { DigitalHealthAgent, AgentConfig } from '../core/DigitalHealthAgent';
 
 export class HCPMarketingStrategist extends DigitalHealthAgent {
   constructor() {
@@ -123,7 +123,19 @@ You have 12+ years developing go-to-market strategies for medical devices with e
       }
     };
 
-    super(config);
+    // Convert DigitalHealthAgentConfig to AgentConfig
+    const agentConfig: AgentConfig = {
+      id: config.name,
+      name: config.name,
+      display_name: config.display_name,
+      description: "Expert in HCP marketing strategy for digital health products",
+      capabilities: config.capabilities_list,
+      model: config.model,
+      knowledge_domains: ["hcp_marketing", "digital_health", "strategy"],
+      tier: config.metadata.tier
+    };
+    
+    super(agentConfig);
   }
 
 }

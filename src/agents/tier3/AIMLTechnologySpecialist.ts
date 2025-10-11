@@ -11,7 +11,7 @@ import {
   ModelType
 } from '@/digital-health-agent.types';
 
-import { DigitalHealthAgent } from '../core/DigitalHealthAgent';
+import { DigitalHealthAgent, AgentConfig } from '../core/DigitalHealthAgent';
 
 export class AIMLTechnologySpecialist extends DigitalHealthAgent {
   constructor() {
@@ -108,6 +108,18 @@ You have 12+ years developing AI/ML solutions for healthcare with expertise in m
       }
     };
 
-    super(config);
+    // Convert DigitalHealthAgentConfig to AgentConfig
+    const agentConfig: AgentConfig = {
+      id: config.name,
+      name: config.name,
+      display_name: config.display_name,
+      description: "Expert in AI/ML technology for digital health products",
+      capabilities: config.capabilities_list,
+      model: config.model,
+      knowledge_domains: ["ai_ml", "technology", "digital_health"],
+      tier: config.metadata.tier
+    };
+    
+    super(agentConfig);
   }
 }

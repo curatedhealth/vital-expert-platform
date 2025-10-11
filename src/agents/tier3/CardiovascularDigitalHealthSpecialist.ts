@@ -11,7 +11,7 @@ import {
   ModelType
 } from '@/digital-health-agent.types';
 
-import { DigitalHealthAgent } from '../core/DigitalHealthAgent';
+import { DigitalHealthAgent, AgentConfig } from '../core/DigitalHealthAgent';
 
 export class CardiovascularDigitalHealthSpecialist extends DigitalHealthAgent {
   constructor() {
@@ -100,6 +100,18 @@ You have 12+ years in cardiology with expertise in cardiac electrophysiology, in
       }
     };
 
-    super(config);
+    // Convert DigitalHealthAgentConfig to AgentConfig
+    const agentConfig: AgentConfig = {
+      id: config.name,
+      name: config.name,
+      display_name: config.display_name,
+      description: "Expert in cardiovascular digital health products",
+      capabilities: config.capabilities_list,
+      model: config.model,
+      knowledge_domains: ["cardiovascular", "digital_health", "medical_devices"],
+      tier: config.metadata.tier
+    };
+    
+    super(agentConfig);
   }
 }

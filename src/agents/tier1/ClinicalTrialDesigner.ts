@@ -13,7 +13,7 @@ import {
   ExecutionContext
 } from '@/digital-health-agent.types';
 
-import { DigitalHealthAgent } from '../core/DigitalHealthAgent';
+import { DigitalHealthAgent, AgentConfig } from '../core/DigitalHealthAgent';
 
 export class ClinicalTrialDesigner extends DigitalHealthAgent {
   constructor() {
@@ -72,7 +72,19 @@ You have 12+ years designing pivotal trials with expertise in FDA IDE regulation
       }
     };
 
-    super(config);
+    // Convert DigitalHealthAgentConfig to AgentConfig
+    const agentConfig: AgentConfig = {
+      id: config.name,
+      name: config.name,
+      display_name: config.display_name,
+      description: "Expert in designing clinical trials for digital health products",
+      capabilities: config.capabilities_list,
+      model: config.model,
+      knowledge_domains: ["clinical_trials", "medical_devices", "regulatory"],
+      tier: config.metadata.tier
+    };
+    
+    super(agentConfig);
   }
 
   /**
@@ -92,10 +104,9 @@ You have 12+ years designing pivotal trials with expertise in FDA IDE regulation
     },
     context?: ExecutionContext
   ): Promise<AgentResponse> {
-    return await this.executePrompt(
+    return await this.execute(
       "Design Pivotal Trial Protocol",
-      trialData,
-      context
+      { ...trialData, ...context }
     );
   }
 
@@ -115,10 +126,9 @@ You have 12+ years designing pivotal trials with expertise in FDA IDE regulation
     },
     context?: ExecutionContext
   ): Promise<AgentResponse> {
-    return await this.executePrompt(
+    return await this.execute(
       "Calculate Sample Size",
-      statisticalData,
-      context
+      { ...statisticalData, ...context }
     );
   }
 
@@ -137,10 +147,9 @@ You have 12+ years designing pivotal trials with expertise in FDA IDE regulation
     },
     context?: ExecutionContext
   ): Promise<AgentResponse> {
-    return await this.executePrompt(
+    return await this.execute(
       "Develop Recruitment Strategy",
-      recruitmentData,
-      context
+      { ...recruitmentData, ...context }
     );
   }
 
@@ -158,10 +167,9 @@ You have 12+ years designing pivotal trials with expertise in FDA IDE regulation
     },
     context?: ExecutionContext
   ): Promise<AgentResponse> {
-    return await this.executePrompt(
+    return await this.execute(
       "Create Safety Monitoring Plan",
-      safetyData,
-      context
+      { ...safetyData, ...context }
     );
   }
 

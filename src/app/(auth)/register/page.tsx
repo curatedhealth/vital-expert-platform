@@ -97,7 +97,7 @@ export default function RegisterPage() {
                   type="text"
                   placeholder="Enter your full name"
                   value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFullName(e.target.value)}
                   required
                   className="h-12 border-gray-200 focus:border-blue-500 focus:ring-blue-500/20"
                 />
@@ -110,7 +110,7 @@ export default function RegisterPage() {
                   type="email"
                   placeholder="Enter your email"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
                   required
                   className="h-12 border-gray-200 focus:border-blue-500 focus:ring-blue-500/20"
                 />
@@ -124,7 +124,7 @@ export default function RegisterPage() {
                     type={showPassword ? 'text' : 'password'}
                     placeholder="Create a password"
                     value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
                     required
                     className="h-12 border-gray-200 focus:border-blue-500 focus:ring-blue-500/20 pr-12"
                   />
@@ -152,7 +152,7 @@ export default function RegisterPage() {
                     type={showConfirmPassword ? 'text' : 'password'}
                     placeholder="Confirm your password"
                     value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setConfirmPassword(e.target.value)}
                     required
                     className="h-12 border-gray-200 focus:border-blue-500 focus:ring-blue-500/20 pr-12"
                   />

@@ -240,7 +240,7 @@ export default function PatternLibrary() {
                         size="sm"
                         variant="outline"
                         className="w-full"
-                        onClick={(e) => {
+                        onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
                           e.stopPropagation();
                           handleExportPattern(pattern);
                         }}
@@ -283,7 +283,7 @@ export default function PatternLibrary() {
                           size="sm"
                           variant="outline"
                           className="w-full"
-                          onClick={(e) => {
+                          onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
                             e.stopPropagation();
                             handleExportPattern(pattern);
                           }}
@@ -382,7 +382,7 @@ export default function PatternLibrary() {
                   <Input
                     placeholder="e.g., Expert Jury"
                     value={newPattern.name}
-                    onChange={(e) => setNewPattern(prev => ({ ...prev, name: e.target.value }))}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewPattern(prev => ({ ...prev, name: e.target.value }))}
                   />
                 </div>
                 <div>
@@ -390,7 +390,7 @@ export default function PatternLibrary() {
                   <Input
                     placeholder="🎯"
                     value={newPattern.icon}
-                    onChange={(e) => setNewPattern(prev => ({ ...prev, icon: e.target.value }))}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewPattern(prev => ({ ...prev, icon: e.target.value }))}
                     maxLength={2}
                   />
                 </div>
@@ -399,7 +399,7 @@ export default function PatternLibrary() {
                   <Input
                     placeholder="Describe how this pattern works..."
                     value={newPattern.description}
-                    onChange={(e) => setNewPattern(prev => ({ ...prev, description: e.target.value }))}
+                    onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setNewPattern(prev => ({ ...prev, description: e.target.value }))}
                   />
                 </div>
               </div>

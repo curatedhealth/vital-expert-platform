@@ -222,7 +222,7 @@ function KnowledgePageContent() {
                 <Input
                   placeholder="Search documents..."
                   value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
                   className="pl-8"
                 />
               </div>
@@ -230,7 +230,7 @@ function KnowledgePageContent() {
             <div className="flex items-center gap-2">
               <select
                 value={selectedDomain}
-                onChange={(e) => setSelectedDomain(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setSelectedDomain(e.target.value)}
                 className="flex h-9 w-[280px] items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <option value="all">All Domains ({domains.length})</option>

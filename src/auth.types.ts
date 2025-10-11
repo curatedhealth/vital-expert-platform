@@ -146,9 +146,9 @@ export function canUserAccess(userRole: UserRole, requiredRole: UserRole): boole
     switch (role) {
       case UserRole.SUPER_ADMIN: return 5;
       case UserRole.ADMIN: return 4;
-      case UserRole.MANAGER: return 3;
+      case UserRole.LLM_MANAGER: return 3;
       case UserRole.USER: return 2;
-      case UserRole.GUEST: return 1;
+      case UserRole.VIEWER: return 1;
       default: return 0;
     }
   };
@@ -162,9 +162,9 @@ export function isHigherRole(role1: UserRole, role2: UserRole): boolean {
     switch (role) {
       case UserRole.SUPER_ADMIN: return 5;
       case UserRole.ADMIN: return 4;
-      case UserRole.MANAGER: return 3;
+      case UserRole.LLM_MANAGER: return 3;
       case UserRole.USER: return 2;
-      case UserRole.GUEST: return 1;
+      case UserRole.VIEWER: return 1;
       default: return 0;
     }
   };

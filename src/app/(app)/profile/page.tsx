@@ -139,7 +139,7 @@ export default function ProfilePage() {
                 <Input
                   id="full_name"
                   value={formData.full_name}
-                  onChange={(e) => handleInputChange('full_name', e.target.value)}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange('full_name', e.target.value)}
                   placeholder="Enter your full name"
                 />
               </div>
@@ -161,7 +161,7 @@ export default function ProfilePage() {
               <Textarea
                 id="bio"
                 value={formData.bio}
-                onChange={(e) => handleInputChange('bio', e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange('bio', e.target.value)}
                 placeholder="Tell us about yourself..."
                 rows={3}
               />
@@ -184,7 +184,7 @@ export default function ProfilePage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="role">Role</Label>
-                <Select value={formData.role} onValueChange={(value) => handleInputChange('role', value)}>
+                <Select value={formData.role} onValueChange={(value: string) => handleInputChange('role', value)}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select your role" />
                   </SelectTrigger>
@@ -204,7 +204,7 @@ export default function ProfilePage() {
                 <Input
                   id="institution"
                   value={formData.institution}
-                  onChange={(e) => handleInputChange('institution', e.target.value)}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange('institution', e.target.value)}
                   placeholder="Your organization or institution"
                 />
               </div>
@@ -215,7 +215,7 @@ export default function ProfilePage() {
               <Input
                 id="specialty"
                 value={formData.specialty}
-                onChange={(e) => handleInputChange('specialty', e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange('specialty', e.target.value)}
                 placeholder="Your area of expertise or specialty"
               />
             </div>

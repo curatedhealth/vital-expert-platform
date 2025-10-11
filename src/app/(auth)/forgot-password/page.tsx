@@ -20,7 +20,7 @@ const forgotPasswordSchema = z.object({
 type ForgotPasswordForm = z.infer<typeof forgotPasswordSchema>;
 
 export default function ForgotPasswordPage() {
-  const { resetPassword } = useAuth();
+  const { resetPassword } = useAuth() as any;
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
@@ -41,7 +41,7 @@ export default function ForgotPasswordPage() {
       await resetPassword(data.email);
       setSuccess(true);
     } catch (error: unknown) {
-      setError(error.message || 'Failed to send reset email');
+      setError((error as Error).message || 'Failed to send reset email');
     } finally {
       setIsLoading(false);
     }

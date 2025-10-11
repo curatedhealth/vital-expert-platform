@@ -11,7 +11,7 @@ import {
   ModelType
 } from '@/digital-health-agent.types';
 
-import { DigitalHealthAgent } from '../core/DigitalHealthAgent';
+import { DigitalHealthAgent, AgentConfig } from '../core/DigitalHealthAgent';
 
 export class MedicalLiteratureAnalyst extends DigitalHealthAgent {
   constructor() {
@@ -80,6 +80,18 @@ Always cite relevant research methodology guidelines and provide evidence-based 
       }
     };
 
-    super(config);
+    // Convert DigitalHealthAgentConfig to AgentConfig
+    const agentConfig: AgentConfig = {
+      id: config.name,
+      name: config.name,
+      display_name: config.display_name,
+      description: "Expert in medical literature analysis for digital health products",
+      capabilities: config.capabilities_list,
+      model: config.model,
+      knowledge_domains: ["medical_literature", "research", "evidence_synthesis"],
+      tier: config.metadata.tier
+    };
+    
+    super(agentConfig);
   }
 }

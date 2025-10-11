@@ -11,7 +11,7 @@ import {
   ModelType
 } from '@/digital-health-agent.types';
 
-import { DigitalHealthAgent } from '../core/DigitalHealthAgent';
+import { DigitalHealthAgent, AgentConfig } from '../core/DigitalHealthAgent';
 
 export class PatientEngagementSpecialist extends DigitalHealthAgent {
   constructor() {
@@ -97,6 +97,18 @@ You have 10+ years designing patient engagement strategies with expertise in hea
       }
     };
 
-    super(config);
+    // Convert DigitalHealthAgentConfig to AgentConfig
+    const agentConfig: AgentConfig = {
+      id: config.name,
+      name: config.name,
+      display_name: config.display_name,
+      description: "Expert in patient engagement for digital health products",
+      capabilities: config.capabilities_list,
+      model: config.model,
+      knowledge_domains: ["patient_engagement", "user_experience", "behavioral_health"],
+      tier: config.metadata.tier
+    };
+    
+    super(agentConfig);
   }
 }

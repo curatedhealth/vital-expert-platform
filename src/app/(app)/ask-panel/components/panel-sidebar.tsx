@@ -17,9 +17,9 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { cn } from '@/shared/utils';
+import { cn } from '@/lib/utils';
 
-import { usePanelStore } from '../services/panel-store';
+import { __usePanelStore as usePanelStore } from '../services/panel-store';
 
 interface PanelSidebarProps {
   className?: string;
@@ -38,8 +38,8 @@ export function PanelSidebar({
 
   // Filter panels based on search
   const filteredPanels = panels.filter((panel) =>
-    panel.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    panel.description.toLowerCase().includes(searchQuery.toLowerCase())
+    (panel as any).name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (panel as any).description.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   if (isCollapsed) {
@@ -97,7 +97,7 @@ export function PanelSidebar({
           <Input
             placeholder="Search panels..."
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
             className="pl-9 h-9"
           />
         </div>
@@ -162,64 +162,64 @@ export function PanelSidebar({
             ) : (
               <div className="space-y-2">
                 {filteredPanels.map((panel) => {
-                  const isActive = currentPanel?.id === panel.id;
+                  const isActive = currentPanel?.id === (panel as any).id;
 
                   return (
                     <Card
-                      key={panel.id}
+                      key={(panel as any).id}
                       className={cn(
                         "p-3 cursor-pointer transition-colors hover:bg-muted/50",
                         isActive && "bg-primary/10 border-primary/30"
                       )}
-                      onClick={() => selectPanel(panel.id)}
+                      onClick={() => selectPanel((panel as any).id)}
                     >
                       <div className="space-y-2">
                         <div className="flex items-start justify-between">
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium truncate">{panel.name}</p>
+                            <p className="text-sm font-medium truncate">{(panel as any).name}</p>
                             <p className="text-xs text-muted-foreground line-clamp-2">
-                              {panel.description}
+                              {(panel as any).description}
                             </p>
                           </div>
                           <span className="text-xs text-muted-foreground whitespace-nowrap ml-2">
-                            {new Date(panel.updated_at).toLocaleDateString()}
+                            {new Date((panel as any).updated_at).toLocaleDateString()}
                           </span>
                         </div>
 
                         {/* Panel Members */}
                         <div className="flex items-center gap-2">
                           <div className="flex -space-x-1">
-                            {panel.members.slice(0, 3).map((member, index) => (
+                            {(panel as any).members.slice(0, 3).map((member: any, index: number) => (
                               <Avatar key={index} className="h-6 w-6 border-2 border-background">
-                                <AvatarImage src={member.agent.avatar?.startsWith('http') ? member.agent.avatar : undefined} />
+                                <AvatarImage src={(member as any).agent.avatar?.startsWith('http') ? (member as any).agent.avatar : undefined} />
                                 <AvatarFallback className="text-xs">
-                                  {member.agent.name.split(' ').map(n => n[0]).join('')}
+                                  {(member as any).agent.name.split(' ').map((n: string) => n[0]).join('')}
                                 </AvatarFallback>
                               </Avatar>
                             ))}
-                            {panel.members.length > 3 && (
+                            {(panel as any).members.length > 3 && (
                               <div className="h-6 w-6 rounded-full bg-muted border-2 border-background flex items-center justify-center">
                                 <span className="text-xs text-muted-foreground">
-                                  +{panel.members.length - 3}
+                                  +{(panel as any).members.length - 3}
                                 </span>
                               </div>
                             )}
                           </div>
                           <span className="text-xs text-muted-foreground">
-                            {panel.members.length} experts
+                            {(panel as any).members.length} experts
                           </span>
                         </div>
 
                         {/* Panel Status */}
                         <div className="flex items-center justify-between">
                           <span className="text-xs text-muted-foreground">
-                            {panel.messages.length} messages
+                            {(panel as any).messages.length} messages
                           </span>
                           <Badge
-                            variant={panel.status === 'active' ? 'default' : 'secondary'}
+                            variant={(panel as any).status === 'active' ? 'default' : 'secondary'}
                             className="text-xs"
                           >
-                            {panel.status}
+                            {(panel as any).status}
                           </Badge>
                         </div>
                       </div>

@@ -3,7 +3,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-import { Agent } from '@/shared/services/agents/agents-store';
+import { Agent } from '@/lib/stores/agents-store';
 
 export interface PanelMember {
   agent: Agent;
@@ -214,7 +214,7 @@ export const __usePanelStore = create<PanelState>()(
       },
 
       selectPanel: (panelId: string) => {
-
+        const panel = get().panels.find(p => p.id === panelId);
         if (panel) {
           set({ currentPanel: panel });
         }
@@ -263,7 +263,7 @@ export const __usePanelStore = create<PanelState>()(
       },
 
       sendMessageToPanel: async (content: string) => {
-
+        const state = get();
         if (!state.currentPanel) return;
 
         const userMessage: PanelMessage = {

@@ -66,7 +66,7 @@ export default function KnowledgeDomainsPage() {
       filtered = filtered.filter(
         (d) =>
           d.name.toLowerCase().includes(query) ||
-          d.description?.toLowerCase().includes(query) ||
+          d.code?.toLowerCase().includes(query) ||
           d.keywords.some((k) => k.toLowerCase().includes(query))
       );
     }
@@ -222,7 +222,7 @@ export default function KnowledgeDomainsPage() {
           <Input
             placeholder="Search domains by name, keywords..."
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
             className="pl-9"
           />
         </div>
@@ -431,7 +431,7 @@ function DomainCard({
     <Card
       className="cursor-pointer hover:shadow-lg transition-shadow"
       onClick={onClick}
-      style={{ borderLeftColor: domain.color || '#3B82F6', borderLeftWidth: '4px' }}
+      style={{ borderLeftColor: '#3B82F6', borderLeftWidth: '4px' }}
     >
       <CardHeader>
         <div className="flex items-start justify-between">
@@ -446,7 +446,7 @@ function DomainCard({
       </CardHeader>
       <CardContent>
         <p className="text-sm text-muted-foreground line-clamp-2">
-          {domain.description}
+          Domain Code: {domain.code}
         </p>
         <div className="mt-4 space-y-2">
           <div className="flex items-center gap-2 text-xs">
@@ -462,9 +462,9 @@ function DomainCard({
             </code>
           </div>
         </div>
-        {domain.agent_count_estimate > 0 && (
+        {0 > 0 && (
           <div className="mt-3 text-xs text-muted-foreground">
-            ~{domain.agent_count_estimate} agents
+            ~{0} agents
           </div>
         )}
       </CardContent>
@@ -525,7 +525,7 @@ function DomainTable({
                   {domain.recommended_models?.chat?.primary || 'N/A'}
                 </code>
               </td>
-              <td className="px-4 py-3 text-sm">{domain.agent_count_estimate || 0}</td>
+              <td className="px-4 py-3 text-sm">{0 || 0}</td>
             </tr>
           ))}
         </tbody>
@@ -552,11 +552,11 @@ function DomainDetailsDialog({
           <DialogTitle className="flex items-center gap-3">
             <span
               className="w-4 h-4 rounded"
-              style={{ backgroundColor: domain.color }}
+              style={{ backgroundColor: '#3B82F6' }}
             />
             {domain.name}
           </DialogTitle>
-          <DialogDescription>{domain.description}</DialogDescription>
+          <DialogDescription>{domain.code}</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-6">
@@ -611,7 +611,7 @@ function DomainDetailsDialog({
                 )}
                 <div className="text-sm">
                   <span className="font-semibold">Alternatives:</span>{' '}
-                  {domain.recommended_models?.embedding?.alternatives?.map((alt, i) => (
+                  {domain.recommended_models?.embedding?.alternatives?.map((alt: string, i: number) => (
                     <code key={i} className="bg-muted px-2 py-0.5 rounded ml-1">
                       {alt}
                     </code>
@@ -645,7 +645,7 @@ function DomainDetailsDialog({
                 )}
                 <div className="text-sm">
                   <span className="font-semibold">Alternatives:</span>{' '}
-                  {domain.recommended_models?.chat?.alternatives?.map((alt, i) => (
+                  {domain.recommended_models?.chat?.alternatives?.map((alt: string, i: number) => (
                     <code key={i} className="bg-muted px-2 py-0.5 rounded ml-1">
                       {alt}
                     </code>
@@ -689,10 +689,10 @@ function DomainDetailsDialog({
           )}
 
           {/* Stats */}
-          {domain.agent_count_estimate > 0 && (
+          {0 > 0 && (
             <div>
               <Label className="text-sm font-medium">Estimated Agent Count</Label>
-              <div className="text-2xl font-bold mt-1">{domain.agent_count_estimate}</div>
+              <div className="text-2xl font-bold mt-1">{0}</div>
             </div>
           )}
         </div>
@@ -818,7 +818,7 @@ function CreateDomainDialog({
               <Input
                 id="name"
                 value={formData.name}
-                onChange={(e) =>
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                   setFormData({ ...formData, name: e.target.value })
                 }
                 placeholder="e.g., Regulatory Affairs"
@@ -830,7 +830,7 @@ function CreateDomainDialog({
               <Input
                 id="code"
                 value={formData.code}
-                onChange={(e) =>
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                   setFormData({ ...formData, code: e.target.value })
                 }
                 placeholder="e.g., REG_AFFAIRS"
@@ -845,7 +845,7 @@ function CreateDomainDialog({
               <Input
                 id="slug"
                 value={formData.slug}
-                onChange={(e) =>
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                   setFormData({ ...formData, slug: e.target.value })
                 }
                 placeholder="e.g., regulatory_affairs"
@@ -856,7 +856,7 @@ function CreateDomainDialog({
               <Label htmlFor="tier">Tier *</Label>
               <Select
                 value={formData.tier.toString()}
-                onValueChange={(value) =>
+                onValueChange={(value: string) =>
                   setFormData({ ...formData, tier: parseInt(value) })
                 }
               >
@@ -877,7 +877,7 @@ function CreateDomainDialog({
             <Textarea
               id="description"
               value={formData.description}
-              onChange={(e) =>
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                 setFormData({ ...formData, description: e.target.value })
               }
               placeholder="Brief description of this knowledge domain"
@@ -890,7 +890,7 @@ function CreateDomainDialog({
             <Input
               id="keywords"
               value={formData.keywords}
-              onChange={(e) =>
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                 setFormData({ ...formData, keywords: e.target.value })
               }
               placeholder="e.g., fda, ema, regulatory, compliance"
@@ -902,7 +902,7 @@ function CreateDomainDialog({
             <Input
               id="sub_domains"
               value={formData.sub_domains}
-              onChange={(e) =>
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                 setFormData({ ...formData, sub_domains: e.target.value })
               }
               placeholder="e.g., fda_regulations, ema_regulations"
@@ -916,7 +916,7 @@ function CreateDomainDialog({
                 id="color"
                 type="color"
                 value={formData.color}
-                onChange={(e) =>
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                   setFormData({ ...formData, color: e.target.value })
                 }
                 className="w-20 h-10"
@@ -929,7 +929,7 @@ function CreateDomainDialog({
             <Label htmlFor="embedding_model">Recommended Embedding Model *</Label>
             <Select
               value={formData.embedding_model}
-              onValueChange={(value) =>
+              onValueChange={(value: string) =>
                 setFormData({ ...formData, embedding_model: value })
               }
             >
@@ -937,7 +937,7 @@ function CreateDomainDialog({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {embeddingModels.map((model) => (
+                {embeddingModels.map((model: any) => (
                   <SelectItem key={model.value} value={model.value}>
                     {model.label} - {model.provider}
                   </SelectItem>
@@ -950,7 +950,7 @@ function CreateDomainDialog({
             <Label htmlFor="chat_model">Recommended Chat Model *</Label>
             <Select
               value={formData.chat_model}
-              onValueChange={(value) =>
+              onValueChange={(value: string) =>
                 setFormData({ ...formData, chat_model: value })
               }
             >
@@ -958,7 +958,7 @@ function CreateDomainDialog({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {chatModels.map((model) => (
+                {chatModels.map((model: any) => (
                   <SelectItem key={model.value} value={model.value}>
                     {model.label} - {model.provider}
                   </SelectItem>

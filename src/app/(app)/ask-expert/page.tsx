@@ -408,9 +408,11 @@ export default function AskExpertPage() {
                       </Avatar>
                     )}
                     <div className="flex-1">
-                      <ReactMarkdown className="prose prose-sm max-w-none">
-                        {message.content}
-                      </ReactMarkdown>
+                      <div className="prose prose-sm max-w-none">
+                        <ReactMarkdown>
+                          {message.content}
+                        </ReactMarkdown>
+                      </div>
                       
                       {/* Sources and Citations */}
                       {message.metadata?.sources && message.metadata.sources.length > 0 && (
@@ -439,7 +441,7 @@ export default function AskExpertPage() {
           <div className="flex space-x-3">
             <Textarea
               value={state.input}
-              onChange={(e) => setState(prev => ({ ...prev, input: e.target.value }))}
+              onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setState(prev => ({ ...prev, input: e.target.value }))}
               placeholder={
                 state.selectedAgent
                   ? `Ask ${state.selectedAgent.name} anything...`
@@ -447,7 +449,7 @@ export default function AskExpertPage() {
               }
               disabled={!state.selectedAgent || state.isLoading}
               className="flex-1 min-h-[60px] max-h-[120px]"
-              onKeyDown={(e) => {
+              onKeyDown={(e: React.KeyboardEvent<HTMLTextAreaElement>) => {
                 if (e.key === 'Enter' && !e.shiftKey) {
                   e.preventDefault();
                   handleSendMessage();

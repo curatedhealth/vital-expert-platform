@@ -11,7 +11,7 @@ import {
   ModelType
 } from '@/digital-health-agent.types';
 
-import { DigitalHealthAgent } from '../core/DigitalHealthAgent';
+import { DigitalHealthAgent, AgentConfig } from '../core/DigitalHealthAgent';
 
 export class PatientCohortAnalyzer extends DigitalHealthAgent {
   constructor() {
@@ -81,6 +81,18 @@ All analyses comply with HIPAA, GDPR, and other privacy regulations. Ensures pro
       }
     };
 
-    super(config);
+    // Convert DigitalHealthAgentConfig to AgentConfig
+    const agentConfig: AgentConfig = {
+      id: config.name,
+      name: config.name,
+      display_name: config.display_name,
+      description: "Expert in patient cohort analysis for digital health products",
+      capabilities: config.capabilities_list,
+      model: config.model,
+      knowledge_domains: ["patient_cohorts", "data_analysis", "population_health"],
+      tier: config.metadata.tier
+    };
+    
+    super(agentConfig);
   }
 }

@@ -15,9 +15,9 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { cn } from '@/shared/utils';
+import { cn } from '@/lib/utils';
 
-import { usePanelStore } from '../services/panel-store';
+import { __usePanelStore as usePanelStore } from '../services/panel-store';
 
 interface PanelBuilderProps {
   templateId?: string | null;
@@ -149,7 +149,7 @@ export function PanelBuilder({
                 <label className="text-sm font-medium mb-2 block">Panel Name</label>
                 <Input
                   value={panelName}
-                  onChange={(e) => setPanelName(e.target.value)}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPanelName(e.target.value)}
                   placeholder={template ? `${template.name} Panel` : "Enter panel name..."}
                 />
               </div>
@@ -157,7 +157,7 @@ export function PanelBuilder({
                 <label className="text-sm font-medium mb-2 block">Description</label>
                 <Textarea
                   value={panelDescription}
-                  onChange={(e) => setPanelDescription(e.target.value)}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPanelDescription(e.target.value)}
                   placeholder="Describe the purpose and scope of this advisory panel..."
                   className="min-h-[80px]"
                 />
@@ -187,7 +187,7 @@ export function PanelBuilder({
                 <div className="mb-6">
                   <h4 className="text-sm font-medium mb-3">Selected Experts</h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    {selectedExperts.map((expert) => (
+                    {selectedExperts.map((expert: any) => (
                       <div
                         key={expert.id}
                         className="flex items-center gap-3 p-3 border rounded-lg bg-primary/5 border-primary/20"

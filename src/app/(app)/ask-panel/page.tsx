@@ -475,7 +475,7 @@ export default function AskPanelPage() {
                     <Settings2 className="h-4 w-4 text-muted-foreground" />
                     <div className="flex-1">
                       <label className="text-sm font-medium mb-1 block">Orchestration Mode</label>
-                      <Select value={orchestrationMode} onValueChange={(value) => setOrchestrationMode(value as OrchestrationMode)}>
+                      <Select value={orchestrationMode} onValueChange={(value: string) => setOrchestrationMode(value as OrchestrationMode)}>
                         <SelectTrigger className="w-full bg-background">
                           <SelectValue />
                         </SelectTrigger>
@@ -498,8 +498,8 @@ export default function AskPanelPage() {
                     <Input
                       placeholder="Enter your question for the panel..."
                       value={query}
-                      onChange={(e) => setQuery(e.target.value)}
-                      onKeyPress={(e) => e.key === 'Enter' && !isLoading && handleAskPanel()}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setQuery(e.target.value)}
+                      onKeyPress={(e: React.KeyboardEvent<HTMLInputElement>) => e.key === 'Enter' && !isLoading && handleAskPanel()}
                       disabled={isLoading}
                       className="flex-1"
                     />

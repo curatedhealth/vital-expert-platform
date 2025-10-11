@@ -24,9 +24,9 @@ import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import React, { useState } from 'react';
 
-import { Avatar, AvatarFallback, AvatarImage } from '@/shared/components/ui/avatar';
-import { Badge } from '@/shared/components/ui/badge';
-import { Button } from '@/shared/components/ui/button';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -35,14 +35,14 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
   DropdownMenuGroup
-} from '@/shared/components/ui/dropdown-menu';
-import { ModelConfig, AVAILABLE_MODELS, useModelSelection } from '@/shared/components/ui/model-selector';
+} from '@/components/ui/dropdown-menu';
+import { ModelConfig, AVAILABLE_MODELS, __useModelSelection as useModelSelection } from '@/model-selector';
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger
-} from '@/shared/components/ui/popover';
-import { cn } from '@/shared/services/utils';
+  __Popover as Popover,
+  __PopoverContent as PopoverContent,
+  __PopoverTrigger as PopoverTrigger
+} from '@/components/ui/popover';
+import { cn } from '@/lib/utils';
 
 // 🎯 AI Model Navbar Props
 interface AIModelNavbarProps {

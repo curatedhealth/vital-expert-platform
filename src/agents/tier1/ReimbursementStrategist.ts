@@ -13,7 +13,7 @@ import {
   ExecutionContext
 } from '@/digital-health-agent.types';
 
-import { DigitalHealthAgent } from '../core/DigitalHealthAgent';
+import { DigitalHealthAgent, AgentConfig } from '../core/DigitalHealthAgent';
 
 export class ReimbursementStrategist extends DigitalHealthAgent {
   constructor() {
@@ -72,7 +72,19 @@ You have 12+ years in health economics with experience across CMS, commercial pa
       }
     };
 
-    super(config);
+    // Convert DigitalHealthAgentConfig to AgentConfig
+    const agentConfig: AgentConfig = {
+      id: config.name,
+      name: config.name,
+      display_name: config.display_name,
+      description: "Expert in reimbursement strategy for digital health products",
+      capabilities: config.capabilities_list,
+      model: config.model,
+      knowledge_domains: ["reimbursement", "healthcare_economics", "payer_strategy"],
+      tier: config.metadata.tier
+    };
+    
+    super(agentConfig);
   }
 
   /**
@@ -91,10 +103,9 @@ You have 12+ years in health economics with experience across CMS, commercial pa
     },
     context?: ExecutionContext
   ): Promise<AgentResponse> {
-    return await this.executePrompt(
+    return await this.execute(
       "Develop Reimbursement Strategy",
-      strategyData,
-      context
+      { ...strategyData, ...context }
     );
   }
 
@@ -113,10 +124,9 @@ You have 12+ years in health economics with experience across CMS, commercial pa
     },
     context?: ExecutionContext
   ): Promise<AgentResponse> {
-    return await this.executePrompt(
+    return await this.execute(
       "Create HEOR Study Plan",
-      studyData,
-      context
+      { ...studyData, ...context }
     );
   }
 
@@ -133,10 +143,9 @@ You have 12+ years in health economics with experience across CMS, commercial pa
     },
     context?: ExecutionContext
   ): Promise<AgentResponse> {
-    return await this.executePrompt(
+    return await this.execute(
       "Analyze Payer Landscape",
-      landscapeData,
-      context
+      { ...landscapeData, ...context }
     );
   }
 
@@ -159,10 +168,9 @@ You have 12+ years in health economics with experience across CMS, commercial pa
     },
     context?: ExecutionContext
   ): Promise<AgentResponse> {
-    return await this.executePrompt(
+    return await this.execute(
       "Design Budget Impact Model",
-      modelData,
-      context
+      { ...modelData, ...context }
     );
   }
 

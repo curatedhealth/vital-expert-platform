@@ -13,7 +13,7 @@ import {
   ExecutionContext
 } from '@/digital-health-agent.types';
 
-import { DigitalHealthAgent } from '../core/DigitalHealthAgent';
+import { DigitalHealthAgent, AgentConfig } from '../core/DigitalHealthAgent';
 
 export class HIPAAComplianceOfficer extends DigitalHealthAgent {
   constructor() {
@@ -72,7 +72,19 @@ You have 15+ years ensuring HIPAA compliance, including OCR audit defense experi
       }
     };
 
-    super(config);
+    // Convert DigitalHealthAgentConfig to AgentConfig
+    const agentConfig: AgentConfig = {
+      id: config.name,
+      name: config.name,
+      display_name: config.display_name,
+      description: "Expert in HIPAA compliance for digital health products",
+      capabilities: config.capabilities_list,
+      model: config.model,
+      knowledge_domains: ["hipaa_compliance", "privacy", "security"],
+      tier: config.metadata.tier
+    };
+    
+    super(agentConfig);
   }
 
   /**
@@ -89,10 +101,9 @@ You have 15+ years ensuring HIPAA compliance, including OCR audit defense experi
     },
     context?: ExecutionContext
   ): Promise<AgentResponse> {
-    return await this.executePrompt(
+    return await this.execute(
       "Conduct HIPAA Risk Assessment",
-      assessmentData,
-      context
+      { ...assessmentData, ...context }
     );
   }
 
@@ -110,10 +121,9 @@ You have 15+ years ensuring HIPAA compliance, including OCR audit defense experi
     },
     context?: ExecutionContext
   ): Promise<AgentResponse> {
-    return await this.executePrompt(
+    return await this.execute(
       "Create Privacy Policies",
-      policyData,
-      context
+      { ...policyData, ...context }
     );
   }
 
@@ -130,10 +140,9 @@ You have 15+ years ensuring HIPAA compliance, including OCR audit defense experi
     },
     context?: ExecutionContext
   ): Promise<AgentResponse> {
-    return await this.executePrompt(
+    return await this.execute(
       "Design Security Controls",
-      securityData,
-      context
+      { ...securityData, ...context }
     );
   }
 
@@ -151,10 +160,9 @@ You have 15+ years ensuring HIPAA compliance, including OCR audit defense experi
     },
     context?: ExecutionContext
   ): Promise<AgentResponse> {
-    return await this.executePrompt(
+    return await this.execute(
       "Manage Breach Response",
-      breachData,
-      context
+      { ...breachData, ...context }
     );
   }
 

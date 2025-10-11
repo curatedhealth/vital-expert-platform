@@ -4,8 +4,13 @@
 
 export interface AgentResponse {
   success: boolean;
-  content: string;
-  data?: any;
+  content?: string;
+  data?: Record<string, unknown>;
+  error?: string;
+  execution_time: number;
+  validation_status: "passed" | "failed" | "warning";
+  validation_details?: string;
+  audit_log_id?: string;
   metadata?: {
     agentName: string;
     capabilities: string[];
@@ -55,14 +60,17 @@ export class DigitalHealthAgent {
   async execute(query: string, context: any): Promise<AgentResponse> {
     // Simple mock execution
     const startTime = Date.now();
+    const responseTime = Date.now() - startTime;
     
     return {
       success: true,
       content: `Mock response from ${this.config.name} for query: "${query}"`,
+      execution_time: responseTime,
+      validation_status: "passed",
       metadata: {
         agentName: this.config.name,
         capabilities: this.config.capabilities,
-        responseTime: Date.now() - startTime
+        responseTime: responseTime
       },
       timestamp: new Date()
     };

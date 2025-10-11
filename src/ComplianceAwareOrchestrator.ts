@@ -238,12 +238,12 @@ export class ComplianceAwareOrchestrator extends AgentOrchestrator {
     };
     recommendations: string[];
   }> {
-    const execution = his.getExecutionStatus(executionId);
+    const execution = this.getExecutionStatus(executionId);
     if (!execution) {
       throw new Error(`Execution ${executionId} not found`);
     }
 
-    const complianceAnalysis = 
+    const complianceAnalysis = {
       total_steps: execution.total_steps,
       compliant_steps: 0,
       phi_exposures: 0,
@@ -259,14 +259,14 @@ export class ComplianceAwareOrchestrator extends AgentOrchestrator {
 
     // Analyze each step for compliance
     for (const [stepId, stepResult] of Object.entries(execution.step_results)) {
-      const isCompliant = tepResult.response.success;
+      const isCompliant = stepResult.response.success;
       if (isCompliant) {
         complianceAnalysis.compliant_steps++;
       }
 
       // Check for PHI in step results
       if (stepResult.response.content) {
-        const phiResult = his.complianceMiddleware['complianceManager'].detectPHI(
+        const phiResult = this.complianceMiddleware['complianceManager'].detectPHI(
           stepResult.response.content
         );
 
@@ -286,7 +286,7 @@ export class ComplianceAwareOrchestrator extends AgentOrchestrator {
     }
 
     // Generate recommendations
-    const recommendations = ];
+    const recommendations: string[] = [];
     if (complianceAnalysis.phi_exposures > 0) {
       recommendations.push('Implement stronger PHI anonymization measures');
     }

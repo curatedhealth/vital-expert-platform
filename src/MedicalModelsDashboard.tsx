@@ -371,7 +371,7 @@ export const MedicalModelsDashboard: React.FC<MedicalModelsDashboardProps> = ({
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-600">
-              {hipaaCompliantModels.length}
+              {models.filter(m => m.is_hipaa_compliant).length}
             </div>
             <p className="text-xs text-muted-foreground">
               Ready for clinical use
@@ -401,7 +401,7 @@ export const MedicalModelsDashboard: React.FC<MedicalModelsDashboardProps> = ({
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {clinicalTrialModels.length}
+              {models.filter(m => m.clinical_trials).length}
             </div>
             <p className="text-xs text-muted-foreground">
               Models in trials

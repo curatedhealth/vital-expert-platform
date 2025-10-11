@@ -79,7 +79,7 @@ export const LLMProviderDashboard: React.FC<LLMProviderDashboardProps> = ({ clas
   const loadProviders = async () => {
     try {
       setLoading(true);
-      const response = await llmProviderService.getAllProviders();
+      const response = await llmProviderService.listProviders({});
       setProviders(response.providers);
       setError(null);
     } catch (err) {

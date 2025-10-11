@@ -249,7 +249,7 @@ export class MultiAgentCoordinator {
     
     for (const agent of agents) {
       try {
-        console.log(`🔄 Executing agent: ${agent.getStatus().name}`);
+        console.log(`🔄 Executing agent: ${agent.config.name}`);
         
         const response = await this.executeAgent(agent, query, currentContext);
         responses.push(response);
@@ -258,7 +258,7 @@ export class MultiAgentCoordinator {
         currentContext = this.updateContextWithResponse(currentContext, response);
         
       } catch (error) {
-        console.error(`❌ Agent ${agent.getStatus().name} failed:`, error);
+        console.error(`❌ Agent ${agent.config.name} failed:`, error);
         // Continue with next agent
       }
     }
@@ -298,7 +298,7 @@ export class MultiAgentCoordinator {
     // Execute all agents in parallel
     const agentPromises = agents.map(agent => 
       this.executeAgent(agent, query, context).catch(error => {
-        console.error(`❌ Agent ${agent.getStatus().name} failed:`, error);
+        console.error(`❌ Agent ${agent.config.name} failed:`, error);
         return null;
       })
     );
@@ -347,7 +347,7 @@ export class MultiAgentCoordinator {
     
     // Group other agents by specialization
     const specialistGroups = this.groupAgentsBySpecialization(
-      agents.filter(a => a.getStatus().name !== masterAgent.getStatus().name)
+      agents.filter(a => a.config.name !== masterAgent.config.name)
     );
     
     // Master agent coordinates specialists
@@ -356,7 +356,7 @@ export class MultiAgentCoordinator {
         const groupResponses = await Promise.all(
           group.map(agent => 
             this.executeAgent(agent, query, context).catch(error => {
-              console.error(`❌ Specialist ${agent.getStatus().name} failed:`, error);
+              console.error(`❌ Specialist ${agent.config.name} failed:`, error);
               return null;
             })
           )
@@ -410,7 +410,7 @@ export class MultiAgentCoordinator {
     // Execute all agents in parallel
     const agentPromises = agents.map(agent => 
       this.executeAgent(agent, query, context).catch(error => {
-        console.error(`❌ Agent ${agent.getStatus().name} failed:`, error);
+        console.error(`❌ Agent ${agent.config.name} failed:`, error);
         return null;
       })
     );
@@ -519,7 +519,7 @@ export class MultiAgentCoordinator {
     return {
       count: agents.length,
       capabilities: Array.from(capabilities),
-      averageTier: agents.reduce((sum, agent) => sum + agent.config.tier, 0) / agents.length,
+      averageTier: agents.reduce((sum, agent) => sum + (agent.config.tier || 1), 0) / agents.length,
       specialization: agents.map(agent => agent.config.specialization)
     };
   }
@@ -598,7 +598,7 @@ export class MultiAgentCoordinator {
   private sortAgentsByRelevance(agents: DigitalHealthAgent[], query: string): DigitalHealthAgent[] {
     return agents.sort((a, b) => {
       // Sort by tier first (lower tier = higher priority)
-      if (a.config.tier !== b.config.tier) return a.config.tier - b.config.tier;
+      if ((a.config.tier || 1) !== (b.config.tier || 1)) return (a.config.tier || 1) - (b.config.tier || 1);
       
       // Then by specialization relevance
       const aRelevance = this.calculateSpecializationRelevance(a, query);
@@ -625,11 +625,11 @@ export class MultiAgentCoordinator {
     // In production, this would call the actual agent service
     return {
       id: `response-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-      agentId: agent.getStatus().name,
-      content: `Response from ${agent.getStatus().name} for query: ${query.substring(0, 50)}...`,
-      confidence: agent.config.confidence || 0.8,
+      agentId: agent.config.name,
+      content: `Response from ${agent.config.name} for query: ${query.substring(0, 50)}...`,
+      confidence: 0.8, // Default confidence level
       metadata: {
-        agentName: agent.getStatus().name,
+        agentName: agent.config.name,
         capabilities: agent.getCapabilities(),
         responseTime: Date.now() - startTime
       },

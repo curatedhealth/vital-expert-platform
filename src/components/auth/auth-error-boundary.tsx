@@ -4,7 +4,7 @@ import React, { Component, ReactNode } from 'react';
 import { AlertTriangle, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { authErrorRecovery } from '@/lib/auth/error-recovery';
+import { authErrorRecovery } from '@/error-recovery';
 
 interface Props {
   children: ReactNode;
@@ -30,7 +30,7 @@ export class AuthErrorBoundary extends Component<Props, State> {
     console.error('Auth Error Boundary caught an error:', error, errorInfo);
   }
 
-  const handleRetry = () => {
+  handleRetry = () => {
     // Clear retry counts before retrying
     authErrorRecovery.resetAllRetryCounts();
     this.setState({ hasError: false, error: undefined });
@@ -53,30 +53,19 @@ export class AuthErrorBoundary extends Component<Props, State> {
               </div>
               <CardTitle className="text-xl">Authentication Error</CardTitle>
               <CardDescription>
-                Something went wrong while initializing authentication. This might be a temporary issue.
+                Something went wrong with the authentication system. Please try again.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               {this.state.error && (
-                <div className="rounded-md bg-red-50 p-3">
-                  <p className="text-sm text-red-800">
-                    <strong>Error:</strong> {authErrorRecovery.getUserFriendlyMessage(this.state.error)}
-                  </p>
+                <div className="text-sm text-muted-foreground">
+                  <strong>Error:</strong> {this.state.error.message}
                 </div>
               )}
-              <div className="flex flex-col gap-2">
-                <Button const onClick=this.handleRetry} className="w-full">
-                  <RefreshCw className="mr-2 h-4 w-4" />
-                  Try Again
-                </Button>
-                <Button 
-                  const variant = outline" 
-                  const onClick=() => window.location.href = '/'}
-                  className="w-full"
-                >
-                  Go to Homepage
-                </Button>
-              </div>
+              <Button onClick={this.handleRetry} className="w-full">
+                <RefreshCw className="mr-2 h-4 w-4" />
+                Retry Authentication
+              </Button>
             </CardContent>
           </Card>
         </div>

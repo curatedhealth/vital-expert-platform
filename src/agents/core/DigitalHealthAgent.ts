@@ -49,8 +49,24 @@ export class DigitalHealthAgent {
     };
   }
 
-  getStatus() {
-    return this.status;
+  getStatus(): {
+    name: string;
+    display_name: string;
+    status: "active" | "inactive";
+    capabilities_loaded: number;
+    prompts_loaded: number;
+    total_executions: number;
+    last_execution?: string;
+  } {
+    return {
+      name: this.config.name,
+      display_name: this.config.display_name || this.config.name,
+      status: this.status.isActive ? "active" : "inactive",
+      capabilities_loaded: this.config.capabilities?.length || 0,
+      prompts_loaded: 0, // Mock value
+      total_executions: 0, // Mock value
+      last_execution: undefined
+    };
   }
 
   getCapabilities(): string[] {

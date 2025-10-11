@@ -94,7 +94,7 @@ export const LLMProviderDashboard: React.FC<LLMProviderDashboardProps> = ({ clas
       // Calculate metrics from providers
       const totalProviders = providers.length;
       const activeProviders = providers.filter(p => p.is_active).length;
-      const healthyProviders = providers.filter(p => p.status === 'healthy').length;
+      const healthyProviders = providers.filter(p => p.status === 'active').length;
 
       setDashboardMetrics({
         totalProviders,

@@ -267,7 +267,7 @@ export class MultiAgentCoordinator {
         synthesisTime: 0
       },
       metadata: {
-        participatingAgents: agents.map(a => a.id),
+        participatingAgents: agents.map(a => a.getStatus().name),
         coordinationOverhead: 0.1, // 10% overhead for sequential
         qualityScore: this.calculateQualityScore(responses, finalResponse)
       }
@@ -323,7 +323,7 @@ export class MultiAgentCoordinator {
         synthesisTime
       },
       metadata: {
-        participatingAgents: agents.map(a => a.id),
+        participatingAgents: agents.map(a => a.getStatus().name),
         coordinationOverhead: 0.05, // 5% overhead for parallel
         qualityScore: this.calculateQualityScore(responses, finalResponse)
       }
@@ -402,7 +402,7 @@ export class MultiAgentCoordinator {
         synthesisTime: 0
       },
       metadata: {
-        participatingAgents: agents.map(a => a.id),
+        participatingAgents: agents.map(a => a.getStatus().name),
         coordinationOverhead: 0.15, // 15% overhead for hierarchical
         qualityScore: this.calculateQualityScore(responses, finalResponse)
       }
@@ -463,7 +463,7 @@ export class MultiAgentCoordinator {
         synthesisTime: 0
       },
       metadata: {
-        participatingAgents: agents.map(a => a.id),
+        participatingAgents: agents.map(a => a.getStatus().name),
         coordinationOverhead: 0.2, // 20% overhead for consensus
         qualityScore: this.calculateQualityScore(validResponses, finalResponse)
       }

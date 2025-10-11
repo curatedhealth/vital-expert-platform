@@ -224,7 +224,7 @@ export class MultiAgentCoordinator {
 
     for (const agent of sortedAgents) {
       try {
-        console.log(`🔄 Executing agent: ${agent.name}`);
+        console.log(`🔄 Executing agent: ${agent.config.name}`);
         
         // Execute agent with current context
         const response = await this.executeAgent(agent, query, currentContext);
@@ -558,7 +558,7 @@ export class MultiAgentCoordinator {
   private sortAgentsByRelevance(agents: DigitalHealthAgent[], query: string): DigitalHealthAgent[] {
     return agents.sort((a, b) => {
       // Sort by tier first (lower tier = higher priority)
-      if (a.tier !== b.tier) return a.tier - b.tier;
+      if (a.config.tier !== b.config.tier) return a.config.tier - b.config.tier;
       
       // Then by specialization relevance
       const aRelevance = this.calculateSpecializationRelevance(a, query);
@@ -570,7 +570,7 @@ export class MultiAgentCoordinator {
 
   private calculateSpecializationRelevance(agent: DigitalHealthAgent, query: string): number {
     const queryLower = query.toLowerCase();
-    return agent.specialization.reduce((score, spec) => {
+    return agent.config.specialization.reduce((score, spec) => {
       if (queryLower.includes(spec.toLowerCase())) {
         return score + 1;
       }
@@ -584,12 +584,12 @@ export class MultiAgentCoordinator {
     return {
       id: `response-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       agentId: agent.id,
-      content: `Response from ${agent.name} for query: ${query.substring(0, 50)}...`,
+      content: `Response from ${agent.config.name} for query: ${query.substring(0, 50)}...`,
       confidence: agent.config.confidence || 0.8,
       metadata: {
-        agentName: agent.name,
+        agentName: agent.config.name,
         capabilities: agent.capabilities,
-        responseTime: agent.performance.responseTime
+        responseTime: agent.performance?.responseTime || 0
       },
       timestamp: new Date()
     };

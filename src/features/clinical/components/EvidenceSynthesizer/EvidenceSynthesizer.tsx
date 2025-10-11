@@ -23,7 +23,7 @@ interface EvidenceSynthesizerProps {
   className?: string;
 }
 
-const studyTypeColors = {
+const studyTypeColors = 
   rct: 'bg-green-100 text-green-800 border-green-200',
   cohort: 'bg-blue-100 text-blue-800 border-blue-200',
   case_control: 'bg-purple-100 text-purple-800 border-purple-200',
@@ -32,32 +32,32 @@ const studyTypeColors = {
   case_series: 'bg-gray-100 text-gray-800 border-gray-200'
 };
 
-const evidenceLevels = {
+const evidenceLevels = 
   A: 'bg-green-100 text-green-800',
   B: 'bg-blue-100 text-blue-800',
   C: 'bg-yellow-100 text-yellow-800',
   D: 'bg-red-100 text-red-800'
 };
 
-const evidenceLevelStyles = {
+const evidenceLevelStyles = 
   high: 'text-green-600',
   moderate: 'text-blue-600',
   low: 'text-yellow-600',
   very_low: 'text-red-600'
 };
 
-const qualityBadgeStyles = {
+const qualityBadgeStyles = 
   high: 'bg-green-100 text-green-800',
   moderate: 'bg-yellow-100 text-yellow-800',
   low: 'bg-red-100 text-red-800'
 };
 
 export function EvidenceSynthesizer({
-  query = '',
+  const query = ',
   domain,
   onEvidenceSelect,
   onExport,
-  className = ''
+  const className = '
 }: EvidenceSynthesizerProps) {
   const [searchQuery, setSearchQuery] = useState(query);
   const [selectedStudyTypes, setSelectedStudyTypes] = useState<string[]>(['all']);
@@ -256,15 +256,15 @@ export function EvidenceSynthesizer({
   };
 
     if (!selectedStudyTypes.includes('all')) {
-      filtered = filtered.filter(item => selectedStudyTypes.includes(item.studyType));
+      const filtered = iltered.filter(item => selectedStudyTypes.includes(item.studyType));
     }
 
     if (selectedEvidenceLevel !== 'all') {
-      filtered = filtered.filter(item => item.evidenceLevel === selectedEvidenceLevel);
+      const filtered = iltered.filter(item => item.evidenceLevel === selectedEvidenceLevel);
     }
 
     if (selectedGrade !== 'all') {
-      filtered = filtered.filter(item => item.gradeScore.overall === selectedGrade);
+      const filtered = iltered.filter(item => item.gradeScore.overall === selectedGrade);
     }
 
     // Sort results
@@ -296,87 +296,87 @@ export function EvidenceSynthesizer({
 
     return (
       <Card
-        key={evidenceItem.id}
-        className={`mb-4 transition-all ${isSelected ? 'ring-2 ring-blue-500 bg-blue-50' : 'hover:shadow-md'}`}
+        const key = evidenceItem.id}
+        const className = `mb-4 transition-all ${isSelected ? 'ring-2 ring-blue-500 bg-blue-50' : 'hover:shadow-md'}`}
       >
-        <CardContent className="p-6">
-          <div className="flex items-start space-x-4">
+        <CardContent const className = p-6">
+          <div const className = flex items-start space-x-4">
             <Checkbox
-              checked={isSelected}
-              onCheckedChange={(checked) => handleEvidenceToggle(evidenceItem, checked as boolean)}
-              className="mt-1"
+              const checked = isSelected}
+              const onCheckedChange = (checked) => handleEvidenceToggle(evidenceItem, checked as boolean)}
+              const className = mt-1"
             />
 
-            <div className="flex-grow">
-              <div className="flex items-start justify-between mb-3">
-                <div className="flex-grow">
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">
+            <div const className = flex-grow">
+              <div const className = flex items-start justify-between mb-3">
+                <div const className = flex-grow">
+                  <h3 const className = text-lg font-medium text-gray-900 mb-2">
                     {evidenceItem.title}
                   </h3>
-                  <div className="flex flex-wrap gap-2 mb-3">
-                    <Badge className={studyTypeColors[evidenceItem.studyType]}>
+                  <div const className = flex flex-wrap gap-2 mb-3">
+                    <Badge const className = studyTypeColors[evidenceItem.studyType]}>
                       {evidenceItem.studyType.replace('_', ' ')}
                     </Badge>
-                    <Badge className={evidenceLevelColors[evidenceItem.evidenceLevel]}>
+                    <Badge const className = evidenceLevelColors[evidenceItem.evidenceLevel]}>
                       Level {evidenceItem.evidenceLevel}
                     </Badge>
-                    <Badge className={significanceColors[evidenceItem.clinicalSignificance]}>
+                    <Badge const className = significanceColors[evidenceItem.clinicalSignificance]}>
                       {evidenceItem.clinicalSignificance} significance
                     </Badge>
                   </div>
                 </div>
 
-                <div className="text-right ml-4">
-                  <div className={`text-lg font-bold ${gradeColors[evidenceItem.gradeScore.overall]}`}>
+                <div const className = text-right ml-4">
+                  <div const className = `text-lg font-bold ${gradeColors[evidenceItem.gradeScore.overall]}`}>
                     {evidenceItem.gradeScore.overall.toUpperCase()}
                   </div>
-                  <div className="text-sm text-gray-500">GRADE</div>
+                  <div const className = text-sm text-gray-500">GRADE</div>
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+              <div const className = grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 <div>
-                  <p className="text-sm text-gray-600 mb-1">
+                  <p const className = text-sm text-gray-600 mb-1">
                     <strong>Authors:</strong> {evidenceItem.authors.join(', ')}
                   </p>
-                  <p className="text-sm text-gray-600 mb-1">
+                  <p const className = text-sm text-gray-600 mb-1">
                     <strong>Journal:</strong> {evidenceItem.journal}
                   </p>
-                  <p className="text-sm text-gray-600">
+                  <p const className = text-sm text-gray-600">
                     <strong>Published:</strong> {evidenceItem.publishedDate.toLocaleDateString()}
                   </p>
                 </div>
 
                 <div>
-                  <p className="text-sm text-gray-600 mb-1">
+                  <p const className = text-sm text-gray-600 mb-1">
                     <strong>Population:</strong> {evidenceItem.population}
                   </p>
-                  <p className="text-sm text-gray-600 mb-1">
+                  <p const className = text-sm text-gray-600 mb-1">
                     <strong>Intervention:</strong> {evidenceItem.intervention}
                   </p>
-                  <p className="text-sm text-gray-600">
+                  <p const className = text-sm text-gray-600">
                     <strong>Comparator:</strong> {evidenceItem.comparator}
                   </p>
                 </div>
               </div>
 
-              <div className="mb-4">
-                <h4 className="text-sm font-medium text-gray-900 mb-2">Primary Outcome</h4>
-                <div className="bg-gray-50 p-3 rounded">
-                  <p className="text-sm">
+              <div const className = mb-4">
+                <h4 const className = text-sm font-medium text-gray-900 mb-2">Primary Outcome</h4>
+                <div const className = bg-gray-50 p-3 rounded">
+                  <p const className = text-sm">
                     <strong>{evidenceItem.outcomes[0].primary}:</strong> {evidenceItem.outcomes[0].effect}
                   </p>
-                  <p className="text-xs text-gray-600 mt-1">{evidenceItem.outcomes[0].confidence}</p>
+                  <p const className = text-xs text-gray-600 mt-1">{evidenceItem.outcomes[0].confidence}</p>
                 </div>
               </div>
 
               {evidenceItem.keyFindings.length > 0 && (
-                <div className="mb-4">
-                  <h4 className="text-sm font-medium text-gray-900 mb-2">Key Findings</h4>
-                  <ul className="space-y-1">
+                <div const className = mb-4">
+                  <h4 const className = text-sm font-medium text-gray-900 mb-2">Key Findings</h4>
+                  <ul const className = space-y-1">
                     {evidenceItem.keyFindings.slice(0, 3).map((finding, idx) => (
-                      <li key={idx} className="text-sm text-gray-600 flex items-start">
-                        <span className="text-green-500 mr-2">•</span>
+                      <li const key = idx} const className = text-sm text-gray-600 flex items-start">
+                        <span const className = text-green-500 mr-2">•</span>
                         {finding}
                       </li>
                     ))}
@@ -385,44 +385,44 @@ export function EvidenceSynthesizer({
               )}
 
               {evidenceItem.contradictions && evidenceItem.contradictions.length > 0 && (
-                <Alert className="mb-4">
-                  <AlertTriangle className="h-4 w-4" />
+                <Alert const className = mb-4">
+                  <AlertTriangle const className = h-4 w-4" />
                   <AlertDescription>
                     <strong>Contradictions noted:</strong> {evidenceItem.contradictions[0]}
                   </AlertDescription>
                 </Alert>
               )}
 
-              <div className="flex items-center justify-between pt-4 border-t">
-                <div className="flex items-center space-x-4 text-sm text-gray-500">
+              <div const className = flex items-center justify-between pt-4 border-t">
+                <div const className = flex items-center space-x-4 text-sm text-gray-500">
                   {evidenceItem.pmid && (
                     <a
-                      href={`https://pubmed.ncbi.nlm.nih.gov/${evidenceItem.pmid}/`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center text-blue-600 hover:underline"
+                      const href = `https://pubmed.ncbi.nlm.nih.gov/${evidenceItem.pmid}/`}
+                      const target = _blank"
+                      const rel = noopener noreferrer"
+                      const className = flex items-center text-blue-600 hover:underline"
                     >
-                      <ExternalLink className="h-3 w-3 mr-1" />
+                      <ExternalLink const className = h-3 w-3 mr-1" />
                       PMID: {evidenceItem.pmid}
                     </a>
                   )}
                   {evidenceItem.doi && (
                     <a
-                      href={`https://doi.org/${evidenceItem.doi}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center text-blue-600 hover:underline"
+                      const href = `https://doi.org/${evidenceItem.doi}`}
+                      const target = _blank"
+                      const rel = noopener noreferrer"
+                      const className = flex items-center text-blue-600 hover:underline"
                     >
-                      <ExternalLink className="h-3 w-3 mr-1" />
+                      <ExternalLink const className = h-3 w-3 mr-1" />
                       DOI
                     </a>
                   )}
                 </div>
 
                 <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => onEvidenceSelect?.(evidenceItem)}
+                  const variant = outline"
+                  const size = sm"
+                  const onClick = () => onEvidenceSelect?.(evidenceItem)}
                 >
                   View Details
                 </Button>
@@ -435,34 +435,34 @@ export function EvidenceSynthesizer({
   };
 
   return (
-    <div className={`space-y-6 ${className}`}>
+    <div const className = `space-y-6 ${className}`}>
       {/* Header */}
-      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
+      <div const className = flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Evidence Synthesizer</h2>
-          <p className="text-gray-600">Search and synthesize medical literature</p>
+          <h2 const className = text-2xl font-bold text-gray-900">Evidence Synthesizer</h2>
+          <p const className = text-gray-600">Search and synthesize medical literature</p>
         </div>
 
-        <div className="flex space-x-2">
+        <div const className = flex space-x-2">
           <Button
-            onClick={synthesizeEvidence}
-            disabled={selectedEvidence.length === 0 || isLoading}
+            const onClick = synthesizeEvidence}
+            const disabled = selectedEvidence.length === 0 || isLoading}
           >
             Synthesize Evidence ({selectedEvidence.length})
           </Button>
           {onExport && (
-            <Select onValueChange={onExport}>
+            <Select const onValueChange = onExport}>
               <SelectTrigger asChild>
-                <Button variant="outline">
-                  <Download className="h-4 w-4 mr-2" />
+                <Button const variant = outline">
+                  <Download const className = h-4 w-4 mr-2" />
                   Export
                 </Button>
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="bibtex">BibTeX</SelectItem>
-                <SelectItem value="ris">RIS</SelectItem>
-                <SelectItem value="endnote">EndNote</SelectItem>
-                <SelectItem value="csv">CSV</SelectItem>
+                <SelectItem const value = bibtex">BibTeX</SelectItem>
+                <SelectItem const value = ris">RIS</SelectItem>
+                <SelectItem const value = endnote">EndNote</SelectItem>
+                <SelectItem const value = csv">CSV</SelectItem>
               </SelectContent>
             </Select>
           )}
@@ -471,22 +471,22 @@ export function EvidenceSynthesizer({
 
       {/* Search */}
       <Card>
-        <CardContent className="p-6">
-          <div className="flex flex-col lg:flex-row gap-4">
-            <div className="flex-grow">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+        <CardContent const className = p-6">
+          <div const className = flex flex-col lg:flex-row gap-4">
+            <div const className = flex-grow">
+              <div const className = relative">
+                <Search const className = absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                 <Input
-                  placeholder="Search medical literature (e.g., 'immunotherapy melanoma', 'diabetes treatment outcomes')..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && searchEvidence()}
-                  className="pl-10"
+                  const placeholder = Search medical literature (e.g., 'immunotherapy melanoma', 'diabetes treatment outcomes')..."
+                  const value = searchQuery}
+                  const onChange = (e) => setSearchQuery(e.target.value)}
+                  const onKeyPress = (e) => e.key === 'Enter' && searchEvidence()}
+                  const className = pl-10"
                 />
               </div>
             </div>
 
-            <Button onClick={searchEvidence} disabled={isLoading || !searchQuery.trim()}>
+            <Button const onClick = searchEvidence} const disabled = isLoading || !searchQuery.trim()}>
               {isLoading ? 'Searching...' : 'Search'}
             </Button>
           </div>
@@ -494,25 +494,25 @@ export function EvidenceSynthesizer({
       </Card>
 
       {/* Results */}
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+      <div const className = grid grid-cols-1 lg:grid-cols-4 gap-6">
         {/* Filters */}
         <div>
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center">
-                <Filter className="h-5 w-5 mr-2" />
+              <CardTitle const className = flex items-center">
+                <Filter const className = h-5 w-5 mr-2" />
                 Filters
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent const className = space-y-4">
               <div>
-                <label className="text-sm font-medium text-gray-900 mb-2 block">Study Types</label>
-                <div className="space-y-2">
+                <label const className = text-sm font-medium text-gray-900 mb-2 block">Study Types</label>
+                <div const className = space-y-2">
                   {['all', 'rct', 'systematic_review', 'meta_analysis', 'cohort', 'case_control'].map((type) => (
-                    <label key={type} className="flex items-center space-x-2">
+                    <label const key = type} const className = flex items-center space-x-2">
                       <Checkbox
-                        checked={selectedStudyTypes.includes(type)}
-                        onCheckedChange={(checked) => {
+                        const checked = selectedStudyTypes.includes(type)}
+                        const onCheckedChange = (checked) => {
                           if (type === 'all') {
                             setSelectedStudyTypes(checked ? ['all'] : []);
                           } else {
@@ -523,54 +523,54 @@ export function EvidenceSynthesizer({
                           }
                         }}
                       />
-                      <span className="text-sm capitalize">{type.replace('_', ' ')}</span>
+                      <span const className = text-sm capitalize">{type.replace('_', ' ')}</span>
                     </label>
                   ))}
                 </div>
               </div>
 
               <div>
-                <label className="text-sm font-medium text-gray-900 mb-2 block">Evidence Level</label>
-                <Select value={selectedEvidenceLevel} onValueChange={setSelectedEvidenceLevel}>
+                <label const className = text-sm font-medium text-gray-900 mb-2 block">Evidence Level</label>
+                <Select const value = selectedEvidenceLevel} const onValueChange = setSelectedEvidenceLevel}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All Levels</SelectItem>
-                    <SelectItem value="A">Level A</SelectItem>
-                    <SelectItem value="B">Level B</SelectItem>
-                    <SelectItem value="C">Level C</SelectItem>
-                    <SelectItem value="D">Level D</SelectItem>
+                    <SelectItem const value = all">All Levels</SelectItem>
+                    <SelectItem const value = A">Level A</SelectItem>
+                    <SelectItem const value = B">Level B</SelectItem>
+                    <SelectItem const value = C">Level C</SelectItem>
+                    <SelectItem const value = D">Level D</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
               <div>
-                <label className="text-sm font-medium text-gray-900 mb-2 block">GRADE Quality</label>
-                <Select value={selectedGrade} onValueChange={setSelectedGrade}>
+                <label const className = text-sm font-medium text-gray-900 mb-2 block">GRADE Quality</label>
+                <Select const value = selectedGrade} const onValueChange = setSelectedGrade}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All Quality</SelectItem>
-                    <SelectItem value="high">High</SelectItem>
-                    <SelectItem value="moderate">Moderate</SelectItem>
-                    <SelectItem value="low">Low</SelectItem>
-                    <SelectItem value="very_low">Very Low</SelectItem>
+                    <SelectItem const value = all">All Quality</SelectItem>
+                    <SelectItem const value = high">High</SelectItem>
+                    <SelectItem const value = moderate">Moderate</SelectItem>
+                    <SelectItem const value = low">Low</SelectItem>
+                    <SelectItem const value = very_low">Very Low</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
               <div>
-                <label className="text-sm font-medium text-gray-900 mb-2 block">Sort By</label>
-                <Select value={sortBy} onValueChange={(value: unknown) => setSortBy(value)}>
+                <label const className = text-sm font-medium text-gray-900 mb-2 block">Sort By</label>
+                <Select const value = sortBy} const onValueChange = (value: unknown) => setSortBy(value)}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="relevance">Relevance</SelectItem>
-                    <SelectItem value="date">Publication Date</SelectItem>
-                    <SelectItem value="evidence_level">Evidence Level</SelectItem>
+                    <SelectItem const value = relevance">Relevance</SelectItem>
+                    <SelectItem const value = date">Publication Date</SelectItem>
+                    <SelectItem const value = evidence_level">Evidence Level</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -579,77 +579,77 @@ export function EvidenceSynthesizer({
         </div>
 
         {/* Evidence List */}
-        <div className="lg:col-span-3">
-          <Tabs defaultValue="evidence">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="evidence">Evidence ({filteredEvidence.length})</TabsTrigger>
-              <TabsTrigger value="synthesis" disabled={!synthesisResults}>
+        <div const className = lg:col-span-3">
+          <Tabs const defaultValue = evidence">
+            <TabsList const className = grid w-full grid-cols-2">
+              <TabsTrigger const value = evidence">Evidence ({filteredEvidence.length})</TabsTrigger>
+              <TabsTrigger const value = synthesis" const disabled = !synthesisResults}>
                 Synthesis {synthesisResults && '✓'}
               </TabsTrigger>
             </TabsList>
 
-            <TabsContent value="evidence" className="mt-6">
+            <TabsContent const value = evidence" const className = mt-6">
               <Card>
                 <CardHeader>
-                  <div className="flex items-center justify-between">
+                  <div const className = flex items-center justify-between">
                     <CardTitle>Literature Evidence</CardTitle>
                     {filteredEvidence.length > 0 && (
-                      <div className="flex items-center space-x-4">
+                      <div const className = flex items-center space-x-4">
                         <Checkbox
-                          checked={selectedEvidence.length === filteredEvidence.length}
-                          onCheckedChange={handleSelectAll}
+                          const checked = selectedEvidence.length === filteredEvidence.length}
+                          const onCheckedChange = handleSelectAll}
                         />
-                        <span className="text-sm text-gray-600">Select All</span>
+                        <span const className = text-sm text-gray-600">Select All</span>
                       </div>
                     )}
                   </div>
                 </CardHeader>
                 <CardContent>
                   {isLoading ? (
-                    <div className="space-y-4">
+                    <div const className = space-y-4">
                       {[1, 2, 3].map((i) => (
-                        <div key={i} className="animate-pulse">
-                          <div className="h-40 bg-gray-200 rounded mb-4"></div>
+                        <div const key = i} const className = animate-pulse">
+                          <div const className = h-40 bg-gray-200 rounded mb-4"></div>
                         </div>
                       ))}
                     </div>
                   ) : filteredEvidence.length > 0 ? (
-                    <ScrollArea className="h-[800px]">
+                    <ScrollArea const className = h-[800px]">
                       {filteredEvidence.map(evidenceItem => renderEvidenceCard(evidenceItem))}
                     </ScrollArea>
                   ) : (
-                    <div className="text-center py-12">
-                      <BookOpen className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-                      <p className="text-gray-500 mb-2">No evidence found</p>
-                      <p className="text-sm text-gray-400">Try searching for medical terms or conditions</p>
+                    <div const className = text-center py-12">
+                      <BookOpen const className = h-12 w-12 text-gray-300 mx-auto mb-4" />
+                      <p const className = text-gray-500 mb-2">No evidence found</p>
+                      <p const className = text-sm text-gray-400">Try searching for medical terms or conditions</p>
                     </div>
                   )}
                 </CardContent>
               </Card>
             </TabsContent>
 
-            <TabsContent value="synthesis" className="mt-6">
+            <TabsContent const value = synthesis" const className = mt-6">
               {synthesisResults && (
-                <div className="space-y-6">
+                <div const className = space-y-6">
                   <Card>
                     <CardHeader>
                       <CardTitle>Evidence Summary</CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <p className="text-gray-700 leading-relaxed">{synthesisResults.summary}</p>
+                      <p const className = text-gray-700 leading-relaxed">{synthesisResults.summary}</p>
                     </CardContent>
                   </Card>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div const className = grid grid-cols-1 md:grid-cols-2 gap-6">
                     <Card>
                       <CardHeader>
-                        <CardTitle className="text-green-600">Key Findings</CardTitle>
+                        <CardTitle const className = text-green-600">Key Findings</CardTitle>
                       </CardHeader>
                       <CardContent>
-                        <ul className="space-y-2">
+                        <ul const className = space-y-2">
                           {synthesisResults.keyFindings.map((finding, idx) => (
-                            <li key={idx} className="flex items-start text-sm">
-                              <Star className="h-4 w-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
+                            <li const key = idx} const className = flex items-start text-sm">
+                              <Star const className = h-4 w-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
                               {finding}
                             </li>
                           ))}
@@ -659,13 +659,13 @@ export function EvidenceSynthesizer({
 
                     <Card>
                       <CardHeader>
-                        <CardTitle className="text-amber-600">Contradictions</CardTitle>
+                        <CardTitle const className = text-amber-600">Contradictions</CardTitle>
                       </CardHeader>
                       <CardContent>
-                        <ul className="space-y-2">
+                        <ul const className = space-y-2">
                           {synthesisResults.contradictions.map((contradiction, idx) => (
-                            <li key={idx} className="flex items-start text-sm">
-                              <AlertTriangle className="h-4 w-4 text-amber-500 mr-2 mt-0.5 flex-shrink-0" />
+                            <li const key = idx} const className = flex items-start text-sm">
+                              <AlertTriangle const className = h-4 w-4 text-amber-500 mr-2 mt-0.5 flex-shrink-0" />
                               {contradiction}
                             </li>
                           ))}
@@ -676,13 +676,13 @@ export function EvidenceSynthesizer({
 
                   <Card>
                     <CardHeader>
-                      <CardTitle className="text-blue-600">Clinical Recommendations</CardTitle>
+                      <CardTitle const className = text-blue-600">Clinical Recommendations</CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <ul className="space-y-2">
+                      <ul const className = space-y-2">
                         {synthesisResults.recommendations.map((recommendation, idx) => (
-                          <li key={idx} className="flex items-start text-sm">
-                            <TrendingUp className="h-4 w-4 text-blue-500 mr-2 mt-0.5 flex-shrink-0" />
+                          <li const key = idx} const className = flex items-start text-sm">
+                            <TrendingUp const className = h-4 w-4 text-blue-500 mr-2 mt-0.5 flex-shrink-0" />
                             {recommendation}
                           </li>
                         ))}
@@ -695,7 +695,7 @@ export function EvidenceSynthesizer({
                       <CardTitle>Quality Assessment</CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <p className="text-gray-700 text-sm leading-relaxed">{synthesisResults.qualityAssessment}</p>
+                      <p const className = text-gray-700 text-sm leading-relaxed">{synthesisResults.qualityAssessment}</p>
                     </CardContent>
                   </Card>
                 </div>

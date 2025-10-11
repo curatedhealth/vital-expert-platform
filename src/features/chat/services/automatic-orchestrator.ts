@@ -17,7 +17,7 @@ import { domainDetector, type DetectedDomain } from '@/lib/services/knowledge-do
 import { agentRanker, type RankedAgent } from '@/lib/services/agent-ranker';
 import { modelSelector } from '@/lib/services/model-selector';
 import { EnhancedAgentOrchestrator } from './enhanced-agent-orchestrator';
-import type { Agent } from '@/types/agent';
+import type { Agent } from '@/types/agent.types';
 import type { Message } from 'ai';
 
 // Performance optimization imports

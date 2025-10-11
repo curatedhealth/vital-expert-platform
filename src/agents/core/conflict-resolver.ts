@@ -1,574 +1,107 @@
 /**
- * Agent Conflict Resolution System
- * Handles conflicts between multiple agents and implements resolution strategies
+ * Simple conflict resolver for agent coordination
  */
 
-import { DigitalHealthAgent } from './DigitalHealthAgent';
-import type { AgentResponse } from '@/types/agent';
-
-export interface AgentConflict {
+export interface Conflict {
   id: string;
-  agents: DigitalHealthAgent[];
-  responses: AgentResponse[];
-  conflictType: 'contradiction' | 'inconsistency' | 'overlap' | 'priority' | 'authority';
-  severity: 'low' | 'medium' | 'high' | 'critical';
+  type: string;
+  agents: string[];
   description: string;
-  context: {
-    query: string;
-    userContext: any;
-    sessionId: string;
-    timestamp: Date;
-  };
-  metadata: {
-    confidenceScores: number[];
-    responseTimes: number[];
-    agentCapabilities: string[];
-  };
+  severity: 'low' | 'medium' | 'high' | 'critical';
+  timestamp: Date;
 }
 
 export interface ConflictResolution {
-  strategy: 'voting' | 'authority' | 'consensus' | 'escalation' | 'synthesis';
-  resolvedResponse: AgentResponse;
+  conflictId: string;
+  resolution: string;
   confidence: number;
-  reasoning: string;
-  participatingAgents: string[];
-  resolutionTime: number;
-  metadata: {
-    votes?: Record<string, number>;
-    authorityRanking?: string[];
-    consensusScore?: number;
-    escalationReason?: string;
-  };
-}
-
-export interface ResolutionStrategy {
-  name: string;
-  canResolve: (conflict: AgentConflict) => boolean;
-  resolve: (conflict: AgentConflict) => Promise<ConflictResolution>;
-  priority: number; // Higher number = higher priority
+  timestamp: Date;
 }
 
 export class AgentConflictResolver {
-  private strategies: Map<string, ResolutionStrategy> = new Map();
-  private conflictHistory: AgentConflict[] = [];
-  private resolutionMetrics: Map<string, { success: number; total: number; avgTime: number }> = new Map();
+  private conflicts: Conflict[] = [];
+  private resolutions: ConflictResolution[] = [];
 
-  constructor() {
-    this.initializeStrategies();
-  }
-
-  /**
-   * Initialize resolution strategies
-   */
-  private initializeStrategies(): void {
-    // Voting strategy
-    this.strategies.set('voting', {
-      name: 'voting',
-      canResolve: (conflict) => conflict.agents.length >= 2 && conflict.conflictType !== 'authority',
-      resolve: this.resolveByVoting.bind(this),
-      priority: 1
-    });
-
-    // Authority strategy
-    this.strategies.set('authority', {
-      name: 'authority',
-      canResolve: (conflict) => conflict.conflictType === 'authority' || conflict.severity === 'critical',
-      resolve: this.resolveByAuthority.bind(this),
-      priority: 4
-    });
-
-    // Consensus strategy
-    this.strategies.set('consensus', {
-      name: 'consensus',
-      canResolve: (conflict) => conflict.agents.length >= 3 && conflict.conflictType === 'contradiction',
-      resolve: this.resolveByConsensus.bind(this),
-      priority: 3
-    });
-
-    // Escalation strategy
-    this.strategies.set('escalation', {
-      name: 'escalation',
-      canResolve: (conflict) => conflict.severity === 'critical' || conflict.agents.length > 5,
-      resolve: this.resolveByEscalation.bind(this),
-      priority: 5
-    });
-
-    // Synthesis strategy
-    this.strategies.set('synthesis', {
-      name: 'synthesis',
-      canResolve: (conflict) => conflict.conflictType === 'overlap' || conflict.conflictType === 'inconsistency',
-      resolve: this.resolveBySynthesis.bind(this),
-      priority: 2
-    });
-  }
-
-  /**
-   * Detect conflicts between agent responses
-   */
   detectConflicts(
-    agents: DigitalHealthAgent[],
-    responses: AgentResponse[],
+    agents: any[],
+    responses: any[],
     query: string,
     context: any
-  ): AgentConflict[] {
-    const conflicts: AgentConflict[] = [];
+  ): Conflict[] {
+    // Simple conflict detection - in production this would be more sophisticated
+    const conflicts: Conflict[] = [];
+    
+    // Check for contradictory responses
+    if (responses.length > 1) {
+      const responseContents = responses.map(r => r.content?.toLowerCase() || '');
+      const hasContradictions = responseContents.some((content, index) => {
+        return responseContents.some((otherContent, otherIndex) => {
+          if (index === otherIndex) return false;
+          // Simple contradiction detection
+          return content.includes('yes') && otherContent.includes('no') ||
+                 content.includes('no') && otherContent.includes('yes');
+        });
+      });
 
-    // Check for contradictions
-    const contradictionConflicts = this.detectContradictions(agents, responses, query, context);
-    conflicts.push(...contradictionConflicts);
+      if (hasContradictions) {
+        conflicts.push({
+          id: `conflict-${Date.now()}`,
+          type: 'contradictory_responses',
+          agents: responses.map(r => r.agentId || 'unknown'),
+          description: 'Agents provided contradictory responses',
+          severity: 'medium',
+          timestamp: new Date()
+        });
+      }
+    }
 
-    // Check for inconsistencies
-    const inconsistencyConflicts = this.detectInconsistencies(agents, responses, query, context);
-    conflicts.push(...inconsistencyConflicts);
-
-    // Check for overlaps
-    const overlapConflicts = this.detectOverlaps(agents, responses, query, context);
-    conflicts.push(...overlapConflicts);
-
-    // Check for priority conflicts
-    const priorityConflicts = this.detectPriorityConflicts(agents, responses, query, context);
-    conflicts.push(...priorityConflicts);
-
-    // Check for authority conflicts
-    const authorityConflicts = this.detectAuthorityConflicts(agents, responses, query, context);
-    conflicts.push(...authorityConflicts);
-
+    this.conflicts = [...this.conflicts, ...conflicts];
     return conflicts;
   }
 
-  /**
-   * Resolve conflicts using appropriate strategy
-   */
-  async resolveConflicts(conflicts: AgentConflict[]): Promise<ConflictResolution[]> {
+  async resolveConflicts(conflicts: Conflict[]): Promise<ConflictResolution[]> {
     const resolutions: ConflictResolution[] = [];
 
     for (const conflict of conflicts) {
-      try {
-        const resolution = await this.resolveConflict(conflict);
-        resolutions.push(resolution);
-        
-        // Update metrics
-        this.updateResolutionMetrics(resolution);
-      } catch (error) {
-        console.error(`Failed to resolve conflict ${conflict.id}:`, error);
-        
-        // Create fallback resolution
-        const fallbackResolution = this.createFallbackResolution(conflict);
-        resolutions.push(fallbackResolution);
-      }
+      // Simple resolution strategy
+      const resolution: ConflictResolution = {
+        conflictId: conflict.id,
+        resolution: this.getResolutionStrategy(conflict),
+        confidence: 0.8,
+        timestamp: new Date()
+      };
+
+      resolutions.push(resolution);
     }
 
+    this.resolutions = [...this.resolutions, ...resolutions];
     return resolutions;
   }
 
-  /**
-   * Resolve a single conflict
-   */
-  private async resolveConflict(conflict: AgentConflict): Promise<ConflictResolution> {
-    // Select appropriate strategy
-    const strategy = this.selectStrategy(conflict);
-    
-    if (!strategy) {
-      throw new Error(`No suitable strategy found for conflict ${conflict.id}`);
+  private getResolutionStrategy(conflict: Conflict): string {
+    switch (conflict.type) {
+      case 'contradictory_responses':
+        return 'Use majority consensus or request clarification from user';
+      case 'resource_conflict':
+        return 'Implement priority-based resource allocation';
+      case 'timing_conflict':
+        return 'Adjust execution order based on dependencies';
+      default:
+        return 'Escalate to human operator for manual resolution';
     }
-
-    console.log(`🔧 Resolving conflict ${conflict.id} using ${strategy.name} strategy`);
-
-    const startTime = Date.now();
-    const resolution = await strategy.resolve(conflict);
-    const resolutionTime = Date.now() - startTime;
-
-    resolution.resolutionTime = resolutionTime;
-    resolution.strategy = strategy.name as any;
-
-    // Log conflict resolution
-    this.logConflictResolution(conflict, resolution);
-
-    return resolution;
   }
 
-  /**
-   * Select the best strategy for a conflict
-   */
-  private selectStrategy(conflict: AgentConflict): ResolutionStrategy | null {
-    const applicableStrategies = Array.from(this.strategies.values())
-      .filter(strategy => strategy.canResolve(conflict))
-      .sort((a, b) => b.priority - a.priority);
-
-    return applicableStrategies[0] || null;
+  getConflicts(): Conflict[] {
+    return [...this.conflicts];
   }
 
-  /**
-   * Resolve by voting
-   */
-  private async resolveByVoting(conflict: AgentConflict): Promise<ConflictResolution> {
-    const votes: Record<string, number> = {};
-    
-    // Each agent votes for their own response
-    for (let i = 0; i < conflict.agents.length; i++) {
-      const agent = conflict.agents[i];
-      const response = conflict.responses[i];
-      const confidence = response.confidence || 0.5;
-      
-      votes[agent.id] = confidence;
-    }
-
-    // Find the response with highest confidence
-    const winningAgentIndex = Object.entries(votes)
-      .sort(([,a], [,b]) => b - a)[0][0];
-    
-    const winningIndex = conflict.agents.findIndex(agent => agent.id === winningAgentIndex);
-    const winningResponse = conflict.responses[winningIndex];
-
-    return {
-      strategy: 'voting',
-      resolvedResponse: winningResponse,
-      confidence: Math.max(...Object.values(votes)),
-      reasoning: `Voting resolution: Agent ${winningAgentIndex} won with confidence ${votes[winningAgentIndex]}`,
-      participatingAgents: conflict.agents.map(a => a.id),
-      resolutionTime: 0, // Will be set by caller
-      metadata: { votes }
-    };
+  getResolutions(): ConflictResolution[] {
+    return [...this.resolutions];
   }
 
-  /**
-   * Resolve by authority
-   */
-  private async resolveByAuthority(conflict: AgentConflict): Promise<ConflictResolution> {
-    // Rank agents by authority (tier, experience, specialization)
-    const authorityRanking = this.rankAgentsByAuthority(conflict.agents);
-    const highestAuthorityAgent = authorityRanking[0];
-    
-    const winningIndex = conflict.agents.findIndex(agent => agent.id === highestAuthorityAgent.id);
-    const winningResponse = conflict.responses[winningIndex];
-
-    return {
-      strategy: 'authority',
-      resolvedResponse: winningResponse,
-      confidence: 0.9, // High confidence for authority-based resolution
-      reasoning: `Authority resolution: Agent ${highestAuthorityAgent.id} has highest authority (tier: ${highestAuthorityAgent.tier})`,
-      participatingAgents: conflict.agents.map(a => a.id),
-      resolutionTime: 0,
-      metadata: { 
-        authorityRanking: authorityRanking.map(a => a.id),
-        votes: {} 
-      }
-    };
-  }
-
-  /**
-   * Resolve by consensus
-   */
-  private async resolveByConsensus(conflict: AgentConflict): Promise<ConflictResolution> {
-    // Find common elements across responses
-    const commonElements = this.findCommonElements(conflict.responses);
-    const consensusScore = this.calculateConsensusScore(conflict.responses);
-    
-    // Create synthesized response
-    const synthesizedResponse = this.synthesizeResponses(conflict.responses, commonElements);
-
-    return {
-      strategy: 'consensus',
-      resolvedResponse: synthesizedResponse,
-      confidence: consensusScore,
-      reasoning: `Consensus resolution: Found ${commonElements.length} common elements with ${consensusScore} consensus score`,
-      participatingAgents: conflict.agents.map(a => a.id),
-      resolutionTime: 0,
-      metadata: { 
-        consensusScore,
-        votes: {} 
-      }
-    };
-  }
-
-  /**
-   * Resolve by escalation
-   */
-  private async resolveByEscalation(conflict: AgentConflict): Promise<ConflictResolution> {
-    // Escalate to human or higher authority
-    const escalationReason = this.determineEscalationReason(conflict);
-    
-    // Create escalation response
-    const escalationResponse: AgentResponse = {
-      id: `escalation-${Date.now()}`,
-      agentId: 'escalation-system',
-      content: `This conflict requires human intervention. Reason: ${escalationReason}. Please contact the system administrator.`,
-      confidence: 1.0,
-      metadata: {
-        escalationReason,
-        originalConflict: conflict.id,
-        escalatedAt: new Date().toISOString()
-      },
-      timestamp: new Date()
-    };
-
-    return {
-      strategy: 'escalation',
-      resolvedResponse: escalationResponse,
-      confidence: 1.0,
-      reasoning: `Escalation resolution: ${escalationReason}`,
-      participatingAgents: conflict.agents.map(a => a.id),
-      resolutionTime: 0,
-      metadata: { 
-        escalationReason,
-        votes: {} 
-      }
-    };
-  }
-
-  /**
-   * Resolve by synthesis
-   */
-  private async resolveBySynthesis(conflict: AgentConflict): Promise<ConflictResolution> {
-    // Synthesize responses into a coherent answer
-    const synthesizedResponse = this.synthesizeResponses(conflict.responses);
-    const synthesisConfidence = this.calculateSynthesisConfidence(conflict.responses);
-
-    return {
-      strategy: 'synthesis',
-      resolvedResponse: synthesizedResponse,
-      confidence: synthesisConfidence,
-      reasoning: `Synthesis resolution: Combined ${conflict.responses.length} responses into coherent answer`,
-      participatingAgents: conflict.agents.map(a => a.id),
-      resolutionTime: 0,
-      metadata: { 
-        votes: {} 
-      }
-    };
-  }
-
-  // Conflict detection methods
-  private detectContradictions(
-    agents: DigitalHealthAgent[],
-    responses: AgentResponse[],
-    query: string,
-    context: any
-  ): AgentConflict[] {
-    const conflicts: AgentConflict[] = [];
-
-    for (let i = 0; i < responses.length; i++) {
-      for (let j = i + 1; j < responses.length; j++) {
-        const response1 = responses[i];
-        const response2 = responses[j];
-        
-        if (this.areContradictory(response1, response2)) {
-          conflicts.push({
-            id: `contradiction-${Date.now()}-${i}-${j}`,
-            agents: [agents[i], agents[j]],
-            responses: [response1, response2],
-            conflictType: 'contradiction',
-            severity: 'high',
-            description: `Contradictory responses from agents ${agents[i].id} and ${agents[j].id}`,
-            context: { query, userContext: context, sessionId: 'unknown', timestamp: new Date() },
-            metadata: {
-              confidenceScores: [response1.confidence || 0.5, response2.confidence || 0.5],
-              responseTimes: [0, 0], // Would be populated from actual timing
-              agentCapabilities: [agents[i].capabilities?.join(',') || '', agents[j].capabilities?.join(',') || '']
-            }
-          });
-        }
-      }
-    }
-
-    return conflicts;
-  }
-
-  private detectInconsistencies(
-    agents: DigitalHealthAgent[],
-    responses: AgentResponse[],
-    query: string,
-    context: any
-  ): AgentConflict[] {
-    // Similar to contradictions but for less severe inconsistencies
-    return []; // Simplified for now
-  }
-
-  private detectOverlaps(
-    agents: DigitalHealthAgent[],
-    responses: AgentResponse[],
-    query: string,
-    context: any
-  ): AgentConflict[] {
-    // Detect when agents provide overlapping but not contradictory information
-    return []; // Simplified for now
-  }
-
-  private detectPriorityConflicts(
-    agents: DigitalHealthAgent[],
-    responses: AgentResponse[],
-    query: string,
-    context: any
-  ): AgentConflict[] {
-    // Detect when agents have different priorities for the same task
-    return []; // Simplified for now
-  }
-
-  private detectAuthorityConflicts(
-    agents: DigitalHealthAgent[],
-    responses: AgentResponse[],
-    query: string,
-    context: any
-  ): AgentConflict[] {
-    // Detect when agents have conflicting authority levels
-    return []; // Simplified for now
-  }
-
-  // Helper methods
-  private areContradictory(response1: AgentResponse, response2: AgentResponse): boolean {
-    // Simple contradiction detection based on content analysis
-    const content1 = response1.content.toLowerCase();
-    const content2 = response2.content.toLowerCase();
-    
-    // Check for opposite keywords
-    const opposites = [
-      ['yes', 'no'], ['true', 'false'], ['correct', 'incorrect'],
-      ['should', 'should not'], ['recommend', 'not recommend']
-    ];
-    
-    for (const [positive, negative] of opposites) {
-      if ((content1.includes(positive) && content2.includes(negative)) ||
-          (content1.includes(negative) && content2.includes(positive))) {
-        return true;
-      }
-    }
-    
-    return false;
-  }
-
-  private rankAgentsByAuthority(agents: DigitalHealthAgent[]): DigitalHealthAgent[] {
-    return agents.sort((a, b) => {
-      // Sort by tier (1 = highest authority)
-      if (a.tier !== b.tier) {
-        return a.tier - b.tier;
-      }
-      
-      // Then by experience/performance
-      const aExperience = a.metadata?.experience || 0;
-      const bExperience = b.metadata?.experience || 0;
-      return bExperience - aExperience;
-    });
-  }
-
-  private findCommonElements(responses: AgentResponse[]): string[] {
-    // Find common keywords or phrases across responses
-    const allWords = responses.flatMap(r => 
-      r.content.toLowerCase().split(/\s+/).filter(word => word.length > 3)
-    );
-    
-    const wordCounts = allWords.reduce((acc, word) => {
-      acc[word] = (acc[word] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>);
-    
-    return Object.entries(wordCounts)
-      .filter(([, count]) => count > 1)
-      .map(([word]) => word);
-  }
-
-  private calculateConsensusScore(responses: AgentResponse[]): number {
-    if (responses.length < 2) return 1.0;
-    
-    const commonElements = this.findCommonElements(responses);
-    const totalWords = responses.reduce((sum, r) => sum + r.content.split(/\s+/).length, 0);
-    
-    return Math.min(1.0, commonElements.length / (totalWords / responses.length));
-  }
-
-  private synthesizeResponses(responses: AgentResponse[], commonElements?: string[]): AgentResponse {
-    // Simple synthesis - combine responses with common elements highlighted
-    const combinedContent = responses
-      .map(r => r.content)
-      .join('\n\n---\n\n');
-    
-    return {
-      id: `synthesized-${Date.now()}`,
-      agentId: 'synthesis-system',
-      content: `Synthesized response from ${responses.length} agents:\n\n${combinedContent}`,
-      confidence: this.calculateSynthesisConfidence(responses),
-      metadata: {
-        synthesizedFrom: responses.map(r => r.agentId),
-        commonElements: commonElements || [],
-        synthesizedAt: new Date().toISOString()
-      },
-      timestamp: new Date()
-    };
-  }
-
-  private calculateSynthesisConfidence(responses: AgentResponse[]): number {
-    const avgConfidence = responses.reduce((sum, r) => sum + (r.confidence || 0.5), 0) / responses.length;
-    const consensusScore = this.calculateConsensusScore(responses);
-    
-    return (avgConfidence + consensusScore) / 2;
-  }
-
-  private determineEscalationReason(conflict: AgentConflict): string {
-    if (conflict.severity === 'critical') {
-      return 'Critical severity conflict requiring human intervention';
-    }
-    if (conflict.agents.length > 5) {
-      return 'Too many agents involved in conflict';
-    }
-    if (conflict.conflictType === 'authority') {
-      return 'Authority conflict requiring administrative decision';
-    }
-    return 'Complex conflict requiring human review';
-  }
-
-  private createFallbackResolution(conflict: AgentConflict): ConflictResolution {
-    // Use the first response as fallback
-    const fallbackResponse = conflict.responses[0];
-    
-    return {
-      strategy: 'escalation',
-      resolvedResponse: {
-        ...fallbackResponse,
-        content: `[FALLBACK] ${fallbackResponse.content}\n\nNote: This response was selected as a fallback due to resolution failure.`,
-        metadata: {
-          ...fallbackResponse.metadata,
-          fallback: true,
-          originalConflict: conflict.id
-        }
-      },
-      confidence: 0.3, // Low confidence for fallback
-      reasoning: 'Fallback resolution due to resolution failure',
-      participatingAgents: conflict.agents.map(a => a.id),
-      resolutionTime: 0,
-      metadata: { votes: {} }
-    };
-  }
-
-  private updateResolutionMetrics(resolution: ConflictResolution): void {
-    const strategy = resolution.strategy;
-    const metrics = this.resolutionMetrics.get(strategy) || { success: 0, total: 0, avgTime: 0 };
-    
-    metrics.total++;
-    if (resolution.confidence > 0.5) {
-      metrics.success++;
-    }
-    metrics.avgTime = (metrics.avgTime * (metrics.total - 1) + resolution.resolutionTime) / metrics.total;
-    
-    this.resolutionMetrics.set(strategy, metrics);
-  }
-
-  private logConflictResolution(conflict: AgentConflict, resolution: ConflictResolution): void {
-    console.log(`✅ Resolved conflict ${conflict.id} using ${resolution.strategy} strategy`);
-    console.log(`   Confidence: ${resolution.confidence}`);
-    console.log(`   Reasoning: ${resolution.reasoning}`);
-    console.log(`   Resolution time: ${resolution.resolutionTime}ms`);
-  }
-
-  /**
-   * Get resolution metrics
-   */
-  getResolutionMetrics(): Map<string, { success: number; total: number; avgTime: number }> {
-    return new Map(this.resolutionMetrics);
-  }
-
-  /**
-   * Get conflict history
-   */
-  getConflictHistory(): AgentConflict[] {
-    return [...this.conflictHistory];
+  clearHistory(): void {
+    this.conflicts = [];
+    this.resolutions = [];
   }
 }
 

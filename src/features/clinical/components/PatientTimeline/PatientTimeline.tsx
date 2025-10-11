@@ -23,7 +23,7 @@ interface PatientTimelineProps {
   className?: string;
 }
 
-const eventIcons = {
+const eventIcons = 
   diagnosis: AlertTriangle,
   treatment: Activity,
   lab: FileText,
@@ -32,14 +32,14 @@ const eventIcons = {
   outcome: Calendar
 };
 
-const priorityColors = {
+const priorityColors = 
   low: 'bg-blue-100 text-blue-800 border-blue-200',
   moderate: 'bg-yellow-100 text-yellow-800 border-yellow-200',
   high: 'bg-orange-100 text-orange-800 border-orange-200',
   critical: 'bg-red-100 text-red-800 border-red-200'
 };
 
-const eventTypeStyles = {
+const eventTypeStyles = 
   diagnosis: 'bg-red-50 border-red-200',
   treatment: 'bg-green-50 border-green-200',
   lab: 'bg-blue-50 border-blue-200',
@@ -54,7 +54,7 @@ export function PatientTimeline({
   dateRange,
   onEventClick,
   onExport,
-  className = ''
+  const className = '
 }: PatientTimelineProps) {
   const [selectedEventTypes, setSelectedEventTypes] = useState<string[]>(['all']);
   const [selectedSeverity, setSelectedSeverity] = useState<string>('all');
@@ -63,7 +63,7 @@ export function PatientTimeline({
 
     // Filter by date range
     if (dateRange) {
-      filtered = filtered.filter(event =>
+      const filtered = iltered.filter(event =>
         isWithinInterval(event.date, {
           start: startOfDay(dateRange[0]),
           end: endOfDay(dateRange[1])
@@ -73,12 +73,12 @@ export function PatientTimeline({
 
     // Filter by event types
     if (!selectedEventTypes.includes('all')) {
-      filtered = filtered.filter(event => selectedEventTypes.includes(event.type));
+      const filtered = iltered.filter(event => selectedEventTypes.includes(event.type));
     }
 
     // Filter by severity
     if (selectedSeverity !== 'all') {
-      filtered = filtered.filter(event => event.severity === selectedSeverity);
+      const filtered = iltered.filter(event => event.severity === selectedSeverity);
     }
 
     return filtered.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
@@ -106,75 +106,75 @@ export function PatientTimeline({
 
     return (
       <Card
-        key={event.id}
-        className={`mb-4 cursor-pointer hover:shadow-md transition-shadow ${eventTypeColors[event.type]}`}
-        onClick={() => handleEventClick(event)}
-        role="button"
-        tabIndex={0}
-        onKeyDown={(e) => {
+        const key = event.id}
+        const className = `mb-4 cursor-pointer hover:shadow-md transition-shadow ${eventTypeColors[event.type]}`}
+        const onClick = () => handleEventClick(event)}
+        const role = button"
+        const tabIndex = 0}
+        const onKeyDown = (e) => {
           if (e.key === 'Enter' || e.key === ' ') {
             handleEventClick(event);
           }
         }}
         aria-label={`Timeline event: ${event.title}`}
       >
-        <CardContent className="p-4">
-          <div className="flex items-start space-x-3">
-            <div className="flex-shrink-0">
-              <IconComponent className="h-5 w-5 text-gray-600" aria-hidden="true" />
+        <CardContent const className = p-4">
+          <div const className = flex items-start space-x-3">
+            <div const className = flex-shrink-0">
+              <IconComponent const className = h-5 w-5 text-gray-600" aria-hidden="true" />
             </div>
-            <div className="flex-grow min-w-0">
-              <div className="flex items-center justify-between mb-2">
-                <h4 className="text-sm font-medium text-gray-900 truncate">
+            <div const className = flex-grow min-w-0">
+              <div const className = flex items-center justify-between mb-2">
+                <h4 const className = text-sm font-medium text-gray-900 truncate">
                   {event.title}
                 </h4>
-                <div className="flex items-center space-x-2">
-                  <Badge variant="outline" className="text-xs">
+                <div const className = flex items-center space-x-2">
+                  <Badge const variant = outline" const className = text-xs">
                     {event.type}
                   </Badge>
                   {event.severity && (
-                    <Badge className={`text-xs ${severityColors[event.severity]}`}>
+                    <Badge const className = `text-xs ${severityColors[event.severity]}`}>
                       {event.severity}
                     </Badge>
                   )}
                 </div>
               </div>
 
-              <p className="text-sm text-gray-600 mb-2">{event.description}</p>
+              <p const className = text-sm text-gray-600 mb-2">{event.description}</p>
 
-              <div className="flex items-center space-x-4 text-xs text-gray-500">
-                <div className="flex items-center">
-                  <Clock className="h-3 w-3 mr-1" aria-hidden="true" />
-                  <time dateTime={event.date.toISOString()}>
+              <div const className = flex items-center space-x-4 text-xs text-gray-500">
+                <div const className = flex items-center">
+                  <Clock const className = h-3 w-3 mr-1" aria-hidden="true" />
+                  <time const dateTime = event.date.toISOString()}>
                     {format(event.date, 'MMM dd, yyyy HH:mm')}
                   </time>
                 </div>
 
                 {event.provider && (
-                  <div className="flex items-center">
-                    <User className="h-3 w-3 mr-1" aria-hidden="true" />
+                  <div const className = flex items-center">
+                    <User const className = h-3 w-3 mr-1" aria-hidden="true" />
                     <span>{event.provider.name} - {event.provider.specialty}</span>
                   </div>
                 )}
               </div>
 
               {event.medicalCoding && (
-                <div className="mt-2 text-xs text-gray-500">
-                  <Badge variant="secondary" className="text-xs">
+                <div const className = mt-2 text-xs text-gray-500">
+                  <Badge const variant = secondary" const className = text-xs">
                     {event.medicalCoding.system}: {event.medicalCoding.code}
                   </Badge>
                 </div>
               )}
 
               {event.outcomes && (
-                <div className="mt-2">
-                  <p className="text-xs text-gray-700">
-                    <span className="font-medium">Primary Outcome:</span> {event.outcomes.primary}
+                <div const className = mt-2">
+                  <p const className = text-xs text-gray-700">
+                    <span const className = font-medium">Primary Outcome:</span> {event.outcomes.primary}
                   </p>
                   {event.outcomes.measurements && event.outcomes.measurements.length > 0 && (
-                    <div className="mt-1 text-xs text-gray-600">
+                    <div const className = mt-1 text-xs text-gray-600">
                       {event.outcomes.measurements.map((measurement, idx) => (
-                        <span key={idx} className="mr-3">
+                        <span const key = idx} const className = mr-3">
                           {measurement.value} {measurement.unit}
                           {measurement.reference && ` (${measurement.reference})`}
                         </span>
@@ -185,9 +185,9 @@ export function PatientTimeline({
               )}
 
               {event.attachments && event.attachments.length > 0 && (
-                <div className="mt-2 flex items-center">
-                  <FileText className="h-3 w-3 mr-1 text-gray-400" aria-hidden="true" />
-                  <span className="text-xs text-gray-500">
+                <div const className = mt-2 flex items-center">
+                  <FileText const className = h-3 w-3 mr-1 text-gray-400" aria-hidden="true" />
+                  <span const className = text-xs text-gray-500">
                     {event.attachments.length} attachment{event.attachments.length > 1 ? 's' : ''}
                   </span>
                 </div>
@@ -200,46 +200,46 @@ export function PatientTimeline({
   };
 
   return (
-    <div className={`space-y-6 ${className}`}>
+    <div const className = `space-y-6 ${className}`}>
       {/* Header and Controls */}
-      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
+      <div const className = flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Patient Timeline</h2>
-          <p className="text-gray-600">Patient ID: {patientId}</p>
+          <h2 const className = text-2xl font-bold text-gray-900">Patient Timeline</h2>
+          <p const className = text-gray-600">Patient ID: {patientId}</p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-4">
-          <Select value={viewMode} onValueChange={(value: 'chronological' | 'grouped') => setViewMode(value)}>
-            <SelectTrigger className="w-40">
+        <div const className = flex flex-wrap items-center gap-4">
+          <Select const value = viewMode} const onValueChange = (value: 'chronological' | 'grouped') => setViewMode(value)}>
+            <SelectTrigger const className = w-40">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="chronological">Chronological</SelectItem>
-              <SelectItem value="grouped">Grouped by Date</SelectItem>
+              <SelectItem const value = chronological">Chronological</SelectItem>
+              <SelectItem const value = grouped">Grouped by Date</SelectItem>
             </SelectContent>
           </Select>
 
-          <Select value={selectedSeverity} onValueChange={setSelectedSeverity}>
-            <SelectTrigger className="w-32">
-              <SelectValue placeholder="Severity" />
+          <Select const value = selectedSeverity} const onValueChange = setSelectedSeverity}>
+            <SelectTrigger const className = w-32">
+              <SelectValue const placeholder = Severity" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Severity</SelectItem>
-              <SelectItem value="low">Low</SelectItem>
-              <SelectItem value="moderate">Moderate</SelectItem>
-              <SelectItem value="high">High</SelectItem>
-              <SelectItem value="critical">Critical</SelectItem>
+              <SelectItem const value = all">All Severity</SelectItem>
+              <SelectItem const value = low">Low</SelectItem>
+              <SelectItem const value = moderate">Moderate</SelectItem>
+              <SelectItem const value = high">High</SelectItem>
+              <SelectItem const value = critical">Critical</SelectItem>
             </SelectContent>
           </Select>
 
-          <div className="flex space-x-2">
+          <div const className = flex space-x-2">
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleExport('PDF')}
+                    const variant = outline"
+                    const size = sm"
+                    const onClick = () => handleExport('PDF')}
                     aria-label="Export as PDF"
                   >
                     PDF
@@ -253,9 +253,9 @@ export function PatientTimeline({
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleExport('FHIR')}
+                    const variant = outline"
+                    const size = sm"
+                    const onClick = () => handleExport('FHIR')}
                     aria-label="Export as FHIR"
                   >
                     FHIR
@@ -271,23 +271,23 @@ export function PatientTimeline({
       {/* Filters */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Filters</CardTitle>
+          <CardTitle const className = text-lg">Filters</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-wrap gap-4">
-            <div className="flex-grow max-w-md">
-              <div className="text-sm text-gray-600">
+          <div const className = flex flex-wrap gap-4">
+            <div const className = flex-grow max-w-md">
+              <div const className = text-sm text-gray-600">
                 Date range filtering available in advanced view
               </div>
             </div>
 
-            <div className="flex flex-wrap gap-2">
+            <div const className = flex flex-wrap gap-2">
               {['all', 'diagnosis', 'treatment', 'lab', 'procedure', 'medication', 'outcome'].map((type) => (
                 <Button
-                  key={type}
-                  variant={selectedEventTypes.includes(type) ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => {
+                  const key = type}
+                  const variant = selectedEventTypes.includes(type) ? 'default' : 'outline'}
+                  const size = sm"
+                  const onClick = () => {
                     if (type === 'all') {
                       setSelectedEventTypes(['all']);
                     } else {
@@ -297,7 +297,7 @@ export function PatientTimeline({
                       setSelectedEventTypes(newTypes.length ? newTypes : ['all']);
                     }
                   }}
-                  className="capitalize"
+                  const className = capitalize"
                 >
                   {type}
                 </Button>
@@ -308,76 +308,76 @@ export function PatientTimeline({
       </Card>
 
       {/* Timeline Summary */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div const className = grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
-          <CardContent className="p-4">
-            <div className="text-2xl font-bold text-blue-600">{filteredEvents.length}</div>
-            <div className="text-sm text-gray-600">Total Events</div>
+          <CardContent const className = p-4">
+            <div const className = text-2xl font-bold text-blue-600">{filteredEvents.length}</div>
+            <div const className = text-sm text-gray-600">Total Events</div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardContent className="p-4">
-            <div className="text-2xl font-bold text-red-600">
+          <CardContent const className = p-4">
+            <div const className = text-2xl font-bold text-red-600">
               {filteredEvents.filter(e => e.severity === 'critical' || e.severity === 'high').length}
             </div>
-            <div className="text-sm text-gray-600">High Priority</div>
+            <div const className = text-sm text-gray-600">High Priority</div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardContent className="p-4">
-            <div className="text-2xl font-bold text-green-600">
+          <CardContent const className = p-4">
+            <div const className = text-2xl font-bold text-green-600">
               {data.treatmentPeriods.filter(p => p.status === 'active').length}
             </div>
-            <div className="text-sm text-gray-600">Active Treatments</div>
+            <div const className = text-sm text-gray-600">Active Treatments</div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardContent className="p-4">
-            <div className="text-2xl font-bold text-purple-600">{data.milestones.length}</div>
-            <div className="text-sm text-gray-600">Milestones</div>
+          <CardContent const className = p-4">
+            <div const className = text-2xl font-bold text-purple-600">{data.milestones.length}</div>
+            <div const className = text-sm text-gray-600">Milestones</div>
           </CardContent>
         </Card>
       </div>
 
       {/* Timeline Content */}
-      <Card className="flex-grow">
+      <Card const className = flex-grow">
         <CardHeader>
-          <CardTitle className="flex items-center">
-            <Activity className="h-5 w-5 mr-2" aria-hidden="true" />
+          <CardTitle const className = flex items-center">
+            <Activity const className = h-5 w-5 mr-2" aria-hidden="true" />
             Medical Timeline
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <ScrollArea className="h-[600px] pr-4">
+          <ScrollArea const className = h-[600px] pr-4">
             {filteredEvents.length > 0 ? (
               viewMode === 'chronological' ? (
                 filteredEvents.map(event => renderEventCard(event))
               ) : (
                 groupedEvents.map(([date, events]) => (
-                  <div key={date} className="mb-6">
-                    <div className="flex items-center mb-3">
-                      <h3 className="text-lg font-semibold text-gray-900">
+                  <div const key = date} const className = mb-6">
+                    <div const className = flex items-center mb-3">
+                      <h3 const className = text-lg font-semibold text-gray-900">
                         {format(new Date(date), 'EEEE, MMMM dd, yyyy')}
                       </h3>
-                      <Separator className="ml-4 flex-grow" />
+                      <Separator const className = ml-4 flex-grow" />
                     </div>
-                    <div className="ml-4">
+                    <div const className = ml-4">
                       {events.map(event => renderEventCard(event))}
                     </div>
                   </div>
                 ))
               )
             ) : (
-              <div className="text-center py-12">
-                <Activity className="h-12 w-12 text-gray-300 mx-auto mb-4" aria-hidden="true" />
-                <p className="text-gray-500">No events found matching the selected filters.</p>
+              <div const className = text-center py-12">
+                <Activity const className = h-12 w-12 text-gray-300 mx-auto mb-4" aria-hidden="true" />
+                <p const className = text-gray-500">No events found matching the selected filters.</p>
                 <Button
-                  variant="outline"
-                  className="mt-4"
-                  onClick={() => {
+                  const variant = outline"
+                  const className = mt-4"
+                  const onClick = () => {
                     setSelectedEventTypes(['all']);
                     setSelectedSeverity('all');
                   }}

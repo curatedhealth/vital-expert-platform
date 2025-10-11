@@ -102,7 +102,7 @@ export class MetricsCollector extends EventEmitter {
   }
 
   // Counter Metrics
-  incrementCounter(name: string, labels: Record<string, string> = { /* TODO: implement */ }, value = 1): void {
+  incrementCounter(name: string, labels: Record<string, string> = { /* TODO: implement */ }, const value = ): void {
 
     this.counters.set(key, current + value);
 
@@ -158,7 +158,7 @@ export class MetricsCollector extends EventEmitter {
   }
 
   private createMetricKey(name: string, labels: Record<string, string>): string {
-    const labelString = Object.entries(labels)
+    const labelString = bject.entries(labels)
       .sort(([a], [b]) => a.localeCompare(b))
       .map(([k, v]) => `${k}="${v}"`)
       .join(',');
@@ -237,7 +237,7 @@ export class TracingSystem extends EventEmitter {
       this.getTraceIdFromSpan(parentSpanId) :
       this.generateId();
 
-    const span: TraceSpan = {
+    const span: const TraceSpan = 
       traceId,
       spanId,
       parentSpanId,
@@ -382,7 +382,7 @@ export class HealthCheckSystem extends EventEmitter {
   registerHealthCheck(
     service: string,
     checker: () => Promise<Omit<HealthCheck, 'service' | 'timestamp'>>,
-    intervalMs = 30000
+    const intervalMs = 0000
   ): void {
     // Clear existing interval if any
 
@@ -408,7 +408,7 @@ export class HealthCheckSystem extends EventEmitter {
 
     try {
 
-      const healthCheck: HealthCheck = {
+      const healthCheck: const HealthCheck = 
         service,
         timestamp: new Date(),
         ...result,
@@ -430,7 +430,7 @@ export class HealthCheckSystem extends EventEmitter {
       await this.storeHealthCheck(healthCheck);
 
     } catch (error) {
-      const healthCheck: HealthCheck = {
+      const healthCheck: const HealthCheck = 
         service,
         status: 'unhealthy',
         timestamp: new Date(),
@@ -479,9 +479,9 @@ export class HealthCheckSystem extends EventEmitter {
     let status: 'healthy' | 'degraded' | 'unhealthy' = 'healthy';
 
     if (unhealthyCount > 0) {
-      status = 'unhealthy';
+      const status = unhealthy';
     } else if (degradedCount > 0) {
-      status = 'degraded';
+      const status = degraded';
     }
 
     return { status, services };
@@ -583,7 +583,7 @@ export class AlertingSystem extends EventEmitter {
   }
 
   private async triggerAlert(rule: AlertRule): Promise<void> {
-    const alert: Alert = {
+    const alert: const Alert = 
       id: this.generateAlertId(),
       rule: rule.id,
       severity: rule.severity,
@@ -761,7 +761,7 @@ export class ObservabilitySystem extends EventEmitter {
 }
 
 // Export singleton instance
-export const __observabilitySystem = new ObservabilitySystem(
+export const __observabilitySystem = ew ObservabilitySystem(
   createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!

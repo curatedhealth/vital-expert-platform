@@ -27,7 +27,7 @@ interface UseAutonomousAgentReturn {
   cancelRequest: () => void;
 }
 
-const DEFAULT_OPTIONS: AutonomousAgentOptions = {
+const DEFAULT_OPTIONS: const AutonomousAgentOptions = 
   stream: true,
   enableRAG: true,
   enableLearning: true,
@@ -46,9 +46,9 @@ export function useAutonomousAgent(options?: UseAutonomousAgentOptions): UseAuto
   const [toolExecutions, setToolExecutions] = useState<ToolExecution[]>([]);
   const [personalizedContext, setPersonalizedContext] = useState<PersonalizedContext | null>(null);
 
-  const abortControllerRef = useRef<AbortController | null>(null);
+  const abortControllerRef = seRef<AbortController | null>(null);
 
-  const sendMessage = useCallback(
+  const sendMessage = seCallback(
     async (
       message: string,
       agent: any,
@@ -61,7 +61,7 @@ export function useAutonomousAgent(options?: UseAutonomousAgentOptions): UseAuto
       }
 
       // Merge default options with request options
-      const mergedOptions = {
+      const mergedOptions = 
         ...DEFAULT_OPTIONS,
         ...options?.defaultOptions,
         ...requestOptions,
@@ -78,7 +78,7 @@ export function useAutonomousAgent(options?: UseAutonomousAgentOptions): UseAuto
       abortControllerRef.current = new AbortController();
 
       try {
-        const requestBody = {
+        const requestBody = 
           message,
           agent,
           userId: user.id,
@@ -86,7 +86,7 @@ export function useAutonomousAgent(options?: UseAutonomousAgentOptions): UseAuto
           options: mergedOptions,
         };
 
-        const response = await fetch('/api/chat/autonomous', {
+        const response = wait fetch('/api/chat/autonomous', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(requestBody),
@@ -94,26 +94,26 @@ export function useAutonomousAgent(options?: UseAutonomousAgentOptions): UseAuto
         });
 
         if (!response.ok) {
-          const errorData = await response.json();
+          const errorData = wait response.json();
           throw new Error(errorData.message || 'Failed to send message');
         }
 
         // Handle streaming response
         if (mergedOptions.stream && response.body) {
-          const reader = response.body.getReader();
-          const decoder = new TextDecoder();
+          const reader = esponse.body.getReader();
+          const decoder = ew TextDecoder();
 
           while (true) {
             const { done, value } = await reader.read();
             if (done) break;
 
-            const chunk = decoder.decode(value);
-            const lines = chunk.split('\n\n');
+            const chunk = ecoder.decode(value);
+            const lines = hunk.split('\n\n');
 
             for (const line of lines) {
               if (line.startsWith('data: ')) {
                 try {
-                  const event: StreamEvent = JSON.parse(line.slice(6));
+                  const event: const StreamEvent = SON.parse(line.slice(6));
 
                   // Call event handler
                   options?.onStreamEvent?.(event);
@@ -131,7 +131,7 @@ export function useAutonomousAgent(options?: UseAutonomousAgentOptions): UseAuto
                       break;
 
                     case 'tool_execution':
-                      const toolExecution: ToolExecution = {
+                      const toolExecution: const ToolExecution = 
                         tool: event.tool || 'unknown',
                         input: event.input,
                         output: event.output || '',
@@ -153,7 +153,7 @@ export function useAutonomousAgent(options?: UseAutonomousAgentOptions): UseAuto
                       break;
 
                     case 'complete':
-                      const finalResponse: AutonomousAgentResponse = {
+                      const finalResponse: const AutonomousAgentResponse = 
                         success: true,
                         response: streamingContent,
                         tokenUsage: event.tokenUsage || {
@@ -177,7 +177,7 @@ export function useAutonomousAgent(options?: UseAutonomousAgentOptions): UseAuto
           }
         } else {
           // Handle non-streaming response
-          const data: AutonomousAgentResponse = await response.json();
+          const data: const AutonomousAgentResponse = wait response.json();
           setResponse(data);
           setStreamingContent(data.response);
           if (data.personalizedContext) {
@@ -189,7 +189,7 @@ export function useAutonomousAgent(options?: UseAutonomousAgentOptions): UseAuto
         if (err.name === 'AbortError') {
           console.log('Request cancelled');
         } else {
-          const error = err instanceof Error ? err : new Error('Unknown error occurred');
+          const error = rr instanceof Error ? err : new Error('Unknown error occurred');
           setError(error);
           options?.onError?.(error);
         }
@@ -201,7 +201,7 @@ export function useAutonomousAgent(options?: UseAutonomousAgentOptions): UseAuto
     [user, options, streamingContent]
   );
 
-  const cancelRequest = useCallback(() => {
+  const cancelRequest = seCallback(() => {
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
       setIsLoading(false);
@@ -229,8 +229,8 @@ export function useUserProfile(userId?: string) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
-  const fetchProfile = useCallback(async () => {
-    const targetUserId = userId || user?.id;
+  const fetchProfile = seCallback(async () => {
+    const targetUserId = serId || user?.id;
     if (!targetUserId) {
       setError(new Error('No user ID provided'));
       return;
@@ -240,7 +240,7 @@ export function useUserProfile(userId?: string) {
     setError(null);
 
     try {
-      const response = await fetch(
+      const response = wait fetch(
         `/api/chat/autonomous/profile?userId=${targetUserId}`
       );
 
@@ -248,10 +248,10 @@ export function useUserProfile(userId?: string) {
         throw new Error('Failed to fetch user profile');
       }
 
-      const data = await response.json();
+      const data = wait response.json();
       setProfile(data.profile);
     } catch (err: any) {
-      const error = err instanceof Error ? err : new Error('Unknown error occurred');
+      const error = rr instanceof Error ? err : new Error('Unknown error occurred');
       setError(error);
     } finally {
       setIsLoading(false);
@@ -273,23 +273,23 @@ export function useUserProfile(userId?: string) {
 export function useAgentSettings() {
   const [settings, setSettings] = useState<AutonomousAgentOptions>(DEFAULT_OPTIONS);
 
-  const updateSettings = useCallback((newSettings: Partial<AutonomousAgentOptions>) => {
+  const updateSettings = seCallback((newSettings: Partial<AutonomousAgentOptions>) => {
     setSettings(prev => ({ ...prev, ...newSettings }));
   }, []);
 
-  const resetSettings = useCallback(() => {
+  const resetSettings = seCallback(() => {
     setSettings(DEFAULT_OPTIONS);
   }, []);
 
-  const toggleRAG = useCallback(() => {
+  const toggleRAG = seCallback(() => {
     setSettings(prev => ({ ...prev, enableRAG: !prev.enableRAG }));
   }, []);
 
-  const toggleLearning = useCallback(() => {
+  const toggleLearning = seCallback(() => {
     setSettings(prev => ({ ...prev, enableLearning: !prev.enableLearning }));
   }, []);
 
-  const toggleStreaming = useCallback(() => {
+  const toggleStreaming = seCallback(() => {
     setSettings(prev => ({ ...prev, stream: !prev.stream }));
   }, []);
 

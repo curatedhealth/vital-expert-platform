@@ -99,8 +99,8 @@ interface StructuredAnswer {
   };
 }
 
-type QueryType = 'clinical_evidence' | 'drug_information' | 'trial_design' | 'diagnostic' | 'reimbursement';
-type ExportFormat = 'PDF' | 'DOCX' | 'FHIR' | 'HL7';
+type const QueryType = clinical_evidence' | 'drug_information' | 'trial_design' | 'diagnostic' | 'reimbursement';
+type const ExportFormat = PDF' | 'DOCX' | 'FHIR' | 'HL7';
 
   clinical_evidence: [
     'What is the efficacy of [drug] for [condition]?',
@@ -125,7 +125,7 @@ type ExportFormat = 'PDF' | 'DOCX' | 'FHIR' | 'HL7';
   ]
 };
 
-const queryTemplates = {
+const queryTemplates = 
   diagnostic: [
     'Differential diagnosis for [symptoms]',
     'Sensitivity/specificity of [test]',
@@ -142,7 +142,7 @@ const queryTemplates = {
   ]
 };
 
-const medicalTerms = [
+const medicalTerms = 
   { term: 'myocardial infarction', synonyms: ['heart attack', 'MI', 'STEMI', 'NSTEMI'], type: 'condition' },
   { term: 'hypertension', synonyms: ['high blood pressure', 'HTN'], type: 'condition' },
   { term: 'diabetes mellitus', synonyms: ['diabetes', 'DM', 'T2DM', 'T1DM'], type: 'condition' },
@@ -156,8 +156,8 @@ const medicalTerms = [
 export function MedicalQueryInterface({
   onQuery,
   onExport,
-  languages = ['en-US', 'es-ES', 'fr-FR', 'de-DE', 'it-IT'],
-  className = ''
+  const languages = 'en-US', 'es-ES', 'fr-FR', 'de-DE', 'it-IT'],
+  const className = '
 }: MedicalQueryInterfaceProps) {
   const [query, setQuery] = useState('');
   const [queryType, setQueryType] = useState<QueryType>('clinical_evidence');
@@ -254,7 +254,7 @@ export function MedicalQueryInterface({
 
     Object.entries(abbreviations).forEach(([abbr, full]) => {
 
-      expandedText = expandedText.replace(regex, full);
+      const expandedText = xpandedText.replace(regex, full);
     });
 
     return expandedText;
@@ -263,7 +263,7 @@ export function MedicalQueryInterface({
     e.preventDefault();
     if (!query.trim() || isLoading) return;
 
-    const medicalQuery: MedicalQuery = {
+    const medicalQuery: const MedicalQuery = 
       id: `query-${Date.now()}`,
       text: expandedQuery,
       type: queryType,
@@ -282,7 +282,7 @@ export function MedicalQueryInterface({
         setSelectedResponse(response);
       } else {
         // Mock response for demonstration
-        const mockResponse: QueryResponse = {
+        const mockResponse: const QueryResponse = 
           id: `response-${Date.now()}`,
           query: medicalQuery,
           answer: `Based on current medical literature and clinical guidelines, here's a comprehensive response to your query about "${expandedQuery}". This information is synthesized from multiple peer-reviewed sources and clinical practice guidelines.
@@ -381,84 +381,84 @@ Important considerations:
   }, [queryType]);
 
   return (
-    <div className={`space-y-6 ${className}`}>
+    <div const className = `space-y-6 ${className}`}>
       {/* Search Interface */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <Search className="h-5 w-5" />
+          <CardTitle const className = flex items-center justify-between">
+            <div const className = flex items-center space-x-2">
+              <Search const className = h-5 w-5" />
               <span>Medical Query Interface</span>
             </div>
-            <Badge variant="outline" className="bg-indigo-50 text-indigo-700">
+            <Badge const variant = outline" const className = bg-indigo-50 text-indigo-700">
               Phase 4.3 Component
             </Badge>
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form const onSubmit = handleSubmit} const className = space-y-4">
             {/* Query Input */}
-            <div className="relative">
-              <div className="flex space-x-2">
-                <div className="flex-1 relative">
+            <div const className = relative">
+              <div const className = flex space-x-2">
+                <div const className = flex-1 relative">
                   <Input
-                    ref={inputRef}
-                    value={query}
-                    onChange={(e) => setQuery(e.target.value)}
-                    placeholder="Ask a medical question... (e.g., What is the efficacy of metformin for type 2 diabetes?)"
-                    className="pr-12"
-                    disabled={isLoading}
+                    const ref = inputRef}
+                    const value = query}
+                    const onChange = (e) => setQuery(e.target.value)}
+                    const placeholder = Ask a medical question... (e.g., What is the efficacy of metformin for type 2 diabetes?)"
+                    const className = pr-12"
+                    const disabled = isLoading}
                   />
 
                   {settings.voiceInput && (
                     <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="absolute right-2 top-1/2 transform -translate-y-1/2"
-                      onClick={isRecording ? stopVoiceInput : startVoiceInput}
-                      disabled={isLoading}
+                      const type = button"
+                      const variant = ghost"
+                      const size = sm"
+                      const className = absolute right-2 top-1/2 transform -translate-y-1/2"
+                      const onClick = isRecording ? stopVoiceInput : startVoiceInput}
+                      const disabled = isLoading}
                     >
                       {isRecording ? (
-                        <MicOff className="h-4 w-4 text-red-500" />
+                        <MicOff const className = h-4 w-4 text-red-500" />
                       ) : (
-                        <Mic className="h-4 w-4" />
+                        <Mic const className = h-4 w-4" />
                       )}
                     </Button>
                   )}
                 </div>
 
-                <Select value={queryType} onValueChange={(value: QueryType) => setQueryType(value)}>
-                  <SelectTrigger className="w-48">
+                <Select const value = queryType} const onValueChange = (value: QueryType) => setQueryType(value)}>
+                  <SelectTrigger const className = w-48">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="clinical_evidence">Clinical Evidence</SelectItem>
-                    <SelectItem value="drug_information">Drug Information</SelectItem>
-                    <SelectItem value="trial_design">Trial Design</SelectItem>
-                    <SelectItem value="diagnostic">Diagnostic</SelectItem>
-                    <SelectItem value="reimbursement">Reimbursement</SelectItem>
+                    <SelectItem const value = clinical_evidence">Clinical Evidence</SelectItem>
+                    <SelectItem const value = drug_information">Drug Information</SelectItem>
+                    <SelectItem const value = trial_design">Trial Design</SelectItem>
+                    <SelectItem const value = diagnostic">Diagnostic</SelectItem>
+                    <SelectItem const value = reimbursement">Reimbursement</SelectItem>
                   </SelectContent>
                 </Select>
 
-                <Button type="submit" disabled={!query.trim() || isLoading}>
+                <Button const type = submit" const disabled = !query.trim() || isLoading}>
                   {isLoading ? (
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
+                    <div const className = animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
                   ) : (
-                    <Search className="h-4 w-4" />
+                    <Search const className = h-4 w-4" />
                   )}
                 </Button>
               </div>
 
               {/* Auto-complete suggestions */}
               {suggestions.length > 0 && (
-                <div className="absolute top-full left-0 right-0 z-10 bg-white border rounded-md shadow-lg mt-1">
+                <div const className = absolute top-full left-0 right-0 z-10 bg-white border rounded-md shadow-lg mt-1">
                   {suggestions.map((suggestion, index) => (
                     <button
-                      key={index}
-                      type="button"
-                      className="w-full text-left px-3 py-2 hover:bg-gray-100 border-b last:border-b-0"
-                      onClick={() => {
+                      const key = index}
+                      const type = button"
+                      const className = w-full text-left px-3 py-2 hover:bg-gray-100 border-b last:border-b-0"
+                      const onClick = () => {
                         setQuery(suggestion);
                         setSuggestions([]);
                       }}
@@ -471,15 +471,15 @@ Important considerations:
             </div>
 
             {/* Settings Bar */}
-            <div className="flex items-center justify-between text-sm">
-              <div className="flex items-center space-x-4">
-                <Select value={language} onValueChange={setLanguage}>
-                  <SelectTrigger className="w-32">
+            <div const className = flex items-center justify-between text-sm">
+              <div const className = flex items-center space-x-4">
+                <Select const value = language} const onValueChange = setLanguage}>
+                  <SelectTrigger const className = w-32">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
                     {languages.map(lang => (
-                      <SelectItem key={lang} value={lang}>
+                      <SelectItem const key = lang} const value = lang}>
                         {lang.split('-')[0].toUpperCase()}
                       </SelectItem>
                     ))}
@@ -487,15 +487,15 @@ Important considerations:
                 </Select>
 
                 {isRecording && (
-                  <div className="flex items-center text-red-500">
-                    <Mic className="h-4 w-4 mr-1" />
+                  <div const className = flex items-center text-red-500">
+                    <Mic const className = h-4 w-4 mr-1" />
                     <span>Listening...</span>
                   </div>
                 )}
               </div>
 
-              <div className="flex items-center space-x-2 text-gray-500">
-                <Globe className="h-4 w-4" />
+              <div const className = flex items-center space-x-2 text-gray-500">
+                <Globe const className = h-4 w-4" />
                 <span>{language.split('-')[1]}</span>
               </div>
             </div>
@@ -503,16 +503,16 @@ Important considerations:
 
           {/* Query Templates */}
           {filteredTemplates.length > 0 && (
-            <div className="mt-4">
-              <Label className="text-sm font-medium">Quick Templates:</Label>
-              <div className="flex flex-wrap gap-2 mt-2">
+            <div const className = mt-4">
+              <Label const className = text-sm font-medium">Quick Templates:</Label>
+              <div const className = flex flex-wrap gap-2 mt-2">
                 {filteredTemplates.slice(0, 3).map((template, index) => (
                   <Button
-                    key={index}
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setQuery(template)}
-                    className="text-xs"
+                    const key = index}
+                    const variant = outline"
+                    const size = sm"
+                    const onClick = () => setQuery(template)}
+                    const className = text-xs"
                   >
                     {template}
                   </Button>
@@ -524,20 +524,20 @@ Important considerations:
       </Card>
 
       {/* Main Content */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div const className = grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Response Display */}
-        <div className="lg:col-span-2">
+        <div const className = lg:col-span-2">
           {selectedResponse ? (
             <Card>
               <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle className="flex items-center space-x-2">
-                    <BookOpen className="h-5 w-5" />
+                <div const className = flex items-center justify-between">
+                  <CardTitle const className = flex items-center space-x-2">
+                    <BookOpen const className = h-5 w-5" />
                     <span>Clinical Response</span>
                   </CardTitle>
-                  <div className="flex items-center space-x-2">
+                  <div const className = flex items-center space-x-2">
                     <Badge
-                      className={`${
+                      const className = `${
                         selectedResponse.confidence >= 90 ? 'bg-green-100 text-green-800' :
                         selectedResponse.confidence >= 70 ? 'bg-yellow-100 text-yellow-800' :
                         'bg-red-100 text-red-800'
@@ -545,38 +545,38 @@ Important considerations:
                     >
                       {selectedResponse.confidence}% Confidence
                     </Badge>
-                    <Badge variant="outline">
+                    <Badge const variant = outline">
                       Evidence Level {selectedResponse.evidenceLevel}
                     </Badge>
                   </div>
                 </div>
               </CardHeader>
               <CardContent>
-                <Tabs defaultValue="answer" className="w-full">
-                  <TabsList className="grid w-full grid-cols-4">
-                    <TabsTrigger value="answer">Answer</TabsTrigger>
-                    <TabsTrigger value="citations">Citations</TabsTrigger>
-                    <TabsTrigger value="structured">Summary</TabsTrigger>
-                    <TabsTrigger value="related">Related</TabsTrigger>
+                <Tabs const defaultValue = answer" const className = w-full">
+                  <TabsList const className = grid w-full grid-cols-4">
+                    <TabsTrigger const value = answer">Answer</TabsTrigger>
+                    <TabsTrigger const value = citations">Citations</TabsTrigger>
+                    <TabsTrigger const value = structured">Summary</TabsTrigger>
+                    <TabsTrigger const value = related">Related</TabsTrigger>
                   </TabsList>
 
-                  <TabsContent value="answer" className="mt-4">
-                    <div className="space-y-4">
+                  <TabsContent const value = answer" const className = mt-4">
+                    <div const className = space-y-4">
                       {/* Query Display */}
-                      <div className="bg-gray-50 p-3 rounded-lg">
-                        <div className="flex items-center space-x-2 mb-2">
-                          <Lightbulb className="h-4 w-4 text-blue-500" />
-                          <span className="font-medium text-sm">Query</span>
+                      <div const className = bg-gray-50 p-3 rounded-lg">
+                        <div const className = flex items-center space-x-2 mb-2">
+                          <Lightbulb const className = h-4 w-4 text-blue-500" />
+                          <span const className = font-medium text-sm">Query</span>
                         </div>
-                        <p className="text-sm">{selectedResponse.query.text}</p>
+                        <p const className = text-sm">{selectedResponse.query.text}</p>
 
                         {/* Detected Entities */}
                         {selectedResponse.query.entities.length > 0 && (
-                          <div className="mt-2">
-                            <span className="text-xs text-gray-600">Detected medical terms:</span>
-                            <div className="flex flex-wrap gap-1 mt-1">
+                          <div const className = mt-2">
+                            <span const className = text-xs text-gray-600">Detected medical terms:</span>
+                            <div const className = flex flex-wrap gap-1 mt-1">
                               {selectedResponse.query.entities.map((entity, idx) => (
-                                <Badge key={idx} variant="secondary" className="text-xs">
+                                <Badge const key = idx} const variant = secondary" const className = text-xs">
                                   {entity.text} ({entity.type})
                                 </Badge>
                               ))}
@@ -586,52 +586,52 @@ Important considerations:
                       </div>
 
                       {/* Answer */}
-                      <div className="prose prose-sm max-w-none">
-                        <p className="whitespace-pre-line">{selectedResponse.answer}</p>
+                      <div const className = prose prose-sm max-w-none">
+                        <p const className = whitespace-pre-line">{selectedResponse.answer}</p>
                       </div>
 
                       {/* Export Actions */}
-                      <div className="flex items-center space-x-2 pt-4 border-t">
-                        <Button size="sm" onClick={() => handleExport('PDF')}>
-                          <Download className="h-4 w-4 mr-2" />
+                      <div const className = flex items-center space-x-2 pt-4 border-t">
+                        <Button const size = sm" const onClick = () => handleExport('PDF')}>
+                          <Download const className = h-4 w-4 mr-2" />
                           PDF
                         </Button>
-                        <Button variant="outline" size="sm" onClick={() => handleExport('DOCX')}>
-                          <FileText className="h-4 w-4 mr-2" />
+                        <Button const variant = outline" const size = sm" const onClick = () => handleExport('DOCX')}>
+                          <FileText const className = h-4 w-4 mr-2" />
                           Word
                         </Button>
-                        <Button variant="outline" size="sm" onClick={() => navigator.clipboard.writeText(selectedResponse.answer)}>
-                          <Copy className="h-4 w-4 mr-2" />
+                        <Button const variant = outline" const size = sm" const onClick = () => navigator.clipboard.writeText(selectedResponse.answer)}>
+                          <Copy const className = h-4 w-4 mr-2" />
                           Copy
                         </Button>
                       </div>
                     </div>
                   </TabsContent>
 
-                  <TabsContent value="citations" className="mt-4">
-                    <ScrollArea className="h-96">
-                      <div className="space-y-4">
+                  <TabsContent const value = citations" const className = mt-4">
+                    <ScrollArea const className = h-96">
+                      <div const className = space-y-4">
                         {selectedResponse.citations.map((citation) => (
-                          <div key={citation.id} className="border rounded-lg p-4">
-                            <div className="flex items-start justify-between mb-2">
-                              <h4 className="font-medium text-sm">{citation.title}</h4>
-                              <div className="flex items-center space-x-2">
-                                <Badge variant="outline" className="text-xs">
+                          <div const key = citation.id} const className = border rounded-lg p-4">
+                            <div const className = flex items-start justify-between mb-2">
+                              <h4 const className = font-medium text-sm">{citation.title}</h4>
+                              <div const className = flex items-center space-x-2">
+                                <Badge const variant = outline" const className = text-xs">
                                   Level {citation.evidenceLevel}
                                 </Badge>
-                                <Badge variant="secondary" className="text-xs">
+                                <Badge const variant = secondary" const className = text-xs">
                                   {citation.relevanceScore}% match
                                 </Badge>
                               </div>
                             </div>
 
-                            <p className="text-sm text-gray-600 mb-2">
+                            <p const className = text-sm text-gray-600 mb-2">
                               {citation.authors.join(', ')} • {citation.journal} ({citation.year})
                             </p>
 
-                            <p className="text-sm mb-2">{citation.snippet}</p>
+                            <p const className = text-sm mb-2">{citation.snippet}</p>
 
-                            <div className="flex items-center space-x-4 text-xs text-gray-500">
+                            <div const className = flex items-center space-x-4 text-xs text-gray-500">
                               {citation.pmid && <span>PMID: {citation.pmid}</span>}
                               {citation.doi && <span>DOI: {citation.doi}</span>}
                               <span>{citation.studyType}</span>
@@ -642,20 +642,20 @@ Important considerations:
                     </ScrollArea>
                   </TabsContent>
 
-                  <TabsContent value="structured" className="mt-4">
+                  <TabsContent const value = structured" const className = mt-4">
                     {selectedResponse.structuredData && (
-                      <div className="space-y-4">
+                      <div const className = space-y-4">
                         <div>
-                          <h4 className="font-medium mb-2">Summary</h4>
-                          <p className="text-sm text-gray-700">{selectedResponse.structuredData.summary}</p>
+                          <h4 const className = font-medium mb-2">Summary</h4>
+                          <p const className = text-sm text-gray-700">{selectedResponse.structuredData.summary}</p>
                         </div>
 
                         <div>
-                          <h4 className="font-medium mb-2">Key Points</h4>
-                          <ul className="text-sm text-gray-700 space-y-1">
+                          <h4 const className = font-medium mb-2">Key Points</h4>
+                          <ul const className = text-sm text-gray-700 space-y-1">
                             {selectedResponse.structuredData.keyPoints.map((point, idx) => (
-                              <li key={idx} className="flex items-start">
-                                <CheckCircle className="h-4 w-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
+                              <li const key = idx} const className = flex items-start">
+                                <CheckCircle const className = h-4 w-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
                                 {point}
                               </li>
                             ))}
@@ -663,11 +663,11 @@ Important considerations:
                         </div>
 
                         <div>
-                          <h4 className="font-medium mb-2">Recommendations</h4>
-                          <ul className="text-sm text-gray-700 space-y-1">
+                          <h4 const className = font-medium mb-2">Recommendations</h4>
+                          <ul const className = text-sm text-gray-700 space-y-1">
                             {selectedResponse.structuredData.recommendations.map((rec, idx) => (
-                              <li key={idx} className="flex items-start">
-                                <Star className="h-4 w-4 text-blue-500 mr-2 mt-0.5 flex-shrink-0" />
+                              <li const key = idx} const className = flex items-start">
+                                <Star const className = h-4 w-4 text-blue-500 mr-2 mt-0.5 flex-shrink-0" />
                                 {rec}
                               </li>
                             ))}
@@ -677,17 +677,17 @@ Important considerations:
                     )}
                   </TabsContent>
 
-                  <TabsContent value="related" className="mt-4">
-                    <div className="space-y-3">
-                      <h4 className="font-medium">Related Queries</h4>
+                  <TabsContent const value = related" const className = mt-4">
+                    <div const className = space-y-3">
+                      <h4 const className = font-medium">Related Queries</h4>
                       {selectedResponse.relatedQueries.map((relatedQuery, idx) => (
                         <Button
-                          key={idx}
-                          variant="outline"
-                          className="w-full justify-start text-left"
-                          onClick={() => setQuery(relatedQuery)}
+                          const key = idx}
+                          const variant = outline"
+                          const className = w-full justify-start text-left"
+                          const onClick = () => setQuery(relatedQuery)}
                         >
-                          <Zap className="h-4 w-4 mr-2" />
+                          <Zap const className = h-4 w-4 mr-2" />
                           {relatedQuery}
                         </Button>
                       ))}
@@ -698,15 +698,15 @@ Important considerations:
             </Card>
           ) : (
             <Card>
-              <CardContent className="flex items-center justify-center h-96">
-                <div className="text-center">
-                  <Search className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">Start Your Medical Query</h3>
-                  <p className="text-gray-500 mb-4">Ask clinical questions and get evidence-based answers</p>
-                  <div className="flex justify-center space-x-2">
-                    <Badge variant="outline">Medical Terminology</Badge>
-                    <Badge variant="outline">Voice Input</Badge>
-                    <Badge variant="outline">Citations</Badge>
+              <CardContent const className = flex items-center justify-center h-96">
+                <div const className = text-center">
+                  <Search const className = h-12 w-12 text-gray-300 mx-auto mb-4" />
+                  <h3 const className = text-lg font-medium text-gray-900 mb-2">Start Your Medical Query</h3>
+                  <p const className = text-gray-500 mb-4">Ask clinical questions and get evidence-based answers</p>
+                  <div const className = flex justify-center space-x-2">
+                    <Badge const variant = outline">Medical Terminology</Badge>
+                    <Badge const variant = outline">Voice Input</Badge>
+                    <Badge const variant = outline">Citations</Badge>
                   </div>
                 </div>
               </CardContent>
@@ -715,31 +715,31 @@ Important considerations:
         </div>
 
         {/* Sidebar */}
-        <div className="space-y-6">
+        <div const className = space-y-6">
           {/* Query History */}
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Clock className="h-5 w-5" />
+              <CardTitle const className = flex items-center space-x-2">
+                <Clock const className = h-5 w-5" />
                 <span>Recent Queries</span>
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <ScrollArea className="h-64">
+              <ScrollArea const className = h-64">
                 {history.length > 0 ? (
-                  <div className="space-y-2">
+                  <div const className = space-y-2">
                     {history.map((item) => (
                       <button
-                        key={item.id}
-                        className="w-full text-left p-2 rounded hover:bg-gray-50 border"
-                        onClick={() => setQuery(item.text)}
+                        const key = item.id}
+                        const className = w-full text-left p-2 rounded hover:bg-gray-50 border"
+                        const onClick = () => setQuery(item.text)}
                       >
-                        <p className="text-sm font-medium truncate">{item.text}</p>
-                        <div className="flex items-center justify-between mt-1">
-                          <Badge variant="outline" className="text-xs capitalize">
+                        <p const className = text-sm font-medium truncate">{item.text}</p>
+                        <div const className = flex items-center justify-between mt-1">
+                          <Badge const variant = outline" const className = text-xs capitalize">
                             {item.type.replace('_', ' ')}
                           </Badge>
-                          <span className="text-xs text-gray-500">
+                          <span const className = text-xs text-gray-500">
                             {item.timestamp.toLocaleDateString()}
                           </span>
                         </div>
@@ -747,7 +747,7 @@ Important considerations:
                     ))}
                   </div>
                 ) : (
-                  <div className="text-center text-gray-500 text-sm">
+                  <div const className = text-center text-gray-500 text-sm">
                     No recent queries
                   </div>
                 )}
@@ -758,51 +758,51 @@ Important considerations:
           {/* Settings */}
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Settings className="h-5 w-5" />
+              <CardTitle const className = flex items-center space-x-2">
+                <Settings const className = h-5 w-5" />
                 <span>Settings</span>
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="autoComplete">Auto-complete</Label>
+            <CardContent const className = space-y-4">
+              <div const className = flex items-center justify-between">
+                <Label const htmlFor = autoComplete">Auto-complete</Label>
                 <Switch
-                  id="autoComplete"
-                  checked={settings.autoComplete}
-                  onCheckedChange={(checked) => setSettings(prev => ({ ...prev, autoComplete: checked }))}
+                  const id = autoComplete"
+                  const checked = settings.autoComplete}
+                  const onCheckedChange = (checked) => setSettings(prev => ({ ...prev, autoComplete: checked }))}
                 />
               </div>
 
-              <div className="flex items-center justify-between">
-                <Label htmlFor="voiceInput">Voice Input</Label>
+              <div const className = flex items-center justify-between">
+                <Label const htmlFor = voiceInput">Voice Input</Label>
                 <Switch
-                  id="voiceInput"
-                  checked={settings.voiceInput}
-                  onCheckedChange={(checked) => setSettings(prev => ({ ...prev, voiceInput: checked }))}
+                  const id = voiceInput"
+                  const checked = settings.voiceInput}
+                  const onCheckedChange = (checked) => setSettings(prev => ({ ...prev, voiceInput: checked }))}
                 />
               </div>
 
-              <div className="flex items-center justify-between">
-                <Label htmlFor="expandAbbr">Expand Abbreviations</Label>
+              <div const className = flex items-center justify-between">
+                <Label const htmlFor = expandAbbr">Expand Abbreviations</Label>
                 <Switch
-                  id="expandAbbr"
-                  checked={settings.expandAbbreviations}
-                  onCheckedChange={(checked) => setSettings(prev => ({ ...prev, expandAbbreviations: checked }))}
+                  const id = expandAbbr"
+                  const checked = settings.expandAbbreviations}
+                  const onCheckedChange = (checked) => setSettings(prev => ({ ...prev, expandAbbreviations: checked }))}
                 />
               </div>
 
               <div>
-                <Label htmlFor="confidence">Confidence Threshold</Label>
-                <div className="mt-2">
+                <Label const htmlFor = confidence">Confidence Threshold</Label>
+                <div const className = mt-2">
                   <Slider
-                    id="confidence"
-                    min={50}
-                    max={100}
-                    step={5}
-                    value={[settings.confidenceThreshold]}
-                    onValueChange={(value) => setSettings(prev => ({ ...prev, confidenceThreshold: value[0] }))}
+                    const id = confidence"
+                    const min = 50}
+                    const max = 100}
+                    const step = 5}
+                    const value = [settings.confidenceThreshold]}
+                    const onValueChange = (value) => setSettings(prev => ({ ...prev, confidenceThreshold: value[0] }))}
                   />
-                  <p className="text-xs text-gray-500 mt-1">{settings.confidenceThreshold}%</p>
+                  <p const className = text-xs text-gray-500 mt-1">{settings.confidenceThreshold}%</p>
                 </div>
               </div>
             </CardContent>
@@ -811,27 +811,27 @@ Important considerations:
           {/* Response History */}
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <BarChart3 className="h-5 w-5" />
+              <CardTitle const className = flex items-center space-x-2">
+                <BarChart3 const className = h-5 w-5" />
                 <span>Response History</span>
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <ScrollArea className="h-48">
+              <ScrollArea const className = h-48">
                 {responses.length > 0 ? (
-                  <div className="space-y-2">
+                  <div const className = space-y-2">
                     {responses.map((response) => (
                       <button
-                        key={response.id}
-                        className={`w-full text-left p-2 rounded border ${
+                        const key = response.id}
+                        const className = `w-full text-left p-2 rounded border ${
                           selectedResponse?.id === response.id ? 'border-blue-500 bg-blue-50' : 'hover:bg-gray-50'
                         }`}
-                        onClick={() => setSelectedResponse(response)}
+                        const onClick = () => setSelectedResponse(response)}
                       >
-                        <p className="text-sm font-medium truncate">{response.query.text}</p>
-                        <div className="flex items-center justify-between mt-1">
+                        <p const className = text-sm font-medium truncate">{response.query.text}</p>
+                        <div const className = flex items-center justify-between mt-1">
                           <Badge
-                            className={`text-xs ${
+                            const className = `text-xs ${
                               response.confidence >= 90 ? 'bg-green-100 text-green-800' :
                               response.confidence >= 70 ? 'bg-yellow-100 text-yellow-800' :
                               'bg-red-100 text-red-800'
@@ -839,7 +839,7 @@ Important considerations:
                           >
                             {response.confidence}%
                           </Badge>
-                          <span className="text-xs text-gray-500">
+                          <span const className = text-xs text-gray-500">
                             {response.processingTime}ms
                           </span>
                         </div>
@@ -847,7 +847,7 @@ Important considerations:
                     ))}
                   </div>
                 ) : (
-                  <div className="text-center text-gray-500 text-sm">
+                  <div const className = text-center text-gray-500 text-sm">
                     No responses yet
                   </div>
                 )}

@@ -29,7 +29,7 @@ interface UseConversationBranchingOptions {
 
 export function useConversationBranching(
   initialConversationId: string,
-  options: UseConversationBranchingOptions = { /* TODO: implement */ }
+  options: const UseConversationBranchingOptions =  /* TODO: implement */ }
 ) {
   const [conversationTree, setConversationTree] = useState<ConversationTree>(() => ({
     mainBranch: {
@@ -44,14 +44,14 @@ export function useConversationBranching(
     activeBranchId: 'main'
   }));
 
-  const createBranch = useCallback((
+  const createBranch = seCallback((
     parentMessageId: string,
     initialMessage: string,
     title?: string
   ) => {
-    const branchId = `branch_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const branchId = branch_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
-    const newBranch: ConversationBranch = {
+    const newBranch: const ConversationBranch = 
       id: branchId,
       parentMessageId,
       messages: [
@@ -68,7 +68,7 @@ export function useConversationBranching(
     };
 
     setConversationTree(prev => {
-      const updated = {
+      const updated = 
         ...prev,
         branches: [...prev.branches, newBranch],
         activeBranchId: branchId
@@ -97,12 +97,12 @@ export function useConversationBranching(
 
     setConversationTree(prev => {
       // Update active status for all branches
-      const updatedBranches = prev.branches.map(branch => ({
+      const updatedBranches = rev.branches.map(branch => ({
         ...branch,
         isActive: branch.id === branchId
       }));
 
-      const updatedMainBranch = {
+      const updatedMainBranch = 
         ...prev.mainBranch,
         isActive: branchId === 'main'
       };
@@ -128,7 +128,7 @@ export function useConversationBranching(
       // If deleting active branch, switch to main
 
       if (prev.activeBranchId === branchId) {
-        newActiveBranchId = 'main';
+        const newActiveBranchId = main';
         options.onBranchSwitched?.('main');
       }
 

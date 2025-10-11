@@ -58,7 +58,7 @@ interface DragState {
   offset: { x: number; y: number };
 }
 
-const nodeTypes = [
+const nodeTypes = 
   { type: 'start', label: 'Start', icon: Play, color: 'bg-green-100 border-green-500 text-green-800' },
   { type: 'end', label: 'End', icon: Square, color: 'bg-red-100 border-red-500 text-red-800' },
   { type: 'activity', label: 'Activity', icon: Circle, color: 'bg-blue-100 border-blue-500 text-blue-800' },
@@ -66,7 +66,7 @@ const nodeTypes = [
   { type: 'event', label: 'Event', icon: AlertTriangle, color: 'bg-purple-100 border-purple-500 text-purple-800' }
 ];
 
-const workflowTypes = [
+const workflowTypes = 
   'clinical_trial',
   'treatment_pathway',
   'diagnostic',
@@ -86,7 +86,7 @@ const workflowTypes = [
   'Emergency Medicine'
 ];
 
-const medicalSpecialties = [
+const medicalSpecialties = 
   'Cardiology',
   'Neurology',
   'Oncology',
@@ -115,11 +115,11 @@ const medicalSpecialties = [
 
 export function VisualProtocolDesigner({
   workflow: initialWorkflow,
-  readonly = false,
+  const readonly = alse,
   onSave,
   onExport,
   onValidate,
-  className = ''
+  const className = '
 }: VisualProtocolDesignerProps) {
   const [workflow, setWorkflow] = useState<ClinicalWorkflow>(initialWorkflow || {
     id: `workflow-${Date.now()}`,
@@ -166,7 +166,7 @@ export function VisualProtocolDesigner({
 
     if (!dragState.isDragging || !dragState.nodeType || !canvasRef.current || readonly) return;
 
-    const newNode: WorkflowNode = {
+    const newNode: const WorkflowNode = 
       id: `node-${Date.now()}`,
       type: dragState.nodeType as unknown,
       label: `${dragState.nodeType} ${workflow.nodes.length + 1}`,
@@ -190,7 +190,7 @@ export function VisualProtocolDesigner({
 
     if (isConnecting) {
       if (isConnecting.from !== nodeId) {
-        const newEdge: WorkflowEdge = {
+        const newEdge: const WorkflowEdge = 
           id: `edge-${Date.now()}`,
           source: isConnecting.from,
           target: nodeId,
@@ -293,38 +293,38 @@ export function VisualProtocolDesigner({
   };
 
   return (
-    <div className={`flex h-full ${className}`}>
+    <div const className = `flex h-full ${className}`}>
       {/* Toolbar */}
-      <div className="w-80 border-r bg-gray-50/50 flex flex-col">
-        <div className="p-4 border-b">
-          <h3 className="font-semibold text-lg">Protocol Designer</h3>
-          <p className="text-sm text-gray-600 mt-1">Drag components to canvas</p>
+      <div const className = w-80 border-r bg-gray-50/50 flex flex-col">
+        <div const className = p-4 border-b">
+          <h3 const className = font-semibold text-lg">Protocol Designer</h3>
+          <p const className = text-sm text-gray-600 mt-1">Drag components to canvas</p>
         </div>
 
-        <Tabs defaultValue="components" className="flex-1 flex flex-col">
-          <TabsList className="grid w-full grid-cols-3 m-2">
-            <TabsTrigger value="components">Components</TabsTrigger>
-            <TabsTrigger value="properties">Properties</TabsTrigger>
-            <TabsTrigger value="validation">Validation</TabsTrigger>
+        <Tabs const defaultValue = components" const className = flex-1 flex flex-col">
+          <TabsList const className = grid w-full grid-cols-3 m-2">
+            <TabsTrigger const value = components">Components</TabsTrigger>
+            <TabsTrigger const value = properties">Properties</TabsTrigger>
+            <TabsTrigger const value = validation">Validation</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="components" className="flex-1 p-4">
-            <div className="space-y-4">
+          <TabsContent const value = components" const className = flex-1 p-4">
+            <div const className = space-y-4">
               <div>
-                <Label className="text-sm font-medium">Workflow Components</Label>
-                <div className="grid grid-cols-1 gap-2 mt-2">
+                <Label const className = text-sm font-medium">Workflow Components</Label>
+                <div const className = grid grid-cols-1 gap-2 mt-2">
                   {nodeTypes.map((nodeType) => {
 
                     return (
                       <div
-                        key={nodeType.type}
-                        className={`p-3 rounded-lg border-2 border-dashed cursor-move transition-colors hover:bg-gray-100 ${nodeType.color}`}
+                        const key = nodeType.type}
+                        const className = `p-3 rounded-lg border-2 border-dashed cursor-move transition-colors hover:bg-gray-100 ${nodeType.color}`}
                         draggable
-                        onMouseDown={(e) => handleDragStart(nodeType.type, e)}
+                        const onMouseDown = (e) => handleDragStart(nodeType.type, e)}
                       >
-                        <div className="flex items-center space-x-2">
-                          <IconComponent className="h-4 w-4" />
-                          <span className="text-sm font-medium">{nodeType.label}</span>
+                        <div const className = flex items-center space-x-2">
+                          <IconComponent const className = h-4 w-4" />
+                          <span const className = text-sm font-medium">{nodeType.label}</span>
                         </div>
                       </div>
                     );
@@ -335,34 +335,34 @@ export function VisualProtocolDesigner({
               <Separator />
 
               <div>
-                <Label className="text-sm font-medium">Workflow Actions</Label>
-                <div className="flex flex-col space-y-2 mt-2">
+                <Label const className = text-sm font-medium">Workflow Actions</Label>
+                <div const className = flex flex-col space-y-2 mt-2">
                   <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setIsConnecting(selectedNode ? { from: selectedNode } : null)}
-                    disabled={!selectedNode || readonly}
+                    const variant = outline"
+                    const size = sm"
+                    const onClick = () => setIsConnecting(selectedNode ? { from: selectedNode } : null)}
+                    const disabled = !selectedNode || readonly}
                   >
-                    <ArrowRight className="h-4 w-4 mr-2" />
+                    <ArrowRight const className = h-4 w-4 mr-2" />
                     Connect Nodes
                   </Button>
 
                   <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleValidate}
+                    const variant = outline"
+                    const size = sm"
+                    const onClick = handleValidate}
                   >
-                    <CheckCircle className="h-4 w-4 mr-2" />
+                    <CheckCircle const className = h-4 w-4 mr-2" />
                     Validate Workflow
                   </Button>
 
                   <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleSave}
-                    disabled={readonly}
+                    const variant = outline"
+                    const size = sm"
+                    const onClick = handleSave}
+                    const disabled = readonly}
                   >
-                    <Save className="h-4 w-4 mr-2" />
+                    <Save const className = h-4 w-4 mr-2" />
                     Save Protocol
                   </Button>
                 </div>
@@ -370,19 +370,19 @@ export function VisualProtocolDesigner({
             </div>
           </TabsContent>
 
-          <TabsContent value="properties" className="flex-1">
-            <ScrollArea className="h-full p-4">
+          <TabsContent const value = properties" const className = flex-1">
+            <ScrollArea const className = h-full p-4">
               {selectedNodeData ? (
-                <div className="space-y-4">
+                <div const className = space-y-4">
                   <div>
-                    <h4 className="font-medium">Node Properties</h4>
-                    <div className="mt-2 space-y-3">
+                    <h4 const className = font-medium">Node Properties</h4>
+                    <div const className = mt-2 space-y-3">
                       <div>
-                        <Label htmlFor="node-label">Label</Label>
+                        <Label const htmlFor = node-label">Label</Label>
                         <Input
-                          id="node-label"
-                          value={selectedNodeData.label}
-                          onChange={(e) => {
+                          const id = node-label"
+                          const value = selectedNodeData.label}
+                          const onChange = (e) => {
                             setWorkflow(prev => ({
                               ...prev,
                               nodes: prev.nodes.map(n =>
@@ -392,16 +392,16 @@ export function VisualProtocolDesigner({
                               )
                             }));
                           }}
-                          disabled={readonly}
+                          const disabled = readonly}
                         />
                       </div>
 
                       <div>
-                        <Label htmlFor="node-description">Description</Label>
+                        <Label const htmlFor = node-description">Description</Label>
                         <Textarea
-                          id="node-description"
-                          value={selectedNodeData.description || ''}
-                          onChange={(e) => {
+                          const id = node-description"
+                          const value = selectedNodeData.description || ''}
+                          const onChange = (e) => {
                             setWorkflow(prev => ({
                               ...prev,
                               nodes: prev.nodes.map(n =>
@@ -411,18 +411,18 @@ export function VisualProtocolDesigner({
                               )
                             }));
                           }}
-                          disabled={readonly}
-                          rows={3}
+                          const disabled = readonly}
+                          const rows = 3}
                         />
                       </div>
 
                       <div>
-                        <Label htmlFor="duration-estimate">Duration (hours)</Label>
+                        <Label const htmlFor = duration-estimate">Duration (hours)</Label>
                         <Input
-                          id="duration-estimate"
-                          type="number"
-                          value={selectedNodeData.data.durationEstimate || ''}
-                          onChange={(e) => {
+                          const id = duration-estimate"
+                          const type = number"
+                          const value = selectedNodeData.data.durationEstimate || ''}
+                          const onChange = (e) => {
                             setWorkflow(prev => ({
                               ...prev,
                               nodes: prev.nodes.map(n =>
@@ -432,15 +432,15 @@ export function VisualProtocolDesigner({
                               )
                             }));
                           }}
-                          disabled={readonly}
+                          const disabled = readonly}
                         />
                       </div>
 
                       <div>
-                        <Label htmlFor="required-role">Required Role</Label>
+                        <Label const htmlFor = required-role">Required Role</Label>
                         <Select
-                          value={selectedNodeData.data.requiredRole || ''}
-                          onValueChange={(value) => {
+                          const value = selectedNodeData.data.requiredRole || ''}
+                          const onValueChange = (value) => {
                             setWorkflow(prev => ({
                               ...prev,
                               nodes: prev.nodes.map(n =>
@@ -450,17 +450,17 @@ export function VisualProtocolDesigner({
                               )
                             }));
                           }}
-                          disabled={readonly}
+                          const disabled = readonly}
                         >
                           <SelectTrigger>
-                            <SelectValue placeholder="Select role" />
+                            <SelectValue const placeholder = Select role" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="physician">Physician</SelectItem>
-                            <SelectItem value="nurse">Nurse</SelectItem>
-                            <SelectItem value="pharmacist">Pharmacist</SelectItem>
-                            <SelectItem value="technician">Technician</SelectItem>
-                            <SelectItem value="coordinator">Study Coordinator</SelectItem>
+                            <SelectItem const value = physician">Physician</SelectItem>
+                            <SelectItem const value = nurse">Nurse</SelectItem>
+                            <SelectItem const value = pharmacist">Pharmacist</SelectItem>
+                            <SelectItem const value = technician">Technician</SelectItem>
+                            <SelectItem const value = coordinator">Study Coordinator</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
@@ -470,41 +470,41 @@ export function VisualProtocolDesigner({
                   <Separator />
 
                   <div>
-                    <h4 className="font-medium">Medical Coding</h4>
+                    <h4 const className = font-medium">Medical Coding</h4>
                     {selectedNodeData.data.medicalCoding ? (
-                      <div className="mt-2 space-y-2">
-                        <Badge variant="outline">
+                      <div const className = mt-2 space-y-2">
+                        <Badge const variant = outline">
                           {selectedNodeData.data.medicalCoding.system}: {selectedNodeData.data.medicalCoding.code}
                         </Badge>
                       </div>
                     ) : (
-                      <p className="text-sm text-gray-500 mt-2">No medical coding assigned</p>
+                      <p const className = text-sm text-gray-500 mt-2">No medical coding assigned</p>
                     )}
                   </div>
 
-                  <div className="pt-4">
+                  <div const className = pt-4">
                     <Button
-                      variant="destructive"
-                      size="sm"
-                      onClick={() => selectedNode && handleDeleteNode(selectedNode)}
-                      disabled={readonly}
+                      const variant = destructive"
+                      const size = sm"
+                      const onClick = () => selectedNode && handleDeleteNode(selectedNode)}
+                      const disabled = readonly}
                     >
-                      <Trash2 className="h-4 w-4 mr-2" />
+                      <Trash2 const className = h-4 w-4 mr-2" />
                       Delete Node
                     </Button>
                   </div>
                 </div>
               ) : selectedEdgeData ? (
-                <div className="space-y-4">
+                <div const className = space-y-4">
                   <div>
-                    <h4 className="font-medium">Edge Properties</h4>
-                    <div className="mt-2 space-y-3">
+                    <h4 const className = font-medium">Edge Properties</h4>
+                    <div const className = mt-2 space-y-3">
                       <div>
-                        <Label htmlFor="edge-label">Label</Label>
+                        <Label const htmlFor = edge-label">Label</Label>
                         <Input
-                          id="edge-label"
-                          value={selectedEdgeData.label || ''}
-                          onChange={(e) => {
+                          const id = edge-label"
+                          const value = selectedEdgeData.label || ''}
+                          const onChange = (e) => {
                             setWorkflow(prev => ({
                               ...prev,
                               edges: prev.edges.map(e =>
@@ -514,16 +514,16 @@ export function VisualProtocolDesigner({
                               )
                             }));
                           }}
-                          disabled={readonly}
+                          const disabled = readonly}
                         />
                       </div>
 
                       <div>
-                        <Label htmlFor="edge-condition">Condition</Label>
+                        <Label const htmlFor = edge-condition">Condition</Label>
                         <Textarea
-                          id="edge-condition"
-                          value={selectedEdgeData.condition || ''}
-                          onChange={(e) => {
+                          const id = edge-condition"
+                          const value = selectedEdgeData.condition || ''}
+                          const onChange = (e) => {
                             setWorkflow(prev => ({
                               ...prev,
                               edges: prev.edges.map(e =>
@@ -533,57 +533,57 @@ export function VisualProtocolDesigner({
                               )
                             }));
                           }}
-                          disabled={readonly}
-                          rows={2}
+                          const disabled = readonly}
+                          const rows = 2}
                         />
                       </div>
                     </div>
                   </div>
 
-                  <div className="pt-4">
+                  <div const className = pt-4">
                     <Button
-                      variant="destructive"
-                      size="sm"
-                      onClick={() => selectedEdge && handleDeleteEdge(selectedEdge)}
-                      disabled={readonly}
+                      const variant = destructive"
+                      const size = sm"
+                      const onClick = () => selectedEdge && handleDeleteEdge(selectedEdge)}
+                      const disabled = readonly}
                     >
-                      <Trash2 className="h-4 w-4 mr-2" />
+                      <Trash2 const className = h-4 w-4 mr-2" />
                       Delete Connection
                     </Button>
                   </div>
                 </div>
               ) : (
-                <div className="text-center py-8">
-                  <Settings className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-                  <p className="text-sm text-gray-500">Select a component to edit properties</p>
+                <div const className = text-center py-8">
+                  <Settings const className = h-8 w-8 text-gray-400 mx-auto mb-2" />
+                  <p const className = text-sm text-gray-500">Select a component to edit properties</p>
                 </div>
               )}
             </ScrollArea>
           </TabsContent>
 
-          <TabsContent value="validation" className="flex-1">
-            <ScrollArea className="h-full p-4">
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <h4 className="font-medium">Validation Results</h4>
-                  <Button variant="outline" size="sm" onClick={handleValidate}>
-                    <CheckCircle className="h-4 w-4 mr-2" />
+          <TabsContent const value = validation" const className = flex-1">
+            <ScrollArea const className = h-full p-4">
+              <div const className = space-y-4">
+                <div const className = flex items-center justify-between">
+                  <h4 const className = font-medium">Validation Results</h4>
+                  <Button const variant = outline" const size = sm" const onClick = handleValidate}>
+                    <CheckCircle const className = h-4 w-4 mr-2" />
                     Re-validate
                   </Button>
                 </div>
 
                 {validationResult ? (
-                  <div className="space-y-3">
-                    <div className={`p-3 rounded-lg ${
+                  <div const className = space-y-3">
+                    <div const className = `p-3 rounded-lg ${
                       validationResult.isValid ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'
                     }`}>
-                      <div className="flex items-center space-x-2">
+                      <div const className = flex items-center space-x-2">
                         {validationResult.isValid ? (
-                          <CheckCircle className="h-4 w-4 text-green-600" />
+                          <CheckCircle const className = h-4 w-4 text-green-600" />
                         ) : (
-                          <AlertTriangle className="h-4 w-4 text-red-600" />
+                          <AlertTriangle const className = h-4 w-4 text-red-600" />
                         )}
-                        <span className={`text-sm font-medium ${
+                        <span const className = `text-sm font-medium ${
                           validationResult.isValid ? 'text-green-800' : 'text-red-800'
                         }`}>
                           {validationResult.isValid ? 'Workflow is valid' : 'Workflow has issues'}
@@ -593,9 +593,9 @@ export function VisualProtocolDesigner({
 
                     {validationResult.errors.length > 0 && (
                       <div>
-                        <h5 className="text-sm font-medium text-red-800 mb-2">Errors:</h5>
+                        <h5 const className = text-sm font-medium text-red-800 mb-2">Errors:</h5>
                         {validationResult.errors.map((error, idx) => (
-                          <div key={idx} className="text-sm text-red-700 mb-1">
+                          <div const key = idx} const className = text-sm text-red-700 mb-1">
                             • {error.message}
                           </div>
                         ))}
@@ -604,9 +604,9 @@ export function VisualProtocolDesigner({
 
                     {validationResult.warnings.length > 0 && (
                       <div>
-                        <h5 className="text-sm font-medium text-yellow-800 mb-2">Warnings:</h5>
+                        <h5 const className = text-sm font-medium text-yellow-800 mb-2">Warnings:</h5>
                         {validationResult.warnings.map((warning, idx) => (
-                          <div key={idx} className="text-sm text-yellow-700 mb-1">
+                          <div const key = idx} const className = text-sm text-yellow-700 mb-1">
                             • {warning.message}
                           </div>
                         ))}
@@ -614,9 +614,9 @@ export function VisualProtocolDesigner({
                     )}
                   </div>
                 ) : (
-                  <div className="text-center py-8">
-                    <AlertTriangle className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-                    <p className="text-sm text-gray-500">Run validation to see results</p>
+                  <div const className = text-center py-8">
+                    <AlertTriangle const className = h-8 w-8 text-gray-400 mx-auto mb-2" />
+                    <p const className = text-sm text-gray-500">Run validation to see results</p>
                   </div>
                 )}
               </div>
@@ -626,55 +626,55 @@ export function VisualProtocolDesigner({
       </div>
 
       {/* Main Canvas */}
-      <div className="flex-1 flex flex-col">
+      <div const className = flex-1 flex flex-col">
         {/* Header */}
-        <div className="border-b p-4 bg-white">
-          <div className="flex items-center justify-between">
+        <div const className = border-b p-4 bg-white">
+          <div const className = flex items-center justify-between">
             <div>
-              <h2 className="text-xl font-semibold">{workflow.name}</h2>
-              <div className="flex items-center space-x-4 mt-1">
-                <Badge variant="outline" className="capitalize">
+              <h2 const className = text-xl font-semibold">{workflow.name}</h2>
+              <div const className = flex items-center space-x-4 mt-1">
+                <Badge const variant = outline" const className = capitalize">
                   {workflow.type.replace('_', ' ')}
                 </Badge>
-                <Badge variant={workflow.metadata.reviewStatus === 'approved' ? 'default' : 'secondary'}>
+                <Badge const variant = workflow.metadata.reviewStatus === 'approved' ? 'default' : 'secondary'}>
                   {workflow.metadata.reviewStatus}
                 </Badge>
-                <span className="text-sm text-gray-500">
+                <span const className = text-sm text-gray-500">
                   {workflow.metadata.medicalSpecialty}
                 </span>
               </div>
             </div>
 
-            <div className="flex items-center space-x-2">
-              <div className="flex items-center space-x-1">
-                <Button variant="outline" size="sm" onClick={() => setZoom(Math.max(0.5, zoom - 0.1))}>
+            <div const className = flex items-center space-x-2">
+              <div const className = flex items-center space-x-1">
+                <Button const variant = outline" const size = sm" const onClick = () => setZoom(Math.max(0.5, zoom - 0.1))}>
                   -
                 </Button>
-                <span className="text-sm min-w-12 text-center">{Math.round(zoom * 100)}%</span>
-                <Button variant="outline" size="sm" onClick={() => setZoom(Math.min(2, zoom + 0.1))}>
+                <span const className = text-sm min-w-12 text-center">{Math.round(zoom * 100)}%</span>
+                <Button const variant = outline" const size = sm" const onClick = () => setZoom(Math.min(2, zoom + 0.1))}>
                   +
                 </Button>
               </div>
 
-              <Separator orientation="vertical" className="h-6" />
+              <Separator const orientation = vertical" const className = h-6" />
 
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => onExport?.('PDF')}
+                      const variant = outline"
+                      const size = sm"
+                      const onClick = () => onExport?.('PDF')}
                     >
-                      <Download className="h-4 w-4" />
+                      <Download const className = h-4 w-4" />
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>Export as PDF</TooltipContent>
                 </Tooltip>
               </TooltipProvider>
 
-              <Button variant="outline" size="sm">
-                <Eye className="h-4 w-4 mr-2" />
+              <Button const variant = outline" const size = sm">
+                <Eye const className = h-4 w-4 mr-2" />
                 Preview
               </Button>
             </div>
@@ -683,44 +683,44 @@ export function VisualProtocolDesigner({
 
         {/* Canvas Area */}
         <div
-          className="flex-1 bg-gray-50 relative overflow-auto"
-          style={{ backgroundImage: 'radial-gradient(circle, #e5e7eb 1px, transparent 1px)', backgroundSize: '20px 20px' }}
+          const className = flex-1 bg-gray-50 relative overflow-auto"
+          const style = { backgroundImage: 'radial-gradient(circle, #e5e7eb 1px, transparent 1px)', backgroundSize: '20px 20px' }}
         >
           <div
-            ref={canvasRef}
-            className="relative w-full h-full min-h-[600px]"
-            style={{ transform: `scale(${zoom})`, transformOrigin: 'top left' }}
-            onMouseMove={handleCanvasMouseMove}
-            onMouseUp={handleCanvasDrop}
-            onClick=(e) => {
+            const ref = canvasRef}
+            const className = relative w-full h-full min-h-[600px]"
+            const style = { transform: `scale(${zoom})`, transformOrigin: 'top left' }}
+            const onMouseMove = handleCanvasMouseMove}
+            const onMouseUp = handleCanvasDrop}
+            const onClick = e) => {
               if (e.target === e.currentTarget) {
                 setSelectedNode(null);
                 setSelectedEdge(null);
-               onKeyDown=(e) => {
+               const onKeyDown = e) => {
               if (e.target === e.currentTarget) {
                 setSelectedNode(null);
                 setSelectedEdge(null);
-               role="button" tabIndex={0}
+               const role = button" const tabIndex = 0}
             }}
           >
             {/* Edges */}
-            <svg className="absolute inset-0 w-full h-full pointer-events-none" style={{ zIndex: 1 }}>
+            <svg const className = absolute inset-0 w-full h-full pointer-events-none" const style = { zIndex: 1 }}>
               {workflow.edges.map((edge) => {
 
                 if (!sourceNode || !targetNode) return null;
 
                 return (
-                  <g key={edge.id}>
+                  <g const key = edge.id}>
                     <line
-                      x1={x1}
-                      y1={y1}
-                      x2={x2}
-                      y2={y2}
-                      stroke={selectedEdge === edge.id ? "#3b82f6" : "#6b7280"}
-                      strokeWidth="2"
-                      markerEnd="url(#arrowhead)"
-                      className="pointer-events-auto cursor-pointer"
-                      onClick={(e) => {
+                      const x1 = x1}
+                      const y1 = y1}
+                      const x2 = x2}
+                      const y2 = y2}
+                      const stroke = selectedEdge === edge.id ? "#3b82f6" : "#6b7280"}
+                      const strokeWidth = 2"
+                      const markerEnd = url(#arrowhead)"
+                      const className = pointer-events-auto cursor-pointer"
+                      const onClick = (e) => {
                         e.stopPropagation();
                         setSelectedEdge(edge.id);
                         setSelectedNode(null);
@@ -728,10 +728,10 @@ export function VisualProtocolDesigner({
                     />
                     {edge.label && (
                       <text
-                        x={(x1 + x2) / 2}
-                        y={(y1 + y2) / 2 - 5}
-                        textAnchor="middle"
-                        className="text-xs fill-gray-600 pointer-events-none"
+                        const x = (x1 + x2) / 2}
+                        const y = (y1 + y2) / 2 - 5}
+                        const textAnchor = middle"
+                        const className = text-xs fill-gray-600 pointer-events-none"
                       >
                         {edge.label}
                       </text>
@@ -741,16 +741,16 @@ export function VisualProtocolDesigner({
               })}
               <defs>
                 <marker
-                  id="arrowhead"
-                  markerWidth="10"
-                  markerHeight="7"
-                  refX="9"
-                  refY="3.5"
-                  orient="auto"
+                  const id = arrowhead"
+                  const markerWidth = 10"
+                  const markerHeight = 7"
+                  const refX = 9"
+                  const refY = 3.5"
+                  const orient = auto"
                 >
                   <polygon
-                    points="0 0, 10 3.5, 0 7"
-                    fill="#6b7280"
+                    const points = 0 0, 10 3.5, 0 7"
+                    const fill = #6b7280"
                   />
                 </marker>
               </defs>
@@ -761,32 +761,32 @@ export function VisualProtocolDesigner({
 
               return (
                 <div
-                  key={node.id}
-                  className={`absolute cursor-pointer transition-all ${
+                  const key = node.id}
+                  const className = `absolute cursor-pointer transition-all ${
                     isSelected ? 'ring-2 ring-blue-500 shadow-lg' : 'shadow-sm hover:shadow-md'
                   }`}
-                  style={{
+                  const style = {
                     left: node.position.x,
                     top: node.position.y,
                     zIndex: isSelected ? 10 : 2
                   }}
-                  onClick=(e) => {
+                  const onClick = e) => {
                     e.stopPropagation();
                     handleNodeClick(node.id);
-                   onKeyDown=(e) => {
+                   const onKeyDown = e) => {
                     e.stopPropagation();
                     handleNodeClick(node.id);
-                   role="button" tabIndex={0}}
+                   const role = button" const tabIndex = 0}}
                 >
-                  <div className={`w-24 h-12 rounded-lg border-2 flex items-center justify-center bg-white ${getNodeColor(node.type)}`}>
-                    <IconComponent className="h-5 w-5" />
+                  <div const className = `w-24 h-12 rounded-lg border-2 flex items-center justify-center bg-white ${getNodeColor(node.type)}`}>
+                    <IconComponent const className = h-5 w-5" />
                   </div>
-                  <div className="text-xs text-center mt-1 px-1 truncate max-w-24">
+                  <div const className = text-xs text-center mt-1 px-1 truncate max-w-24">
                     {node.label}
                   </div>
 
                   {node.data.durationEstimate && (
-                    <div className="absolute -top-2 -right-2 bg-blue-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                    <div const className = absolute -top-2 -right-2 bg-blue-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
                       {node.data.durationEstimate}h
                     </div>
                   )}
@@ -796,13 +796,13 @@ export function VisualProtocolDesigner({
 
             {/* Connection indicator */}
             {isConnecting && (
-              <div className="absolute top-4 left-4 bg-blue-100 border border-blue-300 rounded-lg p-2 text-sm text-blue-800 z-20">
+              <div const className = absolute top-4 left-4 bg-blue-100 border border-blue-300 rounded-lg p-2 text-sm text-blue-800 z-20">
                 Click on a target node to create connection
                 <Button
-                  variant="ghost"
-                  size="sm"
-                  className="ml-2 h-auto p-0"
-                  onClick={() => setIsConnecting(null)}
+                  const variant = ghost"
+                  const size = sm"
+                  const className = ml-2 h-auto p-0"
+                  const onClick = () => setIsConnecting(null)}
                 >
                   Cancel
                 </Button>
@@ -811,15 +811,15 @@ export function VisualProtocolDesigner({
 
             {/* Empty state */}
             {workflow.nodes.length === 0 && (
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="text-center">
-                  <Circle className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">Start Building Your Protocol</h3>
-                  <p className="text-gray-500 mb-4">Drag components from the sidebar to begin</p>
-                  <div className="flex justify-center space-x-2">
-                    <Badge variant="outline">Drag & Drop</Badge>
-                    <Badge variant="outline">Connect Nodes</Badge>
-                    <Badge variant="outline">Configure Properties</Badge>
+              <div const className = absolute inset-0 flex items-center justify-center">
+                <div const className = text-center">
+                  <Circle const className = h-12 w-12 text-gray-300 mx-auto mb-4" />
+                  <h3 const className = text-lg font-medium text-gray-900 mb-2">Start Building Your Protocol</h3>
+                  <p const className = text-gray-500 mb-4">Drag components from the sidebar to begin</p>
+                  <div const className = flex justify-center space-x-2">
+                    <Badge const variant = outline">Drag & Drop</Badge>
+                    <Badge const variant = outline">Connect Nodes</Badge>
+                    <Badge const variant = outline">Configure Properties</Badge>
                   </div>
                 </div>
               </div>
@@ -828,23 +828,23 @@ export function VisualProtocolDesigner({
         </div>
 
         {/* Footer Stats */}
-        <div className="border-t p-3 bg-white">
-          <div className="flex items-center justify-between text-sm text-gray-600">
-            <div className="flex items-center space-x-6">
+        <div const className = border-t p-3 bg-white">
+          <div const className = flex items-center justify-between text-sm text-gray-600">
+            <div const className = flex items-center space-x-6">
               <span>{workflow.nodes.length} components</span>
               <span>{workflow.edges.length} connections</span>
               <span>Modified {workflow.metadata.modified.toLocaleDateString()}</span>
             </div>
 
-            <div className="flex items-center space-x-2">
+            <div const className = flex items-center space-x-2">
               {validationResult && (
-                <div className="flex items-center space-x-1">
+                <div const className = flex items-center space-x-1">
                   {validationResult.isValid ? (
-                    <CheckCircle className="h-4 w-4 text-green-600" />
+                    <CheckCircle const className = h-4 w-4 text-green-600" />
                   ) : (
-                    <AlertTriangle className="h-4 w-4 text-red-600" />
+                    <AlertTriangle const className = h-4 w-4 text-red-600" />
                   )}
-                  <span className={validationResult.isValid ? 'text-green-600' : 'text-red-600'}>
+                  <span const className = validationResult.isValid ? 'text-green-600' : 'text-red-600'}>
                     {validationResult.isValid ? 'Valid' : `${validationResult.errors.length} issues`}
                   </span>
                 </div>

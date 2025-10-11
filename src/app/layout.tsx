@@ -1,13 +1,6 @@
 import { Inter } from 'next/font/google'
-import { Analytics } from '@vercel/analytics/react'
-import { SpeedInsights } from '@vercel/speed-insights/next'
-
-import '@/lib/polyfills/location-polyfill'
-
 import type { Metadata } from 'next'
 import './globals.css'
-import { AuthProvider } from '@/lib/auth/auth-provider'
-import { AuthErrorBoundary } from '@/components/auth/auth-error-boundary'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -28,13 +21,7 @@ export default function RootLayout({
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </head>
       <body className={inter.className}>
-        <AuthErrorBoundary>
-          <AuthProvider>
-            {children}
-          </AuthProvider>
-        </AuthErrorBoundary>
-        <Analytics />
-        <SpeedInsights />
+        {children}
       </body>
     </html>
   )

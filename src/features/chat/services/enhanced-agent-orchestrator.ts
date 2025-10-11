@@ -4,6 +4,21 @@
  */
 
 import { ChatOpenAI } from '@langchain/openai';
+
+// Local AgentResponse interface for this file
+interface AgentResponse {
+  id: string;
+  agentId: string;
+  content: string;
+  confidence: number;
+  metadata: {
+    agentName: string;
+    capabilities: string[];
+    responseTime: number;
+  };
+  timestamp: Date;
+}
+
 import { AgentExecutor, createOpenAIFunctionsAgent } from 'langchain/agents';
 import { ChatPromptTemplate, MessagesPlaceholder } from '@langchain/core/prompts';
 import { dynamicToolLoader } from '@/lib/services/dynamic-tool-loader';

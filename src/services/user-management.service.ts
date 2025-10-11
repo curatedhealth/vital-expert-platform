@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+
 import { AuditLogger, AuditAction, AuditSeverity } from '@/lib/security/audit-logger';
 
 export interface UserProfile {

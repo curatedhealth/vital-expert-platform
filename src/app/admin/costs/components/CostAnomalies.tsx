@@ -1,13 +1,15 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { AlertTriangle, TrendingUp, TrendingDown, Activity, CheckCircle, Clock } from 'lucide-react';
-import { costAnalyticsService, CostAnomaly } from '@/services/cost-analytics.service';
+import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
+
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { costAnalyticsService, CostAnomaly } from '@/services/cost-analytics.service';
+
 
 export function CostAnomalies() {
   const [anomalies, setAnomalies] = useState<CostAnomaly[]>([]);

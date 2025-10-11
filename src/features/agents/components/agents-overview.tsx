@@ -3,10 +3,9 @@
 import { Brain, Users, Zap, TrendingUp, Activity, Award } from 'lucide-react';
 import { useMemo, useEffect } from 'react';
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAgentsStore } from '@/lib/stores/agents-store';
-import { cn } from '@/lib/utils';
 
 export function AgentsOverview() {
   const { agents, loadAgents, isLoading, error } = useAgentsStore();

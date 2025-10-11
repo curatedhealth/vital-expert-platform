@@ -1,10 +1,6 @@
 'use client';
 
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { cn } from '@/lib/utils';
 import { 
-  Shield, 
   FileText, 
   Users, 
   Key, 
@@ -12,6 +8,10 @@ import {
   BarChart3,
   TestTube
 } from 'lucide-react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+
+import { cn } from '@/lib/utils';
 
 const adminNavItems = [
   {

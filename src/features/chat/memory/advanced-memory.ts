@@ -3,9 +3,7 @@
  */
 
 import { createClient } from '@supabase/supabase-js';
-import { BufferWindowMemory, ConversationSummaryMemory, VectorStoreRetrieverMemory } from 'langchain/memory';
-import { ChatMessageHistory } from 'langchain/stores/message/in_memory';
-import { BaseMessage, HumanMessage, AIMessage } from '@langchain/core/messages';
+import { BufferWindowMemory, ConversationSummaryMemory } from 'langchain/memory';
 
 export type MemoryStrategy = 'buffer' | 'summary' | 'vector' | 'hybrid' | 'entity';
 

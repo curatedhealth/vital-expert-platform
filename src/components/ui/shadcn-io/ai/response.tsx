@@ -148,6 +148,11 @@ function parseIncompleteMarkdown(text: string): string {
 }
 
 // Create a hardened version of ReactMarkdown
+const hardenReactMarkdown = (Component: typeof ReactMarkdown) => {
+  return memo(Component);
+};
+
+const HardenedMarkdown = hardenReactMarkdown(ReactMarkdown);
 
 export type ResponseProps = HTMLAttributes<HTMLDivElement> & {
   options?: Options;
@@ -287,6 +292,7 @@ const components: Options['components'] = {
     </blockquote>
   ),
   code: ({ node, className, ...props }) => {
+    const inline = !className?.includes('language-');
 
     if (!inline) {
       return <code className={className} {...props} />;
@@ -303,13 +309,14 @@ const components: Options['components'] = {
     );
   },
   pre: ({ node, className, children }) => {
+    let language = 'text';
+    let code = '';
 
     if (typeof node?.properties?.className === 'string') {
       language = node.properties.className.replace('language-', '');
     }
 
     // Extract code content from children safely
-
     if (
       isValidElement(children) &&
       children.props &&
@@ -377,4 +384,8 @@ export const __Response = memo(
   (prevProps, nextProps) => prevProps.children === nextProps.children
 );
 
-Response.displayName = 'Response';
+__Response.displayName = 'Response';
+
+// Export with regular names for compatibility
+export const Response = __Response;
+export const StreamingResponse = __Response;

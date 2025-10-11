@@ -1,14 +1,14 @@
 'use client';
 
+import { Key, AlertTriangle, Check, Copy } from 'lucide-react';
 import { useState } from 'react';
+
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Key, AlertTriangle, Check, Copy } from 'lucide-react';
-import { format } from 'date-fns';
 
 interface CreateApiKeyDialogProps {
   isOpen: boolean;

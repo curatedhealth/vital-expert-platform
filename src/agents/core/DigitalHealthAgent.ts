@@ -103,7 +103,9 @@ export class DigitalHealthAgent {
       content: response.content || '',
       data: response.data,
       metadata: response.metadata,
-      timestamp: response.timestamp || new Date()
+      timestamp: response.timestamp || new Date(),
+      execution_time: response.execution_time || 0,
+      validation_status: response.validation_status || 'passed'
     };
   }
 

@@ -5,14 +5,7 @@ import {
   User,
   Settings,
   LogOut,
-  Home,
-  BarChart3,
   Plus,
-  MessageSquare,
-  Bot,
-  Target,
-  Database,
-  Sparkles,
 } from 'lucide-react';
 import Link from 'next/link';
 

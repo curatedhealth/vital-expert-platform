@@ -4,6 +4,7 @@
  */
 
 import { createClient } from '@supabase/supabase-js';
+
 import type { BreachIncident, NotificationResult } from './breach-response-system';
 
 export interface NotificationTemplate {

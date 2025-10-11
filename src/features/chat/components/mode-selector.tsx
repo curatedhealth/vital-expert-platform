@@ -1,12 +1,12 @@
 'use client';
 
 import { Bot, Users, Zap } from 'lucide-react';
-import { Button } from '@/shared/components/button';
-import { Card, CardContent } from '@/shared/components/card';
-import { Badge } from '@/shared/components/badge';
+
 import { Switch } from '@/components/ui/switch';
 import { useChatStore } from '@/lib/stores/chat-store';
 import { cn } from '@/lib/utils';
+import { Badge } from '@/shared/components/badge';
+import { Card, CardContent } from '@/shared/components/card';
 
 export function ModeSelector() {
   const {

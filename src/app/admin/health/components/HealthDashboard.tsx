@@ -1,15 +1,17 @@
 'use client';
 
+import { RefreshCw, AlertTriangle, Activity } from 'lucide-react';
 import { useState, useEffect } from 'react';
-import { HealthMonitoringService, HealthMetrics, HealthStatus, SLOConfig, Incident } from '@/services/health-monitoring.service';
-import ServiceHealthCard from './ServiceHealthCard';
-import SLOTracker from './SLOTracker';
-import IncidentBanner from './IncidentBanner';
-import AlertConfigPanel from './AlertConfigPanel';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import { RefreshCw, AlertTriangle, Activity } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { HealthMonitoringService, HealthMetrics, HealthStatus, SLOConfig, Incident } from '@/services/health-monitoring.service';
+
+import AlertConfigPanel from './AlertConfigPanel';
+import IncidentBanner from './IncidentBanner';
+import ServiceHealthCard from './ServiceHealthCard';
+import SLOTracker from './SLOTracker';
 
 interface HealthDashboardProps {
   initialMetrics: HealthMetrics;

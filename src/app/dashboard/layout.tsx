@@ -10,7 +10,6 @@ import {
   Search,
   Package2,
   Home,
-  FolderOpen,
   MessageSquare,
   FileText,
   Database,

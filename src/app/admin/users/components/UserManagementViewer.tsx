@@ -1,13 +1,14 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { UserManagementService, UserFilters as UserFiltersType, UserProfile, UserPagination } from '@/services/user-management.service';
-import UserFilters from './UserFilters';
-import UserTable from './UserTable';
-import UserRoleDialog from './UserRoleDialog';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertTriangle } from 'lucide-react';
+import { useState, useEffect } from 'react';
+
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { UserManagementService, UserFilters as UserFiltersType, UserProfile, UserPagination } from '@/services/user-management.service';
+
+import UserFilters from './UserFilters';
+import UserRoleDialog from './UserRoleDialog';
+import UserTable from './UserTable';
 
 interface UserManagementViewerProps {
   initialFilterOptions: {

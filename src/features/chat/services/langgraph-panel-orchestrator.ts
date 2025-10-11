@@ -1,9 +1,10 @@
+import { HumanMessage, SystemMessage } from "@langchain/core/messages";
 import { StateGraph, END, START, Annotation } from "@langchain/langgraph";
 import { ChatOpenAI } from "@langchain/openai";
-import { HumanMessage, SystemMessage, AIMessage } from "@langchain/core/messages";
-import { Agent } from '@/shared/services/stores/agents-store';
+
 import { PanelMember } from '@/app/(app)/ask-panel/services/panel-store';
 import { langchainRAGService } from '@/features/chat/services/langchain-service';
+import { Agent } from '@/shared/services/stores/agents-store';
 
 // Panel State Definition
 const PanelStateAnnotation = Annotation.Root({

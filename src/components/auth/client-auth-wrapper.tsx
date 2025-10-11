@@ -1,9 +1,11 @@
 'use client';
 
 import React, { useState, useEffect, ReactNode } from 'react';
+
 import { useAuth } from '@/supabase-auth-context';
-import { AuthLoadingScreen, AuthErrorScreen } from './auth-loading-screen';
+
 import { AuthErrorBoundary } from './auth-error-boundary';
+import { AuthLoadingScreen, AuthErrorScreen } from './auth-loading-screen';
 
 interface ClientAuthWrapperProps {
   children: ReactNode;

@@ -1,19 +1,5 @@
 'use client';
 
-import { useState } from 'react';
-import { 
-  BackupRecoveryService, 
-  BackupMetadata, 
-  RestoreOperation, 
-  BackupSchedule 
-} from '@/services/backup-recovery.service';
-import BackupHistory from './BackupHistory';
-import BackupScheduler from './BackupScheduler';
-import RestoreManager from './RestoreManager';
-import BackupHealthMonitor from './BackupHealthMonitor';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 import { 
   Database, 
   Clock, 
@@ -23,6 +9,22 @@ import {
   CheckCircle,
   XCircle
 } from 'lucide-react';
+import { useState } from 'react';
+
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { 
+  BackupRecoveryService, 
+  BackupMetadata, 
+  RestoreOperation, 
+  BackupSchedule 
+} from '@/services/backup-recovery.service';
+
+import BackupHealthMonitor from './BackupHealthMonitor';
+import BackupHistory from './BackupHistory';
+import BackupScheduler from './BackupScheduler';
+import RestoreManager from './RestoreManager';
 
 interface BackupDashboardProps {
   initialBackupHistory: BackupMetadata[];

@@ -1,16 +1,18 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { Loader2, Save, User, Building, Shield } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/supabase-auth-context';
-import { supabase } from '@/lib/supabase/client';
+import { useState, useEffect } from 'react';
+
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, Save, User, Mail, Building, Shield } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
+import { supabase } from '@/lib/supabase/client';
+import { useAuth } from '@/supabase-auth-context';
+
 
 export default function ProfilePage() {
   const { user, userProfile, loading } = useAuth();

@@ -1,4 +1,5 @@
 import { HealthMonitoringService } from '@/services/health-monitoring.service';
+
 import HealthDashboard from './components/HealthDashboard';
 
 export default async function HealthPage() {

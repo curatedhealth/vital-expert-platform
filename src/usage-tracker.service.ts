@@ -206,7 +206,7 @@ export class UsageTracker {
     userId?: string
   ): Promise<CostBreakdown> {
     try {
-      let const query = his.supabaseClient
+      let query = this.supabaseClient
         .from('llm_usage_logs')
         .select(`
           *,
@@ -216,7 +216,7 @@ export class UsageTracker {
         .lte('created_at', endDate.toISOString());
 
       if (userId) {
-        const query = uery.eq('user_id', userId);
+        query = query.eq('user_id', userId);
       }
 
       const { data, error } = await query;
@@ -247,7 +247,7 @@ export class UsageTracker {
     successRate: number;
   }> {
     try {
-
+      const today = new Date();
       today.setHours(0, 0, 0, 0);
 
       const { data, error } = await this.supabase
@@ -259,7 +259,12 @@ export class UsageTracker {
         throw error;
       }
 
+      const totalRequests = data?.length || 0;
+      const successfulRequests = data?.filter((d: any) => d.status === 'success').length || 0;
+      const totalCost = data?.reduce((sum: number, d: any) => sum + (d.cost || 0), 0) || 0;
+      const averageLatency = data && data.length > 0 ? 
         (data as unknown[]).reduce((sum: number, d: unknown) => sum + ((d as any).latency_ms || 0), 0) / (data as unknown[]).length : 0;
+      const activeProviders = new Set(data?.map((d: any) => d.provider_id)).size || 0;
 
       return {
         activeProviders,
@@ -316,8 +321,11 @@ export class UsageTracker {
     startDate: Date,
     endDate: Date
   ): ProviderUsageSummary {
-
-      data.reduce((sum, d) => sum + (d.latency_ms || 0), 0) / totalRequests : 0;
+    const totalRequests = data.length;
+    const successfulRequests = data.filter((d: any) => d.status === 'success').length;
+    const totalCost = data.reduce((sum: number, d: any) => sum + (d.cost || 0), 0);
+    const averageLatency = totalRequests > 0 ? 
+      data.reduce((sum: number, d: any) => sum + (d.latency_ms || 0), 0) / totalRequests : 0;
 
     return {
       provider_id: data[0]?.provider_id || '',

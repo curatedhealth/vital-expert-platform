@@ -31,7 +31,7 @@ export * from './tier3/TreatmentOutcomePredictor';
 export * from './tier3/PatientCohortAnalyzer';
 
 // Core System
-export * from './core/AgentOrchestrator';
+export * from '../AgentOrchestrator';
 export * from './core/DigitalHealthAgent';
 export * from './core/ComplianceAwareOrchestrator';
 

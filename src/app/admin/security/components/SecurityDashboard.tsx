@@ -1,10 +1,5 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { 
   Shield, 
   AlertTriangle, 
@@ -14,9 +9,16 @@ import {
   Settings,
   RefreshCw
 } from 'lucide-react';
-import { RateLimitManager } from './RateLimitManager';
+import { useState, useEffect } from 'react';
+
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+
 import { AbuseDetection } from './AbuseDetection';
 import { IPManagement } from './IPManagement';
+import { RateLimitManager } from './RateLimitManager';
 import { SecurityIncidents } from './SecurityIncidents';
 
 interface SecurityStats {

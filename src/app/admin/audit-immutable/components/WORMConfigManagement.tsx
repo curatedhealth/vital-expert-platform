@@ -1,18 +1,9 @@
 'use client';
 
-import { useState } from 'react';
-import { ImmutableAuditService, WORMConfig } from '@/services/immutable-audit.service';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { format } from 'date-fns';
 import { 
   Plus, 
   Edit, 
-  Database, 
   AlertTriangle, 
   CheckCircle, 
   Clock,
@@ -20,7 +11,16 @@ import {
   Trash2,
   Shield
 } from 'lucide-react';
-import { format } from 'date-fns';
+import { useState } from 'react';
+
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { ImmutableAuditService, WORMConfig } from '@/services/immutable-audit.service';
 
 interface WORMConfigManagementProps {
   wormConfigs: WORMConfig[];

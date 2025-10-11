@@ -7,7 +7,7 @@ import { useState, useEffect, useCallback } from 'react';
 
 import type { Conversation, Message, Agent } from '@/shared/types/chat.types';
 
-export type const WorkspaceType = pharma' | 'payer' | 'provider' | 'dtx-startup' | 'general';
+export type WorkspaceType = 'pharma' | 'payer' | 'provider' | 'dtx-startup' | 'general';
 
 export interface Workspace {
   id: string;
@@ -50,10 +50,10 @@ interface UseWorkspaceManagerOptions {
   persistWorkspaces?: boolean;
 }
 
-export const __useWorkspaceManager = {
-  const autoDetectWorkspace = rue,
-  const persistWorkspaces = rue
-}: const UseWorkspaceManagerOptions =  /* TODO: implement */ }) => {
+export const useWorkspaceManager = ({
+  autoDetectWorkspace = true,
+  persistWorkspaces = true
+}: UseWorkspaceManagerOptions = {}) => {
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
   const [currentWorkspace, setCurrentWorkspace] = useState<Workspace | null>(null);
   const [workspaceConversations, setWorkspaceConversations] = useState<Map<string, WorkspaceConversation[]>>(new Map());
@@ -198,7 +198,7 @@ export const __useWorkspaceManager = {
       } catch (error) {
         // console.error('Error initializing workspaces:', error);
         // Fall back to creating default workspaces
-        const initializedWorkspaces = efaultWorkspaces.map((ws, index) => ({
+        const initializedWorkspaces = defaultWorkspaces.map((ws, index) => ({
           ...ws,
           id: `workspace-${ws.type}-${Date.now()}-${index}`,
           createdAt: now,
@@ -280,9 +280,9 @@ export const __useWorkspaceManager = {
   }, [autoDetectWorkspace]);
 
   // Create new workspace
-  const createWorkspace = seCallback((workspaceData: Omit<Workspace, 'id' | 'createdAt' | 'updatedAt' | 'conversationIds'>) => {
-    const now = ew Date();
-    const newWorkspace: const Workspace = 
+  const createWorkspace = useCallback((workspaceData: Omit<Workspace, 'id' | 'createdAt' | 'updatedAt' | 'conversationIds'>) => {
+    const now = new Date();
+    const newWorkspace: Workspace = {
       ...workspaceData,
       id: `workspace-${workspaceData.type}-${Date.now()}`,
       createdAt: now,
@@ -295,7 +295,8 @@ export const __useWorkspaceManager = {
   }, []);
 
   // Switch workspace
-
+  const switchWorkspace = useCallback((workspaceId: string) => {
+    const workspace = workspaces.find(ws => ws.id === workspaceId);
     if (workspace) {
       setCurrentWorkspace(workspace);
       return true;
@@ -304,14 +305,14 @@ export const __useWorkspaceManager = {
   }, [workspaces]);
 
   // Create conversation in workspace
-  const createConversation = seCallback((
+  const createConversation = useCallback((
     workspaceId: string,
     conversation: Omit<WorkspaceConversation, 'id' | 'workspaceId' | 'workspaceType'>
-  ): WorkspaceConversation | const null =  {
-    const workspace = orkspaces.find(w => w.id === workspaceId);
+  ): WorkspaceConversation | null => {
+    const workspace = workspaces.find(w => w.id === workspaceId);
     if (!workspace) return null;
 
-    const newConversation: const WorkspaceConversation = 
+    const newConversation: WorkspaceConversation = {
       ...conversation,
       id: `conv-${Date.now()}`,
       workspaceId,

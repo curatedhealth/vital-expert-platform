@@ -1,4 +1,5 @@
 import { ComplianceReportingService } from '@/services/compliance-reporting.service';
+
 import ComplianceDashboard from './components/ComplianceDashboard';
 
 export default async function CompliancePage() {

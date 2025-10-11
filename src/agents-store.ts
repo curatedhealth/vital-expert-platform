@@ -157,7 +157,8 @@ export const __getAgentsByCapability = (capability: string, agents: Agent[]) => 
 };
 
 export const __searchAgents = (query: string, agents: Agent[]) => {
-
+  const searchTerm = query.toLowerCase();
+  
   return agents.filter(agent =>
     agent.name.toLowerCase().includes(searchTerm) ||
     agent.description.toLowerCase().includes(searchTerm) ||

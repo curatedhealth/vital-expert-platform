@@ -3,8 +3,8 @@
  * Provides consistent authentication and authorization for all API routes
  */
 
-import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
+import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 // User role hierarchy

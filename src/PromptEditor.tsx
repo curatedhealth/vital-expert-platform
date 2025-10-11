@@ -32,6 +32,7 @@ interface PromptEditorProps {
   mode: 'create' | 'edit' | 'copy';
 }
 
+const departmentOptions = [
   { value: 'medical_affairs', label: 'Medical Affairs' },
   { value: 'commercial', label: 'Commercial' },
   { value: 'compliance', label: 'Compliance' },
@@ -40,6 +41,7 @@ interface PromptEditorProps {
   { value: 'general', label: 'General' }
 ];
 
+const promptTemplates = {
   medical_affairs: `You are a medical affairs professional with expertise in {therapeutic_area}. Your role is to provide evidence-based insights and support clinical decision-making.
 
 Context:

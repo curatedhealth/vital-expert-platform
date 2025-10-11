@@ -4,7 +4,9 @@
  */
 
 import crypto from 'crypto';
+
 import { createClient } from '@supabase/supabase-js';
+
 import type { KeyInfo } from './encryption-manager';
 
 export interface KeyStorageConfig {

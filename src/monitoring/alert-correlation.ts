@@ -3,7 +3,6 @@
  * Intelligent alert correlation and deduplication to reduce noise
  */
 
-import { alertTuner } from './alert-tuner';
 
 export interface AlertEvent {
   id: string;

@@ -1,18 +1,22 @@
 'use client';
 
+import { DollarSign, TrendingUp, AlertTriangle, Users, BarChart3, Settings } from 'lucide-react';
 import { useState, useEffect } from 'react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { toast } from 'sonner';
+
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { DollarSign, TrendingUp, AlertTriangle, Users, BarChart3, Settings } from 'lucide-react';
-import { CostByTenant } from './CostByTenant';
-import { BudgetManager } from './BudgetManager';
-import { CostAnomalies } from './CostAnomalies';
-import { UsageForecast } from './UsageForecast';
-import { CostAllocation } from './CostAllocation';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { costAnalyticsService, CostOverview } from '@/services/cost-analytics.service';
-import { toast } from 'sonner';
+
+import { BudgetManager } from './BudgetManager';
+import { CostAllocation } from './CostAllocation';
+import { CostAnomalies } from './CostAnomalies';
+import { CostByTenant } from './CostByTenant';
+import { UsageForecast } from './UsageForecast';
+
+
 
 export function CostDashboard() {
   const [overview, setOverview] = useState<CostOverview | null>(null);

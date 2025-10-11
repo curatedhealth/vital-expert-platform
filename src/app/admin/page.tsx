@@ -1,12 +1,8 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import Link from 'next/link';
 import { 
   FileText, 
   Users, 
   Key, 
   Settings,
-  BarChart3,
   Activity,
   Shield,
   Building2,
@@ -16,6 +12,10 @@ import {
   Lock,
   Bell
 } from 'lucide-react';
+import Link from 'next/link';
+
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
 export default async function AdminPage() {
 

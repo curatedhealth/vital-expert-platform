@@ -4,6 +4,7 @@
  */
 
 import { createClient } from '@supabase/supabase-js';
+
 import type { Service } from './service-discovery';
 
 export interface ServiceRegistration {

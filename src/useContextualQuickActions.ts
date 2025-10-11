@@ -257,9 +257,9 @@ export const __useContextualQuickActions = ({
   const stakeholderWelcomeMessages = {
     pharma: {
       title: 'Pharmaceutical Development Intelligence',
-        subtitle: 'Expert guidance for drug development, regulatory strategy, and clinical research',
-        description: 'Navigate complex pharmaceutical development with AI experts specializing in regulatory pathways, clinical trial design, and market access strategy.'
-      },
+      subtitle: 'Expert guidance for drug development, regulatory strategy, and clinical research',
+      description: 'Navigate complex pharmaceutical development with AI experts specializing in regulatory pathways, clinical trial design, and market access strategy.'
+    },
       payer: {
         title: 'Healthcare Value Assessment',
         subtitle: 'Evidence-based coverage decisions and value analysis',
@@ -281,9 +281,12 @@ export const __useContextualQuickActions = ({
         description: 'Access specialized healthcare AI experts for regulatory, clinical, and business guidance tailored to your specific needs.'
       }
     };
-    // eslint-disable-next-line security/detect-object-injection
-    return messages[detectedStakeholder];
-  };
+    
+    const getWelcomeMessage = () => {
+      const messages = stakeholderWelcomeMessages;
+      // eslint-disable-next-line security/detect-object-injection
+      return messages[detectedStakeholder];
+    };
 
   return {
     contextualActions,

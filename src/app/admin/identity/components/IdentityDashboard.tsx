@@ -1,20 +1,5 @@
 'use client';
 
-import { useState } from 'react';
-import { 
-  IdentityHardeningService, 
-  SSOProvider, 
-  MFAConfig, 
-  AccessReview, 
-  ImpersonationSession 
-} from '@/services/identity-hardening.service';
-import SSOManagement from './SSOManagement';
-import MFAManagement from './MFAManagement';
-import AccessReviewManagement from './AccessReviewManagement';
-import ImpersonationManagement from './ImpersonationManagement';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 import { 
   AlertTriangle, 
   Shield, 
@@ -23,6 +8,23 @@ import {
   UserCheck,
   Activity
 } from 'lucide-react';
+import { useState } from 'react';
+
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { 
+  IdentityHardeningService, 
+  SSOProvider, 
+  MFAConfig, 
+  AccessReview, 
+  ImpersonationSession 
+} from '@/services/identity-hardening.service';
+
+import AccessReviewManagement from './AccessReviewManagement';
+import ImpersonationManagement from './ImpersonationManagement';
+import MFAManagement from './MFAManagement';
+import SSOManagement from './SSOManagement';
 
 interface IdentityDashboardProps {
   initialSSOProviders: SSOProvider[];

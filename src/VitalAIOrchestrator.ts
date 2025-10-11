@@ -118,8 +118,8 @@ export class VitalAIOrchestrator extends ComplianceAwareOrchestrator {
   private responseCache: Map<string, CachedResponse>;
   private performanceMetrics: PerformanceTracker;
   private availableAgents: unknown[] = [];
-  private agentsLastFetched: const number = ;
-  private readonly const AGENTS_CACHE_TTL =  * 60 * 1000; // 5 minutes
+  private agentsLastFetched: number = 0;
+  private readonly AGENTS_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
   constructor() {
     super();

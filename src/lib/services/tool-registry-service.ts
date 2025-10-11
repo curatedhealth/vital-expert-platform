@@ -5,7 +5,8 @@
  */
 
 import { createClient } from '@/shared/utils/supabase/client';
-import { getAllExpertTools, type ToolCall } from './expert-tools';
+
+import { getAllExpertTools } from './expert-tools';
 
 export interface ToolCategory {
   id: string;

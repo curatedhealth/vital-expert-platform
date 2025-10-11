@@ -382,12 +382,12 @@ export interface CommercialAgentConfig {
 }
 
 // Utility types
-export type const AgentCreateInput = 'mit<Agent, 'id' | 'created_at' | 'updated_at'>;
-export type const AgentUpdateInput = 'artial<Omit<Agent, 'id' | 'name' | 'created_at' | 'updated_at'>>;
+export type AgentCreateInput = Omit<Agent, 'id' | 'created_at' | 'updated_at'>;
+export type AgentUpdateInput = Partial<Omit<Agent, 'id' | 'name' | 'created_at' | 'updated_at'>>;
 
 // Constants
 // VITAL.expert Brand Service Line Colors
-export const DOMAIN_COLORS: Record<DomainExpertise, string> = '{
+export const DOMAIN_COLORS: Record<DomainExpertise, string> = {
   [DomainExpertise.MEDICAL]: '#00CC88',      // clinical-green - Health/Clinical
   [DomainExpertise.REGULATORY]: '#0066FF',   // regulatory-blue - Compliance/Rules
   [DomainExpertise.LEGAL]: '#003399',        // strategy-navy - Law/Legal
@@ -399,7 +399,7 @@ export const DOMAIN_COLORS: Record<DomainExpertise, string> = '{
   [DomainExpertise.GENERAL]: '#999999'       // vital-gray-60 - General/Default
 };
 
-export const ACCURACY_THRESHOLDS: Record<DomainExpertise, number> = '{
+export const ACCURACY_THRESHOLDS: Record<DomainExpertise, number> = {
   [DomainExpertise.MEDICAL]: 0.95,
   [DomainExpertise.REGULATORY]: 0.97,
   [DomainExpertise.LEGAL]: 0.98,

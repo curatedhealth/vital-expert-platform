@@ -8,7 +8,6 @@ import {
   ExecutionContext,
   ComplianceError
 } from '@/digital-health-agent.types';
-
 import { ComplianceMiddleware, ProtectedAgentResponse } from '@/lib/compliance/compliance-middleware';
 
 import { AgentOrchestrator } from './AgentOrchestrator';

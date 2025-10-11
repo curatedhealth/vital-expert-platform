@@ -1,12 +1,13 @@
 'use client';
 
+import { AlertTriangle } from 'lucide-react';
 import { useState, useEffect } from 'react';
+
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AuditService, AuditLogFilters as AuditLogFiltersType, AuditLogEntry, AuditLogPagination } from '@/services/audit.service';
+
 import AuditLogFilters from './AuditLogFilters';
 import AuditLogTable from './AuditLogTable';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { AlertTriangle } from 'lucide-react';
 
 interface AuditLogViewerProps {
   initialFilterOptions: {

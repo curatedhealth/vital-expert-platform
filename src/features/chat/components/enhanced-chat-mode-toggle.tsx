@@ -1,11 +1,12 @@
 'use client';
 
 import { Bot, Users, Zap, TrendingUp } from 'lucide-react';
-import { Button } from '@/shared/components/button';
-import { Badge } from '@/shared/components/badge';
-import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/shared/components/tooltip';
+
 import { useChatStore } from '@/lib/stores/chat-store';
 import { cn } from '@/lib/utils';
+import { Badge } from '@/shared/components/badge';
+import { Button } from '@/shared/components/button';
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/shared/components/tooltip';
 import { TIER_CONFIG } from '@/shared/types/interaction-mode.types';
 
 export function EnhancedChatModeToggle() {

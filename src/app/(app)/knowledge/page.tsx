@@ -39,8 +39,8 @@ import {
 import { KnowledgeAnalyticsDashboard } from '@/features/knowledge/components/knowledge-analytics-dashboard';
 import { KnowledgeUploader } from '@/features/knowledge/components/knowledge-uploader';
 import { KnowledgeViewer } from '@/features/knowledge/components/knowledge-viewer';
-import { createClient } from '@/lib/supabase/client';
 import type { KnowledgeDomain } from '@/lib/services/model-selector';
+import { createClient } from '@/lib/supabase/client';
 
 interface Document {
   id: string;

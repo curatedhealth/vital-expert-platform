@@ -1,8 +1,5 @@
 'use client';
 
-import React from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { 
   AlertTriangle, 
   Ban, 
@@ -12,6 +9,9 @@ import {
   Eye,
   Clock
 } from 'lucide-react';
+import React from 'react';
+
+import { Badge } from '@/components/ui/badge';
 
 interface ThreatEvent {
   id: string;

@@ -1,6 +1,8 @@
-import { createClient } from '@supabase/supabase-js';
-import { AuditLogger, AuditAction, AuditSeverity } from '@/lib/security/audit-logger';
 import crypto from 'crypto';
+
+import { createClient } from '@supabase/supabase-js';
+
+import { AuditLogger, AuditAction, AuditSeverity } from '@/lib/security/audit-logger';
 
 export interface ApiKey {
   id: string;

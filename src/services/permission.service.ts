@@ -1,5 +1,6 @@
-import { UserRole, PermissionScope, PermissionAction, hasPermission } from '@/lib/auth/unified-roles';
 import { createClient } from '@supabase/supabase-js';
+
+import { UserRole, PermissionScope, PermissionAction, hasPermission } from '@/lib/auth/unified-roles';
 
 export class PermissionService {
   private static supabase = createClient(

@@ -327,7 +327,7 @@ export class VitalPathCore extends EventEmitter {
     compliance: unknown
   ): Promise<VitalPathResponse> {
 
-    let evidence: unknown[] = [];
+    const evidence: unknown[] = [];
 
     // Step 1: RAG Retrieval
     const ragStart = Date.now();

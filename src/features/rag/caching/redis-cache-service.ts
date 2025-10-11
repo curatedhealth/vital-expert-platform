@@ -3,11 +3,11 @@
  * Implements semantic caching and query result caching for 70-80% cost reduction
  */
 
+import { Document } from '@langchain/core/documents';
+import { OpenAIEmbeddings } from '@langchain/openai';
 import Redis from 'ioredis';
 // Note: Upstash Redis import disabled for Vercel compatibility
 // import { createClient } from '@upstash/redis';
-import { OpenAIEmbeddings } from '@langchain/openai';
-import { Document } from '@langchain/core/documents';
 
 export interface CacheConfig {
   ttl: number; // Time to live in seconds

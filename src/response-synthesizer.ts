@@ -209,7 +209,7 @@ export class ResponseSynthesizer {
     const themes: string[] = [];
 
     // Common healthcare themes
-    const themeKeywords = 
+    const themePatterns = {
       'regulatory': ['regulatory', 'fda', 'compliance', 'approval', 'submission'],
       'clinical': ['clinical', 'trial', 'study', 'patient', 'safety'],
       'technical': ['technical', 'implementation', 'system', 'technology'],

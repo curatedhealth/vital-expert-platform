@@ -154,7 +154,7 @@ export class RateLimitManagerService {
     const configs = await this.getRateLimitConfigs(scope, scopeId);
     
     // Find the most specific config for this endpoint
-    let applicableConfig = configs.find(c => c.endpoint === endpoint) || 
+    const applicableConfig = configs.find(c => c.endpoint === endpoint) || 
                           configs.find(c => c.endpoint === '*') ||
                           configs.find(c => c.scope === scope);
 

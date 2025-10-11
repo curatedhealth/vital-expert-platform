@@ -11,10 +11,8 @@
  * - ✅ Token Tracking
  */
 
+import { OpenAIEmbeddings , ChatOpenAI } from '@langchain/openai';
 import { createClient } from '@supabase/supabase-js';
-import { OpenAIEmbeddings } from '@langchain/openai';
-import { ChatOpenAI } from '@langchain/openai';
-import { BaseRetriever } from 'langchain/schema/retriever';
 import { Document } from 'langchain/document';
 
 export interface RAGConfig {

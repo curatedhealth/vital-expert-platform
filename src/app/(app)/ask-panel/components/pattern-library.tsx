@@ -1,19 +1,13 @@
 'use client';
 
+import { Plus, Save, Trash2, Download } from 'lucide-react';
 import { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+
 import { Badge } from '@/components/ui/badge';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, Save, Play, Trash2, GitBranch, Download, Upload } from 'lucide-react';
 import type { OrchestrationPattern, PatternNode, PatternEdge } from '@/lib/services/langgraph-orchestrator';
 
 // Built-in patterns (these come from the orchestrator)

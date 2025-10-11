@@ -16,14 +16,15 @@ interface UseStreamingResponseOptions {
   onError?: (error: Error) => void;
 }
 
-export function useStreamingResponse(options: UseStreamingResponseOptions = { /* TODO: implement */ }) {
+export function useStreamingResponse(options: UseStreamingResponseOptions = {}) {
   const [isStreaming, setIsStreaming] = useState(false);
   const [currentMessage, setCurrentMessage] = useState<StreamingMessage | null>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   const startStreaming = async (
     query: string,
     agentType: string,
-    additionalParams: Record<string, unknown> = { /* TODO: implement */ }
+    additionalParams: Record<string, unknown> = {}
   ) => {
     try {
       setIsStreaming(true);
@@ -32,7 +33,7 @@ export function useStreamingResponse(options: UseStreamingResponseOptions = { /*
       abortControllerRef.current = new AbortController();
 
       // Initialize streaming message
-
+      const messageId = Math.random().toString(36).substr(2, 9);
       const initialMessage: StreamingMessage = {
         id: messageId,
         content: '',
@@ -47,7 +48,7 @@ export function useStreamingResponse(options: UseStreamingResponseOptions = { /*
       options.onMessage?.(initialMessage);
 
       // Make streaming request
-
+      const response = await fetch('/api/stream', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -66,6 +67,7 @@ export function useStreamingResponse(options: UseStreamingResponseOptions = { /*
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
+      const reader = response.body?.getReader();
       if (!reader) {
         throw new Error('No response body reader available');
       }

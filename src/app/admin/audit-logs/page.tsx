@@ -1,4 +1,5 @@
 import { AuditService } from '@/services/audit.service';
+
 import AuditLogViewer from './components/AuditLogViewer';
 
 export default async function AuditLogsPage() {

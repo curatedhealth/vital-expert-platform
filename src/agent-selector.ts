@@ -207,23 +207,25 @@ export class AgentSelector {
     query: string,
     domain: string
   ): number {
+    let score = 0;
 
     // Agent domain matching
-
+    const agentConfig = agent.getConfig();
+    const agentDomain = (agentConfig as any).domain_expertise || agentConfig.specialization?.[0];
     if (agentDomain === domain) {
       score += 20;
     }
 
     // Capability matching
-    const capabilityBonus = this.calculateCapabilityMatch(
-      agent.getConfig().capabilities_list || [],
+    const capabilityBonus = this.calculateCapabilityScore(
+      agent,
       intent,
       query
     );
     score += capabilityBonus * 0.7; // Slightly lower weight for domain matches
 
     // Priority and status
-    if (agent.getConfig().metadata?.tier === 1) {
+    if (agent.getConfig().tier === 1) {
       score += 8;
     }
 
@@ -236,17 +238,21 @@ export class AgentSelector {
 
   private calculateCapabilityScore(agent: DigitalHealthAgent, intent: IntentResult, query: string): number {
     let score = 0;
-    const capabilityBonus = this.calculateCapabilityMatch(
-      agent.getConfig().capabilities_list || [],
-      intent,
-      query
-    );
-    score += capabilityBonus;
+    const capabilities = agent.getConfig().capabilities || [];
+    
+    // Simple capability matching
+    capabilities.forEach(capability => {
+      if (query.toLowerCase().includes(capability.toLowerCase())) {
+        score += 10;
+      }
+    });
 
     // Knowledge domain matching - removed as knowledge_domains is not in the config interface
 
     // Description matching - removed as description is not in the config interface
     // Use system_prompt instead for keyword matching
+    const systemPrompt = (agent.getConfig() as any).system_prompt || '';
+    let descriptionMatches = 0;
 
     for (const keyword of intent.keywords) {
       if (systemPrompt.includes(keyword.toLowerCase())) {
@@ -270,8 +276,10 @@ export class AgentSelector {
     intent: IntentResult,
     query: string
   ): number {
+    let alignmentScore = 0;
 
     for (const capability of capabilities) {
+      const capLower = capability.toLowerCase();
 
       // Direct keyword matches
       for (const keyword of intent.keywords) {
@@ -281,7 +289,7 @@ export class AgentSelector {
       }
 
       // Query text matching
-
+      const queryLower = query.toLowerCase();
       if (queryLower.includes(capLower) || capLower.includes(queryLower.split(' ').find(word => word.length > 4) || '')) {
         alignmentScore += 5;
       }
@@ -307,7 +315,7 @@ export class AgentSelector {
 
   // Get agents by domain
   getAgentsByDomain(domain: string): DigitalHealthAgent[] {
-
+    const agentIds = this.domainAgentMap[domain] || [];
     return agentIds.map(id => this.agents.get(id)).filter(Boolean) as DigitalHealthAgent[];
   }
 

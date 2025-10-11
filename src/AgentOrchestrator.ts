@@ -3,7 +3,12 @@
  * Coordinates multi-agent workflows and manages agent interactions
  */
 
-import { LibraryLoader } from '@/lib/utils/library-loader';
+import { DigitalHealthAgent } from '@/agents/core/DigitalHealthAgent';
+import { ClinicalTrialDesigner } from '@/agents/tier1/ClinicalTrialDesigner';
+import { FDARegulatoryStrategist } from '@/agents/tier1/FDARegulatoryStrategist';
+import { HIPAAComplianceOfficer } from '@/agents/tier1/HIPAAComplianceOfficer';
+import { QMSArchitect } from '@/agents/tier1/QMSArchitect';
+import { ReimbursementStrategist } from '@/agents/tier1/ReimbursementStrategist';
 import {
   AgentResponse,
   ExecutionContext,
@@ -13,15 +18,7 @@ import {
   AgentInteraction,
   ComplianceLevel
 } from '@/digital-health-agent.types';
-
-// Import Tier 1 agents
-import { ClinicalTrialDesigner } from '@/agents/tier1/ClinicalTrialDesigner';
-import { FDARegulatoryStrategist } from '@/agents/tier1/FDARegulatoryStrategist';
-import { HIPAAComplianceOfficer } from '@/agents/tier1/HIPAAComplianceOfficer';
-import { QMSArchitect } from '@/agents/tier1/QMSArchitect';
-import { ReimbursementStrategist } from '@/agents/tier1/ReimbursementStrategist';
-
-import { DigitalHealthAgent } from '@/agents/core/DigitalHealthAgent';
+import { LibraryLoader } from '@/lib/utils/library-loader';
 
 export class AgentOrchestrator {
   protected agents: Map<string, DigitalHealthAgent> = new Map();
@@ -237,7 +234,7 @@ export class AgentOrchestrator {
       execution.status = 'completed';
       execution.completed_at = new Date().toISOString();
 
-      const duration = this.calculateExecutionDuration(execution);
+      // const duration = this.calculateExecutionDuration(execution);
       // console.log(`✅ Workflow completed: ${workflow.name} (${duration} minutes)`);
 
     } catch (error) {

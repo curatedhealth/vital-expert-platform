@@ -3,8 +3,8 @@
  * Automatic scaling based on load patterns and resource utilization
  */
 
-import { performanceOptimizer } from './performance-optimizer';
 import { cacheOptimizer } from './cache-optimizer';
+import { performanceOptimizer } from './performance-optimizer';
 
 export interface ScalingTarget {
   id: string;

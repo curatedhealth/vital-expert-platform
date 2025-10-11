@@ -3,10 +3,11 @@
  * Integrates Redis caching with RAG operations for 70-80% cost reduction
  */
 
+import { Document } from '@langchain/core/documents';
+
 import { CloudRAGService } from '../../chat/services/cloud-rag-service';
 import { redisCacheService } from '../caching/redis-cache-service';
 import { RAGASEvaluator, RAGEvaluationInput } from '../evaluation/ragas-evaluator';
-import { Document } from '@langchain/core/documents';
 
 export interface CachedRAGConfig {
   enableCaching: boolean;

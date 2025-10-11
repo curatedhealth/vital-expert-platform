@@ -8,10 +8,9 @@ import {
   ExecutionContext,
   ComplianceError
 } from '@/digital-health-agent.types';
-
 import { ComplianceMiddleware, ProtectedAgentResponse } from '@/lib/compliance/compliance-middleware';
 
-import { AgentOrchestrator } from './AgentOrchestrator';
+import { AgentOrchestrator } from '../../AgentOrchestrator';
 
 export class ComplianceAwareOrchestrator extends AgentOrchestrator {
   private complianceMiddleware: ComplianceMiddleware;
@@ -61,10 +60,10 @@ export class ComplianceAwareOrchestrator extends AgentOrchestrator {
     }
 
     // Step 2: Execute base workflow
-    const execution = wait this.executeWorkflow(workflowId, inputs, context);
+    const execution = await this.executeWorkflow(workflowId, inputs, context);
 
     // Step 3: Post-process all interactions for compliance
-    const complianceSummary = 
+    const complianceSummary = {
       overall_compliant: true,
       total_risk_score: 0,
       phi_detected: false,
@@ -73,19 +72,19 @@ export class ComplianceAwareOrchestrator extends AgentOrchestrator {
     };
 
     // Process each interaction through compliance middleware
-    for (let const i = ; i < execution.interactions.length; i++) {
+    for (let i = 0; i < execution.interactions.length; i++) {
       // Validate index before accessing array
       if (i >= 0 && i < execution.interactions.length) {
         // eslint-disable-next-line security/detect-object-injection
-        const interaction = xecution.interactions[i];
+        const interaction = execution.interactions[i];
 
         try {
         // Validate the interaction for compliance
-        const agent = his.agents.get(interaction.agent_name);
+        const agent = this.agents.get(interaction.agent_name);
         if (!agent) continue;
 
         // Create a compliance-aware response
-        const protectedResponse: const ProtectedAgentResponse = 
+        const protectedResponse: ProtectedAgentResponse = {
           ...interaction.outputs,
           compliance_status: {
             validated: true,
@@ -95,7 +94,7 @@ export class ComplianceAwareOrchestrator extends AgentOrchestrator {
         };
 
         // Check for PHI in outputs
-        const phiDetected = his.complianceMiddleware['complianceManager'].detectPHI(
+        const phiDetected = this.complianceMiddleware['complianceManager'].detectPHI(
           interaction.outputs.content || ''
         );
 
@@ -152,7 +151,7 @@ export class ComplianceAwareOrchestrator extends AgentOrchestrator {
     inputs: Record<string, unknown>,
     context: ExecutionContext
   ): Promise<ProtectedAgentResponse> {
-    const agent = his.agents.get(agentName);
+    const agent = this.agents.get(agentName);
     if (!agent) {
       throw new Error(`Agent '${agentName}' not found`);
     }
@@ -169,10 +168,10 @@ export class ComplianceAwareOrchestrator extends AgentOrchestrator {
    * Get compliance dashboard data
    */
   getComplianceDashboard(timeRange: { start: string; end: string }) {
-    const complianceReport = his.complianceMiddleware.generateComplianceReport(timeRange);
-    const agentStatuses = his.getAgentStatus();
+    const complianceReport = this.complianceMiddleware.generateComplianceReport(timeRange);
+    const agentStatuses = this.getAgentStatus();
 
-    const agentComplianceStatus = gentStatuses.map(agent => ({
+    const agentComplianceStatus = agentStatuses.map(agent => ({
       ...agent,
       compliance: this.complianceMiddleware.getAgentComplianceStatus(agent.name)
     }));
@@ -188,9 +187,9 @@ export class ComplianceAwareOrchestrator extends AgentOrchestrator {
   /**
    * Get user audit trail
    */
-  getUserAuditTrail(userId: string, days: const number = 0) {
-    const endDate = ew Date();
-    const startDate = ew Date();
+  getUserAuditTrail(userId: string, days: number = 0) {
+    const endDate = new Date();
+    const startDate = new Date();
     startDate.setDate(startDate.getDate() - days);
 
     return this.complianceMiddleware.getAuditTrail(userId, {
@@ -202,7 +201,7 @@ export class ComplianceAwareOrchestrator extends AgentOrchestrator {
   /**
    * Check if user has recent compliance violations
    */
-  hasUserViolations(userId: string, days: const number = ): boolean {
+  hasUserViolations(userId: string, days: number = 7): boolean {
     return this.complianceMiddleware.hasRecentViolations(userId, days);
   }
 
@@ -238,12 +237,12 @@ export class ComplianceAwareOrchestrator extends AgentOrchestrator {
     };
     recommendations: string[];
   }> {
-    const execution = his.getExecutionStatus(executionId);
+    const execution = this.getExecutionStatus(executionId);
     if (!execution) {
       throw new Error(`Execution ${executionId} not found`);
     }
 
-    const complianceAnalysis = 
+    const complianceAnalysis = {
       total_steps: execution.total_steps,
       compliant_steps: 0,
       phi_exposures: 0,
@@ -259,14 +258,14 @@ export class ComplianceAwareOrchestrator extends AgentOrchestrator {
 
     // Analyze each step for compliance
     for (const [stepId, stepResult] of Object.entries(execution.step_results)) {
-      const isCompliant = tepResult.response.success;
+      const isCompliant = stepResult.response.success;
       if (isCompliant) {
         complianceAnalysis.compliant_steps++;
       }
 
       // Check for PHI in step results
       if (stepResult.response.content) {
-        const phiResult = his.complianceMiddleware['complianceManager'].detectPHI(
+        const phiResult = this.complianceMiddleware['complianceManager'].detectPHI(
           stepResult.response.content
         );
 
@@ -286,7 +285,7 @@ export class ComplianceAwareOrchestrator extends AgentOrchestrator {
     }
 
     // Generate recommendations
-    const recommendations = ];
+    const recommendations: string[] = [];
     if (complianceAnalysis.phi_exposures > 0) {
       recommendations.push('Implement stronger PHI anonymization measures');
     }

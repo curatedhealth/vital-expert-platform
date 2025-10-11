@@ -1,12 +1,13 @@
 'use client';
 
+import { format } from 'date-fns';
+import { AlertTriangle } from 'lucide-react';
+
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { AlertTriangle, Clock, User, ExternalLink } from 'lucide-react';
-import { format } from 'date-fns';
 import { Incident } from '@/services/health-monitoring.service';
 
 interface IncidentBannerProps {

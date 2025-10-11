@@ -3,22 +3,21 @@
  * Integrates RAG knowledge bases with chat functionality
  */
 
-import { ragService } from '@/rag-service';
 
 
 // Local AgentResponse interface for this file
-interface AgentResponse {
-  id: string;
-  agentId: string;
-  content: string;
-  confidence: number;
-  metadata: {
-    agentName: string;
-    capabilities: string[];
-    responseTime: number;
-  };
-  timestamp: Date;
-}
+// interface AgentResponse {
+//   id: string;
+//   agentId: string;
+//   content: string;
+//   confidence: number;
+//   metadata: {
+//     agentName: string;
+//     capabilities: string[];
+//     responseTime: number;
+//   };
+//   timestamp: Date;
+// }
 
 export interface ChatMessage {
   id: string;
@@ -97,11 +96,11 @@ export class ChatRagIntegration {
   static async enhanceMessageWithRag(
     message: string,
     context: AgentChatContext,
-    options: {
-      maxRagResults?: number;
-      similarityThreshold?: number;
-      useAllRags?: boolean;
-    } = { /* TODO: implement */ }
+    // _options: {
+    //   maxRagResults?: number;
+    //   similarityThreshold?: number;
+    //   useAllRags?: boolean;
+    // } = { /* TODO: implement */ }
   ): Promise<{
     enhanced_message: string;
     system_context: string;
@@ -297,7 +296,7 @@ export class ChatRagIntegration {
   /**
    * Get RAG context summary for agent configuration
    */
-  static async getRagContextSummary(agentName: string): Promise<{
+  static async getRagContextSummary(/* _agentName: string */): Promise<{
     total_rags: number;
     primary_rag?: string;
     domains_covered: string[];

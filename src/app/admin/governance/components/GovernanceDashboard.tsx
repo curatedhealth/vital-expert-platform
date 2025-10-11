@@ -1,14 +1,16 @@
 'use client';
 
+import { AlertTriangle, Shield, FileText, Workflow } from 'lucide-react';
 import { useState } from 'react';
-import { LLMGovernanceService, GovernancePolicy, PromptChange, ApprovalWorkflow } from '@/services/llm-governance.service';
-import PolicyManager from './PolicyManager';
-import ChangeManagement from './ChangeManagement';
-import ApprovalWorkflows from './ApprovalWorkflows';
+
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { AlertTriangle, Shield, FileText, Workflow } from 'lucide-react';
+import { LLMGovernanceService, GovernancePolicy, PromptChange, ApprovalWorkflow } from '@/services/llm-governance.service';
+
+import ApprovalWorkflows from './ApprovalWorkflows';
+import ChangeManagement from './ChangeManagement';
+import PolicyManager from './PolicyManager';
 
 interface GovernanceDashboardProps {
   initialPolicies: GovernancePolicy[];

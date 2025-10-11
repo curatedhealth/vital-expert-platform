@@ -4,6 +4,7 @@
  */
 
 import { serviceDiscovery } from '../services/service-discovery';
+
 import type { Service } from '../services/service-discovery';
 
 export interface DegradationLevel {

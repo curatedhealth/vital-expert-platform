@@ -4,6 +4,7 @@
  */
 
 import { createClient } from '@supabase/supabase-js';
+
 import { HIPAAComplianceManager } from './hipaa-compliance';
 
 export interface BreachIncident {

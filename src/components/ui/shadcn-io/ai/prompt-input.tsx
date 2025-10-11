@@ -29,6 +29,9 @@ export const __PromptInput = ({ className, ...props }: PromptInputProps) => (
   />
 );
 
+// Export with regular names for compatibility
+export const PromptInput = __PromptInput;
+
 export type PromptInputTextareaProps = ComponentProps<typeof Textarea> & {
   minHeight?: number;
   maxHeight?: number;
@@ -77,6 +80,9 @@ export const __PromptInputTextarea = ({
   );
 };
 
+// Export with regular names for compatibility
+export const PromptInputTextarea = __PromptInputTextarea;
+
 export type PromptInputToolbarProps = HTMLAttributes<HTMLDivElement>;
 
 export const __PromptInputToolbar = ({
@@ -88,6 +94,9 @@ export const __PromptInputToolbar = ({
     {...props}
   />
 );
+
+// Export with regular names for compatibility
+export const PromptInputToolbar = __PromptInputToolbar;
 
 export type PromptInputToolsProps = HTMLAttributes<HTMLDivElement>;
 
@@ -144,6 +153,7 @@ export const __PromptInputSubmit = ({
   children,
   ...props
 }: PromptInputSubmitProps) => {
+  let Icon = <SquareIcon className="size-4" />;
 
   if (status === 'submitted') {
     Icon = <Loader2Icon className="size-4 animate-spin" />;
@@ -165,6 +175,9 @@ export const __PromptInputSubmit = ({
     </Button>
   );
 };
+
+// Export with regular names for compatibility
+export const PromptInputSubmit = __PromptInputSubmit;
 
 export type PromptInputModelSelectProps = ComponentProps<typeof Select>;
 

@@ -5,11 +5,12 @@
  * for the admin dashboard Phase 4 implementation.
  */
 
-import { createClient } from '@supabase/supabase-js';
 import { exec } from 'child_process';
-import { promisify } from 'util';
-import path from 'path';
 import fs from 'fs';
+import path from 'path';
+import { promisify } from 'util';
+
+import { createClient } from '@supabase/supabase-js';
 
 const execAsync = promisify(exec);
 const supabase = createClient(

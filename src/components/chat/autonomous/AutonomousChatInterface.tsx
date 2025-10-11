@@ -2,16 +2,18 @@
 
 import { Send, Bot, User as UserIcon, Settings, Brain, Loader2 } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
-import { useAutonomousAgent, useAgentSettings } from '@/hooks/useAutonomousAgent';
+
 import { useAuth } from '@/hooks/useAuth';
+import { useAutonomousAgent, useAgentSettings } from '@/hooks/useAutonomousAgent';
 import { Button } from '@/shared/components/ui/button';
 import { Card } from '@/shared/components/ui/card';
 import { ScrollArea } from '@/shared/components/ui/scroll-area';
 import { Textarea } from '@/shared/components/ui/textarea';
+import type { StreamEvent } from '@/types/autonomous-agent.types';
+
 import { AutonomousAgentSettings } from './AutonomousAgentSettings';
 import { CompactToolExecutionDisplay, ToolExecutionDisplay } from './ToolExecutionDisplay';
 import { UserProfileViewer } from './UserProfileViewer';
-import type { StreamEvent } from '@/types/autonomous-agent.types';
 
 interface Message {
   id: string;

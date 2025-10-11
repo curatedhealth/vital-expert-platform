@@ -63,7 +63,7 @@ export class RedisCache {
       const fullKey = this.buildKey(key);
       const serializedValue = JSON.stringify(value);
       
-      let ttl = options.ttl || 3600; // Default 1 hour
+      const ttl = options.ttl || 3600; // Default 1 hour
       
       if (options.tags && options.tags.length > 0) {
         // Store tags for this key

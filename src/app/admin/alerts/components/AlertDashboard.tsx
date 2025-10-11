@@ -1,10 +1,5 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { 
   Bell, 
   AlertTriangle, 
@@ -15,9 +10,16 @@ import {
   Eye,
   Activity
 } from 'lucide-react';
+import { useState, useEffect } from 'react';
+
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+
+import { AlertHistory } from './AlertHistory';
 import { AlertRuleManager } from './AlertRuleManager';
 import { NotificationChannels } from './NotificationChannels';
-import { AlertHistory } from './AlertHistory';
 
 interface AlertStats {
   totalRules: number;

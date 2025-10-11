@@ -1,6 +1,7 @@
-import { RedisCache } from './redis-cache';
-import { MemoryCache } from './memory-cache';
 import { createClient } from '@supabase/supabase-js';
+
+import { MemoryCache } from './memory-cache';
+import { RedisCache } from './redis-cache';
 
 export interface CacheStrategy {
   level: 'memory' | 'redis' | 'database';

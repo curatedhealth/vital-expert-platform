@@ -17,7 +17,7 @@ import {
   Shield,
   Brain
 } from 'lucide-react';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
@@ -43,13 +43,181 @@ import { llmProviderService } from '@/llm-provider.service';
 import {
   LLMProvider,
   ProviderStatus,
-  PROVIDER_TYPE_LABELS,
-  ProviderFilters
+  PROVIDER_TYPE_LABELS
 } from '@/llm-provider.types';
 
 interface LLMProviderDashboardProps {
   className?: string;
 }
+
+// Helper functions
+const getStatusIcon = (status: ProviderStatus) => {
+  switch (status) {
+    case ProviderStatus.ACTIVE:
+      return <CheckCircle className="h-4 w-4 text-green-500" />;
+    case ProviderStatus.ERROR:
+      return <AlertTriangle className="h-4 w-4 text-red-500" />;
+    case ProviderStatus.MAINTENANCE:
+      return <Settings className="h-4 w-4 text-yellow-500" />;
+    default:
+      return <Activity className="h-4 w-4 text-gray-500" />;
+  }
+};
+
+const getStatusBadge = (status: ProviderStatus) => {
+  const getStatusClass = (status: ProviderStatus): string => {
+    switch (status) {
+      case ProviderStatus.ACTIVE:
+        return 'bg-green-100 text-green-800';
+      case ProviderStatus.ERROR:
+        return 'bg-red-100 text-red-800';
+      case ProviderStatus.MAINTENANCE:
+        return 'bg-yellow-100 text-yellow-800';
+      case ProviderStatus.DISABLED:
+        return 'bg-gray-100 text-gray-800';
+      case ProviderStatus.INITIALIZING:
+        return 'bg-blue-100 text-blue-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  return (
+    <Badge className={`${getStatusClass(status)} text-xs`}>
+      {status.toString().toUpperCase()}
+    </Badge>
+  );
+};
+
+const formatCost = (cost: number) => {
+  return `$${cost.toFixed(4)}`;
+};
+
+const formatLatency = (latency?: number) => {
+  return latency ? `${latency}ms` : 'N/A';
+};
+
+// Provider Details Modal Component
+interface ProviderDetailsModalProps {
+  provider: LLMProvider;
+  onClose: () => void;
+}
+
+const ProviderDetailsModal: React.FC<ProviderDetailsModalProps> = ({ provider, onClose }) => {
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-bold">Provider Details</h2>
+          <Button variant="ghost" size="sm" onClick={onClose}>
+            ×
+          </Button>
+        </div>
+
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label htmlFor="provider-name" className="block text-sm font-medium text-gray-700">Name</label>
+              <p id="provider-name" className="text-sm text-gray-900">{provider.provider_name}</p>
+            </div>
+            <div>
+              <label htmlFor="provider-type" className="block text-sm font-medium text-gray-700">Type</label>
+              <p id="provider-type" className="text-sm text-gray-900">{PROVIDER_TYPE_LABELS[provider.provider_type]}</p>
+            </div>
+            <div>
+              <label htmlFor="provider-model" className="block text-sm font-medium text-gray-700">Model</label>
+              <p id="provider-model" className="text-sm text-gray-900">{provider.model_id}</p>
+            </div>
+            <div>
+              <label htmlFor="provider-status" className="block text-sm font-medium text-gray-700">Status</label>
+              <div id="provider-status" className="mt-1">{getStatusBadge(provider.status)}</div>
+            </div>
+          </div>
+
+          <div>
+            <label htmlFor="provider-capabilities" className="block text-sm font-medium text-gray-700 mb-2">Capabilities</label>
+            <div id="provider-capabilities" className="flex flex-wrap gap-2">
+              {Object.entries(provider.capabilities).map(([key, value]) => {
+                if (value) {
+                  return (
+                    <Badge key={key} variant="outline" className="text-xs">
+                      {key.replace('_', ' ')}
+                    </Badge>
+                  );
+                }
+                return null;
+              })}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label htmlFor="provider-input-cost" className="block text-sm font-medium text-gray-700">Input Cost (per 1K tokens)</label>
+              <p id="provider-input-cost" className="text-sm text-gray-900">${provider.cost_per_1k_input_tokens.toFixed(6)}</p>
+            </div>
+            <div>
+              <label htmlFor="provider-output-cost" className="block text-sm font-medium text-gray-700">Output Cost (per 1K tokens)</label>
+              <p id="provider-output-cost" className="text-sm text-gray-900">${provider.cost_per_1k_output_tokens.toFixed(6)}</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-3 gap-4">
+            <div>
+              <label htmlFor="provider-rate-limit-rpm" className="block text-sm font-medium text-gray-700">Rate Limit (RPM)</label>
+              <p id="provider-rate-limit-rpm" className="text-sm text-gray-900">{provider.rate_limit_rpm}</p>
+            </div>
+            <div>
+              <label htmlFor="provider-rate-limit-tpm" className="block text-sm font-medium text-gray-700">Rate Limit (TPM)</label>
+              <p id="provider-rate-limit-tpm" className="text-sm text-gray-900">{provider.rate_limit_tpm}</p>
+            </div>
+            <div>
+              <label htmlFor="provider-max-tokens" className="block text-sm font-medium text-gray-700">Max Tokens</label>
+              <p id="provider-max-tokens" className="text-sm text-gray-900">{provider.max_tokens}</p>
+            </div>
+          </div>
+
+          {provider.metadata && Object.keys(provider.metadata).length > 0 && (
+            <div>
+              <label htmlFor="provider-metadata" className="block text-sm font-medium text-gray-700 mb-2">Metadata</label>
+              <pre id="provider-metadata" className="text-xs bg-gray-100 p-2 rounded">
+                {JSON.stringify(provider.metadata, null, 2)}
+              </pre>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Add Provider Modal Component
+interface AddProviderModalProps {
+  onClose: () => void;
+  onSuccess: () => void;
+}
+
+const AddProviderModal: React.FC<AddProviderModalProps> = ({ onClose, onSuccess }) => {
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg p-6 max-w-lg w-full mx-4">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-bold">Add LLM Provider</h2>
+          <Button variant="ghost" size="sm" onClick={onClose}>
+            ×
+          </Button>
+        </div>
+
+        <div className="text-center py-8 text-gray-500">
+          <Plus className="h-12 w-12 mx-auto mb-4" />
+          <p>Add provider form coming soon...</p>
+          <Button className="mt-4" onClick={onSuccess}>
+            Mock Success
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 export const LLMProviderDashboard: React.FC<LLMProviderDashboardProps> = ({ className }) => {
   const [providers, setProviders] = useState<LLMProvider[]>([]);
@@ -57,7 +225,6 @@ export const LLMProviderDashboard: React.FC<LLMProviderDashboardProps> = ({ clas
   const [error, setError] = useState<string | null>(null);
   const [selectedProvider, setSelectedProvider] = useState<LLMProvider | null>(null);
   const [showAddProvider, setShowAddProvider] = useState(false);
-  const [filters, setFilters] = useState<ProviderFilters>({ /* TODO: implement */ });
   const [refreshing, setRefreshing] = useState(false);
 
   // Dashboard metrics
@@ -71,12 +238,7 @@ export const LLMProviderDashboard: React.FC<LLMProviderDashboardProps> = ({ clas
     errorRate: 0
   });
 
-  useEffect(() => {
-    loadProviders();
-    loadDashboardMetrics();
-  }, [filters]);
-
-  const loadProviders = async () => {
+  const loadProviders = useCallback(async () => {
     try {
       setLoading(true);
       const response = await llmProviderService.listProviders({});
@@ -87,9 +249,9 @@ export const LLMProviderDashboard: React.FC<LLMProviderDashboardProps> = ({ clas
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const loadDashboardMetrics = async () => {
+  const loadDashboardMetrics = useCallback(async () => {
     try {
       // Calculate metrics from providers
       const totalProviders = providers.length;
@@ -108,7 +270,15 @@ export const LLMProviderDashboard: React.FC<LLMProviderDashboardProps> = ({ clas
     } catch (err) {
       // console.error('Failed to load dashboard metrics:', err);
     }
-  };
+  }, [providers]);
+
+  useEffect(() => {
+    loadProviders();
+  }, [loadProviders]);
+
+  useEffect(() => {
+    loadDashboardMetrics();
+  }, [loadDashboardMetrics]);
 
   const handleRefresh = async () => {
     setRefreshing(true);
@@ -120,21 +290,25 @@ export const LLMProviderDashboard: React.FC<LLMProviderDashboardProps> = ({ clas
   const handleProviderAction = async (providerId: string, action: string) => {
     try {
       switch (action) {
-        case 'activate':
+        case 'activate': {
           await llmProviderService.updateProvider(providerId, { is_active: true });
           break;
-        case 'deactivate':
+        }
+        case 'deactivate': {
           await llmProviderService.updateProvider(providerId, { is_active: false });
           break;
-        case 'delete':
+        }
+        case 'delete': {
           await llmProviderService.deleteProvider(providerId);
           break;
-        case 'test':
+        }
+        case 'test': {
           const provider = providers.find(p => p.id === providerId);
           if (provider) {
             await llmProviderService.testProviderHealth(provider);
           }
           break;
+        }
       }
       await loadProviders();
     } catch (err) {
@@ -142,42 +316,6 @@ export const LLMProviderDashboard: React.FC<LLMProviderDashboardProps> = ({ clas
     }
   };
 
-  const getStatusIcon = (status: ProviderStatus) => {
-    switch (status) {
-      case ProviderStatus.ACTIVE:
-        return <CheckCircle className="h-4 w-4 text-green-500" />;
-      case ProviderStatus.ERROR:
-        return <AlertTriangle className="h-4 w-4 text-red-500" />;
-      case ProviderStatus.MAINTENANCE:
-        return <Settings className="h-4 w-4 text-yellow-500" />;
-      default:
-        return <Activity className="h-4 w-4 text-gray-500" />;
-    }
-  };
-
-  const getStatusBadge = (status: ProviderStatus) => {
-    const colorMap = {
-      [ProviderStatus.ACTIVE]: 'bg-green-100 text-green-800',
-      [ProviderStatus.ERROR]: 'bg-red-100 text-red-800',
-      [ProviderStatus.MAINTENANCE]: 'bg-yellow-100 text-yellow-800',
-      [ProviderStatus.DISABLED]: 'bg-gray-100 text-gray-800',
-      [ProviderStatus.INITIALIZING]: 'bg-blue-100 text-blue-800'
-    };
-
-    return (
-      <Badge className={`${colorMap[status]} text-xs`}>
-        {status.toUpperCase()}
-      </Badge>
-    );
-  };
-
-  const formatCost = (cost: number) => {
-    return `$${cost.toFixed(4)}`;
-  };
-
-  const formatLatency = (latency?: number) => {
-    return latency ? `${latency}ms` : 'N/A';
-  };
 
   return (
     <div className={`space-y-6 ${className}`}>
@@ -493,123 +631,5 @@ export const LLMProviderDashboard: React.FC<LLMProviderDashboardProps> = ({ clas
   );
 };
 
-// Provider Details Modal Component
-interface ProviderDetailsModalProps {
-  provider: LLMProvider;
-  onClose: () => void;
-}
-
-const ProviderDetailsModal: React.FC<ProviderDetailsModalProps> = ({ provider, onClose }) => {
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-bold">Provider Details</h2>
-          <Button variant="ghost" size="sm" onClick={onClose}>
-            ×
-          </Button>
-        </div>
-
-        <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Name</label>
-              <p className="text-sm text-gray-900">{provider.provider_name}</p>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Type</label>
-              <p className="text-sm text-gray-900">{PROVIDER_TYPE_LABELS[provider.provider_type]}</p>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Model</label>
-              <p className="text-sm text-gray-900">{provider.model_id}</p>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Status</label>
-              <div className="mt-1">{getStatusBadge(provider.status)}</div>
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Capabilities</label>
-            <div className="flex flex-wrap gap-2">
-              {Object.entries(provider.capabilities).map(([key, value]) => (
-                value && (
-                  <Badge key={key} variant="outline" className="text-xs">
-                    {key.replace('_', ' ')}
-                  </Badge>
-                )
-              ))}
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Input Cost (per 1K tokens)</label>
-              <p className="text-sm text-gray-900">${provider.cost_per_1k_input_tokens.toFixed(6)}</p>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Output Cost (per 1K tokens)</label>
-              <p className="text-sm text-gray-900">${provider.cost_per_1k_output_tokens.toFixed(6)}</p>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-3 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Rate Limit (RPM)</label>
-              <p className="text-sm text-gray-900">{provider.rate_limit_rpm}</p>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Rate Limit (TPM)</label>
-              <p className="text-sm text-gray-900">{provider.rate_limit_tpm}</p>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Max Tokens</label>
-              <p className="text-sm text-gray-900">{provider.max_tokens}</p>
-            </div>
-          </div>
-
-          {provider.metadata && Object.keys(provider.metadata).length > 0 && (
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Metadata</label>
-              <pre className="text-xs bg-gray-100 p-2 rounded">
-                {JSON.stringify(provider.metadata, null, 2)}
-              </pre>
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// Add Provider Modal Component
-interface AddProviderModalProps {
-  onClose: () => void;
-  onSuccess: () => void;
-}
-
-const AddProviderModal: React.FC<AddProviderModalProps> = ({ onClose, onSuccess }) => {
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 max-w-lg w-full mx-4">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-bold">Add LLM Provider</h2>
-          <Button variant="ghost" size="sm" onClick={onClose}>
-            ×
-          </Button>
-        </div>
-
-        <div className="text-center py-8 text-gray-500">
-          <Plus className="h-12 w-12 mx-auto mb-4" />
-          <p>Add provider form coming soon...</p>
-          <Button className="mt-4" onClick={onSuccess}>
-            Mock Success
-          </Button>
-        </div>
-      </div>
-    </div>
-  );
-};
 
 export default LLMProviderDashboard;

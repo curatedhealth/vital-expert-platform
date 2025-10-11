@@ -1,4 +1,5 @@
 import { Suspense } from 'react';
+
 import { CostDashboard } from './components/CostDashboard';
 
 export default async function CostManagementPage() {

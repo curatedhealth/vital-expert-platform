@@ -198,8 +198,8 @@ export class CacheOptimizer {
     let totalRequests = 0;
     let hits = 0;
     let misses = 0;
-    let evictions = 0;
-    let totalAccessTime = 0;
+    const evictions = 0;
+    const totalAccessTime = 0;
     let totalSize = 0;
 
     for (const [key, entry] of entries.entries()) {

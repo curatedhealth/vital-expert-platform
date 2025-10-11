@@ -1,4 +1,5 @@
 import { LLMGovernanceService } from '@/services/llm-governance.service';
+
 import GovernanceDashboard from './components/GovernanceDashboard';
 
 export default async function GovernancePage() {

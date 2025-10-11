@@ -3,10 +3,10 @@
  * Implements complete advisory board orchestration based on LangGraph guide
  */
 
-import { personaAgentRunner, AgentReply } from './persona-agent-runner';
-import { synthesisComposer, Synthesis } from './synthesis-composer';
-import { policyGuard } from './policy-guard';
 import { evidencePackBuilder, EvidenceSource } from './evidence-pack-builder';
+import { personaAgentRunner, AgentReply } from './persona-agent-runner';
+import { policyGuard } from './policy-guard';
+import { synthesisComposer, Synthesis } from './synthesis-composer';
 
 export type OrchestrationMode =
   | 'parallel'      // Parallel Polling - Quick breadth

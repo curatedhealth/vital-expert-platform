@@ -1,6 +1,7 @@
+import { Shield } from 'lucide-react';
+
 import AdminClientWrapper from '@/components/admin/AdminClientWrapper';
 import AdminNav from '@/components/admin/AdminNav';
-import { Shield } from 'lucide-react';
 
 export default function AdminLayout({
   children,

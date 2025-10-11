@@ -3,7 +3,6 @@
  * Advanced conflict detection and resolution strategies
  */
 
-import { consistencyManager } from './consistency-manager';
 
 export interface ConflictDetection {
   id: string;

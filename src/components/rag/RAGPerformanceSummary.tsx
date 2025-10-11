@@ -5,8 +5,8 @@
 
 'use client';
 
-import React from 'react';
 import { Brain, Activity, Clock, Database } from 'lucide-react';
+import React from 'react';
 
 interface RAGPerformanceSummaryProps {
   className?: string;

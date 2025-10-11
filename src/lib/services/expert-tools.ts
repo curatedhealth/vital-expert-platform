@@ -413,8 +413,8 @@ export const toolUsageTracker = new ToolUsageTracker();
 // GET ALL TOOLS (including Evidence Retrieval & Clinical Standards Tools)
 // ============================================================================
 
-import { getAllEvidenceTools } from './evidence-retrieval';
 import { getAllClinicalStandardsTools } from './clinical-standards-tools';
+import { getAllEvidenceTools } from './evidence-retrieval';
 
 export function getAllExpertTools() {
   const baseTools = [

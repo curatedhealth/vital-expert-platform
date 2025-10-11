@@ -1,18 +1,19 @@
 'use client';
 
+import { AlertTriangle, Plus, Edit, Trash2 } from 'lucide-react';
 import { useState, useEffect } from 'react';
-import { HealthMonitoringService, AlertConfig } from '@/services/health-monitoring.service';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
-import { AlertTriangle, Plus, Edit, Trash2 } from 'lucide-react';
+import { HealthMonitoringService, AlertConfig } from '@/services/health-monitoring.service';
 
 export default function AlertConfigPanel() {
   const [alerts, setAlerts] = useState<AlertConfig[]>([]);

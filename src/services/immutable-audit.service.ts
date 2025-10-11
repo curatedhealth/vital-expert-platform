@@ -1,5 +1,7 @@
-import { createClient } from '@supabase/supabase-js';
 import { createHash, createHmac } from 'crypto';
+
+import { createClient } from '@supabase/supabase-js';
+
 import { AuditLogger, AuditAction, AuditSeverity } from '@/lib/security/audit-logger';
 
 export interface AuditBlock {

@@ -1,9 +1,5 @@
 'use client';
 
-import React from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
 import { 
   CheckCircle, 
   XCircle, 
@@ -12,10 +8,13 @@ import {
   FileText,
   Lock,
   Eye,
-  Database,
-  Users,
-  Clock
+  Database
 } from 'lucide-react';
+import React from 'react';
+
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Progress } from '@/components/ui/progress';
 
 interface ComplianceStatusProps {
   className?: string;

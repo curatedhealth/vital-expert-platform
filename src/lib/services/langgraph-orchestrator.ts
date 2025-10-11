@@ -3,17 +3,18 @@
  * Implements state-machine based orchestration patterns with visual debugging
  */
 
-import { StateGraph, END, START, Annotation } from "@langchain/langgraph";
 // Note: SqliteSaver disabled for Vercel compatibility
 // import { SqliteSaver } from "@langchain/langgraph-checkpoint-sqlite";
-import { sessionStore } from './supabase-session-store';
-import { ChatOpenAI } from "@langchain/openai";
 import { HumanMessage, SystemMessage } from "@langchain/core/messages";
-import { AgentExecutor, createOpenAIFunctionsAgent } from "langchain/agents";
 import { ChatPromptTemplate, MessagesPlaceholder } from "@langchain/core/prompts";
-import { policyGuard } from './policy-guard';
-import { minorityOpinionAnalyzer, type AgentReply as MinorityAgentReply } from './minority-opinion-analyzer';
+import { StateGraph, END, START, Annotation } from "@langchain/langgraph";
+import { ChatOpenAI } from "@langchain/openai";
+import { AgentExecutor, createOpenAIFunctionsAgent } from "langchain/agents";
+
 import { getAllExpertTools, toolUsageTracker, type ToolCall } from './expert-tools';
+import { minorityOpinionAnalyzer, type AgentReply as MinorityAgentReply } from './minority-opinion-analyzer';
+import { policyGuard } from './policy-guard';
+import { sessionStore } from './supabase-session-store';
 
 // ============================================================================
 // STATE DEFINITION

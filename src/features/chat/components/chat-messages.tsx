@@ -7,28 +7,26 @@ import {
   RefreshCw,
   Edit,
   ExternalLink,
-  Clock,
-  Zap,
   FileText,
   Check,
   X,
 } from 'lucide-react';
 import { useState, useCallback } from 'react';
 
-import { AgentAvatar } from '@/components/ui/agent-avatar';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { Textarea } from '@/components/ui/textarea';
 import {
   Reasoning,
   ReasoningTrigger,
   ReasoningContent,
 } from '@/components/ai/reasoning';
+import { Response } from '@/components/ai/response';
+import { AgentAvatar } from '@/components/ui/agent-avatar';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { Textarea } from '@/components/ui/textarea';
+import { renderTextWithCitations } from '@/inline-citation';
 import { ChatMessage, useChatStore } from '@/lib/stores/chat-store';
 import { cn } from '@/lib/utils';
-import { renderTextWithCitations, type CitationSource } from '@/inline-citation';
-import { Response } from '@/components/ai/response';
 
 interface ChatMessagesProps {
   messages: ChatMessage[];

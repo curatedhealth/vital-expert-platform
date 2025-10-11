@@ -1,17 +1,16 @@
 'use client';
 
-import React from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Progress } from '@/components/ui/progress';
-import { Badge } from '@/components/ui/badge';
 import { 
   Shield, 
   CheckCircle, 
   AlertTriangle, 
   XCircle,
-  TrendingUp,
-  TrendingDown
+  TrendingUp
 } from 'lucide-react';
+import React from 'react';
+
+import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
 
 interface SecurityScoreProps {
   score: number;

@@ -1,5 +1,6 @@
-import { ThreatEvent } from './threat-detection.service';
 import { createClient } from '@supabase/supabase-js';
+
+import { ThreatEvent } from './threat-detection.service';
 
 export interface AlertChannel {
   type: 'email' | 'slack' | 'sms' | 'webhook';

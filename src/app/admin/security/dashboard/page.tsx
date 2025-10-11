@@ -1,31 +1,29 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 import { 
   Shield, 
   AlertTriangle, 
   Activity, 
   Users, 
-  Globe, 
-  Clock,
-  TrendingUp,
-  TrendingDown,
+  Globe,
   RefreshCw,
   Eye,
   Ban,
   CheckCircle
 } from 'lucide-react';
-import { MetricsCard } from '@/components/security/MetricsCard';
-import { ThreatTimeline } from '@/components/security/ThreatTimeline';
+import React, { useState, useEffect } from 'react';
+
+import { ComplianceStatus } from '@/components/security/ComplianceStatus';
 import { LiveActivityFeed } from '@/components/security/LiveActivityFeed';
+import { MetricsCard } from '@/components/security/MetricsCard';
 import { SecurityScore } from '@/components/security/SecurityScore';
 import { ThreatAnalytics } from '@/components/security/ThreatAnalytics';
-import { ComplianceStatus } from '@/components/security/ComplianceStatus';
+import { ThreatTimeline } from '@/components/security/ThreatTimeline';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 interface SecurityMetrics {
   activeThreats: number;

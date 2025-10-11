@@ -1,5 +1,6 @@
-import { RedisRateLimitStore, RateLimitResult } from './redis-store';
 import { createClient } from '@supabase/supabase-js';
+
+import { RedisRateLimitStore, RateLimitResult } from './redis-store';
 
 export interface OrganizationRateLimitConfig {
   organizationId: string;

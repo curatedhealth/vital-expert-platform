@@ -1,7 +1,7 @@
 'use client';
 
 import { ArrowDownIcon } from 'lucide-react';
-import { useCallback, useEffect } from 'react';
+import { useEffect } from 'react';
 import { StickToBottom, useStickToBottomContext } from 'use-stick-to-bottom';
 
 import { Button } from '@/components/ui/button';
@@ -21,6 +21,9 @@ export const __Conversation = ({ className, ...props }: ConversationProps) => (
   />
 );
 
+// Export with regular names for compatibility
+export const Conversation = __Conversation;
+
 export type ConversationContentProps = ComponentProps<
   typeof StickToBottom.Content
 >;
@@ -31,6 +34,9 @@ export const __ConversationContent = ({
 }: ConversationContentProps) => (
   <StickToBottom.Content className={cn('p-4', className)} {...props} />
 );
+
+// Export with regular names for compatibility
+export const ConversationContent = __ConversationContent;
 
 export type ConversationScrollButtonProps = ComponentProps<typeof Button>;
 

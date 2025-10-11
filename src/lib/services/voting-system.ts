@@ -69,7 +69,7 @@ export class VotingSystem {
     );
 
     let remainingCandidates = Array.from(candidates);
-    let currentRankings = { ...rankings };
+    const currentRankings = { ...rankings };
 
     // Instant runoff rounds
     while (remainingCandidates.length > 1) {

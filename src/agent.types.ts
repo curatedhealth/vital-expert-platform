@@ -1,43 +1,43 @@
 // Enum types matching database
 export enum AgentStatus {
-  const DEVELOPMENT = development',
-  const TESTING = testing',
-  const ACTIVE = active',
-  const DEPRECATED = deprecated'
+  DEVELOPMENT = 'development',
+  TESTING = 'testing',
+  ACTIVE = 'active',
+  DEPRECATED = 'deprecated'
 }
 
 export enum ValidationStatus {
-  const VALIDATED = validated',
-  const PENDING = pending',
-  const IN_REVIEW = in_review',
-  const EXPIRED = expired',
-  const NOT_REQUIRED = not_required'
+  VALIDATED = 'validated',
+  PENDING = 'pending',
+  IN_REVIEW = 'in_review',
+  EXPIRED = 'expired',
+  NOT_REQUIRED = 'not_required'
 }
 
 export enum DomainExpertise {
-  const MEDICAL = medical',
-  const REGULATORY = regulatory',
-  const LEGAL = legal',
-  const FINANCIAL = financial',
-  const BUSINESS = business',
-  const TECHNICAL = technical',
-  const COMMERCIAL = commercial',
-  const ACCESS = access',
-  const GENERAL = general'
+  MEDICAL = 'medical',
+  REGULATORY = 'regulatory',
+  LEGAL = 'legal',
+  FINANCIAL = 'financial',
+  BUSINESS = 'business',
+  TECHNICAL = 'technical',
+  COMMERCIAL = 'commercial',
+  ACCESS = 'access',
+  GENERAL = 'general'
 }
 
 export enum DataClassification {
-  const PUBLIC = public',
-  const INTERNAL = internal',
-  const CONFIDENTIAL = confidential',
-  const RESTRICTED = restricted'
+  PUBLIC = 'public',
+  INTERNAL = 'internal',
+  CONFIDENTIAL = 'confidential',
+  RESTRICTED = 'restricted'
 }
 
 export enum RiskLevel {
-  const LOW = low',
-  const MEDIUM = medium',
-  const HIGH = high',
-  const CRITICAL = critical'
+  LOW = 'low',
+  MEDIUM = 'medium',
+  HIGH = 'high',
+  CRITICAL = 'critical'
 }
 
 // Main Agent interface
@@ -373,8 +373,8 @@ export interface CommercialAgentConfig {
 }
 
 // Utility types
-export type const AgentCreateInput = mit<Agent, 'id' | 'created_at' | 'updated_at'>;
-export type const AgentUpdateInput = artial<Omit<Agent, 'id' | 'name' | 'created_at' | 'updated_at'>>;
+export type AgentCreateInput = Omit<Agent, 'id' | 'created_at' | 'updated_at'>;
+export type AgentUpdateInput = Partial<Omit<Agent, 'id' | 'name' | 'created_at' | 'updated_at'>>;
 
 // Constants
 export const DOMAIN_COLORS: Record<DomainExpertise, string> = {

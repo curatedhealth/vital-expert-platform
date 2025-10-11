@@ -2,29 +2,17 @@
 
 import {
   MessageSquare,
-  User,
-  Brain,
-  Zap,
-  Database,
-  Settings,
-  ArrowRight,
   Send,
   Loader2,
-  CheckCircle,
-  AlertCircle,
-  BookOpen,
-  Lightbulb,
-  Target,
-  TrendingUp,
 } from 'lucide-react';
-import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import { useState, useEffect, useRef } from 'react';
+import ReactMarkdown from 'react-markdown';
 
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
+import { Progress } from '@/components/ui/progress';
 import {
   Select,
   SelectContent,
@@ -32,12 +20,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Progress } from '@/components/ui/progress';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Textarea } from '@/components/ui/textarea';
 import { useAgentsStore, Agent } from '@/lib/stores/agents-store';
 import { useAuth } from '@/supabase-auth-context';
-import ReactMarkdown from 'react-markdown';
+
 
 interface Message {
   id: string;

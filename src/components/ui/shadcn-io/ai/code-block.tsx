@@ -101,6 +101,9 @@ export const __CodeBlock = ({
   </CodeBlockContext.Provider>
 );
 
+// Export with regular names for compatibility
+export const CodeBlock = __CodeBlock;
+
 export type CodeBlockCopyButtonProps = ComponentProps<typeof Button> & {
   onCopy?: () => void;
   onError?: (error: Error) => void;
@@ -134,6 +137,8 @@ export const __CodeBlockCopyButton = ({
     }
   };
 
+  const Icon = isCopied ? CheckIcon : CopyIcon;
+
   return (
     <Button
       className={cn('shrink-0', className)}
@@ -146,3 +151,6 @@ export const __CodeBlockCopyButton = ({
     </Button>
   );
 };
+
+// Export with regular names for compatibility
+export const CodeBlockCopyButton = __CodeBlockCopyButton;

@@ -1,7 +1,8 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { getUserRateLimiter, UserRateLimiter } from './user-rate-limiter';
-import { getOrganizationRateLimiter, OrganizationRateLimiter } from './org-rate-limiter';
 import { createClient } from '@supabase/supabase-js';
+import { NextRequest, NextResponse } from 'next/server';
+
+import { getOrganizationRateLimiter, OrganizationRateLimiter } from './org-rate-limiter';
+import { getUserRateLimiter, UserRateLimiter } from './user-rate-limiter';
 
 export interface RateLimitOptions {
   skipSuccessfulRequests?: boolean;
@@ -255,7 +256,7 @@ export class RateLimitMiddleware {
     const pathname = url.pathname;
     
     // Convert dynamic segments to patterns
-    let pattern = pathname
+    const pattern = pathname
       .replace(/\/[0-9a-f-]{36}/g, '/:id') // UUIDs
       .replace(/\/\d+/g, '/:id') // Numbers
       .replace(/\/[^/]+$/g, '/:slug'); // Other dynamic segments

@@ -51,9 +51,10 @@ export function useRealtimeCollaboration(options: UseRealtimeCollaborationOption
   });
 
   // Refs
+  const lastTypingEventRef = useRef<number>(0);
 
   // Connection management
-
+  const connect = useCallback(async () => {
     try {
       setState(prev => ({ ...prev, connectionStatus: 'connecting' }));
       await websocketService.connect(conversationId);
@@ -62,6 +63,11 @@ export function useRealtimeCollaboration(options: UseRealtimeCollaborationOption
       setState(prev => ({ ...prev, connectionStatus: 'disconnected' }));
     }
   }, [conversationId]);
+
+  // Connect on mount
+  useEffect(() => {
+    connect();
+  }, [connect]);
 
   // Cleanup on unmount
   useEffect(() => {

@@ -1,14 +1,5 @@
 'use client';
 
-import { useState } from 'react';
-import { ComplianceReportingService, IncidentPlaybook, PlaybookExecution } from '@/services/compliance-reporting.service';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { 
   Play, 
   AlertTriangle, 
@@ -19,6 +10,15 @@ import {
   Shield,
   Zap
 } from 'lucide-react';
+import { useState } from 'react';
+
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { ComplianceReportingService, IncidentPlaybook, PlaybookExecution } from '@/services/compliance-reporting.service';
 
 interface IncidentPlaybooksProps {
   playbooks: IncidentPlaybook[];

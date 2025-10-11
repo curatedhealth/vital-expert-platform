@@ -316,7 +316,7 @@ export const MedicalModelsDashboard: React.FC<MedicalModelsDashboardProps> = ({
 
                     return (
                       <Badge key={index} variant="outline" className="flex items-center gap-1">
-                        <SpecialtyIcon className="h-3 w-3" />
+                        <Stethoscope className="h-3 w-3" />
                         {specialty.replace(/_/g, ' ')}
                       </Badge>
                     );

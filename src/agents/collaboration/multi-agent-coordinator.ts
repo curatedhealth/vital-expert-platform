@@ -504,7 +504,7 @@ export class MultiAgentCoordinator {
   // Helper methods
   private hasRequiredCapabilities(agents: DigitalHealthAgent[], requiredCapabilities: string[]): boolean {
     const availableCapabilities = new Set(
-      agents.flatMap(agent => agent.capabilities)
+      agents.flatMap(agent => agent.getCapabilities())
     );
     
     return requiredCapabilities.every(capability => 

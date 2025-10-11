@@ -45,7 +45,7 @@ import {
   ProviderStatus,
   PROVIDER_TYPE_LABELS,
   ProviderFilters
-} from '@/types/llm-provider.types';
+} from '@/llm-provider.types';
 
 interface LLMProviderDashboardProps {
   className?: string;

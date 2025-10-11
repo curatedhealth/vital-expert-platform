@@ -491,7 +491,7 @@ export class AgentOrchestrator {
     if (!agent) {
       throw new Error(`Agent '${agentName}' not found`);
     }
-    const response = await agent.executePrompt(promptTitle, inputs, context);
+    const response = await agent.execute(promptTitle, context);
     return response;
   }
 

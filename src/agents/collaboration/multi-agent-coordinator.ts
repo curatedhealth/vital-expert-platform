@@ -550,7 +550,7 @@ export class MultiAgentCoordinator {
   }
 
   private analyzeAgentCapabilities(agents: DigitalHealthAgent[]): Set<string> {
-    return new Set(agents.flatMap(agent => agent.capabilities));
+    return new Set(agents.flatMap(agent => agent.getCapabilities()));
   }
 
   private sortAgentsByRelevance(agents: DigitalHealthAgent[], query: string): DigitalHealthAgent[] {

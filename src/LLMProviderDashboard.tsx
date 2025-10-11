@@ -130,7 +130,7 @@ export const LLMProviderDashboard: React.FC<LLMProviderDashboardProps> = ({ clas
           await llmProviderService.deleteProvider(providerId);
           break;
         case 'test':
-
+          const provider = providers.find(p => p.id === providerId);
           if (provider) {
             await llmProviderService.testProviderHealth(provider);
           }

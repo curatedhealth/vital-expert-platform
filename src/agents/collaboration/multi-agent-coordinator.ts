@@ -6,8 +6,8 @@
 import { agentConflictResolver } from '../core/conflict-resolver';
 import { DigitalHealthAgent } from '../core/DigitalHealthAgent';
 
-// Local response type for multi-agent coordination
-interface AgentResponse {
+// Response type for multi-agent coordination
+interface CoordinationAgentResponse {
   id: string;
   agentId: string;
   content: string;
@@ -47,10 +47,10 @@ export interface AgentInfo {
 
 export interface CoordinationResult {
   strategy: string;
-  responses: AgentResponse[];
+  responses: CoordinationAgentResponse[];
   conflicts: any[];
   resolutions: any[];
-  finalResponse: AgentResponse;
+  finalResponse: CoordinationAgentResponse;
   performance: {
     totalTime: number;
     coordinationTime: number;
@@ -61,101 +61,82 @@ export interface CoordinationResult {
     participatingAgents: string[];
     coordinationOverhead: number;
     qualityScore: number;
+    confidence: number;
+    timestamp: Date;
   };
-}
-
-export interface CommunicationProtocol {
-  type: 'broadcast' | 'point_to_point' | 'hierarchical' | 'consensus';
-  messageFormat: 'json' | 'xml' | 'protobuf';
-  compression: boolean;
-  encryption: boolean;
-  timeout: number;
 }
 
 export class MultiAgentCoordinator {
   private strategies: Map<string, CoordinationStrategy> = new Map();
-  private communicationProtocol: CommunicationProtocol;
   private performanceMetrics: Map<string, number[]> = new Map();
+  private conflictHistory: any[] = [];
 
   constructor() {
     this.initializeStrategies();
-    this.communicationProtocol = {
-      type: 'consensus',
-      messageFormat: 'json',
-      compression: true,
-      encryption: true,
-      timeout: 30000
-    };
   }
 
-  /**
-   * Initialize coordination strategies
-   */
   private initializeStrategies(): void {
     // Sequential Strategy
     this.strategies.set('sequential', {
       name: 'sequential',
-      description: 'Agents execute one after another, building on previous results',
+      description: 'Execute agents one after another, passing context between them',
       execute: this.executeSequentialStrategy.bind(this),
       requirements: {
-        minAgents: 2,
+        minAgents: 1,
         maxAgents: 5,
-        capabilities: ['analysis', 'synthesis']
+        capabilities: ['context_passing', 'sequential_processing']
       }
     });
 
     // Parallel Strategy
     this.strategies.set('parallel', {
       name: 'parallel',
-      description: 'All agents execute simultaneously and results are synthesized',
+      description: 'Execute all agents simultaneously and synthesize results',
       execute: this.executeParallelStrategy.bind(this),
       requirements: {
         minAgents: 2,
         maxAgents: 10,
-        capabilities: ['analysis']
+        capabilities: ['parallel_processing', 'result_synthesis']
       }
     });
 
     // Hierarchical Strategy
     this.strategies.set('hierarchical', {
       name: 'hierarchical',
-      description: 'Agents organized in hierarchy with master coordinator',
+      description: 'Master agent coordinates specialist agents',
       execute: this.executeHierarchicalStrategy.bind(this),
       requirements: {
         minAgents: 3,
         maxAgents: 15,
-        capabilities: ['coordination', 'analysis', 'synthesis']
+        capabilities: ['hierarchical_coordination', 'specialization']
       }
     });
 
     // Consensus Strategy
     this.strategies.set('consensus', {
       name: 'consensus',
-      description: 'Agents work together to reach consensus on response',
+      description: 'All agents vote on the best response',
       execute: this.executeConsensusStrategy.bind(this),
       requirements: {
         minAgents: 3,
-        maxAgents: 8,
-        capabilities: ['analysis', 'reasoning', 'consensus']
+        maxAgents: 20,
+        capabilities: ['voting', 'consensus_building']
       }
     });
 
     // Adaptive Strategy
     this.strategies.set('adaptive', {
       name: 'adaptive',
-      description: 'Strategy adapts based on query complexity and agent availability',
+      description: 'Dynamically select the best strategy based on context',
       execute: this.executeAdaptiveStrategy.bind(this),
       requirements: {
-        minAgents: 2,
-        maxAgents: 20,
-        capabilities: ['analysis', 'adaptation']
+        minAgents: 1,
+        maxAgents: 25,
+        capabilities: ['adaptive_planning', 'strategy_selection']
       }
     });
   }
 
-  /**
-   * Coordinate multiple agents
-   */
   async coordinate(
     agents: DigitalHealthAgent[],
     query: string,
@@ -165,138 +146,155 @@ export class MultiAgentCoordinator {
     const startTime = Date.now();
     
     try {
-      // Select appropriate strategy
+      // Validate agents
+      if (!agents || agents.length === 0) {
+        throw new Error('No agents provided for coordination');
+      }
+
+      // Select strategy
       const strategy = strategyName 
         ? this.strategies.get(strategyName)
         : this.selectOptimalStrategy(agents, query, context);
 
       if (!strategy) {
-        throw new Error(`No suitable coordination strategy found`);
+        throw new Error(`Strategy ${strategyName || 'optimal'} not found or not suitable`);
       }
 
-      console.log(`🤝 Coordinating ${agents.length} agents using ${strategy.name} strategy`);
+      // Validate strategy requirements
+      if (!this.validateStrategyRequirements(agents, strategy)) {
+        throw new Error(`Strategy ${strategy.name} requirements not met`);
+      }
 
-      // Execute coordination strategy
+      // Execute strategy
       const result = await strategy.execute(agents, query, context);
       
       // Record performance metrics
-      this.recordPerformanceMetrics(strategy.name, Date.now() - startTime);
-
+      const totalTime = Date.now() - startTime;
+      this.recordPerformanceMetrics(strategy.name, totalTime);
+      
+      // Update result with performance data
+      result.performance.totalTime = totalTime;
+      result.metadata.timestamp = new Date();
+      
       return result;
+      
     } catch (error) {
       console.error('❌ Multi-agent coordination failed:', error);
       throw error;
     }
   }
 
-  /**
-   * Select optimal strategy based on agents and query
-   */
+  private validateStrategyRequirements(agents: DigitalHealthAgent[], strategy: CoordinationStrategy): boolean {
+    const { minAgents, maxAgents, capabilities } = strategy.requirements;
+    
+    // Check agent count
+    if (agents.length < minAgents || agents.length > maxAgents) {
+      return false;
+    }
+    
+    // Check capabilities
+    if (capabilities.length > 0) {
+      return this.hasRequiredCapabilities(agents, capabilities);
+    }
+    
+    return true;
+  }
+
   private selectOptimalStrategy(
     agents: DigitalHealthAgent[],
     query: string,
     context: any
   ): CoordinationStrategy | null {
     const availableStrategies = Array.from(this.strategies.values())
-      .filter(strategy => 
-        agents.length >= strategy.requirements.minAgents &&
-        agents.length <= strategy.requirements.maxAgents &&
-        this.hasRequiredCapabilities(agents, strategy.requirements.capabilities)
-      );
-
+      .filter(strategy => this.validateStrategyRequirements(agents, strategy));
+    
     if (availableStrategies.length === 0) {
       return null;
     }
-
-    // Score strategies based on query complexity and agent capabilities
-    const scoredStrategies = availableStrategies.map(strategy => ({
-      strategy,
-      score: this.calculateStrategyScore(strategy, agents, query, context)
-    }));
-
-    // Return highest scoring strategy
-    return scoredStrategies
-      .sort((a, b) => b.score - a.score)[0]
-      .strategy;
+    
+    // Simple strategy selection based on agent count and query complexity
+    const agentCount = agents.length;
+    const queryComplexity = this.analyzeQueryComplexity(query);
+    
+    if (agentCount === 1) {
+      return availableStrategies.find(s => s.name === 'sequential') || availableStrategies[0];
+    } else if (agentCount <= 3 && queryComplexity < 0.5) {
+      return availableStrategies.find(s => s.name === 'parallel') || availableStrategies[0];
+    } else if (agentCount <= 5 && queryComplexity >= 0.5) {
+      return availableStrategies.find(s => s.name === 'hierarchical') || availableStrategies[0];
+    } else if (agentCount > 5) {
+      return availableStrategies.find(s => s.name === 'consensus') || availableStrategies[0];
+    }
+    
+    return availableStrategies[0];
   }
 
-  /**
-   * Execute sequential coordination strategy
-   */
-  private   async executeSequentialStrategy(
+  private analyzeQueryComplexity(query: string): number {
+    // Simple complexity analysis based on query length and keywords
+    const length = query.length;
+    const keywordCount = (query.match(/\b(and|or|but|however|therefore|because|although|unless|if|when|where|why|how|what|who|which)\b/gi) || []).length;
+    
+    return Math.min(1, (length / 1000) + (keywordCount * 0.2));
+  }
+
+  // Strategy Implementations
+  private async executeSequentialStrategy(
     agents: DigitalHealthAgent[],
     query: string,
     context: any
   ): Promise<CoordinationResult> {
     const startTime = Date.now();
-    const responses: AgentResponse[] = [];
+    const responses: CoordinationAgentResponse[] = [];
     let currentContext = { ...context };
-
-    // Sort agents by tier and specialization relevance
-    const sortedAgents = this.sortAgentsByRelevance(agents, query);
-
-    for (const agent of sortedAgents) {
+    
+    for (const agent of agents) {
       try {
         console.log(`🔄 Executing agent: ${agent.getStatus().name}`);
         
-        // Execute agent with current context
         const response = await this.executeAgent(agent, query, currentContext);
         responses.push(response);
-
-        // Update context with agent's response
+        
+        // Update context with response
         currentContext = this.updateContextWithResponse(currentContext, response);
-
-        // Add delay between agents for context processing
-        await new Promise(resolve => setTimeout(resolve, 100));
-
+        
       } catch (error) {
         console.error(`❌ Agent ${agent.getStatus().name} failed:`, error);
         // Continue with next agent
       }
     }
-
-    // Detect and resolve conflicts
-    const conflicts = agentConflictResolver.detectConflicts(
-      agents,
-      responses,
-      query,
-      context
-    );
-    const resolutions = await agentConflictResolver.resolveConflicts(conflicts);
-
-    // Synthesize final response
-    const finalResponse = await this.synthesizeSequentialResponse(responses, resolutions);
-
+    
+    const coordinationTime = Date.now() - startTime;
+    const finalResponse = await this.synthesizeSequentialResponse(responses, []);
+    
     return {
       strategy: 'sequential',
       responses,
-      conflicts,
-      resolutions,
+      conflicts: [],
+      resolutions: [],
       finalResponse,
       performance: {
-        totalTime: Date.now() - startTime,
-        coordinationTime: Date.now() - startTime,
-        conflictResolutionTime: 0, // Conflicts resolved during synthesis
+        totalTime: coordinationTime,
+        coordinationTime,
+        conflictResolutionTime: 0,
         synthesisTime: 0
       },
       metadata: {
-        participatingAgents: agents.map(a => a.getStatus().name),
-        coordinationOverhead: 0.1, // 10% overhead for sequential
-        qualityScore: this.calculateQualityScore(responses, finalResponse)
+        participatingAgents: responses.map(r => r.agentId),
+        coordinationOverhead: 0.1,
+        qualityScore: this.calculateQualityScore(responses, finalResponse),
+        confidence: finalResponse.confidence,
+        timestamp: new Date()
       }
     };
   }
 
-  /**
-   * Execute parallel coordination strategy
-   */
-  private   async executeParallelStrategy(
+  private async executeParallelStrategy(
     agents: DigitalHealthAgent[],
     query: string,
     context: any
   ): Promise<CoordinationResult> {
     const startTime = Date.now();
-
+    
     // Execute all agents in parallel
     const agentPromises = agents.map(agent => 
       this.executeAgent(agent, query, context).catch(error => {
@@ -304,25 +302,17 @@ export class MultiAgentCoordinator {
         return null;
       })
     );
-
-    const responses = (await Promise.all(agentPromises)).filter(Boolean) as AgentResponse[];
-
+    
+    const responses = (await Promise.all(agentPromises)).filter(Boolean) as CoordinationAgentResponse[];
+    const coordinationTime = Date.now() - startTime;
+    
     // Detect and resolve conflicts
-    const conflictStartTime = Date.now();
-    const conflicts = agentConflictResolver.detectConflicts(
-      agents,
-      responses,
-      query,
-      context
-    );
-    const resolutions = await agentConflictResolver.resolveConflicts(conflicts);
-    const conflictResolutionTime = Date.now() - conflictStartTime;
-
+    const conflicts = await agentConflictResolver.detectConflicts(responses);
+    const resolutions = await agentConflictResolver.resolveConflicts(conflicts, responses);
+    
     // Synthesize final response
-    const synthesisStartTime = Date.now();
     const finalResponse = await this.synthesizeParallelResponse(responses, resolutions);
-    const synthesisTime = Date.now() - synthesisStartTime;
-
+    
     return {
       strategy: 'parallel',
       responses,
@@ -330,37 +320,36 @@ export class MultiAgentCoordinator {
       resolutions,
       finalResponse,
       performance: {
-        totalTime: Date.now() - startTime,
-        coordinationTime: 0, // No coordination overhead for parallel
-        conflictResolutionTime,
-        synthesisTime
+        totalTime: coordinationTime,
+        coordinationTime,
+        conflictResolutionTime: 0,
+        synthesisTime: 0
       },
       metadata: {
-        participatingAgents: agents.map(a => a.getStatus().name),
-        coordinationOverhead: 0.05, // 5% overhead for parallel
-        qualityScore: this.calculateQualityScore(responses, finalResponse)
+        participatingAgents: responses.map(r => r.agentId),
+        coordinationOverhead: 0.05,
+        qualityScore: this.calculateQualityScore(responses, finalResponse),
+        confidence: finalResponse.confidence,
+        timestamp: new Date()
       }
     };
   }
 
-  /**
-   * Execute hierarchical coordination strategy
-   */
-  private   async executeHierarchicalStrategy(
+  private async executeHierarchicalStrategy(
     agents: DigitalHealthAgent[],
     query: string,
     context: any
   ): Promise<CoordinationResult> {
     const startTime = Date.now();
-
+    
     // Select master coordinator (first agent as fallback)
     const masterAgent = agents[0];
-
+    
     // Group other agents by specialization
     const specialistGroups = this.groupAgentsBySpecialization(
       agents.filter(a => a.getStatus().name !== masterAgent.getStatus().name)
     );
-
+    
     // Master agent coordinates specialists
     const coordinationResults = await Promise.all(
       specialistGroups.map(async (group) => {
@@ -372,144 +361,122 @@ export class MultiAgentCoordinator {
             })
           )
         );
-        return groupResponses.filter(Boolean) as AgentResponse[];
+        return groupResponses.filter(Boolean) as CoordinationAgentResponse[];
       })
     );
-
+    
+    // Flatten all responses
     const allResponses = coordinationResults.flat();
-    const masterResponse = await this.executeAgent(masterAgent, query, {
-      ...context,
-      specialistResponses: allResponses
-    });
-
-    const responses = [...allResponses, masterResponse];
-
-    // Detect and resolve conflicts
-    const conflicts = agentConflictResolver.detectConflicts(
-      agents,
-      responses,
-      query,
-      context
-    );
-    const resolutions = await agentConflictResolver.resolveConflicts(conflicts);
-
-    // Master agent synthesizes final response
+    
+    // Master agent synthesizes results
+    const masterResponse = await this.executeAgent(masterAgent, query, context);
     const finalResponse = await this.synthesizeHierarchicalResponse(
       masterResponse,
       allResponses,
-      resolutions
+      []
     );
-
+    
+    const coordinationTime = Date.now() - startTime;
+    
     return {
       strategy: 'hierarchical',
+      responses: [masterResponse, ...allResponses],
+      conflicts: [],
+      resolutions: [],
+      finalResponse,
+      performance: {
+        totalTime: coordinationTime,
+        coordinationTime,
+        conflictResolutionTime: 0,
+        synthesisTime: 0
+      },
+      metadata: {
+        participatingAgents: [masterResponse.agentId, ...allResponses.map(r => r.agentId)],
+        coordinationOverhead: 0.15,
+        qualityScore: this.calculateQualityScore([masterResponse, ...allResponses], finalResponse),
+        confidence: finalResponse.confidence,
+        timestamp: new Date()
+      }
+    };
+  }
+
+  private async executeConsensusStrategy(
+    agents: DigitalHealthAgent[],
+    query: string,
+    context: any
+  ): Promise<CoordinationResult> {
+    const startTime = Date.now();
+    
+    // Execute all agents in parallel
+    const agentPromises = agents.map(agent => 
+      this.executeAgent(agent, query, context).catch(error => {
+        console.error(`❌ Agent ${agent.getStatus().name} failed:`, error);
+        return null;
+      })
+    );
+    
+    const responses = (await Promise.all(agentPromises)).filter(Boolean) as CoordinationAgentResponse[];
+    const coordinationTime = Date.now() - startTime;
+    
+    // Build consensus
+    const consensusResponse = await this.buildConsensus(responses, query, context);
+    
+    // Detect and resolve conflicts
+    const conflicts = await agentConflictResolver.detectConflicts(responses);
+    const resolutions = await agentConflictResolver.resolveConflicts(conflicts, responses);
+    
+    // Synthesize final response
+    const finalResponse = await this.synthesizeConsensusResponse(
+      responses,
+      consensusResponse,
+      resolutions
+    );
+    
+    return {
+      strategy: 'consensus',
       responses,
       conflicts,
       resolutions,
       finalResponse,
       performance: {
-        totalTime: Date.now() - startTime,
-        coordinationTime: Date.now() - startTime,
+        totalTime: coordinationTime,
+        coordinationTime,
         conflictResolutionTime: 0,
         synthesisTime: 0
       },
       metadata: {
-        participatingAgents: agents.map(a => a.getStatus().name),
-        coordinationOverhead: 0.15, // 15% overhead for hierarchical
-        qualityScore: this.calculateQualityScore(responses, finalResponse)
+        participatingAgents: responses.map(r => r.agentId),
+        coordinationOverhead: 0.2,
+        qualityScore: this.calculateQualityScore(responses, finalResponse),
+        confidence: finalResponse.confidence,
+        timestamp: new Date()
       }
     };
   }
 
-  /**
-   * Execute consensus coordination strategy
-   */
-  private   async executeConsensusStrategy(
+  private async executeAdaptiveStrategy(
     agents: DigitalHealthAgent[],
     query: string,
     context: any
   ): Promise<CoordinationResult> {
-    const startTime = Date.now();
-
-    // All agents work on the same query
-    const responses = await Promise.all(
-      agents.map(agent => 
-        this.executeAgent(agent, query, context).catch(error => {
-          console.error(`❌ Agent ${agent.getStatus().name} failed:`, error);
-          return null;
-        })
-      )
-    );
-
-    const validResponses = responses.filter(Boolean) as AgentResponse[];
-
-    // Build consensus through iterative refinement
-    let consensusResponse = await this.buildConsensus(validResponses, query, context);
-
-    // Detect and resolve any remaining conflicts
-    const conflicts = agentConflictResolver.detectConflicts(
-      agents,
-      validResponses,
-      query,
-      context
-    );
-    const resolutions = await agentConflictResolver.resolveConflicts(conflicts);
-
-    // Final consensus synthesis
-    const finalResponse = await this.synthesizeConsensusResponse(
-      validResponses,
-      consensusResponse,
-      resolutions
-    );
-
-    return {
-      strategy: 'consensus',
-      responses: validResponses,
-      conflicts,
-      resolutions,
-      finalResponse,
-      performance: {
-        totalTime: Date.now() - startTime,
-        coordinationTime: Date.now() - startTime,
-        conflictResolutionTime: 0,
-        synthesisTime: 0
-      },
-      metadata: {
-        participatingAgents: agents.map(a => a.getStatus().name),
-        coordinationOverhead: 0.2, // 20% overhead for consensus
-        qualityScore: this.calculateQualityScore(validResponses, finalResponse)
-      }
-    };
-  }
-
-  /**
-   * Execute adaptive coordination strategy
-   */
-  private   async executeAdaptiveStrategy(
-    agents: DigitalHealthAgent[],
-    query: string,
-    context: any
-  ): Promise<CoordinationResult> {
-    const startTime = Date.now();
-
-    // Analyze query complexity and agent capabilities
-    const queryComplexity = this.analyzeQueryComplexity(query);
-    const agentCapabilities = this.analyzeAgentCapabilities(agents);
-
-    // Select strategy based on analysis
-    let selectedStrategy: CoordinationStrategy;
+    // Analyze context and select best strategy dynamically
+    const contextAnalysis = this.analyzeContext(context);
+    const queryAnalysis = this.analyzeQuery(query);
+    const agentAnalysis = this.analyzeAgents(agents);
     
-    if (queryComplexity < 0.3 && agents.length <= 3) {
-      selectedStrategy = this.strategies.get('parallel')!;
-    } else if (queryComplexity > 0.7 && agentCapabilities.has('consensus')) {
-      selectedStrategy = this.strategies.get('consensus')!;
-    } else if (agents.length > 5 && agentCapabilities.has('coordination')) {
-      selectedStrategy = this.strategies.get('hierarchical')!;
-    } else {
-      selectedStrategy = this.strategies.get('sequential')!;
+    // Select strategy based on analysis
+    const strategyScore = this.calculateStrategyScore(
+      contextAnalysis,
+      queryAnalysis,
+      agentAnalysis
+    );
+    
+    const selectedStrategy = this.strategies.get(strategyScore.bestStrategy);
+    
+    if (!selectedStrategy) {
+      throw new Error('No suitable strategy found for adaptive coordination');
     }
-
-    console.log(`🔄 Adaptive strategy selected: ${selectedStrategy.name}`);
-
+    
     // Execute selected strategy
     return selectedStrategy.execute(agents, query, context);
   }
@@ -525,41 +492,103 @@ export class MultiAgentCoordinator {
     );
   }
 
-  private calculateStrategyScore(
-    strategy: CoordinationStrategy,
-    agents: DigitalHealthAgent[],
-    query: string,
-    context: any
-  ): number {
-    let score = 0;
-
-    // Base score from strategy requirements match
-    const capabilityMatch = this.hasRequiredCapabilities(agents, strategy.requirements.capabilities);
-    score += capabilityMatch ? 50 : 0;
-
-    // Agent count optimization
-    const agentCount = agents.length;
-    const optimalCount = (strategy.requirements.minAgents + strategy.requirements.maxAgents) / 2;
-    const countScore = 30 - Math.abs(agentCount - optimalCount) * 2;
-    score += Math.max(0, countScore);
-
-    // Query complexity match
-    const queryComplexity = this.analyzeQueryComplexity(query);
-    if (strategy.name === 'consensus' && queryComplexity > 0.7) score += 20;
-    if (strategy.name === 'parallel' && queryComplexity < 0.3) score += 20;
-
-    return score;
+  private analyzeContext(context: any): any {
+    // Analyze context complexity and requirements
+    return {
+      complexity: Object.keys(context).length,
+      hasPreviousResponses: !!(context.previousResponses && context.previousResponses.length > 0),
+      hasConflicts: !!(context.conflicts && context.conflicts.length > 0),
+      urgency: context.urgency || 'normal'
+    };
   }
 
-  private analyzeQueryComplexity(query: string): number {
-    // Simple complexity analysis based on query length and keywords
-    const length = query.length;
-    const keywords = ['analyze', 'compare', 'evaluate', 'synthesize', 'complex', 'multiple'];
-    const keywordCount = keywords.filter(keyword => 
-      query.toLowerCase().includes(keyword)
-    ).length;
+  private analyzeQuery(query: string): any {
+    // Analyze query characteristics
+    return {
+      length: query.length,
+      complexity: this.analyzeQueryComplexity(query),
+      hasMultipleQuestions: (query.match(/\?/g) || []).length > 1,
+      requiresSpecialization: this.requiresSpecialization(query)
+    };
+  }
 
-    return Math.min(1, (length / 1000) + (keywordCount * 0.2));
+  private analyzeAgents(agents: DigitalHealthAgent[]): any {
+    // Analyze agent capabilities and performance
+    const capabilities = this.analyzeAgentCapabilities(agents);
+    
+    return {
+      count: agents.length,
+      capabilities: Array.from(capabilities),
+      averageTier: agents.reduce((sum, agent) => sum + agent.config.tier, 0) / agents.length,
+      specialization: agents.map(agent => agent.config.specialization)
+    };
+  }
+
+  private requiresSpecialization(query: string): boolean {
+    const specializationKeywords = [
+      'medical', 'clinical', 'diagnosis', 'treatment', 'patient',
+      'drug', 'medication', 'therapy', 'surgery', 'procedure'
+    ];
+    
+    return specializationKeywords.some(keyword => 
+      query.toLowerCase().includes(keyword)
+    );
+  }
+
+  private calculateStrategyScore(contextAnalysis: any, queryAnalysis: any, agentAnalysis: any): any {
+    const strategies = Array.from(this.strategies.values());
+    const scores = strategies.map(strategy => ({
+      strategy: strategy.name,
+      score: this.calculateStrategyRelevance(strategy, contextAnalysis, queryAnalysis, agentAnalysis)
+    }));
+    
+    scores.sort((a, b) => b.score - a.score);
+    
+    return {
+      bestStrategy: scores[0].strategy,
+      scores
+    };
+  }
+
+  private calculateStrategyRelevance(strategy: CoordinationStrategy, contextAnalysis: any, queryAnalysis: any, agentAnalysis: any): number {
+    let score = 0;
+    
+    // Base score
+    score += 0.3;
+    
+    // Context-based scoring
+    if (strategy.name === 'sequential' && contextAnalysis.hasPreviousResponses) {
+      score += 0.2;
+    }
+    
+    if (strategy.name === 'parallel' && !contextAnalysis.hasConflicts) {
+      score += 0.2;
+    }
+    
+    if (strategy.name === 'hierarchical' && queryAnalysis.requiresSpecialization) {
+      score += 0.3;
+    }
+    
+    if (strategy.name === 'consensus' && agentAnalysis.count > 5) {
+      score += 0.2;
+    }
+    
+    // Query-based scoring
+    if (queryAnalysis.complexity > 0.7 && strategy.name === 'hierarchical') {
+      score += 0.2;
+    }
+    
+    if (queryAnalysis.hasMultipleQuestions && strategy.name === 'parallel') {
+      score += 0.1;
+    }
+    
+    // Agent-based scoring
+    if (agentAnalysis.count >= strategy.requirements.minAgents && 
+        agentAnalysis.count <= strategy.requirements.maxAgents) {
+      score += 0.2;
+    }
+    
+    return Math.min(1, score);
   }
 
   private analyzeAgentCapabilities(agents: DigitalHealthAgent[]): Set<string> {
@@ -569,7 +598,7 @@ export class MultiAgentCoordinator {
   private sortAgentsByRelevance(agents: DigitalHealthAgent[], query: string): DigitalHealthAgent[] {
     return agents.sort((a, b) => {
       // Sort by tier first (lower tier = higher priority)
-      if (a.getStatus().name !== b.getStatus().name) return a.getStatus().name.localeCompare(b.getStatus().name);
+      if (a.config.tier !== b.config.tier) return a.config.tier - b.config.tier;
       
       // Then by specialization relevance
       const aRelevance = this.calculateSpecializationRelevance(a, query);
@@ -582,31 +611,33 @@ export class MultiAgentCoordinator {
   private calculateSpecializationRelevance(agent: DigitalHealthAgent, query: string): number {
     const queryLower = query.toLowerCase();
     return agent.getCapabilities().reduce((score, spec) => {
-      if (queryLower.includes(spec.toLowerCase())) {
+      const specLower = spec.toLowerCase();
+      if (queryLower.includes(specLower)) {
         return score + 1;
       }
       return score;
     }, 0);
   }
 
-  private async executeAgent(agent: DigitalHealthAgent, query: string, context: any): Promise<AgentResponse> {
-    // Simulate agent execution
+  private async executeAgent(agent: DigitalHealthAgent, query: string, context: any): Promise<CoordinationAgentResponse> {
+    const startTime = Date.now();
+    
     // In production, this would call the actual agent service
     return {
       id: `response-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-      agentId: agent.id,
+      agentId: agent.getStatus().name,
       content: `Response from ${agent.getStatus().name} for query: ${query.substring(0, 50)}...`,
-      confidence: 0.8,
+      confidence: agent.config.confidence || 0.8,
       metadata: {
         agentName: agent.getStatus().name,
-        capabilities: agent.capabilities,
-        responseTime: agent.performance?.responseTime || 0
+        capabilities: agent.getCapabilities(),
+        responseTime: Date.now() - startTime
       },
       timestamp: new Date()
     };
   }
 
-  private updateContextWithResponse(context: any, response: AgentResponse): any {
+  private updateContextWithResponse(context: any, response: CoordinationAgentResponse): any {
     return {
       ...context,
       previousResponses: [...(context.previousResponses || []), response],
@@ -629,108 +660,135 @@ export class MultiAgentCoordinator {
     return Array.from(groups.values());
   }
 
-  private async buildConsensus(responses: AgentResponse[], query: string, context: any): Promise<AgentResponse> {
+  private async buildConsensus(responses: CoordinationAgentResponse[], query: string, context: any): Promise<CoordinationAgentResponse> {
     // Simple consensus building - in production, this would be more sophisticated
     const consensusContent = responses
       .map(r => r.content)
       .join('\n\n---\n\n');
-
+    
+    const averageConfidence = responses.reduce((sum, r) => sum + r.confidence, 0) / responses.length;
+    
     return {
       id: `consensus-${Date.now()}`,
-      agentId: 'consensus-builder',
+      agentId: 'consensus',
       content: `Consensus Response:\n\n${consensusContent}`,
-      confidence: responses.reduce((sum, r) => sum + r.confidence, 0) / responses.length,
+      confidence: averageConfidence,
       metadata: {
-        consensusType: 'iterative',
-        participantCount: responses.length
+        agentName: 'Consensus Builder',
+        capabilities: ['consensus_building'],
+        responseTime: 0
       },
       timestamp: new Date()
     };
   }
 
-  private async synthesizeSequentialResponse(responses: AgentResponse[], resolutions: any[]): Promise<AgentResponse> {
+  private async synthesizeSequentialResponse(responses: CoordinationAgentResponse[], resolutions: any[]): Promise<CoordinationAgentResponse> {
     // Synthesize responses from sequential execution
-    const content = responses
-      .map((r, i) => `Step ${i + 1} (${r.metadata?.agentName}): ${r.content}`)
+    const synthesizedContent = responses
+      .map((r, index) => `Step ${index + 1} (${r.metadata.agentName}): ${r.content}`)
       .join('\n\n');
-
+    
+    const averageConfidence = responses.reduce((sum, r) => sum + r.confidence, 0) / responses.length;
+    
     return {
-      id: `synthesized-sequential-${Date.now()}`,
-      agentId: 'sequential-synthesizer',
-      content: `Sequential Analysis:\n\n${content}`,
-      confidence: responses.reduce((sum, r) => sum + r.confidence, 0) / responses.length,
+      id: `synthesized-${Date.now()}`,
+      agentId: 'synthesizer',
+      content: `Sequential Synthesis:\n\n${synthesizedContent}`,
+      confidence: averageConfidence,
       metadata: {
-        synthesisType: 'sequential',
-        stepCount: responses.length
+        agentName: 'Sequential Synthesizer',
+        capabilities: ['sequential_synthesis'],
+        responseTime: 0
       },
       timestamp: new Date()
     };
   }
 
-  private async synthesizeParallelResponse(responses: AgentResponse[], resolutions: any[]): Promise<AgentResponse> {
+  private async synthesizeParallelResponse(responses: CoordinationAgentResponse[], resolutions: any[]): Promise<CoordinationAgentResponse> {
     // Synthesize responses from parallel execution
-    const content = responses
-      .map(r => `• ${r.metadata?.agentName}: ${r.content}`)
+    const synthesizedContent = responses
+      .map(r => `${r.metadata.agentName}: ${r.content}`)
       .join('\n\n');
-
+    
+    const averageConfidence = responses.reduce((sum, r) => sum + r.confidence, 0) / responses.length;
+    
     return {
-      id: `synthesized-parallel-${Date.now()}`,
-      agentId: 'parallel-synthesizer',
-      content: `Parallel Analysis:\n\n${content}`,
-      confidence: responses.reduce((sum, r) => sum + r.confidence, 0) / responses.length,
+      id: `synthesized-${Date.now()}`,
+      agentId: 'synthesizer',
+      content: `Parallel Synthesis:\n\n${synthesizedContent}`,
+      confidence: averageConfidence,
       metadata: {
-        synthesisType: 'parallel',
-        participantCount: responses.length
+        agentName: 'Parallel Synthesizer',
+        capabilities: ['parallel_synthesis'],
+        responseTime: 0
       },
       timestamp: new Date()
     };
   }
 
   private async synthesizeHierarchicalResponse(
-    masterResponse: AgentResponse,
-    specialistResponses: AgentResponse[],
+    masterResponse: CoordinationAgentResponse,
+    specialistResponses: CoordinationAgentResponse[],
     resolutions: any[]
-  ): Promise<AgentResponse> {
-    const content = `Master Analysis: ${masterResponse.content}\n\nSpecialist Inputs:\n${specialistResponses
-      .map(r => `• ${r.metadata?.agentName}: ${r.content}`)
-      .join('\n')}`;
-
+  ): Promise<CoordinationAgentResponse> {
+    // Synthesize master and specialist responses
+    const specialistContent = specialistResponses
+      .map(r => `${r.metadata.agentName}: ${r.content}`)
+      .join('\n\n');
+    
+    const synthesizedContent = `Master Response (${masterResponse.metadata.agentName}):\n${masterResponse.content}\n\nSpecialist Responses:\n${specialistContent}`;
+    
+    const allResponses = [masterResponse, ...specialistResponses];
+    const averageConfidence = allResponses.reduce((sum, r) => sum + r.confidence, 0) / allResponses.length;
+    
     return {
-      id: `synthesized-hierarchical-${Date.now()}`,
-      agentId: 'hierarchical-synthesizer',
-      content,
-      confidence: (masterResponse.confidence + specialistResponses.reduce((sum, r) => sum + r.confidence, 0) / specialistResponses.length) / 2,
+      id: `synthesized-${Date.now()}`,
+      agentId: 'synthesizer',
+      content: `Hierarchical Synthesis:\n\n${synthesizedContent}`,
+      confidence: averageConfidence,
       metadata: {
-        synthesisType: 'hierarchical',
-        masterAgent: masterResponse.agentId,
-        specialistCount: specialistResponses.length
+        agentName: 'Hierarchical Synthesizer',
+        capabilities: ['hierarchical_synthesis'],
+        responseTime: 0
       },
       timestamp: new Date()
     };
   }
 
   private async synthesizeConsensusResponse(
-    responses: AgentResponse[],
-    consensusResponse: AgentResponse,
+    responses: CoordinationAgentResponse[],
+    consensusResponse: CoordinationAgentResponse,
     resolutions: any[]
-  ): Promise<AgentResponse> {
+  ): Promise<CoordinationAgentResponse> {
+    // Synthesize consensus response
+    const synthesizedContent = `Consensus Response:\n${consensusResponse.content}\n\nIndividual Responses:\n${responses.map(r => `${r.metadata.agentName}: ${r.content}`).join('\n\n')}`;
+    
+    const averageConfidence = responses.reduce((sum, r) => sum + r.confidence, 0) / responses.length;
+    
     return {
-      ...consensusResponse,
-      id: `final-consensus-${Date.now()}`,
+      id: `synthesized-${Date.now()}`,
+      agentId: 'synthesizer',
+      content: `Consensus Synthesis:\n\n${synthesizedContent}`,
+      confidence: averageConfidence,
       metadata: {
-        ...consensusResponse.metadata,
-        finalConsensus: true,
-        resolutionCount: resolutions.length
-      }
+        agentName: 'Consensus Synthesizer',
+        capabilities: ['consensus_synthesis'],
+        responseTime: 0
+      },
+      timestamp: new Date()
     };
   }
 
-  private calculateQualityScore(responses: AgentResponse[], finalResponse: AgentResponse): number {
-    // Simple quality score based on response confidence and consistency
-    const avgConfidence = responses.reduce((sum, r) => sum + r.confidence, 0) / responses.length;
-    const finalConfidence = finalResponse.confidence;
+  private calculateQualityScore(responses: CoordinationAgentResponse[], finalResponse: CoordinationAgentResponse): number {
+    // Simple quality score calculation
+    const responseCount = responses.length;
+    const averageConfidence = responses.reduce((sum, r) => sum + r.confidence, 0) / responseCount;
+    const contentLength = finalResponse.content.length;
     
-    return (avgConfidence + finalConfidence) / 2;
+    // Normalize score between 0 and 1
+    const score = (averageConfidence * 0.6) + (Math.min(1, contentLength / 1000) * 0.4);
+    
+    return Math.min(1, score);
   }
 
   private recordPerformanceMetrics(strategy: string, time: number): void {
@@ -741,30 +799,25 @@ export class MultiAgentCoordinator {
     const metrics = this.performanceMetrics.get(strategy)!;
     metrics.push(time);
     
-    // Keep only last 100 metrics per strategy
+    // Keep only last 100 measurements
     if (metrics.length > 100) {
-      metrics.splice(0, metrics.length - 100);
+      metrics.shift();
     }
   }
 
-  /**
-   * Get performance metrics for strategies
-   */
-  getPerformanceMetrics(): Map<string, { average: number; count: number; min: number; max: number }> {
-    const result = new Map();
-    
-    for (const [strategy, times] of this.performanceMetrics.entries()) {
-      if (times.length === 0) continue;
-      
-      const average = times.reduce((sum, time) => sum + time, 0) / times.length;
-      const min = Math.min(...times);
-      const max = Math.max(...times);
-      
-      result.set(strategy, { average, count: times.length, min, max });
-    }
-    
-    return result;
+  // Public methods for monitoring and debugging
+  getPerformanceMetrics(): Map<string, number[]> {
+    return new Map(this.performanceMetrics);
+  }
+
+  getConflictHistory(): any[] {
+    return [...this.conflictHistory];
+  }
+
+  getAvailableStrategies(): CoordinationStrategy[] {
+    return Array.from(this.strategies.values());
   }
 }
 
+// Export singleton instance
 export const multiAgentCoordinator = new MultiAgentCoordinator();

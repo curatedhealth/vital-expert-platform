@@ -61,10 +61,22 @@ export class ChatRagIntegration {
    */
   static async initializeChatContext(agentName: string, conversationId: string): Promise<AgentChatContext | null> {
     try {
-      // const _ragContext = await ragService.getAgentRagContext(agentName);
+      // Mock RAG context for now - in real implementation would call ragService.getAgentRagContext(agentName)
+      const ragContext = {
+        assigned_rags: [
+          {
+            id: 'default-rag',
+            name: 'Default Knowledge Base',
+            description: 'General knowledge base for the agent',
+            purpose_description: 'Provides general context and information',
+            priority: 1,
+            is_primary: true
+          }
+        ]
+      };
 
       if (ragContext.assigned_rags.length === 0) {
-        // return null;
+        return null;
       }
 
       return {
@@ -102,13 +114,13 @@ export class ChatRagIntegration {
     }>;
   }> {
     try {
-      // const ragSources: Array<{
-      //   rag_id: string;
-      //   rag_name: string;
-      //   content: string;
-      //   relevance_score: number;
-      //   document_source: string;
-      // }> = [];
+      const ragSources: Array<{
+        rag_id: string;
+        rag_name: string;
+        content: string;
+        relevance_score: number;
+        document_source: string;
+      }> = [];
 
       try {
         // Determine which RAG databases to query
@@ -126,9 +138,9 @@ export class ChatRagIntegration {
         // Process each RAG assignment
         for (const assignment of ragAssignments) {
           try {
-            const ragResults = await this.ragService.queryRAG({
-              ragId: assignment.rag_id,
-              query: context.user_query,
+            const ragResults = await ragService.queryRAG({
+              ragId: assignment.id,
+              query: message,
               maxResults: options.maxRagResults || 5,
               similarityThreshold: options.similarityThreshold || 0.7,
               agentId: context.agent_id,
@@ -138,8 +150,8 @@ export class ChatRagIntegration {
             // Add sources from this RAG
             ragResults.results.forEach(result => {
               ragSources.push({
-                  rag_id: assignment.rag_id,
-                rag_name: assignment.rag_name,
+                rag_id: assignment.id,
+                rag_name: assignment.name,
                 content: result.content,
                 relevance_score: result.score,
                 document_source: result.metadata.document_name || 'Unknown Document'
@@ -196,7 +208,7 @@ export class ChatRagIntegration {
     context: AgentChatContext
   ): { enhanced_message: string; system_context: string } {
     // Build system context with RAG descriptions
-
+    let systemContext = `You are a specialized AI agent with access to the following knowledge bases:\n\n`;
     systemContext += `AVAILABLE KNOWLEDGE BASES:\n`;
     context.rag_assignments.forEach(rag => {
       systemContext += `• ${rag.name}: ${rag.description}\n`;
@@ -211,6 +223,7 @@ export class ChatRagIntegration {
     });
 
     // Build enhanced message with relevant context
+    let enhancedMessage = originalMessage;
 
     if (ragSources.length > 0) {
       enhancedMessage += `\n\nRELEVANT KNOWLEDGE CONTEXT:\n`;
@@ -230,6 +243,7 @@ export class ChatRagIntegration {
    * Build basic system context when no RAG sources are available
    */
   private static buildBasicSystemContext(context: AgentChatContext): string {
+    let systemContext = `You are a specialized AI agent. `;
 
     if (context.rag_assignments.length > 0) {
       systemContext += `You have access to ${context.rag_assignments.length} specialized knowledge base(s), but no relevant context was found for this query. `;
@@ -285,6 +299,19 @@ export class ChatRagIntegration {
     last_updated: string;
   }> {
     try {
+      // Mock RAG context for now
+      const ragContext = {
+        assigned_rags: [
+          {
+            id: 'default-rag',
+            name: 'Default Knowledge Base',
+            description: 'General knowledge base for the agent',
+            purpose_description: 'Provides general context and information',
+            priority: 1,
+            is_primary: true
+          }
+        ]
+      };
 
       // Extract domains from RAG descriptions (would be actual data in real implementation)
       const domains = [
@@ -293,6 +320,9 @@ export class ChatRagIntegration {
         'pharmacovigilance',
         'medical_devices'
       ];
+
+      const primaryRag = ragContext.assigned_rags.find(rag => rag.is_primary);
+      const domainsCovered = domains;
 
       return {
         total_rags: ragContext.assigned_rags.length,
@@ -336,8 +366,10 @@ export class ChatRagIntegration {
       confidence_score: number;
     }> = [];
 
+    const queryLower = query.toLowerCase();
+    
     availableRags.forEach(rag => {
-
+      let score = 0;
       const reasons: string[] = [];
 
       // Check description match

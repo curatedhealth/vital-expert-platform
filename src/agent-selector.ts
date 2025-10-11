@@ -44,10 +44,11 @@ export class AgentSelector {
   };
 
   async selectAgents(intent: IntentResult, query: string): Promise<DigitalHealthAgent[]> {
-    // `);
+    // Mock candidates for now - in real implementation would query available agents
+    const candidates: Array<{ agent: DigitalHealthAgent; score: number }> = [];
 
     if (candidates.length === 0) {
-      // return [];
+      return [];
     }
 
     // Sort by score

@@ -153,19 +153,12 @@ export default function PromptEditor({ prompt, isOpen, onClose, onSave, mode }: 
 
   const handleSave = () => {
     if (!validateForm()) {
-      toast({
-        title: "Validation Error",
-        description: "Please fix the errors before saving",
-        variant: "destructive",
-      });
+      console.error("Validation Error: Please fix the errors before saving");
       return;
     }
 
     onSave(formData);
-    toast({
-      title: "Success",
-      description: `Prompt ${mode === 'create' ? 'created' : 'updated'} successfully`,
-    });
+    console.log(`Prompt ${mode === 'create' ? 'created' : 'updated'} successfully`);
     onClose();
   };
 

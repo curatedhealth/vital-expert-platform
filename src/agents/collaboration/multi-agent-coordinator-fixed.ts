@@ -4,7 +4,7 @@
  */
 
 import { agentConflictResolver } from '../core/conflict-resolver';
-import { DigitalHealthAgent } from '../../agents-disabled/core/DigitalHealthAgent';
+import { DigitalHealthAgent } from '../core/DigitalHealthAgent';
 
 // Response type for multi-agent coordination
 interface CoordinationAgentResponse {
@@ -307,8 +307,8 @@ export class MultiAgentCoordinator {
     const coordinationTime = Date.now() - startTime;
     
     // Detect and resolve conflicts
-    const conflicts = await agentConflictResolver.detectConflicts(responses);
-    const resolutions = await agentConflictResolver.resolveConflicts(conflicts, responses);
+    const conflicts = agentConflictResolver.detectConflicts(agents, responses, query, context);
+    const resolutions = await agentConflictResolver.resolveConflicts(conflicts);
     
     // Synthesize final response
     const finalResponse = await this.synthesizeParallelResponse(responses, resolutions);
@@ -422,8 +422,8 @@ export class MultiAgentCoordinator {
     const consensusResponse = await this.buildConsensus(responses, query, context);
     
     // Detect and resolve conflicts
-    const conflicts = await agentConflictResolver.detectConflicts(responses);
-    const resolutions = await agentConflictResolver.resolveConflicts(conflicts, responses);
+    const conflicts = agentConflictResolver.detectConflicts(agents, responses, query, context);
+    const resolutions = await agentConflictResolver.resolveConflicts(conflicts);
     
     // Synthesize final response
     const finalResponse = await this.synthesizeConsensusResponse(

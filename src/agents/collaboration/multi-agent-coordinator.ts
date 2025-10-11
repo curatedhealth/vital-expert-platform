@@ -308,7 +308,7 @@ export class MultiAgentCoordinator {
     
     // Detect and resolve conflicts
     const conflicts = await agentConflictResolver.detectConflicts(agents, responses, query, context);
-    const resolutions = await agentConflictResolver.resolveConflicts(conflicts, responses);
+    const resolutions = await agentConflictResolver.resolveConflicts(conflicts);
     
     // Synthesize final response
     const finalResponse = await this.synthesizeParallelResponse(responses, resolutions);
@@ -423,7 +423,7 @@ export class MultiAgentCoordinator {
     
     // Detect and resolve conflicts
     const conflicts = await agentConflictResolver.detectConflicts(agents, responses, query, context);
-    const resolutions = await agentConflictResolver.resolveConflicts(conflicts, responses);
+    const resolutions = await agentConflictResolver.resolveConflicts(conflicts);
     
     // Synthesize final response
     const finalResponse = await this.synthesizeConsensusResponse(

@@ -74,7 +74,7 @@ export const MedicalModelsDashboard: React.FC<MedicalModelsDashboardProps> = ({
         model.provider_name.toLowerCase().includes('bio') ||
         model.provider_name.toLowerCase().includes('med-') ||
         model.provider_name.toLowerCase().includes('scibert') ||
-        (model.capabilities && model.capabilities.medical_knowledge)
+        model.medical_specialties.length > 0
       );
 
       setModels(medicalModels);

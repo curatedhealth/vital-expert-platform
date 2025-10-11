@@ -4,7 +4,7 @@
  */
 
 import { agentConflictResolver } from '../core/conflict-resolver';
-import { DigitalHealthAgent } from '../core/DigitalHealthAgent';
+import { DigitalHealthAgent } from '../../agents-disabled/core/DigitalHealthAgent';
 
 // Response type for multi-agent coordination
 interface CoordinationAgentResponse {

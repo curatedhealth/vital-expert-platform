@@ -359,7 +359,7 @@ export const MedicalModelsDashboard: React.FC<MedicalModelsDashboardProps> = ({
           <CardContent>
             <div className="text-2xl font-bold">{models.length}</div>
             <p className="text-xs text-muted-foreground">
-              {activeModels.length} active models
+              {models.filter(m => m.is_active).length} active models
             </p>
           </CardContent>
         </Card>

@@ -354,7 +354,7 @@ export class MultiAgentCoordinator {
         const groupResponses = await Promise.all(
           group.map(agent => 
             this.executeAgent(agent, query, context).catch(error => {
-              console.error(`❌ Specialist ${agent.name} failed:`, error);
+              console.error(`❌ Specialist ${agent.getStatus().name} failed:`, error);
               return null;
             })
           )

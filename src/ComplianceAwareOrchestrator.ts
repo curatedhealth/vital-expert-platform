@@ -188,9 +188,9 @@ export class ComplianceAwareOrchestrator extends AgentOrchestrator {
   /**
    * Get user audit trail
    */
-  getUserAuditTrail(userId: string, days: const number = 0) {
-    const endDate = ew Date();
-    const startDate = ew Date();
+  getUserAuditTrail(userId: string, days: number = 30) {
+    const endDate = new Date();
+    const startDate = new Date();
     startDate.setDate(startDate.getDate() - days);
 
     return this.complianceMiddleware.getAuditTrail(userId, {

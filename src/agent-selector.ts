@@ -164,8 +164,9 @@ export class AgentSelector {
       score += 5;
     }
 
-    // Domain expertise alignment
-    const agentDomain = agent.getConfig().domain;
+    // Domain expertise alignment - using name as domain for now
+    const agentName = agent.getConfig().name;
+    const agentDomain = agentName.split('-')[0]; // Extract domain from agent name
     if (agentDomain && intent.domains.includes(agentDomain)) {
       score += 15;
     }
@@ -190,8 +191,9 @@ export class AgentSelector {
       score += 5;
     }
 
-    // Domain expertise alignment
-    const agentDomain = agent.getConfig().domain;
+    // Domain expertise alignment - using name as domain for now
+    const agentName = agent.getConfig().name;
+    const agentDomain = agentName.split('-')[0]; // Extract domain from agent name
     if (agentDomain && intent.domains.includes(agentDomain)) {
       score += 15;
     }

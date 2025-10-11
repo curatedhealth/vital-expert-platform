@@ -15,13 +15,13 @@ import {
 } from '@/digital-health-agent.types';
 
 // Import Tier 1 agents
-import { ClinicalTrialDesigner } from '../tier1/ClinicalTrialDesigner';
-import { FDARegulatoryStrategist } from '../tier1/FDARegulatoryStrategist';
-import { HIPAAComplianceOfficer } from '../tier1/HIPAAComplianceOfficer';
-import { QMSArchitect } from '../tier1/QMSArchitect';
-import { ReimbursementStrategist } from '../tier1/ReimbursementStrategist';
+import { ClinicalTrialDesigner } from '@/agents/tier1/ClinicalTrialDesigner';
+import { FDARegulatoryStrategist } from '@/agents/tier1/FDARegulatoryStrategist';
+import { HIPAAComplianceOfficer } from '@/agents/tier1/HIPAAComplianceOfficer';
+import { QMSArchitect } from '@/agents/tier1/QMSArchitect';
+import { ReimbursementStrategist } from '@/agents/tier1/ReimbursementStrategist';
 
-import { DigitalHealthAgent } from './DigitalHealthAgent';
+import { DigitalHealthAgent } from '@/agents/core/DigitalHealthAgent';
 
 export class AgentOrchestrator {
   protected agents: Map<string, DigitalHealthAgent> = new Map();

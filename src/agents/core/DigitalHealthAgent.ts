@@ -17,7 +17,7 @@ import {
 } from '@/types/digital-health-agent.types';
 
 export class DigitalHealthAgent {
-  protected config: DigitalHealthAgentConfig;
+  public config: DigitalHealthAgentConfig;
   protected capabilities: Map<string, Capability> = new Map();
   protected prompts: Map<string, PromptTemplate> = new Map();
   protected conversationHistory: Array<{
@@ -465,8 +465,8 @@ Please review the analysis and let me know if you need any clarification or addi
     last_execution?: string;
   } {
     return {
-      name: this.getStatus().name,
-      display_name: this.getStatus().display_name,
+      name: this.config.name,
+      display_name: this.config.display_name,
       status: this.capabilities.size > 0 && this.prompts.size > 0 ? "active" : "inactive",
       capabilities_loaded: this.capabilities.size,
       prompts_loaded: this.prompts.size,

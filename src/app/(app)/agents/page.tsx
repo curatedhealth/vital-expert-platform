@@ -11,7 +11,7 @@ import { AgentsBoard } from '@/features/agents/components/agents-board';
 import { AgentsOverview } from '@/features/agents/components/agents-overview';
 import { AgentsTable } from '@/features/agents/components/agents-table';
 import { AgentCreator } from '@/features/chat/components/agent-creator';
-import { type Agent as AgentsStoreAgent, useAgentsStore } from '@/lib/stores/agents-store-simple';
+import { type Agent as AgentsStoreAgent, useAgentsStore } from '@/lib/stores/agents-store';
 import { type Agent } from '@/lib/stores/chat-store';
 import { useAuth } from '@/supabase-auth-context';
 

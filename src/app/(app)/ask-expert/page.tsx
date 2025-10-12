@@ -4,6 +4,7 @@ import {
   MessageSquare,
   Send,
   Loader2,
+  User,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useState, useEffect, useRef } from 'react';

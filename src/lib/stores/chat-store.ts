@@ -219,15 +219,18 @@ const _useChatStore = create<ChatStore>()(
 
       // Actions
       createNewChat: () => {
-        const { selectedAgent, interactionMode } = get();
-        if (!selectedAgent) return;
-
+        const { selectedAgent, interactionMode, chatMode } = get();
+        
         const newChat: Chat = {
           id: `chat-${Date.now()}`,
-          title: `New conversation with ${selectedAgent.name || 'AI Assistant'}`,
+          title: selectedAgent 
+            ? `New conversation with ${selectedAgent.name || 'AI Assistant'}`
+            : chatMode === 'direct' 
+              ? 'New Direct LLM Chat'
+              : 'New conversation with AI Assistant',
           createdAt: new Date(),
           updatedAt: new Date(),
-          agentId: selectedAgent.id || 'default',
+          agentId: selectedAgent?.id || 'default',
           messageCount: 0,
           mode: interactionMode, // Track the mode for this chat
         };
@@ -277,11 +280,11 @@ const _useChatStore = create<ChatStore>()(
       },
 
       sendMessage: async (content: string, attachments?: unknown[]) => {
-        let { currentChat, selectedAgent, messages, interactionMode } = get();
+        let { currentChat, selectedAgent, messages, interactionMode, chatMode } = get();
 
-        // In automatic mode, allow sending messages without pre-selected agent
+        // In automatic mode or direct LLM mode, allow sending messages without pre-selected agent
         // The API will handle agent selection automatically
-        if (!selectedAgent && interactionMode !== 'automatic') {
+        if (!selectedAgent && interactionMode !== 'automatic' && chatMode !== 'direct') {
           console.warn('⚠️  No agent selected. Please select an agent before sending a message.');
           return;
         }
@@ -334,14 +337,14 @@ const _useChatStore = create<ChatStore>()(
             sources: [],
             processingTime: 0,
             tokenUsage: { promptTokens: 0, completionTokens: 0, totalTokens: 0 },
-            workflow_step: selectedAgent.capabilities?.[0] || 'general',
+            workflow_step: selectedAgent?.capabilities?.[0] || 'general',
             metadata_model: {
-              name: selectedAgent.name || 'Unknown Agent',
-              display_name: selectedAgent.name || 'Unknown Agent',
-              description: selectedAgent.description || 'AI Assistant',
+              name: selectedAgent?.name || 'Unknown Agent',
+              display_name: selectedAgent?.name || 'Unknown Agent',
+              description: selectedAgent?.description || 'AI Assistant',
               image_url: null,
-              brain_id: selectedAgent.id || 'default',
-              brain_name: selectedAgent.name || 'Unknown Agent',
+              brain_id: selectedAgent?.id || 'default',
+              brain_name: selectedAgent?.name || 'Unknown Agent',
             },
           },
         };

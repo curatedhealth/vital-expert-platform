@@ -1,22 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
-// Create Supabase client with service role key for admin access
+// Create Supabase client with anon key for now
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-if (!supabaseUrl || !supabaseServiceKey) {
+if (!supabaseUrl || !supabaseAnonKey) {
   console.error('❌ Missing Supabase configuration');
 }
 
-// Create Supabase client with service role key for admin access
-const supabase = supabaseUrl && supabaseServiceKey 
-  ? createClient(supabaseUrl, supabaseServiceKey, {
-      auth: {
-        autoRefreshToken: false,
-        persistSession: false
-      }
-    })
+// Create Supabase client with anon key
+const supabase = supabaseUrl && supabaseAnonKey 
+  ? createClient(supabaseUrl, supabaseAnonKey)
   : null;
 
 export async function GET(request: NextRequest) {
@@ -24,7 +19,7 @@ export async function GET(request: NextRequest) {
     console.log('🔍 API: Fetching agents from Supabase...');
     console.log('🔍 API: Environment check:', {
       hasUrl: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
-      hasServiceKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
+      hasAnonKey: !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
       nodeEnv: process.env.NODE_ENV,
       vercelEnv: process.env.VERCEL_ENV
     });

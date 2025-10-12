@@ -23,10 +23,9 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { AgentsFilterProvider, useAgentsFilter } from '@/contexts/agents-filter-context';
-// import { DashboardSidebarWithSuspense } from '@/features/dashboard/components/dashboard-sidebar';
+import { DashboardSidebarWithSuspense } from '@/features/dashboard/components/dashboard-sidebar';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/supabase-auth-context';
-// import { AuthGuard } from '@/components/auth/auth-guard';
 
 function AppLayoutContent({
   children,
@@ -123,7 +122,7 @@ function AppLayoutContent({
       {/* Desktop Sidebar */}
       <div className="hidden border-r bg-muted/40 md:block">
         <div className="flex h-full max-h-screen flex-col gap-2">
-          {/* <DashboardSidebarWithSuspense
+          <DashboardSidebarWithSuspense
             className="flex-1"
             isCollapsed={isCollapsed}
             onToggleCollapse={() => setIsCollapsed(!isCollapsed)}
@@ -139,8 +138,7 @@ function AppLayoutContent({
             businessFunctions={businessFunctions}
             departments={departments}
             organizationalRoles={roles}
-          /> */}
-          <div className="p-4 text-center text-gray-500">Dashboard Sidebar - Coming Soon</div>
+          />
         </div>
       </div>
 

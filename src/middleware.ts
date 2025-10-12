@@ -4,10 +4,6 @@ import { NextResponse, type NextRequest } from 'next/server';
 export async function middleware(request: NextRequest) {
   const url = request.nextUrl.clone();
 
-  // TEMPORARILY DISABLED FOR TESTING - Skip all authentication checks
-  console.log('⚠️ MIDDLEWARE DISABLED FOR TESTING - All routes allowed');
-  return NextResponse.next();
-
   // Public routes that don't require authentication
   const publicRoutes = [
     '/',

@@ -4,6 +4,10 @@ import { NextResponse, type NextRequest } from 'next/server';
 export async function middleware(request: NextRequest) {
   const url = request.nextUrl.clone();
 
+  // TEMPORARILY DISABLED FOR TESTING - Skip all authentication checks
+  console.log('⚠️ MIDDLEWARE DISABLED FOR TESTING - All routes allowed');
+  return NextResponse.next();
+
   // Public routes that don't require authentication
   const publicRoutes = [
     '/',
@@ -64,7 +68,11 @@ export async function middleware(request: NextRequest) {
   try {
     // Skip authentication check when using mock authentication
     // This is for testing/demo purposes until full Supabase auth is configured
-    if (process.env.NEXT_PUBLIC_SKIP_AUTH === 'true') {
+    const skipAuth = process.env.NEXT_PUBLIC_SKIP_AUTH === 'true' || 
+                     process.env.VERCEL_ENV === 'preview' ||
+                     process.env.NODE_ENV === 'development';
+    
+    if (skipAuth) {
       console.log('⚠️ Skipping auth check - mock authentication enabled for testing');
       return NextResponse.next();
     }

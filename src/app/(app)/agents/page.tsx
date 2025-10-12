@@ -133,34 +133,59 @@ function AgentsPageContent() {
   const handleAddAgentToChat = async (agent: AgentsStoreAgent) => {
     try {
       // Import chat store to add agent to library
-      const { addAgentToLibrary } = useChatStore.getState();
+      const { addAgentToLibrary, addAgentToChatStore } = useChatStore.getState();
       
-      // Check if this is an admin agent that needs to be copied
-      if (!agent.is_user_copy) {
-        // Create user copy through the store
-        const userCopy = await createUserCopy(agent.id);
+      console.log('🔄 Adding original agent to chat:', agent.id, agent.display_name);
+      
+      // Add the ORIGINAL agent directly to chat library (no copying)
+      addAgentToLibrary(agent.id);
 
-        // Add the user copy to the chat store library
-        addAgentToLibrary(userCopy.id);
+      // Also add the original agent to chat store so it can be found by getLibraryAgents
+      // Transform to chat store format
+      const chatAgent = {
+        id: agent.id,
+        name: agent.display_name,
+        description: agent.description,
+        avatar: agent.avatar || '🤖',
+        businessFunction: agent.business_function || 'General',
+        category: `Tier ${agent.tier}`,
+        capabilities: agent.capabilities || [],
+        specialties: agent.specializations || [],
+        tier: `Tier ${agent.tier}`,
+        isActive: agent.status === 'active',
+        ragEnabled: agent.rag_enabled || true,
+        isCustom: false, // This is the original agent, not a custom copy
+        metadata: {}
+      };
+      
+      addAgentToChatStore(chatAgent);
 
-        // Show success message
-        alert(`✅ Agent "${userCopy.display_name}" added to your chat library!`);
+      // Show success message
+      alert(`✅ Agent "${agent.display_name}" added to your chat library!`);
 
-        // Navigate to chat page
-        router.push('/chat');
-      } else {
-        // This is already a user copy, add directly to library
-        addAgentToLibrary(agent.id);
-
-        // Show success message
-        alert(`✅ Agent "${agent.display_name}" added to your chat library!`);
-
-        // Navigate to chat page
-        router.push('/chat');
-      }
+      // Navigate to chat page
+      router.push('/chat');
     } catch (error) {
       console.error('Error adding agent to chat:', error);
       alert('❌ Failed to add agent to chat. Please try again.');
+    }
+  };
+
+  const handleDuplicateAgent = async (agent: AgentsStoreAgent) => {
+    try {
+      console.log('🔄 Duplicating agent:', agent.id, agent.display_name);
+      
+      // Create user copy through the store
+      const userCopy = await createUserCopy(agent.id);
+
+      // Show success message
+      alert(`✅ Agent "${userCopy.display_name}" duplicated successfully!`);
+
+      // Optionally navigate to edit the new agent
+      // router.push(`/agents/edit/${userCopy.id}`);
+    } catch (error) {
+      console.error('Error duplicating agent:', error);
+      alert('❌ Failed to duplicate agent. Please try again.');
     }
   };
 
@@ -194,6 +219,7 @@ function AgentsPageContent() {
           <AgentsBoard
             onAgentSelect={handleAgentSelect}
             onAddToChat={handleAddAgentToChat}
+            onDuplicateAgent={handleDuplicateAgent}
             showCreateButton={true}
             hiddenControls={false}
             searchQuery={searchQuery}
@@ -209,6 +235,7 @@ function AgentsPageContent() {
           <AgentsBoard
             onAgentSelect={handleAgentSelect}
             onAddToChat={handleAddAgentToChat}
+            onDuplicateAgent={handleDuplicateAgent}
             showCreateButton={true}
             hiddenControls={false}
             searchQuery={searchQuery}

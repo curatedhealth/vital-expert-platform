@@ -145,6 +145,7 @@ interface AgentFilters {
 interface AgentsBoardProps {
   onAgentSelect?: (agent: Agent) => void;
   onAddToChat?: (agent: Agent) => void;
+  onDuplicateAgent?: (agent: Agent) => void;
   showCreateButton?: boolean;
   hiddenControls?: boolean;
   // External state management for sidebar controls
@@ -159,6 +160,7 @@ interface AgentsBoardProps {
 export function AgentsBoard({
   onAgentSelect,
   onAddToChat,
+  onDuplicateAgent,
   showCreateButton = true,
   hiddenControls = false,
   // External props for sidebar control
@@ -237,13 +239,21 @@ export function AgentsBoard({
   };
 
   const handleDuplicateAgent = (agent: Agent) => {
-    const duplicatedAgent: Agent = {
-      ...agent,
-      id: `${agent.id}-copy-${Date.now()}`,
-      display_name: `${agent.display_name} (Copy)`,
-      is_custom: true,
-    };
-    createCustomAgent(duplicatedAgent);
+    if (onDuplicateAgent) {
+      onDuplicateAgent(agent);
+    } else {
+      // Fallback to local duplication if no prop provided
+      const duplicatedAgent: Agent = {
+        ...agent,
+        id: `${agent.id}-copy-${Date.now()}`,
+        display_name: `${agent.display_name} (Copy)`,
+        is_custom: true,
+        is_user_copy: true,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+      createCustomAgent(duplicatedAgent);
+    }
   };
 
   const handleEditAgent = (agent: Agent) => {

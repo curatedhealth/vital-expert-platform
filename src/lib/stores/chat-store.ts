@@ -767,16 +767,55 @@ const _useChatStore = create<ChatStore>()(
         set({ isLoadingAgents: true, error: null });
 
         try {
-          // const dbAgents = await agentService.getActiveAgents();
-          // const formattedAgents = dbAgents.map((agent) => agentService.convertToLegacyFormat(agent));
+          console.log('🔍 ChatStore: Loading agents from database...');
+          
+          // Use the API route to fetch agents
+          const response = await fetch('/api/agents-crud');
+          
+          if (!response.ok) {
+            throw new Error(`Failed to fetch agents: ${response.status} ${response.statusText}`);
+          }
+
+          const data = await response.json();
+          const dbAgents = data.agents || [];
+          
+          console.log(`✅ ChatStore: Loaded ${dbAgents.length} agents from database`);
+          
+          // Transform agents to match the expected format
+          const formattedAgents = dbAgents.map((agent: any) => ({
+            id: agent.id,
+            name: agent.display_name || agent.name,
+            description: agent.description || 'AI Health Agent',
+            avatar: agent.avatar || '🤖',
+            businessFunction: agent.business_function || agent.role || 'General',
+            category: `Tier ${agent.tier}`,
+            capabilities: agent.capabilities || [],
+            specialties: agent.specializations || [],
+            tier: `Tier ${agent.tier}`,
+            isActive: agent.status === 'active',
+            ragEnabled: agent.rag_enabled || true,
+            isCustom: false,
+            metadata: {
+              priority: agent.priority,
+              implementation_phase: agent.implementation_phase,
+              medical_specialty: agent.medical_specialty,
+              clinical_validation_status: agent.clinical_validation_status,
+              medical_accuracy_score: agent.medical_accuracy_score,
+              hipaa_compliant: agent.hipaa_compliant,
+              pharma_enabled: agent.pharma_enabled,
+              verify_enabled: agent.verify_enabled,
+              fda_samd_class: agent.fda_samd_class
+            }
+          }));
+
           set((state) => ({
-            agents: [], // Mock empty for now
+            agents: formattedAgents,
             // Don't auto-select first agent - keep current selection or null
             selectedAgent: state.selectedAgent || null,
             isLoadingAgents: false,
           }));
         } catch (error) {
-          console.error('Failed to load agents from database:', error);
+          console.error('❌ ChatStore: Failed to load agents from database:', error);
 
           // Don't fall back to default agents - just show empty state with error
           set({

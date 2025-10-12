@@ -56,7 +56,9 @@ export const __useAgentsStore = create<AgentsState>()(
 
           // Handle the response structure from agents-crud API
           const data = await response.json();
-          const agentsData = Array.isArray(data) ? data : data.agents || [];
+          const agentsData = data.agents || [];
+          
+          console.log(`✅ AgentsStore: Loaded ${agentsData.length} agents from database`);
 
           // Transform agents to match expected interface
           const transformedAgents = agentsData.map((agent: any) => ({

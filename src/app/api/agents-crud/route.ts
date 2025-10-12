@@ -41,7 +41,7 @@ export async function GET(request: NextRequest) {
 
     // Filter by status if not showing all
     if (!showAll) {
-      query = query.in('status', ['active', 'testing']);
+      query = query.in('status', ['active', 'testing', 'development']);
     }
 
     // Apply pagination if specified

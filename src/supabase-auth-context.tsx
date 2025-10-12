@@ -240,24 +240,6 @@ export function SupabaseAuthProvider({ children }: AuthProviderProps) {
         
         console.log('✅ Mock authentication successful for:', email);
         return;
-      }
-      
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: email.trim(),
-        password: password
-      });
-
-      if (error) {
-        console.error('Sign in error:', error);
-        throw new Error(error.message);
-      }
-
-      if (data.user) {
-        setUser(data.user);
-        setSession(data.session);
-        await fetchUserProfile(data.user.id);
-        console.log('✅ Successfully signed in:', data.user.email);
-      }
     } catch (error) {
       console.error('Sign in error:', error);
       const errorMessage = error instanceof Error ? error.message : 'Sign in failed';

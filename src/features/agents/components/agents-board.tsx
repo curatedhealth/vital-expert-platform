@@ -537,11 +537,6 @@ export function AgentsBoard({
                     <h4 className="font-semibold text-gray-900 text-sm truncate">
                       {agent.display_name || agent.name}
                     </h4>
-                    {agent.tier !== undefined && (
-                      <Badge variant="outline" className="text-xs mt-1">
-                        Tier {agent.tier}
-                      </Badge>
-                    )}
                   </div>
                 </div>
 
@@ -605,20 +600,6 @@ export function AgentsBoard({
                             {agent.display_name}
                           </h3>
                           <div className="flex items-center gap-1.5 mt-1">
-                            {agent.tier !== undefined && (
-                              <Badge
-                                variant="outline"
-                                className={cn(
-                                  "text-[10px] font-bold px-1.5 py-0 h-4",
-                                  agent.tier === 0 && "bg-gradient-to-r from-purple-100 to-pink-100 text-purple-900 border-purple-300",
-                                  agent.tier === 1 && "bg-blue-50 text-blue-700 border-blue-200",
-                                  agent.tier === 2 && "bg-green-50 text-green-700 border-green-200",
-                                  agent.tier === 3 && "bg-orange-50 text-orange-700 border-orange-200"
-                                )}
-                              >
-                                {agent.tier === 0 ? 'Core' : `T${agent.tier}`}
-                              </Badge>
-                            )}
                             {agent.status && (
                               <Badge
                                 className={cn(
@@ -771,7 +752,7 @@ export function AgentsBoard({
                         className="flex-1 h-8 text-xs bg-green-50 hover:bg-green-100 text-green-700 border-green-200"
                       >
                         <Heart className="h-3 w-3 mr-1" />
-                        Add to Library
+                        Library
                       </Button>
                       
                       {onAddToChat && (
@@ -786,7 +767,7 @@ export function AgentsBoard({
                           className="flex-1 h-8 text-xs bg-blue-50 hover:bg-blue-100 text-blue-700 border-blue-200"
                         >
                           <MessageSquare className="h-3 w-3 mr-1" />
-                          Add to Chat
+                          Chat
                         </Button>
                       )}
                     </div>

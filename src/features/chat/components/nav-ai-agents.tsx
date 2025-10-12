@@ -126,16 +126,11 @@ export function NavAiAgents({ onAgentStoreClick, onCreateAgentClick, onAgentSele
                         )}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
+                        <div className="mb-1">
                           <div className="text-sm font-semibold truncate text-gray-900">{agent.name}</div>
-                          {agent.tier && (
-                            <span className="px-2 py-0.5 text-xs bg-blue-100 text-blue-700 rounded-full font-medium">
-                              T{agent.tier}
-                            </span>
-                          )}
                         </div>
                         {agent.description && (
-                          <div className="text-xs text-gray-600 truncate mb-1 leading-relaxed">{agent.description}</div>
+                          <div className="text-xs text-gray-600 line-clamp-2 mb-1 leading-relaxed">{agent.description}</div>
                         )}
                         <div className="flex items-center gap-1 text-xs">
                           {agent.business_function && (
@@ -176,8 +171,7 @@ export function NavAiAgents({ onAgentStoreClick, onCreateAgentClick, onAgentSele
                           : "bg-blue-600 hover:bg-blue-700 text-white"
                       )}
                     >
-                      {isAlreadyAdded ? 'Added' : <UserPlus className="h-3 w-3 mr-1" />}
-                      {!isAlreadyAdded && 'Add'}
+                      {isAlreadyAdded ? 'Added' : <UserPlus className="h-4 w-4" />}
                     </Button>
                   </div>
                 );
@@ -240,16 +234,11 @@ export function NavAiAgents({ onAgentStoreClick, onCreateAgentClick, onAgentSele
                         
                         {!isCollapsed && (
                           <div className="flex-1 text-left min-w-0">
-                            <div className="flex items-center gap-2 mb-1">
-                              <div className="text-sm font-semibold truncate">{agent.name}</div>
-                              {agent.tier && (
-                                <span className="px-2 py-0.5 text-xs bg-blue-100 text-blue-700 rounded-full font-medium">
-                                  T{agent.tier}
-                                </span>
-                              )}
+                            <div className="mb-1">
+                              <div className="text-sm font-semibold truncate text-gray-900">{agent.name}</div>
                             </div>
                             {agent.description && (
-                              <div className="text-xs text-gray-600 truncate leading-relaxed">{agent.description}</div>
+                              <div className="text-xs text-gray-600 line-clamp-2 leading-relaxed">{agent.description}</div>
                             )}
                             {agent.business_function && (
                               <div className="mt-1">

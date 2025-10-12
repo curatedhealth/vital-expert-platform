@@ -182,8 +182,7 @@ function KnowledgePageContent() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {/* <KnowledgeUploader onUploadComplete={handleUploadComplete} /> */}
-            <div className="p-8 text-center text-gray-500">Knowledge Uploader - Coming Soon</div>
+            <KnowledgeUploader onUploadComplete={handleUploadComplete} />
           </CardContent>
         </Card>
       ) : activeTab === 'manage' ? (
@@ -519,12 +518,11 @@ function KnowledgePageContent() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {/* <KnowledgeViewer /> */}
-            <div className="p-8 text-center text-gray-500">Knowledge Viewer - Coming Soon</div>
+            <KnowledgeViewer />
           </CardContent>
         </Card>
       ) : (
-        <div className="p-8 text-center text-gray-500">Knowledge Analytics Dashboard - Coming Soon</div>
+        <KnowledgeAnalyticsDashboard />
       )}
     </div>
   );

@@ -231,25 +231,23 @@ export function PanelInterface({
         ) : (
           /* Chat Messages */
           <div className="flex-1 overflow-hidden">
-            {/* <ChatMessages
+            <ChatMessages
               messages={(panel as any).messages}
-            /> */}
-            <div className="p-8 text-center text-gray-500">Chat Messages - Coming Soon</div>
+            />
           </div>
         )}
 
         {/* Chat Input */}
         <div className="border-t bg-background p-4">
           <div className="max-w-4xl mx-auto">
-            {/* <EnhancedChatInput
+            <EnhancedChatInput
               value={message}
               onChange={setMessage}
               onSendMessage={handleSendMessage}
               isLoading={isLoading}
               placeholder="Ask your advisory panel for expert insights..."
               showModelSelector={false}
-            /> */}
-            <div className="p-4 text-center text-gray-500">Enhanced Chat Input - Coming Soon</div>
+            />
             <div className="flex items-center justify-between mt-2 text-xs text-muted-foreground">
               <div className="flex items-center gap-4">
                 <span className="flex items-center gap-1">

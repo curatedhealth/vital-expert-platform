@@ -12,10 +12,9 @@ export default function KnowledgeUploadPage() {
         </p>
       </div>
 
-      {/* <KnowledgeUploader onUploadComplete={() => {
+      <KnowledgeUploader onUploadComplete={() => {
         // Optional: Add success message or redirect
-      }} /> */}
-      <div className="p-8 text-center text-gray-500">Knowledge Uploader - Coming Soon</div>
+      }} />
     </div>
   );
 }

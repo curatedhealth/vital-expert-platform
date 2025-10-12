@@ -15,8 +15,7 @@ export default function KnowledgeAnalyticsPage() {
         </p>
       </div>
 
-      {/* <KnowledgeAnalyticsDashboard /> */}
-      <div className="p-8 text-center text-gray-500">Knowledge Analytics Dashboard - Coming Soon</div>
+      <KnowledgeAnalyticsDashboard />
     </div>
   );
 }

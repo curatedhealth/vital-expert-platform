@@ -77,7 +77,8 @@ export async function POST(request: NextRequest) {
                 fullContent += content;
                 controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify({
                   type: 'content',
-                  content: content
+                  content: content,
+                  fullContent: fullContent
                 })}\n\n`));
               }
             }
@@ -170,7 +171,8 @@ export async function POST(request: NextRequest) {
               fullContent += content;
               controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify({
                 type: 'content',
-                content: content
+                content: content,
+                fullContent: fullContent
               })}\n\n`));
             }
           }

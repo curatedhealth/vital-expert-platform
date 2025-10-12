@@ -252,12 +252,11 @@ function AgentsPageContent() {
         </TabsList>
 
         <TabsContent value="overview" className="mt-6">
-          {/* <AgentsOverview /> */}
-          <div className="p-8 text-center text-gray-500">Agents Overview - Coming Soon</div>
+          <AgentsOverview />
         </TabsContent>
 
         <TabsContent value="grid" className="mt-6">
-          {/* <AgentsBoard
+          <AgentsBoard
             onAgentSelect={handleAgentSelect}
             onAddToChat={handleAddAgentToChat}
             showCreateButton={true}
@@ -268,12 +267,11 @@ function AgentsPageContent() {
             onFilterChange={setFilters}
             viewMode="grid"
             onViewModeChange={setViewMode}
-          /> */}
-          <div className="p-8 text-center text-gray-500">Agents Board - Coming Soon</div>
+          />
         </TabsContent>
 
         <TabsContent value="list" className="mt-6">
-          {/* <AgentsBoard
+          <AgentsBoard
             onAgentSelect={handleAgentSelect}
             onAddToChat={handleAddAgentToChat}
             showCreateButton={true}
@@ -284,28 +282,26 @@ function AgentsPageContent() {
             onFilterChange={setFilters}
             viewMode="list"
             onViewModeChange={setViewMode}
-          /> */}
-          <div className="p-8 text-center text-gray-500">Agents List - Coming Soon</div>
+          />
         </TabsContent>
 
         <TabsContent value="table" className="mt-6">
-          {/* <AgentsTable
+          <AgentsTable
             onAgentSelect={handleAgentSelect}
             onAddToChat={handleAddAgentToChat}
-          /> */}
-          <div className="p-8 text-center text-gray-500">Agents Table - Coming Soon</div>
+          />
         </TabsContent>
       </Tabs>
 
-      {/* {selectedAgent && (
+      {selectedAgent && (
         <AgentDetailsModal
           agent={selectedAgent}
           onClose={() => setSelectedAgent(null)}
           onEdit={handleEditAgent}
         />
-      )} */}
+      )}
 
-      {/* {showCreateModal && (
+      {showCreateModal && (
         <AgentCreator
           isOpen={showCreateModal}
           onClose={() => {
@@ -322,7 +318,7 @@ function AgentsPageContent() {
           }}
           editingAgent={editingAgent as any}
         />
-      )} */}
+      )}
     </div>
   );
 }

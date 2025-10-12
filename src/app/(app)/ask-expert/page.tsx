@@ -68,20 +68,55 @@ export default function AskExpertPage() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    console.log('🔄 Loading agents on mount...');
     loadAgents();
   }, [loadAgents]);
+
+  useEffect(() => {
+    console.log('📊 Agents state changed:', {
+      agentsCount: agents.length,
+      firstAgent: agents[0] ? { id: agents[0].id, name: agents[0].display_name || agents[0].name } : null
+    });
+  }, [agents]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [state.messages]);
 
   const handleAgentSelect = (agentId: string) => {
+    console.log('🎯 Agent selection:', {
+      agentId,
+      agentsCount: agents.length,
+      availableAgents: agents.slice(0, 3).map(a => ({ id: a.id, name: a.name }))
+    });
     const agent = agents.find(a => a.id === agentId);
+    console.log('🎯 Selected agent:', agent ? { id: agent.id, name: agent.name } : 'NOT FOUND');
     setState(prev => ({ ...prev, selectedAgent: agent || null }));
   };
 
   const handleSendMessage = async () => {
-    if (!state.input.trim() || !state.selectedAgent || state.isLoading) return;
+    console.log('📤 Send message check:', {
+      hasInput: !!state.input.trim(),
+      hasSelectedAgent: !!state.selectedAgent,
+      isLoading: state.isLoading,
+      selectedAgent: state.selectedAgent ? { id: state.selectedAgent.id, name: state.selectedAgent.name } : null
+    });
+    
+    if (!state.input.trim()) {
+      console.warn('❌ No input provided');
+      return;
+    }
+    
+    if (!state.selectedAgent) {
+      console.warn('❌ No agent selected');
+      alert('Please select an agent first');
+      return;
+    }
+    
+    if (state.isLoading) {
+      console.warn('❌ Already loading');
+      return;
+    }
 
     const userMessage: Message = {
       id: `msg-${Date.now()}`,
@@ -108,7 +143,17 @@ export default function AskExpertPage() {
         },
         body: JSON.stringify({
           message: state.input,
-          agent: state.selectedAgent,
+          agent: {
+            id: state.selectedAgent.id,
+            display_name: state.selectedAgent.display_name || state.selectedAgent.name,
+            business_function: state.selectedAgent.business_function || 'General',
+            system_prompt: state.selectedAgent.system_prompt || '',
+            model: state.selectedAgent.model || 'gpt-4',
+            temperature: state.selectedAgent.temperature || 0.7,
+            max_tokens: state.selectedAgent.max_tokens || 2000,
+            capabilities: state.selectedAgent.capabilities || [],
+            specializations: state.selectedAgent.knowledge_domains || []
+          },
           userId: user?.id || 'anonymous',
           sessionId: state.sessionId,
           chatHistory: state.messages.map(msg => ({
@@ -289,9 +334,9 @@ export default function AskExpertPage() {
                   <div className="flex items-center space-x-2">
                     <Avatar className="h-6 w-6">
                       <AvatarImage src={agent.avatar} />
-                      <AvatarFallback>{agent.name[0]}</AvatarFallback>
+                      <AvatarFallback>{(agent.display_name || agent.name)[0]}</AvatarFallback>
                     </Avatar>
-                    <span>{agent.name}</span>
+                    <span>{agent.display_name || agent.name}</span>
                   </div>
                 </SelectItem>
               ))}
@@ -305,13 +350,13 @@ export default function AskExpertPage() {
             <div className="flex items-center space-x-3">
               <Avatar className="h-12 w-12">
                 <AvatarImage src={state.selectedAgent.avatar} />
-                <AvatarFallback>{state.selectedAgent.name[0]}</AvatarFallback>
+                <AvatarFallback>{(state.selectedAgent.display_name || state.selectedAgent.name)[0]}</AvatarFallback>
               </Avatar>
               <div>
-                <h4 className="font-medium">{state.selectedAgent.name}</h4>
+                <h4 className="font-medium">{state.selectedAgent.display_name || state.selectedAgent.name}</h4>
                 <p className="text-sm text-gray-600">{state.selectedAgent.description}</p>
                 <div className="flex flex-wrap gap-1 mt-2">
-                  {state.selectedAgent.capabilities?.slice(0, 3).map((cap) => (
+                  {(state.selectedAgent.capabilities || [])?.slice(0, 3).map((cap) => (
                     <Badge key={cap} variant="secondary" className="text-xs">
                       {cap}
                     </Badge>
@@ -421,7 +466,7 @@ export default function AskExpertPage() {
                     {message.role === 'assistant' && (
                       <Avatar className="h-8 w-8 mt-1">
                         <AvatarImage src={state.selectedAgent?.avatar} />
-                        <AvatarFallback>{state.selectedAgent?.name[0]}</AvatarFallback>
+                        <AvatarFallback>{(state.selectedAgent?.display_name || state.selectedAgent?.name)?.[0]}</AvatarFallback>
                       </Avatar>
                     )}
                     <div className="flex-1">

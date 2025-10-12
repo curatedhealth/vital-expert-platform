@@ -9,8 +9,14 @@ if (!supabaseUrl || !supabaseServiceKey) {
   console.error('❌ Missing Supabase configuration');
 }
 
+// Create Supabase client with service role key for admin access
 const supabase = supabaseUrl && supabaseServiceKey 
-  ? createClient(supabaseUrl, supabaseServiceKey)
+  ? createClient(supabaseUrl, supabaseServiceKey, {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false
+      }
+    })
   : null;
 
 export async function GET(request: NextRequest) {

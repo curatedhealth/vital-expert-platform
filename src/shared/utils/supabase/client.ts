@@ -1,2 +1,2 @@
 // Re-export from the main supabase client
-export * from '../../../../lib/supabase/client';
+export * from '../../../lib/supabase/client';

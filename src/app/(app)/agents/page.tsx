@@ -12,7 +12,7 @@ import { AgentsOverview } from '@/features/agents/components/agents-overview';
 import { AgentsTable } from '@/features/agents/components/agents-table';
 import { AgentCreator } from '@/features/chat/components/agent-creator';
 import { type Agent as AgentsStoreAgent, useAgentsStore } from '@/lib/stores/agents-store';
-import { type Agent } from '@/lib/stores/chat-store';
+import { type Agent, useChatStore } from '@/lib/stores/chat-store';
 import { useAuth } from '@/supabase-auth-context';
 
 function AgentsPageContent() {
@@ -132,106 +132,35 @@ function AgentsPageContent() {
 
   const handleAddAgentToChat = async (agent: AgentsStoreAgent) => {
     try {
+      // Import chat store to add agent to library
+      const { addAgentToLibrary } = useChatStore.getState();
+      
       // Check if this is an admin agent that needs to be copied
       if (!agent.is_user_copy) {
         // Create user copy through the store
         const userCopy = await createUserCopy(agent.id);
 
-        // Convert to chat store format
-        const chatAgent: Agent = {
-          id: userCopy.id,
-          name: userCopy.display_name,
-          description: userCopy.description,
-          systemPrompt: userCopy.system_prompt,
-          model: userCopy.model,
-          avatar: userCopy.avatar,
-          color: userCopy.color,
-          capabilities: userCopy.capabilities,
-          ragEnabled: userCopy.rag_enabled,
-          temperature: userCopy.temperature,
-          maxTokens: userCopy.max_tokens,
-          isCustom: userCopy.is_custom,
-          knowledgeDomains: userCopy.knowledge_domains,
-          businessFunction: userCopy.business_function || undefined,
-          department: userCopy.department || undefined,
-          organizationalRole: (userCopy as any).organizational_role || (userCopy as any).role || undefined,
-          tier: userCopy.tier || undefined,
-          role: (userCopy as any).role || undefined,
-        };
+        // Add the user copy to the chat store library
+        addAgentToLibrary(userCopy.id);
 
-        // Get existing user agents from localStorage
-        const existingAgents = localStorage.getItem('user-chat-agents');
-        const userAgents = existingAgents ? JSON.parse(existingAgents) : [];
-
-        // Check if agent is already added (by original agent id)
-        const isAlreadyAdded = userAgents.some((ua: any) => ua.original_agent_id === agent.id);
-
-        if (!isAlreadyAdded) {
-          // Add user copy to localStorage
-          const newUserAgents = [...userAgents, chatAgent];
-          localStorage.setItem('user-chat-agents', JSON.stringify(newUserAgents));
-        } else { /* TODO: implement */ }
+        // Show success message
+        alert(`✅ Agent "${userCopy.display_name}" added to your chat library!`);
 
         // Navigate to chat page
         router.push('/chat');
       } else {
-        // This is already a user copy, convert to chat format
-        const chatAgent: Agent = {
-          id: agent.id,
-          name: agent.display_name,
-          description: agent.description,
-          systemPrompt: agent.system_prompt,
-          model: agent.model,
-          avatar: agent.avatar || '🤖',
-          color: agent.color,
-          capabilities: agent.capabilities,
-          ragEnabled: agent.rag_enabled,
-          temperature: agent.temperature,
-          maxTokens: agent.max_tokens,
-          isCustom: agent.is_custom,
-          knowledgeDomains: agent.knowledge_domains,
-          businessFunction: agent.business_function || undefined,
-          department: agent.department || undefined,
-          organizationalRole: (agent as any).organizational_role || (agent as any).role || undefined,
-          tier: agent.tier || undefined,
-          role: (agent as any).role || undefined,
-        };
+        // This is already a user copy, add directly to library
+        addAgentToLibrary(agent.id);
 
-        // Get existing user agents from localStorage
-        const existingAgents = localStorage.getItem('user-chat-agents');
-        const userAgents = existingAgents ? JSON.parse(existingAgents) : [];
-
-        // Check if agent is already added
-        const isAlreadyAdded = userAgents.some((ua: any) => ua.id === agent.id);
-
-        if (!isAlreadyAdded) {
-          // Add existing user copy to localStorage
-          const newUserAgents = [...userAgents, chatAgent];
-          localStorage.setItem('user-chat-agents', JSON.stringify(newUserAgents));
-        }
+        // Show success message
+        alert(`✅ Agent "${agent.display_name}" added to your chat library!`);
 
         // Navigate to chat page
         router.push('/chat');
       }
     } catch (error) {
-      console.error('Failed to add agent to chat:', error);
-      // Fallback to old behavior if copy fails
-      const chatAgent = {
-        id: agent.id,
-        name: agent.display_name,
-        avatar: agent.avatar || '🤖'
-      };
-
-      const existingAgents = localStorage.getItem('user-chat-agents');
-      const userAgents = existingAgents ? JSON.parse(existingAgents) : [];
-      const isAlreadyAdded = userAgents.some((ua: any) => ua.id === agent.id);
-
-      if (!isAlreadyAdded) {
-        const newUserAgents = [...userAgents, chatAgent];
-        localStorage.setItem('user-chat-agents', JSON.stringify(newUserAgents));
-      }
-
-      router.push('/chat');
+      console.error('Error adding agent to chat:', error);
+      alert('❌ Failed to add agent to chat. Please try again.');
     }
   };
 

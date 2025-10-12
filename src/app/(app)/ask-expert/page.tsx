@@ -160,15 +160,8 @@ export default function AskExpertPage() {
             try {
               const data = JSON.parse(line.slice(6));
               
-              if (data.type === 'workflow_step') {
-                setState(prev => ({
-                  ...prev,
-                  currentStep: data.step,
-                  workflowSteps: [...prev.workflowSteps, data],
-                  progress: Math.min(prev.progress + 10, 90),
-                }));
-              } else if (data.type === 'output') {
-                fullContent += data.content;
+              if (data.type === 'content') {
+                fullContent = data.fullContent;
                 setState(prev => ({
                   ...prev,
                   messages: prev.messages.map(msg =>
@@ -178,20 +171,27 @@ export default function AskExpertPage() {
                   ),
                 }));
               } else if (data.type === 'metadata') {
-                metadata = data.data;
+                metadata = data.metadata;
                 setState(prev => ({
                   ...prev,
                   messages: prev.messages.map(msg =>
                     msg.id === assistantMessage.id
-                      ? { ...msg, metadata: data.data }
+                      ? { ...msg, metadata: data.metadata }
                       : msg
                   ),
-                }));
-              } else if (data.type === 'done') {
-                setState(prev => ({
-                  ...prev,
                   progress: 100,
                   currentStep: 'Complete',
+                }));
+              } else if (data.type === 'error') {
+                setState(prev => ({
+                  ...prev,
+                  messages: prev.messages.map(msg =>
+                    msg.id === assistantMessage.id
+                      ? { ...msg, content: 'Sorry, I encountered an error. Please try again.' }
+                      : msg
+                  ),
+                  progress: 100,
+                  currentStep: 'Error',
                 }));
               }
             } catch (e) {

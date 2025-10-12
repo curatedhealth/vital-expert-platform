@@ -66,6 +66,24 @@ export interface ChatMessage {
   };
 }
 
+export interface EscalationEvent {
+  id: string;
+  fromTier: 1 | 2 | 3 | 'human';
+  toTier: 1 | 2 | 3 | 'human';
+  reason: string;
+  timestamp: Date;
+  confidence: number;
+  cost: number;
+}
+
+export interface TierMetrics {
+  tier1Calls: number;
+  tier2Escalations: number;
+  tier3Escalations: number;
+  totalCost: number;
+  averageResponseTime: number;
+}
+
 export interface Chat {
   id: string;
   title: string;
@@ -101,10 +119,11 @@ export interface ChatStore {
   abortController: AbortController | null;
 
   // Dual-Mode State
-  interactionMode: 'automatic' | 'manual'; // Agent selection mode
+  interactionMode: 'automatic' | 'manual' | 'autonomous'; // Agent selection mode
   autonomousMode: boolean; // Chat mode: normal (false) vs autonomous with tools (true)
   currentTier: 1 | 2 | 3 | 'human';
-  escalationHistory: unknown[];
+  escalationHistory: EscalationEvent[];
+  tierMetrics: TierMetrics;
   selectedExpert: Agent | null;
   conversationContext: {
     sessionId: string;
@@ -124,6 +143,12 @@ export interface ChatStore {
   createCustomAgent: (agent: Omit<Agent, 'id' | 'isCustom'>) => void;
   updateAgent: (agentId: string, updates: Partial<Agent>) => void;
   deleteAgent: (agentId: string) => void;
+  
+  // Orchestration Actions
+  escalateToTier: (tier: 1 | 2 | 3 | 'human', reason: string) => void;
+  recordEscalation: (from: 1 | 2 | 3 | 'human', to: 1 | 2 | 3 | 'human', reason: string, confidence: number, cost: number) => void;
+  resetTierMetrics: () => void;
+  setInteractionMode: (mode: 'automatic' | 'manual' | 'autonomous') => void;
   clearError: () => void;
   regenerateResponse: (messageId: string) => Promise<void>;
   editMessage: (messageId: string, newContent: string) => void;
@@ -698,6 +723,64 @@ const _useChatStore = create<ChatStore>()(
 
       clearError: () => {
         set({ error: null });
+      },
+
+      // Orchestration Actions
+      escalateToTier: (tier: 1 | 2 | 3 | 'human', reason: string) => {
+        const { currentTier, escalationHistory } = get();
+        const escalation: EscalationEvent = {
+          id: `escalation-${Date.now()}`,
+          fromTier: currentTier || 1,
+          toTier: tier,
+          reason,
+          timestamp: new Date(),
+          confidence: 0.8, // Default confidence
+          cost: 0 // Will be calculated based on tier
+        };
+        
+        set((state) => ({
+          currentTier: tier,
+          escalationHistory: [...state.escalationHistory, escalation]
+        }));
+      },
+
+      recordEscalation: (from: 1 | 2 | 3 | 'human', to: 1 | 2 | 3 | 'human', reason: string, confidence: number, cost: number) => {
+        const escalation: EscalationEvent = {
+          id: `escalation-${Date.now()}`,
+          fromTier: from,
+          toTier: to,
+          reason,
+          timestamp: new Date(),
+          confidence,
+          cost
+        };
+        
+        set((state) => ({
+          escalationHistory: [...state.escalationHistory, escalation],
+          tierMetrics: {
+            ...state.tierMetrics,
+            totalCost: state.tierMetrics.totalCost + cost,
+            tier2Escalations: to === 2 ? state.tierMetrics.tier2Escalations + 1 : state.tierMetrics.tier2Escalations,
+            tier3Escalations: to === 3 ? state.tierMetrics.tier3Escalations + 1 : state.tierMetrics.tier3Escalations
+          }
+        }));
+      },
+
+      resetTierMetrics: () => {
+        set({
+          tierMetrics: {
+            tier1Calls: 0,
+            tier2Escalations: 0,
+            tier3Escalations: 0,
+            totalCost: 0,
+            averageResponseTime: 0
+          },
+          escalationHistory: []
+        });
+      },
+
+      setInteractionMode: (mode: 'automatic' | 'manual' | 'autonomous') => {
+        set({ interactionMode: mode });
       },
 
       regenerateResponse: async (messageId: string) => {

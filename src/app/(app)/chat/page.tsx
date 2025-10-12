@@ -130,15 +130,15 @@ function ChatPageContent() {
     await sendMessage(message);
   };
 
-  // Safe wrapper for getLibraryAgents
-  const safeGetLibraryAgents = () => {
+  // Safe wrapper for getLibraryAgents with dependency on agents
+  const safeGetLibraryAgents = useMemo(() => {
     try {
       return getLibraryAgents ? getLibraryAgents() : [];
     } catch (error) {
       console.error('Error getting library agents:', error);
       return [];
     }
-  };
+  }, [agents, libraryAgents, getLibraryAgents]);
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -235,7 +235,7 @@ function ChatPageContent() {
           onAgentRemove={handleAgentRemove}
           onAddAgentToLibrary={handleAddAgentToLibrary}
           selectedAgentId={selectedAgent?.id}
-            agents={mounted ? safeGetLibraryAgents() : []}
+            agents={mounted ? safeGetLibraryAgents : []}
           allAgents={mounted ? agents : []}
           formatDate={formatDate}
           isCollapsed={isCollapsed}

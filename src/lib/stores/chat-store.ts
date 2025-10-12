@@ -906,9 +906,14 @@ const _useChatStore = create<ChatStore>()(
 
       // Add agent to user's library
       addAgentToLibrary: (agentId: string) => {
-        set((state) => ({
-          libraryAgents: [...state.libraryAgents, agentId]
-        }));
+        console.log('➕ Adding agent to library:', agentId);
+        set((state) => {
+          const newLibraryAgents = [...state.libraryAgents, agentId];
+          console.log('📝 Updated libraryAgents:', newLibraryAgents);
+          return {
+            libraryAgents: newLibraryAgents
+          };
+        });
       },
 
       // Remove agent from user's library
@@ -921,7 +926,14 @@ const _useChatStore = create<ChatStore>()(
       // Get agents in user's library
       getLibraryAgents: () => {
         const { agents, libraryAgents } = get();
-        return agents.filter(agent => libraryAgents.includes(agent.id));
+        console.log('🔍 getLibraryAgents called:', {
+          agentsCount: agents.length,
+          libraryAgentsCount: libraryAgents.length,
+          libraryAgents: libraryAgents
+        });
+        const filteredAgents = agents.filter(agent => libraryAgents.includes(agent.id));
+        console.log('📚 Filtered library agents:', filteredAgents.length);
+        return filteredAgents;
       },
     }),
     {

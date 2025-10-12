@@ -1,5 +1,8 @@
 'use client';
 
+// Prevent pre-rendering for client-side only page
+export const dynamic = 'force-dynamic';
+
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -19,7 +22,21 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const router = useRouter();
-  const { user, loading, signIn, clearError } = useAuth();
+  // Handle case where AuthProvider might not be available during build
+  let user, loading, signIn, clearError;
+  try {
+    const auth = useAuth();
+    user = auth.user;
+    loading = auth.loading;
+    signIn = auth.signIn;
+    clearError = auth.clearError;
+  } catch (error) {
+    // Fallback for build time when AuthProvider is not available
+    user = null;
+    loading = false;
+    signIn = async () => {};
+    clearError = () => {};
+  }
 
   // Redirect if already authenticated
   useEffect(() => {

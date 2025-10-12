@@ -1,6 +1,9 @@
 import { UserManagementService } from '@/services/user-management.service';
 import UserManagementViewer from './components/UserManagementViewer';
 
+
+// Prevent pre-rendering for admin pages
+export const dynamic = 'force-dynamic';
 export default async function UsersPage() {
   
   const userService = new UserManagementService();

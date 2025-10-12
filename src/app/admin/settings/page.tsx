@@ -1,6 +1,9 @@
 import { SystemSettingsService } from '@/services/system-settings.service';
 import SettingsDashboard from './components/SettingsDashboard';
 
+
+// Prevent pre-rendering for admin pages
+export const dynamic = 'force-dynamic';
 export default async function SettingsPage() {
 
   const systemSettingsService = new SystemSettingsService();

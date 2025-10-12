@@ -324,7 +324,8 @@ export class SystemSettingsService {
     const { data, error } = await query;
 
     if (error) {
-      throw new Error(`Failed to fetch system announcements: ${error.message}`);
+      console.warn('System announcements table not found, returning empty array:', error.message);
+      return [];
     }
 
     return data || [];

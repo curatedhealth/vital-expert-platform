@@ -1,5 +1,8 @@
 'use client';
 
+// Prevent pre-rendering for client-side only page
+export const dynamic = 'force-dynamic';
+
 // import { KnowledgeAnalyticsDashboard } from '@/features/knowledge/components/knowledge-analytics-dashboard';
 
 export default function KnowledgeAnalyticsPage() {

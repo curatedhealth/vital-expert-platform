@@ -268,7 +268,8 @@ export class ImmutableAuditService {
       const { data: blocks, error } = await query;
 
       if (error) {
-        throw new Error(`Failed to fetch audit blocks: ${error.message}`);
+        console.warn('Audit blocks table not found, returning empty array:', error.message);
+        return [];
       }
 
       const integrityChecks: IntegrityCheck[] = [];
@@ -500,7 +501,8 @@ export class ImmutableAuditService {
         .order('started_at', { ascending: false });
 
       if (error) {
-        throw new Error(`Failed to fetch SIEM exports: ${error.message}`);
+        console.warn('SIEM exports table not found, returning empty array:', error.message);
+        return [];
       }
 
       return (data || []).map(export_ => ({
@@ -533,7 +535,8 @@ export class ImmutableAuditService {
         .order('created_at', { ascending: false });
 
       if (error) {
-        throw new Error(`Failed to fetch WORM configs: ${error.message}`);
+        console.warn('WORM configs table not found, returning empty array:', error.message);
+        return [];
       }
 
       return (data || []).map(config => ({

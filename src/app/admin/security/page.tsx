@@ -1,5 +1,8 @@
 import { SecurityDashboard } from './components/SecurityDashboard';
 
+
+// Prevent pre-rendering for admin pages
+export const dynamic = 'force-dynamic';
 export default async function SecurityPage() {
 
   return (

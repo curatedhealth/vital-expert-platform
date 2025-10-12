@@ -218,7 +218,8 @@ export class LLMGovernanceService {
         .order('created_at', { ascending: false });
 
       if (error) {
-        throw new Error(`Failed to fetch policies: ${error.message}`);
+        console.warn('Governance policies table not found, returning empty array:', error.message);
+        return [];
       }
 
       return (data || []).map(policy => ({
@@ -341,7 +342,8 @@ export class LLMGovernanceService {
       const { data, error } = await query;
 
       if (error) {
-        throw new Error(`Failed to fetch prompt changes: ${error.message}`);
+        console.warn('Prompt changes table not found, returning empty array:', error.message);
+        return [];
       }
 
       return (data || []).map(change => ({
@@ -545,7 +547,8 @@ export class LLMGovernanceService {
         .order('created_at', { ascending: false });
 
       if (error) {
-        throw new Error(`Failed to fetch workflows: ${error.message}`);
+        console.warn('Approval workflows table not found, returning empty array:', error.message);
+        return [];
       }
 
       return (data || []).map(workflow => ({

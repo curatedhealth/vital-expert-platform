@@ -2,6 +2,9 @@ import { ImmutableAuditService } from '@/services/immutable-audit.service';
 
 import ImmutableAuditDashboard from './components/ImmutableAuditDashboard';
 
+
+// Prevent pre-rendering for admin pages
+export const dynamic = 'force-dynamic';
 export default async function ImmutableAuditPage() {
   
   const auditService = new ImmutableAuditService();

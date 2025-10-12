@@ -2,6 +2,9 @@ import { HealthMonitoringService } from '@/services/health-monitoring.service';
 
 import HealthDashboard from './components/HealthDashboard';
 
+
+// Prevent pre-rendering for admin pages
+export const dynamic = 'force-dynamic';
 export default async function HealthPage() {
   
   const healthService = new HealthMonitoringService();

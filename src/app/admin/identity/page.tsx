@@ -1,6 +1,9 @@
 import { IdentityHardeningService } from '@/services/identity-hardening.service';
 import IdentityDashboard from './components/IdentityDashboard';
 
+
+// Prevent pre-rendering for admin pages
+export const dynamic = 'force-dynamic';
 export default async function IdentityPage() {
   
   const identityService = new IdentityHardeningService();

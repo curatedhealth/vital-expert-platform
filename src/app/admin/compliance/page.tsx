@@ -2,7 +2,12 @@ import { ComplianceReportingService } from '@/services/compliance-reporting.serv
 
 import ComplianceDashboard from './components/ComplianceDashboard';
 
+
+// Prevent pre-rendering for admin pages
+export const dynamic = 'force-dynamic';
 export default async function CompliancePage() {
+  // Mock super admin status - in production this would come from auth context
+  const isSuperAdmin = true;
   
   const complianceService = new ComplianceReportingService();
   

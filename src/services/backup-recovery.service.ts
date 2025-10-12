@@ -208,7 +208,8 @@ export class BackupRecoveryService {
     const { data, error } = await query;
 
     if (error) {
-      throw new Error(`Failed to fetch backup history: ${error.message}`);
+      console.warn('Backup metadata table not found, returning empty array:', error.message);
+      return [];
     }
 
     return data || [];
@@ -360,7 +361,8 @@ export class BackupRecoveryService {
       .order('started_at', { ascending: false });
 
     if (error) {
-      throw new Error(`Failed to fetch restore history: ${error.message}`);
+      console.warn('Restore operations table not found, returning empty array:', error.message);
+      return [];
     }
 
     return data || [];

@@ -44,18 +44,6 @@ const adminNavItems = [
     icon: Settings,
     description: 'LLM provider administration'
   },
-  {
-    title: 'RBAC Testing',
-    href: '/admin/rbac-test',
-    icon: TestTube,
-    description: 'Test RBAC permissions and roles'
-  },
-  {
-    title: 'User Switcher',
-    href: '/admin/dev-user-switcher',
-    icon: User,
-    description: 'Switch between different user roles (Dev only)'
-  }
 ];
 
 interface AdminNavProps {

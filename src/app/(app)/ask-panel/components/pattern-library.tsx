@@ -399,7 +399,7 @@ export default function PatternLibrary() {
                   <Input
                     placeholder="Describe how this pattern works..."
                     value={newPattern.description}
-                    onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setNewPattern(prev => ({ ...prev, description: e.target.value }))}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewPattern(prev => ({ ...prev, description: e.target.value }))}
                   />
                 </div>
               </div>

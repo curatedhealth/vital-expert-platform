@@ -1,5 +1,8 @@
 'use client';
 
+// Prevent pre-rendering for client-side only page
+export const dynamic = 'force-dynamic';
+
 import { Users, Star, ArrowRight, Send, Loader2, MessageSquare, Settings2 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';

@@ -1,3 +1,6 @@
+// Prevent pre-rendering for admin pages
+export const dynamic = 'force-dynamic';
+
 import { 
   FileText, 
   Users, 

@@ -231,12 +231,6 @@ export default function TestPreProductionPage() {
             <Button variant="outline" asChild>
               <a href="/admin">Admin Dashboard</a>
             </Button>
-            <Button variant="outline" asChild>
-              <a href="/admin/rbac-test">RBAC Testing</a>
-            </Button>
-            <Button variant="outline" asChild>
-              <a href="/admin/dev-user-switcher">User Switcher</a>
-            </Button>
           </CardContent>
         </Card>
       </div>

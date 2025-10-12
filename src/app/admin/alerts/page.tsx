@@ -1,5 +1,8 @@
 import { AlertDashboard } from './components/AlertDashboard';
 
+
+// Prevent pre-rendering for admin pages
+export const dynamic = 'force-dynamic';
 export default async function AlertsPage() {
   return (
     <div className="container mx-auto py-6">

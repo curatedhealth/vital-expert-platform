@@ -157,7 +157,7 @@ export function PanelBuilder({
                 <label className="text-sm font-medium mb-2 block">Description</label>
                 <Textarea
                   value={panelDescription}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPanelDescription(e.target.value)}
+                  onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setPanelDescription(e.target.value)}
                   placeholder="Describe the purpose and scope of this advisory panel..."
                   className="min-h-[80px]"
                 />

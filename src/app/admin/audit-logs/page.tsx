@@ -2,6 +2,9 @@ import { AuditService } from '@/services/audit.service';
 
 import AuditLogViewer from './components/AuditLogViewer';
 
+
+// Prevent pre-rendering for admin pages
+export const dynamic = 'force-dynamic';
 export default async function AuditLogsPage() {
   
   const auditService = new AuditService();

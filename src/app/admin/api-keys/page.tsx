@@ -2,6 +2,9 @@ import { ApiKeyManagementService } from '@/services/api-key-management.service';
 
 import ApiKeyManagementViewer from './components/ApiKeyManagementViewer';
 
+
+// Prevent pre-rendering for admin pages
+export const dynamic = 'force-dynamic';
 export default async function ApiKeysPage() {
   
   const apiKeyService = new ApiKeyManagementService();

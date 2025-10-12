@@ -2,7 +2,12 @@ import { BackupRecoveryService } from '@/services/backup-recovery.service';
 
 import BackupDashboard from './components/BackupDashboard';
 
+
+// Prevent pre-rendering for admin pages
+export const dynamic = 'force-dynamic';
 export default async function BackupPage() {
+  // Mock super admin status - in production this would come from auth context
+  const isSuperAdmin = true;
 
   const backupService = new BackupRecoveryService();
 

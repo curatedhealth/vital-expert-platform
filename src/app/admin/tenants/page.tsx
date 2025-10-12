@@ -1,6 +1,9 @@
 import { TenantManagementService } from '@/services/tenant-management.service';
 import TenantManagementViewer from './components/TenantManagementViewer';
 
+
+// Prevent pre-rendering for admin pages
+export const dynamic = 'force-dynamic';
 export default async function TenantsPage() {
   
   const tenantService = new TenantManagementService();

@@ -1,5 +1,8 @@
 'use client';
 
+// Prevent pre-rendering for client-side only page
+export const dynamic = 'force-dynamic';
+
 import { Workflow, Star, CheckCircle, ArrowRight, GitBranch, Zap } from 'lucide-react';
 import { useState } from 'react';
 

@@ -161,7 +161,7 @@ export default function ProfilePage() {
               <Textarea
                 id="bio"
                 value={formData.bio}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange('bio', e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => handleInputChange('bio', e.target.value)}
                 placeholder="Tell us about yourself..."
                 rows={3}
               />

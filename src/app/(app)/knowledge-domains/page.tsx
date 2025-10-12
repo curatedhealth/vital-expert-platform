@@ -1,5 +1,8 @@
 'use client';
 
+// Prevent pre-rendering for client-side only page
+export const dynamic = 'force-dynamic';
+
 import { Plus, Search, Filter, Info } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
@@ -877,7 +880,7 @@ function CreateDomainDialog({
             <Textarea
               id="description"
               value={formData.description}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+              onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
                 setFormData({ ...formData, description: e.target.value })
               }
               placeholder="Brief description of this knowledge domain"

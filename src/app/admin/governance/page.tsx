@@ -2,7 +2,12 @@ import { LLMGovernanceService } from '@/services/llm-governance.service';
 
 import GovernanceDashboard from './components/GovernanceDashboard';
 
+
+// Prevent pre-rendering for admin pages
+export const dynamic = 'force-dynamic';
 export default async function GovernancePage() {
+  // Mock super admin status - in production this would come from auth context
+  const isSuperAdmin = true;
   
   const governanceService = new LLMGovernanceService();
   const [policies, promptChanges, workflows] = await Promise.all([

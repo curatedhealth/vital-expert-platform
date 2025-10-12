@@ -2,6 +2,9 @@ import { Suspense } from 'react';
 
 import { CostDashboard } from './components/CostDashboard';
 
+
+// Prevent pre-rendering for admin pages
+export const dynamic = 'force-dynamic';
 export default async function CostManagementPage() {
 
   return (

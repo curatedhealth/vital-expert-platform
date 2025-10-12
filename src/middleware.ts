@@ -33,6 +33,9 @@ export async function middleware(request: NextRequest) {
     '/api/agents-crud',
     '/api/chat',
     '/api/ask-expert',
+    '/api/chat/autonomous',
+    '/api/chat/langchain-enhanced',
+    '/api/panel/orchestrate',
     '/api/admin/compliance/playbooks',
     '/api/organizational-structure',
     '/api/migrate-memory'

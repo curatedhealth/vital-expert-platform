@@ -213,7 +213,7 @@ export default function AskExpertPage() {
               const data = JSON.parse(line.slice(6));
               
               if (data.type === 'content') {
-                fullContent = data.fullContent;
+                fullContent += data.content;
                 console.log('📝 Updating message content:', {
                   messageId: assistantMessage.id,
                   contentLength: fullContent.length,
@@ -227,6 +227,27 @@ export default function AskExpertPage() {
                       : msg
                   ),
                 }));
+              } else if (data.type === 'final') {
+                // Use the final content if provided, otherwise keep accumulated content
+                if (data.content) {
+                  fullContent = data.content;
+                }
+                setState(prev => ({
+                  ...prev,
+                  messages: prev.messages.map(msg =>
+                    msg.id === assistantMessage.id
+                      ? { 
+                          ...msg, 
+                          content: fullContent,
+                          isLoading: false,
+                          metadata: data.metadata || metadata
+                        }
+                      : msg
+                  ),
+                  progress: 100,
+                  currentStep: 'Complete',
+                }));
+                break;
               } else if (data.type === 'metadata') {
                 metadata = data.metadata;
                 setState(prev => ({
@@ -253,6 +274,7 @@ export default function AskExpertPage() {
               }
             } catch (e) {
               console.warn('Failed to parse SSE data:', e);
+              // Continue processing other lines even if one fails
             }
           }
         }

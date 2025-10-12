@@ -71,7 +71,7 @@ export async function POST(request: NextRequest) {
 ${agentData.system_prompt || `You are an expert in ${agentData.business_function} with deep knowledge of medical device development, regulatory affairs, and healthcare innovation.`}
 
 Your capabilities include:
-- ${agentData.capabilities?.join(', ') || 'Expert consultation and guidance'}
+- ${Array.isArray(agentData.capabilities) ? agentData.capabilities.join(', ') : (agentData.capabilities || 'Expert consultation and guidance')}
 
 Please provide helpful, accurate, and professional responses based on your expertise.`;
     }

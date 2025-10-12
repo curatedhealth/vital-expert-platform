@@ -403,6 +403,7 @@ const _useChatStore = create<ChatStore>()(
           console.log('📤 Request body:', JSON.stringify(requestBody, null, 2));
 
           // Call the appropriate chat API with streaming support
+          console.log('🌐 Making fetch request to:', apiEndpoint);
           const response = await fetch(apiEndpoint, {
             method: 'POST',
             headers: {
@@ -410,6 +411,13 @@ const _useChatStore = create<ChatStore>()(
             },
             signal: controller.signal,
             body: JSON.stringify(requestBody)
+          });
+
+          console.log('📡 Response received:', {
+            status: response.status,
+            statusText: response.statusText,
+            headers: Object.fromEntries(response.headers.entries()),
+            ok: response.ok
           });
 
           if (!response.ok) {
@@ -423,14 +431,18 @@ const _useChatStore = create<ChatStore>()(
           }
 
           // Handle streaming response
+          console.log('📖 Setting up streaming reader...');
           const reader = response.body?.getReader();
           const decoder = new TextDecoder();
           let fullContent = '';
           let metadata: unknown = null;
 
           if (!reader) {
+            console.error('❌ Response body is not readable');
             throw new Error('Response body is not readable');
           }
+
+          console.log('✅ Streaming reader ready, starting to read chunks...');
 
           while (true) {
             const { done, value } = await reader.read();

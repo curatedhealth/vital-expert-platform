@@ -39,8 +39,10 @@ interface ChatSidebarProps extends React.ComponentProps<typeof Sidebar> {
   onCreateAgentClick: () => void;
   onAgentSelect?: (agentId: string) => void;
   onAgentRemove?: (agentId: string) => void;
+  onAddAgentToLibrary?: (agentId: string) => void;
   selectedAgentId?: string;
   agents?: Agent[];
+  allAgents?: Agent[];
   formatDate: (date: string) => string;
   isCollapsed?: boolean;
   onToggleCollapse?: () => void;
@@ -155,8 +157,10 @@ export function ChatSidebar({
           onCreateAgentClick={onCreateAgentClick}
           onAgentSelect={onAgentSelect}
           onAgentRemove={onAgentRemove}
+          onAddAgentToLibrary={onAddAgentToLibrary}
           selectedAgentId={selectedAgentId}
           agents={agents}
+          allAgents={allAgents}
           isCollapsed={isCollapsed}
           mounted={mounted}
         />

@@ -76,6 +76,7 @@ function ChatPageContent() {
     currentTier,
     escalationHistory,
     selectedExpert,
+    libraryAgents,
     setInteractionMode,
     setAutonomousMode,
     setSelectedExpert,
@@ -89,6 +90,9 @@ function ChatPageContent() {
     loadAgentsFromDatabase,
     syncWithGlobalStore,
     subscribeToGlobalChanges,
+    addAgentToLibrary,
+    removeAgentFromLibrary,
+    getLibraryAgents,
   } = useChatStore();
 
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -101,7 +105,6 @@ function ChatPageContent() {
   const [showAgentCreator, setShowAgentCreator] = useState(false);
   const [isSelectingAgent, setIsSelectingAgent] = useState(false);
   const [showAgentSelector, setShowAgentSelector] = useState(false);
-  const [userAgents, setUserAgents] = useState<Agent[]>([]);
   const [recommendedAgents, setRecommendedAgents] = useState<any[]>([]);
   const [pendingMessage, setPendingMessage] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
@@ -123,23 +126,6 @@ function ChatPageContent() {
   // Load userAgents from localStorage after component mounts to prevent hydration issues
   useEffect(() => {
     setMounted(true);
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('user-chat-agents');
-      if (saved) {
-        try {
-          const agents = JSON.parse(saved);
-          const markedAgents = agents.map((agent: Agent) => ({
-            ...agent,
-            is_user_copy: true,
-            isCustom: true,
-          }));
-          setUserAgents(markedAgents);
-        } catch (error) {
-          console.error('Failed to parse user agents from localStorage:', error);
-          setUserAgents([]);
-        }
-      }
-    }
   }, []);
 
   // Load agents from database on component mount and sync with global store
@@ -209,11 +195,15 @@ function ChatPageContent() {
   };
 
   const handleAgentRemove = (agentId: string) => {
-    setUserAgents(prev => prev.filter(agent => agent.id !== agentId));
+    removeAgentFromLibrary(agentId);
     if (selectedAgent?.id === agentId) {
       setSelectedAgent(null);
       setHasUserSelectedAgent(false);
     }
+  };
+
+  const handleAddAgentToLibrary = (agentId: string) => {
+    addAgentToLibrary(agentId);
   };
 
   const toggleSection = (section: keyof typeof collapsedSections) => {
@@ -240,8 +230,10 @@ function ChatPageContent() {
           onCreateAgentClick={handleCreateAgentClick}
           onAgentSelect={handleAgentSelect}
           onAgentRemove={handleAgentRemove}
+          onAddAgentToLibrary={handleAddAgentToLibrary}
           selectedAgentId={selectedAgent?.id}
-          agents={mounted ? userAgents : []}
+          agents={mounted ? getLibraryAgents() : []}
+          allAgents={mounted ? agents : []}
           formatDate={formatDate}
           isCollapsed={isCollapsed}
           onToggleCollapse={() => setIsCollapsed(!isCollapsed)}

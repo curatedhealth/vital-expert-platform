@@ -150,6 +150,11 @@ export interface ChatStore {
   // Global agents store integration
   syncWithGlobalStore: () => void;
   subscribeToGlobalChanges: () => () => void;
+  
+  // Agent library management
+  addAgentToLibrary: (agentId: string) => void;
+  removeAgentFromLibrary: (agentId: string) => void;
+  getLibraryAgents: () => Agent[];
 }
 
 const _useChatStore = create<ChatStore>()(
@@ -897,6 +902,26 @@ const _useChatStore = create<ChatStore>()(
         return useAgentsStore.subscribe((state) => {
           get().syncWithGlobalStore();
         });
+      },
+
+      // Add agent to user's library
+      addAgentToLibrary: (agentId: string) => {
+        set((state) => ({
+          libraryAgents: [...state.libraryAgents, agentId]
+        }));
+      },
+
+      // Remove agent from user's library
+      removeAgentFromLibrary: (agentId: string) => {
+        set((state) => ({
+          libraryAgents: state.libraryAgents.filter(id => id !== agentId)
+        }));
+      },
+
+      // Get agents in user's library
+      getLibraryAgents: () => {
+        const { agents, libraryAgents } = get();
+        return agents.filter(agent => libraryAgents.includes(agent.id));
       },
     }),
     {

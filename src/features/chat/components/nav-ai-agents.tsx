@@ -3,6 +3,7 @@
 import { ShoppingCart, UserPlus, X } from 'lucide-react';
 import Image from 'next/image';
 import * as React from 'react';
+import { useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -19,28 +20,72 @@ interface NavAiAgentsProps {
   onCreateAgentClick: () => void;
   onAgentSelect?: (agentId: string) => void;
   onAgentRemove?: (agentId: string) => void;
+  onAddAgentToLibrary?: (agentId: string) => void;
   selectedAgentId?: string;
   agents?: Agent[];
+  allAgents?: Agent[];
   isCollapsed?: boolean;
   mounted?: boolean;
 }
 
 // Agents will be passed as props from the chat store
 
-export function NavAiAgents({ onAgentStoreClick, onCreateAgentClick, onAgentSelect, onAgentRemove, selectedAgentId, agents = [], isCollapsed = false, mounted = false }: NavAiAgentsProps) {
+export function NavAiAgents({ onAgentStoreClick, onCreateAgentClick, onAgentSelect, onAgentRemove, onAddAgentToLibrary, selectedAgentId, agents = [], allAgents = [], isCollapsed = false, mounted = false }: NavAiAgentsProps) {
   // Use the mounted prop passed from parent instead of local state
   const safeAgents = mounted ? agents : [];
+  const [showAgentSelector, setShowAgentSelector] = useState(false);
 
   return (
     <div className="px-3">
       <div className="space-y-1">
-        <h2 className="mb-2 px-4 text-lg font-semibold tracking-tight">
-          {!isCollapsed && "My Agents"}
-        </h2>
+        <div className="flex items-center justify-between mb-2 px-4">
+          <h2 className="text-lg font-semibold tracking-tight">
+            {!isCollapsed && "My Agents"}
+          </h2>
+          {!isCollapsed && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowAgentSelector(!showAgentSelector)}
+              className="h-6 w-6 p-0"
+            >
+              <UserPlus className="h-4 w-4" />
+            </Button>
+          )}
+        </div>
+        
+        {/* Agent Selector */}
+        {showAgentSelector && !isCollapsed && (
+          <div className="mb-2 p-2 bg-muted rounded-lg">
+            <div className="text-xs text-muted-foreground mb-2">Add agents to chat:</div>
+            <div className="space-y-1 max-h-32 overflow-y-auto">
+              {allAgents.slice(0, 10).map((agent) => (
+                <div key={agent.id} className="flex items-center justify-between p-1 hover:bg-background rounded">
+                  <div className="flex items-center space-x-2">
+                    <span className="text-sm">{agent.avatar}</span>
+                    <span className="text-xs truncate">{agent.name}</span>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      onAddAgentToLibrary?.(agent.id);
+                      setShowAgentSelector(false);
+                    }}
+                    className="h-6 w-6 p-0"
+                  >
+                    <UserPlus className="h-3 w-3" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         <div className="space-y-1">
           {!mounted || safeAgents.length === 0 ? (
             <div className="px-4 py-2 text-sm text-muted-foreground">
-              {!isCollapsed && (mounted ? "No agents added yet. Visit Agent Store to add some." : "Loading agents...")}
+              {!isCollapsed && (mounted ? "No agents added yet. Click + to add some." : "Loading agents...")}
             </div>
           ) : (
             safeAgents.map((agent) => {

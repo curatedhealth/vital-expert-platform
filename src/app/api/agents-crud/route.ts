@@ -16,6 +16,12 @@ const supabase = supabaseUrl && supabaseServiceKey
 export async function GET(request: NextRequest) {
   try {
     console.log('🔍 API: Fetching agents from Supabase...');
+    console.log('🔍 API: Environment check:', {
+      hasUrl: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
+      hasServiceKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
+      nodeEnv: process.env.NODE_ENV,
+      vercelEnv: process.env.VERCEL_ENV
+    });
     
     if (!supabase) {
       console.error('❌ Supabase client not initialized');

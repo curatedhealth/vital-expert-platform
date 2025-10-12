@@ -16,116 +16,73 @@ const supabase = supabaseUrl && supabaseServiceKey
 
 export async function GET(request: NextRequest) {
   try {
-    console.log('🔍 API: Returning mock agents data...');
+    console.log('🔍 API: Fetching agents from Supabase...');
+    console.log('🔍 API: Environment check:', {
+      hasUrl: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
+      hasServiceKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
+      nodeEnv: process.env.NODE_ENV,
+      vercelEnv: process.env.VERCEL_ENV
+    });
     
+    if (!supabase) {
+      console.error('❌ Supabase client not initialized');
+      return NextResponse.json(
+        { error: 'Database connection not configured' },
+        { status: 500 }
+      );
+    }
+
     // Get query parameters
     const { searchParams } = new URL(request.url);
     const showAll = searchParams.get('showAll') === 'true';
     const limit = searchParams.get('limit');
+    const offset = searchParams.get('offset');
 
-    // Generate mock agents data (372 agents total)
-    const mockAgents = [];
-    const agentTypes = [
-      { name: 'Digital Health Strategy Director', businessFunction: 'Strategy', avatar: '🎯', description: 'Strategic planning and digital transformation expert' },
-      { name: 'Clinical Trial Designer', businessFunction: 'Clinical Research', avatar: '🧪', description: 'Clinical trial design and methodology specialist' },
-      { name: 'FDA Regulatory Strategist', businessFunction: 'Regulatory', avatar: '📋', description: 'FDA compliance and regulatory affairs expert' },
-      { name: 'Statistical Programmer', businessFunction: 'Data Science', avatar: '📊', description: 'Statistical analysis and data modeling specialist' },
-      { name: 'Promotional Material Developer', businessFunction: 'Marketing', avatar: '📢', description: 'Marketing content and promotional material creator' },
-      { name: 'Medical Affairs Specialist', businessFunction: 'Medical Affairs', avatar: '👩‍⚕️', description: 'Medical information and scientific communication expert' },
-      { name: 'Quality Assurance Manager', businessFunction: 'Quality', avatar: '✅', description: 'Quality control and assurance specialist' },
-      { name: 'Pharmacovigilance Expert', businessFunction: 'Safety', avatar: '⚠️', description: 'Drug safety monitoring and adverse event specialist' },
-      { name: 'Market Access Strategist', businessFunction: 'Market Access', avatar: '🌐', description: 'Market access and pricing strategy expert' },
-      { name: 'Clinical Data Manager', businessFunction: 'Data Management', avatar: '💾', description: 'Clinical data collection and management specialist' },
-      { name: 'Biostatistician', businessFunction: 'Statistics', avatar: '📈', description: 'Biostatistical analysis and study design expert' },
-      { name: 'Regulatory Writer', businessFunction: 'Regulatory', avatar: '📝', description: 'Regulatory document preparation and submission specialist' },
-      { name: 'Health Economics Expert', businessFunction: 'Health Economics', avatar: '💰', description: 'Health economic evaluation and outcomes research specialist' },
-      { name: 'Patient Engagement Specialist', businessFunction: 'Patient Engagement', avatar: '🤝', description: 'Patient advocacy and engagement strategy expert' },
-      { name: 'Digital Marketing Manager', businessFunction: 'Marketing', avatar: '📱', description: 'Digital marketing and social media strategy specialist' },
-      { name: 'Clinical Operations Manager', businessFunction: 'Operations', avatar: '⚙️', description: 'Clinical trial operations and project management expert' },
-      { name: 'Regulatory Affairs Associate', businessFunction: 'Regulatory', avatar: '📄', description: 'Regulatory submission and compliance specialist' },
-      { name: 'Medical Writer', businessFunction: 'Medical Writing', avatar: '✍️', description: 'Scientific and medical content writing specialist' },
-      { name: 'Clinical Research Coordinator', businessFunction: 'Clinical Research', avatar: '🔬', description: 'Clinical trial coordination and site management expert' },
-      { name: 'Health Technology Assessor', businessFunction: 'Health Technology', avatar: '🔍', description: 'Health technology assessment and evaluation specialist' }
-    ];
-    
-    const statuses = ['active', 'testing', 'development'];
-    const tiers = [1, 2, 3];
-    const departments = ['Clinical', 'Regulatory', 'Medical Affairs', 'Marketing', 'Data Science', 'Quality', 'Operations', 'Strategy'];
-    const roles = ['Director', 'Manager', 'Specialist', 'Coordinator', 'Analyst', 'Expert', 'Associate', 'Lead'];
-    const capabilities = [
-      ['Analysis', 'Research', 'Strategy'],
-      ['Data Science', 'Statistics', 'Modeling'],
-      ['Regulatory', 'Compliance', 'Documentation'],
-      ['Clinical', 'Trial Design', 'Operations'],
-      ['Marketing', 'Communication', 'Content'],
-      ['Quality', 'Assurance', 'Validation'],
-      ['Technology', 'Digital', 'Innovation'],
-      ['Economics', 'Pricing', 'Access']
-    ];
+    console.log(`📊 API: Fetching ${showAll ? 'all' : 'active/testing'} agents`);
 
-    // Generate 372 agents
-    for (let i = 0; i < 372; i++) {
-      const baseAgent = agentTypes[i % agentTypes.length];
-      const randomStatus = statuses[Math.floor(Math.random() * statuses.length)];
-      const randomTier = tiers[Math.floor(Math.random() * tiers.length)];
-      const randomDepartment = departments[Math.floor(Math.random() * departments.length)];
-      const randomRole = roles[Math.floor(Math.random() * roles.length)];
-      const randomCapabilities = capabilities[Math.floor(Math.random() * capabilities.length)];
-      
-      // Create more realistic agent names with variations
-      const agentNumber = i + 1;
-      const nameVariation = agentNumber > 20 ? ` ${randomRole}` : '';
-      const displayName = `${baseAgent.name}${nameVariation} ${agentNumber}`;
-      
-      mockAgents.push({
-        id: `agent-${agentNumber}`,
-        name: baseAgent.name.toLowerCase().replace(/\s+/g, '-') + `-${agentNumber}`,
-        display_name: displayName,
-        description: baseAgent.description,
-        avatar: baseAgent.avatar,
-        status: randomStatus,
-        tier: randomTier,
-        priority: Math.floor(agentNumber / 50) + 1,
-        business_function: baseAgent.businessFunction,
-        department: randomDepartment,
-        organizational_role: randomRole,
-        capabilities: randomCapabilities,
-        specializations: { 
-          primary: baseAgent.businessFunction.toLowerCase(),
-          secondary: randomDepartment.toLowerCase()
-        },
-        tools: { 
-          basic: true,
-          advanced: randomTier <= 2,
-          premium: randomTier === 1
-        },
-        rag_enabled: true,
-        is_custom: false,
-        color: `hsl(${(i * 137.5) % 360}, 70%, 50%)`, // Generate diverse colors
-        created_at: new Date(Date.now() - Math.random() * 365 * 24 * 60 * 60 * 1000).toISOString(),
-        updated_at: new Date().toISOString()
-      });
-    }
+    // Build query
+    let query = supabase
+      .from('agents')
+      .select('*')
+      .order('priority', { ascending: true });
 
     // Filter by status if not showing all
-    let filteredAgents = mockAgents;
     if (!showAll) {
-      filteredAgents = mockAgents.filter(agent => 
-        ['active', 'testing', 'development'].includes(agent.status)
-      );
+      query = query.in('status', ['active', 'testing', 'development']);
     }
 
     // Apply pagination if specified
     if (limit) {
-      filteredAgents = filteredAgents.slice(0, parseInt(limit));
+      query = query.limit(parseInt(limit));
+    }
+    if (offset) {
+      query = query.range(parseInt(offset), parseInt(offset) + (parseInt(limit) || 100) - 1);
     }
 
-    console.log(`✅ API: Returning ${filteredAgents.length} mock agents`);
-    console.log(`📊 API: Total count: ${mockAgents.length}`);
+    const { data, error, count } = await query;
+
+    if (error) {
+      console.error('❌ Supabase query error:', error);
+      return NextResponse.json(
+        { error: `Database query failed: ${error.message}` },
+        { status: 500 }
+      );
+    }
+
+    console.log(`✅ API: Successfully fetched ${data?.length || 0} agents from database`);
+    console.log(`📊 API: Total count: ${count || 'unknown'}`);
+    
+    if (data && data.length > 0) {
+      console.log('📋 API: Sample agent data:');
+      console.log('- Name:', data[0]?.display_name || data[0]?.name);
+      console.log('- Status:', data[0]?.status);
+      console.log('- Tier:', data[0]?.tier);
+      console.log('- Priority:', data[0]?.priority);
+    }
 
     return NextResponse.json({
-      agents: filteredAgents,
-      count: mockAgents.length,
+      agents: data || [],
+      count: count || data?.length || 0,
       success: true
     });
 

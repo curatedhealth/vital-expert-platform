@@ -73,25 +73,9 @@ export function SupabaseAuthProvider({ children }: AuthProviderProps) {
         console.log('✅ Mock user loaded for pre-production testing');
         setIsInitialized(true);
         setLoading(false);
-        return;
-
-        console.log('🌐 Using Supabase authentication');
-        const { data: { session }, error } = await supabase.auth.getSession();
-        if (error) {
-          console.error('Error getting session:', error);
-          setError(`Authentication error: ${error.message}`);
-        } else {
-          setSession(session);
-          setUser(session?.user ?? null);
-          if (session?.user) {
-            await fetchUserProfile(session.user.id);
-          }
-          console.log('✅ Supabase session loaded:', session?.user?.email || 'No user');
-        }
       } catch (error) {
         console.error('Error in getInitialSession:', error);
         setError(`Initialization error: ${error instanceof Error ? error.message : 'Unknown error'}`);
-      } finally {
         setIsInitialized(true);
         setLoading(false);
       }
@@ -99,34 +83,8 @@ export function SupabaseAuthProvider({ children }: AuthProviderProps) {
 
     getInitialSession();
 
-    // Skip auth state changes in development mode or when using mock auth
-    if (process.env.NODE_ENV === 'development' || process.env.NEXT_PUBLIC_USE_MOCK_AUTH === 'true') {
-      return;
-    }
-
-    // Listen for auth changes
-    const { data: { subscription: authSubscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        console.log('Auth state changed:', event, session?.user?.email);
-        setError(null); // Clear any previous errors
-        setSession(session);
-        setUser(session?.user ?? null);
-        
-        if (session?.user) {
-          await fetchUserProfile(session.user.id);
-        } else {
-          setUserProfile(null);
-        }
-        
-        setLoading(false);
-      }
-    );
-
-    return () => {
-      if (authSubscription) {
-        authSubscription.unsubscribe();
-      }
-    };
+    // Skip auth state changes for mock authentication
+    return;
   }, []);
 
   const fetchUserProfile = async (userId: string) => {

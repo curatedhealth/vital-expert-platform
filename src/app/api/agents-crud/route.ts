@@ -30,20 +30,31 @@ export async function GET(request: NextRequest) {
       { name: 'Clinical Trial Designer', status: 'active', tier: 1, businessFunction: 'Clinical Research' },
       { name: 'FDA Regulatory Strategist', status: 'active', tier: 1, businessFunction: 'Regulatory' },
       { name: 'Statistical Programmer', status: 'development', tier: 2, businessFunction: 'Data Science' },
-      { name: 'Promotional Material Developer', status: 'development', tier: 2, businessFunction: 'Marketing' }
+      { name: 'Promotional Material Developer', status: 'development', tier: 2, businessFunction: 'Marketing' },
+      { name: 'Medical Affairs Specialist', status: 'testing', tier: 2, businessFunction: 'Medical Affairs' },
+      { name: 'Quality Assurance Manager', status: 'active', tier: 3, businessFunction: 'Quality' },
+      { name: 'Pharmacovigilance Expert', status: 'active', tier: 3, businessFunction: 'Safety' },
+      { name: 'Market Access Strategist', status: 'testing', tier: 2, businessFunction: 'Market Access' },
+      { name: 'Clinical Data Manager', status: 'development', tier: 3, businessFunction: 'Data Management' }
     ];
+    
+    const statuses = ['active', 'testing', 'development'];
+    const tiers = [1, 2, 3];
 
     // Generate 372 agents
     for (let i = 0; i < 372; i++) {
       const baseAgent = agentTypes[i % agentTypes.length];
+      const randomStatus = statuses[Math.floor(Math.random() * statuses.length)];
+      const randomTier = tiers[Math.floor(Math.random() * tiers.length)];
+      
       mockAgents.push({
         id: `agent-${i + 1}`,
         name: `${baseAgent.name} ${i + 1}`,
         display_name: `${baseAgent.name} ${i + 1}`,
         description: `AI agent specialized in ${baseAgent.businessFunction.toLowerCase()}`,
         avatar: '🤖',
-        status: baseAgent.status,
-        tier: baseAgent.tier,
+        status: randomStatus,
+        tier: randomTier,
         priority: Math.floor(i / 10) + 1,
         business_function: baseAgent.businessFunction,
         capabilities: ['Analysis', 'Research', 'Strategy'],

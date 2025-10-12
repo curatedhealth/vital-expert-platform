@@ -1,6 +1,6 @@
 'use client';
 
-import { ChevronLeft, ChevronRight, Zap, User } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Zap, User, MessageSquare, Bot } from 'lucide-react';
 import * as React from 'react';
 
 import { Button } from '@/components/ui/button';
@@ -51,6 +51,8 @@ interface ChatSidebarProps extends React.ComponentProps<typeof Sidebar> {
   onToggleMode?: (mode: 'automatic' | 'manual') => void;
   autonomousMode?: boolean;
   onToggleAutonomous?: (enabled: boolean) => void;
+  chatMode?: 'agent' | 'direct';
+  onToggleChatMode?: (mode: 'agent' | 'direct') => void;
 }
 
 export function ChatSidebar({
@@ -76,6 +78,8 @@ export function ChatSidebar({
   onToggleMode,
   autonomousMode = false,
   onToggleAutonomous,
+  chatMode = 'agent',
+  onToggleChatMode,
   ...props
 }: ChatSidebarProps) {
   return (
@@ -136,6 +140,24 @@ export function ChatSidebar({
                     checked={autonomousMode}
                     onCheckedChange={onToggleAutonomous}
                   />
+                </div>
+              )}
+
+              {/* Chat Mode Toggle: Direct LLM vs Expert Agent */}
+              {onToggleChatMode && (
+                <div className="flex items-center gap-2 px-2 py-1.5 border border-vital-gray-80 rounded-lg bg-vital-gray-95">
+                  <div className="flex items-center gap-1">
+                    <MessageSquare className={`h-3 w-3 ${chatMode === 'direct' ? 'text-blue-500' : 'text-vital-gray-60'}`} />
+                    <span className="text-xs font-medium text-vital-black">Direct LLM</span>
+                  </div>
+                  <Switch
+                    checked={chatMode === 'agent'}
+                    onCheckedChange={(checked) => onToggleChatMode(checked ? 'agent' : 'direct')}
+                  />
+                  <div className="flex items-center gap-1">
+                    <Bot className={`h-3 w-3 ${chatMode === 'agent' ? 'text-clinical-green' : 'text-vital-gray-60'}`} />
+                    <span className="text-xs font-medium text-vital-black">Expert Agent</span>
+                  </div>
                 </div>
               )}
             </div>

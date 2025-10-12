@@ -121,6 +121,7 @@ export interface ChatStore {
   // Dual-Mode State
   interactionMode: 'automatic' | 'manual' | 'autonomous'; // Agent selection mode
   autonomousMode: boolean; // Chat mode: normal (false) vs autonomous with tools (true)
+  chatMode: 'agent' | 'direct'; // Chat interface mode: expert agent vs direct LLM
   currentTier: 1 | 2 | 3 | 'human';
   escalationHistory: EscalationEvent[];
   tierMetrics: TierMetrics;
@@ -149,6 +150,7 @@ export interface ChatStore {
   recordEscalation: (from: 1 | 2 | 3 | 'human', to: 1 | 2 | 3 | 'human', reason: string, confidence: number, cost: number) => void;
   resetTierMetrics: () => void;
   setInteractionMode: (mode: 'automatic' | 'manual' | 'autonomous') => void;
+  setChatMode: (mode: 'agent' | 'direct') => void;
   clearError: () => void;
   regenerateResponse: (messageId: string) => Promise<void>;
   editMessage: (messageId: string, newContent: string) => void;
@@ -204,6 +206,7 @@ const _useChatStore = create<ChatStore>()(
       // Dual-Mode Initial State
       interactionMode: 'automatic',
       autonomousMode: false,
+      chatMode: 'agent',
       currentTier: 1,
       escalationHistory: [],
       selectedExpert: null,
@@ -781,6 +784,10 @@ const _useChatStore = create<ChatStore>()(
 
       setInteractionMode: (mode: 'automatic' | 'manual' | 'autonomous') => {
         set({ interactionMode: mode });
+      },
+
+      setChatMode: (mode: 'agent' | 'direct') => {
+        set({ chatMode: mode });
       },
 
       regenerateResponse: async (messageId: string) => {

@@ -100,6 +100,7 @@ function ChatPageContent() {
   });
   const [hasUserSelectedAgent, setHasUserSelectedAgent] = useState(false);
   const [useDirectLLM, setUseDirectLLM] = useState(true);
+  const [chatMode, setChatMode] = useState<'agent' | 'direct'>('agent');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -245,6 +246,8 @@ function ChatPageContent() {
           onToggleMode={setInteractionMode}
           autonomousMode={autonomousMode}
           onToggleAutonomous={setAutonomousMode}
+          chatMode={chatMode}
+          onToggleChatMode={setChatMode}
         />
 
         <SidebarInset className="flex flex-col flex-1 overflow-hidden">

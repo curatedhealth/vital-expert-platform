@@ -69,8 +69,10 @@ export function NavAiAgents({ onAgentStoreClick, onCreateAgentClick, onAgentSele
                     variant="ghost"
                     size="sm"
                     onClick={() => {
-                      onAddAgentToLibrary?.(agent.id);
-                      setShowAgentSelector(false);
+                      if (onAddAgentToLibrary) {
+                        onAddAgentToLibrary(agent.id);
+                        setShowAgentSelector(false);
+                      }
                     }}
                     className="h-6 w-6 p-0"
                   >

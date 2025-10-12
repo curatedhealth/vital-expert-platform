@@ -32,7 +32,8 @@ export async function middleware(request: NextRequest) {
     // API routes
     '/api/agents-crud',
     '/api/chat',
-    '/api/admin/compliance/playbooks'
+    '/api/admin/compliance/playbooks',
+    '/api/organizational-structure'
   ];
 
   // Public API routes that don't require authentication

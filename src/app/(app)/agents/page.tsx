@@ -49,6 +49,12 @@ function AgentsPageContent() {
     }
   }, [searchParams, router]);
 
+  // Load agents when component mounts
+  useEffect(() => {
+    const { loadAgents } = useAgentsStore.getState();
+    loadAgents();
+  }, []);
+
   const handleAgentSelect = (agent: AgentsStoreAgent) => {
     // Debug: Log the incoming agent data
     console.log('🔍 Agent selected:', {

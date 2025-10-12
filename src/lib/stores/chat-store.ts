@@ -479,6 +479,23 @@ const _useChatStore = create<ChatStore>()(
                           : msg
                       ),
                     }));
+                  } else if (data.type === 'final') {
+                    // Handle final message - set isLoading to false
+                    console.log('✅ [streaming] Received final message:', {
+                      length: data.content?.length || 0,
+                      assistantMsgId: assistantMessage.id
+                    });
+                    
+                    fullContent = data.content || fullContent;
+                    
+                    // Update message with final content and stop loading
+                    set((state) => ({
+                      messages: state.messages.map((msg) =>
+                        msg.id === assistantMessage.id
+                          ? { ...msg, content: fullContent || '', isLoading: false }
+                          : msg
+                      ),
+                    }));
                   } else if (data.type === 'metadata') {
                     metadata = data.metadata;
                   } else if (data.type === 'error') {
@@ -502,37 +519,41 @@ const _useChatStore = create<ChatStore>()(
             assistantMsgId: assistantMessage.id
           });
 
-          set((state) => ({
-            messages: state.messages.map((msg) =>
-              msg.id === assistantMessage.id
-                ? {
-                    ...msg,
-                    content: fullContent || '',
-                    isLoading: false,
-                    metadata: {
-                      ...msg.metadata!,
-                      processingTime,
-                      reasoning: metadata?.reasoning || state.liveReasoning || undefined,
-                      tokenUsage: metadata?.tokenUsage || {
-                        promptTokens: 0,
-                        completionTokens: 0,
-                        totalTokens: 0,
+          // Only finalize if not already finalized by type: 'final' message
+          const currentMessage = get().messages.find(msg => msg.id === assistantMessage.id);
+          if (currentMessage?.isLoading) {
+            set((state) => ({
+              messages: state.messages.map((msg) =>
+                msg.id === assistantMessage.id
+                  ? {
+                      ...msg,
+                      content: fullContent || '',
+                      isLoading: false,
+                      metadata: {
+                        ...msg.metadata!,
+                        processingTime,
+                        reasoning: metadata?.reasoning || state.liveReasoning || undefined,
+                        tokenUsage: metadata?.tokenUsage || {
+                          promptTokens: 0,
+                          completionTokens: 0,
+                          totalTokens: 0,
+                        },
+                        sources: metadata?.sources || [],
+                        citations: metadata?.citations || [],
+                        followupQuestions: metadata?.followupQuestions || [
+                          'Can you provide more specific guidance?',
+                          'What are the key requirements I should know?',
+                          'How should I proceed?',
+                        ],
+                        alternativeAgents: metadata?.alternativeAgents || [],
                       },
-                      sources: metadata?.sources || [],
-                      citations: metadata?.citations || [],
-                      followupQuestions: metadata?.followupQuestions || [
-                        'Can you provide more specific guidance?',
-                        'What are the key requirements I should know?',
-                        'How should I proceed?',
-                      ],
-                      alternativeAgents: metadata?.alternativeAgents || [],
-                    },
-                  }
-                : msg
-            ),
-            liveReasoning: '',
-            isReasoningActive: false,
-          }));
+                    }
+                  : msg
+              ),
+              liveReasoning: '',
+              isReasoningActive: false,
+            }));
+          }
 
           // Save messages to localStorage
           const finalMessages = get().messages;

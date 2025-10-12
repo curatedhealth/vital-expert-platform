@@ -926,7 +926,7 @@ const _useChatStore = create<ChatStore>()(
     }),
     {
       name: 'chat-store',
-      version: 5, // Increment to force cache refresh - exclude messages from persistence
+      version: 6, // Increment to force cache refresh - include libraryAgents in persistence
       migrate: (persistedState: unknown, version: number) => {
         // Always force reload agents from database on version change
         if (version < 5) {
@@ -936,6 +936,14 @@ const _useChatStore = create<ChatStore>()(
             selectedAgent: null,
             error: null,
             messages: [], // Clear messages - they're loaded per-chat from separate storage
+            libraryAgents: [], // Initialize library agents
+          };
+        }
+        // For version 6, ensure libraryAgents is initialized
+        if (version < 6) {
+          return {
+            ...persistedState,
+            libraryAgents: [], // Initialize library agents for new persistence
           };
         }
         return persistedState;
@@ -953,6 +961,7 @@ const _useChatStore = create<ChatStore>()(
         selectedAgent: state.selectedAgent,
         selectedModel: state.selectedModel,
         agents: state.agents,
+        libraryAgents: state.libraryAgents, // Include library agents for persistence
         interactionMode: state.interactionMode,
         selectedExpert: state.selectedExpert,
         currentTier: state.currentTier,

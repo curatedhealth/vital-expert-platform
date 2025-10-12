@@ -545,20 +545,53 @@ export function AgentsBoard({
                   {agent.description}
                 </p>
 
-                {/* Footer with Status */}
+                {/* Footer with Action Buttons */}
                 <div className="mt-auto pt-3 border-t border-gray-100">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs text-gray-500">Status:</span>
-                    <Badge
-                      className={`text-xs ${
-                        agent.status === 'active' ? 'bg-green-100 text-green-800' :
-                        agent.status === 'development' ? 'bg-blue-100 text-blue-800' :
-                        agent.status === 'testing' ? 'bg-yellow-100 text-yellow-800' :
-                        'bg-gray-100 text-gray-800'
-                      }`}
+                  <div className="flex gap-1">
+                    {/* Chat Button */}
+                    {onAddToChat && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          console.log('Adding agent to chat:', agent.display_name);
+                          onAddToChat(agent);
+                        }}
+                        className="h-8 w-8 p-0 bg-blue-50 hover:bg-blue-100 text-blue-700 border-blue-200"
+                        title="Add to Chat"
+                      >
+                        <MessageSquare className="h-4 w-4" />
+                      </Button>
+                    )}
+                    
+                    {/* Library Button */}
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleSaveToLibrary(agent.id);
+                      }}
+                      className="h-8 w-8 p-0 bg-green-50 hover:bg-green-100 text-green-700 border-green-200"
+                      title="Add to Library"
                     >
-                      {agent.status}
-                    </Badge>
+                      <Heart className="h-4 w-4" />
+                    </Button>
+                    
+                    {/* Duplicate Button */}
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDuplicateAgent(agent);
+                      }}
+                      className="h-8 w-8 p-0 bg-purple-50 hover:bg-purple-100 text-purple-700 border-purple-200"
+                      title="Duplicate Agent"
+                    >
+                      <Copy className="h-4 w-4" />
+                    </Button>
                   </div>
                 </div>
               </div>

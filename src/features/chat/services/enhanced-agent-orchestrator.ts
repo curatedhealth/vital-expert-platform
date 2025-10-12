@@ -105,13 +105,13 @@ class EnhancedAgentOrchestrator {
     let stepCounter = 0;
 
     // Get agent metadata for personalized prompt
-    const agent = await this.getAgentMetadata(agentId);
+    const agentMetadata = await this.getAgentMetadata(agentId);
 
     // Create agent with tools
     const prompt = ChatPromptTemplate.fromMessages([
-      ['system', `You are ${agent.name}, ${agent.role}.
+      ['system', `You are ${agentMetadata.name}, ${agentMetadata.role}.
 
-Your expertise: ${agent.expertise?.join(', ') || 'general AI assistant'}
+Your expertise: ${agentMetadata.expertise?.join(', ') || 'general AI assistant'}
 
 You have access to ${tools.length} specialized tools:
 ${tools.map(t => `- ${t.name}: ${t.description}`).join('\n')}

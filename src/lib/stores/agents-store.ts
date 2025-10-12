@@ -250,6 +250,7 @@ export const useAgentsStore = create<{
 
         // Also add to chat store so it can be found by getLibraryAgents
         try {
+          console.log('🔄 Adding user copy to chat store:', userCopy.id);
           const { useChatStore } = await import('@/lib/stores/chat-store');
           const { addAgentToChatStore } = useChatStore.getState();
           
@@ -270,9 +271,11 @@ export const useAgentsStore = create<{
             metadata: {}
           };
           
+          console.log('📝 Chat agent to add:', chatAgent);
           addAgentToChatStore(chatAgent);
+          console.log('✅ User copy added to chat store successfully');
         } catch (error) {
-          console.error('Failed to add user copy to chat store:', error);
+          console.error('❌ Failed to add user copy to chat store:', error);
         }
 
         return userCopy;

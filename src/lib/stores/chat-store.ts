@@ -911,6 +911,7 @@ const _useChatStore = create<ChatStore>()(
         set((state) => {
           const newLibraryAgents = [...state.libraryAgents, agentId];
           console.log('📝 Updated libraryAgents:', newLibraryAgents);
+          console.log('📊 Library agents count:', newLibraryAgents.length);
           return {
             libraryAgents: newLibraryAgents
           };
@@ -927,9 +928,14 @@ const _useChatStore = create<ChatStore>()(
       // Add agent to chat store (for user copies)
       addAgentToChatStore: (agent: any) => {
         console.log('➕ Adding agent to chat store:', agent.id);
-        set((state) => ({
-          agents: [...state.agents, agent]
-        }));
+        set((state) => {
+          const newAgents = [...state.agents, agent];
+          console.log('📊 Chat store agents count after add:', newAgents.length);
+          console.log('📋 All chat store agents:', newAgents.map(a => ({ id: a.id, name: a.name })));
+          return {
+            agents: newAgents
+          };
+        });
       },
 
       // Get agents in user's library

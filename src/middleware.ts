@@ -64,12 +64,8 @@ export async function middleware(request: NextRequest) {
   try {
     // Skip authentication check when using mock authentication
     // This is for testing/demo purposes until full Supabase auth is configured
-    const skipAuth = process.env.NEXT_PUBLIC_SKIP_AUTH === 'true' || 
-                     process.env.VERCEL_ENV === 'preview' ||
-                     !process.env.SUPABASE_SERVICE_ROLE_KEY;
-    
-    if (skipAuth) {
-      console.log('Skipping auth check - mock authentication enabled');
+    if (process.env.NEXT_PUBLIC_SKIP_AUTH === 'true') {
+      console.log('⚠️ Skipping auth check - mock authentication enabled for testing');
       return NextResponse.next();
     }
 

@@ -243,9 +243,37 @@ export const useAgentsStore = create<{
           updated_at: new Date().toISOString(),
         };
 
+        // Add to agents store
         set(state => ({
           agents: [...state.agents, userCopy]
         }));
+
+        // Also add to chat store so it can be found by getLibraryAgents
+        try {
+          const { useChatStore } = await import('@/lib/stores/chat-store');
+          const { addAgentToChatStore } = useChatStore.getState();
+          
+          // Transform to chat store format
+          const chatAgent = {
+            id: userCopy.id,
+            name: userCopy.display_name,
+            description: userCopy.description,
+            avatar: userCopy.avatar || '🤖',
+            businessFunction: userCopy.business_function || 'General',
+            category: `Tier ${userCopy.tier}`,
+            capabilities: userCopy.capabilities || [],
+            specialties: userCopy.specializations || [],
+            tier: `Tier ${userCopy.tier}`,
+            isActive: userCopy.status === 'active',
+            ragEnabled: userCopy.rag_enabled || true,
+            isCustom: true,
+            metadata: {}
+          };
+          
+          addAgentToChatStore(chatAgent);
+        } catch (error) {
+          console.error('Failed to add user copy to chat store:', error);
+        }
 
         return userCopy;
       },

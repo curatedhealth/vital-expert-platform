@@ -155,6 +155,7 @@ export interface ChatStore {
   addAgentToLibrary: (agentId: string) => void;
   removeAgentFromLibrary: (agentId: string) => void;
   getLibraryAgents: () => Agent[];
+  addAgentToChatStore: (agent: any) => void;
 }
 
 const _useChatStore = create<ChatStore>()(
@@ -920,6 +921,14 @@ const _useChatStore = create<ChatStore>()(
       removeAgentFromLibrary: (agentId: string) => {
         set((state) => ({
           libraryAgents: state.libraryAgents.filter(id => id !== agentId)
+        }));
+      },
+
+      // Add agent to chat store (for user copies)
+      addAgentToChatStore: (agent: any) => {
+        console.log('➕ Adding agent to chat store:', agent.id);
+        set((state) => ({
+          agents: [...state.agents, agent]
         }));
       },
 

@@ -62,6 +62,12 @@ export async function middleware(request: NextRequest) {
 
   // For protected routes, check authentication
   try {
+    // Skip authentication check in pre-production mode (mock auth)
+    if (process.env.NODE_ENV === 'production' && process.env.VERCEL_ENV === 'preview') {
+      // Allow all requests in pre-production mode
+      return NextResponse.next();
+    }
+
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.SUPABASE_SERVICE_ROLE_KEY!,

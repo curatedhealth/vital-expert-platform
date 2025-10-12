@@ -21,7 +21,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 // import { ExpertPanelSelector } from '@/features/chat/components/expert-panel-selector';
-import { useAgentsStore, Agent } from '@/lib/stores/agents-store-simple';
+import { useAgentsStore, Agent } from '@/lib/stores/agents-store';
 
 
 // Three-Level Hierarchy: Domain → Subdomain → Use Cases

@@ -3818,7 +3818,7 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
                                     </Badge>
                                   ) : TOOL_STATUS[tool.name] === 'coming_soon' ? (
                                     <Badge variant="outline" className="text-xs border-amber-300 text-amber-700 bg-amber-50">
-                                      🚧 Coming Soon
+                                      🚧 In Development
                                     </Badge>
                                   ) : null}
                                 </div>

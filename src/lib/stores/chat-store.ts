@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
 // import { agentService } from '@/features/agents/services/agent-service';
-import { useAgentsStore, type Agent as GlobalAgent } from '@/lib/stores/agents-store-simple';
+import { useAgentsStore, type Agent as GlobalAgent } from '@/lib/stores/agents-store';
 
 export interface Agent {
   id: string;

@@ -179,7 +179,7 @@ export default function JobsToBeDonePage() {
           <Button
             size="default"
             className="flex items-center gap-2"
-            onClick={() => window.alert('Custom workflow builder coming soon!')}
+            onClick={() => window.alert('Custom workflow builder will be available soon!')}
           >
             <GitBranch className="h-4 w-4" />
             Build Custom Workflow
@@ -359,7 +359,7 @@ export default function JobsToBeDonePage() {
                 <Button className="flex-1" onClick={() => window.alert('Running workflow...')}>
                   Run Workflow
                 </Button>
-                <Button variant="outline" onClick={() => window.alert('Customization coming soon!')}>
+                <Button variant="outline" onClick={() => window.alert('Customization will be available soon!')}>
                   Customize
                 </Button>
                 <Button variant="outline" onClick={() => {

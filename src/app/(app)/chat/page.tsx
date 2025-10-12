@@ -35,24 +35,6 @@ import { useChatStore } from '@/lib/stores/chat-store';
 import { Agent } from '../../../types/agent.types';
 import { IconService } from '@/shared/services/icon-service';
 
-// Mock data for testing
-const mockAgents = [
-  {
-    id: '1',
-    name: 'Test Agent',
-    description: 'A test agent for development',
-    avatar: '🤖',
-    businessFunction: 'Testing',
-    category: 'Tier 1',
-    capabilities: ['Testing'],
-    specialties: ['Development'],
-    tier: 'Tier 1',
-    isActive: true,
-    ragEnabled: true,
-    isCustom: false,
-    metadata: {}
-  }
-];
 
 function ChatPageContent() {
   const router = useRouter();

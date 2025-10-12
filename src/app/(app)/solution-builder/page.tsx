@@ -164,7 +164,7 @@ export default function SolutionBuilderPage() {
           <Button
             size="default"
             className="flex items-center gap-2"
-            onClick={() => window.alert('Custom solution builder coming soon!')}
+            onClick={() => window.alert('Custom solution builder will be available soon!')}
           >
             <Layers className="h-4 w-4" />
             Start from Scratch
@@ -315,7 +315,7 @@ export default function SolutionBuilderPage() {
                 <Button className="flex-1" onClick={() => window.alert('Starting project setup...')}>
                   Start Building
                 </Button>
-                <Button variant="outline" onClick={() => window.alert('Customization options coming soon!')}>
+                <Button variant="outline" onClick={() => window.alert('Customization options will be available soon!')}>
                   Customize Template
                 </Button>
               </div>

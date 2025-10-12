@@ -8,7 +8,6 @@
     "src/app/globals.css",
     "src/components/ui/**/*",
     "src/lib/utils.ts",
-    "src/lib/stores/agents-store-simple.ts",
     "src/lib/stores/chat-store.ts",
     "src/lib/stores/panel-store.ts",
     "src/shared/services/icon-service.ts",

@@ -63,56 +63,7 @@ export function KnowledgeViewer() {
     { value: 'health-economics', label: 'Health Economics' },
   ];
 
-  const mockResults: KnowledgeChunk[] = [
-    {
-      id: '1',
-      content: 'Digital health technologies must undergo rigorous validation processes to ensure safety and efficacy. The FDA has established specific guidelines for software as medical devices (SaMD) that outline the requirements for clinical evidence, risk management, and post-market surveillance. These guidelines emphasize the importance of real-world evidence and continuous monitoring of device performance.',
-      title: 'FDA Digital Health Guidelines - Software as Medical Device',
-      source: 'FDA Digital Health Guidelines.pdf',
-      sourceType: 'PDF',
-      domain: 'digital-health',
-      similarity: 0.95,
-      isGlobal: true,
-      metadata: {
-        page: 23,
-        section: 'Software as Medical Device (SaMD)',
-        uploadedAt: '2024-01-15T10:30:00Z',
-        chunkIndex: 15,
-      },
-    },
-    {
-      id: '2',
-      content: 'Clinical trial design for digital therapeutics requires special consideration of digital endpoints and remote monitoring capabilities. Traditional endpoint measurement may not capture the full therapeutic benefit of digital interventions. Researchers should consider incorporating patient-reported outcomes, behavioral analytics, and real-time physiological data to create a comprehensive efficacy profile.',
-      title: 'Clinical Trial Design Best Practices - Digital Endpoints',
-      source: 'Clinical Trial Design Best Practices.docx',
-      sourceType: 'Word Document',
-      domain: 'clinical-research',
-      similarity: 0.88,
-      isGlobal: true,
-      metadata: {
-        section: 'Digital Endpoints and Remote Monitoring',
-        uploadedAt: '2024-01-14T14:20:00Z',
-        chunkIndex: 8,
-      },
-    },
-    {
-      id: '3',
-      content: 'Market access strategies for digital health solutions must address unique value propositions that traditional pharmaceuticals do not offer. Payers are increasingly interested in real-world outcomes, cost-effectiveness data, and the ability to demonstrate population health improvements. Digital solutions should emphasize their ability to provide continuous care, reduce healthcare utilization, and improve patient engagement.',
-      title: 'Market Access Strategies - Digital Health Value Proposition',
-      source: 'Market Access Strategies.pdf',
-      sourceType: 'PDF',
-      domain: 'market-access',
-      similarity: 0.82,
-      isGlobal: false,
-      agentId: 'market-access',
-      metadata: {
-        page: 45,
-        section: 'Digital Health Value Proposition',
-        uploadedAt: '2024-01-13T09:15:00Z',
-        chunkIndex: 22,
-      },
-    },
-  ];
+  // Mock results removed - will use real data from API
 
   const performSearch = async () => {
     if (!query.trim()) return;
@@ -153,15 +104,8 @@ export function KnowledgeViewer() {
       }
     } catch (error) {
       console.error('Search error:', error);
-      // Fallback to mock results on error
-      const filteredResults = mockResults.filter(result => {
-        const domainMatch = selectedDomain === 'all' || result.domain === selectedDomain;
-        const scopeMatch = selectedScope === 'all' ||
-          (selectedScope === 'global' && result.isGlobal) ||
-          (selectedScope === 'agent' && !result.isGlobal);
-
-        return domainMatch && scopeMatch;
-      });
+      // Fallback to empty results on error
+      const filteredResults: KnowledgeChunk[] = [];
 
       setSearchResults({
         query,

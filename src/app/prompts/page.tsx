@@ -76,262 +76,34 @@ const useCases = [
   'Communication',
 ];
 
-const mockPrompts: Prompt[] = [
-  {
-    id: '1',
-    title: 'FDA 510(k) Predicate Analysis',
-    description: 'Generate comprehensive predicate device analysis for FDA 510(k) submissions',
-    content: `Analyze the following medical device for FDA 510(k) submission:
-
-Device: {device_name}
-Intended Use: {intended_use}
-Technology: {technology_description}
-
-Please provide:
-1. Predicate device identification and comparison
-2. Substantial equivalence assessment
-3. Safety and effectiveness comparison
-4. Regulatory pathway recommendations
-5. Potential risks and mitigation strategies
-
-Format the response as a structured regulatory document suitable for FDA submission.`,
-    category: 'Regulatory',
-    tags: ['FDA', '510k', 'predicate', 'medical-device', 'regulatory'],
-    agent_type: 'FDA Regulatory Strategist',
-    use_case: '510k Preparation',
-    difficulty_level: 'advanced',
-    estimated_time_minutes: 25,
-    popularity_score: 95,
-    usage_count: 147,
-    rating: 4.8,
-    created_by: 'system',
-    created_at: '2024-01-15T10:00:00Z',
-    updated_at: '2024-03-10T15:30:00Z',
-    is_featured: true,
-    is_public: true,
-    variables: ['device_name', 'intended_use', 'technology_description'],
-  },
-  {
-    id: '2',
-    title: 'Clinical Trial Protocol Design',
-    description: 'Create comprehensive clinical trial protocols with statistical analysis plans',
-    content: `Design a clinical trial protocol for:
-
-Study Title: {study_title}
-Primary Endpoint: {primary_endpoint}
-Population: {target_population}
-Sample Size: {estimated_sample_size}
-
-Include:
-1. Study objectives and hypotheses
-2. Study design and methodology
-3. Inclusion/exclusion criteria
-4. Statistical analysis plan
-5. Safety monitoring procedures
-6. Data collection timeline
-7. Regulatory considerations
-
-Ensure compliance with ICH-GCP guidelines.`,
-    category: 'Clinical',
-    tags: ['clinical-trial', 'protocol', 'statistics', 'GCP', 'design'],
-    agent_type: 'Clinical Trial Designer',
-    use_case: 'Clinical Protocol',
-    difficulty_level: 'advanced',
-    estimated_time_minutes: 35,
-    popularity_score: 88,
-    usage_count: 89,
-    rating: 4.7,
-    created_by: 'system',
-    created_at: '2024-02-01T14:20:00Z',
-    updated_at: '2024-03-15T09:45:00Z',
-    is_featured: true,
-    is_public: true,
-    variables: ['study_title', 'primary_endpoint', 'target_population', 'estimated_sample_size'],
-  },
-  {
-    id: '3',
-    title: 'HIPAA Risk Assessment Template',
-    description: 'Comprehensive HIPAA compliance risk assessment for healthcare organizations',
-    content: `Conduct a HIPAA risk assessment for:
-
-Organization: {organization_name}
-Type: {organization_type}
-PHI Types: {phi_types_handled}
-Systems: {systems_involved}
-
-Assessment Areas:
-1. Administrative Safeguards
-2. Physical Safeguards
-3. Technical Safeguards
-4. Risk Analysis and Management
-5. Assigned Security Responsibilities
-6. Workforce Training
-7. Access Management
-8. Audit Controls
-
-Provide risk levels, compliance gaps, and remediation recommendations.`,
-    category: 'Compliance',
-    tags: ['HIPAA', 'privacy', 'security', 'risk-assessment', 'compliance'],
-    agent_type: 'HIPAA Compliance Officer',
-    use_case: 'Risk Assessment',
-    difficulty_level: 'intermediate',
-    estimated_time_minutes: 20,
-    popularity_score: 82,
-    usage_count: 156,
-    rating: 4.6,
-    created_by: 'system',
-    created_at: '2024-01-20T11:15:00Z',
-    updated_at: '2024-03-08T16:20:00Z',
-    is_featured: false,
-    is_public: true,
-    variables: ['organization_name', 'organization_type', 'phi_types_handled', 'systems_involved'],
-  },
-  {
-    id: '4',
-    title: 'Reimbursement Strategy Development',
-    description: 'Create comprehensive reimbursement and market access strategies',
-    content: `Develop reimbursement strategy for:
-
-Product: {product_name}
-Indication: {indication}
-Target Market: {target_market}
-Comparators: {existing_treatments}
-
-Strategy Components:
-1. Health economic value proposition
-2. Payer landscape analysis
-3. Coverage and coding strategy
-4. Evidence generation plan
-5. Value-based contracting opportunities
-6. Market access timeline
-7. Risk mitigation strategies
-
-Include budget impact modeling framework.`,
-    category: 'Strategy',
-    tags: ['reimbursement', 'market-access', 'health-economics', 'payer', 'strategy'],
-    agent_type: 'Reimbursement Strategist',
-    use_case: 'Regulatory Strategy',
-    difficulty_level: 'advanced',
-    estimated_time_minutes: 30,
-    popularity_score: 75,
-    usage_count: 63,
-    rating: 4.5,
-    created_by: 'system',
-    created_at: '2024-02-10T08:30:00Z',
-    updated_at: '2024-03-12T13:10:00Z',
-    is_featured: false,
-    is_public: true,
-    variables: ['product_name', 'indication', 'target_market', 'existing_treatments'],
-  },
-  {
-    id: '5',
-    title: 'Quality Management System Audit',
-    description: 'ISO 13485 QMS audit checklist and assessment framework',
-    content: `Conduct QMS audit for:
-
-Organization: {company_name}
-Scope: {audit_scope}
-Standards: {applicable_standards}
-Previous Audit Date: {last_audit_date}
-
-Audit Areas:
-1. Management Responsibility
-2. Resource Management
-3. Product Realization
-4. Measurement and Improvement
-5. Design Controls
-6. Risk Management
-7. Post-Market Surveillance
-8. Management Review
-
-Provide findings, non-conformities, and CAPA recommendations.`,
-    category: 'Quality',
-    tags: ['QMS', 'ISO-13485', 'audit', 'quality', 'compliance'],
-    agent_type: 'QMS Architect',
-    use_case: 'Compliance Review',
-    difficulty_level: 'intermediate',
-    estimated_time_minutes: 40,
-    popularity_score: 70,
-    usage_count: 92,
-    rating: 4.4,
-    created_by: 'system',
-    created_at: '2024-01-25T12:45:00Z',
-    updated_at: '2024-03-05T14:25:00Z',
-    is_featured: false,
-    is_public: true,
-    variables: ['company_name', 'audit_scope', 'applicable_standards', 'last_audit_date'],
-  },
-  {
-    id: '6',
-    title: 'Medical Device Labeling Review',
-    description: 'Comprehensive medical device labeling review for regulatory compliance',
-    content: `Review medical device labeling for:
-
-Device: {device_name}
-Classification: {device_class}
-Intended Use: {intended_use}
-Market: {target_markets}
-
-Review Elements:
-1. Indications for Use
-2. Contraindications
-3. Warnings and Precautions
-4. Instructions for Use
-5. Device Description
-6. Clinical Data Summary
-7. Storage and Handling
-8. Compatibility Information
-
-Ensure compliance with FDA, EU MDR, and international requirements.`,
-    category: 'Documentation',
-    tags: ['labeling', 'IFU', 'medical-device', 'regulatory', 'compliance'],
-    agent_type: 'Medical Writer',
-    use_case: 'Documentation',
-    difficulty_level: 'intermediate',
-    estimated_time_minutes: 25,
-    popularity_score: 68,
-    usage_count: 78,
-    rating: 4.3,
-    created_by: 'system',
-    created_at: '2024-02-05T09:20:00Z',
-    updated_at: '2024-03-18T11:40:00Z',
-    is_featured: false,
-    is_public: true,
-    variables: ['device_name', 'device_class', 'intended_use', 'target_markets'],
-  },
-];
+// Mock prompts removed - will use real data from API
+const mockPrompts: Prompt[] = [];
 
 export default function PromptsPage() {
   const [prompts, setPrompts] = useState<Prompt[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All Categories');
-  const [selectedUseCase, setSelectedUseCase] = useState('All Use Cases');
-  const [sortBy, setSortBy] = useState('popularity');
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const [selectedPrompt, setSelectedPrompt] = useState<Prompt | null>(null);
-  const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [sortBy, setSortBy] = useState<'popular' | 'rating' | 'recent' | 'usage'>('popular');
 
+  // Load prompts on component mount
   useEffect(() => {
-    // Load data immediately
     setPrompts(mockPrompts);
     setLoading(false);
   }, []);
 
+  // Filter and sort prompts
   const filteredPrompts = prompts.filter(prompt => {
     const matchesSearch = prompt.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          prompt.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          prompt.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()));
-
     const matchesCategory = selectedCategory === 'All Categories' || prompt.category === selectedCategory;
-    const matchesUseCase = selectedUseCase === 'All Use Cases' || prompt.use_case === selectedUseCase;
-
-    return matchesSearch && matchesCategory && matchesUseCase;
+    return matchesSearch && matchesCategory;
   });
 
   const sortedPrompts = [...filteredPrompts].sort((a, b) => {
     switch (sortBy) {
-      case 'popularity':
+      case 'popular':
         return b.popularity_score - a.popularity_score;
       case 'rating':
         return b.rating - a.rating;

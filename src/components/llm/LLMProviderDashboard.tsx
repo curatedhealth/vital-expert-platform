@@ -452,7 +452,7 @@ export const LLMProviderDashboard: React.FC<LLMProviderDashboardProps> = ({ clas
             <CardContent>
               <div className="flex items-center justify-center py-8 text-gray-500">
                 <TrendingUp className="h-12 w-12 mb-4" />
-                <p>Analytics dashboard coming soon...</p>
+                <p>Analytics dashboard will be available soon.</p>
               </div>
             </CardContent>
           </Card>
@@ -466,7 +466,7 @@ export const LLMProviderDashboard: React.FC<LLMProviderDashboardProps> = ({ clas
             <CardContent>
               <div className="flex items-center justify-center py-8 text-gray-500">
                 <Settings className="h-12 w-12 mb-4" />
-                <p>Settings panel coming soon...</p>
+                <p>Settings panel will be available soon.</p>
               </div>
             </CardContent>
           </Card>

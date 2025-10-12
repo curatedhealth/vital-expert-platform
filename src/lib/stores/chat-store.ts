@@ -121,7 +121,6 @@ export interface ChatStore {
   // Dual-Mode State
   interactionMode: 'automatic' | 'manual' | 'autonomous'; // Agent selection mode
   autonomousMode: boolean; // Chat mode: normal (false) vs autonomous with tools (true)
-  chatMode: 'agent' | 'direct'; // Chat interface mode: expert agent vs direct LLM
   currentTier: 1 | 2 | 3 | 'human';
   escalationHistory: EscalationEvent[];
   tierMetrics: TierMetrics;
@@ -150,7 +149,6 @@ export interface ChatStore {
   recordEscalation: (from: 1 | 2 | 3 | 'human', to: 1 | 2 | 3 | 'human', reason: string, confidence: number, cost: number) => void;
   resetTierMetrics: () => void;
   setInteractionMode: (mode: 'automatic' | 'manual' | 'autonomous') => void;
-  setChatMode: (mode: 'agent' | 'direct') => void;
   clearError: () => void;
   regenerateResponse: (messageId: string) => Promise<void>;
   editMessage: (messageId: string, newContent: string) => void;
@@ -206,7 +204,6 @@ const _useChatStore = create<ChatStore>()(
       // Dual-Mode Initial State
       interactionMode: 'automatic',
       autonomousMode: false,
-      chatMode: 'agent',
       currentTier: 1,
       escalationHistory: [],
       selectedExpert: null,
@@ -219,15 +216,13 @@ const _useChatStore = create<ChatStore>()(
 
       // Actions
       createNewChat: () => {
-        const { selectedAgent, interactionMode, chatMode } = get();
+        const { selectedAgent, interactionMode } = get();
         
         const newChat: Chat = {
           id: `chat-${Date.now()}`,
           title: selectedAgent 
             ? `New conversation with ${selectedAgent.name || 'AI Assistant'}`
-            : chatMode === 'direct' 
-              ? 'New Direct LLM Chat'
-              : 'New conversation with AI Assistant',
+            : 'New conversation with AI Assistant',
           createdAt: new Date(),
           updatedAt: new Date(),
           agentId: selectedAgent?.id || 'default',
@@ -280,11 +275,11 @@ const _useChatStore = create<ChatStore>()(
       },
 
       sendMessage: async (content: string, attachments?: unknown[]) => {
-        let { currentChat, selectedAgent, messages, interactionMode, chatMode } = get();
+        let { currentChat, selectedAgent, messages, interactionMode } = get();
 
-        // In automatic mode or direct LLM mode, allow sending messages without pre-selected agent
+        // In automatic mode, allow sending messages without pre-selected agent
         // The API will handle agent selection automatically
-        if (!selectedAgent && interactionMode !== 'automatic' && chatMode !== 'direct') {
+        if (!selectedAgent && interactionMode !== 'automatic') {
           console.warn('⚠️  No agent selected. Please select an agent before sending a message.');
           return;
         }
@@ -789,9 +784,6 @@ const _useChatStore = create<ChatStore>()(
         set({ interactionMode: mode });
       },
 
-      setChatMode: (mode: 'agent' | 'direct') => {
-        set({ chatMode: mode });
-      },
 
       regenerateResponse: async (messageId: string) => {
         const { messages, selectedAgent } = get();

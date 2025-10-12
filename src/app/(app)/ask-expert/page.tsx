@@ -55,7 +55,6 @@ export default function AskExpertPage() {
   const router = useRouter();
   const { user } = useAuth();
   const { agents, loadAgents } = useAgentsStore();
-  const { chatMode, setChatMode } = useChatStore();
   
   const [state, setState] = useState<AskExpertState>({
     selectedAgent: null,
@@ -110,9 +109,9 @@ export default function AskExpertPage() {
       return;
     }
     
-    if (chatMode === 'agent' && !state.selectedAgent) {
+    if (!state.selectedAgent) {
       console.warn('❌ No agent selected');
-      alert('Please select an agent first or switch to direct chat mode');
+      alert('Please select an agent first');
       return;
     }
     
@@ -146,7 +145,7 @@ export default function AskExpertPage() {
         },
         body: JSON.stringify({
           message: state.input,
-          agent: chatMode === 'agent' && state.selectedAgent ? {
+          agent: {
             id: state.selectedAgent.id,
             display_name: state.selectedAgent.display_name || state.selectedAgent.name,
             business_function: state.selectedAgent.business_function || 'General',
@@ -156,16 +155,6 @@ export default function AskExpertPage() {
             max_tokens: state.selectedAgent.max_tokens || 2000,
             capabilities: state.selectedAgent.capabilities || [],
             specializations: state.selectedAgent.knowledge_domains || []
-          } : {
-            id: 'direct-llm',
-            display_name: 'Direct LLM',
-            business_function: 'General',
-            system_prompt: 'You are a helpful AI assistant. Provide clear, accurate, and helpful responses.',
-            model: 'gpt-4',
-            temperature: 0.7,
-            max_tokens: 2000,
-            capabilities: ['general_conversation', 'question_answering', 'analysis'],
-            specializations: []
           },
           userId: user?.id || 'anonymous',
           sessionId: state.sessionId,
@@ -173,9 +162,8 @@ export default function AskExpertPage() {
             role: msg.role,
             content: msg.content,
           })),
-          ragEnabled: chatMode === 'agent',
-          useEnhancedWorkflow: chatMode === 'agent',
-          chatMode: chatMode,
+          ragEnabled: true,
+          useEnhancedWorkflow: true,
         }),
       });
 
@@ -336,8 +324,8 @@ export default function AskExpertPage() {
         </div>
 
 
-        {/* Agent Selection - Only show in agent mode */}
-        {chatMode === 'agent' && (
+        {/* Agent Selection */}
+        {(
           <div className="p-6 border-b border-gray-200">
             <h3 className="text-sm font-medium text-gray-900 mb-3">Select Expert</h3>
             <Select onValueChange={handleAgentSelect}>
@@ -362,7 +350,7 @@ export default function AskExpertPage() {
         )}
 
         {/* Selected Agent Info */}
-        {chatMode === 'agent' && state.selectedAgent && (
+        {state.selectedAgent && (
           <div className="p-6 border-b border-gray-200">
             <div className="flex items-center space-x-3">
               <Avatar className="h-12 w-12">
@@ -384,31 +372,12 @@ export default function AskExpertPage() {
           </div>
         )}
 
-        {/* Direct LLM Info */}
-        {chatMode === 'direct' && (
-          <div className="p-6 border-b border-gray-200">
-            <div className="flex items-center space-x-3">
-              <Avatar className="h-12 w-12">
-                <AvatarFallback>🤖</AvatarFallback>
-              </Avatar>
-              <div>
-                <h4 className="font-medium">Direct LLM Chat</h4>
-                <p className="text-sm text-gray-600">Chat directly with GPT-4 for general assistance</p>
-                <div className="flex flex-wrap gap-1 mt-2">
-                  <Badge variant="secondary" className="text-xs">General Conversation</Badge>
-                  <Badge variant="secondary" className="text-xs">Question Answering</Badge>
-                  <Badge variant="secondary" className="text-xs">Analysis</Badge>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
 
         {/* Quick Prompts */}
         <div className="p-6 flex-1">
           <h3 className="text-sm font-medium text-gray-900 mb-3">Quick Prompts</h3>
           <div className="space-y-2">
-            {chatMode === 'agent' && state.selectedAgent ? (
+            {state.selectedAgent ? (
               getExpertPrompts().map((prompt, index) => (
                 <Button
                   key={index}
@@ -427,30 +396,9 @@ export default function AskExpertPage() {
                 </Button>
               ))
             ) : (
-              // Direct LLM prompts
-              [
-                { icon: "💡", text: "Explain this concept in simple terms", description: "Get a clear, easy-to-understand explanation" },
-                { icon: "📊", text: "Help me analyze this data", description: "Break down data and provide insights" },
-                { icon: "⭐", text: "What are the best practices for this?", description: "Learn industry standards and recommendations" },
-                { icon: "🧠", text: "Can you help me brainstorm ideas?", description: "Generate creative solutions and alternatives" },
-                { icon: "🤔", text: "What should I consider before making this decision?", description: "Get a comprehensive decision-making framework" }
-              ].map((prompt, index) => (
-                <Button
-                  key={index}
-                  variant="outline"
-                  size="sm"
-                  className="w-full justify-start text-left h-auto p-3"
-                  onClick={() => setState(prev => ({ ...prev, input: prompt.text }))}
-                >
-                  <div>
-                    <div className="flex items-center space-x-2">
-                      <span>{prompt.icon}</span>
-                      <span className="font-medium">{prompt.text}</span>
-                    </div>
-                    <p className="text-xs text-gray-600 mt-1">{prompt.description}</p>
-                  </div>
-                </Button>
-              ))
+              <div className="text-sm text-gray-500 text-center py-4">
+                Select an expert agent to see quick prompts
+              </div>
             )}
           </div>
         </div>
@@ -463,28 +411,24 @@ export default function AskExpertPage() {
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-lg font-semibold">
-                {chatMode === 'direct' 
-                  ? 'Direct LLM Chat' 
-                  : state.selectedAgent 
-                    ? `Chat with ${state.selectedAgent.display_name || state.selectedAgent.name}` 
-                    : 'Select an Expert'
+                {state.selectedAgent 
+                  ? `Chat with ${state.selectedAgent.display_name || state.selectedAgent.name}` 
+                  : 'Select an Expert'
                 }
               </h2>
               <p className="text-sm text-gray-600">
-                {chatMode === 'direct' 
-                  ? 'Chat directly with GPT-4 for general assistance'
-                  : state.selectedAgent 
-                    ? state.selectedAgent.description 
-                    : 'Choose an expert to get started'
+                {state.selectedAgent 
+                  ? state.selectedAgent.description 
+                  : 'Choose an expert to get started'
                 }
               </p>
             </div>
             <div className="flex items-center space-x-2">
               <Badge variant="outline">
-                {chatMode === 'direct' ? 'Direct LLM' : 'Ask Expert'}
+                Ask Expert
               </Badge>
               <Badge variant="secondary">
-                {chatMode === 'direct' ? 'GPT-4' : 'LangGraph'}
+                LangGraph
               </Badge>
             </div>
           </div>
@@ -541,12 +485,9 @@ export default function AskExpertPage() {
                   <div className="flex items-start space-x-3">
                     {message.role === 'assistant' && (
                       <Avatar className="h-8 w-8 mt-1">
-                        <AvatarImage src={chatMode === 'direct' ? undefined : state.selectedAgent?.avatar} />
+                        <AvatarImage src={state.selectedAgent?.avatar} />
                         <AvatarFallback>
-                          {chatMode === 'direct' 
-                            ? '🤖' 
-                            : (state.selectedAgent?.display_name || state.selectedAgent?.name)?.[0]
-                          }
+                          {(state.selectedAgent?.display_name || state.selectedAgent?.name)?.[0]}
                         </AvatarFallback>
                       </Avatar>
                     )}
@@ -587,13 +528,11 @@ export default function AskExpertPage() {
               value={state.input}
               onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setState(prev => ({ ...prev, input: e.target.value }))}
               placeholder={
-                chatMode === 'direct'
-                  ? 'Ask me anything...'
-                  : state.selectedAgent
-                    ? `Ask ${state.selectedAgent.name} anything...`
-                    : 'Select an expert first'
+                state.selectedAgent
+                  ? `Ask ${state.selectedAgent.name} anything...`
+                  : 'Select an expert first'
               }
-              disabled={(chatMode === 'agent' && !state.selectedAgent) || state.isLoading}
+              disabled={!state.selectedAgent || state.isLoading}
               className="flex-1 min-h-[60px] max-h-[120px]"
               onKeyDown={(e: React.KeyboardEvent<HTMLTextAreaElement>) => {
                 if (e.key === 'Enter' && !e.shiftKey) {
@@ -604,7 +543,7 @@ export default function AskExpertPage() {
             />
             <Button
               onClick={handleSendMessage}
-              disabled={!state.input.trim() || (chatMode === 'agent' && !state.selectedAgent) || state.isLoading}
+              disabled={!state.input.trim() || !state.selectedAgent || state.isLoading}
               size="lg"
               className="px-6"
             >

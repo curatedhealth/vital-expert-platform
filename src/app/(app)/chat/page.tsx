@@ -203,7 +203,14 @@ function ChatPageContent() {
   };
 
   const handleAddAgentToLibrary = (agentId: string) => {
-    addAgentToLibrary(agentId);
+    try {
+      if (typeof window !== 'undefined' && addAgentToLibrary) {
+        addAgentToLibrary(agentId);
+        console.log('Agent added to library:', agentId);
+      }
+    } catch (error) {
+      console.error('Error adding agent to library:', error);
+    }
   };
 
   const toggleSection = (section: keyof typeof collapsedSections) => {
@@ -230,7 +237,7 @@ function ChatPageContent() {
           onCreateAgentClick={handleCreateAgentClick}
           onAgentSelect={handleAgentSelect}
           onAgentRemove={handleAgentRemove}
-          onAddAgentToLibrary={handleAddAgentToLibrary}
+          onAddAgentToLibrary={addAgentToLibrary ? handleAddAgentToLibrary : undefined}
           selectedAgentId={selectedAgent?.id}
           agents={mounted ? getLibraryAgents() : []}
           allAgents={mounted ? agents : []}

@@ -30,8 +30,10 @@ export class SessionSync {
     if (this.isListening) return;
     
     this.isListening = true;
-    window.addEventListener('storage', this.handleStorageChange);
-    window.addEventListener('focus', this.handleFocus);
+    if (typeof window !== 'undefined') {
+      window.addEventListener('storage', this.handleStorageChange);
+      window.addEventListener('focus', this.handleFocus);
+    }
   }
 
   // Stop listening for storage events
@@ -39,8 +41,10 @@ export class SessionSync {
     if (!this.isListening) return;
     
     this.isListening = false;
-    window.removeEventListener('storage', this.handleStorageChange);
-    window.removeEventListener('focus', this.handleFocus);
+    if (typeof window !== 'undefined') {
+      window.removeEventListener('storage', this.handleStorageChange);
+      window.removeEventListener('focus', this.handleFocus);
+    }
   }
 
   // Handle storage changes (cross-tab sync)
@@ -69,13 +73,15 @@ export class SessionSync {
   // Force sync across all tabs
   async syncAcrossTabs(): Promise<void> {
     try {
-      // Trigger a storage event to notify other tabs
-      const event = new StorageEvent('storage', {
-        key: 'supabase-sync',
-        newValue: Date.now().toString(),
-        url: window.location.href
-      });
-      window.dispatchEvent(event);
+      if (typeof window !== 'undefined') {
+        // Trigger a storage event to notify other tabs
+        const event = new StorageEvent('storage', {
+          key: 'supabase-sync',
+          newValue: Date.now().toString(),
+          url: window.location.href
+        });
+        window.dispatchEvent(event);
+      }
     } catch (error) {
       console.warn('Cross-tab sync failed:', error);
     }

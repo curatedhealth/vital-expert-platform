@@ -62,9 +62,14 @@ export async function middleware(request: NextRequest) {
 
   // For protected routes, check authentication
   try {
-    // Skip authentication check in pre-production mode (mock auth)
-    if (process.env.NODE_ENV === 'production' && process.env.VERCEL_ENV === 'preview') {
-      // Allow all requests in pre-production mode
+    // Skip authentication check when using mock authentication
+    // This is for testing/demo purposes until full Supabase auth is configured
+    const skipAuth = process.env.NEXT_PUBLIC_SKIP_AUTH === 'true' || 
+                     process.env.VERCEL_ENV === 'preview' ||
+                     !process.env.SUPABASE_SERVICE_ROLE_KEY;
+    
+    if (skipAuth) {
+      console.log('Skipping auth check - mock authentication enabled');
       return NextResponse.next();
     }
 

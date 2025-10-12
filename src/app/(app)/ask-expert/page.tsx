@@ -47,6 +47,7 @@ interface AskExpertState {
   workflowSteps: any[];
   currentStep: string;
   progress: number;
+  chatMode: 'agent' | 'direct';
 }
 
 export default function AskExpertPage() {
@@ -63,6 +64,7 @@ export default function AskExpertPage() {
     workflowSteps: [],
     currentStep: '',
     progress: 0,
+    chatMode: 'agent',
   });
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -107,9 +109,9 @@ export default function AskExpertPage() {
       return;
     }
     
-    if (!state.selectedAgent) {
+    if (state.chatMode === 'agent' && !state.selectedAgent) {
       console.warn('❌ No agent selected');
-      alert('Please select an agent first');
+      alert('Please select an agent first or switch to direct chat mode');
       return;
     }
     
@@ -143,7 +145,7 @@ export default function AskExpertPage() {
         },
         body: JSON.stringify({
           message: state.input,
-          agent: {
+          agent: state.chatMode === 'agent' && state.selectedAgent ? {
             id: state.selectedAgent.id,
             display_name: state.selectedAgent.display_name || state.selectedAgent.name,
             business_function: state.selectedAgent.business_function || 'General',
@@ -153,6 +155,16 @@ export default function AskExpertPage() {
             max_tokens: state.selectedAgent.max_tokens || 2000,
             capabilities: state.selectedAgent.capabilities || [],
             specializations: state.selectedAgent.knowledge_domains || []
+          } : {
+            id: 'direct-llm',
+            display_name: 'Direct LLM',
+            business_function: 'General',
+            system_prompt: 'You are a helpful AI assistant. Provide clear, accurate, and helpful responses.',
+            model: 'gpt-4',
+            temperature: 0.7,
+            max_tokens: 2000,
+            capabilities: ['general_conversation', 'question_answering', 'analysis'],
+            specializations: []
           },
           userId: user?.id || 'anonymous',
           sessionId: state.sessionId,
@@ -160,8 +172,9 @@ export default function AskExpertPage() {
             role: msg.role,
             content: msg.content,
           })),
-          ragEnabled: true,
-          useEnhancedWorkflow: true,
+          ragEnabled: state.chatMode === 'agent',
+          useEnhancedWorkflow: state.chatMode === 'agent',
+          chatMode: state.chatMode,
         }),
       });
 
@@ -321,31 +334,66 @@ export default function AskExpertPage() {
           </p>
         </div>
 
-        {/* Agent Selection */}
+        {/* Chat Mode Selection */}
         <div className="p-6 border-b border-gray-200">
-          <h3 className="text-sm font-medium text-gray-900 mb-3">Select Expert</h3>
-          <Select onValueChange={handleAgentSelect}>
-            <SelectTrigger>
-              <SelectValue placeholder="Choose an expert agent" />
-            </SelectTrigger>
-            <SelectContent>
-              {agents.map((agent) => (
-                <SelectItem key={agent.id} value={agent.id}>
-                  <div className="flex items-center space-x-2">
-                    <Avatar className="h-6 w-6">
-                      <AvatarImage src={agent.avatar} />
-                      <AvatarFallback>{(agent.display_name || agent.name)[0]}</AvatarFallback>
-                    </Avatar>
-                    <span>{agent.display_name || agent.name}</span>
-                  </div>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <h3 className="text-sm font-medium text-gray-900 mb-3">Chat Mode</h3>
+          <div className="flex space-x-2">
+            <button
+              onClick={() => setState(prev => ({ ...prev, chatMode: 'direct' }))}
+              className={`flex-1 px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+                state.chatMode === 'direct'
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              <div className="flex items-center justify-center space-x-2">
+                <MessageSquare className="h-4 w-4" />
+                <span>Direct LLM</span>
+              </div>
+            </button>
+            <button
+              onClick={() => setState(prev => ({ ...prev, chatMode: 'agent' }))}
+              className={`flex-1 px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+                state.chatMode === 'agent'
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              <div className="flex items-center justify-center space-x-2">
+                <User className="h-4 w-4" />
+                <span>Expert Agent</span>
+              </div>
+            </button>
+          </div>
         </div>
 
+        {/* Agent Selection - Only show in agent mode */}
+        {state.chatMode === 'agent' && (
+          <div className="p-6 border-b border-gray-200">
+            <h3 className="text-sm font-medium text-gray-900 mb-3">Select Expert</h3>
+            <Select onValueChange={handleAgentSelect}>
+              <SelectTrigger>
+                <SelectValue placeholder="Choose an expert agent" />
+              </SelectTrigger>
+              <SelectContent>
+                {agents.map((agent) => (
+                  <SelectItem key={agent.id} value={agent.id}>
+                    <div className="flex items-center space-x-2">
+                      <Avatar className="h-6 w-6">
+                        <AvatarImage src={agent.avatar} />
+                        <AvatarFallback>{(agent.display_name || agent.name)[0]}</AvatarFallback>
+                      </Avatar>
+                      <span>{agent.display_name || agent.name}</span>
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+
         {/* Selected Agent Info */}
-        {state.selectedAgent && (
+        {state.chatMode === 'agent' && state.selectedAgent && (
           <div className="p-6 border-b border-gray-200">
             <div className="flex items-center space-x-3">
               <Avatar className="h-12 w-12">
@@ -367,12 +415,32 @@ export default function AskExpertPage() {
           </div>
         )}
 
+        {/* Direct LLM Info */}
+        {state.chatMode === 'direct' && (
+          <div className="p-6 border-b border-gray-200">
+            <div className="flex items-center space-x-3">
+              <Avatar className="h-12 w-12">
+                <AvatarFallback>🤖</AvatarFallback>
+              </Avatar>
+              <div>
+                <h4 className="font-medium">Direct LLM Chat</h4>
+                <p className="text-sm text-gray-600">Chat directly with GPT-4 for general assistance</p>
+                <div className="flex flex-wrap gap-1 mt-2">
+                  <Badge variant="secondary" className="text-xs">General Conversation</Badge>
+                  <Badge variant="secondary" className="text-xs">Question Answering</Badge>
+                  <Badge variant="secondary" className="text-xs">Analysis</Badge>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Quick Prompts */}
-        {state.selectedAgent && (
-          <div className="p-6 flex-1">
-            <h3 className="text-sm font-medium text-gray-900 mb-3">Quick Prompts</h3>
-            <div className="space-y-2">
-              {getExpertPrompts().map((prompt, index) => (
+        <div className="p-6 flex-1">
+          <h3 className="text-sm font-medium text-gray-900 mb-3">Quick Prompts</h3>
+          <div className="space-y-2">
+            {state.chatMode === 'agent' && state.selectedAgent ? (
+              getExpertPrompts().map((prompt, index) => (
                 <Button
                   key={index}
                   variant="outline"
@@ -388,10 +456,35 @@ export default function AskExpertPage() {
                     <p className="text-xs text-gray-600 mt-1">{prompt.description}</p>
                   </div>
                 </Button>
-              ))}
-            </div>
+              ))
+            ) : (
+              // Direct LLM prompts
+              [
+                { icon: "💡", text: "Explain this concept in simple terms", description: "Get a clear, easy-to-understand explanation" },
+                { icon: "📊", text: "Help me analyze this data", description: "Break down data and provide insights" },
+                { icon: "⭐", text: "What are the best practices for this?", description: "Learn industry standards and recommendations" },
+                { icon: "🧠", text: "Can you help me brainstorm ideas?", description: "Generate creative solutions and alternatives" },
+                { icon: "🤔", text: "What should I consider before making this decision?", description: "Get a comprehensive decision-making framework" }
+              ].map((prompt, index) => (
+                <Button
+                  key={index}
+                  variant="outline"
+                  size="sm"
+                  className="w-full justify-start text-left h-auto p-3"
+                  onClick={() => setState(prev => ({ ...prev, input: prompt.text }))}
+                >
+                  <div>
+                    <div className="flex items-center space-x-2">
+                      <span>{prompt.icon}</span>
+                      <span className="font-medium">{prompt.text}</span>
+                    </div>
+                    <p className="text-xs text-gray-600 mt-1">{prompt.description}</p>
+                  </div>
+                </Button>
+              ))
+            )}
           </div>
-        )}
+        </div>
       </div>
 
       {/* Main Chat Area */}
@@ -401,15 +494,29 @@ export default function AskExpertPage() {
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-lg font-semibold">
-                {state.selectedAgent ? `Chat with ${state.selectedAgent.name}` : 'Select an Expert'}
+                {state.chatMode === 'direct' 
+                  ? 'Direct LLM Chat' 
+                  : state.selectedAgent 
+                    ? `Chat with ${state.selectedAgent.display_name || state.selectedAgent.name}` 
+                    : 'Select an Expert'
+                }
               </h2>
               <p className="text-sm text-gray-600">
-                {state.selectedAgent ? state.selectedAgent.description : 'Choose an expert to get started'}
+                {state.chatMode === 'direct' 
+                  ? 'Chat directly with GPT-4 for general assistance'
+                  : state.selectedAgent 
+                    ? state.selectedAgent.description 
+                    : 'Choose an expert to get started'
+                }
               </p>
             </div>
             <div className="flex items-center space-x-2">
-              <Badge variant="outline">Ask Expert</Badge>
-              <Badge variant="secondary">LangGraph</Badge>
+              <Badge variant="outline">
+                {state.chatMode === 'direct' ? 'Direct LLM' : 'Ask Expert'}
+              </Badge>
+              <Badge variant="secondary">
+                {state.chatMode === 'direct' ? 'GPT-4' : 'LangGraph'}
+              </Badge>
             </div>
           </div>
         </div>
@@ -465,8 +572,13 @@ export default function AskExpertPage() {
                   <div className="flex items-start space-x-3">
                     {message.role === 'assistant' && (
                       <Avatar className="h-8 w-8 mt-1">
-                        <AvatarImage src={state.selectedAgent?.avatar} />
-                        <AvatarFallback>{(state.selectedAgent?.display_name || state.selectedAgent?.name)?.[0]}</AvatarFallback>
+                        <AvatarImage src={state.chatMode === 'direct' ? undefined : state.selectedAgent?.avatar} />
+                        <AvatarFallback>
+                          {state.chatMode === 'direct' 
+                            ? '🤖' 
+                            : (state.selectedAgent?.display_name || state.selectedAgent?.name)?.[0]
+                          }
+                        </AvatarFallback>
                       </Avatar>
                     )}
                     <div className="flex-1">

@@ -64,36 +64,50 @@ export const useAgentsStore = create<{
       loadAgents: async () => {
         set({ loading: true, error: null });
         try {
-          // Mock data for now
-          const mockAgents: Agent[] = [
-            {
-              id: '1',
-              name: 'clinical-trial',
-              display_name: 'Clinical Trial Designer',
-              description: 'Expert in clinical trial design and methodology',
-              system_prompt: 'You are a clinical trial design expert...',
-              model: 'gpt-4',
-              avatar: '',
-              color: '#6366f1',
-              capabilities: ['trial-design', 'statistics'],
-              rag_enabled: true,
-              temperature: 0.7,
-              max_tokens: 2000,
-              is_custom: false,
-              status: 'active',
-              tier: 1,
-              priority: 1,
-              implementation_phase: 1,
-              knowledge_domains: ['clinical-research'],
-              business_function: 'research',
-              department: 'clinical',
-              organizational_role: 'researcher',
-              created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString(),
-            }
-          ];
-          set({ agents: mockAgents, loading: false });
+          console.log('🔍 AgentsStore: Loading agents from API...');
+          
+          // Call the API to fetch agents
+          const response = await fetch('/api/agents-crud');
+          
+          if (!response.ok) {
+            throw new Error(`Failed to fetch agents: ${response.status} ${response.statusText}`);
+          }
+          
+          const data = await response.json();
+          const agentsData = data.agents || [];
+          
+          console.log(`✅ AgentsStore: Loaded ${agentsData.length} agents from API`);
+          
+          // Transform agents to match expected interface
+          const transformedAgents: Agent[] = agentsData.map((agent: any) => ({
+            id: agent.id,
+            name: agent.name,
+            display_name: agent.display_name,
+            description: agent.description,
+            system_prompt: agent.system_prompt || 'AI agent specialized in ' + (agent.business_function || 'general tasks'),
+            model: agent.model || 'gpt-4',
+            avatar: agent.avatar || '🤖',
+            color: agent.color || '#6366f1',
+            capabilities: agent.capabilities || ['Analysis', 'Research', 'Strategy'],
+            rag_enabled: agent.rag_enabled || true,
+            temperature: agent.temperature || 0.7,
+            max_tokens: agent.max_tokens || 2000,
+            is_custom: agent.is_custom || false,
+            status: agent.status,
+            tier: agent.tier,
+            priority: agent.priority,
+            implementation_phase: agent.implementation_phase || 1,
+            knowledge_domains: agent.knowledge_domains || [],
+            business_function: agent.business_function,
+            department: agent.department || 'general',
+            organizational_role: agent.organizational_role || 'specialist',
+            created_at: agent.created_at,
+            updated_at: agent.updated_at,
+          }));
+          
+          set({ agents: transformedAgents, loading: false });
         } catch (error) {
+          console.error('❌ AgentsStore: Failed to load agents:', error);
           set({ error: 'Failed to load agents', loading: false });
         }
       },

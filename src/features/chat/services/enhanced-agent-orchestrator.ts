@@ -488,5 +488,6 @@ When you don't know something, say so clearly and suggest how to find the answer
   }
 }
 
+export { EnhancedAgentOrchestrator };
 export const enhancedAgentOrchestrator = new EnhancedAgentOrchestrator();
 export default enhancedAgentOrchestrator;

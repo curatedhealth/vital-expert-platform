@@ -325,6 +325,22 @@ Helpful Answer:`;
   }
 }
 
+export class TokenTrackingCallback {
+  private tokenUsage: { promptTokens: number; completionTokens: number; totalTokens: number } = {
+    promptTokens: 0,
+    completionTokens: 0,
+    totalTokens: 0
+  };
+
+  onTokenUsage(usage: { promptTokens: number; completionTokens: number; totalTokens: number }) {
+    this.tokenUsage = usage;
+  }
+
+  getTokenUsage() {
+    return this.tokenUsage;
+  }
+}
+
 // Create singleton instance
 export const enhancedLangChainService = new EnhancedLangChainService({
   model: 'gpt-3.5-turbo',

@@ -484,6 +484,12 @@ const _useChatStore = create<ChatStore>()(
                     });
 
                     // Update message with streaming content
+                    console.log('🔄 [streaming] Updating message content:', {
+                      messageId: assistantMessage.id,
+                      contentLength: fullContent?.length || 0,
+                      contentPreview: fullContent?.substring(0, 100) + '...'
+                    });
+                    
                     set((state) => ({
                       messages: state.messages.map((msg) =>
                         msg.id === assistantMessage.id
@@ -501,6 +507,12 @@ const _useChatStore = create<ChatStore>()(
                     fullContent = data.content || fullContent;
                     
                     // Update message with final content and stop loading
+                    console.log('🏁 [final] Updating message with final content:', {
+                      messageId: assistantMessage.id,
+                      contentLength: fullContent?.length || 0,
+                      contentPreview: fullContent?.substring(0, 100) + '...'
+                    });
+                    
                     set((state) => ({
                       messages: state.messages.map((msg) =>
                         msg.id === assistantMessage.id

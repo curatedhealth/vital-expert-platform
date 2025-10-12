@@ -1,17 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import OpenAI from 'openai';
-
-// Initialize OpenAI
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+import { OpenAI } from 'openai';
 
 // Initialize Supabase
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
+
+// Initialize OpenAI
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
 
 export async function POST(request: NextRequest) {
   try {
@@ -22,27 +22,29 @@ export async function POST(request: NextRequest) {
       userId, 
       sessionId, 
       chatHistory = [],
-      ragEnabled = false 
+      ragEnabled = false,
+      useEnhancedWorkflow = false
     } = body;
 
-    if (!message || !agent || !userId || !sessionId) {
+    if (!message) {
       return NextResponse.json(
-        { error: 'Missing required fields: message, agent, userId, sessionId' },
+        { error: 'Message is required' },
         { status: 400 }
       );
     }
 
     console.log('🤖 Ask Expert API called:', {
       message: message.substring(0, 100) + '...',
-      agentId: agent.id,
+      agentId: agent?.id || 'direct-llm',
       userId,
       sessionId,
-      chatHistoryLength: chatHistory.length
+      ragEnabled,
+      useEnhancedWorkflow
     });
 
     // Get agent details from database (skip for direct-llm)
     let agentData = agent;
-    if (agent.id !== 'direct-llm') {
+    if (agent && agent.id !== 'direct-llm') {
       const { data: dbAgentData, error: agentError } = await supabase
         .from('agents')
         .select('*')
@@ -61,8 +63,8 @@ export async function POST(request: NextRequest) {
 
     // Build system prompt
     let systemPrompt;
-    if (agent.id === 'direct-llm') {
-      systemPrompt = `You are a helpful AI assistant. Provide clear, accurate, and helpful responses to user questions. You can help with a wide range of topics including digital health, clinical trials, regulatory compliance, and general questions.`;
+    if (agent && agent.id === 'direct-llm') {
+      systemPrompt = `You are a helpful AI assistant specializing in digital health, clinical trials, regulatory compliance, and healthcare innovation. Provide clear, accurate, and helpful responses to user questions. You can help with a wide range of topics including digital health, clinical trials, regulatory compliance, and general questions.`;
     } else {
       systemPrompt = `You are ${agentData.display_name}, a ${agentData.business_function} expert.
 
@@ -74,124 +76,106 @@ Your capabilities include:
 Please provide helpful, accurate, and professional responses based on your expertise.`;
     }
 
-    // Prepare messages for OpenAI
-    const messages = [
-      { role: 'system', content: systemPrompt },
-      ...chatHistory.map((msg: any) => ({
-        role: msg.role,
-        content: msg.content
-      })),
-      { role: 'user', content: message }
-    ];
-
-    console.log('📝 Sending to OpenAI:', {
-      model: agentData.model || 'gpt-4',
-      messageCount: messages.length,
-      agentName: agentData.display_name
-    });
-
-    // Call OpenAI
-    const completion = await openai.chat.completions.create({
-      model: agentData.model || 'gpt-4',
-      messages: messages as any,
-      temperature: agentData.temperature || 0.7,
-      max_tokens: agentData.max_tokens || 2000,
-      stream: true
-    });
-
     // Create streaming response
     const stream = new ReadableStream({
       async start(controller) {
         try {
           let fullContent = '';
-          let tokenCount = 0;
+          let metadata: any = {};
 
+          // Prepare messages for OpenAI
+          const messages = [
+            { role: 'system', content: systemPrompt },
+            ...chatHistory.map((msg: any) => ({
+              role: msg.role,
+              content: msg.content
+            })),
+            { role: 'user', content: message }
+          ];
+
+          // Call OpenAI with streaming
+          const completion = await openai.chat.completions.create({
+            model: 'gpt-4',
+            messages: messages as any,
+            stream: true,
+            temperature: 0.7,
+            max_tokens: 2000,
+          });
+
+          // Stream the response
           for await (const chunk of completion) {
             const content = chunk.choices[0]?.delta?.content || '';
-            
             if (content) {
               fullContent += content;
-              tokenCount++;
-
               const data = JSON.stringify({
                 type: 'content',
                 content: content,
                 fullContent: fullContent,
               });
-
               controller.enqueue(new TextEncoder().encode(`data: ${data}\n\n`));
             }
           }
 
+          // Send final metadata
+          const finalData = JSON.stringify({
+            type: 'metadata',
+            metadata: {
+              selectedAgent: agentData ? {
+                id: agentData.id,
+                name: agentData.display_name || agentData.name,
+                businessFunction: agentData.business_function,
+                capabilities: agentData.capabilities || []
+              } : {
+                id: 'direct-llm',
+                name: 'Direct LLM',
+                businessFunction: 'General Purpose',
+                capabilities: ['General AI Assistance']
+              },
+              citations: [],
+              followupQuestions: [
+                'Can you provide more specific guidance?',
+                'What would be the next steps?',
+                'Are there any important considerations I should know about?',
+              ],
+              sources: [],
+              processingTime: 1000,
+              tokenUsage: { promptTokens: 0, completionTokens: 0, totalTokens: 0 },
+            },
+          });
+          
+          controller.enqueue(new TextEncoder().encode(`data: ${finalData}\n\n`));
+          controller.close();
+
           // Save message to database
           try {
-            const { error: saveError } = await supabase
+            const { error: messageError } = await supabase
               .from('chat_messages')
-              .insert([
-                {
-                  session_id: sessionId,
-                  user_id: userId,
-                  agent_id: agent.id,
-                  role: 'user',
-                  content: message,
-                  metadata: { timestamp: new Date().toISOString() }
-                },
-                {
-                  session_id: sessionId,
-                  user_id: userId,
-                  agent_id: agent.id,
-                  role: 'assistant',
-                  content: fullContent,
-                  metadata: { 
-                    timestamp: new Date().toISOString(),
-                    tokenCount,
-                    model: agentData.model || 'gpt-4'
-                  }
-                }
-              ]);
+              .insert({
+                session_id: sessionId,
+                user_id: userId,
+                agent_id: agentData?.id || 'direct-llm',
+                role: 'assistant',
+                content: fullContent,
+                metadata: metadata
+              });
 
-            if (saveError) {
-              console.error('❌ Error saving messages:', saveError);
-            } else {
-              console.log('✅ Messages saved to database');
+            if (messageError) {
+              console.error('❌ Failed to save message:', messageError);
             }
           } catch (dbError) {
             console.error('❌ Database error:', dbError);
           }
 
-          // Send final metadata
-          const metadata = JSON.stringify({
-            type: 'metadata',
-            metadata: {
-              agent: {
-                id: agent.id,
-                name: agentData.display_name,
-                businessFunction: agentData.business_function
-              },
-              tokenUsage: {
-                promptTokens: 0, // Would need to calculate from input
-                completionTokens: tokenCount,
-                totalTokens: tokenCount
-              },
-              processingTime: Date.now(),
-              citations: [],
-              sources: []
-            }
-          });
-
-          controller.enqueue(new TextEncoder().encode(`data: ${metadata}\n\n`));
-          controller.close();
-
         } catch (error) {
-          console.error('❌ Streaming error:', error);
+          console.error('❌ Ask Expert streaming error:', error);
           const errorData = JSON.stringify({
             type: 'error',
-            error: 'Failed to generate response'
+            error: 'Failed to generate response: ' + (error as Error).message,
           });
           controller.enqueue(new TextEncoder().encode(`data: ${errorData}\n\n`));
           controller.close();
         }
-      }
+      },
     });
 
     return new Response(stream, {
@@ -201,11 +185,10 @@ Please provide helpful, accurate, and professional responses based on your exper
         'Connection': 'keep-alive',
       },
     });
-
   } catch (error) {
     console.error('❌ Ask Expert API error:', error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: 'Internal server error: ' + (error as Error).message },
       { status: 500 }
     );
   }

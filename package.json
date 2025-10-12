@@ -7,6 +7,7 @@
     "dev": "next dev",
     "build": "next build",
     "build:preprod": "node scripts/preprod-build.js build",
+    "vercel-build": "node scripts/preprod-build.js build",
     "start": "next start",
     "lint": "next lint",
     "lint:fix": "next lint --fix",

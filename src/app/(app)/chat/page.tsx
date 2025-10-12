@@ -265,7 +265,7 @@ function ChatPageContent() {
                         <h4 className="font-medium text-lg">{selectedAgent.display_name || selectedAgent.name}</h4>
                         <p className="text-sm text-gray-600">{selectedAgent.description}</p>
                         <div className="flex flex-wrap gap-1 mt-2">
-                          {(selectedAgent.capabilities || [])?.slice(0, 3).map((cap) => (
+                          {Array.isArray(selectedAgent.capabilities) && selectedAgent.capabilities.slice(0, 3).map((cap) => (
                             <Badge key={cap} variant="secondary" className="text-xs">
                               {cap}
                             </Badge>

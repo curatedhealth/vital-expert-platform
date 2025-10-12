@@ -1035,10 +1035,24 @@ const _useChatStore = create<ChatStore>()(
       getLibraryAgents: () => {
         const { agents, libraryAgents } = get();
         console.log('🔍 getLibraryAgents called:', {
-          agentsCount: agents.length,
-          libraryAgentsCount: libraryAgents.length,
-          libraryAgents: libraryAgents
+          agentsCount: agents?.length || 0,
+          libraryAgentsCount: libraryAgents?.length || 0,
+          libraryAgents: libraryAgents,
+          agentsType: typeof agents,
+          agentsIsArray: Array.isArray(agents)
         });
+        
+        // Ensure agents is an array before filtering
+        if (!Array.isArray(agents)) {
+          console.error('❌ Agents is not an array:', agents);
+          return [];
+        }
+        
+        if (!Array.isArray(libraryAgents)) {
+          console.error('❌ LibraryAgents is not an array:', libraryAgents);
+          return [];
+        }
+        
         const filteredAgents = agents.filter(agent => libraryAgents.includes(agent.id));
         console.log('📚 Filtered library agents:', filteredAgents.length);
         return filteredAgents;

@@ -43,10 +43,10 @@ export function NavAiAgents({ onAgentStoreClick, onCreateAgentClick, onAgentSele
   const [addedAgentName, setAddedAgentName] = useState<string | null>(null);
   
   // Filter agents based on search term
-  const filteredAgents = allAgents.filter(agent => 
+  const filteredAgents = Array.isArray(allAgents) ? allAgents.filter(agent => 
     agent.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     (agent.description && agent.description.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
+  ) : [];
 
   return (
     <div className="px-3">
@@ -105,7 +105,7 @@ export function NavAiAgents({ onAgentStoreClick, onCreateAgentClick, onAgentSele
             </div>
             
             <div className="space-y-2 max-h-48 overflow-y-auto">
-              {filteredAgents.slice(0, 15).map((agent) => {
+              {Array.isArray(filteredAgents) && filteredAgents.slice(0, 15).map((agent) => {
                 const isAlreadyAdded = agents.some(a => a.id === agent.id);
                 return (
                   <div key={agent.id} className="flex items-center justify-between p-3 hover:bg-gray-50 rounded-lg border border-gray-100 transition-colors">

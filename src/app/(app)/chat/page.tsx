@@ -16,6 +16,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import { useState, useEffect, useRef, useMemo } from 'react';
 
 import { ClientAuthWrapper } from '@/components/auth/client-auth-wrapper';
+import { ErrorBoundary } from '@/components/error-boundary';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -31,7 +32,7 @@ import { ChatSidebar } from '@/features/chat/components/chat-sidebar';
 import { useAuth } from '@/supabase-auth-context';
 import { __useAgentsStore as useAgentsStore } from '@/agents-store';
 import { useChatStore } from '@/lib/stores/chat-store';
-import { Agent } from '@/types/agent';
+import { Agent } from '../../../types/agent.types';
 import { IconService } from '@/shared/services/icon-service';
 
 // Mock data for testing
@@ -58,7 +59,7 @@ function ChatPageContent() {
   const pathname = usePathname();
 
   const { user, loading, signOut } = useAuth();
-  const { createUserCopy, canEditAgent } = useAgentsStore();
+  // const { createUserCopy, canEditAgent } = useAgentsStore(); // Not used
 
   const {
     chats,
@@ -147,6 +148,16 @@ function ChatPageContent() {
     await sendMessage(message);
   };
 
+  // Safe wrapper for getLibraryAgents
+  const safeGetLibraryAgents = () => {
+    try {
+      return getLibraryAgents ? getLibraryAgents() : [];
+    } catch (error) {
+      console.error('Error getting library agents:', error);
+      return [];
+    }
+  };
+
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
@@ -224,7 +235,10 @@ function ChatPageContent() {
     <div className="flex flex-col h-full">
       <SidebarProvider defaultOpen={sidebarOpen}>
         <ChatSidebar
-          chats={filteredChats}
+          chats={filteredChats.map(chat => ({
+            ...chat,
+            updatedAt: chat.updatedAt instanceof Date ? chat.updatedAt.toISOString() : chat.updatedAt
+          }))}
           currentChat={currentChat ? {
             ...currentChat,
             updatedAt: currentChat.updatedAt instanceof Date ? currentChat.updatedAt.toISOString() : currentChat.updatedAt
@@ -237,9 +251,9 @@ function ChatPageContent() {
           onCreateAgentClick={handleCreateAgentClick}
           onAgentSelect={handleAgentSelect}
           onAgentRemove={handleAgentRemove}
-          onAddAgentToLibrary={addAgentToLibrary ? handleAddAgentToLibrary : undefined}
+          onAddAgentToLibrary={handleAddAgentToLibrary}
           selectedAgentId={selectedAgent?.id}
-          agents={mounted ? getLibraryAgents() : []}
+            agents={mounted ? safeGetLibraryAgents() : []}
           allAgents={mounted ? agents : []}
           formatDate={formatDate}
           isCollapsed={isCollapsed}
@@ -292,8 +306,10 @@ function ChatPageContent() {
 
 export default function ChatPage() {
   return (
-    <ClientAuthWrapper requireAuth={true}>
-      <ChatPageContent />
-    </ClientAuthWrapper>
+    <ErrorBoundary>
+      <ClientAuthWrapper requireAuth={true}>
+        <ChatPageContent />
+      </ClientAuthWrapper>
+    </ErrorBoundary>
   );
 }

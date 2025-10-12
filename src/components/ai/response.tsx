@@ -27,7 +27,8 @@ export function Response({ children, className }: ResponseProps) {
         remarkPlugins={[remarkGfm, remarkMath]}
         rehypePlugins={[rehypeKatex]}
         components={{
-          code({ node, inline, className, children, ...props }) {
+          code({ node, className, children, ...props }: any) {
+            const inline = (props as any).inline;
             const match = /language-(\w+)/.exec(className || "")
             const language = match ? match[1] : ""
 

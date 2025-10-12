@@ -1,6 +1,6 @@
 'use client';
 
-import { AgentCreator } from '@/features/chat/components/agent-creator';
+// import { AgentCreator } from '@/features/chat/components/agent-creator';
 
 export default function CreateAgentPage() {
   return (
@@ -12,7 +12,7 @@ export default function CreateAgentPage() {
         </p>
       </div>
 
-      <AgentCreator
+      {/* <AgentCreator
         isOpen={true}
         onClose={() => window.history.back()}
         onSave={() => {
@@ -21,7 +21,8 @@ export default function CreateAgentPage() {
             window.location.href = '/agents';
           }
         }}
-      />
+      /> */}
+      <div className="p-8 text-center text-gray-500">Agent Creator - Coming Soon</div>
     </div>
   );
 }

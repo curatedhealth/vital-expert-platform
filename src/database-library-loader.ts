@@ -9,7 +9,7 @@ import {
   DigitalHealthAgentConfig,
   Capability,
   PromptTemplate
-} from '@/types/digital-health-agent.types';
+} from './types/digital-health-agent.types';
 
 export class DatabaseLibraryLoader {
   private supabaseClient;
@@ -150,11 +150,11 @@ export class DatabaseLibraryLoader {
 
       // If no direct relationships found, try domain matching
       if (!data || data.length === 0) {
-        const result = wait this.supabaseClient
+        const result = await this.supabaseClient
           .rpc('get_agent_prompt_starters_by_domain', { agent_name_param: agentName });
 
-        const data = esult.data;
-        const error = esult.error;
+        data = result.data;
+        error = result.error;
       }
 
       if (error) {
@@ -162,7 +162,7 @@ export class DatabaseLibraryLoader {
         return [];
       }
 
-      // return data || [];
+      return data || [];
     } catch (error) {
       // console.warn(`⚠️  Error loading agent prompt starters: ${agentName}`, error);
       return [];
@@ -217,7 +217,7 @@ export class DatabaseLibraryLoader {
         return [];
       }
 
-      // return data || [];
+      return data || [];
     } catch (error) {
       // console.warn(`⚠️  Error loading agent capabilities: ${agentName}`, error);
       return [];
@@ -248,7 +248,7 @@ export class DatabaseLibraryLoader {
         return [];
       }
 
-      // return data || [];
+      return data || [];
     } catch (error) {
       // console.warn('⚠️  Error loading available capabilities', error);
       return [];
@@ -258,7 +258,7 @@ export class DatabaseLibraryLoader {
   /**
    * Add a capability to an agent
    */
-  async addCapabilityToAgent(agentId: string, capabilityId: string, proficiencyLevel: const string = intermediate', isPrimary: const boolean = alse): Promise<boolean> {
+  async addCapabilityToAgent(agentId: string, capabilityId: string, proficiencyLevel: string = 'intermediate', isPrimary: boolean = false): Promise<boolean> {
     try {
       const { error } = await this.supabaseClient
         .from('agent_capabilities')
@@ -274,7 +274,7 @@ export class DatabaseLibraryLoader {
         return false;
       }
 
-      // return true;
+      return true;
     } catch (error) {
       // console.warn('⚠️  Error adding capability to agent', error);
       return false;
@@ -297,7 +297,7 @@ export class DatabaseLibraryLoader {
         return false;
       }
 
-      // return true;
+      return true;
     } catch (error) {
       // console.warn('⚠️  Error removing capability from agent', error);
       return false;
@@ -436,7 +436,7 @@ export class DatabaseLibraryLoader {
       const agents: DigitalHealthAgentConfig[] = [];
       for (const agentData of data || []) {
         try {
-
+          const agent = await this.loadAgentConfig(agentData.name);
           agents.push(agent);
         } catch (error) {
           // console.warn(`⚠️  Could not load agent: ${agentData.name}`);

@@ -7,7 +7,7 @@ import { useState, useEffect } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { IconService, type Icon } from '@/lib/services/icon-service';
+import { IconService, type Icon } from '@/shared/services/icon-service';
 
 interface AvatarPickerModalProps {
   isOpen: boolean;
@@ -68,7 +68,7 @@ export function AvatarPickerModal({
     if (searchQuery) {
       filtered = filtered.filter(icon =>
         icon.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        icon.display_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (icon.display_name && icon.display_name.toLowerCase().includes(searchQuery.toLowerCase())) ||
         (icon.tags && icon.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase())))
       );
     }
@@ -95,8 +95,8 @@ export function AvatarPickerModal({
     if (isBase64 || isImagePath) {
       return (
         <Image
-          src={icon.file_url}
-          alt={icon.display_name}
+          src={icon.file_url || ''}
+          alt={icon.display_name || icon.name}
           width={viewMode === 'grid' ? 48 : 32}
           height={viewMode === 'grid' ? 48 : 32}
           className="object-cover rounded-full"
@@ -153,7 +153,7 @@ export function AvatarPickerModal({
             <Input
               placeholder="Search avatars..."
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
               className="pl-10"
             />
           </div>
@@ -169,7 +169,7 @@ export function AvatarPickerModal({
                     key={category}
                     variant={selectedCategory === category ? 'default' : 'outline'}
                     size="sm"
-                    onClick={() => setSelectedCategory(category)}
+                    onClick={() => setSelectedCategory(category || 'all')}
                     className="h-8 text-xs"
                   >
                     {category === 'all' ? 'All' : category}

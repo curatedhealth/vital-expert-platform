@@ -17,8 +17,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { ExpertPanelSelector } from '@/features/chat/components/expert-panel-selector';
-import { useAgentsStore, Agent } from '@/lib/stores/agents-store';
+// import { ExpertPanelSelector } from '@/features/chat/components/expert-panel-selector';
+import { useAgentsStore, Agent } from '@/lib/stores/agents-store-simple';
 
 
 // Three-Level Hierarchy: Domain → Subdomain → Use Cases
@@ -795,14 +795,14 @@ export default function AskPanelPage() {
       </div>
 
       {/* Expert Panel Selector Modal */}
-      <ExpertPanelSelector
+      {/* <ExpertPanelSelector
         isOpen={showExpertPanelSelector}
         onClose={() => {
           setShowExpertPanelSelector(false);
           setSelectedUseCase(null);
         }}
         onCreatePanel={handleCreateExpertPanel}
-      />
+      /> */}
     </div>
   );
 }

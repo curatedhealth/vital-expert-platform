@@ -6,7 +6,7 @@ import { useState, useEffect } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { IconService, type Icon } from '@/lib/services/icon-service';
+import { IconService, type Icon } from '@/shared/services/icon-service';
 
 interface IconSelectionModalProps {
   isOpen: boolean;
@@ -138,7 +138,7 @@ export function IconSelectionModal({
             <Input
               placeholder="Search icons..."
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
               className="pl-10"
             />
           </div>

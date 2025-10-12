@@ -3,11 +3,11 @@
 import { Loader2, Send, User, Bot, Clock, Brain, CheckCircle } from 'lucide-react';
 import { useState } from 'react';
 
-import { Badge } from '@/shared/components/ui/badge';
-import { Button } from '@/shared/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card';
-import { Input } from '@/shared/components/ui/input';
-import { ScrollArea } from '@/shared/components/ui/scroll-area';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface ChatMessage {
   id: string;
@@ -31,6 +31,7 @@ export function DemoChat() {
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim() || isLoading) return;
 
@@ -46,13 +47,14 @@ export function DemoChat() {
     setIsLoading(true);
 
     try {
-
+      const response = await fetch('/api/chat', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ query: input }),
       });
+      const data = await response.json();
 
       if (data.success) {
         const assistantMessage: ChatMessage = {
@@ -82,6 +84,7 @@ export function DemoChat() {
     }
   };
 
+  const formatTime = (date: Date) => {
     return date.toLocaleTimeString('en-US', {
       hour: '2-digit',
       minute: '2-digit'
@@ -216,7 +219,7 @@ export function DemoChat() {
               <form onSubmit={handleSubmit} className="flex gap-2">
                 <Input
                   value={input}
-                  onChange={(e) => setInput(e.target.value)}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setInput(e.target.value)}
                   placeholder="Ask about psoriasis digital health opportunities in Europe..."
                   disabled={isLoading}
                   className="flex-1 min-w-0"

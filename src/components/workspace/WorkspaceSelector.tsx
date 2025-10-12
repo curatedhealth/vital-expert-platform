@@ -20,10 +20,10 @@ import {
 import React, { useState } from 'react';
 
 import { type Workspace, type WorkspaceType } from '@/hooks/useWorkspaceManager';
-import { Badge } from '@/shared/components/ui/badge';
-import { Button } from '@/shared/components/ui/button';
-import { Card, CardContent } from '@/shared/components/ui/card';
-import { Separator } from '@/shared/components/ui/separator';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Separator } from '@/components/ui/separator';
 
 interface WorkspaceSelectorProps {
   workspaces: Workspace[];

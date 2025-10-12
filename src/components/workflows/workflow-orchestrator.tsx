@@ -18,19 +18,19 @@ import {
 } from 'lucide-react';
 import React, { useState } from 'react';
 
-import { Badge } from '@/shared/components/ui/badge';
-import { Button } from '@/shared/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle
-} from '@/shared/components/ui/dialog';
-import { Input } from '@/shared/components/ui/input';
-import { Progress } from '@/shared/components/ui/progress';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/components/ui/select';
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Progress } from '@/components/ui/progress';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface WorkflowStep {
   id: string;
@@ -317,6 +317,9 @@ const WorkflowCard: React.FC<{
     urgent: 'bg-red-100 text-red-800'
   };
 
+  const config = statusConfig[workflow.status as keyof typeof statusConfig] || statusConfig.draft;
+  const StatusIcon = config.icon;
+
   return (
     <Card className="hover:shadow-lg transition-shadow">
       <CardHeader className="pb-3">
@@ -417,13 +420,16 @@ const WorkflowStepItem: React.FC<{ step: WorkflowStep; isFirst: boolean; isLast:
   isFirst,
   isLast
 }) => {
-
+  const stepStatusConfig = {
     pending: { color: 'bg-gray-200', textColor: 'text-gray-600', icon: Clock },
     running: { color: 'bg-blue-500', textColor: 'text-blue-600', icon: RefreshCw },
     completed: { color: 'bg-green-500', textColor: 'text-green-600', icon: CheckCircle },
     failed: { color: 'bg-red-500', textColor: 'text-red-600', icon: AlertTriangle },
     skipped: { color: 'bg-gray-300', textColor: 'text-gray-500', icon: ArrowRight }
   };
+
+  const config = stepStatusConfig[step.status as keyof typeof stepStatusConfig] || stepStatusConfig.pending;
+  const StatusIcon = config.icon;
 
   return (
     <div className="flex items-start gap-4">
@@ -568,6 +574,7 @@ const WorkflowOrchestrator: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [priorityFilter, setPriorityFilter] = useState<string>('all');
 
+  const handleStartWorkflow = (id: string) => {
     setWorkflows(prev => prev.map(wf =>
       wf.id === id
         ? { ...wf, status: 'active' as const, startTime: new Date() }
@@ -575,11 +582,13 @@ const WorkflowOrchestrator: React.FC = () => {
     ));
   };
 
+  const handlePauseWorkflow = (id: string) => {
     setWorkflows(prev => prev.map(wf =>
       wf.id === id ? { ...wf, status: 'paused' as const } : wf
     ));
   };
 
+  const handleStopWorkflow = (id: string) => {
     setWorkflows(prev => prev.map(wf =>
       wf.id === id
         ? { ...wf, status: 'cancelled' as const, endTime: new Date() }
@@ -587,21 +596,31 @@ const WorkflowOrchestrator: React.FC = () => {
     ));
   };
 
+  const handleViewWorkflow = (workflow: Workflow) => {
     setSelectedWorkflow(workflow);
     setViewerOpen(true);
   };
 
+  const handleEditWorkflow = (workflow: Workflow) => {
     // TODO: Implement workflow editor
-    // };
+  };
 
+  const handleDeleteWorkflow = (id: string) => {
     setWorkflows(prev => prev.filter(wf => wf.id !== id));
   };
 
+  const filteredWorkflows = workflows.filter(workflow => {
+    const matchesSearch = searchTerm === '' || 
+                         workflow.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          workflow.description.toLowerCase().includes(searchTerm.toLowerCase());
+
+    const matchesStatus = statusFilter === 'all' || workflow.status === statusFilter;
+    const matchesPriority = priorityFilter === 'all' || workflow.priority === priorityFilter;
 
     return matchesSearch && matchesStatus && matchesPriority;
   });
 
+  const stats = {
     total: workflows.length,
     active: workflows.filter(w => w.status === 'active').length,
     completed: workflows.filter(w => w.status === 'completed').length,
@@ -635,31 +654,31 @@ const WorkflowOrchestrator: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
         <Card>
           <CardContent className="p-4">
-            <div className="text-2xl font-bold">{workflowStats.total}</div>
+            <div className="text-2xl font-bold">{stats.total}</div>
             <div className="text-sm text-gray-600">Total Workflows</div>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4">
-            <div className="text-2xl font-bold text-green-600">{workflowStats.active}</div>
+            <div className="text-2xl font-bold text-green-600">{stats.active}</div>
             <div className="text-sm text-gray-600">Active</div>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4">
-            <div className="text-2xl font-bold text-blue-600">{workflowStats.completed}</div>
+            <div className="text-2xl font-bold text-blue-600">{stats.completed}</div>
             <div className="text-sm text-gray-600">Completed</div>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4">
-            <div className="text-2xl font-bold text-red-600">{workflowStats.failed}</div>
+            <div className="text-2xl font-bold text-red-600">{stats.failed}</div>
             <div className="text-sm text-gray-600">Failed</div>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4">
-            <div className="text-2xl font-bold text-gray-600">{workflowStats.draft}</div>
+            <div className="text-2xl font-bold text-gray-600">{stats.draft}</div>
             <div className="text-sm text-gray-600">Draft</div>
           </CardContent>
         </Card>
@@ -670,7 +689,7 @@ const WorkflowOrchestrator: React.FC = () => {
         <Input
           placeholder="Search workflows..."
           value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
           className="max-w-sm"
         />
         <Select value={statusFilter} onValueChange={setStatusFilter}>

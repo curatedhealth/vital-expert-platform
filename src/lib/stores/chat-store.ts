@@ -1,8 +1,8 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-import { agentService } from '@/features/agents/services/agent-service';
-import { useAgentsStore, type Agent as GlobalAgent } from '@/lib/stores/agents-store';
+// import { agentService } from '@/features/agents/services/agent-service';
+import { useAgentsStore, type Agent as GlobalAgent } from '@/lib/stores/agents-store-simple';
 
 export interface Agent {
   id: string;
@@ -767,10 +767,10 @@ const _useChatStore = create<ChatStore>()(
         set({ isLoadingAgents: true, error: null });
 
         try {
-          const dbAgents = await agentService.getActiveAgents();
-          const formattedAgents = dbAgents.map((agent) => agentService.convertToLegacyFormat(agent));
+          // const dbAgents = await agentService.getActiveAgents();
+          // const formattedAgents = dbAgents.map((agent) => agentService.convertToLegacyFormat(agent));
           set((state) => ({
-            agents: formattedAgents,
+            agents: [], // Mock empty for now
             // Don't auto-select first agent - keep current selection or null
             selectedAgent: state.selectedAgent || null,
             isLoadingAgents: false,
@@ -795,8 +795,9 @@ const _useChatStore = create<ChatStore>()(
 
       searchAgents: async (searchTerm: string) => {
         try {
-          const dbAgents = await agentService.searchAgents(searchTerm);
-          return dbAgents.map((agent) => agentService.convertToLegacyFormat(agent));
+          // const dbAgents = await agentService.searchAgents(searchTerm);
+          // return dbAgents.map((agent) => agentService.convertToLegacyFormat(agent));
+          return []; // Mock empty for now
         } catch (error) {
           console.error('Failed to search agents:', error);
           return [];
@@ -805,8 +806,9 @@ const _useChatStore = create<ChatStore>()(
 
       getAgentsByCategory: async (categoryName: string) => {
         try {
-          const dbAgents = await agentService.getAgentsByCategory(categoryName);
-          return dbAgents.map((agent) => agentService.convertToLegacyFormat(agent));
+          // const dbAgents = await agentService.getAgentsByCategory(categoryName);
+          // return dbAgents.map((agent) => agentService.convertToLegacyFormat(agent));
+          return []; // Mock empty for now
         } catch (error) {
           console.error('Failed to get agents by category:', error);
           return [];
@@ -815,8 +817,9 @@ const _useChatStore = create<ChatStore>()(
 
       getAgentsByTier: async (tier: number) => {
         try {
-          const dbAgents = await agentService.getAgentsByTier(tier);
-          return dbAgents.map((agent) => agentService.convertToLegacyFormat(agent));
+          // const dbAgents = await agentService.getAgentsByTier(tier);
+          // return dbAgents.map((agent) => agentService.convertToLegacyFormat(agent));
+          return []; // Mock empty for now
         } catch (error) {
           console.error('Failed to get agents by tier:', error);
           return [];

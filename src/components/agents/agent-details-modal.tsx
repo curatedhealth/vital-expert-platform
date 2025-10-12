@@ -14,6 +14,7 @@ interface Agent {
 }
 
 interface AgentDetailsModalProps {
+  isOpen: boolean;
   agent?: Agent | null;
   onClose: () => void;
   onEdit?: (agent: Agent) => void;
@@ -21,6 +22,7 @@ interface AgentDetailsModalProps {
 }
 
 export function AgentDetailsModal({
+  isOpen,
   agent,
   onClose,
   onEdit,

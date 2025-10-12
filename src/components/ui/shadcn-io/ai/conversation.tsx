@@ -46,6 +46,10 @@ export const __ConversationScrollButton = ({
 }: ConversationScrollButtonProps) => {
   const { isAtBottom, scrollToBottom } = useStickToBottomContext();
 
+  const handleScrollToBottom = () => {
+    scrollToBottom();
+  };
+
   useEffect(() => {
     scrollToBottom();
   }, [scrollToBottom]);

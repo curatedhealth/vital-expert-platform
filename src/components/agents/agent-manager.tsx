@@ -14,20 +14,20 @@ import {
 } from 'lucide-react';
 import React, { useState, useEffect } from 'react';
 
-import { Badge } from '@/shared/components/ui/badge';
-import { Button } from '@/shared/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle
-} from '@/shared/components/ui/dialog';
-import { Input } from '@/shared/components/ui/input';
-import { Progress } from '@/shared/components/ui/progress';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/components/ui/select';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/components/ui/tabs';
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Progress } from '@/components/ui/progress';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 interface Agent {
   id: string;
@@ -243,8 +243,8 @@ const AgentCard: React.FC<{
               <CardDescription>v{agent.version}</CardDescription>
             </div>
           </div>
-          <Badge className={config.color}>
-            <StatusIcon className="h-3 w-3 mr-1" />
+          <Badge className={statusConfig[agent.status as keyof typeof statusConfig]?.color || 'bg-gray-100 text-gray-800 border-gray-200'}>
+            {React.createElement(statusConfig[agent.status as keyof typeof statusConfig]?.icon || Clock, { className: "h-3 w-3 mr-1" })}
             {agent.status}
           </Badge>
         </div>
@@ -331,12 +331,14 @@ const AgentCard: React.FC<{
 };
 
 const ExecutionItem: React.FC<{ execution: AgentExecution }> = ({ execution }) => {
-
+  const statusConfig = {
     running: { color: 'bg-blue-100 text-blue-800', icon: '🔄' },
     completed: { color: 'bg-green-100 text-green-800', icon: '✅' },
     failed: { color: 'bg-red-100 text-red-800', icon: '❌' },
     cancelled: { color: 'bg-gray-100 text-gray-800', icon: '⏹️' }
   };
+
+  const config = statusConfig[execution.status as keyof typeof statusConfig] || statusConfig.failed;
 
   return (
     <div className="p-4 border rounded-lg">
@@ -396,6 +398,7 @@ const AgentConfigDialog: React.FC<{
     }
   }, [agent]);
 
+  const handleSave = () => {
     onSave(config);
     onClose();
   };
@@ -418,7 +421,7 @@ const AgentConfigDialog: React.FC<{
             <Input
               type="number"
               value={config.maxConcurrentTasks}
-              onChange={(e) => setConfig(prev => ({
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setConfig(prev => ({
                 ...prev,
                 maxConcurrentTasks: parseInt(e.target.value) || 1
               }))}
@@ -430,7 +433,7 @@ const AgentConfigDialog: React.FC<{
             <Input
               type="number"
               value={config.timeout}
-              onChange={(e) => setConfig(prev => ({
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setConfig(prev => ({
                 ...prev,
                 timeout: parseInt(e.target.value) || 60000
               }))}
@@ -441,7 +444,7 @@ const AgentConfigDialog: React.FC<{
             <label className="text-sm font-medium">Priority</label>
             <Select
               value={config.priority}
-              onValueChange={(value) => setConfig(prev => ({
+              onValueChange={(value: string) => setConfig(prev => ({
                 ...prev,
                 priority: value as 'low' | 'medium' | 'high' | 'critical'
               }))}
@@ -594,7 +597,7 @@ const AgentManager: React.FC = () => {
           <Input
             placeholder="Search agents..."
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
             className="max-w-sm"
           />
         </div>

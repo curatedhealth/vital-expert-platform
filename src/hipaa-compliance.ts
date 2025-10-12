@@ -3,13 +3,78 @@
  * Implements comprehensive HIPAA compliance monitoring and enforcement
  */
 
-import {
-  HIPAAComplianceRecord,
-  AuditLogEntry,
-  ComplianceLevel,
-  ExecutionContext,
-  ComplianceError
-} from '@/types/digital-health-agent.types';
+// import {
+//   HIPAAComplianceRecord,
+//   AuditLogEntry,
+//   ComplianceLevel,
+//   ExecutionContext,
+//   ComplianceError
+// } from '@/types/digital-health-agent.types';
+
+// Define types locally
+export interface AgentConfig {
+  id: string;
+  name: string;
+  description: string;
+  system_prompt: string;
+  model: string;
+  temperature: number;
+  max_tokens: number;
+  capabilities: string[];
+  rag_enabled: boolean;
+  tier: number;
+  priority: number;
+  implementation_phase: number;
+  knowledge_domains: string[];
+  business_function: string;
+  department: string;
+  organizational_role: string;
+  is_custom: boolean;
+  status: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ExecutionContext {
+  agentId: string;
+  userId: string;
+  sessionId: string;
+  timestamp: Date;
+  environment: 'development' | 'testing' | 'production';
+  complianceLevel: ComplianceLevel;
+}
+
+export interface ComplianceError {
+  code: string;
+  message: string;
+  severity: 'low' | 'medium' | 'high' | 'critical';
+  timestamp: Date;
+  context: ExecutionContext;
+}
+
+export interface HIPAAComplianceRecord {
+  id: string;
+  agentId: string;
+  userId: string;
+  sessionId: string;
+  timestamp: Date;
+  complianceLevel: ComplianceLevel;
+  phiDetected: boolean;
+  phiTypes: string[];
+  auditLog: AuditLogEntry[];
+  errors: ComplianceError[];
+}
+
+export interface AuditLogEntry {
+  id: string;
+  timestamp: Date;
+  action: string;
+  details: Record<string, any>;
+  userId: string;
+  sessionId: string;
+}
+
+export type ComplianceLevel = 'low' | 'medium' | 'high' | 'critical';
 
 export interface PHIDetectionResult {
   containsPHI: boolean;

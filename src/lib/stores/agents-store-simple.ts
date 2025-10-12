@@ -52,7 +52,6 @@ export const useAgentsStore = create<{
   updateAgent: (id: string, updates: Partial<Agent>) => Promise<void>;
   deleteAgent: (id: string) => Promise<void>;
   createUserCopy: (agentId: string) => Promise<Agent>;
-  canEditAgent: (agent: Agent) => boolean;
 }>()(
   persist(
     (set, get) => ({
@@ -212,11 +211,6 @@ export const useAgentsStore = create<{
         }));
 
         return userCopy;
-      },
-
-      canEditAgent: (agent: Agent) => {
-        // Allow editing if it's a custom agent or user copy
-        return agent.is_custom || agent.is_user_copy || false;
       },
     }),
     {

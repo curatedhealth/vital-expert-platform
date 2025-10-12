@@ -69,11 +69,12 @@ export function IconSelectionModal({
       return;
     }
 
-    const filtered = icons.filter(icon =>
-      icon.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      icon.display_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (icon.tags && icon.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase())))
-    );
+    const filtered = icons.filter(icon => {
+      const nameMatch = icon.name.toLowerCase().includes(searchQuery.toLowerCase());
+      const displayNameMatch = icon.display_name ? icon.display_name.toLowerCase().includes(searchQuery.toLowerCase()) : false;
+      const tagsMatch = icon.tags ? icon.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase())) : false;
+      return nameMatch || displayNameMatch || tagsMatch;
+    });
     setFilteredIcons(filtered);
   };
 
@@ -100,7 +101,7 @@ export function IconSelectionModal({
         <div className={cellClass}>
           <img
             src={iconUrl}
-            alt={icon.display_name}
+            alt={icon.display_name || icon.name}
             className="w-full h-full object-cover rounded"
             onError={(e) => {
               // Swap to a known-good local fallback icon, no innerHTML
@@ -150,7 +151,7 @@ export function IconSelectionModal({
             <Input
               placeholder="Search icons..."
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
               className="pl-10"
             />
           </div>
@@ -182,7 +183,7 @@ export function IconSelectionModal({
                       : 'border-gray-200 hover:border-gray-300'
                     }
                   `}
-                  title={icon.display_name}
+                  title={icon.display_name || icon.name}
                 >
                   {renderIcon(icon)}
                 </button>

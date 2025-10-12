@@ -4,7 +4,7 @@
  */
 
 import { DigitalHealthAgent } from '@/agents/core/DigitalHealthAgent';
-import { IntentResult } from '@/shared/types/orchestration.types';
+import { IntentResult } from './orchestration.types';
 
 interface DigitalHealthMatch {
   agent: DigitalHealthAgent;
@@ -55,18 +55,68 @@ export class DigitalHealthRouter {
   }
 
   async selectBestAgent(query: string, intent: IntentResult): Promise<DigitalHealthAgent | null> {
-    // const __candidates = await this.findCandidateAgents(query, intent);
+    const candidates = await this.findCandidateAgents(query, intent);
 
     if (candidates.length === 0) {
-      // return null;
+      return null;
     }
 
     // Sort by score and return best match
     candidates.sort((a, b) => b.score - a.score);
 
-    // `);
+    const bestMatch = candidates[0];
 
     return bestMatch.agent;
+  }
+
+  private calculateMatch(query: string, intent: IntentResult, specialty: string, config: any): { score: number; reasoning: string; confidence: number } {
+    // Simple keyword matching for now
+    const keywords = config.keywords || [];
+    const queryLower = query.toLowerCase();
+    
+    let score = 0;
+    let matchedKeywords: string[] = [];
+    
+    for (const keyword of keywords) {
+      if (queryLower.includes(keyword.toLowerCase())) {
+        score += 20;
+        matchedKeywords.push(keyword);
+      }
+    }
+    
+    // Boost score based on intent
+    if (intent.primaryDomain === specialty) {
+      score += 30;
+    }
+    
+    const reasoning = matchedKeywords.length > 0 
+      ? `Matched keywords: ${matchedKeywords.join(', ')}`
+      : 'No keyword matches found';
+      
+    const confidence = Math.min(100, score);
+    
+    return { score, reasoning, confidence };
+  }
+
+  private calculateGeneralScore(query: string, intent: IntentResult, agent: DigitalHealthAgent): number {
+    // Simple general scoring based on agent capabilities
+    const config = agent.getConfig();
+    let score = 0;
+    
+    // Base score for all agents
+    score += 20;
+    
+    // Boost for high confidence intent
+    if (intent.confidence > 0.8) {
+      score += 15;
+    }
+    
+    // Boost for complex queries
+    if (intent.complexity === 'high' || intent.complexity === 'very-high') {
+      score += 10;
+    }
+    
+    return Math.min(100, score);
   }
 
   private async findCandidateAgents(query: string, intent: IntentResult): Promise<DigitalHealthMatch[]> {
@@ -74,9 +124,11 @@ export class DigitalHealthRouter {
 
     // Check each specialization
     for (const [specialty, config] of Object.entries(this.specializations)) {
+      const match = this.calculateMatch(query, intent, specialty, config);
 
       if (match.score > 0) {
         // Get primary agent
+        const primaryAgent = this.digitalHealthAgents.get(config.primaryAgent);
 
         if (primaryAgent) {
           candidates.push({
@@ -89,6 +141,7 @@ export class DigitalHealthRouter {
 
         // Add alternative agents with lower score
         for (const altAgent of config.alternativeAgents) {
+          const agent = this.digitalHealthAgents.get(altAgent);
 
           if (agent && match.score > 60) { // Only include alternatives for strong matches
             candidates.push({
@@ -104,6 +157,7 @@ export class DigitalHealthRouter {
 
     // Add general digital health scoring
     for (const [agentId, agent] of this.digitalHealthAgents.entries()) {
+      const generalScore = this.calculateGeneralScore(query, intent, agent);
 
       if (generalScore > 30 && !candidates.some(c => c.agent.getConfig().name === agentId)) {
         candidates.push({
@@ -122,9 +176,9 @@ export class DigitalHealthRouter {
     query: string,
     intent: IntentResult,
     specialty: string,
-    config: unknown
+    config: any
   ): { score: number; reasoning: string; confidence: number } {
-
+    let score = 0;
     const reasons: string[] = [];
 
     // Direct intent match
@@ -134,7 +188,7 @@ export class DigitalHealthRouter {
     }
 
     // Keyword matching
-
+    let keywordMatches = 0;
     for (const keyword of config.keywords) {
       if (query.includes(keyword)) {
         keywordMatches++;
@@ -166,7 +220,7 @@ export class DigitalHealthRouter {
     return {
       score: Math.min(100, score),
       reasoning: reasons.join(', '),
-      confidence
+      confidence: Math.min(100, score)
     };
   }
 
@@ -175,13 +229,16 @@ export class DigitalHealthRouter {
     intent: IntentResult,
     agent: DigitalHealthAgent
   ): number {
+    let score = 0;
+    const config = agent.getConfig();
 
     // Check agent capabilities
-
+    const capabilities = config.capabilities || [];
     const domains: string[] = []; // knowledge_domains not available in config interface
 
     // Capability matching
     for (const capability of capabilities) {
+      const capLower = capability.toLowerCase();
 
       if (query.includes(capLower) || intent.keywords.some(kw => capLower.includes(kw))) {
         score += 8;
@@ -190,6 +247,7 @@ export class DigitalHealthRouter {
 
     // Domain matching
     for (const domain of domains) {
+      const domainLower = domain.toLowerCase();
 
       if (intent.domains.some(d => domainLower.includes(d)) ||
           intent.keywords.some(kw => domainLower.includes(kw))) {
@@ -198,11 +256,13 @@ export class DigitalHealthRouter {
     }
 
     // Priority bonus for higher tier agents
-    if (agent.getConfig().metadata?.tier === 1) {
+    if (agent.getConfig().tier === 1) {
       score += 5;
     }
 
     // Digital health keywords in agent profile
+    const digitalKeywords = ['digital', 'health', 'technology', 'innovation', 'ai', 'ml', 'data'];
+    const agentProfile = `${config.name} ${config.description || ''}`.toLowerCase();
 
     for (const keyword of digitalKeywords) {
       if (agentProfile.includes(keyword)) {

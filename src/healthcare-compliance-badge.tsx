@@ -1,9 +1,22 @@
 import { Shield, AlertTriangle, CheckCircle, Clock, X } from 'lucide-react';
 import React from 'react';
 
-import { ClinicalValidationStatus, FDASaMDClass } from '@/shared/types/agent.types';
+// import { ClinicalValidationStatus, FDASaMDClass } from '@/shared/types/agent.types';
 
 import { Badge } from './badge';
+
+// Define types locally
+enum ClinicalValidationStatus {
+  VALIDATED = 'validated',
+  IN_REVIEW = 'in_review',
+  REJECTED = 'rejected'
+}
+
+enum FDASaMDClass {
+  CLASS_I = 'class_i',
+  CLASS_II = 'class_ii',
+  CLASS_III = 'class_iii'
+}
 
 interface HealthcareComplianceBadgeProps {
   type: 'hipaa' | 'fda' | 'clinical' | 'pharma' | 'verify' | 'medical_accuracy';
@@ -18,7 +31,7 @@ export function HealthcareComplianceBadge({
   status,
   className
 }: HealthcareComplianceBadgeProps) {
-
+  const getBadgeContent = () => {
     switch (type) {
       case 'hipaa':
         return {
@@ -45,7 +58,7 @@ export function HealthcareComplianceBadge({
         };
 
       case 'clinical':
-
+        const clinicalStatus = status as ClinicalValidationStatus;
         switch (clinicalStatus) {
           case ClinicalValidationStatus.VALIDATED:
             return {
@@ -94,7 +107,8 @@ export function HealthcareComplianceBadge({
         };
 
       case 'medical_accuracy':
-
+        const accuracy = (status as number) || 0;
+        const isHighAccuracy = accuracy >= 0.8;
         return {
           icon: isHighAccuracy ? CheckCircle : AlertTriangle,
           text: `Medical Accuracy: ${(accuracy * 100).toFixed(1)}%`,
@@ -116,7 +130,7 @@ export function HealthcareComplianceBadge({
 
   return (
     <Badge
-      variant={variant}
+      variant={variant as any}
       className={`${color} flex items-center gap-1 ${className}`}
     >
       <Icon className="w-3 h-3" />

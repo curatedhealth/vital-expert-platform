@@ -2,14 +2,47 @@ import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { User } from '@supabase/supabase-js';
 import { useState, useEffect, useCallback, createContext, useContext } from 'react';
 
-import {
-  UserRole,
-  PermissionScope,
-  PermissionAction,
-  UserProfile,
-  AuthenticatedUser,
-  ROLE_HIERARCHY
-} from '@/types/auth.types';
+// import {
+//   UserRole,
+//   PermissionScope,
+//   PermissionAction,
+//   UserProfile,
+//   AuthenticatedUser,
+//   ROLE_HIERARCHY
+// } from '@/types/auth.types';
+
+// Define types locally
+export type UserRole = 'admin' | 'user' | 'viewer' | 'editor';
+
+export interface UserProfile {
+  id: string;
+  email: string;
+  name: string;
+  role: UserRole;
+  permissions: string[];
+  createdAt: string;
+  updatedAt: string;
+  is_active: boolean;
+}
+
+export interface AuthenticatedUser {
+  id: string;
+  email: string;
+  name: string;
+  role: UserRole;
+  permissions: string[];
+  isActive: boolean;
+}
+
+export type PermissionScope = 'global' | 'organization' | 'project' | 'resource';
+export type PermissionAction = 'read' | 'write' | 'delete' | 'admin';
+
+export const ROLE_HIERARCHY: Record<UserRole, number> = {
+  admin: 4,
+  editor: 3,
+  user: 2,
+  viewer: 1
+};
 
 interface AuthState {
   user: AuthenticatedUser | null;
@@ -53,7 +86,7 @@ export const _useAuthState = () => {
 
   // Permission mappings (should match the backend)
   const rolePermissions = new Map<UserRole, Set<string>>([
-    [UserRole.SUPER_ADMIN, new Set([
+    ['admin', new Set([
       'llm_providers:create', 'llm_providers:read', 'llm_providers:update', 'llm_providers:delete', 'llm_providers:manage',
       'agents:create', 'agents:read', 'agents:update', 'agents:delete', 'agents:manage',
       'workflows:create', 'workflows:read', 'workflows:update', 'workflows:delete', 'workflows:execute',
@@ -62,7 +95,7 @@ export const _useAuthState = () => {
       'user_management:create', 'user_management:read', 'user_management:update', 'user_management:delete', 'user_management:manage',
       'audit_logs:read'
     ])],
-    [UserRole.ADMIN, new Set([
+    ['admin', new Set([
       'llm_providers:create', 'llm_providers:read', 'llm_providers:update', 'llm_providers:delete', 'llm_providers:manage',
       'agents:create', 'agents:read', 'agents:update', 'agents:delete', 'agents:manage',
       'workflows:create', 'workflows:read', 'workflows:update', 'workflows:delete', 'workflows:execute',
@@ -70,19 +103,19 @@ export const _useAuthState = () => {
       'system_settings:read', 'system_settings:update',
       'audit_logs:read'
     ])],
-    [UserRole.LLM_MANAGER, new Set([
+    ['editor', new Set([
       'llm_providers:create', 'llm_providers:read', 'llm_providers:update', 'llm_providers:delete',
       'agents:read',
       'workflows:read', 'workflows:execute',
       'analytics:read'
     ])],
-    [UserRole.USER, new Set([
+    ['user', new Set([
       'llm_providers:read',
       'agents:read', 'agents:create', 'agents:update',
       'workflows:read', 'workflows:execute',
       'analytics:read'
     ])],
-    [UserRole.VIEWER, new Set([
+    ['viewer', new Set([
       'llm_providers:read',
       'agents:read',
       'workflows:read',
@@ -134,9 +167,10 @@ export const _useAuthState = () => {
         const authenticatedUser: AuthenticatedUser = {
           id: data.user.id,
           email: profile.email,
+          name: profile.name,
           role: profile.role,
-          isActive: profile.is_active,
-          profile
+          permissions: profile.permissions,
+          isActive: profile.is_active
         };
 
         setState({
@@ -194,9 +228,10 @@ export const _useAuthState = () => {
           const authenticatedUser: AuthenticatedUser = {
             id: user.id,
             email: profile.email,
+            name: profile.name,
             role: profile.role,
-            isActive: profile.is_active,
-            profile
+            permissions: profile.permissions,
+            isActive: profile.is_active
           };
 
           setState(prev => ({
@@ -226,11 +261,11 @@ export const _useAuthState = () => {
   }, [state.user]);
 
   const isAdmin = useCallback((): boolean => {
-    return state.user?.role === UserRole.ADMIN || state.user?.role === UserRole.SUPER_ADMIN;
+    return state.user?.role === 'admin';
   }, [state.user]);
 
   const isSuperAdmin = useCallback((): boolean => {
-    return state.user?.role === UserRole.SUPER_ADMIN;
+    return state.user?.role === 'admin';
   }, [state.user]);
 
   const canAccess = useCallback((requiredRole: UserRole): boolean => {
@@ -254,9 +289,10 @@ export const _useAuthState = () => {
             const authenticatedUser: AuthenticatedUser = {
               id: session.user.id,
               email: profile.email,
+              name: profile.name,
               role: profile.role,
-              isActive: profile.is_active,
-              profile
+              permissions: profile.permissions,
+              isActive: profile.is_active
             };
 
             setState({
@@ -311,9 +347,10 @@ export const _useAuthState = () => {
             const authenticatedUser: AuthenticatedUser = {
               id: session.user.id,
               email: profile.email,
+              name: profile.name,
               role: profile.role,
-              isActive: profile.is_active,
-              profile
+              permissions: profile.permissions,
+              isActive: profile.is_active
             };
 
             setState({

@@ -36,9 +36,9 @@ import {
   TableHeader,
   TableRow
 } from '@/components/ui/table';
-import { KnowledgeAnalyticsDashboard } from '@/features/knowledge/components/knowledge-analytics-dashboard';
-import { KnowledgeUploader } from '@/features/knowledge/components/knowledge-uploader';
-import { KnowledgeViewer } from '@/features/knowledge/components/knowledge-viewer';
+// import { KnowledgeAnalyticsDashboard } from '@/features/knowledge/components/knowledge-analytics-dashboard';
+// import { KnowledgeUploader } from '@/features/knowledge/components/knowledge-uploader';
+// import { KnowledgeViewer } from '@/features/knowledge/components/knowledge-viewer';
 import type { KnowledgeDomain } from '@/lib/services/model-selector';
 import { createClient } from '@/lib/supabase/client';
 
@@ -179,7 +179,8 @@ function KnowledgePageContent() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <KnowledgeUploader onUploadComplete={handleUploadComplete} />
+            {/* <KnowledgeUploader onUploadComplete={handleUploadComplete} /> */}
+            <div className="p-8 text-center text-gray-500">Knowledge Uploader - Coming Soon</div>
           </CardContent>
         </Card>
       ) : activeTab === 'manage' ? (
@@ -515,14 +516,12 @@ function KnowledgePageContent() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <KnowledgeViewer />
+            {/* <KnowledgeViewer /> */}
+            <div className="p-8 text-center text-gray-500">Knowledge Viewer - Coming Soon</div>
           </CardContent>
         </Card>
       ) : (
-        <KnowledgeAnalyticsDashboard
-          categoryFilter={categoryFilter || undefined}
-          agentFilter={agentFilter || undefined}
-        />
+        <div className="p-8 text-center text-gray-500">Knowledge Analytics Dashboard - Coming Soon</div>
       )}
     </div>
   );

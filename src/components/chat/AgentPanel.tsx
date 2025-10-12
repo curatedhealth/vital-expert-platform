@@ -19,20 +19,20 @@ import {
 } from 'lucide-react';
 import React, { useState } from 'react';
 
-import { Badge } from '@/shared/components/ui/badge';
-import { Button } from '@/shared/components/ui/button';
-import { Card, CardContent } from '@/shared/components/ui/card';
-import { Input } from '@/shared/components/ui/input';
-import { ScrollArea } from '@/shared/components/ui/scroll-area';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue
-} from '@/shared/components/ui/select';
-import { cn } from '@/shared/services/utils';
-import type { Agent, AgentType } from '@/shared/types/chat.types';
+} from '@/components/ui/select';
+import { cn } from '@/lib/utils';
+import type { Agent, AgentType } from '@/chat.types';
 
 interface AgentPanelProps {
   onClose: () => void;
@@ -104,6 +104,7 @@ const HEALTHCARE_AGENTS: Agent[] = [
   }
 ];
 
+const SPECIALTIES = [
   'All Specialties',
   'FDA Regulatory Affairs',
   'Clinical Research Design',
@@ -124,7 +125,7 @@ export const AgentPanel: React.FC<AgentPanelProps> = ({
   const [selectedAgentIds, setSelectedAgentIds] = useState<Set<string>>(new Set());
 
   // Filter agents based on search and specialty
-
+  const filteredAgents = MOCK_AGENTS.filter(agent => {
     const matchesSearch =
       agent.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       agent.specialty.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -137,6 +138,8 @@ export const AgentPanel: React.FC<AgentPanelProps> = ({
     return matchesSearch && matchesSpecialty;
   });
 
+  const handleAgentToggle = (agentId: string) => {
+    const newSelected = new Set(selectedAgentIds);
     if (newSelected.has(agentId)) {
       newSelected.delete(agentId);
     } else {
@@ -145,7 +148,7 @@ export const AgentPanel: React.FC<AgentPanelProps> = ({
     setSelectedAgentIds(newSelected);
 
     // Convert to agent types for parent component
-
+    const selectedTypes = Array.from(newSelected)
       .map(id => agents.find(a => a.id === id)?.type)
       .filter(Boolean) as AgentType[];
 

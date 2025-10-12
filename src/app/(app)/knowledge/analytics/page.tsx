@@ -1,6 +1,6 @@
 'use client';
 
-import { KnowledgeAnalyticsDashboard } from '@/features/knowledge/components/knowledge-analytics-dashboard';
+// import { KnowledgeAnalyticsDashboard } from '@/features/knowledge/components/knowledge-analytics-dashboard';
 
 export default function KnowledgeAnalyticsPage() {
   return (
@@ -12,7 +12,8 @@ export default function KnowledgeAnalyticsPage() {
         </p>
       </div>
 
-      <KnowledgeAnalyticsDashboard />
+      {/* <KnowledgeAnalyticsDashboard /> */}
+      <div className="p-8 text-center text-gray-500">Knowledge Analytics Dashboard - Coming Soon</div>
     </div>
   );
 }

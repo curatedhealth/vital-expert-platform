@@ -9,10 +9,10 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 
-import { Badge } from '@/shared/components/ui/badge';
-import { Button } from '@/shared/components/ui/button';
-import { Textarea } from '@/shared/components/ui/textarea';
-import { cn } from '@/shared/utils';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
+import { cn } from '@/lib/utils';
 
 interface EnhancedChatInputProps {
   value?: string;
@@ -82,7 +82,7 @@ export function EnhancedChatInput({
       <div className="relative">
         <Textarea
           value={currentValue}
-          onChange={(e) => handleChange(e.target.value)}
+          onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => handleChange(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder={placeholder}
           disabled={isLoading}

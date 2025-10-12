@@ -34,8 +34,8 @@ export function useAgentFilters() {
   const availableRoles = useMemo(() => {
     const uniqueRoles = new Set<string>();
     agents.forEach(agent => {
-      if (agent.role) {
-        uniqueRoles.add(agent.role);
+      if ((agent as any).role) {
+        uniqueRoles.add((agent as any).role);
       }
     });
     return Array.from(uniqueRoles).sort();

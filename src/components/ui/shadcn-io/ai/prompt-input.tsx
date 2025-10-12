@@ -1,7 +1,7 @@
 'use client';
 
 import { Loader2Icon, SquareIcon, XIcon } from 'lucide-react';
-import { Children } from 'react';
+import { Children, useRef } from 'react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -55,6 +55,7 @@ export const __PromptInputTextarea = ({
       // Submit on Enter (without Shift)
       e.preventDefault();
 
+      const form = (e.target as HTMLElement).closest('form');
       if (form) {
         form.requestSubmit();
       }
@@ -70,7 +71,7 @@ export const __PromptInputTextarea = ({
         className
       )}
       name="message"
-      onChange={(e) => {
+      onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => {
         onChange?.(e);
       }}
       onKeyDown={handleKeyDown}

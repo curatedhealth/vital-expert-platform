@@ -21,12 +21,12 @@ import {
   SidebarInset,
   SidebarProvider
 } from '@/components/ui/sidebar';
-import { AgentCreator } from '@/features/chat/components/agent-creator';
-import { ChatInput } from '@/features/chat/components/chat-input';
-import { ChatMessages } from '@/features/chat/components/chat-messages';
-import { ChatSidebar } from '@/features/chat/components/chat-sidebar';
-import type { AgentWithCategories } from '@/features/agents/services/agent-service';
-import { IconService, type Icon } from '@/lib/services/icon-service';
+// import { AgentCreator } from '@/features/chat/components/agent-creator';
+// import { ChatInput } from '@/features/chat/components/chat-input';
+// import { ChatMessages } from '@/features/chat/components/chat-messages';
+// import { ChatSidebar } from '@/features/chat/components/chat-sidebar';
+// import type { AgentWithCategories } from '@/features/agents/services/agent-service';
+import { IconService, type Icon } from '@/shared/services/icon-service';
 import { useAgentsStore } from '@/lib/stores/agents-store';
 import { useChatStore, Agent as ChatAgent } from '@/lib/stores/chat-store';
 import { Agent } from '@/lib/stores/agents-store';
@@ -150,7 +150,7 @@ function ChatPageContent() {
   const [input, setInput] = useState('');
   const [promptIcons, setPromptIcons] = useState<Icon[]>([]);
   const [iconService] = useState(() => new IconService());
-  const [editingAgent, setEditingAgent] = useState<AgentWithCategories | null>(null);
+  const [editingAgent, setEditingAgent] = useState<Agent | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [showAgentCreator, setShowAgentCreator] = useState(false);
   const [isSelectingAgent, setIsSelectingAgent] = useState(false);
@@ -503,7 +503,7 @@ function ChatPageContent() {
           isCustom: userCopy.is_custom,
           knowledgeDomains: userCopy.knowledge_domains,
           businessFunction: userCopy.business_function || undefined,
-          role: userCopy.role || undefined,
+          role: (userCopy as any).role || undefined,
           tier: userCopy.tier || 1,
         };
 
@@ -534,7 +534,7 @@ function ChatPageContent() {
             isCustom: agent.is_custom,
             knowledgeDomains: agent.knowledge_domains,
             businessFunction: agent.business_function || undefined,
-            role: agent.role || undefined,
+            role: (agent as any).role || undefined,
             tier: agent.tier,
           };
           const newUserAgents = [...userAgents, chatAgent];
@@ -563,7 +563,7 @@ function ChatPageContent() {
           isCustom: agent.is_custom,
           knowledgeDomains: agent.knowledge_domains,
           businessFunction: agent.business_function || undefined,
-          role: agent.role || undefined,
+          role: (agent as any).role || undefined,
           tier: agent.tier,
         };
         const newUserAgents = [...userAgents, chatAgent];
@@ -918,7 +918,7 @@ function ChatPageContent() {
           {/* Single chat input - always visible */}
           {recommendedAgents.length === 0 && (
             <div className="w-full max-w-3xl">
-              <ChatInput
+              {/* <ChatInput
                 value={input}
                 onChange={setInput}
                 onSend={handleSendMessage}
@@ -929,7 +929,8 @@ function ChatPageContent() {
                 selectedModel={selectedModel || undefined}
                 onModelChange={setSelectedModel}
                 onStop={stopGeneration}
-              />
+              /> */}
+              <div className="p-4 text-center text-gray-500">Chat Input - Coming Soon</div>
             </div>
           )}
         </div>
@@ -1024,7 +1025,7 @@ function ChatPageContent() {
 
               {/* Input component centered with content */}
               <div className="mt-6">
-                <ChatInput
+                {/* <ChatInput
                   value={input}
                   onChange={setInput}
                   onSend={handleSendMessage}
@@ -1035,7 +1036,8 @@ function ChatPageContent() {
                   selectedModel={selectedModel || undefined}
                   onModelChange={setSelectedModel}
                   onStop={stopGeneration}
-                />
+                /> */}
+                <div className="p-4 text-center text-gray-500">Chat Input - Coming Soon</div>
               </div>
             </div>
           </div>
@@ -1044,11 +1046,12 @@ function ChatPageContent() {
           <>
             <div className="flex-1 overflow-y-auto">
               <div className="max-w-4xl mx-auto px-6 py-6">
-                <ChatMessages
+                {/* <ChatMessages
                   messages={messages}
                   liveReasoning={liveReasoning}
                   isReasoningActive={isReasoningActive}
-                />
+                /> */}
+                <div className="p-8 text-center text-gray-500">Chat Messages - Coming Soon</div>
               </div>
               <div ref={messagesEndRef} />
             </div>
@@ -1106,7 +1109,7 @@ function ChatPageContent() {
                     <span>Finding the best experts for your question...</span>
                   </div>
                 )}
-                <ChatInput
+                {/* <ChatInput
                   value={input}
                   onChange={setInput}
                   onSend={handleSendMessage}
@@ -1117,7 +1120,8 @@ function ChatPageContent() {
                   selectedModel={selectedModel || undefined}
                   onModelChange={setSelectedModel}
                   onStop={stopGeneration}
-                />
+                /> */}
+                <div className="p-4 text-center text-gray-500">Chat Input - Coming Soon</div>
               </div>
             </div>
           </>
@@ -1129,7 +1133,7 @@ function ChatPageContent() {
   return (
     <div className="flex flex-col h-full">
       <SidebarProvider defaultOpen={sidebarOpen}>
-        <ChatSidebar
+        {/* <ChatSidebar
           chats={filteredChats}
           currentChat={currentChat ? {
             ...currentChat,
@@ -1153,7 +1157,8 @@ function ChatPageContent() {
           onToggleMode={setInteractionMode}
           autonomousMode={autonomousMode}
           onToggleAutonomous={setAutonomousMode}
-        />
+        /> */}
+        <div className="w-64 bg-gray-100 p-4 text-center text-gray-500">Chat Sidebar - Coming Soon</div>
 
         <SidebarInset className="flex flex-col flex-1 overflow-hidden">
           {/* Content - Show initial welcome, agent selection, or chat interface */}
@@ -1198,7 +1203,7 @@ function ChatPageContent() {
         </SidebarInset>
 
         {/* Agent Creator Modal */}
-        {(editingAgent || showAgentCreator) && (
+        {/* {(editingAgent || showAgentCreator) && (
           <AgentCreator
             isOpen={!!editingAgent || showAgentCreator}
             onClose={() => {
@@ -1225,7 +1230,7 @@ function ChatPageContent() {
             }}
             editingAgent={editingAgent}
           />
-        )}
+        )} */}
 
       </SidebarProvider>
     </div>

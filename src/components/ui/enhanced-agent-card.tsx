@@ -96,7 +96,7 @@ export function EnhancedAgentCard({
         className
       )}
       onClick={onClick}
-      onKeyDown={(e) => {
+      onKeyDown={(e: React.KeyboardEvent<HTMLDivElement>) => {
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault();
           onClick?.();
@@ -104,7 +104,7 @@ export function EnhancedAgentCard({
       }}
       role="button"
       tabIndex={0}
-      aria-label={`Select agent ${agent.display_name || agent.name}`}
+      aria-label={`Select agent ${agent.name}`}
     >
       <CardContent className="p-0">
         <div className="flex items-start gap-3">
@@ -140,16 +140,16 @@ export function EnhancedAgentCard({
                   'text-gray-900 truncate group-hover:text-blue-700 transition-colors',
                   config.title
                 )}>
-                  {agent.display_name || agent.name}
+                  {agent.name}
                 </h4>
                 
                 {/* Role/Department */}
-                {(agent.role || agent.department || agent.business_function) && (
+                {(agent.role || agent.department || agent.businessFunction) && (
                   <p className={cn(
                     'text-gray-600 truncate mt-0.5',
                     config.description
                   )}>
-                    {agent.role || agent.department || agent.business_function}
+                    {agent.role || agent.department || agent.businessFunction}
                   </p>
                 )}
               </div>
@@ -157,12 +157,12 @@ export function EnhancedAgentCard({
               {/* Badges and Score */}
               <div className="flex flex-col gap-1 items-end">
                 {/* Matching Score */}
-                {agent.score !== undefined && (
+                {(agent as any).score !== undefined && (
                   <div className={cn(
                     'bg-blue-100 text-blue-800 px-2 py-1 rounded-md font-semibold',
                     config.score
                   )}>
-                    {Math.round(agent.score)}% match
+                    {Math.round((agent as any).score)}% match
                   </div>
                 )}
                 
@@ -203,13 +203,13 @@ export function EnhancedAgentCard({
             </p>
 
             {/* Reasoning */}
-            {showReasoning && agent.reasoning && (
+            {showReasoning && (agent as any).reasoning && (
               <div className="mt-2 p-2 bg-gray-50 rounded-lg border border-gray-200">
                 <p className={cn(
                   'text-gray-500 italic',
                   config.reasoning
                 )}>
-                  {agent.reasoning}
+                  {(agent as any).reasoning}
                 </p>
               </div>
             )}
@@ -244,7 +244,7 @@ export function EnhancedAgentCard({
             )}
 
             {/* Domain Expertise */}
-            {agent.domain_expertise && (
+            {(agent as any).domain_expertise && (
               <div className="mt-2">
                 <Badge
                   variant="outline"
@@ -254,7 +254,7 @@ export function EnhancedAgentCard({
                   )}
                 >
                   <Zap className="w-3 h-3 mr-1" />
-                  {agent.domain_expertise}
+                  {(agent as any).domain_expertise}
                 </Badge>
               </div>
             )}

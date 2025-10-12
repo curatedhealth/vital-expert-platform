@@ -16,21 +16,12 @@ import {
 } from 'lucide-react';
 import React, { useState } from 'react';
 
-import {
-  Badge,
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-  Button,
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger
-} from '@/shared/components/ui';
-import { cn } from '@/shared/services/utils';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Button } from '@/components/ui/button';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { cn } from '@/lib/utils';
 
 interface Capability {
   capability_id: string;
@@ -58,12 +49,14 @@ interface AgentCapabilitiesDisplayProps {
   className?: string;
 }
 
+const LEVEL_COLORS = {
   basic: 'bg-green-100 text-green-800 border-green-200',
   intermediate: 'bg-blue-100 text-blue-800 border-blue-200',
   advanced: 'bg-purple-100 text-purple-800 border-purple-200',
   expert: 'bg-red-100 text-red-800 border-red-200'
 };
 
+const LEVEL_BG_COLORS = {
   basic: 'bg-gray-100 text-gray-700',
   intermediate: 'bg-yellow-100 text-yellow-800',
   advanced: 'bg-orange-100 text-orange-800',

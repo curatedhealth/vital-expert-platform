@@ -4,13 +4,13 @@ import { CalendarIcon } from "lucide-react"
 import * as React from "react"
 import { DateRange } from "react-day-picker"
 
-import { Button } from "@/shared/components/ui/button"
+import { Button } from "@/components/ui/button"
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger
-} from "@/shared/components/ui/popover"
-import { cn } from "@/shared/services/utils"
+  __Popover as Popover,
+  __PopoverContent as PopoverContent,
+  __PopoverTrigger as PopoverTrigger
+} from "@/components/ui/popover"
+import { cn } from "@/lib/utils"
 
 interface DatePickerWithRangeProps {
   className?: string
@@ -25,6 +25,12 @@ export function DatePickerWithRange({
 }: DatePickerWithRangeProps) {
   const [selectedDate, setSelectedDate] = React.useState<DateRange | undefined>(date)
 
+  const today = new Date()
+  const lastWeek = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000)
+  const lastMonth = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000)
+  const lastYear = new Date(today.getTime() - 365 * 24 * 60 * 60 * 1000)
+
+  const handleDateSelect = (newDate: DateRange | undefined) => {
     setSelectedDate(newDate)
     onDateChange?.(newDate)
   }
@@ -67,7 +73,7 @@ export function DatePickerWithRange({
                 size="sm"
                 onClick={() => {
 
-                  handleDateChange({ from: lastWeek, to: today })
+                  handleDateSelect({ from: lastWeek, to: today })
                 }}
               >
                 Last 7 days
@@ -77,7 +83,7 @@ export function DatePickerWithRange({
                 size="sm"
                 onClick={() => {
 
-                  handleDateChange({ from: lastMonth, to: today })
+                  handleDateSelect({ from: lastMonth, to: today })
                 }}
               >
                 Last 30 days
@@ -87,7 +93,7 @@ export function DatePickerWithRange({
                 size="sm"
                 onClick={() => {
 
-                  handleDateChange({ from: lastYear, to: today })
+                  handleDateSelect({ from: lastYear, to: today })
                 }}
               >
                 Last year

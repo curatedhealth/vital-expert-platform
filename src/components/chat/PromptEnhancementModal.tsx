@@ -242,7 +242,7 @@ Context: Healthcare professional seeking expert guidance.`;
                   <Input
                     placeholder="Search prompts..."
                     value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
                     className="pl-10"
                   />
                 </div>
@@ -355,7 +355,7 @@ Context: Healthcare professional seeking expert guidance.`;
                 <label className="text-sm font-medium">Enhanced Prompt</label>
                 <Textarea
                   value={enhancedPrompt}
-                  onChange={(e) => setEnhancedPrompt(e.target.value)}
+                  onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setEnhancedPrompt(e.target.value)}
                   className="min-h-[200px]"
                   placeholder="Enhanced prompt will appear here..."
                 />

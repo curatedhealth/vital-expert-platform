@@ -1,6 +1,6 @@
 import { forwardRef, useEffect, useRef } from "react";
 
-import { cn } from "@/shared/services/utils";
+import { cn } from "@/lib/utils";
 
 import { Message, MessageProps } from "./message";
 
@@ -58,6 +58,7 @@ ConversationContent.displayName = "ConversationContent";
 // Legacy component for backward compatibility
 const ConversationWithMessages = forwardRef<HTMLDivElement, ConversationWithMessagesProps>(
   ({ className, messages = [], isLoading, autoScroll = true, ...props }, ref) => {
+    const _scrollRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
       if (autoScroll && _scrollRef.current) {

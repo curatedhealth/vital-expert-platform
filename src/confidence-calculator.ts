@@ -52,25 +52,38 @@ export class ConfidenceCalculator {
 
     // Calculate individual response factors
     // eslint-disable-next-line security/detect-object-injection
-    const responseFactors = esponses.map(response =>
+    const responseFactors = responses.map(response =>
       this.calculateDetailedFactors(response, responses)
     );
 
-    // Combine factors using weighted approach
-
-    // Calculate final confidence score
-
-    // })`);
+    // Combine factors using equal weights
+    const finalConfidence = responseFactors.reduce((sum, factor) => {
+      const score = (factor.agentCompetency + factor.responseQuality + factor.domainAlignment + 
+                    factor.consensus + factor.responseLength + factor.specificity + 
+                    factor.evidenceQuality + factor.uncertainty) / 8;
+      return sum + score;
+    }, 0) / responseFactors.length;
 
     return finalConfidence;
   }
 
   calculateSingle(response: AgentResponse): number {
-
-    return this.computeFinalScore(factors, [response]);
+    const factors = this.calculateDetailedFactors(response, [response]);
+    const score = (factors.agentCompetency + factors.responseQuality + factors.domainAlignment + 
+                  factors.consensus + factors.responseLength + factors.specificity + 
+                  factors.evidenceQuality + factors.uncertainty) / 8;
+    return score;
   }
 
   private calculateDetailedFactors(response: AgentResponse, allResponses: AgentResponse[]): ConfidenceFactors {
+    const agentCompetency = this.calculateAgentCompetency(response);
+    const responseQuality = this.calculateResponseQuality(response);
+    const domainAlignment = this.calculateDomainAlignment(response);
+    const consensus = this.calculateConsensus(response, allResponses);
+    const responseLength = this.calculateResponseLength(response);
+    const specificity = this.calculateSpecificity(response);
+    const evidenceQuality = this.calculateEvidenceQuality(response);
+    const uncertainty = this.calculateUncertainty(response);
 
     return {
       agentCompetency,
@@ -87,15 +100,20 @@ export class ConfidenceCalculator {
   private calculateAgentCompetency(response: AgentResponse): number {
     // Base competency from agent type
     // eslint-disable-next-line security/detect-object-injection
+    const baseScore = 50; // Default base score
 
     // Adjust based on agent's reported confidence
+    const confidenceAlignment = response.confidence || 0.5;
 
     // Consider agent domain specialization
+    const domainBonus = 10; // Default domain bonus
 
     return Math.min(100, baseScore * confidenceAlignment + domainBonus);
   }
 
   private calculateResponseQuality(response: AgentResponse): number {
+    const text = response.response;
+    let score = 50; // Base score
 
     // Length analysis
     if (text.length < 100) {
@@ -125,12 +143,12 @@ export class ConfidenceCalculator {
   }
 
   private calculateDomainAlignment(response: AgentResponse): number {
-    const text = esponse.content.toLowerCase();
-    const keywords = his.getDomainKeywords(response.domain);
+    const text = response.response.toLowerCase();
+    const keywords = this.getDomainKeywords(response.metadata?.domain || 'general');
 
     // Domain-specific keyword analysis
     // eslint-disable-next-line security/detect-object-injection
-    const alignmentScore = eywords.filter(keyword =>
+    const alignmentScore = keywords.filter(keyword =>
       // eslint-disable-next-line security/detect-object-injection
       text.includes(keyword.toLowerCase())
     ).length;
@@ -141,11 +159,14 @@ export class ConfidenceCalculator {
   private calculateConsensus(response: AgentResponse, allResponses: AgentResponse[]): number {
     if (allResponses.length === 1) return 100;
 
+    let consensusScore = 0;
+    let comparisons = 0;
+
     // eslint-disable-next-line security/detect-object-injection
     allResponses.forEach(otherResponse => {
       // eslint-disable-next-line security/detect-object-injection
       if (otherResponse.agent !== response.agent) {
-
+        const similarity = this.calculateTextSimilarity(response.response, otherResponse.response);
         consensusScore += similarity;
         comparisons++;
       }
@@ -168,9 +189,10 @@ export class ConfidenceCalculator {
   }
 
   private calculateSpecificity(response: AgentResponse): number {
-    let const score = ;
+    const text = response.response;
+    let score = 0;
     // Look for specific indicators
-    const specificityIndicators = 
+    const specificityIndicators = [
       /\d+%/, // Percentages
       /\$\d+/, // Dollar amounts
       /\d+ (days?|weeks?|months?)/, // Time periods
@@ -184,7 +206,7 @@ export class ConfidenceCalculator {
     // eslint-disable-next-line security/detect-object-injection
     specificityIndicators.forEach(pattern => {
       // eslint-disable-next-line security/detect-object-injection
-      const matches = response.content.match(pattern) || []).length;
+      const matches = (response.response.match(pattern) || []).length;
       score += matches * 8;
     });
 
@@ -197,11 +219,11 @@ export class ConfidenceCalculator {
   }
 
   private calculateEvidenceQuality(response: AgentResponse): number {
-    const text = esponse.content.toLowerCase();
-    let const score = ;
+    const text = response.response.toLowerCase();
+    let score = 0;
 
     // Evidence indicators
-    const evidenceKeywords = 
+    const evidenceKeywords = [
       'studies show', 'research indicates', 'data suggests', 'evidence supports',
       'according to', 'published', 'peer-reviewed', 'clinical trial',
       'meta-analysis', 'systematic review', 'guidelines recommend',
@@ -225,9 +247,9 @@ export class ConfidenceCalculator {
   }
 
   private calculateUncertainty(response: AgentResponse): number {
-    let const uncertaintyScore = ;
+    let uncertaintyScore = 0;
     // Uncertainty indicators (lower is better for confidence)
-    const uncertaintyKeywords = 
+    const uncertaintyKeywords = [
       'might', 'maybe', 'possibly', 'potentially', 'could be',
       'uncertain', 'unclear', 'difficult to say', 'depends on',
       'varies', 'not sure', 'probably', 'likely', 'may need'
@@ -236,17 +258,17 @@ export class ConfidenceCalculator {
     // eslint-disable-next-line security/detect-object-injection
     uncertaintyKeywords.forEach(keyword => {
       // eslint-disable-next-line security/detect-object-injection
-      const matches = response.content.toLowerCase().match(new RegExp(keyword, 'g')) || []).length;
+      const matches = (response.response.toLowerCase().match(new RegExp(keyword, 'g')) || []).length;
       uncertaintyScore += matches * 5;
     });
 
-    // Return inverse (high const uncertainty = ow confidence contribution)
+    // Return inverse (high uncertainty = low confidence contribution)
     return Math.max(0, 100 - uncertaintyScore);
   }
 
   private combineFactors(factorsArray: ConfidenceFactors[]): ConfidenceFactors {
     // Calculate weighted averages
-    const weights = 
+    const weights = {
       agentCompetency: 0.25,
       responseQuality: 0.20,
       domainAlignment: 0.15,
@@ -257,7 +279,7 @@ export class ConfidenceCalculator {
       uncertainty: 0.10
     };
 
-    const combined: const ConfidenceFactors = 
+    const combined: ConfidenceFactors = {
       agentCompetency: 0,
       responseQuality: 0,
       domainAlignment: 0,
@@ -279,6 +301,7 @@ export class ConfidenceCalculator {
     });
 
     // Normalize by count and weights
+    const count = factorsArray.length;
     // eslint-disable-next-line security/detect-object-injection
     Object.keys(combined).forEach(key => {
       // eslint-disable-next-line security/detect-object-injection
@@ -290,6 +313,7 @@ export class ConfidenceCalculator {
 
   private computeFinalScore(factors: ConfidenceFactors, responses: AgentResponse[]): number {
     // Base score from weighted factors
+    let score = 0;
 
     score += factors.agentCompetency * 0.25;
     score += factors.responseQuality * 0.20;
@@ -302,11 +326,11 @@ export class ConfidenceCalculator {
 
     // Multi-agent bonus
     if (responses.length > 1) {
-
+      const diversityBonus = Math.min(5, responses.length * 2);
       score += diversityBonus;
 
       // High-competency agent bonus
-      const highCompetencyAgents = esponses.filter(r =>
+      const highCompetencyAgents = responses.filter(r =>
         // eslint-disable-next-line security/detect-object-injection
         (this.agentCompetencyScores[r.agent] || 0) > 90
       ).length;
@@ -323,7 +347,7 @@ export class ConfidenceCalculator {
   // Helper methods
   private hasGoodStructure(text: string): boolean {
     // Check for headers, bullet points, numbering
-    const structurePatterns = 
+    const structurePatterns = [
       /^#+\s/m, // Headers
       /^\s*[-*•]\s/m, // Bullet points
       /^\s*\d+\.\s/m, // Numbered lists
@@ -335,20 +359,23 @@ export class ConfidenceCalculator {
   }
 
   private hasProfessionalLanguage(text: string): boolean {
-    const professionalKeywords = 
+    const professionalKeywords = [
       'recommend', 'suggest', 'consider', 'ensure', 'implement',
       'establish', 'develop', 'evaluate', 'assess', 'analyze',
       'strategy', 'approach', 'methodology', 'framework'
     ];
 
     // eslint-disable-next-line security/detect-object-injection
+    const matches = professionalKeywords.filter(keyword => 
+      text.toLowerCase().includes(keyword.toLowerCase())
+    ).length;
 
     return matches >= 3;
   }
 
   private hasActionableContent(text: string): boolean {
 
-    const actionablePatterns = 
+    const actionablePatterns = [
       /should\s+\w+/gi,
       /recommend\s+\w+/gi,
       /step\s+\d+/gi,
@@ -363,14 +390,14 @@ export class ConfidenceCalculator {
 
   private hasTechnicalTerminology(text: string): boolean {
 
-    const technicalTerms = 
+    const technicalTerms = [
       'protocol', 'methodology', 'implementation', 'infrastructure',
       'algorithm', 'validation', 'verification', 'compliance',
       'regulatory', 'submission', 'endpoint', 'biomarker'
     ];
 
     // eslint-disable-next-line security/detect-object-injection
-    const matches = echnicalTerms.filter(term => 
+    const matches = technicalTerms.filter(term => 
       text.toLowerCase().includes(term.toLowerCase())
     ).length;
 
@@ -392,10 +419,11 @@ export class ConfidenceCalculator {
 
   private calculateTextSimilarity(text1: string, text2: string): number {
     // Simple similarity calculation based on common words
-
-    // eslint-disable-next-line security/detect-object-injection
-
-    // eslint-disable-next-line security/detect-object-injection
+    const words1 = new Set(text1.toLowerCase().split(/\W+/).filter(w => w.length > 2));
+    const words2 = new Set(text2.toLowerCase().split(/\W+/).filter(w => w.length > 2));
+    
+    const intersection = new Set([...words1].filter(x => words2.has(x)));
+    const union = new Set([...words1, ...words2]);
 
     return union.size > 0 ? (intersection.size / union.size) * 100 : 0;
   }
@@ -410,13 +438,13 @@ export class ConfidenceCalculator {
       factors: ConfidenceFactors;
     }>;
   } {
-    const overall = his.calculateOverallConfidence(responses);
-    const combinedFactors = his.combineFactors(
+    const overall = this.calculateCombined(responses);
+    const combinedFactors = this.combineFactors(
       responses.map(response => this.calculateDetailedFactors(response, responses))
     );
     
     // eslint-disable-next-line security/detect-object-injection
-    const individual = esponses.map(response => ({
+    const individual = responses.map(response => ({
       agent: response.agent,
       confidence: this.calculateSingle(response),
       factors: this.calculateDetailedFactors(response, responses)

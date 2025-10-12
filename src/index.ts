@@ -11,7 +11,7 @@
 // export * from './supabase';
 // export * from './utils';
 export * from './document-utils';
-export * from './icon-service';
+// export * from './icon-service';
 export * from './openai-usage.service';
 export * from './prompt-generation-service';
 export * from './usage-tracker.service';

@@ -23,7 +23,7 @@ import { useState } from 'react';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { DashboardSidebarWithSuspense } from '@/features/dashboard/components/dashboard-sidebar';
+// import { DashboardSidebarWithSuspense } from '@/features/dashboard/components/dashboard-sidebar';
 // import { useAuth } from '@/lib/auth/auth-context';
 import { cn } from '@/lib/utils';
 
@@ -153,12 +153,13 @@ export default function DashboardLayout({
       {/* Desktop Sidebar */}
       <div className="hidden border-r bg-muted/40 md:block">
         <div className="flex h-full max-h-screen flex-col gap-2">
-          <DashboardSidebarWithSuspense
+          {/* <DashboardSidebarWithSuspense
             className="flex-1"
             isCollapsed={isCollapsed}
             onToggleCollapse={() => setIsCollapsed(!isCollapsed)}
             currentView={getCurrentView()}
-          />
+          /> */}
+          <div className="p-4 text-center text-gray-500">Dashboard Sidebar - Coming Soon</div>
         </div>
       </div>
 
@@ -309,7 +310,8 @@ export default function DashboardLayout({
                   <X className="h-5 w-5" />
                 </Button>
               </div>
-              <DashboardSidebarWithSuspense className="p-4" currentView={getCurrentView()} />
+              {/* <DashboardSidebarWithSuspense className="p-4" currentView={getCurrentView()} /> */}
+              <div className="p-4 text-center text-gray-500">Dashboard Sidebar - Coming Soon</div>
             </div>
           </div>
         )}

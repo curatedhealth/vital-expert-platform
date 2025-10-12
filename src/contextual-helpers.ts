@@ -6,9 +6,11 @@
 type StakeholderType = 'pharma' | 'payer' | 'provider' | 'dtx-startup' | 'auto';
 
 // Stakeholder detection and contextual helper functions
-export function detectStakeholderType(context: unknown): StakeholderType {
+export function detectStakeholderType(context: { stakeholder?: StakeholderType } | unknown): StakeholderType {
   // Implement intelligent stakeholder detection based on context clues
-  if (context?.stakeholder) return context.stakeholder;
+  if (context && typeof context === 'object' && 'stakeholder' in context) {
+    return (context as { stakeholder: StakeholderType }).stakeholder;
+  }
   // Add more sophisticated detection logic here
   return 'auto';
 }
@@ -23,7 +25,7 @@ export function getDefaultAgentsForStakeholder(stakeholderType: string): string[
   };
   // Validate stakeholderType to prevent object injection
   const validStakeholderTypes = ['pharma', 'payer', 'provider', 'dtx-startup', 'auto'] as const;
-  if (!validStakeholderTypes.includes(stakeholderType as unknown)) {
+  if (!validStakeholderTypes.includes(stakeholderType as any)) {
     return ['clinical-trial'];
   }
   return defaults[stakeholderType as keyof typeof defaults] || ['clinical-trial'];
@@ -40,6 +42,7 @@ export function getContextualWorkflow(stakeholderType: string, message: string, 
   };
 
   // Message content analysis for workflow refinement
+  const messageKeywords = message.toLowerCase().split(' ');
 
   if (messageKeywords.includes('clinical trial') || messageKeywords.includes('study')) {
     return 'clinical-research-workflow';
@@ -51,7 +54,7 @@ export function getContextualWorkflow(stakeholderType: string, message: string, 
 
   // Validate stakeholderType to prevent object injection
   const validStakeholderTypes = ['pharma', 'payer', 'provider', 'dtx-startup', 'auto'] as const;
-  if (!validStakeholderTypes.includes(stakeholderType as unknown)) {
+  if (!validStakeholderTypes.includes(stakeholderType as any)) {
     return 'general-healthcare-consultation';
   }
   return workflows[stakeholderType as keyof typeof workflows] || 'general-healthcare-consultation';
@@ -67,7 +70,7 @@ export function getContextualThinkingMessage(stakeholderType: string): string {
   };
   // Validate stakeholderType to prevent object injection
   const validStakeholderTypes = ['pharma', 'payer', 'provider', 'dtx-startup', 'auto'] as const;
-  if (!validStakeholderTypes.includes(stakeholderType as unknown)) {
+  if (!validStakeholderTypes.includes(stakeholderType as any)) {
     return messages['auto'];
   }
   return messages[stakeholderType as keyof typeof messages] || messages['auto'];
@@ -75,6 +78,8 @@ export function getContextualThinkingMessage(stakeholderType: string): string {
 
 // Contextual response generation based on stakeholder type
 export function generateContextualResponse(message: string, selectedAgents: string[], execution: unknown, stakeholderType: string): string {
+  const stakeholderContext = getStakeholderResponseContext(stakeholderType) as any;
+  const agentExpertise = selectedAgents.map(agent => getAgentSpecialty(agent)).join(', ');
 
   return `${stakeholderContext.greeting} "${message.substring(0, 100)}${message.length > 100 ? '...' : ''}".
 
@@ -86,8 +91,8 @@ I've consulted with our specialized ${stakeholderContext.expertType} focusing on
 
 ${generateStakeholderSpecificInsights(selectedAgents, stakeholderType)}
 
-**Compliance Status:** ${execution.compliance_summary?.overall_compliant ? '✅ Fully Compliant' : '⚠️ Review Required'}
-${execution.compliance_summary?.phi_detected ? '\n**Note:** Potential PHI detected - additional privacy safeguards recommended' : ''}
+**Compliance Status:** ${(execution as any)?.compliance_summary?.overall_compliant ? '✅ Fully Compliant' : '⚠️ Review Required'}
+${(execution as any)?.compliance_summary?.phi_detected ? '\n**Note:** Potential PHI detected - additional privacy safeguards recommended' : ''}
 
 **${stakeholderContext.nextStepsLabel}:**
 
@@ -164,18 +169,18 @@ function getStakeholderResponseContext(stakeholderType: string) {
   };
   // Validate stakeholderType to prevent object injection
   const validStakeholderTypes = ['pharma', 'payer', 'provider', 'dtx-startup', 'auto'] as const;
-  if (!validStakeholderTypes.includes(stakeholderType as unknown)) {
+  if (!validStakeholderTypes.includes(stakeholderType as any)) {
     return contexts['auto'];
   }
   return contexts[stakeholderType as keyof typeof contexts] || contexts['auto'];
 }
 
 function generateStakeholderSpecificInsights(selectedAgents: string[], stakeholderType: string): string {
+  let insights = '';
 
   // Generate insights based on selected agents and stakeholder context
   if (selectedAgents.includes('fda-regulatory')) {
-
-                   stakeholderType === 'dtx-startup' ? 'Digital Health' : 'Regulatory';
+    const context = stakeholderType === 'dtx-startup' ? 'Digital Health' : 'Regulatory';
     insights += `\n🏛️ **${context} Regulatory Perspective:**\n`;
     insights += stakeholderType === 'pharma' ?
       '- Navigate IND/NDA pathways for your therapeutic\n- Plan Phase I-III clinical development strategy\n- Ensure CMC and manufacturing readiness\n- Prepare for FDA advisory committee meetings\n' :
@@ -190,7 +195,7 @@ function generateStakeholderSpecificInsights(selectedAgents: string[], stakehold
   }
 
   if (selectedAgents.includes('reimbursement')) {
-
+    const focus = stakeholderType === 'payer' ? 'Coverage Assessment' : 'Reimbursement Strategy';
     insights += `\n💰 **${focus}:**\n`;
     insights += stakeholderType === 'payer' ?
       '- Evaluate clinical and economic evidence quality\n- Assess budget impact and cost-effectiveness\n- Consider comparative effectiveness vs. standard of care\n- Plan value-based contract structures\n' :
@@ -210,7 +215,7 @@ function generateContextualNextSteps(stakeholderType: string): string {
   };
   // Validate stakeholderType to prevent object injection
   const validStakeholderTypes = ['pharma', 'payer', 'provider', 'dtx-startup', 'auto'] as const;
-  if (!validStakeholderTypes.includes(stakeholderType as unknown)) {
+  if (!validStakeholderTypes.includes(stakeholderType as any)) {
     return steps['auto'];
   }
   return steps[stakeholderType as keyof typeof steps] || steps['auto'];
@@ -218,6 +223,8 @@ function generateContextualNextSteps(stakeholderType: string): string {
 
 // Contextual metadata generation functions
 export function generateContextualCitations(selectedAgents: string[], stakeholderType: string): unknown[] {
+  const citations: unknown[] = [];
+  let citationId = 1;
 
   // Add stakeholder-specific base citations
   if (stakeholderType === 'pharma') {
@@ -303,12 +310,13 @@ export function generateContextualFollowupQuestions(message: string, selectedAge
 
   // Validate stakeholderType to prevent object injection
   const validStakeholderTypes = ['pharma', 'payer', 'provider', 'dtx-startup', 'auto'] as const;
-  if (!validStakeholderTypes.includes(stakeholderType as unknown)) {
+  if (!validStakeholderTypes.includes(stakeholderType as any)) {
     return stakeholderQuestions['auto'];
   }
   const questions = stakeholderQuestions[stakeholderType as keyof typeof stakeholderQuestions] || stakeholderQuestions['auto'];
 
   // Add agent-specific questions
+  const agentQuestions: string[] = [];
 
   if (selectedAgents.includes('reimbursement')) {
     agentQuestions.push('What health economic data would be most compelling to decision-makers?');
@@ -324,6 +332,7 @@ export function generateContextualFollowupQuestions(message: string, selectedAge
 }
 
 export function generateContextualSources(selectedAgents: string[], stakeholderType: string): unknown[] {
+  const sources: unknown[] = [];
 
   // Add stakeholder-specific sources
   if (stakeholderType === 'pharma') {
@@ -387,7 +396,7 @@ export function getAgentSpecialty(agentType: string): string {
     'real-world-evidence', 'quality-systems'
   ] as const;
   
-  if (!validAgentTypes.includes(agentType as unknown)) {
+  if (!validAgentTypes.includes(agentType as any)) {
     return 'Healthcare AI Expert';
   }
   return specialties[agentType as keyof typeof specialties] || 'Healthcare AI Expert';

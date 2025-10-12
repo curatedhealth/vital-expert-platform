@@ -1,17 +1,124 @@
 import { useState, useEffect, useCallback } from 'react';
 
-import { llmProviderService } from '@/services/llm-provider.service';
-import {
-  LLMProvider,
-  ProviderFilters,
-  ProviderSort,
-  ProviderListResponse,
-  LLMProviderConfig,
-  ProviderSelectionCriteria,
-  ProviderRecommendation,
-  LLMProviderMetrics,
-  ProviderStatus
-} from '@/types/llm-provider.types';
+import { LLMProviderService } from '@/services/llm-provider.service';
+
+const llmProviderService = new LLMProviderService();
+// import {
+//   LLMProvider,
+//   ProviderFilters,
+//   ProviderSort,
+//   ProviderListResponse,
+//   LLMProviderConfig,
+//   ProviderSelectionCriteria,
+//   ProviderRecommendation,
+//   LLMProviderMetrics,
+//   ProviderStatus
+// } from '@/types/llm-provider.types';
+
+// Define types locally
+export interface LLMProvider {
+  id: string;
+  name: string;
+  type: string;
+  status: ProviderStatus;
+  capabilities: string[];
+  metrics: LLMProviderMetrics;
+  config: Record<string, any>;
+  createdAt: string;
+  updatedAt: string;
+  uptime_percentage: number;
+}
+
+export interface ProviderFilters {
+  status?: ProviderStatus;
+  type?: string;
+  capabilities?: string[];
+  search?: string;
+}
+
+export interface ProviderSort {
+  field: keyof LLMProvider;
+  direction: 'asc' | 'desc';
+}
+
+export interface ProviderListResponse {
+  providers: LLMProvider[];
+  total: number;
+  total_count: number;
+  page: number;
+  limit: number;
+  has_next_page: boolean;
+}
+
+export interface LLMProviderMetrics {
+  id: string;
+  provider_id: string;
+  metric_date: Date;
+  total_requests: number;
+  successful_requests: number;
+  failed_requests: number;
+  cancelled_requests: number;
+  total_input_tokens: number;
+  total_output_tokens: number;
+  total_tokens: number;
+  total_cost: number;
+  avg_cost_per_request: number;
+  avg_latency_ms: number;
+  p50_latency_ms: number;
+  p95_latency_ms: number;
+  p99_latency_ms: number;
+  max_latency_ms: number;
+  avg_confidence_score: number;
+  avg_medical_accuracy: number;
+  error_rate: number;
+  timeout_count: number;
+  rate_limit_count: number;
+  auth_error_count: number;
+  server_error_count: number;
+  health_check_success_rate: number;
+  uptime_minutes: number;
+  unique_users_count: number;
+  unique_agents_count: number;
+  peak_concurrent_requests: number;
+  phi_requests_count: number;
+  clinical_validations_passed: number;
+  clinical_validations_failed: number;
+  created_at: Date;
+  average_latency: number;
+  p95_latency: number;
+  p99_latency: number;
+  throughput: number;
+  cost: number;
+  accuracy: number;
+  availability: number;
+  latency: number;
+}
+
+export type ProviderStatus = 'active' | 'inactive' | 'error' | 'maintenance';
+
+export interface LLMProviderConfig {
+  apiKey: string;
+  baseUrl?: string;
+  model: string;
+  temperature?: number;
+  maxTokens?: number;
+  timeout?: number;
+}
+
+export interface ProviderSelectionCriteria {
+  requiredCapabilities?: string[];
+  maxLatency?: number;
+  maxCost?: number;
+  minAccuracy?: number;
+  preferredTypes?: string[];
+}
+
+export interface ProviderRecommendation {
+  provider: LLMProvider;
+  score: number;
+  reasoning: string;
+  alternatives: LLMProvider[];
+}
 
 interface UseLLMProvidersState {
   providers: LLMProvider[];
@@ -175,7 +282,7 @@ export const useLLMProviders = (
           p.id === id
             ? {
                 ...p,
-                status: isHealthy ? ProviderStatus.ACTIVE : ProviderStatus.ERROR,
+                status: isHealthy ? 'active' : 'error',
                 uptime_percentage: isHealthy ? Math.min(p.uptime_percentage + 1, 100) : Math.max(p.uptime_percentage - 5, 0)
               } as LLMProvider
             : p
@@ -247,7 +354,15 @@ export const useLLMProviders = (
         phi_requests_count: Math.floor(Math.random() * 50),
         clinical_validations_passed: Math.floor(Math.random() * 30),
         clinical_validations_failed: Math.floor(Math.random() * 5),
-        created_at: new Date()
+        created_at: new Date(),
+        average_latency: Math.random() * 1000,
+        p95_latency: Math.random() * 2000,
+        p99_latency: Math.random() * 3000,
+        throughput: Math.random() * 100,
+        cost: Math.random() * 50,
+        accuracy: Math.random() * 100,
+        availability: Math.random() * 100,
+        latency: Math.random() * 500
       };
 
       return mockMetrics;

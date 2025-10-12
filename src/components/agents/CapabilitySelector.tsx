@@ -30,8 +30,8 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue
-} from '@/shared/components/ui';
-import { cn } from '@/shared/services/utils';
+} from '@/components/ui';
+import { cn } from '@/lib/utils';
 
 interface AvailableCapability {
   id: string;

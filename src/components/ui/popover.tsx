@@ -48,7 +48,7 @@ export const __PopoverTrigger = ({ children, asChild = false, onClick }: Popover
   if (asChild && React.isValidElement(children)) {
     return React.cloneElement(children, {
       onClick: handleClick,
-    } as unknown)
+    } as any)
   }
 
   return (
@@ -63,13 +63,14 @@ export const __PopoverContent = ({
   className = "",
   align = "center"
 }: PopoverContentProps) => {
+  const context = React.useContext(PopoverContext)
 
   if (!context) throw new Error("PopoverContent must be used within Popover")
 
   if (!context.isOpen) return null
 
   // eslint-disable-next-line security/detect-object-injection
-
+  const alignClasses = {
     start: "left-0",
     center: "left-1/2 transform -translate-x-1/2",
     end: "right-0"
@@ -80,7 +81,7 @@ export const __PopoverContent = ({
       className={`
         absolute top-full mt-2 z-50 w-72 rounded-md border
         bg-white p-4 shadow-md outline-none
-        ${alignmentClass}
+        ${alignClasses}
         ${className}
       `}
     >

@@ -14,8 +14,8 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ChatMessages } from '@/features/chat/components/chat-messages';
-import { EnhancedChatInput } from '@/features/chat/components/enhanced-chat-input';
+// import { ChatMessages } from '@/features/chat/components/chat-messages';
+// import { EnhancedChatInput } from '@/features/chat/components/enhanced-chat-input';
 
 import { __usePanelStore as usePanelStore } from '../services/panel-store';
 
@@ -231,23 +231,25 @@ export function PanelInterface({
         ) : (
           /* Chat Messages */
           <div className="flex-1 overflow-hidden">
-            <ChatMessages
+            {/* <ChatMessages
               messages={(panel as any).messages}
-            />
+            /> */}
+            <div className="p-8 text-center text-gray-500">Chat Messages - Coming Soon</div>
           </div>
         )}
 
         {/* Chat Input */}
         <div className="border-t bg-background p-4">
           <div className="max-w-4xl mx-auto">
-            <EnhancedChatInput
+            {/* <EnhancedChatInput
               value={message}
               onChange={setMessage}
               onSendMessage={handleSendMessage}
               isLoading={isLoading}
               placeholder="Ask your advisory panel for expert insights..."
               showModelSelector={false}
-            />
+            /> */}
+            <div className="p-4 text-center text-gray-500">Enhanced Chat Input - Coming Soon</div>
             <div className="flex items-center justify-between mt-2 text-xs text-muted-foreground">
               <div className="flex items-center gap-4">
                 <span className="flex items-center gap-1">

@@ -157,15 +157,9 @@ const HardenedMarkdown = hardenReactMarkdown(ReactMarkdown);
 export type ResponseProps = HTMLAttributes<HTMLDivElement> & {
   options?: Options;
   children: Options['children'];
-  allowedImagePrefixes?: ComponentProps<
-    ReturnType<typeof hardenReactMarkdown>
-  >['allowedImagePrefixes'];
-  allowedLinkPrefixes?: ComponentProps<
-    ReturnType<typeof hardenReactMarkdown>
-  >['allowedLinkPrefixes'];
-  defaultOrigin?: ComponentProps<
-    ReturnType<typeof hardenReactMarkdown>
-  >['defaultOrigin'];
+  allowedImagePrefixes?: any;
+  allowedLinkPrefixes?: any;
+  defaultOrigin?: any;
   parseIncompleteMarkdown?: boolean;
 };
 
@@ -320,9 +314,9 @@ const components: Options['components'] = {
     if (
       isValidElement(children) &&
       children.props &&
-      typeof (children.props as unknown).children === 'string'
+      typeof (children.props as any).children === 'string'
     ) {
-      code = (children.props as unknown).children;
+      code = (children.props as any).children;
     } else if (typeof children === 'string') {
       code = children;
     }
@@ -368,10 +362,7 @@ export const __Response = memo(
         {...props}
       >
         <HardenedMarkdown
-          allowedImagePrefixes={allowedImagePrefixes ?? ['*']}
-          allowedLinkPrefixes={allowedLinkPrefixes ?? ['*']}
           components={components}
-          defaultOrigin={defaultOrigin}
           rehypePlugins={[rehypeKatex]}
           remarkPlugins={[remarkGfm, remarkMath]}
           {...options}

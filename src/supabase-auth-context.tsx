@@ -9,7 +9,9 @@ interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
+  signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
+  clearError: () => void;
   userProfile: any;
   error: string | null;
   isInitialized: boolean;
@@ -193,6 +195,42 @@ export function SupabaseAuthProvider({ children }: AuthProviderProps) {
     }
   };
 
+  const signIn = async (email: string, password: string) => {
+    try {
+      setLoading(true);
+      setError(null);
+      console.log('🔐 Signing in user:', email);
+      
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: email.trim(),
+        password: password
+      });
+
+      if (error) {
+        console.error('Sign in error:', error);
+        throw new Error(error.message);
+      }
+
+      if (data.user) {
+        setUser(data.user);
+        setSession(data.session);
+        await fetchUserProfile(data.user.id);
+        console.log('✅ Successfully signed in:', data.user.email);
+      }
+    } catch (error) {
+      console.error('Sign in error:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Sign in failed';
+      setError(errorMessage);
+      throw new Error(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const clearError = () => {
+    setError(null);
+  };
+
   const signOut = async () => {
     try {
       setLoading(true);
@@ -235,7 +273,9 @@ export function SupabaseAuthProvider({ children }: AuthProviderProps) {
     user,
     session,
     loading,
+    signIn,
     signOut,
+    clearError,
     userProfile,
     error,
     isInitialized
@@ -256,7 +296,9 @@ export function useAuth() {
       user: null,
       session: null,
       loading: true,
+      signIn: async () => {},
       signOut: async () => {},
+      clearError: () => {},
       userProfile: null,
       error: null,
       isInitialized: false

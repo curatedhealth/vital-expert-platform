@@ -13,7 +13,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { AUTH_CONFIG } from '@/config';
-import { useAuth } from '@/lib/auth/auth-provider';
+import { useAuth } from '@/supabase-auth-context';
 import { getPostLoginRedirect } from '@/redirect-handler';
 
 export default function LoginPage() {

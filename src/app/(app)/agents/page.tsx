@@ -6,11 +6,11 @@ import { useState, useEffect, Suspense } from 'react';
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAgentsFilter } from '@/contexts/agents-filter-context';
-// import { AgentDetailsModal } from '@/features/agents/components/agent-details-modal';
-// import { AgentsBoard } from '@/features/agents/components/agents-board';
-// import { AgentsOverview } from '@/features/agents/components/agents-overview';
-// import { AgentsTable } from '@/features/agents/components/agents-table';
-// import { AgentCreator } from '@/features/chat/components/agent-creator';
+import { AgentDetailsModal } from '@/features/agents/components/agent-details-modal';
+import { AgentsBoard } from '@/features/agents/components/agents-board';
+import { AgentsOverview } from '@/features/agents/components/agents-overview';
+import { AgentsTable } from '@/features/agents/components/agents-table';
+import { AgentCreator } from '@/features/chat/components/agent-creator';
 import { type Agent as AgentsStoreAgent, useAgentsStore } from '@/lib/stores/agents-store-simple';
 import { type Agent } from '@/lib/stores/chat-store';
 import { useAuth } from '@/supabase-auth-context';

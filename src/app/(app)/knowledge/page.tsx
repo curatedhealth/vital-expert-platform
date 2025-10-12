@@ -39,9 +39,9 @@ import {
   TableHeader,
   TableRow
 } from '@/components/ui/table';
-// import { KnowledgeAnalyticsDashboard } from '@/features/knowledge/components/knowledge-analytics-dashboard';
-// import { KnowledgeUploader } from '@/features/knowledge/components/knowledge-uploader';
-// import { KnowledgeViewer } from '@/features/knowledge/components/knowledge-viewer';
+import { KnowledgeAnalyticsDashboard } from '@/features/knowledge/components/knowledge-analytics-dashboard';
+import { KnowledgeUploader } from '@/features/knowledge/components/knowledge-uploader';
+import { KnowledgeViewer } from '@/features/knowledge/components/knowledge-viewer';
 import type { KnowledgeDomain } from '@/lib/services/model-selector';
 import { createClient } from '@/lib/supabase/client';
 

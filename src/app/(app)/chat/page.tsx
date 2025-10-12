@@ -24,9 +24,9 @@ import {
   SidebarInset,
   SidebarProvider
 } from '@/components/ui/sidebar';
-// import { AgentCreator } from '@/features/chat/components/agent-creator';
-// import { ChatInput } from '@/features/chat/components/chat-input';
-// import { ChatMessages } from '@/features/chat/components/chat-messages';
+import { AgentCreator } from '@/features/chat/components/agent-creator';
+import { ChatInput } from '@/features/chat/components/chat-input';
+import { ChatMessages } from '@/features/chat/components/chat-messages';
 import { ChatSidebar } from '@/features/chat/components/chat-sidebar';
 // import type { AgentWithCategories } from '@/features/agents/services/agent-service';
 import { IconService, type Icon } from '@/shared/services/icon-service';

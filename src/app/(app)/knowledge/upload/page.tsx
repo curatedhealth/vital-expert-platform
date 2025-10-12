@@ -1,6 +1,6 @@
 'use client';
 
-// import { KnowledgeUploader } from '@/features/knowledge/components/knowledge-uploader';
+import { KnowledgeUploader } from '@/features/knowledge/components/knowledge-uploader';
 
 export default function KnowledgeUploadPage() {
   return (

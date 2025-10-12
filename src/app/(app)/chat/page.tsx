@@ -758,7 +758,7 @@ function ChatPageContent() {
   );
 
   // Initial welcome view - no agent selected
-  const renderInitialWelcome = () => {
+  /* const renderInitialWelcome = () => {
     return (
       <div className="flex-1 flex flex-col h-full bg-white">
         <div className="flex-1 overflow-y-auto">
@@ -938,7 +938,7 @@ function ChatPageContent() {
       </div>
     </div>
   );
-  };
+  }; */
 
   // Agent-specific interface with avatar and prompt starters
   const renderChatInterface = () => {
@@ -1305,7 +1305,23 @@ function ChatPageContent() {
 
               // Legacy fallbacks (should rarely be hit now)
               if (!useDirectLLM && !hasUserSelectedAgent) {
-                return renderInitialWelcome();
+                return (
+                  <div className="flex-1 flex flex-col h-full bg-white">
+                    <div className="flex-1 overflow-y-auto">
+                      <div className="flex flex-col items-center justify-center h-full px-6">
+                        <div className="text-center mb-6">
+                          <div className="w-20 h-20 rounded-full flex items-center justify-center bg-gradient-to-br from-blue-50 to-purple-50 border-2 border-blue-200 mx-auto mb-4 overflow-hidden relative">
+                            <MessageSquare className="w-8 h-8 text-blue-600" />
+                          </div>
+                          <h2 className="text-2xl font-bold text-gray-900 mb-2">Welcome to VITAL Expert</h2>
+                          <p className="text-gray-600 mb-4 max-w-md">
+                            Select an AI agent from the sidebar to start a conversation.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
               }
 
               if (messages.length > 0) {

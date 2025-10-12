@@ -596,30 +596,32 @@ export function AgentsBoard({
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex-1 min-w-0">
-                          <h3 className="font-semibold text-base text-deep-charcoal group-hover:text-progress-teal transition-colors truncate leading-tight">
-                            {agent.display_name}
-                          </h3>
-                          <div className="flex items-center gap-1.5 mt-1">
-                            {agent.status && (
+                          <div className="flex items-center gap-2 mb-1">
+                            <h3 className="font-semibold text-base text-deep-charcoal group-hover:text-progress-teal transition-colors truncate leading-tight">
+                              {agent.display_name}
+                            </h3>
+                            {agent.tier !== undefined && (
                               <Badge
+                                variant="outline"
                                 className={cn(
-                                  "text-[10px] font-medium px-1.5 py-0 h-4",
-                                  agent.status === 'active' && "bg-green-100 text-green-700 border-green-200",
-                                  agent.status === 'development' && "bg-blue-100 text-blue-700 border-blue-200",
-                                  agent.status === 'testing' && "bg-yellow-100 text-yellow-700 border-yellow-200",
-                                  agent.status === 'deprecated' && "bg-red-100 text-red-700 border-red-200",
-                                  agent.status === 'inactive' && "bg-gray-100 text-gray-600 border-gray-200"
+                                  "text-[10px] font-bold px-1.5 py-0 h-4",
+                                  agent.tier === 0 && "bg-gradient-to-r from-purple-100 to-pink-100 text-purple-900 border-purple-300",
+                                  agent.tier === 1 && "bg-blue-50 text-blue-700 border-blue-200",
+                                  agent.tier === 2 && "bg-green-50 text-green-700 border-green-200",
+                                  agent.tier === 3 && "bg-orange-50 text-orange-700 border-orange-200"
                                 )}
                               >
-                                {agent.status === 'active' ? 'Active' : agent.status === 'development' ? 'Dev' : agent.status === 'testing' ? 'Test' : agent.status}
-                              </Badge>
-                            )}
-                            {agent.is_custom && (
-                              <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 bg-purple-50 text-purple-700 border-purple-200">
-                                Custom
+                                {agent.tier === 0 ? 'Core' : `T${agent.tier}`}
                               </Badge>
                             )}
                           </div>
+                          {agent.is_custom && (
+                            <div className="flex items-center gap-1.5">
+                              <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 bg-purple-50 text-purple-700 border-purple-200">
+                                Custom
+                              </Badge>
+                            </div>
+                          )}
                         </div>
 
                         <DropdownMenu>
@@ -741,20 +743,8 @@ export function AgentsBoard({
                     </div>
                     
                     {/* Action Buttons Row */}
-                    <div className="flex gap-2">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleSaveToLibrary(agent.id);
-                        }}
-                        className="flex-1 h-8 text-xs bg-green-50 hover:bg-green-100 text-green-700 border-green-200"
-                      >
-                        <Heart className="h-3 w-3 mr-1" />
-                        Library
-                      </Button>
-                      
+                    <div className="flex gap-1">
+                      {/* Chat Button */}
                       {onAddToChat && (
                         <Button
                           size="sm"
@@ -764,12 +754,40 @@ export function AgentsBoard({
                             console.log('Adding agent to chat:', agent.display_name);
                             onAddToChat(agent);
                           }}
-                          className="flex-1 h-8 text-xs bg-blue-50 hover:bg-blue-100 text-blue-700 border-blue-200"
+                          className="h-8 w-8 p-0 bg-blue-50 hover:bg-blue-100 text-blue-700 border-blue-200"
+                          title="Add to Chat"
                         >
-                          <MessageSquare className="h-3 w-3 mr-1" />
-                          Chat
+                          <MessageSquare className="h-4 w-4" />
                         </Button>
                       )}
+                      
+                      {/* Library Button */}
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleSaveToLibrary(agent.id);
+                        }}
+                        className="h-8 w-8 p-0 bg-green-50 hover:bg-green-100 text-green-700 border-green-200"
+                        title="Add to Library"
+                      >
+                        <Heart className="h-4 w-4" />
+                      </Button>
+                      
+                      {/* Duplicate Button */}
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDuplicateAgent(agent);
+                        }}
+                        className="h-8 w-8 p-0 bg-purple-50 hover:bg-purple-100 text-purple-700 border-purple-200"
+                        title="Duplicate Agent"
+                      >
+                        <Copy className="h-4 w-4" />
+                      </Button>
                     </div>
                   </div>
                 </div>
@@ -784,6 +802,20 @@ export function AgentsBoard({
                       <h3 className="font-semibold text-deep-charcoal group-hover:text-progress-teal transition-colors">
                         {agent.display_name}
                       </h3>
+                      {agent.tier !== undefined && (
+                        <Badge
+                          variant="outline"
+                          className={cn(
+                            "text-xs font-bold",
+                            agent.tier === 0 && "bg-gradient-to-r from-purple-100 to-pink-100 text-purple-900 border-purple-300",
+                            agent.tier === 1 && "bg-blue-50 text-blue-700 border-blue-200",
+                            agent.tier === 2 && "bg-green-50 text-green-700 border-green-200",
+                            agent.tier === 3 && "bg-orange-50 text-orange-700 border-orange-200"
+                          )}
+                        >
+                          {agent.tier === 0 ? 'Core' : `T${agent.tier}`}
+                        </Badge>
+                      )}
                       {agent.is_custom && (
                         <Badge variant="outline" className="text-xs">
                           Custom
@@ -816,19 +848,7 @@ export function AgentsBoard({
                     
                     {/* Action Buttons */}
                     <div className="flex gap-1">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleSaveToLibrary(agent.id);
-                        }}
-                        className="h-7 px-2 text-xs bg-green-50 hover:bg-green-100 text-green-700 border-green-200"
-                      >
-                        <Heart className="h-3 w-3 mr-1" />
-                        Library
-                      </Button>
-                      
+                      {/* Chat Button */}
                       {onAddToChat && (
                         <Button
                           size="sm"
@@ -838,12 +858,40 @@ export function AgentsBoard({
                             console.log('Adding agent to chat:', agent.display_name);
                             onAddToChat(agent);
                           }}
-                          className="h-7 px-2 text-xs bg-blue-50 hover:bg-blue-100 text-blue-700 border-blue-200"
+                          className="h-7 w-7 p-0 bg-blue-50 hover:bg-blue-100 text-blue-700 border-blue-200"
+                          title="Add to Chat"
                         >
-                          <MessageSquare className="h-3 w-3 mr-1" />
-                          Chat
+                          <MessageSquare className="h-3 w-3" />
                         </Button>
                       )}
+                      
+                      {/* Library Button */}
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleSaveToLibrary(agent.id);
+                        }}
+                        className="h-7 w-7 p-0 bg-green-50 hover:bg-green-100 text-green-700 border-green-200"
+                        title="Add to Library"
+                      >
+                        <Heart className="h-3 w-3" />
+                      </Button>
+                      
+                      {/* Duplicate Button */}
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDuplicateAgent(agent);
+                        }}
+                        className="h-7 w-7 p-0 bg-purple-50 hover:bg-purple-100 text-purple-700 border-purple-200"
+                        title="Duplicate Agent"
+                      >
+                        <Copy className="h-3 w-3" />
+                      </Button>
                     </div>
                     
                     <DropdownMenu>

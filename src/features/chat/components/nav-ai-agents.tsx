@@ -126,8 +126,13 @@ export function NavAiAgents({ onAgentStoreClick, onCreateAgentClick, onAgentSele
                         )}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="mb-1">
+                        <div className="flex items-center gap-2 mb-1">
                           <div className="text-sm font-semibold truncate text-gray-900">{agent.name}</div>
+                          {agent.tier && (
+                            <span className="px-2 py-0.5 text-xs bg-blue-100 text-blue-700 rounded-full font-medium">
+                              T{agent.tier}
+                            </span>
+                          )}
                         </div>
                         {agent.description && (
                           <div className="text-xs text-gray-600 line-clamp-2 mb-1 leading-relaxed">{agent.description}</div>
@@ -234,8 +239,13 @@ export function NavAiAgents({ onAgentStoreClick, onCreateAgentClick, onAgentSele
                         
                         {!isCollapsed && (
                           <div className="flex-1 text-left min-w-0">
-                            <div className="mb-1">
+                            <div className="flex items-center gap-2 mb-1">
                               <div className="text-sm font-semibold truncate text-gray-900">{agent.name}</div>
+                              {agent.tier && (
+                                <span className="px-2 py-0.5 text-xs bg-blue-100 text-blue-700 rounded-full font-medium">
+                                  T{agent.tier}
+                                </span>
+                              )}
                             </div>
                             {agent.description && (
                               <div className="text-xs text-gray-600 line-clamp-2 leading-relaxed">{agent.description}</div>

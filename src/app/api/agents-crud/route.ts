@@ -26,43 +26,83 @@ export async function GET(request: NextRequest) {
     // Generate mock agents data (372 agents total)
     const mockAgents = [];
     const agentTypes = [
-      { name: 'Digital Health Strategy Director', status: 'active', tier: 1, businessFunction: 'Strategy' },
-      { name: 'Clinical Trial Designer', status: 'active', tier: 1, businessFunction: 'Clinical Research' },
-      { name: 'FDA Regulatory Strategist', status: 'active', tier: 1, businessFunction: 'Regulatory' },
-      { name: 'Statistical Programmer', status: 'development', tier: 2, businessFunction: 'Data Science' },
-      { name: 'Promotional Material Developer', status: 'development', tier: 2, businessFunction: 'Marketing' },
-      { name: 'Medical Affairs Specialist', status: 'testing', tier: 2, businessFunction: 'Medical Affairs' },
-      { name: 'Quality Assurance Manager', status: 'active', tier: 3, businessFunction: 'Quality' },
-      { name: 'Pharmacovigilance Expert', status: 'active', tier: 3, businessFunction: 'Safety' },
-      { name: 'Market Access Strategist', status: 'testing', tier: 2, businessFunction: 'Market Access' },
-      { name: 'Clinical Data Manager', status: 'development', tier: 3, businessFunction: 'Data Management' }
+      { name: 'Digital Health Strategy Director', businessFunction: 'Strategy', avatar: '🎯', description: 'Strategic planning and digital transformation expert' },
+      { name: 'Clinical Trial Designer', businessFunction: 'Clinical Research', avatar: '🧪', description: 'Clinical trial design and methodology specialist' },
+      { name: 'FDA Regulatory Strategist', businessFunction: 'Regulatory', avatar: '📋', description: 'FDA compliance and regulatory affairs expert' },
+      { name: 'Statistical Programmer', businessFunction: 'Data Science', avatar: '📊', description: 'Statistical analysis and data modeling specialist' },
+      { name: 'Promotional Material Developer', businessFunction: 'Marketing', avatar: '📢', description: 'Marketing content and promotional material creator' },
+      { name: 'Medical Affairs Specialist', businessFunction: 'Medical Affairs', avatar: '👩‍⚕️', description: 'Medical information and scientific communication expert' },
+      { name: 'Quality Assurance Manager', businessFunction: 'Quality', avatar: '✅', description: 'Quality control and assurance specialist' },
+      { name: 'Pharmacovigilance Expert', businessFunction: 'Safety', avatar: '⚠️', description: 'Drug safety monitoring and adverse event specialist' },
+      { name: 'Market Access Strategist', businessFunction: 'Market Access', avatar: '🌐', description: 'Market access and pricing strategy expert' },
+      { name: 'Clinical Data Manager', businessFunction: 'Data Management', avatar: '💾', description: 'Clinical data collection and management specialist' },
+      { name: 'Biostatistician', businessFunction: 'Statistics', avatar: '📈', description: 'Biostatistical analysis and study design expert' },
+      { name: 'Regulatory Writer', businessFunction: 'Regulatory', avatar: '📝', description: 'Regulatory document preparation and submission specialist' },
+      { name: 'Health Economics Expert', businessFunction: 'Health Economics', avatar: '💰', description: 'Health economic evaluation and outcomes research specialist' },
+      { name: 'Patient Engagement Specialist', businessFunction: 'Patient Engagement', avatar: '🤝', description: 'Patient advocacy and engagement strategy expert' },
+      { name: 'Digital Marketing Manager', businessFunction: 'Marketing', avatar: '📱', description: 'Digital marketing and social media strategy specialist' },
+      { name: 'Clinical Operations Manager', businessFunction: 'Operations', avatar: '⚙️', description: 'Clinical trial operations and project management expert' },
+      { name: 'Regulatory Affairs Associate', businessFunction: 'Regulatory', avatar: '📄', description: 'Regulatory submission and compliance specialist' },
+      { name: 'Medical Writer', businessFunction: 'Medical Writing', avatar: '✍️', description: 'Scientific and medical content writing specialist' },
+      { name: 'Clinical Research Coordinator', businessFunction: 'Clinical Research', avatar: '🔬', description: 'Clinical trial coordination and site management expert' },
+      { name: 'Health Technology Assessor', businessFunction: 'Health Technology', avatar: '🔍', description: 'Health technology assessment and evaluation specialist' }
     ];
     
     const statuses = ['active', 'testing', 'development'];
     const tiers = [1, 2, 3];
+    const departments = ['Clinical', 'Regulatory', 'Medical Affairs', 'Marketing', 'Data Science', 'Quality', 'Operations', 'Strategy'];
+    const roles = ['Director', 'Manager', 'Specialist', 'Coordinator', 'Analyst', 'Expert', 'Associate', 'Lead'];
+    const capabilities = [
+      ['Analysis', 'Research', 'Strategy'],
+      ['Data Science', 'Statistics', 'Modeling'],
+      ['Regulatory', 'Compliance', 'Documentation'],
+      ['Clinical', 'Trial Design', 'Operations'],
+      ['Marketing', 'Communication', 'Content'],
+      ['Quality', 'Assurance', 'Validation'],
+      ['Technology', 'Digital', 'Innovation'],
+      ['Economics', 'Pricing', 'Access']
+    ];
 
     // Generate 372 agents
     for (let i = 0; i < 372; i++) {
       const baseAgent = agentTypes[i % agentTypes.length];
       const randomStatus = statuses[Math.floor(Math.random() * statuses.length)];
       const randomTier = tiers[Math.floor(Math.random() * tiers.length)];
+      const randomDepartment = departments[Math.floor(Math.random() * departments.length)];
+      const randomRole = roles[Math.floor(Math.random() * roles.length)];
+      const randomCapabilities = capabilities[Math.floor(Math.random() * capabilities.length)];
+      
+      // Create more realistic agent names with variations
+      const agentNumber = i + 1;
+      const nameVariation = agentNumber > 20 ? ` ${randomRole}` : '';
+      const displayName = `${baseAgent.name}${nameVariation} ${agentNumber}`;
       
       mockAgents.push({
-        id: `agent-${i + 1}`,
-        name: `${baseAgent.name} ${i + 1}`,
-        display_name: `${baseAgent.name} ${i + 1}`,
-        description: `AI agent specialized in ${baseAgent.businessFunction.toLowerCase()}`,
-        avatar: '🤖',
+        id: `agent-${agentNumber}`,
+        name: baseAgent.name.toLowerCase().replace(/\s+/g, '-') + `-${agentNumber}`,
+        display_name: displayName,
+        description: baseAgent.description,
+        avatar: baseAgent.avatar,
         status: randomStatus,
         tier: randomTier,
-        priority: Math.floor(i / 10) + 1,
+        priority: Math.floor(agentNumber / 50) + 1,
         business_function: baseAgent.businessFunction,
-        capabilities: ['Analysis', 'Research', 'Strategy'],
-        specializations: { general: true },
-        tools: { basic: true },
+        department: randomDepartment,
+        organizational_role: randomRole,
+        capabilities: randomCapabilities,
+        specializations: { 
+          primary: baseAgent.businessFunction.toLowerCase(),
+          secondary: randomDepartment.toLowerCase()
+        },
+        tools: { 
+          basic: true,
+          advanced: randomTier <= 2,
+          premium: randomTier === 1
+        },
         rag_enabled: true,
         is_custom: false,
-        created_at: new Date().toISOString(),
+        color: `hsl(${(i * 137.5) % 360}, 70%, 50%)`, // Generate diverse colors
+        created_at: new Date(Date.now() - Math.random() * 365 * 24 * 60 * 60 * 1000).toISOString(),
         updated_at: new Date().toISOString()
       });
     }

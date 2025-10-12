@@ -254,32 +254,144 @@ function ChatPageContent() {
           <div className="flex-1 overflow-hidden">
             <div className="flex-1 flex flex-col h-full bg-white">
               <div className="flex-1 overflow-y-auto">
-                <div className="flex flex-col items-center justify-center h-full px-6">
-                  <div className="text-center mb-8">
-                    <h1 className="text-3xl font-normal text-gray-900 mb-4">
-                      What's on the agenda today?
-                    </h1>
-                    <p className="text-gray-600 mb-6">
-                      Ask me anything about digital health, clinical trials, regulatory compliance, and more.
-                    </p>
+                {/* Selected Agent Info */}
+                {selectedAgent && (
+                  <div className="p-6 border-b border-gray-200">
+                    <div className="flex items-center space-x-3">
+                      <div className="h-12 w-12 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-semibold text-lg">
+                        {(selectedAgent.display_name || selectedAgent.name || 'A')[0]}
+                      </div>
+                      <div>
+                        <h4 className="font-medium text-lg">{selectedAgent.display_name || selectedAgent.name}</h4>
+                        <p className="text-sm text-gray-600">{selectedAgent.description}</p>
+                        <div className="flex flex-wrap gap-1 mt-2">
+                          {(selectedAgent.capabilities || [])?.slice(0, 3).map((cap) => (
+                            <Badge key={cap} variant="secondary" className="text-xs">
+                              {cap}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
                   </div>
+                )}
 
-                  {/* Single chat input - always visible */}
-                  <div className="w-full max-w-3xl">
-                    <ChatInput
-                      value={input}
-                      onChange={setInput}
-                      onSend={handleSendMessage}
-                      onKeyPress={handleKeyPress}
-                      isLoading={isLoading || isSelectingAgent}
-                      selectedAgent={null}
-                      enableVoice={true}
-                      selectedModel={selectedModel || undefined}
-                      onModelChange={setSelectedModel}
+                {/* Direct LLM Info */}
+                {chatMode === 'direct' && !selectedAgent && (
+                  <div className="p-6 border-b border-gray-200">
+                    <div className="flex items-center space-x-3">
+                      <div className="h-12 w-12 rounded-full bg-gradient-to-br from-green-500 to-blue-600 flex items-center justify-center text-white font-semibold text-lg">
+                        🤖
+                      </div>
+                      <div>
+                        <h4 className="font-medium text-lg">Direct LLM Chat</h4>
+                        <p className="text-sm text-gray-600">Chat directly with GPT-4 for general assistance</p>
+                        <div className="flex flex-wrap gap-1 mt-2">
+                          <Badge variant="secondary" className="text-xs">General Conversation</Badge>
+                          <Badge variant="secondary" className="text-xs">Question Answering</Badge>
+                          <Badge variant="secondary" className="text-xs">Research Assistance</Badge>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Messages Area */}
+                {messages.length > 0 ? (
+                  <div className="flex-1 p-6">
+                    <ChatMessages
+                      messages={messages}
+                      selectedAgent={selectedAgent}
+                      isLoading={isLoading}
                       onStop={stopGeneration}
                     />
                   </div>
-                </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center h-full px-6">
+                    <div className="text-center mb-8">
+                      <h1 className="text-3xl font-normal text-gray-900 mb-4">
+                        {selectedAgent ? `Chat with ${selectedAgent.display_name || selectedAgent.name}` : 
+                         chatMode === 'direct' ? "Direct LLM Chat" : 
+                         "What's on the agenda today?"}
+                      </h1>
+                      <p className="text-gray-600 mb-6">
+                        {selectedAgent ? selectedAgent.description :
+                         chatMode === 'direct' ? "Ask me anything - I'm here to help with any questions you have." :
+                         "Ask me anything about digital health, clinical trials, regulatory compliance, and more."}
+                      </p>
+                    </div>
+
+                    {/* Quick Prompts */}
+                    {selectedAgent && (
+                      <div className="w-full max-w-3xl mb-6">
+                        <h3 className="text-sm font-medium text-gray-700 mb-3">Quick Prompts</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                          {[
+                            `What are the key capabilities of ${selectedAgent.display_name || selectedAgent.name}?`,
+                            `How can ${selectedAgent.display_name || selectedAgent.name} help with my project?`,
+                            `What are the best practices in ${selectedAgent.business_function || 'your field'}?`,
+                            `Can you provide guidance on regulatory compliance?`
+                          ].map((prompt, index) => (
+                            <Button
+                              key={index}
+                              variant="outline"
+                              className="text-left justify-start h-auto p-3 text-sm"
+                              onClick={() => {
+                                setInput(prompt);
+                                handleSendMessage(prompt);
+                              }}
+                            >
+                              {prompt}
+                            </Button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Direct LLM Quick Prompts */}
+                    {chatMode === 'direct' && !selectedAgent && (
+                      <div className="w-full max-w-3xl mb-6">
+                        <h3 className="text-sm font-medium text-gray-700 mb-3">Quick Prompts</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                          {[
+                            "Explain digital health trends in 2024",
+                            "What are the key regulatory requirements for medical devices?",
+                            "How do I design a clinical trial protocol?",
+                            "What are the latest developments in AI for healthcare?"
+                          ].map((prompt, index) => (
+                            <Button
+                              key={index}
+                              variant="outline"
+                              className="text-left justify-start h-auto p-3 text-sm"
+                              onClick={() => {
+                                setInput(prompt);
+                                handleSendMessage(prompt);
+                              }}
+                            >
+                              {prompt}
+                            </Button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Single chat input - always visible */}
+                    <div className="w-full max-w-3xl">
+                      <ChatInput
+                        value={input}
+                        onChange={setInput}
+                        onSend={handleSendMessage}
+                        onKeyPress={handleKeyPress}
+                        isLoading={isLoading || isSelectingAgent}
+                        selectedAgent={selectedAgent}
+                        enableVoice={true}
+                        selectedModel={selectedModel || undefined}
+                        onModelChange={setSelectedModel}
+                        onStop={stopGeneration}
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>

@@ -276,7 +276,7 @@ export function useAuth() {
     return {
       user: null,
       session: null,
-      loading: true,
+      loading: false,
       signIn: async () => {},
       signOut: async () => {},
       clearError: () => {},

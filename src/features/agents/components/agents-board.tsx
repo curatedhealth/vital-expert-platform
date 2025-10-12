@@ -750,22 +750,40 @@ export function AgentsBoard({
                     )}
                   </div>
 
-                  {/* Footer with Model and Add to Chat Button */}
+                  {/* Footer with Model and Action Buttons */}
                   <div className="mt-auto pt-3 border-t border-gray-100">
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-1.5 text-xs text-gray-500">
                         <Brain className="h-3 w-3" />
                         <span className="font-medium">{agent.model}</span>
                       </div>
+                    </div>
+                    
+                    {/* Action Buttons Row */}
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleSaveToLibrary(agent.id);
+                        }}
+                        className="flex-1 h-8 text-xs bg-green-50 hover:bg-green-100 text-green-700 border-green-200"
+                      >
+                        <Heart className="h-3 w-3 mr-1" />
+                        Add to Library
+                      </Button>
+                      
                       {onAddToChat && (
                         <Button
                           size="sm"
                           variant="outline"
                           onClick={(e) => {
                             e.stopPropagation();
+                            console.log('Adding agent to chat:', agent.display_name);
                             onAddToChat(agent);
                           }}
-                          className="h-7 px-2 text-xs bg-blue-50 hover:bg-blue-100 text-blue-700 border-blue-200"
+                          className="flex-1 h-8 text-xs bg-blue-50 hover:bg-blue-100 text-blue-700 border-blue-200"
                         >
                           <MessageSquare className="h-3 w-3 mr-1" />
                           Add to Chat
@@ -814,20 +832,39 @@ export function AgentsBoard({
                     {savedAgents.has(agent.id) && (
                       <Heart className="h-4 w-4 fill-current text-red-500" />
                     )}
-                    {onAddToChat && (
+                    
+                    {/* Action Buttons */}
+                    <div className="flex gap-1">
                       <Button
                         size="sm"
                         variant="outline"
                         onClick={(e) => {
                           e.stopPropagation();
-                          onAddToChat(agent);
+                          handleSaveToLibrary(agent.id);
                         }}
-                        className="h-7 px-2 text-xs bg-blue-50 hover:bg-blue-100 text-blue-700 border-blue-200"
+                        className="h-7 px-2 text-xs bg-green-50 hover:bg-green-100 text-green-700 border-green-200"
                       >
-                        <MessageSquare className="h-3 w-3 mr-1" />
-                        Add to Chat
+                        <Heart className="h-3 w-3 mr-1" />
+                        Library
                       </Button>
-                    )}
+                      
+                      {onAddToChat && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            console.log('Adding agent to chat:', agent.display_name);
+                            onAddToChat(agent);
+                          }}
+                          className="h-7 px-2 text-xs bg-blue-50 hover:bg-blue-100 text-blue-700 border-blue-200"
+                        >
+                          <MessageSquare className="h-3 w-3 mr-1" />
+                          Chat
+                        </Button>
+                      )}
+                    </div>
+                    
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
                         <Button variant="ghost" size="icon" className="h-8 w-8">

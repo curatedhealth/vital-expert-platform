@@ -40,23 +40,31 @@ export async function POST(request: NextRequest) {
       chatHistoryLength: chatHistory.length
     });
 
-    // Get agent details from database
-    const { data: agentData, error: agentError } = await supabase
-      .from('agents')
-      .select('*')
-      .eq('id', agent.id)
-      .single();
+    // Get agent details from database (skip for direct-llm)
+    let agentData = agent;
+    if (agent.id !== 'direct-llm') {
+      const { data: dbAgentData, error: agentError } = await supabase
+        .from('agents')
+        .select('*')
+        .eq('id', agent.id)
+        .single();
 
-    if (agentError || !agentData) {
-      console.error('❌ Agent not found:', agentError);
-      return NextResponse.json(
-        { error: 'Agent not found' },
-        { status: 404 }
-      );
+      if (agentError || !dbAgentData) {
+        console.error('❌ Agent not found:', agentError);
+        return NextResponse.json(
+          { error: 'Agent not found' },
+          { status: 404 }
+        );
+      }
+      agentData = dbAgentData;
     }
 
     // Build system prompt
-    const systemPrompt = `You are ${agentData.display_name}, a ${agentData.business_function} expert.
+    let systemPrompt;
+    if (agent.id === 'direct-llm') {
+      systemPrompt = `You are a helpful AI assistant. Provide clear, accurate, and helpful responses to user questions. You can help with a wide range of topics including digital health, clinical trials, regulatory compliance, and general questions.`;
+    } else {
+      systemPrompt = `You are ${agentData.display_name}, a ${agentData.business_function} expert.
 
 ${agentData.system_prompt || `You are an expert in ${agentData.business_function} with deep knowledge of medical device development, regulatory affairs, and healthcare innovation.`}
 
@@ -64,6 +72,7 @@ Your capabilities include:
 - ${agentData.capabilities?.join(', ') || 'Expert consultation and guidance'}
 
 Please provide helpful, accurate, and professional responses based on your expertise.`;
+    }
 
     // Prepare messages for OpenAI
     const messages = [

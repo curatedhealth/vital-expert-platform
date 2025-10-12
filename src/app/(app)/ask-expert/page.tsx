@@ -587,11 +587,13 @@ export default function AskExpertPage() {
               value={state.input}
               onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setState(prev => ({ ...prev, input: e.target.value }))}
               placeholder={
-                state.selectedAgent
-                  ? `Ask ${state.selectedAgent.name} anything...`
-                  : 'Select an expert first'
+                chatMode === 'direct'
+                  ? 'Ask me anything...'
+                  : state.selectedAgent
+                    ? `Ask ${state.selectedAgent.name} anything...`
+                    : 'Select an expert first'
               }
-              disabled={!state.selectedAgent || state.isLoading}
+              disabled={(chatMode === 'agent' && !state.selectedAgent) || state.isLoading}
               className="flex-1 min-h-[60px] max-h-[120px]"
               onKeyDown={(e: React.KeyboardEvent<HTMLTextAreaElement>) => {
                 if (e.key === 'Enter' && !e.shiftKey) {
@@ -602,7 +604,7 @@ export default function AskExpertPage() {
             />
             <Button
               onClick={handleSendMessage}
-              disabled={!state.input.trim() || !state.selectedAgent || state.isLoading}
+              disabled={!state.input.trim() || (chatMode === 'agent' && !state.selectedAgent) || state.isLoading}
               size="lg"
               className="px-6"
             >

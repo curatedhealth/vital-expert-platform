@@ -35,8 +35,8 @@ export function SupabaseAuthProvider({ children }: AuthProviderProps) {
     // Get initial session
     const getInitialSession = async () => {
       try {
-        // In development mode, use mock user for testing
-        if (process.env.NODE_ENV === 'development') {
+        // In development mode or for testing, use mock user
+        if (process.env.NODE_ENV === 'development' || process.env.NEXT_PUBLIC_USE_MOCK_AUTH === 'true') {
           console.log('🧪 Development mode: Using mock user for testing');
           const mockUser = {
             id: 'dev-user-123',
@@ -101,8 +101,8 @@ export function SupabaseAuthProvider({ children }: AuthProviderProps) {
 
     getInitialSession();
 
-    // Skip auth state changes in development mode
-    if (process.env.NODE_ENV === 'development') {
+    // Skip auth state changes in development mode or when using mock auth
+    if (process.env.NODE_ENV === 'development' || process.env.NEXT_PUBLIC_USE_MOCK_AUTH === 'true') {
       return;
     }
 
@@ -200,6 +200,50 @@ export function SupabaseAuthProvider({ children }: AuthProviderProps) {
       setLoading(true);
       setError(null);
       console.log('🔐 Signing in user:', email);
+      
+      // For testing purposes, allow mock authentication
+      if (process.env.NEXT_PUBLIC_USE_MOCK_AUTH === 'true' || process.env.NODE_ENV === 'development') {
+        console.log('🧪 Using mock authentication for testing');
+        
+        // Simulate a brief delay
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        const mockUser = {
+          id: 'dev-user-123',
+          email: email.trim(),
+          user_metadata: {
+            full_name: 'Test User'
+          }
+        } as User;
+        
+        const mockSession = {
+          user: mockUser,
+          access_token: 'mock-token',
+          refresh_token: 'mock-refresh-token',
+          expires_in: 3600,
+          expires_at: Date.now() + 3600000,
+          token_type: 'bearer'
+        } as Session;
+
+        setUser(mockUser);
+        setSession(mockSession);
+        
+        // Set mock user profile
+        setUserProfile({
+          id: 'dev-user-123',
+          email: email.trim(),
+          full_name: 'Test User',
+          role: 'admin',
+          organization: 'Vital Expert',
+          avatar_url: null,
+          phone: null,
+          timezone: 'UTC',
+          preferences: {}
+        });
+        
+        console.log('✅ Mock authentication successful for:', email);
+        return;
+      }
       
       const { data, error } = await supabase.auth.signInWithPassword({
         email: email.trim(),

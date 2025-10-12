@@ -277,11 +277,22 @@ const _useChatStore = create<ChatStore>()(
       sendMessage: async (content: string, attachments?: unknown[]) => {
         let { currentChat, selectedAgent, messages, interactionMode } = get();
 
-        // In automatic mode, allow sending messages without pre-selected agent
+        console.log('📤 [sendMessage] Debug info:', {
+          hasSelectedAgent: !!selectedAgent,
+          interactionMode,
+          content: content.substring(0, 50) + '...'
+        });
+
+        // Allow sending messages without pre-selected agent in automatic mode
         // The API will handle agent selection automatically
         if (!selectedAgent && interactionMode !== 'automatic') {
           console.warn('⚠️  No agent selected. Please select an agent before sending a message.');
           return;
+        }
+
+        // If no agent is selected but we're in automatic mode, proceed with message
+        if (!selectedAgent && interactionMode === 'automatic') {
+          console.log('🤖 Automatic mode: Proceeding without selected agent, API will handle routing');
         }
 
         // Auto-create a chat if one doesn't exist

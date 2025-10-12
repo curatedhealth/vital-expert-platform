@@ -10,9 +10,7 @@
 
 import { DynamicTool } from '@langchain/core/tools';
 
-
 // Import existing LangChain tools
-
 import {
   clinicalTrialsSearchTool,
   studyDesignTool,
@@ -20,7 +18,6 @@ import {
 } from './clinical-trials-tools';
 import {
   tavilySearchTool,
-  // wikipediaTool, // Removed - use Tavily web search instead
   arxivSearchTool,
   pubmedSearchTool,
   euMedicalDeviceTool,
@@ -35,21 +32,15 @@ import type { StructuredToolInterface } from '@langchain/core/tools';
 
 /**
  * Tool Status Metadata
- * Tracks which tools are fully implemented vs placeholders
+ * Tracks which tools are fully implemented and available
  */
 export const TOOL_STATUS: Record<string, 'available' | 'coming_soon'> = {
   'Web Search': 'available',
-  'Document Analysis': 'coming_soon',
   'Data Calculator': 'available',
   'Regulatory Database Search': 'available',
   'Literature Search': 'available',
-  'Statistical Analysis': 'coming_soon',
-  'Timeline Generator': 'coming_soon',
   'Budget Calculator': 'available',
-  'Risk Assessment Matrix': 'coming_soon',
   'Compliance Checker': 'available',
-  'Citation Generator': 'coming_soon',
-  'Template Generator': 'coming_soon',
   'Clinical Trials Search': 'available',
   'Study Design': 'available',
   'Endpoint Selection': 'available',
@@ -64,27 +55,12 @@ export const TOOL_STATUS: Record<string, 'available' | 'coming_soon'> = {
  * - Example: "Literature Search" loads both PubMed and ArXiv tools
  *
  * ✅ = Fully implemented and available
- * 🚧 = Coming soon (placeholder implementation)
  */
 export const TOOL_REGISTRY: Record<string, StructuredToolInterface[]> = {
   // Web Search
   'Web Search': [tavilySearchTool],
 
-  // Document Analysis (placeholder - implement actual tool later)
-  'Document Analysis': [
-    new DynamicTool({
-      name: 'document_analysis',
-      description: 'Analyze documents for key information and insights',
-      func: async (input: string) => {
-        return JSON.stringify({
-          message: 'Document analysis tool - implementation coming soon',
-          input,
-        });
-      },
-    }),
-  ],
-
-  // Data Calculator (placeholder - could use Python REPL or calculator tool)
+  // Data Calculator
   'Data Calculator': [
     new DynamicTool({
       name: 'data_calculator',
@@ -115,35 +91,6 @@ export const TOOL_REGISTRY: Record<string, StructuredToolInterface[]> = {
   'Literature Search': [
     pubmedSearchTool,
     arxivSearchTool,
-    // wikipediaTool removed - agents should use Web Search (Tavily) for current information
-  ],
-
-  // Statistical Analysis (placeholder)
-  'Statistical Analysis': [
-    new DynamicTool({
-      name: 'statistical_analysis',
-      description: 'Perform statistical tests and analysis',
-      func: async (input: string) => {
-        return JSON.stringify({
-          message: 'Statistical analysis tool - implementation coming soon',
-          input,
-        });
-      },
-    }),
-  ],
-
-  // Timeline Generator (placeholder)
-  'Timeline Generator': [
-    new DynamicTool({
-      name: 'timeline_generator',
-      description: 'Generate project timelines and Gantt charts',
-      func: async (input: string) => {
-        return JSON.stringify({
-          message: 'Timeline generator - implementation coming soon',
-          input,
-        });
-      },
-    }),
   ],
 
   // Budget Calculator
@@ -151,51 +98,9 @@ export const TOOL_REGISTRY: Record<string, StructuredToolInterface[]> = {
     regulatoryCalculatorTool,
   ],
 
-  // Risk Assessment Matrix (placeholder)
-  'Risk Assessment Matrix': [
-    new DynamicTool({
-      name: 'risk_assessment',
-      description: 'Assess and visualize project risks',
-      func: async (input: string) => {
-        return JSON.stringify({
-          message: 'Risk assessment tool - implementation coming soon',
-          input,
-        });
-      },
-    }),
-  ],
-
   // Compliance Checker (uses FDA guidance tool)
   'Compliance Checker': [
     fdaGuidanceTool,
-  ],
-
-  // Citation Generator (placeholder)
-  'Citation Generator': [
-    new DynamicTool({
-      name: 'citation_generator',
-      description: 'Generate properly formatted citations',
-      func: async (input: string) => {
-        return JSON.stringify({
-          message: 'Citation generator - implementation coming soon',
-          input,
-        });
-      },
-    }),
-  ],
-
-  // Template Generator (placeholder)
-  'Template Generator': [
-    new DynamicTool({
-      name: 'template_generator',
-      description: 'Generate document templates',
-      func: async (input: string) => {
-        return JSON.stringify({
-          message: 'Template generator - implementation coming soon',
-          input,
-        });
-      },
-    }),
   ],
 
   // Clinical Trials tools
@@ -213,44 +118,31 @@ export const TOOL_REGISTRY: Record<string, StructuredToolInterface[]> = {
 };
 
 /**
- * Get LangChain tools by database tool name
+ * Get available tools for an agent
  */
-export function getToolsByName(toolName: string): StructuredToolInterface[] {
-  return TOOL_REGISTRY[toolName] || [];
-}
-
-/**
- * Get LangChain tools by database tool IDs
- *
- * @param toolNames Array of tool names from database
- * @returns Flat array of all LangChain tools for those names
- */
-export function getToolsByNames(toolNames: string[]): StructuredToolInterface[] {
+export function getAvailableTools(toolNames: string[]): StructuredToolInterface[] {
   const tools: StructuredToolInterface[] = [];
-
-  for (const name of toolNames) {
-    const matchedTools = getToolsByName(name);
-    if (matchedTools.length > 0) {
-      tools.push(...matchedTools);
-      console.log(`✅ Loaded ${matchedTools.length} LangChain tool(s) for "${name}"`);
-    } else {
-      console.warn(`⚠️  No LangChain implementation found for tool: "${name}"`);
+  
+  for (const toolName of toolNames) {
+    const toolGroup = TOOL_REGISTRY[toolName];
+    if (toolGroup) {
+      tools.push(...toolGroup);
     }
   }
-
+  
   return tools;
 }
 
 /**
- * List all available tool names in the registry
+ * Get all available tool names
  */
-export function listAvailableTools(): string[] {
+export function getAllAvailableToolNames(): string[] {
   return Object.keys(TOOL_REGISTRY);
 }
 
 /**
- * Get tool count for a database tool name
+ * Check if a tool is available
  */
-export function getToolCount(toolName: string): number {
-  return TOOL_REGISTRY[toolName]?.length || 0;
+export function isToolAvailable(toolName: string): boolean {
+  return TOOL_STATUS[toolName] === 'available';
 }

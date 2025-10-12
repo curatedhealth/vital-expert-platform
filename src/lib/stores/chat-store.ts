@@ -834,9 +834,12 @@ const _useChatStore = create<ChatStore>()(
 
       searchAgents: async (searchTerm: string) => {
         try {
-          // const dbAgents = await agentService.searchAgents(searchTerm);
-          // return dbAgents.map((agent) => agentService.convertToLegacyFormat(agent));
-          return []; // Mock empty for now
+          const { agents } = get();
+          return agents.filter(agent => 
+            agent.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            agent.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            (agent.businessFunction && agent.businessFunction.toLowerCase().includes(searchTerm.toLowerCase()))
+          );
         } catch (error) {
           console.error('Failed to search agents:', error);
           return [];
@@ -845,9 +848,11 @@ const _useChatStore = create<ChatStore>()(
 
       getAgentsByCategory: async (categoryName: string) => {
         try {
-          // const dbAgents = await agentService.getAgentsByCategory(categoryName);
-          // return dbAgents.map((agent) => agentService.convertToLegacyFormat(agent));
-          return []; // Mock empty for now
+          const { agents } = get();
+          return agents.filter(agent => 
+            agent.businessFunction?.toLowerCase() === categoryName.toLowerCase() ||
+            agent.category?.toLowerCase() === categoryName.toLowerCase()
+          );
         } catch (error) {
           console.error('Failed to get agents by category:', error);
           return [];
@@ -856,9 +861,8 @@ const _useChatStore = create<ChatStore>()(
 
       getAgentsByTier: async (tier: number) => {
         try {
-          // const dbAgents = await agentService.getAgentsByTier(tier);
-          // return dbAgents.map((agent) => agentService.convertToLegacyFormat(agent));
-          return []; // Mock empty for now
+          const { agents } = get();
+          return agents.filter(agent => agent.tier === tier);
         } catch (error) {
           console.error('Failed to get agents by tier:', error);
           return [];

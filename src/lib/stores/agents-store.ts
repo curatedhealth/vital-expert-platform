@@ -114,16 +114,38 @@ export const useAgentsStore = create<{
 
       loadCategories: async () => {
         try {
-          const mockCategories: AgentCategory[] = [
+          // Load categories from API or use default categories
+          const defaultCategories: AgentCategory[] = [
             {
-              id: '1',
+              id: 'clinical-research',
               name: 'Clinical Research',
               description: 'Clinical trial and research agents',
               color: '#6366f1',
               icon: 'flask'
+            },
+            {
+              id: 'regulatory',
+              name: 'Regulatory',
+              description: 'Regulatory affairs and compliance agents',
+              color: '#10b981',
+              icon: 'shield'
+            },
+            {
+              id: 'data-science',
+              name: 'Data Science',
+              description: 'Data analysis and statistics agents',
+              color: '#f59e0b',
+              icon: 'chart'
+            },
+            {
+              id: 'medical-affairs',
+              name: 'Medical Affairs',
+              description: 'Medical information and communication agents',
+              color: '#8b5cf6',
+              icon: 'heart'
             }
           ];
-          set({ categories: mockCategories });
+          set({ categories: defaultCategories });
         } catch (error) {
           set({ error: 'Failed to load categories' });
         }

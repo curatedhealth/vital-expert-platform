@@ -143,6 +143,11 @@ export default function AskExpertPage() {
         metadata: {},
       };
 
+      console.log('🤖 Creating assistant message:', {
+        messageId: assistantMessage.id,
+        currentMessagesCount: state.messages.length
+      });
+
       setState(prev => ({
         ...prev,
         messages: [...prev.messages, assistantMessage],
@@ -162,6 +167,11 @@ export default function AskExpertPage() {
               
               if (data.type === 'content') {
                 fullContent = data.fullContent;
+                console.log('📝 Updating message content:', {
+                  messageId: assistantMessage.id,
+                  contentLength: fullContent.length,
+                  content: fullContent.substring(0, 100) + '...'
+                });
                 setState(prev => ({
                   ...prev,
                   messages: prev.messages.map(msg =>
@@ -388,7 +398,14 @@ export default function AskExpertPage() {
               </p>
             </div>
           ) : (
-            state.messages.map((message) => (
+            state.messages.map((message) => {
+              console.log('🎨 Rendering message:', {
+                id: message.id,
+                role: message.role,
+                contentLength: message.content.length,
+                content: message.content.substring(0, 50) + '...'
+              });
+              return (
               <div
                 key={message.id}
                 className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
@@ -431,7 +448,8 @@ export default function AskExpertPage() {
                   </div>
                 </div>
               </div>
-            ))
+              );
+            })
           )}
           <div ref={messagesEndRef} />
         </div>

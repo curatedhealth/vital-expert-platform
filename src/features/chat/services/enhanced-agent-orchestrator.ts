@@ -105,13 +105,13 @@ class EnhancedAgentOrchestrator {
     let stepCounter = 0;
 
     // Get agent metadata for personalized prompt
-    const agentMetadata = await this.getAgentMetadata(agentId);
+    const agent = await this.getAgentMetadata(agentId);
 
     // Create agent with tools
     const prompt = ChatPromptTemplate.fromMessages([
-      ['system', `You are ${agentMetadata.name}, ${agentMetadata.role}.
+      ['system', `You are ${agent.name}, ${agent.role}.
 
-Your expertise: ${agentMetadata.expertise?.join(', ') || 'general AI assistant'}
+Your expertise: ${agent.expertise?.join(', ') || 'general AI assistant'}
 
 You have access to ${tools.length} specialized tools:
 ${tools.map(t => `- ${t.name}: ${t.description}`).join('\n')}
@@ -488,6 +488,5 @@ When you don't know something, say so clearly and suggest how to find the answer
   }
 }
 
-export { EnhancedAgentOrchestrator };
 export const enhancedAgentOrchestrator = new EnhancedAgentOrchestrator();
 export default enhancedAgentOrchestrator;

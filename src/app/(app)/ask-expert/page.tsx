@@ -23,6 +23,7 @@ import {
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { useAgentsStore, Agent } from '@/lib/stores/agents-store';
+import { useChatStore } from '@/lib/stores/chat-store';
 import { useAuth } from '@/supabase-auth-context';
 
 

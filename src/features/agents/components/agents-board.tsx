@@ -545,8 +545,41 @@ export function AgentsBoard({
                   {agent.description}
                 </p>
 
-                {/* Footer with Action Buttons */}
+                {/* Status and Tier Info */}
                 <div className="mt-auto pt-3 border-t border-gray-100">
+                  <div className="flex items-center justify-between mb-2">
+                    {/* Status Badge */}
+                    <Badge
+                      variant="outline"
+                      className={cn(
+                        "text-xs font-medium",
+                        agent.status === 'active' && "bg-green-50 text-green-700 border-green-200",
+                        agent.status === 'development' && "bg-blue-50 text-blue-700 border-blue-200",
+                        agent.status === 'testing' && "bg-yellow-50 text-yellow-700 border-yellow-200",
+                        agent.status === 'inactive' && "bg-gray-50 text-gray-700 border-gray-200"
+                      )}
+                    >
+                      {agent.status}
+                    </Badge>
+                    
+                    {/* Tier Badge */}
+                    {agent.tier !== undefined && (
+                      <Badge
+                        variant="outline"
+                        className={cn(
+                          "text-xs font-bold",
+                          agent.tier === 0 && "bg-gradient-to-r from-purple-100 to-pink-100 text-purple-900 border-purple-300",
+                          agent.tier === 1 && "bg-blue-50 text-blue-700 border-blue-200",
+                          agent.tier === 2 && "bg-green-50 text-green-700 border-green-200",
+                          agent.tier === 3 && "bg-orange-50 text-orange-700 border-orange-200"
+                        )}
+                      >
+                        {agent.tier === 0 ? 'Core' : `T${agent.tier}`}
+                      </Badge>
+                    )}
+                  </div>
+                  
+                  {/* Action Buttons */}
                   <div className="flex gap-1">
                     {/* Chat Button */}
                     {onAddToChat && (
@@ -849,6 +882,19 @@ export function AgentsBoard({
                           {agent.tier === 0 ? 'Core' : `T${agent.tier}`}
                         </Badge>
                       )}
+                      {/* Status Badge */}
+                      <Badge
+                        variant="outline"
+                        className={cn(
+                          "text-xs font-medium",
+                          agent.status === 'active' && "bg-green-50 text-green-700 border-green-200",
+                          agent.status === 'development' && "bg-blue-50 text-blue-700 border-blue-200",
+                          agent.status === 'testing' && "bg-yellow-50 text-yellow-700 border-yellow-200",
+                          agent.status === 'inactive' && "bg-gray-50 text-gray-700 border-gray-200"
+                        )}
+                      >
+                        {agent.status}
+                      </Badge>
                       {agent.is_custom && (
                         <Badge variant="outline" className="text-xs">
                           Custom

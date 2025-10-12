@@ -27,7 +27,7 @@ import {
 // import { AgentCreator } from '@/features/chat/components/agent-creator';
 // import { ChatInput } from '@/features/chat/components/chat-input';
 // import { ChatMessages } from '@/features/chat/components/chat-messages';
-// import { ChatSidebar } from '@/features/chat/components/chat-sidebar';
+import { ChatSidebar } from '@/features/chat/components/chat-sidebar';
 // import type { AgentWithCategories } from '@/features/agents/services/agent-service';
 import { IconService, type Icon } from '@/shared/services/icon-service';
 import { useAgentsStore } from '@/lib/stores/agents-store';
@@ -1136,7 +1136,7 @@ function ChatPageContent() {
   return (
     <div className="flex flex-col h-full">
       <SidebarProvider defaultOpen={sidebarOpen}>
-        {/* <ChatSidebar
+        <ChatSidebar
           chats={filteredChats}
           currentChat={currentChat ? {
             ...currentChat,
@@ -1160,8 +1160,7 @@ function ChatPageContent() {
           onToggleMode={setInteractionMode}
           autonomousMode={autonomousMode}
           onToggleAutonomous={setAutonomousMode}
-        /> */}
-        <div className="w-64 bg-gray-100 p-4 text-center text-gray-500">Chat Sidebar - Coming Soon</div>
+        />
 
         <SidebarInset className="flex flex-col flex-1 overflow-hidden">
           {/* Content - Show initial welcome, agent selection, or chat interface */}

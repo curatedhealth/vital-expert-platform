@@ -448,7 +448,7 @@ function AppLayoutContent({
                   </Link>
                 </nav>
               </div>
-              {/* <DashboardSidebarWithSuspense
+              <DashboardSidebarWithSuspense
                 className="p-4"
                 currentView={getCurrentView()}
                 onCreateAgent={getCurrentView() === 'agents' ? handleCreateAgent : undefined}
@@ -462,8 +462,7 @@ function AppLayoutContent({
                 businessFunctions={businessFunctions}
                 departments={departments}
                 organizationalRoles={roles}
-              /> */}
-              <div className="p-4 text-center text-gray-500">Dashboard Sidebar - Coming Soon</div>
+              />
             </div>
           </div>
         )}

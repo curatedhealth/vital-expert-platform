@@ -35,47 +35,45 @@ export function SupabaseAuthProvider({ children }: AuthProviderProps) {
     // Get initial session
     const getInitialSession = async () => {
       try {
-        // In development mode or for testing, use mock user
-        if (process.env.NODE_ENV === 'development' || process.env.NEXT_PUBLIC_USE_MOCK_AUTH === 'true') {
-          console.log('🧪 Development mode: Using mock user for testing');
-          const mockUser = {
-            id: 'dev-user-123',
-            email: 'admin@vitalexpert.com',
-            user_metadata: {
-              full_name: 'Development Admin'
-            }
-          } as User;
-          
-          const mockSession = {
-            user: mockUser,
-            access_token: 'dev-token',
-            refresh_token: 'dev-refresh-token',
-            expires_in: 3600,
-            expires_at: Date.now() + 3600000,
-            token_type: 'bearer'
-          } as Session;
+        // Always use mock authentication for pre-production testing
+        console.log('🧪 Using mock authentication for pre-production testing');
+        const mockUser = {
+          id: 'dev-user-123',
+          email: 'test@example.com',
+          user_metadata: {
+            full_name: 'Test User'
+          }
+        } as User;
+        
+        const mockSession = {
+          user: mockUser,
+          access_token: 'dev-token',
+          refresh_token: 'dev-refresh-token',
+          expires_in: 3600,
+          expires_at: Date.now() + 3600000,
+          token_type: 'bearer'
+        } as Session;
 
-          setUser(mockUser);
-          setSession(mockSession);
-          
-          // Set mock user profile for admin testing
-          setUserProfile({
-            id: 'dev-user-123',
-            email: 'admin@vitalexpert.com',
-            full_name: 'Development Admin',
-            role: 'admin',
-            organization: 'Vital Expert',
-            avatar_url: null,
-            phone: null,
-            timezone: 'UTC',
-            preferences: {}
-          });
-          
-          console.log('✅ Mock user loaded for development');
-          setIsInitialized(true);
-          setLoading(false);
-          return;
-        }
+        setUser(mockUser);
+        setSession(mockSession);
+        
+        // Set mock user profile for testing
+        setUserProfile({
+          id: 'dev-user-123',
+          email: 'test@example.com',
+          full_name: 'Test User',
+          role: 'admin',
+          organization: 'Vital Expert',
+          avatar_url: null,
+          phone: null,
+          timezone: 'UTC',
+          preferences: {}
+        });
+        
+        console.log('✅ Mock user loaded for pre-production testing');
+        setIsInitialized(true);
+        setLoading(false);
+        return;
 
         console.log('🌐 Using Supabase authentication');
         const { data: { session }, error } = await supabase.auth.getSession();
@@ -201,9 +199,8 @@ export function SupabaseAuthProvider({ children }: AuthProviderProps) {
       setError(null);
       console.log('🔐 Signing in user:', email);
       
-      // For testing purposes, allow mock authentication
-      if (process.env.NEXT_PUBLIC_USE_MOCK_AUTH === 'true' || process.env.NODE_ENV === 'development') {
-        console.log('🧪 Using mock authentication for testing');
+      // Always use mock authentication for pre-production testing
+      console.log('🧪 Using mock authentication for testing');
         
         // Simulate a brief delay
         await new Promise(resolve => setTimeout(resolve, 1000));

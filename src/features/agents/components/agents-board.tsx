@@ -750,11 +750,27 @@ export function AgentsBoard({
                     )}
                   </div>
 
-                  {/* Footer with Model */}
+                  {/* Footer with Model and Add to Chat Button */}
                   <div className="mt-auto pt-3 border-t border-gray-100">
-                    <div className="flex items-center gap-1.5 text-xs text-gray-500">
-                      <Brain className="h-3 w-3" />
-                      <span className="font-medium">{agent.model}</span>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-1.5 text-xs text-gray-500">
+                        <Brain className="h-3 w-3" />
+                        <span className="font-medium">{agent.model}</span>
+                      </div>
+                      {onAddToChat && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onAddToChat(agent);
+                          }}
+                          className="h-7 px-2 text-xs bg-blue-50 hover:bg-blue-100 text-blue-700 border-blue-200"
+                        >
+                          <MessageSquare className="h-3 w-3 mr-1" />
+                          Add to Chat
+                        </Button>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -797,6 +813,20 @@ export function AgentsBoard({
                     )}
                     {savedAgents.has(agent.id) && (
                       <Heart className="h-4 w-4 fill-current text-red-500" />
+                    )}
+                    {onAddToChat && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onAddToChat(agent);
+                        }}
+                        className="h-7 px-2 text-xs bg-blue-50 hover:bg-blue-100 text-blue-700 border-blue-200"
+                      >
+                        <MessageSquare className="h-3 w-3 mr-1" />
+                        Add to Chat
+                      </Button>
                     )}
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>

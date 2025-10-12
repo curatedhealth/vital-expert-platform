@@ -47,18 +47,11 @@ export default function LoginPage() {
     }
   }, [user, loading, router]);
 
-  // Handle successful login
+  // AUTH DISABLED - Auto-redirect to dashboard
   useEffect(() => {
-    if (user && !loading) {
-      const redirectPath = getPostLoginRedirect(user);
-      console.log('Login successful, redirecting to:', redirectPath);
-      
-      // Small delay to ensure session is fully established
-      setTimeout(() => {
-        router.push(redirectPath);
-      }, AUTH_CONFIG.sessionWaitTime);
-    }
-  }, [user, loading, router]);
+    console.log('🔓 AUTH DISABLED - Auto-redirecting to dashboard');
+    router.push('/dashboard');
+  }, [router]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();

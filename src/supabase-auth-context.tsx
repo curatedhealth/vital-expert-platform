@@ -32,59 +32,45 @@ export function SupabaseAuthProvider({ children }: AuthProviderProps) {
   const [isInitialized, setIsInitialized] = useState(false);
 
   useEffect(() => {
-    // Get initial session
-    const getInitialSession = async () => {
-      try {
-        // Always use mock authentication for pre-production testing
-        console.log('🧪 Using mock authentication for pre-production testing');
-        const mockUser = {
-          id: 'dev-user-123',
-          email: 'test@example.com',
-          user_metadata: {
-            full_name: 'Test User'
-          }
-        } as User;
-        
-        const mockSession = {
-          user: mockUser,
-          access_token: 'dev-token',
-          refresh_token: 'dev-refresh-token',
-          expires_in: 3600,
-          expires_at: Date.now() + 3600000,
-          token_type: 'bearer'
-        } as Session;
-
-        setUser(mockUser);
-        setSession(mockSession);
-        
-        // Set mock user profile for testing
-        setUserProfile({
-          id: 'dev-user-123',
-          email: 'test@example.com',
-          full_name: 'Test User',
-          role: 'user',
-          organization: 'Vital Expert',
-          avatar_url: null,
-          phone: null,
-          timezone: 'UTC',
-          preferences: {}
-        });
-        
-        console.log('✅ Mock user loaded for pre-production testing');
-        setIsInitialized(true);
-        setLoading(false);
-      } catch (error) {
-        console.error('Error in getInitialSession:', error);
-        setError(`Initialization error: ${error instanceof Error ? error.message : 'Unknown error'}`);
-        setIsInitialized(true);
-        setLoading(false);
+    // AUTH DISABLED FOR TESTING - Always set as logged in
+    console.log('🔓 AUTH DISABLED - Auto-logging in for testing');
+    
+    const mockUser = {
+      id: 'test-user-123',
+      email: 'test@vitalexpert.com',
+      user_metadata: {
+        full_name: 'Test User'
       }
-    };
+    } as User;
+    
+    const mockSession = {
+      user: mockUser,
+      access_token: 'test-token',
+      refresh_token: 'test-refresh-token',
+      expires_in: 3600,
+      expires_at: Date.now() + 3600000,
+      token_type: 'bearer'
+    } as Session;
 
-    getInitialSession();
-
-    // Skip auth state changes for mock authentication
-    return;
+    setUser(mockUser);
+    setSession(mockSession);
+    
+    // Set mock user profile for testing
+    setUserProfile({
+      id: 'test-user-123',
+      email: 'test@vitalexpert.com',
+      full_name: 'Test User',
+      role: 'user',
+      organization: 'Vital Expert',
+      avatar_url: null,
+      phone: null,
+      timezone: 'UTC',
+      preferences: {}
+    });
+    
+    console.log('✅ Auto-logged in for testing - Auth disabled');
+    setIsInitialized(true);
+    setLoading(false);
   }, []);
 
   const fetchUserProfile = async (userId: string) => {
@@ -152,60 +138,9 @@ export function SupabaseAuthProvider({ children }: AuthProviderProps) {
   };
 
   const signIn = async (email: string, password: string) => {
-    try {
-      setLoading(true);
-      setError(null);
-      console.log('🔐 Signing in user:', email);
-      
-      // Always use mock authentication for pre-production testing
-      console.log('🧪 Using mock authentication for testing');
-        
-        // Simulate a brief delay
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
-        const mockUser = {
-          id: 'dev-user-123',
-          email: email.trim(),
-          user_metadata: {
-            full_name: 'Test User'
-          }
-        } as User;
-        
-        const mockSession = {
-          user: mockUser,
-          access_token: 'mock-token',
-          refresh_token: 'mock-refresh-token',
-          expires_in: 3600,
-          expires_at: Date.now() + 3600000,
-          token_type: 'bearer'
-        } as Session;
-
-        setUser(mockUser);
-        setSession(mockSession);
-        
-        // Set mock user profile
-        setUserProfile({
-          id: 'dev-user-123',
-          email: email.trim(),
-          full_name: 'Test User',
-          role: 'user',
-          organization: 'Vital Expert',
-          avatar_url: null,
-          phone: null,
-          timezone: 'UTC',
-          preferences: {}
-        });
-        
-        console.log('✅ Mock authentication successful for:', email);
-        return;
-    } catch (error) {
-      console.error('Sign in error:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Sign in failed';
-      setError(errorMessage);
-      throw new Error(errorMessage);
-    } finally {
-      setLoading(false);
-    }
+    // AUTH DISABLED - Always succeed immediately
+    console.log('🔓 AUTH DISABLED - Auto-login successful for:', email);
+    return;
   };
 
   const clearError = () => {
@@ -272,17 +207,42 @@ export function SupabaseAuthProvider({ children }: AuthProviderProps) {
 export function useAuth() {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    // Return a default context during SSR/static generation
+    // AUTH DISABLED - Return logged in state during SSR/static generation
     return {
-      user: null,
-      session: null,
+      user: {
+        id: 'test-user-123',
+        email: 'test@vitalexpert.com',
+        user_metadata: { full_name: 'Test User' }
+      },
+      session: {
+        user: {
+          id: 'test-user-123',
+          email: 'test@vitalexpert.com',
+          user_metadata: { full_name: 'Test User' }
+        },
+        access_token: 'test-token',
+        refresh_token: 'test-refresh-token',
+        expires_in: 3600,
+        expires_at: Date.now() + 3600000,
+        token_type: 'bearer'
+      },
       loading: false,
       signIn: async () => {},
       signOut: async () => {},
       clearError: () => {},
-      userProfile: null,
+      userProfile: {
+        id: 'test-user-123',
+        email: 'test@vitalexpert.com',
+        full_name: 'Test User',
+        role: 'user',
+        organization: 'Vital Expert',
+        avatar_url: null,
+        phone: null,
+        timezone: 'UTC',
+        preferences: {}
+      },
       error: null,
-      isInitialized: false
+      isInitialized: true
     };
   }
   return context;

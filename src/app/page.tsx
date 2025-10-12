@@ -1,9 +1,20 @@
+'use client';
+
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { MessageSquare, Users, BookOpen, Brain, Workflow, BarChart3 } from 'lucide-react';
 
 export default function Home() {
+  const router = useRouter();
+
+  // AUTH DISABLED - Auto-redirect to dashboard
+  useEffect(() => {
+    console.log('🔓 AUTH DISABLED - Auto-redirecting from home to dashboard');
+    router.push('/dashboard');
+  }, [router]);
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
       <div className="container mx-auto px-4 py-16">

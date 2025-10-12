@@ -448,9 +448,15 @@ const _useChatStore = create<ChatStore>()(
                     });
                     // The final reasoning will be stored in metadata
                   } else if (data.type === 'content') {
-                    fullContent = data.fullContent;
+                    // Handle both streaming content and fullContent
+                    if (data.content) {
+                      fullContent += data.content;
+                    } else if (data.fullContent) {
+                      fullContent = data.fullContent;
+                    }
+                    
                     console.log('📥 [streaming] Received content chunk:', {
-                      length: fullContent.length,
+                      length: fullContent?.length || 0,
                       assistantMsgId: assistantMessage.id
                     });
 
@@ -458,7 +464,7 @@ const _useChatStore = create<ChatStore>()(
                     set((state) => ({
                       messages: state.messages.map((msg) =>
                         msg.id === assistantMessage.id
-                          ? { ...msg, content: fullContent, isLoading: true }
+                          ? { ...msg, content: fullContent || '', isLoading: true }
                           : msg
                       ),
                     }));
@@ -469,6 +475,8 @@ const _useChatStore = create<ChatStore>()(
                   }
                 } catch (parseError) {
                   console.warn('Failed to parse SSE data:', parseError);
+                  // Continue processing other lines
+                  continue;
                 }
               }
             }
@@ -478,7 +486,7 @@ const _useChatStore = create<ChatStore>()(
 
           // Update the assistant message with final metadata and clear live reasoning
           console.log('✅ [streaming complete] Finalizing message:', {
-            fullContentLength: fullContent.length,
+            fullContentLength: fullContent?.length || 0,
             hasMetadata: !!metadata,
             assistantMsgId: assistantMessage.id
           });
@@ -488,7 +496,7 @@ const _useChatStore = create<ChatStore>()(
               msg.id === assistantMessage.id
                 ? {
                     ...msg,
-                    content: fullContent,
+                    content: fullContent || '',
                     isLoading: false,
                     metadata: {
                       ...msg.metadata!,

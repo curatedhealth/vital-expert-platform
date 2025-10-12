@@ -16,7 +16,19 @@ export async function middleware(request: NextRequest) {
     '/about',
     '/contact',
     '/privacy',
-    '/terms'
+    '/terms',
+    // Core app pages for testing
+    '/dashboard',
+    '/agents',
+    '/chat',
+    '/knowledge',
+    '/workflows',
+    '/ask-expert',
+    '/ask-panel',
+    '/solution-builder',
+    '/capabilities',
+    '/prompts',
+    '/profile'
   ];
 
   // Public API routes that don't require authentication

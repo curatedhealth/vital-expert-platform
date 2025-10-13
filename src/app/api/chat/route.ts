@@ -175,17 +175,27 @@ export async function POST(request: NextRequest) {
             console.log('🤖 Creating agent suggestions from database...');
             const suggestions = agents.slice(0, 10).map((agent, index) => {
               // Normalize capabilities to always be an array
+              console.log(`🔍 Agent ${index + 1} capabilities normalization:`, {
+                original: agent.capabilities,
+                type: typeof agent.capabilities,
+                isArray: Array.isArray(agent.capabilities)
+              });
+              
               let normalizedCapabilities = [];
               if (Array.isArray(agent.capabilities)) {
                 normalizedCapabilities = agent.capabilities;
+                console.log(`✅ Agent ${index + 1}: Using array capabilities`);
               } else if (typeof agent.capabilities === 'string') {
                 // Parse string format like "{cap1,cap2,cap3}" or "cap1,cap2,cap3"
                 const cleanString = agent.capabilities.replace(/[{}]/g, '');
                 normalizedCapabilities = cleanString.split(',').map(cap => cap.trim()).filter(cap => cap.length > 0);
+                console.log(`✅ Agent ${index + 1}: Converted string to array:`, normalizedCapabilities);
               } else if (agent.tools && typeof agent.tools === 'object') {
                 normalizedCapabilities = Object.keys(agent.tools).filter(key => agent.tools[key] === true);
+                console.log(`✅ Agent ${index + 1}: Using tools as capabilities:`, normalizedCapabilities);
               } else {
                 normalizedCapabilities = ['General assistance'];
+                console.log(`✅ Agent ${index + 1}: Using fallback capabilities`);
               }
 
               return {
@@ -204,6 +214,9 @@ export async function POST(request: NextRequest) {
             });
             
             console.log('✅ Agent suggestions created:', suggestions.length);
+            console.log('🔍 Sample suggestion capabilities:', suggestions[0]?.capabilities);
+            console.log('🔍 Sample suggestion capabilities type:', typeof suggestions[0]?.capabilities);
+            console.log('🔍 Sample suggestion capabilities isArray:', Array.isArray(suggestions[0]?.capabilities));
             
             // Send agent suggestions
             controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify({
@@ -211,6 +224,7 @@ export async function POST(request: NextRequest) {
               content: `🎯 Found ${suggestions.length} suitable agents. Please select the best one for your query:`
             })}\n\n`));
             
+            console.log('📤 Sending agent suggestions via SSE...');
             controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify({
               type: 'agent_suggestions',
               content: suggestions

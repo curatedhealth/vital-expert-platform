@@ -101,7 +101,7 @@ export function ChatMessages({ messages, liveReasoning, isReasoningActive }: Cha
       selectAgentFromSuggestions(agent);
       
       // Wait a moment for state to update
-      await new Promise(resolve => setTimeout(resolve, 300));
+      await new Promise(resolve => setTimeout(resolve, 500));
       
       // Get the current state to ensure agent is selected
       const currentState = useChatStore.getState();
@@ -111,7 +111,34 @@ export function ChatMessages({ messages, liveReasoning, isReasoningActive }: Cha
       const lastUserMessage = messages.filter(msg => msg.role === 'user').pop();
       if (lastUserMessage) {
         console.log('🔄 Continuing conversation with selected agent:', agent.name);
-        // Send the message with the selected agent
+        
+        // Create a properly formatted agent object for the store
+        const formattedAgent = {
+          id: agent.id,
+          name: agent.name,
+          display_name: agent.display_name || agent.name,
+          description: agent.description,
+          capabilities: agent.capabilities || [],
+          business_function: agent.business_function || 'General',
+          systemPrompt: agent.system_prompt || `You are a ${agent.display_name || agent.name} expert.`,
+          model: agent.model || 'gpt-4',
+          temperature: agent.temperature || 0.7,
+          maxTokens: agent.max_tokens || 2000,
+          ragEnabled: agent.rag_enabled || false,
+          avatar: agent.avatar || '🤖',
+          color: agent.color || 'text-blue-600',
+          tools: agent.tools || [],
+          knowledgeDomains: agent.knowledge_domains || [],
+          knowledgeUrls: agent.knowledge_urls || []
+        };
+        
+        // Update the selected agent in the store
+        currentState.setSelectedAgent(formattedAgent);
+        
+        // Wait a moment for the agent to be set
+        await new Promise(resolve => setTimeout(resolve, 200));
+        
+        // Send the message (the selected agent will be used automatically)
         await currentState.sendMessage(lastUserMessage.content);
       } else {
         console.warn('No user message found to continue conversation');
@@ -376,19 +403,6 @@ export function ChatMessages({ messages, liveReasoning, isReasoningActive }: Cha
                 )}
               </div>
 
-              {/* AI Reasoning Component - show ABOVE message content for assistant */}
-              {!isUser && message.metadata?.reasoning && (
-                <div className="mb-3">
-                  <Reasoning isStreaming={false}>
-                    <ReasoningTrigger title="I am thinking..." />
-                    <ReasoningContent>
-                      <div className="text-sm text-gray-600 whitespace-pre-wrap">
-                        {message.metadata.reasoning}
-                      </div>
-                    </ReasoningContent>
-                  </Reasoning>
-                </div>
-              )}
 
               {/* Message Bubble */}
               <div

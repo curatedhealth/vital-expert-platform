@@ -74,11 +74,10 @@ export async function POST(request: NextRequest) {
     try {
       // Get all active agents from database
       console.log('🔍 Querying agents from database...');
-      const { data: agents, error: agentsError } = await supabase
+      let { data: agents, error: agentsError } = await supabase
         .from('agents')
         .select('*')
-        .eq('status', 'active')
-        .limit(5);
+        .eq('status', 'active');
       
       console.log('📊 Agents query result:', { 
         agentsCount: agents?.length || 0, 
@@ -87,11 +86,37 @@ export async function POST(request: NextRequest) {
       });
       
       if (agentsError) {
-        console.error('❌ Database error:', agentsError);
-        return NextResponse.json(
-          { error: `Database error: ${agentsError.message}` },
-          { status: 500 }
-        );
+        console.error('❌ Database error with status filter:', agentsError);
+        console.log('🔄 Trying to query all agents without status filter...');
+        
+        // Try querying without status filter
+        const { data: allAgents, error: allAgentsError } = await supabase
+          .from('agents')
+          .select('*');
+        
+        if (allAgentsError) {
+          console.error('❌ Database error without status filter:', allAgentsError);
+          return NextResponse.json(
+            { error: `Database error: ${allAgentsError.message}` },
+            { status: 500 }
+          );
+        }
+        
+        console.log('📊 All agents query result:', { 
+          agentsCount: allAgents?.length || 0,
+          agents: allAgents?.map(a => ({ id: a.id, name: a.name, status: a.status })) || []
+        });
+        
+        if (!allAgents || allAgents.length === 0) {
+          console.error('❌ No agents found in database at all');
+          return NextResponse.json(
+            { error: 'No agents available' },
+            { status: 404 }
+          );
+        }
+        
+        // Use all agents if status filter failed
+        agents = allAgents;
       }
       
       if (!agents || agents.length === 0) {
@@ -229,9 +254,9 @@ export async function POST(request: NextRequest) {
               await new Promise(resolve => setTimeout(resolve, 100));
             }
             
-            // Create simplified agent suggestions
+            // Create simplified agent suggestions (limit to 10 for UI performance)
             console.log('🤖 Creating simplified agent suggestions...');
-            const suggestions = agents.map((agent, index) => ({
+            const suggestions = agents.slice(0, 10).map((agent, index) => ({
               id: agent.id,
               name: agent.name,
               display_name: agent.display_name || agent.name,

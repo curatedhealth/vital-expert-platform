@@ -39,6 +39,18 @@ export function ChatMessages({ messages, liveReasoning, isReasoningActive }: Cha
   const [editingMessage, setEditingMessage] = useState<string | null>(null);
   const [editContent, setEditContent] = useState<string>('');
 
+  // Debug logging for messages
+  console.log('🔍 [ChatMessages] Rendering messages:', {
+    totalMessages: messages.length,
+    messages: messages.map(msg => ({
+      id: msg.id,
+      role: msg.role,
+      contentLength: msg.content?.length || 0,
+      isLoading: msg.isLoading,
+      contentPreview: msg.content?.substring(0, 50) + '...'
+    }))
+  });
+
   const getAgent = useCallback((agentId?: string) => {
     return agents.find((a) => a.id === agentId);
   }, [agents]);
@@ -375,37 +387,50 @@ export function ChatMessages({ messages, liveReasoning, isReasoningActive }: Cha
                 ) : (
                   // Normal view mode
                   <div>
-                    {message.isLoading && !message.content ? (
-                      // Show nothing - reasoning component will display below
-                      <div className="h-4"></div>
-                    ) : (
-                      <div className={cn(isUser ? 'text-white' : 'text-deep-charcoal')}>
-                        <div className="relative">
-                          <Response>
-                            {message.role === 'assistant' && message.metadata?.sources ? (
-                              // Render message with inline citations
-                              <>{renderTextWithCitations(
-                                message.content,
-                                (message.metadata.sources || []).map((src: any, idx: number) => ({
-                                  id: src.id || `source-${idx}`,
-                                  title: src.title || src.name || 'Unknown Source',
-                                  category: src.category || src.domain,
-                                  excerpt: src.excerpt || src.content?.substring(0, 200),
-                                  score: src.score || src.similarity,
-                                  url: src.url
-                                }))
-                              )}</>
-                            ) : (
-                              // Regular message content
-                              message.content
+                    {(() => {
+                      console.log('🔍 [Message Render] Debug info:', {
+                        messageId: message.id,
+                        role: message.role,
+                        isLoading: message.isLoading,
+                        hasContent: !!message.content,
+                        contentLength: message.content?.length || 0,
+                        contentPreview: message.content?.substring(0, 100) + '...',
+                        shouldShowNothing: message.isLoading && !message.content,
+                        shouldShowContent: !(message.isLoading && !message.content)
+                      });
+                      
+                      return message.isLoading && !message.content ? (
+                        // Show nothing - reasoning component will display below
+                        <div className="h-4"></div>
+                      ) : (
+                        <div className={cn(isUser ? 'text-white' : 'text-deep-charcoal')}>
+                          <div className="relative">
+                            <Response>
+                              {message.role === 'assistant' && message.metadata?.sources ? (
+                                // Render message with inline citations
+                                <>{renderTextWithCitations(
+                                  message.content,
+                                  (message.metadata.sources || []).map((src: any, idx: number) => ({
+                                    id: src.id || `source-${idx}`,
+                                    title: src.title || src.name || 'Unknown Source',
+                                    category: src.category || src.domain,
+                                    excerpt: src.excerpt || src.content?.substring(0, 200),
+                                    score: src.score || src.similarity,
+                                    url: src.url
+                                  }))
+                                )}</>
+                              ) : (
+                                // Regular message content
+                                message.content
+                              )}
+                            </Response>
+                            {message.isLoading && message.content && (
+                              <span className="inline-block w-2 h-4 bg-current animate-pulse ml-1"></span>
                             )}
-                          </Response>
-                          {message.isLoading && message.content && (
-                            <span className="inline-block w-2 h-4 bg-current animate-pulse ml-1"></span>
-                          )}
+                          </div>
                         </div>
-                      </div>
-                    )}
+                      );
+                    })()}
                   </div>
                 )}
 

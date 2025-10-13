@@ -279,9 +279,8 @@ function ChatPageContent() {
                   <div className="flex-1 p-6">
                     <ChatMessages
                       messages={messages}
-                      selectedAgent={selectedAgent}
-                      isLoading={isLoading}
-                      onStop={stopGeneration}
+                      liveReasoning={liveReasoning}
+                      isReasoningActive={isReasoningActive}
                     />
                   </div>
                 ) : (

@@ -2,20 +2,6 @@
 const nextConfig = {
   trailingSlash: false,
   
-  // Exclude admin pages from pre-production builds
-  ...(process.env.BUILD_TARGET === 'preprod' && {
-    // Custom webpack configuration to exclude admin pages
-    webpack: (config, { isServer }) => {
-      // Exclude admin pages from pre-production builds
-      if (process.env.BUILD_TARGET === 'preprod') {
-        config.module.rules.push({
-          test: /\/admin\//,
-          use: 'null-loader'
-        });
-      }
-      return config;
-    }
-  }),
   images: {
     domains: [
       'images.unsplash.com',
@@ -41,6 +27,14 @@ const nextConfig = {
         tls: false,
         child_process: false,
       };
+    }
+
+    // Exclude admin pages from pre-production builds
+    if (process.env.BUILD_TARGET === 'preprod') {
+      config.module.rules.push({
+        test: /\/admin\//,
+        use: 'null-loader'
+      });
     }
 
     // Ignore problematic native modules

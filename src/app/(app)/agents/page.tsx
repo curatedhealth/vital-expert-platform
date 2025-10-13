@@ -4,16 +4,16 @@ import { LayoutGrid, List, Table as TableIcon, BarChart3 } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useState, useEffect, Suspense } from 'react';
 
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useAgentsFilter } from '@/contexts/agents-filter-context';
-import { AgentDetailsModal } from '@/features/agents/components/agent-details-modal';
-import { AgentsBoard } from '@/features/agents/components/agents-board';
-import { AgentsOverview } from '@/features/agents/components/agents-overview';
-import { AgentsTable } from '@/features/agents/components/agents-table';
-import { AgentCreator } from '@/features/chat/components/agent-creator';
-import { type Agent as AgentsStoreAgent, useAgentsStore } from '@/lib/stores/agents-store';
-import { type Agent, useChatStore } from '@/lib/stores/chat-store';
-import { useAuth } from '@/supabase-auth-context';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../../components/ui/tabs';
+import { useAgentsFilter } from '../../../contexts/agents-filter-context';
+import { AgentDetailsModal } from '../../../features/agents/components/agent-details-modal';
+import { AgentsBoard } from '../../../features/agents/components/agents-board';
+import { AgentsOverview } from '../../../features/agents/components/agents-overview';
+import { AgentsTable } from '../../../features/agents/components/agents-table';
+import { AgentCreator } from '../../../features/chat/components/agent-creator';
+import { type Agent as AgentsStoreAgent, useAgentsStore } from '../../../lib/stores/agents-store';
+import { type Agent, useChatStore } from '../../../lib/stores/chat-store';
+import { useAuth } from '../../../supabase-auth-context';
 
 function AgentsPageContent() {
   const router = useRouter();

@@ -72,164 +72,40 @@ export async function POST(request: NextRequest) {
     });
     
     try {
-      // Get all active agents from database
+      // Get all agents from database (try different approaches)
       console.log('🔍 Querying agents from database...');
+      
+      // First try: get all agents without any filters
       let { data: agents, error: agentsError } = await supabase
         .from('agents')
-        .select('*')
-        .eq('status', 'active');
+        .select('*');
       
-      console.log('📊 Agents query result:', { 
+      console.log('📊 All agents query result:', { 
         agentsCount: agents?.length || 0, 
         error: agentsError,
-        agents: agents?.map(a => ({ id: a.id, name: a.name, status: a.status })) || []
+        sampleAgents: agents?.slice(0, 3).map(a => ({ 
+          id: a.id, 
+          name: a.name, 
+          status: a.status,
+          business_function: a.business_function,
+          capabilities: a.capabilities
+        })) || []
       });
       
       if (agentsError) {
-        console.error('❌ Database error with status filter:', agentsError);
-        console.log('🔄 Trying to query all agents without status filter...');
-        
-        // Try querying without status filter
-        const { data: allAgents, error: allAgentsError } = await supabase
-          .from('agents')
-          .select('*');
-        
-        if (allAgentsError) {
-          console.error('❌ Database error without status filter:', allAgentsError);
-          return NextResponse.json(
-            { error: `Database error: ${allAgentsError.message}` },
-            { status: 500 }
-          );
-        }
-        
-        console.log('📊 All agents query result:', { 
-          agentsCount: allAgents?.length || 0,
-          agents: allAgents?.map(a => ({ id: a.id, name: a.name, status: a.status })) || []
-        });
-        
-        if (!allAgents || allAgents.length === 0) {
-          console.error('❌ No agents found in database at all');
-          return NextResponse.json(
-            { error: 'No agents available' },
-            { status: 404 }
-          );
-        }
-        
-        // Use all agents if status filter failed
-        agents = allAgents;
+        console.error('❌ Database error:', agentsError);
+        return NextResponse.json(
+          { error: `Database error: ${agentsError.message}` },
+          { status: 500 }
+        );
       }
       
       if (!agents || agents.length === 0) {
-        console.warn('⚠️ No agents found in database, using fallback agents');
-        // Fallback agents if database is empty
-        const fallbackAgents = [
-          {
-            id: 'digital-health-strategist',
-            name: 'Digital Health Strategist',
-            display_name: 'Digital Health Strategist',
-            description: 'Expert in digital health strategy and implementation',
-            capabilities: ['Strategy Development', 'Digital Transformation'],
-            business_function: 'Strategy',
-            color: 'text-blue-600',
-            avatar: '🏥'
-          },
-          {
-            id: 'clinical-trial-designer',
-            name: 'Clinical Trial Designer',
-            display_name: 'Clinical Trial Designer',
-            description: 'Specialist in clinical trial design and execution',
-            capabilities: ['Trial Design', 'Regulatory Compliance'],
-            business_function: 'Clinical Research',
-            color: 'text-green-600',
-            avatar: '🧪'
-          },
-          {
-            id: 'regulatory-expert',
-            name: 'Regulatory Expert',
-            display_name: 'Regulatory Expert',
-            description: 'Expert in healthcare regulations and compliance',
-            capabilities: ['FDA Compliance', 'Regulatory Strategy'],
-            business_function: 'Regulatory',
-            color: 'text-purple-600',
-            avatar: '📋'
-          }
-        ];
-        
-        console.log('✅ Using fallback agents:', fallbackAgents.length);
-        
-        // Create streaming response with fallback agents
-        const stream = new ReadableStream({
-          async start(controller) {
-            try {
-              // Send initial reasoning steps
-              const initialReasoningSteps = [
-                '🔍 Analyzing your question and context...',
-                '🧠 Detecting relevant knowledge domains...',
-                '⚡ Selecting the most appropriate expert agent...',
-                '📊 Preparing specialized response...'
-              ];
-              
-              for (let i = 0; i < initialReasoningSteps.length; i++) {
-                controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify({
-                  type: 'reasoning',
-                  content: initialReasoningSteps[i]
-                })}\n\n`));
-                await new Promise(resolve => setTimeout(resolve, 100));
-              }
-              
-              // Create agent suggestions from fallback data
-              const suggestions = fallbackAgents.map((agent, index) => ({
-                id: agent.id,
-                name: agent.name,
-                display_name: agent.display_name,
-                description: agent.description,
-                capabilities: agent.capabilities,
-                score: 0.7 + (index * 0.05),
-                confidence: 'medium' as const,
-                reasoning: `Available ${agent.business_function} expert`,
-                color: agent.color,
-                avatar: agent.avatar
-              }));
-              
-              console.log('✅ Fallback agent suggestions created:', suggestions.length);
-              
-              // Send agent suggestions
-              controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify({
-                type: 'reasoning',
-                content: `🎯 Found ${suggestions.length} suitable agents. Please select the best one for your query:`
-              })}\n\n`));
-              
-              controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify({
-                type: 'agent_suggestions',
-                content: suggestions
-              })}\n\n`));
-              
-              // Send waiting message
-              controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify({
-                type: 'waiting_for_selection',
-                content: 'Please select an agent to continue...'
-              })}\n\n`));
-              
-              controller.close();
-              return;
-            } catch (error) {
-              console.error('❌ Fallback orchestration error:', error);
-              controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify({
-                type: 'error',
-                content: 'Sorry, I encountered an error during agent selection. Please try again.'
-              })}\n\n`));
-              controller.close();
-            }
-          }
-        });
-
-        return new Response(stream, {
-          headers: {
-            'Content-Type': 'text/event-stream',
-            'Cache-Control': 'no-cache',
-            'Connection': 'keep-alive',
-          },
-        });
+        console.error('❌ No agents found in database');
+        return NextResponse.json(
+          { error: 'No agents available in database' },
+          { status: 404 }
+        );
       }
       
       console.log('✅ Found agents:', agents.length);
@@ -254,19 +130,20 @@ export async function POST(request: NextRequest) {
               await new Promise(resolve => setTimeout(resolve, 100));
             }
             
-            // Create simplified agent suggestions (limit to 10 for UI performance)
-            console.log('🤖 Creating simplified agent suggestions...');
+            // Create agent suggestions from real database agents (limit to 10 for UI performance)
+            console.log('🤖 Creating agent suggestions from database...');
             const suggestions = agents.slice(0, 10).map((agent, index) => ({
               id: agent.id,
               name: agent.name,
               display_name: agent.display_name || agent.name,
-              description: agent.description || 'Expert agent',
-              capabilities: agent.capabilities || ['General assistance'],
+              description: agent.description || agent.system_prompt || 'Expert agent',
+              capabilities: agent.capabilities || agent.tools || ['General assistance'],
               score: 0.7 + (index * 0.05), // Simple scoring
               confidence: 'medium' as const,
-              reasoning: `Available ${agent.business_function || 'General'} expert`,
+              reasoning: `Available ${agent.business_function || agent.tier || 'General'} expert`,
               color: agent.color || 'text-blue-600',
-              avatar: agent.avatar || '🤖'
+              avatar: agent.avatar || '🤖',
+              business_function: agent.business_function || 'General'
             }));
             
             console.log('✅ Agent suggestions created:', suggestions.length);

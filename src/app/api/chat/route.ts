@@ -16,17 +16,15 @@ Please provide a comprehensive, expert response to the user's query. Use your sp
 
 User's query: "${message}"`;
 
-    // Generate a more natural, direct response
-    const response = `I'm ${agent.display_name || agent.name}, your ${agent.business_function || 'General'} expert. 
-
-Based on my expertise in ${Array.isArray(agent.capabilities) ? agent.capabilities.slice(0, 3).join(', ') : 'general assistance'}, I can provide specialized guidance on your query.
+    // Generate a direct, helpful response without the pattern
+    const response = `Based on my expertise in ${Array.isArray(agent.capabilities) ? agent.capabilities.slice(0, 3).join(', ') : 'general assistance'}, I can help you with your query.
 
 What specific aspects would you like me to focus on?`;
 
     return response;
   } catch (error) {
     console.error('❌ Error generating agent response:', error);
-    return `I'm ${agent.display_name || agent.name}, your ${agent.business_function || 'General'} expert. How can I assist you today?`;
+    return `How can I assist you today?`;
   }
 }
 

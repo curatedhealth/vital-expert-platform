@@ -140,9 +140,9 @@ export function ChatMessages({ messages, liveReasoning, isReasoningActive }: Cha
         console.log('🔄 Continuing conversation with selected agent:', agent.name);
         console.log('📝 Last user message:', lastUserMessage.content);
         
-        // Send the message (the selected agent will be used automatically)
+        // Send the message with the specific agent (bypassing automatic orchestration)
         console.log('📤 Sending message with selected agent...');
-        await sendMessage(lastUserMessage.content);
+        await sendMessage(lastUserMessage.content, formattedAgent);
         console.log('✅ Message sent successfully');
       } else {
         console.warn('No user message found to continue conversation');

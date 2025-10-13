@@ -8,7 +8,7 @@
  * - Use case requirements
  */
 
-import { supabase } from '@/lib/supabase/client';
+import { supabase } from '../supabase/client';
 
 // ============================================================================
 // Types

@@ -62,12 +62,12 @@ export function AgentSelection({ agents, onSelect, isLoading = false, className 
           <p className="text-gray-500">No agents available at the moment.</p>
         </div>
       ) : (
-      <div className="grid gap-3 md:grid-cols-1 lg:grid-cols-3">
+      <div className="grid gap-2 md:grid-cols-1 lg:grid-cols-3">
         {safeAgents.map((agent, index) => (
           <Card
             key={agent.id}
             className={cn(
-              'p-3 cursor-pointer transition-all duration-200 hover:shadow-md hover:border-blue-400',
+              'p-2 cursor-pointer transition-all duration-200 hover:shadow-md hover:border-blue-400',
               'border border-gray-200 hover:border-blue-400 bg-white rounded-lg',
               isLoading && 'opacity-50 cursor-not-allowed'
             )}
@@ -79,7 +79,7 @@ export function AgentSelection({ agents, onSelect, isLoading = false, className 
               }
             }}
           >
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               {/* Agent Header - Compact */}
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
@@ -89,13 +89,13 @@ export function AgentSelection({ agents, onSelect, isLoading = false, className 
                     size="sm"
                   />
                   <div className="flex-1 min-w-0">
-                    <h4 className="font-medium text-gray-900 text-sm truncate">
+                    <h4 className="font-medium text-gray-900 text-xs truncate">
                       {agent.display_name || agent.name}
                     </h4>
                     <div className="flex items-center gap-1 mt-0.5">
                       <Badge 
                         variant="outline" 
-                        className={cn('text-xs px-1.5 py-0.5', getConfidenceColor(agent.confidence))}
+                        className={cn('text-xs px-1 py-0.5', getConfidenceColor(agent.confidence))}
                       >
                         {agent.confidence}
                       </Badge>
@@ -112,37 +112,32 @@ export function AgentSelection({ agents, onSelect, isLoading = false, className 
                 </div>
               </div>
 
-              {/* Agent Description - Compact */}
-              <p className="text-xs text-gray-600 line-clamp-2 leading-relaxed">
+              {/* Agent Description - Ultra Compact */}
+              <p className="text-xs text-gray-600 line-clamp-1 leading-tight">
                 {agent.description}
               </p>
 
-              {/* Capabilities - Compact */}
-              <div className="flex flex-wrap gap-1">
-                {agent.capabilities.slice(0, 2).map((capability, capIndex) => (
+              {/* Capabilities - Ultra Compact */}
+              <div className="flex flex-wrap gap-0.5">
+                {agent.capabilities.slice(0, 1).map((capability, capIndex) => (
                   <Badge
                     key={capIndex}
                     variant="secondary"
-                    className="text-xs px-1.5 py-0.5 bg-gray-100 text-gray-700"
+                    className="text-xs px-1 py-0.5 bg-gray-100 text-gray-700"
                   >
                     {capability}
                   </Badge>
                 ))}
-                {agent.capabilities.length > 2 && (
-                  <Badge variant="secondary" className="text-xs px-1.5 py-0.5 bg-gray-100 text-gray-700">
-                    +{agent.capabilities.length - 2}
+                {agent.capabilities.length > 1 && (
+                  <Badge variant="secondary" className="text-xs px-1 py-0.5 bg-gray-100 text-gray-700">
+                    +{agent.capabilities.length - 1}
                   </Badge>
                 )}
               </div>
 
-              {/* Reasoning - Compact */}
-              <div className="text-xs text-gray-500 line-clamp-1">
-                <strong>Why:</strong> {agent.reasoning}
-              </div>
-
-              {/* Select Button - Compact */}
+              {/* Select Button - Ultra Compact */}
               <Button
-                className="w-full mt-2 h-8 text-xs font-medium"
+                className="w-full mt-1.5 h-7 text-xs font-medium"
                 variant="outline"
                 disabled={isLoading}
                 onClick={(e: React.MouseEvent) => {
@@ -153,7 +148,7 @@ export function AgentSelection({ agents, onSelect, isLoading = false, className 
                   }
                 }}
               >
-                {isLoading ? 'Processing...' : 'Select Agent'}
+                {isLoading ? 'Processing...' : 'Select'}
               </Button>
             </div>
           </Card>

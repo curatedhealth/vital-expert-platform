@@ -4,7 +4,7 @@
  * Based on LangGraph Implementation Guide for Pharma
  */
 
-import { supabase } from '@/lib/supabase/client';
+import { supabase } from '../supabase/client';
 
 export interface EvidenceSource {
   id: string;

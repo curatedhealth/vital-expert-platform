@@ -4,7 +4,7 @@
  * Including: Role, Identity, Capabilities, RAG, Tools, Tier, etc.
  */
 
-import type { AgentWithCategories } from '@/features/agents/services/agent-service';
+import type { AgentWithCategories } from '../../features/agents/services/agent-service';
 
 interface PromptGenerationConfig {
   // Basic Identity

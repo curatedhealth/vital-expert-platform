@@ -4,7 +4,7 @@
  * Manages tools and their assignments to agents via Supabase database
  */
 
-import { supabase } from '@/lib/supabase/client';
+import { supabase } from '../supabase/client';
 
 import { getAllExpertTools } from './expert-tools';
 

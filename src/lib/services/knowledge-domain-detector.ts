@@ -8,7 +8,7 @@
 
 import { OpenAIEmbeddings } from '@langchain/openai';
 
-import { supabaseAdmin } from '@/lib/supabase/admin';
+import { supabaseAdmin } from '../supabase/admin';
 
 interface DomainPattern {
   domains: string[];

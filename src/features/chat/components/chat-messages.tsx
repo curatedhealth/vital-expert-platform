@@ -134,19 +134,8 @@ export function ChatMessages({ messages, liveReasoning, isReasoningActive }: Cha
       const updatedState = useChatStore.getState();
       console.log('✅ Agent set in store:', updatedState.selectedAgent?.name);
       
-      // Continue the conversation with the selected agent
-      const lastUserMessage = messages.filter(msg => msg.role === 'user').pop();
-      if (lastUserMessage) {
-        console.log('🔄 Continuing conversation with selected agent:', agent.name);
-        console.log('📝 Last user message:', lastUserMessage.content);
-        
-        // Send the message with the specific agent (bypassing automatic orchestration)
-        console.log('📤 Sending message with selected agent...');
-        await sendMessage(lastUserMessage.content, formattedAgent);
-        console.log('✅ Message sent successfully');
-      } else {
-        console.warn('No user message found to continue conversation');
-      }
+      // The agent is now set in the store, so the next sendMessage call will use it
+      console.log('✅ Agent set in store, conversation will continue with next message');
     } catch (error) {
       console.error('❌ Error in agent selection:', error);
       console.error('❌ Error details:', error instanceof Error ? error.message : String(error), error instanceof Error ? error.stack : '');

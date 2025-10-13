@@ -1228,10 +1228,6 @@ const _useChatStore = create<ChatStore>()(
           description: agent.description
         });
         
-        // Get the last user message to continue the conversation
-        const { messages } = get();
-        const lastUserMessage = messages.filter(msg => msg.role === 'user').pop();
-        
         set({
           selectedAgent: agent,
           showAgentSelection: false,
@@ -1239,14 +1235,7 @@ const _useChatStore = create<ChatStore>()(
           suggestedAgents: [],
         });
         
-        // Continue the conversation with the selected agent
-        if (lastUserMessage) {
-          console.log('🔄 Continuing conversation with selected agent:', agent.name);
-          // Send the same message again but now with the selected agent
-          get().sendMessage(lastUserMessage.content);
-        }
-        
-        console.log('✅ Agent selection state updated');
+        console.log('✅ Agent selection state updated - conversation will continue automatically');
       },
 
       hideAgentSelection: () => {

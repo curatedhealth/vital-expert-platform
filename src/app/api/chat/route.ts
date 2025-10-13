@@ -16,10 +16,8 @@ Please provide a comprehensive, expert response to the user's query. Use your sp
 
 User's query: "${message}"`;
 
-    // Generate a direct, helpful response without the pattern
-    const response = `Based on my expertise in ${Array.isArray(agent.capabilities) ? agent.capabilities.slice(0, 3).join(', ') : 'general assistance'}, I can help you with your query.
-
-What specific aspects would you like me to focus on?`;
+    // Generate a completely natural response without any patterns
+    const response = `I can help you with your query. What specific aspects would you like me to focus on?`;
 
     return response;
   } catch (error) {
@@ -70,6 +68,12 @@ export async function POST(request: NextRequest) {
             // Send the agent's response
             controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify({
               type: 'content',
+              content: agentResponse
+            })}\n\n`));
+
+            // Send final message to close the stream properly
+            controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify({
+              type: 'final',
               content: agentResponse
             })}\n\n`));
 

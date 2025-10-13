@@ -332,7 +332,8 @@ function ChatPageContent() {
                           ))}
                         </div>
                       </div>
-                    )}
+                    );
+                  })()}
 
 
                     {/* Single chat input - always visible */}

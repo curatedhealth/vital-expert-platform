@@ -246,8 +246,8 @@ function ChatPageContent() {
           onAgentRemove={handleAgentRemove}
           onAddAgentToLibrary={handleAddAgentToLibrary}
           selectedAgentId={selectedAgent?.id}
-            agents={mounted ? safeGetLibraryAgents : []}
-          allAgents={mounted ? agents : []}
+            agents={safeGetLibraryAgents}
+          allAgents={agents}
           formatDate={formatDate}
           isCollapsed={isCollapsed}
           onToggleCollapse={() => setIsCollapsed(!isCollapsed)}

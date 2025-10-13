@@ -181,6 +181,8 @@ export interface ChatStore {
   removeAgentFromLibrary: (agentId: string) => void;
   getLibraryAgents: () => Agent[];
   addAgentToChatStore: (agent: any) => void;
+  clearSelectedAgent: () => void;
+  setInteractionMode: (mode: 'automatic' | 'manual') => void;
 }
 
 const _useChatStore = create<ChatStore>()(
@@ -216,16 +218,29 @@ const _useChatStore = create<ChatStore>()(
 
       // Actions
       createNewChat: () => {
-        const { selectedAgent, interactionMode } = get();
+        const { interactionMode } = get();
+        
+        // Create orchestrator agent for automatic mode
+        const orchestratorAgent = {
+          id: 'orchestrator',
+          name: 'AI Orchestrator',
+          display_name: 'AI Orchestrator',
+          description: 'Intelligently routes your queries to the most appropriate expert agent based on your question content and context.',
+          business_function: 'Intelligent Agent Orchestration',
+          capabilities: ['Agent Selection', 'Query Analysis', 'Expert Routing', 'Context Understanding'],
+          tier: 1,
+          color: 'text-blue-600',
+          avatar: '🤖'
+        };
         
         const newChat: Chat = {
           id: `chat-${Date.now()}`,
-          title: selectedAgent 
-            ? `New conversation with ${selectedAgent.name || 'AI Assistant'}`
+          title: interactionMode === 'automatic' 
+            ? 'New conversation with AI Orchestrator'
             : 'New conversation with AI Assistant',
           createdAt: new Date(),
           updatedAt: new Date(),
-          agentId: selectedAgent?.id || 'default',
+          agentId: interactionMode === 'automatic' ? 'orchestrator' : 'default',
           messageCount: 0,
           mode: interactionMode, // Track the mode for this chat
         };
@@ -234,7 +249,10 @@ const _useChatStore = create<ChatStore>()(
           chats: [newChat, ...state.chats],
           currentChat: newChat,
           messages: [],
+          selectedAgent: interactionMode === 'automatic' ? orchestratorAgent : null,
           error: null,
+          liveReasoning: '', // Clear any existing reasoning
+          isReasoningActive: false, // Clear reasoning state
         }));
       },
 
@@ -297,14 +315,14 @@ const _useChatStore = create<ChatStore>()(
 
         // Auto-create a chat if one doesn't exist
         if (!currentChat) {
-          const agentName = selectedAgent?.display_name || selectedAgent?.name || 'AI Assistant';
+          const agentName = selectedAgent?.display_name || selectedAgent?.name || (interactionMode === 'automatic' ? 'AI Orchestrator' : 'AI Assistant');
           console.log('📝 Auto-creating new chat for selected agent:', agentName);
           const newChat: Chat = {
             id: `chat-${Date.now()}`,
-            title: `New conversation with ${agentName}`,
+            title: interactionMode === 'automatic' ? 'New conversation with AI Orchestrator' : `New conversation with ${agentName}`,
             createdAt: new Date(),
             updatedAt: new Date(),
-            agentId: selectedAgent?.id || 'default',
+            agentId: selectedAgent?.id || (interactionMode === 'automatic' ? 'orchestrator' : 'default'),
             messageCount: 0,
             mode: interactionMode, // Track the mode for this chat
           };
@@ -454,7 +472,12 @@ const _useChatStore = create<ChatStore>()(
             for (const line of lines) {
               if (line.startsWith('data: ')) {
                 try {
-                  const data = JSON.parse(line.slice(6));
+                  const jsonString = line.slice(6).trim();
+                  if (!jsonString) continue; // Skip empty data lines
+                  
+                  const data = JSON.parse(jsonString);
+                  
+                  console.log('📥 [SSE] Parsed data:', { type: data.type, hasContent: !!data.content });
 
                   if (data.type === 'reasoning') {
                     // Accumulate reasoning steps
@@ -1101,6 +1124,41 @@ const _useChatStore = create<ChatStore>()(
         });
       },
 
+      // Clear selected agent
+      clearSelectedAgent: () => {
+        console.log('🧹 Clearing selected agent');
+        set({
+          selectedAgent: null,
+          liveReasoning: '',
+          isReasoningActive: false,
+        });
+      },
+
+      // Set interaction mode and handle agent switching
+      setInteractionMode: (mode: 'automatic' | 'manual') => {
+        console.log('🔄 Switching interaction mode to:', mode);
+        
+        // Create orchestrator agent for automatic mode
+        const orchestratorAgent = {
+          id: 'orchestrator',
+          name: 'AI Orchestrator',
+          display_name: 'AI Orchestrator',
+          description: 'Intelligently routes your queries to the most appropriate expert agent based on your question content and context.',
+          business_function: 'Intelligent Agent Orchestration',
+          capabilities: ['Agent Selection', 'Query Analysis', 'Expert Routing', 'Context Understanding'],
+          tier: 1,
+          color: 'text-blue-600',
+          avatar: '🤖'
+        };
+        
+        set((state) => ({
+          interactionMode: mode,
+          selectedAgent: mode === 'automatic' ? orchestratorAgent : null,
+          liveReasoning: '',
+          isReasoningActive: false,
+        }));
+      },
+
       // Get agents in user's library
       getLibraryAgents: () => {
         const { agents, libraryAgents } = get();
@@ -1123,6 +1181,12 @@ const _useChatStore = create<ChatStore>()(
           return [];
         }
         
+        // If no agents in library, return all agents (first 5) without modifying state
+        if (libraryAgents.length === 0 && agents.length > 0) {
+          console.log('📚 No library agents, returning first 5 agents');
+          return agents.slice(0, 5);
+        }
+        
         const filteredAgents = agents.filter(agent => libraryAgents.includes(agent.id));
         console.log('📚 Filtered library agents:', filteredAgents.length);
         return filteredAgents;
@@ -1143,11 +1207,11 @@ const _useChatStore = create<ChatStore>()(
             libraryAgents: [], // Initialize library agents
           };
         }
-        // For version 6, ensure libraryAgents is initialized
+        // For version 6, ensure libraryAgents is initialized but preserve existing ones
         if (version < 6) {
           return {
             ...persistedState,
-            libraryAgents: [], // Initialize library agents for new persistence
+            libraryAgents: (persistedState as any)?.libraryAgents || [], // Preserve existing library agents
           };
         }
         return persistedState;
@@ -1155,7 +1219,15 @@ const _useChatStore = create<ChatStore>()(
       onRehydrateStorage: () => (state) => {
         // Automatically load agents from database after rehydration
         if (state) {
-          state.loadAgentsFromDatabase();
+          state.loadAgentsFromDatabase().then(() => {
+            // After loading agents, initialize library if empty
+            const { agents, libraryAgents } = state.getState();
+            if (libraryAgents.length === 0 && agents.length > 0) {
+              console.log('📚 Initializing library with first 5 agents');
+              const firstFiveAgentIds = agents.slice(0, 5).map(agent => agent.id);
+              state.setState({ libraryAgents: firstFiveAgentIds });
+            }
+          });
         }
       },
       // Exclude messages and transient state from persistence to avoid conflicts

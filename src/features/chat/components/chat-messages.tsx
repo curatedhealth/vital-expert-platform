@@ -39,17 +39,17 @@ export function ChatMessages({ messages, liveReasoning, isReasoningActive }: Cha
   const [editingMessage, setEditingMessage] = useState<string | null>(null);
   const [editContent, setEditContent] = useState<string>('');
 
-  // Debug logging for messages
-  console.log('🔍 [ChatMessages] Rendering messages:', {
-    totalMessages: messages.length,
-    messages: messages.map(msg => ({
-      id: msg.id,
-      role: msg.role,
-      contentLength: msg.content?.length || 0,
-      isLoading: msg.isLoading,
-      contentPreview: msg.content?.substring(0, 50) + '...'
-    }))
-  });
+  // Debug logging for messages (disabled for production)
+  // console.log('🔍 [ChatMessages] Rendering messages:', {
+  //   totalMessages: messages.length,
+  //   messages: messages.map(msg => ({
+  //     id: msg.id,
+  //     role: msg.role,
+  //     contentLength: msg.content?.length || 0,
+  //     isLoading: msg.isLoading,
+  //     contentPreview: msg.content?.substring(0, 50) + '...'
+  //   }))
+  // });
 
   const getAgent = useCallback((agentId?: string) => {
     return agents.find((a) => a.id === agentId);
@@ -320,12 +320,12 @@ export function ChatMessages({ messages, liveReasoning, isReasoningActive }: Cha
               {/* Message Header */}
               <div className={cn('flex items-center gap-2 mb-2', isUser && 'flex-row-reverse')}>
                 <span className="text-sm font-medium text-deep-charcoal">
-                  {isUser ? 'You' : agent?.name || 'Assistant'}
+                  {isUser ? 'You' : (agent?.name || agent?.display_name || 'Assistant')}
                 </span>
                 <span className="text-xs text-medical-gray">
                   {formatTimestamp(message.timestamp)}
                 </span>
-                {!isUser && agent && (
+                {!isUser && agent && agent.capabilities && agent.capabilities.length > 0 && (
                   <Badge variant="outline" className={cn('text-xs', agent.color)}>
                     {agent.capabilities[0]}
                   </Badge>
@@ -387,50 +387,28 @@ export function ChatMessages({ messages, liveReasoning, isReasoningActive }: Cha
                 ) : (
                   // Normal view mode
                   <div>
-                    {(() => {
-                      console.log('🔍 [Message Render] Debug info:', {
-                        messageId: message.id,
-                        role: message.role,
-                        isLoading: message.isLoading,
-                        hasContent: !!message.content,
-                        contentLength: message.content?.length || 0,
-                        contentPreview: message.content?.substring(0, 100) + '...',
-                        shouldShowNothing: message.isLoading && !message.content,
-                        shouldShowContent: !(message.isLoading && !message.content)
-                      });
-                      
-                      return message.isLoading && !message.content ? (
-                        // Show nothing - reasoning component will display below
-                        <div className="h-4"></div>
-                      ) : (
-                        <div className={cn(isUser ? 'text-white' : 'text-deep-charcoal')}>
-                          <div className="relative">
-                            <Response>
-                              {message.role === 'assistant' && message.metadata?.sources ? (
-                                // Render message with inline citations
-                                <>{renderTextWithCitations(
-                                  message.content,
-                                  (message.metadata.sources || []).map((src: any, idx: number) => ({
-                                    id: src.id || `source-${idx}`,
-                                    title: src.title || src.name || 'Unknown Source',
-                                    category: src.category || src.domain,
-                                    excerpt: src.excerpt || src.content?.substring(0, 200),
-                                    score: src.score || src.similarity,
-                                    url: src.url
-                                  }))
-                                )}</>
-                              ) : (
-                                // Regular message content
-                                message.content
-                              )}
-                            </Response>
-                            {message.isLoading && message.content && (
-                              <span className="inline-block w-2 h-4 bg-current animate-pulse ml-1"></span>
-                            )}
+                    {/* Simplified message content rendering */}
+                    <div className={cn(isUser ? 'text-white' : 'text-deep-charcoal')}>
+                      {message.isLoading && !message.content ? (
+                        // Show loading when no content yet
+                        <div className="flex items-center gap-2">
+                          <div className="animate-pulse flex items-center gap-2">
+                            <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
+                            <span>Thinking...</span>
                           </div>
                         </div>
-                      );
-                    })()}
+                      ) : (
+                        // Show content (streaming or complete)
+                        <div className="relative">
+                          <Response>
+                            {message.content || ''}
+                          </Response>
+                          {message.isLoading && message.content && (
+                            <span className="inline-block w-2 h-4 bg-current animate-pulse ml-1"></span>
+                          )}
+                        </div>
+                      )}
+                    </div>
                   </div>
                 )}
 
@@ -450,13 +428,13 @@ export function ChatMessages({ messages, liveReasoning, isReasoningActive }: Cha
       })}
 
       {/* Live Reasoning Component - shows while AI is thinking */}
-      {liveReasoning && (
+      {(liveReasoning || isReasoningActive) && (
         <div className="mb-6">
           <Reasoning isStreaming={isReasoningActive || false}>
-            <ReasoningTrigger title="I am thinking..." />
+            <ReasoningTrigger title={`I am thinking... ${isReasoningActive ? '🔄' : '✅'}`} />
             <ReasoningContent>
               <div className="text-sm text-gray-600 whitespace-pre-wrap">
-                {liveReasoning}
+                {liveReasoning || 'Preparing response...'}
               </div>
             </ReasoningContent>
           </Reasoning>

@@ -36,8 +36,8 @@ interface NavAiAgentsProps {
 // Agents will be passed as props from the chat store
 
 export function NavAiAgents({ onAgentStoreClick, onCreateAgentClick, onAgentSelect, onAgentRemove, onAddAgentToLibrary, selectedAgentId, agents = [], allAgents = [], isCollapsed = false, mounted = false }: NavAiAgentsProps) {
-  // Use the mounted prop passed from parent instead of local state
-  const safeAgents = mounted ? agents : [];
+  // Use agents directly, but handle hydration safely
+  const safeAgents = Array.isArray(agents) ? agents : [];
   const [showAgentSelector, setShowAgentSelector] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [addedAgentName, setAddedAgentName] = useState<string | null>(null);
@@ -191,9 +191,9 @@ export function NavAiAgents({ onAgentStoreClick, onCreateAgentClick, onAgentSele
         )}
 
         <div className="space-y-1">
-          {!mounted || safeAgents.length === 0 ? (
+          {safeAgents.length === 0 ? (
             <div className="px-4 py-2 text-sm text-muted-foreground">
-              {!isCollapsed && (mounted ? "No agents added yet. Click + to add some." : "Loading agents...")}
+              {!isCollapsed && "No agents added yet. Click + to add some."}
             </div>
           ) : (
             safeAgents.map((agent) => {

@@ -9,6 +9,7 @@ interface ReasoningContextValue {
   isStreaming: boolean;
   isOpen: boolean;
   setIsOpen: (open: boolean) => void;
+  toggleOpen: () => void;
   startTime: number;
   duration: number;
 }
@@ -17,6 +18,7 @@ const ReasoningContext = React.createContext<ReasoningContextValue>({
   isStreaming: false,
   isOpen: false,
   setIsOpen: () => {},
+  toggleOpen: () => {},
   startTime: 0,
   duration: 0,
 });
@@ -29,6 +31,7 @@ interface ReasoningProps {
 
 export function Reasoning({ children, isStreaming = false, className }: ReasoningProps) {
   const [isOpen, setIsOpen] = React.useState(false);
+  const [userManuallyOpened, setUserManuallyOpened] = React.useState(false);
   const [startTime] = React.useState(Date.now());
   const [duration, setDuration] = React.useState(0);
 
@@ -50,27 +53,39 @@ export function Reasoning({ children, isStreaming = false, className }: Reasonin
     return () => clearInterval(interval);
   }, [isStreaming, startTime]);
 
-  // Auto-close when streaming completes
+  // Auto-close when streaming completes (only if user hasn't manually opened it)
   React.useEffect(() => {
-    if (!isStreaming && isOpen) {
-      // Delay close slightly to allow user to see final state
+    if (!isStreaming && isOpen && !userManuallyOpened) {
+      // Only auto-close if it was opened automatically (not manually by user)
       const timeout = setTimeout(() => {
         setIsOpen(false);
-      }, 1000);
+      }, 2000);
 
       return () => clearTimeout(timeout);
     }
-  }, [isStreaming, isOpen]);
+  }, [isStreaming, isOpen, userManuallyOpened]);
+
+  // Manual toggle function
+  const toggleOpen = React.useCallback(() => {
+    setIsOpen(prev => {
+      const newOpen = !prev;
+      if (newOpen) {
+        setUserManuallyOpened(true);
+      }
+      return newOpen;
+    });
+  }, []);
 
   const value = React.useMemo(
     () => ({
       isStreaming,
       isOpen,
       setIsOpen,
+      toggleOpen,
       startTime,
       duration,
     }),
-    [isStreaming, isOpen, startTime, duration]
+    [isStreaming, isOpen, toggleOpen, startTime, duration]
   );
 
   return (
@@ -93,7 +108,7 @@ interface ReasoningTriggerProps {
 }
 
 export function ReasoningTrigger({ title = 'Thinking', className }: ReasoningTriggerProps) {
-  const { isStreaming, isOpen, setIsOpen, duration } = React.useContext(ReasoningContext);
+  const { isStreaming, isOpen, toggleOpen, duration } = React.useContext(ReasoningContext);
 
   const formatDuration = (ms: number) => {
     if (ms < 1000) return `${ms}ms`;
@@ -102,7 +117,7 @@ export function ReasoningTrigger({ title = 'Thinking', className }: ReasoningTri
 
   return (
     <button
-      onClick={() => setIsOpen(!isOpen)}
+      onClick={toggleOpen}
       className={cn(
         'w-full flex items-center justify-between px-4 py-3 text-sm font-medium transition-colors hover:bg-gray-100/50',
         className

@@ -28,8 +28,6 @@ User's query: "${message}"`;
 
 export async function POST(request: NextRequest) {
   try {
-    // Minimal logging for performance
-    
     const body = await request.json();
     const { 
       message, 
@@ -40,191 +38,68 @@ export async function POST(request: NextRequest) {
       automaticRouting = true 
     } = body;
 
-    // Minimal request logging
-
-    // If agent is provided, use it directly (but not AI Orchestrator)
-    if (agent && agent.id && agent.id !== 'ai-orchestrator' && agent.name !== 'AI Orchestrator') {
-      console.log('🤖 Agent provided, processing with:', agent.name);
-      
-      // Process the request with the selected agent using Langchain
-      const stream = new ReadableStream({
-        async start(controller) {
-          try {
-            // Send agent confirmation
-            controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify({
-              type: 'agent_selected',
-              content: `Selected: ${agent.display_name || agent.name}`
-            })}\n\n`));
-
-            // Send single reasoning step for faster response
-            controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify({
-              type: 'reasoning',
-              content: `🔍 Processing with ${agent.display_name || agent.name}...`
-            })}\n\n`));
-
-            // Generate response using the selected agent's capabilities
-            const agentResponse = await generateAgentResponse(agent, message, chatHistory);
-            
-            // Send the agent's response
-            controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify({
-              type: 'content',
-              content: agentResponse
-            })}\n\n`));
-
-            // Send final message to close the stream properly
-            controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify({
-              type: 'final',
-              content: agentResponse
-            })}\n\n`));
-
-            controller.close();
-          } catch (error) {
-            console.error('❌ Agent processing error:', error);
-            controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify({
-              type: 'error',
-              content: 'Sorry, I encountered an error processing your request. Please try again.'
-            })}\n\n`));
-            controller.close();
-          }
-        }
-      });
-
-      return new Response(stream, {
-        headers: {
-          'Content-Type': 'text/event-stream',
-          'Cache-Control': 'no-cache',
-          'Connection': 'keep-alive',
-        },
-      });
-    }
-
-    // No agent provided or AI Orchestrator - show agent selection
-    console.log('🤖 No specific agent provided, showing agent selection interface');
-    console.log('🔍 Agent check:', { 
-      hasAgent: !!agent, 
-      agentId: agent?.id, 
-      agentName: agent?.name,
-      isAIOrchestrator: agent?.name === 'AI Orchestrator' || agent?.id === 'ai-orchestrator'
-    });
+    // SIMPLIFIED FLOW: Always auto-select the best agent
+    console.log('🤖 Auto-selecting best agent for message:', message.substring(0, 50) + '...');
     
     try {
-      // Get all agents from database (try different approaches)
-      console.log('🔍 Querying agents from database...');
-      // Skip detailed client checks for performance
+      // Get agents from database
+      let { data: agents, error: agentsError } = await supabaseAdmin
+        .from('agents')
+        .select('id, name, display_name, description, business_function, capabilities, tier, status, avatar, color')
+        .eq('status', 'active')
+        .limit(10);
       
-      // Skip connection test for performance
-      
-              // Optimized query: get only necessary fields and limit to active agents first
-              console.log('🔍 Querying agents...');
-              let { data: agents, error: agentsError } = await supabaseAdmin
-                .from('agents')
-                .select('id, name, display_name, description, business_function, capabilities, tier, status, avatar, color')
-                .eq('status', 'active')
-                .limit(10);
-      
-      console.log('📊 All agents query result:', { 
-        agentsCount: agents?.length || 0, 
-        error: agentsError,
-        errorMessage: agentsError?.message,
-        errorCode: agentsError?.code,
-        errorDetails: agentsError?.details,
-        errorHint: agentsError?.hint,
-        sampleAgents: agents?.slice(0, 3).map(a => ({ 
-          id: a.id, 
-          name: a.name, 
-          status: a.status,
-          business_function: a.business_function,
-          capabilities: a.capabilities
-        })) || []
-      });
-      
-      if (agentsError) {
-        console.error('❌ Database error:', agentsError);
+      if (agentsError || !agents || agents.length === 0) {
+        // Fallback to development agents
+        const { data: devAgents } = await supabaseAdmin
+          .from('agents')
+          .select('id, name, display_name, description, business_function, capabilities, tier, status, avatar, color')
+          .eq('status', 'development')
+          .limit(10);
+        agents = devAgents || [];
+      }
+
+      if (!agents || agents.length === 0) {
         return NextResponse.json(
-          { error: `Database error: ${agentsError.message}` },
-          { status: 500 }
+          { error: 'No agents available' },
+          { status: 404 }
         );
       }
-      
-              // If no active agents, try development agents as fallback
-              if (!agents || agents.length === 0) {
-                console.log('🔍 No active agents, trying development agents...');
-                const { data: devAgents, error: devError } = await supabaseAdmin
-                  .from('agents')
-                  .select('id, name, display_name, description, business_function, capabilities, tier, status, avatar, color')
-                  .eq('status', 'development')
-                  .limit(10);
-                
-                if (devError || !devAgents || devAgents.length === 0) {
-                  console.error('❌ No agents found in database');
-                  return NextResponse.json(
-                    { error: 'No agents available in database' },
-                    { status: 404 }
-                  );
-                }
-                agents = devAgents;
-              }
-      
-      console.log('✅ Found agents:', agents.length);
-      
-      // Create streaming response
+
+      // Simple agent selection based on message content
+      const selectedAgent = selectBestAgent(message, agents);
+      console.log('✅ Selected agent:', selectedAgent.name);
+
+      // Process with selected agent
       const stream = new ReadableStream({
         async start(controller) {
           try {
-            // Send single reasoning step for faster response
+            // Send reasoning
             controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify({
               type: 'reasoning',
-              content: '🔍 Analyzing your query and selecting the best expert agents...'
+              content: `🔍 Analyzing your query and selecting the best expert...`
             })}\n\n`));
-            
-                    // Create agent suggestions from real database agents (limit to 3 for top agents)
-                    const suggestions = agents.slice(0, 3).map((agent, index) => {
-              // Fast capabilities normalization without extensive logging
-              let normalizedCapabilities = [];
-              if (Array.isArray(agent.capabilities)) {
-                normalizedCapabilities = agent.capabilities;
-              } else if (typeof agent.capabilities === 'string') {
-                const cleanString = agent.capabilities.replace(/[{}]/g, '');
-                normalizedCapabilities = cleanString.split(',').map(cap => cap.trim()).filter(cap => cap.length > 0);
-              } else if (agent.tools && typeof agent.tools === 'object') {
-                normalizedCapabilities = Object.keys(agent.tools).filter(key => agent.tools[key] === true);
-              } else {
-                normalizedCapabilities = ['General assistance'];
-              }
 
-              return {
-                id: agent.id,
-                name: agent.name,
-                display_name: agent.display_name || agent.name,
-                description: agent.description || agent.system_prompt || 'Expert agent',
-                capabilities: normalizedCapabilities,
-                score: 0.7 + (index * 0.05), // Simple scoring
-                confidence: 'medium' as const,
-                reasoning: `Available ${agent.business_function || agent.tier || 'General'} expert`,
-                color: agent.color || 'text-blue-600',
-                avatar: agent.avatar || '🤖',
-                business_function: agent.business_function || 'General'
-              };
-            });
-            
-            // Send agent suggestions immediately without extra logging
             controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify({
               type: 'reasoning',
-              content: `🎯 Found ${suggestions.length} top-rated agents. Please select the best one for your query:`
+              content: `✅ Selected: ${selectedAgent.display_name || selectedAgent.name}`
             })}\n\n`));
+
+            // Generate response
+            const response = await generateAgentResponse(selectedAgent, message, chatHistory);
             
+            // Send response
             controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify({
-              type: 'agent_suggestions',
-              content: suggestions
+              type: 'content',
+              content: response
             })}\n\n`));
-            
+
             controller.close();
-            return;
           } catch (error) {
-            console.error('❌ Simplified orchestration error:', error);
+            console.error('❌ Error:', error);
             controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify({
               type: 'error',
-              content: 'Sorry, I encountered an error during agent selection. Please try again.'
+              content: 'Sorry, I encountered an error. Please try again.'
             })}\n\n`));
             controller.close();
           }
@@ -239,16 +114,10 @@ export async function POST(request: NextRequest) {
         },
       });
       
-    } catch (importError) {
-      console.error('Failed to get agents:', importError);
-      console.error('Import error details:', {
-        message: importError instanceof Error ? importError.message : String(importError),
-        stack: importError instanceof Error ? importError.stack : undefined,
-        name: importError instanceof Error ? importError.name : undefined
-      });
-      // Fallback to basic response
+    } catch (error) {
+      console.error('❌ Error:', error);
       return NextResponse.json(
-        { error: 'Agent selection unavailable. Please try again.' },
+        { error: 'Internal server error' },
         { status: 500 }
       );
     }
@@ -260,4 +129,46 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
+}
+
+// Simple agent selection logic
+function selectBestAgent(message: string, agents: any[]) {
+  const messageLower = message.toLowerCase();
+  
+  // Simple keyword matching
+  for (const agent of agents) {
+    const capabilities = Array.isArray(agent.capabilities) 
+      ? agent.capabilities.join(' ').toLowerCase()
+      : (agent.capabilities || '').toLowerCase();
+    
+    const businessFunction = (agent.business_function || '').toLowerCase();
+    const description = (agent.description || '').toLowerCase();
+    
+    // Check for reimbursement keywords
+    if (messageLower.includes('reimbursement') || messageLower.includes('payment') || messageLower.includes('cost')) {
+      if (capabilities.includes('reimbursement') || businessFunction.includes('reimbursement') || 
+          capabilities.includes('payment') || capabilities.includes('cost')) {
+        return agent;
+      }
+    }
+    
+    // Check for digital health keywords
+    if (messageLower.includes('digital health') || messageLower.includes('digital therapeutics')) {
+      if (capabilities.includes('digital health') || businessFunction.includes('digital health') ||
+          capabilities.includes('digital therapeutics') || businessFunction.includes('digital therapeutics')) {
+        return agent;
+      }
+    }
+    
+    // Check for clinical trial keywords
+    if (messageLower.includes('clinical trial') || messageLower.includes('protocol') || messageLower.includes('study')) {
+      if (capabilities.includes('clinical') || businessFunction.includes('clinical') ||
+          capabilities.includes('protocol') || capabilities.includes('trial')) {
+        return agent;
+      }
+    }
+  }
+  
+  // Default to first agent if no match
+  return agents[0];
 }

@@ -46,7 +46,13 @@ export async function middleware(request: NextRequest) {
     '/api/migrate-memory',
     '/api/knowledge/upload',
     '/api/knowledge/process',
-    '/api/knowledge/documents'
+    '/api/knowledge/documents',
+    '/api/knowledge/analytics',
+    '/api/metrics',
+    '/api/healthcare-metrics',
+    '/api/agent-metrics',
+    '/api/rag-metrics',
+    '/api/security-metrics'
   ];
 
   // Public API routes that don't require authentication

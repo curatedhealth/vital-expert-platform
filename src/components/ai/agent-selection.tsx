@@ -50,7 +50,7 @@ export function AgentSelection({ agents, onSelect, isLoading = false, className 
     <div className={cn('space-y-4', className)}>
       <div className="text-center">
         <h3 className="text-lg font-semibold text-gray-900 mb-2">
-          🤖 Select the Best Agent for Your Query
+          🎉 Select the Best Agent for Your Query
         </h3>
         <p className="text-sm text-gray-600">
           I've analyzed your question and found these expert agents. Choose the one that best fits your needs:
@@ -62,13 +62,13 @@ export function AgentSelection({ agents, onSelect, isLoading = false, className 
           <p className="text-gray-500">No agents available at the moment.</p>
         </div>
       ) : (
-      <div className="grid gap-4 md:grid-cols-1 lg:grid-cols-3">
+      <div className="grid gap-3 md:grid-cols-1 lg:grid-cols-3">
         {safeAgents.map((agent, index) => (
           <Card
             key={agent.id}
             className={cn(
-              'p-4 cursor-pointer transition-all duration-200 hover:shadow-lg hover:border-blue-400',
-              'border border-gray-200 hover:border-blue-400 bg-white',
+              'p-3 cursor-pointer transition-all duration-200 hover:shadow-md hover:border-blue-400',
+              'border border-gray-200 hover:border-blue-400 bg-white rounded-lg',
               isLoading && 'opacity-50 cursor-not-allowed'
             )}
             onClick={(e: React.MouseEvent) => {
@@ -79,80 +79,70 @@ export function AgentSelection({ agents, onSelect, isLoading = false, className 
               }
             }}
           >
-            <div className="space-y-3">
-              {/* Agent Header */}
-              <div className="flex items-start justify-between">
-                <div className="flex items-center gap-3">
+            <div className="space-y-2">
+              {/* Agent Header - Compact */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
                   <AgentAvatar
                     avatar={agent.avatar || '🤖'}
                     name={agent.display_name || agent.name}
-                    size="md"
+                    size="sm"
                   />
-                  <div className="flex-1">
-                    <h4 className="font-semibold text-gray-900 text-sm">
+                  <div className="flex-1 min-w-0">
+                    <h4 className="font-medium text-gray-900 text-sm truncate">
                       {agent.display_name || agent.name}
                     </h4>
-                    <div className="flex items-center gap-2 mt-1">
+                    <div className="flex items-center gap-1 mt-0.5">
                       <Badge 
                         variant="outline" 
-                        className={cn('text-xs px-2 py-1', getConfidenceColor(agent.confidence))}
+                        className={cn('text-xs px-1.5 py-0.5', getConfidenceColor(agent.confidence))}
                       >
-                        {agent.confidence} confidence
+                        {agent.confidence}
                       </Badge>
                       <span className={cn('text-xs font-medium', getScoreColor(agent.score))}>
-                        {Math.round(agent.score * 100)}% match
+                        {Math.round(agent.score * 100)}%
                       </span>
                     </div>
                   </div>
                 </div>
                 <div className="text-right">
-                  <div className="text-lg font-bold text-gray-300">
+                  <div className="text-sm font-bold text-gray-300">
                     #{index + 1}
                   </div>
                 </div>
               </div>
 
-              {/* Agent Description */}
-              <p className="text-sm text-gray-600 line-clamp-2">
+              {/* Agent Description - Compact */}
+              <p className="text-xs text-gray-600 line-clamp-2 leading-relaxed">
                 {agent.description}
               </p>
 
-              {/* Capabilities */}
-              <div className="space-y-2">
-                <h5 className="text-xs font-medium text-gray-500 uppercase tracking-wide">
-                  Capabilities
-                </h5>
-                <div className="flex flex-wrap gap-1">
-                  {agent.capabilities.slice(0, 3).map((capability, capIndex) => (
-                    <Badge
-                      key={capIndex}
-                      variant="secondary"
-                      className="text-xs px-2 py-1 bg-gray-100 text-gray-700"
-                    >
-                      {capability}
-                    </Badge>
-                  ))}
-                  {agent.capabilities.length > 3 && (
-                    <Badge variant="secondary" className="text-xs px-2 py-1 bg-gray-100 text-gray-700">
-                      +{agent.capabilities.length - 3} more
-                    </Badge>
-                  )}
-                </div>
+              {/* Capabilities - Compact */}
+              <div className="flex flex-wrap gap-1">
+                {agent.capabilities.slice(0, 2).map((capability, capIndex) => (
+                  <Badge
+                    key={capIndex}
+                    variant="secondary"
+                    className="text-xs px-1.5 py-0.5 bg-gray-100 text-gray-700"
+                  >
+                    {capability}
+                  </Badge>
+                ))}
+                {agent.capabilities.length > 2 && (
+                  <Badge variant="secondary" className="text-xs px-1.5 py-0.5 bg-gray-100 text-gray-700">
+                    +{agent.capabilities.length - 2}
+                  </Badge>
+                )}
               </div>
 
-              {/* Why This Agent */}
-              <div className="space-y-2">
-                <h5 className="text-xs font-medium text-gray-500 uppercase tracking-wide">
-                  Why This Agent?
-                </h5>
-                <p className="text-xs text-gray-600 italic line-clamp-2">
-                  {agent.reasoning}
-                </p>
+              {/* Reasoning - Compact */}
+              <div className="text-xs text-gray-500 line-clamp-1">
+                <strong>Why:</strong> {agent.reasoning}
               </div>
 
-              {/* Select Button */}
+              {/* Select Button - Compact */}
               <Button
-                className="w-full mt-3 h-9 text-sm font-medium"
+                className="w-full mt-2 h-8 text-xs font-medium"
                 variant="outline"
                 disabled={isLoading}
                 onClick={(e: React.MouseEvent) => {
@@ -163,7 +153,7 @@ export function AgentSelection({ agents, onSelect, isLoading = false, className 
                   }
                 }}
               >
-                {isLoading ? 'Processing...' : 'Select This Agent'}
+                {isLoading ? 'Processing...' : 'Select Agent'}
               </Button>
             </div>
           </Card>

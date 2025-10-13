@@ -98,15 +98,40 @@ export function ChatMessages({ messages, liveReasoning, isReasoningActive }: Cha
     console.log('🔍 Agent data:', agent);
     
     try {
-      // First, select the agent from suggestions
-      selectAgentFromSuggestions(agent);
+      // Hide the agent selection modal immediately for better UX
+      hideAgentSelection();
       
-      // Wait a moment for state to update
-      await new Promise(resolve => setTimeout(resolve, 500));
+      // Create a properly formatted agent object for the store
+      const formattedAgent = {
+        id: agent.id,
+        name: agent.name,
+        display_name: agent.display_name || agent.name,
+        description: agent.description,
+        capabilities: agent.capabilities || [],
+        business_function: agent.business_function || 'General',
+        systemPrompt: agent.system_prompt || `You are a ${agent.display_name || agent.name} expert specializing in ${agent.description}.`,
+        model: agent.model || 'gpt-4',
+        temperature: agent.temperature || 0.7,
+        maxTokens: agent.max_tokens || 2000,
+        ragEnabled: agent.rag_enabled || false,
+        avatar: agent.avatar || '🤖',
+        color: agent.color || 'text-blue-600',
+        tools: agent.tools || [],
+        knowledgeDomains: agent.knowledge_domains || [],
+        knowledgeUrls: agent.knowledge_urls || []
+      };
       
-      // Get the current state to ensure agent is selected
-      const currentState = useChatStore.getState();
-      console.log('🔍 Current selected agent after selection:', currentState.selectedAgent?.name);
+      console.log('🤖 Formatted agent for store:', formattedAgent);
+      
+      // Update the selected agent in the store
+      setSelectedAgent(formattedAgent);
+      
+      // Wait a moment for the agent to be set
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
+      // Verify the agent is set
+      const updatedState = useChatStore.getState();
+      console.log('✅ Agent set in store:', updatedState.selectedAgent?.name);
       
       // Continue the conversation with the selected agent
       const lastUserMessage = messages.filter(msg => msg.role === 'user').pop();
@@ -114,54 +139,18 @@ export function ChatMessages({ messages, liveReasoning, isReasoningActive }: Cha
         console.log('🔄 Continuing conversation with selected agent:', agent.name);
         console.log('📝 Last user message:', lastUserMessage.content);
         
-        // Create a properly formatted agent object for the store
-        const formattedAgent = {
-          id: agent.id,
-          name: agent.name,
-          display_name: agent.display_name || agent.name,
-          description: agent.description,
-          capabilities: agent.capabilities || [],
-          business_function: agent.business_function || 'General',
-          systemPrompt: agent.system_prompt || `You are a ${agent.display_name || agent.name} expert specializing in ${agent.description}.`,
-          model: agent.model || 'gpt-4',
-          temperature: agent.temperature || 0.7,
-          maxTokens: agent.max_tokens || 2000,
-          ragEnabled: agent.rag_enabled || false,
-          avatar: agent.avatar || '🤖',
-          color: agent.color || 'text-blue-600',
-          tools: agent.tools || [],
-          knowledgeDomains: agent.knowledge_domains || [],
-          knowledgeUrls: agent.knowledge_urls || []
-        };
-        
-        console.log('🤖 Formatted agent for store:', formattedAgent);
-        
-        // Update the selected agent in the store
-        currentState.setSelectedAgent(formattedAgent);
-        
-        // Wait a moment for the agent to be set
-        await new Promise(resolve => setTimeout(resolve, 300));
-        
-        // Verify the agent is set
-        const updatedState = useChatStore.getState();
-        console.log('✅ Agent set in store:', updatedState.selectedAgent?.name);
-        
         // Send the message (the selected agent will be used automatically)
         console.log('📤 Sending message with selected agent...');
-        await currentState.sendMessage(lastUserMessage.content);
+        await sendMessage(lastUserMessage.content);
         console.log('✅ Message sent successfully');
       } else {
         console.warn('No user message found to continue conversation');
-        // If no user message, just close the selection modal
-        hideAgentSelection();
       }
     } catch (error) {
       console.error('❌ Error in agent selection:', error);
       console.error('❌ Error details:', error instanceof Error ? error.message : String(error), error instanceof Error ? error.stack : '');
-      // Close the modal on error
-      hideAgentSelection();
     }
-  }, [selectAgentFromSuggestions, messages, hideAgentSelection]);
+  }, [hideAgentSelection, setSelectedAgent, messages, sendMessage]);
 
   const handleEditCancel = useCallback(() => {
     setEditingMessage(null);

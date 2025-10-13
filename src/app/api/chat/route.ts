@@ -21,8 +21,8 @@ export async function POST(request: NextRequest) {
       automaticRouting
     });
 
-    // If agent is provided, use it directly
-    if (agent && agent.id && agent.id !== 'ai-orchestrator') {
+    // If agent is provided, use it directly (but not AI Orchestrator)
+    if (agent && agent.id && agent.id !== 'ai-orchestrator' && agent.name !== 'AI Orchestrator') {
       console.log('🤖 Agent provided, using:', agent.name);
       
       // Create streaming response for selected agent
@@ -64,6 +64,12 @@ export async function POST(request: NextRequest) {
 
     // No agent provided or AI Orchestrator - show agent selection
     console.log('🤖 No specific agent provided, showing agent selection interface');
+    console.log('🔍 Agent check:', { 
+      hasAgent: !!agent, 
+      agentId: agent?.id, 
+      agentName: agent?.name,
+      isAIOrchestrator: agent?.name === 'AI Orchestrator' || agent?.id === 'ai-orchestrator'
+    });
     
     try {
       // Get all active agents from database

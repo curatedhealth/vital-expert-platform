@@ -79,7 +79,7 @@ const nextConfig = {
   // Enable TypeScript checking for production builds
   typescript: {
     ignoreBuildErrors: true,
-    tsconfigPath: './tsconfig.core.json',
+    tsconfigPath: './tsconfig.json',
   },
   // Enable ESLint during build
   eslint: {

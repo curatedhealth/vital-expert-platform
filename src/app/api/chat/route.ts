@@ -38,8 +38,57 @@ export async function POST(request: NextRequest) {
       automaticRouting = true 
     } = body;
 
-    // SIMPLIFIED FLOW: Always auto-select the best agent
-    console.log('🤖 Auto-selecting best agent for message:', message.substring(0, 50) + '...');
+    // If agent is provided, process with that agent
+    if (agent && agent.id && agent.id !== 'ai-orchestrator' && agent.name !== 'AI Orchestrator') {
+      console.log('🤖 Processing with selected agent:', agent.name);
+      
+      const stream = new ReadableStream({
+        async start(controller) {
+          try {
+            // Send agent confirmation
+            controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify({
+              type: 'agent_selected',
+              content: `Selected: ${agent.display_name || agent.name}`
+            })}\n\n`));
+
+            // Send reasoning
+            controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify({
+              type: 'reasoning',
+              content: `🔍 Processing with ${agent.display_name || agent.name}...`
+            })}\n\n`));
+
+            // Generate response
+            const response = await generateAgentResponse(agent, message, chatHistory);
+            
+            // Send response
+            controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify({
+              type: 'content',
+              content: response
+            })}\n\n`));
+
+            controller.close();
+          } catch (error) {
+            console.error('❌ Error:', error);
+            controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify({
+              type: 'error',
+              content: 'Sorry, I encountered an error. Please try again.'
+            })}\n\n`));
+            controller.close();
+          }
+        }
+      });
+
+      return new Response(stream, {
+        headers: {
+          'Content-Type': 'text/event-stream',
+          'Cache-Control': 'no-cache',
+          'Connection': 'keep-alive',
+        },
+      });
+    }
+
+    // No agent provided - show agent selection
+    console.log('🤖 Showing agent selection for message:', message.substring(0, 50) + '...');
     
     try {
       // Get agents from database
@@ -66,32 +115,53 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      // Simple agent selection based on message content
-      const selectedAgent = selectBestAgent(message, agents);
-      console.log('✅ Selected agent:', selectedAgent.name);
+      // Create agent suggestions
+      const suggestions = agents.slice(0, 3).map((agent, index) => {
+        // Normalize capabilities
+        let normalizedCapabilities = [];
+        if (Array.isArray(agent.capabilities)) {
+          normalizedCapabilities = agent.capabilities;
+        } else if (typeof agent.capabilities === 'string') {
+          const cleanString = agent.capabilities.replace(/[{}]/g, '');
+          normalizedCapabilities = cleanString.split(',').map(cap => cap.trim()).filter(cap => cap.length > 0);
+        } else {
+          normalizedCapabilities = ['General assistance'];
+        }
 
-      // Process with selected agent
+        return {
+          id: agent.id,
+          name: agent.name,
+          display_name: agent.display_name || agent.name,
+          description: agent.description || 'Expert agent',
+          capabilities: normalizedCapabilities,
+          score: 0.7 + (index * 0.05),
+          confidence: 'medium' as const,
+          reasoning: `Available ${agent.business_function || 'General'} expert`,
+          color: agent.color || 'text-blue-600',
+          avatar: agent.avatar || '🤖',
+          business_function: agent.business_function || 'General'
+        };
+      });
+
+      // Show agent selection
       const stream = new ReadableStream({
         async start(controller) {
           try {
             // Send reasoning
             controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify({
               type: 'reasoning',
-              content: `🔍 Analyzing your query and selecting the best expert...`
+              content: '🔍 Analyzing your query and selecting the best expert agents...'
             })}\n\n`));
 
             controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify({
               type: 'reasoning',
-              content: `✅ Selected: ${selectedAgent.display_name || selectedAgent.name}`
+              content: `🎯 Found ${suggestions.length} top-rated agents. Please select the best one for your query:`
             })}\n\n`));
-
-            // Generate response
-            const response = await generateAgentResponse(selectedAgent, message, chatHistory);
             
-            // Send response
+            // Send agent suggestions
             controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify({
-              type: 'content',
-              content: response
+              type: 'agent_suggestions',
+              content: suggestions
             })}\n\n`));
 
             controller.close();
@@ -99,7 +169,7 @@ export async function POST(request: NextRequest) {
             console.error('❌ Error:', error);
             controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify({
               type: 'error',
-              content: 'Sorry, I encountered an error. Please try again.'
+              content: 'Sorry, I encountered an error during agent selection. Please try again.'
             })}\n\n`));
             controller.close();
           }

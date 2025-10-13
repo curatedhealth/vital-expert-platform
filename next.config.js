@@ -83,7 +83,8 @@ const nextConfig = {
   },
   // Enable ESLint during build
   eslint: {
-    ignoreDuringBuilds: true,
+    ignoreDuringBuilds: false,
+    dirs: ['src', 'pages', 'components', 'lib', 'app'],
   },
   // Skip build-time errors in development
   onDemandEntries: {

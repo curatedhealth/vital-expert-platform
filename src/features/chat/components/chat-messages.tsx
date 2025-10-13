@@ -101,14 +101,17 @@ export function ChatMessages({ messages, liveReasoning, isReasoningActive }: Cha
       selectAgentFromSuggestions(agent);
       
       // Wait a moment for state to update
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise(resolve => setTimeout(resolve, 200));
+      
+      // Get the current state to ensure agent is selected
+      const currentState = useChatStore.getState();
+      console.log('🔍 Current selected agent after selection:', currentState.selectedAgent?.name);
       
       // Continue the conversation with the selected agent
-      const { sendMessage } = useChatStore.getState();
       const lastUserMessage = messages.findLast(msg => msg.role === 'user');
       if (lastUserMessage) {
         console.log('🔄 Continuing conversation with selected agent:', agent.name);
-        await sendMessage(lastUserMessage.content);
+        await currentState.sendMessage(lastUserMessage.content);
       } else {
         console.warn('No user message found to continue conversation');
       }

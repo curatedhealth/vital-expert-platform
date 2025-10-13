@@ -279,30 +279,60 @@ export class AutomaticAgentOrchestrator {
     } catch (error) {
       console.error('[AutomaticOrchestrator] Complete failure in getAgentSuggestions:', error);
       
-      // Ultimate fallback - return basic suggestions
-      const fallbackAgents: RankedAgent[] = [{
-        agent: {
-          id: 'fallback-agent',
-          name: 'AI Assistant',
-          display_name: 'AI Assistant',
-          description: 'General purpose AI assistant',
-          capabilities: ['General Assistance', 'Question Answering'],
-          knowledge_domains: ['General'],
-          tier: 1,
-          status: 'active',
-          model: 'gpt-4',
-          metadata: {}
-        },
-        scores: {
-          semantic: 0.5,
-          tier: 1.0,
-          domain: 0.5,
-          performance: 0.5,
-          final: 0.5,
-        },
-        reasoning: 'Fallback agent due to system error',
-        confidence: 'medium' as const,
-      }];
+      // Try to get some basic agents from database as fallback
+      let fallbackAgents: RankedAgent[] = [];
+      try {
+        const { data: basicAgents, error: dbError } = await supabaseAdmin
+          .from('agents')
+          .select('*')
+          .eq('status', 'active')
+          .limit(3)
+          .order('tier', { ascending: true });
+        
+        if (!dbError && basicAgents && basicAgents.length > 0) {
+          fallbackAgents = basicAgents.map((agent, index) => ({
+            agent,
+            scores: {
+              semantic: 0.6 + (index * 0.1),
+              tier: agent.tier === 1 ? 1.0 : agent.tier === 2 ? 0.7 : 0.4,
+              domain: 0.5,
+              performance: 0.5,
+              final: 0.6 + (index * 0.1),
+            },
+            reasoning: `Available ${agent.business_function || 'healthcare'} expert`,
+            confidence: 'medium' as const,
+          }));
+        }
+      } catch (dbFallbackError) {
+        console.error('[AutomaticOrchestrator] Database fallback also failed:', dbFallbackError);
+      }
+      
+      // If no agents from database, use ultimate fallback
+      if (fallbackAgents.length === 0) {
+        fallbackAgents = [{
+          agent: {
+            id: 'fallback-agent',
+            name: 'AI Assistant',
+            display_name: 'AI Assistant',
+            description: 'General purpose AI assistant',
+            capabilities: ['General Assistance', 'Question Answering'],
+            knowledge_domains: ['General'],
+            tier: 1,
+            status: 'active',
+            model: 'gpt-4',
+            metadata: {}
+          },
+          scores: {
+            semantic: 0.5,
+            tier: 1.0,
+            domain: 0.5,
+            performance: 0.5,
+            final: 0.5,
+          },
+          reasoning: 'Fallback agent due to system error',
+          confidence: 'medium' as const,
+        }];
+      }
 
       return {
         rankedAgents: fallbackAgents,

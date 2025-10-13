@@ -1113,13 +1113,13 @@ const _useChatStore = create<ChatStore>()(
             return;
           }
           
-          const globalAgents = useAgentsStore.getState().agents;
-          if (!Array.isArray(globalAgents)) {
+          const globalState = useAgentsStore.getState();
+          if (!globalState || !Array.isArray(globalState.agents)) {
             console.warn('Global agents not available or not an array');
             return;
           }
           
-          const convertedAgents = globalAgents.map((agent: GlobalAgent) => ({
+          const convertedAgents = globalState.agents.map((agent: GlobalAgent) => ({
             id: agent.id,
             name: agent.display_name,
             description: agent.description,
@@ -1322,6 +1322,7 @@ const _useChatStore = create<ChatStore>()(
       onRehydrateStorage: () => (state) => {
         // Automatically load agents from database after rehydration
         if (state) {
+          // Load agents from database
           state.loadAgentsFromDatabase().then(() => {
             // After loading agents, initialize library if empty
             const currentState = state.getState();
@@ -1331,6 +1332,14 @@ const _useChatStore = create<ChatStore>()(
               const firstFiveAgentIds = agents.slice(0, 5).map(agent => agent.id);
               state.setState({ libraryAgents: firstFiveAgentIds });
             }
+          }).catch((error) => {
+            console.error('Failed to load agents on rehydration:', error);
+            // Set empty state to prevent errors
+            state.setState({ 
+              agents: [], 
+              selectedAgent: null, 
+              error: 'Failed to load agents from database' 
+            });
           });
         }
       },

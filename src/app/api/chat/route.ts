@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '../../../lib/supabase/client';
+import { supabaseAdmin } from '../../../lib/supabase/admin';
 
 export async function POST(request: NextRequest) {
   try {
@@ -83,15 +83,15 @@ export async function POST(request: NextRequest) {
     try {
       // Get all agents from database (try different approaches)
       console.log('🔍 Querying agents from database...');
-      console.log('🔍 Supabase client check:', {
-        hasSupabase: !!supabase,
-        supabaseType: typeof supabase,
-        supabaseMethods: Object.getOwnPropertyNames(supabase)
+      console.log('🔍 Supabase admin client check:', {
+        hasSupabaseAdmin: !!supabaseAdmin,
+        supabaseAdminType: typeof supabaseAdmin,
+        supabaseAdminMethods: Object.getOwnPropertyNames(supabaseAdmin)
       });
       
       // Test basic connection first
       console.log('🔍 Testing basic Supabase connection...');
-      const { data: testData, error: testError } = await supabase
+      const { data: testData, error: testError } = await supabaseAdmin
         .from('agents')
         .select('id')
         .limit(1);
@@ -113,7 +113,7 @@ export async function POST(request: NextRequest) {
       
       // First try: get all agents without any filters
       console.log('🔍 Querying all agents...');
-      let { data: agents, error: agentsError } = await supabase
+      let { data: agents, error: agentsError } = await supabaseAdmin
         .from('agents')
         .select('*');
       

@@ -134,6 +134,15 @@ export default [
     },
   },
   
+  // Middleware configuration
+  {
+    files: ['**/middleware/**/*.{js,ts}', '**/middleware.{js,ts}'],
+    rules: {
+      '@typescript-eslint/no-explicit-any': 'warn',
+      'no-undef': 'off',
+    },
+  },
+  
   // Ignore patterns
   {
     ignores: [

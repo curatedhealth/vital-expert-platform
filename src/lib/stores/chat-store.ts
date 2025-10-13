@@ -232,11 +232,6 @@ const _useChatStore = create<ChatStore>()(
     lastActivity: null,
   },
 
-  // Agent Selection State
-  suggestedAgents: any[];
-  showAgentSelection: boolean;
-  isWaitingForAgentSelection: boolean;
-
       // Actions
       createNewChat: () => {
         const { interactionMode, selectedAgent } = get();

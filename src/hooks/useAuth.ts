@@ -1,6 +1,6 @@
 import { createBrowserClient } from '@supabase/ssr';
 import { User } from '@supabase/supabase-js';
-import { useState, useEffect, useCallback, createContext, useContext } from 'react';
+import { useState, useEffect, useCallback, createContext, useContext, useMemo } from 'react';
 
 // import {
 //   UserRole,
@@ -88,7 +88,7 @@ export const _useAuthState = () => {
   );
 
   // Permission mappings (should match the backend)
-  const rolePermissions = new Map<UserRole, Set<string>>([
+  const rolePermissions = useMemo(() => new Map<UserRole, Set<string>>([
     ['admin', new Set([
       'llm_providers:create', 'llm_providers:read', 'llm_providers:update', 'llm_providers:delete', 'llm_providers:manage',
       'agents:create', 'agents:read', 'agents:update', 'agents:delete', 'agents:manage',
@@ -124,7 +124,7 @@ export const _useAuthState = () => {
       'workflows:read',
       'analytics:read'
     ])]
-  ]);
+  ]), []);
 
   const fetchUserProfile = useCallback(async (user: User): Promise<UserProfile | null> => {
     try {

@@ -93,7 +93,7 @@ export class AuthMiddleware {
             get(name: string) {
               return request.cookies.get(name)?.value;
             },
-            set(name: string, value: string, options: any) {
+            set(name: string, value: string, options: Record<string, any>) {
               request.cookies.set({
                 name,
                 value,
@@ -110,7 +110,7 @@ export class AuthMiddleware {
                 ...options,
               });
             },
-            remove(name: string, options: any) {
+            remove(name: string, options: Record<string, any>) {
               request.cookies.set({
                 name,
                 value: '',
@@ -202,7 +202,7 @@ export class AuthMiddleware {
             get(name: string) {
               return request.cookies.get(name)?.value;
             },
-            set(name: string, value: string, options: any) {
+            set(name: string, value: string, options: Record<string, any>) {
               request.cookies.set({
                 name,
                 value,
@@ -219,7 +219,7 @@ export class AuthMiddleware {
                 ...options,
               });
             },
-            remove(name: string, options: any) {
+            remove(name: string, options: Record<string, any>) {
               request.cookies.set({
                 name,
                 value: '',
@@ -267,7 +267,7 @@ export class AuthMiddleware {
 export function requireAuth(handler: (request: NextRequest, user: AuthenticatedUser) => Promise<NextResponse>) {
   return async (request: NextRequest) => {
     const auth = AuthMiddleware.getInstance();
-// const user = // Unused variable await auth.authenticateRequest(request);
+    const user = await auth.authenticateRequest(request);
 
     if (!user) {
       await auth.logSecurityEvent(request, null, 'UNAUTHORIZED_ACCESS', 'api', request.nextUrl.pathname, false, 'No valid session');
@@ -285,7 +285,7 @@ export function requirePermission(permission: PermissionCheck) {
   return function(handler: (request: NextRequest, user: AuthenticatedUser) => Promise<NextResponse>) {
     return async (request: NextRequest) => {
       const auth = AuthMiddleware.getInstance();
-// const user = // Unused variable await auth.authenticateRequest(request);
+      const user = await auth.authenticateRequest(request);
 
       if (!user) {
         await auth.logSecurityEvent(request, null, 'UNAUTHORIZED_ACCESS', 'api', request.nextUrl.pathname, false, 'No valid session');
@@ -320,7 +320,7 @@ export function requirePermission(permission: PermissionCheck) {
 export function requireAdmin(handler: (request: NextRequest, user: AuthenticatedUser) => Promise<NextResponse>) {
   return async (request: NextRequest) => {
     const auth = AuthMiddleware.getInstance();
-// const user = // Unused variable await auth.authenticateRequest(request);
+    const user = await auth.authenticateRequest(request);
 
     if (!user) {
       await auth.logSecurityEvent(request, null, 'UNAUTHORIZED_ACCESS', 'api', request.nextUrl.pathname, false, 'No valid session');
@@ -346,7 +346,7 @@ export function requireAdmin(handler: (request: NextRequest, user: Authenticated
 export function requireSuperAdmin(handler: (request: NextRequest, user: AuthenticatedUser) => Promise<NextResponse>) {
   return async (request: NextRequest) => {
     const auth = AuthMiddleware.getInstance();
-// const user = // Unused variable await auth.authenticateRequest(request);
+    const user = await auth.authenticateRequest(request);
 
     if (!user) {
       await auth.logSecurityEvent(request, null, 'UNAUTHORIZED_ACCESS', 'api', request.nextUrl.pathname, false, 'No valid session');

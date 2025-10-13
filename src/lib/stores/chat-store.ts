@@ -7,6 +7,7 @@ import { useAgentsStore, type Agent as GlobalAgent } from '@/lib/stores/agents-s
 export interface Agent {
   id: string;
   name: string;
+  display_name?: string;
   description: string;
   systemPrompt: string;
   model: string;
@@ -118,6 +119,11 @@ export interface ChatStore {
   isReasoningActive: boolean;
   abortController: AbortController | null;
 
+  // Agent Selection State
+  suggestedAgents: any[];
+  showAgentSelection: boolean;
+  isWaitingForAgentSelection: boolean;
+
   // Dual-Mode State
   interactionMode: 'automatic' | 'manual' | 'autonomous'; // Agent selection mode
   autonomousMode: boolean; // Chat mode: normal (false) vs autonomous with tools (true)
@@ -183,6 +189,11 @@ export interface ChatStore {
   addAgentToChatStore: (agent: any) => void;
   clearSelectedAgent: () => void;
   setInteractionMode: (mode: 'automatic' | 'manual') => void;
+  
+  // Agent selection methods
+  showAgentSelectionModal: (agents: any[]) => void;
+  selectAgentFromSuggestions: (agent: any) => void;
+  hideAgentSelection: () => void;
 }
 
 const _useChatStore = create<ChatStore>()(
@@ -203,6 +214,11 @@ const _useChatStore = create<ChatStore>()(
       isReasoningActive: false,
       abortController: null,
 
+      // Agent Selection State
+      suggestedAgents: [],
+      showAgentSelection: false,
+      isWaitingForAgentSelection: false,
+
   // Dual-Mode Initial State
   interactionMode: 'automatic',
   autonomousMode: false,
@@ -217,9 +233,9 @@ const _useChatStore = create<ChatStore>()(
   },
 
   // Agent Selection State
-  suggestedAgents: [],
-  showAgentSelection: false,
-  isWaitingForAgentSelection: false,
+  suggestedAgents: any[];
+  showAgentSelection: boolean;
+  isWaitingForAgentSelection: boolean;
 
       // Actions
       createNewChat: () => {
@@ -1210,12 +1226,19 @@ const _useChatStore = create<ChatStore>()(
 
       selectAgentFromSuggestions: (agent: any) => {
         console.log('✅ User selected agent:', agent.name);
+        console.log('🔍 Agent details:', {
+          id: agent.id,
+          name: agent.name,
+          display_name: agent.display_name,
+          description: agent.description
+        });
         set({
           selectedAgent: agent,
           showAgentSelection: false,
           isWaitingForAgentSelection: false,
           suggestedAgents: [],
         });
+        console.log('✅ Agent selection state updated');
       },
 
       hideAgentSelection: () => {

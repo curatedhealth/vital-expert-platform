@@ -101,24 +101,29 @@ export function ChatMessages({ messages, liveReasoning, isReasoningActive }: Cha
       selectAgentFromSuggestions(agent);
       
       // Wait a moment for state to update
-      await new Promise(resolve => setTimeout(resolve, 200));
+      await new Promise(resolve => setTimeout(resolve, 300));
       
       // Get the current state to ensure agent is selected
       const currentState = useChatStore.getState();
       console.log('🔍 Current selected agent after selection:', currentState.selectedAgent?.name);
       
       // Continue the conversation with the selected agent
-      const lastUserMessage = messages.findLast(msg => msg.role === 'user');
+      const lastUserMessage = messages.filter(msg => msg.role === 'user').pop();
       if (lastUserMessage) {
         console.log('🔄 Continuing conversation with selected agent:', agent.name);
+        // Send the message with the selected agent
         await currentState.sendMessage(lastUserMessage.content);
       } else {
         console.warn('No user message found to continue conversation');
+        // If no user message, just close the selection modal
+        hideAgentSelection();
       }
     } catch (error) {
       console.error('Error in agent selection:', error);
+      // Close the modal on error
+      hideAgentSelection();
     }
-  }, [selectAgentFromSuggestions, messages]);
+  }, [selectAgentFromSuggestions, messages, hideAgentSelection]);
 
   const handleEditCancel = useCallback(() => {
     setEditingMessage(null);
@@ -210,16 +215,16 @@ export function ChatMessages({ messages, liveReasoning, isReasoningActive }: Cha
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <h5 className="text-xs font-medium text-deep-charcoal mb-1">
-                        {source.title || source.name || `Document ${index + 1}`}
+                        {(source as any).title || (source as any).name || `Document ${index + 1}`}
                       </h5>
                       <p className="text-xs text-medical-gray line-clamp-2">
-                        {source.excerpt || source.content || 'No preview available'}
+                        {(source as any).excerpt || (source as any).content || 'No preview available'}
                       </p>
                       <div className="flex items-center gap-2 mt-2">
                         <Badge variant="outline" className="text-xs">
-                          Relevance: {Math.round((source.similarity || 0.8) * 100)}%
+                          Relevance: {Math.round(((source as any).similarity || 0.8) * 100)}%
                         </Badge>
-                        {source.source_url && (
+                        {(source as any).source_url && (
                           <Button
                             variant="ghost"
                             size="sm"
@@ -399,7 +404,7 @@ export function ChatMessages({ messages, liveReasoning, isReasoningActive }: Cha
                   <div className="space-y-3">
                     <Textarea
                       value={editContent}
-                      onChange={(e) => setEditContent(e.target.value)}
+                      onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setEditContent(e.target.value)}
                       className="min-h-[100px] resize-none"
                       placeholder="Edit your message..."
                     />
@@ -548,7 +553,7 @@ export function ChatMessages({ messages, liveReasoning, isReasoningActive }: Cha
           <AgentSelection
             agents={suggestedAgents}
             onSelect={handleAgentSelect}
-            isLoading={isWaitingForAgentSelection}
+            isLoading={false}
           />
         </DialogContent>
       </Dialog>

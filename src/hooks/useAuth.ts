@@ -1,4 +1,4 @@
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { createBrowserClient } from '@supabase/ssr';
 import { User } from '@supabase/supabase-js';
 import { useState, useEffect, useCallback, createContext, useContext } from 'react';
 
@@ -82,7 +82,10 @@ export const _useAuthState = () => {
     initialized: false
   });
 
-  const supabase = createClientComponentClient();
+  const supabase = createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
 
   // Permission mappings (should match the backend)
   const rolePermissions = new Map<UserRole, Set<string>>([
@@ -270,7 +273,7 @@ export const _useAuthState = () => {
 
   const canAccess = useCallback((requiredRole: UserRole): boolean => {
     if (!state.user) return false;
-    // eslint-disable-next-line security/detect-object-injection
+     
     return ROLE_HIERARCHY[state.user.role] >= ROLE_HIERARCHY[requiredRole];
   }, [state.user]);
 

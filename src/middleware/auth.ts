@@ -1,4 +1,4 @@
-import { createMiddlewareClient } from '@supabase/auth-helpers-nextjs';
+import { createServerClient } from '@supabase/ssr';
 import { NextRequest, NextResponse } from 'next/server';
 
 import { UserRole, PermissionScope, PermissionAction } from '@/types/auth.types';
@@ -79,8 +79,57 @@ export class AuthMiddleware {
 
   async authenticateRequest(request: NextRequest): Promise<AuthenticatedUser | null> {
     try {
-      const response = NextResponse.next();
-      const supabase = createMiddlewareClient({ req: request, res: response });
+      let response = NextResponse.next({
+        request: {
+          headers: request.headers,
+        },
+      });
+
+      const supabase = createServerClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        {
+          cookies: {
+            get(name: string) {
+              return request.cookies.get(name)?.value;
+            },
+            set(name: string, value: string, options: any) {
+              request.cookies.set({
+                name,
+                value,
+                ...options,
+              });
+              response = NextResponse.next({
+                request: {
+                  headers: request.headers,
+                },
+              });
+              response.cookies.set({
+                name,
+                value,
+                ...options,
+              });
+            },
+            remove(name: string, options: any) {
+              request.cookies.set({
+                name,
+                value: '',
+                ...options,
+              });
+              response = NextResponse.next({
+                request: {
+                  headers: request.headers,
+                },
+              });
+              response.cookies.set({
+                name,
+                value: '',
+                ...options,
+              });
+            },
+          },
+        }
+      );
 
       const { data: { session }, error } = await supabase.auth.getSession();
 
@@ -139,8 +188,57 @@ export class AuthMiddleware {
     errorMessage?: string
   ) {
     try {
-      const response = NextResponse.next();
-      const supabase = createMiddlewareClient({ req: request, res: response });
+      let response = NextResponse.next({
+        request: {
+          headers: request.headers,
+        },
+      });
+
+      const supabase = createServerClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        {
+          cookies: {
+            get(name: string) {
+              return request.cookies.get(name)?.value;
+            },
+            set(name: string, value: string, options: any) {
+              request.cookies.set({
+                name,
+                value,
+                ...options,
+              });
+              response = NextResponse.next({
+                request: {
+                  headers: request.headers,
+                },
+              });
+              response.cookies.set({
+                name,
+                value,
+                ...options,
+              });
+            },
+            remove(name: string, options: any) {
+              request.cookies.set({
+                name,
+                value: '',
+                ...options,
+              });
+              response = NextResponse.next({
+                request: {
+                  headers: request.headers,
+                },
+              });
+              response.cookies.set({
+                name,
+                value: '',
+                ...options,
+              });
+            },
+          },
+        }
+      );
 
       const userAgent = request.headers.get('user-agent') || '';
       const ipAddress = request.headers.get('x-forwarded-for') ||

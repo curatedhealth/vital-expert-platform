@@ -63,7 +63,17 @@ export function AgentSelection({ agents, onSelect, isLoading = false, className 
               'border-2 hover:border-blue-300',
               isLoading && 'opacity-50 cursor-not-allowed'
             )}
-            onClick={() => !isLoading && onSelect(agent)}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              console.log('🖱️ Agent card clicked:', agent.name, 'isLoading:', isLoading);
+              if (!isLoading) {
+                console.log('✅ Calling onSelect with agent:', agent);
+                onSelect(agent);
+              } else {
+                console.log('❌ Click ignored - loading state active');
+              }
+            }}
           >
             <div className="space-y-3">
               {/* Agent Header */}
@@ -142,8 +152,15 @@ export function AgentSelection({ agents, onSelect, isLoading = false, className 
                 variant="outline"
                 disabled={isLoading}
                 onClick={(e) => {
+                  e.preventDefault();
                   e.stopPropagation();
-                  onSelect(agent);
+                  console.log('🖱️ Select button clicked for agent:', agent.name, 'isLoading:', isLoading);
+                  if (!isLoading) {
+                    console.log('✅ Calling onSelect from button with agent:', agent);
+                    onSelect(agent);
+                  } else {
+                    console.log('❌ Button click ignored - loading state active');
+                  }
                 }}
               >
                 {isLoading ? 'Processing...' : 'Select This Agent'}

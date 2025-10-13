@@ -1,9 +1,16 @@
 'use client';
 
-import { ChevronDown, ChevronUp, Loader2 } from 'lucide-react';
+import { ChevronDown, ChevronUp, Loader2, Search, Brain, Zap, BarChart3, Target, CheckCircle } from 'lucide-react';
 import * as React from 'react';
 
 import { cn } from '@/lib/utils';
+
+interface ActionStep {
+  id: string;
+  text: string;
+  completed: boolean;
+  active: boolean;
+}
 
 interface ReasoningContextValue {
   isStreaming: boolean;
@@ -12,6 +19,10 @@ interface ReasoningContextValue {
   toggleOpen: () => void;
   startTime: number;
   duration: number;
+  currentStep: number;
+  totalSteps: number;
+  progress: number;
+  actions: ActionStep[];
 }
 
 const ReasoningContext = React.createContext<ReasoningContextValue>({
@@ -21,6 +32,10 @@ const ReasoningContext = React.createContext<ReasoningContextValue>({
   toggleOpen: () => {},
   startTime: 0,
   duration: 0,
+  currentStep: 0,
+  totalSteps: 5,
+  progress: 0,
+  actions: [],
 });
 
 interface ReasoningProps {
@@ -34,13 +49,68 @@ export function Reasoning({ children, isStreaming = false, className }: Reasonin
   const [userManuallyOpened, setUserManuallyOpened] = React.useState(false);
   const [startTime] = React.useState(Date.now());
   const [duration, setDuration] = React.useState(0);
+  const [currentStep, setCurrentStep] = React.useState(0);
+  const [totalSteps] = React.useState(5);
+  const [progress, setProgress] = React.useState(0);
+
+  // Define action steps
+  const [actions, setActions] = React.useState<ActionStep[]>([
+    { id: 'analyze', text: 'Analyzing your question and context...', completed: false, active: false },
+    { id: 'domains', text: 'Detecting relevant knowledge domains...', completed: false, active: false },
+    { id: 'select', text: 'Selecting the most appropriate expert agent...', completed: false, active: false },
+    { id: 'prepare', text: 'Preparing specialized response...', completed: false, active: false },
+    { id: 'found', text: 'Found 3 suitable agents. Please select the best one for your query:', completed: false, active: false },
+  ]);
 
   // Auto-open when streaming starts
   React.useEffect(() => {
     if (isStreaming) {
       setIsOpen(true);
+      // Start the action sequence
+      setCurrentStep(0);
+      setProgress(0);
+      setActions(prev => prev.map((action, index) => ({
+        ...action,
+        completed: false,
+        active: index === 0
+      })));
     }
   }, [isStreaming]);
+
+  // Simulate step progression
+  React.useEffect(() => {
+    if (!isStreaming) return;
+
+    const stepInterval = setInterval(() => {
+      setCurrentStep(prev => {
+        const nextStep = prev + 1;
+        if (nextStep < totalSteps) {
+          setProgress((nextStep / totalSteps) * 100);
+          setActions(prevActions => 
+            prevActions.map((action, index) => ({
+              ...action,
+              completed: index < nextStep,
+              active: index === nextStep
+            }))
+          );
+          return nextStep;
+        } else {
+          setProgress(100);
+          setActions(prevActions => 
+            prevActions.map(action => ({
+              ...action,
+              completed: true,
+              active: false
+            }))
+          );
+          clearInterval(stepInterval);
+          return prev;
+        }
+      });
+    }, 800); // Progress every 800ms
+
+    return () => clearInterval(stepInterval);
+  }, [isStreaming, totalSteps]);
 
   // Update duration while streaming
   React.useEffect(() => {
@@ -76,26 +146,22 @@ export function Reasoning({ children, isStreaming = false, className }: Reasonin
     });
   }, []);
 
-  const value = React.useMemo(
-    () => ({
-      isStreaming,
-      isOpen,
-      setIsOpen,
-      toggleOpen,
-      startTime,
-      duration,
-    }),
-    [isStreaming, isOpen, toggleOpen, startTime, duration]
-  );
-
   return (
-    <ReasoningContext.Provider value={value}>
-      <div
-        className={cn(
-          'rounded-lg border border-gray-200 bg-gray-50/50 overflow-hidden transition-all',
-          className
-        )}
-      >
+    <ReasoningContext.Provider
+      value={{
+        isStreaming,
+        isOpen,
+        setIsOpen,
+        toggleOpen,
+        startTime,
+        duration,
+        currentStep,
+        totalSteps,
+        progress,
+        actions,
+      }}
+    >
+      <div className={cn('border border-gray-200 rounded-lg bg-white', className)}>
         {children}
       </div>
     </ReasoningContext.Provider>
@@ -107,8 +173,8 @@ interface ReasoningTriggerProps {
   className?: string;
 }
 
-export function ReasoningTrigger({ title = 'Thinking', className }: ReasoningTriggerProps) {
-  const { isStreaming, isOpen, toggleOpen, duration } = React.useContext(ReasoningContext);
+export function ReasoningTrigger({ title = 'I am thinking...', className }: ReasoningTriggerProps) {
+  const { isStreaming, isOpen, toggleOpen, duration, progress } = React.useContext(ReasoningContext);
 
   const formatDuration = (ms: number) => {
     if (ms < 1000) return `${ms}ms`;
@@ -119,38 +185,32 @@ export function ReasoningTrigger({ title = 'Thinking', className }: ReasoningTri
     <button
       onClick={toggleOpen}
       className={cn(
-        'w-full flex items-center justify-between px-4 py-3 text-sm font-medium transition-colors hover:bg-gray-100/50',
+        'w-full flex items-center justify-between px-4 py-3 text-sm font-medium transition-colors hover:bg-gray-50',
         className
       )}
       aria-expanded={isOpen}
       aria-controls="reasoning-content"
     >
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-3">
         {isStreaming ? (
-          <Loader2 className="h-4 w-4 animate-spin text-blue-600" />
+          <Loader2 className="h-4 w-4 animate-spin text-green-600" />
         ) : (
-          <div className="h-4 w-4 rounded-full bg-green-500 flex items-center justify-center">
-            <svg
-              className="h-3 w-3 text-white"
-              fill="none"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path d="M5 13l4 4L19 7" />
-            </svg>
-          </div>
+          <CheckCircle className="h-4 w-4 text-green-600" />
         )}
-        <span className="text-gray-700">
+        <span className="text-gray-700 font-medium">
           {title}
-          {isStreaming ? '...' : ''}
         </span>
         {isStreaming && (
-          <div className="flex items-center gap-1">
-            <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
-            <span className="text-xs text-blue-600 font-medium">Processing</span>
+          <div className="flex items-center gap-2">
+            <div className="w-16 bg-gray-200 rounded-full h-1.5">
+              <div 
+                className="bg-green-500 h-1.5 rounded-full transition-all duration-300"
+                style={{ width: `${progress}%` }}
+              />
+            </div>
+            <span className="text-xs text-gray-500 font-medium">
+              {Math.round(progress)}%
+            </span>
           </div>
         )}
         {duration > 0 && (
@@ -174,7 +234,7 @@ interface ReasoningContentProps {
 }
 
 export function ReasoningContent({ children, className }: ReasoningContentProps) {
-  const { isOpen } = React.useContext(ReasoningContext);
+  const { isOpen, actions } = React.useContext(ReasoningContext);
   const contentRef = React.useRef<HTMLDivElement>(null);
   const [height, setHeight] = React.useState<number | undefined>(0);
 
@@ -194,57 +254,70 @@ export function ReasoningContent({ children, className }: ReasoningContentProps)
     }
   }, []);
 
+  const getStepIcon = (stepId: string, completed: boolean, active: boolean) => {
+    if (completed) {
+      return <CheckCircle className="h-4 w-4 text-green-600" />;
+    }
+    if (active) {
+      return <Loader2 className="h-4 w-4 animate-spin text-blue-600" />;
+    }
+    
+    switch (stepId) {
+      case 'analyze':
+        return <Search className="h-4 w-4 text-gray-400" />;
+      case 'domains':
+        return <Brain className="h-4 w-4 text-gray-400" />;
+      case 'select':
+        return <Zap className="h-4 w-4 text-gray-400" />;
+      case 'prepare':
+        return <BarChart3 className="h-4 w-4 text-gray-400" />;
+      case 'found':
+        return <Target className="h-4 w-4 text-gray-400" />;
+      default:
+        return <div className="h-4 w-4 rounded-full bg-gray-300" />;
+    }
+  };
+
   return (
     <div
       id="reasoning-content"
+      className={cn(
+        'overflow-hidden transition-all duration-300 ease-in-out',
+        isOpen ? 'opacity-100' : 'opacity-0'
+      )}
       style={{
-        maxHeight: isOpen ? height : 0,
-        overflow: 'hidden',
-        transition: 'max-height 0.3s ease-in-out',
+        height: isOpen ? (height || 'auto') : 0,
       }}
     >
-      <div ref={contentRef}>
-        <div
-          className={cn(
-            'px-4 py-3 text-sm text-gray-600 border-t border-gray-200 bg-white',
-            className
-          )}
-        >
-          {children}
+      <div ref={contentRef} className={cn('px-4 pb-4', className)}>
+        <div className="space-y-3">
+          {actions.map((action, index) => (
+            <div
+              key={action.id}
+              className={cn(
+                'flex items-center gap-3 py-2',
+                action.completed ? 'text-gray-700' : 
+                action.active ? 'text-blue-600' : 'text-gray-500'
+              )}
+            >
+              {getStepIcon(action.id, action.completed, action.active)}
+              <span className={cn(
+                'text-sm',
+                action.completed ? 'font-medium' : 
+                action.active ? 'font-medium' : 'font-normal'
+              )}>
+                {action.text}
+              </span>
+              {action.active && (
+                <div className="flex items-center gap-1 ml-auto">
+                  <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+                </div>
+              )}
+            </div>
+          ))}
         </div>
+        {children}
       </div>
-    </div>
-  );
-}
-
-// Convenience component for step-by-step reasoning
-interface ReasoningStepProps {
-  step: number;
-  children: React.ReactNode;
-  className?: string;
-}
-
-export function ReasoningStep({ step, children, className }: ReasoningStepProps) {
-  return (
-    <div className={cn('flex gap-3 mb-3 last:mb-0', className)}>
-      <div className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-100 text-blue-700 text-xs font-semibold flex items-center justify-center">
-        {step}
-      </div>
-      <div className="flex-1 pt-0.5">{children}</div>
-    </div>
-  );
-}
-
-// Convenience component for reasoning with markdown-style formatting
-interface ReasoningTextProps {
-  children: React.ReactNode;
-  className?: string;
-}
-
-export function ReasoningText({ children, className }: ReasoningTextProps) {
-  return (
-    <div className={cn('prose prose-sm max-w-none', className)}>
-      {children}
     </div>
   );
 }

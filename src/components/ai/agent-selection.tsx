@@ -28,8 +28,6 @@ interface AgentSelectionProps {
 }
 
 export function AgentSelection({ agents, onSelect, isLoading = false, className }: AgentSelectionProps) {
-  console.log('🔍 AgentSelection rendered with isLoading:', isLoading, 'agents count:', agents.length);
-  
   const getConfidenceColor = (confidence: string) => {
     switch (confidence) {
       case 'high': return 'bg-green-100 text-green-800 border-green-200';
@@ -56,119 +54,103 @@ export function AgentSelection({ agents, onSelect, isLoading = false, className 
         </p>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-1 lg:grid-cols-3">
+      <div className="grid gap-3 md:grid-cols-1 lg:grid-cols-3">
         {agents.map((agent, index) => (
           <Card
             key={agent.id}
             className={cn(
-              'p-4 cursor-pointer transition-all duration-200 hover:shadow-lg hover:scale-105',
-              'border-2 hover:border-blue-300',
+              'p-3 cursor-pointer transition-all duration-200 hover:shadow-md hover:border-blue-300',
+              'border border-gray-200 hover:border-blue-300',
               isLoading && 'opacity-50 cursor-not-allowed'
             )}
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
-              console.log('🖱️ Agent card clicked:', agent.name, 'isLoading:', isLoading);
               if (!isLoading) {
-                console.log('✅ Calling onSelect with agent:', agent);
                 onSelect(agent);
-              } else {
-                console.log('❌ Click ignored - loading state active');
               }
             }}
           >
-            <div className="space-y-3">
+            <div className="space-y-2">
               {/* Agent Header */}
-              <div className="flex items-start justify-between">
-                <div className="flex items-center gap-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
                   <AgentAvatar
                     avatar={agent.avatar || '🤖'}
                     name={agent.display_name || agent.name}
-                    size="md"
+                    size="sm"
                   />
                   <div>
-                    <h4 className="font-semibold text-gray-900">
+                    <h4 className="font-medium text-gray-900 text-sm">
                       {agent.display_name || agent.name}
                     </h4>
-                    <div className="flex items-center gap-2 mt-1">
+                    <div className="flex items-center gap-2">
                       <Badge 
                         variant="outline" 
-                        className={cn('text-xs', getConfidenceColor(agent.confidence))}
+                        className={cn('text-xs px-1.5 py-0.5', getConfidenceColor(agent.confidence))}
                       >
-                        {agent.confidence} confidence
+                        {agent.confidence}
                       </Badge>
-                      <span className={cn('text-sm font-medium', getScoreColor(agent.score))}>
-                        {Math.round(agent.score * 100)}% match
+                      <span className={cn('text-xs font-medium', getScoreColor(agent.score))}>
+                        {Math.round(agent.score * 100)}%
                       </span>
                     </div>
                   </div>
                 </div>
                 <div className="text-right">
-                  <div className="text-2xl font-bold text-gray-900">
+                  <div className="text-lg font-semibold text-gray-400">
                     #{index + 1}
                   </div>
                 </div>
               </div>
 
               {/* Agent Description */}
-              <p className="text-sm text-gray-600 line-clamp-2">
+              <p className="text-xs text-gray-600 line-clamp-2">
                 {agent.description}
               </p>
 
               {/* Capabilities */}
-              <div className="space-y-2">
-                <h5 className="text-xs font-medium text-gray-500 uppercase tracking-wide">
-                  Capabilities
-                </h5>
+              <div className="space-y-1">
                 <div className="flex flex-wrap gap-1">
-                  {agent.capabilities.slice(0, 3).map((capability, capIndex) => (
+                  {agent.capabilities.slice(0, 2).map((capability, capIndex) => (
                     <Badge
                       key={capIndex}
                       variant="secondary"
-                      className="text-xs px-2 py-1"
+                      className="text-xs px-1.5 py-0.5 bg-gray-100 text-gray-700"
                     >
                       {capability}
                     </Badge>
                   ))}
-                  {agent.capabilities.length > 3 && (
-                    <Badge variant="secondary" className="text-xs px-2 py-1">
-                      +{agent.capabilities.length - 3} more
+                  {agent.capabilities.length > 2 && (
+                    <Badge variant="secondary" className="text-xs px-1.5 py-0.5 bg-gray-100 text-gray-700">
+                      +{agent.capabilities.length - 2}
                     </Badge>
                   )}
                 </div>
               </div>
 
               {/* Reasoning */}
-              <div className="space-y-2">
-                <h5 className="text-xs font-medium text-gray-500 uppercase tracking-wide">
-                  Why This Agent?
-                </h5>
-                <p className="text-xs text-gray-600 italic">
+              <div className="space-y-1">
+                <p className="text-xs text-gray-500 italic line-clamp-1">
                   {agent.reasoning}
                 </p>
               </div>
 
               {/* Select Button */}
               <Button
-                className="w-full mt-3"
+                className="w-full mt-2 h-8 text-xs"
                 variant="outline"
+                size="sm"
                 disabled={isLoading}
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
-                  console.log('🖱️ Select button clicked for agent:', agent.name, 'isLoading:', isLoading);
                   if (!isLoading) {
-                    console.log('✅ Calling onSelect from button with agent:', agent);
                     onSelect(agent);
-                  } else {
-                    console.log('❌ Button click ignored - loading state active');
                   }
                 }}
               >
-                {(() => {
-                  console.log('🔍 Button text logic - isLoading:', isLoading, 'agent:', agent.name);
-                  return isLoading ? 'Processing...' : 'Select This Agent';
-                })()}
+                {isLoading ? 'Processing...' : 'Select Agent'}
               </Button>
             </div>
           </Card>

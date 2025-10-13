@@ -179,11 +179,28 @@ function ChatPageContent() {
   };
 
   const handleAgentSelect = (agentId: string) => {
+    console.log('🎯 Agent selection triggered:', { agentId, agentsCount: agents.length });
     const agent = agents.find(a => a.id === agentId);
+    console.log('🔍 Found agent:', agent);
+    
     if (agent) {
-      setSelectedAgent(agent);
+      // Ensure the agent has all required fields
+      const completeAgent = {
+        ...agent,
+        display_name: agent.display_name || agent.name,
+        description: agent.description || 'AI Assistant',
+        business_function: agent.business_function || 'General Purpose',
+        capabilities: agent.capabilities || [],
+        color: agent.color || 'text-blue-600',
+        avatar: agent.avatar || '🤖'
+      };
+      
+      console.log('✅ Setting selected agent:', completeAgent);
+      setSelectedAgent(completeAgent);
       setHasUserSelectedAgent(true);
       createNewChat();
+    } else {
+      console.warn('❌ Agent not found:', agentId);
     }
   };
 
@@ -213,15 +230,16 @@ function ChatPageContent() {
     }));
   };
 
-  // Debug logging for messages
-  console.log('🔍 [ChatPage] Messages condition check:', {
-    messagesLength: messages.length,
-    messages: messages.map(msg => ({
-      id: msg.id,
-      role: msg.role,
-      contentLength: msg.content?.length || 0,
-      isLoading: msg.isLoading
-    }))
+  // Debug logging for messages and selected agent
+  console.log('🔍 [ChatPage] State check:', {
+    selectedAgent: selectedAgent ? {
+      id: selectedAgent.id,
+      name: selectedAgent.name,
+      display_name: selectedAgent.display_name
+    } : null,
+    hasUserSelectedAgent,
+    interactionMode,
+    messagesLength: messages.length
   });
 
   return (

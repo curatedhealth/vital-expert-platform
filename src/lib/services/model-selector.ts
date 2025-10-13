@@ -8,7 +8,7 @@
  * - Use case requirements
  */
 
-import { createClient } from '@/lib/supabase/client';
+import { supabase } from '@/lib/supabase/client';
 
 // ============================================================================
 // Types
@@ -204,10 +204,7 @@ export const AVAILABLE_CHAT_MODELS = {
 export class ModelSelector {
 
   private getSupabaseClient() {
-    if (!this.supabase) {
-      this.supabase = createClient();
-    }
-    return this.supabase;
+    return supabase;
   }
   private static instance: ModelSelector;
   private supabase: ReturnType<typeof createClient> | null = null;
@@ -247,6 +244,12 @@ export class ModelSelector {
     const sortedDomains = domains.sort((a, b) => a.tier - b.tier);
     const primaryDomain = sortedDomains[0];
 
+    // Check if domain has valid recommended_models
+    if (!primaryDomain.recommended_models || !primaryDomain.recommended_models.embedding) {
+      console.warn(`Domain ${primaryDomain.slug} missing recommended_models.embedding, using fallback`);
+      return fallbackModel;
+    }
+
     // Use specialized model if requested and available
     if (useSpecialized && primaryDomain.recommended_models.embedding.specialized) {
       return primaryDomain.recommended_models.embedding.specialized;
@@ -280,6 +283,12 @@ export class ModelSelector {
     // Prioritize by tier (Tier 1 > Tier 2 > Tier 3)
     const sortedDomains = domains.sort((a, b) => a.tier - b.tier);
     const primaryDomain = sortedDomains[0];
+
+    // Check if domain has valid recommended_models
+    if (!primaryDomain.recommended_models || !primaryDomain.recommended_models.chat) {
+      console.warn(`Domain ${primaryDomain.slug} missing recommended_models.chat, using fallback`);
+      return fallbackModel;
+    }
 
     // Use specialized model if requested and available
     if (useSpecialized && primaryDomain.recommended_models.chat.specialized) {

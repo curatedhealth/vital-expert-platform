@@ -301,7 +301,7 @@ export class PerformanceOptimizer {
     // In production, this would analyze actual query logs
     // For now, we'll return some example slow queries
     return [
-      'SELECT * FROM digital_health_agents WHERE status = ? AND tier <= ? ORDER BY tier, metadata->experience DESC',
+      'SELECT * FROM agents WHERE status = ? AND tier <= ? ORDER BY tier, metadata->experience DESC',
       'SELECT * FROM chat_memory WHERE user_id = ? AND session_id = ? ORDER BY created_at DESC LIMIT ?',
       'SELECT * FROM user_preferences WHERE user_id = ? AND preference_type = ?'
     ];

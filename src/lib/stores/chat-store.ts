@@ -218,7 +218,7 @@ const _useChatStore = create<ChatStore>()(
 
       // Actions
       createNewChat: () => {
-        const { interactionMode } = get();
+        const { interactionMode, selectedAgent } = get();
         
         // Create orchestrator agent for automatic mode
         const orchestratorAgent = {
@@ -233,14 +233,18 @@ const _useChatStore = create<ChatStore>()(
           avatar: '🤖'
         };
         
+        // Determine which agent to use for the chat
+        const chatAgent = interactionMode === 'automatic' ? orchestratorAgent : selectedAgent;
+        const chatTitle = chatAgent 
+          ? `New conversation with ${chatAgent.display_name || chatAgent.name}`
+          : 'New conversation with AI Assistant';
+        
         const newChat: Chat = {
           id: `chat-${Date.now()}`,
-          title: interactionMode === 'automatic' 
-            ? 'New conversation with AI Orchestrator'
-            : 'New conversation with AI Assistant',
+          title: chatTitle,
           createdAt: new Date(),
           updatedAt: new Date(),
-          agentId: interactionMode === 'automatic' ? 'orchestrator' : 'default',
+          agentId: chatAgent?.id || (interactionMode === 'automatic' ? 'orchestrator' : 'default'),
           messageCount: 0,
           mode: interactionMode, // Track the mode for this chat
         };
@@ -249,7 +253,7 @@ const _useChatStore = create<ChatStore>()(
           chats: [newChat, ...state.chats],
           currentChat: newChat,
           messages: [],
-          selectedAgent: interactionMode === 'automatic' ? orchestratorAgent : null,
+          selectedAgent: chatAgent || (interactionMode === 'automatic' ? orchestratorAgent : null),
           error: null,
           liveReasoning: '', // Clear any existing reasoning
           isReasoningActive: false, // Clear reasoning state
@@ -475,9 +479,13 @@ const _useChatStore = create<ChatStore>()(
                   const jsonString = line.slice(6).trim();
                   if (!jsonString) continue; // Skip empty data lines
                   
+                  console.log('🔍 [SSE] Raw JSON string:', jsonString);
+                  console.log('🔍 [SSE] JSON string length:', jsonString.length);
+                  console.log('🔍 [SSE] JSON string preview:', jsonString.substring(0, 100) + '...');
+                  
                   const data = JSON.parse(jsonString);
                   
-                  console.log('📥 [SSE] Parsed data:', { type: data.type, hasContent: !!data.content });
+                  console.log('📥 [SSE] Parsed data:', { type: data.type, hasContent: !!data.content, keys: Object.keys(data) });
 
                   if (data.type === 'reasoning') {
                     // Accumulate reasoning steps
@@ -563,7 +571,13 @@ const _useChatStore = create<ChatStore>()(
                     throw new Error(data.error);
                   }
                 } catch (parseError) {
-                  console.warn('Failed to parse SSE data:', parseError);
+                  console.error('❌ [SSE] Failed to parse SSE data:', {
+                    error: parseError,
+                    rawLine: line,
+                    jsonString: line.slice(6).trim(),
+                    errorMessage: parseError.message,
+                    errorStack: parseError.stack
+                  });
                   // Continue processing other lines
                   continue;
                 }
@@ -1063,7 +1077,8 @@ const _useChatStore = create<ChatStore>()(
 
       // Global agents store integration
       syncWithGlobalStore: () => {
-        const globalAgents = useAgentsStore.getState().agents;
+        try {
+          const globalAgents = useAgentsStore.getState().agents;
         const convertedAgents = globalAgents.map((agent: GlobalAgent) => ({
           id: agent.id,
           name: agent.display_name,
@@ -1083,12 +1098,21 @@ const _useChatStore = create<ChatStore>()(
         }));
 
         set({ agents: convertedAgents });
+        } catch (error) {
+          console.error('Failed to sync with global agents store:', error);
+        }
       },
 
       subscribeToGlobalChanges: () => {
-        return useAgentsStore.subscribe((state) => {
-          get().syncWithGlobalStore();
-        });
+        try {
+          return useAgentsStore.subscribe((state) => {
+            const chatStore = get();
+            chatStore.syncWithGlobalStore();
+          });
+        } catch (error) {
+          console.error('Failed to subscribe to global agents store changes:', error);
+          return () => {}; // Return empty unsubscribe function
+        }
       },
 
       // Add agent to user's library

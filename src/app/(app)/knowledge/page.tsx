@@ -43,7 +43,7 @@ import { KnowledgeAnalyticsDashboard } from '@/features/knowledge/components/kno
 import { KnowledgeUploader } from '@/features/knowledge/components/knowledge-uploader';
 import { KnowledgeViewer } from '@/features/knowledge/components/knowledge-viewer';
 import type { KnowledgeDomain } from '@/lib/services/model-selector';
-import { createClient } from '@/lib/supabase/client';
+import { supabase } from '@/lib/supabase/client';
 
 interface Document {
   id: string;
@@ -65,7 +65,7 @@ function KnowledgePageContent() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const supabase = createClient();
+  // Use the singleton supabase client
 
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedDomain, setSelectedDomain] = useState('all');

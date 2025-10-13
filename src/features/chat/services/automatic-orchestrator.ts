@@ -113,6 +113,14 @@ export interface AutomaticOrchestratorResult {
   };
   response: ReadableStream<Uint8Array>;
   reasoning: string;
+  sources?: any[];
+  citations?: any[];
+  followupQuestions?: string[];
+  tokenUsage?: {
+    promptTokens: number;
+    completionTokens: number;
+    totalTokens: number;
+  };
 }
 
 export class AutomaticAgentOrchestrator {
@@ -179,12 +187,33 @@ export class AutomaticAgentOrchestrator {
 
     // OPTIMIZATION: Phase 3 - RAG Ranking with Cache (~100ms instead of 200ms)
     const rankingStart = Date.now();
-    const rankedAgents = await this.rankAgentsOptimized(query, candidates, {
-      detectedDomains: detectedDomains.map(d => d.domain),
-      minScore: minConfidence,
-      maxResults: maxCandidates,
-      useCache: true,
-    });
+    let rankedAgents: RankedAgent[];
+    try {
+      console.log('[AutomaticOrchestrator] Starting agent ranking...');
+      rankedAgents = await this.rankAgentsOptimized(query, candidates, {
+        detectedDomains: detectedDomains.map(d => d.domain),
+        minScore: minConfidence,
+        maxResults: maxCandidates,
+        useCache: true,
+      });
+      console.log('[AutomaticOrchestrator] Agent ranking completed successfully');
+    } catch (rankingError) {
+      console.error('[AutomaticOrchestrator] Agent ranking error:', rankingError);
+      // Fallback: create a simple ranking without embeddings
+      rankedAgents = candidates.slice(0, maxCandidates).map((agent, index) => ({
+        agent,
+        scores: {
+          semantic: 0.5,
+          tier: agent.tier === 1 ? 1.0 : agent.tier === 2 ? 0.7 : 0.4,
+          domain: 0.5,
+          performance: 0.5,
+          final: 0.5,
+        },
+        reasoning: 'Fallback ranking due to embedding error',
+        confidence: 'medium' as const,
+      }));
+      console.log('[AutomaticOrchestrator] Using fallback ranking');
+    }
     const rankingTime = Date.now() - rankingStart;
 
     console.log('[AutomaticOrchestrator] Top ranked agents:', rankedAgents.slice(0, 3).map(r => ({
@@ -208,24 +237,61 @@ export class AutomaticAgentOrchestrator {
     // Get recommended model for this agent
     let selectedModel = modelOverride;
     if (!selectedModel) {
-      selectedModel = await modelSelector.getChatModel({
-        knowledgeDomains: selectedAgent.knowledge_domains || [],
-        tier: selectedAgent.tier,
-        useSpecialized: useSpecializedModels && selectedAgent.tier === 1,
-      });
+      try {
+        selectedModel = await modelSelector.getChatModel({
+          knowledgeDomains: selectedAgent.knowledge_domains || [],
+          tier: selectedAgent.tier,
+          useSpecialized: useSpecializedModels && selectedAgent.tier === 1,
+        });
+      } catch (modelError) {
+        console.warn('[AutomaticOrchestrator] Model selection failed, using fallback:', modelError);
+        selectedModel = 'gpt-4-turbo-preview'; // Fallback model
+      }
     }
 
     console.log('[AutomaticOrchestrator] Using model:', selectedModel);
 
     // Execute with EnhancedAgentOrchestrator
-    const response = await this.enhancedOrchestrator.chat({
-      agentId: selectedAgent.id,
-      message: query,
-      conversationHistory,
-      modelOverride: selectedModel,
-      userId,
-      conversationId,
-    });
+    let response: any;
+    try {
+      console.log('[AutomaticOrchestrator] Starting agent execution with:', selectedAgent.name);
+      response = await this.enhancedOrchestrator.chat({
+        agentId: selectedAgent.id,
+        message: query,
+        conversationHistory,
+        modelOverride: selectedModel,
+        userId,
+        conversationId,
+      });
+      console.log('[AutomaticOrchestrator] Agent execution completed successfully');
+    } catch (executionError) {
+      console.error('[AutomaticOrchestrator] Agent execution error:', executionError);
+      // Create a fallback response
+      response = {
+        content: `I apologize, but I encountered an error while processing your request: ${executionError.message}. Please try rephrasing your question or contact support if the issue persists.`,
+        confidence: 0.1,
+        confidenceLevel: 'very-low' as const,
+        confidenceRationale: 'Error occurred during agent execution',
+        citations: [],
+        toolCalls: [],
+        thinkingSteps: [{
+          step: 1,
+          description: 'Error occurred during processing',
+          status: 'error' as const,
+          timestamp: new Date().toISOString()
+        }],
+        evidenceSummary: {
+          totalSources: 0,
+          clinicalTrials: 0,
+          fdaApprovals: 0,
+          pubmedArticles: 0,
+          guidelines: 0,
+          internalKnowledge: 0
+        },
+        timestamp: new Date().toISOString()
+      };
+      console.log('[AutomaticOrchestrator] Using fallback response due to execution error');
+    }
 
     const executionTime = Date.now() - executionStart;
     const totalTime = Date.now() - startTime;
@@ -627,7 +693,7 @@ export class AutomaticAgentOrchestrator {
   ): Promise<Agent[]> {
     // Use optimized database query with composite indexes
     const { data: candidates, error } = await supabaseAdmin
-      .from('digital_health_agents')
+      .from('agents')
       .select(`
         id, name, display_name, description, capabilities, 
         knowledge_domains, tier, status, model, metadata
@@ -635,12 +701,25 @@ export class AutomaticAgentOrchestrator {
       .eq('status', 'active')
       .lte('tier', maxTier)
       .limit(maxCandidates)
-      .order('tier', { ascending: true })
-      .order('metadata->experience', { ascending: false });
+      .order('tier', { ascending: true });
 
     if (error) {
       console.error('[AutomaticOrchestrator] Database filtering error:', error);
-      throw new Error('Failed to filter candidate agents');
+      console.log('[AutomaticOrchestrator] Falling back to basic response generation');
+      
+      // Return a fallback response instead of throwing an error
+      return [{
+        id: 'fallback-agent',
+        name: 'AI Assistant',
+        display_name: 'AI Assistant',
+        description: 'General purpose AI assistant',
+        capabilities: ['General Assistance', 'Question Answering'],
+        knowledge_domains: ['General'],
+        tier: 1,
+        status: 'active',
+        model: 'gpt-4',
+        metadata: {}
+      }];
     }
 
     return candidates || [];

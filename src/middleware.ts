@@ -29,6 +29,11 @@ export async function middleware(request: NextRequest) {
     '/capabilities',
     '/prompts',
     '/profile',
+    // Test pages
+    '/test-simple',
+    '/test-orchestrator',
+    '/test-markdown',
+    '/test-preproduction',
     // API routes
     '/api/agents-crud',
     '/api/chat',
@@ -38,7 +43,10 @@ export async function middleware(request: NextRequest) {
     '/api/panel/orchestrate',
     '/api/admin/compliance/playbooks',
     '/api/organizational-structure',
-    '/api/migrate-memory'
+    '/api/migrate-memory',
+    '/api/knowledge/upload',
+    '/api/knowledge/process',
+    '/api/knowledge/documents'
   ];
 
   // Public API routes that don't require authentication

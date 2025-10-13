@@ -36,7 +36,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { modelSelector } from '@/lib/services/model-selector';
 import type { KnowledgeDomain } from '@/lib/services/model-selector';
-import { createClient } from '@/lib/supabase/client';
+import { supabase } from '@/lib/supabase/client';
 
 export default function KnowledgeDomainsPage() {
   const [domains, setDomains] = useState<KnowledgeDomain[]>([]);
@@ -47,7 +47,7 @@ export default function KnowledgeDomainsPage() {
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [selectedDomain, setSelectedDomain] = useState<KnowledgeDomain | null>(null);
 
-  const supabase = createClient();
+  // Use the singleton supabase client
 
   // Load domains
   useEffect(() => {
@@ -736,7 +736,7 @@ function CreateDomainDialog({
     chat_model: 'gpt-4-turbo-preview',
   });
   const [loading, setLoading] = useState(false);
-  const supabase = createClient();
+  // Use the singleton supabase client
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

@@ -22,7 +22,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import type { KnowledgeDomain } from '@/lib/services/model-selector';
 import { useAgentsStore } from '@/lib/stores/agents-store';
-import { createClient } from '@/lib/supabase/client';
+import { supabase } from '@/lib/supabase/client';
 import { cn } from '@/lib/utils';
 
 interface UploadFile {
@@ -45,7 +45,7 @@ interface KnowledgeUploaderProps {
 
 export function KnowledgeUploader({ onUploadComplete }: KnowledgeUploaderProps) {
   const { agents, loadAgents } = useAgentsStore();
-  const supabase = createClient();
+  // Use the singleton supabase client
   const [files, setFiles] = useState<UploadFile[]>([]);
   const [domains, setDomains] = useState<KnowledgeDomain[]>([]);
   const [dragActive, setDragActive] = useState(false);

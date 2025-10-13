@@ -1,6 +1,6 @@
 // LLM Provider Registry and Management Service
 import { databaseService } from '@/lib/database/database-service';
-import { createClient } from '@/lib/supabase/client';
+import { supabase } from '@/lib/supabase/client';
 import {
   LLMProvider,
   LLMProviderConfig,
@@ -32,11 +32,8 @@ export class LLMProviderService {
     this.initializeService();
   }
 
-  private getSupabaseClient(): ReturnType<typeof createClient> {
-    if (!this.supabase) {
-      this.supabase = createClient();
-    }
-    return this.supabase;
+  private getSupabaseClient() {
+    return supabase;
   }
 
   async initializeService(): Promise<void> {

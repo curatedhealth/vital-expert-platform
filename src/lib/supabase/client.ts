@@ -11,15 +11,21 @@ if (!supabaseUrl || !supabaseAnonKey) {
 
 // Create a function that returns a new Supabase client
 export const createClient = () => {
-  console.log('🌐 Supabase Client - Using Cloud Instance:', supabaseUrl);
-  return createSupabaseClient(supabaseUrl, supabaseAnonKey);
+  return createSupabaseClient(supabaseUrl, supabaseAnonKey, {
+    auth: {
+      autoRefreshToken: true,
+      persistSession: true,
+      detectSessionInUrl: true
+    }
+  });
 };
 
-// Export a lazy-loaded default instance for backward compatibility
+// Export a singleton instance to prevent multiple client warnings
 let _supabase: any = null;
 export const supabase = new Proxy({} as any, {
   get(target, prop) {
     if (!_supabase) {
+      console.log('🌐 Supabase Client - Using Cloud Instance:', supabaseUrl);
       _supabase = createClient();
     }
     return _supabase[prop];

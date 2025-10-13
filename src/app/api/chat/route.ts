@@ -51,11 +51,11 @@ export async function POST(request: NextRequest) {
         // Import the automatic orchestrator
         const { AutomaticAgentOrchestrator } = await import('@/features/chat/services/automatic-orchestrator');
         const orchestrator = new AutomaticAgentOrchestrator();
-        
-        // Create streaming response
-        const stream = new ReadableStream({
-          async start(controller) {
-            try {
+      
+      // Create streaming response
+      const stream = new ReadableStream({
+        async start(controller) {
+          try {
               // Send initial reasoning steps
               const initialReasoningSteps = [
                 '🔍 Analyzing your question and context...',
@@ -74,16 +74,27 @@ export async function POST(request: NextRequest) {
               
               // Use automatic orchestration
               console.log('🤖 Starting automatic orchestration...');
-              const result = await orchestrator.chat(message, chatHistory, {
-                userId,
-                conversationId: sessionId,
-                maxCandidates: 5,
-                minConfidence: 0.4
-              });
+              let result;
+              try {
+                result = await orchestrator.chat(message, chatHistory, {
+                  userId,
+                  conversationId: sessionId,
+                  maxCandidates: 5,
+                  minConfidence: 0.4
+                });
+              } catch (orchestratorError) {
+                console.error('❌ Orchestrator execution error:', orchestratorError);
+                controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify({
+                  type: 'error',
+                  content: 'Sorry, I encountered an error during orchestration. Please try again.'
+                })}\n\n`));
+                controller.close();
+                return;
+              }
               
               console.log('✅ Automatic orchestration result:', {
                 hasResponse: !!result.response,
-                responseLength: result.response?.length || 0,
+                responseType: typeof result.response,
                 selectedAgent: result.selectedAgent?.name,
                 hasReasoning: !!result.reasoning
               });
@@ -96,23 +107,42 @@ export async function POST(request: NextRequest) {
                 content: `✅ Selected ${result.selectedAgent.name} (${confidence}% confidence) - ${reasoningText}`
               })}\n\n`));
               
-              // Send the response content
-              controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify({
-                type: 'content',
-                content: result.response,
-                fullContent: result.response
-              })}\n\n`));
-              
-              // Send reasoning complete
-              controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify({
-                type: 'reasoning_done',
-                content: 'Automatic agent orchestration complete'
-              })}\n\n`));
+              // Handle ReadableStream response
+              if (result.response instanceof ReadableStream) {
+                console.log('📡 Processing ReadableStream response...');
+                
+                const reader = result.response.getReader();
+            let fullContent = '';
+            
+                try {
+                  while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    
+                    const chunk = new TextDecoder().decode(value);
+                    fullContent += chunk;
+                    
+                    // Send streaming content
+                    controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify({
+                      type: 'content',
+                      content: chunk,
+                      fullContent: fullContent
+                    })}\n\n`));
+                  }
+                } finally {
+                  reader.releaseLock();
+                }
+                
+                // Send reasoning complete
+                controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify({
+                  type: 'reasoning_done',
+                  content: 'Automatic agent orchestration complete'
+                })}\n\n`));
 
-              // Send final message
-              const finalData = JSON.stringify({
-                type: 'final',
-                content: result.response,
+                // Send final message
+                const finalData = JSON.stringify({
+                  type: 'final',
+                  content: fullContent,
                 metadata: {
                   agent: {
                     id: result.selectedAgent.id,
@@ -128,6 +158,43 @@ export async function POST(request: NextRequest) {
               });
               
               controller.enqueue(new TextEncoder().encode(`data: ${finalData}\n\n`));
+              } else {
+                // Fallback for non-streaming response
+                console.log('📄 Processing non-streaming response...');
+                
+                controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify({
+                  type: 'content',
+                  content: result.response || 'No response generated',
+                  fullContent: result.response || 'No response generated'
+                })}\n\n`));
+                
+                // Send reasoning complete
+                controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify({
+                  type: 'reasoning_done',
+                  content: 'Automatic agent orchestration complete'
+                })}\n\n`));
+
+                // Send final message
+                const finalData = JSON.stringify({
+                  type: 'final',
+                  content: result.response || 'No response generated',
+                  metadata: {
+                    agent: {
+                      id: result.selectedAgent.id,
+                      name: result.selectedAgent.name,
+                      businessFunction: result.selectedAgent.businessFunction || 'Expert'
+                    },
+                    sources: result.sources || [],
+                    citations: result.citations || [],
+                    followupQuestions: result.followupQuestions || [],
+                    processingTime: result.performance?.total || 1000,
+                    tokenUsage: result.tokenUsage || { promptTokens: 0, completionTokens: 0, totalTokens: 0 }
+                  }
+                });
+                
+                controller.enqueue(new TextEncoder().encode(`data: ${finalData}\n\n`));
+              }
+              
               controller.close();
             } catch (error) {
               console.error('❌ Automatic orchestration error:', error);
@@ -158,9 +225,196 @@ export async function POST(request: NextRequest) {
     }
 
     // Handle agent-specific response
-    console.log('🎯 Using provided agent:', agent.id);
+    console.log('🎯 Using provided agent:', JSON.stringify(agent, null, 2));
+    console.log('🎯 Agent ID:', agent.id);
+    console.log('🎯 Agent ID type:', typeof agent.id);
+    console.log('🎯 Agent ID length:', agent.id?.length);
+    console.log('🎯 Agent ID char codes:', agent.id?.split('').map((c: string) => c.charCodeAt(0)));
+    console.log('🎯 Is orchestrator?', agent.id === 'orchestrator');
+    console.log('🎯 Strict equality check:', agent.id === 'orchestrator');
+    console.log('🎯 Trimmed equality check:', agent.id?.trim() === 'orchestrator');
     
-    // Get agent details from database
+    // Special handling for orchestrator agent (virtual agent)
+    if (agent.id === 'orchestrator' || agent.id?.trim() === 'orchestrator' || agent.name === 'AI Orchestrator') {
+      console.log('🤖 Using orchestrator agent - redirecting to automatic orchestration');
+      // Redirect to automatic orchestration for orchestrator agent
+      try {
+        const { AutomaticAgentOrchestrator } = await import('@/features/chat/services/automatic-orchestrator');
+        const orchestrator = new AutomaticAgentOrchestrator();
+        
+        // Create streaming response
+        const stream = new ReadableStream({
+          async start(controller) {
+            try {
+              // Send initial reasoning steps
+              const initialReasoningSteps = [
+                '🔍 Analyzing your question and context...',
+                '🧠 Detecting relevant knowledge domains...',
+                '⚡ Selecting the most appropriate expert agent...',
+                '📊 Preparing specialized response...'
+              ];
+              
+              for (let i = 0; i < initialReasoningSteps.length; i++) {
+                controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify({
+                  type: 'reasoning',
+                  content: initialReasoningSteps[i]
+                })}\n\n`));
+                await new Promise(resolve => setTimeout(resolve, 300));
+              }
+              
+              // Use automatic orchestration
+              let result;
+              try {
+                result = await orchestrator.chat(message, chatHistory, {
+                  userId,
+                  conversationId: sessionId,
+                  maxCandidates: 5,
+                  minConfidence: 0.4
+                });
+              } catch (orchestratorError) {
+                console.error('❌ Orchestrator execution error:', orchestratorError);
+                controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify({
+                  type: 'error',
+                  content: 'Sorry, I encountered an error during orchestration. Please try again.'
+                })}\n\n`));
+                controller.close();
+                return;
+              }
+              
+              console.log('🤖 Orchestrator result structure:', {
+                hasResponse: !!result.response,
+                responseType: typeof result.response,
+                isReadableStream: result.response instanceof ReadableStream,
+                selectedAgent: result.selectedAgent?.name,
+                hasReasoning: !!result.reasoning,
+                fullResult: JSON.stringify(result, null, 2)
+              });
+              
+              // Send agent selection reasoning
+              const confidence = result.rankedAgents?.[0]?.confidence || 85;
+              const reasoningText = result.reasoning || 'Selected based on query analysis';
+              controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify({
+                type: 'reasoning',
+                content: `✅ Selected ${result.selectedAgent.name} (${confidence}% confidence) - ${reasoningText}`
+              })}\n\n`));
+              
+              // Handle ReadableStream response
+              if (result.response instanceof ReadableStream) {
+                console.log('📡 Processing ReadableStream response...');
+                
+                const reader = result.response.getReader();
+                let fullContent = '';
+                
+                try {
+                  while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    
+                    const chunk = new TextDecoder().decode(value);
+                    fullContent += chunk;
+                    
+                    // Send streaming content
+                    controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify({
+                      type: 'content',
+                      content: chunk,
+                      fullContent: fullContent
+                    })}\n\n`));
+                  }
+                } finally {
+                  reader.releaseLock();
+                }
+                
+                // Send reasoning complete
+                controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify({
+                  type: 'reasoning_done',
+                  content: 'Automatic agent orchestration complete'
+                })}\n\n`));
+
+            // Send final message
+            const finalData = JSON.stringify({
+              type: 'final',
+              content: fullContent,
+              metadata: {
+                agent: {
+                    id: result.selectedAgent.id,
+                    name: result.selectedAgent.name,
+                    businessFunction: result.selectedAgent.businessFunction || 'Expert'
+                  },
+                  sources: result.sources || [],
+                  citations: result.citations || [],
+                  followupQuestions: result.followupQuestions || [],
+                  processingTime: result.performance?.total || 1000,
+                  tokenUsage: result.tokenUsage || { promptTokens: 0, completionTokens: 0, totalTokens: 0 }
+              }
+            });
+            
+            controller.enqueue(new TextEncoder().encode(`data: ${finalData}\n\n`));
+              } else {
+                // Fallback for non-streaming response
+                console.log('📄 Processing non-streaming response...');
+                
+                controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify({
+                  type: 'content',
+                  content: result.response || 'No response generated',
+                  fullContent: result.response || 'No response generated'
+                })}\n\n`));
+                
+                // Send reasoning complete
+                controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify({
+                  type: 'reasoning_done',
+                  content: 'Automatic agent orchestration complete'
+                })}\n\n`));
+
+                // Send final message
+                const finalData = JSON.stringify({
+                  type: 'final',
+                  content: result.response || 'No response generated',
+                  metadata: {
+                    agent: {
+                      id: result.selectedAgent.id,
+                      name: result.selectedAgent.name,
+                      businessFunction: result.selectedAgent.businessFunction || 'Expert'
+                    },
+                    sources: result.sources || [],
+                    citations: result.citations || [],
+                    followupQuestions: result.followupQuestions || [],
+                    processingTime: result.performance?.total || 1000,
+                    tokenUsage: result.tokenUsage || { promptTokens: 0, completionTokens: 0, totalTokens: 0 }
+                  }
+                });
+                
+                controller.enqueue(new TextEncoder().encode(`data: ${finalData}\n\n`));
+              }
+              
+            controller.close();
+          } catch (error) {
+              console.error('❌ Orchestrator error:', error);
+            controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify({
+              type: 'error',
+                content: 'Sorry, I encountered an error during orchestration. Please try again.'
+            })}\n\n`));
+            controller.close();
+          }
+        }
+      });
+
+      return new Response(stream, {
+        headers: {
+          'Content-Type': 'text/event-stream',
+          'Cache-Control': 'no-cache',
+          'Connection': 'keep-alive',
+        },
+      });
+      } catch (importError) {
+        console.error('Failed to import automatic orchestrator:', importError);
+        return NextResponse.json(
+          { error: 'Orchestrator unavailable. Please try again.' },
+          { status: 500 }
+        );
+      }
+    }
+    
+    // Get agent details from database for regular agents
     const { data: agentData, error: agentError } = await supabase
       .from('agents')
       .select('*')
@@ -186,7 +440,7 @@ export async function POST(request: NextRequest) {
                 role: 'system',
                 content: agentData.system_prompt || `You are ${agentData.display_name}, a ${agentData.business_function} expert. ${agentData.description || 'Provide expert guidance in your field.'}`
               },
-              ...chatHistory.map(msg => ({
+              ...chatHistory.map((msg: any) => ({
                 role: msg.role as 'user' | 'assistant',
                 content: msg.content
               })),

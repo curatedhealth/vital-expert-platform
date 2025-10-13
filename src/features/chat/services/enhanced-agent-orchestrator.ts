@@ -93,11 +93,18 @@ class EnhancedAgentOrchestrator {
     const { agentId, message, conversationHistory, conversationId, userId, onThinkingUpdate } = params;
 
     // Load agent-specific tools from database
-    const tools = await dynamicToolLoader.loadAgentTools(agentId);
+    let tools;
+    try {
+      tools = await dynamicToolLoader.loadAgentTools(agentId);
 
-    if (tools.length === 0) {
-      console.warn(`No tools assigned to agent ${agentId}, loading all active tools`);
-      tools.push(...await dynamicToolLoader.loadAllActiveTools());
+      if (tools.length === 0) {
+        console.warn(`No tools assigned to agent ${agentId}, loading all active tools`);
+        tools.push(...await dynamicToolLoader.loadAllActiveTools());
+      }
+    } catch (error) {
+      console.error('[EnhancedAgentOrchestrator] Tool loading error:', error);
+      // Continue with empty tools array
+      tools = [];
     }
 
     const toolCalls: ToolCall[] = [];
@@ -177,11 +184,41 @@ When you don't know something, say so clearly and suggest how to find the answer
 
     const startTime = Date.now();
 
-    // Execute agent
-    const result = await agentExecutor.invoke({
-      input: message,
-      chat_history: conversationHistory
-    });
+    // Execute agent with error handling
+    let result;
+    try {
+      result = await agentExecutor.invoke({
+        input: message,
+        chat_history: conversationHistory
+      });
+    } catch (error) {
+      console.error('[EnhancedAgentOrchestrator] Agent execution error:', error);
+      
+      // Return a fallback response instead of throwing
+      return {
+        content: `I apologize, but I encountered an error while processing your request: ${error.message}. Please try rephrasing your question or contact support if the issue persists.`,
+        confidence: 0.1,
+        confidenceLevel: 'very-low' as const,
+        confidenceRationale: 'Error occurred during agent execution',
+        citations: [],
+        toolCalls: [],
+        thinkingSteps: [{
+          step: 1,
+          description: 'Error occurred during processing',
+          status: 'error' as const,
+          timestamp: new Date().toISOString()
+        }],
+        evidenceSummary: {
+          totalSources: 0,
+          clinicalTrials: 0,
+          fdaApprovals: 0,
+          pubmedArticles: 0,
+          guidelines: 0,
+          internalKnowledge: 0
+        },
+        timestamp: new Date().toISOString()
+      };
+    }
 
     const executionTime = Date.now() - startTime;
 

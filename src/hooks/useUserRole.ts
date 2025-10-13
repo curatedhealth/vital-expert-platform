@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 
-import { createClient } from '@/lib/supabase/client';
+import { supabase } from '@/lib/supabase/client';
 
 export type UserRole = 'super_admin' | 'admin' | 'user';
 
@@ -17,7 +17,7 @@ export interface UserProfile {
 export function useUserRole() {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
-  const supabase = createClient();
+  // Use the singleton supabase client
 
   useEffect(() => {
     loadUserProfile();

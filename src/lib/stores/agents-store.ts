@@ -248,35 +248,8 @@ export const useAgentsStore = create<{
           agents: [...state.agents, userCopy]
         }));
 
-        // Also add to chat store so it can be found by getLibraryAgents
-        try {
-          console.log('🔄 Adding user copy to chat store:', userCopy.id);
-          const { useChatStore } = await import('@/lib/stores/chat-store');
-          const { addAgentToChatStore } = useChatStore.getState();
-          
-          // Transform to chat store format
-          const chatAgent = {
-            id: userCopy.id,
-            name: userCopy.display_name,
-            description: userCopy.description,
-            avatar: userCopy.avatar || '🤖',
-            businessFunction: userCopy.business_function || 'General',
-            category: `Tier ${userCopy.tier}`,
-            capabilities: userCopy.capabilities || [],
-            specialties: userCopy.specializations || [],
-            tier: `Tier ${userCopy.tier}`,
-            isActive: userCopy.status === 'active',
-            ragEnabled: userCopy.rag_enabled || true,
-            isCustom: true,
-            metadata: {}
-          };
-          
-          console.log('📝 Chat agent to add:', chatAgent);
-          addAgentToChatStore(chatAgent);
-          console.log('✅ User copy added to chat store successfully');
-        } catch (error) {
-          console.error('❌ Failed to add user copy to chat store:', error);
-        }
+        // Note: Chat store will automatically sync with global agents store
+        console.log('✅ User copy created, chat store will sync automatically');
 
         return userCopy;
       },

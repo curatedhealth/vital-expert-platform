@@ -39,7 +39,12 @@
     "src/auth.types.ts",
     "src/orchestration.types.ts",
     "src/digital-health-agent.types.ts",
-    ".next/types/**/*.ts"
+    ".next/types/**/*.ts",
+    "src/features/knowledge/**/*",
+    "src/features/chat/services/supabase-rag-service.ts",
+    "src/features/chat/services/enhanced-langchain-service.ts",
+    "src/features/chat/services/langchain-service.ts",
+    "src/app/api/knowledge/**/*"
   ],
   "exclude": [
     "node_modules",

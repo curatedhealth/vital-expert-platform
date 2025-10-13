@@ -4,7 +4,7 @@
  * Manages tools and their assignments to agents via Supabase database
  */
 
-import { createClient } from '@/shared/utils/supabase/client';
+import { supabase } from '@/lib/supabase/client';
 
 import { getAllExpertTools } from './expert-tools';
 
@@ -98,10 +98,7 @@ class ToolRegistryService {
   private supabase: ReturnType<typeof createClient> | null = null;
 
   private getSupabaseClient() {
-    if (!this.supabase) {
-      this.supabase = createClient();
-    }
-    return this.supabase;
+    return supabase;
   }
 
   // ============================================================================

@@ -4,7 +4,7 @@
  * Based on LangGraph Implementation Guide for Pharma
  */
 
-import { createClient } from '@/lib/supabase/client';
+import { supabase } from '@/lib/supabase/client';
 
 export interface EvidenceSource {
   id: string;
@@ -33,10 +33,7 @@ export interface EvidencePack {
 export class EvidencePackBuilder {
 
   private getSupabaseClient() {
-    if (!this.supabase) {
-      this.supabase = createClient();
-    }
-    return this.supabase;
+    return supabase;
   }
   private supabase: ReturnType<typeof createClient> | null = null;
 

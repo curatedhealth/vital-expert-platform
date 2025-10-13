@@ -3,6 +3,15 @@ import { supabase } from '../../../lib/supabase/client';
 
 export async function POST(request: NextRequest) {
   try {
+    // Debug environment variables
+    console.log('🔍 Environment variables check:', {
+      hasSupabaseUrl: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
+      hasSupabaseKey: !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+      supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL ? 'SET' : 'MISSING',
+      supabaseKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? 'SET' : 'MISSING',
+      nodeEnv: process.env.NODE_ENV
+    });
+    
     const body = await request.json();
     const { 
       message, 
@@ -74,8 +83,36 @@ export async function POST(request: NextRequest) {
     try {
       // Get all agents from database (try different approaches)
       console.log('🔍 Querying agents from database...');
+      console.log('🔍 Supabase client check:', {
+        hasSupabase: !!supabase,
+        supabaseType: typeof supabase,
+        supabaseMethods: Object.getOwnPropertyNames(supabase)
+      });
+      
+      // Test basic connection first
+      console.log('🔍 Testing basic Supabase connection...');
+      const { data: testData, error: testError } = await supabase
+        .from('agents')
+        .select('id')
+        .limit(1);
+      
+      console.log('🔍 Basic connection test:', {
+        testData,
+        testError,
+        hasTestData: !!testData,
+        testDataLength: testData?.length || 0
+      });
+      
+      if (testError) {
+        console.error('❌ Basic connection failed:', testError);
+        return NextResponse.json(
+          { error: `Database connection failed: ${testError.message}` },
+          { status: 500 }
+        );
+      }
       
       // First try: get all agents without any filters
+      console.log('🔍 Querying all agents...');
       let { data: agents, error: agentsError } = await supabase
         .from('agents')
         .select('*');
@@ -83,6 +120,10 @@ export async function POST(request: NextRequest) {
       console.log('📊 All agents query result:', { 
         agentsCount: agents?.length || 0, 
         error: agentsError,
+        errorMessage: agentsError?.message,
+        errorCode: agentsError?.code,
+        errorDetails: agentsError?.details,
+        errorHint: agentsError?.hint,
         sampleAgents: agents?.slice(0, 3).map(a => ({ 
           id: a.id, 
           name: a.name, 

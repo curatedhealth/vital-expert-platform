@@ -490,13 +490,27 @@ const _useChatStore = create<ChatStore>()(
                       contentPreview: fullContent?.substring(0, 100) + '...'
                     });
                     
-                    set((state) => ({
-                      messages: state.messages.map((msg) =>
+                    set((state) => {
+                      const updatedMessages = state.messages.map((msg) =>
                         msg.id === assistantMessage.id
                           ? { ...msg, content: fullContent || '', isLoading: true }
                           : msg
-                      ),
-                    }));
+                      );
+                      
+                      console.log('🔄 [Store Update] Updating messages in store:', {
+                        messageId: assistantMessage.id,
+                        totalMessages: updatedMessages.length,
+                        updatedMessage: updatedMessages.find(msg => msg.id === assistantMessage.id),
+                        allMessages: updatedMessages.map(msg => ({
+                          id: msg.id,
+                          role: msg.role,
+                          contentLength: msg.content?.length || 0,
+                          isLoading: msg.isLoading
+                        }))
+                      });
+                      
+                      return { messages: updatedMessages };
+                    });
                   } else if (data.type === 'final') {
                     // Handle final message - set isLoading to false
                     console.log('✅ [streaming] Received final message:', {

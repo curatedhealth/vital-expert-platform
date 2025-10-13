@@ -275,15 +275,26 @@ function ChatPageContent() {
 
 
                 {/* Messages Area */}
-                {messages.length > 0 ? (
-                  <div className="flex-1 p-6">
-                    <ChatMessages
-                      messages={messages}
-                      liveReasoning={liveReasoning}
-                      isReasoningActive={isReasoningActive}
-                    />
-                  </div>
-                ) : (
+                {(() => {
+                  console.log('🔍 [ChatPage] Messages condition check:', {
+                    messagesLength: messages.length,
+                    messages: messages.map(msg => ({
+                      id: msg.id,
+                      role: msg.role,
+                      contentLength: msg.content?.length || 0,
+                      isLoading: msg.isLoading
+                    }))
+                  });
+                  
+                  return messages.length > 0 ? (
+                    <div className="flex-1 p-6">
+                      <ChatMessages
+                        messages={messages}
+                        liveReasoning={liveReasoning}
+                        isReasoningActive={isReasoningActive}
+                      />
+                    </div>
+                  ) : (
                   <div className="flex flex-col items-center justify-center h-full px-6">
                     <div className="text-center mb-8">
                       <h1 className="text-3xl font-normal text-gray-900 mb-4">

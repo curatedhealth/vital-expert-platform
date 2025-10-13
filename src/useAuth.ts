@@ -55,7 +55,7 @@ export const _useAuthState = () => {
   );
 
   // Permission mappings (should match the backend)
-  const rolePermissions = new Map<UserRole, Set<string>>([
+  const rolePermissions = useMemo(() => new Map<UserRole, Set<string>>([
     [UserRole.SUPER_ADMIN, new Set([
       'llm_providers:create', 'llm_providers:read', 'llm_providers:update', 'llm_providers:delete', 'llm_providers:manage',
       'agents:create', 'agents:read', 'agents:update', 'agents:delete', 'agents:manage',
@@ -91,7 +91,7 @@ export const _useAuthState = () => {
       'workflows:read',
       'analytics:read'
     ])]
-  ]);
+  ]), []);
 
   const fetchUserProfile = useCallback(async (user: User): Promise<UserProfile | null> => {
     try {

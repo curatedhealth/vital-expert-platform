@@ -28,6 +28,8 @@ interface AgentSelectionProps {
 }
 
 export function AgentSelection({ agents, onSelect, isLoading = false, className }: AgentSelectionProps) {
+  console.log('🔍 AgentSelection rendered with isLoading:', isLoading, 'agents count:', agents.length);
+  
   const getConfidenceColor = (confidence: string) => {
     switch (confidence) {
       case 'high': return 'bg-green-100 text-green-800 border-green-200';
@@ -163,7 +165,10 @@ export function AgentSelection({ agents, onSelect, isLoading = false, className 
                   }
                 }}
               >
-                {isLoading ? 'Processing...' : 'Select This Agent'}
+                {(() => {
+                  console.log('🔍 Button text logic - isLoading:', isLoading, 'agent:', agent.name);
+                  return isLoading ? 'Processing...' : 'Select This Agent';
+                })()}
               </Button>
             </div>
           </Card>

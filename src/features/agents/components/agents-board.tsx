@@ -793,7 +793,7 @@ export function AgentsBoard({
                     })()}
 
                     {/* Capabilities Preview */}
-                    {agent.capabilities && agent.capabilities.length > 0 && (
+                    {Array.isArray(agent.capabilities) && agent.capabilities.length > 0 && (
                       <div className="flex flex-wrap gap-1">
                         {agent.capabilities.slice(0, 2).map((capability) => (
                           <Badge key={capability} variant="outline" className="text-[10px] px-1.5 py-0.5 h-5 bg-gray-50 text-gray-700 border-gray-200">

@@ -119,7 +119,7 @@ export function AgentSelection({ agents, onSelect, isLoading = false, className 
 
               {/* Capabilities - Ultra Compact */}
               <div className="flex flex-wrap gap-0.5">
-                {agent.capabilities.slice(0, 1).map((capability, capIndex) => (
+                {Array.isArray(agent.capabilities) && agent.capabilities.slice(0, 1).map((capability, capIndex) => (
                   <Badge
                     key={capIndex}
                     variant="secondary"

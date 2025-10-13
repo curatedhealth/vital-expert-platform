@@ -22,7 +22,6 @@ export async function GET() {
         color,
         metadata
       `)
-      .eq('status', 'active')
       .order('tier', { ascending: true });
 
     if (error) {
@@ -35,10 +34,29 @@ export async function GET() {
 
     console.log(`✅ [Agents CRUD] Successfully fetched ${agents?.length || 0} agents`);
     
+    // Normalize capabilities for all agents
+    const normalizedAgents = (agents || []).map(agent => {
+      let normalizedCapabilities = [];
+      if (Array.isArray(agent.capabilities)) {
+        normalizedCapabilities = agent.capabilities;
+      } else if (typeof agent.capabilities === 'string') {
+        // Parse string format like "{cap1,cap2,cap3}" or "cap1,cap2,cap3"
+        const cleanString = agent.capabilities.replace(/[{}]/g, '');
+        normalizedCapabilities = cleanString.split(',').map(cap => cap.trim()).filter(cap => cap.length > 0);
+      } else {
+        normalizedCapabilities = ['General assistance'];
+      }
+
+      return {
+        ...agent,
+        capabilities: normalizedCapabilities
+      };
+    });
+    
     return NextResponse.json({
       success: true,
-      agents: agents || [],
-      count: agents?.length || 0
+      agents: normalizedAgents,
+      count: normalizedAgents.length
     });
   } catch (error) {
     console.error('❌ [Agents CRUD] Unexpected error:', error);

@@ -173,19 +173,35 @@ export async function POST(request: NextRequest) {
             
             // Create agent suggestions from real database agents (limit to 10 for UI performance)
             console.log('🤖 Creating agent suggestions from database...');
-            const suggestions = agents.slice(0, 10).map((agent, index) => ({
-              id: agent.id,
-              name: agent.name,
-              display_name: agent.display_name || agent.name,
-              description: agent.description || agent.system_prompt || 'Expert agent',
-              capabilities: agent.capabilities || agent.tools || ['General assistance'],
-              score: 0.7 + (index * 0.05), // Simple scoring
-              confidence: 'medium' as const,
-              reasoning: `Available ${agent.business_function || agent.tier || 'General'} expert`,
-              color: agent.color || 'text-blue-600',
-              avatar: agent.avatar || '🤖',
-              business_function: agent.business_function || 'General'
-            }));
+            const suggestions = agents.slice(0, 10).map((agent, index) => {
+              // Normalize capabilities to always be an array
+              let normalizedCapabilities = [];
+              if (Array.isArray(agent.capabilities)) {
+                normalizedCapabilities = agent.capabilities;
+              } else if (typeof agent.capabilities === 'string') {
+                // Parse string format like "{cap1,cap2,cap3}" or "cap1,cap2,cap3"
+                const cleanString = agent.capabilities.replace(/[{}]/g, '');
+                normalizedCapabilities = cleanString.split(',').map(cap => cap.trim()).filter(cap => cap.length > 0);
+              } else if (agent.tools && typeof agent.tools === 'object') {
+                normalizedCapabilities = Object.keys(agent.tools).filter(key => agent.tools[key] === true);
+              } else {
+                normalizedCapabilities = ['General assistance'];
+              }
+
+              return {
+                id: agent.id,
+                name: agent.name,
+                display_name: agent.display_name || agent.name,
+                description: agent.description || agent.system_prompt || 'Expert agent',
+                capabilities: normalizedCapabilities,
+                score: 0.7 + (index * 0.05), // Simple scoring
+                confidence: 'medium' as const,
+                reasoning: `Available ${agent.business_function || agent.tier || 'General'} expert`,
+                color: agent.color || 'text-blue-600',
+                avatar: agent.avatar || '🤖',
+                business_function: agent.business_function || 'General'
+              };
+            });
             
             console.log('✅ Agent suggestions created:', suggestions.length);
             

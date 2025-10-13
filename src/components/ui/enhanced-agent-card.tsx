@@ -215,7 +215,7 @@ export function EnhancedAgentCard({
             )}
 
             {/* Capabilities/Tags */}
-            {agent.capabilities && agent.capabilities.length > 0 && (
+            {Array.isArray(agent.capabilities) && agent.capabilities.length > 0 && (
               <div className="mt-2 flex flex-wrap gap-1">
                 {agent.capabilities.slice(0, 3).map((capability, index) => (
                   <Badge

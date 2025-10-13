@@ -42,6 +42,7 @@ export function ChatMessages({ messages, liveReasoning, isReasoningActive }: Cha
     regenerateResponse, 
     editMessage, 
     setSelectedAgent, 
+    sendMessage,
     setInteractionMode,
     suggestedAgents,
     showAgentSelection,

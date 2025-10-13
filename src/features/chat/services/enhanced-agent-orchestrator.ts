@@ -22,9 +22,9 @@ interface AgentResponse {
 import { AgentExecutor, createOpenAIFunctionsAgent } from 'langchain/agents';
 import { ChatPromptTemplate, MessagesPlaceholder } from '@langchain/core/prompts';
 
-import { dynamicToolLoader } from '@/lib/services/dynamic-tool-loader';
-import type { ToolCall } from '@/lib/services/expert-tools';
-import { toolRegistryService, type ToolUsageLog } from '@/lib/services/tool-registry-service';
+import { dynamicToolLoader } from '../../../lib/services/dynamic-tool-loader';
+import type { ToolCall } from '../../../lib/services/expert-tools';
+import { toolRegistryService, type ToolUsageLog } from '../../../lib/services/tool-registry-service';
 
 export interface Citation {
   type: 'clinical-trial' | 'fda-approval' | 'pubmed' | 'ich-guideline' | 'iso-standard' | 'dime-resource' | 'ichom-set' | 'web-source' | 'knowledge-base';

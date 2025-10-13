@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
       
       try {
         // Import the automatic orchestrator
-        const { AutomaticAgentOrchestrator } = await import('@/features/chat/services/automatic-orchestrator');
+        const { AutomaticAgentOrchestrator } = await import('../../../features/chat/services/automatic-orchestrator');
         const orchestrator = new AutomaticAgentOrchestrator();
       
       // Create streaming response
@@ -153,6 +153,11 @@ export async function POST(request: NextRequest) {
         });
       } catch (importError) {
         console.error('Failed to import automatic orchestrator:', importError);
+        console.error('Import error details:', {
+          message: importError instanceof Error ? importError.message : String(importError),
+          stack: importError instanceof Error ? importError.stack : undefined,
+          name: importError instanceof Error ? importError.name : undefined
+        });
         // Fallback to basic OpenAI response
         return NextResponse.json(
           { error: 'Automatic orchestration unavailable. Please select an agent manually.' },
@@ -178,7 +183,7 @@ export async function POST(request: NextRequest) {
       console.log('🤖 Using orchestrator agent - redirecting to automatic orchestration');
       // Redirect to automatic orchestration for orchestrator agent
       try {
-        const { AutomaticAgentOrchestrator } = await import('@/features/chat/services/automatic-orchestrator');
+        const { AutomaticAgentOrchestrator } = await import('../../../features/chat/services/automatic-orchestrator');
         const orchestrator = new AutomaticAgentOrchestrator();
         
         // Create streaming response

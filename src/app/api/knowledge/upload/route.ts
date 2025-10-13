@@ -2,8 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { OpenAI } from 'openai';
 import { RecursiveCharacterTextSplitter } from 'langchain/text_splitter';
-import pdf from 'pdf-parse';
-import mammoth from 'mammoth';
+// Dynamic imports to avoid test file issues in production
+// import pdf from 'pdf-parse';
+// import mammoth from 'mammoth';
 
 // Initialize Supabase with service role key (server-side only)
 const supabase = createClient(
@@ -102,11 +103,23 @@ export async function POST(request: NextRequest) {
         const buffer = Buffer.from(await file.arrayBuffer());
 
         if (file.type === 'application/pdf') {
-          const pdfData = await pdf(buffer);
-          textContent = pdfData.text;
+          try {
+            const pdf = (await import('pdf-parse')).default;
+            const pdfData = await pdf(buffer);
+            textContent = pdfData.text;
+          } catch (pdfError) {
+            console.error(`PDF parsing error for ${file.name}:`, pdfError);
+            throw new Error(`Failed to parse PDF file: ${pdfError instanceof Error ? pdfError.message : 'Unknown error'}`);
+          }
         } else if (file.type.includes('wordprocessingml') || file.type === 'application/msword') {
-          const result = await mammoth.extractRawText({ buffer });
-          textContent = result.value;
+          try {
+            const mammoth = (await import('mammoth')).default;
+            const result = await mammoth.extractRawText({ buffer });
+            textContent = result.value;
+          } catch (mammothError) {
+            console.error(`Word document parsing error for ${file.name}:`, mammothError);
+            throw new Error(`Failed to parse Word document: ${mammothError instanceof Error ? mammothError.message : 'Unknown error'}`);
+          }
         } else if (file.type === 'text/plain' || file.type === 'text/csv') {
           textContent = buffer.toString('utf-8');
         } else {

@@ -477,11 +477,11 @@ const _useChatStore = create<ChatStore>()(
               if (line.startsWith('data: ')) {
                 try {
                   const jsonString = line.slice(6).trim();
-                  if (!jsonString) continue; // Skip empty data lines
+                  if (!jsonString || typeof jsonString !== 'string') continue; // Skip empty data lines or non-strings
                   
                   console.log('🔍 [SSE] Raw JSON string:', jsonString);
                   console.log('🔍 [SSE] JSON string length:', jsonString.length);
-                  console.log('🔍 [SSE] JSON string preview:', jsonString.substring(0, 100) + '...');
+                  console.log('🔍 [SSE] JSON string preview:', typeof jsonString === 'string' ? jsonString.substring(0, 100) + '...' : String(jsonString).substring(0, 100) + '...');
                   
                   const data = JSON.parse(jsonString);
                   
@@ -546,10 +546,19 @@ const _useChatStore = create<ChatStore>()(
                     // Handle final message - set isLoading to false
                     console.log('✅ [streaming] Received final message:', {
                       length: data.content?.length || 0,
-                      assistantMsgId: assistantMessage.id
+                      assistantMsgId: assistantMessage.id,
+                      contentType: typeof data.content,
+                      contentKeys: data.content ? Object.keys(data.content) : []
                     });
                     
-                    fullContent = data.content || fullContent;
+                    // Handle nested content structure
+                    if (data.content && typeof data.content === 'object' && data.content.content) {
+                      fullContent = data.content.content;
+                    } else if (typeof data.content === 'string') {
+                      fullContent = data.content;
+                    } else {
+                      fullContent = fullContent; // Keep existing content
+                    }
                     
                     // Update message with final content and stop loading
                     console.log('🏁 [final] Updating message with final content:', {

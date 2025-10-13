@@ -28,6 +28,9 @@ interface AgentSelectionProps {
 }
 
 export function AgentSelection({ agents, onSelect, isLoading = false, className }: AgentSelectionProps) {
+  // Safety check for agents array
+  const safeAgents = Array.isArray(agents) ? agents : [];
+  
   const getConfidenceColor = (confidence: string) => {
     switch (confidence) {
       case 'high': return 'bg-green-100 text-green-800 border-green-200';
@@ -54,8 +57,13 @@ export function AgentSelection({ agents, onSelect, isLoading = false, className 
         </p>
       </div>
 
-      <div className="grid gap-3 md:grid-cols-1 lg:grid-cols-3">
-        {agents.map((agent, index) => (
+      {safeAgents.length === 0 ? (
+        <div className="text-center py-8">
+          <p className="text-gray-500">No agents available at the moment.</p>
+        </div>
+      ) : (
+        <div className="grid gap-3 md:grid-cols-1 lg:grid-cols-3">
+          {safeAgents.map((agent, index) => (
           <Card
             key={agent.id}
             className={cn(
@@ -155,7 +163,8 @@ export function AgentSelection({ agents, onSelect, isLoading = false, className 
             </div>
           </Card>
         ))}
-      </div>
+        </div>
+      )}
 
       {isLoading && (
         <div className="text-center py-4">

@@ -1337,23 +1337,23 @@ const _useChatStore = create<ChatStore>()(
         }
         return persistedState;
       },
-      onRehydrateStorage: () => (state) => {
+      onRehydrateStorage: () => (state, store) => {
         // Automatically load agents from database after rehydration
-        if (state) {
+        if (state && store) {
           // Load agents from database
-          state.loadAgentsFromDatabase().then(() => {
+          store.loadAgentsFromDatabase().then(() => {
             // After loading agents, initialize library if empty
-            const currentState = state.getState();
+            const currentState = store.getState();
             const { agents, libraryAgents } = currentState;
             if (libraryAgents.length === 0 && agents.length > 0) {
               console.log('📚 Initializing library with first 5 agents');
               const firstFiveAgentIds = agents.slice(0, 5).map(agent => agent.id);
-              state.setState({ libraryAgents: firstFiveAgentIds });
+              store.setState({ libraryAgents: firstFiveAgentIds });
             }
           }).catch((error) => {
             console.error('Failed to load agents on rehydration:', error);
             // Set empty state to prevent errors
-            state.setState({ 
+            store.setState({ 
               agents: [], 
               selectedAgent: null, 
               error: 'Failed to load agents from database' 

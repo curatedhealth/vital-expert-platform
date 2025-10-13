@@ -5,7 +5,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "npm ci --silent && next build",
+    "build": "next build",
     "build:preprod": "node scripts/preprod-build.js build",
     "vercel-build": "node scripts/preprod-build.js build",
     "start": "next start",

@@ -907,6 +907,12 @@ export class AutomaticAgentOrchestrator {
     maxTier: number, 
     maxCandidates: number
   ): Promise<Agent[]> {
+    console.log('[AutomaticOrchestrator] Starting database query with params:', {
+      maxTier,
+      maxCandidates,
+      supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL
+    });
+
     // Use optimized database query with composite indexes
     const { data: candidates, error } = await supabaseAdmin
       .from('agents')
@@ -918,6 +924,12 @@ export class AutomaticAgentOrchestrator {
       .lte('tier', maxTier)
       .limit(maxCandidates)
       .order('tier', { ascending: true });
+
+    console.log('[AutomaticOrchestrator] Database query result:', {
+      dataLength: candidates?.length || 0,
+      error: error?.message || 'none',
+      candidates: candidates?.map(c => ({ id: c.id, name: c.name, status: c.status })) || []
+    });
 
     if (error) {
       console.error('[AutomaticOrchestrator] Database filtering error:', error);
@@ -938,7 +950,23 @@ export class AutomaticAgentOrchestrator {
       }];
     }
 
-    return candidates || [];
+    if (!candidates || candidates.length === 0) {
+      console.warn('[AutomaticOrchestrator] No agents found in database, using fallback');
+      return [{
+        id: 'fallback-agent',
+        name: 'AI Assistant',
+        display_name: 'AI Assistant',
+        description: 'General purpose AI assistant',
+        capabilities: ['General Assistance', 'Question Answering'],
+        knowledge_domains: ['General'],
+        tier: 1,
+        status: 'active',
+        model: 'gpt-4',
+        metadata: {}
+      }];
+    }
+
+    return candidates;
   }
 
   /**

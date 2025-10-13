@@ -52,7 +52,8 @@ export async function middleware(request: NextRequest) {
     '/api/healthcare-metrics',
     '/api/agent-metrics',
     '/api/rag-metrics',
-    '/api/security-metrics'
+    '/api/security-metrics',
+    '/api/admin/populate-agents'
   ];
 
   // Public API routes that don't require authentication

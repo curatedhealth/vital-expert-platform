@@ -5,7 +5,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "npm ci --silent && next build",
     "build:preprod": "node scripts/preprod-build.js build",
     "vercel-build": "node scripts/preprod-build.js build",
     "start": "next start",
@@ -170,6 +170,10 @@
   },
   "resolutions": {
     "prismjs": ">=1.30.0"
+  },
+  "overrides": {
+    "rimraf": "^5.0.0",
+    "glob": "^11.0.0"
   },
   "devDependencies": {
     "@cypress/code-coverage": "^3.14.6",

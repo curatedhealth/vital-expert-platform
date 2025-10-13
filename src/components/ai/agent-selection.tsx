@@ -62,16 +62,16 @@ export function AgentSelection({ agents, onSelect, isLoading = false, className 
           <p className="text-gray-500">No agents available at the moment.</p>
         </div>
       ) : (
-        <div className="grid gap-3 md:grid-cols-1 lg:grid-cols-3">
-          {safeAgents.map((agent, index) => (
+      <div className="grid gap-4 md:grid-cols-1 lg:grid-cols-3">
+        {safeAgents.map((agent, index) => (
           <Card
             key={agent.id}
             className={cn(
-              'p-3 cursor-pointer transition-all duration-200 hover:shadow-md hover:border-blue-300',
-              'border border-gray-200 hover:border-blue-300',
+              'p-4 cursor-pointer transition-all duration-200 hover:shadow-lg hover:border-blue-400',
+              'border border-gray-200 hover:border-blue-400 bg-white',
               isLoading && 'opacity-50 cursor-not-allowed'
             )}
-            onClick={(e) => {
+            onClick={(e: React.MouseEvent) => {
               e.preventDefault();
               e.stopPropagation();
               if (!isLoading) {
@@ -79,78 +79,83 @@ export function AgentSelection({ agents, onSelect, isLoading = false, className 
               }
             }}
           >
-            <div className="space-y-2">
+            <div className="space-y-3">
               {/* Agent Header */}
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
+              <div className="flex items-start justify-between">
+                <div className="flex items-center gap-3">
                   <AgentAvatar
                     avatar={agent.avatar || '🤖'}
                     name={agent.display_name || agent.name}
-                    size="sm"
+                    size="md"
                   />
-                  <div>
-                    <h4 className="font-medium text-gray-900 text-sm">
+                  <div className="flex-1">
+                    <h4 className="font-semibold text-gray-900 text-sm">
                       {agent.display_name || agent.name}
                     </h4>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 mt-1">
                       <Badge 
                         variant="outline" 
-                        className={cn('text-xs px-1.5 py-0.5', getConfidenceColor(agent.confidence))}
+                        className={cn('text-xs px-2 py-1', getConfidenceColor(agent.confidence))}
                       >
-                        {agent.confidence}
+                        {agent.confidence} confidence
                       </Badge>
                       <span className={cn('text-xs font-medium', getScoreColor(agent.score))}>
-                        {Math.round(agent.score * 100)}%
+                        {Math.round(agent.score * 100)}% match
                       </span>
                     </div>
                   </div>
                 </div>
                 <div className="text-right">
-                  <div className="text-lg font-semibold text-gray-400">
+                  <div className="text-lg font-bold text-gray-300">
                     #{index + 1}
                   </div>
                 </div>
               </div>
 
               {/* Agent Description */}
-              <p className="text-xs text-gray-600 line-clamp-2">
+              <p className="text-sm text-gray-600 line-clamp-2">
                 {agent.description}
               </p>
 
               {/* Capabilities */}
-              <div className="space-y-1">
+              <div className="space-y-2">
+                <h5 className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                  Capabilities
+                </h5>
                 <div className="flex flex-wrap gap-1">
-                  {agent.capabilities.slice(0, 2).map((capability, capIndex) => (
+                  {agent.capabilities.slice(0, 3).map((capability, capIndex) => (
                     <Badge
                       key={capIndex}
                       variant="secondary"
-                      className="text-xs px-1.5 py-0.5 bg-gray-100 text-gray-700"
+                      className="text-xs px-2 py-1 bg-gray-100 text-gray-700"
                     >
                       {capability}
                     </Badge>
                   ))}
-                  {agent.capabilities.length > 2 && (
-                    <Badge variant="secondary" className="text-xs px-1.5 py-0.5 bg-gray-100 text-gray-700">
-                      +{agent.capabilities.length - 2}
+                  {agent.capabilities.length > 3 && (
+                    <Badge variant="secondary" className="text-xs px-2 py-1 bg-gray-100 text-gray-700">
+                      +{agent.capabilities.length - 3} more
                     </Badge>
                   )}
                 </div>
               </div>
 
-              {/* Reasoning */}
-              <div className="space-y-1">
-                <p className="text-xs text-gray-500 italic line-clamp-1">
+              {/* Why This Agent */}
+              <div className="space-y-2">
+                <h5 className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                  Why This Agent?
+                </h5>
+                <p className="text-xs text-gray-600 italic line-clamp-2">
                   {agent.reasoning}
                 </p>
               </div>
 
               {/* Select Button */}
               <Button
-                className="w-full mt-2 h-8 text-xs"
+                className="w-full mt-3 h-9 text-sm font-medium"
                 variant="outline"
-                size="sm"
                 disabled={isLoading}
-                onClick={(e) => {
+                onClick={(e: React.MouseEvent) => {
                   e.preventDefault();
                   e.stopPropagation();
                   if (!isLoading) {
@@ -158,7 +163,7 @@ export function AgentSelection({ agents, onSelect, isLoading = false, className 
                   }
                 }}
               >
-                {isLoading ? 'Processing...' : 'Select Agent'}
+                {isLoading ? 'Processing...' : 'Select This Agent'}
               </Button>
             </div>
           </Card>

@@ -95,6 +95,7 @@ export function ChatMessages({ messages, liveReasoning, isReasoningActive }: Cha
 
   const handleAgentSelect = useCallback(async (agent: any) => {
     console.log('🎯 User selected agent:', agent.name);
+    console.log('🔍 Agent data:', agent);
     
     try {
       // First, select the agent from suggestions
@@ -111,6 +112,7 @@ export function ChatMessages({ messages, liveReasoning, isReasoningActive }: Cha
       const lastUserMessage = messages.filter(msg => msg.role === 'user').pop();
       if (lastUserMessage) {
         console.log('🔄 Continuing conversation with selected agent:', agent.name);
+        console.log('📝 Last user message:', lastUserMessage.content);
         
         // Create a properly formatted agent object for the store
         const formattedAgent = {
@@ -120,7 +122,7 @@ export function ChatMessages({ messages, liveReasoning, isReasoningActive }: Cha
           description: agent.description,
           capabilities: agent.capabilities || [],
           business_function: agent.business_function || 'General',
-          systemPrompt: agent.system_prompt || `You are a ${agent.display_name || agent.name} expert.`,
+          systemPrompt: agent.system_prompt || `You are a ${agent.display_name || agent.name} expert specializing in ${agent.description}.`,
           model: agent.model || 'gpt-4',
           temperature: agent.temperature || 0.7,
           maxTokens: agent.max_tokens || 2000,
@@ -132,21 +134,30 @@ export function ChatMessages({ messages, liveReasoning, isReasoningActive }: Cha
           knowledgeUrls: agent.knowledge_urls || []
         };
         
+        console.log('🤖 Formatted agent for store:', formattedAgent);
+        
         // Update the selected agent in the store
         currentState.setSelectedAgent(formattedAgent);
         
         // Wait a moment for the agent to be set
-        await new Promise(resolve => setTimeout(resolve, 200));
+        await new Promise(resolve => setTimeout(resolve, 300));
+        
+        // Verify the agent is set
+        const updatedState = useChatStore.getState();
+        console.log('✅ Agent set in store:', updatedState.selectedAgent?.name);
         
         // Send the message (the selected agent will be used automatically)
+        console.log('📤 Sending message with selected agent...');
         await currentState.sendMessage(lastUserMessage.content);
+        console.log('✅ Message sent successfully');
       } else {
         console.warn('No user message found to continue conversation');
         // If no user message, just close the selection modal
         hideAgentSelection();
       }
     } catch (error) {
-      console.error('Error in agent selection:', error);
+      console.error('❌ Error in agent selection:', error);
+      console.error('❌ Error details:', error instanceof Error ? error.message : String(error), error instanceof Error ? error.stack : '');
       // Close the modal on error
       hideAgentSelection();
     }
@@ -489,69 +500,10 @@ export function ChatMessages({ messages, liveReasoning, isReasoningActive }: Cha
       {(liveReasoning || isReasoningActive) && (
         <div className="mb-6">
           <Reasoning isStreaming={isReasoningActive || false}>
-            <ReasoningTrigger title={`I am thinking... ${isReasoningActive ? '🔄' : '✅'}`} />
+            <ReasoningTrigger title="I am thinking..." />
             <ReasoningContent>
-              <div className="space-y-3">
-                {liveReasoning ? (
-                  liveReasoning.split('\n').map((step, index) => {
-                    // Skip empty lines
-                    if (!step.trim()) return null;
-                    
-                    // Check if it's a reasoning step (starts with emoji or bullet)
-                    const isStep = step.match(/^[🔍🧠⚡📊✅❌]/) || step.startsWith('•') || step.startsWith('-');
-                    const isAgentSelection = step.includes('Selected') && step.includes('agent');
-                    const isDomainInfo = step.includes('Detected domains:') || step.includes('Confidence:') || step.includes('Reasoning:') || step.includes('Using model:');
-                    const isOtherAgents = step.includes('Other considered agents:');
-                    const isCompleted = step.includes('✅') || step.includes('Selected') || step.includes('Complete');
-                    
-                    return (
-                      <div key={index} className={cn(
-                        'flex items-start gap-3 p-3 rounded-lg',
-                        isStep ? 'bg-blue-50 border border-blue-200' : 
-                        isAgentSelection ? 'bg-green-50 border border-green-200' :
-                        isDomainInfo ? 'bg-purple-50 border border-purple-200' :
-                        isOtherAgents ? 'bg-gray-50 border border-gray-200' :
-                        'bg-gray-50'
-                      )}>
-                        <div className="flex-shrink-0 mt-0.5">
-                          {isCompleted ? (
-                            <div className="w-5 h-5 rounded-full bg-green-500 flex items-center justify-center">
-                              <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-                                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                              </svg>
-                            </div>
-                          ) : isStep ? (
-                            <div className="w-5 h-5 rounded-full bg-blue-500 flex items-center justify-center">
-                              <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
-                            </div>
-                          ) : isAgentSelection ? (
-                            <div className="w-5 h-5 rounded-full bg-green-500 flex items-center justify-center">
-                              <div className="w-2 h-2 bg-white rounded-full"></div>
-                            </div>
-                          ) : isDomainInfo ? (
-                            <div className="w-5 h-5 rounded-full bg-purple-500 flex items-center justify-center">
-                              <div className="w-2 h-2 bg-white rounded-full"></div>
-                            </div>
-                          ) : (
-                            <div className="w-5 h-5 rounded-full bg-gray-500 flex items-center justify-center">
-                              <div className="w-2 h-2 bg-white rounded-full"></div>
-                            </div>
-                          )}
-                        </div>
-                        <div className="flex-1 text-sm text-gray-700">
-                          <span className="font-medium">{step}</span>
-                        </div>
-                      </div>
-                    );
-                  })
-                ) : (
-                  <div className="flex items-center gap-3 p-3 rounded-lg bg-blue-50 border border-blue-200">
-                    <div className="w-5 h-5 rounded-full bg-blue-500 flex items-center justify-center">
-                      <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
-                    </div>
-                    <div className="text-sm text-gray-700">Preparing response...</div>
-                  </div>
-                )}
+              <div>
+                {/* The new reasoning component handles all the steps automatically */}
               </div>
             </ReasoningContent>
           </Reasoning>

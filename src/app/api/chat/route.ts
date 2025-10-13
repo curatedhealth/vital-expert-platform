@@ -16,33 +16,23 @@ Please provide a comprehensive, expert response to the user's query. Use your sp
 
 User's query: "${message}"`;
 
-    // For now, we'll use a simple response generation
-    // In a full implementation, this would integrate with Langchain and the agent's specific tools
-    const response = `As a ${agent.business_function || 'General'} expert, I can help you with "${message}". 
+    // Generate a more natural, direct response
+    const response = `I'm ${agent.display_name || agent.name}, your ${agent.business_function || 'General'} expert. 
 
-Based on my expertise in ${Array.isArray(agent.capabilities) ? agent.capabilities.slice(0, 3).join(', ') : 'general assistance'}, here's what I can tell you:
+Based on my expertise in ${Array.isArray(agent.capabilities) ? agent.capabilities.slice(0, 3).join(', ') : 'general assistance'}, I can provide specialized guidance on your query.
 
-This is a specialized response from ${agent.display_name || agent.name}. I'm ready to dive deeper into your specific needs and provide detailed guidance based on my ${agent.business_function || 'General'} expertise.
-
-What specific aspects of "${message}" would you like me to focus on?`;
+What specific aspects would you like me to focus on?`;
 
     return response;
   } catch (error) {
     console.error('❌ Error generating agent response:', error);
-    return `I'm ${agent.display_name || agent.name}, your ${agent.business_function || 'General'} expert. I'm ready to help you with "${message}". Please let me know what specific information you need.`;
+    return `I'm ${agent.display_name || agent.name}, your ${agent.business_function || 'General'} expert. How can I assist you today?`;
   }
 }
 
 export async function POST(request: NextRequest) {
   try {
-    // Debug environment variables
-    console.log('🔍 Environment variables check:', {
-      hasSupabaseUrl: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
-      hasSupabaseKey: !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-      supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL ? 'SET' : 'MISSING',
-      supabaseKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? 'SET' : 'MISSING',
-      nodeEnv: process.env.NODE_ENV
-    });
+    // Minimal logging for performance
     
     const body = await request.json();
     const { 
@@ -54,13 +44,7 @@ export async function POST(request: NextRequest) {
       automaticRouting = true 
     } = body;
 
-    console.log('📨 Chat request received:', {
-      message: message?.substring(0, 50) + '...',
-      userId,
-      sessionId,
-      hasAgent: !!agent,
-      automaticRouting
-    });
+    // Minimal request logging
 
     // If agent is provided, use it directly (but not AI Orchestrator)
     if (agent && agent.id && agent.id !== 'ai-orchestrator' && agent.name !== 'AI Orchestrator') {
@@ -76,21 +60,11 @@ export async function POST(request: NextRequest) {
               content: `Selected: ${agent.display_name || agent.name}`
             })}\n\n`));
 
-            // Send reasoning steps
-            const reasoningSteps = [
-              `🔍 Processing your request with ${agent.display_name || agent.name}...`,
-              `🧠 Analyzing: "${message}"`,
-              `⚡ Applying ${agent.business_function || 'General'} expertise...`,
-              `📊 Generating specialized response...`
-            ];
-
-            for (let i = 0; i < reasoningSteps.length; i++) {
-              controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify({
-                type: 'reasoning',
-                content: reasoningSteps[i]
-              })}\n\n`));
-              await new Promise(resolve => setTimeout(resolve, 200));
-            }
+            // Send single reasoning step for faster response
+            controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify({
+              type: 'reasoning',
+              content: `🔍 Processing with ${agent.display_name || agent.name}...`
+            })}\n\n`));
 
             // Generate response using the selected agent's capabilities
             const agentResponse = await generateAgentResponse(agent, message, chatHistory);
@@ -134,39 +108,17 @@ export async function POST(request: NextRequest) {
     try {
       // Get all agents from database (try different approaches)
       console.log('🔍 Querying agents from database...');
-      console.log('🔍 Supabase admin client check:', {
-        hasSupabaseAdmin: !!supabaseAdmin,
-        supabaseAdminType: typeof supabaseAdmin,
-        supabaseAdminMethods: Object.getOwnPropertyNames(supabaseAdmin)
-      });
+      // Skip detailed client checks for performance
       
-      // Test basic connection first
-      console.log('🔍 Testing basic Supabase connection...');
-      const { data: testData, error: testError } = await supabaseAdmin
-        .from('agents')
-        .select('id')
-        .limit(1);
+      // Skip connection test for performance
       
-      console.log('🔍 Basic connection test:', {
-        testData,
-        testError,
-        hasTestData: !!testData,
-        testDataLength: testData?.length || 0
-      });
-      
-      if (testError) {
-        console.error('❌ Basic connection failed:', testError);
-        return NextResponse.json(
-          { error: `Database connection failed: ${testError.message}` },
-          { status: 500 }
-        );
-      }
-      
-      // First try: get all agents without any filters
-      console.log('🔍 Querying all agents...');
-      let { data: agents, error: agentsError } = await supabaseAdmin
-        .from('agents')
-        .select('*');
+              // Optimized query: get only necessary fields and limit to active agents first
+              console.log('🔍 Querying agents...');
+              let { data: agents, error: agentsError } = await supabaseAdmin
+                .from('agents')
+                .select('id, name, display_name, description, business_function, capabilities, tier, status, avatar, color')
+                .eq('status', 'active')
+                .limit(10);
       
       console.log('📊 All agents query result:', { 
         agentsCount: agents?.length || 0, 
@@ -192,13 +144,24 @@ export async function POST(request: NextRequest) {
         );
       }
       
-      if (!agents || agents.length === 0) {
-        console.error('❌ No agents found in database');
-        return NextResponse.json(
-          { error: 'No agents available in database' },
-          { status: 404 }
-        );
-      }
+              // If no active agents, try development agents as fallback
+              if (!agents || agents.length === 0) {
+                console.log('🔍 No active agents, trying development agents...');
+                const { data: devAgents, error: devError } = await supabaseAdmin
+                  .from('agents')
+                  .select('id, name, display_name, description, business_function, capabilities, tier, status, avatar, color')
+                  .eq('status', 'development')
+                  .limit(10);
+                
+                if (devError || !devAgents || devAgents.length === 0) {
+                  console.error('❌ No agents found in database');
+                  return NextResponse.json(
+                    { error: 'No agents available in database' },
+                    { status: 404 }
+                  );
+                }
+                agents = devAgents;
+              }
       
       console.log('✅ Found agents:', agents.length);
       
@@ -206,47 +169,25 @@ export async function POST(request: NextRequest) {
       const stream = new ReadableStream({
         async start(controller) {
           try {
-            // Send initial reasoning steps
-            const initialReasoningSteps = [
-              '🔍 Analyzing your question and context...',
-              '🧠 Detecting relevant knowledge domains...',
-              '⚡ Selecting the most appropriate expert agent...',
-              '📊 Preparing specialized response...'
-            ];
-            
-            for (let i = 0; i < initialReasoningSteps.length; i++) {
-              controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify({
-                type: 'reasoning',
-                content: initialReasoningSteps[i]
-              })}\n\n`));
-              await new Promise(resolve => setTimeout(resolve, 100));
-            }
+            // Send single reasoning step for faster response
+            controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify({
+              type: 'reasoning',
+              content: '🔍 Analyzing your query and selecting the best expert agents...'
+            })}\n\n`));
             
                     // Create agent suggestions from real database agents (limit to 3 for top agents)
-                    console.log('🤖 Creating agent suggestions from database...');
                     const suggestions = agents.slice(0, 3).map((agent, index) => {
-              // Normalize capabilities to always be an array
-              console.log(`🔍 Agent ${index + 1} capabilities normalization:`, {
-                original: agent.capabilities,
-                type: typeof agent.capabilities,
-                isArray: Array.isArray(agent.capabilities)
-              });
-              
+              // Fast capabilities normalization without extensive logging
               let normalizedCapabilities = [];
               if (Array.isArray(agent.capabilities)) {
                 normalizedCapabilities = agent.capabilities;
-                console.log(`✅ Agent ${index + 1}: Using array capabilities`);
               } else if (typeof agent.capabilities === 'string') {
-                // Parse string format like "{cap1,cap2,cap3}" or "cap1,cap2,cap3"
                 const cleanString = agent.capabilities.replace(/[{}]/g, '');
                 normalizedCapabilities = cleanString.split(',').map(cap => cap.trim()).filter(cap => cap.length > 0);
-                console.log(`✅ Agent ${index + 1}: Converted string to array:`, normalizedCapabilities);
               } else if (agent.tools && typeof agent.tools === 'object') {
                 normalizedCapabilities = Object.keys(agent.tools).filter(key => agent.tools[key] === true);
-                console.log(`✅ Agent ${index + 1}: Using tools as capabilities:`, normalizedCapabilities);
               } else {
                 normalizedCapabilities = ['General assistance'];
-                console.log(`✅ Agent ${index + 1}: Using fallback capabilities`);
               }
 
               return {
@@ -264,27 +205,15 @@ export async function POST(request: NextRequest) {
               };
             });
             
-            console.log('✅ Agent suggestions created:', suggestions.length);
-            console.log('🔍 Sample suggestion capabilities:', suggestions[0]?.capabilities);
-            console.log('🔍 Sample suggestion capabilities type:', typeof suggestions[0]?.capabilities);
-            console.log('🔍 Sample suggestion capabilities isArray:', Array.isArray(suggestions[0]?.capabilities));
+            // Send agent suggestions immediately without extra logging
+            controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify({
+              type: 'reasoning',
+              content: `🎯 Found ${suggestions.length} top-rated agents. Please select the best one for your query:`
+            })}\n\n`));
             
-                    // Send agent suggestions
-                    controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify({
-                      type: 'reasoning',
-                      content: `🎯 Found ${suggestions.length} top-rated agents. Please select the best one for your query:`
-                    })}\n\n`));
-            
-            console.log('📤 Sending agent suggestions via SSE...');
             controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify({
               type: 'agent_suggestions',
               content: suggestions
-            })}\n\n`));
-            
-            // Send waiting message
-            controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify({
-              type: 'waiting_for_selection',
-              content: 'Please select an agent to continue...'
             })}\n\n`));
             
             controller.close();

@@ -594,9 +594,9 @@ const _useChatStore = create<ChatStore>()(
                     metadata = data.metadata;
                   } else if (data.type === 'agent_suggestions') {
                     // Show agent selection modal
-                    console.log('🎯 Received agent suggestions:', data.suggestions);
+                    console.log('🎯 Received agent suggestions:', data.content);
                     set({
-                      suggestedAgents: data.suggestions || [],
+                      suggestedAgents: data.content || [],
                       showAgentSelection: true,
                       isWaitingForAgentSelection: true,
                     });

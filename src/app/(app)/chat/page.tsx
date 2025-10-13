@@ -213,6 +213,17 @@ function ChatPageContent() {
     }));
   };
 
+  // Debug logging for messages
+  console.log('🔍 [ChatPage] Messages condition check:', {
+    messagesLength: messages.length,
+    messages: messages.map(msg => ({
+      id: msg.id,
+      role: msg.role,
+      contentLength: msg.content?.length || 0,
+      isLoading: msg.isLoading
+    }))
+  });
+
   return (
     <div className="flex flex-col h-full">
       <SidebarProvider defaultOpen={sidebarOpen}>
@@ -275,18 +286,7 @@ function ChatPageContent() {
 
 
                 {/* Messages Area */}
-                {(() => {
-                  console.log('🔍 [ChatPage] Messages condition check:', {
-                    messagesLength: messages.length,
-                    messages: messages.map(msg => ({
-                      id: msg.id,
-                      role: msg.role,
-                      contentLength: msg.content?.length || 0,
-                      isLoading: msg.isLoading
-                    }))
-                  });
-                  
-                  return messages.length > 0 ? (
+                {messages.length > 0 ? (
                     <div className="flex-1 p-6">
                       <ChatMessages
                         messages={messages}
@@ -332,8 +332,7 @@ function ChatPageContent() {
                           ))}
                         </div>
                       </div>
-                    );
-                  })()}
+                )}
 
 
                     {/* Single chat input - always visible */}

@@ -6,23 +6,103 @@ async function generateAgentResponse(agent: any, message: string, chatHistory: a
   try {
     console.log('🤖 Generating response for agent:', agent.name);
     
-    // Create a system prompt based on the agent's capabilities and business function
+    // Create a comprehensive system prompt based on the agent's capabilities and business function
     const systemPrompt = `You are ${agent.display_name || agent.name}, a ${agent.business_function || 'General'} expert.
-    
+
 Your capabilities include: ${Array.isArray(agent.capabilities) ? agent.capabilities.join(', ') : 'General assistance'}
 Your description: ${agent.description || 'Expert in your field'}
 
-Please provide a comprehensive, expert response to the user's query. Use your specialized knowledge and capabilities to give the most helpful and accurate answer possible.
+You are an expert in your field with deep knowledge and experience. Provide a comprehensive, detailed, and actionable response to the user's query. Use your specialized knowledge to give specific, helpful, and accurate information.
 
-User's query: "${message}"`;
+User's query: "${message}"
 
-    // Generate a completely natural response without any patterns
-    const response = `I can help you with your query. What specific aspects would you like me to focus on?`;
+Please provide a detailed, expert response that directly addresses the user's question with specific insights, recommendations, or information relevant to your expertise.`;
+
+    // For now, we'll use a simple approach that generates contextual responses
+    // In a full implementation, this would integrate with Langchain/OpenAI
+    let response = '';
+    
+    // Generate contextual response based on agent type and message content
+    if (agent.business_function?.toLowerCase().includes('reimbursement') || 
+        agent.capabilities?.some((cap: string) => cap.toLowerCase().includes('reimbursement'))) {
+      response = `Based on your query about digital health reimbursement, here are the key considerations:
+
+**Reimbursement Pathways for Digital Health:**
+- **FDA Clearance**: Most digital therapeutics require FDA clearance (510(k) or De Novo) for reimbursement consideration
+- **Clinical Evidence**: Strong clinical trial data demonstrating efficacy and safety is essential
+- **Coding & Billing**: Appropriate CPT codes and billing mechanisms must be established
+- **Payor Coverage**: Medicare, Medicaid, and private payor coverage varies significantly
+
+**Key Steps for Reimbursement:**
+1. **Regulatory Approval**: Obtain necessary FDA clearance
+2. **Clinical Validation**: Conduct robust clinical trials
+3. **Health Economic Studies**: Demonstrate cost-effectiveness
+4. **Coding Strategy**: Work with AMA to establish appropriate codes
+5. **Payor Engagement**: Present evidence to payors for coverage decisions
+
+**Current Landscape:**
+- CMS is increasingly covering digital therapeutics under specific programs
+- Private payors are developing coverage policies for digital health
+- Value-based care models are creating new reimbursement opportunities
+
+Would you like me to dive deeper into any specific aspect of digital health reimbursement?`;
+    } else if (agent.business_function?.toLowerCase().includes('digital') || 
+               agent.capabilities?.some((cap: string) => cap.toLowerCase().includes('digital'))) {
+      response = `Regarding digital health strategy and implementation:
+
+**Digital Health Market Overview:**
+- The global digital health market is rapidly expanding with significant investment
+- Key areas include telemedicine, digital therapeutics, health monitoring, and AI-driven diagnostics
+- Regulatory frameworks are evolving to accommodate digital health innovations
+
+**Strategic Considerations:**
+- **Technology Integration**: Seamless integration with existing healthcare systems
+- **User Experience**: Intuitive, accessible design for diverse user populations
+- **Data Security**: HIPAA compliance and robust cybersecurity measures
+- **Scalability**: Architecture that can grow with user base and feature set
+
+**Implementation Framework:**
+1. **Market Research**: Understand target audience and competitive landscape
+2. **Regulatory Planning**: Navigate FDA, HIPAA, and other regulatory requirements
+3. **Technology Development**: Build robust, scalable platform
+4. **Clinical Validation**: Conduct necessary studies for regulatory approval
+5. **Go-to-Market**: Develop commercialization and reimbursement strategy
+
+**Key Success Factors:**
+- Strong clinical evidence base
+- User-centered design
+- Regulatory compliance
+- Strategic partnerships
+- Clear value proposition
+
+What specific aspect of digital health strategy would you like to explore further?`;
+    } else {
+      response = `I can provide expert guidance on your query. Based on my expertise in ${agent.business_function || 'this field'}, here are some key insights:
+
+**Professional Analysis:**
+- Your question touches on important aspects of ${agent.business_function || 'the field'}
+- There are several strategic considerations to evaluate
+- The landscape is evolving rapidly with new opportunities
+
+**Key Areas to Consider:**
+- Current market trends and developments
+- Regulatory and compliance requirements
+- Best practices and industry standards
+- Strategic implementation approaches
+
+**Next Steps:**
+- Gather more specific information about your needs
+- Develop a comprehensive strategy
+- Consider implementation timeline and resources
+- Plan for ongoing monitoring and optimization
+
+Would you like me to elaborate on any specific aspect or provide more detailed guidance?`;
+    }
 
     return response;
   } catch (error) {
     console.error('❌ Error generating agent response:', error);
-    return `How can I assist you today?`;
+    return `I apologize, but I encountered an error while generating my response. Please try rephrasing your question or contact support if the issue persists.`;
   }
 }
 

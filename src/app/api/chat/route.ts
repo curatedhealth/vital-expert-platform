@@ -43,8 +43,11 @@ export async function POST(request: NextRequest) {
       useIntelligentRouting
     });
 
-    // Automatic orchestration: if no agent provided, use intelligent agent selection
-    if (!agent) {
+    // Check if this is a follow-up call with a selected agent
+    if (agent && agent.id !== 'orchestrator') {
+      console.log('🤖 Agent already selected, proceeding with:', agent.name);
+      // Continue with the selected agent - this will be handled by the existing agent logic below
+    } else if (!agent) {
       console.log('🤖 No agent provided, using automatic orchestration');
       
       try {
@@ -69,133 +72,67 @@ export async function POST(request: NextRequest) {
                   type: 'reasoning',
                   content: initialReasoningSteps[i]
                 })}\n\n`));
-                await new Promise(resolve => setTimeout(resolve, 300)); // Slightly longer delay for orchestration
+                await new Promise(resolve => setTimeout(resolve, 100)); // Optimized delay for orchestration
               }
               
-              // Use automatic orchestration
-              console.log('🤖 Starting automatic orchestration...');
+              // Get agent suggestions only (no execution)
+              console.log('🤖 Getting agent suggestions...');
               let result;
               try {
-                result = await orchestrator.chat(message, chatHistory, {
+                result = await orchestrator.getAgentSuggestions(message, chatHistory, {
                   userId,
                   conversationId: sessionId,
                   maxCandidates: 5,
                   minConfidence: 0.4
                 });
               } catch (orchestratorError) {
-                console.error('❌ Orchestrator execution error:', orchestratorError);
+                console.error('❌ Agent suggestions error:', orchestratorError);
                 controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify({
                   type: 'error',
-                  content: 'Sorry, I encountered an error during orchestration. Please try again.'
+                  content: 'Sorry, I encountered an error during agent analysis. Please try again.'
                 })}\n\n`));
                 controller.close();
                 return;
               }
               
-              console.log('✅ Automatic orchestration result:', {
-                hasResponse: !!result.response,
-                responseType: typeof result.response,
-                selectedAgent: result.selectedAgent?.name,
-                hasReasoning: !!result.reasoning
+              console.log('✅ Agent suggestions result:', {
+                rankedAgentsCount: result.rankedAgents?.length || 0,
+                detectedDomains: result.detectedDomains?.length || 0
               });
               
-              // Send agent selection reasoning
-              const confidence = result.rankedAgents?.[0]?.confidence || 85;
-              const reasoningText = result.reasoning || 'Selected based on query analysis';
+              // Send agent suggestions
               controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify({
                 type: 'reasoning',
-                content: `✅ Selected ${result.selectedAgent.name} (${confidence}% confidence) - ${reasoningText}`
+                content: `🎯 Found ${result.rankedAgents?.length || 0} suitable agents. Please select the best one for your query:`
+              })}\n\n`));
+
+              // Send agent suggestions
+              const suggestions = result.rankedAgents?.slice(0, 3).map((rankedAgent, index) => ({
+                id: rankedAgent.agent.id,
+                name: rankedAgent.agent.name,
+                display_name: rankedAgent.agent.display_name || rankedAgent.agent.name,
+                description: rankedAgent.agent.description,
+                capabilities: rankedAgent.agent.capabilities || [],
+                score: rankedAgent.scores.final,
+                confidence: rankedAgent.confidence,
+                reasoning: rankedAgent.reasoning,
+                color: rankedAgent.agent.color || 'text-blue-600',
+                avatar: rankedAgent.agent.avatar || '🤖'
+              })) || [];
+
+              controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify({
+                type: 'agent_suggestions',
+                suggestions: suggestions
               })}\n\n`));
               
-              // Handle ReadableStream response
-              if (result.response instanceof ReadableStream) {
-                console.log('📡 Processing ReadableStream response...');
-                
-                const reader = result.response.getReader();
-            let fullContent = '';
-            
-                try {
-                  while (true) {
-                    const { done, value } = await reader.read();
-                    if (done) break;
-                    
-                    const chunk = new TextDecoder().decode(value);
-                    fullContent += chunk;
-                    
-                    // Send streaming content
-                    controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify({
-                      type: 'content',
-                      content: chunk,
-                      fullContent: fullContent
-                    })}\n\n`));
-                  }
-                } finally {
-                  reader.releaseLock();
-                }
-                
-                // Send reasoning complete
-                controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify({
-                  type: 'reasoning_done',
-                  content: 'Automatic agent orchestration complete'
-                })}\n\n`));
-
-                // Send final message
-                const finalData = JSON.stringify({
-                  type: 'final',
-                  content: fullContent,
-                metadata: {
-                  agent: {
-                    id: result.selectedAgent.id,
-                    name: result.selectedAgent.name,
-                    businessFunction: result.selectedAgent.businessFunction || 'Expert'
-                  },
-                  sources: result.sources || [],
-                  citations: result.citations || [],
-                  followupQuestions: result.followupQuestions || [],
-                  processingTime: result.performance?.total || 1000,
-                  tokenUsage: result.tokenUsage || { promptTokens: 0, completionTokens: 0, totalTokens: 0 }
-                }
-              });
-              
-              controller.enqueue(new TextEncoder().encode(`data: ${finalData}\n\n`));
-              } else {
-                // Fallback for non-streaming response
-                console.log('📄 Processing non-streaming response...');
-                
-                controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify({
-                  type: 'content',
-                  content: result.response || 'No response generated',
-                  fullContent: result.response || 'No response generated'
-                })}\n\n`));
-                
-                // Send reasoning complete
-                controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify({
-                  type: 'reasoning_done',
-                  content: 'Automatic agent orchestration complete'
-                })}\n\n`));
-
-                // Send final message
-                const finalData = JSON.stringify({
-                  type: 'final',
-                  content: result.response || 'No response generated',
-                  metadata: {
-                    agent: {
-                      id: result.selectedAgent.id,
-                      name: result.selectedAgent.name,
-                      businessFunction: result.selectedAgent.businessFunction || 'Expert'
-                    },
-                    sources: result.sources || [],
-                    citations: result.citations || [],
-                    followupQuestions: result.followupQuestions || [],
-                    processingTime: result.performance?.total || 1000,
-                    tokenUsage: result.tokenUsage || { promptTokens: 0, completionTokens: 0, totalTokens: 0 }
-                  }
-                });
-                
-                controller.enqueue(new TextEncoder().encode(`data: ${finalData}\n\n`));
-              }
+              // Wait for user selection - don't generate response yet
+              controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify({
+                type: 'waiting_for_selection',
+                content: 'Please select an agent to continue...'
+              })}\n\n`));
               
               controller.close();
+              return;
             } catch (error) {
               console.error('❌ Automatic orchestration error:', error);
               controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify({
@@ -223,6 +160,8 @@ export async function POST(request: NextRequest) {
         );
       }
     }
+
+    // Continue with selected agent logic (existing code below)
 
     // Handle agent-specific response
     console.log('🎯 Using provided agent:', JSON.stringify(agent, null, 2));
@@ -259,134 +198,66 @@ export async function POST(request: NextRequest) {
                   type: 'reasoning',
                   content: initialReasoningSteps[i]
                 })}\n\n`));
-                await new Promise(resolve => setTimeout(resolve, 300));
+                await new Promise(resolve => setTimeout(resolve, 100));
               }
               
-              // Use automatic orchestration
+              // Get agent suggestions only (no execution)
+              console.log('🤖 Getting agent suggestions for orchestrator...');
               let result;
               try {
-                result = await orchestrator.chat(message, chatHistory, {
+                result = await orchestrator.getAgentSuggestions(message, chatHistory, {
                   userId,
                   conversationId: sessionId,
                   maxCandidates: 5,
                   minConfidence: 0.4
                 });
               } catch (orchestratorError) {
-                console.error('❌ Orchestrator execution error:', orchestratorError);
+                console.error('❌ Agent suggestions error:', orchestratorError);
                 controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify({
                   type: 'error',
-                  content: 'Sorry, I encountered an error during orchestration. Please try again.'
+                  content: 'Sorry, I encountered an error during agent analysis. Please try again.'
                 })}\n\n`));
                 controller.close();
                 return;
               }
               
-              console.log('🤖 Orchestrator result structure:', {
-                hasResponse: !!result.response,
-                responseType: typeof result.response,
-                isReadableStream: result.response instanceof ReadableStream,
-                selectedAgent: result.selectedAgent?.name,
-                hasReasoning: !!result.reasoning,
-                fullResult: JSON.stringify(result, null, 2)
+              console.log('✅ Agent suggestions result:', {
+                rankedAgentsCount: result.rankedAgents?.length || 0,
+                detectedDomains: result.detectedDomains?.length || 0
               });
               
-              // Send agent selection reasoning
-              const confidence = result.rankedAgents?.[0]?.confidence || 85;
-              const reasoningText = result.reasoning || 'Selected based on query analysis';
+              // Send agent suggestions
               controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify({
                 type: 'reasoning',
-                content: `✅ Selected ${result.selectedAgent.name} (${confidence}% confidence) - ${reasoningText}`
+                content: `🎯 Found ${result.rankedAgents?.length || 0} suitable agents. Please select the best one for your query:`
+              })}\n\n`));
+
+              // Send agent suggestions
+              const suggestions = result.rankedAgents?.slice(0, 3).map((rankedAgent, index) => ({
+                id: rankedAgent.agent.id,
+                name: rankedAgent.agent.name,
+                display_name: rankedAgent.agent.display_name || rankedAgent.agent.name,
+                description: rankedAgent.agent.description,
+                capabilities: rankedAgent.agent.capabilities || [],
+                score: rankedAgent.scores.final,
+                confidence: rankedAgent.confidence,
+                reasoning: rankedAgent.reasoning,
+                color: rankedAgent.agent.color || 'text-blue-600',
+                avatar: rankedAgent.agent.avatar || '🤖'
+              })) || [];
+
+              controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify({
+                type: 'agent_suggestions',
+                suggestions: suggestions
               })}\n\n`));
               
-              // Handle ReadableStream response
-              if (result.response instanceof ReadableStream) {
-                console.log('📡 Processing ReadableStream response...');
-                
-                const reader = result.response.getReader();
-                let fullContent = '';
-                
-                try {
-                  while (true) {
-                    const { done, value } = await reader.read();
-                    if (done) break;
-                    
-                    const chunk = new TextDecoder().decode(value);
-                    fullContent += chunk;
-                    
-                    // Send streaming content
-                    controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify({
-                      type: 'content',
-                      content: chunk,
-                      fullContent: fullContent
-                    })}\n\n`));
-                  }
-                } finally {
-                  reader.releaseLock();
-                }
-                
-                // Send reasoning complete
-                controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify({
-                  type: 'reasoning_done',
-                  content: 'Automatic agent orchestration complete'
-                })}\n\n`));
-
-            // Send final message
-            const finalData = JSON.stringify({
-              type: 'final',
-              content: fullContent,
-              metadata: {
-                agent: {
-                    id: result.selectedAgent.id,
-                    name: result.selectedAgent.name,
-                    businessFunction: result.selectedAgent.businessFunction || 'Expert'
-                  },
-                  sources: result.sources || [],
-                  citations: result.citations || [],
-                  followupQuestions: result.followupQuestions || [],
-                  processingTime: result.performance?.total || 1000,
-                  tokenUsage: result.tokenUsage || { promptTokens: 0, completionTokens: 0, totalTokens: 0 }
-              }
-            });
-            
-            controller.enqueue(new TextEncoder().encode(`data: ${finalData}\n\n`));
-              } else {
-                // Fallback for non-streaming response
-                console.log('📄 Processing non-streaming response...');
-                
-                controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify({
-                  type: 'content',
-                  content: result.response || 'No response generated',
-                  fullContent: result.response || 'No response generated'
-                })}\n\n`));
-                
-                // Send reasoning complete
-                controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify({
-                  type: 'reasoning_done',
-                  content: 'Automatic agent orchestration complete'
-                })}\n\n`));
-
-                // Send final message
-                const finalData = JSON.stringify({
-                  type: 'final',
-                  content: result.response || 'No response generated',
-                  metadata: {
-                    agent: {
-                      id: result.selectedAgent.id,
-                      name: result.selectedAgent.name,
-                      businessFunction: result.selectedAgent.businessFunction || 'Expert'
-                    },
-                    sources: result.sources || [],
-                    citations: result.citations || [],
-                    followupQuestions: result.followupQuestions || [],
-                    processingTime: result.performance?.total || 1000,
-                    tokenUsage: result.tokenUsage || { promptTokens: 0, completionTokens: 0, totalTokens: 0 }
-                  }
-                });
-                
-                controller.enqueue(new TextEncoder().encode(`data: ${finalData}\n\n`));
-              }
+              // Wait for user selection - don't generate response yet
+              controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify({
+                type: 'waiting_for_selection',
+                content: 'Please select an agent to continue...'
+              })}\n\n`));
               
-            controller.close();
+              controller.close();
           } catch (error) {
               console.error('❌ Orchestrator error:', error);
             controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify({
@@ -467,7 +338,7 @@ export async function POST(request: NextRequest) {
               type: 'reasoning',
               content: agentReasoningSteps[i]
             })}\n\n`));
-            await new Promise(resolve => setTimeout(resolve, 250)); // Slightly longer delay for agent reasoning
+            await new Promise(resolve => setTimeout(resolve, 80)); // Optimized delay for agent reasoning
           }
           
           for await (const chunk of completion) {

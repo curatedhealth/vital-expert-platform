@@ -147,6 +147,12 @@ export function ReasoningTrigger({ title = 'Thinking', className }: ReasoningTri
           {title}
           {isStreaming ? '...' : ''}
         </span>
+        {isStreaming && (
+          <div className="flex items-center gap-1">
+            <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+            <span className="text-xs text-blue-600 font-medium">Processing</span>
+          </div>
+        )}
         {duration > 0 && (
           <span className="text-xs text-gray-500">
             {formatDuration(duration)}

@@ -24,6 +24,8 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { AgentSelection } from '@/components/ai/agent-selection';
 import { renderTextWithCitations } from '@/inline-citation';
 import { ChatMessage, useChatStore } from '@/lib/stores/chat-store';
 import { cn } from '@/lib/utils';
@@ -35,7 +37,18 @@ interface ChatMessagesProps {
 }
 
 export function ChatMessages({ messages, liveReasoning, isReasoningActive }: ChatMessagesProps) {
-  const { agents, regenerateResponse, editMessage } = useChatStore();
+  const { 
+    agents, 
+    regenerateResponse, 
+    editMessage, 
+    setSelectedAgent, 
+    setInteractionMode,
+    suggestedAgents,
+    showAgentSelection,
+    isWaitingForAgentSelection,
+    selectAgentFromSuggestions,
+    hideAgentSelection
+  } = useChatStore();
   const [editingMessage, setEditingMessage] = useState<string | null>(null);
   const [editContent, setEditContent] = useState<string>('');
 
@@ -79,6 +92,30 @@ export function ChatMessages({ messages, liveReasoning, isReasoningActive }: Cha
       setEditContent('');
     }
   }, [editingMessage, editContent, editMessage]);
+
+  const handleAgentSelect = useCallback(async (agent: any) => {
+    console.log('🎯 User selected agent:', agent.name);
+    
+    try {
+      // First, select the agent from suggestions
+      selectAgentFromSuggestions(agent);
+      
+      // Wait a moment for state to update
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      // Continue the conversation with the selected agent
+      const { sendMessage } = useChatStore.getState();
+      const lastUserMessage = messages.findLast(msg => msg.role === 'user');
+      if (lastUserMessage) {
+        console.log('🔄 Continuing conversation with selected agent:', agent.name);
+        await sendMessage(lastUserMessage.content);
+      } else {
+        console.warn('No user message found to continue conversation');
+      }
+    } catch (error) {
+      console.error('Error in agent selection:', error);
+    }
+  }, [selectAgentFromSuggestions, messages]);
 
   const handleEditCancel = useCallback(() => {
     setEditingMessage(null);
@@ -260,7 +297,6 @@ export function ChatMessages({ messages, liveReasoning, isReasoningActive }: Cha
                       variant="ghost"
                       className="text-xs text-market-purple hover:bg-market-purple/10"
                       onClick={() => {
-                        const { setSelectedAgent, setInteractionMode } = useChatStore.getState();
                         setInteractionMode('manual');
                         setSelectedAgent(altAgent.agent);
                       }}
@@ -401,7 +437,7 @@ export function ChatMessages({ messages, liveReasoning, isReasoningActive }: Cha
                         // Show content (streaming or complete)
                         <div className="relative">
                           <Response>
-                            {message.content || ''}
+                            {typeof message.content === 'string' ? message.content : JSON.stringify(message.content) || ''}
                           </Response>
                           {message.isLoading && message.content && (
                             <span className="inline-block w-2 h-4 bg-current animate-pulse ml-1"></span>
@@ -433,13 +469,86 @@ export function ChatMessages({ messages, liveReasoning, isReasoningActive }: Cha
           <Reasoning isStreaming={isReasoningActive || false}>
             <ReasoningTrigger title={`I am thinking... ${isReasoningActive ? '🔄' : '✅'}`} />
             <ReasoningContent>
-              <div className="text-sm text-gray-600 whitespace-pre-wrap">
-                {liveReasoning || 'Preparing response...'}
+              <div className="space-y-3">
+                {liveReasoning ? (
+                  liveReasoning.split('\n').map((step, index) => {
+                    // Skip empty lines
+                    if (!step.trim()) return null;
+                    
+                    // Check if it's a reasoning step (starts with emoji or bullet)
+                    const isStep = step.match(/^[🔍🧠⚡📊✅❌]/) || step.startsWith('•') || step.startsWith('-');
+                    const isAgentSelection = step.includes('Selected') && step.includes('agent');
+                    const isDomainInfo = step.includes('Detected domains:') || step.includes('Confidence:') || step.includes('Reasoning:') || step.includes('Using model:');
+                    const isOtherAgents = step.includes('Other considered agents:');
+                    const isCompleted = step.includes('✅') || step.includes('Selected') || step.includes('Complete');
+                    
+                    return (
+                      <div key={index} className={cn(
+                        'flex items-start gap-3 p-3 rounded-lg',
+                        isStep ? 'bg-blue-50 border border-blue-200' : 
+                        isAgentSelection ? 'bg-green-50 border border-green-200' :
+                        isDomainInfo ? 'bg-purple-50 border border-purple-200' :
+                        isOtherAgents ? 'bg-gray-50 border border-gray-200' :
+                        'bg-gray-50'
+                      )}>
+                        <div className="flex-shrink-0 mt-0.5">
+                          {isCompleted ? (
+                            <div className="w-5 h-5 rounded-full bg-green-500 flex items-center justify-center">
+                              <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                              </svg>
+                            </div>
+                          ) : isStep ? (
+                            <div className="w-5 h-5 rounded-full bg-blue-500 flex items-center justify-center">
+                              <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
+                            </div>
+                          ) : isAgentSelection ? (
+                            <div className="w-5 h-5 rounded-full bg-green-500 flex items-center justify-center">
+                              <div className="w-2 h-2 bg-white rounded-full"></div>
+                            </div>
+                          ) : isDomainInfo ? (
+                            <div className="w-5 h-5 rounded-full bg-purple-500 flex items-center justify-center">
+                              <div className="w-2 h-2 bg-white rounded-full"></div>
+                            </div>
+                          ) : (
+                            <div className="w-5 h-5 rounded-full bg-gray-500 flex items-center justify-center">
+                              <div className="w-2 h-2 bg-white rounded-full"></div>
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex-1 text-sm text-gray-700">
+                          <span className="font-medium">{step}</span>
+                        </div>
+                      </div>
+                    );
+                  })
+                ) : (
+                  <div className="flex items-center gap-3 p-3 rounded-lg bg-blue-50 border border-blue-200">
+                    <div className="w-5 h-5 rounded-full bg-blue-500 flex items-center justify-center">
+                      <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
+                    </div>
+                    <div className="text-sm text-gray-700">Preparing response...</div>
+                  </div>
+                )}
               </div>
             </ReasoningContent>
           </Reasoning>
         </div>
       )}
+
+      {/* Agent Selection Modal */}
+      <Dialog open={showAgentSelection} onOpenChange={hideAgentSelection}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Select the Best Agent for Your Query</DialogTitle>
+          </DialogHeader>
+          <AgentSelection
+            agents={suggestedAgents}
+            onSelect={handleAgentSelect}
+            isLoading={isWaitingForAgentSelection}
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

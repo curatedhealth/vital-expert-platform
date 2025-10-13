@@ -137,6 +137,192 @@ export class AutomaticAgentOrchestrator {
   /**
    * Main chat method - automatically selects and executes best agent
    */
+  /**
+   * Get agent suggestions only (without executing the selected agent)
+   */
+  async getAgentSuggestions(
+    query: string,
+    conversationHistory: Message[] = [],
+    options: AutomaticOrchestratorOptions = {}
+  ): Promise<{
+    rankedAgents: RankedAgent[];
+    detectedDomains: DetectedDomain[];
+    performance: {
+      domainDetection: number;
+      filtering: number;
+      ranking: number;
+      total: number;
+    };
+    reasoning: string;
+  }> {
+    const startTime = Date.now();
+    const {
+      maxCandidates = 10,
+      maxTier = 3,
+      minConfidence = 0.4,
+    } = options;
+
+    console.log('[AutomaticOrchestrator] Getting agent suggestions for query:', query.substring(0, 100));
+
+    try {
+
+    // Phase 1: Domain Detection
+    const domainStart = Date.now();
+    let detectedDomains: DetectedDomain[];
+    try {
+      console.log('[AutomaticOrchestrator] Starting domain detection...');
+      detectedDomains = await this.detectDomainsOptimized(query);
+      console.log('[AutomaticOrchestrator] Domain detection completed successfully');
+    } catch (domainError) {
+      console.error('[AutomaticOrchestrator] Domain detection error:', domainError);
+      // Fallback: create basic domain detection
+      detectedDomains = [{
+        domain: 'general-healthcare',
+        confidence: 0.5,
+        method: 'fallback',
+        reasoning: 'Fallback domain detection due to error'
+      }];
+      console.log('[AutomaticOrchestrator] Using fallback domain detection');
+    }
+    const domainTime = Date.now() - domainStart;
+
+    // Phase 2: Database Filtering
+    const filteringStart = Date.now();
+    let candidates: Agent[];
+    try {
+      console.log('[AutomaticOrchestrator] Starting database filtering...');
+      candidates = await this.filterCandidatesOptimized(query, maxTier, maxCandidates * 2);
+      console.log('[AutomaticOrchestrator] Database filtering completed successfully');
+    } catch (filteringError) {
+      console.error('[AutomaticOrchestrator] Database filtering error:', filteringError);
+      // Fallback: create basic candidates
+      candidates = [{
+        id: 'fallback-agent',
+        name: 'AI Assistant',
+        display_name: 'AI Assistant',
+        description: 'General purpose AI assistant',
+        capabilities: ['General Assistance', 'Question Answering'],
+        knowledge_domains: ['General'],
+        tier: 1,
+        status: 'active',
+        model: 'gpt-4',
+        metadata: {}
+      }];
+      console.log('[AutomaticOrchestrator] Using fallback candidates');
+    }
+    const filteringTime = Date.now() - filteringStart;
+
+    console.log('[AutomaticOrchestrator] Detected domains:', detectedDomains.map(d => ({
+      domain: d.domain,
+      confidence: d.confidence.toFixed(2),
+      method: d.method,
+    })));
+
+    console.log('[AutomaticOrchestrator] Found', candidates.length, 'candidate agents');
+
+    if (candidates.length === 0) {
+      throw new Error('No suitable agents found for this query. Please try rephrasing or contact support.');
+    }
+
+    // Phase 3: RAG Ranking
+    const rankingStart = Date.now();
+    let rankedAgents: RankedAgent[];
+    try {
+      console.log('[AutomaticOrchestrator] Starting agent ranking...');
+      rankedAgents = await this.rankAgentsOptimized(query, candidates, {
+        detectedDomains: detectedDomains.map(d => d.domain),
+        minScore: minConfidence,
+        maxResults: maxCandidates,
+        useCache: true,
+      });
+      console.log('[AutomaticOrchestrator] Agent ranking completed successfully');
+    } catch (rankingError) {
+      console.error('[AutomaticOrchestrator] Agent ranking error:', rankingError);
+      // Fallback: create a simple ranking without embeddings
+      rankedAgents = candidates.slice(0, maxCandidates).map((agent, index) => ({
+        agent,
+        scores: {
+          semantic: 0.5,
+          tier: agent.tier === 1 ? 1.0 : agent.tier === 2 ? 0.7 : 0.4,
+          domain: 0.5,
+          performance: 0.5,
+          final: 0.5,
+        },
+        reasoning: 'Fallback ranking due to embedding error',
+        confidence: 'medium' as const,
+      }));
+      console.log('[AutomaticOrchestrator] Using fallback ranking');
+    }
+    const rankingTime = Date.now() - rankingStart;
+
+    // Generate reasoning
+    const reasoning = this.generateReasoning(detectedDomains, rankedAgents, {
+      domainDetection: domainTime,
+      filtering: filteringTime,
+      ranking: rankingTime,
+      total: Date.now() - startTime,
+    });
+
+    console.log('[AutomaticOrchestrator] Agent suggestions completed in', Date.now() - startTime, 'ms');
+
+    return {
+      rankedAgents,
+      detectedDomains,
+      performance: {
+        domainDetection: domainTime,
+        filtering: filteringTime,
+        ranking: rankingTime,
+        total: Date.now() - startTime,
+      },
+      reasoning,
+    };
+    } catch (error) {
+      console.error('[AutomaticOrchestrator] Complete failure in getAgentSuggestions:', error);
+      
+      // Ultimate fallback - return basic suggestions
+      const fallbackAgents: RankedAgent[] = [{
+        agent: {
+          id: 'fallback-agent',
+          name: 'AI Assistant',
+          display_name: 'AI Assistant',
+          description: 'General purpose AI assistant',
+          capabilities: ['General Assistance', 'Question Answering'],
+          knowledge_domains: ['General'],
+          tier: 1,
+          status: 'active',
+          model: 'gpt-4',
+          metadata: {}
+        },
+        scores: {
+          semantic: 0.5,
+          tier: 1.0,
+          domain: 0.5,
+          performance: 0.5,
+          final: 0.5,
+        },
+        reasoning: 'Fallback agent due to system error',
+        confidence: 'medium' as const,
+      }];
+
+      return {
+        rankedAgents: fallbackAgents,
+        detectedDomains: [{
+          domain: 'general',
+          confidence: 0.5,
+          method: 'fallback',
+          reasoning: 'Fallback domain due to system error'
+        }],
+        performance: {
+          domainDetection: 0,
+          filtering: 0,
+          ranking: 0,
+          total: Date.now() - startTime,
+        },
+        reasoning: 'System encountered an error, using fallback agent suggestions',
+      };
+    }
+  }
+
   async chat(
     query: string,
     conversationHistory: Message[] = [],

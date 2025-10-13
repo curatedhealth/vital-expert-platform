@@ -203,18 +203,23 @@ const _useChatStore = create<ChatStore>()(
       isReasoningActive: false,
       abortController: null,
 
-      // Dual-Mode Initial State
-      interactionMode: 'automatic',
-      autonomousMode: false,
-      currentTier: 1,
-      escalationHistory: [],
-      selectedExpert: null,
-      conversationContext: {
-        sessionId: `session-${Date.now()}`,
-        messageCount: 0,
-        startTime: null,
-        lastActivity: null,
-      },
+  // Dual-Mode Initial State
+  interactionMode: 'automatic',
+  autonomousMode: false,
+  currentTier: 1,
+  escalationHistory: [],
+  selectedExpert: null,
+  conversationContext: {
+    sessionId: `session-${Date.now()}`,
+    messageCount: 0,
+    startTime: null,
+    lastActivity: null,
+  },
+
+  // Agent Selection State
+  suggestedAgents: [],
+  showAgentSelection: false,
+  isWaitingForAgentSelection: false,
 
       // Actions
       createNewChat: () => {
@@ -576,8 +581,23 @@ const _useChatStore = create<ChatStore>()(
                     }));
                   } else if (data.type === 'metadata') {
                     metadata = data.metadata;
+                  } else if (data.type === 'agent_suggestions') {
+                    // Show agent selection modal
+                    console.log('🎯 Received agent suggestions:', data.suggestions);
+                    set({
+                      suggestedAgents: data.suggestions || [],
+                      showAgentSelection: true,
+                      isWaitingForAgentSelection: true,
+                    });
+                  } else if (data.type === 'waiting_for_selection') {
+                    // User needs to select an agent
+                    console.log('⏳ Waiting for user agent selection...');
+                    // Don't close the stream, just wait
                   } else if (data.type === 'error') {
-                    throw new Error(data.error);
+                    console.error('❌ [SSE] Error received:', data.error || data.content || 'Unknown error');
+                    throw new Error(data.error || data.content || 'Unknown error');
+                  } else {
+                    console.log('🔍 [SSE] Unknown data type:', data.type, data);
                   }
                 } catch (parseError) {
                   console.error('❌ [SSE] Failed to parse SSE data:', {
@@ -1087,26 +1107,37 @@ const _useChatStore = create<ChatStore>()(
       // Global agents store integration
       syncWithGlobalStore: () => {
         try {
+          // Check if useAgentsStore is available and has getState method
+          if (!useAgentsStore || typeof useAgentsStore.getState !== 'function') {
+            console.warn('useAgentsStore not available or getState method missing');
+            return;
+          }
+          
           const globalAgents = useAgentsStore.getState().agents;
-        const convertedAgents = globalAgents.map((agent: GlobalAgent) => ({
-          id: agent.id,
-          name: agent.display_name,
-          description: agent.description,
-          systemPrompt: agent.system_prompt,
-          model: agent.model,
-          avatar: agent.avatar,
-          color: agent.color,
-          capabilities: agent.capabilities,
-          ragEnabled: agent.rag_enabled,
-          temperature: agent.temperature,
-          maxTokens: agent.max_tokens,
-          knowledgeDomains: agent.knowledge_domains,
-          businessFunction: agent.business_function || undefined,
-          role: agent.role || undefined,
-          isCustom: agent.is_custom,
-        }));
+          if (!Array.isArray(globalAgents)) {
+            console.warn('Global agents not available or not an array');
+            return;
+          }
+          
+          const convertedAgents = globalAgents.map((agent: GlobalAgent) => ({
+            id: agent.id,
+            name: agent.display_name,
+            description: agent.description,
+            systemPrompt: agent.system_prompt,
+            model: agent.model,
+            avatar: agent.avatar,
+            color: agent.color,
+            capabilities: agent.capabilities,
+            ragEnabled: agent.rag_enabled,
+            temperature: agent.temperature,
+            maxTokens: agent.max_tokens,
+            knowledgeDomains: agent.knowledge_domains,
+            businessFunction: agent.business_function || undefined,
+            role: agent.role || undefined,
+            isCustom: agent.is_custom,
+          }));
 
-        set({ agents: convertedAgents });
+          set({ agents: convertedAgents });
         } catch (error) {
           console.error('Failed to sync with global agents store:', error);
         }
@@ -1167,6 +1198,35 @@ const _useChatStore = create<ChatStore>()(
         });
       },
 
+      // Agent Selection Actions
+      showAgentSelectionModal: (agents: any[]) => {
+        console.log('🎯 Showing agent selection modal with agents:', agents.length);
+        set({
+          suggestedAgents: agents,
+          showAgentSelection: true,
+          isWaitingForAgentSelection: true,
+        });
+      },
+
+      selectAgentFromSuggestions: (agent: any) => {
+        console.log('✅ User selected agent:', agent.name);
+        set({
+          selectedAgent: agent,
+          showAgentSelection: false,
+          isWaitingForAgentSelection: false,
+          suggestedAgents: [],
+        });
+      },
+
+      hideAgentSelection: () => {
+        console.log('❌ Hiding agent selection modal');
+        set({
+          showAgentSelection: false,
+          isWaitingForAgentSelection: false,
+          suggestedAgents: [],
+        });
+      },
+
       // Set interaction mode and handle agent switching
       setInteractionMode: (mode: 'automatic' | 'manual') => {
         console.log('🔄 Switching interaction mode to:', mode);
@@ -1220,6 +1280,16 @@ const _useChatStore = create<ChatStore>()(
           return agents.slice(0, 5);
         }
         
+        // If no agents at all, try to load them
+        if (agents.length === 0) {
+          console.log('📚 No agents available, attempting to load from database');
+          // Trigger async load but return empty array for now
+          get().loadAgentsFromDatabase().catch(error => {
+            console.error('Failed to load agents from database:', error);
+          });
+          return [];
+        }
+        
         const filteredAgents = agents.filter(agent => libraryAgents.includes(agent.id));
         console.log('📚 Filtered library agents:', filteredAgents.length);
         return filteredAgents;
@@ -1254,7 +1324,8 @@ const _useChatStore = create<ChatStore>()(
         if (state) {
           state.loadAgentsFromDatabase().then(() => {
             // After loading agents, initialize library if empty
-            const { agents, libraryAgents } = state.getState();
+            const currentState = state.getState();
+            const { agents, libraryAgents } = currentState;
             if (libraryAgents.length === 0 && agents.length > 0) {
               console.log('📚 Initializing library with first 5 agents');
               const firstFiveAgentIds = agents.slice(0, 5).map(agent => agent.id);

@@ -315,6 +315,7 @@ export function KnowledgeUploader({ onUploadComplete }: KnowledgeUploaderProps) 
       }
 
       const result = await response.json();
+      console.log('📊 API Response:', result);
       updateProgress(100, 'processing');
 
       // Wait a bit to show processing state
@@ -322,9 +323,11 @@ export function KnowledgeUploader({ onUploadComplete }: KnowledgeUploaderProps) 
 
       // Check if file was processed or is a duplicate
       const fileResult = result.results?.[0];
+      console.log('📄 File Result:', fileResult);
 
       if (fileResult?.status === 'duplicate') {
         // File is a duplicate - show as completed with info
+        console.log('✅ File is duplicate, marking as completed');
         updateProgress(100, 'completed');
         return {
           name: file.file.name,
@@ -336,6 +339,7 @@ export function KnowledgeUploader({ onUploadComplete }: KnowledgeUploaderProps) 
           duplicate: true,
         };
       } else if (result.success && result.totalProcessed > 0) {
+        console.log('✅ File processed successfully, marking as completed');
         updateProgress(100, 'completed');
         return {
           name: file.file.name,
@@ -346,11 +350,19 @@ export function KnowledgeUploader({ onUploadComplete }: KnowledgeUploaderProps) 
           selectedAgents: file.selectedAgents,
         };
       } else {
+        console.log('❌ Processing failed:', {
+          success: result.success,
+          totalProcessed: result.totalProcessed,
+          fileResult: fileResult,
+          message: result.message
+        });
         const errorMsg = fileResult?.error || result.message || 'Processing failed';
         throw new Error(errorMsg);
       }
     } catch (error) {
+      console.error('❌ Upload error:', error);
       const errorMessage = error instanceof Error ? error.message : 'Upload failed. Please try again.';
+      console.error('❌ Error message:', errorMessage);
       updateProgress(0, 'error', errorMessage);
       return null;
     }

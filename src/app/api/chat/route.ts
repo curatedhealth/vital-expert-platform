@@ -52,8 +52,11 @@ export async function POST(request: NextRequest) {
       
       try {
         // Import the automatic orchestrator
+        console.log('🔄 Attempting to import automatic orchestrator...');
         const { AutomaticAgentOrchestrator } = await import('../../../features/chat/services/automatic-orchestrator');
+        console.log('✅ Automatic orchestrator imported successfully');
         const orchestrator = new AutomaticAgentOrchestrator();
+        console.log('✅ Automatic orchestrator instantiated successfully');
       
       // Create streaming response
       const stream = new ReadableStream({

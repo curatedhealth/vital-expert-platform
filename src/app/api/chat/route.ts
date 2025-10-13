@@ -222,9 +222,9 @@ export async function POST(request: NextRequest) {
               await new Promise(resolve => setTimeout(resolve, 100));
             }
             
-            // Create agent suggestions from real database agents (limit to 10 for UI performance)
-            console.log('🤖 Creating agent suggestions from database...');
-            const suggestions = agents.slice(0, 10).map((agent, index) => {
+                    // Create agent suggestions from real database agents (limit to 3 for top agents)
+                    console.log('🤖 Creating agent suggestions from database...');
+                    const suggestions = agents.slice(0, 3).map((agent, index) => {
               // Normalize capabilities to always be an array
               console.log(`🔍 Agent ${index + 1} capabilities normalization:`, {
                 original: agent.capabilities,
@@ -269,11 +269,11 @@ export async function POST(request: NextRequest) {
             console.log('🔍 Sample suggestion capabilities type:', typeof suggestions[0]?.capabilities);
             console.log('🔍 Sample suggestion capabilities isArray:', Array.isArray(suggestions[0]?.capabilities));
             
-            // Send agent suggestions
-            controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify({
-              type: 'reasoning',
-              content: `🎯 Found ${suggestions.length} suitable agents. Please select the best one for your query:`
-            })}\n\n`));
+                    // Send agent suggestions
+                    controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify({
+                      type: 'reasoning',
+                      content: `🎯 Found ${suggestions.length} top-rated agents. Please select the best one for your query:`
+                    })}\n\n`));
             
             console.log('📤 Sending agent suggestions via SSE...');
             controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify({

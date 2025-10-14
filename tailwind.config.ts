@@ -97,17 +97,19 @@ const config: Config = {
   				'5': 'var(--chart-5)'
   			}
   		},
-  		fontFamily: {
-  			sans: [
-  				'Inter',
-  				'system-ui',
-  				'sans-serif'
-  			],
-  			mono: [
-  				'JetBrains Mono',
-  				'monospace'
-  			]
-  		},
+		fontFamily: {
+			sans: [
+				'Outfit',
+				'Inter',
+				'system-ui',
+				'sans-serif'
+			],
+			mono: [
+				'Fira Code',
+				'JetBrains Mono',
+				'monospace'
+			]
+		},
   		borderRadius: {
   			lg: 'var(--radius)',
   			md: 'calc(var(--radius) - 2px)',

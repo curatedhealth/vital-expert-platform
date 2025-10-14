@@ -135,10 +135,11 @@ export interface ChatStore {
     tools?: string[];
   }>;
   reasoningEvents: Array<{
-    type: string;
+    type: 'reasoning' | 'complete' | 'error';
     step: string;
-    description: string;
-    data: any;
+    description?: string;
+    data?: Record<string, any>;
+    timestamp: Date;
   }>;
   abortController: AbortController | null;
 
@@ -253,6 +254,13 @@ export interface ChatStore {
     details?: any;
     tools?: string[];
   }>) => void;
+  addReasoningEvent: (event: {
+    type: 'reasoning' | 'complete' | 'error';
+    step: string;
+    description?: string;
+    data?: Record<string, any>;
+  }) => void;
+  clearReasoningEvents: () => void;
 }
 
 const _useChatStore = create<ChatStore>()(
@@ -1404,6 +1412,29 @@ const _useChatStore = create<ChatStore>()(
 
       updateCurrentReasoning: (reasoning) => {
         set({ currentReasoning: reasoning });
+      },
+
+      // Add reasoning event
+      addReasoningEvent: (event: {
+        type: 'reasoning' | 'complete' | 'error';
+        step: string;
+        description?: string;
+        data?: Record<string, any>;
+      }) => {
+        set((state) => ({
+          reasoningEvents: [
+            ...state.reasoningEvents,
+            {
+              ...event,
+              timestamp: new Date(),
+            },
+          ],
+        }));
+      },
+
+      // Clear reasoning events
+      clearReasoningEvents: () => {
+        set({ reasoningEvents: [] });
       },
 
       // Set interaction mode and handle agent switching

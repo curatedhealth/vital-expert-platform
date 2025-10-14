@@ -16,4 +16,3 @@ export function parseSSELine(line: string): SSE | null {
     return { type: 'error:event', message: 'Malformed SSE' }; 
   }
 }
-

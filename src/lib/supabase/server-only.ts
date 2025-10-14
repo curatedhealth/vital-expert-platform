@@ -21,4 +21,3 @@ export function getServiceRoleKey(): string {
   
   return key;
 }
-

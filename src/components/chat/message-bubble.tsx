@@ -1,125 +1,122 @@
 'use client';
 
 import React from 'react';
-import { User, Bot, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { User, Bot, Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
-import type { Message } from '@/types/chat.types';
 
-export function MessageBubble({ message }: { message: Message }) {
+interface Message {
+  id: string;
+  role: 'user' | 'assistant';
+  content: string;
+  timestamp: Date | string;
+  isLoading?: boolean;
+  error?: boolean;
+  metadata?: {
+    agent?: {
+      name: string;
+      display_name?: string;
+    };
+    reasoning?: string[];
+  };
+}
+
+interface MessageBubbleProps {
+  message: Message;
+  isLastMessage?: boolean;
+  isLoading?: boolean;
+}
+
+export function MessageBubble({ message, isLastMessage, isLoading }: MessageBubbleProps) {
   const isUser = message.role === 'user';
   const isAssistant = message.role === 'assistant';
-  const isSystem = message.role === 'system';
+  const isError = message.error;
+  const isProcessing = isLoading || message.isLoading;
 
-  // AUDIT FIX: Safe JSON parsing
-  const parseMetadata = (metadata: any) => {
-    try {
-      return typeof metadata === 'string' ? JSON.parse(metadata) : metadata;
-    } catch {
-      return {};
+  const getStatusIcon = () => {
+    if (isProcessing) {
+      return <Loader2 className="h-3 w-3 animate-spin text-blue-500" />;
     }
+    if (isError) {
+      return <AlertCircle className="h-3 w-3 text-red-500" />;
+    }
+    if (isAssistant && !isProcessing) {
+      return <CheckCircle2 className="h-3 w-3 text-green-500" />;
+    }
+    return null;
   };
 
-  const metadata = parseMetadata(message.metadata);
-  const agent = metadata?.agent || metadata?.selectedAgent;
+  const formatTimestamp = (timestamp: Date | string) => {
+    const date = typeof timestamp === 'string' ? new Date(timestamp) : timestamp;
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  };
 
   return (
     <div className={cn(
       "flex gap-3",
-      isUser && "flex-row-reverse"
+      isUser ? "justify-end" : "justify-start"
     )}>
-      {/* Avatar */}
-      <div className="flex-shrink-0">
-        {isUser ? (
-          <Avatar className="w-8 h-8">
-            <AvatarFallback className="bg-blue-600 text-white">
-              <User className="w-4 h-4" />
-            </AvatarFallback>
-          </Avatar>
-        ) : (
-          <Avatar className="w-8 h-8">
-            <AvatarImage 
-              src={agent?.avatarUrl || agent?.avatar || ''} 
-              alt={agent?.display_name || agent?.name || 'AI Agent'} 
-            />
-            <AvatarFallback className="bg-gradient-to-br from-purple-500 to-pink-600 text-white">
-              <Bot className="w-4 h-4" />
-            </AvatarFallback>
-          </Avatar>
-        )}
-      </div>
+      {!isUser && (
+        <Avatar className="h-8 w-8 flex-shrink-0">
+          <AvatarImage 
+            src={message.metadata?.agent?.display_name ? '' : ''} 
+            alt={message.metadata?.agent?.display_name || 'AI Assistant'} 
+          />
+          <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white text-xs">
+            {message.metadata?.agent?.display_name?.[0] || 'AI'}
+          </AvatarFallback>
+        </Avatar>
+      )}
 
-      {/* Message Content */}
       <div className={cn(
-        "flex-1 min-w-0",
-        isUser && "flex flex-col items-end"
+        "flex flex-col max-w-[80%]",
+        isUser ? "items-end" : "items-start"
       )}>
-        {/* Agent Info for Assistant Messages */}
-        {isAssistant && agent && (
+        {/* Agent info for assistant messages */}
+        {isAssistant && message.metadata?.agent && (
           <div className="mb-1">
-            <Badge variant="secondary" className="text-xs">
-              {agent.display_name || agent.name}
+            <Badge variant="outline" className="text-xs">
+              {message.metadata.agent.display_name || message.metadata.agent.name}
             </Badge>
           </div>
         )}
 
-        {/* Message Card */}
+        {/* Message content */}
         <Card className={cn(
-          "max-w-[80%]",
-          isUser && "bg-blue-600 text-white",
-          isAssistant && "bg-white border",
-          isSystem && "bg-gray-100 border-gray-200"
+          "px-4 py-3",
+          isUser 
+            ? "bg-blue-600 text-white" 
+            : isError 
+              ? "bg-red-50 border-red-200 text-red-900"
+              : "bg-gray-50 border-gray-200",
+          isProcessing && "animate-pulse"
         )}>
-          <CardContent className="p-3">
-            {/* Loading State */}
-            {message.isLoading && (
-              <div className="flex items-center gap-2 text-sm text-gray-500">
-                <div className="w-4 h-4 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin" />
-                <span>Thinking...</span>
-              </div>
-            )}
-
-            {/* Error State */}
-            {message.error && (
-              <div className="flex items-center gap-2 text-sm text-red-600">
-                <AlertCircle className="w-4 h-4" />
-                <span>Error: {message.error}</span>
-              </div>
-            )}
-
-            {/* Content */}
-            {message.content && (
-              <div className="prose prose-sm max-w-none">
-                {message.content.split('\n').map((line, i) => (
-                  <p key={i} className={cn(
-                    "mb-2 last:mb-0",
-                    isUser && "text-white"
-                  )}>
-                    {line}
-                  </p>
-                ))}
-              </div>
-            )}
-
-            {/* Success State */}
-            {!message.isLoading && !message.error && message.content && (
-              <div className="flex items-center justify-end mt-2">
-                <CheckCircle2 className="w-3 h-3 text-green-500" />
-              </div>
-            )}
+          <CardContent className="p-0">
+            <div className="whitespace-pre-wrap text-sm">
+              {message.content || (isProcessing ? 'Thinking...' : '')}
+            </div>
           </CardContent>
         </Card>
 
-        {/* Timestamp */}
+        {/* Timestamp and status */}
         <div className={cn(
-          "text-xs text-gray-500 mt-1",
-          isUser && "text-right"
+          "flex items-center gap-2 mt-1 text-xs text-gray-500",
+          isUser ? "flex-row-reverse" : "flex-row"
         )}>
-          {new Date(message.timestamp).toLocaleTimeString()}
+          <span>{formatTimestamp(message.timestamp)}</span>
+          {getStatusIcon()}
         </div>
       </div>
+
+      {isUser && (
+        <Avatar className="h-8 w-8 flex-shrink-0">
+          <AvatarFallback className="bg-gray-600 text-white text-xs">
+            <User className="h-4 w-4" />
+          </AvatarFallback>
+        </Avatar>
+      )}
     </div>
   );
 }

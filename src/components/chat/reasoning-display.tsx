@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Brain, ChevronDown, ChevronRight, Clock, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Brain, ChevronDown, ChevronRight, CheckCircle2, AlertCircle, Clock } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';

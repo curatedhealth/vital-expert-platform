@@ -5,6 +5,7 @@ import { Send, Loader2, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { EnhancedPromptInput } from './enhanced-prompt-input';
 import { cn } from '@/lib/utils';
 
 interface ChatInputProps {
@@ -17,6 +18,9 @@ interface ChatInputProps {
   disabled?: boolean;
   className?: string;
   isCentered?: boolean;
+  selectedAgent?: any;
+  selectedModel?: string;
+  onModelChange?: (model: string) => void;
 }
 
 export function ChatInput({
@@ -28,7 +32,10 @@ export function ChatInput({
   hasSelectedAgent,
   disabled = false,
   className,
-  isCentered = false
+  isCentered = false,
+  selectedAgent,
+  selectedModel = 'gpt-4o',
+  onModelChange
 }: ChatInputProps) {
   // Validation: Check if can send
   const canSend = value.trim() && 
@@ -55,16 +62,10 @@ export function ChatInput({
     }
   };
 
-  return (
-    <div className={cn(
-      isCentered 
-        ? "bg-transparent p-0" 
-        : "border-t bg-white p-4", 
-      className
-    )}>
-      <form onSubmit={handleSubmit} className={cn(
-        isCentered ? "w-full" : "max-w-4xl mx-auto"
-      )}>
+  // Use enhanced prompt input for non-centered mode
+  if (!isCentered) {
+    return (
+      <div className={cn("border-t bg-white p-4", className)}>
         {/* Warning: No agent selected */}
         {showWarning && (
           <Alert variant="destructive" className="mb-3">
@@ -75,36 +76,44 @@ export function ChatInput({
           </Alert>
         )}
 
+        <EnhancedPromptInput
+          value={value}
+          onChange={onChange}
+          onSubmit={onSubmit}
+          isLoading={isLoading}
+          disabled={!canSend}
+          placeholder={
+            showWarning
+              ? "Please select an AI agent first..."
+              : "Ask about digital health, reimbursement, clinical research..."
+          }
+          selectedAgent={selectedAgent}
+          selectedModel={selectedModel}
+          onModelChange={onModelChange}
+        />
+      </div>
+    );
+  }
+
+  // Centered mode - use simple input
+  return (
+    <div className={cn("bg-transparent p-0", className)}>
+      <form onSubmit={handleSubmit} className="w-full">
         {/* Input Area */}
-        <div className={cn(
-          "flex gap-2",
-          isCentered && "bg-white rounded-2xl border border-gray-200 shadow-lg p-2"
-        )}>
+        <div className="flex gap-2 bg-white rounded-2xl border border-gray-200 shadow-lg p-2">
           <Textarea
             value={value}
             onChange={(e) => onChange(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder={
-              showWarning
-                ? "Please select an AI agent first..."
-                : isCentered
-                ? "Message VITAL Expert..."
-                : "Ask about digital health, reimbursement, clinical research..."
-            }
-            className={cn(
-              "min-h-[40px] max-h-[120px] resize-none",
-              isCentered && "border-0 shadow-none focus:ring-0 text-base"
-            )}
+            placeholder="Message VITAL Expert..."
+            className="min-h-[40px] max-h-[120px] resize-none border-0 shadow-none focus:ring-0 text-base"
             disabled={!canSend}
             rows={1}
           />
           <Button
             type="submit"
             disabled={!canSend}
-            className={cn(
-              "px-4 shrink-0",
-              isCentered && "rounded-xl"
-            )}
+            className="px-4 shrink-0 rounded-xl"
           >
             {isLoading ? (
               <Loader2 className="w-4 h-4 animate-spin" />
@@ -113,13 +122,6 @@ export function ChatInput({
             )}
           </Button>
         </div>
-
-        {/* Helper Text */}
-        {!isCentered && (
-          <p className="text-xs text-gray-500 mt-2">
-            Press Enter to send, Shift+Enter for new line
-          </p>
-        )}
       </form>
     </div>
   );

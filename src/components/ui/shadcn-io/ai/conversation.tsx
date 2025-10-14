@@ -1,17 +1,15 @@
 'use client';
 
-import { ArrowDownIcon } from 'lucide-react';
-import { useEffect } from 'react';
-import { StickToBottom, useStickToBottomContext } from 'use-stick-to-bottom';
-
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-
+import { ArrowDownIcon } from 'lucide-react';
 import type { ComponentProps } from 'react';
+import { useCallback } from 'react';
+import { StickToBottom, useStickToBottomContext } from 'use-stick-to-bottom';
 
 export type ConversationProps = ComponentProps<typeof StickToBottom>;
 
-export const __Conversation = ({ className, ...props }: ConversationProps) => (
+export const Conversation = ({ className, ...props }: ConversationProps) => (
   <StickToBottom
     className={cn('relative flex-1 overflow-y-auto', className)}
     initial="smooth"
@@ -21,36 +19,26 @@ export const __Conversation = ({ className, ...props }: ConversationProps) => (
   />
 );
 
-// Export with regular names for compatibility
-export const Conversation = __Conversation;
-
 export type ConversationContentProps = ComponentProps<
   typeof StickToBottom.Content
 >;
 
-export const __ConversationContent = ({
+export const ConversationContent = ({
   className,
   ...props
 }: ConversationContentProps) => (
   <StickToBottom.Content className={cn('p-4', className)} {...props} />
 );
 
-// Export with regular names for compatibility
-export const ConversationContent = __ConversationContent;
-
 export type ConversationScrollButtonProps = ComponentProps<typeof Button>;
 
-export const __ConversationScrollButton = ({
+export const ConversationScrollButton = ({
   className,
   ...props
 }: ConversationScrollButtonProps) => {
   const { isAtBottom, scrollToBottom } = useStickToBottomContext();
 
-  const handleScrollToBottom = () => {
-    scrollToBottom();
-  };
-
-  useEffect(() => {
+  const handleScrollToBottom = useCallback(() => {
     scrollToBottom();
   }, [scrollToBottom]);
 

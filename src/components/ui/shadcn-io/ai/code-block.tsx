@@ -1,17 +1,15 @@
 'use client';
 
+import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 import { CheckIcon, CopyIcon } from 'lucide-react';
+import type { ComponentProps, HTMLAttributes, ReactNode } from 'react';
 import { createContext, useContext, useState } from 'react';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import {
   oneDark,
-  oneLight
+  oneLight,
 } from 'react-syntax-highlighter/dist/esm/styles/prism';
-
-import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
-
-import type { ComponentProps, HTMLAttributes, ReactNode } from 'react';
 
 type CodeBlockContextType = {
   code: string;
@@ -28,7 +26,7 @@ export type CodeBlockProps = HTMLAttributes<HTMLDivElement> & {
   children?: ReactNode;
 };
 
-export const __CodeBlock = ({
+export const CodeBlock = ({
   code,
   language,
   showLineNumbers = false,
@@ -101,16 +99,13 @@ export const __CodeBlock = ({
   </CodeBlockContext.Provider>
 );
 
-// Export with regular names for compatibility
-export const CodeBlock = __CodeBlock;
-
 export type CodeBlockCopyButtonProps = ComponentProps<typeof Button> & {
   onCopy?: () => void;
   onError?: (error: Error) => void;
   timeout?: number;
 };
 
-export const __CodeBlockCopyButton = ({
+export const CodeBlockCopyButton = ({
   onCopy,
   onError,
   timeout = 2000,
@@ -151,6 +146,3 @@ export const __CodeBlockCopyButton = ({
     </Button>
   );
 };
-
-// Export with regular names for compatibility
-export const CodeBlockCopyButton = __CodeBlockCopyButton;

@@ -4,7 +4,6 @@ import {
   AvatarImage,
 } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
-
 import type { UIMessage } from 'ai';
 import type { ComponentProps, HTMLAttributes } from 'react';
 
@@ -12,7 +11,7 @@ export type MessageProps = HTMLAttributes<HTMLDivElement> & {
   from: UIMessage['role'];
 };
 
-export const __Message = ({ className, from, ...props }: MessageProps) => (
+export const Message = ({ className, from, ...props }: MessageProps) => (
   <div
     className={cn(
       'group flex w-full items-end justify-end gap-2 py-4',
@@ -26,7 +25,7 @@ export const __Message = ({ className, from, ...props }: MessageProps) => (
 
 export type MessageContentProps = HTMLAttributes<HTMLDivElement>;
 
-export const __MessageContent = ({
+export const MessageContent = ({
   children,
   className,
   ...props
@@ -49,7 +48,7 @@ export type MessageAvatarProps = ComponentProps<typeof Avatar> & {
   name?: string;
 };
 
-export const __MessageAvatar = ({
+export const MessageAvatar = ({
   src,
   name,
   className,

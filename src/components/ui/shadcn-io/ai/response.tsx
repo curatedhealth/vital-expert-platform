@@ -1,19 +1,16 @@
 'use client';
 
-import { memo, isValidElement } from 'react';
-import ReactMarkdown from 'react-markdown';
+import { cn } from '@/lib/utils';
+import type { ComponentProps, HTMLAttributes } from 'react';
+import { isValidElement, memo } from 'react';
+import ReactMarkdown, { type Options } from 'react-markdown';
 import rehypeKatex from 'rehype-katex';
 import remarkGfm from 'remark-gfm';
 import remarkMath from 'remark-math';
-
-import { cn } from '@/lib/utils';
-
 import { CodeBlock, CodeBlockCopyButton } from './code-block';
-
-import type { HTMLAttributes, ComponentProps } from 'react';
-import type { Options } from 'react-markdown';
-
 import 'katex/dist/katex.min.css';
+import hardenReactMarkdown from 'harden-react-markdown';
+
 
 /**
  * Parses markdown text and removes incomplete tokens to prevent partial rendering
@@ -27,16 +24,18 @@ function parseIncompleteMarkdown(text: string): string {
   let result = text;
 
   // Handle incomplete links and images
-  // Pattern: [...] or ?[...] where the closing ] is missing
-  const linkMatch = result.match(/\[[^\]]*$/);
+  // Pattern: [...] or ![...] where the closing ] is missing
+  const linkImagePattern = /(!?\[)([^\]]*?)$/;
+  const linkMatch = result.match(linkImagePattern);
   if (linkMatch) {
-    // If we have an unterminated [ or ?[, remove it and everything after
-    const startIndex = result.lastIndexOf('[');
+    // If we have an unterminated [ or ![, remove it and everything after
+    const startIndex = result.lastIndexOf(linkMatch[1]);
     result = result.substring(0, startIndex);
   }
 
   // Handle incomplete bold formatting (**)
-  const boldMatch = result.match(/\*\*[^*]*$/);
+  const boldPattern = /(\*\*)([^*]*?)$/;
+  const boldMatch = result.match(boldPattern);
   if (boldMatch) {
     // Count the number of ** in the entire string
     const asteriskPairs = (result.match(/\*\*/g) || []).length;
@@ -47,7 +46,8 @@ function parseIncompleteMarkdown(text: string): string {
   }
 
   // Handle incomplete italic formatting (__)
-  const italicMatch = result.match(/__[^_]*$/);
+  const italicPattern = /(__)([^_]*?)$/;
+  const italicMatch = result.match(italicPattern);
   if (italicMatch) {
     // Count the number of __ in the entire string
     const underscorePairs = (result.match(/__/g) || []).length;
@@ -58,14 +58,15 @@ function parseIncompleteMarkdown(text: string): string {
   }
 
   // Handle incomplete single asterisk italic (*)
-  const singleAsteriskMatch = result.match(/\*[^*]*$/);
+  const singleAsteriskPattern = /(\*)([^*]*?)$/;
+  const singleAsteriskMatch = result.match(singleAsteriskPattern);
   if (singleAsteriskMatch) {
     // Count single asterisks that aren't part of **
     const singleAsterisks = result.split('').reduce((acc, char, index) => {
-      const prevChar = result[index - 1];
-      const nextChar = result[index + 1];
       if (char === '*') {
         // Check if it's part of a ** pair
+        const prevChar = result[index - 1];
+        const nextChar = result[index + 1];
         if (prevChar !== '*' && nextChar !== '*') {
           return acc + 1;
         }
@@ -80,14 +81,15 @@ function parseIncompleteMarkdown(text: string): string {
   }
 
   // Handle incomplete single underscore italic (_)
-  const singleUnderscoreMatch = result.match(/_[^_]*$/);
+  const singleUnderscorePattern = /(_)([^_]*?)$/;
+  const singleUnderscoreMatch = result.match(singleUnderscorePattern);
   if (singleUnderscoreMatch) {
     // Count single underscores that aren't part of __
     const singleUnderscores = result.split('').reduce((acc, char, index) => {
-      const prevChar = result[index - 1];
-      const nextChar = result[index + 1];
       if (char === '_') {
         // Check if it's part of a __ pair
+        const prevChar = result[index - 1];
+        const nextChar = result[index + 1];
         if (prevChar !== '_' && nextChar !== '_') {
           return acc + 1;
         }
@@ -102,22 +104,28 @@ function parseIncompleteMarkdown(text: string): string {
   }
 
   // Handle incomplete inline code blocks (`) - but avoid code blocks (```)
-  const inlineCodeMatch = result.match(/`[^`]*$/);
+  const inlineCodePattern = /(`)([^`]*?)$/;
+  const inlineCodeMatch = result.match(inlineCodePattern);
   if (inlineCodeMatch) {
     // Check if we're dealing with a code block (triple backticks)
-    const codeBlockMatches = result.match(/```/g);
-    const insideIncompleteCodeBlock = codeBlockMatches && codeBlockMatches.length % 2 === 1;
+    const hasCodeBlockStart = result.includes('```');
+    const codeBlockPattern = /```[\s\S]*?```/g;
+    const completeCodeBlocks = (result.match(codeBlockPattern) || []).length;
+    const allTripleBackticks = (result.match(/```/g) || []).length;
 
     // If we have an odd number of ``` sequences, we're inside an incomplete code block
     // In this case, don't complete inline code
+    const insideIncompleteCodeBlock = allTripleBackticks % 2 === 1;
+
     if (!insideIncompleteCodeBlock) {
       // Count the number of single backticks that are NOT part of triple backticks
       let singleBacktickCount = 0;
       for (let i = 0; i < result.length; i++) {
         if (result[i] === '`') {
           // Check if this backtick is part of a triple backtick sequence
-          const isTripleStart = i < result.length - 2 && result.substring(i, i + 3) === '```';
-          const isTripleMiddle = i > 0 && result.substring(i - 1, i + 2) === '```';
+          const isTripleStart = result.substring(i, i + 3) === '```';
+          const isTripleMiddle =
+            i > 0 && result.substring(i - 1, i + 2) === '```';
           const isTripleEnd = i > 1 && result.substring(i - 2, i + 1) === '```';
 
           if (!(isTripleStart || isTripleMiddle || isTripleEnd)) {
@@ -134,7 +142,8 @@ function parseIncompleteMarkdown(text: string): string {
   }
 
   // Handle incomplete strikethrough formatting (~~)
-  const strikethroughMatch = result.match(/~~[^~]*$/);
+  const strikethroughPattern = /(~~)([^~]*?)$/;
+  const strikethroughMatch = result.match(strikethroughPattern);
   if (strikethroughMatch) {
     // Count the number of ~~ in the entire string
     const tildePairs = (result.match(/~~/g) || []).length;
@@ -148,18 +157,20 @@ function parseIncompleteMarkdown(text: string): string {
 }
 
 // Create a hardened version of ReactMarkdown
-const hardenReactMarkdown = (Component: typeof ReactMarkdown) => {
-  return memo(Component);
-};
-
 const HardenedMarkdown = hardenReactMarkdown(ReactMarkdown);
 
 export type ResponseProps = HTMLAttributes<HTMLDivElement> & {
   options?: Options;
   children: Options['children'];
-  allowedImagePrefixes?: any;
-  allowedLinkPrefixes?: any;
-  defaultOrigin?: any;
+  allowedImagePrefixes?: ComponentProps<
+    ReturnType<typeof hardenReactMarkdown>
+  >['allowedImagePrefixes'];
+  allowedLinkPrefixes?: ComponentProps<
+    ReturnType<typeof hardenReactMarkdown>
+  >['allowedLinkPrefixes'];
+  defaultOrigin?: ComponentProps<
+    ReturnType<typeof hardenReactMarkdown>
+  >['defaultOrigin'];
   parseIncompleteMarkdown?: boolean;
 };
 
@@ -286,7 +297,7 @@ const components: Options['components'] = {
     </blockquote>
   ),
   code: ({ node, className, ...props }) => {
-    const inline = !className?.includes('language-');
+    const inline = node?.position?.start.line === node?.position?.end.line;
 
     if (!inline) {
       return <code className={className} {...props} />;
@@ -303,14 +314,14 @@ const components: Options['components'] = {
     );
   },
   pre: ({ node, className, children }) => {
-    let language = 'text';
-    let code = '';
+    let language = 'javascript';
 
     if (typeof node?.properties?.className === 'string') {
       language = node.properties.className.replace('language-', '');
     }
 
     // Extract code content from children safely
+    let code = '';
     if (
       isValidElement(children) &&
       children.props &&
@@ -328,15 +339,15 @@ const components: Options['components'] = {
         language={language}
       >
         <CodeBlockCopyButton
-          onCopy={() => {/* */}}
-          onError={() => {/* console.error('Failed to copy code to clipboard') */}}
+          onCopy={() => console.log('Copied code to clipboard')}
+          onError={() => console.error('Failed to copy code to clipboard')}
         />
       </CodeBlock>
     );
   },
 };
 
-export const __Response = memo(
+export const Response = memo(
   ({
     className,
     options,
@@ -362,7 +373,10 @@ export const __Response = memo(
         {...props}
       >
         <HardenedMarkdown
+          allowedImagePrefixes={allowedImagePrefixes ?? ['*']}
+          allowedLinkPrefixes={allowedLinkPrefixes ?? ['*']}
           components={components}
+          defaultOrigin={defaultOrigin}
           rehypePlugins={[rehypeKatex]}
           remarkPlugins={[remarkGfm, remarkMath]}
           {...options}
@@ -375,8 +389,4 @@ export const __Response = memo(
   (prevProps, nextProps) => prevProps.children === nextProps.children
 );
 
-__Response.displayName = 'Response';
-
-// Export with regular names for compatibility
-export const Response = __Response;
-export const StreamingResponse = __Response;
+Response.displayName = 'Response';

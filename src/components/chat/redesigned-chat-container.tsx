@@ -123,6 +123,9 @@ export function RedesignedChatContainer({ className }: { className?: string }) {
                 isLoading={isLoading}
                 interactionMode={interactionMode}
                 hasSelectedAgent={!!selectedAgent}
+                selectedAgent={selectedAgent}
+                selectedModel={selectedModel?.id || 'gpt-4o'}
+                onModelChange={(model) => setSelectedModel({ id: model, name: model })}
                 className="border-0 bg-transparent"
                 isCentered={true}
               />
@@ -140,6 +143,7 @@ export function RedesignedChatContainer({ className }: { className?: string }) {
                     message={message}
                     isLastMessage={index === messages.length - 1}
                     isLoading={isLoading && index === messages.length - 1}
+                    agent={message.role === 'assistant' ? selectedAgent : undefined}
                   />
                 ))}
                 {isLoading && messages.length > 0 && messages[messages.length - 1]?.role === 'user' && (
@@ -153,6 +157,7 @@ export function RedesignedChatContainer({ className }: { className?: string }) {
                     }}
                     isLastMessage={true}
                     isLoading={true}
+                    agent={selectedAgent}
                   />
                 )}
                 <ReasoningDisplay />
@@ -191,6 +196,9 @@ export function RedesignedChatContainer({ className }: { className?: string }) {
               isLoading={isLoading}
               interactionMode={interactionMode}
               hasSelectedAgent={!!selectedAgent}
+              selectedAgent={selectedAgent}
+              selectedModel={selectedModel?.id || 'gpt-4o'}
+              onModelChange={(model) => setSelectedModel({ id: model, name: model })}
               className="border-t"
             />
           </>

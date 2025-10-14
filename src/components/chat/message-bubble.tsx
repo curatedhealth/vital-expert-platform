@@ -5,6 +5,7 @@ import { User, Bot, Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { AgentAvatar } from '@/components/ui/agent-avatar';
 import { cn } from '@/lib/utils';
 
 interface Message {
@@ -27,9 +28,10 @@ interface MessageBubbleProps {
   message: Message;
   isLastMessage?: boolean;
   isLoading?: boolean;
+  agent?: any; // Agent object for assistant messages
 }
 
-export function MessageBubble({ message, isLastMessage, isLoading }: MessageBubbleProps) {
+export function MessageBubble({ message, isLastMessage, isLoading, agent }: MessageBubbleProps) {
   const isUser = message.role === 'user';
   const isAssistant = message.role === 'assistant';
   const isError = message.error;
@@ -59,13 +61,35 @@ export function MessageBubble({ message, isLastMessage, isLoading }: MessageBubb
       isUser ? "justify-end" : "justify-start"
     )}>
       {!isUser && (
+        <div className="h-8 w-8 flex-shrink-0">
+          {agent ? (
+            <AgentAvatar 
+              agent={agent} 
+              size="sm" 
+              className="rounded-full"
+            />
+          ) : (
+            <Avatar className="h-8 w-8">
+              <AvatarImage 
+                src="" 
+                alt="AI Assistant" 
+              />
+              <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white text-xs">
+                AI
+              </AvatarFallback>
+            </Avatar>
+          )}
+        </div>
+      )}
+
+      {isUser && (
         <Avatar className="h-8 w-8 flex-shrink-0">
           <AvatarImage 
-            src={message.metadata?.agent?.display_name ? '' : ''} 
-            alt={message.metadata?.agent?.display_name || 'AI Assistant'} 
+            src="" 
+            alt="User" 
           />
-          <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white text-xs">
-            {message.metadata?.agent?.display_name?.[0] || 'AI'}
+          <AvatarFallback className="bg-gradient-to-br from-green-500 to-blue-600 text-white text-xs">
+            <User className="h-4 w-4" />
           </AvatarFallback>
         </Avatar>
       )}

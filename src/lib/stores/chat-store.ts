@@ -126,6 +126,13 @@ export interface ChatStore {
   error: string | null;
   liveReasoning: string;
   isReasoningActive: boolean;
+  currentReasoning: Array<{
+    title: string;
+    description?: string;
+    status: 'pending' | 'running' | 'completed' | 'error';
+    details?: any;
+    tools?: string[];
+  }>;
   reasoningEvents: Array<{
     type: string;
     step: string;
@@ -233,7 +240,17 @@ export interface ChatStore {
   // Agent selection methods
   showAgentSelectionModal: (agents: any[]) => void;
   selectAgentFromSuggestions: (agent: any) => Promise<void>;
+  selectAgent: (agentId: string) => Promise<void>;
   hideAgentSelection: () => void;
+  
+  // Reasoning methods
+  updateCurrentReasoning: (reasoning: Array<{
+    title: string;
+    description?: string;
+    status: 'pending' | 'running' | 'completed' | 'error';
+    details?: any;
+    tools?: string[];
+  }>) => void;
 }
 
 const _useChatStore = create<ChatStore>()(
@@ -252,6 +269,7 @@ const _useChatStore = create<ChatStore>()(
       error: null,
       liveReasoning: '',
       isReasoningActive: false,
+      currentReasoning: [],
       reasoningEvents: [],
       abortController: null,
 
@@ -1345,6 +1363,29 @@ const _useChatStore = create<ChatStore>()(
         }
       },
 
+      selectAgent: async (agentId: string) => {
+        const { agents } = get();
+        const agent = agents.find(a => a.id === agentId);
+        
+        if (!agent) {
+          throw new Error(`Agent with ID ${agentId} not found`);
+        }
+
+        console.log('✅ Agent selected via selectAgent:', agent.name);
+        
+        // Set the selected agent
+        set({ 
+          selectedAgent: agent,
+          showAgentSelection: false,
+          isWaitingForAgentSelection: false,
+          error: null
+        });
+
+        // Create a new chat with the selected agent
+        const { createNewChat } = get();
+        createNewChat();
+      },
+
       hideAgentSelection: () => {
         console.log('❌ Hiding agent selection modal');
         set({
@@ -1352,6 +1393,10 @@ const _useChatStore = create<ChatStore>()(
           isWaitingForAgentSelection: false,
           suggestedAgents: [],
         });
+      },
+
+      updateCurrentReasoning: (reasoning) => {
+        set({ currentReasoning: reasoning });
       },
 
       // Set interaction mode and handle agent switching

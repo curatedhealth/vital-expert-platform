@@ -9,14 +9,8 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ChatContainerRoot, ChatContainerContent, ChatContainerScrollAnchor } from '@/components/ui/chat-container';
 import { useChatStore } from '@/lib/stores/chat-store';
+import { DynamicReasoning } from '@/components/ai/dynamic-reasoning';
 
-interface ReasoningStep {
-  id: string;
-  text: string;
-  completed: boolean;
-  active: boolean;
-  timestamp?: number;
-}
 
 interface EnhancedChatContainerProps {
   className?: string;
@@ -29,6 +23,7 @@ export function EnhancedChatContainer({ className }: EnhancedChatContainerProps)
     sendMessage,
     liveReasoning,
     isReasoningActive,
+    reasoningEvents,
     suggestedAgents,
     showAgentSelection,
     selectAgentFromSuggestions,
@@ -36,67 +31,8 @@ export function EnhancedChatContainer({ className }: EnhancedChatContainerProps)
   } = useChatStore();
 
   const [input, setInput] = useState('');
-  const [isExpanded, setIsExpanded] = useState(false);
-  const [reasoningSteps, setReasoningSteps] = useState<ReasoningStep[]>([]);
-  const [currentStep, setCurrentStep] = useState(0);
-  const [progress, setProgress] = useState(0);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // Initialize reasoning steps based on LangGraph workflow
-  const initializeReasoningSteps = () => {
-    const steps: ReasoningStep[] = [
-      { id: 'routing', text: 'Analyzing query and determining workflow mode...', completed: false, active: false },
-      { id: 'agent_selection', text: 'Selecting the most appropriate expert agent...', completed: false, active: false },
-      { id: 'tool_selection', text: 'Configuring tools for your request...', completed: false, active: false },
-      { id: 'context_retrieval', text: 'Retrieving relevant context and knowledge...', completed: false, active: false },
-      { id: 'response_generation', text: 'Generating comprehensive response...', completed: false, active: false },
-    ];
-    setReasoningSteps(steps);
-  };
-
-  // Update reasoning steps based on workflow progress
-  useEffect(() => {
-    if (isReasoningActive) {
-      initializeReasoningSteps();
-      setCurrentStep(0);
-      setProgress(0);
-    }
-  }, [isReasoningActive]);
-
-  // Simulate step progression (in real implementation, this would come from LangGraph events)
-  useEffect(() => {
-    if (!isReasoningActive || reasoningSteps.length === 0) return;
-
-    const stepInterval = setInterval(() => {
-      setCurrentStep(prev => {
-        const nextStep = prev + 1;
-        if (nextStep < reasoningSteps.length) {
-          setProgress((nextStep / reasoningSteps.length) * 100);
-          setReasoningSteps(prevSteps => 
-            prevSteps.map((step, index) => ({
-              ...step,
-              completed: index < nextStep,
-              active: index === nextStep
-            }))
-          );
-          return nextStep;
-        } else {
-          setProgress(100);
-          setReasoningSteps(prevSteps => 
-            prevSteps.map(step => ({
-              ...step,
-              completed: true,
-              active: false
-            }))
-          );
-          clearInterval(stepInterval);
-          return prev;
-        }
-      });
-    }, 1000); // Progress every 1 second
-
-    return () => clearInterval(stepInterval);
-  }, [isReasoningActive, reasoningSteps.length]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -126,17 +62,6 @@ export function EnhancedChatContainer({ className }: EnhancedChatContainerProps)
     return dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
-  const getStepIcon = (step: ReasoningStep) => {
-    if (step.completed) {
-      return <div className="w-4 h-4 rounded-full bg-green-500 flex items-center justify-center">
-        <div className="w-2 h-2 bg-white rounded-full"></div>
-      </div>;
-    }
-    if (step.active) {
-      return <Loader2 className="w-4 h-4 animate-spin text-blue-500" />;
-    }
-    return <div className="w-4 h-4 rounded-full bg-gray-300" />;
-  };
 
   return (
     <div className={cn("flex flex-col h-full", className)}>
@@ -198,64 +123,12 @@ export function EnhancedChatContainer({ className }: EnhancedChatContainerProps)
             </div>
           ))}
 
-          {/* Reasoning Component */}
-          {isReasoningActive && (
-            <Card className="p-4 bg-blue-50 border-blue-200">
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Loader2 className="w-4 h-4 animate-spin text-blue-500" />
-                    <span className="font-medium text-blue-700">Reasoning...</span>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setIsExpanded(!isExpanded)}
-                  >
-                    {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-                  </Button>
-                </div>
-
-                {/* Progress Bar */}
-                <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div 
-                    className="bg-blue-500 h-2 rounded-full transition-all duration-300"
-                    style={{ width: `${progress}%` }}
-                  />
-                </div>
-
-                {/* Reasoning Steps */}
-                {isExpanded && (
-                  <div className="space-y-2">
-                    {reasoningSteps.map((step, index) => (
-                      <div
-                        key={step.id}
-                        className={cn(
-                          "flex items-center gap-3 py-2 px-3 rounded-lg transition-colors",
-                          step.completed ? 'bg-green-50 text-green-700' :
-                          step.active ? 'bg-blue-50 text-blue-700' : 'bg-gray-50 text-gray-500'
-                        )}
-                      >
-                        {getStepIcon(step)}
-                        <span className={cn(
-                          "text-sm",
-                          step.completed ? 'font-medium' :
-                          step.active ? 'font-medium' : 'font-normal'
-                        )}>
-                          {step.text}
-                        </span>
-                        {step.active && (
-                          <div className="ml-auto">
-                            <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" />
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </Card>
-          )}
+          {/* Dynamic Reasoning Component */}
+          <DynamicReasoning 
+            isStreaming={isReasoningActive}
+            reasoningEvents={reasoningEvents}
+            className="mb-4"
+          />
 
           {/* Agent Selection */}
           {showAgentSelection && suggestedAgents.length > 0 && (

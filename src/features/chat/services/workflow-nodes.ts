@@ -387,27 +387,37 @@ export async function synthesizeResponseNode(state: WorkflowState): Promise<Part
  * Get Step Description for UI
  * Provides user-friendly descriptions for workflow steps
  */
-export function getStepDescription(step: string, interactionMode: string, autonomousMode: boolean): string {
+export function getStepDescription(step: string, interactionMode: string, autonomousMode: boolean, selectedAgent?: any): string {
   const mode = `${interactionMode}_${autonomousMode ? 'autonomous' : 'normal'}`;
   
   switch (step) {
     case 'routing':
-      return `🔄 Routing for ${mode} mode...`;
+      return `🔄 Initializing ${interactionMode} mode workflow...`;
     case 'awaiting_selection':
       return `🎯 Found top agents. Please select the best one for your query:`;
     case 'tool_selection':
-      return `🔧 Please select the tools you'd like to use:`;
+      return `🔧 Configuring tools for your request...`;
     case 'agent_selected':
       return `✅ Agent selected automatically`;
     case 'context_retrieved':
+      if (interactionMode === 'manual' && selectedAgent) {
+        return `🔍 ${selectedAgent.display_name || selectedAgent.name} is retrieving context...`;
+      }
       return autonomousMode ? `🔍 Retrieved context with RAG...` : `🔍 Processing your query...`;
+    case 'context_analysis':
+      return `🧠 Analyzing retrieved context...`;
+    case 'tool_execution':
+      return `🔧 Executing specialized tools...`;
     case 'response_generated':
+      if (interactionMode === 'manual' && selectedAgent) {
+        return `✅ ${selectedAgent.display_name || selectedAgent.name} generated response`;
+      }
       return `✅ Response generated successfully`;
     case 'complete':
       return `🎉 Complete!`;
     case 'error':
       return `❌ An error occurred. Please try again.`;
     default:
-      return `Processing...`;
+      return `🔄 Processing...`;
   }
 }

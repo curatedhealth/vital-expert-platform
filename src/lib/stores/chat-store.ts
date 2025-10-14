@@ -126,6 +126,12 @@ export interface ChatStore {
   error: string | null;
   liveReasoning: string;
   isReasoningActive: boolean;
+  reasoningEvents: Array<{
+    type: string;
+    step: string;
+    description: string;
+    data: any;
+  }>;
   abortController: AbortController | null;
 
   // Agent Selection State
@@ -246,6 +252,7 @@ const _useChatStore = create<ChatStore>()(
       error: null,
       liveReasoning: '',
       isReasoningActive: false,
+      reasoningEvents: [],
       abortController: null,
 
       // Agent Selection State
@@ -454,6 +461,7 @@ const _useChatStore = create<ChatStore>()(
           error: null,
           liveReasoning: '',
           isReasoningActive: false,
+          reasoningEvents: [], // Clear previous reasoning events
         });
 
         try {
@@ -521,6 +529,13 @@ const _useChatStore = create<ChatStore>()(
           const decoder = new TextDecoder();
           let fullContent = '';
           let metadata: unknown = null;
+          
+          // Clear previous reasoning events and start fresh
+          set({
+            reasoningEvents: [],
+            isReasoningActive: true,
+            liveReasoning: ''
+          });
 
           if (!reader) {
             console.error('❌ Response body is not readable');
@@ -551,12 +566,21 @@ const _useChatStore = create<ChatStore>()(
                   console.log('📥 [SSE] Parsed data:', { type: data.type, hasContent: !!data.content, keys: Object.keys(data) });
 
                   if (data.type === 'reasoning') {
-                    // Accumulate reasoning steps
+                    // Track reasoning events for dynamic display
                     set((state) => ({
                       liveReasoning: state.liveReasoning
-                        ? `${state.liveReasoning}\n${data.content || ''}`
-                        : (data.content || ''),
+                        ? `${state.liveReasoning}\n${data.description || data.content || ''}`
+                        : (data.description || data.content || ''),
                       isReasoningActive: true,
+                      reasoningEvents: [
+                        ...state.reasoningEvents,
+                        {
+                          type: data.type,
+                          step: data.step || 'processing',
+                          description: data.description || data.content || 'Processing...',
+                          data: data.data || {}
+                        }
+                      ]
                     }));
                   } else if (data.type === 'reasoning_done') {
                     // Reasoning complete, store in message metadata
@@ -564,6 +588,12 @@ const _useChatStore = create<ChatStore>()(
                       isReasoningActive: false,
                     });
                     // The final reasoning will be stored in metadata
+                  } else if (data.type === 'complete') {
+                    // Workflow completed
+                    console.log('✅ [SSE] Workflow completed');
+                    set({
+                      isReasoningActive: false,
+                    });
                   } else if (data.type === 'content') {
                     // Handle both streaming content and fullContent
                     if (data.content) {

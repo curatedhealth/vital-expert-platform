@@ -346,9 +346,16 @@ export function createModeAwareWorkflowGraph() {
     // Workflow edges
     .addEdge(START, "routeByMode")
     
-    // Mode-based routing
-    .addConditionalEdges("routeByMode", routeByModeCondition, {
+    // Mode-based routing - check if agent is already selected
+    .addConditionalEdges("routeByMode", (state) => {
+      if (state.interactionMode === 'manual') {
+        // If agent is already selected, skip agent selection
+        return state.selectedAgent ? 'suggestTools' : 'suggestAgents';
+      }
+      return 'suggestTools'; // automatic mode
+    }, {
       manual: "suggestAgents",
+      manual_with_agent: "suggestTools",
       automatic: "suggestTools"
     })
     
@@ -537,24 +544,67 @@ export async function* streamModeAwareWorkflow(input: {
     }
   );
 
-  // Yield step-by-step updates
+  // Yield step-by-step updates with real-time reasoning
+  let hasGeneratedAnswer = false;
+  
   for await (const event of stream) {
     const stepDescription = getStepDescription(
       event.workflowStep || 'processing',
       input.interactionMode,
-      input.autonomousMode
+      input.autonomousMode,
+      event.selectedAgent
     );
     
-    // Send reasoning events for the reasoning component
+    // Send detailed reasoning events based on actual workflow state
     yield {
       type: 'reasoning',
       step: event.workflowStep,
       description: stepDescription,
-      data: event
+      data: {
+        ...event,
+        timestamp: Date.now(),
+        mode: `${input.interactionMode}_${input.autonomousMode ? 'autonomous' : 'normal'}`,
+        agent: event.selectedAgent?.display_name || event.selectedAgent?.name || 'System'
+      }
     };
+    
+    // Send intermediate progress updates
+    if (event.workflowStep === 'context_retrieved' && event.context) {
+      yield {
+        type: 'reasoning',
+        step: 'context_analysis',
+        description: `🧠 Analyzing retrieved context (${event.context.length} characters)...`,
+        data: {
+          ...event,
+          timestamp: Date.now(),
+          contextLength: event.context.length
+        }
+      };
+    }
+    
+    if (event.workflowStep === 'response_generated' && event.toolCalls) {
+      yield {
+        type: 'reasoning',
+        step: 'tool_execution',
+        description: `🔧 Executed ${event.toolCalls.length} tool calls...`,
+        data: {
+          ...event,
+          timestamp: Date.now(),
+          toolCount: event.toolCalls.length
+        }
+      };
+    }
     
     // If this is the final step with an answer, send it as content
     if (event.answer && (event.workflowStep === 'response_generated' || event.workflowStep === 'complete')) {
+      console.log('📤 [Workflow] Sending final answer as content:', {
+        answerLength: event.answer.length,
+        workflowStep: event.workflowStep,
+        agent: event.selectedAgent?.name
+      });
+      
+      hasGeneratedAnswer = true;
+      
       yield {
         type: 'content',
         content: event.answer,
@@ -563,10 +613,37 @@ export async function* streamModeAwareWorkflow(input: {
           sources: event.sources || [],
           citations: event.citations || [],
           tokenUsage: event.tokenUsage || {},
-          reasoning: stepDescription
+          reasoning: stepDescription,
+          workflowSteps: event.metadata?.workflowSteps || []
         }
       };
     }
+    
+    // Debug: Log all events to see what's being generated
+    console.log('📊 [Workflow] Event details:', {
+      workflowStep: event.workflowStep,
+      hasAnswer: !!event.answer,
+      answerLength: event.answer?.length || 0,
+      selectedAgent: event.selectedAgent?.name,
+      keys: Object.keys(event)
+    });
+  }
+  
+  // Fallback: If no answer was generated, send a default response
+  if (!hasGeneratedAnswer) {
+    console.log('⚠️ [Workflow] No answer generated, sending fallback response');
+    yield {
+      type: 'content',
+      content: 'I apologize, but I encountered an issue while processing your request. Please try again.',
+      metadata: {
+        agent: null,
+        sources: [],
+        citations: [],
+        tokenUsage: {},
+        reasoning: 'Workflow completed without generating a response',
+        workflowSteps: []
+      }
+    };
   }
 }
 

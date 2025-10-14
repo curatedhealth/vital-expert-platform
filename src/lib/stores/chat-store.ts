@@ -117,6 +117,7 @@ export interface ChatStore {
   chats: Chat[];
   currentChat: Chat | null;
   messages: ChatMessage[];
+  input: string;
   selectedAgent: Agent | null;
   selectedModel: AIModel | null;
   agents: Agent[];
@@ -179,6 +180,7 @@ export interface ChatStore {
   deleteChat: (chatId: string) => void;
   sendMessage: (content: string, attachments?: unknown[]) => Promise<void>;
   stopGeneration: () => void;
+  setInput: (input: string) => void;
   setSelectedAgent: (agent: Agent | null) => void;
   setSelectedModel: (model: AIModel | null) => void;
   createCustomAgent: (agent: Omit<Agent, 'id' | 'isCustom'>) => void;
@@ -260,6 +262,7 @@ const _useChatStore = create<ChatStore>()(
       chats: [],
       currentChat: null,
       messages: [],
+      input: '', // Add input state
       selectedAgent: null,
       selectedModel: null,
       agents: [], // Start empty, will be loaded from database
@@ -853,6 +856,10 @@ const _useChatStore = create<ChatStore>()(
 
       setSelectedAgent: (agent: Agent | null) => {
         set({ selectedAgent: agent, error: null });
+      },
+
+      setInput: (input: string) => {
+        set({ input });
       },
 
       setSelectedModel: (model: AIModel | null) => {

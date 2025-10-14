@@ -4,7 +4,9 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { Menu, X, CheckCircle, Users, TrendingUp, Shield, Clock, Brain, ArrowRight, MessageSquare, BookOpen, Workflow, BarChart3 } from 'lucide-react';
-import { VitalLogo } from '@/vital-logo';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 
 export default function Home() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -14,7 +16,7 @@ export default function Home() {
   const services = {
     advisory: {
       badge: 'Most Popular',
-      badgeColor: 'bg-regulatory-blue',
+      badgeColor: 'bg-primary',
       title: 'Strategic Advisory',
       description: 'Instant access to specialized expertise. Get expert guidance from any of our 136 specialized healthcare advisors instantly. From regulatory strategy to market access, receive answers in minutes, not weeks.',
       replaces: '$500K+ annual consulting spend',
@@ -28,7 +30,7 @@ export default function Home() {
     },
     sandbox: {
       badge: 'Most Innovative',
-      badgeColor: 'bg-safety-red',
+      badgeColor: 'bg-destructive',
       title: 'Innovation Sandbox™',
       description: 'Test bold strategies without risk. Create digital twins of your departments, test radical changes, model complex scenarios, and see outcomes before committing any resources.',
       replaces: 'Expensive pilot programs and failed initiatives',
@@ -42,7 +44,7 @@ export default function Home() {
     },
     workflow: {
       badge: 'Most Efficient',
-      badgeColor: 'bg-data-purple',
+      badgeColor: 'bg-chart-2',
       title: 'Workflow Orchestration',
       description: 'Automate complex multi-step processes. Deploy pre-built workflows for common healthcare challenges or create custom orchestrations for your unique needs.',
       replaces: '10-20 FTE routine work',
@@ -56,7 +58,7 @@ export default function Home() {
     },
     knowledge: {
       badge: 'Most Strategic',
-      badgeColor: 'bg-market-orange',
+      badgeColor: 'bg-chart-5',
       title: 'Knowledge Management',
       description: 'Your institutional memory, permanently captured. Every decision, every insight, every outcome - captured and searchable forever. Build competitive advantage that compounds daily.',
       replaces: 'Lost knowledge from turnover',
@@ -73,29 +75,29 @@ export default function Home() {
   const currentService = services[activeService as keyof typeof services];
 
   return (
-    <div className="font-medium antialiased">
+    <div className="min-h-screen bg-background text-foreground font-medium antialiased">
       {/* Navigation */}
-      <nav className="fixed top-0 left-0 right-0 bg-vital-white/95 backdrop-blur-[10px] border-b border-vital-gray-80 z-[1000]">
+      <nav className="fixed top-0 left-0 right-0 bg-background/95 backdrop-blur-[10px] border-b border-border z-[1000]">
         <div className="max-w-[1200px] mx-auto px-10 py-5 flex justify-between items-center">
           <VitalLogo size="sm" serviceLine="regulatory" animated="static" />
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex gap-8 items-center">
-            <a href="#platform" className="text-vital-gray-60 no-underline text-sm font-semibold transition-colors duration-200 hover:text-vital-black">
+            <a href="#platform" className="text-muted-foreground no-underline text-sm font-semibold transition-colors duration-200 hover:text-foreground">
               Platform
             </a>
-            <a href="#services" className="text-vital-gray-60 no-underline text-sm font-semibold transition-colors duration-200 hover:text-vital-black">
+            <a href="#services" className="text-muted-foreground no-underline text-sm font-semibold transition-colors duration-200 hover:text-foreground">
               Services
             </a>
-            <a href="#framework" className="text-vital-gray-60 no-underline text-sm font-semibold transition-colors duration-200 hover:text-vital-black">
+            <a href="#framework" className="text-muted-foreground no-underline text-sm font-semibold transition-colors duration-200 hover:text-foreground">
               Framework
             </a>
-            <Link href="/login" className="text-vital-gray-60 no-underline text-sm font-semibold transition-colors duration-200 hover:text-vital-black">
+            <Link href="/login" className="text-muted-foreground no-underline text-sm font-semibold transition-colors duration-200 hover:text-foreground">
               Sign In
             </Link>
             <Link
               href="/register"
-              className="px-5 py-2.5 bg-vital-black text-vital-white no-underline text-sm font-semibold rounded-md transition-all duration-200 hover:bg-regulatory-blue hover:-translate-y-px"
+              className="px-5 py-2.5 bg-primary text-primary-foreground no-underline text-sm font-semibold rounded-md transition-all duration-200 hover:bg-primary/90 hover:-translate-y-px"
             >
               Get Started
             </Link>
@@ -107,49 +109,49 @@ export default function Home() {
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           >
             {mobileMenuOpen ? (
-              <X className="h-6 w-6 text-vital-gray-60" />
+              <X className="h-6 w-6 text-muted-foreground" />
             ) : (
-              <Menu className="h-6 w-6 text-vital-gray-60" />
+              <Menu className="h-6 w-6 text-muted-foreground" />
             )}
           </button>
         </div>
 
         {/* Mobile Navigation Menu */}
         {mobileMenuOpen && (
-          <div className="md:hidden bg-vital-white border-t border-vital-gray-80">
+          <div className="md:hidden bg-background border-t border-border">
             <div className="px-10 py-4 space-y-4">
               <a 
                 href="#platform" 
                 onClick={() => setMobileMenuOpen(false)}
-                className="block text-vital-gray-60 no-underline text-sm font-semibold transition-colors duration-200 hover:text-vital-black"
+                className="block text-muted-foreground no-underline text-sm font-semibold transition-colors duration-200 hover:text-foreground"
               >
                 Platform
               </a>
               <a 
                 href="#services" 
                 onClick={() => setMobileMenuOpen(false)}
-                className="block text-vital-gray-60 no-underline text-sm font-semibold transition-colors duration-200 hover:text-vital-black"
+                className="block text-muted-foreground no-underline text-sm font-semibold transition-colors duration-200 hover:text-foreground"
               >
                 Services
               </a>
               <a 
                 href="#framework" 
                 onClick={() => setMobileMenuOpen(false)}
-                className="block text-vital-gray-60 no-underline text-sm font-semibold transition-colors duration-200 hover:text-vital-black"
+                className="block text-muted-foreground no-underline text-sm font-semibold transition-colors duration-200 hover:text-foreground"
               >
                 Framework
               </a>
               <Link 
                 href="/login" 
                 onClick={() => setMobileMenuOpen(false)}
-                className="block text-vital-gray-60 no-underline text-sm font-semibold transition-colors duration-200 hover:text-vital-black"
+                className="block text-muted-foreground no-underline text-sm font-semibold transition-colors duration-200 hover:text-foreground"
               >
                 Sign In
               </Link>
               <Link
                 href="/register"
                 onClick={() => setMobileMenuOpen(false)}
-                className="block px-5 py-2.5 bg-vital-black text-vital-white no-underline text-sm font-semibold rounded-md transition-all duration-200 hover:bg-regulatory-blue text-center"
+                className="block px-5 py-2.5 bg-primary text-primary-foreground no-underline text-sm font-semibold rounded-md transition-all duration-200 hover:bg-primary/90 text-center"
               >
                 Get Started
               </Link>
@@ -181,7 +183,7 @@ export default function Home() {
           <div className="flex gap-4 justify-center mb-12 flex-col md:flex-row items-center">
             <Link
               href="/register"
-              className="px-8 py-3.5 text-base font-semibold no-underline rounded-lg transition-all duration-200 cursor-pointer border-none bg-vital-black text-vital-white hover:bg-regulatory-blue hover:-translate-y-0.5 hover:shadow-[0_4px_16px_rgba(0,0,0,0.10)]"
+              className="px-8 py-3.5 text-base font-semibold no-underline rounded-lg transition-all duration-200 cursor-pointer border-none bg-primary text-primary-foreground hover:bg-primary/90 hover:-translate-y-0.5 hover:shadow-[0_4px_16px_rgba(0,0,0,0.10)]"
             >
               Enter Sandbox
             </Link>
@@ -491,7 +493,7 @@ export default function Home() {
               className="px-8 py-3.5 text-base font-semibold no-underline rounded-lg transition-all duration-200 cursor-pointer border-none bg-vital-black text-vital-white hover:bg-regulatory-blue hover:-translate-y-0.5 hover:shadow-[0_4px_16px_rgba(0,0,0,0.10)]"
             >
               Try It Now
-            </Link>
+              </Link>
           </div>
         </div>
       </section>
@@ -554,7 +556,7 @@ export default function Home() {
             className="inline-block px-10 py-4 bg-vital-white text-vital-black no-underline text-lg font-bold rounded-lg transition-all duration-200 hover:bg-regulatory-blue hover:text-vital-white hover:-translate-y-0.5"
           >
             Enter Your Sandbox
-          </Link>
+              </Link>
 
           <p className="mt-5 text-sm opacity-70">No credit card. No sales call. Just results.</p>
 
@@ -651,7 +653,7 @@ export default function Home() {
               <a href="#" className="hover:text-vital-black transition-colors duration-200">Terms</a>
               <a href="#" className="hover:text-vital-black transition-colors duration-200">Status</a>
             </div>
-          </div>
+        </div>
 
           <div className="text-center mt-6 pt-6 border-t border-vital-gray-80 text-xs text-vital-gray-60 italic">
             © 2025 VITAL Expert. Your data remains yours. VITAL Expert is business operations software. Not a medical device.

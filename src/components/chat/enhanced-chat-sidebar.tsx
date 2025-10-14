@@ -80,6 +80,8 @@ export function EnhancedChatSidebar({
   const [filterBy, setFilterBy] = useState<'all' | 'unread' | 'pinned' | 'archived'>('all');
   const [showAgentPanel, setShowAgentPanel] = useState(false);
   const [selectedAgents, setSelectedAgents] = useState<string[]>([]);
+  const [addingAgent, setAddingAgent] = useState<string | null>(null);
+  const [showSuccessMessage, setShowSuccessMessage] = useState(false);
 
   const {
     chats,
@@ -192,11 +194,20 @@ export function EnhancedChatSidebar({
 
   const handleSelectAgent = async (agent: Agent) => {
     try {
+      setAddingAgent(agent.id);
       await selectAgent(agent.id);
       setSelectedAgents(prev => [...prev, agent.id]);
-      setShowAgentPanel(false); // Close the panel after selection
+      setShowSuccessMessage(true);
+      
+      // Show success feedback
+      setTimeout(() => {
+        setAddingAgent(null);
+        setShowSuccessMessage(false);
+        setShowAgentPanel(false); // Close the panel after selection
+      }, 1500);
     } catch (error) {
       console.error('Failed to select agent:', error);
+      setAddingAgent(null);
     }
   };
 
@@ -464,22 +475,35 @@ export function EnhancedChatSidebar({
         </TabsContent>
 
         <TabsContent value="agents" className="flex-1 flex flex-col mt-0">
+          {/* Success Message */}
+          {showSuccessMessage && (
+            <div className="m-4 p-3 bg-green-50 border border-green-200 rounded-lg flex items-center gap-2">
+              <CheckCircle className="h-4 w-4 text-green-600" />
+              <span className="text-sm text-green-700 font-medium">Agent added successfully!</span>
+            </div>
+          )}
+
           {/* Add Agents Panel */}
           {showAgentPanel && (
-            <Card className="m-4 border-gray-200 shadow-sm">
-              <CardHeader className="pb-3 bg-gray-50/50">
+            <Card className="m-4 border-blue-200 shadow-lg bg-gradient-to-br from-blue-50 to-white">
+              <CardHeader className="pb-3 bg-blue-50/80 border-b border-blue-200">
                 <div className="flex items-center justify-between">
-                  <CardTitle className="text-sm font-semibold text-gray-900">Add agents to chat</CardTitle>
+                  <div className="flex items-center gap-2">
+                    <div className="w-6 h-6 rounded-full bg-blue-600 flex items-center justify-center">
+                      <Plus className="h-4 w-4 text-white" />
+                    </div>
+                    <CardTitle className="text-sm font-bold text-blue-900">Add agents to chat</CardTitle>
+                  </div>
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={() => setShowAgentPanel(false)}
-                    className="h-6 w-6 p-0 hover:bg-gray-200"
+                    className="h-6 w-6 p-0 hover:bg-blue-200 text-blue-600"
                   >
                     <X className="h-4 w-4" />
                   </Button>
                 </div>
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-blue-700 font-medium">
                   {availableAgents.length} of {globalAgents.length} agents available
                 </p>
               </CardHeader>
@@ -512,27 +536,62 @@ export function EnhancedChatSidebar({
                       </div>
                     ) : (
                       availableAgents.slice(0, 5).map((agent) => (
-                        <div key={agent.id} className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 border border-transparent hover:border-gray-200 transition-all duration-200">
+                        <div 
+                          key={agent.id} 
+                          className="group flex items-center gap-3 p-4 rounded-lg hover:bg-blue-50 border border-gray-200 hover:border-blue-300 transition-all duration-200 cursor-pointer"
+                          onClick={() => handleSelectAgent(agent)}
+                        >
+                          {/* Agent Avatar */}
+                          <div className="flex-shrink-0">
+                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-semibold text-sm">
+                              {(agent.display_name || agent.name).charAt(0).toUpperCase()}
+                            </div>
+                          </div>
+                          
+                          {/* Agent Info */}
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 mb-1">
-                              <h4 className="text-sm font-medium truncate text-gray-900">
+                              <h4 className="text-sm font-semibold truncate text-gray-900 group-hover:text-blue-700">
                                 {agent.display_name || agent.name}
                               </h4>
-                              <Badge variant="secondary" className="text-xs bg-blue-100 text-blue-700">
+                              <Badge variant="secondary" className="text-xs bg-blue-100 text-blue-700 border-blue-200">
                                 Tier {agent.tier}
                               </Badge>
                             </div>
-                            <p className="text-xs text-gray-500 truncate">
+                            <p className="text-xs text-gray-600 truncate mb-2">
                               {agent.description}
                             </p>
+                            <div className="flex items-center gap-2">
+                              {agent.capabilities?.slice(0, 2).map((capability, idx) => (
+                                <span key={idx} className="text-xs px-2 py-1 bg-gray-100 text-gray-600 rounded-full">
+                                  {capability}
+                                </span>
+                              ))}
+                            </div>
                           </div>
-                          <Button
-                            size="sm"
-                            onClick={() => handleSelectAgent(agent)}
-                            className="h-8 w-8 p-0 bg-blue-600 hover:bg-blue-700 text-white"
-                          >
-                            <Plus className="h-4 w-4" />
-                          </Button>
+                          
+                          {/* Add Button */}
+                          <div className="flex-shrink-0">
+                            <Button
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleSelectAgent(agent);
+                              }}
+                              disabled={addingAgent === agent.id}
+                              className={`h-10 w-10 p-0 rounded-full shadow-sm hover:shadow-md transition-all duration-200 group-hover:scale-110 ${
+                                addingAgent === agent.id 
+                                  ? 'bg-green-600 text-white' 
+                                  : 'bg-blue-600 hover:bg-blue-700 text-white'
+                              }`}
+                            >
+                              {addingAgent === agent.id ? (
+                                <Check className="h-5 w-5" />
+                              ) : (
+                                <Plus className="h-5 w-5" />
+                              )}
+                            </Button>
+                          </div>
                         </div>
                       ))
                     )}
@@ -545,12 +604,12 @@ export function EnhancedChatSidebar({
           {/* Selected Agents */}
           <div className="p-4 space-y-3">
             <div className="flex items-center justify-between">
-              <h3 className="text-sm font-medium text-gray-900">Selected Agents</h3>
+              <h3 className="text-sm font-semibold text-gray-900">Selected Agents</h3>
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => setShowAgentPanel(true)}
-                className="bg-blue-600 hover:bg-blue-700 text-white border-blue-600"
+                className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white border-blue-600 shadow-sm hover:shadow-md transition-all duration-200 font-medium"
               >
                 <Plus className="h-4 w-4 mr-2" />
                 Add Agent
@@ -558,10 +617,16 @@ export function EnhancedChatSidebar({
             </div>
 
             {selectedAgents.length === 0 ? (
-              <div className="text-center py-8 text-gray-500">
-                <Users className="h-8 w-8 mx-auto mb-2 text-gray-300" />
-                <p className="text-sm">No agents added yet</p>
-                <p className="text-xs text-gray-400">Click + to add some</p>
+              <div className="text-center py-8 text-gray-500 bg-gray-50 rounded-lg border-2 border-dashed border-gray-200">
+                <div className="w-16 h-16 mx-auto mb-3 rounded-full bg-gradient-to-br from-blue-100 to-purple-100 flex items-center justify-center">
+                  <Users className="h-8 w-8 text-blue-400" />
+                </div>
+                <p className="text-sm font-medium text-gray-700 mb-1">No agents added yet</p>
+                <p className="text-xs text-gray-500 mb-3">Click the blue "Add Agent" button above to get started</p>
+                <div className="flex items-center justify-center gap-1 text-xs text-blue-600">
+                  <span>💡</span>
+                  <span>Tip: You can click on any agent card to add them instantly</span>
+                </div>
               </div>
             ) : (
               <div className="space-y-2">

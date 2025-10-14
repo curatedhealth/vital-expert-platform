@@ -38,6 +38,7 @@ import { ClientAuthWrapper } from '@/components/auth/client-auth-wrapper';
 import { ErrorBoundary } from '@/components/error-boundary';
 import { AgentCreator } from '@/features/chat/components/agent-creator';
 import { RedesignedChatContainer } from '@/components/chat/redesigned-chat-container';
+import { EnhancedChatSidebar } from '@/components/chat/enhanced-chat-sidebar';
 import { useChatStore } from '@/lib/stores/chat-store';
 
 
@@ -48,6 +49,7 @@ function ChatPageContent() {
   } = useChatStore();
 
   const [showAgentCreator, setShowAgentCreator] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
   // Sync with global store on component mount
   useEffect(() => {
@@ -62,8 +64,16 @@ function ChatPageContent() {
 
   return (
     <div className="flex h-screen bg-gray-50">
-      {/* Chat Container with integrated agent panel */}
-      <RedesignedChatContainer className="h-full" />
+      {/* Enhanced Sidebar */}
+      <EnhancedChatSidebar
+        isCollapsed={isSidebarCollapsed}
+        onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+      />
+
+      {/* Chat Container */}
+      <div className="flex-1 flex flex-col min-w-0">
+        <RedesignedChatContainer className="h-full" />
+      </div>
 
       {/* Agent Creator Modal */}
       {showAgentCreator && (
@@ -71,7 +81,7 @@ function ChatPageContent() {
           onClose={() => setShowAgentCreator(false)}
           onAgentCreated={() => {
             setShowAgentCreator(false);
-            loadAgentsFromDatabase();
+            // Note: loadAgentsFromDatabase is no longer available, agents are loaded via global store
           }}
         />
       )}

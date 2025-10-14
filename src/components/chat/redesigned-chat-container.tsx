@@ -92,19 +92,6 @@ export function RedesignedChatContainer({ className }: { className?: string }) {
 
   return (
     <div className={cn("flex h-full", className)}>
-      {/* Agent Selection Sidebar - Only in Manual Mode */}
-      {interactionMode === 'manual' && (
-        <div className="w-80 border-r bg-gray-50/50 flex-shrink-0">
-          <AgentSelectionPanel
-            agents={agents}
-            selectedAgent={selectedAgent}
-            onSelectAgent={handleSelectAgent}
-            isLoading={false}
-            className="h-full"
-          />
-        </div>
-      )}
-
       {/* Main Chat Area */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Messages */}

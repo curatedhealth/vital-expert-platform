@@ -91,10 +91,14 @@ export interface Chat {
   title: string;
   createdAt: Date;
   updatedAt: Date;
-  agentId: string;
+  agentId: string | null;
+  agentName?: string | null;
+  messages: ChatMessage[];
   messageCount: number;
   lastMessage?: string;
   mode?: 'automatic' | 'manual' | 'autonomous'; // Track which mode was used for this chat
+  isPinned?: boolean;
+  isArchived?: boolean;
 }
 
 export interface AIModel {
@@ -229,6 +233,13 @@ export interface ChatStore {
   searchAgents: (searchTerm: string) => Agent[];
   getAgentsByCategory: (categoryName: string) => Agent[];
   getAgentsByTier: (tier: number) => Agent[];
+
+  // Chat management
+  createNewChat: () => void;
+  selectChat: (chatId: string) => void;
+  deleteChat: (chatId: string) => void;
+  pinChat: (chatId: string) => void;
+  archiveChat: (chatId: string) => void;
   
   // Agent library management
   addAgentToLibrary: (agentId: string) => void;
@@ -1210,6 +1221,61 @@ const _useChatStore = create<ChatStore>()(
       getAgentsByTier: (tier: number) => {
         const agents = get().getAgents();
         return agents.filter(agent => agent.tier === tier);
+      },
+
+      // Chat management
+      createNewChat: () => {
+        const newChat: Chat = {
+          id: Date.now().toString(),
+          title: 'New Chat',
+          messages: [],
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          agentId: null,
+          agentName: null,
+        };
+
+        set(state => ({
+          chats: [newChat, ...state.chats],
+          currentChat: newChat,
+          messages: [],
+          selectedAgent: null,
+        }));
+      },
+
+      selectChat: (chatId: string) => {
+        const chat = get().chats.find(c => c.id === chatId);
+        if (chat) {
+          set({
+            currentChat: chat,
+            messages: chat.messages,
+            selectedAgent: chat.agentId ? get().getAgents().find(a => a.id === chat.agentId) || null : null,
+          });
+        }
+      },
+
+      deleteChat: (chatId: string) => {
+        set(state => ({
+          chats: state.chats.filter(c => c.id !== chatId),
+          currentChat: state.currentChat?.id === chatId ? null : state.currentChat,
+          messages: state.currentChat?.id === chatId ? [] : state.messages,
+        }));
+      },
+
+      pinChat: (chatId: string) => {
+        set(state => ({
+          chats: state.chats.map(c => 
+            c.id === chatId ? { ...c, isPinned: !c.isPinned } : c
+          ),
+        }));
+      },
+
+      archiveChat: (chatId: string) => {
+        set(state => ({
+          chats: state.chats.map(c => 
+            c.id === chatId ? { ...c, isArchived: !c.isArchived } : c
+          ),
+        }));
       },
 
       // Global agents store integration

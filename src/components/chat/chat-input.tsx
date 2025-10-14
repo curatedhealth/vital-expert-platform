@@ -88,7 +88,7 @@ export function ChatInput({
           onChange={onChange}
           onSubmit={onSubmit}
           isLoading={isLoading}
-          disabled={!canSend}
+          disabled={false}
           placeholder={
             showWarning
               ? "Please select an AI agent first..."

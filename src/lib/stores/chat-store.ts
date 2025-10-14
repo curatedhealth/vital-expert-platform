@@ -1177,28 +1177,38 @@ const _useChatStore = create<ChatStore>()(
 
       // Global agents store integration
       getAgents: () => {
-        const globalAgents = useAgentsStore.getState().agents;
-        // Transform global agents to chat store format
-        return globalAgents.map(agent => ({
-          id: agent.id,
-          name: agent.name,
-          display_name: agent.display_name,
-          description: agent.description,
-          systemPrompt: agent.system_prompt,
-          model: agent.model,
-          avatar: agent.avatar,
-          color: agent.color,
-          capabilities: agent.capabilities,
-          ragEnabled: agent.rag_enabled,
-          temperature: agent.temperature,
-          maxTokens: agent.max_tokens,
-          isCustom: agent.is_custom,
-          knowledgeDomains: agent.knowledge_domains,
-          businessFunction: agent.business_function,
-          department: agent.department,
-          organizationalRole: agent.organizational_role,
-          tier: agent.tier,
-        }));
+        try {
+          const globalAgents = useAgentsStore.getState().agents;
+          // Ensure we have an array
+          if (!Array.isArray(globalAgents)) {
+            console.warn('Global agents store returned non-array:', globalAgents);
+            return [];
+          }
+          // Transform global agents to chat store format
+          return globalAgents.map(agent => ({
+            id: agent.id,
+            name: agent.name,
+            display_name: agent.display_name,
+            description: agent.description,
+            systemPrompt: agent.system_prompt,
+            model: agent.model,
+            avatar: agent.avatar,
+            color: agent.color,
+            capabilities: agent.capabilities || [],
+            ragEnabled: agent.rag_enabled,
+            temperature: agent.temperature,
+            maxTokens: agent.max_tokens,
+            isCustom: agent.is_custom,
+            knowledgeDomains: agent.knowledge_domains || [],
+            businessFunction: agent.business_function,
+            department: agent.department,
+            organizationalRole: agent.organizational_role,
+            tier: agent.tier,
+          }));
+        } catch (error) {
+          console.error('Error getting agents from global store:', error);
+          return [];
+        }
       },
 
       searchAgents: (searchTerm: string) => {

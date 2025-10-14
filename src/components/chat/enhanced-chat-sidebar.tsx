@@ -43,6 +43,7 @@ import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { AgentAvatar } from '@/components/ui/agent-avatar';
 import { cn } from '@/lib/utils';
 import { useChatStore } from '@/lib/stores/chat-store';
 import { useAgentsStore } from '@/lib/stores/agents-store';
@@ -67,6 +68,23 @@ interface Conversation {
   isArchived: boolean;
   messageCount: number;
 }
+
+// Helper function to render agent avatar using the proper AgentAvatar component
+const renderAgentAvatar = (agent: Agent, size: 'sm' | 'md' | 'lg' = 'md') => {
+  const sizeMap = {
+    sm: 'sm' as const,
+    md: 'md' as const,
+    lg: 'lg' as const
+  };
+  
+  return (
+    <AgentAvatar 
+      agent={agent} 
+      size={sizeMap[size]} 
+      className="rounded-full"
+    />
+  );
+};
 
 export function EnhancedChatSidebar({ 
   className, 
@@ -180,7 +198,14 @@ export function EnhancedChatSidebar({
 
   // Get available agents with search filtering
   const availableAgents = useMemo(() => {
-    let agents = getAgents().filter(agent => 
+    const allAgents = getAgents();
+    // Ensure we have an array
+    if (!Array.isArray(allAgents)) {
+      console.warn('getAgents() returned non-array:', allAgents);
+      return [];
+    }
+    
+    let agents = allAgents.filter(agent => 
       !selectedAgents.includes(agent.id)
     );
 
@@ -192,7 +217,7 @@ export function EnhancedChatSidebar({
         agent.display_name?.toLowerCase().includes(query) ||
         agent.description?.toLowerCase().includes(query) ||
         agent.businessFunction?.toLowerCase().includes(query) ||
-        agent.knowledgeDomains?.some(domain => domain.toLowerCase().includes(query))
+        (Array.isArray(agent.knowledgeDomains) && agent.knowledgeDomains.some(domain => domain.toLowerCase().includes(query)))
       );
     }
 
@@ -569,9 +594,7 @@ export function EnhancedChatSidebar({
                         >
                           {/* Agent Avatar */}
                           <div className="flex-shrink-0">
-                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-semibold text-sm">
-                              {(agent.display_name || agent.name).charAt(0).toUpperCase()}
-                            </div>
+                            {renderAgentAvatar(agent, 'md')}
                           </div>
                           
                           {/* Agent Info */}
@@ -662,6 +685,11 @@ export function EnhancedChatSidebar({
                   
                   return (
                     <div key={agentId} className="flex items-center gap-3 p-3 rounded-lg bg-gray-50 border border-gray-200 hover:bg-gray-100 transition-colors">
+                      {/* Agent Avatar */}
+                      <div className="flex-shrink-0">
+                        {renderAgentAvatar(agent, 'sm')}
+                      </div>
+                      
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
                           <h4 className="text-sm font-medium truncate text-gray-900">

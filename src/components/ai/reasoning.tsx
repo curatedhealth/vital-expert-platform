@@ -173,7 +173,7 @@ interface ReasoningTriggerProps {
   className?: string;
 }
 
-export function ReasoningTrigger({ title = 'I am thinking...', className }: ReasoningTriggerProps) {
+export function ReasoningTrigger({ title = 'Reasoning...', className }: ReasoningTriggerProps) {
   const { isStreaming, isOpen, toggleOpen, duration, progress } = React.useContext(ReasoningContext);
 
   const formatDuration = (ms: number) => {

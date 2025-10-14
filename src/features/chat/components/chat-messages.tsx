@@ -448,12 +448,12 @@ export function ChatMessages({ messages, liveReasoning, isReasoningActive }: Cha
                   <div>
                     {/* Simplified message content rendering */}
                     <div className={cn(isUser ? 'text-white' : 'text-deep-charcoal')}>
-                      {message.isLoading && !message.content ? (
-                        // Show loading when no content yet
+                      {message.isLoading && !message.content && !isReasoningActive ? (
+                        // Show loading when no content yet and reasoning component is not active
                         <div className="flex items-center gap-2">
                           <div className="animate-pulse flex items-center gap-2">
                             <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
-                            <span>Thinking...</span>
+                            <span>Processing...</span>
                           </div>
                         </div>
                       ) : (
@@ -490,7 +490,7 @@ export function ChatMessages({ messages, liveReasoning, isReasoningActive }: Cha
       {(liveReasoning || isReasoningActive) && (
         <div className="mb-6">
           <Reasoning isStreaming={isReasoningActive || false}>
-            <ReasoningTrigger title="I am thinking..." />
+            <ReasoningTrigger />
             <ReasoningContent>
               <div>
                 {/* The new reasoning component handles all the steps automatically */}

@@ -545,18 +545,25 @@ export async function* streamModeAwareWorkflow(input: {
   
   console.log('🔄 [Workflow] Starting to process stream events...');
   
-  for await (const event of stream) {
-    eventCount++;
-    console.log(`📊 [Workflow] Processing event #${eventCount}`);
-    console.log('🔍 [Stream] Raw event structure:', {
-      keys: Object.keys(event),
-      eventType: typeof event,
-      eventValue: event
-    });
-    
-    // LangGraph stream in "values" mode returns { nodeName: state } format
-    const nodeName = Object.keys(event)[0];
-    const state = (event as any)[nodeName];
+  try {
+    for await (const event of stream) {
+      try {
+        eventCount++;
+        console.log(`📊 [Workflow] Processing event #${eventCount}`);
+        console.log('🔍 [Stream] Raw event structure:', {
+          keys: Object.keys(event),
+          eventType: typeof event,
+          eventValue: event
+        });
+        
+        // LangGraph stream in "values" mode returns { nodeName: state } format
+        const nodeName = Object.keys(event)[0];
+        const state = (event as any)[nodeName];
+        
+        // Validate event structure
+        if (!nodeName || !state) {
+          throw new Error('Malformed stream event');
+        }
     
     console.log('🔍 [Stream] Node execution:', {
       nodeName,
@@ -687,19 +694,34 @@ export async function* streamModeAwareWorkflow(input: {
       };
     }
     
-    // Debug: Log all events to see what's being generated
-    console.log('📊 [Workflow] Event details:', {
-      nodeName,
-      workflowStep: state.workflowStep,
-      hasAnswer: !!state.answer,
-      answerLength: state.answer?.length || 0,
-      selectedAgent: state.selectedAgent?.name,
-      hasReasoningSteps: !!(state.metadata?.reasoningSteps?.length),
-      stateKeys: Object.keys(state)
-    });
+        // Debug: Log all events to see what's being generated
+        console.log('📊 [Workflow] Event details:', {
+          nodeName,
+          workflowStep: state.workflowStep,
+          hasAnswer: !!state.answer,
+          answerLength: state.answer?.length || 0,
+          selectedAgent: state.selectedAgent?.name,
+          hasReasoningSteps: !!(state.metadata?.reasoningSteps?.length),
+          stateKeys: Object.keys(state)
+        });
+      } catch (eventError) {
+        console.error('❌ Event processing error:', eventError);
+        yield encoder.encode(`data: ${JSON.stringify({
+          type: 'error:event',
+          message: String(eventError)
+        })}\n\n`);
+        // Continue processing other events
+      }
+    }
+  } catch (streamError) {
+    console.error('❌ Fatal stream error:', streamError);
+    yield encoder.encode(`data: ${JSON.stringify({
+      type: 'error:fatal',
+      message: String(streamError)
+    })}\n\n`);
+  } finally {
+    console.log(`🏁 [Workflow] Stream processing complete. Total events: ${eventCount}, Answer generated: ${hasGeneratedAnswer}`);
   }
-  
-  console.log(`🏁 [Workflow] Stream processing complete. Total events: ${eventCount}, Answer generated: ${hasGeneratedAnswer}`);
   
   // Fallback: If no answer was generated, send a default response
   if (!hasGeneratedAnswer) {
@@ -724,6 +746,9 @@ export async function* streamModeAwareWorkflow(input: {
       metadata: fallbackMetadata
     };
   }
+  
+  // Always signal completion
+  yield encoder.encode(`data: [DONE]\n\n`);
 }
 
 /**

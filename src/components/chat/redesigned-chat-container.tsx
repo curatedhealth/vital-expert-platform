@@ -25,6 +25,8 @@ export function RedesignedChatContainer({ className }: { className?: string }) {
     error,
     clearError,
     selectedAgent,
+    selectedModel,
+    setSelectedModel,
     interactionMode,
     getAgents,
     selectAgent,

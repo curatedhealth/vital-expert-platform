@@ -5,7 +5,6 @@ import { createClient } from '@supabase/supabase-js';
 import { enhancedLangChainService } from './enhanced-langchain-service';
 import {
   routeByModeNode,
-  routeByModeCondition,
   suggestAgentsNode,
   shouldWaitForUser,
   suggestToolsNode,
@@ -17,7 +16,6 @@ import {
   processWithAgentAutonomousNode,
   synthesizeResponseNode,
   getStepDescription,
-  type WorkflowState,
   type ToolOption
 } from './workflow-nodes';
 
@@ -62,9 +60,11 @@ const ModeAwareWorkflowState = Annotation.Root({
   
   // User-selected tools (for normal mode)
   selectedTools: Annotation<string[]>({
+    value: (x: string[], y: string[]) => y ?? x,
     default: () => []
   }),
   availableTools: Annotation<ToolOption[]>({
+    value: (x: ToolOption[], y: ToolOption[]) => y ?? x,
     default: () => []
   }),
   
@@ -143,7 +143,7 @@ async function retrieveContext(state: AskExpertState): Promise<Partial<AskExpert
   console.log('🔍 Retrieving context from knowledge base...');
 
   try {
-    const searchResults = await enhancedLangChainService['vectorStore'].similaritySearchWithScore(
+    const searchResults = await enhancedLangChainService.vectorStore?.similaritySearchWithScore(
       state.question,
       5
     );
@@ -216,55 +216,19 @@ function routeToNextStep(state: AskExpertState): string {
 }
 
 /**
- * Create Ask Expert workflow graph
+ * Create Ask Expert workflow graph (Legacy - kept for backward compatibility)
  */
 export function createAskExpertGraph() {
-  const workflow = new StateGraph<AskExpertState>({
-    channels: {
-      messages: { value: (x: BaseMessage[], y: BaseMessage[]) => x.concat(y) },
-      question: { value: (x?: string, y?: string) => y ?? x },
-      agentId: { value: (x?: string, y?: string) => y ?? x },
-      sessionId: { value: (x?: string, y?: string) => y ?? x },
-      userId: { value: (x?: string, y?: string) => y ?? x },
-      agent: { value: (x?: any, y?: any) => y ?? x },
-      ragEnabled: { value: (x?: boolean, y?: boolean) => y ?? x },
-      context: { value: (x?: string, y?: string) => y ?? x },
-      sources: { value: (x?: any[], y?: any[]) => y ?? x },
-      answer: { value: (x?: string, y?: string) => y ?? x },
-      citations: { value: (x?: string[], y?: string[]) => y ?? x },
-      tokenUsage: { value: (x?: any, y?: any) => y ?? x },
-      error: { value: (x?: string, y?: string) => y ?? x },
-    },
-  });
-
-  // Add nodes
-  workflow.addNode('check_budget', checkBudget);
-  workflow.addNode('retrieve_context', retrieveContext);
-  workflow.addNode('generate_response', generateResponse);
-  workflow.addNode('error', (state: AskExpertState) => state);
-
-  // Add edges
-  workflow.addEdge(START, 'check_budget');
-  workflow.addConditionalEdges(
-    'check_budget',
-    routeToNextStep,
-    {
-      retrieve_context: 'retrieve_context',
-      error: 'error',
-    }
-  );
-  workflow.addEdge('retrieve_context', 'generate_response');
-  workflow.addEdge('generate_response', END);
-  workflow.addEdge('error', END);
-
-  return workflow;
+  // This is a legacy function - use createModeAwareWorkflowGraph instead
+  console.warn('⚠️ createAskExpertGraph is deprecated. Use createModeAwareWorkflowGraph instead.');
+  return createModeAwareWorkflowGraph();
 }
 
 /**
- * Compile graph with memory persistence
+ * Compile graph with memory persistence (Legacy)
  */
 export function compileAskExpertGraph() {
-  const workflow = createAskExpertGraph();
+  const workflow = createModeAwareWorkflowGraph();
   const checkpointer = new MemorySaver();
 
   const app = workflow.compile({ checkpointer });
@@ -275,7 +239,7 @@ export function compileAskExpertGraph() {
 }
 
 /**
- * Execute Ask Expert workflow
+ * Execute Ask Expert workflow (Legacy)
  */
 export async function executeAskExpertWorkflow(input: {
   question: string;
@@ -286,43 +250,20 @@ export async function executeAskExpertWorkflow(input: {
   ragEnabled: boolean;
   chatHistory: any[];
 }) {
-  console.log('🚀 Starting Ask Expert LangGraph workflow');
+  console.log('🚀 Starting Ask Expert LangGraph workflow (Legacy)');
 
-  const app = compileAskExpertGraph();
-
-  // Convert chat history to LangChain messages
-  const messages: BaseMessage[] = (input.chatHistory || []).map((msg) => {
-    if (msg.role === 'user') {
-      return new HumanMessage(msg.content);
-    } else {
-      return new AIMessage(msg.content);
-    }
+  // Use the new mode-aware workflow
+  return executeModeAwareWorkflow({
+    query: input.question,
+    agentId: input.agentId,
+    sessionId: input.sessionId,
+    userId: input.userId,
+    selectedAgent: input.agent,
+    interactionMode: 'automatic',
+    autonomousMode: input.ragEnabled,
+    selectedTools: [],
+    chatHistory: input.chatHistory
   });
-
-  // Add current question
-  messages.push(new HumanMessage(input.question));
-
-  // Execute workflow
-  const result = await app.invoke(
-    {
-      messages,
-      question: input.question,
-      agentId: input.agentId,
-      sessionId: input.sessionId,
-      userId: input.userId,
-      agent: input.agent,
-      ragEnabled: input.ragEnabled,
-    },
-    {
-      configurable: {
-        thread_id: input.sessionId,
-      },
-    }
-  );
-
-  console.log('✅ Workflow execution complete');
-
-  return result;
 }
 
 /**

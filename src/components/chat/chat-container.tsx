@@ -13,7 +13,7 @@ import { useChatStore } from '@/lib/stores/chat-store';
 import { MessageBubble } from './message-bubble';
 import { ReasoningDisplay } from './reasoning-display';
 import { AgentSelectionPanel } from './agent-selection-panel';
-import { useToast } from '@/hooks/use-toast';
+// import { useToast } from '@/hooks/use-toast';
 
 export function ChatContainer({ className }: { className?: string }) {
   const {
@@ -30,7 +30,7 @@ export function ChatContainer({ className }: { className?: string }) {
     selectAgent,
   } = useChatStore();
 
-  const { toast } = useToast();
+  // const { toast } = useToast();
   const [isRetrying, setIsRetrying] = React.useState(false);
 
   // AUDIT FIX: AbortController lifecycle
@@ -40,20 +40,20 @@ export function ChatContainer({ className }: { className?: string }) {
   const handleSelectAgent = React.useCallback(async (agent: any) => {
     try {
       await selectAgent(agent.id);
-      toast({
-        title: 'Agent Selected',
-        description: `Now chatting with ${agent.display_name || agent.name}`,
-      });
+      // toast({
+      //   title: 'Agent Selected',
+      //   description: `Now chatting with ${agent.display_name || agent.name}`,
+      // });
       return 'ack'; // Acknowledgment
     } catch (error) {
-      toast({
-        title: 'Selection Failed',
-        description: 'Failed to select agent. Please try again.',
-        variant: 'destructive',
-      });
+      // toast({
+      //   title: 'Selection Failed',
+      //   description: 'Failed to select agent. Please try again.',
+      //   variant: 'destructive',
+      // });
       throw error;
     }
-  }, [selectAgent, toast]);
+  }, [selectAgent]);
 
   const handleSubmit = React.useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
@@ -61,11 +61,12 @@ export function ChatContainer({ className }: { className?: string }) {
 
     // AUDIT FIX: Manual mode validation
     if (interactionMode === 'manual' && !selectedAgent) {
-      toast({
-        title: 'No Agent Selected',
-        description: 'Please select an AI agent before sending a message in Manual Mode.',
-        variant: 'destructive',
-      });
+      // toast({
+      //   title: 'No Agent Selected',
+      //   description: 'Please select an AI agent before sending a message in Manual Mode.',
+      //   variant: 'destructive',
+      // });
+      console.warn('No agent selected in manual mode');
       return;
     }
 

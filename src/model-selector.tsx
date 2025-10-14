@@ -3,15 +3,15 @@
 import { Brain, Zap, Clock, Star } from 'lucide-react';
 import React, { useState, useEffect } from 'react';
 
-import { Badge } from '@/shared/components/ui/badge';
+import { Badge } from '@/components/ui/badge';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue
-} from '@/shared/components/ui/select';
-import { cn } from '@/shared/services/utils';
+} from '@/components/ui/select';
+import { cn } from '@/lib/utils';
 
 // 🤖 Model Configuration Types
 export interface ModelConfig {

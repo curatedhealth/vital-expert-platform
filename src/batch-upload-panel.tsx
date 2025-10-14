@@ -3,11 +3,11 @@
 import { Upload, FileText, CheckCircle, AlertCircle } from 'lucide-react';
 import React, { useState } from 'react';
 
-import { Alert, AlertDescription } from '@/shared/components/ui/alert';
-import { Button } from '@/shared/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/components/ui/card';
-import { Input } from '@/shared/components/ui/input';
-import { Label } from '@/shared/components/ui/label';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
 interface BatchUploadPanelProps {
   title?: string;

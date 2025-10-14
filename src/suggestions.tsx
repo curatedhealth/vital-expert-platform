@@ -3,9 +3,9 @@
 import { ArrowRight, Sparkles } from 'lucide-react';
 import React from 'react';
 
-import { Badge } from '@/shared/components/ui/badge';
-import { Button } from '@/shared/components/ui/button';
-import { cn } from '@/shared/services/utils';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 
 // 🎯 Suggestion Component Types
 interface SuggestionProps {

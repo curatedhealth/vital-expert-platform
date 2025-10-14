@@ -12,14 +12,14 @@ import {
 } from 'lucide-react';
 import React, { useState } from 'react';
 
-import { Button } from '@/shared/components/ui/button';
+import { Button } from '@/components/ui/button';
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger
-} from '@/shared/components/ui/tooltip';
-import { cn } from '@/shared/services/utils';
+} from '@/components/ui/tooltip';
+import { cn } from '@/lib/utils';
 
 // 🎯 Action Component Interfaces
 interface ActionsProps {

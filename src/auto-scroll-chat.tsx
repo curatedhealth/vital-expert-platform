@@ -3,9 +3,9 @@
 import { ChevronDown } from 'lucide-react';
 import React, { useEffect, useRef, useState } from 'react';
 
-import { AgentAvatar } from '@/shared/components/ui/agent-avatar';
-import { Button } from '@/shared/components/ui/button';
-import { cn } from '@/shared/services/utils';
+import { AgentAvatar } from '@/components/ui/agent-avatar';
+import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 
 // 📜 Auto-Scrolling Chat Container Interface
 interface ConversationProps {

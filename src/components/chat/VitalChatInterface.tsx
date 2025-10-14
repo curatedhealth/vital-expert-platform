@@ -17,24 +17,24 @@ import {
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 
 import { useRealtimeCollaboration } from '@/hooks/useRealtimeCollaboration';
-import { Badge } from '@/shared/components/ui/badge';
-import { Button } from '@/shared/components/ui/button';
-import { ScrollArea } from '@/shared/components/ui/scroll-area';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue
-} from '@/shared/components/ui/select';
-import { Textarea } from '@/shared/components/ui/textarea';
+} from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger
-} from '@/shared/components/ui/tooltip';
-import { cn } from '@/shared/services/utils';
+} from '@/components/ui/tooltip';
+import { cn } from '@/lib/utils';
 
 // Import our custom components
 import type {

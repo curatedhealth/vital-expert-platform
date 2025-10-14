@@ -9,7 +9,7 @@ import { Settings, Zap, MessageSquare } from 'lucide-react';
 import React, { useState, useEffect } from 'react';
 
 import { Card, CardContent, CardHeader, CardTitle, Button, Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/components/ui';
-import { DatabaseLibraryLoader } from '@/shared/services/utils/database-library-loader';
+import { DatabaseLibraryLoader } from '@/lib/utils/database-library-loader';
 
 import { AgentCapabilitiesDisplay } from './AgentCapabilitiesDisplay';
 import { CapabilitySelector } from './CapabilitySelector';

@@ -5,7 +5,7 @@
 
 import { AgentOrchestrator } from '@/agents/core/AgentOrchestrator';
 import { DigitalHealthAgent } from '@/agents/core/DigitalHealthAgent';
-import { IntentResult, QueryContext, OrchestrationResult } from '@/shared/types/orchestration.types';
+import { IntentResult, QueryContext, OrchestrationResult } from '@/orchestration.types';
 import { ComplianceLevel } from '@/types/digital-health-agent.types';
 
 import { AgentSelector } from './agent-selector';

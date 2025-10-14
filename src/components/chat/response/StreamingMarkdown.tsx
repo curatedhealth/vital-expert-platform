@@ -10,8 +10,8 @@ import ReactMarkdown from 'react-markdown';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { oneDark, oneLight } from 'react-syntax-highlighter/dist/esm/styles/prism';
 
-import { Badge } from '@/shared/components/ui/badge';
-import { Card, CardContent } from '@/shared/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent } from '@/components/ui/card';
 import {
   Table,
   TableBody,
@@ -19,14 +19,14 @@ import {
   TableHead,
   TableHeader,
   TableRow
-} from '@/shared/components/ui/table';
+} from '@/components/ui/table';
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger
-} from '@/shared/components/ui/tooltip';
-import { cn } from '@/shared/services/utils';
+} from '@/components/ui/tooltip';
+import { cn } from '@/lib/utils';
 import type { Citation, MedicalTerm } from '@/types/chat.types';
 
 interface StreamingMarkdownProps {

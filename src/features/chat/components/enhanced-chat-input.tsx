@@ -16,8 +16,8 @@ import {
 import { useState } from 'react';
 
 import { Agent } from '@/lib/stores/chat-store';
-import { Badge } from '@/shared/components/ui/badge';
-import { Button } from '@/shared/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import {
   PromptInput,
   PromptInputTextarea,
@@ -25,8 +25,8 @@ import {
   PromptInputSubmit,
   PromptInputModelSelector,
   PromptInputCharCounter
-} from '@/shared/components/ui/prompt-input';
-import { cn } from '@/shared/services/utils';
+} from '@/components/ui/prompt-input';
+import { cn } from '@/lib/utils';
 
 // Types
 interface IntentAnalysis {

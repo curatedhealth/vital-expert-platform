@@ -19,17 +19,17 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 
 import { useContextualQuickActions } from '@/hooks/useContextualQuickActions';
 import { useWorkspaceManager } from '@/hooks/useWorkspaceManager';
-import { Badge } from '@/shared/components/ui/badge';
-import { Button } from '@/shared/components/ui/button';
-import { ScrollArea } from '@/shared/components/ui/scroll-area';
-import { Textarea } from '@/shared/components/ui/textarea';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Textarea } from '@/components/ui/textarea';
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger
-} from '@/shared/components/ui/tooltip';
-import { cn } from '@/shared/services/utils';
+} from '@/components/ui/tooltip';
+import { cn } from '@/lib/utils';
 import type {
   Message,
   ChatSettings,
@@ -124,7 +124,7 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({
       }
 
       try {
-        const { DatabaseLibraryLoader } = await import('@/shared/services/utils/database-library-loader');
+        const { DatabaseLibraryLoader } = await import('@/lib/utils/database-library-loader');
         const loader = ew DatabaseLibraryLoader();
         const starters = wait loader.getPromptStartersByAgent(selectedAgent.name);
 
@@ -215,7 +215,7 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({
     try {
       // If starter has a name (from prompt library), fetch the full prompt
       if (starter.name || starter.prompt_starter) {
-        const { DatabaseLibraryLoader } = await import('@/shared/services/utils/database-library-loader');
+        const { DatabaseLibraryLoader } = await import('@/lib/utils/database-library-loader');
 
         // Load the full prompt from the library using the prompt_starter text
 

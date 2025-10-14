@@ -10,7 +10,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger
 } from '@/components/ui/collapsible';
-import { cn } from '@/shared/services/utils';
+import { cn } from '@/lib/utils';
 
 // 🧠 Thinking Step Types
 interface ThinkingStep {

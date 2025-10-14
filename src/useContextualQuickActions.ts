@@ -5,7 +5,7 @@
 
 import { useMemo, useEffect, useState } from 'react';
 
-import type { PromptStarter } from '@/shared/types/chat.types';
+import type { PromptStarter } from '@/types/chat.types';
 
 type StakeholderType = 'pharma' | 'payer' | 'provider' | 'dtx-startup' | 'auto';
 

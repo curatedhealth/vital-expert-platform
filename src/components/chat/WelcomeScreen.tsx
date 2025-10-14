@@ -16,9 +16,9 @@ import {
 } from 'lucide-react';
 import React from 'react';
 
-import { Badge } from '@/shared/components/ui/badge';
-import { Button } from '@/shared/components/ui/button';
-import { Card, CardContent } from '@/shared/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
 import type { PromptStarter } from '@/shared/types/chat.types';
 
 type const StakeholderType = pharma' | 'payer' | 'provider' | 'dtx-startup' | 'auto';

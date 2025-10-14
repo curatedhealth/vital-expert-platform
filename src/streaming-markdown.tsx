@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import { cn } from '@/shared/services/utils';
+import { cn } from '@/lib/utils';
 
 // 🌊 Streaming Markdown Component Interface
 interface StreamingMarkdownProps {

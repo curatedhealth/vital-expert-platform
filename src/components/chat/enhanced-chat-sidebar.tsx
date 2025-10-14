@@ -108,6 +108,18 @@ export function EnhancedChatSidebar({
     loadAgents();
   }, [loadAgents]);
 
+  // Sync selected agents with chat store's selected agent
+  useEffect(() => {
+    if (selectedAgent) {
+      setSelectedAgents(prev => {
+        if (!prev.includes(selectedAgent.id)) {
+          return [...prev, selectedAgent.id];
+        }
+        return prev;
+      });
+    }
+  }, [selectedAgent]);
+
   // Mock conversations data - in real app, this would come from the chat store
   const conversations: Conversation[] = useMemo(() => {
     return chats.map(chat => ({
@@ -196,7 +208,15 @@ export function EnhancedChatSidebar({
     try {
       setAddingAgent(agent.id);
       await selectAgent(agent.id);
-      setSelectedAgents(prev => [...prev, agent.id]);
+      
+      // Update local selected agents state
+      setSelectedAgents(prev => {
+        if (!prev.includes(agent.id)) {
+          return [...prev, agent.id];
+        }
+        return prev;
+      });
+      
       setShowSuccessMessage(true);
       
       // Show success feedback
@@ -216,6 +236,12 @@ export function EnhancedChatSidebar({
     // If this was the currently selected agent, clear it
     if (selectedAgent?.id === agentId) {
       clearSelectedAgent();
+      
+      // Also update the current chat to remove the agent
+      if (currentChat) {
+        // Update the chat store to remove the agent from current chat
+        // This will be handled by the chat store's state management
+      }
     }
   };
 

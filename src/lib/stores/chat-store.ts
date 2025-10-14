@@ -1411,7 +1411,10 @@ const _useChatStore = create<ChatStore>()(
       },
 
       selectAgent: async (agentId: string) => {
-        const { agents, setSelectedAgent } = get();
+        const { setSelectedAgent, getAgents } = get();
+        
+        // Get agents from global store
+        const agents = getAgents();
         const agent = agents.find(a => a.id === agentId);
         
         if (!agent) {
@@ -1433,9 +1436,28 @@ const _useChatStore = create<ChatStore>()(
           error: null
         });
 
-        // Create a new chat with the selected agent
-        const { createNewChat } = get();
-        createNewChat();
+        // Update current chat with selected agent
+        const { currentChat } = get();
+        if (currentChat) {
+          set(state => ({
+            chats: state.chats.map(chat => 
+              chat.id === currentChat.id 
+                ? { 
+                    ...chat, 
+                    agentId: agent.id, 
+                    agentName: agent.display_name || agent.name,
+                    updatedAt: new Date()
+                  }
+                : chat
+            ),
+            currentChat: {
+              ...currentChat,
+              agentId: agent.id,
+              agentName: agent.display_name || agent.name,
+              updatedAt: new Date()
+            }
+          }));
+        }
       },
 
       hideAgentSelection: () => {

@@ -435,6 +435,13 @@ export async function* streamModeAwareWorkflow(input: {
   chatHistory: any[];
 }) {
   console.log(`🌊 Starting streaming mode-aware workflow: ${input.interactionMode} + ${input.autonomousMode ? 'Autonomous' : 'Normal'}`);
+  console.log(`🔍 [Workflow] Input parameters:`, {
+    query: input.query,
+    selectedAgent: input.selectedAgent?.name,
+    interactionMode: input.interactionMode,
+    autonomousMode: input.autonomousMode,
+    selectedTools: input.selectedTools
+  });
   
   const app = compileModeAwareWorkflow();
   
@@ -457,6 +464,14 @@ export async function* streamModeAwareWorkflow(input: {
   });
 
   // Stream workflow execution
+  console.log('🚀 [Workflow] Starting workflow execution with state:', {
+    messages: messages.length,
+    query: input.query,
+    selectedAgent: input.selectedAgent?.name,
+    interactionMode: input.interactionMode,
+    autonomousMode: input.autonomousMode
+  });
+  
   const stream = await app.stream(
     {
       messages,
@@ -492,11 +507,18 @@ export async function* streamModeAwareWorkflow(input: {
       streamMode: "values"
     }
   );
+  
+  console.log('✅ [Workflow] Stream created, starting to process events...');
 
   // Yield step-by-step updates with real-time reasoning
   let hasGeneratedAnswer = false;
+  let eventCount = 0;
+  
+  console.log('🔄 [Workflow] Starting to process stream events...');
   
   for await (const event of stream) {
+    eventCount++;
+    console.log(`📊 [Workflow] Processing event #${eventCount}`);
     console.log('🔍 [Stream] Raw event structure:', {
       keys: Object.keys(event),
       eventType: typeof event,
@@ -642,6 +664,8 @@ export async function* streamModeAwareWorkflow(input: {
       stateKeys: Object.keys(state)
     });
   }
+  
+  console.log(`🏁 [Workflow] Stream processing complete. Total events: ${eventCount}, Answer generated: ${hasGeneratedAnswer}`);
   
   // Fallback: If no answer was generated, send a default response
   if (!hasGeneratedAnswer) {

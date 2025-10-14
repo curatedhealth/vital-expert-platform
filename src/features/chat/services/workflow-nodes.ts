@@ -330,7 +330,16 @@ export function processAgentCondition(state: WorkflowState): string {
  * Creates ReAct agent with only user-selected tools
  */
 export async function processWithAgentNormalNode(state: WorkflowState): Promise<Partial<WorkflowState>> {
-  console.log('💬 Normal mode: Processing with user-selected tools');
+  console.log('💬 [ProcessWithAgentNormal] Starting normal mode processing');
+  console.log('🔍 [ProcessWithAgentNormal] State:', {
+    selectedAgent: state.selectedAgent?.name,
+    query: state.query,
+    messagesCount: state.messages?.length || 0,
+    selectedTools: state.selectedTools,
+    interactionMode: state.interactionMode,
+    autonomousMode: state.autonomousMode,
+    contextLength: state.context?.length || 0
+  });
   
   const { selectedAgent, query, messages, selectedTools, interactionMode } = state;
   
@@ -411,7 +420,7 @@ export async function processWithAgentNormalNode(state: WorkflowState): Promise<
       }];
     }
     
-    return {
+    const response = {
       answer: (result as any).output || (result as any).content || 'No response generated',
       toolCalls: (result as any).intermediateSteps || [],
       workflowStep: 'response_generated',
@@ -424,6 +433,15 @@ export async function processWithAgentNormalNode(state: WorkflowState): Promise<
         agentUsed: selectedAgent?.name || 'Unknown'
       }
     };
+    
+    console.log('✅ [ProcessWithAgentNormal] Completed processing:', {
+      answerLength: response.answer.length,
+      toolCallsCount: response.toolCalls.length,
+      reasoningStepsCount: response.metadata.reasoningSteps.length,
+      workflowStep: response.workflowStep
+    });
+    
+    return response;
   } catch (error) {
     console.error('Error processing with normal mode:', error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';

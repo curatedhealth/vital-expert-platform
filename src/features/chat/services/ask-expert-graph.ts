@@ -534,7 +534,12 @@ export async function* streamModeAwareWorkflow(input: {
       stateKeys: Object.keys(state),
       workflowStep: state.workflowStep,
       hasAnswer: !!state.answer,
-      hasReasoningSteps: !!(state.metadata?.reasoningSteps?.length)
+      hasReasoningSteps: !!(state.metadata?.reasoningSteps?.length),
+      answerLength: state.answer?.length || 0,
+      contextLength: state.context?.length || 0,
+      selectedAgent: state.selectedAgent?.name,
+      interactionMode: state.interactionMode,
+      autonomousMode: state.autonomousMode
     });
     
     const stepDescription = getStepDescription(

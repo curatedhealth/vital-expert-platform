@@ -85,7 +85,7 @@ export function ChatContainer({ className }: { className?: string }) {
       }
       console.error('Send message error:', error);
     }
-  }, [input, isLoading, interactionMode, selectedAgent, sendMessage, setInput, toast]);
+  }, [input, isLoading, interactionMode, selectedAgent, sendMessage, setInput]);
 
   const handleRetry = React.useCallback(async () => {
     if (!messages.length) return;

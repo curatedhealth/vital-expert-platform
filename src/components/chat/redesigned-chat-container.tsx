@@ -94,82 +94,107 @@ export function RedesignedChatContainer({ className }: { className?: string }) {
     <div className={cn("flex h-full", className)}>
       {/* Main Chat Area */}
       <div className="flex-1 flex flex-col min-w-0">
-        {/* Messages */}
-        <ScrollArea className="flex-1 p-4">
-          <div className="space-y-4 max-w-4xl mx-auto">
-            {messages.length === 0 ? (
-              <div className="text-center py-12">
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                  Welcome to VITAL Expert Chat
-                </h3>
-                <p className="text-gray-600">
-                  {interactionMode === 'manual' 
-                    ? 'Select an AI agent from the sidebar to start chatting.'
-                    : 'Start by asking a question or selecting an AI agent.'
+        {messages.length === 0 ? (
+          // Empty state with centered input (ChatGPT style)
+          <div className="flex-1 flex flex-col items-center justify-center p-4">
+            {/* Welcome Message */}
+            <div className="text-center mb-8 max-w-2xl">
+              <h3 className="text-2xl font-semibold text-gray-900 mb-3">
+                Welcome to VITAL Expert Chat
+              </h3>
+              <p className="text-gray-600 text-lg">
+                {interactionMode === 'manual' 
+                  ? 'Select an AI agent from the sidebar to start chatting.'
+                  : 'Start by asking a question or selecting an AI agent.'
+                }
+              </p>
+            </div>
+
+            {/* Centered Input */}
+            <div className="w-full max-w-3xl">
+              <ChatInput
+                value={input}
+                onChange={setInput}
+                onSubmit={() => {
+                  if (canSend) {
+                    handleSubmit(new Event('submit') as any);
                   }
-                </p>
-              </div>
-            ) : (
-              messages.map((message, index) => (
-                <MessageBubble
-                  key={message.id || index}
-                  message={message}
-                  isLastMessage={index === messages.length - 1}
-                  isLoading={isLoading && index === messages.length - 1}
-                />
-              ))
-            )}
-            {isLoading && messages.length > 0 && messages[messages.length - 1]?.role === 'user' && (
-              <MessageBubble
-                message={{
-                  id: 'loading',
-                  role: 'assistant',
-                  content: '',
-                  isLoading: true,
-                  createdAt: new Date().toISOString(),
                 }}
-                isLastMessage={true}
-                isLoading={true}
+                isLoading={isLoading}
+                interactionMode={interactionMode}
+                hasSelectedAgent={!!selectedAgent}
+                className="border-0 bg-transparent"
+                isCentered={true}
               />
+            </div>
+          </div>
+        ) : (
+          // Messages view with input at bottom
+          <>
+            {/* Messages */}
+            <ScrollArea className="flex-1 p-4">
+              <div className="space-y-4 max-w-4xl mx-auto">
+                {messages.map((message, index) => (
+                  <MessageBubble
+                    key={message.id || index}
+                    message={message}
+                    isLastMessage={index === messages.length - 1}
+                    isLoading={isLoading && index === messages.length - 1}
+                  />
+                ))}
+                {isLoading && messages.length > 0 && messages[messages.length - 1]?.role === 'user' && (
+                  <MessageBubble
+                    message={{
+                      id: 'loading',
+                      role: 'assistant',
+                      content: '',
+                      isLoading: true,
+                      createdAt: new Date().toISOString(),
+                    }}
+                    isLastMessage={true}
+                    isLoading={true}
+                  />
+                )}
+                <ReasoningDisplay />
+              </div>
+            </ScrollArea>
+
+            {/* Error Display */}
+            {error && (
+              <div className="border-t bg-white p-4">
+                <Alert variant="destructive" className="mb-4">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>{error}</AlertDescription>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleRetry}
+                    className="ml-auto"
+                    disabled={isRetrying}
+                  >
+                    {isRetrying ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+                    <span className="ml-2">Retry</span>
+                  </Button>
+                </Alert>
+              </div>
             )}
-            <ReasoningDisplay />
-          </div>
-        </ScrollArea>
 
-        {/* Error Display */}
-        {error && (
-          <div className="border-t bg-white p-4">
-            <Alert variant="destructive" className="mb-4">
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>{error}</AlertDescription>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleRetry}
-                className="ml-auto"
-                disabled={isRetrying}
-              >
-                {isRetrying ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
-                <span className="ml-2">Retry</span>
-              </Button>
-            </Alert>
-          </div>
+            {/* Input Area at Bottom */}
+            <ChatInput
+              value={input}
+              onChange={setInput}
+              onSubmit={() => {
+                if (canSend) {
+                  handleSubmit(new Event('submit') as any);
+                }
+              }}
+              isLoading={isLoading}
+              interactionMode={interactionMode}
+              hasSelectedAgent={!!selectedAgent}
+              className="border-t"
+            />
+          </>
         )}
-
-        {/* Input Area */}
-        <ChatInput
-          value={input}
-          onChange={setInput}
-          onSubmit={() => {
-            if (canSend) {
-              handleSubmit(new Event('submit') as any);
-            }
-          }}
-          isLoading={isLoading}
-          interactionMode={interactionMode}
-          hasSelectedAgent={!!selectedAgent}
-          className="border-t"
-        />
       </div>
     </div>
   );

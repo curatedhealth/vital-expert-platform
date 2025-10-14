@@ -16,6 +16,7 @@ interface ChatInputProps {
   hasSelectedAgent: boolean;
   disabled?: boolean;
   className?: string;
+  isCentered?: boolean;
 }
 
 export function ChatInput({
@@ -26,7 +27,8 @@ export function ChatInput({
   interactionMode,
   hasSelectedAgent,
   disabled = false,
-  className
+  className,
+  isCentered = false
 }: ChatInputProps) {
   // Validation: Check if can send
   const canSend = value.trim() && 
@@ -54,8 +56,15 @@ export function ChatInput({
   };
 
   return (
-    <div className={cn("border-t bg-white p-4", className)}>
-      <form onSubmit={handleSubmit} className="max-w-4xl mx-auto">
+    <div className={cn(
+      isCentered 
+        ? "bg-transparent p-0" 
+        : "border-t bg-white p-4", 
+      className
+    )}>
+      <form onSubmit={handleSubmit} className={cn(
+        isCentered ? "w-full" : "max-w-4xl mx-auto"
+      )}>
         {/* Warning: No agent selected */}
         {showWarning && (
           <Alert variant="destructive" className="mb-3">
@@ -67,7 +76,10 @@ export function ChatInput({
         )}
 
         {/* Input Area */}
-        <div className="flex gap-2">
+        <div className={cn(
+          "flex gap-2",
+          isCentered && "bg-white rounded-2xl border border-gray-200 shadow-lg p-2"
+        )}>
           <Textarea
             value={value}
             onChange={(e) => onChange(e.target.value)}
@@ -75,16 +87,24 @@ export function ChatInput({
             placeholder={
               showWarning
                 ? "Please select an AI agent first..."
+                : isCentered
+                ? "Message VITAL Expert..."
                 : "Ask about digital health, reimbursement, clinical research..."
             }
-            className="min-h-[40px] max-h-[120px] resize-none"
+            className={cn(
+              "min-h-[40px] max-h-[120px] resize-none",
+              isCentered && "border-0 shadow-none focus:ring-0 text-base"
+            )}
             disabled={!canSend}
             rows={1}
           />
           <Button
             type="submit"
             disabled={!canSend}
-            className="px-4 shrink-0"
+            className={cn(
+              "px-4 shrink-0",
+              isCentered && "rounded-xl"
+            )}
           >
             {isLoading ? (
               <Loader2 className="w-4 h-4 animate-spin" />
@@ -95,9 +115,11 @@ export function ChatInput({
         </div>
 
         {/* Helper Text */}
-        <p className="text-xs text-gray-500 mt-2">
-          Press Enter to send, Shift+Enter for new line
-        </p>
+        {!isCentered && (
+          <p className="text-xs text-gray-500 mt-2">
+            Press Enter to send, Shift+Enter for new line
+          </p>
+        )}
       </form>
     </div>
   );

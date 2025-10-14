@@ -354,22 +354,24 @@ export function createModeAwareWorkflowGraph() {
     
     // Manual mode: Agent selection
     .addConditionalEdges("suggestAgents", shouldWaitForUser, {
-      awaitSelection: "__interrupt__",  // HITL for manual mode
+      awaitSelection: "suggestTools",  // Continue to tool selection
       proceed: "suggestTools"
     })
     
     // Tool selection (for normal mode)
     .addConditionalEdges("suggestTools", shouldWaitForToolSelection, {
-      awaitTools: "__interrupt__",  // HITL for tool selection
+      awaitTools: "selectAgentAutomatic",  // Continue to agent selection
       proceed: "selectAgentAutomatic"
     })
     
     // Automatic mode: Direct to agent selection
     .addEdge("selectAgentAutomatic", "retrieveContext")
     
-    // Context retrieval
-    .addEdge("retrieveContext", "processWithAgentNormal")
-    .addEdge("retrieveContext", "processWithAgentAutonomous")
+    // Context retrieval - route based on autonomous mode
+    .addConditionalEdges("retrieveContext", processAgentCondition, {
+      normal: "processWithAgentNormal",
+      autonomous: "processWithAgentAutonomous"
+    })
     
     // Response synthesis
     .addEdge("processWithAgentNormal", "synthesizeResponse")

@@ -87,6 +87,17 @@ export function routeByModeCondition(state: WorkflowState): string {
  */
 export async function suggestAgentsNode(state: WorkflowState): Promise<Partial<WorkflowState>> {
   console.log('🎯 Manual mode: Suggesting agents for user selection');
+  console.log(`🔍 [SuggestAgents] State: mode=${state.interactionMode}, hasSelectedAgent=${!!state.selectedAgent}, agentId=${state.agentId}`);
+  
+  // If we already have a selected agent in manual mode, don't suggest new ones
+  if (state.selectedAgent && state.interactionMode === 'manual') {
+    console.log('✅ [SuggestAgents] Agent already selected in manual mode, proceeding directly');
+    return {
+      suggestedAgents: [state.selectedAgent],
+      requiresUserInput: false,
+      workflowStep: 'agent_selected'
+    };
+  }
   
   try {
     const suggestions = await orchestrator.getAgentSuggestions(state.query);
@@ -111,6 +122,14 @@ export async function suggestAgentsNode(state: WorkflowState): Promise<Partial<W
 }
 
 export function shouldWaitForUser(state: WorkflowState): string {
+  console.log(`🤔 [ShouldWaitForUser] requiresUserInput=${state.requiresUserInput}, hasSelectedAgent=${!!state.selectedAgent}, mode=${state.interactionMode}`);
+  
+  // If we already have a selected agent in manual mode, proceed directly
+  if (state.selectedAgent && state.interactionMode === 'manual') {
+    console.log('✅ [ShouldWaitForUser] Agent already selected, proceeding directly');
+    return 'proceed';
+  }
+  
   return state.requiresUserInput ? 'awaitSelection' : 'proceed';
 }
 
@@ -319,8 +338,7 @@ export async function processWithAgentNormalNode(state: WorkflowState): Promise<
     // Create ReAct agent with selected tools
     const agent = await createReactAgent({
       llm: model,
-      tools: userTools,
-      systemPrompt: selectedAgent?.system_prompt || `You are ${selectedAgent?.display_name || selectedAgent?.name}, a ${selectedAgent?.business_function || 'General'} expert.`
+      tools: userTools
     });
     
     // Ensure messages array is not empty
@@ -335,7 +353,13 @@ export async function processWithAgentNormalNode(state: WorkflowState): Promise<
     
     // ReAct agent expects input directly, not chat_history
     let result;
-    let reasoningSteps = [];
+    let reasoningSteps: Array<{
+      step: number;
+      description: string;
+      toolUsed: string;
+      status: string;
+      timestamp: string;
+    }> = [];
     
     try {
       result = await agent.invoke({
@@ -343,14 +367,17 @@ export async function processWithAgentNormalNode(state: WorkflowState): Promise<
       });
       
       // Extract reasoning steps from intermediate steps
-      if (result.intermediateSteps) {
-        reasoningSteps = result.intermediateSteps.map((step, index) => ({
-          step: index + 1,
-          description: `Tool execution: ${step.action?.tool || 'Unknown tool'}`,
-          toolUsed: step.action?.tool,
-          status: 'completed',
-          timestamp: new Date().toISOString()
-        }));
+      if (result && typeof result === 'object' && 'intermediateSteps' in result) {
+        const steps = (result as any).intermediateSteps;
+        if (Array.isArray(steps)) {
+          reasoningSteps = steps.map((step: any, index: number) => ({
+            step: index + 1,
+            description: `Tool execution: ${step.action?.tool || 'Unknown tool'}`,
+            toolUsed: step.action?.tool,
+            status: 'completed',
+            timestamp: new Date().toISOString()
+          }));
+        }
       }
     } catch (agentError) {
       console.error('ReAct agent invoke failed:', agentError);
@@ -370,8 +397,8 @@ export async function processWithAgentNormalNode(state: WorkflowState): Promise<
     }
     
     return {
-      answer: result.output,
-      toolCalls: result.intermediateSteps || [],
+      answer: (result as any).output || (result as any).content || 'No response generated',
+      toolCalls: (result as any).intermediateSteps || [],
       workflowStep: 'response_generated',
       metadata: {
         ...state.metadata,
@@ -384,14 +411,15 @@ export async function processWithAgentNormalNode(state: WorkflowState): Promise<
     };
   } catch (error) {
     console.error('Error processing with normal mode:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
     return {
-      answer: `I apologize, but I encountered an error while processing your request: ${error.message}. Please try rephrasing your question or contact support if the issue persists.`,
+      answer: `I apologize, but I encountered an error while processing your request: ${errorMessage}. Please try rephrasing your question or contact support if the issue persists.`,
       toolCalls: [],
       workflowStep: 'response_generated',
       metadata: {
         ...state.metadata,
         processing_mode: 'normal',
-        error: error.message,
+        error: errorMessage,
         errorType: 'normal_mode_processing_error',
         modeReasoning
       }
@@ -432,15 +460,16 @@ export async function processWithAgentAutonomousNode(state: WorkflowState): Prom
     };
   } catch (error) {
     console.error('Error processing with autonomous mode:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
     return {
-      answer: `I apologize, but I encountered an error while processing your request with advanced tools: ${error.message}. Please try rephrasing your question or contact support if the issue persists.`,
+      answer: `I apologize, but I encountered an error while processing your request with advanced tools: ${errorMessage}. Please try rephrasing your question or contact support if the issue persists.`,
       sources: [],
       citations: [],
       workflowStep: 'response_generated',
       metadata: {
         ...state.metadata,
         processing_mode: 'autonomous',
-        error: error.message,
+        error: errorMessage,
         errorType: 'autonomous_mode_processing_error'
       }
     };

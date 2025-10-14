@@ -143,7 +143,7 @@ async function retrieveContext(state: AskExpertState): Promise<Partial<AskExpert
   console.log('🔍 Retrieving context from knowledge base...');
 
   try {
-    const searchResults = await enhancedLangChainService.vectorStore?.similaritySearchWithScore(
+    const searchResults = await enhancedLangChainService['vectorStore']?.similaritySearchWithScore(
       state.question,
       5
     );
@@ -289,6 +289,7 @@ export function createModeAwareWorkflowGraph() {
     
     // Mode-based routing - check if agent is already selected
     .addConditionalEdges("routeByMode", (state) => {
+      console.log(`🔀 [Workflow] Routing decision: mode=${state.interactionMode}, hasAgent=${!!state.selectedAgent}`);
       if (state.interactionMode === 'manual') {
         // If agent is already selected, skip agent selection
         return state.selectedAgent ? 'manual_with_agent' : 'manual';
@@ -497,13 +498,28 @@ export async function* streamModeAwareWorkflow(input: {
     );
     
     // Send detailed reasoning events based on actual workflow state
+    // Only include essential data to avoid JSON truncation
     const reasoningData = {
-      ...event,
+      workflowStep: event.workflowStep,
+      selectedAgent: event.selectedAgent ? {
+        id: event.selectedAgent.id,
+        name: event.selectedAgent.name,
+        display_name: event.selectedAgent.display_name
+      } : null,
+      query: event.query,
+      agentId: event.agentId,
       timestamp: Date.now(),
       mode: `${input.interactionMode}_${input.autonomousMode ? 'autonomous' : 'normal'}`,
       agent: event.selectedAgent?.display_name || event.selectedAgent?.name || 'System',
       interactionMode: input.interactionMode,
-      autonomousMode: input.autonomousMode
+      autonomousMode: input.autonomousMode,
+      // Include only essential metadata
+      metadata: event.metadata ? {
+        processing_mode: event.metadata.processing_mode,
+        modeReasoning: event.metadata.modeReasoning,
+        agentUsed: event.metadata.agentUsed,
+        reasoningSteps: event.metadata.reasoningSteps || []
+      } : {}
     };
     
     // Ensure data is JSON serializable
@@ -519,35 +535,41 @@ export async function* streamModeAwareWorkflow(input: {
     // Send intermediate progress updates
     if (event.workflowStep === 'context_retrieved' && event.context) {
       const contextData = {
-        ...event,
-        timestamp: Date.now(),
+        workflowStep: 'context_analysis',
         contextLength: event.context.length,
+        timestamp: Date.now(),
         interactionMode: input.interactionMode,
-        autonomousMode: input.autonomousMode
+        autonomousMode: input.autonomousMode,
+        agent: event.selectedAgent?.display_name || event.selectedAgent?.name || 'System'
       };
       
       yield {
         type: 'reasoning',
         step: 'context_analysis',
         description: `🧠 Analyzing retrieved context (${event.context.length} characters)...`,
-        data: JSON.parse(JSON.stringify(contextData))
+        data: contextData
       };
     }
     
     if (event.workflowStep === 'response_generated' && event.toolCalls) {
       const toolData = {
-        ...event,
-        timestamp: Date.now(),
+        workflowStep: 'tool_execution',
         toolCount: event.toolCalls.length,
+        timestamp: Date.now(),
         interactionMode: input.interactionMode,
-        autonomousMode: input.autonomousMode
+        autonomousMode: input.autonomousMode,
+        agent: event.selectedAgent?.display_name || event.selectedAgent?.name || 'System',
+        tools: event.toolCalls.map(tc => ({
+          tool: tc.action?.tool || 'unknown',
+          status: 'completed'
+        }))
       };
       
       yield {
         type: 'reasoning',
         step: 'tool_execution',
         description: `🔧 Executed ${event.toolCalls.length} tool calls...`,
-        data: JSON.parse(JSON.stringify(toolData))
+        data: toolData
       };
     }
     
@@ -562,20 +584,25 @@ export async function* streamModeAwareWorkflow(input: {
       hasGeneratedAnswer = true;
       
       const contentMetadata = {
-        agent: event.selectedAgent,
+        agent: event.selectedAgent ? {
+          id: event.selectedAgent.id,
+          name: event.selectedAgent.name,
+          display_name: event.selectedAgent.display_name
+        } : null,
         sources: event.sources || [],
         citations: event.citations || [],
         tokenUsage: event.tokenUsage || {},
         reasoning: stepDescription,
         workflowSteps: event.metadata?.workflowSteps || [],
         interactionMode: input.interactionMode,
-        autonomousMode: input.autonomousMode
+        autonomousMode: input.autonomousMode,
+        reasoningSteps: event.metadata?.reasoningSteps || []
       };
       
       yield {
         type: 'content',
         content: event.answer,
-        metadata: JSON.parse(JSON.stringify(contentMetadata))
+        metadata: contentMetadata
       };
     }
     
@@ -602,13 +629,14 @@ export async function* streamModeAwareWorkflow(input: {
       error: 'No answer generated by workflow',
       fallbackUsed: true,
       interactionMode: input.interactionMode,
-      autonomousMode: input.autonomousMode
+      autonomousMode: input.autonomousMode,
+      reasoningSteps: []
     };
     
     yield {
       type: 'content',
       content: 'I apologize, but I encountered an issue while processing your request. This might be due to a temporary service issue. Please try rephrasing your question or contact support if the problem persists.',
-      metadata: JSON.parse(JSON.stringify(fallbackMetadata))
+      metadata: fallbackMetadata
     };
   }
 }
@@ -640,7 +668,7 @@ export async function* streamAskExpertWorkflow(input: {
   messages.push(new HumanMessage(input.question));
 
   // Stream workflow execution
-  for await (const event of app.stream(
+  for await (const event of await app.stream(
     {
       messages,
       question: input.question,

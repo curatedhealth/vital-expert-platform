@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-import { StreamingResponse } from "@/components/ui/shadcn-io/ai";
+import { Response } from "@/components/ui/shadcn-io/ai";
 import {
   Conversation,
   ConversationContent
@@ -148,7 +148,7 @@ For more detailed guidance, consider engaging our **Regulatory Strategy Expert**
                       </div>
                       <div className="flex-1">
                         <div className="bg-white rounded-lg p-4 shadow-sm border">
-                          <StreamingResponse
+                          <Response
                             content={message.content}
                             isStreaming={message.isStreaming || false}
                             variant="enhanced"

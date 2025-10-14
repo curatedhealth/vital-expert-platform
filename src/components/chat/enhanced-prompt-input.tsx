@@ -159,7 +159,17 @@ export function EnhancedPromptInput({
   //   error: promptError 
   // } = usePromptEnhancement();
 
-  const canSend = value.trim() && !isLoading && !disabled;
+  // Use the disabled prop from parent instead of calculating our own canSend
+  const canSend = !disabled && value.trim() && !isLoading;
+
+  // Debug logging
+  console.log('EnhancedPromptInput Debug:', {
+    disabled,
+    value: value.trim(),
+    isLoading,
+    canSend,
+    selectedAgent
+  });
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {

@@ -1,6 +1,6 @@
 "use client";
 
-import { StreamingResponse } from "@/components/ui/shadcn-io/ai";
+import { Response } from "@/components/ui/shadcn-io/ai";
 
 export default function TestMarkdown() {
   const testContent = `## Overview
@@ -63,7 +63,7 @@ For more detailed guidance, consider engaging our **Regulatory Strategy Expert**
 
         <div className="bg-white rounded-lg shadow-lg p-6">
           <h2 className="text-xl font-semibold mb-4">Rendered Markdown (Static):</h2>
-          <StreamingResponse
+          <Response
             content={testContent}
             isStreaming={false}
             variant="enhanced"
@@ -73,7 +73,7 @@ For more detailed guidance, consider engaging our **Regulatory Strategy Expert**
 
         <div className="bg-white rounded-lg shadow-lg p-6 mt-8">
           <h2 className="text-xl font-semibold mb-4">Streaming Markdown (Progressive):</h2>
-          <StreamingResponse
+          <Response
             content={testContent}
             isStreaming={true}
             variant="enhanced"

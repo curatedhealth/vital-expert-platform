@@ -46,6 +46,16 @@ export function ChatInput({
   // Show warning in manual mode without agent
   const showWarning = interactionMode === 'manual' && !hasSelectedAgent;
 
+  // Debug logging
+  console.log('ChatInput Debug:', {
+    interactionMode,
+    hasSelectedAgent,
+    selectedAgent,
+    canSend,
+    showWarning,
+    disabled
+  });
+
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();

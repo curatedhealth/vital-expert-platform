@@ -26,8 +26,7 @@ import {
   SidebarProvider
 } from '@/components/ui/sidebar';
 import { AgentCreator } from '@/features/chat/components/agent-creator';
-import { ChatInput } from '@/features/chat/components/chat-input';
-import { ChatMessages } from '@/features/chat/components/chat-messages';
+import { EnhancedChatContainer } from '@/components/chat/enhanced-chat-container';
 import { ChatSidebar } from '@/features/chat/components/chat-sidebar';
 import { useAuth } from '@/supabase-auth-context';
 import { __useAgentsStore as useAgentsStore } from '@/agents-store';
@@ -303,73 +302,10 @@ function ChatPageContent() {
                 )}
 
 
-                {/* Messages Area */}
-                {messages.length > 0 ? (
-                    <div className="flex-1 p-6">
-                      <ChatMessages
-                        messages={messages}
-                        liveReasoning={liveReasoning}
-                        isReasoningActive={isReasoningActive}
-                      />
-                    </div>
-                  ) : (
-                  <div className="flex flex-col items-center justify-center h-full px-6">
-                    <div className="text-center mb-8">
-                      <h1 className="text-3xl font-normal text-gray-900 mb-4">
-                        {selectedAgent ? `Chat with ${selectedAgent.display_name || selectedAgent.name}` : 
-                         "What's on the agenda today?"}
-                      </h1>
-                      <p className="text-gray-600 mb-6">
-                        {selectedAgent ? selectedAgent.description :
-                         "Ask me anything about digital health, clinical trials, regulatory compliance, and more."}
-                      </p>
-                    </div>
-
-                    {/* Quick Prompts */}
-                    {selectedAgent && (
-                      <div className="w-full max-w-3xl mb-6">
-                        <h3 className="text-sm font-medium text-gray-700 mb-3">Quick Prompts</h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                          {[
-                            `What are the key capabilities of ${selectedAgent.display_name || selectedAgent.name}?`,
-                            `How can ${selectedAgent.display_name || selectedAgent.name} help with my project?`,
-                            `What are the best practices in ${selectedAgent.business_function || 'your field'}?`,
-                            `Can you provide guidance on regulatory compliance?`
-                          ].map((prompt, index) => (
-                            <Button
-                              key={index}
-                              variant="outline"
-                              className="text-left justify-start h-auto p-3 text-sm"
-                              onClick={() => {
-                                setInput(prompt);
-                                handleSendMessage(prompt);
-                              }}
-                            >
-                              {prompt}
-                            </Button>
-                          ))}
-                        </div>
-                      </div>
-                )}
-
-
-                    {/* Single chat input - always visible */}
-                    <div className="w-full max-w-3xl">
-                      <ChatInput
-                        value={input}
-                        onChange={setInput}
-                        onSend={handleSendMessage}
-                        onKeyPress={handleKeyPress}
-                        isLoading={isLoading || isSelectingAgent}
-                        selectedAgent={selectedAgent}
-                        enableVoice={true}
-                        selectedModel={selectedModel || undefined}
-                        onModelChange={setSelectedModel}
-                        onStop={stopGeneration}
-                      />
-                    </div>
-                  </div>
-                )}
+                {/* Enhanced Chat Container with Dynamic Reasoning */}
+                <div className="flex-1">
+                  <EnhancedChatContainer className="h-full" />
+                </div>
               </div>
             </div>
           </div>

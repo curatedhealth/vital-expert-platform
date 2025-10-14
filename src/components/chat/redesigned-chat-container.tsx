@@ -92,6 +92,16 @@ export function RedesignedChatContainer({ className }: { className?: string }) {
   const canSend = input.trim() && !isLoading && 
     (interactionMode === 'automatic' || selectedAgent);
 
+  // Debug logging
+  console.log('RedesignedChatContainer Debug:', {
+    input: input.trim(),
+    isLoading,
+    interactionMode,
+    selectedAgent: !!selectedAgent,
+    selectedAgentName: selectedAgent?.name,
+    canSend
+  });
+
   return (
     <div className={cn("flex h-full", className)}>
       {/* Main Chat Area */}
@@ -112,7 +122,7 @@ export function RedesignedChatContainer({ className }: { className?: string }) {
               </p>
             </div>
 
-            {/* Centered Input */}
+            {/* Centered Input - Simple version for empty state */}
             <div className="w-full max-w-3xl">
               <ChatInput
                 value={input}
@@ -202,6 +212,7 @@ export function RedesignedChatContainer({ className }: { className?: string }) {
               selectedModel={selectedModel?.id || 'gpt-4o'}
               onModelChange={(model) => setSelectedModel({ id: model, name: model })}
               className="border-t"
+              isCentered={false}
             />
           </>
         )}

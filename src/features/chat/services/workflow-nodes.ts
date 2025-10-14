@@ -204,14 +204,29 @@ export async function selectAgentAutomaticNode(state: WorkflowState): Promise<Pa
     };
   } catch (error) {
     console.error('Error selecting agent automatically:', error);
+    
+    // Create a fallback agent to ensure workflow continues
+    const fallbackAgent = {
+      id: 'fallback-agent',
+      name: 'General AI Assistant',
+      display_name: 'General AI Assistant',
+      description: 'A general-purpose AI assistant that can help with various questions',
+      system_prompt: 'You are a helpful AI assistant. Please provide accurate and helpful responses to user questions.',
+      business_function: 'General Assistance',
+      tier: 1,
+      capabilities: ['general_assistance', 'question_answering'],
+      rag_enabled: false
+    };
+    
     return {
-      selectedAgent: null,
-      suggestedAgents: [],
+      selectedAgent: fallbackAgent,
+      suggestedAgents: [fallbackAgent],
       requiresUserInput: false,
-      workflowStep: 'error',
+      workflowStep: 'agent_selected',
       metadata: {
         ...state.metadata,
-        error: 'Failed to select agent automatically'
+        error: 'Failed to select agent automatically, using fallback',
+        fallbackUsed: true
       }
     };
   }
@@ -290,10 +305,21 @@ export async function processWithAgentNormalNode(state: WorkflowState): Promise<
       messageTypes: agentMessages.map(m => m._getType())
     });
     
-    const result = await agent.invoke({
-      input: query,
-      chat_history: agentMessages
-    });
+    // ReAct agent expects input directly, not chat_history
+    let result;
+    try {
+      result = await agent.invoke({
+        messages: agentMessages
+      });
+    } catch (agentError) {
+      console.error('ReAct agent invoke failed:', agentError);
+      // Fallback to simple LLM call
+      const fallbackResponse = await model.invoke(agentMessages);
+      result = {
+        output: fallbackResponse.content,
+        intermediateSteps: []
+      };
+    }
     
     return {
       answer: result.output,
@@ -308,13 +334,14 @@ export async function processWithAgentNormalNode(state: WorkflowState): Promise<
   } catch (error) {
     console.error('Error processing with normal mode:', error);
     return {
-      answer: `I apologize, but I encountered an error while processing your request. Please try again.`,
+      answer: `I apologize, but I encountered an error while processing your request: ${error.message}. Please try rephrasing your question or contact support if the issue persists.`,
       toolCalls: [],
       workflowStep: 'response_generated',
       metadata: {
         ...state.metadata,
         processing_mode: 'normal',
-        error: error.message
+        error: error.message,
+        errorType: 'normal_mode_processing_error'
       }
     };
   }
@@ -354,14 +381,15 @@ export async function processWithAgentAutonomousNode(state: WorkflowState): Prom
   } catch (error) {
     console.error('Error processing with autonomous mode:', error);
     return {
-      answer: `I apologize, but I encountered an error while processing your request with advanced tools. Please try again.`,
+      answer: `I apologize, but I encountered an error while processing your request with advanced tools: ${error.message}. Please try rephrasing your question or contact support if the issue persists.`,
       sources: [],
       citations: [],
       workflowStep: 'response_generated',
       metadata: {
         ...state.metadata,
         processing_mode: 'autonomous',
-        error: error.message
+        error: error.message,
+        errorType: 'autonomous_mode_processing_error'
       }
     };
   }
@@ -376,19 +404,23 @@ export async function synthesizeResponseNode(state: WorkflowState): Promise<Part
   
   const { answer, sources, citations, toolCalls, metadata } = state;
   
+  // Ensure we always have a valid answer
+  const finalAnswer = answer || 'I apologize, but I was unable to generate a response to your question. Please try rephrasing your question or contact support if the issue persists.';
+  
   // Add final metadata
   const finalMetadata = {
     ...metadata,
     response_generated: true,
     timestamp: new Date().toISOString(),
-    workflow_complete: true
+    workflow_complete: true,
+    hasAnswer: !!answer
   };
   
   return {
-    answer,
-    sources,
-    citations,
-    toolCalls,
+    answer: finalAnswer,
+    sources: sources || [],
+    citations: citations || [],
+    toolCalls: toolCalls || [],
     metadata: finalMetadata,
     workflowStep: 'complete'
   };

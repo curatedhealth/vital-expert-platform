@@ -72,6 +72,8 @@ export function useStreamingResponse(options: UseStreamingResponseOptions = {}) 
         throw new Error('No response body reader available');
       }
 
+      let accumulatedContent = '';
+      
       while (true) {
         const { done, value } = await reader.read();
 
@@ -79,8 +81,12 @@ export function useStreamingResponse(options: UseStreamingResponseOptions = {}) 
           break;
         }
 
+        const chunk = new TextDecoder().decode(value);
+        const lines = chunk.split('\n');
+
         for (const line of lines) {
           if (line.startsWith('data: ')) {
+            const data = line.slice(6).trim();
 
             if (data === '[DONE]') {
               // Streaming complete
@@ -97,6 +103,7 @@ export function useStreamingResponse(options: UseStreamingResponseOptions = {}) 
             }
 
             try {
+              const parsed = JSON.parse(data);
 
               if (parsed.choices?.[0]?.delta?.content) {
                 accumulatedContent += parsed.choices[0].delta.content;
@@ -118,8 +125,9 @@ export function useStreamingResponse(options: UseStreamingResponseOptions = {}) 
 
     } catch (error) {
       if (error instanceof Error && error.name === 'AbortError') {
-        // } else {
-        // console.error('Streaming error:', error);
+        console.log('Streaming was aborted');
+      } else {
+        console.error('Streaming error:', error);
         options.onError?.(error instanceof Error ? error : new Error('Unknown streaming error'));
       }
     } finally {
@@ -128,6 +136,7 @@ export function useStreamingResponse(options: UseStreamingResponseOptions = {}) 
     }
   }, [options]);
 
+  const cancelStreaming = useCallback(() => {
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
       setIsStreaming(false);

@@ -53,13 +53,13 @@ export function Reasoning({ children, isStreaming = false, className }: Reasonin
   const [totalSteps] = React.useState(5);
   const [progress, setProgress] = React.useState(0);
 
-  // Define action steps
+  // Define action steps - more dynamic based on workflow
   const [actions, setActions] = React.useState<ActionStep[]>([
-    { id: 'analyze', text: 'Analyzing your question and context...', completed: false, active: false },
-    { id: 'domains', text: 'Detecting relevant knowledge domains...', completed: false, active: false },
-    { id: 'select', text: 'Selecting the most appropriate expert agent...', completed: false, active: false },
-    { id: 'prepare', text: 'Preparing specialized response...', completed: false, active: false },
-    { id: 'found', text: 'Found 3 suitable agents. Please select the best one for your query:', completed: false, active: false },
+    { id: 'routing', text: 'Analyzing your question and determining workflow...', completed: false, active: false },
+    { id: 'agent_selection', text: 'Selecting the most appropriate expert agent...', completed: false, active: false },
+    { id: 'tool_selection', text: 'Configuring tools for your request...', completed: false, active: false },
+    { id: 'context_retrieval', text: 'Retrieving relevant context and knowledge...', completed: false, active: false },
+    { id: 'response_generation', text: 'Generating comprehensive response...', completed: false, active: false },
   ]);
 
   // Auto-open when streaming starts
@@ -263,15 +263,15 @@ export function ReasoningContent({ children, className }: ReasoningContentProps)
     }
     
     switch (stepId) {
-      case 'analyze':
+      case 'routing':
         return <Search className="h-4 w-4 text-gray-400" />;
-      case 'domains':
-        return <Brain className="h-4 w-4 text-gray-400" />;
-      case 'select':
+      case 'agent_selection':
         return <Zap className="h-4 w-4 text-gray-400" />;
-      case 'prepare':
+      case 'tool_selection':
+        return <Brain className="h-4 w-4 text-gray-400" />;
+      case 'context_retrieval':
         return <BarChart3 className="h-4 w-4 text-gray-400" />;
-      case 'found':
+      case 'response_generation':
         return <Target className="h-4 w-4 text-gray-400" />;
       default:
         return <div className="h-4 w-4 rounded-full bg-gray-300" />;

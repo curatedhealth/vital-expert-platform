@@ -539,12 +539,28 @@ export async function* streamModeAwareWorkflow(input: {
       input.autonomousMode
     );
     
+    // Send reasoning events for the reasoning component
     yield {
-      type: 'workflow_step',
+      type: 'reasoning',
       step: event.workflowStep,
       description: stepDescription,
       data: event
     };
+    
+    // If this is the final step with an answer, send it as content
+    if (event.answer && (event.workflowStep === 'response_generated' || event.workflowStep === 'complete')) {
+      yield {
+        type: 'content',
+        content: event.answer,
+        metadata: {
+          agent: event.selectedAgent,
+          sources: event.sources || [],
+          citations: event.citations || [],
+          tokenUsage: event.tokenUsage || {},
+          reasoning: stepDescription
+        }
+      };
+    }
   }
 }
 

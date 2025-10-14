@@ -507,12 +507,12 @@ const _useChatStore = create<ChatStore>()(
         };
 
         // Add both messages immediately and reset reasoning state
-        const updatedMessages = [...messages, userMessage, assistantMessage];
+        const updatedMessages = [...(messages || []), userMessage, assistantMessage];
         console.log('🔍 [sendMessage] Adding messages to store:', {
           totalMessages: updatedMessages.length,
           userMessageId: userMessage.id,
           assistantMessageId: assistantMessage.id,
-          chatId: currentChat.id
+          chatId: updatedCurrentChat?.id || 'unknown'
         });
         set({
           messages: updatedMessages,
@@ -542,7 +542,7 @@ const _useChatStore = create<ChatStore>()(
             userId: 'hicham.naim@curated.health', // TODO: Get from auth context
             sessionId: updatedCurrentChat.id,
             model: get().selectedModel, // Include selected model
-            chatHistory: messages.map(msg => ({
+            chatHistory: (messages || []).map(msg => ({
               role: msg.role,
               content: msg.content
             })),

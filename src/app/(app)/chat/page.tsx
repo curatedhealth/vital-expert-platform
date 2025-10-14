@@ -9,7 +9,13 @@ import {
   Workflow,
   Home,
   Database,
-  Zap
+  Zap,
+  ChevronLeft,
+  ChevronRight,
+  Search,
+  UserPlus,
+  ShoppingCart,
+  User
 } from 'lucide-react';
 import Image from 'next/image';
 import { useRouter, usePathname } from 'next/navigation';
@@ -20,6 +26,7 @@ import { ErrorBoundary } from '@/components/error-boundary';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { Switch } from '@/components/ui/switch';
 import { EnhancedAgentCard, AgentCardGrid } from '@/components/ui/enhanced-agent-card';
 import {
   SidebarInset,
@@ -27,7 +34,7 @@ import {
 } from '@/components/ui/sidebar';
 import { AgentCreator } from '@/features/chat/components/agent-creator';
 import { ChatContainer } from '@/components/chat/chat-container';
-import { ChatSidebar } from '@/features/chat/components/chat-sidebar';
+// Removed ChatSidebar - consolidating into global sidebar
 import { useAuth } from '@/supabase-auth-context';
 import { __useAgentsStore as useAgentsStore } from '@/agents-store';
 import { useChatStore } from '@/lib/stores/chat-store';
@@ -242,110 +249,222 @@ function ChatPageContent() {
   });
 
   return (
-    <div className="flex flex-col h-full">
-      <SidebarProvider defaultOpen={sidebarOpen}>
-        <ChatSidebar
-          chats={filteredChats.map(chat => ({
-            ...chat,
-            updatedAt: chat.updatedAt instanceof Date ? chat.updatedAt.toISOString() : chat.updatedAt
-          }))}
-          currentChat={currentChat ? {
-            ...currentChat,
-            updatedAt: currentChat.updatedAt instanceof Date ? currentChat.updatedAt.toISOString() : currentChat.updatedAt
-          } : null}
-          searchQuery={searchQuery}
-          onSearchChange={setSearchQuery}
-          onNewChat={createNewChat}
-          onSelectChat={selectChat}
-          onAgentStoreClick={handleAgentStoreClick}
-          onCreateAgentClick={handleCreateAgentClick}
-          onAgentSelect={handleAgentSelect}
-          onAgentRemove={handleAgentRemove}
-          onAddAgentToLibrary={handleAddAgentToLibrary}
-          selectedAgentId={selectedAgent?.id}
-            agents={safeGetLibraryAgents}
-          allAgents={agents}
-          formatDate={formatDate}
-          isCollapsed={isCollapsed}
-          onToggleCollapse={() => setIsCollapsed(!isCollapsed)}
-          mounted={mounted}
-          interactionMode={interactionMode}
-          onToggleMode={setInteractionMode}
-          autonomousMode={autonomousMode}
-          onToggleAutonomous={setAutonomousMode}
-        />
-
-        <SidebarInset className="flex flex-col flex-1 overflow-hidden">
-          <div className="flex-1 overflow-hidden">
-            <div className="flex-1 flex flex-col h-full bg-white">
-              <div className="flex-1 overflow-y-auto">
-                {/* Selected Agent Info */}
-                {selectedAgent && (
-                  <div className="p-6 border-b border-gray-200">
-                    <div className="flex items-center space-x-3">
-                      <div className="h-12 w-12 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-semibold text-lg">
-                        {(selectedAgent.display_name || selectedAgent.name || 'A')[0]}
-                      </div>
-                      <div>
-                        <h4 className="font-medium text-lg">{selectedAgent.display_name || selectedAgent.name}</h4>
-                        <p className="text-sm text-gray-600">{selectedAgent.description}</p>
-                        <div className="flex flex-wrap gap-1 mt-2">
-                          {Array.isArray(selectedAgent.capabilities) && selectedAgent.capabilities.slice(0, 3).map((cap) => (
-                            <Badge key={cap} variant="secondary" className="text-xs">
-                              {cap}
-                            </Badge>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
+    <div className="flex h-screen bg-gray-50">
+      {/* Global Sidebar - Enhanced with Agent Selection */}
+      <div className={`${isCollapsed ? 'w-16' : 'w-80'} bg-white border-r border-gray-200 flex flex-col transition-all duration-300`}>
+        {/* Header */}
+        <div className="p-4 border-b border-gray-200">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              {!isCollapsed && (
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+                    <span className="text-white font-bold text-sm">V</span>
                   </div>
-                )}
-
-                {/* Agent Selection Prompt for Manual Mode */}
-                {interactionMode === 'manual' && !selectedAgent && (
-                  <div className="p-6 border-b border-gray-200 bg-blue-50">
-                    <div className="text-center">
-                      <h3 className="text-lg font-semibold text-blue-900 mb-2">
-                        🤖 Select an AI Agent
-                      </h3>
-                      <p className="text-blue-700 mb-4">
-                        You're in Manual Mode. Please select an AI agent to start chatting.
-                      </p>
-                      <div className="flex flex-wrap gap-2 justify-center">
-                        {agents.slice(0, 6).map((agent) => (
-                          <button
-                            key={agent.id}
-                            onClick={() => handleAgentSelect(agent.id)}
-                            className="px-4 py-2 bg-white border border-blue-300 rounded-lg hover:bg-blue-100 hover:border-blue-400 transition-colors text-sm font-medium text-blue-900"
-                          >
-                            <div className="flex items-center space-x-2">
-                              <span className="text-lg">{agent.avatar || '🤖'}</span>
-                              <span>{agent.display_name || agent.name}</span>
-                            </div>
-                          </button>
-                        ))}
-                      </div>
-                      <p className="text-xs text-blue-600 mt-3">
-                        Or visit the <button 
-                          onClick={handleAgentStoreClick}
-                          className="underline hover:text-blue-800"
-                        >
-                          Agent Store
-                        </button> to see all available agents.
-                      </p>
-                    </div>
-                  </div>
-                )}
-
-                {/* New Chat Container with Agent Selection */}
-                <div className="flex-1">
-                  <ChatContainer className="h-full" />
+                  <span className="font-semibold text-gray-900">VITAL Expert</span>
                 </div>
+              )}
+            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              onClick={() => setIsCollapsed(!isCollapsed)}
+            >
+              {isCollapsed ? (
+                <ChevronRight className="h-4 w-4" />
+              ) : (
+                <ChevronLeft className="h-4 w-4" />
+              )}
+            </Button>
+          </div>
+
+          {/* Mode Selection */}
+          {!isCollapsed && (
+            <div className="mt-4 space-y-3">
+              <div className="text-sm font-medium text-gray-700">Mode Selection</div>
+              
+              {/* Auto/Manual Toggle */}
+              <div className="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
+                <div className="flex items-center gap-2">
+                  <Zap className={`h-4 w-4 ${interactionMode === 'automatic' ? 'text-green-600' : 'text-gray-400'}`} />
+                  <span className="text-sm">Auto</span>
+                </div>
+                <Switch
+                  checked={interactionMode === 'manual'}
+                  onCheckedChange={(checked) => setInteractionMode(checked ? 'manual' : 'automatic')}
+                />
+                <div className="flex items-center gap-2">
+                  <User className={`h-4 w-4 ${interactionMode === 'manual' ? 'text-blue-600' : 'text-gray-400'}`} />
+                  <span className="text-sm">Manual</span>
+                </div>
+              </div>
+
+              {/* Autonomous Toggle */}
+              <div className="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
+                <div className="flex items-center gap-2">
+                  <Zap className={`h-4 w-4 ${autonomousMode ? 'text-purple-600' : 'text-gray-400'}`} />
+                  <span className="text-sm">Autonomous</span>
+                </div>
+                <Switch
+                  checked={autonomousMode}
+                  onCheckedChange={setAutonomousMode}
+                />
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Content */}
+        <div className="flex-1 overflow-y-auto p-4 space-y-4">
+          {/* Conversations Section */}
+          {!isCollapsed && (
+            <div className="space-y-2">
+              <div className="text-sm font-medium text-gray-700">Conversations</div>
+              <Button
+                variant="outline"
+                className="w-full justify-start"
+                onClick={createNewChat}
+              >
+                <MessageSquare className="h-4 w-4 mr-2" />
+                New Chat
+              </Button>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Search chats..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-9 pr-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+            </div>
+          )}
+
+          {/* My Agents Section */}
+          <div className="space-y-2">
+            {!isCollapsed && (
+              <div className="flex items-center justify-between">
+                <div className="text-sm font-medium text-gray-700">My Agents</div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowAgentCreator(true)}
+                  className="h-6 w-6 p-0"
+                >
+                  <UserPlus className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
+
+            {/* Agent List */}
+            <div className="space-y-1">
+              {safeGetLibraryAgents.length === 0 ? (
+                <div className="text-sm text-gray-500 text-center py-4">
+                  {!isCollapsed && "No agents added yet"}
+                </div>
+              ) : (
+                safeGetLibraryAgents.map((agent) => {
+                  const isSelected = selectedAgent?.id === agent.id;
+                  return (
+                    <div
+                      key={agent.id}
+                      className={`p-2 rounded-lg cursor-pointer transition-colors ${
+                        isSelected 
+                          ? 'bg-blue-50 border border-blue-200' 
+                          : 'hover:bg-gray-50 border border-transparent'
+                      }`}
+                      onClick={() => handleAgentSelect(agent.id)}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-100 to-purple-100 flex items-center justify-center text-sm font-medium">
+                          {agent.avatar || agent.name.charAt(0).toUpperCase()}
+                        </div>
+                        {!isCollapsed && (
+                          <div className="flex-1 min-w-0">
+                            <div className="text-sm font-medium truncate">{agent.name}</div>
+                            {agent.description && (
+                              <div className="text-xs text-gray-500 truncate">{agent.description}</div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+
+            {/* Agent Store Link */}
+            {!isCollapsed && (
+              <Button
+                variant="ghost"
+                className="w-full justify-start"
+                onClick={handleAgentStoreClick}
+              >
+                <ShoppingCart className="h-4 w-4 mr-2" />
+                Agent Store
+              </Button>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Main Content Area */}
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {/* Selected Agent Info */}
+        {selectedAgent && (
+          <div className="p-4 border-b border-gray-200 bg-white">
+            <div className="flex items-center space-x-3">
+              <div className="h-10 w-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-semibold">
+                {(selectedAgent.display_name || selectedAgent.name || 'A')[0]}
+              </div>
+              <div>
+                <h4 className="font-medium">{selectedAgent.display_name || selectedAgent.name}</h4>
+                <p className="text-sm text-gray-600">{selectedAgent.description}</p>
               </div>
             </div>
           </div>
-        </SidebarInset>
-      </SidebarProvider>
+        )}
+
+        {/* Agent Selection Prompt for Manual Mode */}
+        {interactionMode === 'manual' && !selectedAgent && (
+          <div className="p-6 border-b border-gray-200 bg-blue-50">
+            <div className="text-center">
+              <h3 className="text-lg font-semibold text-blue-900 mb-2">
+                🤖 Select an AI Agent
+              </h3>
+              <p className="text-blue-700 mb-4">
+                You're in Manual Mode. Please select an AI agent from the sidebar to start chatting.
+              </p>
+              <Button
+                onClick={handleAgentStoreClick}
+                variant="outline"
+                className="border-blue-300 text-blue-700 hover:bg-blue-100"
+              >
+                Visit Agent Store
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* Chat Container */}
+        <div className="flex-1">
+          <ChatContainer className="h-full" />
+        </div>
+      </div>
+
+      {/* Agent Creator Modal */}
+      {showAgentCreator && (
+        <AgentCreator
+          onClose={() => setShowAgentCreator(false)}
+          onAgentCreated={() => {
+            setShowAgentCreator(false);
+            loadAgentsFromDatabase();
+          }}
+        />
+      )}
     </div>
   );
 }

@@ -10,7 +10,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { cn } from '@/lib/utils';
 import { useChatStore } from '@/lib/stores/chat-store';
-import { useStreamingResponse } from '@/hooks/useStreamingResponse';
 import { MessageBubble } from './message-bubble';
 import { ReasoningDisplay } from './reasoning-display';
 import { AgentSelectionPanel } from './agent-selection-panel';

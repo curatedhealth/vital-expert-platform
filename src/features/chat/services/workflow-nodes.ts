@@ -1,0 +1,405 @@
+/**
+ * Mode-Aware Workflow Nodes for LangGraph Multi-Agent System
+ * Supports all 4 mode combinations: Manual/Automatic + Normal/Autonomous
+ */
+
+import { BaseMessage, HumanMessage, AIMessage } from '@langchain/core/messages';
+import { ChatOpenAI } from '@langchain/openai';
+import { createReactAgent } from '@langchain/langgraph/prebuilt';
+import { getAllExpertTools } from '../../../lib/services/expert-tools';
+import { AutomaticAgentOrchestrator } from './automatic-orchestrator';
+import { enhancedLangChainService } from './enhanced-langchain-service';
+
+// Types
+export interface WorkflowState {
+  messages: BaseMessage[];
+  query: string;
+  agentId: string | null;
+  selectedAgent: any;
+  suggestedAgents: any[];
+  context: string;
+  sources: any[];
+  toolCalls: any[];
+  answer: string;
+  citations: string[];
+  tokenUsage: any;
+  metadata: Record<string, any>;
+  
+  // Mode context
+  interactionMode: 'automatic' | 'manual';
+  autonomousMode: boolean;
+  userId: string;
+  sessionId: string;
+  
+  // User-selected tools (for normal mode)
+  selectedTools: string[];
+  availableTools: ToolOption[];
+  
+  // Workflow control
+  workflowStep: string;
+  requiresUserInput: boolean;
+}
+
+export interface ToolOption {
+  id: string;
+  name: string;
+  description: string;
+  icon: string;
+  category: 'research' | 'knowledge' | 'analysis' | 'regulatory';
+  enabled: boolean;
+}
+
+// Initialize LLM
+const model = new ChatOpenAI({
+  modelName: 'gpt-4',
+  temperature: 0.7,
+  openAIApiKey: process.env.OPENAI_API_KEY,
+});
+
+// Initialize orchestrator
+const orchestrator = new AutomaticAgentOrchestrator();
+
+/**
+ * Route by Mode Node
+ * Determines workflow path based on interactionMode and autonomousMode
+ */
+export async function routeByModeNode(state: WorkflowState): Promise<Partial<WorkflowState>> {
+  const { interactionMode, autonomousMode } = state;
+  
+  console.log(`🔄 Routing by mode: ${interactionMode} + ${autonomousMode ? 'Autonomous' : 'Normal'}`);
+  
+  return {
+    workflowStep: 'routing',
+    metadata: {
+      ...state.metadata,
+      mode: `${interactionMode}_${autonomousMode ? 'autonomous' : 'normal'}`
+    }
+  };
+}
+
+export function routeByModeCondition(state: WorkflowState): string {
+  return state.interactionMode; // 'manual' or 'automatic'
+}
+
+/**
+ * Suggest Agents Node (Manual Mode)
+ * Uses existing AutomaticAgentOrchestrator for agent ranking
+ */
+export async function suggestAgentsNode(state: WorkflowState): Promise<Partial<WorkflowState>> {
+  console.log('🎯 Manual mode: Suggesting agents for user selection');
+  
+  try {
+    const suggestions = await orchestrator.getAgentSuggestions(state.query);
+    
+    return {
+      suggestedAgents: suggestions.rankedAgents.slice(0, 3),
+      requiresUserInput: true,
+      workflowStep: 'awaiting_selection'
+    };
+  } catch (error) {
+    console.error('Error suggesting agents:', error);
+    return {
+      suggestedAgents: [],
+      requiresUserInput: false,
+      workflowStep: 'error',
+      metadata: {
+        ...state.metadata,
+        error: 'Failed to suggest agents'
+      }
+    };
+  }
+}
+
+export function shouldWaitForUser(state: WorkflowState): string {
+  return state.requiresUserInput ? 'awaitSelection' : 'proceed';
+}
+
+/**
+ * Tool Suggestion Node
+ * Provides available tools for user selection in normal mode
+ */
+export async function suggestToolsNode(state: WorkflowState): Promise<Partial<WorkflowState>> {
+  console.log('🔧 Suggesting available tools for user selection');
+  
+  const availableTools: ToolOption[] = [
+    {
+      id: 'web_search',
+      name: 'Web Search',
+      description: 'Search the web for current information, news, research papers',
+      icon: '🌐',
+      category: 'research',
+      enabled: false
+    },
+    {
+      id: 'pubmed_search', 
+      name: 'PubMed Search',
+      description: 'Search peer-reviewed medical literature',
+      icon: '📚',
+      category: 'research',
+      enabled: false
+    },
+    {
+      id: 'knowledge_base',
+      name: 'RAG Search',
+      description: 'Search internal knowledge base and documents',
+      icon: '🧠',
+      category: 'knowledge',
+      enabled: false
+    },
+    {
+      id: 'calculator',
+      name: 'Calculator',
+      description: 'Perform mathematical calculations and statistical analysis',
+      icon: '🧮',
+      category: 'analysis',
+      enabled: false
+    },
+    {
+      id: 'fda_database',
+      name: 'FDA Database',
+      description: 'Search FDA approvals and regulatory information',
+      icon: '🏛️',
+      category: 'regulatory',
+      enabled: false
+    }
+  ];
+  
+  return {
+    availableTools,
+    requiresUserInput: !state.autonomousMode, // Only require selection in normal mode
+    workflowStep: 'tool_selection'
+  };
+}
+
+export function shouldWaitForToolSelection(state: WorkflowState): string {
+  return state.autonomousMode ? 'proceed' : 'awaitTools';
+}
+
+/**
+ * Automatic Agent Selection Node
+ * Uses existing AutomaticAgentOrchestrator for automatic selection
+ */
+export async function selectAgentAutomaticNode(state: WorkflowState): Promise<Partial<WorkflowState>> {
+  console.log('🤖 Automatic mode: Selecting best agent automatically');
+  
+  try {
+    const result = await orchestrator.chat(state.query);
+    
+    return {
+      selectedAgent: result.selectedAgent,
+      suggestedAgents: [result.selectedAgent], // For consistency
+      requiresUserInput: false,
+      workflowStep: 'agent_selected'
+    };
+  } catch (error) {
+    console.error('Error selecting agent automatically:', error);
+    return {
+      selectedAgent: null,
+      suggestedAgents: [],
+      requiresUserInput: false,
+      workflowStep: 'error',
+      metadata: {
+        ...state.metadata,
+        error: 'Failed to select agent automatically'
+      }
+    };
+  }
+}
+
+/**
+ * Retrieve Context Node
+ * Uses existing RAG service for context retrieval
+ */
+export async function retrieveContextNode(state: WorkflowState): Promise<Partial<WorkflowState>> {
+  console.log('🔍 Retrieving context from knowledge base');
+  
+  try {
+    const result = await enhancedLangChainService.queryWithChain(
+      state.query,
+      state.selectedAgent?.id || 'default',
+      state.sessionId,
+      state.selectedAgent,
+      state.userId
+    );
+    
+    return {
+      context: result.answer,
+      sources: result.sources,
+      citations: result.citations,
+      tokenUsage: result.tokenUsage,
+      workflowStep: 'context_retrieved'
+    };
+  } catch (error) {
+    console.error('Error retrieving context:', error);
+    return {
+      context: '',
+      sources: [],
+      citations: [],
+      workflowStep: 'context_retrieved'
+    };
+  }
+}
+
+/**
+ * Process Agent Condition
+ * Routes to normal or autonomous processing based on mode
+ */
+export function processAgentCondition(state: WorkflowState): string {
+  return state.autonomousMode ? 'autonomous' : 'normal';
+}
+
+/**
+ * Normal Mode Processing (with User-Selected Tools)
+ * Creates ReAct agent with only user-selected tools
+ */
+export async function processWithAgentNormalNode(state: WorkflowState): Promise<Partial<WorkflowState>> {
+  console.log('💬 Normal mode: Processing with user-selected tools');
+  
+  const { selectedAgent, query, messages, selectedTools } = state;
+  
+  try {
+    // Get user-selected tools
+    const allTools = getAllExpertTools();
+    const userTools = allTools.filter(tool => 
+      selectedTools.includes(tool.name)
+    );
+    
+    // Create ReAct agent with selected tools
+    const agent = await createReactAgent({
+      llm: model,
+      tools: userTools,
+      systemPrompt: selectedAgent?.system_prompt || `You are ${selectedAgent?.display_name || selectedAgent?.name}, a ${selectedAgent?.business_function || 'General'} expert.`
+    });
+    
+    const result = await agent.invoke({
+      input: query,
+      chat_history: messages
+    });
+    
+    return {
+      answer: result.output,
+      toolCalls: result.intermediateSteps || [],
+      workflowStep: 'response_generated',
+      metadata: {
+        ...state.metadata,
+        processing_mode: 'normal',
+        tools_used: selectedTools
+      }
+    };
+  } catch (error) {
+    console.error('Error processing with normal mode:', error);
+    return {
+      answer: `I apologize, but I encountered an error while processing your request. Please try again.`,
+      toolCalls: [],
+      workflowStep: 'response_generated',
+      metadata: {
+        ...state.metadata,
+        processing_mode: 'normal',
+        error: error.message
+      }
+    };
+  }
+}
+
+/**
+ * Autonomous Mode Processing
+ * Uses full LangChain agent with all tools and advanced capabilities
+ */
+export async function processWithAgentAutonomousNode(state: WorkflowState): Promise<Partial<WorkflowState>> {
+  console.log('🔧 Autonomous mode: Processing with LangChain agent + tools');
+  
+  const { selectedAgent, query, messages } = state;
+  
+  try {
+    // Use existing enhanced-langchain-service with full capabilities
+    const result = await enhancedLangChainService.queryWithChain(
+      query,
+      selectedAgent?.id || 'default',
+      state.sessionId,
+      selectedAgent,
+      state.userId
+    );
+    
+    return {
+      answer: result.answer,
+      sources: result.sources,
+      citations: result.citations,
+      tokenUsage: result.tokenUsage,
+      workflowStep: 'response_generated',
+      metadata: {
+        ...state.metadata,
+        processing_mode: 'autonomous',
+        tools_used: ['rag', 'memory', 'knowledge_base', 'web_search', 'pubmed', 'calculator', 'fda_database']
+      }
+    };
+  } catch (error) {
+    console.error('Error processing with autonomous mode:', error);
+    return {
+      answer: `I apologize, but I encountered an error while processing your request with advanced tools. Please try again.`,
+      sources: [],
+      citations: [],
+      workflowStep: 'response_generated',
+      metadata: {
+        ...state.metadata,
+        processing_mode: 'autonomous',
+        error: error.message
+      }
+    };
+  }
+}
+
+/**
+ * Synthesize Response Node
+ * Finalizes the response with metadata and formatting
+ */
+export async function synthesizeResponseNode(state: WorkflowState): Promise<Partial<WorkflowState>> {
+  console.log('✅ Synthesizing final response');
+  
+  const { answer, sources, citations, toolCalls, metadata } = state;
+  
+  // Add final metadata
+  const finalMetadata = {
+    ...metadata,
+    response_generated: true,
+    timestamp: new Date().toISOString(),
+    workflow_complete: true
+  };
+  
+  return {
+    answer,
+    sources,
+    citations,
+    toolCalls,
+    metadata: finalMetadata,
+    workflowStep: 'complete'
+  };
+}
+
+/**
+ * Get Step Description for UI
+ * Provides user-friendly descriptions for workflow steps
+ */
+export function getStepDescription(step: string, interactionMode: string, autonomousMode: boolean): string {
+  const mode = `${interactionMode}_${autonomousMode ? 'autonomous' : 'normal'}`;
+  
+  switch (step) {
+    case 'routing':
+      return `🔄 Routing for ${mode} mode...`;
+    case 'awaiting_selection':
+      return `🎯 Found top agents. Please select the best one for your query:`;
+    case 'tool_selection':
+      return `🔧 Please select the tools you'd like to use:`;
+    case 'agent_selected':
+      return `✅ Agent selected automatically`;
+    case 'context_retrieved':
+      return autonomousMode ? `🔍 Retrieved context with RAG...` : `🔍 Processing your query...`;
+    case 'response_generated':
+      return `✅ Response generated successfully`;
+    case 'complete':
+      return `🎉 Complete!`;
+    case 'error':
+      return `❌ An error occurred. Please try again.`;
+    default:
+      return `Processing...`;
+  }
+}

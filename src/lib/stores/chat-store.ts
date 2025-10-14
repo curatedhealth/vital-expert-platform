@@ -103,6 +103,15 @@ export interface AIModel {
   category: string;
 }
 
+export interface ToolOption {
+  id: string;
+  name: string;
+  description: string;
+  icon: string;
+  category: 'research' | 'knowledge' | 'analysis' | 'regulatory';
+  enabled: boolean;
+}
+
 export interface ChatStore {
   // State
   chats: Chat[];
@@ -123,6 +132,19 @@ export interface ChatStore {
   suggestedAgents: any[];
   showAgentSelection: boolean;
   isWaitingForAgentSelection: boolean;
+
+  // Tool Selection State
+  selectedTools: string[];
+  availableTools: ToolOption[];
+  showToolSelection: boolean;
+  isWaitingForToolSelection: boolean;
+
+  // Workflow State
+  workflowState: {
+    currentStep: string;
+    requiresInput: boolean;
+    availableActions: string[];
+  };
 
   // Dual-Mode State
   interactionMode: 'automatic' | 'manual' | 'autonomous'; // Agent selection mode
@@ -171,6 +193,18 @@ export interface ChatStore {
   removeFromLibrary: (agentId: string) => void;
   isInLibrary: (agentId: string) => boolean;
 
+  // Tool Selection Actions
+  setSelectedTools: (tools: string[]) => void;
+  toggleTool: (toolId: string) => void;
+  setAvailableTools: (tools: ToolOption[]) => void;
+  selectToolFromSuggestions: (tool: ToolOption) => void;
+  setShowToolSelection: (show: boolean) => void;
+  setIsWaitingForToolSelection: (waiting: boolean) => void;
+
+  // Workflow Actions
+  resumeWorkflow: (input: any) => Promise<void>;
+  updateWorkflowState: (state: Partial<{ currentStep: string; requiresInput: boolean; availableActions: string[] }>) => void;
+
   // New database-powered actions
   loadAgentsFromDatabase: () => Promise<void>;
   refreshAgents: () => Promise<void>;
@@ -218,6 +252,19 @@ const _useChatStore = create<ChatStore>()(
       suggestedAgents: [],
       showAgentSelection: false,
       isWaitingForAgentSelection: false,
+
+    // Tool Selection State
+    selectedTools: [],
+    availableTools: [],
+    showToolSelection: false,
+    isWaitingForToolSelection: false,
+
+    // Workflow State
+    workflowState: {
+      currentStep: 'idle',
+      requiresInput: false,
+      availableActions: []
+    },
 
   // Dual-Mode Initial State
   interactionMode: 'automatic',
@@ -1314,6 +1361,94 @@ const _useChatStore = create<ChatStore>()(
         console.log('📚 Filtered library agents:', filteredAgents.length);
         return filteredAgents;
       },
+
+      // Tool Selection Actions
+      setSelectedTools: (tools: string[]) => {
+        set({ selectedTools: tools });
+      },
+
+      toggleTool: (toolId: string) => {
+        const { selectedTools } = get();
+        const newSelectedTools = selectedTools.includes(toolId)
+          ? selectedTools.filter(id => id !== toolId)
+          : [...selectedTools, toolId];
+        set({ selectedTools: newSelectedTools });
+      },
+
+      setAvailableTools: (tools: ToolOption[]) => {
+        set({ availableTools: tools });
+      },
+
+      selectToolFromSuggestions: (tool: ToolOption) => {
+        console.log('✅ User selected tool:', tool.name);
+        set({
+          selectedTools: [...get().selectedTools, tool.id],
+          showToolSelection: false,
+          isWaitingForToolSelection: false,
+        });
+      },
+
+      setShowToolSelection: (show: boolean) => {
+        set({ showToolSelection: show });
+      },
+
+    setIsWaitingForToolSelection: (waiting: boolean) => {
+      set({ isWaitingForToolSelection: waiting });
+    },
+
+    // Workflow Actions
+    resumeWorkflow: async (input: any) => {
+      try {
+        console.log('🔄 Resuming workflow with input:', input);
+        
+        // Update workflow state
+        set({
+          workflowState: {
+            currentStep: 'processing',
+            requiresInput: false,
+            availableActions: []
+          }
+        });
+
+        // Call API to resume workflow
+        const response = await fetch('/api/chat', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            message: input.message || input.query || '',
+            userId: get().conversationContext?.userId || 'anonymous',
+            sessionId: get().conversationContext?.sessionId || `session-${Date.now()}`,
+            agent: input.agent,
+            interactionMode: get().interactionMode,
+            autonomousMode: get().autonomousMode,
+            selectedTools: get().selectedTools,
+            chatHistory: get().messages
+          })
+        });
+
+        if (!response.ok) {
+          throw new Error(`Workflow resume failed: ${response.statusText}`);
+        }
+
+        console.log('✅ Workflow resumed successfully');
+      } catch (error) {
+        console.error('❌ Failed to resume workflow:', error);
+        set({
+          error: error instanceof Error ? error.message : 'Failed to resume workflow'
+        });
+      }
+    },
+
+    updateWorkflowState: (state) => {
+      set({
+        workflowState: {
+          ...get().workflowState,
+          ...state
+        }
+      });
+    },
     }),
     {
       name: 'chat-store',

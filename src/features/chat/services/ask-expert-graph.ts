@@ -1,8 +1,25 @@
 import { BaseMessage, HumanMessage, AIMessage } from '@langchain/core/messages';
-import { StateGraph, END, START , MemorySaver } from '@langchain/langgraph';
+import { StateGraph, END, START, MemorySaver, Annotation } from '@langchain/langgraph';
 import { createClient } from '@supabase/supabase-js';
 
 import { enhancedLangChainService } from './enhanced-langchain-service';
+import {
+  routeByModeNode,
+  routeByModeCondition,
+  suggestAgentsNode,
+  shouldWaitForUser,
+  suggestToolsNode,
+  shouldWaitForToolSelection,
+  selectAgentAutomaticNode,
+  retrieveContextNode,
+  processAgentCondition,
+  processWithAgentNormalNode,
+  processWithAgentAutonomousNode,
+  synthesizeResponseNode,
+  getStepDescription,
+  type WorkflowState,
+  type ToolOption
+} from './workflow-nodes';
 
 // Initialize Supabase client
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -17,8 +34,52 @@ const supabase = supabaseUrl && supabaseServiceKey
   : null;
 
 /**
- * State definition for Ask Expert workflow
+ * Enhanced State definition for Mode-Aware Multi-Agent workflow
+ * Extends the original AskExpertState with mode-aware capabilities
  */
+const ModeAwareWorkflowState = Annotation.Root({
+  // Core workflow state
+  messages: Annotation<BaseMessage[]>({
+    reducer: (current, update) => current.concat(update),
+  }),
+  query: Annotation<string>(),
+  agentId: Annotation<string | null>(),
+  selectedAgent: Annotation<any>(),
+  suggestedAgents: Annotation<any[]>(),
+  context: Annotation<string>(),
+  sources: Annotation<any[]>(),
+  toolCalls: Annotation<any[]>(),
+  answer: Annotation<string>(),
+  citations: Annotation<string[]>(),
+  tokenUsage: Annotation<any>(),
+  metadata: Annotation<Record<string, any>>(),
+  
+  // Mode context
+  interactionMode: Annotation<'automatic' | 'manual'>(),
+  autonomousMode: Annotation<boolean>(),
+  userId: Annotation<string>(),
+  sessionId: Annotation<string>(),
+  
+  // User-selected tools (for normal mode)
+  selectedTools: Annotation<string[]>({
+    default: () => []
+  }),
+  availableTools: Annotation<ToolOption[]>({
+    default: () => []
+  }),
+  
+  // Workflow control
+  workflowStep: Annotation<string>(),
+  requiresUserInput: Annotation<boolean>(),
+  
+  // Legacy fields for backward compatibility
+  question: Annotation<string>(),
+  agent: Annotation<any>(),
+  ragEnabled: Annotation<boolean>(),
+  error: Annotation<string>(),
+});
+
+// Legacy interface for backward compatibility
 interface AskExpertState {
   messages: BaseMessage[];
   question: string;
@@ -262,6 +323,227 @@ export async function executeAskExpertWorkflow(input: {
   console.log('✅ Workflow execution complete');
 
   return result;
+}
+
+/**
+ * Create Mode-Aware Multi-Agent Workflow Graph
+ * Supports all 4 mode combinations: Manual/Automatic + Normal/Autonomous
+ */
+export function createModeAwareWorkflowGraph() {
+  console.log('🔧 Creating mode-aware multi-agent workflow graph');
+  
+  const graph = new StateGraph(ModeAwareWorkflowState)
+    // Core workflow nodes
+    .addNode("routeByMode", routeByModeNode)
+    .addNode("suggestAgents", suggestAgentsNode)
+    .addNode("suggestTools", suggestToolsNode)
+    .addNode("selectAgentAutomatic", selectAgentAutomaticNode)
+    .addNode("retrieveContext", retrieveContextNode)
+    .addNode("processWithAgentNormal", processWithAgentNormalNode)
+    .addNode("processWithAgentAutonomous", processWithAgentAutonomousNode)
+    .addNode("synthesizeResponse", synthesizeResponseNode)
+    
+    // Workflow edges
+    .addEdge(START, "routeByMode")
+    
+    // Mode-based routing
+    .addConditionalEdges("routeByMode", routeByModeCondition, {
+      manual: "suggestAgents",
+      automatic: "suggestTools"
+    })
+    
+    // Manual mode: Agent selection
+    .addConditionalEdges("suggestAgents", shouldWaitForUser, {
+      awaitSelection: "__interrupt__",  // HITL for manual mode
+      proceed: "suggestTools"
+    })
+    
+    // Tool selection (for normal mode)
+    .addConditionalEdges("suggestTools", shouldWaitForToolSelection, {
+      awaitTools: "__interrupt__",  // HITL for tool selection
+      proceed: "selectAgentAutomatic"
+    })
+    
+    // Automatic mode: Direct to agent selection
+    .addEdge("selectAgentAutomatic", "retrieveContext")
+    
+    // Context retrieval
+    .addEdge("retrieveContext", "processWithAgentNormal")
+    .addEdge("retrieveContext", "processWithAgentAutonomous")
+    
+    // Response synthesis
+    .addEdge("processWithAgentNormal", "synthesizeResponse")
+    .addEdge("processWithAgentAutonomous", "synthesizeResponse")
+    .addEdge("synthesizeResponse", END);
+
+  return graph;
+}
+
+/**
+ * Compile Mode-Aware Workflow with Checkpointing
+ */
+export function compileModeAwareWorkflow() {
+  const workflow = createModeAwareWorkflowGraph();
+  const checkpointer = new MemorySaver();
+  const app = workflow.compile({ checkpointer });
+  
+  console.log('✅ Mode-aware workflow compiled with checkpointing');
+  return app;
+}
+
+/**
+ * Execute Mode-Aware Workflow
+ * Handles all 4 mode combinations with proper routing
+ */
+export async function executeModeAwareWorkflow(input: {
+  query: string;
+  agentId?: string;
+  sessionId: string;
+  userId: string;
+  selectedAgent?: any;
+  interactionMode: 'automatic' | 'manual';
+  autonomousMode: boolean;
+  selectedTools?: string[];
+  chatHistory: any[];
+}) {
+  console.log(`🚀 Executing mode-aware workflow: ${input.interactionMode} + ${input.autonomousMode ? 'Autonomous' : 'Normal'}`);
+  
+  const app = compileModeAwareWorkflow();
+  
+  // Convert chat history to BaseMessage format
+  const messages: BaseMessage[] = input.chatHistory.map((msg) => {
+    if (msg.role === 'user') {
+      return new HumanMessage(msg.content);
+    } else {
+      return new AIMessage(msg.content);
+    }
+  });
+
+  // Add current query
+  messages.push(new HumanMessage(input.query));
+
+  // Execute workflow
+  const result = await app.invoke(
+    {
+      messages,
+      query: input.query,
+      agentId: input.agentId || null,
+      selectedAgent: input.selectedAgent || null,
+      suggestedAgents: [],
+      context: '',
+      sources: [],
+      toolCalls: [],
+      answer: '',
+      citations: [],
+      tokenUsage: {},
+      metadata: {},
+      interactionMode: input.interactionMode,
+      autonomousMode: input.autonomousMode,
+      userId: input.userId,
+      sessionId: input.sessionId,
+      selectedTools: input.selectedTools || [],
+      availableTools: [],
+      workflowStep: 'starting',
+      requiresUserInput: false,
+      // Legacy fields
+      question: input.query,
+      agent: input.selectedAgent,
+      ragEnabled: input.autonomousMode,
+      error: ''
+    },
+    {
+      configurable: {
+        thread_id: input.sessionId,
+      },
+    }
+  );
+
+  console.log('✅ Mode-aware workflow execution complete');
+  return result;
+}
+
+/**
+ * Stream Mode-Aware Workflow (for real-time updates)
+ */
+export async function* streamModeAwareWorkflow(input: {
+  query: string;
+  agentId?: string;
+  sessionId: string;
+  userId: string;
+  selectedAgent?: any;
+  interactionMode: 'automatic' | 'manual';
+  autonomousMode: boolean;
+  selectedTools?: string[];
+  chatHistory: any[];
+}) {
+  console.log(`🌊 Starting streaming mode-aware workflow: ${input.interactionMode} + ${input.autonomousMode ? 'Autonomous' : 'Normal'}`);
+  
+  const app = compileModeAwareWorkflow();
+  
+  // Convert chat history to BaseMessage format
+  const messages: BaseMessage[] = input.chatHistory.map((msg) => {
+    if (msg.role === 'user') {
+      return new HumanMessage(msg.content);
+    } else {
+      return new AIMessage(msg.content);
+    }
+  });
+
+  // Add current query
+  messages.push(new HumanMessage(input.query));
+
+  // Stream workflow execution
+  const stream = await app.stream(
+    {
+      messages,
+      query: input.query,
+      agentId: input.agentId || null,
+      selectedAgent: input.selectedAgent || null,
+      suggestedAgents: [],
+      context: '',
+      sources: [],
+      toolCalls: [],
+      answer: '',
+      citations: [],
+      tokenUsage: {},
+      metadata: {},
+      interactionMode: input.interactionMode,
+      autonomousMode: input.autonomousMode,
+      userId: input.userId,
+      sessionId: input.sessionId,
+      selectedTools: input.selectedTools || [],
+      availableTools: [],
+      workflowStep: 'starting',
+      requiresUserInput: false,
+      // Legacy fields
+      question: input.query,
+      agent: input.selectedAgent,
+      ragEnabled: input.autonomousMode,
+      error: ''
+    },
+    {
+      configurable: {
+        thread_id: input.sessionId,
+      },
+      streamMode: "values"
+    }
+  );
+
+  // Yield step-by-step updates
+  for await (const event of stream) {
+    const stepDescription = getStepDescription(
+      event.workflowStep || 'processing',
+      input.interactionMode,
+      input.autonomousMode
+    );
+    
+    yield {
+      type: 'workflow_step',
+      step: event.workflowStep,
+      description: stepDescription,
+      data: event
+    };
+  }
 }
 
 /**

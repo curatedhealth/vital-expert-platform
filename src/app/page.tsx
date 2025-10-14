@@ -79,7 +79,12 @@ export default function Home() {
       {/* Navigation */}
       <nav className="fixed top-0 left-0 right-0 bg-background/95 backdrop-blur-[10px] border-b border-border z-[1000]">
         <div className="max-w-[1200px] mx-auto px-10 py-5 flex justify-between items-center">
-          <VitalLogo size="sm" serviceLine="regulatory" animated="static" />
+          <div className="flex items-center space-x-2">
+            <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+              <Brain className="h-5 w-5 text-primary-foreground" />
+            </div>
+            <span className="text-xl font-bold text-foreground">VITAL</span>
+          </div>
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex gap-8 items-center">
@@ -644,8 +649,13 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="pt-8 border-t border-vital-gray-80 flex justify-between items-center">
-            <VitalLogo size="sm" serviceLine="regulatory" animated="static" />
+          <div className="pt-8 border-t border-border flex justify-between items-center">
+            <div className="flex items-center space-x-2">
+              <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+                <Brain className="h-5 w-5 text-primary-foreground" />
+              </div>
+              <span className="text-xl font-bold text-foreground">VITAL</span>
+            </div>
 
             <div className="flex gap-6 text-xs text-vital-gray-60">
               <a href="#" className="hover:text-vital-black transition-colors duration-200">Security</a>

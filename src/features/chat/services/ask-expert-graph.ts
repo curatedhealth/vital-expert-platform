@@ -503,35 +503,47 @@ export async function* streamModeAwareWorkflow(input: {
       eventValue: event
     });
     
+    // LangGraph stream in "values" mode returns { nodeName: state } format
+    const nodeName = Object.keys(event)[0];
+    const state = (event as any)[nodeName];
+    
+    console.log('🔍 [Stream] Node execution:', {
+      nodeName,
+      stateKeys: Object.keys(state),
+      workflowStep: state.workflowStep,
+      hasAnswer: !!state.answer,
+      hasReasoningSteps: !!(state.metadata?.reasoningSteps?.length)
+    });
+    
     const stepDescription = getStepDescription(
-      event.workflowStep || 'processing',
+      state.workflowStep || 'processing',
       input.interactionMode,
       input.autonomousMode,
-      event.selectedAgent
+      state.selectedAgent
     );
     
     // Send detailed reasoning events based on actual workflow state
     // Only include essential data to avoid JSON truncation
     const reasoningData = {
-      workflowStep: event.workflowStep,
-      selectedAgent: event.selectedAgent ? {
-        id: event.selectedAgent.id,
-        name: event.selectedAgent.name,
-        display_name: event.selectedAgent.display_name
+      workflowStep: state.workflowStep,
+      selectedAgent: state.selectedAgent ? {
+        id: state.selectedAgent.id,
+        name: state.selectedAgent.name,
+        display_name: state.selectedAgent.display_name
       } : null,
-      query: event.query,
-      agentId: event.agentId,
+      query: state.query,
+      agentId: state.agentId,
       timestamp: Date.now(),
       mode: `${input.interactionMode}_${input.autonomousMode ? 'autonomous' : 'normal'}`,
-      agent: event.selectedAgent?.display_name || event.selectedAgent?.name || 'System',
+      agent: state.selectedAgent?.display_name || state.selectedAgent?.name || 'System',
       interactionMode: input.interactionMode,
       autonomousMode: input.autonomousMode,
       // Include only essential metadata
-      metadata: event.metadata ? {
-        processing_mode: event.metadata.processing_mode,
-        modeReasoning: event.metadata.modeReasoning,
-        agentUsed: event.metadata.agentUsed,
-        reasoningSteps: event.metadata.reasoningSteps || []
+      metadata: state.metadata ? {
+        processing_mode: state.metadata.processing_mode,
+        modeReasoning: state.metadata.modeReasoning,
+        agentUsed: state.metadata.agentUsed,
+        reasoningSteps: state.metadata.reasoningSteps || []
       } : {}
     };
     
@@ -540,39 +552,39 @@ export async function* streamModeAwareWorkflow(input: {
     
     yield {
       type: 'reasoning',
-      step: event.workflowStep,
+      step: state.workflowStep,
       description: stepDescription,
       data: sanitizedData
     };
     
     // Send intermediate progress updates
-    if (event.workflowStep === 'context_retrieved' && event.context) {
+    if (state.workflowStep === 'context_retrieved' && state.context) {
       const contextData = {
         workflowStep: 'context_analysis',
-        contextLength: event.context.length,
+        contextLength: state.context.length,
         timestamp: Date.now(),
         interactionMode: input.interactionMode,
         autonomousMode: input.autonomousMode,
-        agent: event.selectedAgent?.display_name || event.selectedAgent?.name || 'System'
+        agent: state.selectedAgent?.display_name || state.selectedAgent?.name || 'System'
       };
       
       yield {
         type: 'reasoning',
         step: 'context_analysis',
-        description: `🧠 Analyzing retrieved context (${event.context.length} characters)...`,
+        description: `🧠 Analyzing retrieved context (${state.context.length} characters)...`,
         data: contextData
       };
     }
     
-    if (event.workflowStep === 'response_generated' && event.toolCalls) {
+    if (state.workflowStep === 'response_generated' && state.toolCalls) {
       const toolData = {
         workflowStep: 'tool_execution',
-        toolCount: event.toolCalls.length,
+        toolCount: state.toolCalls.length,
         timestamp: Date.now(),
         interactionMode: input.interactionMode,
         autonomousMode: input.autonomousMode,
-        agent: event.selectedAgent?.display_name || event.selectedAgent?.name || 'System',
-        tools: event.toolCalls.map(tc => ({
+        agent: state.selectedAgent?.display_name || state.selectedAgent?.name || 'System',
+        tools: state.toolCalls.map((tc: any) => ({
           tool: tc.action?.tool || 'unknown',
           status: 'completed'
         }))
@@ -581,51 +593,53 @@ export async function* streamModeAwareWorkflow(input: {
       yield {
         type: 'reasoning',
         step: 'tool_execution',
-        description: `🔧 Executed ${event.toolCalls.length} tool calls...`,
+        description: `🔧 Executed ${state.toolCalls.length} tool calls...`,
         data: toolData
       };
     }
     
     // If this is the final step with an answer, send it as content
-    if (event.answer && (event.workflowStep === 'response_generated' || event.workflowStep === 'complete')) {
+    if (state.answer && (state.workflowStep === 'response_generated' || state.workflowStep === 'complete')) {
       console.log('📤 [Workflow] Sending final answer as content:', {
-        answerLength: event.answer.length,
-        workflowStep: event.workflowStep,
-        agent: event.selectedAgent?.name
+        answerLength: state.answer.length,
+        workflowStep: state.workflowStep,
+        agent: state.selectedAgent?.name
       });
       
       hasGeneratedAnswer = true;
       
       const contentMetadata = {
-        agent: event.selectedAgent ? {
-          id: event.selectedAgent.id,
-          name: event.selectedAgent.name,
-          display_name: event.selectedAgent.display_name
+        agent: state.selectedAgent ? {
+          id: state.selectedAgent.id,
+          name: state.selectedAgent.name,
+          display_name: state.selectedAgent.display_name
         } : null,
-        sources: event.sources || [],
-        citations: event.citations || [],
-        tokenUsage: event.tokenUsage || {},
+        sources: state.sources || [],
+        citations: state.citations || [],
+        tokenUsage: state.tokenUsage || {},
         reasoning: stepDescription,
-        workflowSteps: event.metadata?.workflowSteps || [],
+        workflowSteps: state.metadata?.workflowSteps || [],
         interactionMode: input.interactionMode,
         autonomousMode: input.autonomousMode,
-        reasoningSteps: event.metadata?.reasoningSteps || []
+        reasoningSteps: state.metadata?.reasoningSteps || []
       };
       
       yield {
         type: 'content',
-        content: event.answer,
+        content: state.answer,
         metadata: contentMetadata
       };
     }
     
     // Debug: Log all events to see what's being generated
     console.log('📊 [Workflow] Event details:', {
-      workflowStep: event.workflowStep,
-      hasAnswer: !!event.answer,
-      answerLength: event.answer?.length || 0,
-      selectedAgent: event.selectedAgent?.name,
-      keys: Object.keys(event)
+      nodeName,
+      workflowStep: state.workflowStep,
+      hasAnswer: !!state.answer,
+      answerLength: state.answer?.length || 0,
+      selectedAgent: state.selectedAgent?.name,
+      hasReasoningSteps: !!(state.metadata?.reasoningSteps?.length),
+      stateKeys: Object.keys(state)
     });
   }
   

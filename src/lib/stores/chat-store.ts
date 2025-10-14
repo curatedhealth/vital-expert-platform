@@ -422,8 +422,12 @@ const _useChatStore = create<ChatStore>()(
         console.log('📤 [sendMessage] Debug info:', {
           hasSelectedAgent: !!selectedAgent,
           selectedAgentId: selectedAgent?.id,
+          selectedAgentName: selectedAgent?.name,
+          selectedAgentDisplayName: selectedAgent?.display_name,
           interactionMode,
-          content: content.substring(0, 50) + '...'
+          content: content.substring(0, 50) + '...',
+          currentChatId: currentChat?.id,
+          currentChatExists: !!currentChat
         });
 
         // LAYER 1: Store-level validation
@@ -540,7 +544,7 @@ const _useChatStore = create<ChatStore>()(
             message: content,
             agent: selectedAgent || null, // Allow null agent in automatic mode
             userId: 'hicham.naim@curated.health', // TODO: Get from auth context
-            sessionId: updatedCurrentChat.id,
+            sessionId: updatedCurrentChat?.id || 'unknown',
             model: get().selectedModel, // Include selected model
             chatHistory: (messages || []).map(msg => ({
               role: msg.role,
@@ -818,15 +822,17 @@ const _useChatStore = create<ChatStore>()(
 
           // Save messages to localStorage
           const finalMessages = get().messages;
-          localStorage.setItem(
-            `chat-messages-${currentChat.id}`,
-            JSON.stringify(finalMessages)
-          );
+          if (currentChat?.id) {
+            localStorage.setItem(
+              `chat-messages-${currentChat.id}`,
+              JSON.stringify(finalMessages)
+            );
+          }
 
           // Update chat metadata
           set((state) => ({
             chats: state.chats.map((chat) =>
-              chat.id === currentChat.id
+              chat.id === currentChat?.id
                 ? {
                     ...chat,
                     updatedAt: new Date(),
@@ -885,6 +891,13 @@ const _useChatStore = create<ChatStore>()(
       },
 
       setSelectedAgent: async (agent: Agent | null) => {
+        console.log('🔄 [setSelectedAgent] Called with:', {
+          agentId: agent?.id,
+          agentName: agent?.name,
+          agentDisplayName: agent?.display_name,
+          isNull: agent === null
+        });
+        
         return new Promise<string>((resolve) => {
           set({ 
             selectedAgent: agent, 
@@ -896,7 +909,13 @@ const _useChatStore = create<ChatStore>()(
           
           // Wait for state update to complete
           setTimeout(() => {
-            console.log('✅ Agent selection confirmed:', agent?.name);
+            const currentState = get();
+            console.log('✅ [setSelectedAgent] Agent selection confirmed:', {
+              requestedAgent: agent?.name,
+              actualSelectedAgent: currentState.selectedAgent?.name,
+              selectedAgentId: currentState.selectedAgent?.id,
+              stateUpdated: !!currentState.selectedAgent
+            });
             resolve('ack'); // Return acknowledgment
           }, 0);
         });

@@ -239,6 +239,13 @@ export async function selectAgentAutomaticNode(state: WorkflowState): Promise<Pa
 export async function retrieveContextNode(state: WorkflowState): Promise<Partial<WorkflowState>> {
   console.log('🔍 Retrieving context from knowledge base');
   
+  // Add mode-specific reasoning
+  const modeContext = state.interactionMode === 'manual' 
+    ? `Using manually selected agent: ${state.selectedAgent?.display_name || state.selectedAgent?.name}`
+    : 'Using automatically selected agent';
+  
+  console.log(`📋 [Context] ${modeContext}`);
+  
   try {
     const result = await enhancedLangChainService.queryWithChain(
       state.query,
@@ -253,7 +260,12 @@ export async function retrieveContextNode(state: WorkflowState): Promise<Partial
       sources: result.sources,
       citations: result.citations,
       tokenUsage: result.tokenUsage,
-      workflowStep: 'context_retrieved'
+      workflowStep: 'context_retrieved',
+      metadata: {
+        ...state.metadata,
+        modeContext,
+        agentUsed: state.selectedAgent?.name || 'Unknown'
+      }
     };
   } catch (error) {
     console.error('Error retrieving context:', error);
@@ -261,7 +273,12 @@ export async function retrieveContextNode(state: WorkflowState): Promise<Partial
       context: '',
       sources: [],
       citations: [],
-      workflowStep: 'context_retrieved'
+      workflowStep: 'context_retrieved',
+      metadata: {
+        ...state.metadata,
+        modeContext,
+        error: 'Context retrieval failed'
+      }
     };
   }
 }
@@ -281,7 +298,14 @@ export function processAgentCondition(state: WorkflowState): string {
 export async function processWithAgentNormalNode(state: WorkflowState): Promise<Partial<WorkflowState>> {
   console.log('💬 Normal mode: Processing with user-selected tools');
   
-  const { selectedAgent, query, messages, selectedTools } = state;
+  const { selectedAgent, query, messages, selectedTools, interactionMode } = state;
+  
+  // Add mode-specific reasoning
+  const modeReasoning = interactionMode === 'manual' 
+    ? `Processing with manually selected agent: ${selectedAgent?.display_name || selectedAgent?.name}`
+    : 'Processing with automatically selected agent';
+  
+  console.log(`🧠 [Processing] ${modeReasoning}`);
   
   try {
     // Get user-selected tools
@@ -289,6 +313,8 @@ export async function processWithAgentNormalNode(state: WorkflowState): Promise<
     const userTools = allTools.filter(tool => 
       selectedTools.includes(tool.name)
     );
+    
+    console.log(`🔧 [Tools] Using ${userTools.length} selected tools:`, userTools.map(t => t.name));
     
     // Create ReAct agent with selected tools
     const agent = await createReactAgent({
@@ -302,15 +328,30 @@ export async function processWithAgentNormalNode(state: WorkflowState): Promise<
     
     console.log('🤖 [Normal Mode] Invoking agent with messages:', {
       messageCount: agentMessages.length,
-      messageTypes: agentMessages.map(m => m._getType())
+      messageTypes: agentMessages.map(m => m._getType()),
+      agentName: selectedAgent?.name,
+      mode: interactionMode
     });
     
     // ReAct agent expects input directly, not chat_history
     let result;
+    let reasoningSteps = [];
+    
     try {
       result = await agent.invoke({
         messages: agentMessages
       });
+      
+      // Extract reasoning steps from intermediate steps
+      if (result.intermediateSteps) {
+        reasoningSteps = result.intermediateSteps.map((step, index) => ({
+          step: index + 1,
+          description: `Tool execution: ${step.action?.tool || 'Unknown tool'}`,
+          toolUsed: step.action?.tool,
+          status: 'completed',
+          timestamp: new Date().toISOString()
+        }));
+      }
     } catch (agentError) {
       console.error('ReAct agent invoke failed:', agentError);
       // Fallback to simple LLM call
@@ -319,6 +360,13 @@ export async function processWithAgentNormalNode(state: WorkflowState): Promise<
         output: fallbackResponse.content,
         intermediateSteps: []
       };
+      reasoningSteps = [{
+        step: 1,
+        description: 'Fallback to direct LLM call due to agent error',
+        toolUsed: 'llm_fallback',
+        status: 'completed',
+        timestamp: new Date().toISOString()
+      }];
     }
     
     return {
@@ -328,7 +376,10 @@ export async function processWithAgentNormalNode(state: WorkflowState): Promise<
       metadata: {
         ...state.metadata,
         processing_mode: 'normal',
-        tools_used: selectedTools
+        tools_used: selectedTools,
+        modeReasoning,
+        reasoningSteps,
+        agentUsed: selectedAgent?.name || 'Unknown'
       }
     };
   } catch (error) {
@@ -341,7 +392,8 @@ export async function processWithAgentNormalNode(state: WorkflowState): Promise<
         ...state.metadata,
         processing_mode: 'normal',
         error: error.message,
-        errorType: 'normal_mode_processing_error'
+        errorType: 'normal_mode_processing_error',
+        modeReasoning
       }
     };
   }
@@ -441,6 +493,9 @@ export function getStepDescription(step: string, interactionMode: string, autono
     case 'tool_selection':
       return `🔧 Configuring tools for your request...`;
     case 'agent_selected':
+      if (interactionMode === 'manual') {
+        return `✅ Agent selected: ${selectedAgent?.display_name || selectedAgent?.name || 'Selected Agent'}`;
+      }
       return `✅ Agent selected automatically`;
     case 'context_retrieved':
       if (interactionMode === 'manual' && selectedAgent) {

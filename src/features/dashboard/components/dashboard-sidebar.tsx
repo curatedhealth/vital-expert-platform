@@ -30,6 +30,11 @@ import {
   CloudCog,
   CheckCircle,
   Star,
+  MessageSquare,
+  UserPlus,
+  ShoppingCart,
+  User,
+  X,
 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -39,6 +44,7 @@ import { useMemo, Suspense } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
+import { Switch } from '@/components/ui/switch';
 import { cn } from '@/lib/utils';
 
 interface NavItem {
@@ -245,7 +251,7 @@ interface DashboardSidebarProps {
   className?: string;
   isCollapsed?: boolean;
   onToggleCollapse?: () => void;
-  currentView?: 'knowledge' | 'agents' | 'projects' | 'llm' | 'prompts' | 'capabilities' | 'default';
+  currentView?: 'knowledge' | 'agents' | 'projects' | 'llm' | 'prompts' | 'capabilities' | 'chat' | 'default';
   // Agent-specific props
   onCreateAgent?: () => void;
   onUploadAgent?: () => void;
@@ -260,6 +266,22 @@ interface DashboardSidebarProps {
   businessFunctions?: Array<{ id: string; name: string }>;
   departments?: Array<{ id: string; name: string; business_function_id?: string }>;
   organizationalRoles?: Array<{ id: string; name: string; department_id?: string; business_function_id?: string }>;
+  // Chat-specific props
+  chats?: Array<{ id: string; title: string; updatedAt: string }>;
+  currentChat?: { id: string; title: string; updatedAt: string } | null;
+  onNewChat?: () => void;
+  onSelectChat?: (chatId: string) => void;
+  onAgentSelect?: (agentId: string) => void;
+  onAgentRemove?: (agentId: string) => void;
+  onAddAgentToLibrary?: (agentId: string) => void;
+  selectedAgentId?: string;
+  agents?: Array<{ id: string; name: string; avatar: string; description?: string }>;
+  allAgents?: Array<{ id: string; name: string; avatar: string; description?: string }>;
+  interactionMode?: 'automatic' | 'manual';
+  onToggleMode?: (mode: 'automatic' | 'manual') => void;
+  autonomousMode?: boolean;
+  onToggleAutonomous?: (enabled: boolean) => void;
+  formatDate?: (date: string) => string;
 }
 
 interface AgentFilters {
@@ -288,9 +310,28 @@ export function DashboardSidebar({
   businessFunctions = [],
   departments = [],
   organizationalRoles = [],
+  // Chat-specific props
+  chats = [],
+  currentChat = null,
+  onNewChat,
+  onSelectChat,
+  onAgentSelect,
+  onAgentRemove,
+  onAddAgentToLibrary,
+  selectedAgentId,
+  agents = [],
+  allAgents = [],
+  interactionMode = 'automatic',
+  onToggleMode,
+  autonomousMode = false,
+  onToggleAutonomous,
+  formatDate = (date: string) => date,
 }: DashboardSidebarProps) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
+
+  // Debug logging
+  console.log('🔍 [Sidebar] Current view:', currentView, 'Has onNewChat:', !!onNewChat, 'Agents count:', agents.length);
 
   // Deduplicate business functions, departments, and roles by name
   const uniqueBusinessFunctions = useMemo(() => {
@@ -997,6 +1038,238 @@ export function DashboardSidebar({
     </>
   );
 
+  const renderChatNavigation = () => (
+    <>
+      {/* Mode Selection */}
+      <div className="px-3">
+        <div className="space-y-1">
+          <h2 className="mb-2 px-4 text-lg font-semibold tracking-tight">
+            {!isCollapsed && "Mode Selection"}
+          </h2>
+          {!isCollapsed && onToggleMode && (
+            <div className="px-4 space-y-3">
+              {/* Auto/Manual Toggle */}
+              <div className="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
+                <div className="flex items-center gap-2">
+                  <Zap className={`h-4 w-4 ${interactionMode === 'automatic' ? 'text-green-600' : 'text-gray-400'}`} />
+                  <span className="text-sm">Auto</span>
+                </div>
+                <Switch
+                  checked={interactionMode === 'manual'}
+                  onCheckedChange={(checked) => onToggleMode(checked ? 'manual' : 'automatic')}
+                />
+                <div className="flex items-center gap-2">
+                  <User className={`h-4 w-4 ${interactionMode === 'manual' ? 'text-blue-600' : 'text-gray-400'}`} />
+                  <span className="text-sm">Manual</span>
+                </div>
+              </div>
+
+              {/* Autonomous Toggle */}
+              {onToggleAutonomous && (
+                <div className="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
+                  <div className="flex items-center gap-2">
+                    <Zap className={`h-4 w-4 ${autonomousMode ? 'text-purple-600' : 'text-gray-400'}`} />
+                    <span className="text-sm">Autonomous</span>
+                  </div>
+                  <Switch
+                    checked={autonomousMode}
+                    onCheckedChange={onToggleAutonomous}
+                  />
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className="px-3">
+        <Separator />
+      </div>
+
+      {/* Conversations Section */}
+      <div className="px-3">
+        <div className="space-y-1">
+          <h2 className="mb-2 px-4 text-lg font-semibold tracking-tight">
+            {!isCollapsed && "Conversations"}
+          </h2>
+          <div className="space-y-1">
+            {onNewChat && (
+              <Button
+                variant="ghost"
+                className={cn(
+                  'w-full',
+                  isCollapsed ? 'justify-center px-2' : 'justify-start',
+                )}
+                onClick={onNewChat}
+              >
+                <MessageSquare className="h-4 w-4" />
+                {!isCollapsed && <span className="ml-2">New Chat</span>}
+              </Button>
+            )}
+            {!isCollapsed && onSearchChange && (
+              <div className="px-4">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <input
+                    type="text"
+                    placeholder="Search chats..."
+                    value={searchQuery}
+                    onChange={(e) => onSearchChange(e.target.value)}
+                    className="w-full pl-10 pr-4 py-2 text-sm border border-input rounded-md bg-background hover:bg-accent focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                  />
+                </div>
+              </div>
+            )}
+            
+            {/* Recent Chats */}
+            {!isCollapsed && chats && chats.length > 0 && (
+              <div className="px-4 mt-2">
+                <div className="text-xs font-medium text-muted-foreground mb-2">Recent Chats</div>
+                <div className="space-y-1 max-h-32 overflow-y-auto">
+                  {chats.slice(0, 5).map((chat) => (
+                    <Button
+                      key={chat.id}
+                      variant="ghost"
+                      className={cn(
+                        'w-full justify-start h-auto p-2 text-xs',
+                        currentChat?.id === chat.id && 'bg-muted'
+                      )}
+                      onClick={() => onSelectChat?.(chat.id)}
+                    >
+                      <MessageSquare className="h-3 w-3 mr-2 flex-shrink-0" />
+                      <span className="truncate">{chat.title}</span>
+                    </Button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      <div className="px-3">
+        <Separator />
+      </div>
+
+      {/* My Agents Section */}
+      <div className="px-3">
+        <div className="space-y-1">
+          <div className="flex items-center justify-between mb-2 px-4">
+            <h2 className="text-lg font-semibold tracking-tight">
+              {!isCollapsed && "My Agents"}
+            </h2>
+            {!isCollapsed && (
+              <div className="flex items-center gap-1">
+                {onAddAgentToLibrary && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 w-6 p-0"
+                    title="Add Agent to Library"
+                  >
+                    <UserPlus className="h-4 w-4" />
+                  </Button>
+                )}
+                <Badge variant="secondary" className="text-xs">
+                  {agents.length}
+                </Badge>
+              </div>
+            )}
+          </div>
+          
+          <div className="space-y-1">
+            {agents.length === 0 ? (
+              <div className="px-4 py-2 text-sm text-muted-foreground">
+                {!isCollapsed && "No agents added yet. Click + to add some."}
+              </div>
+            ) : (
+              agents.map((agent) => {
+                const isSelected = selectedAgentId === agent.id;
+                return (
+                  <div key={agent.id} className="group relative">
+                    <div className={cn(
+                      'relative rounded-lg border transition-all duration-200',
+                      isSelected 
+                        ? 'bg-blue-50 border-blue-200 shadow-sm' 
+                        : 'bg-white border-gray-200 hover:border-gray-300 hover:shadow-sm'
+                    )}>
+                      <Button
+                        variant="ghost"
+                        className={cn(
+                          'w-full h-auto p-3',
+                          isCollapsed ? 'justify-center' : 'justify-start',
+                          isSelected && 'text-blue-900',
+                        )}
+                        onClick={() => onAgentSelect?.(agent.id)}
+                      >
+                        <div className="flex items-start gap-3 w-full">
+                          <div className="relative w-8 h-8 flex-shrink-0">
+                            {agent.avatar && (agent.avatar.startsWith('/') || agent.avatar.startsWith('http')) ? (
+                              <Image
+                                src={agent.avatar}
+                                alt={agent.name}
+                                width={32}
+                                height={32}
+                                className="rounded-full"
+                              />
+                            ) : (
+                              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-100 to-purple-100 flex items-center justify-center text-sm font-medium">
+                                {agent.avatar || agent.name.charAt(0).toUpperCase()}
+                              </div>
+                            )}
+                          </div>
+                          
+                          {!isCollapsed && (
+                            <div className="flex-1 text-left min-w-0">
+                              <div className="mb-1">
+                                <div className="text-sm font-semibold truncate text-gray-900">{agent.name}</div>
+                              </div>
+                              {agent.description && (
+                                <div className="text-xs text-gray-600 line-clamp-2 leading-relaxed">{agent.description}</div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      </Button>
+                      
+                      {!isCollapsed && onAgentRemove && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="absolute right-2 top-2 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity bg-white shadow-sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onAgentRemove(agent.id);
+                          }}
+                        >
+                          <X className="h-3 w-3 text-gray-500 hover:text-red-500" />
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+
+          {/* Agent Store Link */}
+          {!isCollapsed && (
+            <div className="mt-2">
+              <Button
+                variant="ghost"
+                className="w-full justify-start"
+                onClick={() => window.open('/agents', '_blank')}
+              >
+                <ShoppingCart className="h-4 w-4" />
+                <span className="ml-2">Agent Store</span>
+              </Button>
+            </div>
+          )}
+        </div>
+      </div>
+    </>
+  );
+
   const renderDefaultNavigation = () => (
     <div className="px-3">
       <div className="space-y-1">
@@ -1011,31 +1284,15 @@ export function DashboardSidebar({
   );
 
   return (
-    <div className={cn('pb-12', className)}>
+    <div className={cn('h-full', className)}>
       <div className="space-y-4 py-4">
-        <div className={cn("px-3 py-2", isCollapsed && "px-1")}>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Package2 className="h-6 w-6" />
-              {!isCollapsed && (
-                <h2 className="text-lg font-semibold tracking-tight">
-                  Context Menu
-                </h2>
-              )}
-            </div>
-            {onToggleCollapse && (
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8"
-                onClick={onToggleCollapse}
-              >
-                {isCollapsed ? (
-                  <ChevronRight className="h-4 w-4" />
-                ) : (
-                  <ChevronLeft className="h-4 w-4" />
-                )}
-              </Button>
+        <div className="px-3 py-2">
+          <div className="flex items-center gap-2">
+            <Package2 className="h-6 w-6" />
+            {!isCollapsed && (
+              <h2 className="text-lg font-semibold tracking-tight">
+                Context Menu
+              </h2>
             )}
           </div>
         </div>
@@ -1044,7 +1301,8 @@ export function DashboardSidebar({
         {currentView === 'llm' && renderLLMNavigation()}
         {currentView === 'prompts' && renderPromptsNavigation()}
         {currentView === 'capabilities' && renderCapabilitiesNavigation()}
-        {currentView === 'default' && renderDefaultNavigation()}
+        {(currentView === 'chat' || (currentView === 'default' && onNewChat)) && renderChatNavigation()}
+        {currentView === 'default' && !onNewChat && renderDefaultNavigation()}
       </div>
     </div>
   );

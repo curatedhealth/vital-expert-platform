@@ -90,9 +90,6 @@ export default function Home() {
             <a href="#framework" className="text-vital-gray-60 no-underline text-sm font-semibold transition-colors duration-200 hover:text-vital-black">
               Framework
             </a>
-            <a href="#pricing" className="text-vital-gray-60 no-underline text-sm font-semibold transition-colors duration-200 hover:text-vital-black">
-              Pricing
-            </a>
             <Link href="/login" className="text-vital-gray-60 no-underline text-sm font-semibold transition-colors duration-200 hover:text-vital-black">
               Sign In
             </Link>
@@ -142,13 +139,6 @@ export default function Home() {
               >
                 Framework
               </a>
-              <a 
-                href="#pricing" 
-                className="block text-vital-gray-60 no-underline text-sm font-semibold transition-colors duration-200 hover:text-vital-black"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                Pricing
-              </a>
               <Link 
                 href="/login" 
                 onClick={() => setMobileMenuOpen(false)}
@@ -180,7 +170,7 @@ export default function Home() {
           </h1>
 
           <p className="text-xl font-medium text-vital-gray-60 max-w-[700px] mx-auto mb-8 leading-[1.5]">
-            Healthcare organizations need flexible capacity to meet dynamic challenges.
+            Life Sciences organizations need flexible capacity to meet dynamic challenges.
             VITAL Expert provides on-demand strategic intelligence that scales with your needs.
           </p>
 
@@ -195,17 +185,13 @@ export default function Home() {
             >
               Enter Sandbox
             </Link>
-            <Link
-              href="/login"
+            <a
+              href="https://vimeo.com/your-demo-video"
+              target="_blank"
+              rel="noopener noreferrer"
               className="px-8 py-3.5 text-base font-semibold no-underline rounded-lg transition-all duration-200 cursor-pointer bg-vital-white text-vital-black border-2 border-vital-gray-80 hover:border-vital-black hover:-translate-y-0.5"
             >
               View Demo
-            </Link>
-            <a
-              href="#pricing"
-              className="bg-transparent text-vital-gray-60 underline transition-colors duration-200 hover:text-vital-black"
-            >
-              Calculate ROI
             </a>
           </div>
 
@@ -219,7 +205,7 @@ export default function Home() {
       <section className="py-20 px-10">
         <div className="max-w-[1200px] mx-auto">
           <div className="text-center mb-[60px]">
-            <h2 className="text-[40px] font-extrabold leading-[1.2] mb-5">Healthcare's Capacity Constraint</h2>
+            <h2 className="text-[40px] font-extrabold leading-[1.2] mb-5 text-regulatory-blue">Traditional Consulting is Over</h2>
           </div>
           <div className="max-w-[700px] mx-auto text-center">
             <p className="text-lg leading-[2] text-vital-gray-60 my-8">
@@ -240,12 +226,12 @@ export default function Home() {
             <p className="text-lg text-vital-gray-60 max-w-[600px] mx-auto leading-[1.5]">Not Software. Not Consulting. Infrastructure.</p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {[
               {
                 number: '1',
                 title: 'Expert Agent Network',
-                description: '136 specialized healthcare advisors delivering instant expertise',
+                description: '136 specialized life sciences advisors delivering instant expertise',
                 features: [
                   'Trained on 10M+ validated documents',
                   'Updated daily from authoritative sources',
@@ -288,7 +274,7 @@ export default function Home() {
               }
             ].map((component) => (
               <div key={component.number} className="p-8 bg-vital-white rounded-xl shadow-[0_2px_8px_rgba(0,0,0,0.08)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_8px_32px_rgba(0,0,0,0.12)]">
-                <div className="inline-flex w-12 h-12 items-center justify-center bg-vital-black text-vital-white rounded-full text-xl font-bold mb-5">
+                <div className="inline-flex w-12 h-12 items-center justify-center bg-regulatory-blue text-vital-white rounded-full text-xl font-bold mb-5">
                   {component.number}
                 </div>
                 <h3 className="text-xl font-bold mb-3">{component.title}</h3>
@@ -404,6 +390,11 @@ export default function Home() {
             </p>
           </div>
 
+          <div className="text-center mb-12">
+            <h2 className="text-6xl font-extrabold text-regulatory-blue mb-4">VITAL</h2>
+            <p className="text-xl text-vital-gray-60">A proven methodology for life sciences innovation and transformation</p>
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-5 gap-8">
             {[
               {
@@ -458,39 +449,39 @@ export default function Home() {
 
           <div className="grid grid-cols-[repeat(auto-fit,minmax(250px,1fr))] gap-10 mt-[60px]">
             <div className="text-center">
-              <div className="inline-flex w-12 h-12 items-center justify-center bg-vital-black text-vital-white rounded-full text-xl font-bold mb-5">
+              <div className="inline-flex w-16 h-16 items-center justify-center bg-regulatory-blue text-vital-white rounded-full text-2xl font-bold mb-5">
                 1
               </div>
-              <h3 className="text-xl font-bold mb-3">Ask</h3>
-              <p className="text-vital-gray-60 text-sm leading-[1.5]">Natural language queries. No special training.</p>
-              <p className="italic text-vital-gray-40 text-[13px] mt-2">"What's our optimal regulatory pathway?"</p>
+              <h3 className="text-2xl font-bold mb-3">Ask</h3>
+              <p className="text-vital-gray-60 text-base leading-[1.5]">Natural language queries. No special training.</p>
+              <p className="italic text-vital-gray-40 text-sm mt-2">"What's our optimal regulatory pathway?"</p>
             </div>
 
             <div className="text-center">
-              <div className="inline-flex w-12 h-12 items-center justify-center bg-vital-black text-vital-white rounded-full text-xl font-bold mb-5">
+              <div className="inline-flex w-16 h-16 items-center justify-center bg-regulatory-blue text-vital-white rounded-full text-2xl font-bold mb-5">
                 2
               </div>
-              <h3 className="text-xl font-bold mb-3">Analyze</h3>
-              <p className="text-vital-gray-60 text-sm leading-[1.5]">Multiple expert agents collaborate instantly</p>
-              <p className="italic text-vital-gray-40 text-[13px] mt-2">Drawing from 10M+ validated documents</p>
+              <h3 className="text-2xl font-bold mb-3">Analyze</h3>
+              <p className="text-vital-gray-60 text-base leading-[1.5]">Multiple expert agents collaborate instantly</p>
+              <p className="italic text-vital-gray-40 text-sm mt-2">Drawing from 10M+ validated documents</p>
             </div>
 
             <div className="text-center">
-              <div className="inline-flex w-12 h-12 items-center justify-center bg-vital-black text-vital-white rounded-full text-xl font-bold mb-5">
+              <div className="inline-flex w-16 h-16 items-center justify-center bg-regulatory-blue text-vital-white rounded-full text-2xl font-bold mb-5">
                 3
               </div>
-              <h3 className="text-xl font-bold mb-3">Test</h3>
-              <p className="text-vital-gray-60 text-sm leading-[1.5]">Run scenarios in the sandbox</p>
-              <p className="italic text-vital-gray-40 text-[13px] mt-2">See outcomes before committing resources</p>
+              <h3 className="text-2xl font-bold mb-3">Test</h3>
+              <p className="text-vital-gray-60 text-base leading-[1.5]">Run scenarios in the sandbox</p>
+              <p className="italic text-vital-gray-40 text-sm mt-2">See outcomes before committing resources</p>
             </div>
 
             <div className="text-center">
-              <div className="inline-flex w-12 h-12 items-center justify-center bg-vital-black text-vital-white rounded-full text-xl font-bold mb-5">
+              <div className="inline-flex w-16 h-16 items-center justify-center bg-regulatory-blue text-vital-white rounded-full text-2xl font-bold mb-5">
                 4
               </div>
-              <h3 className="text-xl font-bold mb-3">Implement</h3>
-              <p className="text-vital-gray-60 text-sm leading-[1.5]">Deploy with confidence</p>
-              <p className="italic text-vital-gray-40 text-[13px] mt-2">Track results and compound knowledge</p>
+              <h3 className="text-2xl font-bold mb-3">Implement</h3>
+              <p className="text-vital-gray-60 text-base leading-[1.5]">Deploy with confidence</p>
+              <p className="italic text-vital-gray-40 text-sm mt-2">Track results and compound knowledge</p>
             </div>
           </div>
 
@@ -499,7 +490,7 @@ export default function Home() {
               href="/register"
               className="px-8 py-3.5 text-base font-semibold no-underline rounded-lg transition-all duration-200 cursor-pointer border-none bg-vital-black text-vital-white hover:bg-regulatory-blue hover:-translate-y-0.5 hover:shadow-[0_4px_16px_rgba(0,0,0,0.10)]"
             >
-              Try It Now - No Login Required
+              Try It Now
             </Link>
           </div>
         </div>
@@ -551,94 +542,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Pricing */}
-      <section id="pricing" className="py-20 px-10">
-        <div className="max-w-[1200px] mx-auto">
-          <div className="text-center mb-[60px]">
-            <h2 className="text-[40px] font-extrabold leading-[1.2] mb-5">Transparent. Scalable. Month-to-Month.</h2>
-          </div>
-
-          <div className="grid grid-cols-[repeat(auto-fit,minmax(280px,1fr))] gap-8 mt-[60px]">
-            <div className="p-8 pt-10 bg-vital-white rounded-xl border-2 border-vital-gray-80 text-center relative transition-all duration-300 hover:border-regulatory-blue hover:-translate-y-1 hover:shadow-[0_8px_32px_rgba(0,0,0,0.12)]">
-              <h3 className="text-xl font-bold mb-2">Starter</h3>
-              <div className="text-4xl font-extrabold mb-1">
-                $2K<span className="text-base font-medium text-vital-gray-60">/month</span>
-              </div>
-              <ul className="list-none my-6 text-left">
-                <li className="py-2 text-sm text-vital-gray-60 relative pl-6 before:content-['✓'] before:absolute before:left-0 before:text-clinical-green before:font-bold">5 users</li>
-                <li className="py-2 text-sm text-vital-gray-60 relative pl-6 before:content-['✓'] before:absolute before:left-0 before:text-clinical-green before:font-bold">10 agents</li>
-                <li className="py-2 text-sm text-vital-gray-60 relative pl-6 before:content-['✓'] before:absolute before:left-0 before:text-clinical-green before:font-bold">1,000 queries</li>
-                <li className="py-2 text-sm text-vital-gray-60 relative pl-6 before:content-['✓'] before:absolute before:left-0 before:text-clinical-green before:font-bold">Sandbox access</li>
-              </ul>
-              <Link
-                href="/register"
-                className="w-full py-3 bg-vital-black text-vital-white border-none rounded-md font-semibold cursor-pointer transition-all duration-200 hover:bg-regulatory-blue inline-block text-center no-underline"
-              >
-                Start Free Trial
-              </Link>
-            </div>
-
-            <div className="p-8 pt-10 bg-vital-white rounded-xl border-2 border-regulatory-blue text-center relative transition-all duration-300 scale-105 shadow-[0_16px_48px_rgba(0,0,0,0.15)] before:content-['MOST_POPULAR'] before:absolute before:-top-3 before:left-1/2 before:-translate-x-1/2 before:px-4 before:py-1 before:bg-regulatory-blue before:text-vital-white before:text-[11px] before:font-bold before:tracking-[0.05em] before:rounded-xl">
-              <h3 className="text-xl font-bold mb-2">Growth</h3>
-              <div className="text-4xl font-extrabold mb-1">
-                $5K<span className="text-base font-medium text-vital-gray-60">/month</span>
-              </div>
-              <ul className="list-none my-6 text-left">
-                <li className="py-2 text-sm text-vital-gray-60 relative pl-6 before:content-['✓'] before:absolute before:left-0 before:text-clinical-green before:font-bold">25 users</li>
-                <li className="py-2 text-sm text-vital-gray-60 relative pl-6 before:content-['✓'] before:absolute before:left-0 before:text-clinical-green before:font-bold">50 agents</li>
-                <li className="py-2 text-sm text-vital-gray-60 relative pl-6 before:content-['✓'] before:absolute before:left-0 before:text-clinical-green before:font-bold">5,000 queries</li>
-                <li className="py-2 text-sm text-vital-gray-60 relative pl-6 before:content-['✓'] before:absolute before:left-0 before:text-clinical-green before:font-bold">Priority support</li>
-              </ul>
-              <Link
-                href="/register"
-                className="w-full py-3 bg-vital-black text-vital-white border-none rounded-md font-semibold cursor-pointer transition-all duration-200 hover:bg-regulatory-blue inline-block text-center no-underline"
-              >
-                Start Free Trial
-              </Link>
-            </div>
-
-            <div className="p-8 pt-10 bg-vital-white rounded-xl border-2 border-vital-gray-80 text-center relative transition-all duration-300 hover:border-regulatory-blue hover:-translate-y-1 hover:shadow-[0_8px_32px_rgba(0,0,0,0.12)]">
-              <h3 className="text-xl font-bold mb-2">Enterprise</h3>
-              <div className="text-4xl font-extrabold mb-1">
-                $15K<span className="text-base font-medium text-vital-gray-60">/month</span>
-              </div>
-              <ul className="list-none my-6 text-left">
-                <li className="py-2 text-sm text-vital-gray-60 relative pl-6 before:content-['✓'] before:absolute before:left-0 before:text-clinical-green before:font-bold">Unlimited users</li>
-                <li className="py-2 text-sm text-vital-gray-60 relative pl-6 before:content-['✓'] before:absolute before:left-0 before:text-clinical-green before:font-bold">All 136 agents</li>
-                <li className="py-2 text-sm text-vital-gray-60 relative pl-6 before:content-['✓'] before:absolute before:left-0 before:text-clinical-green before:font-bold">Unlimited queries</li>
-                <li className="py-2 text-sm text-vital-gray-60 relative pl-6 before:content-['✓'] before:absolute before:left-0 before:text-clinical-green before:font-bold">Dedicated success manager</li>
-              </ul>
-              <Link
-                href="/register"
-                className="w-full py-3 bg-vital-black text-vital-white border-none rounded-md font-semibold cursor-pointer transition-all duration-200 hover:bg-regulatory-blue inline-block text-center no-underline"
-              >
-                Start Free Trial
-              </Link>
-            </div>
-
-            <div className="p-8 pt-10 bg-vital-white rounded-xl border-2 border-vital-gray-80 text-center relative transition-all duration-300 hover:border-regulatory-blue hover:-translate-y-1 hover:shadow-[0_8px_32px_rgba(0,0,0,0.12)]">
-              <h3 className="text-xl font-bold mb-2">Custom</h3>
-              <div className="text-4xl font-extrabold mb-1">Let's talk</div>
-              <ul className="list-none my-6 text-left">
-                <li className="py-2 text-sm text-vital-gray-60 relative pl-6 before:content-['✓'] before:absolute before:left-0 before:text-clinical-green before:font-bold">White-label options</li>
-                <li className="py-2 text-sm text-vital-gray-60 relative pl-6 before:content-['✓'] before:absolute before:left-0 before:text-clinical-green before:font-bold">On-premise deployment</li>
-                <li className="py-2 text-sm text-vital-gray-60 relative pl-6 before:content-['✓'] before:absolute before:left-0 before:text-clinical-green before:font-bold">Custom integrations</li>
-                <li className="py-2 text-sm text-vital-gray-60 relative pl-6 before:content-['✓'] before:absolute before:left-0 before:text-clinical-green before:font-bold">Unlimited everything</li>
-              </ul>
-              <Link
-                href="/register"
-                className="w-full py-3 bg-vital-black text-vital-white border-none rounded-md font-semibold cursor-pointer transition-all duration-200 hover:bg-regulatory-blue inline-block text-center no-underline"
-              >
-                Contact Sales
-              </Link>
-            </div>
-          </div>
-
-          <p className="text-center mt-8 text-sm text-vital-gray-60">
-            All plans include: Daily updates, data isolation, API access
-          </p>
-        </div>
-      </section>
 
       {/* CTA */}
       <section className="bg-vital-black text-vital-white text-center py-[100px] px-10">
@@ -751,8 +654,7 @@ export default function Home() {
           </div>
 
           <div className="text-center mt-6 pt-6 border-t border-vital-gray-80 text-xs text-vital-gray-60 italic">
-            © 2025 VITAL Expert. Your data remains yours.<br />
-            *VITAL Expert is business operations software. Not a medical device.
+            © 2025 VITAL Expert. Your data remains yours. VITAL Expert is business operations software. Not a medical device.
           </div>
         </div>
       </footer>

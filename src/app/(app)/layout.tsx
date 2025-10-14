@@ -8,6 +8,8 @@ import {
   Settings,
   LogOut,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
@@ -23,6 +25,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { AgentsFilterProvider, useAgentsFilter } from '@/contexts/agents-filter-context';
+import { ChatProvider, useChatContext } from '@/contexts/chat-context';
 import { DashboardSidebarWithSuspense } from '@/features/dashboard/components/dashboard-sidebar';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/supabase-auth-context';
@@ -41,6 +44,9 @@ function AppLayoutContent({
 
   // Use agents filter context
   const { searchQuery, setSearchQuery, filters, setFilters, viewMode, setViewMode } = useAgentsFilter();
+  
+  // Use chat context
+  const chatContext = useChatContext();
 
   const [businessFunctions, setBusinessFunctions] = useState<Array<{ id: string; name: string }>>([]);
   const [departments, setDepartments] = useState<Array<{ id: string; name: string; business_function_id?: string }>>([]);
@@ -83,8 +89,12 @@ function AppLayoutContent({
     if (pathname.includes('/knowledge')) return 'knowledge';
     if (pathname.includes('/agents')) return 'agents';
     if (pathname.includes('/projects')) return 'projects';
+    if (pathname.includes('/chat')) return 'chat';
     return 'default';
   };
+
+  // Debug logging
+  console.log('🔍 [Layout] Current pathname:', pathname, 'Current view:', getCurrentView());
 
   // Authentication is now handled by AuthGuard component
 
@@ -112,48 +122,103 @@ function AppLayoutContent({
   //   return null;
   // }
 
+  // Check if we're on the chat page
+  const isChatPage = pathname.includes('/chat');
+
   return (
     <div className={cn(
       "grid min-h-screen w-full",
-      isCollapsed
-        ? "md:grid-cols-[60px_1fr] lg:grid-cols-[60px_1fr]"
-        : "md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]"
+      isChatPage 
+        ? "grid-cols-1" // Full width for chat page - NO SIDEBAR
+        : isCollapsed
+          ? "md:grid-cols-[60px_1fr] lg:grid-cols-[60px_1fr]"
+          : "md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]"
     )}>
-      {/* Desktop Sidebar */}
-      <div className="hidden border-r bg-muted/40 md:block">
-        <div className="flex h-full max-h-screen flex-col gap-2">
-          <DashboardSidebarWithSuspense
-            className="flex-1"
-            isCollapsed={isCollapsed}
-            onToggleCollapse={() => setIsCollapsed(!isCollapsed)}
-            currentView={getCurrentView()}
-            onCreateAgent={getCurrentView() === 'agents' ? handleCreateAgent : undefined}
-            onUploadAgent={getCurrentView() === 'agents' ? handleUploadAgent : undefined}
-            searchQuery={searchQuery}
-            onSearchChange={setSearchQuery}
-            filters={filters}
-            onFilterChange={setFilters}
-            viewMode={viewMode}
-            onViewModeChange={setViewMode}
-            businessFunctions={businessFunctions}
-            departments={departments}
-            organizationalRoles={roles}
-          />
+      {/* Desktop Sidebar - Hidden ONLY on chat page */}
+      {!isChatPage && (
+        <div className="hidden border-r bg-muted/40 md:block">
+          <div className="flex h-full max-h-screen flex-col gap-2">
+            {/* Global Sidebar Header */}
+            <div className="px-3 py-2 border-b">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+                    <span className="text-white font-bold text-sm">V</span>
+                  </div>
+                  {!isCollapsed && (
+                    <h2 className="text-lg font-semibold tracking-tight">
+                      VITAL Expert
+                    </h2>
+                  )}
+                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8"
+                  onClick={() => setIsCollapsed(!isCollapsed)}
+                >
+                  {isCollapsed ? (
+                    <ChevronRight className="h-4 w-4" />
+                  ) : (
+                    <ChevronLeft className="h-4 w-4" />
+                  )}
+                </Button>
+              </div>
+            </div>
+
+            {/* Contextual Menu Content */}
+            <div className="flex-1 overflow-y-auto">
+              <DashboardSidebarWithSuspense
+                className="h-full"
+                isCollapsed={isCollapsed}
+                currentView={getCurrentView()}
+                onCreateAgent={getCurrentView() === 'agents' ? handleCreateAgent : undefined}
+                onUploadAgent={getCurrentView() === 'agents' ? handleUploadAgent : undefined}
+                searchQuery={searchQuery}
+                onSearchChange={setSearchQuery}
+                filters={filters}
+                onFilterChange={setFilters}
+                viewMode={viewMode}
+                onViewModeChange={setViewMode}
+                businessFunctions={businessFunctions}
+                departments={departments}
+                organizationalRoles={roles}
+                // Chat-specific props
+                chats={chatContext.chats}
+                currentChat={chatContext.currentChat}
+                onNewChat={chatContext.onNewChat}
+                onSelectChat={chatContext.onSelectChat}
+                onAgentSelect={chatContext.onAgentSelect}
+                onAgentRemove={chatContext.onAgentRemove}
+                onAddAgentToLibrary={chatContext.onAddAgentToLibrary}
+                selectedAgentId={chatContext.selectedAgentId}
+                agents={chatContext.agents}
+                allAgents={chatContext.allAgents}
+                interactionMode={chatContext.interactionMode}
+                onToggleMode={chatContext.onToggleMode}
+                autonomousMode={chatContext.autonomousMode}
+                onToggleAutonomous={chatContext.onToggleAutonomous}
+                formatDate={chatContext.formatDate}
+              />
+            </div>
+          </div>
         </div>
-      </div>
+      )}
 
       <div className="flex flex-col">
         {/* Internal Navigation Header */}
         <header className="sticky top-0 z-50 flex h-14 items-center gap-4 border-b bg-muted/40 px-4 lg:h-[60px] lg:px-6 backdrop-blur-sm bg-background/95">
-          <Button
-            variant="outline"
-            size="icon"
-            className="shrink-0 md:hidden"
-            onClick={() => setSidebarOpen(true)}
-          >
-            <Menu className="h-5 w-5" />
-            <span className="sr-only">Toggle navigation menu</span>
-          </Button>
+          {!isChatPage && (
+            <Button
+              variant="outline"
+              size="icon"
+              className="shrink-0 md:hidden"
+              onClick={() => setSidebarOpen(true)}
+            >
+              <Menu className="h-5 w-5" />
+              <span className="sr-only">Toggle navigation menu</span>
+            </Button>
+          )}
           <div className="w-full flex-1">
             <nav className="hidden md:flex items-center space-x-6 text-sm font-medium">
               <Link
@@ -315,8 +380,8 @@ function AppLayoutContent({
           </DropdownMenu>
         </header>
 
-        {/* Mobile Sidebar */}
-        {sidebarOpen && (
+        {/* Mobile Sidebar - Hidden on chat page */}
+        {!isChatPage && sidebarOpen && (
           <div className="fixed inset-0 z-50 md:hidden">
             <div className="fixed inset-0 bg-black/80" onClick={() => setSidebarOpen(false)} onKeyDown={() => setSidebarOpen(false)} role="button" tabIndex={0} />
             <div className="fixed left-0 top-0 z-50 h-full w-72 bg-background shadow-lg">
@@ -462,6 +527,22 @@ function AppLayoutContent({
                 businessFunctions={businessFunctions}
                 departments={departments}
                 organizationalRoles={roles}
+                // Chat-specific props
+                chats={chatContext.chats}
+                currentChat={chatContext.currentChat}
+                onNewChat={chatContext.onNewChat}
+                onSelectChat={chatContext.onSelectChat}
+                onAgentSelect={chatContext.onAgentSelect}
+                onAgentRemove={chatContext.onAgentRemove}
+                onAddAgentToLibrary={chatContext.onAddAgentToLibrary}
+                selectedAgentId={chatContext.selectedAgentId}
+                agents={chatContext.agents}
+                allAgents={chatContext.allAgents}
+                interactionMode={chatContext.interactionMode}
+                onToggleMode={chatContext.onToggleMode}
+                autonomousMode={chatContext.autonomousMode}
+                onToggleAutonomous={chatContext.onToggleAutonomous}
+                formatDate={chatContext.formatDate}
               />
             </div>
           </div>
@@ -486,7 +567,9 @@ export default function AppLayout({
 }) {
   return (
     <AgentsFilterProvider>
-      <AppLayoutContent>{children}</AppLayoutContent>
+      <ChatProvider>
+        <AppLayoutContent>{children}</AppLayoutContent>
+      </ChatProvider>
     </AgentsFilterProvider>
   );
 }

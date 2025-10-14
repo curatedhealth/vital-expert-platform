@@ -12,7 +12,6 @@ import { cn } from '@/lib/utils';
 import { useChatStore } from '@/lib/stores/chat-store';
 import { MessageBubble } from './message-bubble';
 import { ReasoningDisplay } from './reasoning-display';
-import { AgentSelectionPanel } from './agent-selection-panel';
 // import { useToast } from '@/hooks/use-toast';
 
 export function ChatContainer({ className }: { className?: string }) {
@@ -115,19 +114,7 @@ export function ChatContainer({ className }: { className?: string }) {
 
   return (
     <div className={cn("flex h-full", className)}>
-      {/* Agent Selection Sidebar - Only in Manual Mode */}
-      {interactionMode === 'manual' && (
-        <div className="w-80 border-r bg-gray-50/50 flex-shrink-0">
-          <AgentSelectionPanel
-            agents={agents}
-            selectedAgent={selectedAgent}
-            onSelectAgent={handleSelectAgent}
-            isLoading={agents.length === 0}
-          />
-        </div>
-      )}
-
-      {/* Main Chat Area */}
+      {/* Main Chat Area - Full Width */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Messages */}
         <ScrollArea className="flex-1 p-4">

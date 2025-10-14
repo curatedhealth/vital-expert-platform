@@ -497,6 +497,12 @@ export async function* streamModeAwareWorkflow(input: {
   let hasGeneratedAnswer = false;
   
   for await (const event of stream) {
+    console.log('🔍 [Stream] Raw event structure:', {
+      keys: Object.keys(event),
+      eventType: typeof event,
+      eventValue: event
+    });
+    
     const stepDescription = getStepDescription(
       event.workflowStep || 'processing',
       input.interactionMode,

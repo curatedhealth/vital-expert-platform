@@ -274,7 +274,7 @@ const _useChatStore = create<ChatStore>()(
     },
 
   // Dual-Mode Initial State
-  interactionMode: 'automatic',
+  interactionMode: 'manual',
   autonomousMode: false,
   currentTier: 1,
   escalationHistory: [],

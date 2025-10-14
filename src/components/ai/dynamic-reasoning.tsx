@@ -36,12 +36,13 @@ export function DynamicReasoning({ isStreaming, reasoningEvents, className }: Dy
     if (!isStreaming || reasoningEvents.length === 0) return;
 
     const latestEvent = reasoningEvents[reasoningEvents.length - 1];
+    let stepIndex = 0;
     
     setSteps(prevSteps => {
       const newSteps = [...prevSteps];
       
       // Find existing step or create new one
-      let stepIndex = newSteps.findIndex(step => step.id === latestEvent.step);
+      stepIndex = newSteps.findIndex(step => step.id === latestEvent.step);
       
       if (stepIndex === -1) {
         // Create new step

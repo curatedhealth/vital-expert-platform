@@ -89,8 +89,8 @@ export function RedesignedChatContainer({ className }: { className?: string }) {
     setIsRetrying(false);
   }, [messages, sendMessage]);
 
-  const canSend = input.trim() && !isLoading && 
-    (interactionMode === 'automatic' || selectedAgent);
+  // Always allow sending (unconditional)
+  const canSend = input.trim() && !isLoading;
 
   // Debug logging
   console.log('RedesignedChatContainer Debug:', {
@@ -122,7 +122,7 @@ export function RedesignedChatContainer({ className }: { className?: string }) {
               </p>
             </div>
 
-            {/* Centered Input - Simple version for empty state */}
+            {/* Enhanced Input - Always use enhanced version */}
             <div className="w-full max-w-3xl">
               <ChatInput
                 value={input}
@@ -139,7 +139,7 @@ export function RedesignedChatContainer({ className }: { className?: string }) {
                 selectedModel={selectedModel?.id || 'gpt-4o'}
                 onModelChange={(model) => setSelectedModel({ id: model, name: model })}
                 className="border-0 bg-transparent"
-                isCentered={true}
+                isCentered={false}
               />
             </div>
           </div>

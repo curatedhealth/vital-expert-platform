@@ -37,13 +37,10 @@ export function ChatInput({
   selectedModel = 'gpt-4o',
   onModelChange
 }: ChatInputProps) {
-  // Validation: Check if can send
-  const canSend = value.trim() && 
-                  !isLoading && 
-                  !disabled &&
-                  (interactionMode === 'automatic' || hasSelectedAgent);
+  // Always allow sending (unconditional)
+  const canSend = value.trim() && !isLoading && !disabled;
 
-  // Show warning in manual mode without agent
+  // Show warning in manual mode without agent (but don't block input)
   const showWarning = interactionMode === 'manual' && !hasSelectedAgent;
 
   // Debug logging

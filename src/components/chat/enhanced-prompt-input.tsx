@@ -159,7 +159,7 @@ export function EnhancedPromptInput({
   //   error: promptError 
   // } = usePromptEnhancement();
 
-  // Use the disabled prop from parent instead of calculating our own canSend
+  // Always allow sending (unconditional)
   const canSend = !disabled && value.trim() && !isLoading;
 
   // Debug logging

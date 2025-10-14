@@ -12,6 +12,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
+import { EnhancedAgentCard } from '@/components/ui/enhanced-agent-card';
 import type { Agent } from '@/types/agent.types';
 
 export function AgentSelectionPanel({ 
@@ -121,55 +122,24 @@ export function AgentSelectionPanel({
     );
   }
 
-  // Memoized Agent Card
+  // Memoized Agent Card using EnhancedAgentCard
   const AgentCard = React.memo<{
     agent: Agent;
     isSelected: boolean;
     onSelect: () => void;
     isSelecting: boolean;
   }>(({ agent, isSelected, onSelect, isSelecting }) => (
-    <Card
+    <EnhancedAgentCard
+      agent={agent}
+      isSelected={isSelected}
+      onClick={onSelect}
+      showReasoning={false}
+      showTier={true}
+      size="sm"
       className={cn(
-        "cursor-pointer transition-all hover:border-blue-400 hover:shadow-md",
-        isSelected && "border-blue-500 bg-blue-50",
         isSelecting && "opacity-50 cursor-not-allowed"
       )}
-      onClick={onSelect}
-    >
-      <CardContent className="p-4">
-        <div className="flex items-start gap-3">
-          {/* AUDIT FIX: Proper Avatar API */}
-          <Avatar className="h-10 w-10">
-            <AvatarImage 
-              src={agent.avatarUrl ?? ''} 
-              alt={agent.display_name || agent.name} 
-            />
-            <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white">
-              {(agent.display_name || agent.name)[0]}
-            </AvatarFallback>
-          </Avatar>
-          
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center justify-between mb-1">
-              <h4 className="font-medium text-sm truncate">
-                {agent.display_name || agent.name}
-              </h4>
-              {isSelected && <Check className="h-4 w-4 text-blue-600 flex-shrink-0" />}
-            </div>
-            <p className="text-xs text-gray-600 line-clamp-2 mb-2">
-              {agent.description}
-            </p>
-            <div className="flex flex-wrap gap-1">
-              {agent.capabilities?.slice(0, 2).map((cap) => (
-                <Badge key={cap} variant="secondary" className="text-xs">
-                  {cap}
-                </Badge>
-              ))}
-            </div>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
+    />
   ));
 
   AgentCard.displayName = 'AgentCard';

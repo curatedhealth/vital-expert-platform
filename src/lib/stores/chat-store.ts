@@ -222,16 +222,13 @@ export interface ChatStore {
   resumeWorkflow: (input: any) => Promise<void>;
   updateWorkflowState: (state: Partial<{ currentStep: string; requiresInput: boolean; availableActions: string[] }>) => void;
 
-  // New database-powered actions
-  loadAgentsFromDatabase: () => Promise<void>;
-  refreshAgents: () => Promise<void>;
-  searchAgents: (searchTerm: string) => Promise<Agent[]>;
-  getAgentsByCategory: (categoryName: string) => Promise<Agent[]>;
-  getAgentsByTier: (tier: number) => Promise<Agent[]>;
-
   // Global agents store integration
   syncWithGlobalStore: () => void;
   subscribeToGlobalChanges: () => () => void;
+  getAgents: () => Agent[];
+  searchAgents: (searchTerm: string) => Agent[];
+  getAgentsByCategory: (categoryName: string) => Agent[];
+  getAgentsByTier: (tier: number) => Agent[];
   
   // Agent library management
   addAgentToLibrary: (agentId: string) => void;
@@ -1167,111 +1164,52 @@ const _useChatStore = create<ChatStore>()(
         }
       },
 
-      // Database-powered actions
-      loadAgentsFromDatabase: async () => {
-        set({ isLoadingAgents: true, error: null });
-
-        try {
-          console.log('🔍 ChatStore: Loading agents from database...');
-          
-          // Use the API route to fetch agents
-          const response = await fetch('/api/agents-crud');
-          
-          if (!response.ok) {
-            throw new Error(`Failed to fetch agents: ${response.status} ${response.statusText}`);
-          }
-
-          const data = await response.json();
-          const dbAgents = data.agents || [];
-          
-          console.log(`✅ ChatStore: Loaded ${dbAgents.length} agents from database`);
-          
-          // Transform agents to match the expected format
-          const formattedAgents = dbAgents.map((agent: any) => ({
-            id: agent.id,
-            name: agent.display_name || agent.name,
-            description: agent.description || 'AI Health Agent',
-            avatar: agent.avatar || '🤖',
-            businessFunction: agent.business_function || agent.role || 'General',
-            category: `Tier ${agent.tier}`,
-            capabilities: agent.capabilities || [],
-            specialties: agent.specializations || [],
-            tier: `Tier ${agent.tier}`,
-            isActive: agent.status === 'active',
-            ragEnabled: agent.rag_enabled || true,
-            isCustom: false,
-            metadata: {
-              priority: agent.priority,
-              implementation_phase: agent.implementation_phase,
-              medical_specialty: agent.medical_specialty,
-              clinical_validation_status: agent.clinical_validation_status,
-              medical_accuracy_score: agent.medical_accuracy_score,
-              hipaa_compliant: agent.hipaa_compliant,
-              pharma_enabled: agent.pharma_enabled,
-              verify_enabled: agent.verify_enabled,
-              fda_samd_class: agent.fda_samd_class
-            }
-          }));
-
-          set((state) => ({
-            agents: formattedAgents,
-            // Don't auto-select first agent - keep current selection or null
-            selectedAgent: state.selectedAgent || null,
-            isLoadingAgents: false,
-          }));
-        } catch (error) {
-          console.error('❌ ChatStore: Failed to load agents from database:', error);
-
-          // Don't fall back to default agents - just show empty state with error
-          set({
-            agents: [],
-            selectedAgent: null,
-            isLoadingAgents: false,
-            error: 'Failed to load agents from database. Please check your connection and try again.',
-          });
-        }
+      // Global agents store integration
+      getAgents: () => {
+        const globalAgents = useAgentsStore.getState().agents;
+        // Transform global agents to chat store format
+        return globalAgents.map(agent => ({
+          id: agent.id,
+          name: agent.name,
+          display_name: agent.display_name,
+          description: agent.description,
+          systemPrompt: agent.system_prompt,
+          model: agent.model,
+          avatar: agent.avatar,
+          color: agent.color,
+          capabilities: agent.capabilities,
+          ragEnabled: agent.rag_enabled,
+          temperature: agent.temperature,
+          maxTokens: agent.max_tokens,
+          isCustom: agent.is_custom,
+          knowledgeDomains: agent.knowledge_domains,
+          businessFunction: agent.business_function,
+          department: agent.department,
+          organizationalRole: agent.organizational_role,
+          tier: agent.tier,
+        }));
       },
 
-      refreshAgents: async () => {
-        const { loadAgentsFromDatabase } = get();
-        await loadAgentsFromDatabase();
+      searchAgents: (searchTerm: string) => {
+        const agents = get().getAgents();
+        return agents.filter(agent => 
+          agent.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          agent.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          (agent.businessFunction && agent.businessFunction.toLowerCase().includes(searchTerm.toLowerCase()))
+        );
       },
 
-      searchAgents: async (searchTerm: string) => {
-        try {
-          const { agents } = get();
-          return agents.filter(agent => 
-            agent.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            agent.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            (agent.businessFunction && agent.businessFunction.toLowerCase().includes(searchTerm.toLowerCase()))
-          );
-        } catch (error) {
-          console.error('Failed to search agents:', error);
-          return [];
-        }
+      getAgentsByCategory: (categoryName: string) => {
+        const agents = get().getAgents();
+        return agents.filter(agent => 
+          agent.knowledgeDomains?.includes(categoryName) ||
+          agent.businessFunction?.toLowerCase().includes(categoryName.toLowerCase())
+        );
       },
 
-      getAgentsByCategory: async (categoryName: string) => {
-        try {
-          const { agents } = get();
-          return agents.filter(agent => 
-            agent.businessFunction?.toLowerCase() === categoryName.toLowerCase() ||
-            agent.category?.toLowerCase() === categoryName.toLowerCase()
-          );
-        } catch (error) {
-          console.error('Failed to get agents by category:', error);
-          return [];
-        }
-      },
-
-      getAgentsByTier: async (tier: number) => {
-        try {
-          const { agents } = get();
-          return agents.filter(agent => agent.tier === tier);
-        } catch (error) {
-          console.error('Failed to get agents by tier:', error);
-          return [];
-        }
+      getAgentsByTier: (tier: number) => {
+        const agents = get().getAgents();
+        return agents.filter(agent => agent.tier === tier);
       },
 
       // Global agents store integration

@@ -26,10 +26,13 @@ export function RedesignedChatContainer({ className }: { className?: string }) {
     clearError,
     selectedAgent,
     interactionMode,
-    agents,
+    getAgents,
     selectAgent,
     cleanup,
   } = useChatStore();
+
+  // Get agents from global store
+  const agents = getAgents();
 
   const [isRetrying, setIsRetrying] = React.useState(false);
 

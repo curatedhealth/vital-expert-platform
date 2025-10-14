@@ -43,16 +43,14 @@ import { useChatStore } from '@/lib/stores/chat-store';
 
 function ChatPageContent() {
   const {
-    loadAgentsFromDatabase,
     syncWithGlobalStore,
     subscribeToGlobalChanges,
   } = useChatStore();
 
   const [showAgentCreator, setShowAgentCreator] = useState(false);
 
-  // Load agents from database on component mount and sync with global store
+  // Sync with global store on component mount
   useEffect(() => {
-    loadAgentsFromDatabase();
     syncWithGlobalStore();
 
     // Subscribe to global changes
@@ -60,7 +58,7 @@ function ChatPageContent() {
 
     // Cleanup subscription on unmount
     return unsubscribe;
-  }, [loadAgentsFromDatabase, syncWithGlobalStore, subscribeToGlobalChanges]);
+  }, [syncWithGlobalStore, subscribeToGlobalChanges]);
 
   return (
     <div className="flex h-screen bg-gray-50">

@@ -367,29 +367,43 @@ const _useChatStore = create<ChatStore>()(
       },
 
       sendMessage: async (content: string, attachments?: unknown[]) => {
-        let { currentChat, selectedAgent, messages, interactionMode } = get();
+        const { currentChat, selectedAgent, messages, interactionMode, isLoading } = get();
+
+        // Prevent re-entrancy
+        if (isLoading) {
+          console.warn('⚠️  Already processing a message');
+          return;
+        }
 
         console.log('📤 [sendMessage] Debug info:', {
           hasSelectedAgent: !!selectedAgent,
-          selectedAgent: selectedAgent,
+          selectedAgentId: selectedAgent?.id,
           interactionMode,
           content: content.substring(0, 50) + '...'
         });
 
-        // In manual mode, require an agent to be selected
-        if (!selectedAgent && interactionMode === 'manual') {
-          console.warn('⚠️  No agent selected in manual mode. Please select an agent before sending a message.');
-          set({ error: 'Please select an agent before sending a message in manual mode.' });
-          return;
+        // CRITICAL: Validate BEFORE creating messages
+        if (interactionMode === 'manual' && !selectedAgent?.id) {
+          console.error('❌ No agent selected in manual mode');
+          set({ 
+            error: 'Please select an AI agent in Manual Mode.',
+            isLoading: false 
+          });
+          return; // Stop here - don't create any messages
         }
+
+        // Clear previous errors and set loading
+        set({ error: null, isLoading: true });
 
         // If no agent is selected but we're in automatic mode, proceed with message
         if (!selectedAgent && interactionMode === 'automatic') {
           console.log('🤖 Automatic mode: Proceeding without selected agent, API will handle routing');
         }
 
+        let updatedCurrentChat = currentChat;
+
         // Auto-create a chat if one doesn't exist
-        if (!currentChat) {
+        if (!updatedCurrentChat) {
           const agentName = selectedAgent?.display_name || selectedAgent?.name || (interactionMode === 'automatic' ? 'AI Orchestrator' : 'AI Assistant');
           console.log('📝 Auto-creating new chat for selected agent:', agentName);
           const newChat: Chat = {
@@ -410,7 +424,7 @@ const _useChatStore = create<ChatStore>()(
           }));
 
           // Update local reference
-          currentChat = newChat;
+          updatedCurrentChat = newChat;
         }
 
         const userMessage: ChatMessage = {
@@ -482,7 +496,7 @@ const _useChatStore = create<ChatStore>()(
             message: content,
             agent: selectedAgent || null, // Allow null agent in automatic mode
             userId: 'hicham.naim@curated.health', // TODO: Get from auth context
-            sessionId: currentChat.id,
+            sessionId: updatedCurrentChat.id,
             model: get().selectedModel, // Include selected model
             chatHistory: messages.map(msg => ({
               role: msg.role,
@@ -795,10 +809,13 @@ const _useChatStore = create<ChatStore>()(
                   ? { ...msg, content: 'Sorry, I encountered an error. Please try again.', isLoading: false, error: true }
                   : msg
               ),
-              error: 'Failed to send message',
+              error: String(error),
               abortController: null,
             }));
           }
+        } finally {
+          // Always ensure loading state is cleared
+          set({ isLoading: false });
         }
       },
 

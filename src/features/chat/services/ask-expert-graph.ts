@@ -291,7 +291,7 @@ export async function executeAskExpertWorkflow(input: {
   const app = compileAskExpertGraph();
 
   // Convert chat history to LangChain messages
-  const messages: BaseMessage[] = input.chatHistory.map((msg) => {
+  const messages: BaseMessage[] = (input.chatHistory || []).map((msg) => {
     if (msg.role === 'user') {
       return new HumanMessage(msg.content);
     } else {
@@ -413,7 +413,7 @@ export async function executeModeAwareWorkflow(input: {
   const app = compileModeAwareWorkflow();
   
   // Convert chat history to BaseMessage format
-  const messages: BaseMessage[] = input.chatHistory.map((msg) => {
+  const messages: BaseMessage[] = (input.chatHistory || []).map((msg) => {
     if (msg.role === 'user') {
       return new HumanMessage(msg.content);
     } else {
@@ -483,7 +483,7 @@ export async function* streamModeAwareWorkflow(input: {
   const app = compileModeAwareWorkflow();
   
   // Convert chat history to BaseMessage format
-  const messages: BaseMessage[] = input.chatHistory.map((msg) => {
+  const messages: BaseMessage[] = (input.chatHistory || []).map((msg) => {
     if (msg.role === 'user') {
       return new HumanMessage(msg.content);
     } else {
@@ -493,6 +493,12 @@ export async function* streamModeAwareWorkflow(input: {
 
   // Add current query
   messages.push(new HumanMessage(input.query));
+  
+  console.log('📝 [Streaming Workflow] Initialized messages:', {
+    chatHistoryLength: input.chatHistory?.length || 0,
+    totalMessages: messages.length,
+    messageTypes: messages.map(m => m._getType())
+  });
 
   // Stream workflow execution
   const stream = await app.stream(
@@ -580,7 +586,7 @@ export async function* streamAskExpertWorkflow(input: {
 
   const app = compileAskExpertGraph();
 
-  const messages: BaseMessage[] = input.chatHistory.map((msg) => {
+  const messages: BaseMessage[] = (input.chatHistory || []).map((msg) => {
     if (msg.role === 'user') {
       return new HumanMessage(msg.content);
     } else {

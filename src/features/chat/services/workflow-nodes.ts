@@ -271,9 +271,17 @@ export async function processWithAgentNormalNode(state: WorkflowState): Promise<
       systemPrompt: selectedAgent?.system_prompt || `You are ${selectedAgent?.display_name || selectedAgent?.name}, a ${selectedAgent?.business_function || 'General'} expert.`
     });
     
+    // Ensure messages array is not empty
+    const agentMessages = messages.length > 0 ? messages : [new HumanMessage(query)];
+    
+    console.log('🤖 [Normal Mode] Invoking agent with messages:', {
+      messageCount: agentMessages.length,
+      messageTypes: agentMessages.map(m => m._getType())
+    });
+    
     const result = await agent.invoke({
       input: query,
-      chat_history: messages
+      chat_history: agentMessages
     });
     
     return {

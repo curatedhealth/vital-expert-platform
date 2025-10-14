@@ -371,14 +371,15 @@ const _useChatStore = create<ChatStore>()(
 
         console.log('📤 [sendMessage] Debug info:', {
           hasSelectedAgent: !!selectedAgent,
+          selectedAgent: selectedAgent,
           interactionMode,
           content: content.substring(0, 50) + '...'
         });
 
-        // Allow sending messages without pre-selected agent in automatic mode
-        // The API will handle agent selection automatically
-        if (!selectedAgent && interactionMode !== 'automatic') {
-          console.warn('⚠️  No agent selected. Please select an agent before sending a message.');
+        // In manual mode, require an agent to be selected
+        if (!selectedAgent && interactionMode === 'manual') {
+          console.warn('⚠️  No agent selected in manual mode. Please select an agent before sending a message.');
+          set({ error: 'Please select an agent before sending a message in manual mode.' });
           return;
         }
 

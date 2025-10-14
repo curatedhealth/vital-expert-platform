@@ -14,8 +14,9 @@ export async function POST(request: NextRequest) {
       chatHistory = []
     } = await request.json();
 
-    console.log(`🚀 Chat API: ${interactionMode} + ${autonomousMode ? 'Autonomous' : 'Normal'} mode`);
-    console.log(`🔍 [API] Received interactionMode: ${interactionMode}, selectedAgent: ${agent?.name || 'none'}`);
+        console.log(`🚀 Chat API: ${interactionMode} + ${autonomousMode ? 'Autonomous' : 'Normal'} mode`);
+        console.log(`🔍 [API] Received interactionMode: ${interactionMode}, selectedAgent: ${agent?.name || 'none'}`);
+        console.log(`🔍 [API] Full agent object:`, JSON.stringify(agent, null, 2));
 
     // Create streaming response
     const stream = new ReadableStream({

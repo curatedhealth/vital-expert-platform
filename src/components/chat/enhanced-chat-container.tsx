@@ -27,7 +27,9 @@ export function EnhancedChatContainer({ className }: EnhancedChatContainerProps)
     suggestedAgents,
     showAgentSelection,
     selectAgentFromSuggestions,
-    hideAgentSelection
+    hideAgentSelection,
+    interactionMode,
+    selectedAgent
   } = useChatStore();
 
   const [input, setInput] = useState('');

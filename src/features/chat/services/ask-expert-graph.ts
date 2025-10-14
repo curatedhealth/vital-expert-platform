@@ -289,12 +289,19 @@ export function createModeAwareWorkflowGraph() {
     
     // Mode-based routing - check if agent is already selected
     .addConditionalEdges("routeByMode", (state) => {
-      console.log(`🔀 [Workflow] Routing decision: mode=${state.interactionMode}, hasAgent=${!!state.selectedAgent}`);
-      if (state.interactionMode === 'manual') {
-        // If agent is already selected, skip agent selection
-        return state.selectedAgent ? 'manual_with_agent' : 'manual';
+      console.log(`🔀 [Workflow] Routing decision: mode=${state.interactionMode}, hasAgent=${!!state.selectedAgent}, workflowStep=${state.workflowStep}`);
+      
+      // Use the routing decision from the routeByModeNode
+      if (state.metadata?.routingDecision === 'manual_with_agent') {
+        console.log(`✅ [Workflow] Routing to retrieveContext (manual with agent)`);
+        return 'manual_with_agent';
+      } else if (state.metadata?.routingDecision === 'manual') {
+        console.log(`⏳ [Workflow] Routing to suggestAgents (manual mode)`);
+        return 'manual';
+      } else {
+        console.log(`🤖 [Workflow] Routing to suggestTools (automatic mode)`);
+        return 'automatic';
       }
-      return 'automatic'; // automatic mode
     }, {
       manual: "suggestAgents",
       manual_with_agent: "retrieveContext", // Skip tool selection for manual mode with pre-selected agent

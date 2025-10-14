@@ -488,6 +488,9 @@ const _useChatStore = create<ChatStore>()(
               content: msg.content
             })),
             ragEnabled: selectedAgent?.ragEnabled || false,
+            interactionMode: interactionMode, // Pass the actual interaction mode
+            autonomousMode: autonomousMode, // Pass the autonomous mode
+            selectedTools: get().selectedTools, // Pass selected tools
             automaticRouting: useAutomaticRouting, // Enable intelligent agent routing for automatic mode
             useIntelligentRouting: useAutomaticRouting
           };

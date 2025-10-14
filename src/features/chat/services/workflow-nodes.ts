@@ -64,15 +64,30 @@ const orchestrator = new AutomaticAgentOrchestrator();
  * Determines workflow path based on interactionMode and autonomousMode
  */
 export async function routeByModeNode(state: WorkflowState): Promise<Partial<WorkflowState>> {
-  const { interactionMode, autonomousMode } = state;
+  const { interactionMode, autonomousMode, selectedAgent } = state;
   
-  console.log(`🔄 Routing by mode: ${interactionMode} + ${autonomousMode ? 'Autonomous' : 'Normal'}`);
+  console.log(`🔄 [RouteByMode] Routing by mode: ${interactionMode} + ${autonomousMode ? 'Autonomous' : 'Normal'}`);
+  console.log(`🔍 [RouteByMode] Selected agent: ${selectedAgent?.name || 'none'}`);
+  
+  // Determine the next step based on mode and agent selection
+  let nextStep = 'routing';
+  if (interactionMode === 'manual' && selectedAgent) {
+    nextStep = 'manual_with_agent';
+    console.log(`✅ [RouteByMode] Manual mode with pre-selected agent: ${selectedAgent.name}`);
+  } else if (interactionMode === 'manual') {
+    nextStep = 'manual';
+    console.log(`⏳ [RouteByMode] Manual mode - waiting for agent selection`);
+  } else {
+    nextStep = 'automatic';
+    console.log(`🤖 [RouteByMode] Automatic mode - will select agent automatically`);
+  }
   
   return {
-    workflowStep: 'routing',
+    workflowStep: nextStep,
     metadata: {
       ...state.metadata,
-      mode: `${interactionMode}_${autonomousMode ? 'autonomous' : 'normal'}`
+      mode: `${interactionMode}_${autonomousMode ? 'autonomous' : 'normal'}`,
+      routingDecision: nextStep
     }
   };
 }

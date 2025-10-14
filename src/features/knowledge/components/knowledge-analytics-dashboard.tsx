@@ -159,6 +159,9 @@ const CHART_COLORS = {
 };
 
 const getChartData = (ragCategories: unknown) => {
+  if (!ragCategories || typeof ragCategories !== 'object') {
+    return [];
+  }
   return Object.entries(ragCategories).map(([category, stats]: [string, any]) => ({
     name: category.charAt(0).toUpperCase() + category.slice(1),
     documents: stats.documents,
@@ -176,7 +179,7 @@ interface KnowledgeAnalyticsDashboardProps {
 export function KnowledgeAnalyticsDashboard({
   categoryFilter,
   agentFilter
-}: KnowledgeAnalyticsDashboardProps = { /* TODO: implement */ }) {
+}: KnowledgeAnalyticsDashboardProps = {}) {
   const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -267,6 +270,19 @@ export function KnowledgeAnalyticsDashboard({
           </button>
         </CardContent>
       </Card>
+    );
+  }
+
+  if (!analytics) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+            <p className="text-muted-foreground">Loading analytics data...</p>
+          </div>
+        </div>
+      </div>
     );
   }
 

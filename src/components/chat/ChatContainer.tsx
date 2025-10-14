@@ -98,7 +98,7 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({
 
   // Dynamic contextual actions based on stakeholder detection and workspace
   const { contextualActions, detectedStakeholder, welcomeMessage } = useContextualQuickActions({
-    userActivity: messages.map(m => m.content),
+    userActivity: (messages || []).map(m => m.content),
     maxActions: 4,
     stakeholderType: (currentWorkspace?.type === 'general') ? 'auto' : currentWorkspace?.type || 'auto'
   });
@@ -414,7 +414,7 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({
       setIsLoading(false);
 
       // Update conversation title if it's the first message
-      if (messages.length === 0) {
+      if ((messages || []).length === 0) {
         setConversations(prev =>
           prev.map(conv =>
             conv.id === conversationId

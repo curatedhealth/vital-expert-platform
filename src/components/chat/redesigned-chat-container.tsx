@@ -80,9 +80,9 @@ export function RedesignedChatContainer({ className }: { className?: string }) {
   }, [input, isLoading, interactionMode, selectedAgent, sendMessage, setInput, clearError]);
 
   const handleRetry = React.useCallback(async () => {
-    if (!messages.length) return;
+    if (!(messages || []).length) return;
     setIsRetrying(true);
-    const lastUserMessage = messages.filter(msg => msg.role === 'user').pop();
+    const lastUserMessage = (messages || []).filter(msg => msg.role === 'user').pop();
     if (lastUserMessage) {
       await sendMessage(lastUserMessage.content);
     }
@@ -106,7 +106,7 @@ export function RedesignedChatContainer({ className }: { className?: string }) {
     <div className={cn("flex h-full", className)}>
       {/* Main Chat Area */}
       <div className="flex-1 flex flex-col min-w-0">
-        {messages.length === 0 ? (
+        {(messages || []).length === 0 ? (
           // Empty state with centered input (ChatGPT style)
           <div className="flex-1 flex flex-col items-center justify-center p-4">
             {/* Welcome Message */}
@@ -149,16 +149,16 @@ export function RedesignedChatContainer({ className }: { className?: string }) {
             {/* Messages */}
             <ScrollArea className="flex-1 p-4">
               <div className="space-y-4 max-w-4xl mx-auto">
-                {messages.map((message, index) => (
+                {(messages || []).map((message, index) => (
                   <MessageBubble
                     key={message.id || index}
                     message={message}
-                    isLastMessage={index === messages.length - 1}
-                    isLoading={isLoading && index === messages.length - 1}
+                    isLastMessage={index === (messages || []).length - 1}
+                    isLoading={isLoading && index === (messages || []).length - 1}
                     agent={message.role === 'assistant' ? selectedAgent : undefined}
                   />
                 ))}
-                {isLoading && messages.length > 0 && messages[messages.length - 1]?.role === 'user' && (
+                {isLoading && (messages || []).length > 0 && (messages || [])[(messages || []).length - 1]?.role === 'user' && (
                   <MessageBubble
                     message={{
                       id: 'loading',

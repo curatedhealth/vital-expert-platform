@@ -143,14 +143,14 @@ export function EnhancedChatSidebar({
     return chats.map(chat => ({
       id: chat.id,
       title: chat.title || 'New Chat',
-      lastMessage: chat.messages[chat.messages.length - 1]?.content || 'No messages yet',
+      lastMessage: (chat.messages || [])[(chat.messages || []).length - 1]?.content || 'No messages yet',
       timestamp: new Date(chat.updatedAt),
       agentId: chat.agentId,
       agentName: chat.agentName,
       unreadCount: 0, // This would be calculated from unread messages
       isPinned: false, // This would come from chat metadata
       isArchived: false, // This would come from chat metadata
-      messageCount: chat.messages.length
+      messageCount: (chat.messages || []).length
     }));
   }, [chats]);
 

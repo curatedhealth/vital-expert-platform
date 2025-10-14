@@ -87,11 +87,11 @@ export function ChatContainer({ className }: { className?: string }) {
   }, [input, isLoading, interactionMode, selectedAgent, sendMessage, setInput]);
 
   const handleRetry = React.useCallback(async () => {
-    if (!messages.length) return;
+    if (!(messages || []).length) return;
     
     setIsRetrying(true);
     try {
-      const lastUserMessage = [...messages].reverse().find(m => m.role === 'user');
+      const lastUserMessage = [...(messages || [])].reverse().find(m => m.role === 'user');
       if (lastUserMessage) {
         await sendMessage(lastUserMessage.content);
       }
@@ -119,7 +119,7 @@ export function ChatContainer({ className }: { className?: string }) {
         {/* Messages */}
         <ScrollArea className="flex-1 p-4">
           <div className="space-y-4 max-w-4xl mx-auto">
-            {messages.length === 0 ? (
+            {(messages || []).length === 0 ? (
               <div className="text-center py-12">
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">
                   Welcome to VITAL Expert Chat
@@ -150,7 +150,7 @@ export function ChatContainer({ className }: { className?: string }) {
                 )}
               </div>
             ) : (
-              messages.map((message) => (
+              (messages || []).map((message) => (
                 <MessageBubble key={message.id} message={message} />
               ))
             )}

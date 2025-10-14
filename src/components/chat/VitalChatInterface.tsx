@@ -503,11 +503,11 @@ Would you like me to dive deeper into any of these areas? I can also generate sp
         <ScrollArea className="flex-1 p-4">
           <div className="space-y-4">
             <AnimatePresence initial={false}>
-              {messages.map((message, index) => (
+              {(messages || []).map((message, index) => (
                 <Message
                   key={message.id}
                   message={message}
-                  isLast={index === messages.length - 1}
+                  isLast={index === (messages || []).length - 1}
                   onBranchChange={(branchIndex) => {
                     setMessages(prev => prev.map(msg =>
                       msg.id === message.id

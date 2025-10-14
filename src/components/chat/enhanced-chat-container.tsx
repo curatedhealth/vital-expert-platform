@@ -79,7 +79,7 @@ export function EnhancedChatContainer({ className }: EnhancedChatContainerProps)
       {/* Chat Container */}
       <ChatContainerRoot className="flex-1 overflow-hidden">
         <ChatContainerContent className="p-4 space-y-4">
-          {messages.map((message) => (
+          {(messages || []).map((message) => (
             <div
               key={message.id}
               className={cn(

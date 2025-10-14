@@ -301,6 +301,41 @@ function ChatPageContent() {
                   </div>
                 )}
 
+                {/* Agent Selection Prompt for Manual Mode */}
+                {interactionMode === 'manual' && !selectedAgent && (
+                  <div className="p-6 border-b border-gray-200 bg-blue-50">
+                    <div className="text-center">
+                      <h3 className="text-lg font-semibold text-blue-900 mb-2">
+                        🤖 Select an AI Agent
+                      </h3>
+                      <p className="text-blue-700 mb-4">
+                        You're in Manual Mode. Please select an AI agent to start chatting.
+                      </p>
+                      <div className="flex flex-wrap gap-2 justify-center">
+                        {agents.slice(0, 6).map((agent) => (
+                          <button
+                            key={agent.id}
+                            onClick={() => handleAgentSelect(agent.id)}
+                            className="px-4 py-2 bg-white border border-blue-300 rounded-lg hover:bg-blue-100 hover:border-blue-400 transition-colors text-sm font-medium text-blue-900"
+                          >
+                            <div className="flex items-center space-x-2">
+                              <span className="text-lg">{agent.avatar || '🤖'}</span>
+                              <span>{agent.display_name || agent.name}</span>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                      <p className="text-xs text-blue-600 mt-3">
+                        Or visit the <button 
+                          onClick={handleAgentStoreClick}
+                          className="underline hover:text-blue-800"
+                        >
+                          Agent Store
+                        </button> to see all available agents.
+                      </p>
+                    </div>
+                  </div>
+                )}
 
                 {/* Enhanced Chat Container with Dynamic Reasoning */}
                 <div className="flex-1">

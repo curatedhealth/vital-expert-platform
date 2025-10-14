@@ -160,6 +160,18 @@ export function EnhancedChatContainer({ className }: EnhancedChatContainerProps)
 
       {/* Input Area */}
       <div className="border-t p-4">
+        {/* Manual Mode Warning */}
+        {interactionMode === 'manual' && !selectedAgent && (
+          <div className="mb-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+            <div className="flex items-center space-x-2">
+              <div className="text-yellow-600">⚠️</div>
+              <p className="text-sm text-yellow-800">
+                Please select an AI agent above before sending a message in Manual Mode.
+              </p>
+            </div>
+          </div>
+        )}
+        
         <form onSubmit={handleSubmit} className="flex gap-2">
           <Textarea
             ref={textareaRef}
@@ -171,13 +183,21 @@ export function EnhancedChatContainer({ className }: EnhancedChatContainerProps)
               e.target.style.height = `${Math.min(e.target.scrollHeight, 120)}px`;
             }}
             onKeyDown={handleKeyDown}
-            placeholder="Ask about digital health, reimbursement, clinical research..."
-            className="min-h-[40px] max-h-[120px] resize-none"
-            disabled={isLoading}
+            placeholder={
+              interactionMode === 'manual' && !selectedAgent 
+                ? "Please select an AI agent first..." 
+                : "Ask about digital health, reimbursement, clinical research..."
+            }
+            className={`min-h-[40px] max-h-[120px] resize-none ${
+              interactionMode === 'manual' && !selectedAgent 
+                ? 'border-yellow-300 bg-yellow-50' 
+                : ''
+            }`}
+            disabled={isLoading || (interactionMode === 'manual' && !selectedAgent)}
           />
           <Button
             type="submit"
-            disabled={!input.trim() || isLoading}
+            disabled={!input.trim() || isLoading || (interactionMode === 'manual' && !selectedAgent)}
             className="px-4"
           >
             {isLoading ? (

@@ -32,6 +32,7 @@ export function AgentSelectionPanel({
   const [selectedCategory, setSelectedCategory] = React.useState('all');
   const [selectingAgentId, setSelectingAgentId] = React.useState<string | null>(null);
   const [recentAgents, setRecentAgents] = React.useState<string[]>([]);
+  const [selectDebounceTimer, setSelectDebounceTimer] = React.useState<NodeJS.Timeout | null>(null);
 
   // AUDIT FIX: Move localStorage to useEffect with try-catch
   React.useEffect(() => {
@@ -43,6 +44,15 @@ export function AgentSelectionPanel({
       localStorage.removeItem('recent-agents'); // heal corrupted data
     }
   }, []);
+
+  // Cleanup debounce timer on unmount
+  React.useEffect(() => {
+    return () => {
+      if (selectDebounceTimer) {
+        clearTimeout(selectDebounceTimer);
+      }
+    };
+  }, [selectDebounceTimer]);
 
   const filteredAgents = React.useMemo(() => {
     let out = agents;
@@ -67,29 +77,39 @@ export function AgentSelectionPanel({
     [agents]
   );
 
-  // AUDIT FIX: Async acknowledgment pattern
+  // AUDIT FIX: Async acknowledgment pattern with debounce
   const handleSelectAgent = React.useCallback(async (agent: Agent) => {
     if (selectingAgentId) return; // Prevent double-click
     
-    setSelectingAgentId(agent.id);
-    try {
-      const ack = await onSelectAgent(agent);
-      if (!ack) return; // Guard on acknowledgment
-      
-      // Update recent agents
-      setRecentAgents(prev => {
-        const next = [agent.id, ...prev.filter(id => id !== agent.id)].slice(0, 5);
-        try { 
-          localStorage.setItem('recent-agents', JSON.stringify(next)); 
-        } catch (e) {
-          console.warn('Failed to persist recent agents', e);
-        }
-        return next;
-      });
-    } finally {
-      setSelectingAgentId(null);
+    // Clear any pending selection
+    if (selectDebounceTimer) {
+      clearTimeout(selectDebounceTimer);
     }
-  }, [onSelectAgent, selectingAgentId]);
+    
+    // Debounce for 100ms to prevent double-clicks
+    const timer = setTimeout(async () => {
+      setSelectingAgentId(agent.id);
+      try {
+        const ack = await onSelectAgent(agent);
+        if (!ack) return; // Guard on acknowledgment
+        
+        // Update recent agents
+        setRecentAgents(prev => {
+          const next = [agent.id, ...prev.filter(id => id !== agent.id)].slice(0, 5);
+          try { 
+            localStorage.setItem('recent-agents', JSON.stringify(next)); 
+          } catch (e) {
+            console.warn('Failed to persist recent agents', e);
+          }
+          return next;
+        });
+      } finally {
+        setSelectingAgentId(null);
+      }
+    }, 100);
+    
+    setSelectDebounceTimer(timer);
+  }, [onSelectAgent, selectingAgentId, selectDebounceTimer]);
 
   if (isLoading) {
     return (

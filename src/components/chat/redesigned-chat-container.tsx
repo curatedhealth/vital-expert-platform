@@ -13,6 +13,7 @@ import { useChatStore } from '@/lib/stores/chat-store';
 import { MessageBubble } from './message-bubble';
 import { ReasoningDisplay } from './reasoning-display';
 import { AgentSelectionPanel } from './agent-selection-panel';
+import { ChatInput } from './chat-input';
 
 export function RedesignedChatContainer({ className }: { className?: string }) {
   const {
@@ -27,12 +28,20 @@ export function RedesignedChatContainer({ className }: { className?: string }) {
     interactionMode,
     agents,
     selectAgent,
+    cleanup,
   } = useChatStore();
 
   const [isRetrying, setIsRetrying] = React.useState(false);
 
   // AUDIT FIX: AbortController lifecycle
   const abortControllerRef = React.useRef<AbortController | null>(null);
+
+  // Cleanup on unmount
+  React.useEffect(() => {
+    return () => {
+      cleanup();
+    };
+  }, [cleanup]);
 
   // AUDIT FIX: Async acknowledgment pattern
   const handleSelectAgent = React.useCallback(async (agent: any) => {
@@ -137,9 +146,9 @@ export function RedesignedChatContainer({ className }: { className?: string }) {
           </div>
         </ScrollArea>
 
-        {/* Input Area */}
-        <div className="border-t bg-white p-4">
-          {error && (
+        {/* Error Display */}
+        {error && (
+          <div className="border-t bg-white p-4">
             <Alert variant="destructive" className="mb-4">
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>{error}</AlertDescription>
@@ -154,31 +163,23 @@ export function RedesignedChatContainer({ className }: { className?: string }) {
                 <span className="ml-2">Retry</span>
               </Button>
             </Alert>
-          )}
-          <form onSubmit={handleSubmit} className="flex items-center space-x-2">
-            <Textarea
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              placeholder={
-                interactionMode === 'manual' && !selectedAgent
-                  ? 'Please select an AI agent to start chatting.'
-                  : 'Type your message...'
-              }
-              className="flex-1 min-h-[40px] max-h-[150px] resize-none"
-              disabled={isLoading || (interactionMode === 'manual' && !selectedAgent)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && !e.shiftKey && canSend) {
-                  e.preventDefault();
-                  handleSubmit(e);
-                }
-              }}
-            />
-            <Button type="submit" disabled={!canSend}>
-              {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-              <span className="sr-only">Send message</span>
-            </Button>
-          </form>
-        </div>
+          </div>
+        )}
+
+        {/* Input Area */}
+        <ChatInput
+          value={input}
+          onChange={setInput}
+          onSubmit={() => {
+            if (canSend) {
+              handleSubmit(new Event('submit') as any);
+            }
+          }}
+          isLoading={isLoading}
+          interactionMode={interactionMode}
+          hasSelectedAgent={!!selectedAgent}
+          className="border-t"
+        />
       </div>
     </div>
   );

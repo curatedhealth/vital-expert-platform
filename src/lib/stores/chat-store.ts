@@ -3,6 +3,7 @@ import { persist } from 'zustand/middleware';
 
 // import { agentService } from '@/features/agents/services/agent-service';
 import { useAgentsStore, type Agent as GlobalAgent } from '@/lib/stores/agents-store';
+import { retryWithExponentialBackoff, isRetryableError } from '@/lib/utils/retry';
 
 export interface Agent {
   id: string;
@@ -182,7 +183,7 @@ export interface ChatStore {
   sendMessage: (content: string, attachments?: unknown[]) => Promise<void>;
   stopGeneration: () => void;
   setInput: (input: string) => void;
-  setSelectedAgent: (agent: Agent | null) => void;
+  setSelectedAgent: (agent: Agent | null) => Promise<string>;
   setSelectedModel: (model: AIModel | null) => void;
   createCustomAgent: (agent: Omit<Agent, 'id' | 'isCustom'>) => void;
   updateAgent: (agentId: string, updates: Partial<Agent>) => void;
@@ -254,6 +255,12 @@ export interface ChatStore {
     details?: any;
     tools?: string[];
   }>) => void;
+
+  // Validation helper
+  validateCanSend: () => { valid: boolean; reason: string | null };
+
+  // Cleanup helper
+  cleanup: () => void;
   addReasoningEvent: (event: {
     type: 'reasoning' | 'complete' | 'error';
     step: string;
@@ -411,14 +418,14 @@ const _useChatStore = create<ChatStore>()(
           content: content.substring(0, 50) + '...'
         });
 
-        // CRITICAL: Validate BEFORE creating messages
+        // LAYER 1: Store-level validation
         if (interactionMode === 'manual' && !selectedAgent?.id) {
-          console.error('❌ No agent selected in manual mode');
+          console.error('❌ [LAYER 1] No agent selected in manual mode');
           set({ 
-            error: 'Please select an AI agent in Manual Mode.',
+            error: 'Manual Mode requires an agent. Please select an AI agent from the left panel.',
             isLoading: false 
           });
-          return; // Stop here - don't create any messages
+          return; // CRITICAL: Stop before creating messages
         }
 
         // Clear previous errors and set loading
@@ -544,14 +551,21 @@ const _useChatStore = create<ChatStore>()(
 
           // Call the appropriate chat API with streaming support
           console.log('🌐 Making fetch request to:', apiEndpoint);
-          const response = await fetch(apiEndpoint, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            signal: controller.signal,
-            body: JSON.stringify(requestBody)
-          });
+          const response = await retryWithExponentialBackoff(
+            () => fetch(apiEndpoint, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              signal: controller.signal,
+              body: JSON.stringify(requestBody)
+            }),
+            {
+              maxAttempts: 3,
+              initialDelay: 1000,
+              shouldRetry: isRetryableError
+            }
+          );
 
           console.log('📡 Response received:', {
             status: response.status,
@@ -862,8 +876,22 @@ const _useChatStore = create<ChatStore>()(
         }
       },
 
-      setSelectedAgent: (agent: Agent | null) => {
-        set({ selectedAgent: agent, error: null });
+      setSelectedAgent: async (agent: Agent | null) => {
+        return new Promise<string>((resolve) => {
+          set({ 
+            selectedAgent: agent, 
+            error: null,
+            // Clear any previous errors when selecting agent
+            liveReasoning: '',
+            isReasoningActive: false
+          });
+          
+          // Wait for state update to complete
+          setTimeout(() => {
+            console.log('✅ Agent selection confirmed:', agent?.name);
+            resolve('ack'); // Return acknowledgment
+          }, 0);
+        });
       },
 
       setInput: (input: string) => {
@@ -1379,7 +1407,7 @@ const _useChatStore = create<ChatStore>()(
       },
 
       selectAgent: async (agentId: string) => {
-        const { agents } = get();
+        const { agents, setSelectedAgent } = get();
         const agent = agents.find(a => a.id === agentId);
         
         if (!agent) {
@@ -1388,9 +1416,14 @@ const _useChatStore = create<ChatStore>()(
 
         console.log('✅ Agent selected via selectAgent:', agent.name);
         
-        // Set the selected agent
-        set({ 
-          selectedAgent: agent,
+        // Use the async setSelectedAgent for proper acknowledgment
+        const ack = await setSelectedAgent(agent);
+        if (!ack) {
+          throw new Error('Agent selection failed - no acknowledgment');
+        }
+        
+        // Update other state
+        set({
           showAgentSelection: false,
           isWaitingForAgentSelection: false,
           error: null
@@ -1591,6 +1624,34 @@ const _useChatStore = create<ChatStore>()(
           ...state
         }
       });
+    },
+
+    // Validation helper
+    validateCanSend: () => {
+      const { selectedAgent, interactionMode, isLoading } = get();
+      
+      if (isLoading) {
+        return { valid: false, reason: 'Already processing a message' };
+      }
+      
+      if (interactionMode === 'manual' && !selectedAgent) {
+        return { 
+          valid: false, 
+          reason: 'Please select an AI agent in Manual Mode' 
+        };
+      }
+      
+      return { valid: true, reason: null };
+    },
+
+    // Cleanup helper
+    cleanup: () => {
+      const { abortController } = get();
+      if (abortController) {
+        console.log('🧹 Cleaning up abort controller');
+        abortController.abort();
+        set({ abortController: null, isLoading: false });
+      }
     },
     }),
     {

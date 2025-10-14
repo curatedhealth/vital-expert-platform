@@ -11,6 +11,7 @@
 
 import { DynamicStructuredTool } from '@langchain/core/tools';
 import { z } from 'zod';
+import { circuitBreakers } from '@/lib/utils/circuit-breaker';
 
 // ============================================================================
 // TYPES & INTERFACES
@@ -61,28 +62,30 @@ export const createWebSearchTool = () => {
           });
         }
 
-        // Call Tavily Search API
-        const response = await fetch('https://api.tavily.com/search', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            api_key: apiKey,
-            query,
-            max_results: Math.min(maxResults, 10),
-            search_depth: 'advanced',
-            include_answer: true,
-            include_domains: [
-              'clinicaltrials.gov',
-              'fda.gov',
-              'ema.europa.eu',
-              'pubmed.ncbi.nlm.nih.gov',
-              'nejm.org',
-              'thelancet.com',
-              'bmj.com'
-            ]
-          })
+        // Call Tavily Search API with circuit breaker protection
+        const response = await circuitBreakers.tavily.execute(async () => {
+          return fetch('https://api.tavily.com/search', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              api_key: apiKey,
+              query,
+              max_results: Math.min(maxResults, 10),
+              search_depth: 'advanced',
+              include_answer: true,
+              include_domains: [
+                'clinicaltrials.gov',
+                'fda.gov',
+                'ema.europa.eu',
+                'pubmed.ncbi.nlm.nih.gov',
+                'nejm.org',
+                'thelancet.com',
+                'bmj.com'
+              ]
+            })
+          });
         });
 
         if (!response.ok) {

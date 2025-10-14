@@ -1,348 +1,243 @@
+/**
+ * Performance Monitoring Dashboard
+ * Real-time monitoring of LangChain, LangGraph, and RAG systems
+ */
+
 'use client';
 
-import { 
-  Activity, 
-  Database, 
-  Zap, 
-  AlertTriangle, 
-  CheckCircle, 
-  Clock,
-  TrendingUp,
-  RefreshCw
-} from 'lucide-react';
 import React, { useState, useEffect } from 'react';
-
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { RefreshCw, Activity, AlertTriangle, CheckCircle, XCircle } from 'lucide-react';
+import { performanceMonitor, type SystemHealth } from '@/lib/monitoring/performance-monitor';
 
-import { VercelAnalyticsDashboard } from './vercel-analytics-dashboard';
-
-interface SystemStatus {
-  redis: 'connected' | 'disconnected' | 'unknown';
-  supabase: 'connected' | 'disconnected' | 'unknown';
-  langsmith: 'enabled' | 'disabled' | 'unknown';
-  openai: 'connected' | 'disconnected' | 'unknown';
-  vercelAnalytics: 'enabled' | 'disabled' | 'unknown';
-  lastUpdate: string;
+interface PerformanceDashboardProps {
+  className?: string;
 }
 
-interface PerformanceMetrics {
-  avgResponseTime: number;
-  totalRequests: number;
-  errorRate: number;
-  cacheHitRate: number;
-  activeSessions: number;
-}
+export function PerformanceDashboard({ className }: PerformanceDashboardProps) {
+  const [health, setHealth] = useState<SystemHealth | null>(null);
+  const [stats, setStats] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-export function PerformanceDashboard() {
-  const [status, setStatus] = useState<SystemStatus>({
-    redis: 'unknown',
-    supabase: 'unknown',
-    langsmith: 'unknown',
-    openai: 'unknown',
-    vercelAnalytics: 'unknown',
-    lastUpdate: new Date().toISOString()
-  });
-
-  const [metrics, setMetrics] = useState<PerformanceMetrics>({
-    avgResponseTime: 0,
-    totalRequests: 0,
-    errorRate: 0,
-    cacheHitRate: 0,
-    activeSessions: 0
-  });
-
-  const [loading, setLoading] = useState(true);
-
-  const checkSystemStatus = async () => {
+  const refreshData = async () => {
+    setIsLoading(true);
     try {
-      setLoading(true);
+      const healthData = performanceMonitor.getSystemHealth();
+      const statsData = performanceMonitor.getStats();
       
-      // Check Redis status
-      const redisStatus = process.env.UPSTASH_REDIS_REST_URL ? 'connected' : 'disconnected';
-      
-      // Check Supabase status
-      const supabaseStatus = process.env.NEXT_PUBLIC_SUPABASE_URL ? 'connected' : 'disconnected';
-      
-      // Check LangSmith status
-      const langsmithStatus = process.env.LANGCHAIN_TRACING_V2 === 'true' ? 'enabled' : 'disabled';
-      
-      // Check OpenAI status
-      const openaiStatus = process.env.OPENAI_API_KEY ? 'connected' : 'disconnected';
-      
-      // Check Vercel Analytics status (check if @vercel/analytics is installed and configured)
-      const vercelAnalyticsStatus = typeof window !== 'undefined' && 
-        (window as any).__VERCEL_ANALYTICS__ ? 'enabled' : 'disabled';
-
-      setStatus({
-        redis: redisStatus,
-        supabase: supabaseStatus,
-        langsmith: langsmithStatus,
-        openai: openaiStatus,
-        vercelAnalytics: vercelAnalyticsStatus,
-        lastUpdate: new Date().toISOString()
-      });
-
-      // Fetch performance metrics
-      try {
-        const response = await fetch('/api/monitoring/performance');
-        if (response.ok) {
-          const data = await response.json();
-          setMetrics(data);
-        }
-      } catch (error) {
-        console.warn('Failed to fetch performance metrics:', error);
-      }
-
+      setHealth(healthData);
+      setStats(statsData);
     } catch (error) {
-      console.error('Failed to check system status:', error);
+      console.error('Failed to fetch monitoring data:', error);
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
   useEffect(() => {
-    checkSystemStatus();
-    const interval = setInterval(checkSystemStatus, 30000); // Check every 30 seconds
+    refreshData();
+    
+    // Refresh every 30 seconds
+    const interval = setInterval(refreshData, 30000);
     return () => clearInterval(interval);
   }, []);
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'connected':
-      case 'enabled':
+      case 'up':
+      case 'healthy':
         return <CheckCircle className="h-4 w-4 text-green-500" />;
-      case 'disconnected':
-      case 'disabled':
-        return <AlertTriangle className="h-4 w-4 text-red-500" />;
+      case 'degraded':
+        return <AlertTriangle className="h-4 w-4 text-yellow-500" />;
+      case 'down':
+      case 'unhealthy':
+        return <XCircle className="h-4 w-4 text-red-500" />;
       default:
-        return <Clock className="h-4 w-4 text-yellow-500" />;
+        return <Activity className="h-4 w-4 text-gray-500" />;
     }
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'connected':
-      case 'enabled':
-        return 'bg-green-100 text-green-800';
-      case 'disconnected':
-      case 'disabled':
-        return 'bg-red-100 text-red-800';
+      case 'up':
+      case 'healthy':
+        return 'bg-green-100 text-green-800 border-green-200';
+      case 'degraded':
+        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      case 'down':
+      case 'unhealthy':
+        return 'bg-red-100 text-red-800 border-red-200';
       default:
-        return 'bg-yellow-100 text-yellow-800';
+        return 'bg-gray-100 text-gray-800 border-gray-200';
     }
   };
 
+  if (isLoading) {
+    return (
+      <div className={`p-6 ${className}`}>
+        <div className="flex items-center justify-center h-64">
+          <RefreshCw className="h-8 w-8 animate-spin text-blue-500" />
+          <span className="ml-2 text-gray-600">Loading monitoring data...</span>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="space-y-6">
+    <div className={`space-y-6 ${className}`}>
+      {/* Header */}
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold">System Performance Dashboard</h2>
-        <Button 
-          onClick={checkSystemStatus} 
-          disabled={loading}
-          variant="outline"
-          size="sm"
-        >
-          <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900">System Performance</h2>
+          <p className="text-gray-600">Real-time monitoring of AI services</p>
+        </div>
+        <Button onClick={refreshData} variant="outline" size="sm">
+          <RefreshCw className="h-4 w-4 mr-2" />
           Refresh
         </Button>
       </div>
 
-      {/* System Status */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+      {/* Overall Health Status */}
+      {health && (
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Redis Cache</CardTitle>
-            {getStatusIcon(status.redis)}
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              {getStatusIcon(health.status)}
+              Overall System Health
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <Badge className={getStatusColor(status.redis)}>
-              {status.redis}
-            </Badge>
-            <p className="text-xs text-muted-foreground mt-1">
-              {status.redis === 'connected' ? 'Caching enabled' : 'Caching disabled'}
-            </p>
+            <div className="flex items-center gap-4">
+              <Badge className={`${getStatusColor(health.status)} text-sm font-medium`}>
+                {health.status.toUpperCase()}
+              </Badge>
+              <div className="text-sm text-gray-600">
+                Last updated: {health.lastUpdated.toLocaleTimeString()}
+              </div>
+            </div>
           </CardContent>
         </Card>
+      )}
 
+      {/* Service Status */}
+      {health && (
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Supabase</CardTitle>
-            {getStatusIcon(status.supabase)}
+          <CardHeader>
+            <CardTitle>Service Status</CardTitle>
           </CardHeader>
           <CardContent>
-            <Badge className={getStatusColor(status.supabase)}>
-              {status.supabase}
-            </Badge>
-            <p className="text-xs text-muted-foreground mt-1">
-              Database connection
-            </p>
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+              {Object.entries(health.services).map(([service, status]) => (
+                <div key={service} className="flex items-center gap-2">
+                  {getStatusIcon(status)}
+                  <span className="text-sm font-medium capitalize">
+                    {service.replace(/([A-Z])/g, ' $1').trim()}
+                  </span>
+                </div>
+              ))}
+            </div>
           </CardContent>
         </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">LangSmith</CardTitle>
-            {getStatusIcon(status.langsmith)}
-          </CardHeader>
-          <CardContent>
-            <Badge className={getStatusColor(status.langsmith)}>
-              {status.langsmith}
-            </Badge>
-            <p className="text-xs text-muted-foreground mt-1">
-              AI monitoring
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">OpenAI</CardTitle>
-            {getStatusIcon(status.openai)}
-          </CardHeader>
-          <CardContent>
-            <Badge className={getStatusColor(status.openai)}>
-              {status.openai}
-            </Badge>
-            <p className="text-xs text-muted-foreground mt-1">
-              AI provider
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Vercel Analytics</CardTitle>
-            {getStatusIcon(status.vercelAnalytics)}
-          </CardHeader>
-          <CardContent>
-            <Badge className={getStatusColor(status.vercelAnalytics)}>
-              {status.vercelAnalytics}
-            </Badge>
-            <p className="text-xs text-muted-foreground mt-1">
-              Web analytics
-            </p>
-          </CardContent>
-        </Card>
-      </div>
+      )}
 
       {/* Performance Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+      {stats && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-gray-600">Total Operations</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.totalOperations}</div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-gray-600">Success Rate</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-green-600">
+                {stats.successRate.toFixed(1)}%
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-gray-600">Avg Response Time</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {stats.avgResponseTime.toFixed(0)}ms
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-gray-600">Error Rate</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-red-600">
+                {stats.errorRate.toFixed(1)}%
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Recent Errors */}
+      {stats && stats.recentErrors.length > 0 && (
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Avg Response Time</CardTitle>
-            <Clock className="h-4 w-4 text-muted-foreground" />
+          <CardHeader>
+            <CardTitle className="text-red-600">Recent Errors</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{metrics.avgResponseTime}ms</div>
-            <p className="text-xs text-muted-foreground">
-              API response time
-            </p>
+            <div className="space-y-2">
+              {stats.recentErrors.slice(0, 5).map((error: any, index: number) => (
+                <div key={index} className="flex items-center justify-between p-2 bg-red-50 rounded">
+                  <div>
+                    <div className="font-medium text-sm">{error.operation}</div>
+                    <div className="text-xs text-red-600">{error.error}</div>
+                  </div>
+                  <div className="text-xs text-gray-500">
+                    {error.duration}ms
+                  </div>
+                </div>
+              ))}
+            </div>
           </CardContent>
         </Card>
+      )}
 
+      {/* Slow Operations */}
+      {stats && stats.slowOperations.length > 0 && (
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Requests</CardTitle>
-            <Activity className="h-4 w-4 text-muted-foreground" />
+          <CardHeader>
+            <CardTitle className="text-yellow-600">Slow Operations (>3s)</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{metrics.totalRequests.toLocaleString()}</div>
-            <p className="text-xs text-muted-foreground">
-              All time requests
-            </p>
+            <div className="space-y-2">
+              {stats.slowOperations.slice(0, 5).map((op: any, index: number) => (
+                <div key={index} className="flex items-center justify-between p-2 bg-yellow-50 rounded">
+                  <div>
+                    <div className="font-medium text-sm">{op.operation}</div>
+                    <div className="text-xs text-gray-600">
+                      {op.timestamp.toLocaleTimeString()}
+                    </div>
+                  </div>
+                  <div className="text-xs text-yellow-600 font-medium">
+                    {op.duration}ms
+                  </div>
+                </div>
+              ))}
+            </div>
           </CardContent>
         </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Error Rate</CardTitle>
-            <AlertTriangle className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{metrics.errorRate.toFixed(2)}%</div>
-            <p className="text-xs text-muted-foreground">
-              Failed requests
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Cache Hit Rate</CardTitle>
-            <Zap className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{metrics.cacheHitRate.toFixed(1)}%</div>
-            <p className="text-xs text-muted-foreground">
-              Cache efficiency
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Sessions</CardTitle>
-            <Database className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{metrics.activeSessions}</div>
-            <p className="text-xs text-muted-foreground">
-              Current users
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Quick Actions */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Quick Actions</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-2">
-          <div className="flex flex-wrap gap-2">
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={() => window.open('https://console.upstash.com/', '_blank')}
-            >
-              <Zap className="h-4 w-4 mr-2" />
-              Setup Redis
-            </Button>
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={() => window.open('https://smith.langchain.com/', '_blank')}
-            >
-              <TrendingUp className="h-4 w-4 mr-2" />
-              Setup LangSmith
-            </Button>
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={() => window.open('https://supabase.com/dashboard', '_blank')}
-            >
-              <Database className="h-4 w-4 mr-2" />
-              Supabase Dashboard
-            </Button>
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={() => window.open('https://vercel.com/dashboard', '_blank')}
-            >
-              <Activity className="h-4 w-4 mr-2" />
-              Vercel Analytics
-            </Button>
-          </div>
-          <p className="text-xs text-muted-foreground">
-            Last updated: {new Date(status.lastUpdate).toLocaleString()}
-          </p>
-        </CardContent>
-      </Card>
-
-      {/* Vercel Analytics Dashboard */}
-      <VercelAnalyticsDashboard />
+      )}
     </div>
   );
 }

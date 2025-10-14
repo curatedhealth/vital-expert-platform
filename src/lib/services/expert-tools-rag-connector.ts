@@ -4,6 +4,8 @@
  */
 
 import { OpenAIEmbeddings } from '@langchain/openai';
+import { circuitBreakers } from '@/lib/utils/circuit-breaker';
+import { embeddingCache } from '@/lib/utils/embedding-cache';
 
 import ragService from '../../shared/services/rag/rag-service';
 
@@ -48,19 +50,23 @@ export async function searchKnowledgeBase(
     // Map category to domain
     const domain = category ? CATEGORY_TO_DOMAIN_MAP[category] : undefined;
 
-    // Generate embedding for query using OpenAI
+    // Generate embedding for query using OpenAI with circuit breaker protection
     const embeddings = new OpenAIEmbeddings({
       openAIApiKey: process.env.OPENAI_API_KEY
     });
 
-    const queryEmbedding = await embeddings.embedQuery(query);
+    const queryEmbedding = await circuitBreakers.openai.execute(async () => {
+      return embeddingCache.getEmbedding(query);
+    });
 
-    // Search knowledge base using existing RAG service
-    const results = await ragService.searchKnowledge(query, queryEmbedding, {
-      threshold: 0.7,
-      limit: topK,
-      domain,
-      include_metadata: true
+    // Search knowledge base using existing RAG service with circuit breaker protection
+    const results = await circuitBreakers.supabase.execute(async () => {
+      return ragService.searchKnowledge(query, queryEmbedding, {
+        threshold: 0.7,
+        limit: topK,
+        domain,
+        include_metadata: true
+      });
     });
 
     const duration = Date.now() - startTime;

@@ -1,5 +1,5 @@
 import { ChatOpenAI } from '@langchain/openai';
-import { StructuredOutputParser, OutputFixingParser } from 'langchain/output_parsers';
+import { StructuredOutputParser, OutputFixingParser } from '@langchain/core/output_parsers';
 import { z } from 'zod';
 
 const llm = new ChatOpenAI({

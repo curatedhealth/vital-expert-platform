@@ -3,6 +3,35 @@
 // Prevent pre-rendering for client-side only page
 export const dynamic = 'force-dynamic';
 
+/**
+ * VITAL Expert Chat Page
+ * 
+ * Supports two interaction modes:
+ * 1. **Manual Mode**: User selects AI agent from left panel
+ * 2. **Automatic Mode**: System selects best agent via LangGraph workflow
+ * 
+ * Agent Selection:
+ * - All agent routing happens through LangGraph StateGraph
+ * - Uses AutomaticAgentOrchestrator for intelligent selection
+ * - No hardcoded agent lists - all from database
+ * 
+ * Validation:
+ * - Three-layer validation: Store, UI, Backend
+ * - Manual mode requires agent selection before sending messages
+ * - Automatic mode works without user intervention
+ * 
+ * Components:
+ * - AgentSelectionPanel: Left sidebar for manual agent selection
+ * - ChatHeader: Shows current agent and mode indicators
+ * - ChatContainer: Main message display area
+ * - ChatInput: Smart input with validation
+ * 
+ * State Management:
+ * - useChatStore: Zustand store for chat state
+ * - Async acknowledgment pattern for agent selection
+ * - Proper cleanup on unmount
+ */
+
 import { useState, useEffect, useRef } from 'react';
 
 import { ClientAuthWrapper } from '@/components/auth/client-auth-wrapper';
@@ -35,13 +64,8 @@ function ChatPageContent() {
 
   return (
     <div className="flex h-screen bg-gray-50">
-      {/* Main Content Area */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Chat Container */}
-        <div className="flex-1">
-          <RedesignedChatContainer className="h-full" />
-        </div>
-      </div>
+      {/* Chat Container with integrated agent panel */}
+      <RedesignedChatContainer className="h-full" />
 
       {/* Agent Creator Modal */}
       {showAgentCreator && (

@@ -9,6 +9,7 @@
  */
 
 import { OpenAIEmbeddings } from '@langchain/openai';
+import { embeddingCache } from '@/lib/utils/embedding-cache';
 
 import { supabaseAdmin } from '../supabase/admin';
 import type { Agent } from '../../types/agent.types';
@@ -86,8 +87,8 @@ export class AgentRanker {
 
     const finalWeights = { ...this.DEFAULT_WEIGHTS, ...weights };
 
-    // Get query embedding
-    const queryEmbedding = await this.embeddings.embedQuery(query);
+      // Get query embedding with caching
+      const queryEmbedding = await embeddingCache.getEmbedding(query);
 
     // Score each candidate
     const ranked = await Promise.all(
@@ -173,8 +174,8 @@ export class AgentRanker {
       // Build agent profile
       const profile = this.buildAgentProfile(agent);
 
-      // Get profile embedding
-      const profileEmbedding = await this.embeddings.embedQuery(profile);
+      // Get profile embedding with caching
+      const profileEmbedding = await embeddingCache.getEmbedding(profile);
 
       // Cache for future use
       if (useCache) {

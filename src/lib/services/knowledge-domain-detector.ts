@@ -7,6 +7,7 @@
  */
 
 import { OpenAIEmbeddings } from '@langchain/openai';
+import { embeddingCache } from '@/lib/utils/embedding-cache';
 
 import { supabaseAdmin } from '../supabase/admin';
 
@@ -272,8 +273,8 @@ export class KnowledgeDomainDetector {
     maxDomains: number
   ): Promise<DetectedDomain[]> {
     try {
-      // Get query embedding
-      const queryEmbedding = await this.embeddings.embedQuery(query);
+      // Get query embedding with caching
+      const queryEmbedding = await embeddingCache.getEmbedding(query);
 
       // Load all knowledge domains with descriptions
       const { data: domains, error } = await supabaseAdmin
@@ -291,7 +292,7 @@ export class KnowledgeDomainDetector {
         domains.map(async (domain) => {
           // Create domain profile for embedding
           const profile = `${domain.name}: ${domain.description || ''}`;
-          const domainEmbedding = await this.embeddings.embedQuery(profile);
+          const domainEmbedding = await embeddingCache.getEmbedding(profile);
 
           // Calculate cosine similarity
           const similarity = this.cosineSimilarity(queryEmbedding, domainEmbedding);

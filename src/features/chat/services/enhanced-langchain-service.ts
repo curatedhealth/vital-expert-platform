@@ -7,8 +7,13 @@ import { SupabaseVectorStore } from '@langchain/community/vectorstores/supabase'
 import { ChatOpenAI , OpenAIEmbeddings } from '@langchain/openai';
 import { createClient } from '@supabase/supabase-js';
 import { ConversationalRetrievalQAChain } from 'langchain/chains';
-import { Document } from 'langchain/document';
+import { Document } from '@langchain/core/documents';
 import { BufferWindowMemory } from 'langchain/memory';
+import { HumanMessage, AIMessage } from '@langchain/core/messages';
+import { memoryManager } from './memory-manager';
+import { circuitBreakers } from '@/lib/utils/circuit-breaker';
+import { embeddingCache } from '@/lib/utils/embedding-cache';
+import { performanceMonitor } from '@/lib/monitoring/performance-monitor';
 
 export interface EnhancedLangChainConfig {
   model: string;
@@ -28,7 +33,6 @@ export class EnhancedLangChainService {
   private llm: ChatOpenAI;
   private embeddings: OpenAIEmbeddings;
   private vectorStore: SupabaseVectorStore | null = null;
-  private memory: Map<string, BufferWindowMemory> = new Map();
   private chains: Map<string, ConversationalRetrievalQAChain> = new Map();
   private supabase: any = null;
 
@@ -85,24 +89,28 @@ export class EnhancedLangChainService {
     agent: any,
     userId: string
   ): Promise<QueryResult> {
+    const startTime = Date.now();
+    let success = true;
+    let error: string | undefined;
+
     try {
-      // Get or create memory for this session
-      const memory = this.getOrCreateMemory(sessionId);
+      // Get or create memory for this session using persistent memory manager
+      const memory = await memoryManager.getOrCreateSession(sessionId, userId);
       
       // Get or create chain for this agent
-      const chain = await this.getOrCreateChain(agentId, sessionId, agent);
+      const chain = await this.getOrCreateChain(agentId, sessionId, agent, userId);
 
-      // Execute query
-      const result = await chain.call({
-        question,
-        chat_history: memory.chatHistory,
+      // Execute query with circuit breaker protection
+      const result = await circuitBreakers.openai.execute(async () => {
+        return chain.call({
+          question,
+          chat_history: memory.messages,
+        });
       });
 
-      // Update memory
-      memory.saveContext(
-        { input: question },
-        { output: result.text }
-      );
+      // Update memory using persistent memory manager
+      await memoryManager.addMessage(sessionId, new HumanMessage(question));
+      await memoryManager.addMessage(sessionId, new AIMessage(result.text));
 
       // Extract sources and citations
       const sources = result.sourceDocuments || [];
@@ -119,11 +127,20 @@ export class EnhancedLangChainService {
         citations,
         tokenUsage: result.tokenUsage || {},
       };
-    } catch (error) {
-      console.error('Query with chain failed:', error);
+    } catch (err) {
+      success = false;
+      error = err instanceof Error ? err.message : 'Unknown error';
+      console.error('Query with chain failed:', err);
       
       // Fallback to simple LLM call
       return this.fallbackQuery(question, agent);
+    } finally {
+      const duration = Date.now() - startTime;
+      performanceMonitor.recordMetric('langchain_query_with_chain', duration, success, error, {
+        agentId,
+        sessionId,
+        questionLength: question.length
+      });
     }
   }
 
@@ -158,17 +175,28 @@ export class EnhancedLangChainService {
   }
 
   /**
-   * Get or create memory for session
+   * Get or create memory for session (now using persistent memory manager)
    */
-  private getOrCreateMemory(sessionId: string): BufferWindowMemory {
-    if (!this.memory.has(sessionId)) {
-      this.memory.set(sessionId, new BufferWindowMemory({
-        k: 10, // Keep last 10 messages
-        memoryKey: 'chat_history',
-        returnMessages: true,
-      }));
+  private async getOrCreateMemory(sessionId: string, userId: string): Promise<BufferWindowMemory> {
+    // For backward compatibility, create a BufferWindowMemory from persistent memory
+    const memory = await memoryManager.getOrCreateSession(sessionId, userId);
+    const bufferMemory = new BufferWindowMemory({
+      k: 10, // Keep last 10 exchanges
+      returnMessages: true,
+      inputKey: 'input',
+      outputKey: 'output',
+    });
+    
+    // Load messages from persistent memory
+    for (const message of memory.messages) {
+      if (message._getType() === 'human') {
+        bufferMemory.chatHistory.addMessage(message);
+      } else if (message._getType() === 'ai') {
+        bufferMemory.chatHistory.addMessage(message);
+      }
     }
-    return this.memory.get(sessionId)!;
+    
+    return bufferMemory;
   }
 
   /**
@@ -177,12 +205,13 @@ export class EnhancedLangChainService {
   private async getOrCreateChain(
     agentId: string,
     sessionId: string,
-    agent: any
+    agent: any,
+    userId: string
   ): Promise<ConversationalRetrievalQAChain> {
     const chainKey = `${agentId}-${sessionId}`;
     
     if (!this.chains.has(chainKey)) {
-      const memory = this.getOrCreateMemory(sessionId);
+      const memory = await this.getOrCreateMemory(sessionId, userId);
       
       // Create retriever (use vector store if available, otherwise create a simple one)
       const retriever = this.vectorStore 
@@ -199,10 +228,10 @@ export class EnhancedLangChainService {
           qaTemplate: this.buildQATemplate(agent),
         }
       );
-
+      
       this.chains.set(chainKey, chain);
     }
-
+    
     return this.chains.get(chainKey)!;
   }
 
@@ -332,6 +361,10 @@ Helpful Answer:`;
     citations: string[];
     metadata: any;
   }> {
+    const startTime = Date.now();
+    let success = true;
+    let error: string | undefined;
+
     console.log(`🔍 Advanced RAG retrieval for agent ${agentId}: ${query.substring(0, 50)}...`);
     
     try {
@@ -343,15 +376,17 @@ Helpful Answer:`;
       const expandedQuery = await this.expandQuery(query);
       console.log(`📝 Expanded query: ${expandedQuery}`);
 
-      // 2. Hybrid retrieval with MMR for diversity
-      const vectorResults = await this.vectorStore.maxMarginalRelevanceSearch(
-        expandedQuery, 
-        { 
-          k: k * 2, 
-          fetchK: k * 3, 
-          lambda: 0.5 // Balance between relevance and diversity
-        }
-      );
+      // 2. Hybrid retrieval with MMR for diversity (with circuit breaker protection)
+      const vectorResults = await circuitBreakers.supabase.execute(async () => {
+        return this.vectorStore!.maxMarginalRelevanceSearch(
+          expandedQuery, 
+          { 
+            k: k * 2, 
+            fetchK: k * 3, 
+            lambda: 0.5 // Balance between relevance and diversity
+          }
+        );
+      });
       
       console.log(`📊 Retrieved ${vectorResults.length} documents from vector search`);
 
@@ -379,9 +414,19 @@ Helpful Answer:`;
         }
       };
 
-    } catch (error) {
-      console.error('❌ Advanced RAG retrieval failed:', error);
-      throw error;
+    } catch (err) {
+      success = false;
+      error = err instanceof Error ? err.message : 'Unknown error';
+      console.error('❌ Advanced RAG retrieval failed:', err);
+      throw err;
+    } finally {
+      const duration = Date.now() - startTime;
+      performanceMonitor.recordMetric('rag_retrieve_context_advanced', duration, success, error, {
+        agentId,
+        queryLength: query.length,
+        k,
+        documentsRetrieved: success ? k : 0
+      });
     }
   }
 
@@ -397,9 +442,11 @@ Helpful Answer:`;
       
       Expanded query:`;
 
-      const response = await this.llm.call([
-        new HumanMessage(expansionPrompt)
-      ]);
+      const response = await circuitBreakers.openai.execute(async () => {
+        return this.llm.call([
+          new HumanMessage(expansionPrompt)
+        ]);
+      });
 
       const expanded = response.content as string;
       return expanded.trim();

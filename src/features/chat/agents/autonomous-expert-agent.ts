@@ -1,6 +1,7 @@
 import { BaseCallbackHandler } from '@langchain/core/callbacks/base';
 import { ChatOpenAI } from '@langchain/openai';
-import { createReactAgent , AgentExecutor } from 'langchain/agents';
+import { createReactAgent } from '@langchain/langgraph/prebuilt';
+import { AgentExecutor } from 'langchain/agents';
 
 import {
   parseRegulatoryAnalysis,

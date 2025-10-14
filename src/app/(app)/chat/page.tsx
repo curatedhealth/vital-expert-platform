@@ -26,7 +26,7 @@ import {
   SidebarProvider
 } from '@/components/ui/sidebar';
 import { AgentCreator } from '@/features/chat/components/agent-creator';
-import { EnhancedChatContainer } from '@/components/chat/enhanced-chat-container';
+import { ChatContainer } from '@/components/chat/chat-container';
 import { ChatSidebar } from '@/features/chat/components/chat-sidebar';
 import { useAuth } from '@/supabase-auth-context';
 import { __useAgentsStore as useAgentsStore } from '@/agents-store';
@@ -337,9 +337,9 @@ function ChatPageContent() {
                   </div>
                 )}
 
-                {/* Enhanced Chat Container with Dynamic Reasoning */}
+                {/* New Chat Container with Agent Selection */}
                 <div className="flex-1">
-                  <EnhancedChatContainer className="h-full" />
+                  <ChatContainer className="h-full" />
                 </div>
               </div>
             </div>

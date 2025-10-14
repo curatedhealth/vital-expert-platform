@@ -350,9 +350,9 @@ export function createModeAwareWorkflowGraph() {
     .addConditionalEdges("routeByMode", (state) => {
       if (state.interactionMode === 'manual') {
         // If agent is already selected, skip agent selection
-        return state.selectedAgent ? 'suggestTools' : 'suggestAgents';
+        return state.selectedAgent ? 'manual_with_agent' : 'manual';
       }
-      return 'suggestTools'; // automatic mode
+      return 'automatic'; // automatic mode
     }, {
       manual: "suggestAgents",
       manual_with_agent: "suggestTools",

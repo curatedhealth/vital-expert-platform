@@ -166,13 +166,24 @@ export async function suggestToolsNode(state: WorkflowState): Promise<Partial<Wo
   
   return {
     availableTools,
-    requiresUserInput: !state.autonomousMode, // Only require selection in normal mode
+    requiresUserInput: !state.autonomousMode && (!state.selectedTools || state.selectedTools.length === 0), // Only require selection in normal mode if no tools selected
     workflowStep: 'tool_selection'
   };
 }
 
 export function shouldWaitForToolSelection(state: WorkflowState): string {
-  return state.autonomousMode ? 'proceed' : 'awaitTools';
+  // In autonomous mode, always proceed
+  if (state.autonomousMode) {
+    return 'proceed';
+  }
+  
+  // In normal mode, check if tools are already selected
+  if (state.selectedTools && state.selectedTools.length > 0) {
+    return 'proceed';
+  }
+  
+  // Otherwise, wait for tool selection
+  return 'awaitTools';
 }
 
 /**

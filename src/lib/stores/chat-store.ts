@@ -232,7 +232,7 @@ export interface ChatStore {
   
   // Agent selection methods
   showAgentSelectionModal: (agents: any[]) => void;
-  selectAgentFromSuggestions: (agent: any) => void;
+  selectAgentFromSuggestions: (agent: any) => Promise<void>;
   hideAgentSelection: () => void;
 }
 
@@ -1296,7 +1296,7 @@ const _useChatStore = create<ChatStore>()(
         });
       },
 
-      selectAgentFromSuggestions: (agent: any) => {
+      selectAgentFromSuggestions: async (agent: any) => {
         console.log('✅ User selected agent:', agent.name);
         console.log('🔍 Agent details:', {
           id: agent.id,
@@ -1312,7 +1312,16 @@ const _useChatStore = create<ChatStore>()(
           suggestedAgents: [],
         });
         
-        console.log('✅ Agent selection state updated - conversation will continue automatically');
+        console.log('✅ Agent selection complete, resuming workflow...');
+        
+        // Resume workflow with selected agent
+        const lastUserMessage = get().messages.findLast(msg => msg.role === 'user');
+        if (lastUserMessage) {
+          await get().resumeWorkflow({
+            message: lastUserMessage.content,
+            agent: agent
+          });
+        }
       },
 
       hideAgentSelection: () => {

@@ -320,6 +320,17 @@ export function validateAgentRecommendation(data: unknown): AgentRecommendation 
   }
 }
 
+export function validateAgentRequest(data: unknown): AgentQuery {
+  try {
+    return AgentQuerySchema.parse(data);
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      throw new Error(`Agent request validation failed: ${error.errors.map(e => e.message).join(', ')}`);
+    }
+    throw error;
+  }
+}
+
 // Sanitization helpers
 export function sanitizeAgentCreate(data: any): Partial<AgentCreate> {
   return {

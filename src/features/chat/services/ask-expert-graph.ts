@@ -311,7 +311,7 @@ export function createModeAwareWorkflowGraph() {
       
       // Use the routing decision from the routeByModeNode
       if (state.metadata?.routingDecision === 'manual_with_agent') {
-        console.log(`✅ [Workflow] Routing to retrieveContext (manual with agent)`);
+        console.log(`✅ [Workflow] Routing to processWithAgentNormal (manual with agent)`);
         return 'manual_with_agent';
       } else if (state.metadata?.routingDecision === 'manual') {
         console.log(`⏳ [Workflow] Routing to suggestAgents (manual mode)`);
@@ -322,14 +322,14 @@ export function createModeAwareWorkflowGraph() {
       }
     }, {
       manual: "suggestAgents",
-      manual_with_agent: "retrieveContext", // Skip tool selection for manual mode with pre-selected agent
+      manual_with_agent: "processWithAgentNormal", // Go directly to processing for manual mode with pre-selected agent
       automatic: "suggestTools"
     })
     
     // Manual mode: Agent selection
     .addConditionalEdges("suggestAgents", shouldWaitForUser, {
-      awaitSelection: "retrieveContext",  // Skip tool selection in manual mode
-      proceed: "retrieveContext"
+      awaitSelection: "processWithAgentNormal",  // Go directly to processing
+      proceed: "processWithAgentNormal"
     })
     
     // Tool selection (for automatic mode only)
@@ -338,11 +338,8 @@ export function createModeAwareWorkflowGraph() {
       proceed: "selectAgentAutomatic"
     })
     
-    // Automatic mode: Direct to agent selection
-    .addEdge("selectAgentAutomatic", "retrieveContext")
-    
-    // Context retrieval - route based on autonomous mode
-    .addConditionalEdges("retrieveContext", processAgentCondition, {
+    // Automatic mode: Direct to agent selection then processing
+    .addConditionalEdges("selectAgentAutomatic", processAgentCondition, {
       normal: "processWithAgentNormal",
       autonomous: "processWithAgentAutonomous"
     })

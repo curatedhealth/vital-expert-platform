@@ -2,7 +2,6 @@
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { MovingBorder } from '@/components/ui/moving-border';
 import { ArrowRight, CheckCircle, Shield, FileCheck } from 'lucide-react';
 
 export function VitalHero() {
@@ -60,18 +59,22 @@ export function VitalHero() {
 
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12">
-            <MovingBorder
-              duration={2000}
-              className="bg-white dark:bg-slate-900 text-black dark:text-white border-neutral-200 dark:border-slate-800"
+            <Button 
+              size="lg" 
+              className="px-8 py-4 text-lg font-semibold bg-blue-600 hover:bg-blue-700 text-white"
+              onClick={() => document.getElementById('waitlist')?.scrollIntoView({ behavior: 'smooth' })}
             >
-              <Button size="lg" className="px-8 py-4 text-lg font-semibold">
-                Join the Waitlist
-                <ArrowRight className="ml-2 h-5 w-5" />
-              </Button>
-            </MovingBorder>
+              Join the Waitlist
+              <ArrowRight className="ml-2 h-5 w-5" />
+            </Button>
             
-            <Button variant="outline" size="lg" className="px-8 py-4 text-lg">
-              Watch Demo
+            <Button 
+              variant="outline" 
+              size="lg" 
+              className="px-8 py-4 text-lg border-blue-600 text-blue-600 hover:bg-blue-50"
+              onClick={() => document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' })}
+            >
+              Learn More
             </Button>
           </div>
 

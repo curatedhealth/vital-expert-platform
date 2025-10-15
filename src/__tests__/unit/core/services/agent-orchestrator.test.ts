@@ -133,9 +133,14 @@ describe('AgentOrchestrator', () => {
       
       mockIntentAnalyzer.analyze.mockRejectedValue(new Error('Analysis failed'));
       
-      // Act & Assert
-      await expect(orchestrator.selectBestAgent(query, agents))
-        .rejects.toThrow('Analysis failed');
+      // Act
+      const result = await orchestrator.selectBestAgent(query, agents);
+
+      // Assert
+      expect(result.selected).toBeNull();
+      expect(result.confidence).toBe(0);
+      expect(result.reasoning).toContain('Error during agent selection: Analysis failed');
+      expect(result.alternatives).toEqual([]);
     });
   });
   
@@ -144,9 +149,9 @@ describe('AgentOrchestrator', () => {
       // Arrange
       const query = 'medical question';
       const agents = [
-        new Agent('1', 'Agent1', 'Agent1', 'Desc1', 'Prompt1', ['medical'], 2, ['medical'], 'gpt-4', 0.7, 4000, true, new Date(), new Date()),
-        new Agent('2', 'Agent2', 'Agent2', 'Desc2', 'Prompt2', ['medical'], 2, ['medical'], 'gpt-4', 0.7, 4000, true, new Date(), new Date()),
-        new Agent('3', 'Agent3', 'Agent3', 'Desc3', 'Prompt3', ['medical'], 2, ['medical'], 'gpt-4', 0.7, 4000, true, new Date(), new Date())
+        new Agent('1', 'Agent1', 'Agent1', 'Desc1', 'Prompt1', ['medical-knowledge'], 2, ['medical'], 'gpt-4', 0.7, 4000, true, new Date(), new Date()),
+        new Agent('2', 'Agent2', 'Agent2', 'Desc2', 'Prompt2', ['medical-knowledge'], 2, ['medical'], 'gpt-4', 0.7, 4000, true, new Date(), new Date()),
+        new Agent('3', 'Agent3', 'Agent3', 'Desc3', 'Prompt3', ['medical-knowledge'], 2, ['medical'], 'gpt-4', 0.7, 4000, true, new Date(), new Date())
       ];
       
       mockIntentAnalyzer.analyze.mockResolvedValue({

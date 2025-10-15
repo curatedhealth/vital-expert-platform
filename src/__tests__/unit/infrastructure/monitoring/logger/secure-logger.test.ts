@@ -1,13 +1,13 @@
-import { describe, it, expect, beforeEach, jest } from '@jest/globals';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { SecureLogger, StructuredLogger } from '@/infrastructure/monitoring/logger/secure-logger';
 
 describe('SecureLogger', () => {
   let logger: SecureLogger;
-  let consoleSpy: jest.SpyInstance;
+  let consoleSpy: any;
 
   beforeEach(() => {
     logger = new SecureLogger();
-    consoleSpy = jest.spyOn(console, 'log').mockImplementation();
+    consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
   });
 
   afterEach(() => {
@@ -214,11 +214,11 @@ describe('SecureLogger', () => {
 
 describe('StructuredLogger', () => {
   let logger: StructuredLogger;
-  let consoleSpy: jest.SpyInstance;
+  let consoleSpy: any;
 
   beforeEach(() => {
     logger = new StructuredLogger('test-service');
-    consoleSpy = jest.spyOn(console, 'log').mockImplementation();
+    consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
   });
 
   afterEach(() => {

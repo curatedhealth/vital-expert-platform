@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, jest } from '@jest/globals';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { WorkflowEngine, WorkflowState } from '@/core/services/workflow-engine/workflow-engine.service';
 import { Agent } from '@/core/domain/entities/agent.entity';
 
@@ -68,14 +68,14 @@ describe('WorkflowEngine', () => {
       };
 
       // Mock the selectAgent method
-      const selectAgentSpy = jest.spyOn(workflowEngine as any, 'selectAgent')
+      const selectAgentSpy = vi.spyOn(workflowEngine as any, 'selectAgent')
         .mockImplementation(async function* () {
           yield { type: 'reasoning', step: 'agent_selection', description: 'Selecting best agent...' };
           yield { type: 'agent_selected', agent: mockAgent, confidence: 0.9, reasoning: 'Best match' };
         });
 
       // Mock the processQuery method
-      const processQuerySpy = jest.spyOn(workflowEngine as any, 'processQuery')
+      const processQuerySpy = vi.spyOn(workflowEngine as any, 'processQuery')
         .mockImplementation(async function* () {
           yield { type: 'reasoning', step: 'processing', description: 'Processing query...' };
           yield { type: 'query_processed', result: 'Query processed successfully' };
@@ -127,7 +127,7 @@ describe('WorkflowEngine', () => {
       };
 
       // Mock the processQuery method
-      const processQuerySpy = jest.spyOn(workflowEngine as any, 'processQuery')
+      const processQuerySpy = vi.spyOn(workflowEngine as any, 'processQuery')
         .mockImplementation(async function* () {
           yield { type: 'reasoning', step: 'processing', description: 'Processing query...' };
           yield { type: 'query_processed', result: 'Query processed successfully' };
@@ -174,7 +174,7 @@ describe('WorkflowEngine', () => {
       };
 
       // Mock selectAgent to throw an error
-      const selectAgentSpy = jest.spyOn(workflowEngine as any, 'selectAgent')
+      const selectAgentSpy = vi.spyOn(workflowEngine as any, 'selectAgent')
         .mockImplementation(async function* () {
           throw new Error('Agent selection failed');
         });
@@ -206,7 +206,7 @@ describe('WorkflowEngine', () => {
       };
 
       // Mock selectAgent to require user input
-      const selectAgentSpy = jest.spyOn(workflowEngine as any, 'selectAgent')
+      const selectAgentSpy = vi.spyOn(workflowEngine as any, 'selectAgent')
         .mockImplementation(async function* () {
           yield { type: 'reasoning', step: 'agent_selection', description: 'Selecting best agent...' };
           yield { type: 'user_input_required', prompt: 'Please select an agent', options: [mockAgent] };
@@ -270,7 +270,7 @@ describe('WorkflowEngine', () => {
       };
 
       // Mock a method to corrupt state
-      const processQuerySpy = jest.spyOn(workflowEngine as any, 'processQuery')
+      const processQuerySpy = vi.spyOn(workflowEngine as any, 'processQuery')
         .mockImplementation(async function* () {
           // Corrupt the state
           (workflowEngine as any).state = null;

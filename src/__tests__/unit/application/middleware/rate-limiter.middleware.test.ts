@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, jest } from '@jest/globals';
+import { describe, it, expect, beforeEach, jest, vi } from 'vitest';
 import { NextRequest, NextResponse } from 'next/server';
 import { RateLimiter, chatLimiter, expensiveLimiter } from '@/application/middleware/rate-limiter.middleware';
 
@@ -28,8 +28,8 @@ describe('RateLimiter', () => {
   let mockConfig: any;
 
   beforeEach(() => {
-    jest.clearAllTimers();
-    jest.useFakeTimers();
+    vi.clearAllTimers();
+    vi.useFakeTimers();
 
     mockConfig = {
       windowMs: 60000, // 1 minute
@@ -41,7 +41,7 @@ describe('RateLimiter', () => {
   });
 
   afterEach(() => {
-    jest.useRealTimers();
+    vi.useRealTimers();
   });
 
   describe('middleware', () => {
@@ -78,7 +78,7 @@ describe('RateLimiter', () => {
       }
 
       // Fast forward time by 1 minute
-      jest.advanceTimersByTime(60000);
+      vi.advanceTimersByTime(60000);
 
       // Should allow requests again
       const response = await rateLimiter.middleware(req);
@@ -166,7 +166,7 @@ describe('RateLimiter', () => {
       await rateLimiter.middleware(req);
       
       // Fast forward time to trigger cleanup
-      jest.advanceTimersByTime(60000);
+      vi.advanceTimersByTime(60000);
 
       // Cleanup should have removed expired windows
       // This is tested indirectly by ensuring the rate limiter still works
@@ -220,12 +220,12 @@ describe('RateLimiter', () => {
 
 describe('Pre-configured Limiters', () => {
   beforeEach(() => {
-    jest.clearAllTimers();
-    jest.useFakeTimers();
+    vi.clearAllTimers();
+    vi.useFakeTimers();
   });
 
   afterEach(() => {
-    jest.useRealTimers();
+    vi.useRealTimers();
   });
 
   describe('chatLimiter', () => {

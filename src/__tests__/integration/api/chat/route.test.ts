@@ -1,21 +1,21 @@
-import { describe, it, expect, beforeEach, afterEach, jest } from '@jest/globals';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { NextRequest } from 'next/server';
 import { POST } from '@/app/api/chat/route';
 
 // Mock the workflow service
-jest.mock('@/features/chat/services/ask-expert-graph', () => ({
-  streamModeAwareWorkflow: jest.fn()
+vi.mock('@/features/chat/services/ask-expert-graph', () => ({
+  streamModeAwareWorkflow: vi.fn()
 }));
 
 // Mock the validation
-jest.mock('@/shared/validation/chat.schemas', () => ({
-  validateChatRequest: jest.fn()
+vi.mock('@/shared/validation/chat.schemas', () => ({
+  validateChatRequest: vi.fn()
 }));
 
 // Mock the rate limiter
-jest.mock('@/application/middleware/rate-limiter.middleware', () => ({
+vi.mock('@/application/middleware/rate-limiter.middleware', () => ({
   chatLimiter: {
-    middleware: jest.fn()
+    middleware: vi.fn()
   }
 }));
 
@@ -31,7 +31,7 @@ describe('POST /api/chat', () => {
   let mockRequest: NextRequest;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
 
     // Mock request
     mockRequest = {
@@ -40,7 +40,7 @@ describe('POST /api/chat', () => {
         ['content-type', 'application/json'],
         ['x-user-id', 'test-user@example.com']
       ]),
-      json: jest.fn().mockResolvedValue({
+      json: vi.fn().mockResolvedValue({
         message: 'Test message',
         userId: 'test-user@example.com',
         sessionId: 'test-session-123',
@@ -66,7 +66,7 @@ describe('POST /api/chat', () => {
   });
 
   afterEach(() => {
-    jest.restoreAllMocks();
+    vi.restoreAllMocks();
   });
 
   describe('Successful requests', () => {
@@ -118,7 +118,7 @@ describe('POST /api/chat', () => {
     it('should handle valid chat request with manual mode and agent', async () => {
       const requestWithAgent = {
         ...mockRequest,
-        json: jest.fn().mockResolvedValue({
+        json: vi.fn().mockResolvedValue({
           message: 'Test message',
           userId: 'test-user@example.com',
           sessionId: 'test-session-123',
@@ -216,7 +216,7 @@ describe('POST /api/chat', () => {
     it('should handle JSON parsing errors', async () => {
       const invalidRequest = {
         ...mockRequest,
-        json: jest.fn().mockRejectedValue(new Error('Invalid JSON'))
+        json: vi.fn().mockRejectedValue(new Error('Invalid JSON'))
       };
 
       const response = await POST(invalidRequest);
@@ -248,7 +248,7 @@ describe('POST /api/chat', () => {
     it('should validate required fields', async () => {
       const invalidRequest = {
         ...mockRequest,
-        json: jest.fn().mockResolvedValue({
+        json: vi.fn().mockResolvedValue({
           // Missing required fields
           userId: 'test-user@example.com'
         })
@@ -268,7 +268,7 @@ describe('POST /api/chat', () => {
     it('should validate email format', async () => {
       const invalidRequest = {
         ...mockRequest,
-        json: jest.fn().mockResolvedValue({
+        json: vi.fn().mockResolvedValue({
           message: 'Test message',
           userId: 'invalid-email'
         })
@@ -288,7 +288,7 @@ describe('POST /api/chat', () => {
     it('should validate session ID format', async () => {
       const invalidRequest = {
         ...mockRequest,
-        json: jest.fn().mockResolvedValue({
+        json: vi.fn().mockResolvedValue({
           message: 'Test message',
           userId: 'test-user@example.com',
           sessionId: 'invalid-uuid'
@@ -347,7 +347,7 @@ describe('POST /api/chat', () => {
     it('should sanitize sensitive data in logs', async () => {
       const requestWithSensitiveData = {
         ...mockRequest,
-        json: jest.fn().mockResolvedValue({
+        json: vi.fn().mockResolvedValue({
           message: 'Test message with password: secret123',
           userId: 'test-user@example.com',
           sessionId: 'test-session-123',
@@ -383,7 +383,7 @@ describe('POST /api/chat', () => {
     it('should handle malicious input', async () => {
       const maliciousRequest = {
         ...mockRequest,
-        json: jest.fn().mockResolvedValue({
+        json: vi.fn().mockResolvedValue({
           message: '<script>alert("xss")</script>',
           userId: 'test-user@example.com',
           sessionId: 'test-session-123',

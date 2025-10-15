@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from '@jest/globals';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { Agent } from '@/core/domain/entities/agent.entity';
 
 describe('Agent Entity', () => {
@@ -98,7 +98,13 @@ describe('Agent Entity', () => {
         description: 'Expert in medical diagnosis and treatment',
         tier: 2,
         capabilities: ['medical-knowledge', 'diagnosis', 'treatment'],
-        knowledgeDomains: ['cardiology', 'neurology']
+        knowledgeDomains: ['cardiology', 'neurology'],
+        model: 'gpt-4',
+        temperature: 0.7,
+        maxTokens: 4000,
+        ragEnabled: true,
+        createdAt: '2024-01-01T00:00:00.000Z',
+        updatedAt: '2024-01-01T00:00:00.000Z'
       });
 
       // The toJSON method includes all properties, so we check the structure

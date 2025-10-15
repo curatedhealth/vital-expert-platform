@@ -4,7 +4,7 @@
  */
 
 import { renderHook, act } from '@testing-library/react';
-import { useAgentsStore } from '@/shared/services/stores/agents-store';
+import { useAgentsStore } from '@/lib/stores/agents-store';
 import { agentService } from '@/shared/services/agents/agent-service';
 
 // Mock the agent service

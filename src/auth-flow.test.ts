@@ -33,9 +33,10 @@ vi.mock('../error-recovery', () => ({
   }
 }));
 
-const wrapper = ({ children }: { children: ReactNode }) => (
-  <AuthProvider>{children}</AuthProvider>
-);
+const wrapper = ({ children }: { children: ReactNode }) => {
+  const React = require('react');
+  return React.createElement(AuthProvider, null, children);
+};
 
 describe('Auth Flow Tests', () => {
   beforeEach(() => {

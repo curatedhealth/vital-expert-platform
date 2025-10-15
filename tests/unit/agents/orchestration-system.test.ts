@@ -14,12 +14,19 @@ import type {
 } from '@/shared/types/chat.types';
 
 // Mock framer-motion to avoid animation issues in tests
-jest.mock('framer-motion', () => ({
-  motion: {
-    div: ({ children, ...props }: any) => <div {...props}>{children}</div>,
-  },
-  AnimatePresence: ({ children }: any) => <>{children}</>,
-}));
+vi.mock('framer-motion', () => {
+  const React = require('react');
+  return {
+    motion: {
+      div: ({ children, ...props }: any) => {
+        return React.createElement('div', props, children);
+      },
+    },
+    AnimatePresence: ({ children }: any) => {
+      return React.createElement(React.Fragment, null, children);
+    },
+  };
+});
 
 describe('Agent Orchestration System', () => {
   const mockAgents: Agent[] = [

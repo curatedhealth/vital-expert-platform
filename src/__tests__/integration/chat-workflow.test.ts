@@ -3,7 +3,7 @@ import { createMocks } from 'node-mocks-http';
 import { POST } from '@/app/api/chat/route';
 
 // Mock Supabase client
-vi.mock('@/supabase/server', () => ({
+vi.mock('@/lib/supabase/server', () => ({
   createClient: vi.fn(() => ({
     auth: {
       getUser: vi.fn().mockResolvedValue({
@@ -138,7 +138,7 @@ describe('Chat Workflow Integration', () => {
       });
 
       // Mock authentication failure
-      const { createClient } = await import('@/supabase/server');
+      const { createClient } = await import('@/lib/supabase/server');
       const mockCreateClient = vi.mocked(createClient);
       mockCreateClient.mockReturnValue({
         auth: {

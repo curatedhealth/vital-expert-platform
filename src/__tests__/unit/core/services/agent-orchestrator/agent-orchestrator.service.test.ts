@@ -1,16 +1,16 @@
-import { describe, it, expect, beforeEach, jest } from '@jest/globals';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { AgentOrchestrator } from '@/core/services/agent-orchestrator/agent-orchestrator.service';
 import { Agent } from '@/core/domain/entities/agent.entity';
 import { IIntentAnalyzer } from '@/core/services/agent-orchestrator/intent-analyzer.interface';
 import { IAgentScorer } from '@/core/services/agent-orchestrator/agent-scorer.interface';
 
 // Mock implementations
-const mockIntentAnalyzer: jest.Mocked<IIntentAnalyzer> = {
-  analyze: jest.fn()
+const mockIntentAnalyzer: IIntentAnalyzer = {
+  analyze: vi.fn()
 };
 
-const mockAgentScorer: jest.Mocked<IAgentScorer> = {
-  scoreAgents: jest.fn()
+const mockAgentScorer: IAgentScorer = {
+  scoreAgents: vi.fn()
 };
 
 describe('AgentOrchestrator', () => {
@@ -19,7 +19,7 @@ describe('AgentOrchestrator', () => {
 
   beforeEach(() => {
     // Reset mocks
-    jest.clearAllMocks();
+    vi.clearAllMocks();
 
     // Create orchestrator with mocked dependencies
     orchestrator = new AgentOrchestrator(mockIntentAnalyzer, mockAgentScorer);
@@ -83,14 +83,14 @@ describe('AgentOrchestrator', () => {
       const query = 'What are the symptoms of heart disease?';
       const context = { chatHistory: [], userPreferences: {} };
 
-      mockIntentAnalyzer.analyze.mockResolvedValue({
+      vi.mocked(mockIntentAnalyzer.analyze).mockResolvedValue({
         domain: 'medical',
         requiredCapabilities: ['medical-knowledge', 'cardiology'],
         complexity: 'high',
         urgency: 'medium'
       });
 
-      mockAgentScorer.scoreAgents.mockResolvedValue([
+      vi.mocked(mockAgentScorer.scoreAgents).mockResolvedValue([
         { agent: mockAgents[0], score: 0.95, reasoning: 'Perfect match for cardiology query' },
         { agent: mockAgents[1], score: 0.3, reasoning: 'Some medical knowledge but not cardiology' },
         { agent: mockAgents[2], score: 0.1, reasoning: 'General knowledge only' }
@@ -124,14 +124,14 @@ describe('AgentOrchestrator', () => {
       const query = 'How to cook pasta?';
       const context = { chatHistory: [], userPreferences: {} };
 
-      mockIntentAnalyzer.analyze.mockResolvedValue({
+      vi.mocked(mockIntentAnalyzer.analyze).mockResolvedValue({
         domain: 'cooking',
         requiredCapabilities: ['cooking-knowledge'],
         complexity: 'low',
         urgency: 'low'
       });
 
-      mockAgentScorer.scoreAgents.mockResolvedValue([
+      vi.mocked(mockAgentScorer.scoreAgents).mockResolvedValue([
         { agent: mockAgents[0], score: 0.1, reasoning: 'No cooking knowledge' },
         { agent: mockAgents[1], score: 0.05, reasoning: 'No cooking knowledge' },
         { agent: mockAgents[2], score: 0.2, reasoning: 'Some general knowledge' }
@@ -151,14 +151,14 @@ describe('AgentOrchestrator', () => {
       const query = 'Any query';
       const context = { chatHistory: [], userPreferences: {} };
 
-      mockIntentAnalyzer.analyze.mockResolvedValue({
+      vi.mocked(mockIntentAnalyzer.analyze).mockResolvedValue({
         domain: 'general',
         requiredCapabilities: ['general-knowledge'],
         complexity: 'low',
         urgency: 'low'
       });
 
-      mockAgentScorer.scoreAgents.mockResolvedValue([]);
+      vi.mocked(mockAgentScorer.scoreAgents).mockResolvedValue([]);
 
       // Act
       const result = await orchestrator.selectBestAgent(query, [], context);
@@ -175,7 +175,7 @@ describe('AgentOrchestrator', () => {
       const query = 'Test query';
       const context = { chatHistory: [], userPreferences: {} };
 
-      mockIntentAnalyzer.analyze.mockResolvedValue({
+      vi.mocked(mockIntentAnalyzer.analyze).mockResolvedValue({
         domain: 'general',
         requiredCapabilities: ['general-knowledge'],
         complexity: 'low',
@@ -196,14 +196,14 @@ describe('AgentOrchestrator', () => {
       const query = 'Medical question';
       const count = 2;
 
-      mockIntentAnalyzer.analyze.mockResolvedValue({
+      vi.mocked(mockIntentAnalyzer.analyze).mockResolvedValue({
         domain: 'medical',
         requiredCapabilities: ['medical-knowledge'],
         complexity: 'medium',
         urgency: 'medium'
       });
 
-      mockAgentScorer.scoreAgents.mockResolvedValue([
+      vi.mocked(mockAgentScorer.scoreAgents).mockResolvedValue([
         { agent: mockAgents[0], score: 0.9, reasoning: 'Best medical agent' },
         { agent: mockAgents[1], score: 0.8, reasoning: 'Good medical agent' },
         { agent: mockAgents[2], score: 0.3, reasoning: 'General agent' }
@@ -223,14 +223,14 @@ describe('AgentOrchestrator', () => {
       const query = 'Test query';
       const count = 10;
 
-      mockIntentAnalyzer.analyze.mockResolvedValue({
+      vi.mocked(mockIntentAnalyzer.analyze).mockResolvedValue({
         domain: 'general',
         requiredCapabilities: ['general-knowledge'],
         complexity: 'low',
         urgency: 'low'
       });
 
-      mockAgentScorer.scoreAgents.mockResolvedValue([
+      vi.mocked(mockAgentScorer.scoreAgents).mockResolvedValue([
         { agent: mockAgents[0], score: 0.5, reasoning: 'Agent 1' },
         { agent: mockAgents[1], score: 0.4, reasoning: 'Agent 2' },
         { agent: mockAgents[2], score: 0.3, reasoning: 'Agent 3' }
@@ -248,14 +248,14 @@ describe('AgentOrchestrator', () => {
       // Arrange
       const query = 'Test query';
 
-      mockIntentAnalyzer.analyze.mockResolvedValue({
+      vi.mocked(mockIntentAnalyzer.analyze).mockResolvedValue({
         domain: 'general',
         requiredCapabilities: ['general-knowledge'],
         complexity: 'low',
         urgency: 'low'
       });
 
-      mockAgentScorer.scoreAgents.mockResolvedValue([
+      vi.mocked(mockAgentScorer.scoreAgents).mockResolvedValue([
         { agent: mockAgents[0], score: 0.5, reasoning: 'Agent 1' },
         { agent: mockAgents[1], score: 0.4, reasoning: 'Agent 2' },
         { agent: mockAgents[2], score: 0.3, reasoning: 'Agent 3' }
@@ -275,7 +275,7 @@ describe('AgentOrchestrator', () => {
       const query = 'Test query';
       const context = { chatHistory: [], userPreferences: {} };
 
-      mockIntentAnalyzer.analyze.mockRejectedValue(new Error('Intent analysis failed'));
+      vi.mocked(mockIntentAnalyzer.analyze).mockRejectedValue(new Error('Intent analysis failed'));
 
       // Act & Assert
       await expect(orchestrator.selectBestAgent(query, mockAgents, context))

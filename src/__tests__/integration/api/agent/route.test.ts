@@ -1,21 +1,21 @@
-import { describe, it, expect, beforeEach, afterEach, jest } from '@jest/globals';
+import { describe, it, expect, beforeEach, afterEach, jest, vi } from 'vitest';
 import { NextRequest } from 'next/server';
 import { GET, POST } from '@/app/api/agent/route';
 
 // Mock the agent service
-jest.mock('@/core/services/agent-orchestrator/agent-orchestrator.service', () => ({
-  AgentOrchestrator: jest.fn()
+vi.mock('@/core/services/agent-orchestrator/agent-orchestrator.service', () => ({
+  AgentOrchestrator: vi.fn()
 }));
 
 // Mock the validation
-jest.mock('@/shared/validation/agent.schemas', () => ({
-  validateAgentRequest: jest.fn()
+vi.mock('@/shared/validation/agent.schemas', () => ({
+  validateAgentRequest: vi.fn()
 }));
 
 // Mock the rate limiter
-jest.mock('@/application/middleware/rate-limiter.middleware', () => ({
+vi.mock('@/application/middleware/rate-limiter.middleware', () => ({
   chatLimiter: {
-    middleware: jest.fn()
+    middleware: vi.fn()
   }
 }));
 
@@ -23,15 +23,15 @@ import { AgentOrchestrator } from '@/core/services/agent-orchestrator/agent-orch
 import { validateAgentRequest } from '@/shared/validation/agent.schemas';
 import { chatLimiter } from '@/application/middleware/rate-limiter.middleware';
 
-const mockAgentOrchestrator = AgentOrchestrator as jest.MockedClass<typeof AgentOrchestrator>;
-const mockValidateAgentRequest = validateAgentRequest as jest.MockedFunction<typeof validateAgentRequest>;
+const mockAgentOrchestrator = AgentOrchestrator as vi.MockedClass<typeof AgentOrchestrator>;
+const mockValidateAgentRequest = validateAgentRequest as vi.MockedFunction<typeof validateAgentRequest>;
 const mockChatLimiter = chatLimiter as any;
 
 describe('GET /api/agent', () => {
   let mockRequest: NextRequest;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
 
     // Mock request
     mockRequest = {
@@ -48,14 +48,14 @@ describe('GET /api/agent', () => {
   });
 
   afterEach(() => {
-    jest.restoreAllMocks();
+    vi.restoreAllMocks();
   });
 
   describe('Successful requests', () => {
     it('should return available agents with filters', async () => {
       // Mock agent orchestrator
       const mockOrchestrator = {
-        suggestAgents: jest.fn().mockResolvedValue([
+        suggestAgents: vi.fn().mockResolvedValue([
           {
             id: 'medical-1',
             name: 'cardiology-expert',
@@ -85,7 +85,7 @@ describe('GET /api/agent', () => {
       };
 
       const mockOrchestrator = {
-        suggestAgents: jest.fn().mockResolvedValue([
+        suggestAgents: vi.fn().mockResolvedValue([
           {
             id: 'medical-1',
             name: 'cardiology-expert',
@@ -116,7 +116,7 @@ describe('GET /api/agent', () => {
       };
 
       const mockOrchestrator = {
-        suggestAgents: jest.fn().mockResolvedValue([
+        suggestAgents: vi.fn().mockResolvedValue([
           {
             id: 'medical-1',
             name: 'cardiology-expert',
@@ -139,7 +139,7 @@ describe('GET /api/agent', () => {
   describe('Error handling', () => {
     it('should return 500 for orchestrator errors', async () => {
       const mockOrchestrator = {
-        suggestAgents: jest.fn().mockRejectedValue(new Error('Orchestrator failed'))
+        suggestAgents: vi.fn().mockRejectedValue(new Error('Orchestrator failed'))
       };
       mockAgentOrchestrator.mockImplementation(() => mockOrchestrator as any);
 
@@ -169,7 +169,7 @@ describe('GET /api/agent', () => {
       };
 
       const mockOrchestrator = {
-        suggestAgents: jest.fn().mockResolvedValue([])
+        suggestAgents: vi.fn().mockResolvedValue([])
       };
       mockAgentOrchestrator.mockImplementation(() => mockOrchestrator as any);
 
@@ -184,7 +184,7 @@ describe('GET /api/agent', () => {
   describe('Response format', () => {
     it('should return properly formatted response', async () => {
       const mockOrchestrator = {
-        suggestAgents: jest.fn().mockResolvedValue([
+        suggestAgents: vi.fn().mockResolvedValue([
           {
             id: 'test-agent',
             name: 'test-agent',
@@ -212,7 +212,7 @@ describe('GET /api/agent', () => {
 
     it('should include metadata in response', async () => {
       const mockOrchestrator = {
-        suggestAgents: jest.fn().mockResolvedValue([])
+        suggestAgents: vi.fn().mockResolvedValue([])
       };
       mockAgentOrchestrator.mockImplementation(() => mockOrchestrator as any);
 
@@ -230,7 +230,7 @@ describe('POST /api/agent', () => {
   let mockRequest: NextRequest;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
 
     // Mock request
     mockRequest = {
@@ -239,7 +239,7 @@ describe('POST /api/agent', () => {
         ['content-type', 'application/json'],
         ['x-user-id', 'test-user@example.com']
       ]),
-      json: jest.fn().mockResolvedValue({
+      json: vi.fn().mockResolvedValue({
         name: 'test-agent',
         displayName: 'Test Agent',
         description: 'Test agent description',
@@ -276,7 +276,7 @@ describe('POST /api/agent', () => {
   describe('Successful requests', () => {
     it('should create a new agent', async () => {
       const mockOrchestrator = {
-        createAgent: jest.fn().mockResolvedValue({
+        createAgent: vi.fn().mockResolvedValue({
           id: 'new-agent-id',
           name: 'test-agent',
           displayName: 'Test Agent',
@@ -295,7 +295,7 @@ describe('POST /api/agent', () => {
 
     it('should validate agent data', async () => {
       const mockOrchestrator = {
-        createAgent: jest.fn().mockResolvedValue({ id: 'new-agent-id' })
+        createAgent: vi.fn().mockResolvedValue({ id: 'new-agent-id' })
       };
       mockAgentOrchestrator.mockImplementation(() => mockOrchestrator as any);
 
@@ -332,7 +332,7 @@ describe('POST /api/agent', () => {
 
     it('should return 500 for creation errors', async () => {
       const mockOrchestrator = {
-        createAgent: jest.fn().mockRejectedValue(new Error('Creation failed'))
+        createAgent: vi.fn().mockRejectedValue(new Error('Creation failed'))
       };
       mockAgentOrchestrator.mockImplementation(() => mockOrchestrator as any);
 

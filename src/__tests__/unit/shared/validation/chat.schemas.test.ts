@@ -1,4 +1,4 @@
-import { describe, it, expect } from '@jest/globals';
+import { describe, it, expect, vi } from 'vitest';
 import { ChatRequestSchema, validateChatRequest } from '@/shared/validation/chat.schemas';
 
 describe('Chat Validation Schemas', () => {

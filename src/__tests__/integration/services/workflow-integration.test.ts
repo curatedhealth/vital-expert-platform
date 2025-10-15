@@ -1,14 +1,14 @@
-import { describe, it, expect, beforeEach, afterEach, jest } from '@jest/globals';
+import { describe, it, expect, beforeEach, afterEach, jest, vi } from 'vitest';
 import { WorkflowEngine } from '@/core/services/workflow-engine/workflow-engine.service';
 import { AgentOrchestrator } from '@/core/services/agent-orchestrator/agent-orchestrator.service';
 import { Agent } from '@/core/domain/entities/agent.entity';
 
 // Mock dependencies
-jest.mock('@/core/services/agent-orchestrator/agent-orchestrator.service');
-jest.mock('@/core/services/workflow-engine/workflow-engine.service');
+vi.mock('@/core/services/agent-orchestrator/agent-orchestrator.service');
+vi.mock('@/core/services/workflow-engine/workflow-engine.service');
 
-const mockAgentOrchestrator = AgentOrchestrator as jest.MockedClass<typeof AgentOrchestrator>;
-const mockWorkflowEngine = WorkflowEngine as jest.MockedClass<typeof WorkflowEngine>;
+const mockAgentOrchestrator = AgentOrchestrator as vi.MockedClass<typeof AgentOrchestrator>;
+const mockWorkflowEngine = WorkflowEngine as vi.MockedClass<typeof WorkflowEngine>;
 
 describe('Workflow Integration Tests', () => {
   let workflowEngine: WorkflowEngine;
@@ -16,7 +16,7 @@ describe('Workflow Integration Tests', () => {
   let mockAgent: Agent;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
 
     // Create mock agent
     mockAgent = new Agent(
@@ -38,22 +38,22 @@ describe('Workflow Integration Tests', () => {
 
     // Mock agent orchestrator
     const mockOrchestratorInstance = {
-      selectBestAgent: jest.fn(),
-      suggestAgents: jest.fn()
+      selectBestAgent: vi.fn(),
+      suggestAgents: vi.fn()
     };
     agentOrchestrator = mockOrchestratorInstance as any;
     mockAgentOrchestrator.mockImplementation(() => agentOrchestrator);
 
     // Mock workflow engine
     const mockWorkflowInstance = {
-      execute: jest.fn()
+      execute: vi.fn()
     };
     workflowEngine = mockWorkflowInstance as any;
     mockWorkflowEngine.mockImplementation(() => workflowEngine);
   });
 
   afterEach(() => {
-    jest.restoreAllMocks();
+    vi.restoreAllMocks();
   });
 
   describe('Complete Workflow Integration', () => {

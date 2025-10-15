@@ -1081,25 +1081,29 @@ const _useChatStore = create<ChatStore>()(
       },
 
       setSelectedAgents: (agents: Agent[]) => {
+        // Safety check for agents array
+        const safeAgents = Array.isArray(agents) ? agents : [];
+        
         console.log('🔄 [setSelectedAgents] Setting multiple agents:', {
-          count: agents.length,
-          agentIds: agents.map(a => a.id),
-          agentNames: agents.map(a => a.name)
+          count: safeAgents.length,
+          agentIds: safeAgents.map(a => a.id),
+          agentNames: safeAgents.map(a => a.name)
         });
         
         set({ 
-          selectedAgents: agents,
-          selectedAgent: agents.length > 0 ? agents[0] : null,
-          activeAgentId: agents.length > 0 ? agents[0].id : null
+          selectedAgents: safeAgents,
+          selectedAgent: safeAgents.length > 0 ? safeAgents[0] : null,
+          activeAgentId: safeAgents.length > 0 ? safeAgents[0].id : null
         });
       },
 
       addSelectedAgent: (agent: Agent) => {
-        const { selectedAgents } = get();
-        const isAlreadySelected = selectedAgents.some(a => a.id === agent.id);
+        const { selectedAgents = [] } = get();
+        const safeSelectedAgents = Array.isArray(selectedAgents) ? selectedAgents : [];
+        const isAlreadySelected = safeSelectedAgents.some(a => a.id === agent.id);
         
         if (!isAlreadySelected) {
-          const newSelectedAgents = [...selectedAgents, agent];
+          const newSelectedAgents = [...safeSelectedAgents, agent];
           console.log('➕ [addSelectedAgent] Adding agent:', {
             agentId: agent.id,
             agentName: agent.name,
@@ -1115,8 +1119,9 @@ const _useChatStore = create<ChatStore>()(
       },
 
       removeSelectedAgent: (agentId: string) => {
-        const { selectedAgents, selectedAgent, activeAgentId } = get();
-        const newSelectedAgents = selectedAgents.filter(a => a.id !== agentId);
+        const { selectedAgents = [], selectedAgent, activeAgentId } = get();
+        const safeSelectedAgents = Array.isArray(selectedAgents) ? selectedAgents : [];
+        const newSelectedAgents = safeSelectedAgents.filter(a => a.id !== agentId);
         
         console.log('➖ [removeSelectedAgent] Removing agent:', {
           agentId,
@@ -1140,8 +1145,9 @@ const _useChatStore = create<ChatStore>()(
       },
 
       setActiveAgent: (agentId: string | null) => {
-        const { selectedAgents } = get();
-        const agent = agentId ? selectedAgents.find(a => a.id === agentId) : null;
+        const { selectedAgents = [] } = get();
+        const safeSelectedAgents = Array.isArray(selectedAgents) ? selectedAgents : [];
+        const agent = agentId ? safeSelectedAgents.find(a => a.id === agentId) : null;
         
         console.log('🔄 [setActiveAgent] Setting active agent:', {
           agentId,

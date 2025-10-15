@@ -42,6 +42,12 @@ export function EnhancedAgentSidebar({
   
   // Filter agents based on search and filters
   const filteredAgents = useMemo(() => {
+    // Safety check for agents array
+    if (!agents || !Array.isArray(agents)) {
+      console.warn('EnhancedAgentSidebar: agents prop is not a valid array', agents);
+      return [];
+    }
+    
     return agents.filter(agent => {
       const matchesSearch = !searchQuery || 
         agent.name.toLowerCase().includes(searchQuery.toLowerCase()) ||

@@ -39,6 +39,12 @@ export function ToolSelector({
   const toolsByCategory = useMemo(() => {
     const grouped: Record<string, ToolConfig[]> = {};
     
+    // Safety check for availableTools array
+    if (!availableTools || !Array.isArray(availableTools)) {
+      console.warn('ToolSelector: availableTools prop is not a valid array', availableTools);
+      return grouped;
+    }
+    
     availableTools.forEach(tool => {
       if (!grouped[tool.category]) {
         grouped[tool.category] = [];
@@ -55,7 +61,7 @@ export function ToolSelector({
         <CardTitle className="text-sm font-medium">
           Available Tools
           <Badge variant="secondary" className="ml-2">
-            {selectedTools.length} selected
+            {selectedTools?.length || 0} selected
           </Badge>
         </CardTitle>
       </CardHeader>
@@ -75,7 +81,7 @@ export function ToolSelector({
                   )}
                 >
                   <Checkbox
-                    checked={selectedTools.includes(tool.id)}
+                    checked={selectedTools?.includes(tool.id) || false}
                     onCheckedChange={() => onToolToggle(tool.id)}
                     disabled={disabled}
                   />

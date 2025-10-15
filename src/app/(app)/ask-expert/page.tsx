@@ -58,7 +58,7 @@ interface AskExpertState {
 export default function AskExpertPage() {
   const router = useRouter();
   const { user } = useAuth();
-  const { agents, loadAgents } = useAgentsStore();
+  const { agents = [], loadAgents } = useAgentsStore();
   
   const [state, setState] = useState<AskExpertState>({
     selectedAgent: null,
@@ -86,8 +86,8 @@ export default function AskExpertPage() {
 
   useEffect(() => {
     console.log('📊 Agents state changed:', {
-      agentsCount: agents.length,
-      firstAgent: agents[0] ? { id: agents[0].id, name: agents[0].display_name || agents[0].name } : null
+      agentsCount: agents?.length || 0,
+      firstAgent: agents?.[0] ? { id: agents[0].id, name: agents[0].display_name || agents[0].name } : null
     });
   }, [agents]);
 
@@ -98,9 +98,16 @@ export default function AskExpertPage() {
   const handleAgentSelect = (agentId: string) => {
     console.log('🎯 Agent selection:', {
       agentId,
-      agentsCount: agents.length,
-      availableAgents: agents.slice(0, 3).map(a => ({ id: a.id, name: a.name }))
+      agentsCount: agents?.length || 0,
+      availableAgents: agents?.slice(0, 3).map(a => ({ id: a.id, name: a.name })) || []
     });
+    
+    // Safety check for agents array
+    if (!agents || !Array.isArray(agents)) {
+      console.error('❌ Agents array is not properly initialized');
+      return;
+    }
+    
     const agent = agents.find(a => a.id === agentId);
     console.log('🎯 Selected agent:', agent ? { id: agent.id, name: agent.name } : 'NOT FOUND');
     setState(prev => ({ ...prev, selectedAgent: agent || null }));

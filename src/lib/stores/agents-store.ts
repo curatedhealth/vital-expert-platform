@@ -76,6 +76,13 @@ export const useAgentsStore = create<{
           const data = await response.json();
           const agentsData = data.agents || [];
           
+          // Ensure agentsData is an array
+          if (!Array.isArray(agentsData)) {
+            console.warn('⚠️ AgentsStore: API returned non-array data, using empty array');
+            set({ agents: [], loading: false, error: null });
+            return;
+          }
+          
           console.log(`✅ AgentsStore: Loaded ${agentsData.length} agents from API`);
           
           // Transform agents to match expected interface
@@ -108,7 +115,11 @@ export const useAgentsStore = create<{
           set({ agents: transformedAgents, loading: false });
         } catch (error) {
           console.error('❌ AgentsStore: Failed to load agents:', error);
-          set({ error: 'Failed to load agents', loading: false });
+          set({ 
+            agents: [], // Ensure agents is always an array
+            error: 'Failed to load agents', 
+            loading: false 
+          });
         }
       },
 

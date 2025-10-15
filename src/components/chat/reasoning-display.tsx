@@ -34,7 +34,10 @@ export function ReasoningDisplay({
 }: ReasoningDisplayProps) {
   const [isExpanded, setIsExpanded] = useState(true);
   
-  if (reasoningEvents.length === 0 && !isActive) {
+  // Safety check for reasoningEvents array
+  const safeReasoningEvents = Array.isArray(reasoningEvents) ? reasoningEvents : [];
+  
+  if (safeReasoningEvents.length === 0 && !isActive) {
     return null;
   }
   
@@ -63,12 +66,12 @@ export function ReasoningDisplay({
       
       {isExpanded && (
         <CardContent>
-          <div className="space-y-3">
-            {reasoningEvents.map((event, index) => (
+        <div className="space-y-3">
+          {safeReasoningEvents.map((event, index) => (
               <ReasoningStep
                 key={index}
                 event={event}
-                isLast={index === reasoningEvents.length - 1}
+                isLast={index === safeReasoningEvents.length - 1}
               />
             ))}
           </div>

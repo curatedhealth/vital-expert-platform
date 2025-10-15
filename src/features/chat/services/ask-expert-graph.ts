@@ -10,7 +10,6 @@ import {
   processWithAgentNormalNode,
   processWithAgentAutonomousNode,
   synthesizeResponseNode,
-  handleErrorNode,
   getStepDescription,
   type ToolOption
 } from './workflow-nodes';
@@ -295,7 +294,6 @@ export function createModeAwareWorkflowGraph() {
     .addNode("processWithAgent", processWithAgentNormalNode) // Unified processing node
     .addNode("processWithAgentAutonomous", processWithAgentAutonomousNode)
     .addNode("synthesizeResponse", synthesizeResponseNode)
-    .addNode("handleError", handleErrorNode) // Error handling node
     
     // Workflow edges - clean and efficient
     .addEdge(START, "routeByMode")
@@ -354,10 +352,7 @@ export function createModeAwareWorkflowGraph() {
     .addEdge("processWithAgentAutonomous", "synthesizeResponse")
     
     // Response synthesis to completion
-    .addEdge("synthesizeResponse", END)
-    
-    // Error handling - can be triggered from any node
-    .addEdge("handleError", END);
+    .addEdge("synthesizeResponse", END);
 
   return graph;
 }

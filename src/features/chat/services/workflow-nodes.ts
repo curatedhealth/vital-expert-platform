@@ -628,20 +628,3 @@ export function getStepDescription(step: string, interactionMode: string, autono
   }
 }
 
-/**
- * Error Handling Node
- * Centralized error handling for the workflow
- */
-export async function handleErrorNode(state: WorkflowState): Promise<Partial<WorkflowState>> {
-  console.error('🚨 [ErrorHandler] Workflow error occurred:', state.error);
-  
-  return {
-    answer: state.error || 'An unexpected error occurred. Please try again.',
-    workflowStep: 'error',
-    metadata: {
-      ...state.metadata,
-      error: state.error,
-      timestamp: Date.now()
-    }
-  };
-}

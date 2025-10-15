@@ -26,6 +26,8 @@ export function RedesignedChatContainer({ className }: { className?: string }) {
     error,
     clearError,
     selectedAgent,
+    selectedAgents,
+    activeAgentId,
     selectedModel,
     setSelectedModel,
     interactionMode,
@@ -112,6 +114,8 @@ export function RedesignedChatContainer({ className }: { className?: string }) {
     selectedAgentName: selectedAgent?.name,
     selectedAgentDisplayName: selectedAgent?.display_name,
     selectedAgentType: typeof selectedAgent,
+    selectedAgentsCount: selectedAgents.length,
+    activeAgentId,
     canSend
   });
 

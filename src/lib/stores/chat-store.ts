@@ -123,7 +123,9 @@ export interface ChatStore {
   currentChat: Chat | null;
   messages: ChatMessage[];
   input: string;
-  selectedAgent: Agent | null;
+  selectedAgent: Agent | null; // Primary/active agent for chat
+  selectedAgents: Agent[]; // All selected agents
+  activeAgentId: string | null; // Currently active agent ID
   selectedModel: AIModel | null;
   agents: Agent[];
   libraryAgents: string[]; // Agent IDs in user's library
@@ -188,6 +190,10 @@ export interface ChatStore {
   stopGeneration: () => void;
   setInput: (input: string) => void;
   setSelectedAgent: (agent: Agent | null) => Promise<string>;
+  setSelectedAgents: (agents: Agent[]) => void;
+  addSelectedAgent: (agent: Agent) => void;
+  removeSelectedAgent: (agentId: string) => void;
+  setActiveAgent: (agentId: string | null) => void;
   setSelectedModel: (model: AIModel | null) => void;
   createCustomAgent: (agent: Omit<Agent, 'id' | 'isCustom'>) => void;
   updateAgent: (agentId: string, updates: Partial<Agent>) => void;
@@ -287,6 +293,8 @@ const _useChatStore = create<ChatStore>()(
       messages: [],
       input: '', // Add input state
       selectedAgent: null,
+      selectedAgents: [],
+      activeAgentId: null,
       selectedModel: null,
       agents: [], // Start empty, will be loaded from database
       libraryAgents: [], // Agent IDs in user's library
@@ -913,6 +921,7 @@ const _useChatStore = create<ChatStore>()(
         return new Promise<string>((resolve) => {
           set({ 
             selectedAgent: agent, 
+            activeAgentId: agent?.id || null,
             error: null,
             // Clear any previous errors when selecting agent
             liveReasoning: '',
@@ -930,6 +939,81 @@ const _useChatStore = create<ChatStore>()(
             });
             resolve('ack'); // Return acknowledgment
           }, 0);
+        });
+      },
+
+      setSelectedAgents: (agents: Agent[]) => {
+        console.log('🔄 [setSelectedAgents] Setting multiple agents:', {
+          count: agents.length,
+          agentIds: agents.map(a => a.id),
+          agentNames: agents.map(a => a.name)
+        });
+        
+        set({ 
+          selectedAgents: agents,
+          selectedAgent: agents.length > 0 ? agents[0] : null,
+          activeAgentId: agents.length > 0 ? agents[0].id : null
+        });
+      },
+
+      addSelectedAgent: (agent: Agent) => {
+        const { selectedAgents } = get();
+        const isAlreadySelected = selectedAgents.some(a => a.id === agent.id);
+        
+        if (!isAlreadySelected) {
+          const newSelectedAgents = [...selectedAgents, agent];
+          console.log('➕ [addSelectedAgent] Adding agent:', {
+            agentId: agent.id,
+            agentName: agent.name,
+            totalSelected: newSelectedAgents.length
+          });
+          
+          set({ 
+            selectedAgents: newSelectedAgents,
+            selectedAgent: agent, // Set as primary agent
+            activeAgentId: agent.id
+          });
+        }
+      },
+
+      removeSelectedAgent: (agentId: string) => {
+        const { selectedAgents, selectedAgent, activeAgentId } = get();
+        const newSelectedAgents = selectedAgents.filter(a => a.id !== agentId);
+        
+        console.log('➖ [removeSelectedAgent] Removing agent:', {
+          agentId,
+          remainingCount: newSelectedAgents.length
+        });
+        
+        // If we removed the active agent, set a new active agent
+        let newSelectedAgent = selectedAgent;
+        let newActiveAgentId = activeAgentId;
+        
+        if (selectedAgent?.id === agentId) {
+          newSelectedAgent = newSelectedAgents.length > 0 ? newSelectedAgents[0] : null;
+          newActiveAgentId = newSelectedAgents.length > 0 ? newSelectedAgents[0].id : null;
+        }
+        
+        set({ 
+          selectedAgents: newSelectedAgents,
+          selectedAgent: newSelectedAgent,
+          activeAgentId: newActiveAgentId
+        });
+      },
+
+      setActiveAgent: (agentId: string | null) => {
+        const { selectedAgents } = get();
+        const agent = agentId ? selectedAgents.find(a => a.id === agentId) : null;
+        
+        console.log('🔄 [setActiveAgent] Setting active agent:', {
+          agentId,
+          agentName: agent?.name,
+          found: !!agent
+        });
+        
+        set({ 
+          selectedAgent: agent,
+          activeAgentId: agentId
         });
       },
 
@@ -1823,6 +1907,8 @@ const _useChatStore = create<ChatStore>()(
         chats: state.chats,
         currentChat: state.currentChat,
         selectedAgent: state.selectedAgent,
+        selectedAgents: state.selectedAgents, // Include multiple selected agents
+        activeAgentId: state.activeAgentId, // Include active agent ID
         selectedModel: state.selectedModel,
         agents: state.agents,
         libraryAgents: state.libraryAgents, // Include library agents for persistence

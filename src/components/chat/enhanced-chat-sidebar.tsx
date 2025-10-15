@@ -97,7 +97,6 @@ export function EnhancedChatSidebar({
   const [sortBy, setSortBy] = useState<'recent' | 'name' | 'unread'>('recent');
   const [filterBy, setFilterBy] = useState<'all' | 'unread' | 'pinned' | 'archived'>('all');
   const [showAgentPanel, setShowAgentPanel] = useState(false);
-  const [selectedAgents, setSelectedAgents] = useState<string[]>([]);
   const [addingAgent, setAddingAgent] = useState<string | null>(null);
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
 
@@ -105,6 +104,8 @@ export function EnhancedChatSidebar({
     chats,
     currentChat,
     selectedAgent,
+    selectedAgents,
+    activeAgentId,
     interactionMode,
     autonomousMode,
     setInteractionMode,
@@ -116,6 +117,9 @@ export function EnhancedChatSidebar({
     archiveChat,
     getAgents,
     selectAgent,
+    addSelectedAgent,
+    removeSelectedAgent,
+    setActiveAgent,
     clearSelectedAgent
   } = useChatStore();
 
@@ -126,13 +130,14 @@ export function EnhancedChatSidebar({
     loadAgents();
   }, [loadAgents]);
 
-  // Sync selectedAgents with chat store's selectedAgent
+  // Sync local state with global selectedAgents
   useEffect(() => {
-    if (selectedAgent && !selectedAgents.includes(selectedAgent.id)) {
-      console.log('🔄 [Sidebar] Syncing selectedAgent to selectedAgents:', selectedAgent.id);
-      setSelectedAgents(prev => [...prev, selectedAgent.id]);
-    }
-  }, [selectedAgent, selectedAgents]);
+    console.log('🔄 [Sidebar] Global selectedAgents updated:', {
+      count: selectedAgents.length,
+      agentIds: selectedAgents.map(a => a.id),
+      activeAgentId
+    });
+  }, [selectedAgents, activeAgentId]);
 
 
   // Mock conversations data - in real app, this would come from the chat store
@@ -203,7 +208,7 @@ export function EnhancedChatSidebar({
     }
     
     let agents = allAgents.filter(agent => 
-      !selectedAgents.includes(agent.id)
+      !selectedAgents.some(selected => selected.id === agent.id)
     );
 
     // Apply search filter
@@ -235,19 +240,11 @@ export function EnhancedChatSidebar({
     
     try {
       setAddingAgent(agent.id);
-      console.log('🔄 [Sidebar] Calling selectAgent with ID:', agent.id);
+      console.log('🔄 [Sidebar] Adding agent to selected agents:', agent.id);
       
-      // Call the chat store's selectAgent function - this will set the primary selectedAgent
-      await selectAgent(agent.id);
-      console.log('✅ [Sidebar] selectAgent completed successfully');
-      
-      // Update local selected agents state
-      setSelectedAgents(prev => {
-        if (!prev.includes(agent.id)) {
-          return [...prev, agent.id];
-        }
-        return prev;
-      });
+      // Add agent to selected agents and set as active
+      addSelectedAgent(agent);
+      console.log('✅ [Sidebar] Agent added successfully');
       
       // Force a re-render to ensure the chat container updates
       console.log('🔄 [Sidebar] Agent selection complete, forcing re-render');
@@ -272,17 +269,13 @@ export function EnhancedChatSidebar({
   };
 
   const handleRemoveAgent = (agentId: string) => {
-    setSelectedAgents(prev => prev.filter(id => id !== agentId));
-    // If this was the currently selected agent, clear it
-    if (selectedAgent?.id === agentId) {
-      clearSelectedAgent();
-      
-      // Also update the current chat to remove the agent
-      if (currentChat) {
-        // Update the chat store to remove the agent from current chat
-        // This will be handled by the chat store's state management
-      }
-    }
+    console.log('🔄 [Sidebar] Removing agent:', agentId);
+    removeSelectedAgent(agentId);
+  };
+
+  const handleActivateAgent = (agentId: string) => {
+    console.log('🔄 [Sidebar] Activating agent:', agentId);
+    setActiveAgent(agentId);
   };
 
   if (isCollapsed) {
@@ -694,12 +687,20 @@ export function EnhancedChatSidebar({
               </div>
             ) : (
               <div className="space-y-2">
-                {selectedAgents.map((agentId) => {
-                  const agent = getAgents().find(a => a.id === agentId);
-                  if (!agent) return null;
+                {selectedAgents.map((agent) => {
+                  const isActive = activeAgentId === agent.id;
                   
                   return (
-                    <div key={agentId} className="flex items-center gap-3 p-3 rounded-lg bg-gray-50 border border-gray-200 hover:bg-gray-100 transition-colors">
+                    <div 
+                      key={agent.id} 
+                      className={cn(
+                        "flex items-center gap-3 p-3 rounded-lg border transition-colors cursor-pointer",
+                        isActive 
+                          ? "bg-blue-50 border-blue-200 hover:bg-blue-100" 
+                          : "bg-gray-50 border-gray-200 hover:bg-gray-100"
+                      )}
+                      onClick={() => handleActivateAgent(agent.id)}
+                    >
                       {/* Agent Avatar */}
                       <div className="flex-shrink-0">
                         {renderAgentAvatar(agent, 'sm')}
@@ -710,8 +711,16 @@ export function EnhancedChatSidebar({
                           <h4 className="text-sm font-medium truncate text-gray-900">
                             {agent.display_name || agent.name}
                           </h4>
-                          <Badge variant="secondary" className="text-xs bg-green-100 text-green-700">
-                            Active
+                          <Badge 
+                            variant="secondary" 
+                            className={cn(
+                              "text-xs",
+                              isActive 
+                                ? "bg-blue-100 text-blue-700" 
+                                : "bg-green-100 text-green-700"
+                            )}
+                          >
+                            {isActive ? 'Active' : 'Selected'}
                           </Badge>
                         </div>
                         <p className="text-xs text-gray-500 truncate">
@@ -721,7 +730,10 @@ export function EnhancedChatSidebar({
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => handleRemoveAgent(agentId)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleRemoveAgent(agent.id);
+                        }}
                         className="h-8 w-8 p-0 hover:bg-red-100 hover:text-red-600"
                       >
                         <X className="h-4 w-4" />

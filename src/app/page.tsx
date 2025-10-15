@@ -1,3 +1,4 @@
+import { VitalNavbar } from '@/components/layout/vital-navbar';
 import { VitalHero } from '@/components/sections/vital-hero';
 import { VitalProblem } from '@/components/sections/vital-problem';
 import { VitalSolution } from '@/components/sections/vital-solution';
@@ -12,6 +13,7 @@ import { VitalWaitlist } from '@/components/sections/vital-waitlist';
 export default function Home() {
   return (
     <div className="overflow-hidden">
+      <VitalNavbar />
       <VitalHero />
       <VitalProblem />
       <VitalSolution />

@@ -2,7 +2,7 @@
 
 export function VitalMetrics() {
   return (
-    <section className="py-20 bg-primary text-primary-foreground">
+    <section id="metrics" className="py-20 bg-primary text-primary-foreground">
       <div className="container">
         <div className="text-center mb-12">
           <h2 className="text-4xl font-bold tracking-tight mb-4">

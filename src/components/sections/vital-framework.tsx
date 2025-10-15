@@ -68,7 +68,7 @@ export function VitalFramework() {
   ];
 
   return (
-    <section className="py-20 bg-muted/30">
+    <section id="framework" className="py-20 bg-muted/30">
       <div className="container">
         <div className="text-center mb-12">
           <Badge className="mb-4">The Framework</Badge>

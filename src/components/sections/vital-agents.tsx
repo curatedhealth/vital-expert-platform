@@ -45,7 +45,7 @@ export function VitalAgents() {
   ];
 
   return (
-    <section className="py-20 bg-muted/30">
+    <section id="agents" className="py-20 bg-muted/30">
       <div className="container">
         <div className="text-center mb-12">
           <Badge className="mb-4">AI Agents</Badge>

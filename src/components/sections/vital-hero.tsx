@@ -13,20 +13,40 @@ export function VitalHero() {
         <div className="absolute inset-0 bg-grid-black/[0.02] bg-grid-16 [mask-image:radial-gradient(ellipse_80%_50%_at_50%_0%,transparent_20%,black)]" />
       </div>
       
-      {/* Floating medical icons animation */}
-      <div className="absolute inset-0">
-        {[...Array(6)].map((_, i) => (
+      {/* Dynamic floating AI icons animation */}
+      <div className="absolute inset-0 overflow-hidden">
+        {[...Array(8)].map((_, i) => (
           <div
             key={i}
-            className="absolute text-primary/10 animate-pulse"
+            className="absolute text-primary/20"
             style={{
-              left: `${15 + i * 15}%`,
-              top: `${20 + i * 10}%`,
-              animationDelay: `${i * 0.5}s`,
-              animationDuration: `${10 + i * 2}s`,
+              left: `${10 + i * 12}%`,
+              top: `${15 + i * 8}%`,
+              animation: `float-${i % 3} ${8 + i}s ease-in-out infinite`,
+              animationDelay: `${i * 0.8}s`,
             }}
           >
-            <Sparkles size={40 + i * 10} />
+            <Sparkles 
+              size={30 + i * 8} 
+              className="drop-shadow-lg"
+            />
+          </div>
+        ))}
+        {[...Array(6)].map((_, i) => (
+          <div
+            key={`secondary-${i}`}
+            className="absolute text-secondary/15"
+            style={{
+              left: `${20 + i * 15}%`,
+              top: `${25 + i * 12}%`,
+              animation: `float-${(i + 1) % 3} ${12 + i * 2}s ease-in-out infinite reverse`,
+              animationDelay: `${i * 1.2}s`,
+            }}
+          >
+            <Sparkles 
+              size={20 + i * 6} 
+              className="drop-shadow-md"
+            />
           </div>
         ))}
       </div>

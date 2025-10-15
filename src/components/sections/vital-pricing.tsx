@@ -51,7 +51,7 @@ export function VitalPricing() {
   ];
 
   return (
-    <section className="py-20 bg-muted/30">
+    <section id="pricing" className="py-20 bg-muted/30">
       <div className="container">
         <div className="text-center mb-12">
           <Badge className="mb-4">Pricing</Badge>

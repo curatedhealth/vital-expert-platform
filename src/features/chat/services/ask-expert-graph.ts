@@ -600,9 +600,23 @@ export async function* streamModeAwareWorkflow(input: {
       selectedAgent: state.selectedAgent?.name,
       selectedAgentId: state.selectedAgent?.id,
       selectedAgentObject: state.selectedAgent,
+      selectedAgentKeys: state.selectedAgent ? Object.keys(state.selectedAgent) : 'null',
       interactionMode: state.interactionMode,
       autonomousMode: state.autonomousMode
     });
+    
+    // CRITICAL: Log agent context preservation
+    if (nodeName === 'processWithAgent' || nodeName === 'processWithAgentNormal') {
+      console.log('🤖 [Agent Context] Processing with agent:', {
+        hasSelectedAgent: !!state.selectedAgent,
+        agentId: state.selectedAgent?.id,
+        agentName: state.selectedAgent?.name,
+        agentDisplayName: state.selectedAgent?.display_name,
+        agentType: typeof state.selectedAgent,
+        agentKeys: state.selectedAgent ? Object.keys(state.selectedAgent) : 'null',
+        workflowStep: state.workflowStep
+      });
+    }
     
     const stepDescription = getStepDescription(
       state.workflowStep || 'processing',

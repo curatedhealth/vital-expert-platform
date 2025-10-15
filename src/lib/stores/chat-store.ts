@@ -784,11 +784,25 @@ const _useChatStore = create<ChatStore>()(
                     });
                     // The final reasoning will be stored in metadata
                   } else if (data.type === 'complete') {
-                    // Workflow completed
+                    // Workflow completed - stop reasoning and finalize
                     console.log('✅ [SSE] Workflow completed');
                     set({
                       isReasoningActive: false,
+                      liveReasoning: '',
                     });
+                    
+                    // Add completion event to reasoning events
+                    set((state) => ({
+                      reasoningEvents: [
+                        ...state.reasoningEvents,
+                        {
+                          type: 'complete',
+                          step: 'workflow_complete',
+                          description: 'Workflow completed successfully',
+                          data: { timestamp: Date.now() }
+                        }
+                      ]
+                    }));
                   } else if (data.type === 'content') {
                     // Handle both streaming content and fullContent
                     if (data.content) {

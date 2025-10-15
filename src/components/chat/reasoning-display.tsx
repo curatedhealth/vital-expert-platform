@@ -27,6 +27,10 @@ export function ReasoningDisplay() {
     return null;
   }
 
+  // Check if workflow is complete
+  const isComplete = reasoningEvents?.some(event => event.type === 'complete') || false;
+  const hasError = reasoningEvents?.some(event => event.type === 'error') || false;
+
   const getStepIcon = (event: any) => {
     if (event.type === 'complete') return <CheckCircle2 className="w-4 h-4 text-green-600" />;
     if (event.type === 'error') return <AlertCircle className="w-4 h-4 text-red-600" />;
@@ -52,6 +56,21 @@ export function ReasoningDisplay() {
               <Badge variant="outline" className="text-xs">
                 {reasoningEvents.length} steps
               </Badge>
+              {isComplete && (
+                <Badge variant="default" className="text-xs bg-green-100 text-green-800">
+                  Complete
+                </Badge>
+              )}
+              {hasError && (
+                <Badge variant="destructive" className="text-xs">
+                  Error
+                </Badge>
+              )}
+              {isReasoningActive && !isComplete && !hasError && (
+                <Badge variant="secondary" className="text-xs bg-blue-100 text-blue-800 animate-pulse">
+                  Processing...
+                </Badge>
+              )}
               {isOpen ? (
                 <ChevronDown className="w-4 h-4 ml-auto" />
               ) : (

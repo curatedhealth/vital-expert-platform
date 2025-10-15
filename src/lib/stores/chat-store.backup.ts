@@ -30,66 +30,6 @@ export interface Agent {
   tier?: number; // Agent tier (1, 2, 3)
 }
 
-// Unified Agent State - Single source of truth
-interface UnifiedAgentState {
-  active: Agent | null;          // Currently active agent
-  library: Agent[];              // User's library agents
-  suggested: Agent[];            // AI-suggested agents
-  selection: {
-    mode: 'manual' | 'automatic';
-    confidence: number;
-    reasoning: string;
-    timestamp: Date;
-  };
-}
-
-// Unified Chat State - Clean architecture
-interface UnifiedChatState {
-  // Agent state - single source of truth
-  agent: UnifiedAgentState;
-  
-  // Interaction modes
-  mode: {
-    selection: 'manual' | 'automatic';
-    interaction: 'interactive' | 'autonomous';
-  };
-  
-  // Chat state
-  chat: {
-    current: Chat | null;
-    messages: ChatMessage[];
-    history: Chat[];
-  };
-  
-  // Workflow state
-  workflow: {
-    step: string;
-    status: 'idle' | 'running' | 'paused' | 'complete' | 'error';
-    reasoning: ReasoningEvent[];
-    requiresInput: boolean;
-  };
-  
-  // UI state
-  ui: {
-    isLoading: boolean;
-    error: string | null;
-    showAgentSelector: boolean;
-    showToolSelector: boolean;
-  };
-  
-  // Cleanup
-  abortController: AbortController | null;
-}
-
-export interface ReasoningEvent {
-  id: string;
-  type: 'reasoning' | 'agent_selection' | 'workflow_step' | 'complete' | 'error';
-  step: string;
-  description: string;
-  timestamp: Date;
-  metadata?: Record<string, any>;
-}
-
 export interface ChatMessage {
   id: string;
   content: string;
@@ -178,10 +118,7 @@ export interface ToolOption {
 }
 
 export interface ChatStore {
-  // Unified State Structure
-  state: UnifiedChatState;
-  
-  // Legacy properties for backward compatibility (will be deprecated)
+  // State
   chats: Chat[];
   currentChat: Chat | null;
   messages: ChatMessage[];
@@ -265,9 +202,6 @@ export interface ChatStore {
   // Orchestration Actions
   escalateToTier: (tier: 1 | 2 | 3 | 'human', reason: string) => void;
   recordEscalation: (from: 1 | 2 | 3 | 'human', to: 1 | 2 | 3 | 'human', reason: string, confidence: number, cost: number) => void;
-  
-  // Cleanup Actions
-  cleanup: () => void;
   resetTierMetrics: () => void;
   clearError: () => void;
   regenerateResponse: (messageId: string) => Promise<void>;
@@ -306,6 +240,9 @@ export interface ChatStore {
   getAgentsByTier: (tier: number) => Agent[];
 
   // Chat management
+  createNewChat: () => void;
+  selectChat: (chatId: string) => void;
+  deleteChat: (chatId: string) => void;
   pinChat: (chatId: string) => void;
   archiveChat: (chatId: string) => void;
   
@@ -333,6 +270,8 @@ export interface ChatStore {
   // Validation helper
   validateCanSend: () => { valid: boolean; reason: string | null };
 
+  // Cleanup helper
+  cleanup: () => void;
   addReasoningEvent: (event: {
     type: 'reasoning' | 'complete' | 'error';
     step: string;
@@ -345,44 +284,7 @@ export interface ChatStore {
 const _useChatStore = create<ChatStore>()(
   persist(
     (set, get) => ({
-      // Unified State Structure
-      state: {
-        agent: {
-          active: null,
-          library: [],
-          suggested: [],
-          selection: {
-            mode: 'automatic',
-            confidence: 0,
-            reasoning: '',
-            timestamp: new Date()
-          }
-        },
-        mode: {
-          selection: 'automatic',
-          interaction: 'interactive'
-        },
-        chat: {
-          current: null,
-          messages: [],
-          history: []
-        },
-        workflow: {
-          step: '',
-          status: 'idle',
-          reasoning: [],
-          requiresInput: false
-        },
-        ui: {
-          isLoading: false,
-          error: null,
-          showAgentSelector: false,
-          showToolSelector: false
-        },
-        abortController: null
-      },
-      
-      // Legacy properties for backward compatibility
+      // Initial state
       chats: [],
       currentChat: null,
       messages: [],
@@ -431,13 +333,6 @@ const _useChatStore = create<ChatStore>()(
     messageCount: 0,
     startTime: null,
     lastActivity: null,
-  },
-  tierMetrics: {
-    tier1Calls: 0,
-    tier2Escalations: 0,
-    tier3Escalations: 0,
-    totalCost: 0,
-    averageResponseTime: 0
   },
 
       // Actions

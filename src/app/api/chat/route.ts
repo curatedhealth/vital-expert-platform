@@ -34,16 +34,18 @@ export async function POST(request: NextRequest) {
             selectedTools,
             chatHistory
           })) {
-            // Send workflow events as SSE - preserve the original event structure
+            // CRITICAL: Preserve ALL original fields
+            // Do NOT transform or rename fields
             const sseData = {
-              type: event.type || 'workflow_step',
-              content: event.content || event.description || event.step || 'Processing...',
-              metadata: event.metadata || {},
-              data: event.data || {},
-              step: event.step,
-              description: event.description
+              ...event,  // Spread ALL original fields
+              _meta: {   // Add metadata without affecting original
+                timestamp: Date.now(),
+                source: 'workflow',
+                sessionId: sessionId || `session-${Date.now()}`
+              }
             };
 
+            // Send exactly as is
             controller.enqueue(
               new TextEncoder().encode(`data: ${JSON.stringify(sseData)}\n\n`)
             );

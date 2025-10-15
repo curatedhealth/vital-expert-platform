@@ -9,10 +9,21 @@ import { cn } from '@/lib/utils';
 import { useChatStore } from '@/lib/stores/chat-store';
 
 export function ReasoningDisplay() {
-  const { reasoningEvents, isReasoningActive } = useChatStore();
+  const { reasoningEvents, isReasoningActive, liveReasoning } = useChatStore();
   const [isOpen, setIsOpen] = React.useState(true);
 
-  if (!reasoningEvents || reasoningEvents.length === 0) {
+  // Debug logging
+  React.useEffect(() => {
+    console.log('🧠 [ReasoningDisplay] State update:', {
+      reasoningEventsCount: reasoningEvents?.length || 0,
+      isReasoningActive,
+      liveReasoningLength: liveReasoning?.length || 0,
+      events: reasoningEvents?.map(e => ({ type: e.type, step: e.step, description: e.description?.substring(0, 50) }))
+    });
+  }, [reasoningEvents, isReasoningActive, liveReasoning]);
+
+  // Show reasoning display if we have events OR if we're actively reasoning
+  if ((!reasoningEvents || reasoningEvents.length === 0) && !isReasoningActive && !liveReasoning) {
     return null;
   }
 

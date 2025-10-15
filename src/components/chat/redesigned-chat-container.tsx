@@ -49,6 +49,15 @@ export function RedesignedChatContainer({ className }: { className?: string }) {
     };
   }, [cleanup]);
 
+  // Force re-render when selectedAgent changes
+  React.useEffect(() => {
+    console.log('🔄 [RedesignedChatContainer] selectedAgent changed:', {
+      selectedAgent: selectedAgent?.name,
+      selectedAgentId: selectedAgent?.id,
+      selectedAgentDisplayName: selectedAgent?.display_name
+    });
+  }, [selectedAgent]);
+
   // AUDIT FIX: Async acknowledgment pattern
   const handleSelectAgent = React.useCallback(async (agent: any) => {
     try {
@@ -116,6 +125,7 @@ export function RedesignedChatContainer({ className }: { className?: string }) {
             {selectedAgent ? (
               // Show prompt starters when agent is selected
               <AgentPromptStarters
+                key={selectedAgent.id} // Force re-render when agent changes
                 selectedAgent={selectedAgent}
                 onPromptSelect={(prompt) => {
                   setInput(prompt);

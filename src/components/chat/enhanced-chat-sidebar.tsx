@@ -237,7 +237,7 @@ export function EnhancedChatSidebar({
       setAddingAgent(agent.id);
       console.log('🔄 [Sidebar] Calling selectAgent with ID:', agent.id);
       
-      // Call the chat store's selectAgent function
+      // Call the chat store's selectAgent function - this will set the primary selectedAgent
       await selectAgent(agent.id);
       console.log('✅ [Sidebar] selectAgent completed successfully');
       

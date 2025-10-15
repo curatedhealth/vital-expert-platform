@@ -230,9 +230,17 @@ export function EnhancedChatSidebar({
   };
 
   const handleSelectAgent = async (agent: Agent) => {
+    console.log('🔄 [Sidebar] handleSelectAgent called with:', {
+      agentId: agent.id,
+      agentName: agent.name,
+      agentDisplayName: agent.display_name
+    });
+    
     try {
       setAddingAgent(agent.id);
+      console.log('🔄 [Sidebar] Calling selectAgent with ID:', agent.id);
       await selectAgent(agent.id);
+      console.log('✅ [Sidebar] selectAgent completed successfully');
       
       // Update local selected agents state
       setSelectedAgents(prev => {
@@ -251,7 +259,12 @@ export function EnhancedChatSidebar({
         setShowAgentPanel(false); // Close the panel after selection
       }, 1500);
     } catch (error) {
-      console.error('Failed to select agent:', error);
+      console.error('❌ [Sidebar] Error selecting agent:', {
+        error: error,
+        agentId: agent.id,
+        agentName: agent.name,
+        errorMessage: error instanceof Error ? error.message : 'Unknown error'
+      });
       setAddingAgent(null);
     }
   };

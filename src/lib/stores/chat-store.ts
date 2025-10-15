@@ -1197,6 +1197,15 @@ const _useChatStore = create<ChatStore>()(
       // Global agents store integration
       getAgents: () => {
         try {
+          // Check if useAgentsStore is available
+          if (!useAgentsStore || typeof useAgentsStore.getState !== 'function') {
+            console.error('❌ [getAgents] useAgentsStore not available:', {
+              useAgentsStore: !!useAgentsStore,
+              getState: typeof useAgentsStore?.getState
+            });
+            return [];
+          }
+          
           const globalAgents = useAgentsStore.getState().agents;
           console.log('🔍 [getAgents] Global agents from store:', {
             isArray: Array.isArray(globalAgents),

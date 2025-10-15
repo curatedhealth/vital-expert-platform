@@ -67,7 +67,13 @@ export async function routeByModeNode(state: WorkflowState): Promise<Partial<Wor
   const { interactionMode, autonomousMode, selectedAgent } = state;
   
   console.log(`🔄 [RouteByMode] Routing by mode: ${interactionMode} + ${autonomousMode ? 'Autonomous' : 'Normal'}`);
-  console.log(`🔍 [RouteByMode] Selected agent: ${selectedAgent?.name || 'none'}`);
+  console.log(`🔍 [RouteByMode] Selected agent details:`, {
+    selectedAgent: selectedAgent?.name || 'none',
+    selectedAgentId: selectedAgent?.id || 'none',
+    selectedAgentType: typeof selectedAgent,
+    selectedAgentKeys: selectedAgent ? Object.keys(selectedAgent) : 'null',
+    selectedAgentObject: selectedAgent
+  });
   
   // Determine the next step based on mode and agent selection
   let nextStep = 'routing';

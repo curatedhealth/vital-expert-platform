@@ -502,6 +502,8 @@ export async function* streamModeAwareWorkflow(input: {
     selectedAgent: input.selectedAgent?.name,
     selectedAgentId: input.selectedAgent?.id,
     selectedAgentObject: input.selectedAgent,
+    selectedAgentType: typeof input.selectedAgent,
+    selectedAgentKeys: input.selectedAgent ? Object.keys(input.selectedAgent) : 'null',
     interactionMode: input.interactionMode,
     autonomousMode: input.autonomousMode
   });

@@ -1,55 +1,62 @@
 'use client';
 
 import { Card, CardContent } from '@/components/ui/card';
-import { Building2, Zap, Lightbulb } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { TrendingDown, Clock, DollarSign } from 'lucide-react';
 
 export function VitalProblem() {
   const problems = [
     {
-      icon: Building2,
-      title: 'Complex Compliance',
-      description: 'Healthcare regulations are constantly evolving and difficult to navigate alone',
-      color: 'text-vital-primary'
+      icon: TrendingDown,
+      stat: "87%",
+      label: "Fail Rate",
+      description: "Healthcare projects fail due to complexity and compliance burden",
+      color: "text-destructive"
     },
     {
-      icon: Zap,
-      title: 'Speed vs. Safety',
-      description: 'Pressure to innovate quickly while maintaining medical-grade quality',
-      color: 'text-vital-accent'
+      icon: Clock,
+      stat: "18",
+      label: "Month Average",
+      description: "Time to market for new digital health solutions",
+      color: "text-warning"
     },
     {
-      icon: Lightbulb,
-      title: 'Expertise Gaps',
-      description: 'Small teams can\'t afford specialists for every domain they need',
-      color: 'text-vital-secondary'
+      icon: DollarSign,
+      stat: "$500K+",
+      label: "Costs",
+      description: "Average consultant fees for regulatory and clinical expertise",
+      color: "text-primary"
     }
   ];
 
   return (
-    <section id="problem" className="py-20 bg-background">
+    <section className="py-20 bg-muted/30">
       <div className="container">
-        <div className="mx-auto max-w-3xl text-center mb-16">
-          <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-6">
-            Healthcare Innovation Shouldn't Require an Army of Consultants
+        <div className="text-center mb-12">
+          <Badge variant="destructive" className="mb-4">
+            The Problem
+          </Badge>
+          <h2 className="text-4xl font-bold tracking-tight mb-4">
+            The $2.7 Trillion Healthcare Innovation Problem
           </h2>
-          <p className="text-xl text-muted-foreground">
-            Every healthcare team faces these critical challenges when building innovative solutions
+          <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+            Small teams are locked out of healthcare innovation by massive barriers
           </p>
         </div>
-
+        
         <div className="grid md:grid-cols-3 gap-8">
-          {problems.map((problem, index) => (
-            <Card key={index} className="p-8 text-center hover:shadow-lg transition-shadow duration-300">
-              <CardContent className="p-0">
-                <div className={`inline-flex items-center justify-center w-16 h-16 rounded-full bg-muted mb-6 ${problem.color}`}>
-                  <problem.icon className="h-8 w-8" />
+          {problems.map((problem, i) => (
+            <Card key={i} className="relative overflow-hidden hover:shadow-xl transition-shadow">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-primary/5 to-transparent rounded-full -mr-16 -mt-16" />
+              <CardContent className="pt-8">
+                <problem.icon className={`h-10 w-10 mb-4 ${problem.color}`} />
+                <div className="space-y-2">
+                  <p className={`text-5xl font-black ${problem.color}`}>
+                    {problem.stat}
+                  </p>
+                  <p className="font-semibold text-lg">{problem.label}</p>
+                  <p className="text-muted-foreground">{problem.description}</p>
                 </div>
-                <h3 className="text-xl font-semibold text-foreground mb-4">
-                  {problem.title}
-                </h3>
-                <p className="text-muted-foreground leading-relaxed">
-                  {problem.description}
-                </p>
               </CardContent>
             </Card>
           ))}

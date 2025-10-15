@@ -2,132 +2,120 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { CheckCircle } from 'lucide-react';
 
 export function VitalFramework() {
-  const frameworkPhases = [
+  const phases = [
     {
       letter: "V",
       name: "Vision",
-      description: "Align stakeholders and define clear success metrics",
-      features: [
-        "Stakeholder mapping",
-        "Regulatory pathway planning",
-        "Success criteria definition"
+      week: "Week 1",
+      description: "Strategic planning & stakeholder alignment",
+      tasks: [
+        "Stakeholder alignment",
+        "Regulatory pathway mapping",
+        "Success metrics definition"
       ],
-      color: "bg-vital-primary"
+      color: "from-blue-500 to-blue-600"
     },
     {
       letter: "I",
       name: "Intelligence",
-      description: "Gather insights and analyze the healthcare landscape",
-      features: [
-        "Market research",
-        "Clinical evidence review",
-        "Competitive analysis"
+      week: "Week 2",
+      description: "Data analysis & market research",
+      tasks: [
+        "Market analysis",
+        "Clinical evidence gathering",
+        "Competitive positioning"
       ],
-      color: "bg-vital-secondary"
+      color: "from-teal-500 to-teal-600"
     },
     {
       letter: "T",
       name: "Trials",
-      description: "Test and validate your healthcare solution",
-      features: [
+      week: "Week 3",
+      description: "Testing and validation protocols",
+      tasks: [
         "Protocol development",
-        "Testing frameworks",
-        "Validation strategies"
+        "Patient recruitment strategy",
+        "Data management setup"
       ],
-      color: "bg-vital-accent"
+      color: "from-purple-500 to-purple-600"
     },
     {
       letter: "A",
       name: "Activation",
-      description: "Launch with confidence and compliance",
-      features: [
+      week: "Week 4",
+      description: "Launch preparation and deployment",
+      tasks: [
         "Go-to-market planning",
-        "Regulatory submissions",
-        "Deployment strategies"
+        "Compliance documentation",
+        "Launch preparation"
       ],
-      color: "bg-vital-success"
+      color: "from-orange-500 to-orange-600"
     },
     {
       letter: "L",
       name: "Learning",
-      description: "Continuously improve based on real-world data",
-      features: [
-        "Outcome tracking",
+      week: "Ongoing",
+      description: "Continuous optimization",
+      tasks: [
         "Performance monitoring",
-        "Iterative optimization"
+        "Continuous optimization",
+        "Outcome tracking"
       ],
-      color: "bg-vital-destructive"
+      color: "from-green-500 to-green-600"
     }
   ];
 
   return (
-    <section id="framework" className="py-20 bg-background">
+    <section className="py-20 bg-muted/30">
       <div className="container">
-        <div className="mx-auto max-w-3xl text-center mb-16">
-          <Badge variant="outline" className="mb-4">
-            VITAL Framework™
-          </Badge>
-          <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-6">
-            A Proven Methodology for Healthcare Success
+        <div className="text-center mb-12">
+          <Badge className="mb-4">The Framework</Badge>
+          <h2 className="text-4xl font-bold tracking-tight mb-4">
+            The Proven Path to Digital Health Success
           </h2>
-          <p className="text-xl text-muted-foreground">
-            Our systematic approach guides you through every stage of healthcare innovation
+          <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+            Our VITAL Framework™ guides you from vision to market in 30 days
           </p>
         </div>
-
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {frameworkPhases.map((phase, index) => (
-            <Card key={index} className="relative overflow-hidden hover:shadow-lg transition-shadow duration-300">
-              <CardHeader className="pb-4">
-                <div className="flex items-center gap-4 mb-4">
-                  <div className={`w-12 h-12 rounded-lg ${phase.color} flex items-center justify-center text-white font-bold text-xl`}>
-                    {phase.letter}
-                  </div>
-                  <div>
-                    <CardTitle className="text-xl">{phase.name}</CardTitle>
-                    <CardDescription className="text-sm">
-                      Phase {index + 1}
+        
+        {/* Timeline visualization */}
+        <div className="relative max-w-6xl mx-auto">
+          {/* Connection line */}
+          <div className="absolute top-1/2 left-0 right-0 h-1 bg-gradient-to-r from-primary via-secondary to-success -translate-y-1/2 hidden md:block" />
+          
+          <div className="grid md:grid-cols-5 gap-6">
+            {phases.map((phase, index) => (
+              <div
+                key={index}
+                className="relative"
+              >
+                <Card className="hover:shadow-xl transition-all hover:-translate-y-2">
+                  <CardHeader className="pb-4">
+                    <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${phase.color} 
+                      flex items-center justify-center text-white text-2xl font-bold mb-3 mx-auto`}>
+                      {phase.letter}
+                    </div>
+                    <CardTitle className="text-xl text-center">{phase.name}</CardTitle>
+                    <p className="text-sm font-semibold text-center text-primary">{phase.week}</p>
+                  </CardHeader>
+                  <CardContent>
+                    <CardDescription className="text-center mb-3">
+                      {phase.description}
                     </CardDescription>
-                  </div>
-                </div>
-                <p className="text-muted-foreground">
-                  {phase.description}
-                </p>
-              </CardHeader>
-              <CardContent>
-                <ul className="space-y-2">
-                  {phase.features.map((feature, featureIndex) => (
-                    <li key={featureIndex} className="flex items-center gap-2 text-sm">
-                      <CheckCircle className="h-4 w-4 text-vital-success flex-shrink-0" />
-                      <span>{feature}</span>
-                    </li>
-                  ))}
-                </ul>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-
-        {/* Framework flow indicator */}
-        <div className="mt-16 text-center">
-          <div className="inline-flex items-center gap-2 text-muted-foreground">
-            <span>Follow the VITAL Framework™</span>
-            <div className="flex items-center gap-1">
-              {frameworkPhases.map((phase, index) => (
-                <div key={index} className="flex items-center">
-                  <div className={`w-6 h-6 rounded-full ${phase.color} flex items-center justify-center text-white text-xs font-bold`}>
-                    {phase.letter}
-                  </div>
-                  {index < frameworkPhases.length - 1 && (
-                    <div className="w-8 h-0.5 bg-muted mx-1" />
-                  )}
-                </div>
-              ))}
-            </div>
-            <span>for guaranteed success</span>
+                    <ul className="space-y-1 text-sm">
+                      {phase.tasks.map((task, i) => (
+                        <li key={i} className="flex items-start gap-2">
+                          <div className="w-1.5 h-1.5 rounded-full bg-secondary mt-1.5 flex-shrink-0" />
+                          <span className="text-muted-foreground">{task}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </CardContent>
+                </Card>
+              </div>
+            ))}
           </div>
         </div>
       </div>

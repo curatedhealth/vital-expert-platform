@@ -13,12 +13,21 @@
   :root {
     --radius: 0.5rem;
 
-    /* VITAL Brand Colors mapped to Scalar system */
-    --vital-primary: oklch(0.41 0.167 246.82);        /* VITAL Blue #0B4F8C */
-    --vital-secondary: oklch(0.59 0.145 194.77);      /* VITAL Teal #00A19C */
-    --vital-accent: oklch(0.73 0.188 84.43);          /* VITAL Gold #F5A623 */
-    --vital-success: oklch(0.63 0.178 145.02);        /* Clinical Green #27AE60 */
-    --vital-destructive: oklch(0.577 0.245 27.325);   /* Alert Red #E74C3C */
+    /* VITAL Brand Colors v3.0 - Enhanced Scalar Integration */
+    --primary: oklch(0.41 0.167 246.82);        /* Trust Blue #0B4F8C */
+    --primary-foreground: oklch(0.99 0 0);       /* White */
+    
+    --secondary: oklch(0.59 0.145 194.77);      /* Progress Teal #00A19C */
+    --secondary-foreground: oklch(0.99 0 0);     /* White */
+    
+    --accent: oklch(0.73 0.188 84.43);          /* Regulatory Gold #F5A623 */
+    --accent-foreground: oklch(0.18 0 0);        /* Dark */
+    
+    /* Extended Palette */
+    --success: oklch(0.63 0.178 145.02);        /* Clinical Green #27AE60 */
+    --warning: oklch(0.73 0.188 84.43);         /* Regulatory Gold #F5A623 */
+    --destructive: oklch(0.577 0.245 27.325);   /* Alert Red #E74C3C */
+    --info: oklch(0.51 0.167 264.07);           /* Market Purple #7B68EE */
 
     /* Clinical Professional Theme Colors */
     --accent-primary: #00D9A3; /* Teal-Green - Primary CTAs, Success */
@@ -473,5 +482,29 @@
     --display-weight: 600;
     --text-weight: 400;
     --text-4xxl: 2.5rem;
+  }
+  
+  /* VITAL v3.0 Typography Enhancement */
+  .hero-headline {
+    font-size: clamp(2.5rem, 5vw, 4rem);
+    font-weight: 900;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+  }
+  
+  .power-number {
+    font-family: var(--font-mono);
+    font-weight: 800;
+    color: var(--secondary);
+  }
+  
+  /* Scalar Grid Patterns */
+  .bg-grid-black\/\[0\.02\] {
+    background-image: radial-gradient(circle, #000 1px, transparent 1px);
+    background-size: 16px 16px;
+  }
+  
+  .bg-grid-16 {
+    background-size: 16px 16px;
   }
 }

@@ -2,95 +2,95 @@
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, CheckCircle, Shield, FileCheck } from 'lucide-react';
+import { ArrowRight, Sparkles } from 'lucide-react';
 
 export function VitalHero() {
   return (
-    <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
-      {/* Animated gradient background */}
-      <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 via-background to-teal-500/10" />
+    <section className="relative min-h-[90vh] flex items-center overflow-hidden">
+      {/* Animated background using Scalar patterns */}
+      <div className="absolute inset-0">
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-background to-secondary/5" />
+        <div className="absolute inset-0 bg-grid-black/[0.02] bg-grid-16 [mask-image:radial-gradient(ellipse_80%_50%_at_50%_0%,transparent_20%,black)]" />
+      </div>
       
       {/* Floating medical icons animation */}
-      <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute top-20 left-10 animate-pulse">
-          <Shield className="h-8 w-8 text-blue-500/20" />
-        </div>
-        <div className="absolute top-40 right-20 animate-pulse delay-1000">
-          <FileCheck className="h-6 w-6 text-teal-500/20" />
-        </div>
-        <div className="absolute bottom-40 left-20 animate-pulse delay-2000">
-          <CheckCircle className="h-7 w-7 text-yellow-500/20" />
-        </div>
-        <div className="absolute bottom-20 right-10 animate-pulse delay-500">
-          <Shield className="h-5 w-5 text-blue-500/20" />
-        </div>
-      </div>
-
-      {/* Subtle grid pattern overlay */}
-      <div className="absolute inset-0 opacity-30" style={{
-        backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23000000' fill-opacity='0.02'%3E%3Ccircle cx='30' cy='30' r='1'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`
-      }} />
-
-      <div className="container relative z-10">
-        <div className="mx-auto max-w-4xl text-center">
-          {/* Badge */}
-          <div className="mb-8">
-            <Badge variant="outline" className="px-4 py-2 text-sm font-medium border-blue-500/20 text-blue-500">
-              🚀 Early Access Opening Soon
-            </Badge>
+      <div className="absolute inset-0">
+        {[...Array(6)].map((_, i) => (
+          <div
+            key={i}
+            className="absolute text-primary/10 animate-pulse"
+            style={{
+              left: `${15 + i * 15}%`,
+              top: `${20 + i * 10}%`,
+              animationDelay: `${i * 0.5}s`,
+              animationDuration: `${10 + i * 2}s`,
+            }}
+          >
+            <Sparkles size={40 + i * 10} />
           </div>
-
-          {/* Main headline */}
-          <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight mb-6">
-            <span className="bg-gradient-to-r from-blue-600 via-teal-600 to-yellow-500 bg-clip-text text-transparent">
-              Transform Your Healthcare Team
+        ))}
+      </div>
+      
+      <div className="container relative z-10">
+        <div className="mx-auto max-w-5xl text-center space-y-6">
+          {/* Animated badge */}
+          <Badge variant="outline" className="border-secondary/30 bg-secondary/5 px-4 py-1.5">
+            <span className="relative flex h-2 w-2 mr-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-secondary opacity-75" />
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-secondary" />
             </span>
+            Launching v2.0 - Now with 200+ Healthcare Agents
+          </Badge>
+          
+          {/* Powerful headline */}
+          <h1 className="hero-headline text-5xl md:text-7xl font-black tracking-tight">
+            Give Your{' '}
+            <span className="text-primary">5-Person Team</span>
             <br />
-            <span className="text-foreground">
-              with AI-Powered Expertise
+            the Power of{' '}
+            <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+              50 Digital Health Experts
             </span>
           </h1>
-
-          {/* Subtitle */}
-          <p className="text-xl md:text-2xl text-muted-foreground mb-8 max-w-3xl mx-auto leading-relaxed">
-            Access specialized medical, regulatory, and technical knowledge instantly. 
-            Build compliant healthcare solutions with confidence.
+          
+          <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto">
+            Build FDA-compliant healthcare solutions 10x faster with AI-powered expertise. 
+            No consultants needed. <span className="text-primary font-semibold">$498K average savings.</span>
           </p>
-
+          
           {/* CTA Buttons */}
-          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12">
+          <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
             <Button 
               size="lg" 
-              className="px-8 py-4 text-lg font-semibold bg-blue-600 hover:bg-blue-700 text-white"
+              className="text-lg px-8 py-6 bg-primary hover:bg-primary/90"
               onClick={() => document.getElementById('waitlist')?.scrollIntoView({ behavior: 'smooth' })}
             >
-              Join the Waitlist
+              Start Building Free
               <ArrowRight className="ml-2 h-5 w-5" />
             </Button>
-            
             <Button 
-              variant="outline" 
               size="lg" 
-              className="px-8 py-4 text-lg border-blue-600 text-blue-600 hover:bg-blue-50"
+              variant="outline" 
+              className="text-lg px-8 py-6"
               onClick={() => document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' })}
             >
-              Learn More
+              Watch 2-min Demo
             </Button>
           </div>
-
+          
           {/* Trust indicators */}
-          <div className="flex flex-wrap justify-center items-center gap-6 text-sm text-muted-foreground">
+          <div className="flex flex-wrap items-center justify-center gap-6 pt-8 text-sm text-muted-foreground">
             <div className="flex items-center gap-2">
-              <CheckCircle className="h-4 w-4 text-green-500" />
-              <span>HIPAA Compliant</span>
+              <div className="w-2 h-2 bg-green-500 rounded-full" />
+              HIPAA Compliant
             </div>
             <div className="flex items-center gap-2">
-              <CheckCircle className="h-4 w-4 text-green-500" />
-              <span>FDA Guidelines</span>
+              <div className="w-2 h-2 bg-green-500 rounded-full" />
+              FDA Ready
             </div>
             <div className="flex items-center gap-2">
-              <CheckCircle className="h-4 w-4 text-green-500" />
-              <span>Medical-Grade Accuracy</span>
+              <div className="w-2 h-2 bg-green-500 rounded-full" />
+              30-Day Money Back
             </div>
           </div>
         </div>

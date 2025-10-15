@@ -42,7 +42,10 @@ const ModeAwareWorkflowState = Annotation.Root({
   }),
   query: Annotation<string>(),
   agentId: Annotation<string | null>(),
-  selectedAgent: Annotation<any>(),
+  selectedAgent: Annotation<any>({
+    value: (x: any, y: any) => y ?? x,
+    default: () => null
+  }),
   suggestedAgents: Annotation<any[]>(),
   context: Annotation<string>(),
   sources: Annotation<any[]>(),
@@ -497,6 +500,8 @@ export async function* streamModeAwareWorkflow(input: {
     messages: messages.length,
     query: input.query,
     selectedAgent: input.selectedAgent?.name,
+    selectedAgentId: input.selectedAgent?.id,
+    selectedAgentObject: input.selectedAgent,
     interactionMode: input.interactionMode,
     autonomousMode: input.autonomousMode
   });
@@ -574,6 +579,8 @@ export async function* streamModeAwareWorkflow(input: {
       answerLength: state.answer?.length || 0,
       contextLength: state.context?.length || 0,
       selectedAgent: state.selectedAgent?.name,
+      selectedAgentId: state.selectedAgent?.id,
+      selectedAgentObject: state.selectedAgent,
       interactionMode: state.interactionMode,
       autonomousMode: state.autonomousMode
     });

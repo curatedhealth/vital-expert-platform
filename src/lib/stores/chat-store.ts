@@ -558,6 +558,18 @@ const _useChatStore = create<ChatStore>()(
             useIntelligentRouting: useAutomaticRouting
           };
 
+          console.log('📤 [sendMessage] Request body being sent:', {
+            message: content.substring(0, 50) + '...',
+            agent: selectedAgent ? {
+              id: selectedAgent.id,
+              name: selectedAgent.name,
+              display_name: selectedAgent.display_name
+            } : null,
+            interactionMode,
+            autonomousMode,
+            sessionId: updatedCurrentChat?.id || 'unknown'
+          });
+
           console.log('📤 Sending request to:', apiEndpoint);
           console.log('📤 Request body:', JSON.stringify(requestBody, null, 2));
 

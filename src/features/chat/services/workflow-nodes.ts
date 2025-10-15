@@ -380,14 +380,38 @@ export async function processWithAgentNormalNode(state: WorkflowState): Promise<
     
     console.log(`🔧 [Tools] Using ${userTools.length} selected tools:`, userTools.map(t => t.name));
     
-    // Create ReAct agent with selected tools
+    // Create agent-specific LLM configuration
+    const agentModel = new ChatOpenAI({
+      modelName: selectedAgent.model || 'gpt-4o',
+      temperature: selectedAgent.temperature || 0.7,
+      maxTokens: selectedAgent.max_tokens || 4000,
+      streaming: true,
+    });
+    
+    console.log(`🤖 [Agent Config] Using agent-specific configuration:`, {
+      model: selectedAgent.model,
+      temperature: selectedAgent.temperature,
+      maxTokens: selectedAgent.max_tokens,
+      systemPrompt: selectedAgent.system_prompt?.substring(0, 100) + '...',
+      capabilities: selectedAgent.capabilities,
+      knowledgeDomains: selectedAgent.knowledge_domains
+    });
+    
+    // Create ReAct agent with selected tools and agent-specific model
     const agent = await createReactAgent({
-      llm: model,
+      llm: agentModel,
       tools: userTools
     });
     
-    // Ensure messages array is not empty
-    const agentMessages = messages.length > 0 ? messages : [new HumanMessage(query)];
+    // Ensure messages array is not empty and add agent's system prompt
+    let agentMessages = messages.length > 0 ? messages : [new HumanMessage(query)];
+    
+    // Add agent's system prompt as the first message if it exists
+    if (selectedAgent.system_prompt) {
+      const systemMessage = new AIMessage(selectedAgent.system_prompt);
+      agentMessages = [systemMessage, ...agentMessages];
+      console.log(`🧠 [System Prompt] Added agent's system prompt: ${selectedAgent.system_prompt.substring(0, 100)}...`);
+    }
     
     console.log('🤖 [Normal Mode] Invoking agent with messages:', {
       messageCount: agentMessages.length,

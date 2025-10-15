@@ -218,9 +218,24 @@ export class EnhancedLangChainService {
         ? this.vectorStore.asRetriever({ k: 5 })
         : this.createSimpleRetriever();
 
+      // Create agent-specific LLM if agent is provided
+      const agentLLM = agent ? new ChatOpenAI({
+        modelName: agent.model || 'gpt-4o',
+        temperature: agent.temperature || 0.7,
+        maxTokens: agent.max_tokens || 4000,
+        openAIApiKey: process.env.OPENAI_API_KEY,
+      }) : this.llm;
+
+      console.log(`🤖 [Enhanced Service] Using agent-specific LLM:`, {
+        model: agent?.model || 'default',
+        temperature: agent?.temperature || 'default',
+        maxTokens: agent?.max_tokens || 'default',
+        agentName: agent?.name || 'default'
+      });
+
       // Create chain
       const chain = ConversationalRetrievalQAChain.fromLLM(
-        this.llm,
+        agentLLM,
         retriever,
         {
           memory,

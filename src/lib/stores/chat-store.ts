@@ -1198,13 +1198,19 @@ const _useChatStore = create<ChatStore>()(
       getAgents: () => {
         try {
           const globalAgents = useAgentsStore.getState().agents;
+          console.log('🔍 [getAgents] Global agents from store:', {
+            isArray: Array.isArray(globalAgents),
+            length: globalAgents?.length || 0,
+            firstAgent: globalAgents?.[0]?.id || 'none'
+          });
+          
           // Ensure we have an array
           if (!Array.isArray(globalAgents)) {
             console.warn('Global agents store returned non-array:', globalAgents);
             return [];
           }
           // Transform global agents to chat store format
-          return globalAgents.map(agent => ({
+          const transformedAgents = globalAgents.map(agent => ({
             id: agent.id,
             name: agent.name,
             display_name: agent.display_name,
@@ -1224,6 +1230,13 @@ const _useChatStore = create<ChatStore>()(
             organizationalRole: agent.organizational_role,
             tier: agent.tier,
           }));
+          
+          console.log('🔍 [getAgents] Transformed agents:', {
+            count: transformedAgents.length,
+            firstAgentId: transformedAgents[0]?.id || 'none'
+          });
+          
+          return transformedAgents;
         } catch (error) {
           console.error('Error getting agents from global store:', error);
           return [];
@@ -1444,9 +1457,21 @@ const _useChatStore = create<ChatStore>()(
         
         // Get agents from global store
         const agents = getAgents();
+        console.log('🔍 [selectAgent] Available agents:', {
+          agentId,
+          totalAgents: agents.length,
+          agentIds: agents.map(a => a.id),
+          foundAgent: agents.find(a => a.id === agentId)
+        });
+        
         const agent = agents.find(a => a.id === agentId);
         
         if (!agent) {
+          console.error('❌ [selectAgent] Agent not found:', {
+            requestedId: agentId,
+            availableIds: agents.map(a => a.id),
+            totalAgents: agents.length
+          });
           throw new Error(`Agent with ID ${agentId} not found`);
         }
 

@@ -98,8 +98,11 @@ export function RedesignedChatContainer({ className }: { className?: string }) {
     input: input.trim(),
     isLoading,
     interactionMode,
-    selectedAgent: !!selectedAgent,
+    selectedAgent: selectedAgent,
+    selectedAgentId: selectedAgent?.id,
     selectedAgentName: selectedAgent?.name,
+    selectedAgentDisplayName: selectedAgent?.display_name,
+    selectedAgentType: typeof selectedAgent,
     canSend
   });
 

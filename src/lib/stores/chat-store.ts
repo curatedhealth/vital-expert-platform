@@ -1309,10 +1309,25 @@ const _useChatStore = create<ChatStore>()(
       selectChat: (chatId: string) => {
         const chat = get().chats.find(c => c.id === chatId);
         if (chat) {
+          const agents = get().getAgents();
+          const foundAgent = chat.agentId ? agents.find(a => a.id === chat.agentId) : null;
+          
+          console.log('🔍 [selectChat] Chat selection debug:', {
+            chatId,
+            chatAgentId: chat.agentId,
+            totalAgents: agents.length,
+            foundAgent: foundAgent ? {
+              id: foundAgent.id,
+              name: foundAgent.name,
+              display_name: foundAgent.display_name
+            } : null,
+            agentIds: agents.map(a => a.id).slice(0, 5) // First 5 agent IDs for debugging
+          });
+          
           set({
             currentChat: chat,
             messages: chat.messages,
-            selectedAgent: chat.agentId ? get().getAgents().find(a => a.id === chat.agentId) || null : null,
+            selectedAgent: foundAgent,
           });
         }
       },

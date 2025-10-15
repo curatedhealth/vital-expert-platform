@@ -3,29 +3,36 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
-import { Menu, X, CheckCircle, Users, TrendingUp, Shield, Clock, Brain, ArrowRight, MessageSquare, BookOpen, Workflow, BarChart3, Zap, Target, RefreshCw, ChevronRight } from 'lucide-react';
+import { Menu, X, CheckCircle, Users, TrendingUp, Shield, Clock, Brain, ArrowRight, MessageSquare, BookOpen, Workflow, BarChart3, Zap, Target, RefreshCw, ChevronRight, Verified } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { MovingBorder } from '@/components/ui/moving-border';
+import { Marquee } from '@/components/magicui/marquee';
+import { Meteors } from '@/components/magicui/meteors';
+import { PlusSigns } from '@/components/icons/plus-signs';
+import { cn } from '@/lib/utils';
 
 export default function Home() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const router = useRouter();
 
   return (
-    <div className="min-h-screen bg-white text-gray-900 font-medium antialiased">
+    <div className="overflow-hidden">
       {/* Navigation */}
-      <nav className="bg-white/95 backdrop-blur-sm border-b border-gray-200 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16">
-            <div className="flex items-center">
-              <div className="flex items-center space-x-2">
-                <div className="w-8 h-8 bg-gradient-to-r from-teal-500 to-cyan-500 rounded-lg flex items-center justify-center">
-                  <Zap className="h-5 w-5 text-white" />
-                </div>
-                <span className="text-xl font-bold text-gray-900">VITAL⚡</span>
+      <header className="border-b transition-all duration-300">
+        <div className="container max-w-[120rem] px-4">
+          <div className="flex items-center border-x py-4 lg:border-none lg:py-6">
+            <div className="flex items-center space-x-2">
+              <div className="w-8 h-8 bg-gradient-to-r from-teal-500 to-cyan-500 rounded-lg flex items-center justify-center">
+                <Zap className="h-5 w-5 text-white" />
               </div>
-              <div className="hidden md:ml-10 md:flex md:space-x-8">
+              <span className="text-xl font-bold text-gray-900">VITAL⚡</span>
+            </div>
+
+            {/* Desktop Navigation */}
+            <div className="ms-8 hidden flex-1 items-center justify-between lg:flex">
+              <nav className="flex space-x-8">
                 <a href="#platform" className="text-gray-700 hover:text-teal-600 px-3 py-2 font-medium transition-colors duration-200">
                   Platform
                 </a>
@@ -38,103 +45,101 @@ export default function Home() {
                 <a href="#about" className="text-gray-700 hover:text-teal-600 px-3 py-2 font-medium transition-colors duration-200">
                   About
                 </a>
-              </div>
-            </div>
-            <div className="flex items-center space-x-4">
-              <Link href="/login" className="text-gray-600 hover:text-teal-600 font-medium px-4 py-2 transition-colors duration-200">
-                Sign In
-              </Link>
-              <Link
-                href="/register"
-                className="bg-gradient-to-r from-teal-500 to-cyan-500 text-white px-4 py-2 rounded-lg font-medium hover:from-teal-600 hover:to-cyan-600 transition-all duration-200 hover:shadow-md"
-              >
-                Sandbox
-              </Link>
-            </div>
-            {/* Mobile menu button */}
-            <button
-              className="md:hidden p-2"
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            >
-              {mobileMenuOpen ? (
-                <X className="h-6 w-6 text-gray-600" />
-              ) : (
-                <Menu className="h-6 w-6 text-gray-600" />
-              )}
-            </button>
-          </div>
-        </div>
+              </nav>
 
-        {/* Mobile Navigation Menu */}
-        {mobileMenuOpen && (
-          <div className="md:hidden bg-white border-t border-gray-200">
-            <div className="px-4 py-4 space-y-4">
-              <a 
-                href="#platform" 
-                onClick={() => setMobileMenuOpen(false)}
-                className="block text-gray-700 hover:text-teal-600 px-3 py-2 font-medium transition-colors duration-200"
-              >
-                Platform
-              </a>
-              <a 
-                href="#solutions" 
-                onClick={() => setMobileMenuOpen(false)}
-                className="block text-gray-700 hover:text-teal-600 px-3 py-2 font-medium transition-colors duration-200"
-              >
-                Solutions
-              </a>
-              <a 
-                href="#resources" 
-                onClick={() => setMobileMenuOpen(false)}
-                className="block text-gray-700 hover:text-teal-600 px-3 py-2 font-medium transition-colors duration-200"
-              >
-                Resources
-              </a>
-              <a 
-                href="#about" 
-                onClick={() => setMobileMenuOpen(false)}
-                className="block text-gray-700 hover:text-teal-600 px-3 py-2 font-medium transition-colors duration-200"
-              >
-                About
-              </a>
-              <div className="pt-4 border-t border-gray-200">
-                <Link 
-                  href="/login" 
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="block text-gray-600 hover:text-teal-600 font-medium px-3 py-2 transition-colors duration-200"
-                >
+              <div className="flex items-center space-x-4">
+                <Link href="/login" className="text-gray-600 hover:text-teal-600 font-medium px-4 py-2 transition-colors duration-200">
                   Sign In
                 </Link>
                 <Link
                   href="/register"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="block bg-gradient-to-r from-teal-500 to-cyan-500 text-white px-4 py-2 rounded-lg font-medium hover:from-teal-600 hover:to-cyan-600 transition-all duration-200 text-center mt-2"
+                  className="bg-gradient-to-r from-teal-500 to-cyan-500 text-white px-4 py-2 rounded-lg font-medium hover:from-teal-600 hover:to-cyan-600 transition-all duration-200 hover:shadow-md"
                 >
                   Sandbox
                 </Link>
               </div>
             </div>
+
+            {/* Mobile Menu Button */}
+            <div className="me-6 ml-auto flex flex-1 items-center justify-end lg:me-0 lg:hidden">
+              <Button
+                variant="outline"
+                size="icon"
+                className="relative flex !bg-transparent"
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              >
+                <span className="sr-only">Open main menu</span>
+                <div className="absolute top-1/2 left-1/2 block w-[18px] -translate-x-1/2 -translate-y-1/2">
+                  <span
+                    aria-hidden="true"
+                    className={cn(
+                      'absolute block h-0.5 w-full rounded-full bg-current transition-transform duration-500 ease-in-out',
+                      mobileMenuOpen ? 'rotate-45' : '-translate-y-1.5',
+                    )}
+                  ></span>
+                  <span
+                    aria-hidden="true"
+                    className={cn(
+                      'absolute block h-0.5 w-full rounded-full bg-current transition-transform duration-500 ease-in-out',
+                      mobileMenuOpen ? 'opacity-0' : '',
+                    )}
+                  ></span>
+                  <span
+                    aria-hidden="true"
+                    className={cn(
+                      'absolute block h-0.5 w-full rounded-full bg-current transition-transform duration-500 ease-in-out',
+                      mobileMenuOpen ? '-rotate-45' : 'translate-y-1.5',
+                    )}
+                  ></span>
+                </div>
+              </Button>
+            </div>
           </div>
-        )}
-      </nav>
+        </div>
+      </header>
 
-      {/* Hero Section - Dark Gradient Background */}
-      <section className="relative bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white py-20 lg:py-32">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center">
-            <h1 className="text-5xl md:text-6xl font-bold leading-tight mb-6">
-              BUILD AN ANTIFRAGILE ORGANIZATION
-            </h1>
-            <h2 className="text-3xl md:text-4xl font-semibold text-teal-300 mb-8">
-              One That Gets Stronger From Every Challenge
-            </h2>
-            <p className="text-xl text-gray-300 max-w-4xl mx-auto mb-12 leading-relaxed">
-              The pace of change in Life Sciences isn't slowing down. Traditional organizations break under this pressure. 
-              <span className="text-teal-300 font-semibold"> Antifragile organizations thrive on it.</span>
-            </p>
+      {/* Hero Section */}
+      <section className="">
+        <div className="container">
+          <div className="bordered-div-padding relative flex flex-col items-center gap-8 border-x text-center md:gap-10 lg:gap-16 lg:!py-25">
+            {/* Beta Banner */}
+            <Link
+              href="#"
+              className="relative inline-flex items-center overflow-hidden rounded-sm p-[1px]"
+            >
+              <MovingBorder duration={4000}>
+                <div
+                  className={cn(
+                    'h-18 w-25 bg-[radial-gradient(#00D9A3_40%,transparent_60%)] opacity-[0.8]',
+                  )}
+                />
+              </MovingBorder>
+              <Button
+                variant="outline"
+                size="sm"
+                className="relative border-none"
+              >
+                Public beta is starting next week
+                <ArrowRight className="ml-1" />
+              </Button>
+            </Link>
 
-            {/* Three Pillars Visualization - White Card Overlay */}
-            <div className="bg-white/95 backdrop-blur-sm rounded-2xl p-8 mb-12 max-w-5xl mx-auto shadow-2xl">
+            {/* Main Heading */}
+            <div className="max-w-4xl space-y-6 md:space-y-8 lg:space-y-12">
+              <h1 className="font-weight-display text-2xl leading-snug tracking-tighter md:text-3xl lg:text-5xl">
+                Build an{' '}
+                <span className="block bg-gradient-to-r from-teal-600 via-cyan-600 to-blue-600 bg-clip-text text-transparent">
+                  Antifragile Organization
+                </span>
+              </h1>
+              <p className="text-muted-foreground mx-auto max-w-[700px] text-sm leading-relaxed md:text-lg lg:text-xl">
+                One that gets stronger from every challenge. The pace of change in Life Sciences isn't slowing down. 
+                Traditional organizations break under this pressure. Antifragile organizations thrive on it.
+              </p>
+            </div>
+
+            {/* Three Pillars Visualization */}
+            <div className="bg-white/95 backdrop-blur-sm rounded-2xl p-8 max-w-5xl mx-auto shadow-2xl border border-gray-200">
               <div className="flex flex-wrap justify-center items-center gap-4 md:gap-8">
                 <div className="text-center">
                   <div className="w-16 h-16 bg-gradient-to-br from-teal-100 to-cyan-100 rounded-xl flex items-center justify-center mx-auto mb-3">
@@ -170,41 +175,101 @@ export default function Home() {
               </div>
             </div>
 
-            {/* CTAs */}
-            <div className="flex flex-col sm:flex-row justify-center gap-4 mb-8">
-              <Link
-                href="/register"
-                className="bg-white text-gray-900 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-all duration-200 hover:shadow-md"
-              >
-                Assess Your Antifragility
-              </Link>
-              <Link
-                href="/register"
-                className="bg-gradient-to-r from-teal-500 to-cyan-500 text-white px-8 py-3 rounded-lg font-semibold hover:from-teal-600 hover:to-cyan-600 transition-all duration-200 hover:shadow-md"
-              >
-                Explore the Sandbox
-              </Link>
-              <Link
-                href="/register"
-                className="border-2 border-white text-white px-8 py-3 rounded-lg font-semibold hover:bg-white hover:text-gray-900 transition-all duration-200"
-              >
-                Schedule Strategy Call
-              </Link>
+            {/* CTA Buttons */}
+            <div className="flex flex-wrap items-center justify-center gap-4 md:gap-6">
+              <Button asChild>
+                <Link href="/register">Start Free Trial</Link>
+              </Button>
+              <Button asChild variant="outline">
+                <Link href="/register">
+                  <MessageSquare className="size-5" />
+                  Explore Sandbox
+                </Link>
+              </Button>
             </div>
-
-            <p className="text-sm text-gray-400">
-              ▼ Trusted by 200+ Life Sciences Organizations ▼
-            </p>
+          </div>
+        </div>
+        <div className="container">
+          <div className="bordered-div-padding flex items-center justify-center border">
+            <div className="w-full h-64 bg-gradient-to-br from-teal-50 to-cyan-50 rounded-lg flex items-center justify-center">
+              <div className="text-center">
+                <div className="text-6xl mb-4">⚡</div>
+                <p className="text-lg text-gray-600">Visualization of Antifragile Organization</p>
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
+      {/* Features Section */}
+      <section id="platform" className="container">
+        <div className="grid grid-cols-1 border border-t-0 md:grid-cols-2">
+          {[
+            {
+              icon: TrendingUp,
+              title: 'Elastic Organization',
+              description: 'Unlimited capacity, zero hiring delays.',
+              subDescription: 'Your team of 5 operates like 50 when needed, then scales back. Meet any demand surge instantly with collective expertise.',
+              className: '!pb-0',
+            },
+            {
+              icon: Brain,
+              title: 'Synergistic Intelligence',
+              description: 'Where human genius meets machine scale.',
+              subDescription: 'Every human partnered with specialized AI agents. Your regulatory expert works with 10 specialized agents while focusing on strategy.',
+              className: '!pb-0',
+            },
+            {
+              icon: RefreshCw,
+              title: 'Adaptive Experimentation',
+              description: 'Learn without risk, change without disruption.',
+              subDescription: 'Test radical ideas with your real data in complete isolation. Create digital twins of your processes and test infinite variations.',
+            },
+            {
+              icon: Shield,
+              title: 'Antifragile Outcome',
+              description: 'An organization that gets stronger from change.',
+              subDescription: 'When these three pillars combine, your organization doesn\'t just handle disruption—it feeds on it. Every challenge adds to your capabilities.',
+            },
+          ].map((feature, index) => (
+            <div
+              key={index}
+              className={cn(
+                'bordered-div-padding relative space-y-8',
+                index == 0 && 'border-b md:border-e',
+                index == 1 && 'border-b md:border-b-0',
+                index == 3 && 'border-t md:border-s',
+                feature.className,
+              )}
+            >
+              {index === 0 && (
+                <PlusSigns className="absolute inset-0 -mt-0.25 hidden !h-[calc(100%+2px)] -translate-x-full border-y md:block" />
+              )}
+              <div className="space-y-4 md:space-y-6">
+                <div className="space-y-4">
+                  <h2 className="text-muted-foreground flex items-center gap-2 text-sm leading-snug font-medium md:text-base">
+                    <feature.icon className="size-5" />
+                    {feature.title}
+                  </h2>
+                  <h3 className="text-foreground font-weight-display leading-snug md:text-xl">
+                    {feature.description}
+                  </h3>
+                </div>
+                <p className="text-muted-foreground text-sm leading-relaxed md:text-base">
+                  {feature.subDescription}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
       {/* The Challenge Section */}
-      <section className="py-20 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <section className="container">
+        <div className="bordered-div-padding border-x">
           <div className="text-center mb-16">
             <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
-              ORGANIZATIONS ARE BUILT FOR STABILITY
+              Organizations Are Built for Stability
             </h2>
             <h3 className="text-2xl md:text-3xl font-semibold text-teal-600 mb-8">
               But Your World Demands Agility
@@ -280,430 +345,168 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Pillar 1: The Elastic Organization */}
-      <section id="platform" className="py-20 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
-              PILLAR 1: THE ELASTIC ORGANIZATION
-            </h2>
-            <h3 className="text-2xl md:text-3xl font-semibold text-teal-600 mb-8">
-              Unlimited Capacity, Zero Hiring Delays
-            </h3>
-            <div className="w-32 h-1 bg-gradient-to-r from-teal-500 to-cyan-500 mx-auto"></div>
+      {/* Testimonials Section */}
+      <section className="container">
+        <div className="bordered-div-padding relative border border-t-0">
+          <div className="absolute top-0 left-full -mt-0.25 hidden h-[calc(100%+2px)] w-[50vw] overflow-hidden border-y md:block">
+            <Meteors
+              number={1000}
+              angle={65}
+              maxDuration={20}
+              minDuration={5}
+              className="opacity-10 [&>div]:opacity-10"
+            />
           </div>
-
-          <div className="text-center mb-12">
-            <p className="text-xl text-gray-600 max-w-4xl mx-auto mb-8">
-              Imagine your regulatory team facing a surge of submissions. Instead of scrambling for consultants or delaying projects, 
-              your existing team instantly scales to meet the demand. They operate with the collective expertise of hundreds of specialists. 
-              Then scale back when the surge passes.
-            </p>
-          </div>
-
-          {/* Elasticity Visualization */}
-          <div className="bg-gradient-to-br from-gray-50 to-white rounded-2xl p-8 mb-12 border border-gray-200">
-            <div className="text-center">
-              <div className="flex justify-center items-center space-x-8 mb-6">
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-gray-900 mb-2">Team of 5</div>
-                  <div className="flex space-x-1 justify-center">
-                    {Array.from({ length: 5 }).map((_, i) => (
-                      <div key={i} className="w-4 h-4 bg-teal-500 rounded-full"></div>
-                    ))}
-                  </div>
-                </div>
-                <div className="text-4xl text-teal-500">⚡</div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-gray-900 mb-2">Capacity of 50</div>
-                  <div className="grid grid-cols-5 gap-1">
-                    {Array.from({ length: 25 }).map((_, i) => (
-                      <div key={i} className="w-4 h-4 bg-cyan-500 rounded-full"></div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-              <div className="text-sm text-gray-500">Scales Back When Done</div>
-            </div>
-          </div>
-
-          {/* Features Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {[
-              { icon: TrendingUp, title: 'SCALE WITHOUT HIRING', desc: 'Meet any demand surge instantly' },
-              { icon: Users, title: 'DEMOCRATIZE EXPERTISE', desc: 'Everyone operates at expert level' },
-              { icon: BarChart3, title: 'TRANSFORM CONSULTING', desc: 'From external cost to internal capacity' },
-              { icon: Workflow, title: 'ORCHESTRATE BYOAI', desc: 'All your AI investments working as one' }
-            ].map((feature, idx) => (
-              <div key={idx} className="bg-white rounded-xl p-6 border border-gray-200 hover:border-teal-400 hover:shadow-lg transition-all duration-200 text-center">
-                <div className="w-12 h-12 bg-gradient-to-br from-teal-100 to-cyan-100 rounded-lg flex items-center justify-center mx-auto mb-4">
-                  <feature.icon className="h-6 w-6 text-teal-600" />
-                </div>
-                <h4 className="text-lg font-bold text-gray-900 mb-2">{feature.title}</h4>
-                <p className="text-sm text-gray-600">{feature.desc}</p>
-              </div>
-            ))}
-          </div>
-
-          <div className="text-center mt-12">
-            <Link
-              href="/register"
-              className="inline-flex items-center bg-gradient-to-r from-teal-500 to-cyan-500 text-white px-8 py-3 rounded-lg font-semibold hover:from-teal-600 hover:to-cyan-600 transition-all duration-200 hover:shadow-md"
-            >
-              See Elasticity in Action
-              <ArrowRight className="ml-2 h-5 w-5" />
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* Pillar 2: The Synergy Advantage */}
-      <section className="py-20 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
-              PILLAR 2: THE SYNERGY ADVANTAGE
-            </h2>
-            <h3 className="text-2xl md:text-3xl font-semibold text-teal-600 mb-8">
-              Where Human Genius Meets Machine Scale
-            </h3>
-            <div className="w-32 h-1 bg-gradient-to-r from-teal-500 to-cyan-500 mx-auto"></div>
-          </div>
-
-          <div className="text-center mb-12">
-            <p className="text-xl text-gray-600 max-w-4xl mx-auto mb-8">
-              This isn't about AI replacing humans or humans managing AI. It's about creating something entirely new: 
-              hybrid intelligence where human creativity and machine capabilities amplify each other exponentially.
-            </p>
-          </div>
-
-          {/* Synergy Features */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
-            {[
-              { icon: Brain, title: 'KNOWLEDGE REACTIVATION', desc: 'Every document becomes active intelligence' },
-              { icon: Users, title: 'THE 50/50 WORKFORCE', desc: 'Every human partnered with specialized AI agents' },
-              { icon: Workflow, title: 'COLLECTIVE INTELLIGENCE', desc: 'Operate with wisdom of entire organization' }
-            ].map((feature, idx) => (
-              <div key={idx} className="bg-white rounded-xl p-8 border border-gray-200 hover:border-teal-400 hover:shadow-lg transition-all duration-200 text-center">
-                <div className="w-16 h-16 bg-gradient-to-br from-teal-100 to-cyan-100 rounded-xl flex items-center justify-center mx-auto mb-6">
-                  <feature.icon className="h-8 w-8 text-teal-600" />
-                </div>
-                <h4 className="text-xl font-bold text-gray-900 mb-4">{feature.title}</h4>
-                <p className="text-gray-600">{feature.desc}</p>
-              </div>
-            ))}
-          </div>
-
-          <div className="text-center">
-            <Link
-              href="/register"
-              className="inline-flex items-center bg-gradient-to-r from-teal-500 to-cyan-500 text-white px-8 py-3 rounded-lg font-semibold hover:from-teal-600 hover:to-cyan-600 transition-all duration-200 hover:shadow-md"
-            >
-              Explore Hybrid Intelligence
-              <ArrowRight className="ml-2 h-5 w-5" />
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* Pillar 3: Adaptive Experimentation */}
-      <section className="py-20 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
-              PILLAR 3: ADAPTIVE EXPERIMENTATION
-            </h2>
-            <h3 className="text-2xl md:text-3xl font-semibold text-teal-600 mb-8">
-              Learn Without Risk, Change Without Disruption
-            </h3>
-            <div className="w-32 h-1 bg-gradient-to-r from-teal-500 to-cyan-500 mx-auto"></div>
-          </div>
-
-          <div className="text-center mb-12">
-            <p className="text-xl text-gray-600 max-w-4xl mx-auto mb-8">
-              Life Sciences organizations face a paradox: you must innovate to survive, but you can't risk patient safety or regulatory compliance. 
-              The Sandbox resolves this paradox.
-            </p>
-          </div>
-
-          {/* Sandbox Features */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
-            {[
-              { icon: MessageSquare, title: 'INNOVATION SANDBOX™', desc: 'Test radical ideas with your real data in complete isolation' },
-              { icon: RefreshCw, title: 'DIGITAL TWIN ORGANIZATION', desc: 'Create perfect replica of processes and test infinite variations' },
-              { icon: BarChart3, title: 'EVIDENCE BEFORE IMPLEMENTATION', desc: 'Test everything. Measure results. Deploy only what works' }
-            ].map((feature, idx) => (
-              <div key={idx} className="bg-white rounded-xl p-8 border border-gray-200 hover:border-teal-400 hover:shadow-lg transition-all duration-200 text-center">
-                <div className="w-16 h-16 bg-gradient-to-br from-teal-100 to-cyan-100 rounded-xl flex items-center justify-center mx-auto mb-6">
-                  <feature.icon className="h-8 w-8 text-teal-600" />
-                </div>
-                <h4 className="text-xl font-bold text-gray-900 mb-4">{feature.title}</h4>
-                <p className="text-gray-600">{feature.desc}</p>
-              </div>
-            ))}
-          </div>
-
-          <div className="text-center">
-            <Link
-              href="/register"
-              className="inline-flex items-center bg-gradient-to-r from-teal-500 to-cyan-500 text-white px-8 py-3 rounded-lg font-semibold hover:from-teal-600 hover:to-cyan-600 transition-all duration-200 hover:shadow-md"
-            >
-              Enter Your Sandbox
-              <ArrowRight className="ml-2 h-5 w-5" />
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* The Outcome: Antifragility */}
-      <section className="py-20 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <div className="bg-white rounded-2xl p-8 border-2 border-yellow-200 max-w-4xl mx-auto mb-8">
-              <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-                THE ANTIFRAGILE ORGANIZATION
-              </h2>
-              <div className="text-xl md:text-2xl font-semibold text-gray-700 mb-4">
-                When Three Pillars Combine
-              </div>
-              <div className="text-lg text-gray-600">
-                ELASTIC + SYNERGISTIC + ADAPTIVE = ANTIFRAGILE
-              </div>
-            </div>
-          </div>
-
-          {/* Comparison Table */}
-          <div className="bg-white rounded-2xl p-8 mb-12 border border-gray-200">
-            <h3 className="text-2xl font-bold text-center text-gray-900 mb-8">
-              Challenge Response Matrix
-            </h3>
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-gray-200">
-                    <th className="text-left py-4 px-4 font-semibold text-gray-900">Challenge</th>
-                    <th className="text-left py-4 px-4 font-semibold text-gray-900">Traditional Org</th>
-                    <th className="text-left py-4 px-4 font-semibold text-gray-900">Your Organization</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200">
-                  {[
-                    { challenge: 'Regulatory Change', traditional: '3-6 months', yourOrg: '3 days ✓' },
-                    { challenge: 'Expert Departure', traditional: 'Knowledge lost', yourOrg: '100% retained ✓' },
-                    { challenge: 'Market Disruption', traditional: 'Slow response', yourOrg: 'Testing 5 options ✓' },
-                    { challenge: 'Demand Surge', traditional: 'Hire consultants', yourOrg: 'Instant scaling ✓' }
-                  ].map((row, idx) => (
-                    <tr key={idx} className={idx % 2 === 0 ? 'bg-gray-50' : 'bg-white'}>
-                      <td className="py-4 px-4 font-medium text-gray-900">{row.challenge}</td>
-                      <td className="py-4 px-4 text-gray-600">{row.traditional}</td>
-                      <td className="py-4 px-4 text-teal-600 font-semibold">{row.yourOrg}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          {/* Timeline */}
-          <div className="bg-white rounded-2xl p-8 border border-gray-200">
-            <h3 className="text-2xl font-bold text-center text-gray-900 mb-8">
-              Compound Advantage Over Time
-            </h3>
-            <div className="flex justify-between items-center">
-              <div className="text-center">
-                <div className="w-4 h-4 bg-teal-500 rounded-full mx-auto mb-2"></div>
-                <div className="text-sm font-bold text-gray-900">Year 1</div>
-                <div className="text-xs text-gray-600">2x advantage</div>
-              </div>
-              <div className="text-center">
-                <div className="w-4 h-4 bg-cyan-500 rounded-full mx-auto mb-2"></div>
-                <div className="text-sm font-bold text-gray-900">Year 3</div>
-                <div className="text-xs text-gray-600">10x advantage</div>
-              </div>
-              <div className="text-center">
-                <div className="w-4 h-4 bg-blue-500 rounded-full mx-auto mb-2"></div>
-                <div className="text-sm font-bold text-gray-900">Year 5</div>
-                <div className="text-xs text-gray-600">Insurmountable lead</div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Transformation Paths */}
-      <section id="solutions" className="py-20 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
-              YOUR PATH TO ANTIFRAGILITY
-            </h2>
-            <h3 className="text-2xl md:text-3xl font-semibold text-teal-600 mb-8">
-              Start Small. Learn Fast. Scale With Confidence.
-            </h3>
-            <div className="w-32 h-1 bg-gradient-to-r from-teal-500 to-cyan-500 mx-auto"></div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {[
-              {
-                title: 'THE SANDBOX EXPERIENCE',
-                icon: MessageSquare,
-                subtitle: 'Risk-free experimentation',
-                description: 'Test the future without risking the present',
-                features: ['30-day pilot program', 'Your data, isolated environment', 'Build confidence through experimentation', 'No risk to operations'],
-                cta: 'EXPLORE →',
-                color: 'border-teal-200',
-                bgColor: 'bg-teal-50'
-              },
-              {
-                title: 'TEAM SPRINT AMPLIFICATION',
-                icon: Users,
-                subtitle: 'Choose one team and one challenge',
-                description: 'We\'ll show you how to 10x their capacity in 30 days',
-                features: ['Pick your highest-impact team', 'Deploy targeted amplification', 'Measure time saved and quality improved', 'Clear ROI in 30 days'],
-                cta: 'SELECT TEAM →',
-                color: 'border-cyan-200',
-                bgColor: 'bg-cyan-50'
-              },
-              {
-                title: 'FULL ROADMAP PARTNERSHIP',
-                icon: BarChart3,
-                subtitle: 'Enterprise transformation strategy',
-                description: 'Design your complete transformation journey',
-                features: ['Comprehensive assessment', 'Phased transformation plan', 'Risk mitigation strategy', 'Executive alignment workshop'],
-                cta: 'SCHEDULE →',
-                color: 'border-purple-200',
-                bgColor: 'bg-purple-50'
-              }
-            ].map((path, idx) => (
-              <div key={idx} className={`bg-white rounded-2xl p-8 border-2 ${path.color} hover:shadow-lg transition-all duration-200`}>
-                <div className="text-center mb-6">
-                  <div className={`w-16 h-16 ${path.bgColor} rounded-xl flex items-center justify-center mx-auto mb-4`}>
-                    <path.icon className="h-8 w-8 text-teal-600" />
-                  </div>
-                  <h3 className="text-xl font-bold text-gray-900 mb-2">{path.title}</h3>
-                  <h4 className="text-lg font-semibold text-teal-600 mb-2">{path.subtitle}</h4>
-                  <p className="text-gray-600 mb-6">{path.description}</p>
-                </div>
-                <ul className="space-y-3 mb-8">
-                  {path.features.map((feature, featureIdx) => (
-                    <li key={featureIdx} className="flex items-start">
-                      <span className="text-teal-500 mr-3 mt-1">✓</span>
-                      <span className="text-sm text-gray-600">{feature}</span>
-                    </li>
-                  ))}
-                </ul>
-                <Link
-                  href="/register"
-                  className={`w-full text-center font-semibold rounded-lg px-6 py-3 transition-all duration-200 border-2 ${path.color} hover:bg-teal-50 hover:border-teal-500 text-teal-600 block`}
-                >
-                  {path.cta}
-                </Link>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* CTA Section */}
-      <section className="py-20 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-4xl md:text-5xl font-bold mb-6">
-            EVERY DAY YOU WAIT, THE GAP WIDENS
+          {/* Trusted by text */}
+          <h2 className="text-muted-foreground flex items-center gap-2 text-sm leading-snug font-medium md:text-base">
+            <Verified className="size-5" />
+            Trusted by Life Sciences Organizations
           </h2>
-          <p className="text-xl text-gray-300 mb-12 max-w-4xl mx-auto">
-            The compound effect works both ways. Organizations building antifragility get stronger from every challenge. 
-            Organizations standing still fall further behind each month.
-          </p>
 
-          <div className="flex flex-col sm:flex-row justify-center gap-4 mb-8">
-            <Link
-              href="/register"
-              className="bg-gradient-to-r from-teal-500 to-cyan-500 text-white px-8 py-3 rounded-lg font-semibold hover:from-teal-600 hover:to-cyan-600 transition-all duration-200 hover:shadow-md"
-            >
-              Enter the Sandbox
-            </Link>
-            <Link
-              href="/register"
-              className="bg-white text-gray-900 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-all duration-200 hover:shadow-md"
-            >
-              Amplify a Team
-            </Link>
-            <Link
-              href="/register"
-              className="border-2 border-white text-white px-8 py-3 rounded-lg font-semibold hover:bg-white hover:text-gray-900 transition-all duration-200"
-            >
-              Design Your Journey
-            </Link>
-          </div>
-
-          <p className="text-sm text-gray-400 italic">
-            No risk. No disruption. Just evolution.
-          </p>
+          {/* Company logos */}
+          <Marquee className="mt-6 [--gap:8rem] md:mt-8 lg:mt-10 xl:[&_div]:[animation-play-state:paused]">
+            {[
+              { name: 'Pfizer', logo: { src: '/images/testimonials/pfizer.svg', width: 100, height: 30 } },
+              { name: 'Johnson & Johnson', logo: { src: '/images/testimonials/jnj.svg', width: 120, height: 25 } },
+              { name: 'Merck', logo: { src: '/images/testimonials/merck.svg', width: 90, height: 28 } },
+              { name: 'Roche', logo: { src: '/images/testimonials/roche.svg', width: 95, height: 26 } },
+              { name: 'Novartis', logo: { src: '/images/testimonials/novartis.svg', width: 110, height: 24 } },
+              { name: 'GSK', logo: { src: '/images/testimonials/gsk.svg', width: 80, height: 22 } },
+            ].map((company) => (
+              <div
+                key={company.name}
+                className="py-2.5 transition-opacity hover:opacity-80 flex items-center justify-center"
+              >
+                <div className="w-24 h-8 bg-gray-200 rounded flex items-center justify-center">
+                  <span className="text-xs text-gray-600 font-medium">{company.name}</span>
+                </div>
+              </div>
+            ))}
+          </Marquee>
         </div>
+        {/* Testimonial */}
+        <blockquote className="bordered-div-padding flex flex-col justify-between gap-8 border border-t-0 md:flex-row">
+          <p className="lg:text-4xxl font-weight-display flex-7 text-2xl leading-snug tracking-tighter md:text-3xl">
+            VITAL Expert changed how we approach organizational capacity. It&apos;s fast, intelligent, and
+            plays perfectly with our Life Sciences stack.
+          </p>
+
+          <footer className="flex-6 self-end">
+            <div className="flex items-center gap-4">
+              <div className="w-10 h-10 bg-gradient-to-br from-teal-500 to-cyan-500 rounded-full flex items-center justify-center">
+                <span className="text-white font-bold text-sm">VP</span>
+              </div>
+              <cite className="text-sm font-medium not-italic md:text-lg lg:text-xl">
+                VP Regulatory Affairs, Top 20 Pharma
+              </cite>
+            </div>
+          </footer>
+        </blockquote>
       </section>
 
       {/* Footer */}
-      <footer className="bg-slate-900 text-white py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
-            <div>
-              <div className="flex items-center space-x-2 mb-4">
-                <div className="w-8 h-8 bg-gradient-to-r from-teal-500 to-cyan-500 rounded-lg flex items-center justify-center">
-                  <Zap className="h-5 w-5 text-white" />
+      <footer className="overflow-hidden">
+        {/* Pricing Section */}
+        <div className="container">
+          <div className="bordered-div-padding border-x">
+            <h2 className="lg:text-4xxl font-weight-display mt-6 text-xl md:mt-14 md:text-3xl lg:mt-40">
+              Start free. Scale confidently.
+            </h2>
+          </div>
+
+          <div className="grid divide-y border md:grid-cols-2 md:divide-x md:divide-y-0">
+            {[
+              {
+                title: 'Sandbox Experience',
+                description: '30-day pilot program',
+                features: [
+                  { name: 'Risk-free experimentation with your data', icon: <MessageSquare className="size-5" /> },
+                  { name: 'Isolated testing environment', icon: <Shield className="size-5" /> },
+                  { name: 'Build confidence through experimentation', icon: <Target className="size-5" /> },
+                  { name: 'Ideal for strategic explorers', icon: <Users className="size-5" /> },
+                ],
+                button: {
+                  text: 'Start Free Trial',
+                  href: '/register',
+                },
+              },
+              {
+                title: 'Enterprise Partnership',
+                description: 'From $29 / month',
+                features: [
+                  { name: 'Full antifragility transformation', icon: <TrendingUp className="size-5" /> },
+                  { name: 'Comprehensive assessment and roadmap', icon: <BarChart3 className="size-5" /> },
+                  { name: 'Executive alignment workshop', icon: <Workflow className="size-5" /> },
+                  { name: 'Dedicated success manager', icon: <Users className="size-5" /> },
+                ],
+                button: {
+                  text: 'Schedule Strategy Call',
+                  href: '/register',
+                },
+              },
+            ].map((plan, index) => (
+              <div
+                key={index}
+                className={cn(
+                  'bordered-div-padding relative flex flex-col gap-6 md:gap-10',
+                )}
+              >
+                {index === 1 && (
+                  <div className="bg-secondary text-secondary-foreground absolute top-0 right-0 px-3 py-2.5 text-sm leading-none font-medium">
+                    Most popular
+                  </div>
+                )}
+                <div>
+                  <h3 className="font-weight-display text-lg md:text-2xl lg:text-3xl">
+                    {plan.title}
+                  </h3>
+                  <p className="font-weight-display mt-6 text-base md:text-xl">
+                    {plan.description}
+                  </p>
                 </div>
-                <span className="text-xl font-bold">VITAL⚡Expert</span>
+
+                <ul className="space-y-6">
+                  {plan.features.map((feature, featureIndex) => (
+                    <li key={featureIndex} className="flex items-start gap-2">
+                      <span className="flex-shrink-0">{feature.icon}</span>
+                      <span className="text-muted-foreground font-medium">
+                        {feature.name}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+
+                <Button
+                  asChild
+                  className={cn('mt-auto mb-0 w-fit')}
+                >
+                  <Link href={plan.button.href}>
+                    {plan.button.text}
+                  </Link>
+                </Button>
               </div>
-              <p className="text-gray-400 text-sm">
-                Building Antifragile Organizations That Thrive on Change
-              </p>
-            </div>
-
-            <div>
-              <h4 className="text-sm font-bold uppercase tracking-wider text-teal-400 mb-4">Platform</h4>
-              <ul className="space-y-3">
-                <li><a href="#platform" className="text-gray-400 hover:text-teal-400 text-sm transition-colors duration-200">Elastic Architecture</a></li>
-                <li><a href="#platform" className="text-gray-400 hover:text-teal-400 text-sm transition-colors duration-200">Synergy Intelligence System</a></li>
-                <li><a href="#platform" className="text-gray-400 hover:text-teal-400 text-sm transition-colors duration-200">Innovation Sandbox</a></li>
-                <li><a href="#platform" className="text-gray-400 hover:text-teal-400 text-sm transition-colors duration-200">Integration Ecosystem</a></li>
-              </ul>
-            </div>
-
-            <div>
-              <h4 className="text-sm font-bold uppercase tracking-wider text-teal-400 mb-4">Solutions</h4>
-              <ul className="space-y-3">
-                <li><a href="#solutions" className="text-gray-400 hover:text-teal-400 text-sm transition-colors duration-200">Regulatory Intelligence</a></li>
-                <li><a href="#solutions" className="text-gray-400 hover:text-teal-400 text-sm transition-colors duration-200">Clinical Development</a></li>
-                <li><a href="#solutions" className="text-gray-400 hover:text-teal-400 text-sm transition-colors duration-200">Commercial Strategy</a></li>
-                <li><a href="#solutions" className="text-gray-400 hover:text-teal-400 text-sm transition-colors duration-200">Medical Affairs</a></li>
-              </ul>
-            </div>
-
-            <div>
-              <h4 className="text-sm font-bold uppercase tracking-wider text-teal-400 mb-4">Resources</h4>
-              <ul className="space-y-3">
-                <li><a href="#resources" className="text-gray-400 hover:text-teal-400 text-sm transition-colors duration-200">Antifragility Assessment</a></li>
-                <li><a href="#resources" className="text-gray-400 hover:text-teal-400 text-sm transition-colors duration-200">ROI Calculator</a></li>
-                <li><a href="#resources" className="text-gray-400 hover:text-teal-400 text-sm transition-colors duration-200">Customer Stories</a></li>
-                <li><a href="#resources" className="text-gray-400 hover:text-teal-400 text-sm transition-colors duration-200">Documentation</a></li>
-              </ul>
-            </div>
+            ))}
           </div>
 
-          <div className="pt-8 border-t border-gray-800 flex flex-col md:flex-row justify-between items-center">
-            <div className="text-sm text-gray-400 mb-4 md:mb-0">
-              © 2025 VITAL Expert. Your Knowledge. Your Control. Your Advantage.
-            </div>
-            <div className="flex space-x-6 text-sm text-gray-400">
-              <a href="#" className="hover:text-teal-400 transition-colors duration-200">Privacy</a>
-              <a href="#" className="hover:text-teal-400 transition-colors duration-200">Terms</a>
-              <a href="#" className="hover:text-teal-400 transition-colors duration-200">Security</a>
-              <a href="#" className="hover:text-teal-400 transition-colors duration-200">Compliance</a>
-            </div>
-          </div>
-
-          <div className="text-center mt-6 pt-6 border-t border-gray-800 text-xs text-gray-500">
-            <strong>SOC 2 Type II</strong> | <strong>HIPAA Compliant</strong> | <strong>ISO 27001</strong> | <strong>GDPR Ready</strong>
+          {/* Legal Links Section */}
+          <div className="bordered-div-padding text-muted-foreground flex items-center justify-center space-x-6 border-x border-b text-sm">
+            <Link
+              href="/privacy-policy"
+              className="hover:text-foreground transition-opacity hover:opacity-80"
+            >
+              Privacy Policy
+            </Link>
+            <span className="text-border">•</span>
+            <Link
+              href="/terms-of-service"
+              className="hover:text-foreground transition-opacity hover:opacity-80"
+            >
+              Terms of Service
+            </Link>
+            <span className="text-border">•</span>
+            <span className="text-muted-foreground">
+              © 2025 VITAL Expert. SOC 2 Type II | HIPAA | ISO 27001 | GDPR
+            </span>
           </div>
         </div>
       </footer>

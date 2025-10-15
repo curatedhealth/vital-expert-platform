@@ -339,6 +339,8 @@ export async function processWithAgentNormalNode(state: WorkflowState): Promise<
   console.log('💬 [ProcessWithAgentNormal] Starting normal mode processing');
   console.log('🔍 [ProcessWithAgentNormal] State:', {
     selectedAgent: state.selectedAgent?.name,
+    selectedAgentId: state.selectedAgent?.id,
+    selectedAgentType: typeof state.selectedAgent,
     query: state.query,
     messagesCount: state.messages?.length || 0,
     selectedTools: state.selectedTools,
@@ -348,6 +350,19 @@ export async function processWithAgentNormalNode(state: WorkflowState): Promise<
   });
   
   const { selectedAgent, query, messages, selectedTools, interactionMode } = state;
+  
+  // CRITICAL: Ensure we have a valid agent
+  if (!selectedAgent || !selectedAgent.id) {
+    console.error('❌ [ProcessWithAgentNormal] No valid agent found in state:', {
+      selectedAgent,
+      hasId: selectedAgent?.id,
+      hasName: selectedAgent?.name
+    });
+    return {
+      answer: 'Error: No agent selected. Please select an agent from the sidebar.',
+      workflowStep: 'error'
+    };
+  }
   
   // Add mode-specific reasoning
   const modeReasoning = interactionMode === 'manual' 

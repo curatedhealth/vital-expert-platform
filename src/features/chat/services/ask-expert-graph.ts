@@ -43,7 +43,22 @@ const ModeAwareWorkflowState = Annotation.Root({
   query: Annotation<string>(),
   agentId: Annotation<string | null>(),
   selectedAgent: Annotation<any>({
-    value: (x: any, y: any) => y ?? x,
+    reducer: (current: any, update: any) => {
+      console.log('🔄 [selectedAgent reducer] Current:', current?.name, 'Update:', update?.name);
+      // Always prefer the update if it exists and has an id
+      if (update && update.id) {
+        console.log('✅ [selectedAgent reducer] Using update:', update.name);
+        return update;
+      }
+      // Otherwise keep current if it exists
+      if (current && current.id) {
+        console.log('✅ [selectedAgent reducer] Keeping current:', current.name);
+        return current;
+      }
+      // Return null if neither exists
+      console.log('❌ [selectedAgent reducer] No valid agent found');
+      return null;
+    },
     default: () => null
   }),
   suggestedAgents: Annotation<any[]>(),
@@ -598,16 +613,16 @@ export async function* streamModeAwareWorkflow(input: {
     // Only include essential data to avoid JSON truncation
     const reasoningData = {
       workflowStep: state.workflowStep,
-      selectedAgent: state.selectedAgent ? {
-        id: state.selectedAgent.id,
-        name: state.selectedAgent.name,
-        display_name: state.selectedAgent.display_name
+      selectedAgent: (state.selectedAgent || input.selectedAgent) ? {
+        id: (state.selectedAgent || input.selectedAgent).id,
+        name: (state.selectedAgent || input.selectedAgent).name,
+        display_name: (state.selectedAgent || input.selectedAgent).display_name
       } : null,
       query: state.query,
       agentId: state.agentId,
       timestamp: Date.now(),
       mode: `${input.interactionMode}_${input.autonomousMode ? 'autonomous' : 'normal'}`,
-      agent: state.selectedAgent?.display_name || state.selectedAgent?.name || 'System',
+      agent: (state.selectedAgent || input.selectedAgent)?.display_name || (state.selectedAgent || input.selectedAgent)?.name || 'System',
       interactionMode: input.interactionMode,
       autonomousMode: input.autonomousMode,
       // Include only essential metadata

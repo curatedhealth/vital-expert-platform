@@ -40,7 +40,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { AgentAvatar } from '@/components/ui/agent-avatar';
@@ -91,7 +90,6 @@ export function EnhancedChatSidebar({
   isCollapsed = false, 
   onToggleCollapse 
 }: EnhancedChatSidebarProps) {
-  const [activeTab, setActiveTab] = useState<'conversations' | 'agents' | 'settings'>('conversations');
   const [searchQuery, setSearchQuery] = useState('');
   const [agentSearchQuery, setAgentSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<'recent' | 'name' | 'unread'>('recent');
@@ -293,52 +291,6 @@ export function EnhancedChatSidebar({
           </Button>
         </div>
 
-        {/* Navigation Icons */}
-        <div className="flex-1 space-y-2 p-2">
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant={activeTab === 'conversations' ? 'default' : 'ghost'}
-                  size="sm"
-                  onClick={() => setActiveTab('conversations')}
-                  className="w-full justify-center"
-                >
-                  <MessageSquare className="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="right">Conversations</TooltipContent>
-            </Tooltip>
-
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant={activeTab === 'agents' ? 'default' : 'ghost'}
-                  size="sm"
-                  onClick={() => setActiveTab('agents')}
-                  className="w-full justify-center"
-                >
-                  <Users className="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="right">Agents</TooltipContent>
-            </Tooltip>
-
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant={activeTab === 'settings' ? 'default' : 'ghost'}
-                  size="sm"
-                  onClick={() => setActiveTab('settings')}
-                  className="w-full justify-center"
-                >
-                  <Settings className="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="right">Settings</TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        </div>
       </div>
     );
   }
@@ -402,35 +354,10 @@ export function EnhancedChatSidebar({
         </div>
       </div>
 
-      {/* Tab Navigation */}
-      <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as any)} className="flex-1 flex flex-col">
-        <div className="px-4 pt-4">
-          <TabsList className="grid w-full grid-cols-3 bg-gray-100 p-1 rounded-lg">
-            <TabsTrigger 
-              value="conversations" 
-              className="data-[state=active]:bg-white data-[state=active]:shadow-sm text-xs font-medium"
-            >
-              <MessageSquare className="h-3 w-3 mr-1" />
-              Chats
-            </TabsTrigger>
-            <TabsTrigger 
-              value="agents" 
-              className="data-[state=active]:bg-white data-[state=active]:shadow-sm text-xs font-medium"
-            >
-              <Users className="h-3 w-3 mr-1" />
-              Agents
-            </TabsTrigger>
-            <TabsTrigger 
-              value="settings" 
-              className="data-[state=active]:bg-white data-[state=active]:shadow-sm text-xs font-medium"
-            >
-              <Settings className="h-3 w-3 mr-1" />
-              Settings
-            </TabsTrigger>
-          </TabsList>
-        </div>
+      {/* Content Area */}
+      <div className="flex-1 flex flex-col">
 
-        <TabsContent value="conversations" className="flex-1 flex flex-col mt-0">
+        {/* Conversations Content */}
           {/* New Chat Button */}
           <div className="p-4 border-b border-gray-200">
             <Button 
@@ -531,9 +458,7 @@ export function EnhancedChatSidebar({
               )}
             </div>
           </ScrollArea>
-        </TabsContent>
-
-        <TabsContent value="agents" className="flex-1 flex flex-col mt-0">
+        {/* Agents Content */}
           {/* Success Message */}
           {showSuccessMessage && (
             <div className="m-4 p-3 bg-green-50 border border-green-200 rounded-lg flex items-center gap-2">
@@ -752,71 +677,7 @@ export function EnhancedChatSidebar({
               Agent Store
             </Button>
           </div>
-        </TabsContent>
-
-        <TabsContent value="settings" className="flex-1 flex flex-col mt-0">
-          <div className="p-4 space-y-6">
-            <div className="bg-white rounded-lg border border-gray-200 p-4">
-              <h3 className="text-sm font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                <MessageSquare className="h-4 w-4 text-blue-600" />
-                Chat Settings
-              </h3>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between p-3 rounded-lg bg-gray-50">
-                  <div>
-                    <span className="text-sm font-medium text-gray-700">Auto-save conversations</span>
-                    <p className="text-xs text-gray-500">Automatically save chat history</p>
-                  </div>
-                  <Switch defaultChecked className="data-[state=checked]:bg-green-600" />
-                </div>
-                <div className="flex items-center justify-between p-3 rounded-lg bg-gray-50">
-                  <div>
-                    <span className="text-sm font-medium text-gray-700">Show typing indicators</span>
-                    <p className="text-xs text-gray-500">Display when agents are typing</p>
-                  </div>
-                  <Switch defaultChecked className="data-[state=checked]:bg-green-600" />
-                </div>
-                <div className="flex items-center justify-between p-3 rounded-lg bg-gray-50">
-                  <div>
-                    <span className="text-sm font-medium text-gray-700">Enable notifications</span>
-                    <p className="text-xs text-gray-500">Get notified of new messages</p>
-                  </div>
-                  <Switch defaultChecked className="data-[state=checked]:bg-green-600" />
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-lg border border-gray-200 p-4">
-              <h3 className="text-sm font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                <Bot className="h-4 w-4 text-purple-600" />
-                Agent Settings
-              </h3>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between p-3 rounded-lg bg-gray-50">
-                  <div>
-                    <span className="text-sm font-medium text-gray-700">Auto-select best agent</span>
-                    <p className="text-xs text-gray-500">Let AI choose the optimal agent</p>
-                  </div>
-                  <div className="text-sm text-gray-500">
-                    {interactionMode === 'automatic' ? 'Enabled' : 'Disabled'}
-                  </div>
-                </div>
-                <div className="flex items-center justify-between p-3 rounded-lg bg-gray-50">
-                  <div>
-                    <span className="text-sm font-medium text-gray-700">Enable autonomous mode</span>
-                    <p className="text-xs text-gray-500">Allow agents to work independently</p>
-                  </div>
-                  <Switch 
-                    checked={autonomousMode} 
-                    onCheckedChange={setAutonomousMode}
-                    className="data-[state=checked]:bg-purple-600"
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-        </TabsContent>
-      </Tabs>
+      </div>
     </div>
   );
 }

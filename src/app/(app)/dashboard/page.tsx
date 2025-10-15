@@ -14,6 +14,8 @@ import {
   TestTube,
   Play,
   BookOpen,
+  ArrowRight,
+  Sparkles,
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -21,46 +23,48 @@ import { ClientAuthWrapper } from '@/components/auth/client-auth-wrapper';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
+import { Badge } from '@/components/ui/badge';
+import { VitalPageLayout, VitalCard, VitalStatsCard } from '@/components/layout/vital-page-layout';
 
 const vitalPhases = [
   {
     name: 'Vision',
     icon: Brain,
     progress: 85,
-    color: 'text-trust-blue',
-    bgColor: 'bg-trust-blue/10',
+    color: 'text-primary',
+    bgColor: 'bg-primary/10',
     description: 'Strategic planning and market analysis',
   },
   {
     name: 'Intelligence',
     icon: Target,
     progress: 65,
-    color: 'text-progress-teal',
-    bgColor: 'bg-progress-teal/10',
+    color: 'text-secondary',
+    bgColor: 'bg-secondary/10',
     description: 'AI integration and smart development',
   },
   {
     name: 'Trials',
     icon: TestTube,
     progress: 40,
-    color: 'text-clinical-green',
-    bgColor: 'bg-clinical-green/10',
+    color: 'text-success',
+    bgColor: 'bg-success/10',
     description: 'Clinical trials and validation',
   },
   {
     name: 'Activation',
     icon: Play,
     progress: 20,
-    color: 'text-regulatory-gold',
-    bgColor: 'bg-regulatory-gold/10',
+    color: 'text-warning',
+    bgColor: 'bg-warning/10',
     description: 'Market deployment and launch',
   },
   {
     name: 'Learning',
     icon: BookOpen,
     progress: 10,
-    color: 'text-market-purple',
-    bgColor: 'bg-market-purple/10',
+    color: 'text-info',
+    bgColor: 'bg-info/10',
     description: 'Continuous learning and optimization',
   },
 ];
@@ -73,7 +77,7 @@ const recentActivities = [
     description: 'Clinical trial design completed',
     time: '2 hours ago',
     icon: CheckCircle,
-    color: 'text-clinical-green',
+    color: 'text-success',
   },
   {
     id: 2,
@@ -82,7 +86,7 @@ const recentActivities = [
     description: 'FDA pathway discussion',
     time: '4 hours ago',
     icon: MessageSquare,
-    color: 'text-trust-blue',
+    color: 'text-primary',
   },
   {
     id: 3,
@@ -91,7 +95,7 @@ const recentActivities = [
     description: '510(k) submission guidelines',
     time: '1 day ago',
     icon: FileText,
-    color: 'text-medical-gray',
+    color: 'text-muted-foreground',
   },
   {
     id: 4,
@@ -100,105 +104,83 @@ const recentActivities = [
     description: 'Clinical validation due in 5 days',
     time: '2 days ago',
     icon: AlertTriangle,
-    color: 'text-regulatory-gold',
+    color: 'text-warning',
   },
 ];
 
 function DashboardPageContent() {
   return (
-    <div className="space-y-8">
-      {/* Welcome Section */}
-      <div className="bg-gradient-to-r from-trust-blue to-progress-teal rounded-lg p-6 text-white">
-        <h1 className="text-3xl font-bold mb-2">Welcome to VITALpath</h1>
-        <p className="text-trust-blue-light text-lg">
-          Your comprehensive healthcare technology development platform
-        </p>
-      </div>
+    <VitalPageLayout
+      title="Dashboard"
+      description="Your comprehensive healthcare technology development platform"
+      badge="VITAL Path v3.0"
+    >
+      <div className="space-y-8">
+        {/* Welcome Hero Section */}
+        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary to-secondary p-8 text-white">
+          <div className="absolute inset-0 bg-grid-white/[0.05] bg-grid-16" />
+          <div className="relative z-10">
+            <div className="flex items-center gap-2 mb-4">
+              <Badge variant="secondary" className="bg-white/20 text-white border-white/30">
+                <Sparkles className="h-3 w-3 mr-1" />
+                AI-Powered Platform
+              </Badge>
+            </div>
+            <h1 className="text-4xl font-bold mb-4">
+              Welcome to VITAL Path
+            </h1>
+            <p className="text-xl opacity-90 mb-6">
+              Transform your healthcare innovation with 200+ AI agents and proven frameworks
+            </p>
+            <div className="flex gap-4">
+              <Button size="lg" variant="secondary" className="bg-white text-primary hover:bg-white/90">
+                Start Building
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+              <Button size="lg" variant="outline" className="border-white/30 text-white hover:bg-white/10">
+                View Documentation
+              </Button>
+            </div>
+          </div>
+        </div>
 
-      {/* Key Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-medical-gray">Active Projects</p>
-                <p className="text-2xl font-bold text-deep-charcoal">3</p>
-              </div>
-              <div className="h-8 w-8 bg-trust-blue/10 rounded-lg flex items-center justify-center">
-                <BarChart3 className="h-4 w-4 text-trust-blue" />
-              </div>
-            </div>
-            <div className="mt-4 flex items-center text-sm">
-              <TrendingUp className="h-4 w-4 text-clinical-green mr-1" />
-              <span className="text-clinical-green">+2 from last month</span>
-            </div>
-          </CardContent>
-        </Card>
+        {/* Key Metrics */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <VitalStatsCard
+            title="Active Projects"
+            value="3"
+            description="Healthcare solutions in development"
+            icon={<BarChart3 className="h-8 w-8" />}
+            trend={{ value: 50, label: "from last month", positive: true }}
+          />
+          <VitalStatsCard
+            title="Team Members"
+            value="12"
+            description="Cross-functional healthcare team"
+            icon={<Users className="h-8 w-8" />}
+            trend={{ value: 20, label: "active this week", positive: true }}
+          />
+          <VitalStatsCard
+            title="AI Consultations"
+            value="47"
+            description="Expert AI agent interactions"
+            icon={<MessageSquare className="h-8 w-8" />}
+            trend={{ value: 34, label: "this week", positive: true }}
+          />
+          <VitalStatsCard
+            title="Documents"
+            value="28"
+            description="Regulatory and clinical docs"
+            icon={<FileText className="h-8 w-8" />}
+            trend={{ value: 25, label: "approved this week", positive: true }}
+          />
+        </div>
 
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-medical-gray">Team Members</p>
-                <p className="text-2xl font-bold text-deep-charcoal">12</p>
-              </div>
-              <div className="h-8 w-8 bg-progress-teal/10 rounded-lg flex items-center justify-center">
-                <Users className="h-4 w-4 text-progress-teal" />
-              </div>
-            </div>
-            <div className="mt-4 flex items-center text-sm">
-              <Clock className="h-4 w-4 text-medical-gray mr-1" />
-              <span className="text-medical-gray">8 active this week</span>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-medical-gray">Documents</p>
-                <p className="text-2xl font-bold text-deep-charcoal">28</p>
-              </div>
-              <div className="h-8 w-8 bg-clinical-green/10 rounded-lg flex items-center justify-center">
-                <FileText className="h-4 w-4 text-clinical-green" />
-              </div>
-            </div>
-            <div className="mt-4 flex items-center text-sm">
-              <CheckCircle className="h-4 w-4 text-clinical-green mr-1" />
-              <span className="text-clinical-green">5 approved this week</span>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-medical-gray">AI Consultations</p>
-                <p className="text-2xl font-bold text-deep-charcoal">47</p>
-              </div>
-              <div className="h-8 w-8 bg-market-purple/10 rounded-lg flex items-center justify-center">
-                <MessageSquare className="h-4 w-4 text-market-purple" />
-              </div>
-            </div>
-            <div className="mt-4 flex items-center text-sm">
-              <TrendingUp className="h-4 w-4 text-clinical-green mr-1" />
-              <span className="text-clinical-green">+12 this week</span>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* VITAL Framework Progress */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Brain className="h-5 w-5 text-trust-blue" />
-            VITAL Framework Progress
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
+        {/* VITAL Framework Progress */}
+        <VitalCard
+          title="VITAL Framework Progress"
+          description="Track your journey through the proven VITAL methodology"
+        >
           <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
             {vitalPhases.map((phase) => (
               <div key={phase.name} className="space-y-3">
@@ -212,68 +194,67 @@ function DashboardPageContent() {
                   <span className="text-sm font-medium">{phase.progress}%</span>
                 </div>
                 <Progress value={phase.progress} className="h-2" />
-                <p className="text-xs text-medical-gray">{phase.description}</p>
+                <p className="text-xs text-muted-foreground">{phase.description}</p>
               </div>
             ))}
           </div>
-        </CardContent>
-      </Card>
+        </VitalCard>
 
-      {/* Recent Activity and Quick Actions */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            <CardTitle>Recent Activity</CardTitle>
-          </CardHeader>
-          <CardContent>
+        {/* Recent Activity and Quick Actions */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <VitalCard
+            title="Recent Activity"
+            description="Latest updates from your healthcare projects"
+            className="lg:col-span-2"
+          >
             <div className="space-y-4">
               {recentActivities.map((activity) => (
-                <div key={activity.id} className="flex items-start gap-3">
-                  <div className={`p-2 rounded-lg bg-gray-50`}>
+                <div key={activity.id} className="flex items-start gap-3 p-3 rounded-lg hover:bg-muted/50 transition-colors">
+                  <div className={`p-2 rounded-lg bg-muted`}>
                     <activity.icon className={`h-4 w-4 ${activity.color}`} />
                   </div>
                   <div className="flex-1 space-y-1">
-                    <p className="text-sm font-medium text-deep-charcoal">
+                    <p className="text-sm font-medium">
                       {activity.title}
                     </p>
-                    <p className="text-sm text-medical-gray">
+                    <p className="text-sm text-muted-foreground">
                       {activity.description}
                     </p>
-                    <p className="text-xs text-medical-gray">{activity.time}</p>
+                    <p className="text-xs text-muted-foreground">{activity.time}</p>
                   </div>
                 </div>
               ))}
             </div>
-          </CardContent>
-        </Card>
+          </VitalCard>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Quick Actions</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <Button className="w-full justify-start bg-trust-blue hover:bg-trust-blue/90">
-              <MessageSquare className="mr-2 h-4 w-4" />
-              Start AI Consultation
-            </Button>
-            <Link href="/dashboard/knowledge">
-              <Button variant="outline" className="w-full justify-start">
-                <FileText className="mr-2 h-4 w-4" />
-                Upload Document
+          <VitalCard
+            title="Quick Actions"
+            description="Jumpstart your healthcare innovation"
+          >
+            <div className="space-y-3">
+              <Button className="w-full justify-start bg-primary hover:bg-primary/90">
+                <MessageSquare className="mr-2 h-4 w-4" />
+                Start AI Consultation
               </Button>
-            </Link>
-            <Button variant="outline" className="w-full justify-start">
-              <Users className="mr-2 h-4 w-4" />
-              Invite Team Member
-            </Button>
-            <Button variant="outline" className="w-full justify-start">
-              <BarChart3 className="mr-2 h-4 w-4" />
-              View Analytics
-            </Button>
-          </CardContent>
-        </Card>
+              <Link href="/knowledge">
+                <Button variant="outline" className="w-full justify-start">
+                  <FileText className="mr-2 h-4 w-4" />
+                  Upload Document
+                </Button>
+              </Link>
+              <Button variant="outline" className="w-full justify-start">
+                <Users className="mr-2 h-4 w-4" />
+                Invite Team Member
+              </Button>
+              <Button variant="outline" className="w-full justify-start">
+                <BarChart3 className="mr-2 h-4 w-4" />
+                View Analytics
+              </Button>
+            </div>
+          </VitalCard>
+        </div>
       </div>
-    </div>
+    </VitalPageLayout>
   );
 }
 

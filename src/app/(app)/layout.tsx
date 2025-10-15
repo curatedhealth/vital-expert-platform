@@ -142,13 +142,14 @@ function AppLayoutContent({
             <div className="px-3 py-2 border-b">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+                  <div className="w-8 h-8 bg-gradient-to-r from-primary to-secondary rounded-lg flex items-center justify-center">
                     <span className="text-white font-bold text-sm">V</span>
                   </div>
                   {!isCollapsed && (
-                    <h2 className="text-lg font-semibold tracking-tight">
-                      VITAL Expert
-                    </h2>
+                    <div className="flex items-center gap-1">
+                      <span className="text-lg font-black text-primary">VITAL</span>
+                      <span className="text-lg font-light text-muted-foreground">Path</span>
+                    </div>
                   )}
                 </div>
                 <Button
@@ -387,8 +388,13 @@ function AppLayoutContent({
             <div className="fixed left-0 top-0 z-50 h-full w-72 bg-background shadow-lg">
               <div className="flex items-center justify-between p-4 border-b">
                 <div className="flex items-center gap-2">
-                  <Package2 className="h-6 w-6" />
-                  <span className="font-semibold">VITALpath</span>
+                  <div className="w-8 h-8 bg-gradient-to-r from-primary to-secondary rounded-lg flex items-center justify-center">
+                    <span className="text-white font-bold text-sm">V</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <span className="text-lg font-black text-primary">VITAL</span>
+                    <span className="text-lg font-light text-muted-foreground">Path</span>
+                  </div>
                 </div>
                 <Button variant="ghost" size="icon" onClick={() => setSidebarOpen(false)}>
                   <X className="h-5 w-5" />

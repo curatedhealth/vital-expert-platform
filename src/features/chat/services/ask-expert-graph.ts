@@ -718,6 +718,13 @@ export async function* streamModeAwareWorkflow(input: {
         content: state.answer,
         metadata: contentMetadata
       };
+      
+      // Send final event to indicate completion
+      yield {
+        type: 'final',
+        content: state.answer,
+        metadata: contentMetadata
+      };
     }
     
         // Debug: Log all events to see what's being generated
@@ -771,7 +778,20 @@ export async function* streamModeAwareWorkflow(input: {
       content: 'I apologize, but I encountered an issue while processing your request. This might be due to a temporary service issue. Please try rephrasing your question or contact support if the problem persists.',
       metadata: fallbackMetadata
     };
+    
+    // Send final and complete events for fallback
+    yield {
+      type: 'final',
+      content: 'I apologize, but I encountered an issue while processing your request. This might be due to a temporary service issue. Please try rephrasing your question or contact support if the problem persists.',
+      metadata: fallbackMetadata
+    };
   }
+  
+  // Always send complete event at the end
+  yield {
+    type: 'complete',
+    content: 'Workflow completed successfully'
+  };
   
   // Always signal completion
   yield encoder.encode(`data: [DONE]\n\n`);

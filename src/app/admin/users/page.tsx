@@ -18,6 +18,7 @@ export default async function UsersPage() {
         <p className="mt-2 text-sm text-gray-600">
           Manage users, roles, and permissions across the platform.
         </p>
+        {isSuperAdmin && (
           <div className="mt-2 flex items-center text-sm text-amber-600">
             <span className="font-medium">Super Admin:</span>
             <span className="ml-1">Full access to all user management features</span>

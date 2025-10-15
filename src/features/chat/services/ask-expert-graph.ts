@@ -39,19 +39,16 @@ const ModeAwareWorkflowState = Annotation.Root({
   agentId: Annotation<string | null>(),
   selectedAgent: Annotation<any>({
     reducer: (current: any, update: any) => {
-      console.log('🔄 [selectedAgent reducer] Current:', current?.name, 'Update:', update?.name);
-      // Always prefer the update if it exists and has an id
+      // Critical: Preserve agent through workflow
       if (update && update.id) {
-        console.log('✅ [selectedAgent reducer] Using update:', update.name);
+        console.log('✅ Preserving updated agent:', update.name);
         return update;
       }
-      // Otherwise keep current if it exists
       if (current && current.id) {
-        console.log('✅ [selectedAgent reducer] Keeping current:', current.name);
+        console.log('✅ Keeping current agent:', current.name);
         return current;
       }
-      // Return null if neither exists
-      console.log('❌ [selectedAgent reducer] No valid agent found');
+      console.warn('⚠️ No valid agent to preserve');
       return null;
     },
     default: () => null

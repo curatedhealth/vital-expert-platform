@@ -213,6 +213,7 @@ export default function TenantManagementViewer({
       {/* Actions */}
       <div className="flex justify-between items-center">
         <h2 className="text-lg font-medium text-gray-900">Organizations</h2>
+        {canCreate && (
           <Button onClick={() => setCreateDialogOpen(true)}>
             <Building2 className="h-4 w-4 mr-2" />
             Create Organization

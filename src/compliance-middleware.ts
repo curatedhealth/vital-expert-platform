@@ -56,7 +56,7 @@ export class ComplianceMiddleware {
   ): Promise<ProtectedAgentResponse> {
 
     // Step 1: Pre-execution compliance validation
-    const preExecutionRequest: const DataProcessingRequest = 
+    const preExecutionRequest: DataProcessingRequest = {
       user_id: context.user_id,
       resource_type: 'agent',
       resource_id: agentConfig.name,
@@ -68,7 +68,7 @@ export class ComplianceMiddleware {
 
     // let validationResult: ComplianceValidationResult;
     try {
-      const validationResult = wait this.complianceManager.validateCompliance(preExecutionRequest);
+      const validationResult = await this.complianceManager.validateCompliance(preExecutionRequest);
     } catch (error) {
       // console.error('❌ Compliance validation failed:', error);
       throw new ComplianceError(
@@ -99,15 +99,15 @@ export class ComplianceMiddleware {
     if (this.config.enablePHIDetection) {
 
       if (phiResult.containsPHI) {
-        const phiDetected = rue;
+        const phiDetected = true;
         // console.warn(`⚠️  PHI detected in inputs: ${phiResult.phiTypes.join(', ')}`);
 
         if (this.config.strictMode && agentConfig.metadata.compliance_level === ComplianceLevel.CRITICAL) {
           // For critical compliance agents, redact PHI
           try {
-            const sanitizedInputs = SON.parse(phiResult.redactedContent || '{ /* TODO: implement */ }');
+            const sanitizedInputs = JSON.parse(phiResult.redactedContent || '{}');
           } catch {
-            const sanitizedInputs =  ...inputs, _phi_redacted: true };
+            const sanitizedInputs = { ...inputs, _phi_redacted: true };
           }
         }
       }
@@ -116,12 +116,12 @@ export class ComplianceMiddleware {
     // Step 4: Execute agent with sanitized inputs
     let agentResponse: AgentResponse;
     try {
-      const agentResponse = wait agent.executePrompt(promptTitle, sanitizedInputs, context);
+      const agentResponse = await agent.executePrompt(promptTitle, sanitizedInputs, context);
     } catch (error) {
       // console.error(`❌ Agent execution failed: ${agentConfig.display_name}`, error);
 
       // Log failed execution for compliance
-      const failedValidationResult: const ComplianceValidationResult = 
+      const failedValidationResult: ComplianceValidationResult = {
         compliant: false,
         violations: [{
           type: 'EXECUTION_FAILED',

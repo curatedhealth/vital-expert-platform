@@ -108,7 +108,7 @@ export default function MaintenanceMode({
         <CardContent className="space-y-4">
           {!isMaintenanceMode ? (
             <div className="space-y-4">
-                <Alert>
+              <Alert>
                   <AlertTriangle className="h-4 w-4" />
                   <AlertDescription>
                     Enabling maintenance mode will prevent users from accessing the system. 

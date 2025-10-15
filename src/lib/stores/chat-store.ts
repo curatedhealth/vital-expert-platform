@@ -1034,15 +1034,37 @@ const _useChatStore = create<ChatStore>()(
           isNull: agent === null
         });
         
+        // Validate agent structure
+        if (agent && !agent.id) {
+          console.error('❌ [setSelectedAgent] Invalid agent structure - missing id');
+          return Promise.reject('Invalid agent structure');
+        }
+        
         return new Promise<string>((resolve) => {
-          set({ 
-            selectedAgent: agent, 
+          // Update state atomically
+          set((state) => ({
+            selectedAgent: agent,
             activeAgentId: agent?.id || null,
+            selectedAgents: agent ? [agent] : [],
             error: null,
-            // Clear any previous errors when selecting agent
+            // Clear reasoning when switching agents
             liveReasoning: '',
-            isReasoningActive: false
-          });
+            isReasoningActive: false,
+            // Update unified state
+            state: {
+              ...state.state,
+              agent: {
+                ...state.state.agent,
+                active: agent,
+                selection: {
+                  mode: state.interactionMode,
+                  confidence: agent ? 1.0 : 0,
+                  reasoning: agent ? `Selected ${agent.display_name || agent.name}` : '',
+                  timestamp: new Date()
+                }
+              }
+            }
+          }));
           
           // Wait for state update to complete
           setTimeout(() => {

@@ -128,6 +128,7 @@ export default function UserRoleDialog({
             </Select>
           </div>
 
+          {!isSuperAdmin && selectedRole === 'super_admin' && (
             <Alert>
               <AlertTriangle className="h-4 w-4" />
               <AlertDescription>

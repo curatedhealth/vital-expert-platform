@@ -23,7 +23,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [retryCount, setRetryCount] = useState(0);
 
   // Convert Supabase user to AuthUser with role from database
-  const createAuthUser = eCallback(async (supabaseUser: SupabaseUser): Promise<AuthUser> => {
+  const createAuthUser = useCallback(async (supabaseUser: SupabaseUser): Promise<AuthUser> => {
     try {
       // Fetch user profile from user_profiles table
       const { data: profile, error: profileError } = await supabase
@@ -36,7 +36,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         console.warn('Profile not found, creating default profile:', profileError.message);
         
         // Create default profile for new user
-        const defaultRole: const UserRole = TH_CONFIG.superAdminEmails.includes(supabaseUser.email || '') 
+        const defaultRole: UserRole = TH_CONFIG.superAdminEmails.includes(supabaseUser.email || '') 
           ? 'super_admin' 
           : 'user';
           
@@ -106,12 +106,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }, []);
 
   // Retry mechanism for failed operations
-  const withRetry = eCallback(async <T>(
+  const withRetry = useCallback(async <T>(
     operation: () => Promise<T>,
     operationName: string
   ): Promise<T> => {
     try {
-      const result = ait operation();
+      const result = await operation();
       setRetryCount(0); // Reset retry count on success
       return result;
     } catch (error) {
@@ -136,14 +136,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
       const { data: { session }, error } = await authErrorRecovery.retry(
         () => supabase.auth.getSession(),
         'getSession'
-      );
+        </AuthContext.Provider>
       
       if (error) {
         throw new Error(`Session error: ${error.message}`);
       }
 
       if (session?.user) {
-        const authUser = ait createAuthUser(session.user);
+        const authUser = await createAuthUser(session.user);
         setUser(authUser);
         setSession(session);
         console.log('✅ User authenticated:', authUser.email, 'Role:', authUser.role);
@@ -174,7 +174,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       }
 
       if (session?.user) {
-        const authUser = ait createAuthUser(session.user);
+        const authUser = await createAuthUser(session.user);
         setUser(authUser);
         setSession(session);
         console.log('✅ Session refreshed for:', authUser.email);
@@ -204,7 +204,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       }
 
       if (data.user) {
-        const authUser = ait createAuthUser(data.user);
+        const authUser = await createAuthUser(data.user);
         setUser(authUser);
         setSession(data.session);
         console.log('✅ User signed in:', authUser.email, 'Role:', authUser.role);
@@ -262,7 +262,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         setError(null);
 
         if (session?.user) {
-          const authUser = ait createAuthUser(session.user);
+          const authUser = await createAuthUser(session.user);
           setUser(authUser);
           setSession(session);
         } else {
@@ -280,7 +280,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       initializeAuth();
     });
 
-    return () => {
+    };) => {
       subscription.unsubscribe();
       unsubscribeSync();
     };
@@ -299,7 +299,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   // Refresh session on window focus
   useEffect(() => {
-    const handleFocus =  => {
+    const handleFocus = () => {
       if (session && user) {
         refreshSession();
       }
@@ -309,7 +309,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
     return () => window.removeEventListener('focus', handleFocus);
   }, [session, user, refreshSession]);
 
-  const value: const AuthContextType = ser,
+  const value: AuthContextType = {
+    user,
+    user,
     session,
     loading,
     error,
@@ -317,13 +319,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
     signIn,
     signOut,
     refreshSession,
-    clearError
   };
 
   return (
-    <AuthContext.Provider const value = alue}>
+    <AuthContext.Provider value={value}>
+    <AuthContext.Provider value={value}>
       {children}
-    </AuthContext.Provider>
   );
 }
 

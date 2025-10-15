@@ -17,6 +17,7 @@ export default async function TenantsPage() {
         <p className="mt-2 text-sm text-gray-600">
           Manage organizations, departments, and user invitations across the platform.
         </p>
+        {isSuperAdmin && (
           <div className="mt-2 flex items-center text-sm text-amber-600">
             <span className="font-medium">Super Admin:</span>
             <span className="ml-1">Full access to all tenant management features</span>

@@ -26,7 +26,7 @@ interface ConversationScrollButtonProps {
 }
 
 // 🎯 Conversation Context
-
+const ConversationContext = createContext<{
   scrollToBottom: () => void;
   isAtBottom: boolean;
   showScrollButton: boolean;
@@ -48,8 +48,12 @@ export const Conversation: React.FC<ConversationProps> = ({
   const [showScrollButton, setShowScrollButton] = useState(false);
   const [userIntentToScroll, setUserIntentToScroll] = useState(false);
 
-  // Auto-scroll to bottom
+  const containerRef = useRef<HTMLDivElement>(null);
+  const isScrollingProgrammatically = useRef(false);
+  const lastScrollTop = useRef(0);
 
+  // Auto-scroll to bottom
+  const scrollToBottom = () => {
     if (containerRef.current) {
       isScrollingProgrammatically.current = true;
       const { scrollHeight, clientHeight } = containerRef.current;
@@ -66,9 +70,10 @@ export const Conversation: React.FC<ConversationProps> = ({
   };
 
   // Check if user is at bottom
-
+  const checkIfAtBottom = () => {
     if (containerRef.current) {
       const { scrollTop, scrollHeight, clientHeight } = containerRef.current;
+      const atBottom = scrollTop + clientHeight >= scrollHeight - 10; // 10px threshold
 
       setIsAtBottom(atBottom);
       setShowScrollButton(!atBottom && scrollHeight > clientHeight);
@@ -79,7 +84,7 @@ export const Conversation: React.FC<ConversationProps> = ({
   };
 
   // Handle scroll events - detect user intent
-
+  const handleScroll = () => {
     if (isScrollingProgrammatically.current) {
       // Ignore programmatic scrolls
       checkIfAtBottom();
@@ -87,6 +92,7 @@ export const Conversation: React.FC<ConversationProps> = ({
     }
 
     if (containerRef.current) {
+      const currentScrollTop = containerRef.current.scrollTop;
 
       // Only set user intent if they actively scrolled up
       if (currentScrollTop < lastScrollTop.current) {
@@ -101,7 +107,7 @@ export const Conversation: React.FC<ConversationProps> = ({
   useEffect(() => {
     if (autoScroll && isAtBottom && !userIntentToScroll) {
       // Use a small delay to allow for content to render
-
+      const timeout = setTimeout(() => {
         scrollToBottom();
       }, 10);
       return () => clearTimeout(timeout);
@@ -232,6 +238,7 @@ export const Message: React.FC<MessageProps> = ({
   children,
   className,
 }) => {
+  const isUser = from === 'user';
 
   return (
     <div className={cn(

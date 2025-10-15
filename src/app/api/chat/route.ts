@@ -1,8 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { streamModeAwareWorkflow } from '@/features/chat/services/ask-expert-graph';
+import { validateChatRequest, ValidationError } from './middleware';
+import { ErrorRecoveryService } from '@/core/services/error-recovery.service';
 
 export async function POST(request: NextRequest) {
   try {
+    // Validate request using middleware
     const { 
       message, 
       userId, 
@@ -12,7 +15,7 @@ export async function POST(request: NextRequest) {
       autonomousMode = false, 
       selectedTools = [],
       chatHistory = []
-    } = await request.json();
+    } = await validateChatRequest(request);
 
         console.log(`🚀 Chat API: ${interactionMode} + ${autonomousMode ? 'Autonomous' : 'Normal'} mode`);
         console.log(`🔍 [API] Received interactionMode: ${interactionMode}, selectedAgent: ${agent?.name || 'none'}`);
@@ -90,10 +93,23 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('❌ Chat API error:', error);
     
+    // Handle validation errors
+    if (error instanceof ValidationError) {
+      return NextResponse.json(
+        { error: error.message },
+        { status: 400 }
+      );
+    }
+    
+    // Handle other errors with recovery
+    const fallbackAgent = await ErrorRecoveryService.recoverFromAgentError(error as Error);
+    
     return NextResponse.json(
       { 
         error: 'Internal server error',
-        message: error instanceof Error ? error.message : 'Unknown error'
+        message: error instanceof Error ? error.message : 'Unknown error',
+        fallbackAgent: fallbackAgent,
+        recoveryUsed: true
       },
       { status: 500 }
     );

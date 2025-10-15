@@ -25,6 +25,10 @@ import { Textarea } from '@/components/ui/textarea';
 import { useAgentsStore, Agent } from '@/lib/stores/agents-store';
 import { useChatStore } from '@/lib/stores/chat-store';
 import { useAuth } from '@/supabase-auth-context';
+import { EnhancedAgentSidebar } from '@/components/chat/enhanced-agent-sidebar';
+import { AgentSelectionModal } from '@/components/chat/agent-selection-modal';
+import { ToolSelector } from '@/components/chat/tool-selector';
+import { ReasoningDisplay } from '@/components/chat/reasoning-display';
 
 
 interface Message {
@@ -66,6 +70,12 @@ export default function AskExpertPage() {
     currentStep: '',
     progress: 0,
   });
+
+  const [showAgentSelection, setShowAgentSelection] = useState(false);
+  const [suggestedAgents, setSuggestedAgents] = useState<Agent[]>([]);
+  const [selectedTools, setSelectedTools] = useState<string[]>([]);
+  const [reasoningEvents, setReasoningEvents] = useState<any[]>([]);
+  const [isReasoningActive, setIsReasoningActive] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -333,97 +343,36 @@ export default function AskExpertPage() {
 
   return (
     <div className="flex h-screen bg-gray-50">
-      {/* Sidebar */}
-      <div className="w-80 bg-white border-r border-gray-200 flex flex-col">
-        <div className="p-6 border-b border-gray-200">
-          <div className="flex items-center space-x-2">
-            <MessageSquare className="h-6 w-6 text-blue-600" />
-            <h1 className="text-xl font-semibold">Ask Expert</h1>
-          </div>
-          <p className="text-sm text-gray-600 mt-1">
-            Get expert guidance from specialized AI agents
-          </p>
-        </div>
-
-
-        {/* Agent Selection */}
-        {(
-          <div className="p-6 border-b border-gray-200">
-            <h3 className="text-sm font-medium text-gray-900 mb-3">Select Expert</h3>
-            <Select onValueChange={handleAgentSelect}>
-              <SelectTrigger>
-                <SelectValue placeholder="Choose an expert agent" />
-              </SelectTrigger>
-              <SelectContent>
-                {agents.map((agent) => (
-                  <SelectItem key={agent.id} value={agent.id}>
-                    <div className="flex items-center space-x-2">
-                      <Avatar className="h-6 w-6">
-                        <AvatarImage src={agent.avatar} />
-                        <AvatarFallback>{(agent.display_name || agent.name)[0]}</AvatarFallback>
-                      </Avatar>
-                      <span>{agent.display_name || agent.name}</span>
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        )}
-
-        {/* Selected Agent Info */}
+      {/* Enhanced Sidebar */}
+      <div className="w-80 space-y-4">
+        <EnhancedAgentSidebar
+          agents={agents}
+          selectedAgent={state.selectedAgent}
+          onSelectAgent={handleAgentSelect}
+          interactionMode="manual"
+          onModeChange={(mode) => {
+            // Handle mode change if needed
+            console.log('Mode changed to:', mode);
+          }}
+        />
+        
+        {/* Tool Selector */}
         {state.selectedAgent && (
-          <div className="p-6 border-b border-gray-200">
-            <div className="flex items-center space-x-3">
-              <Avatar className="h-12 w-12">
-                <AvatarImage src={state.selectedAgent.avatar} />
-                <AvatarFallback>{(state.selectedAgent.display_name || state.selectedAgent.name)[0]}</AvatarFallback>
-              </Avatar>
-              <div>
-                <h4 className="font-medium">{state.selectedAgent.display_name || state.selectedAgent.name}</h4>
-                <p className="text-sm text-gray-600">{state.selectedAgent.description}</p>
-                <div className="flex flex-wrap gap-1 mt-2">
-                  {(state.selectedAgent.capabilities || [])?.slice(0, 3).map((cap) => (
-                    <Badge key={cap} variant="secondary" className="text-xs">
-                      {cap}
-                    </Badge>
-                  ))}
-                </div>
-              </div>
-            </div>
+          <div className="px-4">
+            <ToolSelector
+              availableTools={[]} // TODO: Load from tool registry
+              selectedTools={selectedTools}
+              onToolToggle={(toolId) => {
+                setSelectedTools(prev => 
+                  prev.includes(toolId) 
+                    ? prev.filter(id => id !== toolId)
+                    : [...prev, toolId]
+                );
+              }}
+              disabled={state.isLoading}
+            />
           </div>
         )}
-
-
-        {/* Quick Prompts */}
-        <div className="p-6 flex-1">
-          <h3 className="text-sm font-medium text-gray-900 mb-3">Quick Prompts</h3>
-          <div className="space-y-2">
-            {state.selectedAgent ? (
-              getExpertPrompts().map((prompt, index) => (
-                <Button
-                  key={index}
-                  variant="outline"
-                  size="sm"
-                  className="w-full justify-start text-left h-auto p-3"
-                  onClick={() => setState(prev => ({ ...prev, input: prompt.text }))}
-                >
-                  <div>
-                    <div className="flex items-center space-x-2">
-                      <span>{prompt.icon}</span>
-                      <span className="font-medium">{prompt.text}</span>
-                    </div>
-                    <p className="text-xs text-gray-600 mt-1">{prompt.description}</p>
-                  </div>
-                </Button>
-              ))
-            ) : (
-              <div className="text-sm text-gray-500 text-center py-4">
-                Select an expert agent to see quick prompts
-              </div>
-            )}
-          </div>
-        </div>
       </div>
 
       {/* Main Chat Area */}
@@ -540,6 +489,13 @@ export default function AskExpertPage() {
               );
             })
           )}
+          
+          {/* Reasoning Display */}
+          <ReasoningDisplay
+            reasoningEvents={reasoningEvents}
+            isActive={isReasoningActive}
+          />
+          
           <div ref={messagesEndRef} />
         </div>
 
@@ -578,6 +534,17 @@ export default function AskExpertPage() {
           </div>
         </div>
       </div>
+
+      {/* Agent Selection Modal */}
+      <AgentSelectionModal
+        isOpen={showAgentSelection}
+        onClose={() => setShowAgentSelection(false)}
+        suggestedAgents={suggestedAgents}
+        onSelectAgent={(agent) => {
+          handleAgentSelect(agent.id);
+          setShowAgentSelection(false);
+        }}
+      />
     </div>
   );
 }

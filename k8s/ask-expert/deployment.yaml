@@ -1,0 +1,153 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ask-expert
+  namespace: vital-production
+  labels:
+    app: ask-expert
+    version: v1.0.0
+    component: ask-expert
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: ask-expert
+  template:
+    metadata:
+      labels:
+        app: ask-expert
+        version: v1.0.0
+        component: ask-expert
+    spec:
+      serviceAccountName: ask-expert
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1001
+        fsGroup: 1001
+      containers:
+      - name: ask-expert
+        image: vital-path.azurecr.io/ask-expert:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 3000
+          name: http
+          protocol: TCP
+        env:
+        - name: NODE_ENV
+          value: "production"
+        - name: PORT
+          value: "3000"
+        - name: HOSTNAME
+          value: "0.0.0.0"
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: ask-expert-secrets
+              key: database-url
+        - name: OPENAI_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: ask-expert-secrets
+              key: openai-api-key
+        - name: SUPABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: ask-expert-secrets
+              key: supabase-url
+        - name: SUPABASE_ANON_KEY
+          valueFrom:
+            secretKeyRef:
+              name: ask-expert-secrets
+              key: supabase-anon-key
+        - name: REDIS_URL
+          valueFrom:
+            secretKeyRef:
+              name: ask-expert-secrets
+              key: redis-url
+        - name: PINECONE_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: ask-expert-secrets
+              key: pinecone-api-key
+        - name: PINECONE_ENVIRONMENT
+          valueFrom:
+            configMapKeyRef:
+              name: ask-expert-config
+              key: pinecone-environment
+        - name: JWT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: ask-expert-secrets
+              key: jwt-secret
+        - name: ENCRYPTION_KEY
+          valueFrom:
+            secretKeyRef:
+              name: ask-expert-secrets
+              key: encryption-key
+        envFrom:
+        - configMapRef:
+            name: ask-expert-config
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "2Gi"
+            cpu: "1000m"
+        livenessProbe:
+          httpGet:
+            path: /api/health
+            port: 3000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /api/health
+            port: 3000
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+        startupProbe:
+          httpGet:
+            path: /api/health
+            port: 3000
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 10
+        volumeMounts:
+        - name: tmp
+          mountPath: /tmp
+        - name: logs
+          mountPath: /app/logs
+      volumes:
+      - name: tmp
+        emptyDir: {}
+      - name: logs
+        emptyDir: {}
+      nodeSelector:
+        kubernetes.io/os: linux
+      tolerations:
+      - key: "node.kubernetes.io/not-ready"
+        operator: "Exists"
+        effect: "NoExecute"
+        tolerationSeconds: 300
+      - key: "node.kubernetes.io/unreachable"
+        operator: "Exists"
+        effect: "NoExecute"
+        tolerationSeconds: 300
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app
+                  operator: In
+                  values:
+                  - ask-expert
+              topologyKey: kubernetes.io/hostname

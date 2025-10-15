@@ -166,14 +166,13 @@ export default function ApprovalWorkflows({
                       <TableCell>
                         <div className="flex items-center gap-2">
                           {getStatusBadge(workflow.isActive)}
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleToggleWorkflow(workflow.id, !workflow.isActive)}
-                            >
-                              {workflow.isActive ? 'Deactivate' : 'Activate'}
-                            </Button>
-                          )}
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleToggleWorkflow(workflow.id, !workflow.isActive)}
+                          >
+                            {workflow.isActive ? 'Deactivate' : 'Activate'}
+                          </Button>
                         </div>
                       </TableCell>
                       <TableCell className="text-sm text-muted-foreground">
@@ -206,18 +205,16 @@ export default function ApprovalWorkflows({
                               </ScrollArea>
                             </DialogContent>
                           </Dialog>
-
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => {
-                                setSelectedWorkflow(workflow);
-                                setIsEditDialogOpen(true);
-                              }}
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                          )}
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              setSelectedWorkflow(workflow);
+                              setIsEditDialogOpen(true);
+                            }}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
                         </div>
                       </TableCell>
                     </TableRow>

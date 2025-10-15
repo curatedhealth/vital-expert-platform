@@ -101,13 +101,13 @@ export default function MaintenanceMode({
       </Card>
 
       {/* Maintenance Controls */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Maintenance Controls</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {!isMaintenanceMode ? (
-              <div className="space-y-4">
+      <Card>
+        <CardHeader>
+          <CardTitle>Maintenance Controls</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {!isMaintenanceMode ? (
+            <div className="space-y-4">
                 <Alert>
                   <AlertTriangle className="h-4 w-4" />
                   <AlertDescription>

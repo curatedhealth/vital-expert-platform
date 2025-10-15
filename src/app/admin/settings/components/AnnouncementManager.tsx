@@ -174,28 +174,27 @@ export default function AnnouncementManager({
             Manage system-wide announcements and notifications
           </p>
         </div>
-          <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-            <DialogTrigger asChild>
-              <Button>
-                <Plus className="h-4 w-4 mr-2" />
-                Create Announcement
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-2xl">
-              <DialogHeader>
-                <DialogTitle>Create System Announcement</DialogTitle>
-                <DialogDescription>
-                  Create a new system-wide announcement
-                </DialogDescription>
-              </DialogHeader>
-              <CreateAnnouncementForm
-                onSubmit={handleCreateAnnouncement}
-                onCancel={() => setIsCreateDialogOpen(false)}
-                loading={loading}
-              />
-            </DialogContent>
-          </Dialog>
-        )}
+        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+          <DialogTrigger asChild>
+            <Button>
+              <Plus className="h-4 w-4 mr-2" />
+              Create Announcement
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Create System Announcement</DialogTitle>
+              <DialogDescription>
+                Create a new system-wide announcement
+              </DialogDescription>
+            </DialogHeader>
+            <CreateAnnouncementForm
+              onSubmit={handleCreateAnnouncement}
+              onCancel={() => setIsCreateDialogOpen(false)}
+              loading={loading}
+            />
+          </DialogContent>
+        </Dialog>
       </div>
 
       {/* Filters */}
@@ -273,12 +272,11 @@ export default function AnnouncementManager({
                       <TableCell>
                         <div className="flex items-center gap-2">
                           {getStatusBadge(announcement.is_active, announcement.start_time, announcement.end_time)}
-                            <Switch
-                              checked={announcement.is_active}
-                              onCheckedChange={(isActive) => handleToggleAnnouncement(announcement.id, isActive)}
-                              disabled={loading}
-                            />
-                          )}
+                          <Switch
+                            checked={announcement.is_active}
+                            onCheckedChange={(isActive) => handleToggleAnnouncement(announcement.id, isActive)}
+                            disabled={loading}
+                          />
                         </div>
                       </TableCell>
                       <TableCell>
@@ -330,28 +328,26 @@ export default function AnnouncementManager({
                               <AnnouncementDetails announcement={announcement} />
                             </DialogContent>
                           </Dialog>
-
-                            <>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => {
-                                  setSelectedAnnouncement(announcement);
-                                  setIsEditDialogOpen(true);
-                                }}
-                              >
-                                <Edit className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleDeleteAnnouncement(announcement.id)}
-                                className="text-red-600 hover:text-red-700"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </>
-                          )}
+                          <>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                setSelectedAnnouncement(announcement);
+                                setIsEditDialogOpen(true);
+                              }}
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleDeleteAnnouncement(announcement.id)}
+                              className="text-red-600 hover:text-red-700"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </>
                         </div>
                       </TableCell>
                     </TableRow>

@@ -187,14 +187,13 @@ export default function PolicyManager({
                       <TableCell>
                         <div className="flex items-center gap-2">
                           {getStatusBadge(policy.isActive)}
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleTogglePolicy(policy.id, !policy.isActive)}
-                            >
-                              {policy.isActive ? 'Deactivate' : 'Activate'}
-                            </Button>
-                          )}
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleTogglePolicy(policy.id, !policy.isActive)}
+                          >
+                            {policy.isActive ? 'Deactivate' : 'Activate'}
+                          </Button>
                         </div>
                       </TableCell>
                       <TableCell>
@@ -230,30 +229,28 @@ export default function PolicyManager({
                               </ScrollArea>
                             </DialogContent>
                           </Dialog>
-
-                            <>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => {
-                                  setSelectedPolicy(policy);
-                                  setIsEditDialogOpen(true);
-                                }}
-                              >
-                                <Edit className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => {
-                                  // TODO: Implement delete
-                                  console.log('Delete policy:', policy.id);
-                                }}
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </>
-                          )}
+                          <>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                setSelectedPolicy(policy);
+                                setIsEditDialogOpen(true);
+                              }}
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                // TODO: Implement delete
+                                console.log('Delete policy:', policy.id);
+                              }}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </>
                         </div>
                       </TableCell>
                     </TableRow>

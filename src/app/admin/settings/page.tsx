@@ -23,11 +23,10 @@ export default async function SettingsPage() {
         <p className="mt-2 text-sm text-gray-600">
           Manage global system configuration, feature flags, and announcements.
         </p>
-          <div className="mt-2 flex items-center text-sm text-amber-600">
-            <span className="mr-1">🔧</span>
-            Super Admin privileges active
-          </div>
-        )}
+        <div className="mt-2 flex items-center text-sm text-amber-600">
+          <span className="mr-1">🔧</span>
+          Super Admin privileges active
+        </div>
       </div>
 
       {/* Settings Dashboard */}

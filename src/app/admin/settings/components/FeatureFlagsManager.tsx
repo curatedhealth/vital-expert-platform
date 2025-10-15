@@ -159,28 +159,27 @@ export default function FeatureFlagsManager({
             Manage feature flags and rollout controls
           </p>
         </div>
-          <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-            <DialogTrigger asChild>
-              <Button>
-                <Plus className="h-4 w-4 mr-2" />
-                Add Feature Flag
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-2xl">
-              <DialogHeader>
-                <DialogTitle>Create Feature Flag</DialogTitle>
-                <DialogDescription>
-                  Create a new feature flag with rollout controls
-                </DialogDescription>
-              </DialogHeader>
-              <CreateFeatureFlagForm
-                onSubmit={handleCreateFlag}
-                onCancel={() => setIsCreateDialogOpen(false)}
-                loading={loading}
-              />
-            </DialogContent>
-          </Dialog>
-        )}
+        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+          <DialogTrigger asChild>
+            <Button>
+              <Plus className="h-4 w-4 mr-2" />
+              Add Feature Flag
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Create Feature Flag</DialogTitle>
+              <DialogDescription>
+                Create a new feature flag with rollout controls
+              </DialogDescription>
+            </DialogHeader>
+            <CreateFeatureFlagForm
+              onSubmit={handleCreateFlag}
+              onCancel={() => setIsCreateDialogOpen(false)}
+              loading={loading}
+            />
+          </DialogContent>
+        </Dialog>
       </div>
 
       {/* Filters */}
@@ -258,12 +257,11 @@ export default function FeatureFlagsManager({
                       <TableCell>
                         <div className="flex items-center gap-2">
                           {getStatusBadge(flag.enabled)}
-                            <Switch
-                              checked={flag.enabled}
-                              onCheckedChange={(enabled) => handleToggleFlag(flag.id, enabled)}
-                              disabled={loading}
-                            />
-                          )}
+                          <Switch
+                            checked={flag.enabled}
+                            onCheckedChange={(enabled) => handleToggleFlag(flag.id, enabled)}
+                            disabled={loading}
+                          />
                         </div>
                       </TableCell>
                       <TableCell>
@@ -302,28 +300,26 @@ export default function FeatureFlagsManager({
                               <FeatureFlagDetails flag={flag} />
                             </DialogContent>
                           </Dialog>
-
-                            <>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => {
-                                  setSelectedFlag(flag);
-                                  setIsEditDialogOpen(true);
-                                }}
-                              >
-                                <Edit className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleDeleteFlag(flag.id)}
-                                className="text-red-600 hover:text-red-700"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </>
-                          )}
+                          <>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                setSelectedFlag(flag);
+                                setIsEditDialogOpen(true);
+                              }}
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleDeleteFlag(flag.id)}
+                              className="text-red-600 hover:text-red-700"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </>
                         </div>
                       </TableCell>
                     </TableRow>

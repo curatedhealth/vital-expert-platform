@@ -285,18 +285,16 @@ export default function SystemConfiguration({
                                   <SystemSettingDetails setting={setting} />
                                 </DialogContent>
                               </Dialog>
-
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => {
-                                    setSelectedSetting(setting);
-                                    setIsEditDialogOpen(true);
-                                  }}
-                                >
-                                  <Save className="h-4 w-4" />
-                                </Button>
-                              )}
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                  setSelectedSetting(setting);
+                                  setIsEditDialogOpen(true);
+                                }}
+                              >
+                                <Save className="h-4 w-4" />
+                              </Button>
                             </div>
                           </TableCell>
                         </TableRow>

@@ -117,27 +117,26 @@ export default function SSOManagement({
             Configure SAML, OIDC, and SCIM providers for enterprise authentication
           </p>
         </div>
-          <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-            <DialogTrigger asChild>
-              <Button>
-                <Plus className="h-4 w-4 mr-2" />
-                Add Provider
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-2xl">
-              <DialogHeader>
-                <DialogTitle>Add SSO Provider</DialogTitle>
-                <DialogDescription>
-                  Configure a new SSO provider for enterprise authentication
-                </DialogDescription>
-              </DialogHeader>
-              <CreateSSOProviderForm
-                onSubmit={handleCreateProvider}
-                onCancel={() => setIsCreateDialogOpen(false)}
-              />
-            </DialogContent>
-          </Dialog>
-        )}
+        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+          <DialogTrigger asChild>
+            <Button>
+              <Plus className="h-4 w-4 mr-2" />
+              Add Provider
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Add SSO Provider</DialogTitle>
+              <DialogDescription>
+                Configure a new SSO provider for enterprise authentication
+              </DialogDescription>
+            </DialogHeader>
+            <CreateSSOProviderForm
+              onSubmit={handleCreateProvider}
+              onCancel={() => setIsCreateDialogOpen(false)}
+            />
+          </DialogContent>
+        </Dialog>
       </div>
 
       {/* Providers Table */}
@@ -189,14 +188,13 @@ export default function SSOManagement({
                       <TableCell>
                         <div className="flex items-center gap-2">
                           {getStatusBadge(provider.isActive)}
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleToggleProvider(provider.id, !provider.isActive)}
-                            >
-                              {provider.isActive ? 'Deactivate' : 'Activate'}
-                            </Button>
-                          )}
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleToggleProvider(provider.id, !provider.isActive)}
+                          >
+                            {provider.isActive ? 'Deactivate' : 'Activate'}
+                          </Button>
                         </div>
                       </TableCell>
                       <TableCell className="text-sm text-muted-foreground">
@@ -229,30 +227,28 @@ export default function SSOManagement({
                               </ScrollArea>
                             </DialogContent>
                           </Dialog>
-
-                            <>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => {
-                                  setSelectedProvider(provider);
-                                  setIsEditDialogOpen(true);
-                                }}
-                              >
-                                <Edit className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => {
-                                  // TODO: Implement delete
-                                  console.log('Delete provider:', provider.id);
-                                }}
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </>
-                          )}
+                          <>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                setSelectedProvider(provider);
+                                setIsEditDialogOpen(true);
+                              }}
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                // TODO: Implement delete
+                                console.log('Delete provider:', provider.id);
+                              }}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </>
                         </div>
                       </TableCell>
                     </TableRow>

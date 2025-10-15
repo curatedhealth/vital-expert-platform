@@ -797,14 +797,9 @@ export function EnhancedChatSidebar({
                     <span className="text-sm font-medium text-gray-700">Auto-select best agent</span>
                     <p className="text-xs text-gray-500">Let AI choose the optimal agent</p>
                   </div>
-                  <Switch 
-                    checked={interactionMode === 'automatic'} 
-                    onCheckedChange={(checked) => {
-                      setInteractionMode(checked ? 'automatic' : 'manual');
-                      if (checked) clearSelectedAgent();
-                    }}
-                    className="data-[state=checked]:bg-blue-600"
-                  />
+                  <div className="text-sm text-gray-500">
+                    {interactionMode === 'automatic' ? 'Enabled' : 'Disabled'}
+                  </div>
                 </div>
                 <div className="flex items-center justify-between p-3 rounded-lg bg-gray-50">
                   <div>

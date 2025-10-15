@@ -173,16 +173,16 @@ export default function Home() {
           </div>
 
           <h1 className="text-[56px] font-extrabold leading-[1.1] tracking-[-0.02em] mb-6 max-w-[900px] mx-auto">
-            Scale Expertise Instantly.<br />Test Strategies Safely.
+            Transform Healthcare with<br /><span className="text-regulatory-blue">AI-Powered Intelligence</span>
           </h1>
 
           <p className="text-xl font-medium text-vital-gray-60 max-w-[700px] mx-auto mb-8 leading-[1.5]">
-            Life Sciences organizations need flexible capacity to meet dynamic challenges.
-            VITAL Expert provides on-demand strategic intelligence that scales with your needs.
+            VITAL Path is the comprehensive healthcare AI platform that accelerates digital therapeutic development, 
+            clinical decision support, and medical AI solutions with built-in regulatory compliance and safety monitoring.
           </p>
 
           <p className="text-lg font-semibold mb-10 text-vital-black">
-            Access 136 specialized advisors. Test scenarios risk-free. Pay only for what you use.
+            Access 372+ specialized AI agents. Reduce development time by 60%. Achieve 98%+ medical accuracy.
           </p>
 
           <div className="flex gap-4 justify-center mb-12 flex-col md:flex-row items-center">

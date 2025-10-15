@@ -203,7 +203,6 @@ export interface ChatStore {
   escalateToTier: (tier: 1 | 2 | 3 | 'human', reason: string) => void;
   recordEscalation: (from: 1 | 2 | 3 | 'human', to: 1 | 2 | 3 | 'human', reason: string, confidence: number, cost: number) => void;
   resetTierMetrics: () => void;
-  setInteractionMode: (mode: 'automatic' | 'manual' | 'autonomous') => void;
   clearError: () => void;
   regenerateResponse: (messageId: string) => Promise<void>;
   editMessage: (messageId: string, newContent: string) => void;
@@ -253,8 +252,6 @@ export interface ChatStore {
   getLibraryAgents: () => Agent[];
   addAgentToChatStore: (agent: any) => void;
   clearSelectedAgent: () => void;
-  setInteractionMode: (mode: 'automatic' | 'manual') => void;
-  
   // Agent selection methods
   showAgentSelectionModal: (agents: any[]) => void;
   selectAgentFromSuggestions: (agent: any) => Promise<void>;
@@ -1027,6 +1024,7 @@ const _useChatStore = create<ChatStore>()(
 
       // Dual-Mode Actions Implementation
       setInteractionMode: (mode: 'automatic' | 'manual') => {
+        console.log('🔄 [setInteractionMode] Switching to:', mode);
         const state = get();
         set({
           interactionMode: mode,
@@ -1038,6 +1036,7 @@ const _useChatStore = create<ChatStore>()(
             lastActivity: new Date(),
           },
         });
+        console.log('✅ [setInteractionMode] Mode set to:', mode);
       },
 
       setAutonomousMode: (enabled: boolean) => {
@@ -1217,9 +1216,6 @@ const _useChatStore = create<ChatStore>()(
         });
       },
 
-      setInteractionMode: (mode: 'automatic' | 'manual' | 'autonomous') => {
-        set({ interactionMode: mode });
-      },
 
 
       regenerateResponse: async (messageId: string) => {
@@ -1670,30 +1666,6 @@ const _useChatStore = create<ChatStore>()(
         set({ reasoningEvents: [] });
       },
 
-      // Set interaction mode and handle agent switching
-      setInteractionMode: (mode: 'automatic' | 'manual') => {
-        console.log('🔄 Switching interaction mode to:', mode);
-        
-        // Create orchestrator agent for automatic mode
-        const orchestratorAgent = {
-          id: 'orchestrator',
-          name: 'AI Orchestrator',
-          display_name: 'AI Orchestrator',
-          description: 'Intelligently routes your queries to the most appropriate expert agent based on your question content and context.',
-          business_function: 'Intelligent Agent Orchestration',
-          capabilities: ['Agent Selection', 'Query Analysis', 'Expert Routing', 'Context Understanding'],
-          tier: 1,
-          color: 'text-blue-600',
-          avatar: '🤖'
-        };
-        
-        set((state) => ({
-          interactionMode: mode,
-          selectedAgent: mode === 'automatic' ? orchestratorAgent : null,
-          liveReasoning: '',
-          isReasoningActive: false,
-        }));
-      },
 
       // Get agents in user's library
       getLibraryAgents: () => {

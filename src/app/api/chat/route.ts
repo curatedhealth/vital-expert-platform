@@ -34,11 +34,14 @@ export async function POST(request: NextRequest) {
             selectedTools,
             chatHistory
           })) {
-            // Send workflow steps as SSE
+            // Send workflow events as SSE - preserve the original event structure
             const sseData = {
               type: event.type || 'workflow_step',
-              content: event.description || event.step || 'Processing...',
-              data: event.data || {}
+              content: event.content || event.description || event.step || 'Processing...',
+              metadata: event.metadata || {},
+              data: event.data || {},
+              step: event.step,
+              description: event.description
             };
 
             controller.enqueue(

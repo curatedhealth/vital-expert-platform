@@ -14,6 +14,7 @@ import { MessageBubble } from './message-bubble';
 import { ReasoningDisplay } from './reasoning-display';
 import { AgentSelectionPanel } from './agent-selection-panel';
 import { ChatInput } from './chat-input';
+import { AgentPromptStarters } from './agent-prompt-starters';
 
 export function RedesignedChatContainer({ className }: { className?: string }) {
   const {
@@ -109,18 +110,35 @@ export function RedesignedChatContainer({ className }: { className?: string }) {
         {(messages || []).length === 0 ? (
           // Empty state with centered input (ChatGPT style)
           <div className="flex-1 flex flex-col items-center justify-center p-4">
-            {/* Welcome Message */}
-            <div className="text-center mb-8 max-w-2xl">
-              <h3 className="text-2xl font-semibold text-gray-900 mb-3">
-                Welcome to VITAL Expert Chat
-              </h3>
-              <p className="text-gray-600 text-lg">
-                {interactionMode === 'manual' 
-                  ? 'Select an AI agent from the sidebar to start chatting.'
-                  : 'Start by asking a question or selecting an AI agent.'
-                }
-              </p>
-            </div>
+            {selectedAgent ? (
+              // Show prompt starters when agent is selected
+              <AgentPromptStarters
+                selectedAgent={selectedAgent}
+                onPromptSelect={(prompt) => {
+                  setInput(prompt);
+                  // Auto-send the selected prompt
+                  setTimeout(() => {
+                    if (canSend) {
+                      handleSubmit(new Event('submit') as any);
+                    }
+                  }, 100);
+                }}
+                className="mb-8"
+              />
+            ) : (
+              // Show welcome message when no agent selected
+              <div className="text-center mb-8 max-w-2xl">
+                <h3 className="text-2xl font-semibold text-gray-900 mb-3">
+                  Welcome to VITAL Expert Chat
+                </h3>
+                <p className="text-gray-600 text-lg">
+                  {interactionMode === 'manual' 
+                    ? 'Select an AI agent from the sidebar to start chatting.'
+                    : 'Start by asking a question or selecting an AI agent.'
+                  }
+                </p>
+              </div>
+            )}
 
             {/* Enhanced Input - Always use enhanced version */}
             <div className="w-full max-w-3xl">

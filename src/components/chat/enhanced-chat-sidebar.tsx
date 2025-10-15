@@ -126,17 +126,14 @@ export function EnhancedChatSidebar({
     loadAgents();
   }, [loadAgents]);
 
-  // Sync selected agents with chat store's selected agent
+  // Sync selectedAgents with chat store's selectedAgent
   useEffect(() => {
-    if (selectedAgent) {
-      setSelectedAgents(prev => {
-        if (!prev.includes(selectedAgent.id)) {
-          return [...prev, selectedAgent.id];
-        }
-        return prev;
-      });
+    if (selectedAgent && !selectedAgents.includes(selectedAgent.id)) {
+      console.log('🔄 [Sidebar] Syncing selectedAgent to selectedAgents:', selectedAgent.id);
+      setSelectedAgents(prev => [...prev, selectedAgent.id]);
     }
-  }, [selectedAgent]);
+  }, [selectedAgent, selectedAgents]);
+
 
   // Mock conversations data - in real app, this would come from the chat store
   const conversations: Conversation[] = useMemo(() => {
@@ -239,6 +236,8 @@ export function EnhancedChatSidebar({
     try {
       setAddingAgent(agent.id);
       console.log('🔄 [Sidebar] Calling selectAgent with ID:', agent.id);
+      
+      // Call the chat store's selectAgent function
       await selectAgent(agent.id);
       console.log('✅ [Sidebar] selectAgent completed successfully');
       
@@ -249,6 +248,9 @@ export function EnhancedChatSidebar({
         }
         return prev;
       });
+      
+      // Force a re-render to ensure the chat container updates
+      console.log('🔄 [Sidebar] Agent selection complete, forcing re-render');
       
       setShowSuccessMessage(true);
       

@@ -1,6 +1,8 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -9,6 +11,16 @@
 @layer base {
   :root {
     --radius: 0.5rem;
+
+    /* Cyberpunk Theme Colors */
+    --primary: #00ff9f; /* Neon Green - Primary Actions */
+    --secondary: #ff006e; /* Neon Pink - Alerts/Emphasis */
+    --accent: #00b4d8; /* Cyan - Links/Info */
+    --warning: #ffbe0b; /* Yellow - Warnings */
+    --background: #0a0e27; /* Deep Blue-Black */
+    --surface: #1a1f3a; /* Card Background */
+    --muted: #7a7f98; /* Muted Text */
+    --foreground: #ffffff; /* Primary Text */
 
     /* VITAL.expert Brand Colors - Core Neutrals */
     --vital-black: #0A0A0A;
@@ -95,6 +107,9 @@
     --font-sans: Outfit, sans-serif;
     --font-serif: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
     --font-mono: Fira Code, monospace;
+    --font-heading: "Orbitron", monospace; /* Futuristic/Tech */
+    --font-body: "Inter", sans-serif; /* Clean/Readable */
+    --font-mono-cyber: "JetBrains Mono", monospace; /* Code/Data */
     --spacing: 0.25rem;
     --shadow-2xs: 0px 4px 8px -1px hsl(0 0% 0% / 0.05);
     --shadow: 0px 4px 8px -1px hsl(0 0% 0% / 0.10), 0px 1px 2px -2px hsl(0 0% 0% / 0.10);
@@ -301,5 +316,99 @@
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
+  }
+
+  /* Cyberpunk Animations */
+  @keyframes glitch {
+    0%, 100% { 
+      text-shadow: 2px 0 #00ff9f, -2px 0 #ff006e; 
+    }
+    25% { 
+      text-shadow: -2px 0 #00ff9f, 2px 0 #ff006e; 
+    }
+    50% { 
+      text-shadow: 2px 0 #ff006e, -2px 0 #00b4d8; 
+    }
+    75% { 
+      text-shadow: -2px 0 #00b4d8, 2px 0 #00ff9f; 
+    }
+  }
+
+  @keyframes pulse-glow {
+    0%, 100% { 
+      box-shadow: 0 0 20px rgba(0,255,159,0.5); 
+    }
+    50% { 
+      box-shadow: 0 0 40px rgba(0,255,159,0.8); 
+    }
+  }
+
+  @keyframes pulse-glow-cyan {
+    0%, 100% { 
+      box-shadow: 0 0 15px rgba(0,180,216,0.3); 
+    }
+    50% { 
+      box-shadow: 0 0 30px rgba(0,180,216,0.6); 
+    }
+  }
+
+  @keyframes pulse-slow {
+    0%, 100% { 
+      opacity: 1; 
+    }
+    50% { 
+      opacity: 0.8; 
+    }
+  }
+
+  .animate-glitch {
+    animation: glitch 2s ease-in-out infinite;
+  }
+
+  .animate-pulse-glow {
+    animation: pulse-glow 2s ease-in-out infinite;
+  }
+
+  .animate-pulse-glow-cyan {
+    animation: pulse-glow-cyan 2s ease-in-out infinite;
+  }
+
+  .animate-pulse-slow {
+    animation: pulse-slow 3s ease-in-out infinite;
+  }
+
+  /* Circuit pattern background */
+  .circuit-bg {
+    background-image: 
+      linear-gradient(90deg, rgba(0,255,159,0.1) 1px, transparent 1px),
+      linear-gradient(rgba(0,255,159,0.1) 1px, transparent 1px);
+    background-size: 50px 50px;
+  }
+
+  /* Cyberpunk Button Styles */
+  .btn-cyberpunk-primary {
+    @apply bg-gradient-to-r from-green-400 to-cyan-400 hover:shadow-[0_0_20px_rgba(0,255,159,0.5)] border border-green-400/50 text-black font-bold;
+  }
+
+  .btn-cyberpunk-outline {
+    @apply border-2 border-cyan-400 hover:bg-cyan-400/10 hover:shadow-[0_0_15px_rgba(0,180,216,0.3)] text-cyan-400;
+  }
+
+  .btn-cyberpunk-ghost {
+    @apply hover:text-green-400 transition-all duration-300;
+  }
+
+  /* Cyberpunk Card Styles */
+  .card-cyberpunk {
+    @apply bg-gradient-to-br from-surface/80 to-surface/40 backdrop-blur-md border border-cyan-400/20 hover:border-cyan-400/50 hover:shadow-[0_0_30px_rgba(0,180,216,0.2)] transition-all duration-300;
+  }
+
+  /* Cyberpunk Typography */
+  .text-cyberpunk-hero {
+    @apply text-6xl font-orbitron font-bold bg-gradient-to-r from-green-400 via-cyan-400 to-blue-400 bg-clip-text text-transparent animate-pulse-slow;
+  }
+
+  .text-cyberpunk-section {
+    @apply text-4xl font-orbitron text-white border-b-2 border-green-400 pb-2 mb-8;
   }
 }

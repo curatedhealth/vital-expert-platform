@@ -6,15 +6,11 @@ import { enhancedLangChainService } from './enhanced-langchain-service';
 import {
   routeByModeNode,
   suggestAgentsNode,
-  shouldWaitForUser,
-  suggestToolsNode,
-  shouldWaitForToolSelection,
   selectAgentAutomaticNode,
-  retrieveContextNode,
-  processAgentCondition,
   processWithAgentNormalNode,
   processWithAgentAutonomousNode,
   synthesizeResponseNode,
+  handleErrorNode,
   getStepDescription,
   type ToolOption
 } from './workflow-nodes';
@@ -289,65 +285,79 @@ export async function executeAskExpertWorkflow(input: {
  * Supports all 4 mode combinations: Manual/Automatic + Normal/Autonomous
  */
 export function createModeAwareWorkflowGraph() {
-  console.log('🔧 Creating mode-aware multi-agent workflow graph');
+  console.log('🔧 Creating world-class mode-aware multi-agent workflow graph');
   
   const graph = new StateGraph(ModeAwareWorkflowState)
-    // Core workflow nodes
+    // Core workflow nodes - streamlined for efficiency
     .addNode("routeByMode", routeByModeNode)
     .addNode("suggestAgents", suggestAgentsNode)
-    .addNode("suggestTools", suggestToolsNode)
     .addNode("selectAgentAutomatic", selectAgentAutomaticNode)
-    .addNode("retrieveContext", retrieveContextNode)
-    .addNode("processWithAgentNormal", processWithAgentNormalNode)
+    .addNode("processWithAgent", processWithAgentNormalNode) // Unified processing node
     .addNode("processWithAgentAutonomous", processWithAgentAutonomousNode)
     .addNode("synthesizeResponse", synthesizeResponseNode)
+    .addNode("handleError", handleErrorNode) // Error handling node
     
-    // Workflow edges
+    // Workflow edges - clean and efficient
     .addEdge(START, "routeByMode")
     
-    // Mode-based routing - check if agent is already selected
+    // Smart routing based on mode and agent availability
     .addConditionalEdges("routeByMode", (state) => {
-      console.log(`🔀 [Workflow] Routing decision: mode=${state.interactionMode}, hasAgent=${!!state.selectedAgent}, workflowStep=${state.workflowStep}`);
+      console.log(`🔀 [Workflow] Smart routing: mode=${state.interactionMode}, hasAgent=${!!state.selectedAgent?.id}`);
       
-      // Use the routing decision from the routeByModeNode
-      if (state.metadata?.routingDecision === 'manual_with_agent') {
-        console.log(`✅ [Workflow] Routing to processWithAgentNormal (manual with agent)`);
-        return 'manual_with_agent';
-      } else if (state.metadata?.routingDecision === 'manual') {
-        console.log(`⏳ [Workflow] Routing to suggestAgents (manual mode)`);
-        return 'manual';
-      } else {
-        console.log(`🤖 [Workflow] Routing to suggestTools (automatic mode)`);
-        return 'automatic';
+      // Direct processing for manual mode with pre-selected agent
+      if (state.interactionMode === 'manual' && state.selectedAgent?.id) {
+        console.log(`✅ [Workflow] Direct processing: Manual mode with agent ${state.selectedAgent.name}`);
+        return 'process_direct';
       }
+      
+      // Agent selection for manual mode without agent
+      if (state.interactionMode === 'manual') {
+        console.log(`⏳ [Workflow] Agent selection: Manual mode without agent`);
+        return 'manual_selection';
+      }
+      
+      // Automatic mode - select agent and process
+      console.log(`🤖 [Workflow] Automatic processing: Selecting agent and processing`);
+      return 'automatic_processing';
     }, {
-      manual: "suggestAgents",
-      manual_with_agent: "processWithAgentNormal", // Go directly to processing for manual mode with pre-selected agent
-      automatic: "suggestTools"
+      process_direct: "processWithAgent",
+      manual_selection: "suggestAgents", 
+      automatic_processing: "selectAgentAutomatic"
     })
     
-    // Manual mode: Agent selection
-    .addConditionalEdges("suggestAgents", shouldWaitForUser, {
-      awaitSelection: "processWithAgentNormal",  // Go directly to processing
-      proceed: "processWithAgentNormal"
+    // Manual agent selection flow
+    .addConditionalEdges("suggestAgents", (state) => {
+      // If agent is selected, proceed to processing
+      if (state.selectedAgent?.id) {
+        console.log(`✅ [Workflow] Agent selected: ${state.selectedAgent.name}`);
+        return 'process';
+      }
+      // Otherwise, wait for user selection
+      console.log(`⏳ [Workflow] Waiting for agent selection`);
+      return 'wait';
+    }, {
+      process: "processWithAgent",
+      wait: "suggestAgents" // Loop back to wait for selection
     })
     
-    // Tool selection (for automatic mode only)
-    .addConditionalEdges("suggestTools", shouldWaitForToolSelection, {
-      awaitTools: "selectAgentAutomatic",  // Continue to agent selection
-      proceed: "selectAgentAutomatic"
-    })
-    
-    // Automatic mode: Direct to agent selection then processing
-    .addConditionalEdges("selectAgentAutomatic", processAgentCondition, {
-      normal: "processWithAgentNormal",
+    // Automatic agent selection flow
+    .addConditionalEdges("selectAgentAutomatic", (state) => {
+      // Route based on autonomous mode
+      return state.autonomousMode ? 'autonomous' : 'normal';
+    }, {
+      normal: "processWithAgent",
       autonomous: "processWithAgentAutonomous"
     })
     
-    // Response synthesis
-    .addEdge("processWithAgentNormal", "synthesizeResponse")
+    // Processing nodes - both lead to synthesis
+    .addEdge("processWithAgent", "synthesizeResponse")
     .addEdge("processWithAgentAutonomous", "synthesizeResponse")
-    .addEdge("synthesizeResponse", END);
+    
+    // Response synthesis to completion
+    .addEdge("synthesizeResponse", END)
+    
+    // Error handling - can be triggered from any node
+    .addEdge("handleError", END);
 
   return graph;
 }

@@ -38,6 +38,7 @@ export interface WorkflowState {
   // Workflow control
   workflowStep: string;
   requiresUserInput: boolean;
+  error?: string;
 }
 
 export interface ToolOption {
@@ -625,4 +626,22 @@ export function getStepDescription(step: string, interactionMode: string, autono
     default:
       return `🔄 Processing...`;
   }
+}
+
+/**
+ * Error Handling Node
+ * Centralized error handling for the workflow
+ */
+export async function handleErrorNode(state: WorkflowState): Promise<Partial<WorkflowState>> {
+  console.error('🚨 [ErrorHandler] Workflow error occurred:', state.error);
+  
+  return {
+    answer: state.error || 'An unexpected error occurred. Please try again.',
+    workflowStep: 'error',
+    metadata: {
+      ...state.metadata,
+      error: state.error,
+      timestamp: Date.now()
+    }
+  };
 }

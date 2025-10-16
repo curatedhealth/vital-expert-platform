@@ -116,13 +116,24 @@ export async function processWithAgentNormalNode(state: any): Promise<any> {
     );
     
     console.log('✅ Generated response:', {
-      contentLength: response.answer?.length || 0,
-      hasSources: !!response.sources
+      responseType: typeof response,
+      responseKeys: response ? Object.keys(response) : 'null',
+      contentLength: response?.answer?.length || response?.content?.length || 0,
+      hasSources: !!response?.sources,
+      fullResponse: response
+    });
+    
+    // Extract answer from various possible response formats
+    const answer = response?.answer || response?.content || response?.text || response || 'I apologize, but I was unable to generate a response.';
+    
+    console.log('📝 Extracted answer:', {
+      answerLength: answer.length,
+      answerPreview: answer.substring(0, 100) + '...'
     });
     
     return {
       workflowStep: 'processing_complete',
-      answer: response.answer || 'I apologize, but I was unable to generate a response.',
+      answer: answer,
       currentStep: 'Response generated successfully',
       metadata: {
         ...state.metadata,

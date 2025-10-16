@@ -8,9 +8,22 @@ import { useChatStore } from '@/lib/stores/chat-store';
  */
 export function StateDebugger() {
   const state = useChatStore();
-  const { isAutomaticMode, isAutonomousMode } = state.getCurrentChatModes();
   
   if (process.env.NODE_ENV !== 'development') return null;
+  
+  // Wait for hydration before accessing modes
+  if (!state.isHydrated) {
+    return (
+      <div className="fixed bottom-4 right-4 bg-black/80 text-white p-4 rounded-lg text-xs font-mono z-50 max-w-xs">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mx-auto mb-2"></div>
+          <div>Hydrating...</div>
+        </div>
+      </div>
+    );
+  }
+  
+  const { isAutomaticMode, isAutonomousMode } = state.getCurrentChatModes();
   
   return (
     <div className="fixed bottom-4 right-4 bg-black/80 text-white p-4 rounded-lg text-xs font-mono z-50 max-w-xs">

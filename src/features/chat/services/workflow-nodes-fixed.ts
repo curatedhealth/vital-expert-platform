@@ -150,7 +150,7 @@ export async function processWithAgentNormalNode(state: any): Promise<any> {
     });
     
     return {
-      workflowStep: 'processing_complete',
+      workflowStep: 'response_generated',
       answer: answer,
       currentStep: 'Response generated successfully',
       metadata: {
@@ -202,7 +202,7 @@ export async function synthesizeResponseNode(state: any): Promise<any> {
   if (!state.answer || state.answer.trim() === '') {
     console.warn('⚠️ No answer provided for synthesis, using fallback');
     return {
-      workflowStep: 'synthesis_complete',
+      workflowStep: 'complete',
       answer: 'I apologize, but I was unable to generate a proper response to your question. Please try rephrasing your question or contact support if the issue persists.',
       currentStep: 'Response synthesis complete (fallback)',
       metadata: {
@@ -214,7 +214,7 @@ export async function synthesizeResponseNode(state: any): Promise<any> {
   }
   
   return {
-    workflowStep: 'synthesis_complete',
+    workflowStep: 'complete',
     answer: state.answer,
     currentStep: 'Response synthesis complete',
     metadata: state.metadata || {},

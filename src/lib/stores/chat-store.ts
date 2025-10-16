@@ -685,7 +685,7 @@ const _useChatStore = create<ChatStore>()(
           const useAutomaticRouting = isAutomaticMode;
 
           // Determine API endpoint based on autonomous mode
-          const apiEndpoint = autonomousMode ? '/api/chat/autonomous' : '/api/chat';
+          const apiEndpoint = isAutonomousMode ? '/api/chat/autonomous' : '/api/chat';
 
           // Prepare request body
           const requestBody = {

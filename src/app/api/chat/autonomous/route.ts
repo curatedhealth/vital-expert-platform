@@ -1,3 +1,7 @@
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+export const maxDuration = 120;
+
 import { NextRequest, NextResponse } from 'next/server';
 import { streamModeAwareWorkflow } from '@/features/chat/services/ask-expert-graph';
 import { validateChatRequest } from '../middleware';

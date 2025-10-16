@@ -1,3 +1,8 @@
+// CRITICAL: Specify Node.js runtime for streaming and edge compatibility
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+export const maxDuration = 120; // 2 minutes for streaming responses
+
 import { NextRequest, NextResponse } from 'next/server';
 import { streamModeAwareWorkflow } from '@/features/chat/services/ask-expert-graph';
 import { validateChatRequest, ValidationError } from './middleware';

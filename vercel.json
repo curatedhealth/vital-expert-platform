@@ -7,19 +7,13 @@
   },
   "buildCommand": "npm run build",
   "functions": {
-    "src/app/api/**/*.ts": {
-      "maxDuration": 60
-    },
-    "src/app/api/chat/**/*.ts": {
+    "app/api/**/*.ts": {
       "maxDuration": 120
-    },
-    "src/app/api/rag/**/*.ts": {
-      "maxDuration": 90
     }
   },
   "headers": [
     {
-      "source": "/api/(.*)",
+      "source": "/api/:path*",
       "headers": [
         {
           "key": "Access-Control-Allow-Origin",
@@ -31,7 +25,7 @@
         },
         {
           "key": "Access-Control-Allow-Headers",
-          "value": "Content-Type, Authorization"
+          "value": "Content-Type, Authorization, x-runtime"
         },
         {
           "key": "Cache-Control",
@@ -55,12 +49,6 @@
           "value": "strict-origin-when-cross-origin"
         }
       ]
-    }
-  ],
-  "rewrites": [
-    {
-      "source": "/api/(.*)",
-      "destination": "/api/$1"
     }
   ]
 }

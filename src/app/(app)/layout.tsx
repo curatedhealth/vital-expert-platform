@@ -195,10 +195,9 @@ function AppLayoutContent({
                 selectedAgentId={chatContext.selectedAgentId}
                 agents={chatContext.agents}
                 allAgents={chatContext.allAgents}
-                interactionMode={chatContext.interactionMode}
-                onToggleMode={chatContext.onToggleMode}
-                autonomousMode={chatContext.autonomousMode}
-                onToggleAutonomous={chatContext.onToggleAutonomous}
+                isAutomaticMode={chatContext.isAutomaticMode}
+                isAutonomousMode={chatContext.isAutonomousMode}
+                onUpdateChatMode={chatContext.onUpdateChatMode}
                 formatDate={chatContext.formatDate}
               />
             </div>
@@ -544,10 +543,9 @@ function AppLayoutContent({
                 selectedAgentId={chatContext.selectedAgentId}
                 agents={chatContext.agents}
                 allAgents={chatContext.allAgents}
-                interactionMode={chatContext.interactionMode}
-                onToggleMode={chatContext.onToggleMode}
-                autonomousMode={chatContext.autonomousMode}
-                onToggleAutonomous={chatContext.onToggleAutonomous}
+                isAutomaticMode={chatContext.isAutomaticMode}
+                isAutonomousMode={chatContext.isAutonomousMode}
+                onUpdateChatMode={chatContext.onUpdateChatMode}
                 formatDate={chatContext.formatDate}
               />
             </div>

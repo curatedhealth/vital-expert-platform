@@ -9,15 +9,15 @@ interface ChatContextType {
   selectedAgentId?: string;
   agents: Array<{ id: string; name: string; avatar: string; description?: string }>;
   allAgents: Array<{ id: string; name: string; avatar: string; description?: string }>;
-  interactionMode: 'automatic' | 'manual';
-  autonomousMode: boolean;
+  // Per-session mode properties
+  isAutomaticMode: boolean;
+  isAutonomousMode: boolean;
   onNewChat: () => void;
   onSelectChat: (chatId: string) => void;
   onAgentSelect: (agentId: string) => void;
   onAgentRemove: (agentId: string) => void;
   onAddAgentToLibrary: (agentId: string) => void;
-  onToggleMode: (mode: 'automatic' | 'manual') => void;
-  onToggleAutonomous: (enabled: boolean) => void;
+  onUpdateChatMode: (mode: 'automatic' | 'autonomous', value: boolean) => void;
   formatDate: (date: string) => string;
 }
 
@@ -29,16 +29,17 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     currentChat,
     selectedAgent,
     agents,
-    interactionMode,
-    autonomousMode,
+    getCurrentChatModes,
+    updateChatMode,
     createNewChat,
     selectChat,
     setSelectedAgent,
     removeAgentFromLibrary,
     addAgentToLibrary,
-    setInteractionMode,
-    setAutonomousMode,
   } = useChatStore();
+
+  // Get per-session modes
+  const { isAutomaticMode, isAutonomousMode } = getCurrentChatModes();
 
   const formatDate = (date: string | Date) => {
     if (!date) return '';
@@ -85,15 +86,14 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     selectedAgentId: selectedAgent?.id,
     agents: agents.filter(agent => agent.id !== 'orchestrator'), // Filter out orchestrator
     allAgents: agents,
-    interactionMode,
-    autonomousMode,
+    isAutomaticMode,
+    isAutonomousMode,
     onNewChat: createNewChat,
     onSelectChat: selectChat,
     onAgentSelect: handleAgentSelect,
     onAgentRemove: handleAgentRemove,
     onAddAgentToLibrary: addAgentToLibrary,
-    onToggleMode: setInteractionMode,
-    onToggleAutonomous: setAutonomousMode,
+    onUpdateChatMode: updateChatMode,
     formatDate,
   };
 

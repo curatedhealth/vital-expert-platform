@@ -277,10 +277,9 @@ interface DashboardSidebarProps {
   selectedAgentId?: string;
   agents?: Array<{ id: string; name: string; avatar: string; description?: string }>;
   allAgents?: Array<{ id: string; name: string; avatar: string; description?: string }>;
-  interactionMode?: 'automatic' | 'manual';
-  onToggleMode?: (mode: 'automatic' | 'manual') => void;
-  autonomousMode?: boolean;
-  onToggleAutonomous?: (enabled: boolean) => void;
+  isAutomaticMode?: boolean;
+  isAutonomousMode?: boolean;
+  onUpdateChatMode?: (mode: 'automatic' | 'autonomous', value: boolean) => void;
   formatDate?: (date: string) => string;
 }
 
@@ -321,10 +320,9 @@ export function DashboardSidebar({
   selectedAgentId,
   agents = [],
   allAgents = [],
-  interactionMode = 'automatic',
-  onToggleMode,
-  autonomousMode = false,
-  onToggleAutonomous,
+  isAutomaticMode = true,
+  isAutonomousMode = false,
+  onUpdateChatMode,
   formatDate = (date: string) => date,
 }: DashboardSidebarProps) {
   const pathname = usePathname();
@@ -1046,37 +1044,35 @@ export function DashboardSidebar({
           <h2 className="mb-2 px-4 text-lg font-semibold tracking-tight">
             {!isCollapsed && "Mode Selection"}
           </h2>
-          {!isCollapsed && onToggleMode && (
+          {!isCollapsed && onUpdateChatMode && (
             <div className="px-4 space-y-3">
               {/* Auto/Manual Toggle */}
               <div className="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
                 <div className="flex items-center gap-2">
-                  <Zap className={`h-4 w-4 ${interactionMode === 'automatic' ? 'text-green-600' : 'text-gray-400'}`} />
+                  <Zap className={`h-4 w-4 ${isAutomaticMode ? 'text-green-600' : 'text-gray-400'}`} />
                   <span className="text-sm">Auto</span>
                 </div>
                 <Switch
-                  checked={interactionMode === 'manual'}
-                  onCheckedChange={(checked) => onToggleMode(checked ? 'manual' : 'automatic')}
+                  checked={!isAutomaticMode}
+                  onCheckedChange={(checked) => onUpdateChatMode('automatic', !checked)}
                 />
                 <div className="flex items-center gap-2">
-                  <User className={`h-4 w-4 ${interactionMode === 'manual' ? 'text-blue-600' : 'text-gray-400'}`} />
+                  <User className={`h-4 w-4 ${!isAutomaticMode ? 'text-blue-600' : 'text-gray-400'}`} />
                   <span className="text-sm">Manual</span>
                 </div>
               </div>
 
               {/* Autonomous Toggle */}
-              {onToggleAutonomous && (
-                <div className="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
-                  <div className="flex items-center gap-2">
-                    <Zap className={`h-4 w-4 ${autonomousMode ? 'text-purple-600' : 'text-gray-400'}`} />
-                    <span className="text-sm">Autonomous</span>
-                  </div>
-                  <Switch
-                    checked={autonomousMode}
-                    onCheckedChange={onToggleAutonomous}
-                  />
+              <div className="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
+                <div className="flex items-center gap-2">
+                  <Zap className={`h-4 w-4 ${isAutonomousMode ? 'text-purple-600' : 'text-gray-400'}`} />
+                  <span className="text-sm">Autonomous</span>
                 </div>
-              )}
+                <Switch
+                  checked={isAutonomousMode}
+                  onCheckedChange={(checked) => onUpdateChatMode('autonomous', checked)}
+                />
+              </div>
             </div>
           )}
         </div>

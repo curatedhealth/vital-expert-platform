@@ -8,10 +8,12 @@
   "buildCommand": "npm run build",
   "functions": {
     "src/app/api/**/*.ts": {
-      "maxDuration": 120
+      "maxDuration": 120,
+      "memory": 1024
     },
     "pages/api/**/*.ts": {
-      "maxDuration": 120
+      "maxDuration": 120,
+      "memory": 1024
     }
   },
   "rewrites": [
@@ -22,6 +24,10 @@
     {
       "source": "/api/chat/autonomous",
       "destination": "/api/chat/autonomous"
+    },
+    {
+      "source": "/api/chat/langchain-enhanced",
+      "destination": "/api/chat/langchain-enhanced"
     }
   ],
   "headers": [
@@ -38,11 +44,15 @@
         },
         {
           "key": "Access-Control-Allow-Headers",
-          "value": "Content-Type, Authorization, x-runtime"
+          "value": "Content-Type, Authorization, x-runtime, x-vercel-id"
         },
         {
           "key": "Cache-Control",
           "value": "no-cache, no-store, must-revalidate"
+        },
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
         }
       ]
     },
@@ -60,8 +70,29 @@
         {
           "key": "Referrer-Policy",
           "value": "strict-origin-when-cross-origin"
+        },
+        {
+          "key": "X-XSS-Protection",
+          "value": "1; mode=block"
         }
       ]
+    }
+  ],
+  "redirects": [
+    {
+      "source": "/dashboard/agents",
+      "destination": "/agents",
+      "permanent": true
+    },
+    {
+      "source": "/dashboard/knowledge",
+      "destination": "/knowledge",
+      "permanent": true
+    },
+    {
+      "source": "/dashboard/workflows",
+      "destination": "/workflows",
+      "permanent": true
     }
   ]
 }

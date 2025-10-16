@@ -7,23 +7,10 @@
   },
   "buildCommand": "npm run build",
   "functions": {
-    "src/app/api/**/*.ts": {
-      "maxDuration": 120
-    },
-    "pages/api/**/*.ts": {
+    "app/api/**/*.ts": {
       "maxDuration": 120
     }
   },
-  "rewrites": [
-    {
-      "source": "/api/chat",
-      "destination": "/api/chat"
-    },
-    {
-      "source": "/api/chat/autonomous",
-      "destination": "/api/chat/autonomous"
-    }
-  ],
   "headers": [
     {
       "source": "/api/:path*",

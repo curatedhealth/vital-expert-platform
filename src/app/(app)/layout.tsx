@@ -27,6 +27,7 @@ import {
 import { AgentsFilterProvider, useAgentsFilter } from '@/contexts/agents-filter-context';
 import { ChatProvider, useChatContext } from '@/contexts/chat-context';
 import { DashboardSidebarWithSuspense } from '@/features/dashboard/components/dashboard-sidebar';
+import { ChatErrorBoundary } from '@/components/error-boundary';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/supabase-auth-context';
 
@@ -570,10 +571,12 @@ export default function AppLayout({
   children: React.ReactNode;
 }) {
   return (
-    <AgentsFilterProvider>
-      <ChatProvider>
-        <AppLayoutContent>{children}</AppLayoutContent>
-      </ChatProvider>
-    </AgentsFilterProvider>
+    <ChatErrorBoundary>
+      <AgentsFilterProvider>
+        <ChatProvider>
+          <AppLayoutContent>{children}</AppLayoutContent>
+        </ChatProvider>
+      </AgentsFilterProvider>
+    </ChatErrorBoundary>
   );
 }

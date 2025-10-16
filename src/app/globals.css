@@ -42,9 +42,9 @@
     --surface-elevated: #FAFBFC; /* Elevated Cards */
     
     /* Text Hierarchy */
-    --text-primary: #04009A; /* Deep Cyberpunk Blue - Headlines, Body */
-    --text-secondary: #77ACF1; /* Light Cyberpunk Blue - Supporting Text */
-    --text-muted: #3EDBF0; /* Cyberpunk Cyan - Captions, Metadata */
+    --text-primary: #000000; /* Black - Primary Headlines, Body */
+    --text-secondary: #04009A; /* Deep Cyberpunk Blue - Secondary Text */
+    --text-muted: #77ACF1; /* Light Cyberpunk Blue - Captions, Metadata */
     
     /* Borders & Dividers */
     --border-light: #C0FEFC; /* Light Cyberpunk Mint - Default Borders */
@@ -105,11 +105,11 @@
     --ease-out: cubic-bezier(0, 0, 0.2, 1);
     --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
     --background: oklch(0.9816 0.0017 247.8390);
-    --foreground: oklch(0.1649 0.0352 281.8285);
+    --foreground: #000000; /* Black text */
     --card: oklch(1.0000 0 0);
-    --card-foreground: oklch(0.1649 0.0352 281.8285);
+    --card-foreground: #000000; /* Black text */
     --popover: oklch(1.0000 0 0);
-    --popover-foreground: oklch(0.1649 0.0352 281.8285);
+    --popover-foreground: #000000; /* Black text */
     --primary: oklch(0.5 0.2 200); /* Cyberpunk Blue */
     --primary-foreground: oklch(1.0000 0 0);
     --secondary: oklch(0.9595 0.0200 286.0164);

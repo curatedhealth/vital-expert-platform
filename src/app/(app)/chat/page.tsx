@@ -35,7 +35,7 @@ export const dynamic = 'force-dynamic';
 import { useState, useEffect, useRef } from 'react';
 
 import { ClientAuthWrapper } from '@/components/auth/client-auth-wrapper';
-import { ErrorBoundary } from '@/components/error-boundary';
+import { ChatErrorBoundary } from '@/components/error-boundary';
 import { AgentCreator } from '@/features/chat/components/agent-creator';
 import { RedesignedChatContainer } from '@/components/chat/redesigned-chat-container';
 import { EnhancedChatSidebar } from '@/components/chat/enhanced-chat-sidebar';
@@ -91,10 +91,10 @@ function ChatPageContent() {
 
 export default function ChatPage() {
   return (
-    <ErrorBoundary>
+      <ChatErrorBoundary>
       <ClientAuthWrapper requireAuth={true}>
         <ChatPageContent />
       </ClientAuthWrapper>
-    </ErrorBoundary>
+    </ChatErrorBoundary>
   );
 }

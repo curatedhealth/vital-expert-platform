@@ -346,6 +346,9 @@ export interface ChatStore {
   // Per-session mode management
   getCurrentChatModes: () => { isAutomaticMode: boolean; isAutonomousMode: boolean };
   updateChatMode: (mode: 'automatic' | 'autonomous', value: boolean) => void;
+  
+  // Hydration state
+  isHydrated: boolean;
 }
 
 // Store version for migration
@@ -441,6 +444,9 @@ const _useChatStore = create<ChatStore>()(
     startTime: null,
     lastActivity: null,
   },
+  
+  // Hydration state
+  isHydrated: false,
   tierMetrics: {
     tier1Calls: 0,
     tier2Escalations: 0,
@@ -2019,9 +2025,28 @@ const _useChatStore = create<ChatStore>()(
     // Per-session mode management
     getCurrentChatModes: () => {
       const { currentChat } = get();
+      
+      // Add defensive checks and proper fallbacks
+      if (!currentChat) {
+        console.log('⚠️ No current chat, using defaults');
+        return {
+          isAutomaticMode: true,
+          isAutonomousMode: false
+        };
+      }
+      
+      // Explicitly check for property existence
+      const isAutomaticMode = currentChat.hasOwnProperty('isAutomaticMode') 
+        ? currentChat.isAutomaticMode 
+        : true; // Default to true if missing
+        
+      const isAutonomousMode = currentChat.hasOwnProperty('isAutonomousMode')
+        ? currentChat.isAutonomousMode
+        : false; // Default to false if missing
+      
       return {
-        isAutomaticMode: currentChat?.isAutomaticMode ?? true,
-        isAutonomousMode: currentChat?.isAutonomousMode ?? false
+        isAutomaticMode,
+        isAutonomousMode
       };
     },
 
@@ -2088,66 +2113,90 @@ const _useChatStore = create<ChatStore>()(
         if (version < 9) {
           console.log('🔄 [Migration v9] Converting to per-session mode structure');
           const state = persistedState as any;
-          const migratedChats = state.chats?.map((chat: any) => ({
-            ...chat,
-            isAutomaticMode: chat.isAutomaticMode ?? (chat.mode === 'automatic' || !chat.mode),
-            isAutonomousMode: chat.isAutonomousMode ?? (chat.mode === 'autonomous' || false)
-          })) || [];
           
-          return {
-            ...state,
-            chats: migratedChats,
-            currentChat: state.currentChat ? {
-              ...state.currentChat,
-              isAutomaticMode: state.currentChat.isAutomaticMode ?? (state.currentChat.mode === 'automatic' || !state.currentChat.mode),
-              isAutonomousMode: state.currentChat.isAutonomousMode ?? (state.currentChat.mode === 'autonomous' || false)
-            } : null
+          // Helper function to ensure Chat has required properties
+          const ensureChatProperties = (chat: any): any => {
+            if (!chat || typeof chat !== 'object') return chat;
+            
+            return {
+              ...chat,
+              isAutomaticMode: chat.isAutomaticMode ?? (chat.mode === 'automatic' || !chat.mode || true),
+              isAutonomousMode: chat.isAutonomousMode ?? (chat.mode === 'autonomous' || false)
+            };
           };
+          
+          // Migrate all chats
+          if (state.chats && Array.isArray(state.chats)) {
+            state.chats = state.chats.map(ensureChatProperties);
+          }
+          
+          // Migrate current chat
+          if (state.currentChat) {
+            state.currentChat = ensureChatProperties(state.currentChat);
+          }
+          
+          // Migrate any other chat references that might exist
+          if (state.recentChats && Array.isArray(state.recentChats)) {
+            state.recentChats = state.recentChats.map(ensureChatProperties);
+          }
+          
+          // Validate migration
+          const validateChat = (chat: any, context: string) => {
+            if (chat && typeof chat === 'object') {
+              if (!chat.hasOwnProperty('isAutomaticMode')) {
+                console.error(`❌ Migration failed: isAutomaticMode missing in ${context}`, chat);
+                chat.isAutomaticMode = true;
+              }
+              if (!chat.hasOwnProperty('isAutonomousMode')) {
+                console.error(`❌ Migration failed: isAutonomousMode missing in ${context}`, chat);
+                chat.isAutonomousMode = false;
+              }
+            }
+          };
+          
+          // Validate all migrated chats
+          state.chats?.forEach((chat: any, index: number) => validateChat(chat, `chats[${index}]`));
+          validateChat(state.currentChat, 'currentChat');
+          state.recentChats?.forEach((chat: any, index: number) => validateChat(chat, `recentChats[${index}]`));
+          
+          console.log('✅ Migration v9 completed with validation');
+          return state;
         }
         return persistedState;
       },
-      onRehydrateStorage: () => (state, store) => {
-        // Force interaction mode to automatic on rehydration
-        if (state && store) {
-          console.log('🔄 [Rehydration] Setting interaction mode to automatic');
-          // Force immediate state update
-          store.setState({ 
-            interactionMode: 'automatic',
-            selectedAgent: null,
-            selectedAgents: [],
-            error: null
-          });
-          
-          // Also clear any cached state that might interfere
-          if (typeof window !== 'undefined') {
-            // Clear any conflicting state
-            const keys = Object.keys(localStorage);
-            keys.forEach(key => {
-              if (key.includes('chat') || key.includes('interaction')) {
-                localStorage.removeItem(key);
-              }
+      onRehydrateStorage: () => (state, error) => {
+        if (error) {
+          console.error('❌ Hydration error:', error);
+          // Set defaults on error
+          if (state) {
+            state.setState({
+              isHydrated: true,
+              currentChat: null,
+              error: 'Hydration failed'
             });
           }
+        } else {
+          console.log('✅ Hydration complete');
           
-          // Automatically load agents from database after rehydration
-          store.loadAgentsFromDatabase().then(() => {
-            // After loading agents, initialize library if empty
-            const currentState = store.getState();
-            const { agents, libraryAgents } = currentState;
-            if (libraryAgents.length === 0 && agents.length > 0) {
-              console.log('📚 Initializing library with first 5 agents');
-              const firstFiveAgentIds = agents.slice(0, 5).map(agent => agent.id);
-              store.setState({ libraryAgents: firstFiveAgentIds });
+          // Ensure current chat has required properties
+          if (state?.currentChat) {
+            const currentChat = state.currentChat;
+            if (!currentChat.hasOwnProperty('isAutomaticMode') || !currentChat.hasOwnProperty('isAutonomousMode')) {
+              console.log('🔧 Fixing currentChat during hydration');
+              state.setState({
+                currentChat: {
+                  ...currentChat,
+                  isAutomaticMode: currentChat.isAutomaticMode ?? true,
+                  isAutonomousMode: currentChat.isAutonomousMode ?? false
+                },
+                isHydrated: true
+              });
+            } else {
+              state.setState({ isHydrated: true });
             }
-          }).catch((error) => {
-            console.error('Failed to load agents on rehydration:', error);
-            // Set empty state to prevent errors
-            store.setState({ 
-              agents: [], 
-              selectedAgent: null, 
-              error: 'Failed to load agents from database' 
-            });
-          });
+          } else {
+            state?.setState({ isHydrated: true });
+          }
         }
       },
       // Exclude messages and transient state from persistence to avoid conflicts

@@ -39,8 +39,6 @@ const ModeAwareWorkflowState = Annotation.Root({
   agentId: Annotation<string | null>(),
   selectedAgent: Annotation<any>({
     reducer: (current: any, update: any) => {
-      // LangGraph passes the VALUE directly, not wrapped in {selectedAgent: ...}
-      // So 'update' IS the agent object itself
       console.log('🔄 [State] selectedAgent reducer called:', {
         currentType: typeof current,
         updateType: typeof update,
@@ -48,31 +46,21 @@ const ModeAwareWorkflowState = Annotation.Root({
         updateHasId: update?.id,
         updateValue: update
       });
-      
-      // If update is explicitly null or undefined, keep current
-      if (update === null || update === undefined) {
-        console.log('✅ [State] Update is null/undefined, keeping current');
-        return current;
+
+      // LangGraph Expert Pattern: Always prefer update over current
+      // This ensures state flows correctly through the workflow
+      if (update !== null && update !== undefined) {
+        console.log('✅ [State] Using update value:', update);
+        return update;
       }
-      
-      // If update is provided and is an object, use it
-      if (update && typeof update === 'object') {
-        // Validate it's a proper agent object
-        if (update.id || update.name) {
-          console.log('✅ [State] Preserving valid agent update:', update.name || update.id);
-          return update;
-        }
-        console.warn('⚠️ [State] Update is object but missing id/name:', update);
-        return current; // Keep current if update is malformed
-      }
-      
-      // Keep current if available
+
+      // Only keep current if no update provided
       if (current) {
-        console.log('✅ [State] No valid update, keeping current agent');
+        console.log('✅ [State] No update, keeping current:', current);
         return current;
       }
-      
-      console.warn('⚠️ [State] No valid agent in current or update');
+
+      console.log('⚠️ [State] No current or update, returning null');
       return null;
     },
     default: () => null
@@ -305,9 +293,10 @@ export async function executeAskExpertWorkflow(input: {
  * Supports all 4 mode combinations: Manual/Automatic + Normal/Autonomous
  */
 export function createModeAwareWorkflowGraph() {
-  console.log('🔧 Creating world-class mode-aware multi-agent workflow graph');
+  console.log('🔧 [LangGraph] Creating world-class mode-aware multi-agent workflow graph');
   
-  const graph = new StateGraph(ModeAwareWorkflowState)
+  try {
+    const graph = new StateGraph(ModeAwareWorkflowState)
     // Core workflow nodes - streamlined for efficiency
     .addNode("routeByMode", routeByModeNode)
     .addNode("suggestAgents", suggestAgentsNode)
@@ -375,7 +364,17 @@ export function createModeAwareWorkflowGraph() {
     // Response synthesis to completion
     .addEdge("synthesizeResponse", END);
 
-  return graph;
+    console.log('✅ [LangGraph] Workflow graph created successfully');
+    return graph;
+  } catch (error) {
+    console.error('❌ [LangGraph] Workflow compilation failed:', error);
+    console.error('❌ [LangGraph] Error details:', {
+      message: error?.message,
+      stack: error?.stack,
+      name: error?.name
+    });
+    throw new Error(`Workflow compilation failed: ${error?.message}`);
+  }
 }
 
 /**
@@ -578,7 +577,7 @@ export async function* streamModeAwareWorkflow(input: {
       configurable: {
         thread_id: input.sessionId,
       },
-      streamMode: "values"
+      streamMode: "updates" // Better for debugging node transitions
     }
   );
   

@@ -544,9 +544,8 @@ const _useChatStore = create<ChatStore>()(
       sendMessage: async (content: string, attachments?: unknown[]) => {
         const { currentChat, selectedAgent, messages, isLoading } = get();
         
-        // Get per-session modes
-        const isAutomaticMode = currentChat?.isAutomaticMode ?? true;
-        const isAutonomousMode = currentChat?.isAutonomousMode ?? false;
+        // Get per-session modes from the store
+        const { isAutomaticMode, isAutonomousMode } = get().getCurrentChatModes();
 
         // Prevent re-entrancy and duplicate messages
         if (isLoading) {

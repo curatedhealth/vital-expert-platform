@@ -1,5 +1,5 @@
 // FIXED: Proper agent selection implementation
-import { selectAgentWithReasoning } from './intelligent-agent-router';
+import { selectAgentWithReasoning } from './intelligent-agent-router.js';
 import { enhancedLangChainService } from './enhanced-langchain-service';
 
 // Re-export missing functions from original file
@@ -44,6 +44,7 @@ const MOCK_AGENTS = [
 ];
 
 export async function selectAgentAutomaticNode(state: any): Promise<any> {
+  console.log('🚨 [Agent Selection] ===== NODE CALLED =====');
   console.log('🤖 [Agent Selection] Starting automatic agent selection');
   console.log('🔍 [Agent Selection] Query for agent selection:', state.query);
   console.log('🔍 [Agent Selection] Current state:', {
@@ -80,6 +81,7 @@ export async function selectAgentAutomaticNode(state: any): Promise<any> {
     hasSelectedAgent: !!result.selectedAgent
   });
   
+  console.log('🚨 [Agent Selection] ===== NODE COMPLETED =====');
   return result;
 }
 

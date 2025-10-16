@@ -1,0 +1,43 @@
+# VITAL Project Rules for Cursor AI
+
+## Context
+Working on VITAL Ask Expert & Chat Services refactoring
+Following clean architecture principles
+Implementing dual-mode system (Manual/Automatic + Interactive/Autonomous)
+
+## Code Standards
+- Use TypeScript strict mode
+- Follow single responsibility principle
+- Write tests for all new code
+- Add JSDoc comments for public APIs
+- Use descriptive variable names
+- Implement error handling at boundaries
+
+## File Organization
+- Core logic in /src/core (no framework dependencies)
+- Infrastructure in /src/infrastructure 
+- UI components in /src/presentation
+- Shared utilities in /src/shared
+
+## Git Commits
+- Use conventional commits (feat:, fix:, refactor:, test:, docs:)
+- One logical change per commit
+- Include file paths in commit messages
+
+## Testing
+- Write tests before implementation (TDD)
+- Minimum 80% coverage for new code
+- Use describe/it blocks with clear descriptions
+
+## Security
+- Never log sensitive data
+- Validate all inputs
+- Sanitize outputs
+- Use environment variables for secrets
+
+## Deployment Rules
+- **ALWAYS deploy in preview mode by default**
+- **NEVER deploy to production unless explicitly asked**
+- Use `vercel --prod=false` for all deployments
+- Only use `vercel --prod` when user specifically requests production deployment
+- Always test in preview environment first

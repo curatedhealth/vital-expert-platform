@@ -32,6 +32,15 @@ export function EnhancedChatContainer({ className }: EnhancedChatContainerProps)
     selectedAgent
   } = useChatStore();
 
+  // Debug logging to see state values
+  console.log('🔍 [EnhancedChatContainer] State Debug:', {
+    interactionMode,
+    selectedAgent: selectedAgent?.name || 'None',
+    hasSelectedAgent: !!selectedAgent,
+    shouldShowWarning: interactionMode === 'manual' && !selectedAgent,
+    shouldShowAutoInfo: interactionMode === 'automatic'
+  });
+
   const [input, setInput] = useState('');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -162,7 +171,7 @@ export function EnhancedChatContainer({ className }: EnhancedChatContainerProps)
 
       {/* Input Area */}
       <div className="border-t p-4">
-        {/* Manual Mode Warning - Only show in manual mode */}
+        {/* Manual Mode Warning - Only show in manual mode without agent */}
         {interactionMode === 'manual' && !selectedAgent && (
           <div className="mb-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
             <div className="flex items-center space-x-2">
@@ -174,7 +183,7 @@ export function EnhancedChatContainer({ className }: EnhancedChatContainerProps)
           </div>
         )}
         
-        {/* Automatic Mode Info */}
+        {/* Automatic Mode Info - Only show in automatic mode */}
         {interactionMode === 'automatic' && (
           <div className="mb-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
             <div className="flex items-center space-x-2">

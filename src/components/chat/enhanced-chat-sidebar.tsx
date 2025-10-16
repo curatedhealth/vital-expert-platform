@@ -94,6 +94,7 @@ export function EnhancedChatSidebar({
   const [showAgentPanel, setShowAgentPanel] = useState(false);
   const [addingAgent, setAddingAgent] = useState<string | null>(null);
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
+  const [activeTab, setActiveTab] = useState<'conversations' | 'agents' | 'settings'>('conversations');
 
   const {
     chats,

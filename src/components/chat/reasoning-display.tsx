@@ -108,7 +108,13 @@ function ReasoningStep({ event, isLast }: { event: ReasoningEvent; isLast: boole
       <div className="flex-shrink-0 mt-1">{getIcon()}</div>
       <div className="flex-1 space-y-1">
         <div className="flex items-center gap-2">
-          <span className="text-sm font-medium">{event.step}</span>
+          <span className="text-sm font-medium capitalize">
+            {event.step === 'routing' ? 'Routing' : 
+             event.step === 'agent_selected' ? 'Agent Selected' :
+             event.step === 'response_generated' ? 'Response Generated' :
+             event.step === 'processing' ? 'Processing' :
+             event.step}
+          </span>
           <span className="text-xs text-muted-foreground">
             {new Date(event.timestamp).toLocaleTimeString()}
           </span>
@@ -116,11 +122,7 @@ function ReasoningStep({ event, isLast }: { event: ReasoningEvent; isLast: boole
         {event.description && (
           <p className="text-sm text-muted-foreground">{event.description}</p>
         )}
-        {event.data && (
-          <pre className="text-xs bg-muted p-2 rounded overflow-x-auto">
-            {JSON.stringify(event.data, null, 2)}
-          </pre>
-        )}
+        {/* Remove raw JSON display for cleaner UI - only show formatted description */}
       </div>
     </div>
   );

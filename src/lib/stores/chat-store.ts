@@ -798,7 +798,23 @@ const _useChatStore = create<ChatStore>()(
                   console.log('🔍 [SSE] JSON string length:', jsonString.length);
                   console.log('🔍 [SSE] JSON string preview:', typeof jsonString === 'string' ? jsonString.substring(0, 100) + '...' : String(jsonString).substring(0, 100) + '...');
                   
-                  const data = JSON.parse(jsonString);
+                  // Enhanced JSON parsing with better error handling
+                  let data;
+                  try {
+                    data = JSON.parse(jsonString);
+                  } catch (jsonError) {
+                    console.error('❌ [SSE] JSON Parse Error Details:', {
+                      error: jsonError,
+                      jsonString: jsonString,
+                      jsonLength: jsonString.length,
+                      firstChar: jsonString.charAt(0),
+                      lastChar: jsonString.charAt(jsonString.length - 1),
+                      hasQuotes: jsonString.startsWith('"') && jsonString.endsWith('"'),
+                      isArray: jsonString.startsWith('[') && jsonString.endsWith(']'),
+                      isObject: jsonString.startsWith('{') && jsonString.endsWith('}')
+                    });
+                    throw jsonError;
+                  }
                   
                   console.log('📥 [SSE] Parsed data:', { type: data.type, hasContent: !!data.content, keys: Object.keys(data) });
 

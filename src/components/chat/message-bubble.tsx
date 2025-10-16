@@ -31,7 +31,7 @@ interface MessageBubbleProps {
   agent?: any; // Agent object for assistant messages
 }
 
-export function MessageBubble({ message, isLastMessage, isLoading, agent }: MessageBubbleProps) {
+export const MessageBubble = React.memo(({ message, isLastMessage, isLoading, agent }: MessageBubbleProps) => {
   const isUser = message.role === 'user';
   const isAssistant = message.role === 'assistant';
   const isError = message.error;
@@ -60,8 +60,9 @@ export function MessageBubble({ message, isLastMessage, isLoading, agent }: Mess
       "flex gap-3",
       isUser ? "justify-end" : "justify-start"
     )}>
+      {/* AI Assistant Avatar - only on the left */}
       {!isUser && (
-        <div className="h-8 w-8 flex-shrink-0">
+        <div className="h-8 w-8 flex-shrink-0" key="ai-avatar">
           {agent ? (
             <AgentAvatar 
               agent={agent} 
@@ -79,20 +80,6 @@ export function MessageBubble({ message, isLastMessage, isLoading, agent }: Mess
               </AvatarFallback>
             </Avatar>
           )}
-        </div>
-      )}
-
-      {isUser && (
-        <div className="h-8 w-8 flex-shrink-0">
-          <Avatar className="h-8 w-8">
-            <AvatarImage 
-              src="" 
-              alt="User" 
-            />
-            <AvatarFallback className="bg-gradient-to-br from-green-500 to-blue-600 text-white text-xs">
-              <User className="h-4 w-4" />
-            </AvatarFallback>
-          </Avatar>
         </div>
       )}
 
@@ -136,13 +123,25 @@ export function MessageBubble({ message, isLastMessage, isLoading, agent }: Mess
         </div>
       </div>
 
+      {/* User Avatar - only on the right */}
       {isUser && (
-        <Avatar className="h-8 w-8 flex-shrink-0">
-          <AvatarFallback className="bg-gray-600 text-white text-xs">
-            <User className="h-4 w-4" />
-          </AvatarFallback>
-        </Avatar>
+        <div className="h-8 w-8 flex-shrink-0" key="user-avatar">
+          <Avatar className="h-8 w-8">
+            <AvatarImage 
+              src="" 
+              alt="User" 
+            />
+            <AvatarFallback className="bg-gradient-to-br from-green-500 to-blue-600 text-white text-xs">
+              <User className="h-4 w-4" />
+            </AvatarFallback>
+          </Avatar>
+        </div>
       )}
     </div>
   );
-}
+}, (prevProps, nextProps) => {
+  // Custom comparison to prevent unnecessary re-renders
+  return prevProps.message.id === nextProps.message.id &&
+         prevProps.message.content === nextProps.message.content &&
+         prevProps.isLoading === nextProps.isLoading;
+});

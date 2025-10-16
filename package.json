@@ -241,6 +241,7 @@
     "mochawesome-report-generator": "^6.3.0",
     "node-mocks-http": "^1.17.2",
     "npm-force-resolutions": "^0.0.10",
+    "null-loader": "^4.0.1",
     "nyc": "^17.1.0",
     "prettier": "^3.0.0",
     "rimraf": "^5.0.0",

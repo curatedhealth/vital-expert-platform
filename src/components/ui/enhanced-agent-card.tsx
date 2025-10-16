@@ -21,7 +21,7 @@ interface EnhancedAgentCardProps {
 const tierConfig = {
   0: { 
     label: 'Core', 
-    color: 'bg-gradient-to-r from-purple-100 to-pink-100 text-purple-900 border-purple-300',
+    color: 'bg-gradient-to-r from-blue-100 to-cyan-100 text-blue-900 border-blue-300',
     icon: Star
   },
   1: { 

@@ -578,7 +578,7 @@ export function AgentsBoard({
                         variant="outline"
                         className={cn(
                           "text-xs font-bold",
-                          agent.tier === 0 && "bg-gradient-to-r from-purple-100 to-pink-100 text-purple-900 border-purple-300",
+                          agent.tier === 0 && "bg-gradient-to-r from-blue-100 to-cyan-100 text-blue-900 border-blue-300",
                           agent.tier === 1 && "bg-blue-50 text-blue-700 border-blue-200",
                           agent.tier === 2 && "bg-green-50 text-green-700 border-green-200",
                           agent.tier === 3 && "bg-orange-50 text-orange-700 border-orange-200"
@@ -681,7 +681,7 @@ export function AgentsBoard({
                                 variant="outline"
                                 className={cn(
                                   "text-[10px] font-bold px-1.5 py-0 h-4",
-                                  agent.tier === 0 && "bg-gradient-to-r from-purple-100 to-pink-100 text-purple-900 border-purple-300",
+                                  agent.tier === 0 && "bg-gradient-to-r from-blue-100 to-cyan-100 text-blue-900 border-blue-300",
                                   agent.tier === 1 && "bg-blue-50 text-blue-700 border-blue-200",
                                   agent.tier === 2 && "bg-green-50 text-green-700 border-green-200",
                                   agent.tier === 3 && "bg-orange-50 text-orange-700 border-orange-200"
@@ -883,7 +883,7 @@ export function AgentsBoard({
                           variant="outline"
                           className={cn(
                             "text-xs font-bold",
-                            agent.tier === 0 && "bg-gradient-to-r from-purple-100 to-pink-100 text-purple-900 border-purple-300",
+                            agent.tier === 0 && "bg-gradient-to-r from-blue-100 to-cyan-100 text-blue-900 border-blue-300",
                             agent.tier === 1 && "bg-blue-50 text-blue-700 border-blue-200",
                             agent.tier === 2 && "bg-green-50 text-green-700 border-green-200",
                             agent.tier === 3 && "bg-orange-50 text-orange-700 border-orange-200"

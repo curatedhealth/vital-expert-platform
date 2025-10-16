@@ -393,6 +393,27 @@ export const MODEL_BENCHMARKS: Record<string, BenchmarkResult[]> = {
       citation: 'CuratedHealth (2025). Qwen3 8B SFT',
       source_url: 'https://huggingface.co/CuratedHealth/Qwen3-8B-SFT-20250917123923'
     }
+  ],
+
+  'CuratedHealth/meditron7b-lora-chat': [
+    {
+      benchmark_name: 'Medical Chat Performance',
+      score: 0.82,
+      metric: 'accuracy',
+      dataset: 'Medical conversation and patient interaction tasks',
+      year: 2025,
+      citation: 'CuratedHealth (2025). Meditron 7B LoRA Chat',
+      source_url: 'https://huggingface.co/CuratedHealth/meditron7b-lora-chat'
+    },
+    {
+      benchmark_name: 'Clinical Reasoning',
+      score: 0.78,
+      metric: 'accuracy',
+      dataset: 'Clinical decision support and medical reasoning',
+      year: 2025,
+      citation: 'CuratedHealth (2025). Meditron 7B LoRA Chat',
+      source_url: 'https://huggingface.co/CuratedHealth/meditron7b-lora-chat'
+    }
   ]
 };
 
@@ -468,6 +489,10 @@ export const MODEL_CITATIONS: Record<string, {
   'CuratedHealth/Qwen3-8B-SFT-20250917123923': {
     model_card: 'https://huggingface.co/CuratedHealth/Qwen3-8B-SFT-20250917123923',
     homepage: 'https://huggingface.co/CuratedHealth/Qwen3-8B-SFT-20250917123923'
+  },
+  'CuratedHealth/meditron7b-lora-chat': {
+    model_card: 'https://huggingface.co/CuratedHealth/meditron7b-lora-chat',
+    homepage: 'https://huggingface.co/CuratedHealth/meditron7b-lora-chat'
   }
 };
 

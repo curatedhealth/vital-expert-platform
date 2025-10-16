@@ -140,10 +140,10 @@ export const AVAILABLE_MODELS: ModelConfig[] = [
     status: 'stable'
   },
 
-  // CuratedHealth Medical Models (Local LoRA Adapters)
+  // Curated Health Medical Models (Local LoRA Adapters)
   {
     id: 'CuratedHealth/base_7b',
-    name: 'CuratedHealth Base 7B',
+    name: 'CH Intern 7b',
     provider: 'huggingface',
     description: 'Medical-optimized 7B parameter model with LoRA adapter for healthcare applications',
     contextLength: 4096,
@@ -155,7 +155,7 @@ export const AVAILABLE_MODELS: ModelConfig[] = [
   },
   {
     id: 'CuratedHealth/meditron70b-qlora-1gpu',
-    name: 'Meditron 70B QLoRA',
+    name: 'CH Med 70b',
     provider: 'huggingface',
     description: 'Large-scale medical model with QLoRA optimization for single GPU inference',
     contextLength: 8192,
@@ -167,7 +167,7 @@ export const AVAILABLE_MODELS: ModelConfig[] = [
   },
   {
     id: 'CuratedHealth/Qwen3-8B-SFT-20250917123923',
-    name: 'Qwen3 8B SFT',
+    name: 'CH Q-SFT 8b',
     provider: 'huggingface',
     description: 'Qwen3 8B model with supervised fine-tuning for medical applications',
     contextLength: 8192,
@@ -176,6 +176,18 @@ export const AVAILABLE_MODELS: ModelConfig[] = [
     features: ['Medical', 'SFT', 'Qwen3', 'Instruction Following', 'Clinical'],
     status: 'stable',
     modelUrl: 'CuratedHealth/Qwen3-8B-SFT-20250917123923'
+  },
+  {
+    id: 'CuratedHealth/meditron7b-lora-chat',
+    name: 'CH Med 7b',
+    provider: 'huggingface',
+    description: 'Meditron 7B model with LoRA adapter optimized for medical chat and conversations',
+    contextLength: 4096,
+    pricing: { input: 0.00, output: 0.00 }, // Local model - no API costs
+    capabilities: { reasoning: 4, speed: 4, creativity: 4 },
+    features: ['Medical', 'LoRA', 'Chat', 'Conversational', 'Healthcare'],
+    status: 'stable',
+    modelUrl: 'CuratedHealth/meditron7b-lora-chat'
   }
 ];
 

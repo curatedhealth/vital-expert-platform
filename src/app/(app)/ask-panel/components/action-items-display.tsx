@@ -52,7 +52,7 @@ const CATEGORY_COLORS = {
   regulatory: 'bg-purple-100 text-purple-800',
   commercial: 'bg-green-100 text-green-800',
   operational: 'bg-orange-100 text-orange-800',
-  strategic: 'bg-pink-100 text-pink-800',
+  strategic: 'bg-blue-100 text-blue-800',
   other: 'bg-gray-100 text-gray-800',
 };
 

@@ -203,7 +203,7 @@ const ModelSelectorDropdown = () => {
                             <CapabilityRating rating={model.capabilities.speed} />
                           </div>
                           <div className="flex items-center gap-1">
-                            <Sparkles className="h-3 w-3 text-pink-500" />
+                            <Sparkles className="h-3 w-3 text-blue-500" />
                             <span className="text-gray-500">Creative</span>
                             <CapabilityRating rating={model.capabilities.creativity} />
                           </div>

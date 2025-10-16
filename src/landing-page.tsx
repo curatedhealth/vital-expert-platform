@@ -12,14 +12,27 @@ import {
 import Link from 'next/link';
 
 import { Button } from '@/components/ui/button';
+import { VitalExpertLogo } from '@/components/ui/vital-expert-logo';
+import { FlickeringGrid } from '@/components/ui/shadcn-io/flickering-grid';
 
 export function LandingPage() {
   return (
     <div className="min-h-screen bg-white">
 
       {/* Hero Section */}
-      <section className="relative bg-gradient-to-br from-trust-blue/5 to-progress-teal/5 py-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <section className="relative bg-gradient-to-br from-trust-blue/5 to-progress-teal/5 py-20 overflow-hidden">
+        {/* Flickering Grid Background */}
+        <div className="absolute inset-0">
+          <FlickeringGrid
+            squareSize={4}
+            gridGap={6}
+            flickerChance={0.15}
+            color="rgb(4, 0, 154)" // Deep Cyberpunk Blue
+            maxOpacity={0.1}
+            className="absolute inset-0"
+          />
+        </div>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="text-center">
             <h1 className="text-4xl md:text-6xl font-bold text-deep-charcoal mb-6">
               Transform Your Team with AI-Powered<br />
@@ -398,8 +411,7 @@ export function LandingPage() {
           <div className="grid md:grid-cols-4 gap-8">
             <div className="md:col-span-2">
               <div className="flex items-center mb-4">
-                <span className="text-2xl mr-2">🧩</span>
-                <span className="text-xl font-bold">VITALpath</span>
+                <VitalExpertLogo size="lg" showText={true} />
               </div>
               <p className="text-gray-400 mb-4">
                 Empowering healthcare organizations through AI-powered expertise and the VITAL Framework.

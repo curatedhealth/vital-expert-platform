@@ -173,7 +173,7 @@ export function AgentsOverview() {
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <Badge className="bg-gradient-to-r from-purple-100 to-pink-100 text-purple-900 border-purple-300">
+                  <Badge className="bg-gradient-to-r from-blue-100 to-cyan-100 text-blue-900 border-blue-300">
                     Core
                   </Badge>
                   <span className="text-sm text-gray-600">Premium specialists</span>
@@ -182,7 +182,7 @@ export function AgentsOverview() {
               </div>
               <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-gradient-to-r from-purple-500 to-pink-500"
+                  className="h-full bg-gradient-to-r from-blue-500 to-cyan-500"
                   style={{ width: `${(statistics.byTier.core / statistics.total) * 100}%` }}
                 />
               </div>

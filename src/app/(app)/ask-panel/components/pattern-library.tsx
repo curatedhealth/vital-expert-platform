@@ -86,7 +86,7 @@ const NODE_TYPES = [
   { value: 'consult_sequential', label: 'Sequential Consultation', icon: '🔄', color: 'bg-purple-100 text-purple-700 border-purple-300' },
   { value: 'check_consensus', label: 'Check Consensus', icon: '✓', color: 'bg-green-100 text-green-700 border-green-300' },
   { value: 'cluster_themes', label: 'Cluster Themes', icon: '🎯', color: 'bg-orange-100 text-orange-700 border-orange-300' },
-  { value: 'synthesize', label: 'Synthesize', icon: '📊', color: 'bg-pink-100 text-pink-700 border-pink-300' },
+  { value: 'synthesize', label: 'Synthesize', icon: '📊', color: 'bg-blue-100 text-blue-700 border-blue-300' },
 ];
 
 export default function PatternLibrary() {

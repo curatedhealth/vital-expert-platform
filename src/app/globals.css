@@ -14,26 +14,26 @@
     --radius: 0.5rem;
 
     /* VITAL Brand Colors v3.0 - Enhanced Scalar Integration */
-    --primary: oklch(0.41 0.167 246.82);        /* Trust Blue #0B4F8C */
-    --primary-foreground: oklch(0.99 0 0);       /* White */
+    --primary: #04009A;                         /* Deep Cyberpunk Blue */
+    --primary-foreground: #FFFFFF;              /* White */
     
-    --secondary: oklch(0.59 0.145 194.77);      /* Progress Teal #00A19C */
-    --secondary-foreground: oklch(0.99 0 0);     /* White */
+    --secondary: #77ACF1;                       /* Light Cyberpunk Blue */
+    --secondary-foreground: #04009A;            /* Deep Blue */
     
-    --accent: oklch(0.73 0.188 84.43);          /* Regulatory Gold #F5A623 */
-    --accent-foreground: oklch(0.18 0 0);        /* Dark */
+    --accent: #3EDBF0;                          /* Cyberpunk Cyan */
+    --accent-foreground: #04009A;               /* Deep Blue */
     
     /* Extended Palette */
-    --success: oklch(0.63 0.178 145.02);        /* Clinical Green #27AE60 */
-    --warning: oklch(0.73 0.188 84.43);         /* Regulatory Gold #F5A623 */
-    --destructive: oklch(0.577 0.245 27.325);   /* Alert Red #E74C3C */
-    --info: oklch(0.51 0.167 264.07);           /* Market Purple #7B68EE */
+    --success: #3EDBF0;                         /* Cyberpunk Cyan */
+    --warning: #77ACF1;                         /* Light Cyberpunk Blue */
+    --destructive: #FF3366;                     /* Keep red for errors */
+    --info: #3EDBF0;                            /* Cyberpunk Cyan */
 
     /* Clinical Professional Theme Colors */
-    --accent-primary: #00D9A3; /* Teal-Green - Primary CTAs, Success */
-    --accent-secondary: #00B4D8; /* Cyan - Links, Interactive */
-    --accent-tertiary: #7C3AED; /* Purple - Innovation, AI Features */
-    --accent-alert: #FF6B6B; /* Coral - Alerts, Important */
+    --accent-primary: #3EDBF0; /* Cyberpunk Cyan - Primary CTAs, Success */
+    --accent-secondary: #77ACF1; /* Light Cyberpunk Blue - Links, Interactive */
+    --accent-tertiary: #04009A; /* Deep Cyberpunk Blue - Innovation, AI Features */
+    --accent-alert: #3EDBF0; /* Cyberpunk Cyan - Alerts, Important */
     
     /* Professional Base */
     --background-primary: #FFFFFF; /* Main Background */
@@ -42,14 +42,14 @@
     --surface-elevated: #FAFBFC; /* Elevated Cards */
     
     /* Text Hierarchy */
-    --text-primary: #0F172A; /* Headlines, Body */
-    --text-secondary: #475569; /* Supporting Text */
-    --text-muted: #94A3B8; /* Captions, Metadata */
+    --text-primary: #04009A; /* Deep Cyberpunk Blue - Headlines, Body */
+    --text-secondary: #77ACF1; /* Light Cyberpunk Blue - Supporting Text */
+    --text-muted: #3EDBF0; /* Cyberpunk Cyan - Captions, Metadata */
     
     /* Borders & Dividers */
-    --border-light: #E2E8F0; /* Default Borders */
-    --border-medium: #CBD5E1; /* Hover States */
-    --border-focus: #00B4D8; /* Focus States */
+    --border-light: #C0FEFC; /* Light Cyberpunk Mint - Default Borders */
+    --border-medium: #77ACF1; /* Light Cyberpunk Blue - Hover States */
+    --border-focus: #04009A; /* Deep Cyberpunk Blue - Focus States */
     
     /* Dark Sections (Hero/Footer Only) */
     --dark-gradient: linear-gradient(135deg, #0F172A 0%, #1E293B 100%);
@@ -66,14 +66,14 @@
     --vital-gray-40: #666666;
 
     /* Service Line Colors */
-    --regulatory-blue: #0066FF;
-    --clinical-green: #00CC88;
+    --regulatory-blue: #04009A;
+    --clinical-green: #3EDBF0;
     --safety-red: #FF3366;
-    --data-purple: #9933FF;
-    --market-orange: #FF6600;
-    --research-cyan: #00CCFF;
-    --quality-gold: #FFAA00;
-    --strategy-navy: #003399;
+    --data-purple: #77ACF1;
+    --market-orange: #3EDBF0;
+    --research-cyan: #3EDBF0;
+    --quality-gold: #C0FEFC;
+    --strategy-navy: #04009A;
 
     /* Spacing System */
     --space-xs: 4px;
@@ -110,7 +110,7 @@
     --card-foreground: oklch(0.1649 0.0352 281.8285);
     --popover: oklch(1.0000 0 0);
     --popover-foreground: oklch(0.1649 0.0352 281.8285);
-    --primary: oklch(0.6726 0.2904 341.4084);
+    --primary: oklch(0.5 0.2 200); /* Cyberpunk Blue */
     --primary-foreground: oklch(1.0000 0 0);
     --secondary: oklch(0.9595 0.0200 286.0164);
     --secondary-foreground: oklch(0.1649 0.0352 281.8285);
@@ -164,7 +164,7 @@
     --card-foreground: oklch(0.9513 0.0074 260.7315);
     --popover: oklch(0.2542 0.0611 281.1423);
     --popover-foreground: oklch(0.9513 0.0074 260.7315);
-    --primary: oklch(0.6726 0.2904 341.4084);
+    --primary: oklch(0.5 0.2 200); /* Cyberpunk Blue */
     --primary-foreground: oklch(1.0000 0 0);
     --secondary: oklch(0.2542 0.0611 281.1423);
     --secondary-foreground: oklch(0.9513 0.0074 260.7315);
@@ -508,22 +508,4 @@
     background-size: 16px 16px;
   }
   
-  /* Dynamic AI Icons Animations */
-  @keyframes float-0 {
-    0%, 100% { transform: translateY(0px) rotate(0deg); }
-    25% { transform: translateY(-20px) rotate(5deg); }
-    50% { transform: translateY(-10px) rotate(-3deg); }
-    75% { transform: translateY(-15px) rotate(2deg); }
-  }
-  
-  @keyframes float-1 {
-    0%, 100% { transform: translateY(0px) translateX(0px) rotate(0deg); }
-    33% { transform: translateY(-15px) translateX(10px) rotate(3deg); }
-    66% { transform: translateY(-25px) translateX(-5px) rotate(-2deg); }
-  }
-  
-  @keyframes float-2 {
-    0%, 100% { transform: translateY(0px) scale(1) rotate(0deg); }
-    50% { transform: translateY(-30px) scale(1.1) rotate(10deg); }
-  }
 }

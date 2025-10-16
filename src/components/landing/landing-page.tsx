@@ -4,7 +4,8 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { Menu, X } from 'lucide-react';
-import { VitalLogo } from '@/vital-logo';
+import { VitalExpertLogo } from '@/components/ui/vital-expert-logo';
+import { FlickeringGrid } from '@/components/ui/shadcn-io/flickering-grid';
 
 export function LandingPage() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -15,7 +16,7 @@ export function LandingPage() {
       {/* Navigation */}
       <nav className="fixed top-0 left-0 right-0 bg-vital-white/95 backdrop-blur-[10px] border-b border-vital-gray-80 z-[1000]">
         <div className="max-w-[1200px] mx-auto px-10 py-5 flex justify-between items-center">
-          <VitalLogo size="sm" serviceLine="regulatory" animated="static" />
+          <VitalExpertLogo size="md" showText={true} />
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex gap-8 items-center">
@@ -108,8 +109,19 @@ export function LandingPage() {
       </nav>
 
       {/* Hero Section */}
-      <section className="mt-20 pt-[100px] pb-20 px-10 text-center bg-gradient-to-b from-vital-white to-vital-gray-95">
-        <div className="max-w-[1200px] mx-auto">
+      <section className="mt-20 pt-[100px] pb-20 px-10 text-center bg-gradient-to-b from-vital-white to-vital-gray-95 relative overflow-hidden">
+        {/* Flickering Grid Background */}
+        <div className="absolute inset-0">
+          <FlickeringGrid
+            squareSize={5}
+            gridGap={7}
+            flickerChance={0.18}
+            color="rgb(4, 0, 154)" // Deep Cyberpunk Blue
+            maxOpacity={0.12}
+            className="absolute inset-0"
+          />
+        </div>
+        <div className="max-w-[1200px] mx-auto relative z-10">
           <div className="inline-block px-4 py-1.5 bg-vital-gray-90 rounded-[20px] text-xs font-bold uppercase tracking-[0.08em] text-vital-gray-60 mb-6">
             Strategic Intelligence Platform
           </div>
@@ -496,7 +508,7 @@ export function LandingPage() {
           </div>
 
           <div className="pt-8 border-t border-vital-gray-80 flex justify-between items-center">
-            <VitalLogo size="sm" serviceLine="regulatory" animated="static" />
+            <VitalExpertLogo size="md" showText={true} />
 
             <div className="flex gap-6 text-xs text-vital-gray-60">
               <Link href="#" className="hover:text-vital-black transition-colors duration-200">Security</Link>

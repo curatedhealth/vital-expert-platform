@@ -106,6 +106,15 @@ export async function processWithAgentNormalNode(state: any): Promise<any> {
   }
   
   try {
+    console.log('🚀 [ProcessWithAgent] Starting LangChain query...');
+    console.log('🔍 [ProcessWithAgent] Query details:', {
+      query: state.query,
+      agentId: state.selectedAgent.id,
+      sessionId: state.sessionId || 'default',
+      userId: state.userId || 'anonymous',
+      agentName: state.selectedAgent.name
+    });
+    
     // Use the enhanced LangChain service to generate a response
     const response = await enhancedLangChainService.queryWithChain(
       state.query,
@@ -114,6 +123,8 @@ export async function processWithAgentNormalNode(state: any): Promise<any> {
       state.selectedAgent,
       state.userId || 'anonymous'
     );
+    
+    console.log('✅ [ProcessWithAgent] LangChain query completed');
     
     console.log('✅ Generated response:', {
       responseType: typeof response,

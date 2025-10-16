@@ -84,7 +84,7 @@ export class PerformanceTracker {
     const domainPerf = new Map<string, number>();
     const domainGroups = this.groupBy(metrics, m => m.domain);
     
-    for (const [domain, domainMetrics] of domainGroups.entries()) {
+    for (const [domain, domainMetrics] of Array.from(domainGroups.entries())) {
       const successRate = domainMetrics.filter(m => m.resolutionSuccess).length / domainMetrics.length;
       domainPerf.set(domain, successRate);
     }

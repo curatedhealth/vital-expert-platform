@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { OpenAI } from 'openai';
-import natural from 'natural';
+import * as natural from 'natural';
 
 // Query analysis result schema
 const QueryAnalysisSchema = z.object({
@@ -340,7 +340,7 @@ Provide analysis in JSON format:
     return 'public';
   }
   
-  private determineUrgency(query: string): string {
+  private determineUrgency(query: string): 'routine' | 'priority' | 'urgent' | 'critical' {
     if (/urgent|asap|immediately|critical|emergency/i.test(query)) {
       return 'urgent';
     }

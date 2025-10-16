@@ -1,4 +1,19 @@
-import { Agent } from '@/types/agent';
+// Define Agent interface locally to avoid import issues
+interface Agent {
+  id?: string;
+  name: string;
+  display_name?: string;
+  description: string;
+  system_prompt?: string;
+  business_function?: string;
+  tier?: number;
+  model?: string;
+  temperature?: number;
+  max_tokens?: number;
+  capabilities?: string[];
+  knowledge_domains?: string[];
+  rag_enabled?: boolean;
+}
 import { QueryAnalysis } from './query-analyzer';
 
 export interface AgentMatch {
@@ -122,7 +137,7 @@ export class AgentMatcher {
     const agentCaps = new Set(agent.capabilities);
     
     let matchCount = 0;
-    for (const cap of requiredCaps) {
+    for (const cap of Array.from(requiredCaps)) {
       if (agentCaps.has(cap)) {
         matchCount++;
       }
@@ -197,9 +212,10 @@ export class AgentMatcher {
   
   private calculateConfidence(scores: any, analysis: QueryAnalysis): number {
     // Base confidence on how well the agent matches
-    const avgScore = Object.values(scores).reduce((sum: number, score: any) => 
-      sum + (score as number), 0
-    ) / Object.values(scores).length;
+    const scoreValues = Object.values(scores) as number[];
+    const avgScore = scoreValues.reduce((sum: number, score: number) => 
+      sum + score, 0
+    ) / scoreValues.length;
     
     // Adjust for query complexity
     const complexityFactor = 1 - (analysis.complexity.score / 20);

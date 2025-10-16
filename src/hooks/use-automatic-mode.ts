@@ -1,7 +1,22 @@
 import { useState, useCallback } from 'react';
 import { AutomaticAgentOrchestrator, OrchestrationResult } from '@/features/chat/services/automatic-orchestrator';
 import { PerformanceTracker } from '@/features/chat/services/performance-tracker';
-import { Agent } from '@/types/agent';
+// Define Agent interface locally to avoid import issues
+interface Agent {
+  id?: string;
+  name: string;
+  display_name?: string;
+  description: string;
+  system_prompt?: string;
+  business_function?: string;
+  tier?: number;
+  model?: string;
+  temperature?: number;
+  max_tokens?: number;
+  capabilities?: string[];
+  knowledge_domains?: string[];
+  rag_enabled?: boolean;
+}
 
 export interface AutomaticModeState {
   isProcessing: boolean;

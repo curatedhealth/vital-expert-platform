@@ -1,6 +1,21 @@
 import { QueryAnalyzer, QueryAnalysis } from './query-analyzer';
 import { AgentMatcher, AgentMatch } from './agent-matcher';
-import { Agent } from '@/types/agent';
+// Define Agent interface locally to avoid import issues
+interface Agent {
+  id?: string;
+  name: string;
+  display_name?: string;
+  description: string;
+  system_prompt?: string;
+  business_function?: string;
+  tier?: number;
+  model?: string;
+  temperature?: number;
+  max_tokens?: number;
+  capabilities?: string[];
+  knowledge_domains?: string[];
+  rag_enabled?: boolean;
+}
 
 export interface OrchestrationResult {
   selectedAgent: Agent;
@@ -143,7 +158,7 @@ export class AutomaticAgentOrchestrator {
     
     // Collect all participating agents
     const participatingAgents: Agent[] = [];
-    for (const matches of agentsByDomain.values()) {
+    for (const matches of Array.from(agentsByDomain.values())) {
       participatingAgents.push(...matches.map(m => m.agent));
     }
     

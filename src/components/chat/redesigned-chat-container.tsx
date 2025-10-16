@@ -51,6 +51,7 @@ export function RedesignedChatContainer({ className }: { className?: string }) {
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
           <p className="text-sm text-gray-600">Loading chat...</p>
+          <p className="text-xs text-gray-500 mt-2">If this takes too long, try refreshing the page</p>
         </div>
       </div>
     );
@@ -63,9 +64,25 @@ export function RedesignedChatContainer({ className }: { className?: string }) {
   const agents = getAgents();
 
   const [isRetrying, setIsRetrying] = React.useState(false);
+  const [hydrationTimeout, setHydrationTimeout] = React.useState(false);
 
   // AUDIT FIX: AbortController lifecycle
   const abortControllerRef = React.useRef<AbortController | null>(null);
+
+  // Timeout protection for hydration
+  React.useEffect(() => {
+    if (!isHydrated) {
+      const timeout = setTimeout(() => {
+        console.warn('⚠️ Hydration timeout - forcing hydration');
+        setHydrationTimeout(true);
+        // Force hydration by clearing storage and reloading
+        localStorage.removeItem('chat-store');
+        window.location.reload();
+      }, 10000); // 10 second timeout
+
+      return () => clearTimeout(timeout);
+    }
+  }, [isHydrated]);
 
   // Cleanup on unmount
   React.useEffect(() => {

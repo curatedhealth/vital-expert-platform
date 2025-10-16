@@ -2167,35 +2167,31 @@ const _useChatStore = create<ChatStore>()(
       onRehydrateStorage: () => (state, error) => {
         if (error) {
           console.error('❌ Hydration error:', error);
-          // Set defaults on error
+          // Set defaults on error - modify state directly
           if (state) {
-            state.setState({
-              isHydrated: true,
-              currentChat: null,
-              error: 'Hydration failed'
-            });
+            state.isHydrated = true;
+            state.currentChat = null;
+            state.error = 'Hydration failed';
           }
         } else {
           console.log('✅ Hydration complete');
           
-          // Ensure current chat has required properties
+          // Ensure current chat has required properties - modify state directly
           if (state?.currentChat) {
             const currentChat = state.currentChat;
             if (!currentChat.hasOwnProperty('isAutomaticMode') || !currentChat.hasOwnProperty('isAutonomousMode')) {
               console.log('🔧 Fixing currentChat during hydration');
-              state.setState({
-                currentChat: {
-                  ...currentChat,
-                  isAutomaticMode: currentChat.isAutomaticMode ?? true,
-                  isAutonomousMode: currentChat.isAutonomousMode ?? false
-                },
-                isHydrated: true
-              });
-            } else {
-              state.setState({ isHydrated: true });
+              state.currentChat = {
+                ...currentChat,
+                isAutomaticMode: currentChat.isAutomaticMode ?? true,
+                isAutonomousMode: currentChat.isAutonomousMode ?? false
+              };
             }
-          } else {
-            state?.setState({ isHydrated: true });
+          }
+          
+          // Always set hydrated to true
+          if (state) {
+            state.isHydrated = true;
           }
         }
       },

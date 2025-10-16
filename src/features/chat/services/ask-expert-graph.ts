@@ -786,7 +786,13 @@ export async function* streamModeAwareWorkflow(input: {
       }
     }
   } catch (streamError) {
+    console.error('🚨 [Workflow] ===== FATAL STREAM ERROR =====');
     console.error('❌ Fatal stream error:', streamError);
+    console.error('❌ Error type:', typeof streamError);
+    console.error('❌ Error message:', streamError?.message);
+    console.error('❌ Error stack:', streamError?.stack);
+    console.error('🚨 [Workflow] ===== END ERROR =====');
+    
     yield encoder.encode(`data: ${JSON.stringify({
       type: 'error:fatal',
       message: String(streamError)

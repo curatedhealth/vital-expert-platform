@@ -474,7 +474,6 @@ export async function* streamModeAwareWorkflow(input: {
   selectedTools?: string[];
   chatHistory: any[];
 }) {
-  const encoder = new TextEncoder();
   
   console.log(`🌊 Starting streaming mode-aware workflow: ${input.interactionMode} + ${input.autonomousMode ? 'Autonomous' : 'Normal'}`);
   console.log(`🔍 [Workflow] Input parameters:`, {
@@ -488,27 +487,25 @@ export async function* streamModeAwareWorkflow(input: {
   // CRITICAL: Validate manual mode requirements
   if (input.interactionMode === 'manual' && !input.selectedAgent) {
     console.error('❌ [Workflow] Manual mode requires agent');
-    yield encoder.encode(`data: ${JSON.stringify({
+    yield {
       type: 'error',
       content: 'Please select an AI agent before sending a message in Manual Mode.',
       data: { 
         code: 'NO_AGENT_SELECTED',
         interactionMode: input.interactionMode 
       }
-    })}\n\n`);
-    yield encoder.encode(`data: [DONE]\n\n`);
+    };
     return;
   }
   
   // Validate agent structure
   if (input.selectedAgent && !input.selectedAgent.id) {
     console.error('❌ [Workflow] Invalid agent structure');
-    yield encoder.encode(`data: ${JSON.stringify({
+    yield {
       type: 'error',
       content: 'Invalid agent selected. Please select another agent.',
       data: { code: 'INVALID_AGENT' }
-    })}\n\n`);
-    yield encoder.encode(`data: [DONE]\n\n`);
+    };
     return;
   }
   
@@ -777,10 +774,10 @@ export async function* streamModeAwareWorkflow(input: {
         });
       } catch (eventError) {
         console.error('❌ Event processing error:', eventError);
-        yield encoder.encode(`data: ${JSON.stringify({
+        yield {
           type: 'error:event',
           message: String(eventError)
-        })}\n\n`);
+        };
         // Continue processing other events
       }
     }
@@ -792,10 +789,10 @@ export async function* streamModeAwareWorkflow(input: {
     console.error('❌ Error stack:', streamError?.stack);
     console.error('🚨 [Workflow] ===== END ERROR =====');
     
-    yield encoder.encode(`data: ${JSON.stringify({
+    yield {
       type: 'error:fatal',
       message: String(streamError)
-    })}\n\n`);
+    };
   } finally {
     console.log(`🏁 [Workflow] Stream processing complete. Total events: ${eventCount}, Answer generated: ${hasGeneratedAnswer}`);
   }

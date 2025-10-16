@@ -572,7 +572,8 @@ const _useChatStore = create<ChatStore>()(
           selectedAgentId: selectedAgent?.id,
           selectedAgentName: selectedAgent?.name,
           selectedAgentDisplayName: selectedAgent?.display_name,
-          interactionMode,
+          isAutomaticMode,
+          isAutonomousMode,
           content: content.substring(0, 50) + '...',
           currentChatId: currentChat?.id,
           currentChatExists: !!currentChat

@@ -5,6 +5,7 @@ import { Send, Loader2, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Switch } from '@/components/ui/switch';
 import { EnhancedPromptInput } from './enhanced-prompt-input';
 import { cn } from '@/lib/utils';
 
@@ -21,6 +22,9 @@ interface ChatInputProps {
   selectedAgent?: any;
   selectedModel?: string;
   onModelChange?: (model: string) => void;
+  // Per-session mode props
+  currentChat?: any;
+  onUpdateChatMode?: (mode: 'automatic' | 'autonomous', value: boolean) => void;
 }
 
 export function ChatInput({
@@ -35,14 +39,18 @@ export function ChatInput({
   isCentered = false,
   selectedAgent,
   selectedModel = 'gpt-4o',
-  onModelChange
+  onModelChange,
+  currentChat,
+  onUpdateChatMode
 }: ChatInputProps) {
   // Always allow sending (unconditional)
   const canSend = value.trim() && !isLoading && !disabled;
 
   // Show warning in manual mode without agent (but don't block input)
   // In automatic mode, no warning needed as system will handle agent selection
-  const showWarning = interactionMode === 'manual' && !hasSelectedAgent;
+  // Use per-session mode if available, fallback to global mode
+  const isAutoMode = currentChat?.isAutomaticMode ?? (interactionMode === 'automatic' || interactionMode === 'auto');
+  const showWarning = !isAutoMode && !hasSelectedAgent;
 
   // Debug logging
   console.log('ChatInput Debug:', {
@@ -75,6 +83,29 @@ export function ChatInput({
   if (!isCentered) {
     return (
       <div className={cn("border-t bg-white p-4", className)}>
+        {/* Mode Toggles */}
+        {currentChat && onUpdateChatMode && (
+          <div className="flex items-center gap-4 mb-3">
+            {/* Automatic/Manual Toggle */}
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-gray-600">Automatic:</span>
+              <Switch
+                checked={currentChat?.isAutomaticMode ?? true}
+                onCheckedChange={(checked) => onUpdateChatMode('automatic', checked)}
+              />
+            </div>
+            
+            {/* Autonomous Toggle */}
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-gray-600">Autonomous:</span>
+              <Switch
+                checked={currentChat?.isAutonomousMode ?? false}
+                onCheckedChange={(checked) => onUpdateChatMode('autonomous', checked)}
+              />
+            </div>
+          </div>
+        )}
+
         {/* Warning: No agent selected */}
         {showWarning && (
           <Alert variant="destructive" className="mb-3">

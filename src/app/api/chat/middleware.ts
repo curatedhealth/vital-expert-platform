@@ -16,7 +16,10 @@ export async function validateChatRequest(req: NextRequest) {
   }
   
   // Layer 2: Mode-specific validation
-  if (body.interactionMode === 'manual') {
+  // Check if we have per-session mode data or fallback to global mode
+  const isAutomaticMode = body.isAutomaticMode ?? (body.interactionMode === 'automatic');
+  
+  if (!isAutomaticMode) {
     if (!body.agent?.id) {
       throw new ValidationError('Agent selection required in manual mode');
     }

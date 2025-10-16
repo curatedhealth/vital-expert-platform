@@ -156,9 +156,11 @@ export interface Chat {
   messages: ChatMessage[];
   messageCount: number;
   lastMessage?: string;
-  mode?: 'automatic' | 'manual' | 'autonomous'; // Track which mode was used for this chat
   isPinned?: boolean;
   isArchived?: boolean;
+  // Per-session mode toggles
+  isAutomaticMode: boolean;  // default: true
+  isAutonomousMode: boolean; // default: false
 }
 
 export interface AIModel {
@@ -231,7 +233,7 @@ export interface ChatStore {
     availableActions: string[];
   };
 
-  // Dual-Mode State
+  // Legacy mode state (deprecated - use per-session modes)
   interactionMode: 'automatic' | 'manual' | 'autonomous'; // Agent selection mode
   autonomousMode: boolean; // Chat mode: normal (false) vs autonomous with tools (true)
   currentTier: 1 | 2 | 3 | 'human';
@@ -340,6 +342,10 @@ export interface ChatStore {
     data?: Record<string, any>;
   }) => void;
   clearReasoningEvents: () => void;
+
+  // Per-session mode management
+  getCurrentChatModes: () => { isAutomaticMode: boolean; isAutonomousMode: boolean };
+  updateChatMode: (mode: 'automatic' | 'autonomous', value: boolean) => void;
 }
 
 // Store version for migration
@@ -445,7 +451,7 @@ const _useChatStore = create<ChatStore>()(
 
       // Actions
       createNewChat: () => {
-        const { interactionMode, selectedAgent } = get();
+        const { selectedAgent } = get();
         
         // Create orchestrator agent for automatic mode
         const orchestratorAgent = {
@@ -460,27 +466,26 @@ const _useChatStore = create<ChatStore>()(
           avatar: '🤖'
         };
         
-        // Determine which agent to use for the chat
-        const chatAgent = interactionMode === 'automatic' ? orchestratorAgent : selectedAgent;
-        const chatTitle = chatAgent 
-          ? `New conversation with ${chatAgent.display_name || chatAgent.name}`
-          : 'New conversation with AI Assistant';
+        // Default to automatic mode for new chats
+        const chatAgent = orchestratorAgent;
+        const chatTitle = `New conversation with ${chatAgent.display_name || chatAgent.name}`;
         
         const newChat: Chat = {
           id: `chat-${Date.now()}`,
           title: chatTitle,
           createdAt: new Date(),
           updatedAt: new Date(),
-          agentId: chatAgent?.id || (interactionMode === 'automatic' ? 'orchestrator' : 'default'),
+          agentId: chatAgent.id,
           messageCount: 0,
-          mode: interactionMode, // Track the mode for this chat
+          isAutomaticMode: true,  // default to automatic
+          isAutonomousMode: false // default to false
         };
 
         set((state) => ({
           chats: [newChat, ...state.chats],
           currentChat: newChat,
           messages: [],
-          selectedAgent: chatAgent || (interactionMode === 'automatic' ? orchestratorAgent : null),
+          selectedAgent: chatAgent,
           error: null,
           liveReasoning: '', // Clear any existing reasoning
           isReasoningActive: false, // Clear reasoning state
@@ -496,6 +501,10 @@ const _useChatStore = create<ChatStore>()(
             localStorage.getItem(`chat-messages-${chatId}`) || '[]'
           );
 
+          // Restore session-specific modes
+          const isAutomaticMode = chat.isAutomaticMode ?? true;
+          const isAutonomousMode = chat.isAutonomousMode ?? false;
+
           set({
             currentChat: chat,
             messages: chatMessages.map((msg: unknown) => ({
@@ -503,6 +512,9 @@ const _useChatStore = create<ChatStore>()(
               timestamp: new Date(msg.timestamp),
             })),
             error: null,
+            // Update legacy mode state for backward compatibility
+            interactionMode: isAutomaticMode ? 'automatic' : 'manual',
+            autonomousMode: isAutonomousMode,
           });
         }
       },
@@ -524,7 +536,11 @@ const _useChatStore = create<ChatStore>()(
       },
 
       sendMessage: async (content: string, attachments?: unknown[]) => {
-        const { currentChat, selectedAgent, messages, interactionMode, isLoading } = get();
+        const { currentChat, selectedAgent, messages, isLoading } = get();
+        
+        // Get per-session modes
+        const isAutomaticMode = currentChat?.isAutomaticMode ?? true;
+        const isAutonomousMode = currentChat?.isAutonomousMode ?? false;
 
         // Prevent re-entrancy and duplicate messages
         if (isLoading) {
@@ -557,7 +573,7 @@ const _useChatStore = create<ChatStore>()(
         });
 
         // LAYER 1: Store-level validation
-        if (interactionMode === 'manual' && !selectedAgent?.id) {
+        if (!isAutomaticMode && !selectedAgent?.id) {
           console.error('❌ [LAYER 1] No agent selected in manual mode');
           set({ 
             error: 'Manual Mode requires an agent. Please select an AI agent from the left panel.',
@@ -570,7 +586,7 @@ const _useChatStore = create<ChatStore>()(
         set({ error: null, isLoading: true });
 
         // If no agent is selected but we're in automatic mode, proceed with message
-        if (!selectedAgent && interactionMode === 'automatic') {
+        if (!selectedAgent && isAutomaticMode) {
           console.log('🤖 Automatic mode: Proceeding without selected agent, API will handle routing');
         }
 
@@ -578,16 +594,17 @@ const _useChatStore = create<ChatStore>()(
 
         // Auto-create a chat if one doesn't exist
         if (!updatedCurrentChat) {
-          const agentName = selectedAgent?.display_name || selectedAgent?.name || (interactionMode === 'automatic' ? 'AI Orchestrator' : 'AI Assistant');
+          const agentName = selectedAgent?.display_name || selectedAgent?.name || (isAutomaticMode ? 'AI Orchestrator' : 'AI Assistant');
           console.log('📝 Auto-creating new chat for selected agent:', agentName);
           const newChat: Chat = {
             id: `chat-${Date.now()}`,
-            title: interactionMode === 'automatic' ? 'New conversation with AI Orchestrator' : `New conversation with ${agentName}`,
+            title: isAutomaticMode ? 'New conversation with AI Orchestrator' : `New conversation with ${agentName}`,
             createdAt: new Date(),
             updatedAt: new Date(),
-            agentId: selectedAgent?.id || (interactionMode === 'automatic' ? 'orchestrator' : 'default'),
+            agentId: selectedAgent?.id || (isAutomaticMode ? 'orchestrator' : 'default'),
             messageCount: 0,
-            mode: interactionMode, // Track the mode for this chat
+            isAutomaticMode: isAutomaticMode,
+            isAutonomousMode: isAutonomousMode,
           };
 
           set((state) => ({
@@ -1541,6 +1558,8 @@ const _useChatStore = create<ChatStore>()(
           updatedAt: new Date(),
           agentId: null,
           agentName: null,
+          isAutomaticMode: true,  // default to automatic
+          isAutonomousMode: false // default to false
         };
 
         set(state => ({
@@ -1990,10 +2009,35 @@ const _useChatStore = create<ChatStore>()(
         set({ abortController: null, isLoading: false });
       }
     },
+
+    // Per-session mode management
+    getCurrentChatModes: () => {
+      const { currentChat } = get();
+      return {
+        isAutomaticMode: currentChat?.isAutomaticMode ?? true,
+        isAutonomousMode: currentChat?.isAutonomousMode ?? false
+      };
+    },
+
+    updateChatMode: (mode: 'automatic' | 'autonomous', value: boolean) => {
+      const { currentChat } = get();
+      if (!currentChat) return;
+
+      const updateField = mode === 'automatic' ? 'isAutomaticMode' : 'isAutonomousMode';
+      
+      set((state) => ({
+        chats: state.chats.map((chat) =>
+          chat.id === currentChat.id
+            ? { ...chat, [updateField]: value, updatedAt: new Date() }
+            : chat
+        ),
+        currentChat: { ...currentChat, [updateField]: value, updatedAt: new Date() }
+      }));
+    },
     }),
     {
       name: 'chat-store',
-      version: 7, // Increment to force automatic mode migration
+      version: 9, // Increment for per-session mode migration
       migrate: (persistedState: unknown, version: number) => {
         // Always force reload agents from database on version change
         if (version < 5) {
@@ -2022,13 +2066,62 @@ const _useChatStore = create<ChatStore>()(
             selectedAgent: null, // Clear selected agent for automatic mode
           };
         }
+        // For version 8, ensure clean state and force automatic mode
+        if (version < 8) {
+          console.log('🔄 [Migration v8] Resetting to clean automatic mode state');
+          return {
+            ...persistedState,
+            interactionMode: 'automatic', // Force automatic mode
+            selectedAgent: null, // Clear selected agent for automatic mode
+            selectedAgents: [], // Clear selected agents array
+            error: null, // Clear any errors
+            isLoading: false, // Reset loading state
+          };
+        }
+        // For version 9, migrate to per-session mode structure
+        if (version < 9) {
+          console.log('🔄 [Migration v9] Converting to per-session mode structure');
+          const state = persistedState as any;
+          const migratedChats = state.chats?.map((chat: any) => ({
+            ...chat,
+            isAutomaticMode: chat.isAutomaticMode ?? (chat.mode === 'automatic' || !chat.mode),
+            isAutonomousMode: chat.isAutonomousMode ?? (chat.mode === 'autonomous' || false)
+          })) || [];
+          
+          return {
+            ...state,
+            chats: migratedChats,
+            currentChat: state.currentChat ? {
+              ...state.currentChat,
+              isAutomaticMode: state.currentChat.isAutomaticMode ?? (state.currentChat.mode === 'automatic' || !state.currentChat.mode),
+              isAutonomousMode: state.currentChat.isAutonomousMode ?? (state.currentChat.mode === 'autonomous' || false)
+            } : null
+          };
+        }
         return persistedState;
       },
       onRehydrateStorage: () => (state, store) => {
         // Force interaction mode to automatic on rehydration
         if (state && store) {
           console.log('🔄 [Rehydration] Setting interaction mode to automatic');
-          store.setState({ interactionMode: 'automatic' });
+          // Force immediate state update
+          store.setState({ 
+            interactionMode: 'automatic',
+            selectedAgent: null,
+            selectedAgents: [],
+            error: null
+          });
+          
+          // Also clear any cached state that might interfere
+          if (typeof window !== 'undefined') {
+            // Clear any conflicting state
+            const keys = Object.keys(localStorage);
+            keys.forEach(key => {
+              if (key.includes('chat') || key.includes('interaction')) {
+                localStorage.removeItem(key);
+              }
+            });
+          }
           
           // Automatically load agents from database after rehydration
           store.loadAgentsFromDatabase().then(() => {

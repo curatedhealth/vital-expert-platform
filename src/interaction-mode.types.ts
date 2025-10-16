@@ -1,8 +1,15 @@
 /**
  * Dual-Mode Interaction Types
  * Supports both Automatic Orchestration and Manual Expert Selection
+ * 
+ * NOTE: As of version 9, the system uses per-session boolean toggles instead of global modes:
+ * - isAutomaticMode: boolean (default: true) - Controls agent selection behavior
+ * - isAutonomousMode: boolean (default: false) - Controls autonomous workflow execution
+ * 
+ * The InteractionMode type is deprecated and kept for backward compatibility only.
  */
 
+// @deprecated - Use per-session boolean toggles instead
 export type InteractionMode = 'automatic' | 'manual';
 
 export type AgentTier = 1 | 2 | 3 | 'human';
@@ -107,13 +114,16 @@ export interface ExpertProfile {
 
 export interface ConversationContext {
   sessionId: string;
-  mode: InteractionMode;
+  mode: InteractionMode; // @deprecated - Use per-session boolean toggles
   selectedExpert?: ExpertProfile;
   escalationHistory: EscalationEvent[];
   currentTier: AgentTier;
   messageCount: number;
   startTime: Date;
   lastActivity: Date;
+  // Per-session mode toggles
+  isAutomaticMode: boolean;
+  isAutonomousMode: boolean;
 }
 
 export interface AutomaticModeResponse {

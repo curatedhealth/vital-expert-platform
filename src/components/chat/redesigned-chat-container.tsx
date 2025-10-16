@@ -35,11 +35,16 @@ export function RedesignedChatContainer({ className }: { className?: string }) {
     activeAgentId,
     selectedModel,
     setSelectedModel,
-    interactionMode,
+    currentChat,
+    getCurrentChatModes,
+    updateChatMode,
     getAgents,
     selectAgent,
     cleanup,
   } = useChatStore();
+
+  // Get current chat modes
+  const { isAutomaticMode, isAutonomousMode } = getCurrentChatModes();
 
   // Get agents from global store
   const agents = getAgents();
@@ -84,7 +89,7 @@ export function RedesignedChatContainer({ className }: { className?: string }) {
     clearError();
 
     // If in manual mode and no agent is selected, prevent sending message
-    if (interactionMode === 'manual' && !selectedAgent) {
+    if (!isAutomaticMode && !selectedAgent) {
       return;
     }
 
@@ -113,7 +118,8 @@ export function RedesignedChatContainer({ className }: { className?: string }) {
   console.log('RedesignedChatContainer Debug:', {
     input: input.trim(),
     isLoading,
-    interactionMode,
+    isAutomaticMode,
+    isAutonomousMode,
     selectedAgent: selectedAgent,
     selectedAgentId: selectedAgent?.id,
     selectedAgentName: selectedAgent?.name,
@@ -154,7 +160,7 @@ export function RedesignedChatContainer({ className }: { className?: string }) {
                   Welcome to VITAL Expert Chat
                 </h3>
                 <p className="text-gray-600 text-lg">
-                  {interactionMode === 'manual' 
+                  {!isAutomaticMode 
                     ? 'Select an AI agent from the sidebar to start chatting.'
                     : 'Start by asking a question or selecting an AI agent.'
                   }
@@ -173,13 +179,15 @@ export function RedesignedChatContainer({ className }: { className?: string }) {
                   }
                 }}
                 isLoading={isLoading}
-                interactionMode={interactionMode}
+                interactionMode={isAutomaticMode ? 'automatic' : 'manual'}
                 hasSelectedAgent={!!selectedAgent}
                 selectedAgent={selectedAgent}
                 selectedModel={selectedModel?.id || 'gpt-4o'}
                 onModelChange={(model) => setSelectedModel({ id: model, name: model })}
                 className="border-0 bg-transparent"
                 isCentered={false}
+                currentChat={currentChat}
+                onUpdateChatMode={updateChatMode}
               />
             </div>
           </div>
@@ -246,13 +254,15 @@ export function RedesignedChatContainer({ className }: { className?: string }) {
                 }
               }}
               isLoading={isLoading}
-              interactionMode={interactionMode}
+              interactionMode={isAutomaticMode ? 'automatic' : 'manual'}
               hasSelectedAgent={!!selectedAgent}
               selectedAgent={selectedAgent}
               selectedModel={selectedModel?.id || 'gpt-4o'}
               onModelChange={(model) => setSelectedModel({ id: model, name: model })}
               className="border-t"
               isCentered={false}
+              currentChat={currentChat}
+              onUpdateChatMode={updateChatMode}
             />
           </>
         )}

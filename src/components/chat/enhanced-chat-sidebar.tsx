@@ -13,8 +13,6 @@ import {
   Settings, 
   ChevronLeft, 
   ChevronRight,
-  Zap,
-  User,
   MoreHorizontal,
   Trash2,
   Edit3,
@@ -25,7 +23,6 @@ import {
   SortDesc,
   X,
   Check,
-  Sparkles,
   Users,
   Bot,
   Activity,
@@ -104,10 +101,6 @@ export function EnhancedChatSidebar({
     selectedAgent,
     selectedAgents,
     activeAgentId,
-    interactionMode,
-    autonomousMode,
-    setInteractionMode,
-    setAutonomousMode,
     createNewChat,
     selectChat,
     deleteChat,
@@ -316,43 +309,6 @@ export function EnhancedChatSidebar({
         </Button>
       </div>
 
-      {/* Mode Toggles */}
-      <div className="p-4 space-y-4 border-b border-gray-200 bg-gray-50/50">
-        {/* Auto/Manual Toggle */}
-        <div className="flex items-center justify-between p-3 rounded-lg bg-white border border-gray-200 shadow-sm">
-          <div className="flex items-center gap-2">
-            <Zap className="h-4 w-4 text-blue-600" />
-            <span className="text-sm font-medium text-gray-700">Auto</span>
-          </div>
-          <Switch
-            checked={interactionMode === 'automatic'}
-            onCheckedChange={(checked) => {
-              setInteractionMode(checked ? 'automatic' : 'manual');
-              if (checked) {
-                clearSelectedAgent(); // Clear selected agent when switching to auto mode
-              }
-            }}
-            className="data-[state=checked]:bg-blue-600"
-          />
-          <div className="flex items-center gap-2">
-            <User className="h-4 w-4 text-gray-600" />
-            <span className="text-sm font-medium text-gray-700">Manual</span>
-          </div>
-        </div>
-
-        {/* Autonomous Toggle */}
-        <div className="flex items-center justify-between p-3 rounded-lg bg-white border border-gray-200 shadow-sm">
-          <div className="flex items-center gap-2">
-            <Sparkles className="h-4 w-4 text-purple-600" />
-            <span className="text-sm font-medium text-gray-700">Autonomous</span>
-          </div>
-          <Switch
-            checked={autonomousMode}
-            onCheckedChange={setAutonomousMode}
-            className="data-[state=checked]:bg-purple-600"
-          />
-        </div>
-      </div>
 
       {/* Content Area */}
       <div className="flex-1 flex flex-col">

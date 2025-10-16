@@ -591,7 +591,11 @@ export async function* streamModeAwareWorkflow(input: {
   console.log('🔄 [Workflow] Starting to process stream events...');
   
   try {
+    console.log('🚨 [Workflow] ===== ENTERING STREAM LOOP =====');
+    console.log('🚨 [Workflow] Stream object:', typeof stream, stream);
+    
     for await (const event of stream) {
+      console.log('🚨 [Workflow] ===== STREAM EVENT RECEIVED =====');
       try {
         eventCount++;
         console.log(`📊 [Workflow] Processing event #${eventCount}`);

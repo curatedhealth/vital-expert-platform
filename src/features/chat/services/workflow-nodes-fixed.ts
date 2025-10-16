@@ -106,7 +106,7 @@ export async function processWithAgentNormalNode(state: any): Promise<any> {
   }
   
   try {
-    console.log('🚀 [ProcessWithAgent] Starting LangChain query...');
+    console.log('🤖 [ProcessWithAgent] Starting processWithAgentNormalNode');
     console.log('🔍 [ProcessWithAgent] Query details:', {
       query: state.query,
       agentId: state.selectedAgent.id,
@@ -115,7 +115,7 @@ export async function processWithAgentNormalNode(state: any): Promise<any> {
       agentName: state.selectedAgent.name
     });
     
-    // Use the enhanced LangChain service to generate a response
+    console.log('🔗 [ProcessWithAgent] Calling LangChain service...');
     const response = await enhancedLangChainService.queryWithChain(
       state.query,
       state.selectedAgent.id,
@@ -124,7 +124,14 @@ export async function processWithAgentNormalNode(state: any): Promise<any> {
       state.userId || 'anonymous'
     );
     
-    console.log('✅ [ProcessWithAgent] LangChain query completed');
+    console.log('✅ [ProcessWithAgent] LangChain query completed successfully');
+    console.log('📊 [ProcessWithAgent] LangChain result:', {
+      hasAnswer: !!response?.answer,
+      answerLength: response?.answer?.length || 0,
+      hasSources: !!response?.sources,
+      sourcesCount: response?.sources?.length || 0,
+      fullResponse: response
+    });
     
     console.log('✅ Generated response:', {
       responseType: typeof response,
@@ -156,7 +163,14 @@ export async function processWithAgentNormalNode(state: any): Promise<any> {
       citations: response.citations || []
     };
   } catch (error) {
-    console.error('❌ Processing error:', error);
+    console.error('❌ [ProcessWithAgent] LangChain query failed:', error);
+    console.error('❌ [ProcessWithAgent] Error details:', {
+      errorType: typeof error,
+      errorMessage: error instanceof Error ? error.message : String(error),
+      errorStack: error instanceof Error ? error.stack : 'No stack trace',
+      errorName: error instanceof Error ? error.name : 'Unknown'
+    });
+    
     return {
       workflowStep: 'error',
       answer: 'I encountered an error while processing your request. Please try again.',

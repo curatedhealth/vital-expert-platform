@@ -162,13 +162,25 @@ export function EnhancedChatContainer({ className }: EnhancedChatContainerProps)
 
       {/* Input Area */}
       <div className="border-t p-4">
-        {/* Manual Mode Warning */}
+        {/* Manual Mode Warning - Only show in manual mode */}
         {interactionMode === 'manual' && !selectedAgent && (
           <div className="mb-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
             <div className="flex items-center space-x-2">
               <div className="text-yellow-600">⚠️</div>
               <p className="text-sm text-yellow-800">
                 Please select an AI agent above before sending a message in Manual Mode.
+              </p>
+            </div>
+          </div>
+        )}
+        
+        {/* Automatic Mode Info */}
+        {interactionMode === 'automatic' && (
+          <div className="mb-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+            <div className="flex items-center space-x-2">
+              <div className="text-blue-600">🤖</div>
+              <p className="text-sm text-blue-800">
+                Automatic Mode: AI will intelligently select the best agent for your query.
               </p>
             </div>
           </div>
@@ -188,11 +200,15 @@ export function EnhancedChatContainer({ className }: EnhancedChatContainerProps)
             placeholder={
               interactionMode === 'manual' && !selectedAgent 
                 ? "Please select an AI agent first..." 
+                : interactionMode === 'automatic'
+                ? "Ask anything - AI will select the best agent automatically..."
                 : "Ask about digital health, reimbursement, clinical research..."
             }
             className={`min-h-[40px] max-h-[120px] resize-none ${
               interactionMode === 'manual' && !selectedAgent 
                 ? 'border-yellow-300 bg-yellow-50' 
+                : interactionMode === 'automatic'
+                ? 'border-blue-300 bg-blue-50'
                 : ''
             }`}
             disabled={isLoading || (interactionMode === 'manual' && !selectedAgent)}

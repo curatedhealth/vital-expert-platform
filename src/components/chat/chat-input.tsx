@@ -41,6 +41,7 @@ export function ChatInput({
   const canSend = value.trim() && !isLoading && !disabled;
 
   // Show warning in manual mode without agent (but don't block input)
+  // In automatic mode, no warning needed as system will handle agent selection
   const showWarning = interactionMode === 'manual' && !hasSelectedAgent;
 
   // Debug logging

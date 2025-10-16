@@ -21,7 +21,7 @@ export async function validateChatRequest(req: NextRequest) {
       throw new ValidationError('Agent selection required in manual mode');
     }
     
-    // Validate agent structure
+    // Validate agent structure for manual mode
     const requiredFields = ['id', 'name', 'system_prompt'];
     for (const field of requiredFields) {
       if (!body.agent[field]) {
@@ -29,6 +29,9 @@ export async function validateChatRequest(req: NextRequest) {
       }
     }
   }
+  
+  // For automatic mode, agent selection is handled by the system
+  // No validation needed as the system will select appropriate agents
   
   // Layer 3: Security validation
   if (body.message.length > 4000) {

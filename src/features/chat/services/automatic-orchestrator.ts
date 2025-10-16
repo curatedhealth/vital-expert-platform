@@ -1,4 +1,4 @@
-import { QueryAnalyzer, QueryAnalysis } from './query-analyzer';
+import { QueryAnalyzer, QueryAnalysis } from './query-analyzer-server';
 import { AgentMatcher, AgentMatch } from './agent-matcher';
 // Define Agent interface locally to avoid import issues
 interface Agent {

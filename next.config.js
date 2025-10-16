@@ -26,6 +26,9 @@ const nextConfig = {
         net: false,
         tls: false,
         child_process: false,
+        dns: false,
+        pg: false,
+        'pg-native': false,
       };
     }
 

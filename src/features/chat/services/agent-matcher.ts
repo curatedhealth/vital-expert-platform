@@ -14,7 +14,7 @@ interface Agent {
   knowledge_domains?: string[];
   rag_enabled?: boolean;
 }
-import { QueryAnalysis } from './query-analyzer';
+import { QueryAnalysis } from './query-analyzer-server';
 
 export interface AgentMatch {
   agent: Agent;

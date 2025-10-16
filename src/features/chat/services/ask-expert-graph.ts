@@ -836,9 +836,6 @@ export async function* streamModeAwareWorkflow(input: {
     type: 'complete',
     content: 'Workflow completed successfully'
   };
-  
-  // Always signal completion
-  yield encoder.encode(`data: [DONE]\n\n`);
 }
 
 /**

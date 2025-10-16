@@ -168,7 +168,7 @@ export default function AskExpertPage() {
     setIsReasoningActive(false);
 
     try {
-      const response = await fetch('/api/ask-expert', {
+      const response = await fetch('/api/chat', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -192,8 +192,9 @@ export default function AskExpertPage() {
             role: msg.role,
             content: msg.content,
           })),
-          ragEnabled: true,
-          useEnhancedWorkflow: true,
+          interactionMode: 'manual', // Manual mode since user selects agent
+          autonomousMode: false,
+          selectedTools: selectedTools,
         }),
       });
 

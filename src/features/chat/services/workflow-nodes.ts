@@ -366,11 +366,22 @@ export interface ToolOption {
 
 // Legacy workflow node functions for backward compatibility
 export async function routeByModeNode(state: any): Promise<any> {
-  console.log('🔀 Routing by mode:', state.interactionMode);
-  return {
+  console.log('🚨 [RouteByMode] ===== NODE CALLED =====');
+  console.log('🔀 [RouteByMode] Routing by mode:', state.interactionMode);
+  console.log('🔀 [RouteByMode] State details:', {
+    interactionMode: state.interactionMode,
+    hasSelectedAgent: !!state.selectedAgent,
+    selectedAgentId: state.selectedAgent?.id,
+    query: state.query?.substring(0, 50) + '...'
+  });
+  
+  const result = {
     workflowStep: 'routing',
     currentStep: `Routing in ${state.interactionMode} mode`
   };
+  
+  console.log('🚨 [RouteByMode] ===== NODE COMPLETED =====');
+  return result;
 }
 
 export async function suggestAgentsNode(state: any): Promise<any> {

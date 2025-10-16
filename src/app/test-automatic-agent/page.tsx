@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { AutomaticModeInterface } from '@/components/chat/automatic-mode-interface';
-import { useAutomaticMode } from '@/hooks/use-automatic-mode';
+import { useAutomaticMode } from '@/shared/hooks/use-automatic-mode';
 import { Brain, Send, TestTube, BarChart3 } from 'lucide-react';
 
 const DEMO_QUERIES = [

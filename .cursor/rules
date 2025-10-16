@@ -38,6 +38,7 @@ Implementing dual-mode system (Manual/Automatic + Interactive/Autonomous)
 ## Deployment Rules
 - **ALWAYS deploy in preview mode by default**
 - **NEVER deploy to production unless explicitly asked**
-- Use `vercel --prod=false` for all deployments
+- Use `vercel --target=preview` for all deployments (NOT --prod=false)
 - Only use `vercel --prod` when user specifically requests production deployment
 - Always test in preview environment first
+- If build fails, fix errors before deploying

@@ -83,15 +83,17 @@ export function MessageBubble({ message, isLastMessage, isLoading, agent }: Mess
       )}
 
       {isUser && (
-        <Avatar className="h-8 w-8 flex-shrink-0">
-          <AvatarImage 
-            src="" 
-            alt="User" 
-          />
-          <AvatarFallback className="bg-gradient-to-br from-green-500 to-blue-600 text-white text-xs">
-            <User className="h-4 w-4" />
-          </AvatarFallback>
-        </Avatar>
+        <div className="h-8 w-8 flex-shrink-0">
+          <Avatar className="h-8 w-8">
+            <AvatarImage 
+              src="" 
+              alt="User" 
+            />
+            <AvatarFallback className="bg-gradient-to-br from-green-500 to-blue-600 text-white text-xs">
+              <User className="h-4 w-4" />
+            </AvatarFallback>
+          </Avatar>
+        </div>
       )}
 
       <div className={cn(

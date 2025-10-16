@@ -526,9 +526,22 @@ const _useChatStore = create<ChatStore>()(
       sendMessage: async (content: string, attachments?: unknown[]) => {
         const { currentChat, selectedAgent, messages, interactionMode, isLoading } = get();
 
-        // Prevent re-entrancy
+        // Prevent re-entrancy and duplicate messages
         if (isLoading) {
           console.warn('⚠️  Already processing a message');
+          return;
+        }
+
+        // Check for duplicate messages (same content within last 5 seconds)
+        const recentMessages = (messages || []).slice(-5);
+        const isDuplicate = recentMessages.some(msg => 
+          msg.role === 'user' && 
+          msg.content === content && 
+          (Date.now() - new Date(msg.timestamp).getTime()) < 5000
+        );
+        
+        if (isDuplicate) {
+          console.warn('⚠️  Duplicate message detected, ignoring');
           return;
         }
 

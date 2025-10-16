@@ -186,8 +186,8 @@ export async function POST(request: NextRequest) {
             
             console.log(`✅ [Chat API] Stream completed. Total events: ${eventCount}`);
             
-            // Send final [DONE] marker
-            controller.enqueue(encoder.encode('data: [DONE]\n\n'));
+            // Send final [DONE] marker as JSON
+            controller.enqueue(encoder.encode(`data: ${JSON.stringify({type: 'done'})}\n\n`));
             controller.close();
             
           } catch (streamError: any) {

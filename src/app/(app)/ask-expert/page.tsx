@@ -28,7 +28,7 @@ import { useAuth } from '@/supabase-auth-context';
 import { EnhancedAgentSidebar } from '@/components/chat/enhanced-agent-sidebar';
 import { AgentSelectionModal } from '@/components/chat/agent-selection-modal';
 import { ToolSelector } from '@/components/chat/tool-selector';
-import { ReasoningDisplay } from '@/components/chat/reasoning-display';
+import { EnhancedReasoningDisplay } from '@/components/chat/enhanced-reasoning-display';
 
 
 interface Message {
@@ -292,13 +292,21 @@ export default function AskExpertPage() {
                     step: data.step || 'processing',
                     description: data.description || data.content || 'Processing...',
                     timestamp: new Date(),
-                    data: data.data || {}
+                    data: data.data || {},
+                    status: 'running' as const
                   }
                 ]);
                 setIsReasoningActive(true);
               } else if (data.type === 'reasoning_done') {
-                // Reasoning complete
+                // Reasoning complete - mark last event as completed
                 console.log('✅ [Reasoning] Reasoning process completed');
+                setReasoningEvents(prev => 
+                  prev.map((event, index) => 
+                    index === prev.length - 1 
+                      ? { ...event, status: 'completed' as const }
+                      : event
+                  )
+                );
                 setIsReasoningActive(false);
               } else if (data.type === 'error') {
                 setState(prev => ({
@@ -520,10 +528,12 @@ export default function AskExpertPage() {
             })
           )}
           
-          {/* Reasoning Display */}
-          <ReasoningDisplay
+          {/* Enhanced Reasoning Display */}
+          <EnhancedReasoningDisplay
             reasoningEvents={reasoningEvents}
             isActive={isReasoningActive}
+            showProgress={true}
+            autoCollapse={true}
           />
           
           <div ref={messagesEndRef} />

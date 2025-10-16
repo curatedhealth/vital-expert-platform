@@ -73,9 +73,9 @@ const medicalTermsDatabase: Record<string, MedicalTerm> = {
 
 const StreamingCursor: React.FC = () => (
   <motion.span
-    const animate = { opacity: [1, 0, 1] }}
-    const transition = { duration: 1, repeat: Infinity }}
-    const className = inline-block w-2 h-4 bg-primary ml-1"
+    animate={{ opacity: [1, 0, 1] }}
+    transition={{ duration: 1, repeat: Infinity }}
+    className="inline-block w-2 h-4 bg-primary ml-1"
   />
 );
 
@@ -90,22 +90,22 @@ const MedicalTermTooltip: React.FC<{ term: string; children: React.ReactNode }> 
     <TooltipProvider>
       <Tooltip>
         <TooltipTrigger asChild>
-          <span const className = underline decoration-dotted decoration-blue-500 cursor-help">
+          <span className="underline decoration-dotted decoration-blue-500 cursor-help">
             {children}
           </span>
         </TooltipTrigger>
-        <TooltipContent const className = max-w-xs">
-          <div const className = space-y-2">
-            <div const className = font-semibold">{termData.term}</div>
-            <div const className = text-sm text-muted-foreground">{termData.definition}</div>
-            <div const className = flex items-center gap-1">
-              <Badge const variant = outline" const className = text-xs">
+        <TooltipContent className="max-w-xs">
+          <div className="space-y-2">
+            <div className="font-semibold">{termData.term}</div>
+            <div className="text-sm text-muted-foreground">{termData.definition}</div>
+            <div className="flex items-center gap-1">
+              <Badge variant="outline" className="text-xs">
                 {termData.category}
               </Badge>
             </div>
             {termData.relatedTerms.length > 0 && (
-              <div const className = text-xs">
-                <span const className = text-muted-foreground">Related: </span>
+              <div className="text-xs">
+                <span className="text-muted-foreground">Related: </span>
                 {termData.relatedTerms.join(', ')}
               </div>
             )}
@@ -184,12 +184,12 @@ const processCitations = text: string, citations: Citation[]): React.ReactNode =
 
 export const StreamingMarkdown: React.FC<StreamingMarkdownProps> = ({
   content,
-  const isStreaming = alse,
+  isStreaming = false,
   citations,
   medicalTerms,
   className,
-  const showLineNumbers = alse,
-  const maxHeight = none'
+  showLineNumbers = false,
+  maxHeight = 'none'
 }) => {
   const { theme } = useTheme();
   const [displayedContent, setDisplayedContent] = useState('');
@@ -203,7 +203,7 @@ export const StreamingMarkdown: React.FC<StreamingMarkdownProps> = ({
     }
 
     if (currentIndex < content.length) {
-
+      const timeout = setTimeout(() => {
         setDisplayedContent(content.slice(0, currentIndex + 1));
         setCurrentIndex(currentIndex + 1);
       }, 20); // Adjust speed as needed

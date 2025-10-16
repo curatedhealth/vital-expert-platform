@@ -1201,12 +1201,14 @@ const _useChatStore = create<ChatStore>()(
       },
 
       setSelectedExpert: (expert: Agent | null) => {
+        const currentState = get();
         set({
           selectedExpert: expert,
           selectedAgent: expert, // Also set as selected agent for compatibility
-          interactionMode: 'manual', // Selecting expert switches to manual mode
+          // Don't force manual mode - respect current interaction mode
+          // interactionMode: 'manual', // REMOVED: This was causing the state reversion
           conversationContext: {
-            ...get().conversationContext,
+            ...currentState.conversationContext,
             lastActivity: new Date(),
           },
         });

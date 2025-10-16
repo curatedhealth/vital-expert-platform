@@ -3,6 +3,7 @@ import { streamModeAwareWorkflow } from '@/features/chat/services/ask-expert-gra
 import { validateChatRequest, ValidationError } from './middleware';
 import { ErrorRecoveryService } from '@/core/services/error-recovery.service';
 import { enhancedLangChainService } from '@/features/chat/services/enhanced-langchain-service';
+import { reasoningEmitter } from '@/features/chat/services/reasoning-emitter';
 
 export async function POST(request: NextRequest) {
   try {
@@ -18,181 +19,73 @@ export async function POST(request: NextRequest) {
       chatHistory = []
     } = await validateChatRequest(request);
 
-        console.log(`🚀 Chat API: ${interactionMode} + ${autonomousMode ? 'Autonomous' : 'Normal'} mode`);
-        console.log(`🔍 [API] Received interactionMode: ${interactionMode}, selectedAgent: ${agent?.name || 'none'}`);
-        console.log(`🔍 [API] Full agent object:`, JSON.stringify(agent, null, 2));
+    console.log(`🚀 Chat API: ${interactionMode} + ${autonomousMode ? 'Autonomous' : 'Normal'} mode`);
+    console.log(`🔍 [API] Received interactionMode: ${interactionMode}, selectedAgent: ${agent?.name || 'none'}`);
+    console.log(`🔍 [API] Full agent object:`, JSON.stringify(agent, null, 2));
 
-    // Create streaming response using working LangChain service
-    const stream = new ReadableStream({
-      async start(controller) {
-        try {
-          console.log('🚀 Using enhanced LangChain service for chat');
-          
-          // Send reasoning event
-          controller.enqueue(
-            new TextEncoder().encode(`data: ${JSON.stringify({
-              type: 'reasoning',
-              description: '🔄 AI Assistant is analyzing your question',
-              data: {
-                selectedAgent: agent,
-                timestamp: Date.now(),
-                mode: `${interactionMode}_${autonomousMode ? 'autonomous' : 'normal'}`,
-                agent: agent?.name || 'AI Assistant',
-                interactionMode,
-                autonomousMode,
-                metadata: {}
-              }
-            })}\n\n`)
-          );
+    // Start reasoning visualization
+    reasoningEmitter.startReasoning();
+    
+    // Add initial step
+    reasoningEmitter.addStep({
+      type: 'planning',
+      title: 'Query Analysis',
+      description: 'Understanding user intent and requirements',
+      status: 'running'
+    });
 
-          // Use the working LangChain service directly
-          const response = await enhancedLangChainService.queryWithChain(
-            message,
-            agent?.id || 'default-agent',
-            sessionId || `session-${Date.now()}`,
-            agent,
-            userId || 'anonymous'
-          );
+    // CRITICAL FIX: Use LangGraph workflow instead of direct LangChain service
+    const stream = await streamModeAwareWorkflow({
+      query: message,
+      chatHistory: chatHistory || [],
+      selectedAgent: agent,
+      interactionMode: interactionMode || 'automatic',
+      autonomousMode: autonomousMode || false,
+      selectedTools: selectedTools || [],
+      // Add reasoning callback
+      onStateUpdate: (state) => {
+        // Emit reasoning updates based on workflow state
+        if (state.workflowStep) {
+          const stepTypeMap = {
+            'agent_selected': 'agent_selection',
+            'knowledge_retrieved': 'rag_retrieval',
+            'tools_executed': 'tool_use',
+            'response_generated': 'synthesis'
+          };
 
-          console.log('✅ LangChain service response:', {
-            hasAnswer: !!response.answer,
-            answerLength: response.answer?.length || 0,
-            hasSources: !!response.sources
+          reasoningEmitter.addStep({
+            type: stepTypeMap[state.workflowStep] || 'planning',
+            title: state.workflowStep.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+            description: state.metadata?.description || '',
+            status: 'completed',
+            tokens: state.metadata?.tokens,
+            cost: state.metadata?.cost
           });
-
-          // Send content chunks
-          if (response.answer) {
-            // Split response into chunks for streaming effect
-            const chunks = response.answer.match(/.{1,50}/g) || [response.answer];
-            
-            for (const chunk of chunks) {
-              controller.enqueue(
-                new TextEncoder().encode(`data: ${JSON.stringify({
-                  type: 'content',
-                  content: chunk,
-                  metadata: {
-                    selectedAgent: agent,
-                    sources: response.sources || [],
-                    citations: response.citations || [],
-                    tokenUsage: response.tokenUsage || {},
-                    reasoning: 'Enhanced LangChain processing',
-                    workflowSteps: ['query_analysis', 'knowledge_retrieval', 'response_generation'],
-                    agent: agent?.name || 'AI Assistant',
-                    interactionMode,
-                    autonomousMode,
-                    reasoningSteps: []
-                  }
-                })}\n\n`)
-              );
-              
-              // Small delay for streaming effect
-              await new Promise(resolve => setTimeout(resolve, 50));
-            }
-          }
-
-          // Send final response
-          controller.enqueue(
-            new TextEncoder().encode(`data: ${JSON.stringify({
-              type: 'final',
-              content: response.answer || 'I apologize, but I was unable to generate a response.',
-              metadata: {
-                selectedAgent: agent,
-                sources: response.sources || [],
-                citations: response.citations || [],
-                tokenUsage: response.tokenUsage || {},
-                reasoning: 'Enhanced LangChain processing complete',
-                workflowSteps: ['query_analysis', 'knowledge_retrieval', 'response_generation'],
-                agent: agent?.name || 'AI Assistant',
-                interactionMode,
-                autonomousMode,
-                reasoningSteps: []
-              }
-            })}\n\n`)
-          );
-          
-          // Send completion signal
-          controller.enqueue(
-            new TextEncoder().encode(`data: ${JSON.stringify({
-              type: 'complete',
-              content: 'Workflow completed successfully'
-            })}\n\n`)
-          );
-          
-          controller.close();
-        } catch (error) {
-          console.error('❌ LangChain service execution failed:', error);
-          
-          // Send error as SSE
-          controller.enqueue(
-            new TextEncoder().encode(`data: ${JSON.stringify({
-              type: 'error',
-              content: error instanceof Error ? error.message : 'Service execution failed',
-              metadata: {
-                selectedAgent: agent,
-                sources: [],
-                citations: [],
-                tokenUsage: {},
-                reasoning: 'Error in LangChain service',
-                workflowSteps: [],
-                error: error instanceof Error ? error.message : 'Unknown error',
-                fallbackUsed: true,
-                interactionMode,
-                autonomousMode,
-                reasoningSteps: []
-              }
-            })}\n\n`)
-          );
-          
-          controller.close();
         }
       }
     });
 
+    // Return SSE stream for real-time updates
     return new Response(stream, {
       headers: {
         'Content-Type': 'text/event-stream',
         'Cache-Control': 'no-cache',
         'Connection': 'keep-alive',
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization'
-      }
+      },
     });
 
   } catch (error) {
-    console.error('❌ Chat API error:', error);
-    
-    // Handle validation errors
-    if (error instanceof ValidationError) {
-      return NextResponse.json(
-        { error: error.message },
-        { status: 400 }
-      );
-    }
-    
-    // Handle other errors with recovery
-    const fallbackAgent = await ErrorRecoveryService.recoverFromAgentError(error as Error);
+    console.error('API Route Error:', error);
+    reasoningEmitter.addStep({
+      type: 'validation',
+      title: 'Error',
+      description: error instanceof Error ? error.message : 'Unknown error',
+      status: 'error'
+    });
     
     return NextResponse.json(
-      { 
-        error: 'Internal server error',
-        message: error instanceof Error ? error.message : 'Unknown error',
-        fallbackAgent: fallbackAgent,
-        recoveryUsed: true
-      },
+      { error: 'Failed to process request' },
       { status: 500 }
     );
   }
-}
-
-// Handle preflight requests
-export async function OPTIONS() {
-  return new NextResponse(null, {
-    status: 200,
-    headers: {
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type, Authorization'
-    }
-  });
 }

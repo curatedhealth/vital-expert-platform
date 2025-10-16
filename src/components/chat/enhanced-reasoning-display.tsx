@@ -50,6 +50,15 @@ export function EnhancedReasoningDisplay({
   
   // Safety check for reasoningEvents array
   const safeReasoningEvents = Array.isArray(reasoningEvents) ? reasoningEvents : [];
+
+  // Debug logging
+  console.log('🧠 [EnhancedReasoningDisplay] Props received:', {
+    reasoningEventsCount: safeReasoningEvents.length,
+    isActive,
+    showProgress,
+    autoCollapse,
+    willRender: !(safeReasoningEvents.length === 0 && !isActive)
+  });
   
   // Calculate progress based on events
   useEffect(() => {

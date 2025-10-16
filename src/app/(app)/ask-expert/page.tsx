@@ -77,6 +77,15 @@ export default function AskExpertPage() {
   const [reasoningEvents, setReasoningEvents] = useState<any[]>([]);
   const [isReasoningActive, setIsReasoningActive] = useState(false);
 
+  // Debug logging for reasoning state
+  useEffect(() => {
+    console.log('🧠 [Reasoning Debug] State changed:', {
+      reasoningEventsCount: reasoningEvents.length,
+      isReasoningActive,
+      reasoningEvents: reasoningEvents.map(e => ({ step: e.step, type: e.type, status: e.status }))
+    });
+  }, [reasoningEvents, isReasoningActive]);
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {

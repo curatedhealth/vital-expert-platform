@@ -39,16 +39,40 @@ const ModeAwareWorkflowState = Annotation.Root({
   agentId: Annotation<string | null>(),
   selectedAgent: Annotation<any>({
     reducer: (current: any, update: any) => {
-      // Critical: Preserve agent through workflow
-      if (update && update.id) {
-        console.log('✅ Preserving updated agent:', update.name);
-        return update;
-      }
-      if (current && current.id) {
-        console.log('✅ Keeping current agent:', current.name);
+      // LangGraph passes the VALUE directly, not wrapped in {selectedAgent: ...}
+      // So 'update' IS the agent object itself
+      console.log('🔄 [State] selectedAgent reducer called:', {
+        currentType: typeof current,
+        updateType: typeof update,
+        currentHasId: current?.id,
+        updateHasId: update?.id,
+        updateValue: update
+      });
+      
+      // If update is explicitly null or undefined, keep current
+      if (update === null || update === undefined) {
+        console.log('✅ [State] Update is null/undefined, keeping current');
         return current;
       }
-      console.warn('⚠️ No valid agent to preserve');
+      
+      // If update is provided and is an object, use it
+      if (update && typeof update === 'object') {
+        // Validate it's a proper agent object
+        if (update.id || update.name) {
+          console.log('✅ [State] Preserving valid agent update:', update.name || update.id);
+          return update;
+        }
+        console.warn('⚠️ [State] Update is object but missing id/name:', update);
+        return current; // Keep current if update is malformed
+      }
+      
+      // Keep current if available
+      if (current) {
+        console.log('✅ [State] No valid update, keeping current agent');
+        return current;
+      }
+      
+      console.warn('⚠️ [State] No valid agent in current or update');
       return null;
     },
     default: () => null

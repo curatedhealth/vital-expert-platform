@@ -4,6 +4,7 @@ import { createReactAgent } from '@langchain/langgraph/prebuilt';
 import { MemorySaver, Annotation } from '@langchain/langgraph';
 import { ChatPromptTemplate, MessagesPlaceholder } from '@langchain/core/prompts';
 import { RunnablePassthrough, RunnableSequence } from '@langchain/core/runnables';
+import { enhancedLangChainService } from './enhanced-langchain-service';
 
 // LangGraph Best Practice: Structured State with Proper Annotations
 export const EnhancedWorkflowState = Annotation.Root({
@@ -197,8 +198,8 @@ export async function adaptiveProcessingNode(
       result = await executeMultiStepQuery(state);
       break;
   }
-    
-    return {
+  
+  return {
     ...result,
     reasoningSteps: [strategyReasoning, ...(result.reasoningSteps || [])]
   };
@@ -286,9 +287,9 @@ ${relevantMemories.map(m => `- ${m.summary}`).join('\n')}`),
     response: result.output,
     agent: selectedAgent.id,
     importance: calculateImportance(result)
-  };
-  
-  return {
+    };
+    
+    return {
     answer: result.output,
     episodicMemory: [newMemory],
     reasoningSteps: [{
@@ -392,11 +393,61 @@ export async function selectAgentAutomaticNode(state: any): Promise<any> {
 
 export async function processWithAgentNormalNode(state: any): Promise<any> {
   console.log('🔄 Processing with agent (normal mode)');
-  return {
-    workflowStep: 'processing',
-    answer: 'Response generated using normal processing',
-    currentStep: 'Processing complete'
-  };
+  console.log('🔍 Agent details:', {
+    agentId: state.selectedAgent?.id,
+    agentName: state.selectedAgent?.name,
+    agentModel: state.selectedAgent?.model,
+    query: state.query
+  });
+  
+  // Check if we have a valid agent
+  if (!state.selectedAgent || !state.selectedAgent.id) {
+    console.error('❌ No valid agent provided for processing');
+    return {
+      workflowStep: 'error',
+      answer: 'No agent available for processing your request.',
+      currentStep: 'Error: No agent selected',
+      error: 'No agent selected'
+    };
+  }
+  
+  try {
+    // Use the enhanced LangChain service to generate a response
+    const response = await enhancedLangChainService.queryWithChain(
+      state.query,
+      state.selectedAgent.id,
+      state.sessionId || 'default',
+      state.selectedAgent,
+      state.userId || 'anonymous'
+    );
+    
+    console.log('✅ Generated response:', {
+      contentLength: response.answer?.length || 0,
+      hasSources: !!response.sources
+    });
+    
+    return {
+      workflowStep: 'processing_complete',
+      answer: response.answer || 'I apologize, but I was unable to generate a response.',
+      currentStep: 'Response generated successfully',
+      metadata: {
+        ...state.metadata,
+        processingTime: Date.now() - (state.metadata?.startTime || Date.now()),
+        agentUsed: state.selectedAgent.name,
+        modelUsed: state.selectedAgent.model || 'gpt-4'
+      },
+      sources: response.sources || [],
+      citations: response.citations || []
+    };
+  } catch (error) {
+    console.error('❌ Error processing with agent:', error);
+    return {
+      workflowStep: 'error',
+      answer: 'I apologize, but I encountered an error while processing your request. Please try again.',
+      currentStep: 'Error occurred during processing',
+      error: error instanceof Error ? error.message : 'Unknown error'
+    };
+  }
 }
 
 export async function processWithAgentAutonomousNode(state: any): Promise<any> {
@@ -410,10 +461,36 @@ export async function processWithAgentAutonomousNode(state: any): Promise<any> {
 
 export async function synthesizeResponseNode(state: any): Promise<any> {
   console.log('📝 Synthesizing response');
+  console.log('🔍 State for synthesis:', {
+    hasAnswer: !!state.answer,
+    answerLength: state.answer?.length || 0,
+    hasMetadata: !!state.metadata,
+    hasSources: !!state.sources,
+    workflowStep: state.workflowStep
+  });
+  
+  // Ensure we have a valid answer
+  if (!state.answer || state.answer.trim() === '') {
+    console.warn('⚠️ No answer provided for synthesis, using fallback');
+    return {
+      workflowStep: 'synthesis_complete',
+      answer: 'I apologize, but I was unable to generate a proper response to your question. Please try rephrasing your question or contact support if the issue persists.',
+      currentStep: 'Response synthesis complete (fallback)',
+      metadata: {
+        ...state.metadata,
+        fallbackUsed: true,
+        synthesisReason: 'No answer provided'
+      }
+    };
+  }
+  
   return {
-    workflowStep: 'synthesis',
-    answer: state.answer || 'Response synthesized',
-    currentStep: 'Response synthesis complete'
+    workflowStep: 'synthesis_complete',
+    answer: state.answer,
+    currentStep: 'Response synthesis complete',
+    metadata: state.metadata || {},
+    sources: state.sources || [],
+    citations: state.citations || []
   };
 }
 

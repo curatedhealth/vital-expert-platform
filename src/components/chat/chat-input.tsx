@@ -51,7 +51,8 @@ export function ChatInput({
     selectedAgent,
     canSend,
     showWarning,
-    disabled
+    disabled,
+    value: value.substring(0, 50) + '...'
   });
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {

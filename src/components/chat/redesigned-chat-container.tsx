@@ -10,13 +10,18 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { cn } from '@/lib/utils';
 import { useChatStore } from '@/lib/stores/chat-store';
+import { useChatSync } from '@/hooks/use-chat-sync';
 import { MessageBubble } from './message-bubble';
 import { ReasoningDisplay } from './reasoning-display';
 import { AgentSelectionPanel } from './agent-selection-panel';
 import { ChatInput } from './chat-input';
 import { AgentPromptStarters } from './agent-prompt-starters';
+import { StateDebugger } from '@/components/debug/state-debugger';
 
 export function RedesignedChatContainer({ className }: { className?: string }) {
+  // Use the sync hook to ensure state consistency
+  useChatSync();
+  
   const {
     messages,
     input,
@@ -252,6 +257,9 @@ export function RedesignedChatContainer({ className }: { className?: string }) {
           </>
         )}
       </div>
+      
+      {/* Debug component - only in development */}
+      <StateDebugger />
     </div>
   );
 }

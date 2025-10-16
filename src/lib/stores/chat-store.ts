@@ -342,6 +342,9 @@ export interface ChatStore {
   clearReasoningEvents: () => void;
 }
 
+// Store version for migration
+const STORE_VERSION = 2;
+
 const _useChatStore = create<ChatStore>()(
   persist(
     (set, get) => ({
@@ -1975,7 +1978,7 @@ const _useChatStore = create<ChatStore>()(
     }),
     {
       name: 'chat-store',
-      version: 6, // Increment to force cache refresh - include libraryAgents in persistence
+      version: 7, // Increment to force automatic mode migration
       migrate: (persistedState: unknown, version: number) => {
         // Always force reload agents from database on version change
         if (version < 5) {
@@ -1995,12 +1998,24 @@ const _useChatStore = create<ChatStore>()(
             libraryAgents: (persistedState as any)?.libraryAgents || [], // Preserve existing library agents
           };
         }
+        // For version 7, force automatic mode and clear selected agent
+        if (version < 7) {
+          console.log('🔄 [Migration] Forcing interaction mode to automatic');
+          return {
+            ...persistedState,
+            interactionMode: 'automatic', // Force automatic mode
+            selectedAgent: null, // Clear selected agent for automatic mode
+          };
+        }
         return persistedState;
       },
       onRehydrateStorage: () => (state, store) => {
-        // Automatically load agents from database after rehydration
+        // Force interaction mode to automatic on rehydration
         if (state && store) {
-          // Load agents from database
+          console.log('🔄 [Rehydration] Setting interaction mode to automatic');
+          store.setState({ interactionMode: 'automatic' });
+          
+          // Automatically load agents from database after rehydration
           store.loadAgentsFromDatabase().then(() => {
             // After loading agents, initialize library if empty
             const currentState = store.getState();

@@ -29,7 +29,7 @@
       "@/lib/*": ["./src/lib/*"],
       "@/services/*": ["./src/services/*"],
       "@/types/*": ["./src/shared/types/*"],
-      "@/hooks/*": ["./src/shared/hooks/*"],
+      "@/hooks/*": ["./src/hooks/*"],
       "@/utils/*": ["./src/shared/utils/*"],
       "@/styles/*": ["./src/styles/*"],
       "@/agents/*": ["./src/agents/*"],

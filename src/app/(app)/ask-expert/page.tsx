@@ -154,6 +154,10 @@ export default function AskExpertPage() {
       progress: 0,
     }));
 
+    // Clear previous reasoning events and reset reasoning state
+    setReasoningEvents([]);
+    setIsReasoningActive(false);
+
     try {
       const response = await fetch('/api/ask-expert', {
         method: 'POST',
@@ -277,6 +281,25 @@ export default function AskExpertPage() {
                   progress: 100,
                   currentStep: 'Complete',
                 }));
+              } else if (data.type === 'reasoning') {
+                // Handle reasoning events for step-by-step thinking
+                console.log('🧠 [Reasoning] Received reasoning event:', data);
+                setReasoningEvents(prev => [
+                  ...prev,
+                  {
+                    id: `reasoning-${Date.now()}-${Math.random()}`,
+                    type: 'reasoning',
+                    step: data.step || 'processing',
+                    description: data.description || data.content || 'Processing...',
+                    timestamp: new Date(),
+                    data: data.data || {}
+                  }
+                ]);
+                setIsReasoningActive(true);
+              } else if (data.type === 'reasoning_done') {
+                // Reasoning complete
+                console.log('✅ [Reasoning] Reasoning process completed');
+                setIsReasoningActive(false);
               } else if (data.type === 'error') {
                 setState(prev => ({
                   ...prev,

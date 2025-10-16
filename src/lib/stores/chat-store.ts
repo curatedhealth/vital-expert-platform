@@ -5,6 +5,38 @@ import { persist } from 'zustand/middleware';
 import { useAgentsStore, type Agent as GlobalAgent } from '@/lib/stores/agents-store';
 import { retryWithExponentialBackoff, isRetryableError } from '@/lib/utils/retry';
 
+/**
+ * Format reasoning data into a readable description
+ */
+function formatReasoningDescription(data: any): string {
+  // Handle different reasoning event types
+  if (data.workflowStep === 'routing') {
+    return '🚦 Routing request in automatic mode';
+  }
+  
+  if (data.workflowStep === 'agent_selected') {
+    const agentName = data.selectedAgent?.display_name || 
+                     data.selectedAgent?.name || 
+                     'an expert';
+    return `🤖 ${agentName} is working on your request`;
+  }
+  
+  if (data.workflowStep === 'processing') {
+    return '📊 Analyzing your query and preparing response';
+  }
+  
+  if (data.workflowStep === 'response_generated') {
+    return '✏️ Generating detailed response';
+  }
+  
+  // Fallback to any description provided
+  if (data.description) return data.description;
+  if (data.content) return data.content;
+  
+  // Last resort: show the workflow step
+  return `Processing: ${data.workflowStep || 'unknown'}`;
+}
+
 export interface Agent {
   id: string;
   name: string;
@@ -819,21 +851,33 @@ const _useChatStore = create<ChatStore>()(
                   console.log('📥 [SSE] Parsed data:', { type: data.type, hasContent: !!data.content, keys: Object.keys(data) });
 
                   if (data.type === 'reasoning') {
-                    // Track reasoning events for dynamic display
+                    console.log('🧠 [Raw Reasoning Data]:', {
+                      type: data.type,
+                      step: data.step,
+                      workflowStep: data.workflowStep,
+                      description: data.description,
+                      content: data.content,
+                      fullData: data
+                    });
+
+                    // Transform the reasoning event to match ReasoningDisplay expectations
+                    const reasoningEvent = {
+                      id: `reasoning-${Date.now()}-${Math.random()}`,
+                      type: data.type || 'reasoning',
+                      step: data.step || data.workflowStep || 'processing',
+                      description: data.description || data.content || formatReasoningDescription(data),
+                      timestamp: new Date(),
+                      data: data.data || data
+                    };
+
+                    console.log('🧠 [Reasoning Event]:', reasoningEvent);
+
                     set((state) => ({
                       liveReasoning: state.liveReasoning
-                        ? `${state.liveReasoning}\n${data.description || data.content || ''}`
-                        : (data.description || data.content || ''),
+                        ? `${state.liveReasoning}\n${reasoningEvent.description}`
+                        : reasoningEvent.description,
                       isReasoningActive: true,
-                      reasoningEvents: [
-                        ...state.reasoningEvents,
-                        {
-                          type: data.type,
-                          step: data.step || 'processing',
-                          description: data.description || data.content || 'Processing...',
-                          data: data.data || {}
-                        }
-                      ]
+                      reasoningEvents: [...state.reasoningEvents, reasoningEvent]
                     }));
                   } else if (data.type === 'reasoning_done') {
                     // Reasoning complete, store in message metadata

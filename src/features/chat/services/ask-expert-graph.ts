@@ -12,7 +12,7 @@ import {
   synthesizeResponseNode,
   getStepDescription,
   type ToolOption
-} from './workflow-nodes';
+} from './workflow-nodes-fixed';
 
 // Initialize Supabase client
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;

@@ -42,6 +42,8 @@ export function RedesignedChatContainer({ className }: { className?: string }) {
     selectAgent,
     cleanup,
     isHydrated,
+    reasoningEvents,        // ⬅️ ADD THIS
+    isReasoningActive,      // ⬅️ ADD THIS
   } = useChatStore();
 
   // Wait for hydration before accessing modes
@@ -250,7 +252,10 @@ export function RedesignedChatContainer({ className }: { className?: string }) {
                     agent={selectedAgent}
                   />
                 )}
-                <ReasoningDisplay />
+                <ReasoningDisplay
+                  reasoningEvents={reasoningEvents}
+                  isActive={isReasoningActive}
+                />
               </div>
             </ScrollArea>
 

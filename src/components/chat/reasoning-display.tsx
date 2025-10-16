@@ -42,7 +42,11 @@ export function ReasoningDisplay({
   }
   
   return (
-    <Card className={cn("mt-4 border-l-4 border-l-blue-500", className)}>
+    <Card className={cn(
+      "mt-4 border-l-4 border-l-blue-500 bg-blue-50/50 dark:bg-blue-950/20",
+      "animate-pulse-subtle",
+      className
+    )}>
       <CardHeader
         className="cursor-pointer"
         onClick={() => setIsExpanded(!isExpanded)}

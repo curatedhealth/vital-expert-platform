@@ -99,7 +99,7 @@ export function RedesignedChatContainer({ className }: { className?: string }) {
     } catch (error) {
       console.error('Send message error:', error);
     }
-  }, [input, isLoading, interactionMode, selectedAgent, sendMessage, setInput, clearError]);
+  }, [input, isLoading, isAutomaticMode, selectedAgent, sendMessage, setInput, clearError]);
 
   const handleRetry = React.useCallback(async () => {
     if (!(messages || []).length) return;

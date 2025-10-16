@@ -675,9 +675,8 @@ const _useChatStore = create<ChatStore>()(
           const controller = new AbortController();
           set({ abortController: controller });
 
-          // Get interaction mode to determine routing
-          const { interactionMode, autonomousMode } = get();
-          const useAutomaticRouting = interactionMode === 'automatic';
+          // Get per-session modes for routing
+          const useAutomaticRouting = isAutomaticMode;
 
           // Determine API endpoint based on autonomous mode
           const apiEndpoint = autonomousMode ? '/api/chat/autonomous' : '/api/chat';
@@ -694,8 +693,10 @@ const _useChatStore = create<ChatStore>()(
               content: msg.content
             })),
             ragEnabled: selectedAgent?.ragEnabled || false,
-            interactionMode: interactionMode, // Pass the actual interaction mode
-            autonomousMode: autonomousMode, // Pass the autonomous mode
+            isAutomaticMode: isAutomaticMode, // Pass per-session mode
+            isAutonomousMode: isAutonomousMode, // Pass per-session mode
+            interactionMode: isAutomaticMode ? 'automatic' : 'manual', // Legacy compatibility
+            autonomousMode: isAutonomousMode, // Legacy compatibility
             selectedTools: get().selectedTools, // Pass selected tools
             automaticRouting: useAutomaticRouting, // Enable intelligent agent routing for automatic mode
             useIntelligentRouting: useAutomaticRouting
@@ -708,8 +709,10 @@ const _useChatStore = create<ChatStore>()(
               name: selectedAgent.name,
               display_name: selectedAgent.display_name
             } : null,
-            interactionMode,
-            autonomousMode,
+            isAutomaticMode,
+            isAutonomousMode,
+            interactionMode: isAutomaticMode ? 'automatic' : 'manual', // Legacy compatibility
+            autonomousMode: isAutonomousMode, // Legacy compatibility
             sessionId: updatedCurrentChat?.id || 'unknown'
           });
 
@@ -1953,8 +1956,10 @@ const _useChatStore = create<ChatStore>()(
             userId: get().conversationContext?.userId || 'anonymous',
             sessionId: get().conversationContext?.sessionId || `session-${Date.now()}`,
             agent: input.agent,
-            interactionMode: get().interactionMode,
-            autonomousMode: get().autonomousMode,
+            isAutomaticMode: getCurrentChatModes().isAutomaticMode,
+            isAutonomousMode: getCurrentChatModes().isAutonomousMode,
+            interactionMode: getCurrentChatModes().isAutomaticMode ? 'automatic' : 'manual', // Legacy compatibility
+            autonomousMode: getCurrentChatModes().isAutonomousMode, // Legacy compatibility
             selectedTools: get().selectedTools,
             chatHistory: get().messages
           })
@@ -1984,13 +1989,14 @@ const _useChatStore = create<ChatStore>()(
 
     // Validation helper
     validateCanSend: () => {
-      const { selectedAgent, interactionMode, isLoading } = get();
+      const { selectedAgent, currentChat, isLoading } = get();
+      const { isAutomaticMode } = currentChat ? getCurrentChatModes() : { isAutomaticMode: true };
       
       if (isLoading) {
         return { valid: false, reason: 'Already processing a message' };
       }
       
-      if (interactionMode === 'manual' && !selectedAgent) {
+      if (!isAutomaticMode && !selectedAgent) {
         return { 
           valid: false, 
           reason: 'Please select an AI agent in Manual Mode' 

@@ -54,7 +54,8 @@ export function ChatInput({
 
   // Debug logging
   console.log('ChatInput Debug:', {
-    interactionMode,
+    isAutomaticMode,
+    isAutonomousMode,
     hasSelectedAgent,
     selectedAgent,
     canSend,

@@ -28,17 +28,22 @@ export function EnhancedChatContainer({ className }: EnhancedChatContainerProps)
     showAgentSelection,
     selectAgentFromSuggestions,
     hideAgentSelection,
-    interactionMode,
+    currentChat,
+    getCurrentChatModes,
     selectedAgent
   } = useChatStore();
 
+  // Get per-session modes
+  const { isAutomaticMode, isAutonomousMode } = getCurrentChatModes();
+
   // Debug logging to see state values
   console.log('🔍 [EnhancedChatContainer] State Debug:', {
-    interactionMode,
+    isAutomaticMode,
+    isAutonomousMode,
     selectedAgent: selectedAgent?.name || 'None',
     hasSelectedAgent: !!selectedAgent,
-    shouldShowWarning: interactionMode === 'manual' && !selectedAgent,
-    shouldShowAutoInfo: interactionMode === 'automatic'
+    shouldShowWarning: !isAutomaticMode && !selectedAgent,
+    shouldShowAutoInfo: isAutomaticMode
   });
 
   const [input, setInput] = useState('');
@@ -172,7 +177,7 @@ export function EnhancedChatContainer({ className }: EnhancedChatContainerProps)
       {/* Input Area */}
       <div className="border-t p-4">
         {/* Manual Mode Warning - Only show in manual mode without agent */}
-        {interactionMode === 'manual' && !selectedAgent && (
+        {!isAutomaticMode && !selectedAgent && (
           <div className="mb-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
             <div className="flex items-center space-x-2">
               <div className="text-yellow-600">⚠️</div>
@@ -184,7 +189,7 @@ export function EnhancedChatContainer({ className }: EnhancedChatContainerProps)
         )}
         
         {/* Automatic Mode Info - Only show in automatic mode */}
-        {interactionMode === 'automatic' && (
+        {isAutomaticMode && (
           <div className="mb-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
             <div className="flex items-center space-x-2">
               <div className="text-blue-600">🤖</div>
@@ -207,24 +212,24 @@ export function EnhancedChatContainer({ className }: EnhancedChatContainerProps)
             }}
             onKeyDown={handleKeyDown}
             placeholder={
-              interactionMode === 'manual' && !selectedAgent 
+              !isAutomaticMode && !selectedAgent 
                 ? "Please select an AI agent first..." 
-                : interactionMode === 'automatic'
+                : isAutomaticMode
                 ? "Ask anything - AI will select the best agent automatically..."
                 : "Ask about digital health, reimbursement, clinical research..."
             }
             className={`min-h-[40px] max-h-[120px] resize-none ${
-              interactionMode === 'manual' && !selectedAgent 
+              !isAutomaticMode && !selectedAgent 
                 ? 'border-yellow-300 bg-yellow-50' 
-                : interactionMode === 'automatic'
+                : isAutomaticMode
                 ? 'border-blue-300 bg-blue-50'
                 : ''
             }`}
-            disabled={isLoading || (interactionMode === 'manual' && !selectedAgent)}
+            disabled={isLoading || (!isAutomaticMode && !selectedAgent)}
           />
           <Button
             type="submit"
-            disabled={!input.trim() || isLoading || (interactionMode === 'manual' && !selectedAgent)}
+            disabled={!input.trim() || isLoading || (!isAutomaticMode && !selectedAgent)}
             className="px-4"
           >
             {isLoading ? (

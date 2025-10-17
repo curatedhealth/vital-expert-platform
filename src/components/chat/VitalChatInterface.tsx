@@ -481,7 +481,7 @@ Would you like me to dive deeper into any of these areas? I can also generate sp
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {CHAT_MODES.map(mode => (
+                {chatModes.map(mode => (
                   <SelectItem key={mode.id} value={mode.id}>
                     <div className="flex items-center gap-3">
                       <span className="text-base">{mode.icon}</span>

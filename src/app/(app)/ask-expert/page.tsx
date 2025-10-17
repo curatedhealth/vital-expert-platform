@@ -82,7 +82,7 @@ export default function AskExpertPage() {
     console.log('🧠 [Reasoning Debug] State changed:', {
       reasoningEventsCount: reasoningEvents.length,
       isReasoningActive,
-      reasoningEvents: reasoningEvents.map(e => ({ step: e.step, type: e.type, status: e.status }))
+      reasoningEvents: (reasoningEvents || []).map(e => ({ step: e.step, type: e.type, status: e.status }))
     });
   }, [reasoningEvents, isReasoningActive]);
 
@@ -188,7 +188,7 @@ export default function AskExpertPage() {
           },
           userId: user?.id || 'anonymous',
           sessionId: state.sessionId,
-          chatHistory: state.messages.map(msg => ({
+          chatHistory: (state.messages || []).map(msg => ({
             role: msg.role,
             content: msg.content,
           })),
@@ -482,7 +482,7 @@ export default function AskExpertPage() {
               </p>
             </div>
           ) : (
-            state.messages.map((message) => {
+            (state.messages || []).map((message) => {
               console.log('🎨 Rendering message:', {
                 id: message.id,
                 role: message.role,
@@ -522,7 +522,7 @@ export default function AskExpertPage() {
                         <div className="mt-3 pt-3 border-t border-gray-200">
                           <h4 className="text-xs font-medium text-gray-700 mb-2">Sources:</h4>
                           <div className="space-y-1">
-                            {message.metadata.sources.slice(0, 3).map((source: any, index: number) => (
+                            {(message.metadata?.sources || []).slice(0, 3).map((source: any, index: number) => (
                               <div key={index} className="text-xs text-gray-600">
                                 <span className="font-medium">[{index + 1}]</span> {source.title}
                               </div>

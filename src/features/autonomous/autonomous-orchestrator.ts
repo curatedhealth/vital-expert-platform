@@ -5,6 +5,7 @@ import { taskGenerator, TaskGenerationResult } from './task-generator';
 import { taskExecutor, TaskExecutionResult, TaskExecutionContext } from './task-executor';
 import { memoryManager } from './memory-manager';
 import { evidenceVerifier } from './evidence-verifier';
+import { createAutonomousVERIFYIntegration, AutonomousVERIFYIntegration, VERIFYValidationResult } from './verify-protocol-integration';
 
 export interface AutonomousExecutionOptions {
   mode: 'manual' | 'automatic';
@@ -44,9 +45,11 @@ export class AutonomousOrchestrator extends EventEmitter {
     state: Partial<typeof AutonomousState.State>;
     options: AutonomousExecutionOptions;
   } | null = null;
+  private verifyIntegration: AutonomousVERIFYIntegration;
 
   constructor() {
     super();
+    this.verifyIntegration = createAutonomousVERIFYIntegration();
   }
 
   /**
@@ -527,15 +530,25 @@ export class AutonomousOrchestrator extends EventEmitter {
   private async generateFinalResult(executionResult: any): Promise<AutonomousExecutionResult> {
     const { goal, completedTasks, evidence, verificationProofs, totalIterations, totalCost, totalDuration } = executionResult;
 
-    console.log('🔍 [AutonomousOrchestrator] Generating final result with evidence verification');
+    console.log('🔍 [AutonomousOrchestrator] Generating final result with evidence verification and VERIFY protocol');
 
-    // Verify all evidence
+    // Apply VERIFY protocol validation
+    const verifyValidation = await this.verifyIntegration.applyVERIFYProtocol(evidence, 'medical');
+    console.log('🔬 [AutonomousOrchestrator] VERIFY protocol validation:', {
+      isValid: verifyValidation.isValid,
+      confidence: verifyValidation.confidence,
+      quality: verifyValidation.evidenceQuality,
+      requiresExpertReview: verifyValidation.requiresExpertReview
+    });
+
+    // Verify all evidence with enhanced verification
     const verifiedEvidence = evidence.map(ev => {
       const verification = evidenceVerifier.verifyEvidence(ev);
       return {
         ...ev,
         verificationStatus: verification.verified ? 'verified' : 'unverified',
-        confidence: verification.confidence
+        confidence: verification.confidence,
+        verifyProtocolValid: verifyValidation.isValid
       };
     });
 
@@ -545,17 +558,27 @@ export class AutonomousOrchestrator extends EventEmitter {
     // Generate reasoning proof
     const reasoningProof = evidenceVerifier.generateReasoningProof(completedTasks, goal);
 
-    // Update memory with final results
+    // Generate VERIFY protocol recommendations
+    const verifyRecommendations = this.verifyIntegration.generateVERIFYRecommendations(verifyValidation);
+    const verifySummary = this.verifyIntegration.createVERIFYSummary(verifyValidation);
+
+    // Update memory with final results including VERIFY protocol
     const finalInsights = [
       `Goal completed: ${goal.description}`,
       `Tasks completed: ${completedTasks.length}`,
       `Evidence collected: ${verifiedEvidence.length}`,
-      `Confidence: ${(evidenceSynthesis.confidence * 100).toFixed(1)}%`
+      `Confidence: ${(evidenceSynthesis.confidence * 100).toFixed(1)}%`,
+      `VERIFY Protocol: ${verifyValidation.isValid ? 'PASSED' : 'FAILED'}`,
+      `Evidence Quality: ${verifyValidation.evidenceQuality.toUpperCase()}`,
+      ...verifyRecommendations
     ];
 
     memoryManager.updateWorkingMemory({
       insights: finalInsights,
-      facts: [`Goal achieved: ${goal.description}`]
+      facts: [
+        `Goal achieved: ${goal.description}`,
+        `VERIFY Protocol Status: ${verifySummary}`
+      ]
     });
 
     // Calculate metrics
@@ -567,8 +590,9 @@ export class AutonomousOrchestrator extends EventEmitter {
       ? goal.successCriteria.filter(c => c.achieved).length / goal.successCriteria.length
       : 0;
 
-    // Generate insights
+    // Generate insights including VERIFY protocol results
     const insights = this.generateInsights(completedTasks, verifiedEvidence);
+    insights.push(verifySummary);
 
     console.log('✅ [AutonomousOrchestrator] Final result generated with evidence verification');
 

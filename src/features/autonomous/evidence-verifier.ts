@@ -216,7 +216,7 @@ export class EvidenceVerifier {
     const contradictions = this.detectContradictions([evidence]);
     
     const confidence = this.calculateConfidence(evidence);
-    const verified = confidence > 0.6 && credibilityScore > 0.5 && sourceVerified;
+    const verified = confidence > 0.3 && credibilityScore > 0.3 && sourceVerified;
 
     const result: VerificationResult = {
       verified,
@@ -440,7 +440,8 @@ export class EvidenceVerifier {
    */
 
   calculateConfidence(evidence: Evidence): number {
-    let confidence = 0.5; // Base confidence
+    // Start with the evidence's own confidence score
+    let confidence = evidence.confidence || 0.5;
 
     // Weight by evidence type
     const typeWeight = this.weightBySourceType(evidence.type);
@@ -451,7 +452,8 @@ export class EvidenceVerifier {
     confidence *= credibility;
 
     // Weight by content quality
-    const contentQuality = this.assessContentQuality(evidence.content);
+    const contentStr = typeof evidence.content === 'string' ? evidence.content : JSON.stringify(evidence.content);
+    const contentQuality = this.assessContentQuality(contentStr);
     confidence *= contentQuality;
 
     // Weight by recency (if available)

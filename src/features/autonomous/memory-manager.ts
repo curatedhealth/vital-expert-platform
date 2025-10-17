@@ -3,7 +3,7 @@ import { WorkingMemory, EpisodicMemory, Concept, ToolCombination, Task, Complete
 export interface MemoryStats {
   workingMemorySize: number;
   episodicMemoryCount: number;
-  semanticMemoryCount: number;
+  semanticMemoryConceptCount: number;
   toolMemoryCount: number;
   lastUpdated: Date;
 }
@@ -54,10 +54,10 @@ export class MemoryManager {
   updateWorkingMemory(update: Partial<WorkingMemory>): WorkingMemory {
     console.log('🧠 [MemoryManager] Updating working memory');
     
+    // Merge with existing memory (replace arrays, not append)
     this.workingMemory = {
-      facts: [...(this.workingMemory.facts || []), ...(update.facts || [])],
-      insights: [...(this.workingMemory.insights || []), ...(update.insights || [])],
-      hypotheses: [...(this.workingMemory.hypotheses || []), ...(update.hypotheses || [])],
+      ...this.workingMemory,
+      ...update,
       lastUpdated: new Date()
     };
 
@@ -180,6 +180,41 @@ export class MemoryManager {
   createConceptAssociation(conceptA: string, conceptB: string, strength: number): void {
     console.log('🔗 [MemoryManager] Creating concept association:', conceptA, '->', conceptB);
 
+    const conceptAObj = this.semanticMemory.get(conceptA);
+    const conceptBObj = this.semanticMemory.get(conceptB);
+
+    if (conceptAObj && conceptBObj) {
+      // Add association to concept A
+      if (!conceptAObj.associations) {
+        conceptAObj.associations = [];
+      }
+      if (!conceptAObj.associations.some(assoc => assoc.targetId === conceptB)) {
+        conceptAObj.associations.push({
+          targetId: conceptB,
+          type: 'related',
+          strength,
+          createdAt: new Date()
+        });
+      }
+
+      // Add association to concept B
+      if (!conceptBObj.associations) {
+        conceptBObj.associations = [];
+      }
+      if (!conceptBObj.associations.some(assoc => assoc.targetId === conceptA)) {
+        conceptBObj.associations.push({
+          targetId: conceptA,
+          type: 'related',
+          strength,
+          createdAt: new Date()
+        });
+      }
+
+      // Update the concepts in memory
+      this.semanticMemory.set(conceptA, conceptAObj);
+      this.semanticMemory.set(conceptB, conceptBObj);
+    }
+
     this.conceptAssociations.push({
       conceptA,
       conceptB,
@@ -202,7 +237,7 @@ export class MemoryManager {
         concept,
         relevance: this.calculateConceptRelevance(queryLower, concept)
       }))
-      .filter(item => item.relevance > 0.2)
+      .filter(item => item.relevance > 0.1)
       .sort((a, b) => b.relevance - a.relevance)
       .map(item => item.concept);
 
@@ -217,10 +252,37 @@ export class MemoryManager {
   recordToolUse(toolCombo: ToolCombination): void {
     console.log('🔧 [MemoryManager] Recording tool use:', toolCombo.tools.join(', '));
 
-    this.toolMemory.push({
-      ...toolCombo,
-      timestamp: new Date()
-    });
+    // Check if this tool combination already exists
+    const existingIndex = this.toolMemory.findIndex(
+      existing => 
+        JSON.stringify(existing.tools.sort()) === JSON.stringify(toolCombo.tools.sort()) &&
+        existing.taskType === toolCombo.taskType
+    );
+
+    if (existingIndex > -1) {
+      // Update existing tool combination
+      const existing = this.toolMemory[existingIndex];
+      existing.usageCount = (existing.usageCount || 0) + 1;
+      existing.successRate = ((existing.successRate * (existing.usageCount - 1)) + toolCombo.successRate) / existing.usageCount;
+      existing.avgCost = ((existing.avgCost * (existing.usageCount - 1)) + toolCombo.avgCost) / existing.usageCount;
+      existing.avgDuration = ((existing.avgDuration * (existing.usageCount - 1)) + toolCombo.avgDuration) / existing.usageCount;
+      existing.timestamp = new Date();
+      
+      console.log('📊 [MemoryManager] Updated existing tool combination:', {
+        tools: existing.tools,
+        usageCount: existing.usageCount,
+        successRate: existing.successRate
+      });
+    } else {
+      // Add new tool combination
+      this.toolMemory.push({
+        ...toolCombo,
+        usageCount: toolCombo.usageCount || 1,
+        timestamp: new Date()
+      });
+      
+      console.log('➕ [MemoryManager] Added new tool combination:', toolCombo.tools);
+    }
 
     // Keep only recent tool combinations
     if (this.toolMemory.length > 200) {
@@ -269,6 +331,7 @@ export class MemoryManager {
       };
     }
 
+    const totalUsageCount = toolUses.reduce((sum, tool) => sum + (tool.usageCount || 1), 0);
     const successRate = toolUses.reduce((sum, tool) => sum + tool.successRate, 0) / toolUses.length;
     const avgCost = toolUses.reduce((sum, tool) => sum + tool.avgCost, 0) / toolUses.length;
     const avgDuration = toolUses.reduce((sum, tool) => sum + tool.avgDuration, 0) / toolUses.length;
@@ -281,7 +344,7 @@ export class MemoryManager {
       successRate,
       avgCost,
       avgDuration,
-      usageCount: toolUses.length,
+      usageCount: totalUsageCount,
       lastUsed: new Date(lastUsed)
     };
   }
@@ -330,7 +393,7 @@ export class MemoryManager {
                         this.workingMemory.insights.length + 
                         this.workingMemory.hypotheses.length,
       episodicMemoryCount: this.episodicMemory.length,
-      semanticMemoryCount: this.semanticMemory.size,
+      semanticMemoryConceptCount: this.semanticMemory.size,
       toolMemoryCount: this.toolMemory.length,
       lastUpdated: new Date()
     };

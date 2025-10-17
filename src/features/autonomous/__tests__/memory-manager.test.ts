@@ -149,7 +149,10 @@ describe('Memory Manager Unit Tests', () => {
       manager.addConcept(concept);
       
       const retrieved = manager.getConcept('concept-1');
-      expect(retrieved).toEqual(concept);
+      expect(retrieved).toEqual({
+        ...concept,
+        lastUpdated: expect.any(Date)
+      });
     });
 
     it('should create concept associations', () => {

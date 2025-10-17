@@ -998,6 +998,49 @@ const _useChatStore = create<ChatStore>()(
                     // User needs to select an agent
                     console.log('⏳ Waiting for user agent selection...');
                     // Don't close the stream, just wait
+                  } else if (data.type === 'task_completed') {
+                    console.log('✅ [SSE] Task completed:', data);
+                    // Stream task completion as content
+                    if (data.result && data.result.response) {
+                      const contentEvent = {
+                        type: 'content',
+                        content: data.result.response,
+                        timestamp: new Date().toISOString()
+                      };
+                      // Process as content event
+                      if (contentEvent.content) {
+                        set((state) => ({
+                          liveReasoning: state.liveReasoning + contentEvent.content,
+                          isReasoningActive: false
+                        }));
+                      }
+                    }
+                  } else if (data.type === 'agent_selection') {
+                    console.log('🤖 [SSE] Agent selected:', data);
+                    // Handle agent selection event
+                    if (data.data && data.data.agent) {
+                      set((state) => ({
+                        selectedAgent: data.data.agent,
+                        isReasoningActive: false
+                      }));
+                    }
+                  } else if (data.type === 'task_planning') {
+                    console.log('📋 [SSE] Task planning:', data);
+                    // Handle task planning event
+                    if (data.data && data.data.tasks) {
+                      const reasoningEvent = {
+                        id: `reasoning-${Date.now()}-${Math.random()}`,
+                        type: 'reasoning' as const,
+                        step: 'task_planning',
+                        description: `Created ${data.data.tasks.length} tasks: ${data.data.tasks.map((t: any) => t.description).join(', ')}`,
+                        timestamp: new Date(),
+                        data: data.data
+                      };
+                      set((state) => ({
+                        reasoningEvents: [...state.reasoningEvents, reasoningEvent],
+                        isReasoningActive: true
+                      }));
+                    }
                   } else if (data.type === 'error') {
                     console.error('❌ [SSE] Error received:', data.error || data.content || 'Unknown error');
                     throw new Error(data.error || data.content || 'Unknown error');

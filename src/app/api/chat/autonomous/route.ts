@@ -92,6 +92,16 @@ export async function POST(request: NextRequest) {
             timestamp: new Date().toISOString()
           };
           controller.enqueue(encoder.encode(`data: ${JSON.stringify(event)}\n\n`));
+          
+          // Also send content for streaming if there's a response
+          if (task.result && task.result.response) {
+            const contentEvent = {
+              type: 'content',
+              content: task.result.response,
+              timestamp: new Date().toISOString()
+            };
+            controller.enqueue(encoder.encode(`data: ${JSON.stringify(contentEvent)}\n\n`));
+          }
         });
 
         orchestrator.on('agent:selected', (agent) => {

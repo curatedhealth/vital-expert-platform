@@ -31,20 +31,20 @@ export async function POST(request: NextRequest) {
           type: 'reasoning',
           step: 1,
           status: 'in_progress',
-          description: 'Analyzing your request and developing a comprehensive strategy...',
+          description: `Analyzing your request for "${query}" and developing a comprehensive strategy...`,
           timestamp: new Date().toISOString()
         };
         
         console.log('🧠 [API] Sending initial reasoning step:', initialStep);
         controller.enqueue(encoder.encode(`data: ${JSON.stringify(initialStep)}\n\n`));
 
-        // Simulate reasoning steps with delays
+        // Simulate reasoning steps with delays - DYNAMIC BASED ON QUERY
         const reasoningSteps = [
           {
             type: 'reasoning',
             step: 2,
             status: 'in_progress',
-            description: 'Researching current ADHD digital health landscape...',
+            description: `Researching current ${query} digital health landscape...`,
             timestamp: new Date().toISOString()
           },
           {
@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
             type: 'reasoning',
             step: 5,
             status: 'completed',
-            description: 'Synthesizing comprehensive digital health strategy...',
+            description: `Synthesizing comprehensive digital health strategy for ${query}...`,
             timestamp: new Date().toISOString()
           }
         ];
@@ -83,11 +83,11 @@ export async function POST(request: NextRequest) {
             // Wait a bit before starting content after reasoning is complete
             console.log('🧠 [API] All reasoning steps complete, starting content in 2 seconds...');
             setTimeout(() => {
-              // Send the final content
-            const finalContent = `# Digital Health Strategy for ADHD
+              // Send the final content - USE ACTUAL USER QUERY
+            const finalContent = `# Digital Health Strategy for ${query}
 
 ## Executive Summary
-Based on your request for a digital health strategy for ADHD, I've developed a comprehensive approach that addresses the unique challenges and opportunities in this space.
+Based on your request for a digital health strategy for ${query}, I've developed a comprehensive approach that addresses the unique challenges and opportunities in this space.
 
 ## Key Strategic Pillars
 
@@ -129,11 +129,11 @@ Based on your request for a digital health strategy for ADHD, I've developed a c
 - Patient engagement programs
 
 ## Success Metrics
-- **Clinical**: 20% improvement in ADHD symptom management
+- **Clinical**: 20% improvement in ${query} symptom management
 - **Commercial**: $10M ARR within 24 months
 - **Regulatory**: FDA clearance within 18 months
 
-This strategy positions your digital health solution for success in the ADHD market while ensuring regulatory compliance and clinical efficacy.`;
+This strategy positions your digital health solution for success in the ${query} market while ensuring regulatory compliance and clinical efficacy.`;
 
             // Send content in chunks for streaming effect
             const contentChunks = finalContent.split('\n');

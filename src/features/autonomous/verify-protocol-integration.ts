@@ -122,14 +122,14 @@ export class AutonomousVERIFYIntegration {
     }
 
     // 3. Validate content quality (VERIFY: Fact-check)
-    const contentQuality = this.assessContentQuality(evidence.content);
+    const contentQuality = this.assessContentQuality(evidence.content || '');
     if (contentQuality < 0.6) {
       violations.push(`Content quality below threshold: ${contentQuality.toFixed(2)}`);
       recommendations.push('Ensure content includes specific data, statistics, and clinical details');
     }
 
     // 4. Validate citations (VERIFY: Evidence)
-    if (evidence.citations.length === 0) {
+    if (!evidence.citations || evidence.citations.length === 0) {
       violations.push('No citations provided for medical evidence');
       recommendations.push('Include proper citations in required format');
     }

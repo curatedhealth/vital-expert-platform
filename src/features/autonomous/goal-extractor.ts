@@ -87,7 +87,8 @@ export class GoalExtractor {
       const response = await this.llm.invoke(prompt);
       
       // Parse the response using structured output
-      const extracted = await this.parseStructuredResponse(response.content);
+      const content = response.content || response.text || response;
+      const extracted = await this.parseStructuredResponse(content);
       
       console.log('✅ [GoalExtractor] Goal extracted successfully:', {
         description: extracted.goal.description.substring(0, 100),

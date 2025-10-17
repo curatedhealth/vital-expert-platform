@@ -20,6 +20,13 @@ function moveAdminPages() {
     fs.renameSync(adminDir, path.join(tempAdminDir, 'admin'));
     console.log('✅ Admin pages moved to temp directory');
   }
+  
+  // Also move the (app)/admin directory if it exists
+  const appAdminDir = path.join(__dirname, '..', 'src', 'app', '(app)', 'admin');
+  if (fs.existsSync(appAdminDir)) {
+    fs.renameSync(appAdminDir, path.join(tempAdminDir, 'app-admin'));
+    console.log('✅ App admin pages moved to temp directory');
+  }
 }
 
 function restoreAdminPages() {
@@ -32,6 +39,16 @@ function restoreAdminPages() {
     }
     fs.renameSync(path.join(tempAdminDir, 'admin'), adminDir);
     console.log('✅ Admin pages restored');
+  }
+  
+  // Restore app admin directory
+  const appAdminDir = path.join(__dirname, '..', 'src', 'app', '(app)', 'admin');
+  if (fs.existsSync(path.join(tempAdminDir, 'app-admin'))) {
+    if (fs.existsSync(appAdminDir)) {
+      fs.rmSync(appAdminDir, { recursive: true, force: true });
+    }
+    fs.renameSync(path.join(tempAdminDir, 'app-admin'), appAdminDir);
+    console.log('✅ App admin pages restored');
   }
   
   // Clean up temp directory

@@ -7,8 +7,38 @@ import { taskGenerator } from '../task-generator';
 import { taskExecutor } from '../task-executor';
 
 // Mock external dependencies
-jest.mock('@langchain/openai');
-jest.mock('../chat/services/enhanced-langchain-service');
+jest.mock('@langchain/openai', () => ({
+  ChatOpenAI: jest.fn().mockImplementation(() => ({
+    invoke: jest.fn().mockResolvedValue({
+      content: JSON.stringify({
+        goal: {
+          id: 'test-goal-1',
+          description: 'Research the latest treatments for Type 2 diabetes',
+          successCriteria: [
+            { id: 'criteria-1', description: 'Find 3+ recent studies', achieved: false },
+            { id: 'criteria-2', description: 'Identify treatment efficacy', achieved: false }
+          ],
+          priority: 'high',
+          domain: 'clinical',
+          estimatedDuration: 30,
+          requiredTools: ['pubmed', 'clinical_trials_search'],
+          constraints: ['peer-reviewed sources only']
+        },
+        complexity: {
+          score: 0.7,
+          factors: ['multiple data sources', 'clinical expertise required'],
+          estimatedTasks: 5
+        },
+        context: {
+          domain: 'clinical',
+          subdomain: 'endocrinology',
+          urgency: 'medium',
+          stakeholders: ['clinicians', 'researchers']
+        }
+      })
+    })
+  }))
+}));
 
 describe('Autonomous Agent Integration Tests', () => {
   beforeEach(() => {

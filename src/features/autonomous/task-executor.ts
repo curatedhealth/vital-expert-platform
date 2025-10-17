@@ -5,8 +5,8 @@ import { memoryManager } from './memory-manager';
 import { evidenceVerifier } from './evidence-verifier';
 
 // Import existing VITAL tools
-import { fdaDatabaseTool, fdaGuidanceTool, fdaRegulatoryCalculatorTool } from '../chat/tools/fda-tools';
-import { clinicalTrialsSearchTool, studyDesignTool, endpointSelectionTool } from '../chat/tools/clinical-trials-tools';
+import { fdaDatabaseTool, fdaGuidanceTool, regulatoryCalculatorTool } from '../chat/tools/fda-tools';
+import { clinicalTrialsSearchTool, studyDesignTool, endpointSelectorTool } from '../chat/tools/clinical-trials-tools';
 import { tavilySearchTool, wikipediaTool, pubmedSearchTool, arxivSearchTool } from '../chat/tools/external-api-tools';
 
 // Tool registry for easy access
@@ -14,12 +14,12 @@ const TOOL_REGISTRY = {
   // FDA Tools
   'fda_database_search': fdaDatabaseTool,
   'fda_guidance_lookup': fdaGuidanceTool,
-  'fda_regulatory_calculator': fdaRegulatoryCalculatorTool,
+  'fda_regulatory_calculator': regulatoryCalculatorTool,
   
   // Clinical Trials Tools
   'clinical_trials_search': clinicalTrialsSearchTool,
   'study_design': studyDesignTool,
-  'endpoint_selection': endpointSelectionTool,
+  'endpoint_selection': endpointSelectorTool,
   
   // External API Tools
   'web_search': tavilySearchTool,

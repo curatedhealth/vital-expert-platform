@@ -1,11 +1,13 @@
 import { EventEmitter } from 'events';
-import { Goal, Task, CompletedTask, AutonomousState } from './autonomous-state';
+import { Goal, Task, CompletedTask, AutonomousState, AutonomousStateManager } from './autonomous-state';
 import { goalExtractor, GoalExtractionResult } from './goal-extractor';
 import { taskGenerator, TaskGenerationResult } from './task-generator';
 import { taskExecutor, TaskExecutionResult, TaskExecutionContext } from './task-executor';
 import { memoryManager } from './memory-manager';
 import { evidenceVerifier } from './evidence-verifier';
 import { createAutonomousVERIFYIntegration, AutonomousVERIFYIntegration, VERIFYValidationResult } from './verify-protocol-integration';
+import { performanceOptimizer } from './performance-optimizer';
+import { monitoringSystem } from './monitoring-system';
 
 export interface AutonomousExecutionOptions {
   mode: 'manual' | 'automatic';
@@ -64,34 +66,69 @@ export class AutonomousOrchestrator extends EventEmitter {
     console.log(`🎯 Mode: ${options.mode}`);
 
     this.isRunning = true;
-    this.emit('start', { userInput, options });
+      this.emit('start', { userInput, options });
+
+      // Start monitoring
+      const executionId = `exec_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      monitoringSystem.trackExecutionStart(executionId, this.createFallbackGoal(userInput));
 
     try {
       // Step 1: Extract and validate goal
+      console.log('🔍 [AutonomousOrchestrator] Step 1: Extracting goal...');
       const goalExtraction = await this.extractAndValidateGoal(userInput, options);
+      console.log('✅ [AutonomousOrchestrator] Goal extraction result:', {
+        hasGoal: !!goalExtraction.goal,
+        hasComplexity: !!goalExtraction.complexity,
+        hasContext: !!goalExtraction.context
+      });
+      
       const goal = this.convertToGoal(goalExtraction);
+      console.log('✅ [AutonomousOrchestrator] Converted goal:', {
+        id: goal.id,
+        description: goal.description?.substring(0, 50) + '...',
+        successCriteriaCount: goal.successCriteria?.length || 0
+      });
       
       this.emit('goal:extracted', goal);
 
       // Step 2: Initialize execution state
+      console.log('🔍 [AutonomousOrchestrator] Step 2: Initializing execution state...');
       const initialState = AutonomousStateManager.createInitialState(goal);
       this.currentExecution = {
         goal,
         state: initialState,
         options
       };
+      console.log('✅ [AutonomousOrchestrator] Execution state initialized');
 
       // Step 3: Generate initial tasks
+      console.log('🔍 [AutonomousOrchestrator] Step 3: Generating initial tasks...');
       const initialTasks = await this.generateInitialTasks(goal, options);
-      this.currentExecution.state.taskQueue = initialTasks.tasks;
+      console.log('✅ [AutonomousOrchestrator] Initial tasks generated:', {
+        taskCount: initialTasks.tasks?.length || 0,
+        taskTypes: initialTasks.tasks?.map(t => t.type) || []
+      });
       
+      this.currentExecution.state.taskQueue = initialTasks.tasks;
       this.emit('tasks:initial', initialTasks.tasks);
 
       // Step 4: Main execution loop
+      console.log('🔍 [AutonomousOrchestrator] Step 4: Starting main execution loop...');
       const executionResult = await this.executeMainLoop(options);
+      console.log('✅ [AutonomousOrchestrator] Main execution loop completed:', {
+        completedTasks: executionResult.completedTasks?.length || 0,
+        evidenceCount: executionResult.evidence?.length || 0,
+        totalIterations: executionResult.totalIterations || 0
+      });
 
       // Step 5: Generate final result
+      console.log('🔍 [AutonomousOrchestrator] Step 5: Generating final result...');
       const finalResult = await this.generateFinalResult(executionResult);
+      console.log('✅ [AutonomousOrchestrator] Final result generated:', {
+        success: finalResult.success,
+        completedTasks: finalResult.completedTasks?.length || 0,
+        evidenceCount: finalResult.evidence?.length || 0
+      });
 
       this.emit('complete', finalResult);
 
@@ -99,6 +136,11 @@ export class AutonomousOrchestrator extends EventEmitter {
 
     } catch (error) {
       console.error('❌ [AutonomousOrchestrator] Execution failed:', error);
+      console.error('❌ [AutonomousOrchestrator] Error details:', {
+        message: error.message,
+        stack: error.stack?.substring(0, 200) + '...',
+        name: error.name
+      });
       this.emit('error', error);
       
       return {
@@ -628,9 +670,11 @@ export class AutonomousOrchestrator extends EventEmitter {
     insights.push(`Generated ${evidence.length} pieces of evidence`);
     
     const toolUsage = completedTasks.reduce((acc, task) => {
-      task.toolsUsed.forEach(tool => {
-        acc[tool] = (acc[tool] || 0) + 1;
-      });
+      if (task.toolsUsed && Array.isArray(task.toolsUsed)) {
+        task.toolsUsed.forEach(tool => {
+          acc[tool] = (acc[tool] || 0) + 1;
+        });
+      }
       return acc;
     }, {} as Record<string, number>);
 
@@ -680,16 +724,189 @@ export class AutonomousOrchestrator extends EventEmitter {
   }
 
   private async executeMainLoop(options: AutonomousExecutionOptions): Promise<any> {
-    // This would contain the main execution loop logic
-    // For now, return a placeholder
+    console.log('🔄 [AutonomousOrchestrator] Starting main execution loop');
+    
+    if (!this.currentExecution) {
+      throw new Error('No current execution state found');
+    }
+
+    const { goal, state } = this.currentExecution;
+    const maxIterations = options.maxIterations || 50;
+    const maxCost = options.maxCost || 100;
+    
+    let iteration = 0;
+    let totalCost = 0;
+    const startTime = Date.now();
+
+    console.log(`🔄 [AutonomousOrchestrator] Starting loop with ${maxIterations} max iterations, $${maxCost} max cost`);
+
+    // Optimize initial task queue
+    if (state.taskQueue && state.taskQueue.length > 0) {
+      console.log('⚡ [AutonomousOrchestrator] Optimizing task queue...');
+      state.taskQueue = performanceOptimizer.prioritizeTasks(state.taskQueue);
+      state.taskQueue = performanceOptimizer.optimizeCosts(state.taskQueue, maxCost - totalCost);
+    }
+
+    while (iteration < maxIterations && this.isRunning && totalCost < maxCost) {
+      iteration++;
+      console.log(`🔄 [AutonomousOrchestrator] Iteration ${iteration}/${maxIterations}`);
+
+      // Check if we have tasks to execute
+      if (!state.taskQueue || state.taskQueue.length === 0) {
+        console.log('✅ [AutonomousOrchestrator] No more tasks to execute');
+        break;
+      }
+
+      // Get next task
+      const task = state.taskQueue.shift();
+      if (!task) {
+        console.log('✅ [AutonomousOrchestrator] Task queue empty');
+        break;
+      }
+
+      // Check if we can execute this task (resource management)
+      if (!performanceOptimizer.canExecuteTask(task)) {
+        console.log(`⏸️ [AutonomousOrchestrator] Skipping task ${task.id} - resource constraints`);
+        state.taskQueue.push(task); // Put it back for later
+        continue;
+      }
+
+      console.log(`🎯 [AutonomousOrchestrator] Executing task: ${task.type} - ${task.description?.substring(0, 50)}...`);
+
+      try {
+        // Execute task
+        const taskResult = await taskExecutor.executeTask(task, {
+          goal,
+          state,
+          options,
+          iteration
+        });
+
+        console.log(`✅ [AutonomousOrchestrator] Task completed: ${taskResult.success ? 'SUCCESS' : 'FAILED'}`);
+
+        if (taskResult.success) {
+          // Add to completed tasks
+          state.completedTasks = state.completedTasks || [];
+          state.completedTasks.push({
+            id: task.id,
+            type: task.type,
+            description: task.description,
+            status: 'completed',
+            result: taskResult.result,
+            evidence: taskResult.evidence || [],
+            duration: taskResult.duration || 0,
+            cost: taskResult.cost || 0,
+            timestamp: new Date().toISOString()
+          });
+
+          // Update evidence chain
+          if (taskResult.evidence && taskResult.evidence.length > 0) {
+            state.evidenceChain = state.evidenceChain || [];
+            state.evidenceChain.push(...taskResult.evidence);
+          }
+
+          // Update cost tracking
+          totalCost += taskResult.cost || 0;
+          state.totalCost = totalCost;
+
+          // Update memory
+          if (taskResult.result) {
+            memoryManager.updateWorkingMemory({
+              facts: [`Task ${task.id} completed: ${taskResult.result.answer || 'No answer'}`],
+              insights: [`Completed ${task.type} task successfully`]
+            });
+          }
+
+          // Emit progress event
+          this.emit('task:completed', {
+            task,
+            result: taskResult,
+            iteration,
+            totalCost
+          });
+
+        } else {
+          console.log(`❌ [AutonomousOrchestrator] Task failed: ${task.id}`);
+          
+          // Add to failed tasks
+          state.failedTasks = state.failedTasks || [];
+          state.failedTasks.push({
+            id: task.id,
+            type: task.type,
+            description: task.description,
+            status: 'failed',
+            error: taskResult.error || 'Unknown error',
+            timestamp: new Date().toISOString()
+          });
+
+          this.emit('task:failed', {
+            task,
+            error: taskResult.error,
+            iteration
+          });
+        }
+
+        // Update iteration count
+        state.iteration = iteration;
+
+      } catch (error) {
+        console.error(`❌ [AutonomousOrchestrator] Task execution error:`, error);
+        
+        // Add to failed tasks
+        state.failedTasks = state.failedTasks || [];
+        state.failedTasks.push({
+          id: task.id,
+          type: task.type,
+          description: task.description,
+          status: 'failed',
+          error: error.message || 'Unknown error',
+          timestamp: new Date().toISOString()
+        });
+
+        this.emit('task:failed', {
+          task,
+          error: error.message,
+          iteration
+        });
+      }
+
+      // Optimize memory after each iteration
+      performanceOptimizer.optimizeMemory(state);
+
+      // Small delay to prevent overwhelming the system
+      await new Promise(resolve => setTimeout(resolve, 100));
+    }
+
+    const totalDuration = Date.now() - startTime;
+    console.log(`✅ [AutonomousOrchestrator] Main loop completed: ${iteration} iterations, $${totalCost.toFixed(2)} cost, ${totalDuration}ms duration`);
+
+    // Record performance metrics
+    performanceOptimizer.recordMetrics({
+      totalCost,
+      totalDuration,
+      averageTaskDuration: totalDuration / Math.max(iteration, 1),
+      throughput: (iteration / (totalDuration / 60000)) // tasks per minute
+    });
+
+    // Track execution completion in monitoring
+    const executionId = `exec_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    monitoringSystem.trackExecutionComplete(
+      executionId,
+      true, // success - we completed the execution
+      state.completedTasks || [],
+      state.evidenceChain || [],
+      totalCost,
+      AutonomousStateManager.calculateConfidence(state)
+    );
+
     return {
-      goal: this.currentExecution?.goal,
-      completedTasks: this.currentExecution?.state.completedTasks || [],
-      evidence: this.currentExecution?.state.evidenceChain || [],
-      verificationProofs: this.currentExecution?.state.verificationProofs || [],
-      totalIterations: this.currentExecution?.state.iteration || 0,
-      totalCost: this.currentExecution?.state.totalCost || 0,
-      totalDuration: 0
+      goal,
+      completedTasks: state.completedTasks || [],
+      evidence: state.evidenceChain || [],
+      verificationProofs: state.verificationProofs || [],
+      totalIterations: iteration,
+      totalCost,
+      totalDuration
     };
   }
 }

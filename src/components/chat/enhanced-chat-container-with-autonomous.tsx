@@ -169,7 +169,7 @@ export function EnhancedChatContainerWithAutonomous({ className }: { className?:
                 {/* Messages */}
                 <ScrollArea className="flex-1 p-4">
                   <div className="space-y-4">
-                    {messages.length === 0 ? (
+                    {(!messages || messages.length === 0) ? (
                       <div className="text-center py-8">
                         <Bot className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                         <h3 className="text-lg font-medium mb-2">Welcome to VITAL Expert</h3>
@@ -181,11 +181,11 @@ export function EnhancedChatContainerWithAutonomous({ className }: { className?:
                         )}
                       </div>
                     ) : (
-                      messages.map((message) => (
+                      (messages || []).map((message) => (
                         <MessageBubble
                           key={message.id}
                           message={message}
-                          isLast={message.id === messages[messages.length - 1].id}
+                          isLast={message.id === (messages || [])[(messages || []).length - 1]?.id}
                         />
                       ))
                     )}

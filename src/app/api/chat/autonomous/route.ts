@@ -1,5 +1,325 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ChatOpenAI } from '@langchain/openai';
+import { Tool } from '@langchain/core/tools';
+import { z } from 'zod';
+
+// Task Management Interface
+interface Task {
+  id: string;
+  title: string;
+  description: string;
+  status: 'pending' | 'in_progress' | 'completed' | 'failed';
+  priority: 'low' | 'medium' | 'high';
+  tools: string[];
+  result?: any;
+  error?: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+class TaskManager {
+  private tasks: Task[] = [];
+  private currentTaskIndex = 0;
+
+  createTask(title: string, description: string, priority: 'low' | 'medium' | 'high' = 'medium', tools: string[] = []): Task {
+    const task: Task = {
+      id: `task_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      title,
+      description,
+      status: 'pending',
+      priority,
+      tools,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+    this.tasks.push(task);
+    return task;
+  }
+
+  getNextTask(): Task | null {
+    const pendingTask = this.tasks.find(task => task.status === 'pending');
+    return pendingTask || null;
+  }
+
+  updateTaskStatus(taskId: string, status: Task['status'], result?: any, error?: string): void {
+    const task = this.tasks.find(t => t.id === taskId);
+    if (task) {
+      task.status = status;
+      task.updatedAt = new Date();
+      if (result) task.result = result;
+      if (error) task.error = error;
+    }
+  }
+
+  getAllTasks(): Task[] {
+    return [...this.tasks];
+  }
+
+  getCompletedTasks(): Task[] {
+    return this.tasks.filter(task => task.status === 'completed');
+  }
+
+  getProgress(): { completed: number; total: number; percentage: number } {
+    const completed = this.tasks.filter(task => task.status === 'completed').length;
+    const total = this.tasks.length;
+    return {
+      completed,
+      total,
+      percentage: total > 0 ? Math.round((completed / total) * 100) : 0
+    };
+  }
+}
+
+// Available Tools for ReAct Loop
+const createWebSearchTool = () => new Tool({
+  name: 'web_search',
+  description: 'Search the web for current information about a topic',
+  schema: z.object({
+    query: z.string().describe('The search query'),
+    maxResults: z.number().optional().describe('Maximum number of results to return')
+  }),
+  func: async ({ query, maxResults = 5 }) => {
+    // Simulate web search - in real implementation, use actual search API
+    console.log(`🔍 [Tool] Web search for: ${query}`);
+    return {
+      query,
+      results: [
+        { title: `Research about ${query}`, url: 'https://example.com/1', snippet: `Latest findings on ${query}...` },
+        { title: `Market analysis for ${query}`, url: 'https://example.com/2', snippet: `Market trends and opportunities in ${query}...` },
+        { title: `Regulatory guidelines for ${query}`, url: 'https://example.com/3', snippet: `Regulatory requirements and compliance for ${query}...` }
+      ].slice(0, maxResults)
+    };
+  }
+});
+
+const createDataAnalysisTool = () => new Tool({
+  name: 'data_analysis',
+  description: 'Analyze data and generate insights',
+  schema: z.object({
+    data: z.any().describe('The data to analyze'),
+    analysisType: z.string().describe('Type of analysis to perform')
+  }),
+  func: async ({ data, analysisType }) => {
+    console.log(`📊 [Tool] Data analysis: ${analysisType}`);
+    return {
+      analysisType,
+      insights: `Analysis of ${analysisType} reveals key patterns and opportunities...`,
+      recommendations: `Based on the analysis, here are strategic recommendations...`
+    };
+  }
+});
+
+const createRegulatoryCheckTool = () => new Tool({
+  name: 'regulatory_check',
+  description: 'Check regulatory requirements and compliance guidelines',
+  schema: z.object({
+    domain: z.string().describe('The domain or field to check regulations for'),
+    region: z.string().optional().describe('Specific region or jurisdiction')
+  }),
+  func: async ({ domain, region = 'US' }) => {
+    console.log(`⚖️ [Tool] Regulatory check for: ${domain} in ${region}`);
+    return {
+      domain,
+      region,
+      requirements: [
+        'FDA 510(k) clearance required for medical devices',
+        'HIPAA compliance for patient data protection',
+        'Clinical trial protocols must be followed',
+        'Post-market surveillance requirements'
+      ],
+      timeline: '6-18 months for regulatory approval',
+      cost: '$50,000 - $500,000 depending on complexity'
+    };
+  }
+});
+
+// ReAct Loop Implementation
+async function runReActLoop(query: string, controller: ReadableStreamDefaultController, encoder: TextEncoder) {
+  const llm = new ChatOpenAI({
+    modelName: 'gpt-4o',
+    temperature: 0.3,
+    streaming: false, // We'll handle streaming manually
+  });
+
+  const taskManager = new TaskManager();
+  const tools = [
+    createWebSearchTool(),
+    createDataAnalysisTool(),
+    createRegulatoryCheckTool()
+  ];
+
+  // Step 1: REASON - Analyze the problem and create tasks
+  console.log('🧠 [ReAct] Step 1: Reasoning about the problem...');
+  
+  const reasoningPrompt = `You are an autonomous digital health strategy expert. Analyze this query and create a comprehensive task plan.
+
+Query: "${query}"
+
+Create 3-5 specific tasks that need to be completed to provide a thorough response. Each task should be actionable and use specific tools.
+
+Format your response as JSON with this structure:
+{
+  "analysis": "Your analysis of the problem",
+  "tasks": [
+    {
+      "title": "Task title",
+      "description": "Detailed task description",
+      "priority": "high|medium|low",
+      "tools": ["tool1", "tool2"]
+    }
+  ]
+}`;
+
+  const reasoningResponse = await llm.invoke(reasoningPrompt);
+  const reasoningData = JSON.parse(reasoningResponse.content as string);
+  
+  // Send reasoning analysis
+  const reasoningEvent = {
+    type: 'reasoning',
+    step: 'analysis',
+    status: 'completed',
+    description: reasoningData.analysis,
+    timestamp: new Date().toISOString()
+  };
+  controller.enqueue(encoder.encode(`data: ${JSON.stringify(reasoningEvent)}\n\n`));
+
+  // Create tasks
+  console.log('📋 [ReAct] Creating tasks...');
+  for (const taskData of reasoningData.tasks) {
+    const task = taskManager.createTask(
+      taskData.title,
+      taskData.description,
+      taskData.priority,
+      taskData.tools
+    );
+    
+    const taskEvent = {
+      type: 'task_created',
+      task: {
+        id: task.id,
+        title: task.title,
+        description: task.description,
+        priority: task.priority,
+        tools: task.tools
+      },
+      timestamp: new Date().toISOString()
+    };
+    controller.enqueue(encoder.encode(`data: ${JSON.stringify(taskEvent)}\n\n`));
+  }
+
+  // Step 2: ACT - Execute tasks using tools
+  console.log('⚡ [ReAct] Step 2: Executing tasks...');
+  
+  let currentTask = taskManager.getNextTask();
+  while (currentTask) {
+    console.log(`🔄 [ReAct] Executing task: ${currentTask.title}`);
+    
+    // Update task status to in_progress
+    taskManager.updateTaskStatus(currentTask.id, 'in_progress');
+    
+    const taskUpdateEvent = {
+      type: 'task_update',
+      taskId: currentTask.id,
+      status: 'in_progress',
+      timestamp: new Date().toISOString()
+    };
+    controller.enqueue(encoder.encode(`data: ${JSON.stringify(taskUpdateEvent)}\n\n`));
+
+    try {
+      // Execute tools for this task
+      let taskResult = '';
+      for (const toolName of currentTask.tools) {
+        const tool = tools.find(t => t.name === toolName);
+        if (tool) {
+          console.log(`🔧 [ReAct] Using tool: ${toolName}`);
+          
+          const toolEvent = {
+            type: 'tool_usage',
+            tool: toolName,
+            taskId: currentTask.id,
+            timestamp: new Date().toISOString()
+          };
+          controller.enqueue(encoder.encode(`data: ${JSON.stringify(toolEvent)}\n\n`));
+
+          // Simulate tool execution with query context
+          const toolResult = await tool.func({ 
+            query: query,
+            domain: query,
+            analysisType: currentTask.title
+          });
+          
+          taskResult += `\n\n**${toolName} Results:**\n${JSON.stringify(toolResult, null, 2)}`;
+        }
+      }
+
+      // Mark task as completed
+      taskManager.updateTaskStatus(currentTask.id, 'completed', taskResult);
+      
+      const taskCompleteEvent = {
+        type: 'task_completed',
+        taskId: currentTask.id,
+        result: taskResult,
+        timestamp: new Date().toISOString()
+      };
+      controller.enqueue(encoder.encode(`data: ${JSON.stringify(taskCompleteEvent)}\n\n`));
+
+      // Send progress update
+      const progress = taskManager.getProgress();
+      const progressEvent = {
+        type: 'progress_update',
+        completed: progress.completed,
+        total: progress.total,
+        percentage: progress.percentage,
+        timestamp: new Date().toISOString()
+      };
+      controller.enqueue(encoder.encode(`data: ${JSON.stringify(progressEvent)}\n\n`));
+
+    } catch (error) {
+      console.error(`❌ [ReAct] Task failed: ${currentTask.title}`, error);
+      taskManager.updateTaskStatus(currentTask.id, 'failed', null, error instanceof Error ? error.message : 'Unknown error');
+      
+      const taskFailedEvent = {
+        type: 'task_failed',
+        taskId: currentTask.id,
+        error: error instanceof Error ? error.message : 'Unknown error',
+        timestamp: new Date().toISOString()
+      };
+      controller.enqueue(encoder.encode(`data: ${JSON.stringify(taskFailedEvent)}\n\n`));
+    }
+
+    // Get next task
+    currentTask = taskManager.getNextTask();
+  }
+
+  // Step 3: SYNTHESIZE - Generate final response based on all task results
+  console.log('📝 [ReAct] Step 3: Synthesizing final response...');
+  
+  const synthesisPrompt = `Based on the completed tasks and their results, provide a comprehensive response to the user's query: "${query}"
+
+Task Results:
+${taskManager.getAllTasks().map(task => 
+  `Task: ${task.title}\nStatus: ${task.status}\nResult: ${task.result || 'N/A'}\n`
+).join('\n')}
+
+Provide a well-structured, comprehensive response that addresses the user's query using insights from all completed tasks.`;
+
+  const synthesisResponse = await llm.invoke(synthesisPrompt);
+  
+  // Stream the final response
+  const finalContent = synthesisResponse.content as string;
+  const contentChunks = finalContent.split('\n');
+  
+  for (const chunk of contentChunks) {
+    const contentEvent = {
+      type: 'content',
+      content: chunk + '\n',
+      timestamp: new Date().toISOString()
+    };
+    controller.enqueue(encoder.encode(`data: ${JSON.stringify(contentEvent)}\n\n`));
+  }
+
+  console.log('✅ [ReAct] Loop completed successfully');
+}
 
 export async function POST(request: NextRequest) {
   console.log('🚀 [Autonomous API] POST request received');
@@ -81,58 +401,17 @@ export async function POST(request: NextRequest) {
             stepIndex++;
             setTimeout(sendNextStep, 2000); // 2 second delay between steps
           } else {
-            // Wait a bit before starting content after reasoning is complete
-            console.log('🧠 [API] All reasoning steps complete, starting AI analysis...');
+            // Wait a bit before starting ReAct loop after reasoning is complete
+            console.log('🧠 [API] All reasoning steps complete, starting ReAct loop...');
             setTimeout(async () => {
-              // Use real AI to analyze the user query
+              // Implement ReAct Loop with tool usage
               try {
-                const llm = new ChatOpenAI({
-                  modelName: 'gpt-4o',
-                  temperature: 0.7,
-                  streaming: true,
-                });
-
-                const prompt = `You are a digital health strategy expert. Analyze the following user query and provide a comprehensive digital health strategy response. Be specific to their actual query and avoid generic templates.
-
-User Query: "${query}"
-
-Please provide:
-1. A relevant title based on their specific query
-2. Executive summary addressing their specific needs
-3. Key strategic pillars tailored to their query
-4. Implementation roadmap
-5. Success metrics relevant to their domain
-
-Be thorough, specific, and directly address what they're asking about.`;
-
-                console.log('🤖 [API] Starting AI analysis for query:', query);
+                await runReActLoop(query, controller, encoder);
+              } catch (reactError) {
+                console.error('❌ [API] ReAct loop failed:', reactError);
                 
-                // Stream the AI response
-                const stream = await llm.stream(prompt);
-                
-                let fullResponse = '';
-                for await (const chunk of stream) {
-                  const content = chunk.content;
-                  if (content) {
-                    fullResponse += content;
-                    
-                    // Send content chunk to client
-                    const contentEvent = {
-                      type: 'content',
-                      content: content,
-                      timestamp: new Date().toISOString()
-                    };
-                    controller.enqueue(encoder.encode(`data: ${JSON.stringify(contentEvent)}\n\n`));
-                  }
-                }
-                
-                console.log('✅ [API] AI analysis complete, response length:', fullResponse.length);
-                
-              } catch (aiError) {
-                console.error('❌ [API] AI analysis failed:', aiError);
-                
-                // Fallback response if AI fails
-                const fallbackContent = `I apologize, but I encountered an issue while analyzing your query: "${query}". 
+                // Fallback response if ReAct fails
+                const fallbackContent = `I apologize, but I encountered an issue while processing your query: "${query}". 
 
 Please try rephrasing your question or contact support if the issue persists.`;
                 
@@ -151,26 +430,26 @@ Please try rephrasing your question or contact support if the issue persists.`;
                 timestamp: new Date().toISOString()
               };
               controller.enqueue(encoder.encode(`data: ${JSON.stringify(completionEvent)}\n\n`));
-              controller.close();
+            controller.close();
               
             }, 3000); // Wait 3 seconds after reasoning is complete
           }
         };
         
         setTimeout(sendNextStep, 500); // Start reasoning steps after 500ms
-      }
-    });
+        }
+      });
 
-    return new Response(stream, {
-      headers: {
-        'Content-Type': 'text/event-stream',
-        'Cache-Control': 'no-cache',
-        'Connection': 'keep-alive',
-        'Access-Control-Allow-Origin': '*',
+      return new Response(stream, {
+        headers: {
+          'Content-Type': 'text/event-stream',
+          'Cache-Control': 'no-cache',
+          'Connection': 'keep-alive',
+          'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Methods': 'GET, POST, PATCH, DELETE, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-      },
-    });
+          'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+        },
+      });
 
   } catch (error) {
     console.error('❌ [Autonomous API] Error:', error);

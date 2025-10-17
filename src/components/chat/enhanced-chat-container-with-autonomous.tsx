@@ -133,55 +133,36 @@ export function EnhancedChatContainerWithAutonomous({ className }: { className?:
 
   return (
     <div className={cn("flex h-full", className)}>
-      {/* Left Sidebar - Agent Selection */}
-      <div className="w-80 border-r bg-background flex flex-col">
-        <div className="p-4 border-b">
-          <h2 className="text-lg font-semibold">VITAL Expert</h2>
-          <p className="text-sm text-muted-foreground">
-            {isManualMode ? 'Manual Mode' : 'Automatic Mode'}
-          </p>
-        </div>
-        
-        <div className="flex-1 overflow-hidden">
-          <AgentSelectionPanel 
-            agents={getAgents()}
-            selectedAgent={selectedAgent}
-            onSelectAgent={selectAgent}
-            isLoading={isLoading}
-          />
-        </div>
-      </div>
-
-      {/* Main Chat Area */}
+      {/* Main Chat Area - Full Width */}
       <div className="flex-1 flex flex-col">
         {/* Header */}
         <div className="p-4 border-b bg-background">
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
+            <div>
+              <h2 className="text-lg font-semibold">VITAL Expert</h2>
+              <p className="text-sm text-muted-foreground">
+                {isManualMode ? 'Manual Mode' : 'Automatic Mode'}
+                {isAutonomousMode && ' • Autonomous'}
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
               {selectedAgent && (
-                <>
-                  <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
-                    <Bot className="h-4 w-4 text-primary" />
-                  </div>
-                  <div>
-                    <h3 className="font-medium">{selectedAgent.display_name || selectedAgent.name}</h3>
-                    <p className="text-sm text-muted-foreground">
-                      {selectedAgent.business_function || 'General'}
-                    </p>
-                  </div>
-                </>
+                <div className="text-sm text-muted-foreground">
+                  Agent: {selectedAgent.display_name || selectedAgent.name}
+                </div>
               )}
             </div>
-            
-            <div className="flex items-center space-x-2">
-              <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as any)}>
-                <TabsList>
-                  <TabsTrigger value="chat">Chat</TabsTrigger>
-                  <TabsTrigger value="autonomous">Autonomous</TabsTrigger>
-                </TabsList>
-              </Tabs>
-            </div>
           </div>
+        </div>
+
+        {/* Tab Navigation */}
+        <div className="border-b">
+          <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as any)}>
+            <TabsList className="w-full justify-start rounded-none border-b-0">
+              <TabsTrigger value="chat">Chat</TabsTrigger>
+              <TabsTrigger value="autonomous">Autonomous</TabsTrigger>
+            </TabsList>
+          </Tabs>
         </div>
 
         {/* Tab Content */}

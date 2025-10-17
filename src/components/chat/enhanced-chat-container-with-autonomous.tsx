@@ -124,7 +124,12 @@ export function EnhancedChatContainerWithAutonomous({ className }: { className?:
         </div>
         
         <div className="flex-1 overflow-hidden">
-          <AgentSelectionPanel />
+          <AgentSelectionPanel 
+            agents={getAgents()}
+            selectedAgent={selectedAgent}
+            onSelectAgent={selectAgent}
+            isLoading={isLoading}
+          />
         </div>
       </div>
 

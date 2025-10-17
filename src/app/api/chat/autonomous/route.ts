@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
           type: 'reasoning',
           step: 1,
           status: 'in_progress',
-          message: 'Analyzing your request and developing a comprehensive strategy...',
+          description: 'Analyzing your request and developing a comprehensive strategy...',
           timestamp: new Date().toISOString()
         };
         
@@ -43,28 +43,28 @@ export async function POST(request: NextRequest) {
             type: 'reasoning',
             step: 2,
             status: 'in_progress',
-            message: 'Researching current ADHD digital health landscape...',
+            description: 'Researching current ADHD digital health landscape...',
             timestamp: new Date().toISOString()
           },
           {
             type: 'reasoning',
             step: 3,
             status: 'in_progress',
-            message: 'Identifying key stakeholders and market opportunities...',
+            description: 'Identifying key stakeholders and market opportunities...',
             timestamp: new Date().toISOString()
           },
           {
             type: 'reasoning',
             step: 4,
             status: 'in_progress',
-            message: 'Developing regulatory compliance framework...',
+            description: 'Developing regulatory compliance framework...',
             timestamp: new Date().toISOString()
           },
           {
             type: 'reasoning',
             step: 5,
             status: 'completed',
-            message: 'Synthesizing comprehensive digital health strategy...',
+            description: 'Synthesizing comprehensive digital health strategy...',
             timestamp: new Date().toISOString()
           }
         ];
@@ -74,6 +74,7 @@ export async function POST(request: NextRequest) {
         const sendNextStep = () => {
           if (stepIndex < reasoningSteps.length) {
             const step = reasoningSteps[stepIndex];
+            console.log('🧠 [API] Sending reasoning step:', step);
             controller.enqueue(encoder.encode(`data: ${JSON.stringify(step)}\n\n`));
             stepIndex++;
             setTimeout(sendNextStep, 1500); // 1.5 second delay between steps

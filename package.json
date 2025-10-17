@@ -249,6 +249,7 @@
     "ts-node": "^10.9.2",
     "typedoc": "^0.25.0",
     "typescript": "^5",
-    "vitest": "^3.2.4"
+    "vitest": "^3.2.4",
+    "ioredis": "^5.3.2"
   }
 }

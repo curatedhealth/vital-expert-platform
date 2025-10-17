@@ -95,20 +95,39 @@ export function EnhancedChatContainerWithAutonomous({ className }: { className?:
   };
 
   const handleSendMessage = async () => {
-    if (!input.trim() || isLoading) return;
+    console.log('🚀 [handleSendMessage] Called with:', {
+      input: input.trim(),
+      isLoading,
+      isAutonomousMode,
+      isRunning,
+      selectedAgent: selectedAgent?.name
+    });
+
+    if (!input.trim() || isLoading) {
+      console.log('❌ [handleSendMessage] Blocked:', { 
+        hasInput: !!input.trim(), 
+        isLoading 
+      });
+      return;
+    }
+
+    const message = input.trim();
+    setInput('');
 
     // If in autonomous mode, treat as goal
     if (isAutonomousMode && !isRunning) {
-      setAutonomousGoal(input);
-      setInput('');
+      console.log('🎯 [handleSendMessage] Setting autonomous goal:', message);
+      setAutonomousGoal(message);
       return;
     }
 
     // Regular chat message
+    console.log('💬 [handleSendMessage] Sending regular message:', message);
     try {
-      await sendMessage();
+      await sendMessage(message);
+      console.log('✅ [handleSendMessage] Message sent successfully');
     } catch (error) {
-      console.error('Failed to send message:', error);
+      console.error('❌ [handleSendMessage] Failed to send message:', error);
     }
   };
 

@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach, jest } from '@jest/globals';
+import { describe, it, expect, vi, beforeEach, afterEach, jest } from 'vitest';
 import { autonomousOrchestrator } from '../autonomous-orchestrator';
 import { memoryManager } from '../memory-manager';
 import { evidenceVerifier } from '../evidence-verifier';
@@ -44,7 +44,7 @@ describe('Autonomous Agent Integration Tests', () => {
   beforeEach(() => {
     // Reset memory and evidence verifier before each test
     memoryManager.reset();
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   afterEach(() => {

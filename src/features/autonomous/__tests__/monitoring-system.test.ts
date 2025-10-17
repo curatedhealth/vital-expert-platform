@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, jest } from '@jest/globals';
+import { describe, it, expect, vi, beforeEach, jest } from 'vitest';
 import { MonitoringSystem, monitoringSystem } from '../monitoring-system';
 import { Goal, Task, CompletedTask, Evidence } from '../autonomous-state';
 

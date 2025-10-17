@@ -3,34 +3,7 @@ import { Task, CompletedTask, Evidence } from './autonomous-state';
 import { goalExtractor } from './goal-extractor';
 import { memoryManager } from './memory-manager';
 import { evidenceVerifier } from './evidence-verifier';
-
-// Import existing VITAL tools
-import { fdaDatabaseTool, fdaGuidanceTool, regulatoryCalculatorTool } from '../chat/tools/fda-tools';
-import { clinicalTrialsSearchTool, studyDesignTool, endpointSelectorTool } from '../chat/tools/clinical-trials-tools';
-import { tavilySearchTool, wikipediaTool, pubmedSearchTool, arxivSearchTool } from '../chat/tools/external-api-tools';
-
-// Tool registry for easy access
-const TOOL_REGISTRY = {
-  // FDA Tools
-  'fda_database_search': fdaDatabaseTool,
-  'fda_guidance_lookup': fdaGuidanceTool,
-  'fda_regulatory_calculator': regulatoryCalculatorTool,
-  
-  // Clinical Trials Tools
-  'clinical_trials_search': clinicalTrialsSearchTool,
-  'study_design': studyDesignTool,
-  'endpoint_selection': endpointSelectorTool,
-  
-  // External API Tools
-  'web_search': tavilySearchTool,
-  'wikipedia': wikipediaTool,
-  'pubmed': pubmedSearchTool,
-  'arxiv': arxivSearchTool,
-  
-  // RAG Tools (will be imported from enhanced-langchain-service)
-  'rag_query': null, // Will be set dynamically
-  'knowledge_search': null, // Will be set dynamically
-};
+import { ToolRegistry } from './tool-registry';
 
 export interface TaskExecutionResult {
   success: boolean;
@@ -65,6 +38,11 @@ export class TaskExecutor {
       maxTokens: 2000,
       streaming: false
     });
+    
+    // Initialize tool registry if not already done
+    if (!ToolRegistry.getAllToolNames().length) {
+      ToolRegistry.initialize();
+    }
   }
 
   /**
@@ -194,7 +172,7 @@ TASK:
 - Priority: ${task.priority}
 - Required Tools: ${task.requiredTools.join(', ')}
 
-AVAILABLE TOOLS: ${Object.keys(TOOL_REGISTRY).join(', ')}
+AVAILABLE TOOLS: ${ToolRegistry.getAllToolNames().join(', ')}
 AVAILABLE AGENTS: ${context.availableAgents?.map(a => a.name).join(', ') || 'None specified'}
 
 EXECUTION STRATEGIES:
@@ -246,7 +224,7 @@ Respond with JSON:
     const toolsUsed: string[] = [];
 
     for (const toolName of tools) {
-      const tool = TOOL_REGISTRY[toolName as keyof typeof TOOL_REGISTRY];
+      const tool = ToolRegistry.getTool(toolName);
       
       if (!tool) {
         console.warn(`⚠️ [TaskExecutor] Tool not found: ${toolName}`);

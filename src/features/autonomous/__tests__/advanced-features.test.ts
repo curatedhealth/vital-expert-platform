@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, jest } from '@jest/globals';
+import { describe, it, expect, vi, beforeEach, jest } from 'vitest';
 import { toolSchemaRegistry } from '../enhanced-tool-schemas';
 import { retryLogicManager, DEFAULT_RETRY_CONFIG, DEFAULT_CIRCUIT_BREAKER_CONFIG } from '../retry-logic';
 import { autonomousCacheManager, DEFAULT_CACHE_CONFIG } from '../redis-cache';
@@ -8,7 +8,7 @@ import { analyticsManager } from '../analytics';
 describe('Advanced Features Integration Tests', () => {
   beforeEach(() => {
     // Reset any state before each test
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe('Enhanced Tool Schemas', () => {

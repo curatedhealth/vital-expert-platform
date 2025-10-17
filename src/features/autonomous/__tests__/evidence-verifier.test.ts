@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from '@jest/globals';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { evidenceVerifier, EvidenceVerifier } from '../evidence-verifier';
 import { Evidence, EvidenceType, Task, Goal } from '../autonomous-state';
 

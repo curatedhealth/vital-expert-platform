@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, jest } from '@jest/globals';
+import { describe, it, expect, vi, beforeEach, jest } from 'vitest';
 import { PerformanceOptimizer, performanceOptimizer } from '../performance-optimizer';
 import { Task } from '../autonomous-state';
 

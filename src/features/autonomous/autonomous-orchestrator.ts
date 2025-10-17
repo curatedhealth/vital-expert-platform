@@ -8,6 +8,8 @@ import { evidenceVerifier } from './evidence-verifier';
 import { createAutonomousVERIFYIntegration, AutonomousVERIFYIntegration, VERIFYValidationResult } from './verify-protocol-integration';
 import { performanceOptimizer } from './performance-optimizer';
 import { monitoringSystem } from './monitoring-system';
+import { ToolRegistry } from './tool-registry';
+import { autonomousLogger } from './logger';
 
 export interface AutonomousExecutionOptions {
   mode: 'manual' | 'automatic';
@@ -42,6 +44,7 @@ export interface AutonomousExecutionResult {
 
 export class AutonomousOrchestrator extends EventEmitter {
   private isRunning: boolean = false;
+  private executionMutex: boolean = false; // Add execution mutex
   private currentExecution: {
     goal: Goal;
     state: Partial<typeof AutonomousState.State>;
@@ -52,6 +55,9 @@ export class AutonomousOrchestrator extends EventEmitter {
   constructor() {
     super();
     this.verifyIntegration = createAutonomousVERIFYIntegration();
+    
+    // Initialize tool registry
+    ToolRegistry.initialize();
   }
 
   /**
@@ -61,18 +67,76 @@ export class AutonomousOrchestrator extends EventEmitter {
     userInput: string,
     options: AutonomousExecutionOptions
   ): Promise<AutonomousExecutionResult> {
-    console.log('🚀 [AutonomousOrchestrator] Starting autonomous execution');
-    console.log(`📝 Input: "${userInput.substring(0, 100)}..."`);
-    console.log(`🎯 Mode: ${options.mode}`);
+    autonomousLogger.info('Starting autonomous execution', {
+      input: userInput.substring(0, 100),
+      mode: options.mode,
+      userId: options.userId,
+      sessionId: options.sessionId
+    });
+
+    // Validate input
+    const validation = this.validateInput(userInput, options);
+    if (!validation.valid) {
+      const error = `Input validation failed: ${validation.errors.join(', ')}`;
+      autonomousLogger.error('Input validation failed', { errors: validation.errors, warnings: validation.warnings });
+      this.emit('error', new Error(error));
+      return {
+        success: false,
+        goal: this.createFallbackGoal(userInput),
+        completedTasks: [],
+        finalResult: null,
+        evidence: [],
+        verificationProofs: [],
+        metrics: {
+          totalIterations: 0,
+          totalCost: 0,
+          totalDuration: 0,
+          taskSuccessRate: 0,
+          goalAchievementRate: 0
+        },
+        insights: [],
+        error
+      };
+    }
+
+    // Check for concurrent execution
+    if (this.isRunning || this.executionMutex) {
+      const error = 'Execution already in progress. Please wait for current execution to complete.';
+      autonomousLogger.warn('Concurrent execution prevented', { error });
+      this.emit('error', new Error(error));
+      return {
+        success: false,
+        goal: this.createFallbackGoal(userInput),
+        completedTasks: [],
+        finalResult: null,
+        evidence: [],
+        verificationProofs: [],
+        metrics: {
+          totalIterations: 0,
+          totalCost: 0,
+          totalDuration: 0,
+          taskSuccessRate: 0,
+          goalAchievementRate: 0
+        },
+        insights: [],
+        error
+      };
+    }
 
     this.isRunning = true;
-      this.emit('start', { userInput, options });
+    this.executionMutex = true;
+    this.emit('start', { userInput, options });
 
       // Start monitoring
       const executionId = `exec_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
       monitoringSystem.trackExecutionStart(executionId, this.createFallbackGoal(userInput));
 
     try {
+      // Step 0: Set up RAG service in tool registry
+      if (options.ragService) {
+        ToolRegistry.setRAGService(options.ragService);
+      }
+
       // Step 1: Extract and validate goal
       console.log('🔍 [AutonomousOrchestrator] Step 1: Extracting goal...');
       const goalExtraction = await this.extractAndValidateGoal(userInput, options);
@@ -162,6 +226,7 @@ export class AutonomousOrchestrator extends EventEmitter {
       };
     } finally {
       this.isRunning = false;
+      this.executionMutex = false;
       this.currentExecution = null;
     }
   }
@@ -174,6 +239,21 @@ export class AutonomousOrchestrator extends EventEmitter {
     options: AutonomousExecutionOptions
   ): AsyncGenerator<any, void, unknown> {
     console.log('🌊 [AutonomousOrchestrator] Starting streaming execution');
+
+    // Check for concurrent execution
+    if (this.isRunning || this.executionMutex) {
+      const error = 'Execution already in progress. Please wait for current execution to complete.';
+      console.error('❌ [AutonomousOrchestrator]', error);
+      yield { 
+        type: 'error', 
+        error,
+        message: 'Execution failed - already in progress'
+      };
+      return;
+    }
+
+    this.isRunning = true;
+    this.executionMutex = true;
 
     try {
       // Step 1: Extract goal
@@ -360,6 +440,7 @@ export class AutonomousOrchestrator extends EventEmitter {
       };
     } finally {
       this.isRunning = false;
+      this.executionMutex = false;
       this.currentExecution = null;
     }
   }
@@ -370,6 +451,7 @@ export class AutonomousOrchestrator extends EventEmitter {
   stop(): void {
     console.log('🛑 [AutonomousOrchestrator] Stopping execution');
     this.isRunning = false;
+    this.executionMutex = false;
     this.emit('stop');
   }
 
@@ -411,6 +493,89 @@ export class AutonomousOrchestrator extends EventEmitter {
   }
 
   // Private methods
+
+  private validateInput(userInput: string, options: AutonomousExecutionOptions): {
+    valid: boolean;
+    errors: string[];
+    warnings: string[];
+  } {
+    const errors: string[] = [];
+    const warnings: string[] = [];
+
+    // Validate user input
+    if (!userInput || typeof userInput !== 'string') {
+      errors.push('User input is required and must be a string');
+    } else if (userInput.trim().length === 0) {
+      errors.push('User input cannot be empty');
+    } else if (userInput.length > 10000) {
+      errors.push('User input is too long (max 10,000 characters)');
+    } else if (userInput.length < 10) {
+      warnings.push('User input is very short, consider providing more details');
+    }
+
+    // Validate options
+    if (!options || typeof options !== 'object') {
+      errors.push('Options are required and must be an object');
+    } else {
+      // Validate mode
+      if (!options.mode || !['manual', 'automatic'].includes(options.mode)) {
+        errors.push('Mode must be either "manual" or "automatic"');
+      }
+
+      // Validate numeric limits
+      if (options.maxIterations !== undefined) {
+        if (typeof options.maxIterations !== 'number' || options.maxIterations <= 0) {
+          errors.push('Max iterations must be a positive number');
+        } else if (options.maxIterations > 1000) {
+          warnings.push('Very high iteration limit may lead to long execution times');
+        }
+      }
+
+      if (options.maxCost !== undefined) {
+        if (typeof options.maxCost !== 'number' || options.maxCost <= 0) {
+          errors.push('Max cost must be a positive number');
+        } else if (options.maxCost > 1000) {
+          warnings.push('High cost limit may lead to unexpected charges');
+        }
+      }
+
+      if (options.maxDuration !== undefined) {
+        if (typeof options.maxDuration !== 'number' || options.maxDuration <= 0) {
+          errors.push('Max duration must be a positive number');
+        } else if (options.maxDuration > 480) { // 8 hours
+          warnings.push('Very long duration limit may lead to long execution times');
+        }
+      }
+
+      // Validate supervision level
+      if (options.supervisionLevel !== undefined) {
+        if (!['none', 'low', 'medium', 'high'].includes(options.supervisionLevel)) {
+          errors.push('Supervision level must be one of: none, low, medium, high');
+        }
+      }
+
+      // Validate available agents
+      if (options.availableAgents !== undefined) {
+        if (!Array.isArray(options.availableAgents)) {
+          errors.push('Available agents must be an array');
+        } else {
+          options.availableAgents.forEach((agent, index) => {
+            if (!agent || typeof agent !== 'object') {
+              errors.push(`Agent at index ${index} must be an object`);
+            } else if (!agent.name || typeof agent.name !== 'string') {
+              errors.push(`Agent at index ${index} must have a name property`);
+            }
+          });
+        }
+      }
+    }
+
+    return {
+      valid: errors.length === 0,
+      errors,
+      warnings
+    };
+  }
 
   private async extractAndValidateGoal(
     userInput: string,
@@ -690,20 +855,7 @@ export class AutonomousOrchestrator extends EventEmitter {
   }
 
   private getAvailableTools(): string[] {
-    return [
-      'fda_database_search',
-      'fda_guidance_lookup',
-      'fda_regulatory_calculator',
-      'clinical_trials_search',
-      'study_design',
-      'endpoint_selection',
-      'web_search',
-      'wikipedia',
-      'pubmed',
-      'arxiv',
-      'rag_query',
-      'knowledge_search'
-    ];
+    return ToolRegistry.getAllToolNames();
   }
 
   private createFallbackGoal(userInput: string): Goal {

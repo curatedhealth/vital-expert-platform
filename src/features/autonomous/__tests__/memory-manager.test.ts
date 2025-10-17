@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { memoryManager, MemoryManager } from '../memory-manager';
 import { WorkingMemory, EpisodicMemory, Concept, ToolCombination } from '../autonomous-state';
 

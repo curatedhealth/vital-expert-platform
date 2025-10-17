@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { ChatOpenAI } from '@langchain/openai';
 
 export async function POST(request: NextRequest) {
   console.log('🚀 [Autonomous API] POST request received');
@@ -38,34 +39,34 @@ export async function POST(request: NextRequest) {
         console.log('🧠 [API] Sending initial reasoning step:', initialStep);
         controller.enqueue(encoder.encode(`data: ${JSON.stringify(initialStep)}\n\n`));
 
-        // Simulate reasoning steps with delays - DYNAMIC BASED ON QUERY
+        // Simulate reasoning steps with delays - INTELLIGENT ANALYSIS
         const reasoningSteps = [
           {
             type: 'reasoning',
             step: 2,
             status: 'in_progress',
-            description: `Researching current ${query} digital health landscape...`,
+            description: 'Analyzing query context and extracting key requirements...',
             timestamp: new Date().toISOString()
           },
           {
             type: 'reasoning',
             step: 3,
             status: 'in_progress',
-            description: 'Identifying key stakeholders and market opportunities...',
+            description: 'Researching relevant digital health technologies and approaches...',
             timestamp: new Date().toISOString()
           },
           {
             type: 'reasoning',
             step: 4,
             status: 'in_progress',
-            description: 'Developing regulatory compliance framework...',
+            description: 'Evaluating regulatory and compliance considerations...',
             timestamp: new Date().toISOString()
           },
           {
             type: 'reasoning',
             step: 5,
             status: 'completed',
-            description: `Synthesizing comprehensive digital health strategy for ${query}...`,
+            description: 'Generating comprehensive AI-powered strategy analysis...',
             timestamp: new Date().toISOString()
           }
         ];
@@ -81,88 +82,77 @@ export async function POST(request: NextRequest) {
             setTimeout(sendNextStep, 2000); // 2 second delay between steps
           } else {
             // Wait a bit before starting content after reasoning is complete
-            console.log('🧠 [API] All reasoning steps complete, starting content in 2 seconds...');
-            setTimeout(() => {
-              // Send the final content - USE ACTUAL USER QUERY
-            const finalContent = `# Digital Health Strategy for ${query}
+            console.log('🧠 [API] All reasoning steps complete, starting AI analysis...');
+            setTimeout(async () => {
+              // Use real AI to analyze the user query
+              try {
+                const llm = new ChatOpenAI({
+                  modelName: 'gpt-4o',
+                  temperature: 0.7,
+                  streaming: true,
+                });
 
-## Executive Summary
-Based on your request for a digital health strategy for ${query}, I've developed a comprehensive approach that addresses the unique challenges and opportunities in this space.
+                const prompt = `You are a digital health strategy expert. Analyze the following user query and provide a comprehensive digital health strategy response. Be specific to their actual query and avoid generic templates.
 
-## Key Strategic Pillars
+User Query: "${query}"
 
-### 1. Technology Integration
-- **Digital Therapeutics (DTx)**: FDA-cleared software as medical devices
-- **Wearable Technology**: Continuous monitoring and feedback systems
-- **AI-Powered Personalization**: Adaptive treatment protocols
+Please provide:
+1. A relevant title based on their specific query
+2. Executive summary addressing their specific needs
+3. Key strategic pillars tailored to their query
+4. Implementation roadmap
+5. Success metrics relevant to their domain
 
-### 2. Regulatory Compliance
-- **FDA 510(k) Clearance**: For Class II medical devices
-- **HIPAA Compliance**: Patient data protection and privacy
-- **Clinical Validation**: Evidence-based efficacy requirements
+Be thorough, specific, and directly address what they're asking about.`;
 
-### 3. Market Access Strategy
-- **Provider Integration**: Seamless EHR integration
-- **Payor Engagement**: Value-based care models
-- **Patient Adoption**: User-friendly design and accessibility
+                console.log('🤖 [API] Starting AI analysis for query:', query);
+                
+                // Stream the AI response
+                const stream = await llm.stream(prompt);
+                
+                let fullResponse = '';
+                for await (const chunk of stream) {
+                  const content = chunk.content;
+                  if (content) {
+                    fullResponse += content;
+                    
+                    // Send content chunk to client
+                    const contentEvent = {
+                      type: 'content',
+                      content: content,
+                      timestamp: new Date().toISOString()
+                    };
+                    controller.enqueue(encoder.encode(`data: ${JSON.stringify(contentEvent)}\n\n`));
+                  }
+                }
+                
+                console.log('✅ [API] AI analysis complete, response length:', fullResponse.length);
+                
+              } catch (aiError) {
+                console.error('❌ [API] AI analysis failed:', aiError);
+                
+                // Fallback response if AI fails
+                const fallbackContent = `I apologize, but I encountered an issue while analyzing your query: "${query}". 
 
-### 4. Clinical Evidence Generation
-- **Randomized Controlled Trials**: Efficacy and safety data
-- **Real-World Evidence**: Long-term outcomes and adherence
-- **Comparative Effectiveness**: Against standard of care
-
-## Implementation Roadmap
-
-### Phase 1: Foundation (Months 1-6)
-- Regulatory pathway determination
-- Technology platform development
-- Initial clinical study design
-
-### Phase 2: Validation (Months 7-18)
-- Clinical trial execution
-- Regulatory submission preparation
-- Market research and validation
-
-### Phase 3: Commercialization (Months 19-24)
-- Market launch strategy
-- Provider and payor partnerships
-- Patient engagement programs
-
-## Success Metrics
-- **Clinical**: 20% improvement in ${query} symptom management
-- **Commercial**: $10M ARR within 24 months
-- **Regulatory**: FDA clearance within 18 months
-
-This strategy positions your digital health solution for success in the ${query} market while ensuring regulatory compliance and clinical efficacy.`;
-
-            // Send content in chunks for streaming effect
-            const contentChunks = finalContent.split('\n');
-            let chunkIndex = 0;
-            
-            const sendNextChunk = () => {
-              if (chunkIndex < contentChunks.length) {
-                const chunk = contentChunks[chunkIndex];
+Please try rephrasing your question or contact support if the issue persists.`;
+                
                 const contentEvent = {
                   type: 'content',
-                  content: chunk + '\n',
+                  content: fallbackContent,
                   timestamp: new Date().toISOString()
                 };
                 controller.enqueue(encoder.encode(`data: ${JSON.stringify(contentEvent)}\n\n`));
-                chunkIndex++;
-                setTimeout(sendNextChunk, 100); // 100ms delay between chunks
-              } else {
-                // Send completion event
-                const completionEvent = {
-                  type: 'complete',
-                  message: 'Strategy development completed successfully',
-                  timestamp: new Date().toISOString()
-                };
-                controller.enqueue(encoder.encode(`data: ${JSON.stringify(completionEvent)}\n\n`));
-                controller.close();
               }
-            };
-            
-            setTimeout(sendNextChunk, 1000); // Start content chunks after 1 second
+
+              // Send completion event after AI analysis
+              const completionEvent = {
+                type: 'complete',
+                message: 'AI analysis completed successfully',
+                timestamp: new Date().toISOString()
+              };
+              controller.enqueue(encoder.encode(`data: ${JSON.stringify(completionEvent)}\n\n`));
+              controller.close();
+              
             }, 3000); // Wait 3 seconds after reasoning is complete
           }
         };

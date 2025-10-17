@@ -860,6 +860,7 @@ const _useChatStore = create<ChatStore>()(
                       content: data.content,
                       fullData: data
                     });
+                    console.log('🧠 [Store] Processing reasoning event...');
 
                     // Transform the reasoning event to match ReasoningDisplay expectations
                     const reasoningEvent = {
@@ -873,13 +874,17 @@ const _useChatStore = create<ChatStore>()(
 
                     console.log('🧠 [Reasoning Event]:', reasoningEvent);
 
-                    set((state) => ({
-                      liveReasoning: state.liveReasoning
-                        ? `${state.liveReasoning}\n${reasoningEvent.description}`
-                        : reasoningEvent.description,
-                      isReasoningActive: true,
-                      reasoningEvents: [...state.reasoningEvents, reasoningEvent]
-                    }));
+                    set((state) => {
+                      const newState = {
+                        liveReasoning: state.liveReasoning
+                          ? `${state.liveReasoning}\n${reasoningEvent.description}`
+                          : reasoningEvent.description,
+                        isReasoningActive: true,
+                        reasoningEvents: [...state.reasoningEvents, reasoningEvent]
+                      };
+                      console.log('🧠 [Store] Updated reasoning events:', newState.reasoningEvents.length);
+                      return newState;
+                    });
                   } else if (data.type === 'reasoning_done') {
                     // Reasoning complete, store in message metadata
                     set({

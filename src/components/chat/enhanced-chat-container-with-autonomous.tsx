@@ -210,7 +210,7 @@ export function EnhancedChatContainerWithAutonomous({ className }: { className?:
                 {/* Reasoning Display */}
                 {isReasoningActive && reasoningEvents.length > 0 && (
                   <div className="border-t p-4">
-                    <ReasoningDisplay events={reasoningEvents} />
+                    <ReasoningDisplay reasoningEvents={reasoningEvents} isActive={isReasoningActive} />
                   </div>
                 )}
 

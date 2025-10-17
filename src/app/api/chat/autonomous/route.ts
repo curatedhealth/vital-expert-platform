@@ -35,6 +35,7 @@ export async function POST(request: NextRequest) {
           timestamp: new Date().toISOString()
         };
         
+        console.log('🧠 [API] Sending initial reasoning step:', initialStep);
         controller.enqueue(encoder.encode(`data: ${JSON.stringify(initialStep)}\n\n`));
 
         // Simulate reasoning steps with delays
@@ -77,9 +78,12 @@ export async function POST(request: NextRequest) {
             console.log('🧠 [API] Sending reasoning step:', step);
             controller.enqueue(encoder.encode(`data: ${JSON.stringify(step)}\n\n`));
             stepIndex++;
-            setTimeout(sendNextStep, 1500); // 1.5 second delay between steps
+            setTimeout(sendNextStep, 2000); // 2 second delay between steps
           } else {
-            // Send the final content
+            // Wait a bit before starting content after reasoning is complete
+            console.log('🧠 [API] All reasoning steps complete, starting content in 2 seconds...');
+            setTimeout(() => {
+              // Send the final content
             const finalContent = `# Digital Health Strategy for ADHD
 
 ## Executive Summary
@@ -158,11 +162,12 @@ This strategy positions your digital health solution for success in the ADHD mar
               }
             };
             
-            setTimeout(sendNextChunk, 1000); // Start content after 1 second
+            setTimeout(sendNextChunk, 1000); // Start content chunks after 1 second
+            }, 3000); // Wait 3 seconds after reasoning is complete
           }
         };
         
-        setTimeout(sendNextStep, 1000); // Start reasoning steps after 1 second
+        setTimeout(sendNextStep, 500); // Start reasoning steps after 500ms
       }
     });
 

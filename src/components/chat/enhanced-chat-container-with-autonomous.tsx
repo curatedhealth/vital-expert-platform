@@ -234,13 +234,18 @@ export function EnhancedChatContainerWithAutonomous({ className }: { className?:
                   <ChatInput
                     value={input}
                     onChange={setInput}
-                    onSend={handleSendMessage}
-                    disabled={isLoading || !selectedAgent}
-                    placeholder={
-                      selectedAgent 
-                        ? `Message ${selectedAgent.display_name || selectedAgent.name}...`
-                        : "Select an agent to start chatting..."
-                    }
+                    onSubmit={handleSendMessage}
+                    isLoading={isLoading}
+                    interactionMode={isManualMode ? 'manual' : 'automatic'}
+                    hasSelectedAgent={!!selectedAgent}
+                    selectedAgent={selectedAgent}
+                    selectedModel={selectedModel?.id || 'gpt-4o'}
+                    onModelChange={(model) => setSelectedModel({ id: model, name: model })}
+                    currentChat={currentChat}
+                    onUpdateChatMode={updateChatMode}
+                    disabled={isLoading}
+                    className="border-t"
+                    isCentered={false}
                   />
                 </div>
               </div>

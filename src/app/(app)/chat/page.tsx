@@ -74,17 +74,9 @@ function ChatPageContent() {
   }, [syncWithGlobalStore, subscribeToGlobalChanges]);
 
   return (
-    <div className="flex h-screen bg-gray-50">
-      {/* Enhanced Sidebar */}
-      <EnhancedChatSidebar
-        isCollapsed={isSidebarCollapsed}
-        onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-      />
-
-      {/* Chat Container */}
-      <div className="flex-1 flex flex-col min-w-0">
-        <EnhancedChatContainerWithAutonomous className="h-full" />
-      </div>
+    <div className="h-screen bg-gray-50">
+      {/* Chat Container - Full Width */}
+      <EnhancedChatContainerWithAutonomous className="h-full" />
 
       {/* Agent Creator Modal */}
       {showAgentCreator && (

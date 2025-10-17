@@ -721,7 +721,8 @@ const _useChatStore = create<ChatStore>()(
 
           // Prepare request body
           const requestBody = {
-            message: content,
+            query: content, // Autonomous API expects 'query' parameter
+            message: content, // Keep for backward compatibility
             agent: selectedAgent || null, // Allow null agent in automatic mode
             userId: 'hicham.naim@curated.health', // TODO: Get from auth context
             sessionId: updatedCurrentChat?.id || 'unknown',

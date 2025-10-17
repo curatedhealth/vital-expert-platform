@@ -201,7 +201,10 @@ export function EnhancedChatContainerWithAutonomous({ className }: { className?:
                           Select an agent and start a conversation, or try autonomous mode for complex tasks.
                         </p>
                         {selectedAgent && (
-                          <AgentPromptStarters agent={selectedAgent} />
+                          <AgentPromptStarters 
+                            agent={selectedAgent} 
+                            onPromptSelect={(prompt) => setInput(prompt)}
+                          />
                         )}
                       </div>
                     ) : (

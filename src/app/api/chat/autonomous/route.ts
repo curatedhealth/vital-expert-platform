@@ -4,8 +4,10 @@ import { autonomousOrchestrator } from '@/features/autonomous/autonomous-orchest
 import { safetyManager } from '@/features/autonomous/safety-manager';
 
 export async function POST(request: NextRequest) {
+  console.log('🚀 [Autonomous API] POST request received');
   try {
     const body = await request.json();
+    console.log('📥 [Autonomous API] Request body:', { query: body.query, mode: body.mode });
     const {
       query,
       mode = 'automatic',
@@ -190,6 +192,7 @@ export async function POST(request: NextRequest) {
     }
   } catch (error) {
     console.error('❌ [Autonomous API] Error:', error);
+    console.error('❌ [Autonomous API] Error stack:', error instanceof Error ? error.stack : 'No stack trace');
     
     return NextResponse.json(
       { 

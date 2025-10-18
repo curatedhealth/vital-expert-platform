@@ -68,13 +68,14 @@ export function ReasoningMessage({ steps, isStreaming = false, className }: Reas
     });
   };
 
-  const formatTimestamp = (timestamp: Date) => {
+  const formatTimestamp = (timestamp: Date | string) => {
+    const date = typeof timestamp === 'string' ? new Date(timestamp) : timestamp;
     return new Intl.DateTimeFormat('en-US', {
       hour: '2-digit',
       minute: '2-digit',
       second: '2-digit',
       hour12: true
-    }).format(timestamp);
+    }).format(date);
   };
 
   const displaySteps = steps; // Always show all steps for full transparency

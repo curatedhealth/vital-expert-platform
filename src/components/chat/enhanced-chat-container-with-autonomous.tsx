@@ -205,30 +205,64 @@ export function EnhancedChatContainerWithAutonomous({ className }: { className?:
                             {hasReasoning && (
                               <div className="ml-12 mr-4">
                                 <ReasoningMessage
-                                  steps={reasoningEvents.map(event => ({
-                                    id: event.id,
-                                    timestamp: event.timestamp,
-                                    iteration: 1,
-                                    phase: event.step as any,
-                                    content: {
-                                      description: event.description || 'Processing...',
-                                      reasoning: event.data?.reasoning,
-                                      insights: event.data?.insights,
-                                      questions: event.data?.questions,
-                                      decisions: event.data?.decisions,
-                                      evidence: event.data?.evidence
-                                    },
-                                    metadata: {
-                                      confidence: event.data?.confidence,
-                                      estimatedDuration: event.data?.estimatedDuration,
-                                      toolsUsed: event.data?.toolsUsed,
-                                      cost: event.data?.cost,
-                                      tokensUsed: event.data?.tokensUsed,
-                                      priority: event.data?.priority
-                                    },
-                                    status: event.type === 'complete' ? 'completed' : 
-                                           event.type === 'error' ? 'failed' : 'in_progress'
-                                  }))}
+                                  steps={reasoningEvents.map(event => {
+                                    // Handle both old and new reasoning event formats
+                                    let stepData;
+                                    if (event.data && event.data.content) {
+                                      // New enhanced reasoning step format
+                                      stepData = {
+                                        id: event.data.id || event.id,
+                                        timestamp: event.data.timestamp || event.timestamp,
+                                        iteration: event.data.iteration || 1,
+                                        phase: event.data.phase || event.step || 'processing',
+                                        content: {
+                                          description: event.data.content.description || event.description || 'Processing...',
+                                          reasoning: event.data.content.reasoning,
+                                          insights: event.data.content.insights || [],
+                                          questions: event.data.content.questions || [],
+                                          decisions: event.data.content.decisions || [],
+                                          evidence: event.data.content.evidence || []
+                                        },
+                                        metadata: {
+                                          confidence: event.data.metadata?.confidence,
+                                          estimatedDuration: event.data.metadata?.estimatedDuration,
+                                          toolsUsed: event.data.metadata?.toolsUsed || [],
+                                          cost: event.data.metadata?.cost,
+                                          tokensUsed: event.data.metadata?.tokensUsed,
+                                          priority: event.data.metadata?.priority
+                                        },
+                                        status: event.data.status || (event.type === 'complete' ? 'completed' : 
+                                               event.type === 'error' ? 'failed' : 'in_progress')
+                                      };
+                                    } else {
+                                      // Legacy reasoning event format
+                                      stepData = {
+                                        id: event.id,
+                                        timestamp: event.timestamp,
+                                        iteration: 1,
+                                        phase: event.step || 'processing',
+                                        content: {
+                                          description: event.description || 'Processing...',
+                                          reasoning: event.data?.reasoning,
+                                          insights: event.data?.insights || [],
+                                          questions: event.data?.questions || [],
+                                          decisions: event.data?.decisions || [],
+                                          evidence: event.data?.evidence || []
+                                        },
+                                        metadata: {
+                                          confidence: event.data?.confidence,
+                                          estimatedDuration: event.data?.estimatedDuration,
+                                          toolsUsed: event.data?.toolsUsed || [],
+                                          cost: event.data?.cost,
+                                          tokensUsed: event.data?.tokensUsed,
+                                          priority: event.data?.priority
+                                        },
+                                        status: event.type === 'complete' ? 'completed' : 
+                                               event.type === 'error' ? 'failed' : 'in_progress'
+                                      };
+                                    }
+                                    return stepData;
+                                  })}
                                   isStreaming={isReasoningActive && isLastMessage}
                                 />
                               </div>
@@ -364,30 +398,64 @@ export function EnhancedChatContainerWithAutonomous({ className }: { className?:
                               {hasReasoning && (
                                 <div className="ml-12 mr-4">
                                   <ReasoningMessage
-                                    steps={reasoningEvents.map(event => ({
-                                      id: event.id,
-                                      timestamp: event.timestamp,
-                                      iteration: 1,
-                                      phase: event.step as any,
-                                      content: {
-                                        description: event.description || 'Processing...',
-                                        reasoning: event.data?.reasoning,
-                                        insights: event.data?.insights,
-                                        questions: event.data?.questions,
-                                        decisions: event.data?.decisions,
-                                        evidence: event.data?.evidence
-                                      },
-                                      metadata: {
-                                        confidence: event.data?.confidence,
-                                        estimatedDuration: event.data?.estimatedDuration,
-                                        toolsUsed: event.data?.toolsUsed,
-                                        cost: event.data?.cost,
-                                        tokensUsed: event.data?.tokensUsed,
-                                        priority: event.data?.priority
-                                      },
-                                      status: event.type === 'complete' ? 'completed' : 
-                                             event.type === 'error' ? 'failed' : 'in_progress'
-                                    }))}
+                                    steps={reasoningEvents.map(event => {
+                                      // Handle both old and new reasoning event formats
+                                      let stepData;
+                                      if (event.data && event.data.content) {
+                                        // New enhanced reasoning step format
+                                        stepData = {
+                                          id: event.data.id || event.id,
+                                          timestamp: event.data.timestamp || event.timestamp,
+                                          iteration: event.data.iteration || 1,
+                                          phase: event.data.phase || event.step || 'processing',
+                                          content: {
+                                            description: event.data.content.description || event.description || 'Processing...',
+                                            reasoning: event.data.content.reasoning,
+                                            insights: event.data.content.insights || [],
+                                            questions: event.data.content.questions || [],
+                                            decisions: event.data.content.decisions || [],
+                                            evidence: event.data.content.evidence || []
+                                          },
+                                          metadata: {
+                                            confidence: event.data.metadata?.confidence,
+                                            estimatedDuration: event.data.metadata?.estimatedDuration,
+                                            toolsUsed: event.data.metadata?.toolsUsed || [],
+                                            cost: event.data.metadata?.cost,
+                                            tokensUsed: event.data.metadata?.tokensUsed,
+                                            priority: event.data.metadata?.priority
+                                          },
+                                          status: event.data.status || (event.type === 'complete' ? 'completed' : 
+                                                 event.type === 'error' ? 'failed' : 'in_progress')
+                                        };
+                                      } else {
+                                        // Legacy reasoning event format
+                                        stepData = {
+                                          id: event.id,
+                                          timestamp: event.timestamp,
+                                          iteration: 1,
+                                          phase: event.step || 'processing',
+                                          content: {
+                                            description: event.description || 'Processing...',
+                                            reasoning: event.data?.reasoning,
+                                            insights: event.data?.insights || [],
+                                            questions: event.data?.questions || [],
+                                            decisions: event.data?.decisions || [],
+                                            evidence: event.data?.evidence || []
+                                          },
+                                          metadata: {
+                                            confidence: event.data?.confidence,
+                                            estimatedDuration: event.data?.estimatedDuration,
+                                            toolsUsed: event.data?.toolsUsed || [],
+                                            cost: event.data?.cost,
+                                            tokensUsed: event.data?.tokensUsed,
+                                            priority: event.data?.priority
+                                          },
+                                          status: event.type === 'complete' ? 'completed' : 
+                                                 event.type === 'error' ? 'failed' : 'in_progress'
+                                        };
+                                      }
+                                      return stepData;
+                                    })}
                                     isStreaming={isReasoningActive && isLastMessage}
                                   />
                                 </div>

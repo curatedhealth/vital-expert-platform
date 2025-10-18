@@ -1,5 +1,24 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { embeddingService, EmbeddingResult } from './lib/services/embeddings/openai-embedding-service';
+import { 
+  RAGError, 
+  DatabaseError, 
+  ConfigurationError, 
+  MissingEnvironmentVariableError,
+  EmbeddingGenerationError,
+  VectorSearchError,
+  ValidationError,
+  InvalidEmbeddingError,
+  RAGErrorFactory,
+  withErrorHandling
+} from './lib/errors/rag-errors';
+import { getLogger } from './lib/logging/logger';
+import { 
+  getTenantContextManager, 
+  getTenantService, 
+  TenantContext,
+  TenantPermissions 
+} from './lib/tenant/tenant-context';
 
 export interface RAGKnowledgeSource {
   id: string;
@@ -71,11 +90,15 @@ class RAGService {
   private supabase: SupabaseClient | null = null;
   private defaultTenantId: string | null = null;
   private isInitialized = false;
+  private logger = getLogger();
 
   async initialize() {
     if (this.isInitialized) {
       return;
     }
+
+    const startTime = Date.now();
+    this.logger.info('Initializing RAG Service', { component: 'rag-service', operation: 'initialize' });
 
     try {
       // Initialize Supabase client
@@ -83,8 +106,12 @@ class RAGService {
         const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
         const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
         
-        if (!supabaseUrl || !supabaseKey) {
-          throw new Error('Missing Supabase configuration. Check NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY environment variables.');
+        if (!supabaseUrl) {
+          throw new MissingEnvironmentVariableError('NEXT_PUBLIC_SUPABASE_URL');
+        }
+        
+        if (!supabaseKey) {
+          throw new MissingEnvironmentVariableError('SUPABASE_SERVICE_ROLE_KEY or NEXT_PUBLIC_SUPABASE_ANON_KEY');
         }
 
         this.supabase = createClient(supabaseUrl, supabaseKey, {
@@ -93,37 +120,66 @@ class RAGService {
             persistSession: false
           }
         });
+
+        this.logger.info('Supabase client created', { 
+          component: 'rag-service', 
+          operation: 'initialize',
+          supabaseUrl: supabaseUrl.substring(0, 30) + '...'
+        });
       }
 
       // Test connection
+      this.logger.debug('Testing database connection', { component: 'rag-service', operation: 'initialize' });
       const { data: connectionTest, error: connectionError } = await this.supabase
         .from('rag_tenants')
         .select('id')
         .limit(1);
 
       if (connectionError) {
-        throw new Error(`Database connection failed: ${connectionError.message}`);
+        throw new DatabaseError(`Database connection failed: ${connectionError.message}`, {
+          supabaseError: connectionError
+        });
       }
 
       // Get default tenant ID
+      this.logger.debug('Getting default tenant ID', { component: 'rag-service', operation: 'initialize' });
       const { data, error } = await this.supabase.rpc('get_default_rag_tenant_id');
       if (error) {
-        throw new Error(`Failed to get default tenant ID: ${error.message}`);
+        throw new DatabaseError(`Failed to get default tenant ID: ${error.message}`, {
+          supabaseError: error
+        });
       }
       
       this.defaultTenantId = data;
       this.isInitialized = true;
 
-      console.log('✅ RAG Service initialized successfully');
+      const duration = Date.now() - startTime;
+      this.logger.info('RAG Service initialized successfully', { 
+        component: 'rag-service', 
+        operation: 'initialize',
+        duration,
+        defaultTenantId: this.defaultTenantId
+      });
+
     } catch (error) {
-      console.error('❌ Failed to initialize RAG Service:', error);
-      throw error;
+      const duration = Date.now() - startTime;
+      this.logger.error('Failed to initialize RAG Service', { 
+        component: 'rag-service', 
+        operation: 'initialize',
+        duration,
+        error: error instanceof Error ? error.message : String(error)
+      });
+      
+      throw RAGErrorFactory.fromUnknown(error, { operation: 'initialize' });
     }
   }
 
   private getSupabaseClient(): SupabaseClient {
     if (!this.supabase) {
-      throw new Error('RAG Service not initialized. Call initialize() first.');
+      throw new ConfigurationError('RAG Service not initialized. Call initialize() first.', {
+        component: 'rag-service',
+        operation: 'getSupabaseClient'
+      });
     }
     return this.supabase;
   }
@@ -247,8 +303,9 @@ class RAGService {
   async searchKnowledge(
     queryText: string,
     queryEmbedding: number[],
-    options: RAGSearchOptions = { /* TODO: implement */ }
+    options: RAGSearchOptions = {}
   ): Promise<RAGSearchResult[]> {
+    const startTime = Date.now();
     const {
       threshold = 0.7,
       limit = 10,
@@ -256,24 +313,106 @@ class RAGService {
       prism_suite
     } = options;
 
-    const { data, error } = await this.getSupabaseClient().rpc('search_rag_knowledge', {
-      query_embedding: queryEmbedding,
-      match_threshold: threshold,
-      match_count: limit,
-      filter_domain: domain || null,
-      filter_prism_suite: prism_suite || null,
-      filter_tenant_id: this.defaultTenantId
+    // Get tenant context
+    const tenantManager = getTenantContextManager();
+    const tenantId = tenantManager.getCurrentTenantId();
+
+    this.logger.debug('Starting vector search', { 
+      component: 'rag-service', 
+      operation: 'searchKnowledge',
+      tenantId,
+      queryLength: queryText.length,
+      threshold,
+      limit,
+      domain,
+      prism_suite
     });
 
-    if (error) {
-      // console.error('Failed to search knowledge:', error);
-      throw error;
+    try {
+      // Validate tenant access
+      tenantManager.validateAccess('canSearch', `domain:${domain}`);
+
+      // Validate inputs
+      if (!queryText || queryText.trim().length === 0) {
+        throw new ValidationError('Query text cannot be empty', { queryText });
+      }
+
+      if (!queryEmbedding || queryEmbedding.length !== 3072) {
+        throw new InvalidEmbeddingError(queryEmbedding?.length || 0, 3072, {
+          queryText: queryText.substring(0, 100)
+        });
+      }
+
+      // Apply tenant filters
+      const tenantFilters = tenantManager.getTenantFilters();
+      const finalDomain = domain || tenantFilters.domain;
+      const finalPrismSuite = prism_suite || tenantFilters.prism_suite;
+
+      const { data, error } = await this.getSupabaseClient().rpc('search_rag_knowledge', {
+        query_embedding: queryEmbedding,
+        match_threshold: threshold,
+        match_count: limit,
+        filter_domain: finalDomain || null,
+        filter_prism_suite: finalPrismSuite || null,
+        filter_tenant_id: tenantId
+      });
+
+      if (error) {
+        throw new DatabaseError(`Vector search failed: ${error.message}`, {
+          supabaseError: error,
+          queryText: queryText.substring(0, 100),
+          threshold,
+          limit,
+          tenantId
+        });
+      }
+
+      const results = data || [];
+      const duration = Date.now() - startTime;
+
+      // Log search analytics
+      this.logSearchAnalytics(queryText, queryEmbedding, domain, results.length);
+
+      // Update tenant usage
+      const tenantService = getTenantService();
+      await tenantService.updateUsage(tenantId, 'search', 1);
+
+      this.logger.vectorSearch(queryText, results.length, duration, {
+        component: 'rag-service',
+        operation: 'searchKnowledge',
+        tenantId,
+        threshold,
+        limit,
+        domain: finalDomain,
+        prism_suite: finalPrismSuite
+      });
+
+      return results;
+
+    } catch (error) {
+      const duration = Date.now() - startTime;
+      this.logger.error('Vector search failed', { 
+        component: 'rag-service', 
+        operation: 'searchKnowledge',
+        duration,
+        tenantId,
+        queryText: queryText.substring(0, 100),
+        threshold,
+        limit,
+        error: error instanceof Error ? error.message : String(error)
+      });
+      
+      if (error instanceof RAGError) {
+        throw error;
+      }
+      
+      throw new VectorSearchError(queryText, error instanceof Error ? error.message : 'Unknown error', {
+        threshold,
+        limit,
+        duration,
+        tenantId
+      });
     }
-
-    // Log search analytics
-    this.logSearchAnalytics(queryText, queryEmbedding, domain, data?.length || 0);
-
-    return data || [];
   }
 
   async logSearchAnalytics(
@@ -377,9 +516,18 @@ class RAGService {
 
   // Generate real embeddings using OpenAI text-embedding-3-large
   async generateEmbedding(text: string): Promise<number[]> {
+    const startTime = Date.now();
+    this.logger.debug('Generating embedding', { 
+      component: 'rag-service', 
+      operation: 'generateEmbedding',
+      textLength: text.length
+    });
+
     try {
       if (!text || text.trim().length === 0) {
-        throw new Error('Text cannot be empty for embedding generation');
+        throw new ValidationError('Text cannot be empty for embedding generation', {
+          textLength: text?.length || 0
+        });
       }
 
       const result: EmbeddingResult = await embeddingService.generateEmbedding(text, {
@@ -389,15 +537,38 @@ class RAGService {
 
       // Validate embedding dimensions
       if (result.embedding.length !== 3072) {
-        throw new Error(`Expected 3072 dimensions, got ${result.embedding.length}`);
+        throw new InvalidEmbeddingError(result.embedding.length, 3072, {
+          textLength: text.length,
+          actualDimensions: result.embedding.length
+        });
       }
 
-      console.log(`✅ Generated embedding for text (${text.length} chars) with ${result.embedding.length} dimensions`);
+      const duration = Date.now() - startTime;
+      this.logger.embedding('Generated embedding', text.length, result.embedding.length, duration, {
+        component: 'rag-service',
+        operation: 'generateEmbedding'
+      });
+
       return result.embedding;
 
     } catch (error) {
-      console.error('❌ Failed to generate embedding:', error);
-      throw new Error(`Embedding generation failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      const duration = Date.now() - startTime;
+      this.logger.error('Failed to generate embedding', { 
+        component: 'rag-service', 
+        operation: 'generateEmbedding',
+        duration,
+        textLength: text.length,
+        error: error instanceof Error ? error.message : String(error)
+      });
+      
+      if (error instanceof RAGError) {
+        throw error;
+      }
+      
+      throw new EmbeddingGenerationError(text, error instanceof Error ? error.message : 'Unknown error', {
+        textLength: text.length,
+        duration
+      });
     }
   }
 

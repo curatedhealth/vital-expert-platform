@@ -86,17 +86,11 @@ export class BackendConnectionService {
       console.log('🔗 [BackendConnection] Interactive stream URL:', streamUrl);
       
       const response = await fetch(streamUrl, {
-        method: 'POST',
+        method: 'GET',
         headers: {
-          'Content-Type': 'application/json',
           'Accept': 'text/event-stream',
           'Cache-Control': 'no-cache',
         },
-        body: JSON.stringify({
-          query,
-          agent,
-          session_id: sessionId
-        }),
         signal: controller.signal,
       });
 

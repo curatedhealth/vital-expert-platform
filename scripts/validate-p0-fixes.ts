@@ -261,7 +261,8 @@ class P0ValidationRunner {
     // Test 2: Basic search functionality
     await this.runTest('Basic Vector Search', async () => {
       const query = 'test search functionality';
-      const queryEmbedding = await embeddingService.generateEmbedding(query);
+      const embeddingResult = await embeddingService.generateEmbedding(query);
+      const queryEmbedding = embeddingResult.embedding;
 
       const results = await ragService.searchKnowledge(
         query,
@@ -282,7 +283,8 @@ class P0ValidationRunner {
     // Test 3: Search with filters
     await this.runTest('Search with Domain Filter', async () => {
       const query = 'medical research';
-      const queryEmbedding = await embeddingService.generateEmbedding(query);
+      const embeddingResult = await embeddingService.generateEmbedding(query);
+      const queryEmbedding = embeddingResult.embedding;
 
       const results = await ragService.searchKnowledge(
         query,

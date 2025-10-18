@@ -50,7 +50,9 @@
     "db:supabase:test": "npx tsx scripts/test-db-connection.ts",
     "rag:regenerate-embeddings": "npx tsx scripts/regenerate-embeddings.ts",
     "rag:validate-p0": "npx tsx scripts/validate-p0-fixes.ts",
+    "rag:validate-phase2": "npx tsx scripts/validate-phase2.ts",
     "rag:test": "jest tests/integration/p0-rag-fixes.test.ts",
+    "rag:test-phase2": "npm test tests/integration/phase2-error-handling.test.ts",
     "compliance:scan": "node tools/compliance-scanner/hipaa-scanner.js",
     "medical:validate": "node tools/medical-validation/pharma-validator.js",
     "security:audit": "npm audit --audit-level=moderate",
@@ -188,6 +190,7 @@
     "use-stick-to-bottom": "^1.1.1",
     "uuid": "^9.0.1",
     "vaul": "^1.1.2",
+    "winston": "^3.18.3",
     "ws": "^8.18.3",
     "zod": "^3.22.4",
     "zustand": "^5.0.8"
@@ -233,6 +236,7 @@
     "eslint-plugin-unused-imports": "^4.2.0",
     "glob": "^11.0.0",
     "identity-obj-proxy": "^3.0.0",
+    "ioredis": "^5.3.2",
     "jest": "^29.7.0",
     "jest-environment-jsdom": "^29.7.0",
     "jest-html-reporters": "^3.1.7",
@@ -252,7 +256,6 @@
     "ts-node": "^10.9.2",
     "typedoc": "^0.25.0",
     "typescript": "^5",
-    "vitest": "^3.2.4",
-    "ioredis": "^5.3.2"
+    "vitest": "^3.2.4"
   }
 }

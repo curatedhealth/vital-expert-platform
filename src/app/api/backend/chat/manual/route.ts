@@ -9,14 +9,14 @@ export async function POST(request: NextRequest) {
     
     // Return session started response
     return NextResponse.json({
-      sessionId,
+      session_id: sessionId,
       status: "started",
-      message: "Real LangGraph session started successfully"
+      message: "Interactive consultation session started successfully"
     });
   } catch (error) {
-    console.error('❌ [Backend API] Autonomous execute error:', error);
+    console.error('❌ [Backend API] Consultation start error:', error);
     return NextResponse.json(
-      { error: 'Failed to start autonomous session' },
+      { error: 'Failed to start consultation session' },
       { status: 500 }
     );
   }

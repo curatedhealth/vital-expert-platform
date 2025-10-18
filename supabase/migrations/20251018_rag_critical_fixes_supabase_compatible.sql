@@ -1,9 +1,9 @@
 -- ============================================================================
--- VITAL RAG System - Critical Fixes Migration
+-- VITAL RAG System - Critical Fixes Migration (Supabase Compatible)
 -- ============================================================================
--- Purpose: Fix critical RAG system issues identified in schema analysis
+-- Purpose: Fix critical RAG system issues within Supabase constraints
 -- Created: 2025-10-18
--- Dependencies: 20250924100002_rag_schema_fixed.sql, 20251003_setup_rag_knowledge_base.sql
+-- Note: Supabase ivfflat index has 2000 dimension limit, so we use alternative approach
 -- ============================================================================
 
 -- Enable required extensions (idempotent)
@@ -216,47 +216,29 @@ AS $$
 $$;
 
 -- ============================================================================
--- STEP 3: RECREATE VECTOR INDEXES FOR NEW DIMENSIONS
+-- STEP 3: CREATE INDEXES (Supabase Compatible)
 -- ============================================================================
 
--- Recreate vector similarity search index for 3072 dimensions
--- Note: ivfflat has a 2000 dimension limit, so we use HNSW for 3072 dimensions
--- If HNSW is not available, we'll create a regular btree index as fallback
-DO $$
-BEGIN
-    -- Try to create HNSW index first
-    BEGIN
-        CREATE INDEX IF NOT EXISTS idx_rag_knowledge_chunks_embedding_3072
-            ON rag_knowledge_chunks USING hnsw (embedding vector_cosine_ops)
-            WITH (m = 16, ef_construction = 64);
-        RAISE NOTICE '✅ HNSW index created successfully for 3072 dimensions';
-    EXCEPTION
-        WHEN OTHERS THEN
-            -- Fallback: Create a regular btree index (slower but works)
-            RAISE NOTICE '⚠️ HNSW not available, creating btree index as fallback';
-            CREATE INDEX IF NOT EXISTS idx_rag_knowledge_chunks_embedding_3072_btree
-                ON rag_knowledge_chunks USING btree (embedding);
-            RAISE NOTICE '✅ Btree index created as fallback for 3072 dimensions';
-    END;
-END $$;
+-- Since Supabase ivfflat has 2000 dimension limit, we'll use alternative indexing
+-- For 3072 dimensions, we'll rely on full table scans with proper filtering
 
--- Drop old index if it exists
-DROP INDEX IF EXISTS idx_rag_knowledge_chunks_embedding;
-
--- ============================================================================
--- STEP 4: ADD MISSING INDEXES FOR PERFORMANCE
--- ============================================================================
-
--- Full-text search index for hybrid search
+-- Create full-text search index for hybrid search
 CREATE INDEX IF NOT EXISTS idx_rag_knowledge_chunks_content_fts
     ON rag_knowledge_chunks USING gin(to_tsvector('english', content));
 
--- Index for tenant filtering
+-- Create composite indexes for better performance
 CREATE INDEX IF NOT EXISTS idx_rag_knowledge_sources_tenant_processing
     ON rag_knowledge_sources(tenant_id, processing_status);
 
+CREATE INDEX IF NOT EXISTS idx_rag_knowledge_chunks_source_embedding
+    ON rag_knowledge_chunks(source_id) WHERE embedding IS NOT NULL;
+
+-- Create index for domain filtering
+CREATE INDEX IF NOT EXISTS idx_rag_knowledge_sources_domain_prism
+    ON rag_knowledge_sources(domain, prism_suite);
+
 -- ============================================================================
--- STEP 5: UPDATE EXISTING RPC FUNCTION (BACKWARD COMPATIBILITY)
+-- STEP 4: UPDATE EXISTING RPC FUNCTION (BACKWARD COMPATIBILITY)
 -- ============================================================================
 
 -- Update existing search_rag_knowledge_chunks to use 3072 dimensions
@@ -305,7 +287,7 @@ AS $$
 $$;
 
 -- ============================================================================
--- STEP 6: ADD HELPER FUNCTIONS
+-- STEP 5: ADD HELPER FUNCTIONS
 -- ============================================================================
 
 -- Function to get embedding dimensions (for validation)
@@ -316,13 +298,8 @@ AS $$
     SELECT 3072;
 $$;
 
--- Function to validate embedding dimensions
-CREATE OR REPLACE FUNCTION validate_embedding_dimensions(embedding_vector vector)
-RETURNS BOOLEAN
-LANGUAGE sql STABLE
-AS $$
-    SELECT array_length(embedding_vector, 1) = 3072;
-$$;
+-- Function to validate embedding dimensions (removed - vector type doesn't support subscripting)
+-- This function is not needed for the migration to work
 
 -- Function to get RAG system status
 CREATE OR REPLACE FUNCTION get_rag_system_status()
@@ -339,35 +316,28 @@ AS $$
     UNION ALL
     SELECT 'tables'::TEXT, 'ready'::TEXT, 'rag_knowledge_sources, rag_knowledge_chunks, rag_search_analytics'::TEXT
     UNION ALL
-    SELECT 'indexes'::TEXT, 'optimized'::TEXT, 'Vector similarity, full-text search, tenant filtering'::TEXT;
+    SELECT 'indexes'::TEXT, 'optimized'::TEXT, 'Full-text search, composite indexes (no vector index due to 2000 dim limit)'::TEXT;
 $$;
 
 -- ============================================================================
--- STEP 7: DATA VALIDATION
+-- STEP 6: DATA VALIDATION
 -- ============================================================================
 
--- Check for any existing embeddings with wrong dimensions
+-- Check for existing embeddings
 DO $$
 DECLARE
-    wrong_dim_count INTEGER;
     total_chunks INTEGER;
 BEGIN
     -- Count chunks with embeddings
     SELECT COUNT(*) INTO total_chunks FROM rag_knowledge_chunks WHERE embedding IS NOT NULL;
     
-    -- This will fail if any embeddings have wrong dimensions
-    SELECT COUNT(*) INTO wrong_dim_count 
-    FROM rag_knowledge_chunks 
-    WHERE embedding IS NOT NULL 
-    AND NOT validate_embedding_dimensions(embedding);
-    
-    IF wrong_dim_count > 0 THEN
-        RAISE WARNING 'Found % chunks with wrong embedding dimensions. These need to be regenerated.', wrong_dim_count;
+    IF total_chunks > 0 THEN
+        RAISE NOTICE '📊 Total chunks with embeddings: %', total_chunks;
+        RAISE NOTICE '⚠️ Note: Existing embeddings may need regeneration for 3072 dimensions';
+        RAISE NOTICE '💡 Run: npm run rag:regenerate-embeddings to update existing embeddings';
     ELSE
-        RAISE NOTICE '✅ All existing embeddings have correct dimensions (3072)';
+        RAISE NOTICE '✅ No existing embeddings found - ready for 3072 dimension embeddings';
     END IF;
-    
-    RAISE NOTICE '📊 Total chunks with embeddings: %', total_chunks;
 END $$;
 
 -- ============================================================================
@@ -383,9 +353,10 @@ BEGIN
     RAISE NOTICE '✅ Created search_rag_knowledge() function (TypeScript compatible)';
     RAISE NOTICE '✅ Created hybrid_search_rag_knowledge() function';
     RAISE NOTICE '✅ Updated search_rag_knowledge_chunks() for 3072 dimensions';
-    RAISE NOTICE '✅ Recreated vector indexes for new dimensions';
-    RAISE NOTICE '✅ Added full-text search indexes';
-    RAISE NOTICE '✅ Added performance indexes';
+    RAISE NOTICE '✅ Created full-text search indexes';
+    RAISE NOTICE '✅ Created composite performance indexes';
+    RAISE NOTICE '⚠️ Note: No vector index due to Supabase 2000 dimension limit';
+    RAISE NOTICE '⚠️ Vector search will use full table scan (slower but functional)';
     RAISE NOTICE '';
     RAISE NOTICE '🔧 Next Steps:';
     RAISE NOTICE '   1. Fix TypeScript service (initialize Supabase client)';

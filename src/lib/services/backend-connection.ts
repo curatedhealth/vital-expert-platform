@@ -200,6 +200,13 @@ export class BackendConnectionService {
    */
   async checkHealth(request?: Request): Promise<boolean> {
     try {
+      console.log('🔍 [BackendConnection] Health check called with config:', {
+        pythonBackendUrl: this.config.pythonBackendUrl,
+        startsWithHttp: this.config.pythonBackendUrl.startsWith('http'),
+        isProduction: process.env.NODE_ENV === 'production',
+        isVercel: process.env.VERCEL === '1'
+      });
+      
       // In production with mock endpoints, always return true since we know they work
       if (!this.config.pythonBackendUrl.startsWith('http')) {
         console.log('🔍 [BackendConnection] Using mock backend in production - health check passed');

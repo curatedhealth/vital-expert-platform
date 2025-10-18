@@ -25,7 +25,10 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if backend is available
+    console.log('🔍 [Autonomous API] Checking backend health...');
     const isBackendHealthy = await backendConnection.checkHealth(request);
+    console.log('🔍 [Autonomous API] Backend health result:', isBackendHealthy);
+    
     if (!isBackendHealthy) {
       console.warn('⚠️ [Autonomous API] Backend not available, falling back to error response');
       return NextResponse.json(

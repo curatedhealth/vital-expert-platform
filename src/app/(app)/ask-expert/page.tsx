@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { EnhancedChatSidebar } from '@/components/chat/enhanced-chat-sidebar';
+import { UnifiedChatSidebar } from '@/components/chat/unified-chat-sidebar';
 import { EnhancedChatContainerWithAutonomous } from '@/components/chat/enhanced-chat-container-with-autonomous';
 import { useChatStore } from '@/lib/stores/chat-store';
 
@@ -24,15 +24,15 @@ function AskExpertPageContent() {
   }, [syncWithGlobalStore, subscribeToGlobalChanges]);
 
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="flex h-screen bg-gray-50 overflow-hidden">
       {/* Enhanced Sidebar - Same as Chat View */}
-      <EnhancedChatSidebar
+      <UnifiedChatSidebar
         isCollapsed={isSidebarCollapsed}
         onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
       />
 
       {/* Chat Container - Same as Chat View */}
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         <EnhancedChatContainerWithAutonomous className="h-full" />
       </div>
     </div>

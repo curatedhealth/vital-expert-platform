@@ -35,23 +35,13 @@ Implementing dual-mode system (Manual/Automatic + Interactive/Autonomous)
 - Sanitize outputs
 - Use environment variables for secrets
 
-## Investigation & Debugging Rules
-- **ALWAYS perform comprehensive investigation before proposing solutions**
-- When user asks for audit, investigation, or diagnosis, DO NOT jump to solution mode
-- Follow this investigation process:
-  1. **Analyze the current state** - What is actually happening?
-  2. **Identify root causes** - Why is it happening?
-  3. **Examine error patterns** - What are the commonalities?
-  4. **Check dependencies** - What other systems are affected?
-  5. **Document findings** - Provide clear analysis before any fixes
-- Only propose solutions AFTER completing thorough investigation
-- Use tools like codebase_search, grep, and read_file to gather evidence
-- Present findings in structured format with clear evidence
-
-## Deployment Rules
-- **ALWAYS deploy in preview mode by default**
-- **NEVER deploy to production unless explicitly asked**
-- Use `vercel --target=preview` for all deployments (NOT --prod=false)
-- Only use `vercel --prod` when user specifically requests production deployment
-- Always test in preview environment first
-- If build fails, fix errors before deploying
+## AI Integration Rules
+- NEVER hardcode LangChain LangGraph reasoning steps
+- NEVER create fake conversational AI chat completions
+- ALWAYS connect to real backend services for AI responses
+- ALWAYS use actual LangGraph execution for autonomous reasoning
+- ALWAYS implement real-time streaming from backend services
+- ALWAYS use dynamic reasoning based on actual agent decisions
+- ALWAYS implement real tool execution and evidence gathering
+- ALWAYS connect frontend APIs to Python backend endpoints
+- NEVER use mock data for production AI features

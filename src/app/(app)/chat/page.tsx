@@ -49,7 +49,7 @@ import { ClientAuthWrapper } from '@/components/auth/client-auth-wrapper';
 import { ChatErrorBoundary } from '@/components/error-boundary';
 import { AgentCreator } from '@/features/chat/components/agent-creator';
 import { EnhancedChatContainerWithAutonomous } from '@/components/chat/enhanced-chat-container-with-autonomous';
-import { EnhancedChatSidebar } from '@/components/chat/enhanced-chat-sidebar';
+import { UnifiedChatSidebar } from '@/components/chat/unified-chat-sidebar';
 import { useChatStore } from '@/lib/stores/chat-store';
 
 
@@ -74,15 +74,15 @@ function ChatPageContent() {
   }, [syncWithGlobalStore, subscribeToGlobalChanges]);
 
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="flex h-screen bg-gray-50 overflow-hidden">
       {/* Enhanced Sidebar - Chat History */}
-      <EnhancedChatSidebar
+      <UnifiedChatSidebar
         isCollapsed={isSidebarCollapsed}
         onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
       />
 
       {/* Chat Container */}
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         <EnhancedChatContainerWithAutonomous className="h-full" />
       </div>
 

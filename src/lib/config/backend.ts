@@ -29,6 +29,14 @@ const getBackendConfig = (): BackendConfig => {
 
 export const backendConfig = getBackendConfig();
 
+// Debug logging
+console.log('🔧 [BackendConfig] Configuration loaded:', {
+  pythonBackendUrl: backendConfig.pythonBackendUrl,
+  nodeGatewayUrl: backendConfig.nodeGatewayUrl,
+  isDevelopment: process.env.NODE_ENV === 'development',
+  isProduction: process.env.NODE_ENV === 'production'
+});
+
 // Health check endpoints
 export const healthEndpoints = {
   python: `${backendConfig.pythonBackendUrl}/health`,

@@ -97,6 +97,7 @@ export class BackendConnectionService {
     const sessionId = `session-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     
     try {
+      console.log('🔗 [BackendConnection] Starting autonomous session with URL:', apiEndpoints.autonomous.start);
       const response = await fetch(apiEndpoints.autonomous.start, {
         method: 'POST',
         headers: {

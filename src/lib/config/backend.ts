@@ -18,7 +18,7 @@ const getBackendConfig = (): BackendConfig => {
   
   return {
     pythonBackendUrl: process.env.NEXT_PUBLIC_PYTHON_BACKEND_URL || 
-      (isDevelopment ? 'http://localhost:8001' : 'https://your-python-backend.vercel.app'),
+      (isDevelopment ? 'http://localhost:8001' : '/api/backend'),
     nodeGatewayUrl: process.env.NEXT_PUBLIC_NODE_GATEWAY_URL || 
       (isDevelopment ? 'http://localhost:3001' : 'https://your-node-gateway.vercel.app'),
     timeout: parseInt(process.env.BACKEND_TIMEOUT || '30000'),

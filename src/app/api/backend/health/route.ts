@@ -10,6 +10,16 @@ export async function GET() {
       streaming: 'available',
       agents: 'available'
     },
-    backend: 'vercel-mock-langgraph'
+    backend: 'vercel-mock-langgraph',
+    endpoints: {
+      autonomous: {
+        start: '/api/backend/autonomous/start',
+        stream: '/api/backend/autonomous/stream'
+      },
+      consultation: {
+        start: '/api/backend/consultation/start',
+        stream: '/api/backend/consultation/stream'
+      }
+    }
   });
 }

@@ -31,7 +31,19 @@ export class BackendConnectionService {
     const controller = new AbortController();
     
     try {
-      const response = await fetch(apiEndpoints.autonomous.stream(sessionId), {
+      // Construct full URL for production
+      let streamUrl = apiEndpoints.autonomous.stream(sessionId);
+      if (!streamUrl.startsWith('http')) {
+        // In production, construct the full URL
+        const baseUrl = process.env.VERCEL_URL 
+          ? `https://${process.env.VERCEL_URL}`
+          : 'https://vital-expert-lltl5qmhb-crossroads-catalysts-projects.vercel.app';
+        streamUrl = `${baseUrl}${streamUrl}`;
+      }
+      
+      console.log('🔗 [BackendConnection] Autonomous stream URL:', streamUrl);
+      
+      const response = await fetch(streamUrl, {
         method: 'GET',
         headers: {
           'Accept': 'text/event-stream',
@@ -61,7 +73,19 @@ export class BackendConnectionService {
     const controller = new AbortController();
     
     try {
-      const response = await fetch(apiEndpoints.consultation.stream(sessionId), {
+      // Construct full URL for production
+      let streamUrl = apiEndpoints.consultation.stream(sessionId);
+      if (!streamUrl.startsWith('http')) {
+        // In production, construct the full URL
+        const baseUrl = process.env.VERCEL_URL 
+          ? `https://${process.env.VERCEL_URL}`
+          : 'https://vital-expert-lltl5qmhb-crossroads-catalysts-projects.vercel.app';
+        streamUrl = `${baseUrl}${streamUrl}`;
+      }
+      
+      console.log('🔗 [BackendConnection] Interactive stream URL:', streamUrl);
+      
+      const response = await fetch(streamUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -145,7 +169,19 @@ export class BackendConnectionService {
         };
       }
       
-      const response = await fetch(apiEndpoints.autonomous.start, {
+      // Construct full URL for production
+      let startUrl = apiEndpoints.autonomous.start;
+      if (!startUrl.startsWith('http')) {
+        // In production, construct the full URL
+        const baseUrl = process.env.VERCEL_URL 
+          ? `https://${process.env.VERCEL_URL}`
+          : 'https://vital-expert-lltl5qmhb-crossroads-catalysts-projects.vercel.app';
+        startUrl = `${baseUrl}${startUrl}`;
+      }
+      
+      console.log('🔗 [BackendConnection] Autonomous start URL:', startUrl);
+      
+      const response = await fetch(startUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -177,7 +213,19 @@ export class BackendConnectionService {
     const sessionId = `session-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     
     try {
-      const response = await fetch(apiEndpoints.consultation.start, {
+      // Construct full URL for production
+      let startUrl = apiEndpoints.consultation.start;
+      if (!startUrl.startsWith('http')) {
+        // In production, construct the full URL
+        const baseUrl = process.env.VERCEL_URL 
+          ? `https://${process.env.VERCEL_URL}`
+          : 'https://vital-expert-lltl5qmhb-crossroads-catalysts-projects.vercel.app';
+        startUrl = `${baseUrl}${startUrl}`;
+      }
+      
+      console.log('🔗 [BackendConnection] Interactive start URL:', startUrl);
+      
+      const response = await fetch(startUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -851,7 +851,7 @@ const _useChatStore = create<ChatStore>()(
                   
                   console.log('📥 [SSE] Parsed data:', { type: data.type, hasContent: !!data.content, keys: Object.keys(data) });
 
-                  if (data.type === 'reasoning') {
+                  if (data.type === 'reasoning' || data.type === 'reasoning_step') {
                     console.log('🧠 [Raw Reasoning Data]:', {
                       type: data.type,
                       step: data.step,
@@ -862,15 +862,33 @@ const _useChatStore = create<ChatStore>()(
                     });
                     console.log('🧠 [Store] Processing reasoning event...');
 
-                    // Transform the reasoning event to match ReasoningDisplay expectations
-                    const reasoningEvent = {
-                      id: `reasoning-${Date.now()}-${Math.random()}`,
-                      type: data.type || 'reasoning',
-                      step: data.step || data.workflowStep || 'processing',
-                      description: data.description || data.content || formatReasoningDescription(data),
-                      timestamp: new Date(),
-                      data: data.data || data
-                    };
+                    // Handle both old and new reasoning event formats
+                    let reasoningEvent;
+                    if (data.type === 'reasoning_step' && data.data) {
+                      // New enhanced reasoning step format
+                      reasoningEvent = {
+                        id: data.data.id || `reasoning-${Date.now()}-${Math.random()}`,
+                        type: 'reasoning',
+                        step: data.data.phase || 'processing',
+                        description: data.data.content?.description || data.data.description || 'Processing...',
+                        timestamp: new Date(data.data.timestamp || Date.now()),
+                        data: {
+                          ...data.data,
+                          metadata: data.data.metadata || {},
+                          content: data.data.content || {}
+                        }
+                      };
+                    } else {
+                      // Legacy reasoning event format
+                      reasoningEvent = {
+                        id: `reasoning-${Date.now()}-${Math.random()}`,
+                        type: data.type || 'reasoning',
+                        step: data.step || data.workflowStep || 'processing',
+                        description: data.description || data.content || formatReasoningDescription(data),
+                        timestamp: new Date(),
+                        data: data.data || data
+                      };
+                    }
 
                     console.log('🧠 [Reasoning Event]:', reasoningEvent);
 
@@ -885,7 +903,23 @@ const _useChatStore = create<ChatStore>()(
                       console.log('🧠 [Store] Updated reasoning events:', newState.reasoningEvents.length);
                       return newState;
                     });
-                  } else if (data.type === 'reasoning_done') {
+                  } else if (data.type === 'phase_change') {
+                    // Handle phase changes
+                    console.log('🔄 [Phase Change]:', data.phase, data.metadata);
+                    
+                    const phaseEvent = {
+                      id: `phase-${Date.now()}-${Math.random()}`,
+                      type: 'reasoning',
+                      step: 'phase_change',
+                      description: `Phase changed to: ${data.phase}`,
+                      timestamp: new Date(),
+                      data: { phase: data.phase, metadata: data.metadata }
+                    };
+
+                    set((state) => ({
+                      reasoningEvents: [...state.reasoningEvents, phaseEvent]
+                    }));
+                  } else if (data.type === 'reasoning_done' || data.type === 'execution_complete') {
                     // Reasoning complete, store in message metadata
                     set({
                       isReasoningActive: false,

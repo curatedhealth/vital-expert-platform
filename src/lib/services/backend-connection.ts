@@ -123,51 +123,38 @@ export class BackendConnectionService {
     try {
       console.log('🔗 [BackendConnection] Starting autonomous session with URL:', apiEndpoints.autonomous.start);
       
-      // For development, we need to create a chat first or use an existing one
+      // For real LangGraph backend, we need to create a chat first
       let chatId = sessionId;
       
-      // Check if we're in development mode and need to create a chat
-      if (this.config.pythonBackendUrl.includes('localhost')) {
-        // Try to get existing chats first
-        const chatsResponse = await fetch(`${this.config.pythonBackendUrl}/api/chats`);
-        if (chatsResponse.ok) {
-          const chats = await chatsResponse.json();
-          if (chats.chats && chats.chats.length > 0) {
-            chatId = chats.chats[0].id;
-          } else {
-            // Create a new chat
-            const createChatResponse = await fetch(`${this.config.pythonBackendUrl}/api/chats`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                title: 'Autonomous Chat',
-                agentName: agent?.name || 'Autonomous Agent'
-              })
-            });
-            if (createChatResponse.ok) {
-              const newChat = await createChatResponse.json();
-              chatId = newChat.id;
-            }
-          }
+      // Always create a chat for the real backend
+      try {
+        const createChatResponse = await fetch(`${this.config.pythonBackendUrl}/api/chats`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            title: 'Autonomous Chat',
+            agentName: agent?.name || 'Autonomous Agent'
+          })
+        });
+        
+        if (createChatResponse.ok) {
+          const newChat = await createChatResponse.json();
+          chatId = newChat.chat.id;
+          console.log('🔗 [BackendConnection] Created new chat:', chatId);
+        } else {
+          console.warn('⚠️ [BackendConnection] Failed to create chat, using sessionId');
         }
+      } catch (error) {
+        console.warn('⚠️ [BackendConnection] Chat creation failed:', error);
       }
       
-      // For production with mock endpoints, use the mock format
-      let requestBody;
-      if (!this.config.pythonBackendUrl.startsWith('http') || process.env.VERCEL === '1') {
-        // Use mock endpoint format
-        requestBody = {
-          session_id: sessionId
-        };
-      } else {
-        // Use real backend format
-        requestBody = {
-          chatId,
-          goal: query,
-          maxIterations: 10,
-          autoApprove: true
-        };
-      }
+      // Use real LangGraph backend format
+      const requestBody = {
+        chatId,
+        goal: query,
+        maxIterations: 10,
+        autoApprove: true
+      };
       
       // Construct full URL for production
       let startUrl = apiEndpoints.autonomous.start;
@@ -267,9 +254,13 @@ export class BackendConnectionService {
         isVercel: process.env.VERCEL === '1'
       });
       
-      // In production with mock endpoints, always return true since we know they work
-      if (!this.config.pythonBackendUrl.startsWith('http') || process.env.VERCEL === '1') {
-        console.log('🔍 [BackendConnection] Using mock backend in production - health check passed');
+      // For development, check real backend health
+      if (this.config.pythonBackendUrl.startsWith('http')) {
+        // Real backend - perform actual health check
+        console.log('🔍 [BackendConnection] Checking real LangGraph backend health');
+      } else {
+        // Production - for now, assume healthy since we'll deploy real backend
+        console.log('🔍 [BackendConnection] Production mode - assuming backend is healthy');
         return true;
       }
       

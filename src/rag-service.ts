@@ -1,4 +1,5 @@
-import { createClient } from '@supabase/supabase-js';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { embeddingService, EmbeddingResult } from './lib/services/embeddings/openai-embedding-service';
 
 export interface RAGKnowledgeSource {
   id: string;
@@ -67,18 +68,64 @@ export interface RAGSearchOptions {
 }
 
 class RAGService {
-  private supabase: ReturnType<typeof createClient> | null = null;
+  private supabase: SupabaseClient | null = null;
   private defaultTenantId: string | null = null;
+  private isInitialized = false;
 
   async initialize() {
-    if (!this.defaultTenantId) {
-      const { data, error } = await this.getSupabaseClient().rpc('get_default_rag_tenant_id');
-      if (error) {
-        // console.error('Failed to get default tenant ID:', error);
-        throw error;
-      }
-      this.defaultTenantId = data;
+    if (this.isInitialized) {
+      return;
     }
+
+    try {
+      // Initialize Supabase client
+      if (!this.supabase) {
+        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+        const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+        
+        if (!supabaseUrl || !supabaseKey) {
+          throw new Error('Missing Supabase configuration. Check NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY environment variables.');
+        }
+
+        this.supabase = createClient(supabaseUrl, supabaseKey, {
+          auth: {
+            autoRefreshToken: false,
+            persistSession: false
+          }
+        });
+      }
+
+      // Test connection
+      const { data: connectionTest, error: connectionError } = await this.supabase
+        .from('rag_tenants')
+        .select('id')
+        .limit(1);
+
+      if (connectionError) {
+        throw new Error(`Database connection failed: ${connectionError.message}`);
+      }
+
+      // Get default tenant ID
+      const { data, error } = await this.supabase.rpc('get_default_rag_tenant_id');
+      if (error) {
+        throw new Error(`Failed to get default tenant ID: ${error.message}`);
+      }
+      
+      this.defaultTenantId = data;
+      this.isInitialized = true;
+
+      console.log('✅ RAG Service initialized successfully');
+    } catch (error) {
+      console.error('❌ Failed to initialize RAG Service:', error);
+      throw error;
+    }
+  }
+
+  private getSupabaseClient(): SupabaseClient {
+    if (!this.supabase) {
+      throw new Error('RAG Service not initialized. Call initialize() first.');
+    }
+    return this.supabase;
   }
 
   async getKnowledgeSources(options: {
@@ -209,12 +256,13 @@ class RAGService {
       prism_suite
     } = options;
 
-    const { data, error } = await this.getSupabaseClient().rpc('search_rag_knowledge_chunks', {
+    const { data, error } = await this.getSupabaseClient().rpc('search_rag_knowledge', {
       query_embedding: queryEmbedding,
       match_threshold: threshold,
       match_count: limit,
       filter_domain: domain || null,
-      filter_prism_suite: prism_suite || null
+      filter_prism_suite: prism_suite || null,
+      filter_tenant_id: this.defaultTenantId
     });
 
     if (error) {
@@ -327,12 +375,30 @@ class RAGService {
     }
   }
 
-  // Helper method to generate embeddings (placeholder for OpenAI integration)
+  // Generate real embeddings using OpenAI text-embedding-3-large
   async generateEmbedding(text: string): Promise<number[]> {
-    // In a real implementation, this would call OpenAI's embedding API
-    // For now, return a mock embedding
-    // console.warn('Using mock embedding - integrate with OpenAI embeddings API');
-    return Array(1536).fill(0).map(() => Math.random());
+    try {
+      if (!text || text.trim().length === 0) {
+        throw new Error('Text cannot be empty for embedding generation');
+      }
+
+      const result: EmbeddingResult = await embeddingService.generateEmbedding(text, {
+        model: 'text-embedding-3-large',
+        dimensions: 3072
+      });
+
+      // Validate embedding dimensions
+      if (result.embedding.length !== 3072) {
+        throw new Error(`Expected 3072 dimensions, got ${result.embedding.length}`);
+      }
+
+      console.log(`✅ Generated embedding for text (${text.length} chars) with ${result.embedding.length} dimensions`);
+      return result.embedding;
+
+    } catch (error) {
+      console.error('❌ Failed to generate embedding:', error);
+      throw new Error(`Embedding generation failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
   }
 
   // Helper method to chunk text content

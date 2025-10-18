@@ -21,8 +21,8 @@ const getBackendConfig = (): BackendConfig => {
   const isDevMode = isDevelopment || (!isProduction && !isVercel);
   
   return {
-    pythonBackendUrl: process.env.NEXT_PUBLIC_PYTHON_BACKEND_URL || 
-      (isDevMode ? 'http://localhost:8000' : '/api/backend'),
+  pythonBackendUrl: process.env.NEXT_PUBLIC_PYTHON_BACKEND_URL || 
+    (isDevMode ? 'http://localhost:8002' : 'https://vital-expert-cgkh33m37-crossroads-catalysts-projects.vercel.app'),
     nodeGatewayUrl: process.env.NEXT_PUBLIC_NODE_GATEWAY_URL || 
       (isDevMode ? 'http://localhost:3001' : 'https://your-node-gateway.vercel.app'),
     timeout: parseInt(process.env.BACKEND_TIMEOUT || '30000'),
@@ -58,17 +58,17 @@ export const healthEndpoints = {
 // API endpoints
 export const apiEndpoints = {
   autonomous: {
-    start: `${backendConfig.pythonBackendUrl}/autonomous/start`,
+    start: `${backendConfig.pythonBackendUrl}/autonomous/execute`,
     stream: (sessionId: string) => `${backendConfig.pythonBackendUrl}/autonomous/stream/${sessionId}`
   },
   consultation: {
-    start: `${backendConfig.pythonBackendUrl}/consultation/start`,
-    stream: (sessionId: string) => `${backendConfig.pythonBackendUrl}/consultation/stream/${sessionId}`
+    start: `${backendConfig.pythonBackendUrl}/chat/manual`,
+    stream: (sessionId: string) => `${backendConfig.pythonBackendUrl}/autonomous/stream/${sessionId}`
   },
   modes: {
-    sessions: `${backendConfig.pythonBackendUrl}/modes/sessions`,
-    agents: `${backendConfig.pythonBackendUrl}/modes/agents`,
-    recommendations: `${backendConfig.pythonBackendUrl}/modes/recommendations`
+    sessions: `${backendConfig.pythonBackendUrl}/chats`,
+    agents: `${backendConfig.pythonBackendUrl}/agents`,
+    recommendations: `${backendConfig.pythonBackendUrl}/agents`
   }
 };
 

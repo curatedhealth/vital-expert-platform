@@ -128,17 +128,29 @@ export class BackendConnectionService {
         }
       }
       
+      // For production with mock endpoints, use the mock format
+      let requestBody;
+      if (!this.config.pythonBackendUrl.startsWith('http') || process.env.VERCEL === '1') {
+        // Use mock endpoint format
+        requestBody = {
+          session_id: sessionId
+        };
+      } else {
+        // Use real backend format
+        requestBody = {
+          chatId,
+          goal: query,
+          maxIterations: 10,
+          autoApprove: true
+        };
+      }
+      
       const response = await fetch(apiEndpoints.autonomous.start, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          chatId,
-          goal: query,
-          maxIterations: 10,
-          autoApprove: true
-        }),
+        body: JSON.stringify(requestBody),
       });
 
       if (!response.ok) {
@@ -146,10 +158,10 @@ export class BackendConnectionService {
       }
 
       const result = await response.json();
-      const streamResponse = await this.connectToAutonomousBackend(chatId);
+      const streamResponse = await this.connectToAutonomousBackend(sessionId);
       
       return {
-        sessionId: result.sessionId || chatId,
+        sessionId: result.session_id || result.sessionId || sessionId,
         stream: streamResponse.stream
       };
     } catch (error) {

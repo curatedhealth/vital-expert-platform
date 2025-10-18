@@ -21,6 +21,7 @@ export interface StreamingOptions {
 
 export class StreamingProxyService {
   private activeStreams: Map<string, AbortController> = new Map();
+  private backendConnection = backendConnection;
 
   /**
    * Stream autonomous reasoning from LangGraph backend

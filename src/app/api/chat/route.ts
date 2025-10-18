@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { streamingProxy } from '@/lib/services/streaming-proxy';
+import { backendConnection } from '@/lib/services/backend-connection';
 
 export async function POST(request: NextRequest) {
   console.log('🚀 [Chat API] POST request received - Connecting to real LangGraph backend');
@@ -25,7 +26,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if backend is available
-    const isBackendHealthy = await streamingProxy['backendConnection'].checkHealth();
+    const isBackendHealthy = await backendConnection.checkHealth();
     if (!isBackendHealthy) {
       console.warn('⚠️ [Chat API] Backend not available, falling back to error response');
       return NextResponse.json(

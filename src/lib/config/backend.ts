@@ -58,17 +58,17 @@ export const healthEndpoints = {
 // API endpoints
 export const apiEndpoints = {
   autonomous: {
-    start: `${backendConfig.pythonBackendUrl}/api/autonomous/execute`,
-    stream: (sessionId: string) => `${backendConfig.pythonBackendUrl}/api/autonomous/stream/${sessionId}`
+    start: `${backendConfig.pythonBackendUrl}/autonomous/start`,
+    stream: (sessionId: string) => `${backendConfig.pythonBackendUrl}/autonomous/stream/${sessionId}`
   },
   consultation: {
-    start: `${backendConfig.pythonBackendUrl}/api/chat/manual`,
-    stream: (sessionId: string) => `${backendConfig.pythonBackendUrl}/api/autonomous/stream/${sessionId}`
+    start: `${backendConfig.pythonBackendUrl}/consultation/start`,
+    stream: (sessionId: string) => `${backendConfig.pythonBackendUrl}/consultation/stream/${sessionId}`
   },
   modes: {
-    sessions: `${backendConfig.pythonBackendUrl}/api/chats`,
-    agents: `${backendConfig.pythonBackendUrl}/api/agents`,
-    recommendations: `${backendConfig.pythonBackendUrl}/api/agents`
+    sessions: `${backendConfig.pythonBackendUrl}/modes/sessions`,
+    agents: `${backendConfig.pythonBackendUrl}/modes/agents`,
+    recommendations: `${backendConfig.pythonBackendUrl}/modes/recommendations`
   }
 };
 

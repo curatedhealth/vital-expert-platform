@@ -69,7 +69,6 @@ export function EnhancedChatContainerWithAutonomous({ className }: { className?:
     updateSettings
   } = useAutonomousMode();
 
-  const [activeTab, setActiveTab] = useState<'chat' | 'autonomous'>('chat');
   const [autonomousGoal, setAutonomousGoal] = useState('');
 
   // Wait for hydration before accessing modes
@@ -89,7 +88,6 @@ export function EnhancedChatContainerWithAutonomous({ className }: { className?:
     
     try {
       await startAutonomousExecution(autonomousGoal);
-      setActiveTab('autonomous'); // Switch to autonomous tab when starting
     } catch (error) {
       console.error('Failed to start autonomous execution:', error);
     }
@@ -156,21 +154,8 @@ export function EnhancedChatContainerWithAutonomous({ className }: { className?:
           </div>
         </div>
 
-        {/* Tab Navigation */}
-        <div className="border-b">
-          <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as any)}>
-            <TabsList className="w-full justify-start rounded-none border-b-0">
-              <TabsTrigger value="chat">Chat</TabsTrigger>
-              <TabsTrigger value="autonomous">Autonomous</TabsTrigger>
-            </TabsList>
-          </Tabs>
-        </div>
-
-        {/* Tab Content */}
+        {/* Main Content */}
         <div className="flex-1 overflow-hidden">
-          <Tabs value={activeTab} className="h-full">
-            {/* Regular Chat Tab */}
-            <TabsContent value="chat" className="h-full m-0">
               <div className="flex flex-col h-full">
                 {/* Messages */}
                 <ScrollArea className="flex-1 p-4">
@@ -321,182 +306,6 @@ export function EnhancedChatContainerWithAutonomous({ className }: { className?:
                   />
                 </div>
               </div>
-            </TabsContent>
-
-            {/* Autonomous Mode Tab */}
-            <TabsContent value="autonomous" className="h-full m-0">
-              <div className="flex h-full">
-                {/* Left Panel - Controls */}
-                <div className="w-96 border-r p-4 space-y-4">
-                  <AutonomousModeToggle
-                    isAutonomousMode={isAutonomousMode}
-                    onToggleAutonomousMode={toggleAutonomousMode}
-                    isRunning={isRunning}
-                    onStart={handleAutonomousStart}
-                    onPause={pauseAutonomousExecution}
-                    onStop={stopAutonomousExecution}
-                    maxIterations={settings.maxIterations}
-                    onMaxIterationsChange={(value) => updateSettings({ maxIterations: value[0] })}
-                    maxCost={settings.maxCost}
-                    onMaxCostChange={(value) => updateSettings({ maxCost: value[0] })}
-                    supervisionLevel={settings.supervisionLevel}
-                    onSupervisionLevelChange={(level) => updateSettings({ supervisionLevel: level })}
-                  />
-
-                  {/* Goal Input */}
-                  {isAutonomousMode && !isRunning && (
-                    <Card>
-                      <CardHeader>
-                        <CardTitle className="text-base">Set Your Goal</CardTitle>
-                      </CardHeader>
-                      <CardContent className="space-y-3">
-                        <Textarea
-                          placeholder="Describe what you want the AI to accomplish autonomously..."
-                          value={autonomousGoal}
-                          onChange={(e) => setAutonomousGoal(e.target.value)}
-                          className="min-h-[100px]"
-                        />
-                        <Button
-                          onClick={handleAutonomousStart}
-                          disabled={!autonomousGoal.trim() || !selectedAgent}
-                          className="w-full"
-                        >
-                          <Bot className="h-4 w-4 mr-2" />
-                          Start Autonomous Task
-                        </Button>
-                      </CardContent>
-                    </Card>
-                  )}
-                </div>
-
-                {/* Right Panel - Chat with Reasoning */}
-                <div className="flex-1 flex flex-col">
-                  {/* Messages with Reasoning */}
-                  <ScrollArea className="flex-1 p-4">
-                    <div className="space-y-4">
-                      {(!messages || messages.length === 0) ? (
-                        <div className="text-center py-8">
-                          <Bot className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                          <h3 className="text-lg font-medium mb-2">Autonomous Mode</h3>
-                          <p className="text-muted-foreground mb-4">
-                            Set a goal and watch the AI work autonomously with full reasoning transparency.
-                          </p>
-                        </div>
-                      ) : (
-                        (messages || []).map((message, index) => {
-                          const isLastMessage = message.id === (messages || [])[(messages || []).length - 1]?.id;
-                          const hasReasoning = message.role === 'assistant' && reasoningEvents.length > 0;
-                          
-                          return (
-                            <div key={message.id} className="space-y-2">
-                              <MessageBubble
-                                message={message}
-                                isLast={isLastMessage}
-                              />
-                              
-                              {/* Show reasoning steps directly after assistant messages */}
-                              {hasReasoning && (
-                                <div className="ml-12 mr-4">
-                                  <ReasoningMessage
-                                    steps={reasoningEvents.map(event => {
-                                      // Handle both old and new reasoning event formats
-                                      let stepData;
-                                      if (event.data && event.data.content) {
-                                        // New enhanced reasoning step format
-                                        stepData = {
-                                          id: event.data.id || event.id,
-                                          timestamp: event.data.timestamp || event.timestamp,
-                                          iteration: event.data.iteration || 1,
-                                          phase: event.data.phase || event.step || 'processing',
-                                          content: {
-                                            description: event.data.content.description || event.description || 'Processing...',
-                                            reasoning: event.data.content.reasoning,
-                                            insights: event.data.content.insights || [],
-                                            questions: event.data.content.questions || [],
-                                            decisions: event.data.content.decisions || [],
-                                            evidence: event.data.content.evidence || []
-                                          },
-                                          metadata: {
-                                            confidence: event.data.metadata?.confidence,
-                                            estimatedDuration: event.data.metadata?.estimatedDuration,
-                                            toolsUsed: event.data.metadata?.toolsUsed || [],
-                                            cost: event.data.metadata?.cost,
-                                            tokensUsed: event.data.metadata?.tokensUsed,
-                                            priority: event.data.metadata?.priority
-                                          },
-                                          status: event.data.status || (event.type === 'complete' ? 'completed' : 
-                                                 event.type === 'error' ? 'failed' : 'in_progress')
-                                        };
-                                      } else {
-                                        // Legacy reasoning event format
-                                        stepData = {
-                                          id: event.id,
-                                          timestamp: event.timestamp,
-                                          iteration: 1,
-                                          phase: event.step || 'processing',
-                                          content: {
-                                            description: event.description || 'Processing...',
-                                            reasoning: event.data?.reasoning,
-                                            insights: event.data?.insights || [],
-                                            questions: event.data?.questions || [],
-                                            decisions: event.data?.decisions || [],
-                                            evidence: event.data?.evidence || []
-                                          },
-                                          metadata: {
-                                            confidence: event.data?.confidence,
-                                            estimatedDuration: event.data?.estimatedDuration,
-                                            toolsUsed: event.data?.toolsUsed || [],
-                                            cost: event.data?.cost,
-                                            tokensUsed: event.data?.tokensUsed,
-                                            priority: event.data?.priority
-                                          },
-                                          status: event.type === 'complete' ? 'completed' : 
-                                                 event.type === 'error' ? 'failed' : 'in_progress'
-                                        };
-                                      }
-                                      return stepData;
-                                    })}
-                                    isStreaming={isReasoningActive && isLastMessage}
-                                  />
-                                </div>
-                              )}
-                            </div>
-                          );
-                        })
-                      )}
-                      
-                      {isLoading && (
-                        <div className="flex items-center space-x-2 text-muted-foreground">
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                          <span>Thinking...</span>
-                        </div>
-                      )}
-                    </div>
-                  </ScrollArea>
-
-                  {/* Chat Input for Autonomous Mode */}
-                  <div className="border-t p-4">
-                    <ChatInput
-                      value={input}
-                      onChange={setInput}
-                      onSubmit={handleSendMessage}
-                      isLoading={isLoading}
-                      interactionMode={isManualMode ? 'manual' : 'automatic'}
-                      hasSelectedAgent={!!selectedAgent}
-                      selectedAgent={selectedAgent}
-                      selectedModel={selectedModel?.id || 'gpt-4o'}
-                      onModelChange={(model) => setSelectedModel({ id: model, name: model })}
-                      currentChat={currentChat}
-                      onUpdateChatMode={updateChatMode}
-                      disabled={isLoading}
-                      className="border-t"
-                      isCentered={false}
-                    />
-                  </div>
-                </div>
-              </div>
-            </TabsContent>
-          </Tabs>
         </div>
       </div>
 

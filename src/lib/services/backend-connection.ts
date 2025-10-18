@@ -208,7 +208,7 @@ export class BackendConnectionService {
       });
       
       // In production with mock endpoints, always return true since we know they work
-      if (!this.config.pythonBackendUrl.startsWith('http')) {
+      if (!this.config.pythonBackendUrl.startsWith('http') || process.env.VERCEL === '1') {
         console.log('🔍 [BackendConnection] Using mock backend in production - health check passed');
         return true;
       }

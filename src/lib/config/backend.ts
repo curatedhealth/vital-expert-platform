@@ -15,12 +15,16 @@ export interface BackendConfig {
 const getBackendConfig = (): BackendConfig => {
   const isDevelopment = process.env.NODE_ENV === 'development';
   const isProduction = process.env.NODE_ENV === 'production';
+  const isVercel = process.env.VERCEL === '1';
+  
+  // Determine if we're in development mode
+  const isDevMode = isDevelopment || (!isProduction && !isVercel);
   
   return {
     pythonBackendUrl: process.env.NEXT_PUBLIC_PYTHON_BACKEND_URL || 
-      (isDevelopment ? 'http://localhost:8001' : '/api/backend'),
+      (isDevMode ? 'http://localhost:8000' : '/api/backend'),
     nodeGatewayUrl: process.env.NEXT_PUBLIC_NODE_GATEWAY_URL || 
-      (isDevelopment ? 'http://localhost:3001' : 'https://your-node-gateway.vercel.app'),
+      (isDevMode ? 'http://localhost:3001' : 'https://your-node-gateway.vercel.app'),
     timeout: parseInt(process.env.BACKEND_TIMEOUT || '30000'),
     retryAttempts: parseInt(process.env.BACKEND_RETRY_ATTEMPTS || '3'),
     enableFallback: process.env.ENABLE_BACKEND_FALLBACK === 'true'
@@ -30,11 +34,19 @@ const getBackendConfig = (): BackendConfig => {
 export const backendConfig = getBackendConfig();
 
 // Debug logging
+const isDevelopment = process.env.NODE_ENV === 'development';
+const isProduction = process.env.NODE_ENV === 'production';
+const isVercel = process.env.VERCEL === '1';
+const isDevMode = isDevelopment || (!isProduction && !isVercel);
+
 console.log('🔧 [BackendConfig] Configuration loaded:', {
   pythonBackendUrl: backendConfig.pythonBackendUrl,
   nodeGatewayUrl: backendConfig.nodeGatewayUrl,
-  isDevelopment: process.env.NODE_ENV === 'development',
-  isProduction: process.env.NODE_ENV === 'production'
+  isDevelopment,
+  isProduction,
+  isVercel,
+  NODE_ENV: process.env.NODE_ENV,
+  isDevMode
 });
 
 // Health check endpoints
@@ -46,17 +58,17 @@ export const healthEndpoints = {
 // API endpoints
 export const apiEndpoints = {
   autonomous: {
-    start: `${backendConfig.pythonBackendUrl}/autonomous/start`,
-    stream: (sessionId: string) => `${backendConfig.pythonBackendUrl}/autonomous/stream/${sessionId}`
+    start: `${backendConfig.pythonBackendUrl}/api/autonomous/execute`,
+    stream: (sessionId: string) => `${backendConfig.pythonBackendUrl}/api/autonomous/stream/${sessionId}`
   },
   consultation: {
-    start: `${backendConfig.pythonBackendUrl}/consultation/start`,
-    stream: (sessionId: string) => `${backendConfig.pythonBackendUrl}/consultation/stream/${sessionId}`
+    start: `${backendConfig.pythonBackendUrl}/api/chat/manual`,
+    stream: (sessionId: string) => `${backendConfig.pythonBackendUrl}/api/autonomous/stream/${sessionId}`
   },
   modes: {
-    sessions: `${backendConfig.pythonBackendUrl}/modes/sessions`,
-    agents: `${backendConfig.pythonBackendUrl}/modes/agents`,
-    recommendations: `${backendConfig.pythonBackendUrl}/modes/recommendations`
+    sessions: `${backendConfig.pythonBackendUrl}/api/chats`,
+    agents: `${backendConfig.pythonBackendUrl}/api/agents`,
+    recommendations: `${backendConfig.pythonBackendUrl}/api/agents`
   }
 };
 

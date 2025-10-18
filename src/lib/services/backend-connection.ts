@@ -98,16 +98,46 @@ export class BackendConnectionService {
     
     try {
       console.log('🔗 [BackendConnection] Starting autonomous session with URL:', apiEndpoints.autonomous.start);
+      
+      // For development, we need to create a chat first or use an existing one
+      let chatId = sessionId;
+      
+      // Check if we're in development mode and need to create a chat
+      if (this.config.pythonBackendUrl.includes('localhost')) {
+        // Try to get existing chats first
+        const chatsResponse = await fetch(`${this.config.pythonBackendUrl}/api/chats`);
+        if (chatsResponse.ok) {
+          const chats = await chatsResponse.json();
+          if (chats.chats && chats.chats.length > 0) {
+            chatId = chats.chats[0].id;
+          } else {
+            // Create a new chat
+            const createChatResponse = await fetch(`${this.config.pythonBackendUrl}/api/chats`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                title: 'Autonomous Chat',
+                agentName: agent?.name || 'Autonomous Agent'
+              })
+            });
+            if (createChatResponse.ok) {
+              const newChat = await createChatResponse.json();
+              chatId = newChat.id;
+            }
+          }
+        }
+      }
+      
       const response = await fetch(apiEndpoints.autonomous.start, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          query,
-          agent,
-          business_context: businessContext,
-          session_id: sessionId
+          chatId,
+          goal: query,
+          maxIterations: 10,
+          autoApprove: true
         }),
       });
 
@@ -116,10 +146,10 @@ export class BackendConnectionService {
       }
 
       const result = await response.json();
-      const streamResponse = await this.connectToAutonomousBackend(sessionId);
+      const streamResponse = await this.connectToAutonomousBackend(chatId);
       
       return {
-        sessionId: result.session_id || sessionId,
+        sessionId: result.sessionId || chatId,
         stream: streamResponse.stream
       };
     } catch (error) {
@@ -170,10 +200,34 @@ export class BackendConnectionService {
    */
   async checkHealth(): Promise<boolean> {
     try {
-      const response = await fetch(healthEndpoints.python, {
+      let healthUrl = healthEndpoints.python;
+      
+      // If the backend URL is relative (production), construct the full URL
+      if (!this.config.pythonBackendUrl.startsWith('http')) {
+        // In Vercel, we can use the VERCEL_URL environment variable
+        const baseUrl = process.env.VERCEL_URL 
+          ? `https://${process.env.VERCEL_URL}`
+          : process.env.NEXT_PUBLIC_VERCEL_URL
+          ? `https://${process.env.NEXT_PUBLIC_VERCEL_URL}`
+          : 'http://localhost:3000';
+        
+        healthUrl = `${baseUrl}${healthEndpoints.python}`;
+      }
+      
+      console.log('🔍 [BackendConnection] Health check URL:', healthUrl);
+      console.log('🔍 [BackendConnection] Backend config:', {
+        pythonBackendUrl: this.config.pythonBackendUrl,
+        isRelative: !this.config.pythonBackendUrl.startsWith('http'),
+        VERCEL_URL: process.env.VERCEL_URL,
+        NEXT_PUBLIC_VERCEL_URL: process.env.NEXT_PUBLIC_VERCEL_URL
+      });
+      
+      const response = await fetch(healthUrl, {
         method: 'GET',
         signal: AbortSignal.timeout(this.config.timeout)
       });
+      
+      console.log('🔍 [BackendConnection] Health check response:', response.status, response.ok);
       return response.ok;
     } catch (error) {
       console.error('❌ [BackendConnection] Health check failed:', error);

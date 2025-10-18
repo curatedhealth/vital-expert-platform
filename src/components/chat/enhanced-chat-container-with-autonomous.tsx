@@ -21,6 +21,7 @@ import { AgentPromptStarters } from './agent-prompt-starters';
 import { AutonomousModeToggle } from './autonomous-mode-toggle';
 import { AutonomousTaskProgress } from './autonomous-task-progress';
 import { StateDebugger } from '@/components/debug/state-debugger';
+import { ReasoningMessage } from '@/features/expert-consultation/components/ReasoningMessage';
 
 export function EnhancedChatContainerWithAutonomous({ className }: { className?: string }) {
   // Use the sync hook to ensure state consistency
@@ -189,13 +190,52 @@ export function EnhancedChatContainerWithAutonomous({ className }: { className?:
                         )}
                       </div>
                     ) : (
-                      (messages || []).map((message) => (
-                        <MessageBubble
-                          key={message.id}
-                          message={message}
-                          isLast={message.id === (messages || [])[(messages || []).length - 1]?.id}
-                        />
-                      ))
+                      (messages || []).map((message, index) => {
+                        const isLastMessage = message.id === (messages || [])[(messages || []).length - 1]?.id;
+                        const hasReasoning = message.role === 'assistant' && reasoningEvents.length > 0;
+                        
+                        return (
+                          <div key={message.id} className="space-y-2">
+                            <MessageBubble
+                              message={message}
+                              isLast={isLastMessage}
+                            />
+                            
+                            {/* Show reasoning steps directly after assistant messages */}
+                            {hasReasoning && (
+                              <div className="ml-12 mr-4">
+                                <ReasoningMessage
+                                  steps={reasoningEvents.map(event => ({
+                                    id: event.id,
+                                    timestamp: event.timestamp,
+                                    iteration: 1,
+                                    phase: event.step as any,
+                                    content: {
+                                      description: event.description || 'Processing...',
+                                      reasoning: event.data?.reasoning,
+                                      insights: event.data?.insights,
+                                      questions: event.data?.questions,
+                                      decisions: event.data?.decisions,
+                                      evidence: event.data?.evidence
+                                    },
+                                    metadata: {
+                                      confidence: event.data?.confidence,
+                                      estimatedDuration: event.data?.estimatedDuration,
+                                      toolsUsed: event.data?.toolsUsed,
+                                      cost: event.data?.cost,
+                                      tokensUsed: event.data?.tokensUsed,
+                                      priority: event.data?.priority
+                                    },
+                                    status: event.type === 'complete' ? 'completed' : 
+                                           event.type === 'error' ? 'failed' : 'in_progress'
+                                  }))}
+                                  isStreaming={isReasoningActive && isLastMessage}
+                                />
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })
                     )}
                     
                     {isLoading && (
@@ -207,12 +247,7 @@ export function EnhancedChatContainerWithAutonomous({ className }: { className?:
                   </div>
                 </ScrollArea>
 
-                {/* Reasoning Display */}
-                {isReasoningActive && reasoningEvents.length > 0 && (
-                  <div className="border-t p-4">
-                    <ReasoningDisplay reasoningEvents={reasoningEvents} isActive={isReasoningActive} />
-                  </div>
-                )}
+                {/* Reasoning is now integrated into the chat flow above */}
 
                 {/* Error Display */}
                 {error && (
@@ -300,17 +335,96 @@ export function EnhancedChatContainerWithAutonomous({ className }: { className?:
                   )}
                 </div>
 
-                {/* Right Panel - Progress */}
-                <div className="flex-1 p-4">
-                  <AutonomousTaskProgress
-                    isVisible={isAutonomousMode}
-                    goal={goal}
-                    tasks={tasks}
-                    currentTask={currentTask}
-                    progress={progress}
-                    metrics={metrics}
-                    evidence={evidence}
-                  />
+                {/* Right Panel - Chat with Reasoning */}
+                <div className="flex-1 flex flex-col">
+                  {/* Messages with Reasoning */}
+                  <ScrollArea className="flex-1 p-4">
+                    <div className="space-y-4">
+                      {(!messages || messages.length === 0) ? (
+                        <div className="text-center py-8">
+                          <Bot className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                          <h3 className="text-lg font-medium mb-2">Autonomous Mode</h3>
+                          <p className="text-muted-foreground mb-4">
+                            Set a goal and watch the AI work autonomously with full reasoning transparency.
+                          </p>
+                        </div>
+                      ) : (
+                        (messages || []).map((message, index) => {
+                          const isLastMessage = message.id === (messages || [])[(messages || []).length - 1]?.id;
+                          const hasReasoning = message.role === 'assistant' && reasoningEvents.length > 0;
+                          
+                          return (
+                            <div key={message.id} className="space-y-2">
+                              <MessageBubble
+                                message={message}
+                                isLast={isLastMessage}
+                              />
+                              
+                              {/* Show reasoning steps directly after assistant messages */}
+                              {hasReasoning && (
+                                <div className="ml-12 mr-4">
+                                  <ReasoningMessage
+                                    steps={reasoningEvents.map(event => ({
+                                      id: event.id,
+                                      timestamp: event.timestamp,
+                                      iteration: 1,
+                                      phase: event.step as any,
+                                      content: {
+                                        description: event.description || 'Processing...',
+                                        reasoning: event.data?.reasoning,
+                                        insights: event.data?.insights,
+                                        questions: event.data?.questions,
+                                        decisions: event.data?.decisions,
+                                        evidence: event.data?.evidence
+                                      },
+                                      metadata: {
+                                        confidence: event.data?.confidence,
+                                        estimatedDuration: event.data?.estimatedDuration,
+                                        toolsUsed: event.data?.toolsUsed,
+                                        cost: event.data?.cost,
+                                        tokensUsed: event.data?.tokensUsed,
+                                        priority: event.data?.priority
+                                      },
+                                      status: event.type === 'complete' ? 'completed' : 
+                                             event.type === 'error' ? 'failed' : 'in_progress'
+                                    }))}
+                                    isStreaming={isReasoningActive && isLastMessage}
+                                  />
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })
+                      )}
+                      
+                      {isLoading && (
+                        <div className="flex items-center space-x-2 text-muted-foreground">
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          <span>Thinking...</span>
+                        </div>
+                      )}
+                    </div>
+                  </ScrollArea>
+
+                  {/* Chat Input for Autonomous Mode */}
+                  <div className="border-t p-4">
+                    <ChatInput
+                      value={input}
+                      onChange={setInput}
+                      onSubmit={handleSendMessage}
+                      isLoading={isLoading}
+                      interactionMode={isManualMode ? 'manual' : 'automatic'}
+                      hasSelectedAgent={!!selectedAgent}
+                      selectedAgent={selectedAgent}
+                      selectedModel={selectedModel?.id || 'gpt-4o'}
+                      onModelChange={(model) => setSelectedModel({ id: model, name: model })}
+                      currentChat={currentChat}
+                      onUpdateChatMode={updateChatMode}
+                      disabled={isLoading}
+                      className="border-t"
+                      isCentered={false}
+                    />
+                  </div>
                 </div>
               </div>
             </TabsContent>

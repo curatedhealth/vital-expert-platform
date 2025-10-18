@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { AutonomousOrchestrator } from '../../../../features/autonomous/autonomous-orchestrator';
 
 export async function POST(request: NextRequest) {
   console.log('🚀 [Autonomous API] POST request received');
@@ -23,203 +22,122 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create a streaming response with proper autonomous workflow
+    // Create a streaming response with mock autonomous workflow
     const stream = new ReadableStream({
       start(controller) {
         const encoder = new TextEncoder();
         
-        // Initialize autonomous orchestrator
-        const orchestrator = new AutonomousOrchestrator();
-        
-        // Set up event listeners for streaming
-        orchestrator.on('start', (data) => {
-          console.log('🚀 [Orchestrator] Execution started:', data);
-          const event = {
+        // Mock autonomous workflow steps
+        const steps = [
+          {
             type: 'reasoning',
             step: 'initialization',
             status: 'in_progress',
             description: `Initializing autonomous analysis for "${query}"...`,
             timestamp: new Date().toISOString()
-          };
-          controller.enqueue(encoder.encode(`data: ${JSON.stringify(event)}\n\n`));
-        });
-
-        orchestrator.on('goal:extracted', (goal) => {
-          console.log('🎯 [Orchestrator] Goal extracted:', goal);
-          const event = {
+          },
+          {
             type: 'reasoning',
             step: 'goal_extraction',
             status: 'completed',
-            description: `Goal identified: ${goal.description}`,
+            description: `Goal identified: ${query}`,
             timestamp: new Date().toISOString(),
-            data: { goal }
-          };
-          controller.enqueue(encoder.encode(`data: ${JSON.stringify(event)}\n\n`));
-        });
-
-        orchestrator.on('tasks:generated', (tasks) => {
-          console.log('📋 [Orchestrator] Tasks generated:', tasks);
-          const event = {
-            type: 'task_planning',
-            step: 'task_creation',
-            status: 'completed',
-            description: `Created ${tasks.length} tasks for execution`,
-            timestamp: new Date().toISOString(),
-            data: { tasks: tasks.map(t => ({ id: t.id, description: t.description, type: t.type, priority: t.priority })) }
-          };
-          controller.enqueue(encoder.encode(`data: ${JSON.stringify(event)}\n\n`));
-        });
-
-        orchestrator.on('task:started', (task) => {
-          console.log('🔄 [Orchestrator] Task started:', task);
-          const event = {
-            type: 'task_update',
-            taskId: task.id,
+            data: {
+              goal: query,
+              success_criteria: [
+                "Complete analysis",
+                "Provide recommendations",
+                "Generate actionable insights"
+              ]
+            }
+          },
+          {
+            type: 'reasoning',
+            step: 'task_generation',
             status: 'in_progress',
-            description: `Executing: ${task.description}`,
+            description: 'Generating analysis tasks...',
             timestamp: new Date().toISOString()
-          };
-          controller.enqueue(encoder.encode(`data: ${JSON.stringify(event)}\n\n`));
-        });
-
-        orchestrator.on('task:completed', (task) => {
-          console.log('✅ [Orchestrator] Task completed:', task);
-          const event = {
-            type: 'task_completed',
-            taskId: task.id,
-            result: task.result,
-            description: `Completed: ${task.description}`,
-            timestamp: new Date().toISOString()
-          };
-          controller.enqueue(encoder.encode(`data: ${JSON.stringify(event)}\n\n`));
-          
-          // Also send content for streaming if there's a response
-          if (task.result && task.result.response) {
-            const contentEvent = {
-              type: 'content',
-              content: task.result.response,
-              timestamp: new Date().toISOString()
-            };
-            controller.enqueue(encoder.encode(`data: ${JSON.stringify(contentEvent)}\n\n`));
-          }
-        });
-
-        orchestrator.on('agent:selected', (agent) => {
-          console.log('🤖 [Orchestrator] Agent selected:', agent);
-          const event = {
-            type: 'agent_selection',
-            step: 'agent_orchestration',
+          },
+          {
+            type: 'reasoning',
+            step: 'task_generation',
             status: 'completed',
-            description: `Selected agent: ${agent.name} - ${agent.description}`,
+            description: 'Tasks generated successfully',
             timestamp: new Date().toISOString(),
-            data: { agent }
-          };
-          controller.enqueue(encoder.encode(`data: ${JSON.stringify(event)}\n\n`));
-        });
-
-        orchestrator.on('content', (content) => {
-          console.log('📝 [Orchestrator] Content generated:', content);
-          const event = {
-            type: 'content',
-            content: content,
+            data: {
+              tasks: [
+                "Analyze the query requirements",
+                "Research relevant information",
+                "Generate comprehensive response"
+              ]
+            }
+          },
+          {
+            type: 'reasoning',
+            step: 'task_execution',
+            status: 'in_progress',
+            description: 'Executing analysis tasks...',
             timestamp: new Date().toISOString()
-          };
-          controller.enqueue(encoder.encode(`data: ${JSON.stringify(event)}\n\n`));
-        });
-
-        orchestrator.on('complete', (result) => {
-          console.log('✅ [Orchestrator] Execution completed:', result);
-          const event = {
-            type: 'complete',
-            message: 'Autonomous analysis completed successfully',
+          },
+          {
+            type: 'reasoning',
+            step: 'task_execution',
+            status: 'completed',
+            description: 'Analysis completed successfully',
             timestamp: new Date().toISOString(),
-            data: result
-          };
-          controller.enqueue(encoder.encode(`data: ${JSON.stringify(event)}\n\n`));
-          controller.close();
-        });
+            data: {
+              result: `Based on your query "${query}", I've completed a comprehensive analysis. This is a mock response for the autonomous mode. In a full implementation, this would include detailed research, analysis, and recommendations.`
+            }
+          },
+          {
+            type: 'completion',
+            step: 'final',
+            status: 'completed',
+            description: 'Autonomous analysis completed',
+            timestamp: new Date().toISOString(),
+            data: {
+              final_result: `Autonomous analysis for "${query}" has been completed successfully.`,
+              insights: [
+                "Query analyzed comprehensively",
+                "Multiple perspectives considered",
+                "Actionable recommendations provided"
+              ]
+            }
+          }
+        ];
 
-        orchestrator.on('error', (error) => {
-          console.error('❌ [Orchestrator] Error:', error);
-          const event = {
-            type: 'error',
-            message: error.message || 'An error occurred during autonomous analysis',
-            timestamp: new Date().toISOString()
-          };
-          controller.enqueue(encoder.encode(`data: ${JSON.stringify(event)}\n\n`));
-          controller.close();
-        });
-
-        // Execute autonomous workflow
-        const executeAutonomous = async () => {
-          try {
-            const options = {
-              mode: mode as 'manual' | 'automatic',
-              agent: agent,
-              maxIterations: 10,
-              maxCost: 50,
-              maxDuration: 30,
-              supervisionLevel: 'medium' as const,
-              userId: 'hicham.naim@curated.health',
-              sessionId: `session_${Date.now()}`,
-              availableAgents: [] // Will be populated by orchestrator
-            };
-
-            console.log('🚀 [API] Starting autonomous execution with options:', options);
-            const result = await orchestrator.execute(query, options);
-            console.log('✅ [API] Autonomous execution completed:', result);
-            
-          } catch (error) {
-            console.error('❌ [API] Autonomous execution failed:', error);
-            
-            // Send error event
-            const errorEvent = {
-              type: 'error',
-              message: `Autonomous analysis failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
-              timestamp: new Date().toISOString()
-            };
-            controller.enqueue(encoder.encode(`data: ${JSON.stringify(errorEvent)}\n\n`));
+        // Stream each step with delays
+        let stepIndex = 0;
+        const streamStep = () => {
+          if (stepIndex < steps.length) {
+            const step = steps[stepIndex];
+            console.log('📤 [Autonomous API] Streaming step:', step);
+            controller.enqueue(encoder.encode(`data: ${JSON.stringify(step)}\n\n`));
+            stepIndex++;
+            setTimeout(streamStep, 1000); // 1 second delay between steps
+          } else {
             controller.close();
           }
         };
 
-        // Start execution
-        executeAutonomous();
+        // Start streaming
+        streamStep();
       }
     });
 
     return new Response(stream, {
       headers: {
         'Content-Type': 'text/event-stream',
-        'Cache-Control': 'no-cache, no-transform',
+        'Cache-Control': 'no-cache',
         'Connection': 'keep-alive',
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET, POST, PATCH, DELETE, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
       },
     });
+
   } catch (error) {
     console.error('❌ [Autonomous API] Error:', error);
-    console.error('❌ [Autonomous API] Error stack:', error instanceof Error ? error.stack : 'No stack trace');
-    
     return NextResponse.json(
-      { 
-        error: 'Internal server error',
-        message: error instanceof Error ? error.message : 'Unknown error occurred'
-      },
+      { error: 'Internal server error', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
     );
   }
-}
-
-// Handle OPTIONS requests for CORS
-export async function OPTIONS(request: NextRequest) {
-  return new NextResponse(null, {
-    status: 200,
-    headers: {
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'GET, POST, PATCH, DELETE, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-    },
-  });
 }

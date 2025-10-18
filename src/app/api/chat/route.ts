@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if backend is available
-    const isBackendHealthy = await backendConnection.checkHealth();
+    const isBackendHealthy = await backendConnection.checkHealth(request);
     if (!isBackendHealthy) {
       console.warn('⚠️ [Chat API] Backend not available, falling back to error response');
       return NextResponse.json(

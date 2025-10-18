@@ -198,18 +198,26 @@ export class BackendConnectionService {
   /**
    * Check backend health
    */
-  async checkHealth(): Promise<boolean> {
+  async checkHealth(request?: Request): Promise<boolean> {
     try {
       let healthUrl = healthEndpoints.python;
       
       // If the backend URL is relative (production), construct the full URL
       if (!this.config.pythonBackendUrl.startsWith('http')) {
-        // In Vercel, we can use the VERCEL_URL environment variable
-        const baseUrl = process.env.VERCEL_URL 
-          ? `https://${process.env.VERCEL_URL}`
-          : process.env.NEXT_PUBLIC_VERCEL_URL
-          ? `https://${process.env.NEXT_PUBLIC_VERCEL_URL}`
-          : 'http://localhost:3000';
+        // Try to get the base URL from the request if available
+        let baseUrl = 'http://localhost:3000';
+        
+        if (request) {
+          const url = new URL(request.url);
+          baseUrl = `${url.protocol}//${url.host}`;
+        } else if (process.env.VERCEL_URL) {
+          baseUrl = `https://${process.env.VERCEL_URL}`;
+        } else if (process.env.NEXT_PUBLIC_VERCEL_URL) {
+          baseUrl = `https://${process.env.NEXT_PUBLIC_VERCEL_URL}`;
+        } else if (process.env.VERCEL) {
+          // Fallback: use the known Vercel URL
+          baseUrl = 'https://vital-expert-8qfqa5361-crossroads-catalysts-projects.vercel.app';
+        }
         
         healthUrl = `${baseUrl}${healthEndpoints.python}`;
       }
@@ -219,7 +227,8 @@ export class BackendConnectionService {
         pythonBackendUrl: this.config.pythonBackendUrl,
         isRelative: !this.config.pythonBackendUrl.startsWith('http'),
         VERCEL_URL: process.env.VERCEL_URL,
-        NEXT_PUBLIC_VERCEL_URL: process.env.NEXT_PUBLIC_VERCEL_URL
+        NEXT_PUBLIC_VERCEL_URL: process.env.NEXT_PUBLIC_VERCEL_URL,
+        hasRequest: !!request
       });
       
       const response = await fetch(healthUrl, {

@@ -4,8 +4,8 @@
  * Implements Guide Section 3.2: Automatic Board Composition
  */
 
-import { ChatOpenAI } from "@langchain/openai";
 import { HumanMessage, SystemMessage } from "@langchain/core/messages";
+import { ChatOpenAI } from "@langchain/openai";
 
 export interface BoardRequirements {
   domain: string;  // clinical, regulatory, market_access, etc.

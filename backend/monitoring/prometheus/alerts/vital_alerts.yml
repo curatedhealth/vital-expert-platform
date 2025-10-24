@@ -1,0 +1,328 @@
+# ============================================================================
+# VITAL Platform - Alert Rules
+# ============================================================================
+
+groups:
+  # --------------------------------------------------------------------------
+  # SEARCH PERFORMANCE ALERTS
+  # --------------------------------------------------------------------------
+  - name: search_performance
+    interval: 30s
+    rules:
+      - alert: HighSearchLatency
+        expr: histogram_quantile(0.9, rate(vital_search_duration_seconds_bucket[5m])) > 0.5
+        for: 5m
+        labels:
+          severity: warning
+          component: search
+        annotations:
+          summary: "High search latency detected"
+          description: "P90 search latency is {{ $value }}s (threshold: 500ms)"
+
+      - alert: CriticalSearchLatency
+        expr: histogram_quantile(0.9, rate(vital_search_duration_seconds_bucket[5m])) > 1.0
+        for: 2m
+        labels:
+          severity: critical
+          component: search
+        annotations:
+          summary: "Critical search latency"
+          description: "P90 search latency is {{ $value }}s (threshold: 1s)"
+
+      - alert: LowCacheHitRate
+        expr: vital_cache_hit_rate < 0.5
+        for: 10m
+        labels:
+          severity: warning
+          component: cache
+        annotations:
+          summary: "Low cache hit rate"
+          description: "Cache hit rate is {{ $value | humanizePercentage }} (threshold: 50%)"
+
+  # --------------------------------------------------------------------------
+  # HITL REVIEW QUEUE ALERTS
+  # --------------------------------------------------------------------------
+  - name: hitl_review
+    interval: 1m
+    rules:
+      - alert: ReviewQueueBacklog
+        expr: vital_review_queue_pending > 20
+        for: 5m
+        labels:
+          severity: warning
+          component: hitl
+        annotations:
+          summary: "Review queue backlog"
+          description: "{{ $value }} pending reviews (threshold: 20)"
+
+      - alert: SLABreach
+        expr: vital_review_queue_sla_breached > 0
+        for: 1m
+        labels:
+          severity: critical
+          component: hitl
+        annotations:
+          summary: "SLA breach detected"
+          description: "{{ $value }} reviews have breached SLA"
+
+      - alert: HighRiskItemsUnreviewed
+        expr: vital_review_queue_critical_pending > 0
+        for: 15m
+        labels:
+          severity: critical
+          component: hitl
+        annotations:
+          summary: "Critical risk items pending review"
+          description: "{{ $value }} critical risk items awaiting review for >15min"
+
+  # --------------------------------------------------------------------------
+  # COMPLIANCE ALERTS
+  # --------------------------------------------------------------------------
+  - name: compliance
+    interval: 1m
+    rules:
+      - alert: ComplianceViolations
+        expr: rate(vital_compliance_violations_total[5m]) > 0.1
+        for: 2m
+        labels:
+          severity: critical
+          component: compliance
+        annotations:
+          summary: "Compliance violations detected"
+          description: "{{ $value }} violations/s detected"
+
+      - alert: HighRiskAssessments
+        expr: rate(vital_risk_assessments_critical_total[5m]) > 1
+        for: 5m
+        labels:
+          severity: warning
+          component: risk
+        annotations:
+          summary: "High rate of critical risk assessments"
+          description: "{{ $value }} critical assessments/s"
+
+      - alert: AuditLogFailure
+        expr: rate(vital_compliance_audit_errors_total[5m]) > 0
+        for: 1m
+        labels:
+          severity: critical
+          component: compliance
+        annotations:
+          summary: "Compliance audit logging failure"
+          description: "Audit log errors detected - compliance at risk!"
+
+  # --------------------------------------------------------------------------
+  # EVIDENCE DETECTION ALERTS
+  # --------------------------------------------------------------------------
+  - name: evidence_detection
+    interval: 30s
+    rules:
+      - alert: LowEvidenceDetectionRate
+        expr: rate(vital_evidence_detected_total[5m]) < 0.1
+        for: 10m
+        labels:
+          severity: warning
+          component: evidence
+        annotations:
+          summary: "Low evidence detection rate"
+          description: "Only {{ $value }} evidence/s detected (expected >0.1/s)"
+
+      - alert: EvidenceDetectionFailure
+        expr: rate(vital_evidence_detection_errors_total[5m]) > 0.05
+        for: 5m
+        labels:
+          severity: warning
+          component: evidence
+        annotations:
+          summary: "Evidence detection errors"
+          description: "{{ $value }} errors/s in evidence detection"
+
+  # --------------------------------------------------------------------------
+  # DATABASE ALERTS
+  # --------------------------------------------------------------------------
+  - name: database
+    interval: 30s
+    rules:
+      - alert: HighDatabaseConnections
+        expr: pg_stat_database_numbackends{datname="postgres"} > 80
+        for: 5m
+        labels:
+          severity: warning
+          component: database
+        annotations:
+          summary: "High database connections"
+          description: "{{ $value }} connections (max: 100)"
+
+      - alert: DatabaseConnectionsExhausted
+        expr: pg_stat_database_numbackends{datname="postgres"} > 95
+        for: 1m
+        labels:
+          severity: critical
+          component: database
+        annotations:
+          summary: "Database connections nearly exhausted"
+          description: "{{ $value }} connections (max: 100)"
+
+      - alert: HighDatabaseQueryTime
+        expr: rate(pg_stat_statements_mean_exec_time[5m]) > 1000
+        for: 5m
+        labels:
+          severity: warning
+          component: database
+        annotations:
+          summary: "High database query time"
+          description: "Average query time: {{ $value }}ms"
+
+      - alert: DatabaseDeadlocks
+        expr: rate(pg_stat_database_deadlocks[5m]) > 0
+        for: 1m
+        labels:
+          severity: warning
+          component: database
+        annotations:
+          summary: "Database deadlocks detected"
+          description: "{{ $value }} deadlocks/s"
+
+  # --------------------------------------------------------------------------
+  # REDIS CACHE ALERTS
+  # --------------------------------------------------------------------------
+  - name: redis
+    interval: 30s
+    rules:
+      - alert: RedisDown
+        expr: up{job="redis"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          component: cache
+        annotations:
+          summary: "Redis is down"
+          description: "Redis cache is unreachable"
+
+      - alert: HighRedisMemoryUsage
+        expr: redis_memory_used_bytes / redis_memory_max_bytes > 0.9
+        for: 5m
+        labels:
+          severity: warning
+          component: cache
+        annotations:
+          summary: "High Redis memory usage"
+          description: "Redis memory at {{ $value | humanizePercentage }}"
+
+      - alert: RedisEvictions
+        expr: rate(redis_evicted_keys_total[5m]) > 10
+        for: 5m
+        labels:
+          severity: warning
+          component: cache
+        annotations:
+          summary: "Redis key evictions"
+          description: "{{ $value }} keys/s being evicted"
+
+  # --------------------------------------------------------------------------
+  # RECOMMENDATION ENGINE ALERTS
+  # --------------------------------------------------------------------------
+  - name: recommendations
+    interval: 1m
+    rules:
+      - alert: LowRecommendationCTR
+        expr: vital_recommendation_click_through_rate < 0.1
+        for: 30m
+        labels:
+          severity: warning
+          component: recommendations
+        annotations:
+          summary: "Low recommendation click-through rate"
+          description: "CTR is {{ $value | humanizePercentage }} (threshold: 10%)"
+
+      - alert: RecommendationGenerationFailure
+        expr: rate(vital_recommendations_errors_total[5m]) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+          component: recommendations
+        annotations:
+          summary: "Recommendation generation failures"
+          description: "{{ $value }} errors/s"
+
+  # --------------------------------------------------------------------------
+  # SYSTEM RESOURCE ALERTS
+  # --------------------------------------------------------------------------
+  - name: system_resources
+    interval: 30s
+    rules:
+      - alert: HighCPUUsage
+        expr: 100 - (avg by(instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
+        for: 10m
+        labels:
+          severity: warning
+          component: system
+        annotations:
+          summary: "High CPU usage"
+          description: "CPU usage is {{ $value | humanize }}%"
+
+      - alert: HighMemoryUsage
+        expr: (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100 > 85
+        for: 10m
+        labels:
+          severity: warning
+          component: system
+        annotations:
+          summary: "High memory usage"
+          description: "Memory usage is {{ $value | humanize }}%"
+
+      - alert: DiskSpaceLow
+        expr: (1 - (node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"})) * 100 > 80
+        for: 5m
+        labels:
+          severity: warning
+          component: system
+        annotations:
+          summary: "Low disk space"
+          description: "Disk usage is {{ $value | humanize }}%"
+
+      - alert: DiskSpaceCritical
+        expr: (1 - (node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"})) * 100 > 90
+        for: 1m
+        labels:
+          severity: critical
+          component: system
+        annotations:
+          summary: "Critical disk space"
+          description: "Disk usage is {{ $value | humanize }}%"
+
+  # --------------------------------------------------------------------------
+  # APPLICATION HEALTH ALERTS
+  # --------------------------------------------------------------------------
+  - name: application_health
+    interval: 30s
+    rules:
+      - alert: ServiceDown
+        expr: up == 0
+        for: 2m
+        labels:
+          severity: critical
+          component: application
+        annotations:
+          summary: "Service is down"
+          description: "{{ $labels.job }} on {{ $labels.instance }} is down"
+
+      - alert: HighErrorRate
+        expr: rate(http_requests_total{status=~"5.."}[5m]) > 0.05
+        for: 5m
+        labels:
+          severity: warning
+          component: application
+        annotations:
+          summary: "High HTTP error rate"
+          description: "{{ $value }} 5xx errors/s"
+
+      - alert: CriticalErrorRate
+        expr: rate(http_requests_total{status=~"5.."}[5m]) > 0.1
+        for: 2m
+        labels:
+          severity: critical
+          component: application
+        annotations:
+          summary: "Critical HTTP error rate"
+          description: "{{ $value }} 5xx errors/s"

@@ -6,8 +6,9 @@
  * 2. RAG semantic search (fallback, ~150ms)
  */
 
-import { supabaseAdmin } from '@/lib/supabase/admin';
 import { OpenAIEmbeddings } from '@langchain/openai';
+
+import { supabaseAdmin } from '@/lib/supabase/admin';
 
 interface DomainPattern {
   domains: string[];

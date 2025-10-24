@@ -1,8 +1,8 @@
 'use client'
 
-import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Plus, Minus } from 'lucide-react'
+import { useState } from 'react'
 
 export default function FAQSection() {
   const [openIndex, setOpenIndex] = useState<number | null>(null)

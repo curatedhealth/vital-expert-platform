@@ -1,5 +1,5 @@
 import { Loader2, Mic, Send, MicOff } from "lucide-react";
-import { forwardRef, useRef, useImperativeHandle, KeyboardEvent } from "react";
+import { forwardRef, useRef, useImperativeHandle } from "react";
 
 import { Button } from "@/shared/components/ui/button";
 import { Textarea } from "@/shared/components/ui/textarea";

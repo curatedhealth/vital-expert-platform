@@ -1,17 +1,18 @@
 'use client'
 
-import { Metadata } from 'next'
-import Navigation from './Navigation'
-import HeroSection from './HeroSection'
-import ProblemSection from './ProblemSection'
-import SolutionSection from './SolutionSection'
-import FeaturesGrid from './FeaturesGrid'
-import ROICalculator from './ROICalculator'
-import CaseStudies from './CaseStudies'
-import PricingTable from './PricingTable'
-import FAQSection from './FAQSection'
-import FooterCTA from './FooterCTA'
 import { ChevronUp, MessageCircle } from 'lucide-react'
+
+import CaseStudies from './CaseStudies'
+import FAQSection from './FAQSection'
+import FeaturesGrid from './FeaturesGrid'
+import FooterCTA from './FooterCTA'
+import HeroSection from './HeroSection'
+import Navigation from './Navigation'
+import PricingTable from './PricingTable'
+import ProblemSection from './ProblemSection'
+import ROICalculator from './ROICalculator'
+import SolutionSection from './SolutionSection'
+
 
 export default function EnhancedLandingPage() {
   return (

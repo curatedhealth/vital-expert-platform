@@ -5,9 +5,11 @@
  * the corresponding LangChain tool implementations from the tool registry.
  */
 
-import type { StructuredToolInterface } from '@langchain/core/tools';
 import { supabase } from '@/lib/supabase/client';
+
 import { getToolsByNames } from '../tools/tool-registry';
+
+import type { StructuredToolInterface } from '@langchain/core/tools';
 
 export interface AgentToolAssignment {
   agent_id: string;

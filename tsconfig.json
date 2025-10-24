@@ -1,8 +1,7 @@
 {
   "compilerOptions": {
-    "target": "es2020",
-    "lib": ["dom", "dom.iterable", "es2020"],
-    "downlevelIteration": true,
+    "target": "es5",
+    "lib": ["dom", "dom.iterable", "es6"],
     "allowJs": true,
     "skipLibCheck": true,
     "strict": true,
@@ -21,31 +20,9 @@
     ],
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"],
-      "@/core/*": ["./src/core/*"],
-      "@/features/*": ["./src/features/*"],
-      "@/shared/*": ["./src/shared/*"],
-      "@/components/*": ["./src/components/*"],
-      "@/lib/*": ["./src/lib/*"],
-      "@/services/*": ["./src/shared/services/*"],
-      "@/types/*": ["./src/shared/types/*"],
-      "@/hooks/*": ["./src/shared/hooks/*"],
-      "@/utils/*": ["./src/shared/utils/*"],
-      "@/styles/*": ["./src/styles/*"],
-      "@/agents/*": ["./src/agents/*"],
-      "@/app/*": ["./src/app/*"],
-      "@/config/*": ["./src/config/*"],
-      "@/tools/*": ["./tools/*"],
-      "@/tests/*": ["./tests/*"]
+      "@/*": ["./src/*"]
     }
   },
-  "include": ["next-env.d.ts", "src/**/*.ts", "src/**/*.tsx", ".next/types/**/*.ts"],
-  "exclude": [
-    "node_modules",
-    "backend/**/*",
-    ".next",
-    "out",
-    "dist",
-    "build"
-  ]
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
+  "exclude": ["node_modules"]
 }

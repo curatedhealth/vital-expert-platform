@@ -1,18 +1,21 @@
-import { ChatOpenAI } from '@langchain/openai';
-import { createReactAgent } from 'langchain/agents';
-import { AgentExecutor } from 'langchain/agents';
-import { pull } from 'langchain/hub';
-import { ChatPromptTemplate } from '@langchain/core/prompts';
-import { createClient } from '@supabase/supabase-js';
 import { BaseCallbackHandler } from '@langchain/core/callbacks/base';
+import { ChatOpenAI } from '@langchain/openai';
+import { createReactAgent , AgentExecutor } from 'langchain/agents';
+
+import {
+  parseRegulatoryAnalysis,
+  parseClinicalStudy,
+  parseMarketAccess,
+  parseLiteratureReview,
+  parseRiskAssessment,
+  parseCompetitiveAnalysis,
+} from '../parsers/structured-output';
 import { createAgentPromptBuilder } from '../prompts/agent-prompt-builder';
 
 // Import all tools
 import {
-  fdaDatabaseTool,
-  fdaGuidanceTool,
-  regulatoryCalculatorTool,
-} from '../tools/fda-tools';
+  createAdvancedRetriever,
+} from '../retrievers/advanced-retrievers';
 import {
   clinicalTrialsSearchTool,
   studyDesignTool,
@@ -25,27 +28,17 @@ import {
   pubmedSearchTool,
   euMedicalDeviceTool,
 } from '../tools/external-api-tools';
+import {
+  fdaDatabaseTool,
+  fdaGuidanceTool,
+  regulatoryCalculatorTool,
+} from '../tools/fda-tools';
 
 // Import advanced retrievers
-import {
-  createAdvancedRetriever,
-  HybridRetriever,
-  RAGFusionRetriever,
-} from '../retrievers/advanced-retrievers';
 
 // Import parsers
-import {
-  parseRegulatoryAnalysis,
-  parseClinicalStudy,
-  parseMarketAccess,
-  parseLiteratureReview,
-  parseRiskAssessment,
-  parseCompetitiveAnalysis,
-  getFormatInstructions,
-} from '../parsers/structured-output';
 
 // Import memory
-import { MemoryManager, selectMemoryStrategy } from '../memory/advanced-memory';
 
 /**
  * Token Tracking Callback for Autonomous Agent

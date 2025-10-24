@@ -1,6 +1,7 @@
 'use client';
 
 import { Settings, Brain, Database, Zap, RefreshCw, Info } from 'lucide-react';
+
 import { Button } from '@/shared/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/components/ui/card';
 import { Label } from '@/shared/components/ui/label';

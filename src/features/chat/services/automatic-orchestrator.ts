@@ -12,12 +12,15 @@
  * Total latency target: < 500ms
  */
 
-import { supabaseAdmin } from '@/lib/supabase/admin';
-import { domainDetector, type DetectedDomain } from '@/lib/services/knowledge-domain-detector';
 import { agentRanker, type RankedAgent } from '@/lib/services/agent-ranker';
+import { domainDetector, type DetectedDomain } from '@/lib/services/knowledge-domain-detector';
 import { modelSelector } from '@/lib/services/model-selector';
-import { EnhancedAgentOrchestrator } from './enhanced-agent-orchestrator';
+import { supabaseAdmin } from '@/lib/supabase/admin';
 import type { Agent } from '@/types/agent';
+
+import { EnhancedAgentOrchestrator } from './enhanced-agent-orchestrator';
+
+
 import type { Message } from 'ai';
 
 export interface AutomaticOrchestratorOptions {

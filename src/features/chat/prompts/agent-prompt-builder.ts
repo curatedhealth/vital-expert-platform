@@ -1,10 +1,6 @@
-import { createClient } from '@supabase/supabase-js';
 import { ChatPromptTemplate } from '@langchain/core/prompts';
-import {
-  fdaDatabaseTool,
-  fdaGuidanceTool,
-  regulatoryCalculatorTool,
-} from '../tools/fda-tools';
+
+import { getFormatInstructions } from '../parsers/structured-output';
 import {
   clinicalTrialsSearchTool,
   studyDesignTool,
@@ -17,7 +13,11 @@ import {
   pubmedSearchTool,
   euMedicalDeviceTool,
 } from '../tools/external-api-tools';
-import { getFormatInstructions } from '../parsers/structured-output';
+import {
+  fdaDatabaseTool,
+  fdaGuidanceTool,
+  regulatoryCalculatorTool,
+} from '../tools/fda-tools';
 
 /**
  * Agent Prompt Builder

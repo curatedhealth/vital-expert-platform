@@ -21,8 +21,8 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { AgentCreator } from '@/features/chat/components/agent-creator';
 import { useAgentsFilter } from '@/contexts/agents-filter-context';
+import { AgentCreator } from '@/features/chat/components/agent-creator';
 import { useAgentsStore, type Agent } from '@/lib/stores/agents-store';
 import { cn } from '@/lib/utils';
 

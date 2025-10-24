@@ -2,15 +2,16 @@
 
 import { User, Briefcase, Target, Settings2, RefreshCw, X, Calendar, TrendingUp } from 'lucide-react';
 import { useEffect } from 'react';
+
 import { useUserProfile } from '@/hooks/useAutonomousAgent';
 import { Badge } from '@/shared/components/ui/badge';
 import { Button } from '@/shared/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/shared/components/ui/dialog';
 import { Progress } from '@/shared/components/ui/progress';
 import { ScrollArea } from '@/shared/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/components/ui/tabs';
-import type { UserFact, UserProject, UserGoal, UserPreference, FactCategory } from '@/types/autonomous-agent.types';
+import type { UserFact, UserProject, UserGoal, FactCategory } from '@/types/autonomous-agent.types';
 
 interface UserProfileViewerProps {
   userId: string;

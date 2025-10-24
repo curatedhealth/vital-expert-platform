@@ -1,27 +1,25 @@
 'use client';
 
-import React, { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/components/ui/card';
-import { Badge } from '@/shared/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/components/ui/tabs';
 import {
   CheckCircle2,
   Clock,
   AlertCircle,
   Users,
   Target,
-  TrendingUp,
   Calendar,
   GitBranch,
   ListChecks
 } from 'lucide-react';
+import React, { useState } from 'react';
+
 import type {
   ActionItem,
   ActionItemSummary,
-  RACIMatrix,
-  Priority,
-  Timeline
+  RACIMatrix
 } from '@/lib/services/action-item-extractor';
+import { Badge } from '@/shared/components/ui/badge';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/components/ui/tabs';
 
 interface ActionItemsDisplayProps {
   actionItems: ActionItem[];

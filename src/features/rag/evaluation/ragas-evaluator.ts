@@ -4,8 +4,8 @@
  * Based on RAGAs (RAG Assessment) methodology
  */
 
-import { ChatOpenAI } from '@langchain/openai';
 import { Document } from '@langchain/core/documents';
+import { ChatOpenAI } from '@langchain/openai';
 import { createClient } from '@supabase/supabase-js';
 
 export interface RAGEvaluationInput {

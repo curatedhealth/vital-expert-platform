@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef } from 'react';
-import { useAuth } from './useAuth';
+
 import type {
   AutonomousAgentOptions,
   AutonomousAgentResponse,
@@ -7,6 +7,8 @@ import type {
   ToolExecution,
   PersonalizedContext,
 } from '@/types/autonomous-agent.types';
+
+import { useAuth } from './useAuth';
 
 interface UseAutonomousAgentOptions {
   defaultOptions?: AutonomousAgentOptions;

@@ -3,15 +3,16 @@
  * Implements state-machine based orchestration patterns with visual debugging
  */
 
+import { HumanMessage, SystemMessage } from "@langchain/core/messages";
+import { ChatPromptTemplate, MessagesPlaceholder } from "@langchain/core/prompts";
 import { StateGraph, END, START, Annotation } from "@langchain/langgraph";
 import { SqliteSaver } from "@langchain/langgraph-checkpoint-sqlite";
 import { ChatOpenAI } from "@langchain/openai";
-import { HumanMessage, SystemMessage } from "@langchain/core/messages";
 import { AgentExecutor, createOpenAIFunctionsAgent } from "langchain/agents";
-import { ChatPromptTemplate, MessagesPlaceholder } from "@langchain/core/prompts";
-import { policyGuard } from './policy-guard';
-import { minorityOpinionAnalyzer, type AgentReply as MinorityAgentReply } from './minority-opinion-analyzer';
+
 import { getAllExpertTools, toolUsageTracker, type ToolCall } from './expert-tools';
+import { minorityOpinionAnalyzer, type AgentReply as MinorityAgentReply } from './minority-opinion-analyzer';
+import { policyGuard } from './policy-guard';
 
 // ============================================================================
 // STATE DEFINITION

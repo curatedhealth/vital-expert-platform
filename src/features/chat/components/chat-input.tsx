@@ -6,7 +6,6 @@ import {
   MicOff,
   Square,
   StopCircle,
-  Pause,
   FileText,
   Image,
   Code,
@@ -15,12 +14,7 @@ import {
 } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 
-import {
-  PromptInput,
-  PromptInputTextarea,
-  PromptInputToolbar,
-  PromptInputSubmit,
-} from '@/shared/components/ai/prompt-input';
+import { PromptEnhancementModal } from '@/components/chat/PromptEnhancementModal';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -34,7 +28,12 @@ import {
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Agent } from '@/lib/stores/chat-store';
 import { cn } from '@/lib/utils';
-import { PromptEnhancementModal } from '@/components/chat/PromptEnhancementModal';
+import {
+  PromptInput,
+  PromptInputTextarea,
+  PromptInputToolbar,
+  PromptInputSubmit,
+} from '@/shared/components/ai/prompt-input';
 
 // Voice Recognition Types
 declare global {

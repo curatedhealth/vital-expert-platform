@@ -1,6 +1,6 @@
 // LLM Provider Registry and Management Service
-import { createClient } from '@/lib/supabase/client';
 import { databaseService } from '@/lib/database/database-service';
+import { createClient } from '@/lib/supabase/client';
 import {
   LLMProvider,
   LLMProviderConfig,
@@ -327,7 +327,7 @@ export class LLMProviderService {
     let score = 0;
     const reasoning: string[] = [];
     let estimatedCost: number | undefined = undefined;
-    let estimatedLatency: number | undefined = provider.average_latency_ms;
+    const estimatedLatency: number | undefined = provider.average_latency_ms;
 
     // Base score from priority and weight
     score += (10 - provider.priority_level) * 10; // Higher priority = higher score

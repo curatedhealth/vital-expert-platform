@@ -1,10 +1,12 @@
 'use client'
 
-import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import Link from 'next/link'
-import { Button } from '@/components/ui/button'
 import { Menu, X } from 'lucide-react'
+import Link from 'next/link'
+import { useState, useEffect } from 'react'
+
+import { Button } from '@/components/ui/button'
+
 
 export default function Navigation() {
   const [isScrolled, setIsScrolled] = useState(false)

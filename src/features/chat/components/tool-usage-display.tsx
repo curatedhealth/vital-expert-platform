@@ -1,13 +1,14 @@
 'use client';
 
-import React, { useState } from 'react';
-import { Badge } from '@/shared/components/ui/badge';
-import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card';
-import { Button } from '@/shared/components/ui/button';
 import {
   Search, FileText, Calculator, Database, FlaskConical, Shield, Activity, Globe, ChevronDown, ChevronUp
 } from 'lucide-react';
+import React, { useState } from 'react';
+
 import type { ToolCall } from '@/lib/services/expert-tools';
+import { Badge } from '@/shared/components/ui/badge';
+import { Button } from '@/shared/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card';
 
 interface ToolUsageDisplayProps {
   toolCalls: ToolCall[];

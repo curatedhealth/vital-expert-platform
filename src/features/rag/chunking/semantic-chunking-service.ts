@@ -3,9 +3,9 @@
  * Implements advanced chunking strategies for better context preservation
  */
 
-import { RecursiveCharacterTextSplitter } from 'langchain/text_splitter';
-import { OpenAIEmbeddings } from '@langchain/openai';
 import { Document } from '@langchain/core/documents';
+import { OpenAIEmbeddings } from '@langchain/openai';
+import { RecursiveCharacterTextSplitter } from 'langchain/text_splitter';
 
 export interface ChunkingConfig {
   strategy: 'recursive' | 'semantic' | 'adaptive' | 'medical';

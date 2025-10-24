@@ -8,8 +8,9 @@
  * - Performance (10%): Success rate and latency
  */
 
-import { supabaseAdmin } from '@/lib/supabase/admin';
 import { OpenAIEmbeddings } from '@langchain/openai';
+
+import { supabaseAdmin } from '@/lib/supabase/admin';
 import type { Agent } from '@/types/agent';
 
 export interface RankingWeights {

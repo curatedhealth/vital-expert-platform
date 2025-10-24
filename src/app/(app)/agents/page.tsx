@@ -1,19 +1,19 @@
 'use client';
 
+import { LayoutGrid, List, Table as TableIcon, BarChart3 } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useState, useEffect, Suspense } from 'react';
-import { LayoutGrid, List, Table as TableIcon, BarChart3 } from 'lucide-react';
 
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useAgentsFilter } from '@/contexts/agents-filter-context';
 import { AgentDetailsModal } from '@/features/agents/components/agent-details-modal';
 import { AgentsBoard } from '@/features/agents/components/agents-board';
-import { AgentCreator } from '@/features/chat/components/agent-creator';
 import { AgentsOverview } from '@/features/agents/components/agents-overview';
 import { AgentsTable } from '@/features/agents/components/agents-table';
-import { useAgentsFilter } from '@/contexts/agents-filter-context';
+import { AgentCreator } from '@/features/chat/components/agent-creator';
 import { useAuth } from '@/lib/auth/supabase-auth-context';
 import { type Agent as AgentsStoreAgent, useAgentsStore } from '@/lib/stores/agents-store';
 import { type Agent } from '@/lib/stores/chat-store';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 function AgentsPageContent() {
   const router = useRouter();

@@ -5,9 +5,9 @@
  * No hardcoding - all tools are configured in the database
  */
 
-import * as expertTools from './expert-tools';
-import * as evidenceRetrieval from './evidence-retrieval';
 import * as clinicalStandards from './clinical-standards-tools';
+import * as evidenceRetrieval from './evidence-retrieval';
+import * as expertTools from './expert-tools';
 import { toolRegistryService, type Tool } from './tool-registry-service';
 
 /**

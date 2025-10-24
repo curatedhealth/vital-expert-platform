@@ -1,9 +1,11 @@
 'use client'
 
-import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { Button } from '@/components/ui/button'
 import { Check, X } from 'lucide-react'
+import { useState } from 'react'
+
+import { Button } from '@/components/ui/button'
+
 
 export default function PricingTable() {
   const [isAnnual, setIsAnnual] = useState(false)

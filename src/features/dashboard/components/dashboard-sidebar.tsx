@@ -1,6 +1,5 @@
 'use client';
 
-import { useMemo, Suspense } from 'react';
 import {
   FileText,
   Settings,
@@ -35,6 +34,7 @@ import {
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
+import { useMemo, Suspense } from 'react';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';

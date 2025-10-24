@@ -3,8 +3,9 @@
  * Connects the knowledge_base tool to the existing VITAL RAG system
  */
 
-import ragService from '@/shared/services/rag/rag-service';
 import { OpenAIEmbeddings } from '@langchain/openai';
+
+import ragService from '@/shared/services/rag/rag-service';
 
 // Map tool categories to RAG domains
 const CATEGORY_TO_DOMAIN_MAP: Record<string, string> = {

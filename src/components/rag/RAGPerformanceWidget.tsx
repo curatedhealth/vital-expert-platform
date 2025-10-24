@@ -11,8 +11,7 @@ import {
   Clock,
   Database,
   TrendingUp,
-  AlertTriangle,
-  CheckCircle
+  AlertTriangle
 } from 'lucide-react';
 import React, { useState, useEffect } from 'react';
 

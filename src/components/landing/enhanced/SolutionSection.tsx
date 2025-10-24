@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion'
 import { ArrowRight, Check } from 'lucide-react'
+
 import { Button } from '@/components/ui/button'
 
 export default function SolutionSection() {

@@ -213,3 +213,7 @@ coverage/
 # Generated files
 *.tgz
 *.tar.gz
+
+# Bundle analyzer reports
+/analyze/
+.next/analyze/

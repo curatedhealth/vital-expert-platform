@@ -28,6 +28,12 @@
     --quality-gold: #FFAA00;
     --strategy-navy: #003399;
 
+    /* Multi-Tenant Architecture - Default (Digital Health) */
+    --tenant-primary: var(--clinical-green);
+    --tenant-accent: var(--research-cyan);
+    --tenant-gradient: linear-gradient(135deg, var(--clinical-green), var(--research-cyan));
+    --tenant-name: 'Digital Health';
+
     /* Spacing System */
     --space-xs: 4px;
     --space-sm: 8px;
@@ -91,6 +97,30 @@
     --sidebar-background: 0 0% 98%;
   }
 
+  /* Multi-Tenant Architecture - Pharma Tenant */
+  [data-tenant="pharma"] {
+    --tenant-primary: var(--regulatory-blue);
+    --tenant-accent: var(--strategy-navy);
+    --tenant-gradient: linear-gradient(135deg, var(--regulatory-blue), var(--strategy-navy));
+    --tenant-name: 'Pharma';
+  }
+
+  /* Multi-Tenant Architecture - Digital Health Tenant */
+  [data-tenant="digital-health"] {
+    --tenant-primary: var(--clinical-green);
+    --tenant-accent: var(--research-cyan);
+    --tenant-gradient: linear-gradient(135deg, var(--clinical-green), var(--research-cyan));
+    --tenant-name: 'Digital Health';
+  }
+
+  /* Multi-Tenant Architecture - Payers Tenant */
+  [data-tenant="payers"] {
+    --tenant-primary: var(--data-purple);
+    --tenant-accent: var(--market-orange);
+    --tenant-gradient: linear-gradient(135deg, var(--data-purple), var(--market-orange));
+    --tenant-name: 'Payers';
+  }
+
   .dark {
     --background: oklch(0.141 0.005 285.823);
     --foreground: oklch(0.985 0 0);
@@ -129,7 +159,7 @@
 
 @layer base {
   * {
-    @apply border-border;
+    border-color: hsl(var(--border));
   }
   body {
     @apply bg-background text-foreground;

@@ -43,9 +43,15 @@ export async function middleware(request: NextRequest) {
     return response;
   }
 
-  // Skip auth check if Supabase environment variables are not configured
+  // Require Supabase environment variables for auth - do not bypass in production
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-    console.warn('Supabase environment variables not configured, skipping auth check');
+    console.error('CRITICAL: Supabase environment variables not configured. Authentication cannot proceed.');
+    // In production, redirect to error page instead of bypassing auth
+    if (process.env.NODE_ENV === 'production') {
+      return NextResponse.redirect(new URL('/error?code=config', request.url));
+    }
+    // In development, allow bypass with clear warning
+    console.warn('WARNING: Development mode - bypassing auth check. This should NEVER happen in production.');
     return response;
   }
 

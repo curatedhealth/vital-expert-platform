@@ -1,8 +1,9 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { Button } from '@/components/ui/button'
 import { Shield, CheckCircle, FileText, Award } from 'lucide-react'
+
+import { Button } from '@/components/ui/button'
 
 export default function FooterCTA() {
   const trustBadges = [

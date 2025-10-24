@@ -2,9 +2,8 @@
  * Long Term Memory Service - Real Implementation
  */
 
+import { OpenAIEmbeddings , ChatOpenAI } from '@langchain/openai';
 import { createClient } from '@supabase/supabase-js';
-import { OpenAIEmbeddings } from '@langchain/openai';
-import { ChatOpenAI } from '@langchain/openai';
 
 export interface UserFact {
   id: string;

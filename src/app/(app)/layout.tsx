@@ -13,7 +13,6 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -23,8 +22,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { DashboardSidebarWithSuspense } from '@/features/dashboard/components/dashboard-sidebar';
 import { AgentsFilterProvider, useAgentsFilter } from '@/contexts/agents-filter-context';
+import { DashboardSidebarWithSuspense } from '@/features/dashboard/components/dashboard-sidebar';
 import { useAuth } from '@/lib/auth/supabase-auth-context';
 import { cn } from '@/lib/utils';
 // import { AuthGuard } from '@/components/auth/auth-guard';
@@ -64,12 +63,12 @@ function AppLayoutContent({
     }
   }, [pathname]);
 
-  // Handle redirect to login if not authenticated (disabled for development)
-  // useEffect(() => {
-  //   if (!loading && !user) {
-  //     router.push('/login');
-  //   }
-  // }, [loading, user, router]);
+  // Handle redirect to login if not authenticated
+  useEffect(() => {
+    if (!loading && !user && process.env.NODE_ENV === 'production') {
+      router.push('/login');
+    }
+  }, [loading, user, router]);
 
   // Agent management callbacks
   const handleCreateAgent = () => {
@@ -102,17 +101,17 @@ function AppLayoutContent({
     );
   }
 
-  // For development, allow access even without user
-  const displayUser = user || {
+  // Require authenticated user in production
+  const displayUser = user || (process.env.NODE_ENV === 'development' ? {
     id: 'dev-user',
     email: 'dev@vitalexpert.com',
     user_metadata: { name: 'Development User' }
-  };
+  } : null);
 
-  // Allow access for development even without user
-  // if (!user) {
-  //   return null;
-  // }
+  // Block access if no user in production
+  if (!displayUser && process.env.NODE_ENV === 'production') {
+    return null;
+  }
 
   return (
     <div className={cn(
@@ -168,10 +167,10 @@ function AppLayoutContent({
                 Dashboard
               </Link>
               <Link
-                href="/chat"
+                href="/ask-expert"
                 className={cn(
                   "transition-colors hover:text-foreground/80",
-                  pathname.startsWith("/chat") ? "text-foreground" : "text-foreground/60"
+                  pathname.startsWith("/ask-expert") ? "text-foreground" : "text-foreground/60"
                 )}
               >
                 Ask Expert
@@ -334,10 +333,10 @@ function AppLayoutContent({
                     Dashboard
                   </Link>
                   <Link
-                    href="/chat"
+                    href="/ask-expert"
                     className={cn(
                       "px-3 py-2 rounded-md text-sm font-medium transition-colors",
-                      pathname.startsWith("/chat") ? "bg-primary text-primary-foreground" : "text-foreground/60 hover:text-foreground hover:bg-muted"
+                      pathname.startsWith("/ask-expert") ? "bg-primary text-primary-foreground" : "text-foreground/60 hover:text-foreground hover:bg-muted"
                     )}
                     onClick={() => setSidebarOpen(false)}
                   >
@@ -460,7 +459,7 @@ function AppLayoutContent({
         {/* Main Content */}
         <main className={cn(
           "flex flex-1 flex-col overflow-hidden",
-          pathname === '/chat' ? '' : 'gap-4 p-4 lg:gap-6 lg:p-6'
+          pathname === '/ask-expert' || pathname === '/chat' ? '' : 'gap-4 p-4 lg:gap-6 lg:p-6'
         )}>
           {children}
         </main>

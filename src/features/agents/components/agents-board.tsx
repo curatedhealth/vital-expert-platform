@@ -1,10 +1,6 @@
 'use client';
 
 import {
-  Search,
-  Filter,
-  Grid,
-  List,
   Plus,
   Heart,
   Edit,
@@ -23,16 +19,14 @@ import { AgentAvatar } from '@/components/ui/agent-avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { EnhancedAgentCard, AgentCardGrid } from '@/components/ui/enhanced-agent-card';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Input } from '@/components/ui/input';
+import { EnhancedAgentCard, AgentCardGrid } from '@/components/ui/enhanced-agent-card';
+import { DEPARTMENTS_BY_FUNCTION, ROLES_BY_DEPARTMENT } from '@/config/organizational-structure';
 import { AgentCreator } from '@/features/chat/components/agent-creator';
 import type { AgentWithCategories } from '@/lib/agents/agent-service';
 import { useAgentsStore, type Agent } from '@/lib/stores/agents-store';
-import { supabase } from '@/lib/supabase/client';
 import { cn } from '@/lib/utils';
-import type { HealthcareBusinessFunction, HealthcareRole } from '@/types/healthcare-compliance';
-import { BUSINESS_FUNCTIONS, DEPARTMENTS_BY_FUNCTION, ROLES_BY_DEPARTMENT } from '@/config/organizational-structure';
+import type { HealthcareBusinessFunction } from '@/types/healthcare-compliance';
 
 // Use shared organizational structure configuration
 const staticDepartmentsByFunction = DEPARTMENTS_BY_FUNCTION;

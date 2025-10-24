@@ -1,9 +1,10 @@
 "use client"
 
-import * as React from "react"
-import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card"
-import { Badge } from "@/components/ui/badge"
 import { ExternalLink } from "lucide-react"
+import * as React from "react"
+
+import { Badge } from "@/components/ui/badge"
+import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card"
 import { cn } from "@/lib/utils"
 
 interface Source {

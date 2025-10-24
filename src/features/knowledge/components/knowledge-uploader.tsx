@@ -20,10 +20,10 @@ import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
-import { useAgentsStore } from '@/lib/stores/agents-store';
-import { cn } from '@/lib/utils';
-import { createClient } from '@/lib/supabase/client';
 import type { KnowledgeDomain } from '@/lib/services/model-selector';
+import { useAgentsStore } from '@/lib/stores/agents-store';
+import { createClient } from '@/lib/supabase/client';
+import { cn } from '@/lib/utils';
 
 interface UploadFile {
   file: File;

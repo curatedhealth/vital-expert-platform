@@ -3,13 +3,12 @@
  * Provides RAG, memory, and conversational chain capabilities
  */
 
-import { ChatOpenAI } from '@langchain/openai';
-import { OpenAIEmbeddings } from '@langchain/openai';
 import { SupabaseVectorStore } from '@langchain/community/vectorstores/supabase';
-import { ConversationalRetrievalQAChain } from 'langchain/chains';
-import { BufferWindowMemory } from 'langchain/memory';
+import { ChatOpenAI , OpenAIEmbeddings } from '@langchain/openai';
 import { createClient } from '@supabase/supabase-js';
+import { ConversationalRetrievalQAChain } from 'langchain/chains';
 import { Document } from 'langchain/document';
+import { BufferWindowMemory } from 'langchain/memory';
 
 export interface EnhancedLangChainConfig {
   model: string;

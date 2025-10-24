@@ -2,9 +2,9 @@
 
 import { useState, useEffect } from 'react';
 
+import { AgentAvatar } from '@/components/ui/agent-avatar';
 import { useAgentsStore, type Agent as AgentsStoreAgent } from '@/lib/stores/agents-store';
 import { ragService } from '@/shared/services/rag/rag-service';
-import { AgentAvatar } from '@/components/ui/agent-avatar';
 
 interface ExpertPanelSelectorProps {
   isOpen: boolean;

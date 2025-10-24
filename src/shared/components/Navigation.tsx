@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
+
 import { VitalLogo } from '@/shared/components/vital-logo';
 
 export function Navigation() {

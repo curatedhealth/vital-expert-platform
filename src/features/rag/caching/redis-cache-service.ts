@@ -3,10 +3,10 @@
  * Implements semantic caching and query result caching for 70-80% cost reduction
  */
 
-import Redis from 'ioredis';
-import { createClient } from '@upstash/redis';
-import { OpenAIEmbeddings } from '@langchain/openai';
 import { Document } from '@langchain/core/documents';
+import { OpenAIEmbeddings } from '@langchain/openai';
+import { createClient } from '@upstash/redis';
+import Redis from 'ioredis';
 
 export interface CacheConfig {
   ttl: number; // Time to live in seconds

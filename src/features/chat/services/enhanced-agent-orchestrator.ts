@@ -3,12 +3,13 @@
  * Brings all 13 expert tools to individual agent conversations
  */
 
+import { ChatPromptTemplate, MessagesPlaceholder } from '@langchain/core/prompts';
 import { ChatOpenAI } from '@langchain/openai';
 import { AgentExecutor, createOpenAIFunctionsAgent } from 'langchain/agents';
-import { ChatPromptTemplate, MessagesPlaceholder } from '@langchain/core/prompts';
+
 import { dynamicToolLoader } from '@/lib/services/dynamic-tool-loader';
-import { toolRegistryService, type ToolUsageLog } from '@/lib/services/tool-registry-service';
 import type { ToolCall } from '@/lib/services/expert-tools';
+import { toolRegistryService, type ToolUsageLog } from '@/lib/services/tool-registry-service';
 
 export interface Citation {
   type: 'clinical-trial' | 'fda-approval' | 'pubmed' | 'ich-guideline' | 'iso-standard' | 'dime-resource' | 'ichom-set' | 'web-source' | 'knowledge-base';

@@ -1,4 +1,5 @@
 import { Metadata } from 'next'
+
 import EnhancedLandingPage from '@/components/landing/enhanced/EnhancedLandingPage'
 
 export const metadata: Metadata = {

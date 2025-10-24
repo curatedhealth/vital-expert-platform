@@ -1,10 +1,5 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/components/ui/tabs';
-import { Button } from '@/shared/components/ui/button';
-import { Badge } from '@/shared/components/ui/badge';
 import {
   MessageSquare,
   AlertTriangle,
@@ -14,9 +9,17 @@ import {
   Share2,
   TrendingUp
 } from 'lucide-react';
-import { RiskMatrix, type RiskMatrixData } from './risk-matrix';
-import { ActionItemsDisplay } from './action-items-display';
+import React, { useState, useEffect } from 'react';
+
 import type { ActionItemExtractionResult } from '@/lib/services/action-item-extractor';
+import { Badge } from '@/shared/components/ui/badge';
+import { Button } from '@/shared/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/components/ui/tabs';
+
+import { ActionItemsDisplay } from './action-items-display';
+import { RiskMatrix, type RiskMatrixData } from './risk-matrix';
+
 
 interface EnhancedPanelResultsProps {
   panelDiscussion: {

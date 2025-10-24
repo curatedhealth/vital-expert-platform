@@ -1,12 +1,14 @@
 'use client';
 
-import React, { useState } from 'react';
-import { Badge } from '@/shared/components/ui/badge';
-import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card';
-import { Button } from '@/shared/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/components/ui/tabs';
 import { ExternalLink, FileText, FlaskConical, Shield, Activity, Database, ChevronDown, ChevronUp } from 'lucide-react';
+import React, { useState } from 'react';
+
 import { formatCitation } from '@/lib/services/evidence-retrieval';
+import { Badge } from '@/shared/components/ui/badge';
+import { Button } from '@/shared/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/components/ui/tabs';
+
 import type { Citation } from '../services/enhanced-agent-orchestrator';
 
 interface CitationDisplayProps {

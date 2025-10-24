@@ -11,6 +11,7 @@ from datetime import datetime
 from langchain.chat_models import ChatOpenAI
 from langchain.schema import HumanMessage, SystemMessage, AIMessage
 import structlog
+from services.confidence_calculator import get_confidence_calculator
 
 logger = structlog.get_logger()
 
@@ -20,6 +21,7 @@ class RegulatoryExpertAgent:
     def __init__(self):
         self.agent_id = "regulatory_expert"
         self.name = "Regulatory Expert"
+        self.tier = 1  # Tier 1 specialist (regulatory is critical)
         self.specialties = [
             "fda_regulatory",
             "ema_regulatory",
@@ -28,6 +30,7 @@ class RegulatoryExpertAgent:
             "compliance_monitoring"
         ]
         self.llm = None
+        self.confidence_calculator = get_confidence_calculator()
         self.system_prompt = """You are a Regulatory Expert AI with comprehensive expertise in global regulatory affairs for medical devices and pharmaceuticals. Your role is to provide accurate regulatory guidance and ensure compliance with FDA, EMA, ICH, and other global regulatory requirements.
 
 ## CORE IDENTITY
@@ -115,19 +118,40 @@ You have 20+ years of experience in regulatory affairs with expertise in:
             
             # Get response from LLM
             response = await self.llm.ainvoke(messages)
-            
+
+            # Calculate dynamic confidence
+            agent_metadata = {
+                "name": self.name,
+                "tier": self.tier,
+                "specialties": self.specialties
+            }
+
+            rag_results = context.get("rag_results") if context else None
+
+            confidence_data = await self.confidence_calculator.calculate_confidence(
+                query=query,
+                response=response.content,
+                agent_metadata=agent_metadata,
+                rag_results=rag_results,
+                context=context
+            )
+
             # Process response
             result = {
                 "agent_id": self.agent_id,
                 "agent_name": self.name,
                 "response": response.content,
-                "confidence": 0.90,  # High confidence for regulatory expertise
+                "confidence": confidence_data["confidence"],  # Dynamic confidence
+                "confidence_breakdown": confidence_data["breakdown"],
+                "confidence_reasoning": confidence_data["reasoning"],
+                "quality_level": confidence_data["quality_level"],
                 "specialties_used": self.specialties,
                 "timestamp": datetime.now().isoformat(),
                 "metadata": {
                     "model": "gpt-4-turbo-preview",
                     "temperature": 0.05,
-                    "max_tokens": 4000
+                    "max_tokens": 4000,
+                    "tier": self.tier
                 }
             }
             

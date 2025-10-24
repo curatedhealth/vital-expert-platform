@@ -7,6 +7,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { type Icon } from '@/shared/services/icon-service';
 
+import { OptimizedIconRenderer } from './optimized-icon-renderer';
+
 interface IconSelectionModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -118,38 +120,7 @@ export function IconSelectionModal({
     return icon.file_url;
   };
 
-  const renderIcon = (icon: Icon) => {
-    const iconUrl = getIconUrl(icon);
-    const isImagePath = iconUrl?.startsWith('/') || iconUrl?.startsWith('http');
-
-    if (isImagePath) {
-      return (
-        <div className="w-full h-full flex items-center justify-center p-1">
-          <img
-            src={iconUrl}
-            alt={icon.display_name}
-            className="w-full h-full object-cover rounded"
-            onError={(e) => {
-              console.error(`Failed to load icon: ${iconUrl}`);
-              const target = e.target as HTMLImageElement;
-              target.style.display = 'none';
-              const parent = target.parentElement;
-              if (parent) {
-                parent.innerHTML = '<span class="text-2xl">🤖</span>';
-              }
-            }}
-            onLoad={() => {
-              console.log(`Successfully loaded icon: ${iconUrl}`);
-            }}
-          />
-        </div>
-      );
-    }
-
-    return (
-      <span className="text-2xl">{icon.file_url || '🤖'}</span>
-    );
-  };
+  // Removed renderIcon function - now using OptimizedIconRenderer component
 
   if (!isOpen) return null;
 
@@ -200,11 +171,10 @@ export function IconSelectionModal({
           ) : (
             <div className="grid grid-cols-8 gap-3">
               {filteredIcons.map((icon) => (
-                <button
+                <div
                   key={icon.id}
-                  onClick={() => handleIconSelect(icon)}
                   className={`
-                    w-12 h-12 rounded-lg border-2 flex items-center justify-center
+                    w-12 h-12 rounded-lg border-2
                     transition-all duration-200 hover:scale-105 hover:shadow-md
                     ${selectedIcon === (icon.icon || icon.file_url)
                       ? 'border-blue-500 bg-blue-50'
@@ -213,8 +183,13 @@ export function IconSelectionModal({
                   `}
                   title={icon.display_name}
                 >
-                  {renderIcon(icon)}
-                </button>
+                  <OptimizedIconRenderer
+                    icon={icon}
+                    size={48}
+                    onClick={() => handleIconSelect(icon)}
+                    isSelected={selectedIcon === (icon.icon || icon.file_url)}
+                  />
+                </div>
               ))}
             </div>
           )}

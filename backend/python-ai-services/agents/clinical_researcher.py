@@ -11,6 +11,7 @@ from datetime import datetime
 from langchain.chat_models import ChatOpenAI
 from langchain.schema import HumanMessage, SystemMessage, AIMessage
 import structlog
+from services.confidence_calculator import get_confidence_calculator
 
 logger = structlog.get_logger()
 
@@ -20,6 +21,7 @@ class ClinicalResearcherAgent:
     def __init__(self):
         self.agent_id = "clinical_researcher"
         self.name = "Clinical Researcher"
+        self.tier = 2  # Tier 2 specialist
         self.specialties = [
             "clinical_trial_design",
             "biostatistics",
@@ -28,6 +30,7 @@ class ClinicalResearcherAgent:
             "regulatory_compliance"
         ]
         self.llm = None
+        self.confidence_calculator = get_confidence_calculator()
         self.system_prompt = """You are a Clinical Researcher AI with comprehensive expertise in clinical trial design, execution, and management. Your role is to provide evidence-based clinical research guidance while ensuring compliance with Good Clinical Practice (GCP) and regulatory requirements.
 
 ## CORE IDENTITY
@@ -123,19 +126,40 @@ You have 15+ years of experience in clinical research with expertise in:
             
             # Get response from LLM
             response = await self.llm.ainvoke(messages)
-            
+
+            # Calculate dynamic confidence
+            agent_metadata = {
+                "name": self.name,
+                "tier": self.tier,
+                "specialties": self.specialties
+            }
+
+            rag_results = context.get("rag_results") if context else None
+
+            confidence_data = await self.confidence_calculator.calculate_confidence(
+                query=query,
+                response=response.content,
+                agent_metadata=agent_metadata,
+                rag_results=rag_results,
+                context=context
+            )
+
             # Process response
             result = {
                 "agent_id": self.agent_id,
                 "agent_name": self.name,
                 "response": response.content,
-                "confidence": 0.88,  # High confidence for clinical research
+                "confidence": confidence_data["confidence"],  # Dynamic confidence
+                "confidence_breakdown": confidence_data["breakdown"],
+                "confidence_reasoning": confidence_data["reasoning"],
+                "quality_level": confidence_data["quality_level"],
                 "specialties_used": self.specialties,
                 "timestamp": datetime.now().isoformat(),
                 "metadata": {
                     "model": "gpt-4-turbo-preview",
                     "temperature": 0.2,
-                    "max_tokens": 4000
+                    "max_tokens": 4000,
+                    "tier": self.tier
                 }
             }
             

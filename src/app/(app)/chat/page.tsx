@@ -2,14 +2,11 @@
 
 import {
   MessageSquare,
-  Settings,
   Users,
   Workflow,
   Home,
   Database,
-  Zap,
-  User,
-  ImageIcon
+  Zap
 } from 'lucide-react';
 import Image from 'next/image';
 import { useRouter, usePathname } from 'next/navigation';
@@ -19,22 +16,21 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { EnhancedAgentCard, AgentCardGrid } from '@/components/ui/enhanced-agent-card';
-import {
-  SidebarInset,
-  SidebarProvider
-} from '@/shared/components/ui/sidebar';
-import { Switch } from '@/components/ui/switch';
-import { AgentCreator } from '@/features/chat/components/agent-creator';
 import { ChatInput } from '@/features/chat/components/chat-input';
 import { ChatMessages } from '@/features/chat/components/chat-messages';
 import { ChatSidebar } from '@/features/chat/components/chat-sidebar';
-import { AgentsBoard } from '@/features/agents/components/agents-board';
+// Lazy-loaded heavy components for code splitting
 import type { AgentWithCategories } from '@/lib/agents/agent-service';
 import { useAuth } from '@/lib/auth/supabase-auth-context';
 import { IconService, type Icon } from '@/lib/services/icon-service';
 import { useAgentsStore } from '@/lib/stores/agents-store';
-import { useChatStore, Agent, type AIModel } from '@/lib/stores/chat-store';
+import { useChatStore, Agent } from '@/lib/stores/chat-store';
 import { cn } from '@/lib/utils';
+import { LazyAgentCreator } from '@/lib/utils/lazy-components';
+import {
+  SidebarInset,
+  SidebarProvider
+} from '@/shared/components/ui/sidebar';
 
 // Global navigation items (unused in chat page but kept for consistency)
 const navItems = [
@@ -1181,9 +1177,9 @@ export default function ChatPage() {
           </div>
         </SidebarInset>
 
-        {/* Agent Creator Modal */}
+        {/* Agent Creator Modal - Lazy loaded for code splitting */}
         {(editingAgent || showAgentCreator) && (
-          <AgentCreator
+          <LazyAgentCreator
             isOpen={!!editingAgent || showAgentCreator}
             onClose={() => {
               setEditingAgent(null);

@@ -4,6 +4,7 @@
  */
 
 import { createClient } from '@supabase/supabase-js';
+
 import { mockDatabase } from './mock-database';
 
 export class DatabaseService {

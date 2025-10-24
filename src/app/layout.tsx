@@ -3,6 +3,7 @@ import { Inter } from 'next/font/google'
 import '@/lib/polyfills/location-polyfill'
 
 import type { Metadata } from 'next'
+
 import './globals.css'
 import { SupabaseAuthProvider } from '@/lib/auth/supabase-auth-context'
 

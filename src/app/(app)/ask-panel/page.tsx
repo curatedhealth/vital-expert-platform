@@ -1,8 +1,11 @@
 'use client';
 
-import { Users, Star, CheckCircle, ArrowRight, Send, Loader2, MessageSquare, Settings2 } from 'lucide-react';
+import { Users, Star, ArrowRight, Send, Loader2, MessageSquare, Settings2 } from 'lucide-react';
 import { useState, useEffect } from 'react';
+import ReactMarkdown from 'react-markdown';
 
+import { PanelMember } from '@/app/(app)/ask-panel/services/panel-store';
+import { AgentAvatar } from '@/components/ui/agent-avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -16,9 +19,7 @@ import {
 } from '@/components/ui/select';
 import { ExpertPanelSelector } from '@/features/chat/components/expert-panel-selector';
 import { useAgentsStore, Agent } from '@/lib/stores/agents-store';
-import { PanelMember } from '@/app/(app)/ask-panel/services/panel-store';
-import { AgentAvatar } from '@/components/ui/agent-avatar';
-import ReactMarkdown from 'react-markdown';
+
 
 // Three-Level Hierarchy: Domain → Subdomain → Use Cases
 const PANEL_DOMAINS = [

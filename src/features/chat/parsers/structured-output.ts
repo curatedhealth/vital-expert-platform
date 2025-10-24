@@ -1,7 +1,6 @@
-import { z } from 'zod';
-import { StructuredOutputParser, OutputFixingParser } from 'langchain/output_parsers';
 import { ChatOpenAI } from '@langchain/openai';
-import { PromptTemplate } from '@langchain/core/prompts';
+import { StructuredOutputParser, OutputFixingParser } from 'langchain/output_parsers';
+import { z } from 'zod';
 
 const llm = new ChatOpenAI({
   openAIApiKey: process.env.OPENAI_API_KEY!,

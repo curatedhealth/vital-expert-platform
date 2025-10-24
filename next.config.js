@@ -17,7 +17,21 @@ const nextConfig = {
     ],
   },
   // Exclude backend directories from Next.js compilation
-  webpack: (config, { isServer }) => {
+  webpack: (config, { isServer, dev }) => {
+    // Enable bundle analyzer in production builds when ANALYZE=true
+    if (!dev && process.env.ANALYZE === 'true') {
+      const { BundleAnalyzerPlugin } = require('@next/bundle-analyzer')({
+        enabled: true,
+      });
+      config.plugins.push(
+        new BundleAnalyzerPlugin({
+          analyzerMode: 'static',
+          reportFilename: isServer ? '../analyze/server.html' : './analyze/client.html',
+          openAnalyzer: true,
+        })
+      );
+    }
+
     if (!isServer) {
       config.resolve.fallback = {
         ...config.resolve.fallback,
@@ -61,13 +75,13 @@ const nextConfig = {
 
     return config;
   },
-  // Exclude backend directories from TypeScript checking
+  // TypeScript checking enabled for production safety
   typescript: {
-    ignoreBuildErrors: true,
+    ignoreBuildErrors: false,
   },
-  // Disable ESLint during build
+  // ESLint enabled during build for code quality
   eslint: {
-    ignoreDuringBuilds: true,
+    ignoreDuringBuilds: false,
   },
   // Skip build-time errors in development
   onDemandEntries: {
@@ -77,6 +91,8 @@ const nextConfig = {
   // Experimental features for better performance
   experimental: {
     serverComponentsExternalPackages: ['@supabase/supabase-js', '@supabase/realtime-js'],
+    optimizeCss: true, // Optimize CSS loading
+    optimizePackageImports: ['lucide-react', '@radix-ui/react-icons'], // Tree-shake icon libraries
   },
   
   // Configure compiler options

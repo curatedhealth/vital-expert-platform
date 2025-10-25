@@ -1,25 +1,22 @@
-import { Metadata } from 'next'
-
-import EnhancedLandingPage from '@/components/landing/enhanced/EnhancedLandingPage'
-
-export const metadata: Metadata = {
-  title: 'VITAL Expert - AI-Powered Healthcare Innovation Platform',
-  description: 'Replace $3M in consulting with 136+ healthcare AI experts. Get FDA approval 91% faster. Available 24/7.',
-  keywords: 'healthcare AI, FDA approval, medical device consulting, digital health, regulatory compliance',
-  openGraph: {
-    title: 'VITAL Expert - Transform Healthcare Innovation with AI',
-    description: 'Replace expensive consultants with AI-powered expert intelligence.',
-    images: ['/og-image.png'],
-    url: 'https://vital.expert',
-  },
-  twitter: {
-    card: 'summary_large_image',
-    title: 'VITAL Expert - Healthcare AI Platform',
-    description: 'Transform healthcare innovation with AI-powered expert intelligence.',
-    images: ['/twitter-image.png'],
-  },
-}
-
-export default function Home() {
-  return <EnhancedLandingPage />
+export default function ConsultingPlaceholder() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
+      <div className="text-center p-8">
+        <h1 className="text-4xl font-bold text-gray-900 mb-4">
+          VITAL Consulting Platform
+        </h1>
+        <p className="text-xl text-gray-600 mb-8">
+          Coming Soon
+        </p>
+        <div className="bg-white rounded-lg shadow-lg p-6 max-w-md mx-auto">
+          <p className="text-gray-700">
+            This tenant app is a placeholder for the consulting-focused version
+            of the VITAL Expert Platform. It will share core infrastructure
+            with the digital health startup app while providing consulting-specific
+            features and branding.
+          </p>
+        </div>
+      </div>
+    </div>
+  );
 }

@@ -40,6 +40,22 @@ export enum RiskLevel {
   CRITICAL = 'critical'
 }
 
+// Healthcare-specific enums
+export enum ClinicalValidationStatus {
+  PENDING = 'pending',
+  IN_REVIEW = 'in_review',
+  VALIDATED = 'validated',
+  REJECTED = 'rejected'
+}
+
+export enum FDASaMDClass {
+  NONE = 'none',
+  CLASS_I = 'class_i',
+  CLASS_II = 'class_ii',
+  CLASS_III = 'class_iii',
+  CLASS_IV = 'class_iv'
+}
+
 // Main Agent interface
 export interface Agent {
   // Core Identity

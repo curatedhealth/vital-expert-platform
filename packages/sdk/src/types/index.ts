@@ -5,4 +5,6 @@
 
 export * from './auth.types';
 export * from './database.types';
-export * from './database-generated.types';
+// Note: database-generated.types has conflicting _Constants export with database.types
+// Only export database.types which is the main one
+// export * from './database-generated.types';

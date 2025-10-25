@@ -202,6 +202,7 @@ sync-agents-to-environments.js
 *.sqlite
 *.sqlite-shm
 *.sqlite-wal
+database/checkpoints/*.sqlite*
 
 # Large data files
 data_dump.sql

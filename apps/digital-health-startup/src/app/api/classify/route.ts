@@ -225,11 +225,12 @@ export async function POST(request: NextRequest) {
         complexity: 0.1,
         agents: [],
         context: {
-          urgency: 'low',
-          stakeholder: 'researcher',
-          phase: 'discovery'
+          urgency: 'low' as const,
+          stakeholder: 'researcher' as const,
+          phase: 'discovery' as const
         }
-      }
+      },
+      { status: 500 }
     );
   }
 }

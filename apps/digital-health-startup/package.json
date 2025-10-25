@@ -24,9 +24,6 @@
     "migrate:dry-run": "tsx scripts/run-migrations.ts dry-run"
   },
   "dependencies": {
-    "@vital/ui": "workspace:*",
-    "@vital/sdk": "workspace:*",
-    "@vital/utils": "workspace:*",
     "@anthropic-ai/sdk": "^0.9.1",
     "@dnd-kit/core": "^6.3.1",
     "@dnd-kit/modifiers": "^9.0.0",
@@ -81,6 +78,9 @@
     "@types/dagre": "^0.7.53",
     "@types/uuid": "^9.0.7",
     "@upstash/redis": "^1.35.5",
+    "@vital/sdk": "workspace:*",
+    "@vital/ui": "workspace:*",
+    "@vital/utils": "workspace:*",
     "ai": "^5.0.60",
     "buffer": "^6.0.3",
     "class-variance-authority": "^0.7.1",
@@ -109,6 +109,7 @@
     "prism-react-renderer": "^2.4.1",
     "process": "^0.11.10",
     "react": "^18",
+    "react-countup": "^6.5.3",
     "react-day-picker": "^9.11.0",
     "react-dnd": "^16.0.1",
     "react-dnd-html5-backend": "^16.0.1",

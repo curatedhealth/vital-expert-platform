@@ -6,18 +6,18 @@ import {
   TrendingUp, CheckCircle, Activity, Sparkles
 } from 'lucide-react';
 
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Progress } from '@/components/ui/progress';
+import { Card, CardContent, CardHeader } from '@vital/ui/components/card';
+import { Badge } from '@vital/ui/components/badge';
+import { Button } from '@vital/ui/components/button';
+import { Avatar, AvatarFallback, AvatarImage } from '@vital/ui/components/avatar';
+import { Progress } from '@vital/ui/components/progress';
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from '@/components/ui/tooltip';
-import { cn } from '@/lib/utils';
+} from '@vital/ui/components/tooltip';
+import { cn } from '@vital/ui/lib/utils';
 
 interface ExpertAgent {
   id: string;

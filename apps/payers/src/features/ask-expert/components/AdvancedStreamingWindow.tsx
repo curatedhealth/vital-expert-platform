@@ -7,11 +7,11 @@ import {
 } from 'lucide-react';
 import { useState, useCallback } from 'react';
 
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { Progress } from '@/components/ui/progress';
-import { cn } from '@/lib/utils';
+import { Badge } from '@vital/ui/components/badge';
+import { Button } from '@vital/ui/components/button';
+import { Card, CardContent } from '@vital/ui/components/card';
+import { Progress } from '@vital/ui/components/progress';
+import { cn } from '@vital/ui/lib/utils';
 
 interface WorkflowStep {
   id: string;

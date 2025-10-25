@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { createClient } from '@/lib/supabase/server';
+import { createClient } from '@vital/sdk';
 
 /**
  * Hybrid RAG Search API - Routes to Python Medical RAG Pipeline

@@ -4,9 +4,9 @@
  * Provides visual feedback while content loads
  */
 
-import { Card } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
-import { cn } from '@/lib/utils';
+import { Card } from '@vital/ui/components/card';
+import { Skeleton } from '@vital/ui/components/skeleton';
+import { cn } from '@vital/ui/lib/utils';
 
 // ===========================
 // CHAT SKELETONS

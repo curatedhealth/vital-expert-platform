@@ -5,7 +5,7 @@
  * the corresponding LangChain tool implementations from the tool registry.
  */
 
-import { supabase } from '@/lib/supabase/client';
+import { supabase } from '@vital/sdk/client';
 
 import { getToolsByNames } from '../tools/tool-registry';
 

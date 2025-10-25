@@ -1,6 +1,6 @@
 'use client';
 
-import { cn } from '@/lib/utils';
+import { cn } from '@vital/ui/lib/utils';
 
 export type ServiceLine =
   | 'regulatory'

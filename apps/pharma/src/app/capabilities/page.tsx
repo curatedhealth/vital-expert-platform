@@ -32,16 +32,16 @@ import {
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Progress } from '@/components/ui/progress';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Separator } from '@/components/ui/separator';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Badge } from '@vital/ui/components/badge';
+import { Button } from '@vital/ui/components/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@vital/ui/components/card';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@vital/ui/components/dialog';
+import { Input } from '@vital/ui/components/input';
+import { Progress } from '@vital/ui/components/progress';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@vital/ui/components/select';
+import { Separator } from '@vital/ui/components/separator';
+import { Skeleton } from '@vital/ui/components/skeleton';
+import { Tabs, TabsList, TabsTrigger } from '@vital/ui/components/tabs';
 
 interface Capability {
   id: string;

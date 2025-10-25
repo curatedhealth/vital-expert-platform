@@ -3,8 +3,8 @@
 import { Send } from 'lucide-react';
 import * as React from 'react';
 
-import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
+import { Button } from '@vital/ui/components/button';
+import { cn } from '@vital/ui/lib/utils';
 
 // Context for managing the prompt input state
 interface PromptInputContextValue {

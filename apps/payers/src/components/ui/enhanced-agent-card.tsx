@@ -1,11 +1,11 @@
 import { Star, CheckCircle, Zap, Shield, Target } from 'lucide-react';
 import React from 'react';
 
-import { AgentAvatar } from '@/components/ui/agent-avatar';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent } from '@/components/ui/card';
+import { AgentAvatar } from '@vital/ui/components/agent-avatar';
+import { Badge } from '@vital/ui/components/badge';
+import { Card, CardContent } from '@vital/ui/components/card';
 import { type Agent } from '@/lib/stores/chat-store';
-import { cn } from '@/lib/utils';
+import { cn } from '@vital/ui/lib/utils';
 
 interface EnhancedAgentCardProps {
   agent: Agent;

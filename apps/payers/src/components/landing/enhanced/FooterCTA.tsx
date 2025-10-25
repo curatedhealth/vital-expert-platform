@@ -3,7 +3,7 @@
 import { motion } from 'framer-motion'
 import { Shield, CheckCircle, FileText, Award } from 'lucide-react'
 
-import { Button } from '@/components/ui/button'
+import { Button } from '@vital/ui/components/button'
 
 export default function FooterCTA() {
   const trustBadges = [

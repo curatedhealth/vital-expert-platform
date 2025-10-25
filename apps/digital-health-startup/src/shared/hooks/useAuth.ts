@@ -9,7 +9,7 @@ import {
   UserProfile,
   AuthenticatedUser,
   ROLE_HIERARCHY
-} from '@/types/auth.types';
+} from '@vital/sdk/types/auth.types';
 
 interface AuthState {
   user: AuthenticatedUser | null;

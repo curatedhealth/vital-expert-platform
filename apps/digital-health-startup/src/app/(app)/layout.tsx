@@ -13,7 +13,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 
-import { Button } from '@/components/ui/button';
+import { Button } from '@vital/ui/components/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -21,11 +21,11 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+} from '@vital/ui/components/dropdown-menu';
 import { AgentsFilterProvider, useAgentsFilter } from '@/contexts/agents-filter-context';
 import { DashboardSidebarWithSuspense } from '@/features/dashboard/components/dashboard-sidebar';
 import { useAuth } from '@/lib/auth/supabase-auth-context';
-import { cn } from '@/lib/utils';
+import { cn } from '@vital/ui/lib/utils';
 // import { AuthGuard } from '@/components/auth/auth-guard';
 
 function AppLayoutContent({

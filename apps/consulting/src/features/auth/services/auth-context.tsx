@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useEffect, useState } from 'react';
 // import { User, Session } from '@supabase/supabase-js';
-// import { supabase } from '@/lib/supabase/client';
+// import { supabase } from '@vital/sdk/client';
 
 // Temporary types for development
 interface User {

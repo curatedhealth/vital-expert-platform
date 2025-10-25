@@ -3,8 +3,8 @@
 import { X, Search } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { Button } from '@vital/ui/components/button';
+import { Input } from '@vital/ui/components/input';
 import { type Icon } from '@/shared/services/icon-service';
 
 interface IconSelectionModalProps {

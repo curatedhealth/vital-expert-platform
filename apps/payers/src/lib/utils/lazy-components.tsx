@@ -12,7 +12,7 @@ import {
   ChartSkeleton,
   TableSkeleton,
   AgentDetailsSkeleton,
-} from '@/components/ui/loading-skeletons';
+} from '@vital/ui/components/loading-skeletons';
 
 /**
  * Loading fallback for heavy components

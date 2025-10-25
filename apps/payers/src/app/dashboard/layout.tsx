@@ -21,11 +21,11 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useState } from 'react';
 
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import { Badge } from '@vital/ui/components/badge';
+import { Button } from '@vital/ui/components/button';
 import { DashboardSidebarWithSuspense } from '@/features/dashboard/components/dashboard-sidebar';
 // import { useAuth } from '@/lib/auth/auth-context';
-import { cn } from '@/lib/utils';
+import { cn } from '@vital/ui/lib/utils';
 
 // Global navigation items - Standardized across all pages
 const globalNavItems = [

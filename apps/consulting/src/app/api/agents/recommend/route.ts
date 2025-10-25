@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { OpenAI } from 'openai';
 
-import { createClient } from '@/lib/supabase/server';
+import { createClient } from '@vital/sdk';
 
 // Initialize OpenAI
 const openai = new OpenAI({

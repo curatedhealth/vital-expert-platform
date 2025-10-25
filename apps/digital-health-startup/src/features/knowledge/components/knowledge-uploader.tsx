@@ -11,19 +11,19 @@ import {
 } from 'lucide-react';
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 
-import { AgentAvatar } from '@/components/ui/agent-avatar';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Label } from '@/components/ui/label';
-import { Progress } from '@/components/ui/progress';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Separator } from '@/components/ui/separator';
+import { AgentAvatar } from '@vital/ui/components/agent-avatar';
+import { Badge } from '@vital/ui/components/badge';
+import { Button } from '@vital/ui/components/button';
+import { Card, CardContent } from '@vital/ui/components/card';
+import { Checkbox } from '@vital/ui/components/checkbox';
+import { Label } from '@vital/ui/components/label';
+import { Progress } from '@vital/ui/components/progress';
+import { ScrollArea } from '@vital/ui/components/scroll-area';
+import { Separator } from '@vital/ui/components/separator';
 import type { KnowledgeDomain } from '@/lib/services/model-selector';
 import { useAgentsStore } from '@/lib/stores/agents-store';
-import { createClient } from '@/lib/supabase/client';
-import { cn } from '@/lib/utils';
+import { createClient } from '@vital/sdk/client';
+import { cn } from '@vital/ui/lib/utils';
 
 interface UploadFile {
   file: File;

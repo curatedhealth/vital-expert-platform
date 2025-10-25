@@ -11,7 +11,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 
-import { Button } from '@/components/ui/button';
+import { Button } from '@vital/ui/components/button';
 
 export function LandingPage() {
   return (

@@ -16,22 +16,22 @@ import {
 } from 'lucide-react';
 import React from 'react';
 
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@vital/ui/components/badge';
+import { Button } from '@vital/ui/components/button';
+import { Card, CardContent } from '@vital/ui/components/card';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { Progress } from '@/components/ui/progress';
+} from '@vital/ui/components/dropdown-menu';
+import { Progress } from '@vital/ui/components/progress';
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from '@/components/ui/tooltip';
+} from '@vital/ui/components/tooltip';
 import { useBusinessFunctionMap } from '@/hooks/useBusinessFunctionMap';
 import { useUserRole } from '@/hooks/useUserRole';
 import { AgentAvatar } from '@/shared/components/ui/agent-avatar';

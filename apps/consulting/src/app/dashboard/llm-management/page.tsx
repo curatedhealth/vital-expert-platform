@@ -25,9 +25,9 @@ import { LLMProviderDashboard } from '@/components/llm/LLMProviderDashboard';
 import { MedicalModelsDashboard } from '@/components/llm/MedicalModelsDashboard';
 import { OpenAIUsageDashboard } from '@/components/llm/OpenAIUsageDashboard';
 import { UsageAnalyticsDashboard } from '@/components/llm/UsageAnalyticsDashboard';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Alert, AlertDescription } from '@vital/ui/components/alert';
+import { Badge } from '@vital/ui/components/badge';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@vital/ui/components/card';
 
 function LLMManagementPageContent() {
   const searchParams = useSearchParams();

@@ -5,18 +5,18 @@ import { useState, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 
 import { PanelMember } from '@/app/(app)/ask-panel/services/panel-store';
-import { AgentAvatar } from '@/components/ui/agent-avatar';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
+import { AgentAvatar } from '@vital/ui/components/agent-avatar';
+import { Badge } from '@vital/ui/components/badge';
+import { Button } from '@vital/ui/components/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@vital/ui/components/card';
+import { Input } from '@vital/ui/components/input';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+} from '@vital/ui/components/select';
 import { ExpertPanelSelector } from '@/features/chat/components/expert-panel-selector';
 import { useAgentsStore, Agent } from '@/lib/stores/agents-store';
 

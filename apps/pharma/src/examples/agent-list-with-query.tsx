@@ -2,8 +2,8 @@
 
 import { useState } from 'react';
 
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { Button } from '@vital/ui/components/button';
+import { Input } from '@vital/ui/components/input';
 import { useAgentsQuery, useDeleteAgentMutation } from '@/lib/hooks/use-agents-query';
 import { AgentAvatarOptimized } from '@/shared/components/agent-avatar-optimized';
 

@@ -16,9 +16,9 @@
 import { useRouter } from 'next/navigation';
 import { useState, useEffect, useRef, useCallback } from 'react';
 
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@vital/ui/components/tabs';
+import { Button } from '@vital/ui/components/button';
+import { Separator } from '@vital/ui/components/separator';
 import { useAuth } from '@/lib/auth/supabase-auth-context';
 import { useAgentsStore, Agent } from '@/lib/stores/agents-store';
 import {

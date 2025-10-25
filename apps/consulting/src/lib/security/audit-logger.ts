@@ -1,6 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 
-import { SecurityAuditLog } from '@/types/auth.types';
+import { SecurityAuditLog } from '@vital/sdk/types/auth.types';
 
 /**
  * Security Audit Logging Service

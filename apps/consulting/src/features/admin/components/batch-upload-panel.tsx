@@ -16,15 +16,15 @@ import {
 } from 'lucide-react';
 import React, { useState, useCallback } from 'react';
 
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Label } from '@/components/ui/label';
-import { Progress } from '@/components/ui/progress';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Textarea } from '@/components/ui/textarea';
+import { Alert, AlertDescription, AlertTitle } from '@vital/ui/components/alert';
+import { Badge } from '@vital/ui/components/badge';
+import { Button } from '@vital/ui/components/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@vital/ui/components/card';
+import { Checkbox } from '@vital/ui/components/checkbox';
+import { Label } from '@vital/ui/components/label';
+import { Progress } from '@vital/ui/components/progress';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@vital/ui/components/tabs';
+import { Textarea } from '@vital/ui/components/textarea';
 
 interface UploadResult {
   success: boolean;

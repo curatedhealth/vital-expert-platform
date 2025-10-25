@@ -26,21 +26,21 @@ import Image from 'next/image';
 import { useState, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 
-import { AgentAvatar } from '@/components/ui/agent-avatar';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { IconSelectionModal } from '@/components/ui/icon-selection-modal';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { AgentAvatar } from '@vital/ui/components/agent-avatar';
+import { Badge } from '@vital/ui/components/badge';
+import { Button } from '@vital/ui/components/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@vital/ui/components/card';
+import { IconSelectionModal } from '@vital/ui/components/icon-selection-modal';
+import { Input } from '@vital/ui/components/input';
+import { Label } from '@vital/ui/components/label';
 import { BUSINESS_FUNCTIONS, DEPARTMENTS_BY_FUNCTION, ROLES_BY_DEPARTMENT } from '@/config/organizational-structure';
 import { AgentService, type AgentWithCategories } from '@/features/agents/services/agent-service';
 import { TOOL_STATUS } from '@/features/chat/tools/tool-registry';
 import { promptGenerationService } from '@/lib/services/prompt-generation-service';
 import { useAgentsStore } from '@/lib/stores/agents-store';
 import { useChatStore } from '@/lib/stores/chat-store';
-import { supabase } from '@/lib/supabase/client';
-import { cn } from '@/lib/utils';
+import { supabase } from '@vital/sdk/client';
+import { cn } from '@vital/ui/lib/utils';
 import type {
   MedicalCapability,
   MedicalCompetency,

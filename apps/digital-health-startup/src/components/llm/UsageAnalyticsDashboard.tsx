@@ -13,11 +13,11 @@ import {
 } from 'lucide-react';
 import React, { useState } from 'react';
 
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Progress } from '@/components/ui/progress';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Alert, AlertDescription } from '@vital/ui/components/alert';
+import { Button } from '@vital/ui/components/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@vital/ui/components/card';
+import { Progress } from '@vital/ui/components/progress';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@vital/ui/components/tabs';
 import { useUsageMetrics, useCostBreakdown } from '@/hooks/useUsageData';
 
 interface UsageAnalyticsDashboardProps {

@@ -5,7 +5,7 @@ import { Menu, X } from 'lucide-react'
 import Link from 'next/link'
 import { useState, useEffect } from 'react'
 
-import { Button } from '@/components/ui/button'
+import { Button } from '@vital/ui/components/button'
 
 
 export default function Navigation() {

@@ -3,13 +3,13 @@
 import { ChevronDown, ChevronRight, Brain, Lightbulb, Search, Target, Zap } from 'lucide-react';
 import React, { useState } from 'react';
 
-import { Badge } from '@/components/ui/badge';
-import { Card } from '@/components/ui/card';
+import { Badge } from '@vital/ui/components/badge';
+import { Card } from '@vital/ui/components/card';
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger
-} from '@/components/ui/collapsible';
+} from '@vital/ui/components/collapsible';
 import { cn } from '@/shared/services/utils';
 
 // 🧠 Thinking Step Types

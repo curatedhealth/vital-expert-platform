@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 
-import { createClient } from '@/lib/supabase/client';
+import { createClient } from '@vital/sdk/client';
 
 export type UserRole = 'super_admin' | 'admin' | 'user';
 

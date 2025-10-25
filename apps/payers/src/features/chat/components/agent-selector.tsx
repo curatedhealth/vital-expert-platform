@@ -13,13 +13,13 @@ import {
 import { useState } from 'react';
 import { toast } from 'sonner';
 
-import { AgentAvatar } from '@/components/ui/agent-avatar';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { EnhancedAgentCard, AgentCardGrid } from '@/components/ui/enhanced-agent-card';
+import { AgentAvatar } from '@vital/ui/components/agent-avatar';
+import { Badge } from '@vital/ui/components/badge';
+import { Button } from '@vital/ui/components/button';
+import { Card, CardContent } from '@vital/ui/components/card';
+import { EnhancedAgentCard, AgentCardGrid } from '@vital/ui/components/enhanced-agent-card';
 import { useChatStore } from '@/lib/stores/chat-store';
-import { cn } from '@/lib/utils';
+import { cn } from '@vital/ui/lib/utils';
 
 interface AgentSelectorProps {
   compact?: boolean;

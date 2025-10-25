@@ -3,7 +3,7 @@
 import { Bot, Users, Zap } from 'lucide-react';
 
 import { useChatStore } from '@/lib/stores/chat-store';
-import { cn } from '@/lib/utils';
+import { cn } from '@vital/ui/lib/utils';
 import { Badge } from '@/shared/components/badge';
 import { Button } from '@/shared/components/button';
 import { Card, CardContent } from '@/shared/components/card';

@@ -3,7 +3,7 @@
  * Service layer for managing RAG knowledge bases and agent assignments
  */
 
-import { supabase } from '@/lib/supabase/client';
+import { supabase } from '@vital/sdk/client';
 
 export interface RagKnowledgeBase {
   id: string;

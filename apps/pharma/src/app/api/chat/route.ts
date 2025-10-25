@@ -17,7 +17,7 @@ import {
 } from '@/features/chat/services/intelligent-agent-router';
 import { langchainRAGService } from '@/features/chat/services/langchain-service';
 import { withErrorBoundary, withRetry, withFallback } from '@/lib/api/error-boundary';
-import { withPooledClient } from '@/lib/supabase/connection-pool';
+import { withPooledClient } from '@vital/sdk/lib/supabase/connection-pool';
 import { APIErrors } from '@/middleware/error-handler.middleware';
 import { withRateLimit } from '@/middleware/rate-limit.middleware';
 import { withValidation } from '@/middleware/validation.middleware';

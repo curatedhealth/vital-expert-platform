@@ -1,6 +1,6 @@
 // LLM Provider Registry and Management Service
 import { databaseService } from '@/lib/database/database-service';
-import { createClient } from '@/lib/supabase/client';
+import { createClient } from '@vital/sdk/client';
 import {
   LLMProvider,
   LLMProviderConfig,

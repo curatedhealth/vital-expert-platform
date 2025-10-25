@@ -10,7 +10,7 @@
 
 import { OpenAIEmbeddings } from '@langchain/openai';
 
-import { supabaseAdmin } from '@/lib/supabase/admin';
+import { supabaseAdmin } from '@vital/sdk/lib/supabase/admin';
 import type { Agent } from '@/types/agent';
 
 export interface RankingWeights {

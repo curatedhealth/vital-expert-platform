@@ -15,7 +15,7 @@
 import { agentRanker, type RankedAgent } from '@/lib/services/agent-ranker';
 import { domainDetector, type DetectedDomain } from '@/lib/services/knowledge-domain-detector';
 import { modelSelector } from '@/lib/services/model-selector';
-import { supabaseAdmin } from '@/lib/supabase/admin';
+import { supabaseAdmin } from '@vital/sdk/lib/supabase/admin';
 import type { Agent } from '@/types/agent';
 
 import { EnhancedAgentOrchestrator } from './enhanced-agent-orchestrator';

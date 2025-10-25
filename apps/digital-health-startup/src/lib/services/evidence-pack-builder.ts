@@ -4,7 +4,7 @@
  * Based on LangGraph Implementation Guide for Pharma
  */
 
-import { createClient } from '@/lib/supabase/client';
+import { createClient } from '@vital/sdk/client';
 
 export interface EvidenceSource {
   id: string;

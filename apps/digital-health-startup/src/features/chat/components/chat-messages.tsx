@@ -19,13 +19,13 @@ import {
   ReasoningContent,
 } from '@/components/ai/reasoning';
 import { Response } from '@/components/ai/response';
-import { AgentAvatar } from '@/components/ui/agent-avatar';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { Textarea } from '@/components/ui/textarea';
+import { AgentAvatar } from '@vital/ui/components/agent-avatar';
+import { Badge } from '@vital/ui/components/badge';
+import { Button } from '@vital/ui/components/button';
+import { Card } from '@vital/ui/components/card';
+import { Textarea } from '@vital/ui/components/textarea';
 import { ChatMessage, useChatStore } from '@/lib/stores/chat-store';
-import { cn } from '@/lib/utils';
+import { cn } from '@vital/ui/lib/utils';
 import { renderTextWithCitations } from '@/shared/components/ui/inline-citation';
 
 interface ChatMessagesProps {

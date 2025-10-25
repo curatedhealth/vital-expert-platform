@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 
-import { cn } from '@/lib/utils'
+import { cn } from '@vital/ui/lib/utils'
 
 interface StreamingMarkdownProps {
   content: string

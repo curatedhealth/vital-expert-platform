@@ -4,9 +4,9 @@ import { ShoppingCart, UserPlus, X } from 'lucide-react';
 import Image from 'next/image';
 import * as React from 'react';
 
-import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
-import { cn } from '@/lib/utils';
+import { Button } from '@vital/ui/components/button';
+import { Separator } from '@vital/ui/components/separator';
+import { cn } from '@vital/ui/lib/utils';
 
 interface Agent {
   id: string;

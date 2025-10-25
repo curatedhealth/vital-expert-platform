@@ -10,7 +10,7 @@ import { z } from 'zod';
 
 // Security middleware
 import { withErrorBoundary } from '@/lib/api/error-boundary';
-import { withPooledClient } from '@/lib/supabase/connection-pool';
+import { withPooledClient } from '@vital/sdk/lib/supabase/connection-pool';
 import { createSuccessResponse, APIErrors } from '@/middleware/error-handler.middleware';
 import { withRateLimit } from '@/middleware/rate-limit.middleware';
 import { withRLSValidation } from '@/middleware/rls-validation.middleware';

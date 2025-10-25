@@ -4,8 +4,8 @@ import { X, Search } from 'lucide-react';
 import Image from 'next/image';
 import { useState, useEffect } from 'react';
 
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { Button } from '@vital/ui/components/button';
+import { Input } from '@vital/ui/components/input';
 import { IconService, type Icon } from '@/lib/services/icon-service';
 
 interface IconSelectionModalProps {

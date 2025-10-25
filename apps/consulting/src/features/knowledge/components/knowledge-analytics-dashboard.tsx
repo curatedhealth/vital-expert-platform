@@ -40,17 +40,17 @@ import {
   AreaChart
 } from 'recharts';
 
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@vital/ui/components/badge';
+import { Button } from '@vital/ui/components/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@vital/ui/components/card';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger
-} from '@/components/ui/dropdown-menu';
-import { Separator } from '@/components/ui/separator';
+} from '@vital/ui/components/dropdown-menu';
+import { Separator } from '@vital/ui/components/separator';
 import {
   Table,
   TableBody,
@@ -58,9 +58,9 @@ import {
   TableHead,
   TableHeader,
   TableRow
-} from '@/components/ui/table';
+} from '@vital/ui/components/table';
 
-// import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+// import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@vital/ui/components/tooltip';
 
 interface AnalyticsData {
   ragCategories: {

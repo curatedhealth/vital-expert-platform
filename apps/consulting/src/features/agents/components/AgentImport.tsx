@@ -10,19 +10,19 @@ import {
 } from 'lucide-react';
 import React, { useState, useRef } from 'react';
 
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Progress } from '@/components/ui/progress';
+import { Alert, AlertDescription } from '@vital/ui/components/alert';
+import { Badge } from '@vital/ui/components/badge';
+import { Button } from '@vital/ui/components/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@vital/ui/components/card';
+import { Progress } from '@vital/ui/components/progress';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+} from '@vital/ui/components/select';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@vital/ui/components/tabs';
 import { AgentService } from '@/services/agent.service';
 import { AgentBulkImport, DomainExpertise, ValidationStatus, AgentStatus, RiskLevel } from '@/types/agent.types';
 

@@ -5,7 +5,7 @@ import { ArrowRight, CheckCircle } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import CountUp from 'react-countup'
 
-import { Button } from '@/components/ui/button'
+import { Button } from '@vital/ui/components/button'
 
 export default function HeroSection() {
   const [isVisible, setIsVisible] = useState(false)

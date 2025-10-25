@@ -12,10 +12,10 @@ import Image from 'next/image';
 import { useRouter, usePathname } from 'next/navigation';
 import { useState, useEffect, useRef, useMemo } from 'react';
 
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { EnhancedAgentCard, AgentCardGrid } from '@/components/ui/enhanced-agent-card';
+import { Badge } from '@vital/ui/components/badge';
+import { Button } from '@vital/ui/components/button';
+import { Card } from '@vital/ui/components/card';
+import { EnhancedAgentCard, AgentCardGrid } from '@vital/ui/components/enhanced-agent-card';
 import { ChatInput } from '@/features/chat/components/chat-input';
 import { ChatMessages } from '@/features/chat/components/chat-messages';
 import { ChatSidebar } from '@/features/chat/components/chat-sidebar';
@@ -25,7 +25,7 @@ import { useAuth } from '@/lib/auth/supabase-auth-context';
 import { IconService, type Icon } from '@/lib/services/icon-service';
 import { useAgentsStore } from '@/lib/stores/agents-store';
 import { useChatStore, Agent } from '@/lib/stores/chat-store';
-import { cn } from '@/lib/utils';
+import { cn } from '@vital/ui/lib/utils';
 import { LazyAgentCreator } from '@/lib/utils/lazy-components';
 import {
   SidebarInset,

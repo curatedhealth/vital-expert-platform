@@ -3,15 +3,15 @@
 import { Plus, Search, Filter, Info } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import { Badge } from '@vital/ui/components/badge';
+import { Button } from '@vital/ui/components/button';
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card';
+} from '@vital/ui/components/card';
 import {
   Dialog,
   DialogContent,
@@ -19,21 +19,21 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+} from '@vital/ui/components/dialog';
+import { Input } from '@vital/ui/components/input';
+import { Label } from '@vital/ui/components/label';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Textarea } from '@/components/ui/textarea';
+} from '@vital/ui/components/select';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@vital/ui/components/tabs';
+import { Textarea } from '@vital/ui/components/textarea';
 import { modelSelector } from '@/lib/services/model-selector';
 import type { KnowledgeDomain } from '@/lib/services/model-selector';
-import { createClient } from '@/lib/supabase/client';
+import { createClient } from '@vital/sdk/client';
 
 export default function KnowledgeDomainsPage() {
   const [domains, setDomains] = useState<KnowledgeDomain[]>([]);

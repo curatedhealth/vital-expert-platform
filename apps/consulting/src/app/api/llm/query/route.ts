@@ -3,7 +3,7 @@ import { z } from 'zod';
 
 import { SupabaseRAGService } from '@/features/chat/services/supabase-rag-service';
 import { llmOrchestrator } from '@/lib/llm/orchestrator';
-import { createClient } from '@/lib/supabase/server';
+import { createClient } from '@vital/sdk';
 import { ModelType } from '@/types';
 
 const querySchema = z.object({

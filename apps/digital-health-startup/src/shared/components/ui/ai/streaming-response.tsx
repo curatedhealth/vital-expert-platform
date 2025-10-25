@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react'
 
-import { cn } from '@/lib/utils'
+import { cn } from '@vital/ui/lib/utils'
 
 import { StreamingMarkdown, StreamingMarkdownEnhanced } from './streaming-markdown'
 

@@ -3,10 +3,10 @@
 import { motion, AnimatePresence } from 'framer-motion'
 import { useState } from 'react'
 
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Button } from '@vital/ui/components/button'
+import { Input } from '@vital/ui/components/input'
+import { Label } from '@vital/ui/components/label'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@vital/ui/components/select'
 
 export default function ROICalculator() {
   const [formData, setFormData] = useState({

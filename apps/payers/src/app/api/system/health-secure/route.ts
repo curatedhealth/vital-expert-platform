@@ -7,8 +7,8 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getPoolStats } from '@/lib/supabase/connection-pool';
-import { withPooledClient } from '@/lib/supabase/connection-pool';
+import { getPoolStats } from '@vital/sdk/lib/supabase/connection-pool';
+import { withPooledClient } from '@vital/sdk/lib/supabase/connection-pool';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';

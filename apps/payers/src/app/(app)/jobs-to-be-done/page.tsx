@@ -3,9 +3,9 @@
 import { Workflow, Star, CheckCircle, ArrowRight, GitBranch, Zap } from 'lucide-react';
 import { useState } from 'react';
 
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@vital/ui/components/badge';
+import { Button } from '@vital/ui/components/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@vital/ui/components/card';
 
 // JTBD Workflow Templates - Building blocks for solutions
 const JTBD_WORKFLOWS = [

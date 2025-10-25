@@ -13,16 +13,16 @@ import {
 } from 'lucide-react';
 import React, { useState, useEffect } from 'react';
 
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Textarea } from '@/components/ui/textarea';
+import { Alert, AlertDescription } from '@vital/ui/components/alert';
+import { Badge } from '@vital/ui/components/badge';
+import { Button } from '@vital/ui/components/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@vital/ui/components/card';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@vital/ui/components/dialog';
+import { Input } from '@vital/ui/components/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@vital/ui/components/select';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@vital/ui/components/table';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@vital/ui/components/tabs';
+import { Textarea } from '@vital/ui/components/textarea';
 import usePromptEnhancement from '@/hooks/usePromptEnhancement';
 import { PromptStarter } from '@/lib/services/prompt-enhancement-service';
 import PromptPerformanceMonitor from '@/lib/services/prompt-performance-monitor';

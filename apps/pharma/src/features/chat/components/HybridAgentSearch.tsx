@@ -18,20 +18,20 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Search, Filter, X, Zap, TrendingUp, Users, Layers } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@vital/ui/components/button';
+import { Input } from '@vital/ui/components/input';
+import { Badge } from '@vital/ui/components/badge';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@vital/ui/components/card';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+} from '@vital/ui/components/select';
+import { Avatar, AvatarFallback, AvatarImage } from '@vital/ui/components/avatar';
+import { Skeleton } from '@vital/ui/components/skeleton';
+import { Alert, AlertDescription } from '@vital/ui/components/alert';
 
 import {
   HybridSearchClient,

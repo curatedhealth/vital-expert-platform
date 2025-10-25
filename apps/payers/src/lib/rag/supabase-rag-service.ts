@@ -1,5 +1,5 @@
 import { agentService } from '@/lib/agents/agent-service';
-import { supabase } from '@/lib/supabase/client';
+import { supabase } from '@vital/sdk/client';
 
 // Types for RAG system - using fallback types for missing tables
 export interface KnowledgeSource {

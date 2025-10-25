@@ -10,12 +10,12 @@ import { useRouter } from 'next/navigation';
 import { useState, useEffect, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
 
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
-import { Textarea } from '@/components/ui/textarea';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Avatar, AvatarFallback, AvatarImage } from '@vital/ui/components/avatar';
+import { Badge } from '@vital/ui/components/badge';
+import { Button } from '@vital/ui/components/button';
+import { Progress } from '@vital/ui/components/progress';
+import { Textarea } from '@vital/ui/components/textarea';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@vital/ui/components/tabs';
 import { useAuth } from '@/lib/auth/supabase-auth-context';
 import { useAgentsStore, Agent } from '@/lib/stores/agents-store';
 import { EnhancedModeSelector, ExpertAgentCard } from '@/features/ask-expert/components';

@@ -3,8 +3,8 @@
 import { AlertCircle, RefreshCw, LogIn } from 'lucide-react';
 import { useEffect } from 'react';
 
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
+import { Button } from '@vital/ui/components/button';
+import { Card } from '@vital/ui/components/card';
 
 export default function AuthError({
   error,

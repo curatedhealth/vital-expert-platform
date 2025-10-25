@@ -2,8 +2,8 @@
 
 import { useState } from 'react';
 
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
+import { Button } from '@vital/ui/components/button';
+import { Textarea } from '@vital/ui/components/textarea';
 import {
   useChatQuery,
   useAddMessageMutation,

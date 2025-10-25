@@ -8,7 +8,7 @@
  * - Use case requirements
  */
 
-import { createClient } from '@/lib/supabase/client';
+import { createClient } from '@vital/sdk/client';
 
 // ============================================================================
 // Types

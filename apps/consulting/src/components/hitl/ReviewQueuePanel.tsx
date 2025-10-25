@@ -7,13 +7,13 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Skeleton } from '@/components/ui/skeleton'
-import { Textarea } from '@/components/ui/textarea'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@vital/ui/components/card'
+import { Badge } from '@vital/ui/components/badge'
+import { Button } from '@vital/ui/components/button'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@vital/ui/components/tabs'
+import { Alert, AlertDescription } from '@vital/ui/components/alert'
+import { Skeleton } from '@vital/ui/components/skeleton'
+import { Textarea } from '@vital/ui/components/textarea'
 import {
   Dialog,
   DialogContent,
@@ -21,7 +21,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog'
+} from '@vital/ui/components/dialog'
 import { useHITLQueue } from '@/lib/services/hooks/useBackendIntegration'
 import type { ReviewQueueItem } from '@/lib/services/backend-integration-client'
 import {

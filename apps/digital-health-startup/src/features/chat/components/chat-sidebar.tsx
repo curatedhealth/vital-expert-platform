@@ -3,14 +3,14 @@
 import { ChevronLeft, ChevronRight, Zap, User } from 'lucide-react';
 import * as React from 'react';
 
-import { Button } from '@/components/ui/button';
+import { Button } from '@vital/ui/components/button';
 import {
   Sidebar,
   SidebarContent,
   SidebarHeader,
-} from '@/components/ui/sidebar';
-import { Switch } from '@/components/ui/switch';
-import { cn } from '@/lib/utils';
+} from '@vital/ui/components/sidebar';
+import { Switch } from '@vital/ui/components/switch';
+import { cn } from '@vital/ui/lib/utils';
 import { VitalLogo } from '@/shared/components/vital-logo';
 
 import { NavAiAgents } from './nav-ai-agents';

@@ -16,9 +16,9 @@ import {
 import { useSearchParams } from 'next/navigation';
 import { useState, useCallback, useEffect, Suspense } from 'react';
 
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@vital/ui/components/badge';
+import { Button } from '@vital/ui/components/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@vital/ui/components/card';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -26,8 +26,8 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger
-} from '@/components/ui/dropdown-menu';
-import { Input } from '@/components/ui/input';
+} from '@vital/ui/components/dropdown-menu';
+import { Input } from '@vital/ui/components/input';
 import {
   Table,
   TableBody,
@@ -35,12 +35,12 @@ import {
   TableHead,
   TableHeader,
   TableRow
-} from '@/components/ui/table';
+} from '@vital/ui/components/table';
 import { KnowledgeAnalyticsDashboard } from '@/features/knowledge/components/knowledge-analytics-dashboard';
 import { KnowledgeUploader } from '@/features/knowledge/components/knowledge-uploader';
 import { KnowledgeViewer } from '@/features/knowledge/components/knowledge-viewer';
 import type { KnowledgeDomain } from '@/lib/services/model-selector';
-import { createClient } from '@/lib/supabase/client';
+import { createClient } from '@vital/sdk/client';
 
 interface Document {
   id: string;

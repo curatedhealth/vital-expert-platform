@@ -9,18 +9,18 @@ import { useRouter } from 'next/navigation';
 import { useState, useEffect, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
 
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
+import { Avatar, AvatarFallback, AvatarImage } from '@vital/ui/components/avatar';
+import { Badge } from '@vital/ui/components/badge';
+import { Button } from '@vital/ui/components/button';
+import { Progress } from '@vital/ui/components/progress';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
+} from '@vital/ui/components/select';
+import { Textarea } from '@vital/ui/components/textarea';
 import { useAuth } from '@/lib/auth/supabase-auth-context';
 import { useAgentsStore, Agent } from '@/lib/stores/agents-store';
 

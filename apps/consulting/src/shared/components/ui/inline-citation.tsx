@@ -6,7 +6,7 @@ import { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
-import { cn } from '@/lib/utils';
+import { cn } from '@vital/ui/lib/utils';
 
 export interface CitationSource {
   id: string;

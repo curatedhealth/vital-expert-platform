@@ -1,5 +1,5 @@
-import { supabase } from '@/lib/supabase/client';
-import type { Database } from '@/lib/supabase/types';
+import { supabase } from '@vital/sdk/client';
+import type { Database } from '@vital/sdk/lib/supabase/types';
 
 export type Agent = Database['public']['Tables']['agents']['Row'];
 export type AgentCategory = Database['public']['Tables']['agent_categories']['Row'];

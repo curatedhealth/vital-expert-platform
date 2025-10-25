@@ -3,16 +3,16 @@
 import { Eye, MessageSquare, Edit, Copy, Heart, Trash2, MoreVertical, Brain } from 'lucide-react';
 import { useState, useMemo, useEffect } from 'react';
 
-import { AgentAvatar } from '@/components/ui/agent-avatar';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
+import { AgentAvatar } from '@vital/ui/components/agent-avatar';
+import { Badge } from '@vital/ui/components/badge';
+import { Button } from '@vital/ui/components/button';
+import { Card, CardContent } from '@vital/ui/components/card';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+} from '@vital/ui/components/dropdown-menu';
 import {
   Table,
   TableBody,
@@ -20,11 +20,11 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
+} from '@vital/ui/components/table';
 import { useAgentsFilter } from '@/contexts/agents-filter-context';
 import { AgentCreator } from '@/features/chat/components/agent-creator';
 import { useAgentsStore, type Agent } from '@/lib/stores/agents-store';
-import { cn } from '@/lib/utils';
+import { cn } from '@vital/ui/lib/utils';
 
 interface AgentsTableProps {
   onAgentSelect?: (agent: Agent) => void;

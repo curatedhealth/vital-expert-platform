@@ -3,12 +3,12 @@
 import { Loader2Icon, SquareIcon, XIcon } from 'lucide-react';
 import { Children } from 'react';
 
-import { Button } from '@/components/ui/button';
+import { Button } from '@vital/ui/components/button';
 import {
   Select
-} from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
-import { cn } from '@/lib/utils';
+} from '@vital/ui/components/select';
+import { Textarea } from '@vital/ui/components/textarea';
+import { cn } from '@vital/ui/lib/utils';
 
 import type { ChatStatus } from 'ai';
 import type {

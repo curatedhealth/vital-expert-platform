@@ -8,11 +8,11 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Skeleton } from '@/components/ui/skeleton'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@vital/ui/components/card'
+import { Badge } from '@vital/ui/components/badge'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@vital/ui/components/tabs'
+import { Alert, AlertDescription } from '@vital/ui/components/alert'
+import { Skeleton } from '@vital/ui/components/skeleton'
 import { useEvidenceDetection } from '@/lib/services/hooks/useBackendIntegration'
 import type { Evidence, EvidenceDomain } from '@/lib/services/backend-integration-client'
 import {

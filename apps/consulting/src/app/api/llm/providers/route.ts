@@ -5,7 +5,7 @@ import { requirePermission, rateLimit } from '@/middleware/auth';
 // Force dynamic rendering for this route
 export const dynamic = 'force-dynamic';
 import { llmProviderService } from '@/shared/services/llm/llm-provider.service';
-import { PermissionScope, PermissionAction } from '@/types/auth.types';
+import { PermissionScope, PermissionAction } from '@vital/sdk/types/auth.types';
 import { LLMProviderConfig, ProviderFilters, ProviderSort } from '@/types/llm-provider.types';
 
 // GET /api/llm/providers - List providers with pagination and filtering

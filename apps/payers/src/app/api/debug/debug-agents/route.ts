@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { supabase } from '@/lib/supabase/client';
+import { supabase } from '@vital/sdk/client';
 
 export async function GET(request: NextRequest) {
   try {

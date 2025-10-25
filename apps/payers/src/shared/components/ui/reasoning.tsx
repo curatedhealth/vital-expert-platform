@@ -3,13 +3,13 @@
 import { ChevronDown, ChevronRight, Brain } from 'lucide-react';
 import React, { useState, useEffect } from 'react';
 
-import { Badge } from '@/components/ui/badge';
-import { Card } from '@/components/ui/card';
+import { Badge } from '@vital/ui/components/badge';
+import { Card } from '@vital/ui/components/card';
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger
-} from '@/components/ui/collapsible';
+} from '@vital/ui/components/collapsible';
 import { cn } from '@/shared/services/utils';
 
 // 🧠 Reasoning Component Interface

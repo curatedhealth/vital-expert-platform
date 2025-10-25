@@ -15,17 +15,17 @@ import {
 } from 'lucide-react';
 import { useState, useMemo, useEffect } from 'react';
 
-import { AgentAvatar } from '@/components/ui/agent-avatar';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { EnhancedAgentCard, AgentCardGrid } from '@/components/ui/enhanced-agent-card';
+import { AgentAvatar } from '@vital/ui/components/agent-avatar';
+import { Badge } from '@vital/ui/components/badge';
+import { Button } from '@vital/ui/components/button';
+import { Card, CardContent } from '@vital/ui/components/card';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@vital/ui/components/dropdown-menu';
+import { EnhancedAgentCard, AgentCardGrid } from '@vital/ui/components/enhanced-agent-card';
 import { DEPARTMENTS_BY_FUNCTION, ROLES_BY_DEPARTMENT } from '@/config/organizational-structure';
 import { AgentCreator } from '@/features/chat/components/agent-creator';
 import type { AgentWithCategories } from '@/lib/agents/agent-service';
 import { useAgentsStore, type Agent } from '@/lib/stores/agents-store';
-import { cn } from '@/lib/utils';
+import { cn } from '@vital/ui/lib/utils';
 import type { HealthcareBusinessFunction } from '@/types/healthcare-compliance';
 
 // Use shared organizational structure configuration

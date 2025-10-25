@@ -3,7 +3,7 @@
 import { User, Session } from '@supabase/supabase-js';
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 
-import { supabase } from '@/lib/supabase/client';
+import { supabase } from '@vital/sdk/client';
 
 interface AuthContextType {
   user: User | null;

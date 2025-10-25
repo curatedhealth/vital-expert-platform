@@ -1,7 +1,7 @@
 import { createMiddlewareClient } from '@supabase/auth-helpers-nextjs';
 import { NextRequest, NextResponse } from 'next/server';
 
-import { UserRole, PermissionScope, PermissionAction } from '@/types/auth.types';
+import { UserRole, PermissionScope, PermissionAction } from '@vital/sdk/types/auth.types';
 
 interface AuthenticatedUser {
   id: string;

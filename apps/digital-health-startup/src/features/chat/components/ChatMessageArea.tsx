@@ -3,7 +3,7 @@
 import Image from 'next/image';
 import { useRef, useEffect } from 'react';
 
-import { Button } from '@/components/ui/button';
+import { Button } from '@vital/ui/components/button';
 import { ChatInput } from '@/features/chat/components/chat-input';
 import { ChatMessages } from '@/features/chat/components/chat-messages';
 import type { Agent, AIModel, ChatMessage } from '@/lib/stores/chat-store';

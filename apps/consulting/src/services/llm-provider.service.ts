@@ -1,5 +1,5 @@
 // LLM Provider Registry and Management Service
-import { createClient } from '@/lib/supabase/client';
+import { createClient } from '@vital/sdk/client';
 import {
   LLMProvider,
   LLMProviderConfig,

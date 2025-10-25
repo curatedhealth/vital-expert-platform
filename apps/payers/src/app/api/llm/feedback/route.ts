@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { createClient } from '@/lib/supabase/server';
+import { createClient } from '@vital/sdk';
 
 const feedbackSchema = z.object({
   queryId: z.string().uuid(),

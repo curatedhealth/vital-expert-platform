@@ -3,8 +3,8 @@
 import { Brain, Users, Zap, TrendingUp, Activity, Award } from 'lucide-react';
 import { useMemo, useEffect } from 'react';
 
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@vital/ui/components/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@vital/ui/components/card';
 import { useAgentsStore } from '@/lib/stores/agents-store';
 
 export function AgentsOverview() {

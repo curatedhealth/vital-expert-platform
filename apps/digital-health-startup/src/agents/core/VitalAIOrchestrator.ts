@@ -375,6 +375,7 @@ export class VitalAIOrchestrator extends ComplianceAwareOrchestrator {
       const relevantCapabilities = capabilityMappings[intent.category as keyof typeof capabilityMappings] || [];
 
       // Score agents based on capability match and query keywords
+      const queryLower = query.toLowerCase();
       const agentScores = Array.from(this.agents.values()).map(agent => {
         const agentCapabilities = (agent as any).metadata?.capabilities || (agent as any).capabilities || [];
         let score = 0;
@@ -398,21 +399,22 @@ export class VitalAIOrchestrator extends ComplianceAwareOrchestrator {
         });
 
         // Special handling for specific queries
+        const agentName = (agent as any).name || '';
         if (queryLower.includes('510k') || queryLower.includes('510(k)')) {
-          if (agent.name === 'fda-regulatory-strategist') score += 50;
+          if (agentName === 'fda-regulatory-strategist') score += 50;
         }
         if (queryLower.includes('clinical trial') || queryLower.includes('protocol')) {
-          if (agent.name === 'clinical-trial-designer') score += 50;
+          if (agentName === 'clinical-trial-designer') score += 50;
         }
         if (queryLower.includes('reimbursement') || queryLower.includes('payer')) {
-          if (agent.name === 'reimbursement-strategist') score += 50;
+          if (agentName === 'reimbursement-strategist') score += 50;
         }
 
         return { agent, score };
       }).sort((a, b) => b.score - a.score);
 
       // Select primary agent (highest score)
-      const primaryAgent = agentScores[0]?.agent.name || 'medical-writer';
+      const primaryAgent = (agentScores[0]?.agent as any)?.name || 'medical-writer';
 
       // Select collaborators (next 1-2 highest scoring agents if they have meaningful scores)
       const collaborators: string[] = [];
@@ -423,7 +425,10 @@ export class VitalAIOrchestrator extends ComplianceAwareOrchestrator {
             // eslint-disable-next-line security/detect-object-injection
             if (agentScores[i].score > 5) { // Minimum threshold for collaboration
               // eslint-disable-next-line security/detect-object-injection
-              collaborators.push(agentScores[i].agent.name);
+              const collaboratorName = (agentScores[i].agent as any).name;
+              if (collaboratorName) {
+                collaborators.push(collaboratorName);
+              }
             }
           }
         }
@@ -431,6 +436,8 @@ export class VitalAIOrchestrator extends ComplianceAwareOrchestrator {
 
       // .map(s => ({ name: s.agent.name, score: s.score }))
       // });
+
+      const reasoning = `Selected ${primaryAgent} based on ${intent.category} intent with ${collaborators.length} collaborator(s)`;
 
       return {
         primaryAgent,

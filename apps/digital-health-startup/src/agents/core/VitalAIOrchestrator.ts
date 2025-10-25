@@ -287,6 +287,44 @@ export class VitalAIOrchestrator extends ComplianceAwareOrchestrator {
     return await this.selectOptimalAgentsAdaptive(intent, query || '', context);
   }
 
+  private findBestPrompt(agentName: string, category: string): string {
+    const intent: IntentClassificationResult = {
+      category,
+      confidence: 0.8,
+      subcategories: [],
+      keyTerms: [],
+      complexity: 0.5,
+      processingTime: 0,
+      contextualFactors: {} as any,
+      semanticVector: []
+    };
+    return this.selectBestPrompt(agentName, intent);
+  }
+
+  private async executeAgent(
+    agentName: string,
+    promptTitle: string,
+    params: any,
+    context: ExecutionContext
+  ): Promise<any> {
+    // Placeholder implementation - will be replaced with actual agent execution
+    const agent = this.agents.get(agentName);
+    if (!agent) {
+      throw new Error(`Agent not found: ${agentName}`);
+    }
+
+    // Return a basic response structure
+    return {
+      content: `Response from ${agentName} using prompt: ${promptTitle}`,
+      confidence: 0.8,
+      metadata: {
+        agent: agentName,
+        prompt: promptTitle,
+        timestamp: new Date().toISOString()
+      }
+    };
+  }
+
   /**
    * 🧠 Ultra-Intelligent Intent Classification with Pharmaceutical Context
    * Target: <50ms with advanced contextual understanding
@@ -491,7 +529,8 @@ export class VitalAIOrchestrator extends ComplianceAwareOrchestrator {
           maxResults: Math.min(5, Math.ceil(intent.complexity * 6)) // Conservative RAG usage
         };
 
-        // `);
+        // Retrieve RAG-enhanced information
+        const ragResponse = await agentRAGIntegration.queryAgentKnowledge(ragQuery);
 
         if (ragResponse && ragResponse.sources.length > 0) {
           // Add RAG context as supplementary information (not replacing agent response)

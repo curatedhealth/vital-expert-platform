@@ -295,6 +295,8 @@ export class VitalAIOrchestrator extends ComplianceAwareOrchestrator {
     query: string,
     context: ExecutionContext
   ): Promise<IntentClassificationResult> {
+    const startTime = Date.now();
+
     // Enhanced pharmaceutical intelligence patterns
     let bestMatch: IntentClassificationResult = {
       category: 'general',
@@ -308,7 +310,9 @@ export class VitalAIOrchestrator extends ComplianceAwareOrchestrator {
     };
 
     // Multi-dimensional scoring with pharmaceutical expertise
+    const tokens = query.toLowerCase().split(/\s+/);
     for (const [category, pattern] of this.intentPatterns) {
+      const score = this.scoreIntentMatch(tokens, query, pattern) as { confidence: number; subcategories: string[]; keyTerms: string[] };
 
       if (score.confidence > bestMatch.confidence) {
         bestMatch = {
@@ -317,7 +321,9 @@ export class VitalAIOrchestrator extends ComplianceAwareOrchestrator {
           subcategories: score.subcategories,
           keyTerms: score.keyTerms,
           complexity: this.calculateQueryComplexityAdvanced(query, category),
-          contextualFactors: this.analyzeContextualFactors(query, context, category)
+          processingTime: 0,
+          contextualFactors: this.analyzeContextualFactors(query, context, category),
+          semanticVector: []
         };
       }
     }
@@ -326,11 +332,13 @@ export class VitalAIOrchestrator extends ComplianceAwareOrchestrator {
     bestMatch = this.applyContextualIntelligence(bestMatch, query, context);
 
     // Performance optimization warning
+    const processingTime = Date.now() - startTime;
     if (processingTime > 50) {
       // console.warn(`⚠️  Intent classification took ${processingTime}ms (target: <50ms)`);
     }
 
     // Generate semantic vector for future ML enhancements
+    const semanticVector: number[] = [];
 
     return {
       ...bestMatch,
@@ -364,11 +372,11 @@ export class VitalAIOrchestrator extends ComplianceAwareOrchestrator {
       };
 
       // Get relevant capability keywords for this intent
-      const relevantCapabilities = capabilityKeywords[intent.category as keyof typeof capabilityKeywords] || [];
+      const relevantCapabilities = capabilityMappings[intent.category as keyof typeof capabilityMappings] || [];
 
       // Score agents based on capability match and query keywords
-      const agentScores = this.agents.map(agent => {
-        const agentCapabilities = agent.metadata?.capabilities || [];
+      const agentScores = Array.from(this.agents.values()).map(agent => {
+        const agentCapabilities = (agent as any).metadata?.capabilities || (agent as any).capabilities || [];
         let score = 0;
 
         // Base capability matching
@@ -770,7 +778,7 @@ export class VitalAIOrchestrator extends ComplianceAwareOrchestrator {
   }
 
   // Helper methods
-  private scoreIntentMatch(tokens: string[], query: string, pattern: IntentPattern): unknown {
+  private scoreIntentMatch(tokens: string[], query: string, pattern: IntentPattern): { confidence: number; subcategories: string[]; keyTerms: string[] } {
 
     // Score keywords
     for (const keyword of pattern.keywords) {
@@ -1036,10 +1044,10 @@ export class VitalAIOrchestrator extends ComplianceAwareOrchestrator {
    * 🚀 Apply Contextual Intelligence Boosting
    */
   private applyContextualIntelligence(
-    match: unknown,
+    match: IntentClassificationResult,
     query: string,
     context: ExecutionContext
-  ): unknown {
+  ): IntentClassificationResult {
     // Apply pharmaceutical domain expertise boosting
     if (match.category === 'regulatory' && query.includes('510k')) {
       match.confidence = Math.min(match.confidence + 0.2, 1.0);

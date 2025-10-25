@@ -1,50 +1,245 @@
-# Documentation Archive
+# VITAL Path Digital Health Platform
 
-This folder contains historical documentation that provides context for past architectural decisions and development phases.
+A comprehensive digital health intelligence platform with 50+ healthcare AI agents, built as a modern monorepo.
 
-## Important Historical Documents
+## 🏗️ Architecture
 
-### Core Documentation
-- **CHANGELOG.md** - Project changelog and version history
-- **CONTRIBUTING.md** - Contributing guidelines
-- **SECURITY.md** - Security policy and vulnerability reporting
+This is a monorepo containing multiple applications and shared packages:
 
-### Reference Documentation
-- **AGENTS_QUICK_REFERENCE.md** - Quick reference guide for agents
-- **PLATFORM_ARCHITECTURE.md** - Historical architecture decisions
-- **README-HYBRID-ARCHITECTURE.md** - Hybrid architecture approach
-- **VITAL_AI_PLATFORM_PRD.md** - Original Product Requirements Document
-- **VITAL_AI_CHAT_SYSTEM.md** - Chat system design documentation
-- **MINIMAL_IMPLEMENTATION_PLAN.md** - Historical implementation planning
+### Applications (`apps/`)
+- **`frontend/`** - Next.js React application with healthcare UI components
+- **`node-gateway/`** - Node.js API gateway and orchestration service
+- **`python-services/`** - Python AI services and machine learning components
 
-## Archive Policy
+### Packages (`packages/`)
+- **`ui/`** - Shared React UI components and design system
+- **`core/`** - Shared business logic, types, and utilities
+- **`configs/`** - Shared configuration files (ESLint, Prettier, TypeScript)
 
-This archive contains documents that:
-1. Provide historical context for architectural decisions
-2. Document the evolution of the platform
-3. Serve as reference for understanding past implementations
+### Database (`db/`)
+- **`migrations/`** - Database schema migrations
+- **`seeds/`** - Database seed data
 
-## Finding Deleted Documentation
+## 🚀 Quick Start
 
-If you're looking for temporary implementation reports (migrations, fixes, audits), they have been removed to reduce clutter. The work they documented is complete and preserved in git history:
+### Prerequisites
+- Node.js 20+
+- pnpm 8+
+- Python 3.11+
+- PostgreSQL 14+
+- Supabase CLI (optional)
+
+### Installation
 
 ```bash
-# View commit history for specific topics
-git log --all --grep="migration"
-git log --all --grep="implementation"
+# Install dependencies
+make bootstrap
+# or
+pnpm install
 
-# Search for deleted files
-git log --all --full-history -- "docs/archive/DELETED_FILE.md"
+# Setup database
+make db-setup
+# or
+pnpm db:setup
 
-# Restore a deleted file
-git checkout <commit-hash> -- "docs/archive/DELETED_FILE.md"
+# Start development servers
+make dev
+# or
+pnpm dev
 ```
 
-## Archive Backup
+### Individual Services
 
-A backup of the full archive (before cleanup) is available:
-- **docs-archive-backup-20251002.tar.gz** (in project root)
+```bash
+# Frontend only
+make dev-frontend
+pnpm dev:frontend
+
+# Node Gateway only
+make dev-gateway
+pnpm dev:gateway
+
+# Python Services only
+make dev-python
+pnpm dev:python
+```
+
+## 📁 Project Structure
+
+```
+├── apps/                    # Applications
+│   ├── frontend/           # Next.js React app
+│   ├── node-gateway/       # Node.js API gateway
+│   └── python-services/    # Python AI services
+├── packages/               # Shared packages
+│   ├── ui/                # React UI components
+│   ├── core/              # Business logic & types
+│   └── configs/           # Shared configurations
+├── db/                    # Database
+│   ├── migrations/        # Schema migrations
+│   └── seeds/            # Seed data
+├── infra/                 # Infrastructure
+│   ├── k8s/              # Kubernetes manifests
+│   └── terraform/        # Terraform configurations
+├── docs/                  # Documentation
+└── scripts/              # Utility scripts
+```
+
+## 🛠️ Development
+
+### Available Commands
+
+```bash
+# Development
+make dev                  # Start all services
+make dev-frontend        # Start frontend only
+make dev-gateway         # Start gateway only
+make dev-python          # Start Python services only
+
+# Building
+make build               # Build all packages
+make build-frontend      # Build frontend only
+make build-gateway       # Build gateway only
+
+# Testing
+make test                # Run all tests
+make test-unit           # Run unit tests
+make test-integration    # Run integration tests
+make test-coverage       # Run tests with coverage
+
+# Code Quality
+make lint                # Run linting
+make lint-fix            # Fix linting issues
+make format              # Format code
+make type-check          # TypeScript type checking
+
+# Database
+make db-migrate          # Run migrations
+make db-status           # Check migration status
+make db-setup            # Setup database
+
+# Healthcare Compliance
+make health-check        # Run compliance checks
+make pre-commit          # Run pre-commit checks
+make pre-deploy          # Run pre-deployment checks
+```
+
+### Environment Variables
+
+Create `.env.local` files in each app directory:
+
+#### Frontend (`apps/frontend/.env.local`)
+```env
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+NEXT_PUBLIC_API_URL=http://localhost:3001
+```
+
+#### Node Gateway (`apps/node-gateway/.env.local`)
+```env
+DATABASE_URL=postgresql://user:password@localhost:5432/vital_path
+SUPABASE_URL=your_supabase_url
+SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+PORT=3001
+```
+
+#### Python Services (`apps/python-services/.env.local`)
+```env
+OPENAI_API_KEY=your_openai_key
+ANTHROPIC_API_KEY=your_anthropic_key
+DATABASE_URL=postgresql://user:password@localhost:5432/vital_path
+```
+
+## 🧪 Testing
+
+```bash
+# Run all tests
+make test
+
+# Run specific test suites
+make test-unit
+make test-integration
+make test-coverage
+
+# Run tests for specific app
+pnpm --filter frontend test
+pnpm --filter node-gateway test
+```
+
+## 🚀 Deployment
+
+### Docker
+
+```bash
+# Build all services
+docker-compose build
+
+# Start all services
+docker-compose up
+
+# Start specific service
+docker-compose up frontend
+docker-compose up node-gateway
+docker-compose up python-services
+```
+
+### Kubernetes
+
+```bash
+# Apply Kubernetes manifests
+kubectl apply -f infra/k8s/
+
+# Check deployment status
+kubectl get pods
+kubectl get services
+```
+
+## 📊 Monitoring
+
+- **Frontend**: Built-in Next.js analytics
+- **Backend**: OpenTelemetry instrumentation
+- **Database**: Supabase dashboard
+- **Infrastructure**: Kubernetes metrics
+
+## 🔒 Security
+
+- HIPAA compliance scanning
+- Medical data validation
+- Security audit tools
+- Dependency vulnerability scanning
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Run tests and linting
+5. Submit a pull request
+
+### Code Review
+
+- Frontend changes: `@vital-path/frontend-team`
+- Backend changes: `@vital-path/backend-team`
+- Database changes: `@vital-path/database-team`
+- Infrastructure changes: `@vital-path/devops-team`
+
+## 📚 Documentation
+
+- [Architecture Overview](docs/architecture/)
+- [API Documentation](docs/api/)
+- [Deployment Guide](docs/deployment/)
+- [Contributing Guidelines](CONTRIBUTING.md)
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🆘 Support
+
+- Create an issue for bugs or feature requests
+- Check the [documentation](docs/) for common questions
+- Contact the team for urgent issues
 
 ---
 
-**Note**: For current, active documentation, see the main [docs/README.md](../README.md) file.
+**VITAL Path** - Transforming healthcare through intelligent AI agents

@@ -1,245 +1,222 @@
-# VITAL Path Digital Health Platform
+# VITAL Platform - Multi-Tenant AI Expert System
 
-A comprehensive digital health intelligence platform with 50+ healthcare AI agents, built as a modern monorepo.
+World-class monorepo architecture for the VITAL Platform, featuring multi-tenant frontend applications, shared SDK packages, and AI-powered backend services.
 
 ## 🏗️ Architecture
 
-This is a monorepo containing multiple applications and shared packages:
-
-### Applications (`apps/`)
-- **`frontend/`** - Next.js React application with healthcare UI components
-- **`node-gateway/`** - Node.js API gateway and orchestration service
-- **`python-services/`** - Python AI services and machine learning components
-
-### Packages (`packages/`)
-- **`ui/`** - Shared React UI components and design system
-- **`core/`** - Shared business logic, types, and utilities
-- **`configs/`** - Shared configuration files (ESLint, Prettier, TypeScript)
-
-### Database (`db/`)
-- **`migrations/`** - Database schema migrations
-- **`seeds/`** - Database seed data
-
-## 🚀 Quick Start
-
-### Prerequisites
-- Node.js 20+
-- pnpm 8+
-- Python 3.11+
-- PostgreSQL 14+
-- Supabase CLI (optional)
-
-### Installation
-
-```bash
-# Install dependencies
-make bootstrap
-# or
-pnpm install
-
-# Setup database
-make db-setup
-# or
-pnpm db:setup
-
-# Start development servers
-make dev
-# or
-pnpm dev
+```
+vital-platform/
+├── apps/                           # Frontend applications (Next.js 14)
+│   ├── digital-health-startup/     # Digital Health & Startup tenant
+│   ├── consulting/                 # Consulting tenant
+│   ├── pharma/                     # Pharmaceutical tenant
+│   └── payers/                     # Payers & Insurance tenant
+├── packages/                       # Shared packages
+│   ├── ui/                         # Shared UI components
+│   ├── sdk/                        # VITAL SDK (multi-tenant client)
+│   ├── config/                     # Shared configuration
+│   └── utils/                      # Shared utilities
+├── services/                       # Backend services
+│   ├── ai-engine/                  # Python FastAPI + LangChain + Langfuse
+│   └── api-gateway/                # Node.js API Gateway
+└── docs/                           # Documentation
+    ├── architecture/               # Architecture decision records
+    ├── api/                        # API documentation
+    ├── guides/                     # Development guides
+    └── archive/                    # Archived documentation
 ```
 
-### Individual Services
+## 🚀 Tech Stack
 
-```bash
-# Frontend only
-make dev-frontend
-pnpm dev:frontend
+### Frontend
+- **Framework**: Next.js 14 (App Router)
+- **Language**: TypeScript 5
+- **Styling**: Tailwind CSS + shadcn/ui
+- **State Management**: Zustand + React Query
+- **Auth**: Supabase Auth
 
-# Node Gateway only
-make dev-gateway
-pnpm dev:gateway
+### Backend
+- **AI Engine**: Python FastAPI + LangChain + LangGraph
+- **Observability**: Langfuse (LLM monitoring & tracing)
+- **Vector DB**: Pinecone + pgvector (Supabase)
+- **Cache**: Upstash Redis
+- **Database**: Supabase (PostgreSQL)
 
-# Python Services only
-make dev-python
-pnpm dev:python
-```
+### Infrastructure
+- **Build System**: Turborepo
+- **Package Manager**: pnpm 8.15+
+- **Deployment**: Vercel (frontend) + Cloud Run (backend)
+- **Monitoring**: Langfuse + Sentry
 
-## 📁 Project Structure
+## 📦 Monorepo Structure
 
-```
-├── apps/                    # Applications
-│   ├── frontend/           # Next.js React app
-│   ├── node-gateway/       # Node.js API gateway
-│   └── python-services/    # Python AI services
-├── packages/               # Shared packages
-│   ├── ui/                # React UI components
-│   ├── core/              # Business logic & types
-│   └── configs/           # Shared configurations
-├── db/                    # Database
-│   ├── migrations/        # Schema migrations
-│   └── seeds/            # Seed data
-├── infra/                 # Infrastructure
-│   ├── k8s/              # Kubernetes manifests
-│   └── terraform/        # Terraform configurations
-├── docs/                  # Documentation
-└── scripts/              # Utility scripts
-```
+### Apps
+Each tenant app shares the same codebase but connects to the backend with different `tenant_id`:
+- `@vital/digital-health-startup` - Digital Health & Startup vertical
+- `@vital/consulting` - Consulting vertical
+- `@vital/pharma` - Pharmaceutical vertical
+- `@vital/payers` - Payers & Insurance vertical
+
+### Packages
+- `@vital/ui` - Shared UI components (shadcn/ui + custom)
+- `@vital/sdk` - Multi-tenant SDK for backend integration
+- `@vital/config` - Shared TypeScript/ESLint/Tailwind configs
+- `@vital/utils` - Shared utility functions
+
+### Services
+- `ai-engine` - Python FastAPI service with LangChain orchestration
+- `api-gateway` - Node.js gateway for routing and auth
 
 ## 🛠️ Development
 
-### Available Commands
+### Prerequisites
+- Node.js 18+
+- pnpm 8.15+
+- Python 3.11+
+- Docker (for local services)
+
+### Quick Start
 
 ```bash
-# Development
-make dev                  # Start all services
-make dev-frontend        # Start frontend only
-make dev-gateway         # Start gateway only
-make dev-python          # Start Python services only
+# Install dependencies
+pnpm install
 
-# Building
-make build               # Build all packages
-make build-frontend      # Build frontend only
-make build-gateway       # Build gateway only
+# Start all apps in development mode
+pnpm dev
 
-# Testing
-make test                # Run all tests
-make test-unit           # Run unit tests
-make test-integration    # Run integration tests
-make test-coverage       # Run tests with coverage
+# Start specific app
+pnpm --filter @vital/digital-health-startup dev
 
-# Code Quality
-make lint                # Run linting
-make lint-fix            # Fix linting issues
-make format              # Format code
-make type-check          # TypeScript type checking
+# Build all apps
+pnpm build
 
-# Database
-make db-migrate          # Run migrations
-make db-status           # Check migration status
-make db-setup            # Setup database
+# Run tests
+pnpm test
 
-# Healthcare Compliance
-make health-check        # Run compliance checks
-make pre-commit          # Run pre-commit checks
-make pre-deploy          # Run pre-deployment checks
+# Lint all code
+pnpm lint
 ```
 
 ### Environment Variables
 
-Create `.env.local` files in each app directory:
+Create `.env.local` in each app directory:
 
-#### Frontend (`apps/frontend/.env.local`)
 ```env
-NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
-NEXT_PUBLIC_API_URL=http://localhost:3001
-```
-
-#### Node Gateway (`apps/node-gateway/.env.local`)
-```env
-DATABASE_URL=postgresql://user:password@localhost:5432/vital_path
-SUPABASE_URL=your_supabase_url
+# Supabase
+NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
 SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
-PORT=3001
+
+# OpenAI
+OPENAI_API_KEY=sk-...
+
+# Anthropic
+ANTHROPIC_API_KEY=sk-ant-...
+
+# Pinecone
+PINECONE_API_KEY=your_pinecone_key
+PINECONE_ENVIRONMENT=us-east-1-aws
+
+# Upstash Redis
+UPSTASH_REDIS_REST_URL=https://...
+UPSTASH_REDIS_REST_TOKEN=...
+
+# Langfuse
+LANGFUSE_PUBLIC_KEY=pk-...
+LANGFUSE_SECRET_KEY=sk-...
+LANGFUSE_HOST=https://cloud.langfuse.com
 ```
 
-#### Python Services (`apps/python-services/.env.local`)
-```env
-OPENAI_API_KEY=your_openai_key
-ANTHROPIC_API_KEY=your_anthropic_key
-DATABASE_URL=postgresql://user:password@localhost:5432/vital_path
-```
+## 🌐 Deployment
 
-## 🧪 Testing
+### 3-Tier Deployment Strategy
+
+1. **Production** (`main` branch)
+   - Domain: `vital-platform.com`
+   - Database: Production Supabase
+   - Vercel: Production project
+
+2. **Pre-Production** (`develop` branch)
+   - Domain: `dev.vital-platform.com`
+   - Database: Staging Supabase
+   - Vercel: Pre-production project
+
+3. **Preview** (feature branches)
+   - Domain: `*.vercel.app`
+   - Database: Development Supabase
+   - Vercel: Preview deployments
+
+### Deploy Commands
 
 ```bash
-# Run all tests
-make test
+# Production deployment (via CI/CD)
+git push origin main
 
-# Run specific test suites
-make test-unit
-make test-integration
-make test-coverage
+# Pre-production deployment
+git push origin develop
 
-# Run tests for specific app
-pnpm --filter frontend test
-pnpm --filter node-gateway test
+# Preview deployment
+vercel deploy
 ```
-
-## 🚀 Deployment
-
-### Docker
-
-```bash
-# Build all services
-docker-compose build
-
-# Start all services
-docker-compose up
-
-# Start specific service
-docker-compose up frontend
-docker-compose up node-gateway
-docker-compose up python-services
-```
-
-### Kubernetes
-
-```bash
-# Apply Kubernetes manifests
-kubectl apply -f infra/k8s/
-
-# Check deployment status
-kubectl get pods
-kubectl get services
-```
-
-## 📊 Monitoring
-
-- **Frontend**: Built-in Next.js analytics
-- **Backend**: OpenTelemetry instrumentation
-- **Database**: Supabase dashboard
-- **Infrastructure**: Kubernetes metrics
-
-## 🔒 Security
-
-- HIPAA compliance scanning
-- Medical data validation
-- Security audit tools
-- Dependency vulnerability scanning
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Run tests and linting
-5. Submit a pull request
-
-### Code Review
-
-- Frontend changes: `@vital-path/frontend-team`
-- Backend changes: `@vital-path/backend-team`
-- Database changes: `@vital-path/database-team`
-- Infrastructure changes: `@vital-path/devops-team`
 
 ## 📚 Documentation
 
-- [Architecture Overview](docs/architecture/)
-- [API Documentation](docs/api/)
-- [Deployment Guide](docs/deployment/)
-- [Contributing Guidelines](CONTRIBUTING.md)
+- [Architecture](docs/architecture/) - System design and ADRs
+- [API Documentation](docs/api/) - API reference and guides
+- [Development Guides](docs/guides/) - Setup and contribution guides
+- [Archived Docs](docs/archive/) - Historical documentation
+
+## 🔧 Scripts
+
+```bash
+# Development
+pnpm dev                    # Start all apps
+pnpm dev:digital-health     # Start digital-health-startup app
+pnpm dev:consulting         # Start consulting app
+pnpm dev:pharma             # Start pharma app
+pnpm dev:payers             # Start payers app
+
+# Build
+pnpm build                  # Build all apps and packages
+pnpm build:apps             # Build only apps
+pnpm build:packages         # Build only packages
+
+# Testing
+pnpm test                   # Run all tests
+pnpm test:unit              # Run unit tests
+pnpm test:integration       # Run integration tests
+pnpm test:coverage          # Run tests with coverage
+
+# Quality
+pnpm lint                   # Lint all code
+pnpm lint:fix               # Fix linting issues
+pnpm type-check             # TypeScript type checking
+pnpm format                 # Format code with Prettier
+
+# Utilities
+pnpm clean                  # Clean all build artifacts
+pnpm clean:modules          # Remove all node_modules
+```
+
+## 🤝 Contributing
+
+1. Create a feature branch from `develop`
+2. Make your changes
+3. Run tests and linting: `pnpm test && pnpm lint`
+4. Commit with conventional commits
+5. Push and create a PR to `develop`
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+Proprietary - VITAL Platform © 2025
 
-## 🆘 Support
+## 🔗 Links
 
-- Create an issue for bugs or feature requests
-- Check the [documentation](docs/) for common questions
-- Contact the team for urgent issues
+- [Deployment Strategy](docs/DEPLOYMENT_STRATEGY.md)
+- [Phase 5 Implementation](docs/ASK_EXPERT_2025_ENHANCEMENTS_IMPLEMENTATION.md)
+- [Supabase Dashboard](http://127.0.0.1:54323)
+- [Langfuse Dashboard](https://cloud.langfuse.com)
 
 ---
 
-**VITAL Path** - Transforming healthcare through intelligent AI agents
+**Built with** ❤️ **by the VITAL Team**

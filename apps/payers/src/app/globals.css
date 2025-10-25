@@ -1,0 +1,296 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --radius: 0.65rem;
+
+    /* VITAL.expert Brand Colors - Core Neutrals */
+    --vital-black: #0A0A0A;
+    --vital-white: #FFFFFF;
+    --vital-gray-95: #FAFAFA;
+    --vital-gray-90: #F5F5F5;
+    --vital-gray-80: #E5E5E5;
+    --vital-gray-70: #CCCCCC;
+    --vital-gray-60: #999999;
+    --vital-gray-40: #666666;
+
+    /* Service Line Colors */
+    --regulatory-blue: #0066FF;
+    --clinical-green: #00CC88;
+    --safety-red: #FF3366;
+    --data-purple: #9933FF;
+    --market-orange: #FF6600;
+    --research-cyan: #00CCFF;
+    --quality-gold: #FFAA00;
+    --strategy-navy: #003399;
+
+    /* Multi-Tenant Architecture - Default (Digital Health) */
+    --tenant-primary: var(--clinical-green);
+    --tenant-accent: var(--research-cyan);
+    --tenant-gradient: linear-gradient(135deg, var(--clinical-green), var(--research-cyan));
+    --tenant-name: 'Digital Health';
+
+    /* Spacing System */
+    --space-xs: 4px;
+    --space-sm: 8px;
+    --space-md: 16px;
+    --space-lg: 24px;
+    --space-xl: 32px;
+    --space-2xl: 48px;
+    --space-3xl: 64px;
+    --space-4xl: 80px;
+
+    /* Shadow System */
+    --shadow-xs: 0 1px 3px rgba(0,0,0,0.05);
+    --shadow-sm: 0 2px 8px rgba(0,0,0,0.08);
+    --shadow-md: 0 4px 16px rgba(0,0,0,0.10);
+    --shadow-lg: 0 8px 32px rgba(0,0,0,0.12);
+    --shadow-xl: 0 16px 48px rgba(0,0,0,0.15);
+
+    /* Border Radius */
+    --radius-sm: 4px;
+    --radius-md: 6px;
+    --radius-lg: 8px;
+    --radius-xl: 12px;
+    --radius-2xl: 16px;
+    --radius-full: 9999px;
+
+    /* Animation Timing */
+    --ease-in: cubic-bezier(0.4, 0, 1, 1);
+    --ease-out: cubic-bezier(0, 0, 0.2, 1);
+    --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+    --background: oklch(1 0 0);
+    --foreground: oklch(0.141 0.005 285.823);
+    --card: oklch(1 0 0);
+    --card-foreground: oklch(0.141 0.005 285.823);
+    --popover: oklch(1 0 0);
+    --popover-foreground: oklch(0.141 0.005 285.823);
+    --primary: oklch(0.623 0.214 259.815);
+    --primary-foreground: oklch(0.97 0.014 254.604);
+    --secondary: oklch(0.967 0.001 286.375);
+    --secondary-foreground: oklch(0.21 0.006 285.885);
+    --muted: oklch(0.967 0.001 286.375);
+    --muted-foreground: oklch(0.552 0.016 285.938);
+    --accent: oklch(0.967 0.001 286.375);
+    --accent-foreground: oklch(0.21 0.006 285.885);
+    --destructive: oklch(0.577 0.245 27.325);
+    --border: oklch(0.92 0.004 286.32);
+    --input: oklch(0.92 0.004 286.32);
+    --ring: oklch(0.623 0.214 259.815);
+    --chart-1: oklch(0.646 0.222 41.116);
+    --chart-2: oklch(0.6 0.118 184.704);
+    --chart-3: oklch(0.398 0.07 227.392);
+    --chart-4: oklch(0.828 0.189 84.429);
+    --chart-5: oklch(0.769 0.188 70.08);
+    --sidebar: oklch(0.985 0 0);
+    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-primary: 240 5.9% 10%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 240 4.8% 95.9%;
+    --sidebar-accent-foreground: 240 5.9% 10%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-background: 0 0% 98%;
+  }
+
+  /* Multi-Tenant Architecture - Pharma Tenant */
+  [data-tenant="pharma"] {
+    --tenant-primary: var(--regulatory-blue);
+    --tenant-accent: var(--strategy-navy);
+    --tenant-gradient: linear-gradient(135deg, var(--regulatory-blue), var(--strategy-navy));
+    --tenant-name: 'Pharma';
+  }
+
+  /* Multi-Tenant Architecture - Digital Health Tenant */
+  [data-tenant="digital-health"] {
+    --tenant-primary: var(--clinical-green);
+    --tenant-accent: var(--research-cyan);
+    --tenant-gradient: linear-gradient(135deg, var(--clinical-green), var(--research-cyan));
+    --tenant-name: 'Digital Health';
+  }
+
+  /* Multi-Tenant Architecture - Payers Tenant */
+  [data-tenant="payers"] {
+    --tenant-primary: var(--data-purple);
+    --tenant-accent: var(--market-orange);
+    --tenant-gradient: linear-gradient(135deg, var(--data-purple), var(--market-orange));
+    --tenant-name: 'Payers';
+  }
+
+  .dark {
+    --background: oklch(0.141 0.005 285.823);
+    --foreground: oklch(0.985 0 0);
+    --card: oklch(0.21 0.006 285.885);
+    --card-foreground: oklch(0.985 0 0);
+    --popover: oklch(0.21 0.006 285.885);
+    --popover-foreground: oklch(0.985 0 0);
+    --primary: oklch(0.546 0.245 262.881);
+    --primary-foreground: oklch(0.379 0.146 265.522);
+    --secondary: oklch(0.274 0.006 286.033);
+    --secondary-foreground: oklch(0.985 0 0);
+    --muted: oklch(0.274 0.006 286.033);
+    --muted-foreground: oklch(0.705 0.015 286.067);
+    --accent: oklch(0.274 0.006 286.033);
+    --accent-foreground: oklch(0.985 0 0);
+    --destructive: oklch(0.704 0.191 22.216);
+    --border: oklch(1 0 0 / 10%);
+    --input: oklch(1 0 0 / 15%);
+    --ring: oklch(0.488 0.243 264.376);
+    --chart-1: oklch(0.488 0.243 264.376);
+    --chart-2: oklch(0.696 0.17 162.48);
+    --chart-3: oklch(0.769 0.188 70.08);
+    --chart-4: oklch(0.627 0.265 303.9);
+    --chart-5: oklch(0.645 0.246 16.439);
+    --sidebar: oklch(0.21 0.006 285.885);
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-background: 240 5.9% 10%;
+  }
+}
+
+@layer base {
+  * {
+    border-color: hsl(var(--border));
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+    font-feature-settings: "rlig" 1, "calt" 1;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+/* VITAL.expert Design System Components */
+@layer components {
+  /* Animations */
+  @keyframes pulse-dot {
+    0%, 100% { transform: translateY(-0.15em) scale(1); opacity: 1; }
+    50% { transform: translateY(-0.15em) scale(1.2); opacity: 0.8; }
+  }
+
+  @keyframes dot-morph {
+    0% { background: var(--regulatory-blue); }
+    14% { background: var(--clinical-green); }
+    28% { background: var(--safety-red); }
+    42% { background: var(--data-purple); }
+    57% { background: var(--market-orange); }
+    71% { background: var(--research-cyan); }
+    85% { background: --quality-gold); }
+    100% { background: var(--regulatory-blue); }
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .animate-pulse-dot {
+    animation: pulse-dot 2s ease-in-out infinite;
+  }
+
+  .animate-morph-dot {
+    animation: dot-morph 4s linear infinite;
+  }
+
+  .animate-fade-in {
+    animation: fadeIn 0.5s ease-out;
+  }
+
+  /* Typography */
+  .display {
+    @apply text-[56px] font-extrabold leading-[1.1] tracking-tight;
+  }
+
+  .h1 {
+    @apply text-5xl font-extrabold leading-tight tracking-tight;
+  }
+
+  .h2 {
+    @apply text-4xl font-extrabold leading-tight tracking-tight;
+  }
+
+  .h3 {
+    @apply text-[32px] font-bold leading-snug tracking-tight;
+  }
+
+  .h4 {
+    @apply text-2xl font-bold leading-snug;
+  }
+
+  .h5 {
+    @apply text-xl font-semibold leading-normal;
+  }
+
+  .body-large {
+    @apply text-lg font-medium leading-relaxed;
+  }
+
+  .body {
+    @apply text-base font-medium leading-relaxed;
+  }
+
+  .small-text {
+    @apply text-sm font-medium leading-normal;
+  }
+
+  .caption {
+    @apply text-xs font-semibold leading-tight;
+  }
+
+  /* Buttons */
+  .btn {
+    @apply px-8 py-3.5 text-base font-semibold rounded-lg transition-all duration-200 cursor-pointer inline-flex items-center justify-center;
+  }
+
+  .btn-primary {
+    @apply bg-vital-black text-vital-white hover:bg-[var(--regulatory-blue)] hover:-translate-y-0.5 hover:shadow-[var(--shadow-md)];
+  }
+
+  .btn-secondary {
+    @apply bg-transparent text-vital-black border-2 border-vital-gray-80 hover:border-vital-black hover:-translate-y-0.5;
+  }
+
+  /* Cards */
+  .card {
+    @apply p-8 bg-white border border-vital-gray-80 rounded-xl transition-all duration-300;
+  }
+
+  .card-hover {
+    @apply hover:-translate-y-1 hover:shadow-[var(--shadow-lg)] hover:border-[var(--regulatory-blue)];
+  }
+
+  /* Containers */
+  .container-custom {
+    @apply max-w-[1200px] mx-auto px-10;
+  }
+
+  /* Legacy support */
+  .journey-phase {
+    @apply transition-all duration-300 ease-in-out;
+  }
+
+  .citation-link {
+    @apply text-[var(--regulatory-blue)] hover:text-[var(--clinical-green)] underline cursor-pointer;
+  }
+
+  .gradient-vital {
+    background: linear-gradient(135deg, var(--regulatory-blue) 0%, var(--clinical-green) 100%);
+  }
+
+  .text-gradient-vital {
+    background: linear-gradient(135deg, var(--research-cyan), var(--regulatory-blue));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+}

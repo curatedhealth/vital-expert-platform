@@ -39,6 +39,7 @@ export const RagManagement: React.FC<RagManagementProps> = ({
     loadRagData();
   }, [agentName]);
 
+  const loadRagData = async () => {
     setIsLoading(true);
     try {
       // In a real implementation, these would be API calls
@@ -54,6 +55,7 @@ export const RagManagement: React.FC<RagManagementProps> = ({
     }
   };
 
+  const loadGlobalRagDatabases = () => {
     // Simulate loading global RAG databases
     const mockGlobalRag: RagKnowledgeBase[] = [
       {

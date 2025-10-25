@@ -49,6 +49,7 @@ export const RagContextModal: React.FC<RagContextModalProps> = ({
     }
   }, [rag]);
 
+  const handleSave = () => {
     if (!rag) return;
 
     onSave(rag.id, {
@@ -56,6 +57,7 @@ export const RagContextModal: React.FC<RagContextModalProps> = ({
       custom_prompt_instructions: customInstructions,
       is_primary: isPrimary
     });
+    onClose();
   };
 
   if (!isOpen || !rag) return null;

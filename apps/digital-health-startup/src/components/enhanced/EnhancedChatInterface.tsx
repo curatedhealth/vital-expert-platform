@@ -545,7 +545,7 @@ export const EnhancedChatInterface: React.FC<EnhancedChatInterfaceProps> = ({
         </div>
       </div>
     );
-  }, [handleCopyMessage, handleStarMessage, enableVoice, isSpeaking, speak, stopSpeaking]);
+  };
 
   return (
     <TooltipProvider>

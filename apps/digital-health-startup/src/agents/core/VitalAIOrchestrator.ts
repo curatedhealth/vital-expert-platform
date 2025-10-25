@@ -175,16 +175,17 @@ export class VitalAIOrchestrator extends ComplianceAwareOrchestrator {
       await this.ensureAgentsReady();
 
       // Step 1: Ultra-intelligent intent classification with contextual analysis (<50ms target)
+      const classificationStart = Date.now();
       const intent = await this.classifyIntent(userQuery, context);
+      const classificationTime = Date.now() - classificationStart;
 
       // Step 2: Adaptive agent selection with pharmaceutical expertise mapping
-      const agentSelection = await this.selectAgentsForIntent(intent, context);
+      const agentSelection = await this.selectAgentsForIntent(intent, context, userQuery);
 
       // Step 3: Dynamic collaboration strategy determination
       const collaborationType = this.determineCollaborationType(
-        intent,
-        agentSelection.collaborators.length,
-        context
+        intent.complexity,
+        agentSelection.collaborators.length
       );
 
       // // Step 4: Execute with pharmaceutical-focused orchestration
@@ -207,6 +208,8 @@ export class VitalAIOrchestrator extends ComplianceAwareOrchestrator {
       }
 
       // Step 5: Advanced performance tracking and optimization
+      const totalTime = Date.now() - parseInt(operationId.split('_')[1]);
+      const enhancedResponse = response;
 
       this.performanceMetrics.recordExecution({
         query: userQuery,
@@ -278,15 +281,10 @@ export class VitalAIOrchestrator extends ComplianceAwareOrchestrator {
 
   private async selectAgentsForIntent(
     intent: IntentClassificationResult,
-    context: ExecutionContext
+    context: ExecutionContext,
+    query?: string
   ): Promise<AgentSelectionResult> {
-    const selection = await this.selectOptimalAgentsAdaptive(intent, context);
-    return {
-      primaryAgent: selection.selectedAgents[0] || 'general-healthcare-advisor',
-      collaborators: selection.selectedAgents.slice(1),
-      collaborationType: selection.collaborationType,
-      reasoning: selection.reasoning
-    };
+    return await this.selectOptimalAgentsAdaptive(intent, query || '', context);
   }
 
   /**
@@ -304,7 +302,9 @@ export class VitalAIOrchestrator extends ComplianceAwareOrchestrator {
       subcategories: [],
       keyTerms: [],
       complexity: this.calculateQueryComplexityAdvanced(query),
-      contextualFactors: this.analyzeContextualFactors(query, context)
+      processingTime: 0,
+      contextualFactors: this.analyzeContextualFactors(query, context),
+      semanticVector: []
     };
 
     // Multi-dimensional scoring with pharmaceutical expertise

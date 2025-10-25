@@ -52,6 +52,7 @@ interface ArtifactManagerProps {
   generationProgress?: number;
 }
 
+const ARTIFACT_CONFIG: Record<ArtifactType, any> = {
   'clinical-protocol': {
     icon: FileText,
     label: 'Clinical Protocol',
@@ -96,6 +97,7 @@ interface ArtifactManagerProps {
   }
 } as const;
 
+const EXPORT_FORMATS: Record<ExportFormat, any> = {
   'pdf': { label: 'PDF', icon: FileText },
   'docx': { label: 'Word', icon: FileText },
   'xlsx': { label: 'Excel', icon: FileSpreadsheet },
@@ -122,7 +124,10 @@ const ArtifactItem: React.FC<{
   const [copied, setCopied] = useState(false);
 
   // eslint-disable-next-line security/detect-object-injection
+  const config = ARTIFACT_CONFIG[artifact.type];
+  const ArtifactIcon = config.icon;
 
+  const handleCopy = () => {
     if (artifact.content) {
       navigator.clipboard.writeText(artifact.content);
       setCopied(true);
@@ -130,16 +135,22 @@ const ArtifactItem: React.FC<{
     }
   };
 
+  const handleExport = (format: ExportFormat) => {
     onExport?.(artifact, format);
     setShowExportOptions(false);
   };
 
+  const formatFileSize = (bytes: number) => {
     if (bytes === 0) return '0 B';
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
 
     // eslint-disable-next-line security/detect-object-injection
     return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
   };
 
+  const formatDate = (d: Date) => {
     return d.toLocaleDateString('en-US', {
       month: 'short',
       day: 'numeric',
@@ -321,6 +332,7 @@ export const ArtifactManager: React.FC<ArtifactManagerProps> = ({
 }) => {
   const [previewArtifact, setPreviewArtifact] = useState<Artifact | null>(null);
 
+  const handlePreview = useCallback((artifact: Artifact) => {
     setPreviewArtifact(artifact);
     onPreview?.(artifact);
   }, [onPreview]);
@@ -329,6 +341,7 @@ export const ArtifactManager: React.FC<ArtifactManagerProps> = ({
     return null;
   }
 
+  const groupedArtifacts = artifacts.reduce((acc, artifact) => {
     // eslint-disable-next-line security/detect-object-injection
     if (!acc[artifact.type]) {
       // eslint-disable-next-line security/detect-object-injection
@@ -337,7 +350,7 @@ export const ArtifactManager: React.FC<ArtifactManagerProps> = ({
     // eslint-disable-next-line security/detect-object-injection
     acc[artifact.type].push(artifact);
     return acc;
-  }, { /* TODO: implement */ } as Record<ArtifactType, Artifact[]>);
+  }, {} as Record<ArtifactType, Artifact[]>);
 
   return (
     <div className={cn('space-y-4', className)}>

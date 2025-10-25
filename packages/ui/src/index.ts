@@ -1,0 +1,38 @@
+// UI Components - shadcn/ui based
+export * from './components/agent-avatar';
+export * from './components/alert';
+export * from './components/avatar';
+export * from './components/badge';
+export * from './components/breadcrumb';
+export * from './components/button';
+export * from './components/card';
+export * from './components/checkbox';
+export * from './components/collapsible';
+export * from './components/dialog';
+export * from './components/dropdown-menu';
+export * from './components/enhanced-agent-card';
+export * from './components/icon-selection-modal';
+export * from './components/input';
+export * from './components/label';
+export * from './components/loading-skeletons';
+export * from './components/popover';
+export * from './components/progress';
+export * from './components/resizable';
+export * from './components/scroll-area';
+export * from './components/select';
+export * from './components/separator';
+export * from './components/slider';
+export * from './components/switch';
+export * from './components/table';
+export * from './components/tabs';
+export * from './components/toast';
+export * from './components/toaster';
+export * from './components/toggle';
+export * from './components/toggle-group';
+export * from './components/tooltip';
+
+// AI Components
+export * from './components/ai/inline-citation';
+
+// Utilities
+export * from './lib/utils';

@@ -478,19 +478,28 @@ export class SupabaseRAGService {
   // ===== HELPER METHODS =====
 
   /**
-   * Get embedding for query text
-   * In a real implementation, this would call OpenAI, Hugging Face, etc.
+   * Get embedding for query text using OpenAI
    */
   private async getQueryEmbedding(text: string, model: string): Promise<Partial<EmbeddingModels>> {
-    // Mock implementation - in production, call actual embedding services
+    try {
+      // Import embedding service
+      const { embeddingService } = await import('@/lib/services/embeddings/openai-embedding-service');
 
-      openai: Array.from({ length: 1536 }, () => Math.random()),
-      clinical: Array.from({ length: 768 }, () => Math.random()),
-      legal: Array.from({ length: 768 }, () => Math.random()),
-      scientific: Array.from({ length: 768 }, () => Math.random())
-    };
+      // Generate OpenAI embedding
+      const result = await embeddingService.generateEmbedding(text);
 
-    return mockEmbedding;
+      return {
+        openai: result.embedding,
+        // Note: For clinical, legal, scientific embeddings,
+        // you would need to integrate specialized models
+        // For now, we use OpenAI as the primary embedding
+      };
+    } catch (error) {
+      console.error('Failed to generate embedding:', error);
+
+      // Fallback: Return null to trigger text search
+      throw new Error('Embedding generation failed');
+    }
   }
 
   /**

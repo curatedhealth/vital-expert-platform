@@ -43,9 +43,10 @@ export class EnhancedLangChainService {
       openAIApiKey: process.env.OPENAI_API_KEY,
     });
 
-    // Initialize embeddings
+    // Initialize embeddings with latest model
     this.embeddings = new OpenAIEmbeddings({
       openAIApiKey: process.env.OPENAI_API_KEY,
+      modelName: 'text-embedding-3-large', // Use latest high-quality model
     });
 
     // Initialize Supabase if configured

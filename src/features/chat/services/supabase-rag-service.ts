@@ -335,20 +335,34 @@ export class SupabaseRAGService {
   }
 
   /**
-   * Generate embedding using OpenAI
+   * Generate embedding using OpenAI Embedding Service
    */
   private async generateEmbedding(text: string): Promise<number[] | null> {
-    if (!this.openai) return null;
-
     try {
-      const response = await this.openai.embeddings.create({
-        model: 'text-embedding-ada-002',
-        input: text,
+      // Use the centralized embedding service
+      const { embeddingService } = await import('@/lib/services/embeddings/openai-embedding-service');
+
+      const result = await embeddingService.generateEmbedding(text, {
+        useCache: true, // Enable caching for better performance
       });
 
-      return response.data[0].embedding;
+      return result.embedding;
     } catch (error) {
       console.error('Embedding generation error:', error);
+
+      // Fallback to direct OpenAI call if service fails
+      if (this.openai) {
+        try {
+          const response = await this.openai.embeddings.create({
+            model: 'text-embedding-3-large',
+            input: text,
+          });
+          return response.data[0].embedding;
+        } catch (fallbackError) {
+          console.error('Fallback embedding generation also failed:', fallbackError);
+        }
+      }
+
       return null;
     }
   }

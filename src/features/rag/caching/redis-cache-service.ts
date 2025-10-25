@@ -5,7 +5,7 @@
 
 import { Document } from '@langchain/core/documents';
 import { OpenAIEmbeddings } from '@langchain/openai';
-import { createClient } from '@upstash/redis';
+import { Redis as UpstashRedis } from '@upstash/redis';
 import Redis from 'ioredis';
 
 export interface CacheConfig {
@@ -57,7 +57,7 @@ export class RedisCacheService {
     try {
       // Try Upstash Redis first (serverless-friendly)
       if (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) {
-        this.upstash = createClient({
+        this.upstash = new UpstashRedis({
           url: process.env.UPSTASH_REDIS_REST_URL,
           token: process.env.UPSTASH_REDIS_REST_TOKEN,
         });
@@ -333,11 +333,12 @@ export class RedisCacheService {
   }> {
     try {
       if (this.upstash) {
-        const info = await this.upstash.info();
+        // Upstash REST API has limited stats - use dbsize for key count
+        const dbsize = await this.upstash.dbsize();
         return {
-          totalKeys: info.db0?.keys || 0,
-          hitRate: 0, // Upstash doesn't provide hit rate
-          memoryUsage: info.memory?.used_memory_human || 'Unknown',
+          totalKeys: dbsize,
+          hitRate: 0, // Upstash doesn't provide hit rate via REST API
+          memoryUsage: 'Serverless (Upstash)',
           topKeys: []
         };
       }
@@ -345,7 +346,7 @@ export class RedisCacheService {
       if (this.redis) {
         const info = await this.redis.info('memory');
         const keys = await this.redis.keys('*');
-        
+
         return {
           totalKeys: keys.length,
           hitRate: 0, // Would need to track this separately
@@ -407,7 +408,8 @@ export class RedisCacheService {
   // Private helper methods
   private async set(key: string, value: any, ttl?: number): Promise<void> {
     if (this.upstash) {
-      await this.upstash.setex(key, ttl || this.config.ttl, JSON.stringify(value));
+      // Upstash REST API handles JSON automatically
+      await this.upstash.set(key, value, { ex: ttl || this.config.ttl });
     } else if (this.redis) {
       await this.redis.setex(key, ttl || this.config.ttl, JSON.stringify(value));
     }
@@ -415,8 +417,9 @@ export class RedisCacheService {
 
   private async get(key: string): Promise<any> {
     if (this.upstash) {
+      // Upstash REST API returns parsed JSON automatically
       const value = await this.upstash.get(key);
-      return value ? JSON.parse(value) : null;
+      return value || null;
     } else if (this.redis) {
       const value = await this.redis.get(key);
       return value ? JSON.parse(value) : null;

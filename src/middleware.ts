@@ -8,6 +8,18 @@ export async function middleware(request: NextRequest) {
   const publicRoutes = ['/', '/login', '/register', '/forgot-password', '/platform', '/services', '/framework'];
   const isPublicRoute = publicRoutes.includes(url.pathname);
 
+  // Allow Ask Expert API routes without authentication (uses service role key internally)
+  const publicApiRoutes = ['/api/ask-expert/chat', '/api/ask-expert/generate-document'];
+  const isPublicApiRoute = publicApiRoutes.some(route => url.pathname.startsWith(route));
+
+  if (isPublicApiRoute) {
+    return NextResponse.next({
+      request: {
+        headers: request.headers,
+      },
+    });
+  }
+
   // Redirect old dashboard routes to new structure
   const redirectMap: Record<string, string> = {
     '/dashboard/agents': '/agents',

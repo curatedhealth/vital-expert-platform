@@ -47,10 +47,12 @@ export const AgentRagAssignments: React.FC<AgentRagAssignmentsProps> = ({
   const [selectedRag, setSelectedRag] = useState<AgentRagAssignment | null>(null);
   const [showContextModal, setShowContextModal] = useState(false);
 
+  const handleViewContext = (rag: AgentRagAssignment) => {
     setSelectedRag(rag);
     setShowContextModal(true);
   };
 
+  const handleSaveContext = (context: {
     usage_context: string;
     custom_prompt_instructions: string;
     is_primary: boolean;
@@ -59,11 +61,13 @@ export const AgentRagAssignments: React.FC<AgentRagAssignmentsProps> = ({
     setShowContextModal(false);
   };
 
+  const getPriorityBadge = (priority: number): { label: string; color: 'destructive' | 'default' | 'secondary' } => {
     if (priority >= 80) return { label: 'High', color: 'destructive' };
     if (priority >= 60) return { label: 'Medium', color: 'default' };
     return { label: 'Low', color: 'secondary' };
   };
 
+  const formatLastUsed = (lastUsed: string | null | undefined): string => {
     if (!lastUsed) return 'Never used';
     return new Date(lastUsed).toLocaleDateString();
   };

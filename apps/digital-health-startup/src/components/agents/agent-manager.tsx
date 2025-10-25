@@ -224,13 +224,16 @@ const AgentCard: React.FC<{
   onStop: (id: string) => void;
   onConfigure: (agent: Agent) => void;
 }> = ({ agent, onStart, onStop, onConfigure }) => {
-
+  const statusConfig: Record<string, { color: string; icon: React.ElementType }> = {
     active: { color: 'bg-green-100 text-green-800 border-green-200', icon: CheckCircle },
     idle: { color: 'bg-gray-100 text-gray-800 border-gray-200', icon: Clock },
     busy: { color: 'bg-blue-100 text-blue-800 border-blue-200', icon: Activity },
     error: { color: 'bg-red-100 text-red-800 border-red-200', icon: AlertTriangle },
     maintenance: { color: 'bg-yellow-100 text-yellow-800 border-yellow-200', icon: RefreshCw }
   };
+
+  const config = statusConfig[agent.status] || statusConfig.idle;
+  const StatusIcon = config.icon;
 
   return (
     <Card className="hover:shadow-lg transition-shadow">
@@ -331,12 +334,14 @@ const AgentCard: React.FC<{
 };
 
 const ExecutionItem: React.FC<{ execution: AgentExecution }> = ({ execution }) => {
-
+  const statusConfig: Record<string, { color: string; icon: string }> = {
     running: { color: 'bg-blue-100 text-blue-800', icon: '🔄' },
     completed: { color: 'bg-green-100 text-green-800', icon: '✅' },
     failed: { color: 'bg-red-100 text-red-800', icon: '❌' },
     cancelled: { color: 'bg-gray-100 text-gray-800', icon: '⏹️' }
   };
+
+  const config = statusConfig[execution.status] || statusConfig.running;
 
   return (
     <div className="p-4 border rounded-lg">
@@ -396,6 +401,7 @@ const AgentConfigDialog: React.FC<{
     }
   }, [agent]);
 
+  const handleSave = () => {
     onSave(config);
     onClose();
   };
@@ -480,20 +486,24 @@ const AgentManager: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState<string>('all');
 
+  const handleStart = (agentId: string) => {
     setAgents(prev => prev.map(agent =>
       agent.id === agentId ? { ...agent, status: 'active' as const } : agent
     ));
   };
 
+  const handleStop = (agentId: string) => {
     setAgents(prev => prev.map(agent =>
       agent.id === agentId ? { ...agent, status: 'idle' as const } : agent
     ));
   };
 
+  const handleConfigure = (agent: Agent) => {
     setSelectedAgent(agent);
     setConfigDialogOpen(true);
   };
 
+  const handleSaveConfig = (config: unknown) => {
     if (selectedAgent) {
       setAgents(prev => prev.map(agent =>
         agent.id === selectedAgent.id ? { ...agent, config } : agent
@@ -501,11 +511,14 @@ const AgentManager: React.FC = () => {
     }
   };
 
+  const filteredAgents = agents.filter(agent => {
+    const matchesSearch = agent.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          agent.description.toLowerCase().includes(searchTerm.toLowerCase());
-
+    const matchesStatus = filterStatus === 'all' || agent.status === filterStatus;
     return matchesSearch && matchesStatus;
   });
 
+  const agentStats = {
     total: agents.length,
     active: agents.filter(a => a.status === 'active').length,
     busy: agents.filter(a => a.status === 'busy').length,

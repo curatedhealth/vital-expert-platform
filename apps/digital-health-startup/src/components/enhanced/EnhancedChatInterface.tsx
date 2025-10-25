@@ -78,23 +78,26 @@ declare global {
 }
 
 // Custom hooks
-
+const useSpeechRecognition = () => {
+  const recognitionRef = useRef<any>(null);
   const [isListening, setIsListening] = useState(false);
   const [transcript, setTranscript] = useState('');
 
+  const startListening = useCallback(() => {
     if (!('webkitSpeechRecognition' in window)) {
       alert('Speech recognition not supported in this browser');
       return;
     }
 
+    const recognition = new (window as any).webkitSpeechRecognition();
     recognition.continuous = false;
     recognition.interimResults = false;
     recognition.lang = 'en-US';
 
     recognition.onstart = () => setIsListening(true);
     recognition.onend = () => setIsListening(false);
-    recognition.onresult = (event: unknown) => {
-
+    recognition.onresult = (event: any) => {
+      const transcript = event.results[0][0].transcript;
       setTranscript(transcript);
     };
     recognition.onerror = () => {
@@ -106,6 +109,7 @@ declare global {
     recognition.start();
   }, []);
 
+  const stopListening = useCallback(() => {
     if (recognitionRef.current) {
       recognitionRef.current.stop();
     }
@@ -114,10 +118,12 @@ declare global {
   return { isListening, transcript, startListening, stopListening };
 };
 
+const useSpeechSynthesis = () => {
   const [isSpeaking, setIsSpeaking] = useState(false);
 
+  const speak = useCallback((text: string) => {
     if ('speechSynthesis' in window) {
-
+      const utterance = new SpeechSynthesisUtterance(text);
       utterance.onstart = () => setIsSpeaking(true);
       utterance.onend = () => setIsSpeaking(false);
       utterance.onerror = () => setIsSpeaking(false);
@@ -125,6 +131,7 @@ declare global {
     }
   }, []);
 
+  const stopSpeaking = useCallback(() => {
     if ('speechSynthesis' in window) {
       speechSynthesis.cancel();
       setIsSpeaking(false);
@@ -200,7 +207,7 @@ export const EnhancedChatInterface: React.FC<EnhancedChatInterfaceProps> = ({
   }, [websocketUrl]);
 
   // Handle WebSocket messages
-
+  const handleWebSocketMessage = useCallback((data: any) => {
     switch (data.type) {
       case 'agent_update':
         const updatedAgents: AgentInfo[] = data.agents || [];
@@ -244,7 +251,7 @@ export const EnhancedChatInterface: React.FC<EnhancedChatInterfaceProps> = ({
   }, [onAgentUpdate, enableVoice, speak]);
 
   // Auto-scroll to bottom
-
+  const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, []);
 

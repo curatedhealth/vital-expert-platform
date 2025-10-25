@@ -27,7 +27,7 @@ export const RagAnalytics: React.FC<RagAnalyticsProps> = ({
   assignedRagDatabases
 }) => {
   // Mock analytics data - in real implementation, this would come from the database
-
+  const mockAnalytics = {
     totalQueries: 1247,
     avgResponseTime: 340,
     avgRelevanceScore: 0.87,
@@ -48,6 +48,7 @@ export const RagAnalytics: React.FC<RagAnalyticsProps> = ({
     }))
   };
 
+  const formatScore = (score: number): string => {
     return `${Math.round(score * 100)}%`;
   };
 

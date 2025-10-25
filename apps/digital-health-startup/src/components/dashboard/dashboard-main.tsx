@@ -171,12 +171,14 @@ const AlertItem: React.FC<{ alert: Alert; onAcknowledge: (id: string) => void }>
   alert,
   onAcknowledge
 }) => {
-
+  const alertConfig: Record<string, { color: string; icon: string }> = {
     info: { color: 'bg-blue-100 text-blue-800 border-blue-200', icon: '💡' },
     warning: { color: 'bg-yellow-100 text-yellow-800 border-yellow-200', icon: '⚠️' },
     error: { color: 'bg-red-100 text-red-800 border-red-200', icon: '❌' },
     critical: { color: 'bg-red-200 text-red-900 border-red-300', icon: '🚨' }
   };
+
+  const config = alertConfig[alert.type] || alertConfig.info;
 
   return (
     <div className={`p-3 rounded-lg border ${config.color} ${alert.acknowledged ? 'opacity-60' : ''}`}>
@@ -207,7 +209,7 @@ const AlertItem: React.FC<{ alert: Alert; onAcknowledge: (id: string) => void }>
 };
 
 const SystemHealthPanel: React.FC<{ health: SystemHealth }> = ({ health }) => {
-
+  const getStatusColor = (status: string) => {
     switch (status) {
       case 'healthy': return 'text-green-600';
       case 'warning': return 'text-yellow-600';
@@ -216,6 +218,7 @@ const SystemHealthPanel: React.FC<{ health: SystemHealth }> = ({ health }) => {
     }
   };
 
+  const getStatusBadge = (status: string) => {
     switch (status) {
       case 'healthy': return <Badge className="bg-green-100 text-green-800">Healthy</Badge>;
       case 'warning': return <Badge className="bg-yellow-100 text-yellow-800">Warning</Badge>;
@@ -264,6 +267,7 @@ const SystemHealthPanel: React.FC<{ health: SystemHealth }> = ({ health }) => {
 const ChartWidget: React.FC<{ data: ChartData }> = ({ data }) => {
   const [isLoading, setIsLoading] = useState(false);
 
+  const refreshChart = async () => {
     setIsLoading(true);
     // Simulate API call
     await new Promise(resolve => setTimeout(resolve, 1000));

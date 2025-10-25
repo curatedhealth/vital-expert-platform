@@ -150,6 +150,7 @@ export class VitalAIOrchestrator extends ComplianceAwareOrchestrator {
     userQuery: string,
     context: ExecutionContext
   ): Promise<UnifiedResponse> {
+    const operationId = `op_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
     // Start performance tracking
     performanceMetricsService.startOperation(
@@ -174,7 +175,7 @@ export class VitalAIOrchestrator extends ComplianceAwareOrchestrator {
       await this.ensureAgentsReady();
 
       // Step 1: Ultra-intelligent intent classification with contextual analysis (<50ms target)
-      const intent = await this.classifyIntent(query, context);
+      const intent = await this.classifyIntent(userQuery, context);
 
       // Step 2: Adaptive agent selection with pharmaceutical expertise mapping
       const agentSelection = await this.selectAgentsForIntent(intent, context);
@@ -263,6 +264,29 @@ export class VitalAIOrchestrator extends ComplianceAwareOrchestrator {
       // Enhanced fallback with contextual error recovery
       return await this.executeEnhancedFallback(userQuery, context, error);
     }
+  }
+
+  /**
+   * Alias methods for backward compatibility
+   */
+  private async classifyIntent(
+    query: string,
+    context: ExecutionContext
+  ): Promise<IntentClassificationResult> {
+    return this.classifyIntentUltraIntelligent(query, context);
+  }
+
+  private async selectAgentsForIntent(
+    intent: IntentClassificationResult,
+    context: ExecutionContext
+  ): Promise<AgentSelectionResult> {
+    const selection = await this.selectOptimalAgentsAdaptive(intent, context);
+    return {
+      primaryAgent: selection.selectedAgents[0] || 'general-healthcare-advisor',
+      collaborators: selection.selectedAgents.slice(1),
+      collaborationType: selection.collaborationType,
+      reasoning: selection.reasoning
+    };
   }
 
   /**

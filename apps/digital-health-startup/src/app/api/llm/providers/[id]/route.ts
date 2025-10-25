@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { requirePermission, rateLimit } from '@/middleware/auth';
 import { llmProviderService } from '@/shared/services/llm/llm-provider.service';
-import { PermissionScope, PermissionAction } from '@vital/sdk/types/auth.types';
+import { PermissionScope, PermissionAction } from '@vital/sdk/types';
 import { LLMProviderConfig } from '@/types/llm-provider.types';
 
 interface RouteParams {

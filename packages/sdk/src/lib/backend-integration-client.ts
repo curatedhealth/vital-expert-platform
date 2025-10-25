@@ -660,9 +660,9 @@ export function getBackendClient(): BackendIntegrationClient {
 // ============================================================================
 // REACT HOOKS
 // ============================================================================
-
-export { useBackendIntegration } from './hooks/useBackendIntegration'
-export { useHybridSearch } from './hooks/useHybridSearch'
-export { useEvidenceDetection } from './hooks/useEvidenceDetection'
-export { useHITLQueue } from './hooks/useHITLQueue'
-export { useCompliance } from './hooks/useCompliance'
+// TODO: Implement these React hooks when needed
+// export { useBackendIntegration } from './hooks/useBackendIntegration'
+// export { useHybridSearch } from './hooks/useHybridSearch'
+// export { useEvidenceDetection } from './hooks/useEvidenceDetection'
+// export { useHITLQueue } from './hooks/useHITLQueue'
+// export { useCompliance } from './hooks/useCompliance'

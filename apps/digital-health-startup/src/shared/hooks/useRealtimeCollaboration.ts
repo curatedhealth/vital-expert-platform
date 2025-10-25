@@ -51,9 +51,11 @@ export function useRealtimeCollaboration(options: UseRealtimeCollaborationOption
   });
 
   // Refs
+  const typingTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const lastTypingEventRef = useRef<number>(0);
 
   // Connection management
-
+  const connect = useCallback(async () => {
     try {
       setState(prev => ({ ...prev, connectionStatus: 'connecting' }));
       await websocketService.connect(conversationId);
@@ -63,13 +65,15 @@ export function useRealtimeCollaboration(options: UseRealtimeCollaborationOption
     }
   }, [conversationId]);
 
+  const disconnect = useCallback(() => {
     websocketService.disconnect();
     setState(prev => ({ ...prev, connectionStatus: 'disconnected' }));
   }, []);
 
   // Typing indicators
-
+  const startTyping = useCallback(() => {
     if (!enableTypingIndicators) return;
+    const now = Date.now();
 
     // Throttle typing events (send at most once per second)
     // eslint-disable-next-line security/detect-object-injection
@@ -93,8 +97,9 @@ export function useRealtimeCollaboration(options: UseRealtimeCollaborationOption
     typingTimerRef.current = setTimeout(() => {
       stopTyping();
     }, typingTimeout);
-  }, [enableTypingIndicators, typingTimeout]);
+  }, [enableTypingIndicators, typingTimeout, userId, conversationId]);
 
+  const stopTyping = useCallback(() => {
     if (!enableTypingIndicators) return;
 
     websocketService.stopTyping(userId || 'anonymous', conversationId);
@@ -107,16 +112,16 @@ export function useRealtimeCollaboration(options: UseRealtimeCollaborationOption
       // eslint-disable-next-line security/detect-object-injection
       typingTimerRef.current = null;
     }
-  }, [enableTypingIndicators]);
+  }, [enableTypingIndicators, userId, conversationId]);
 
   // Message handling
-
+  const sendMessage = useCallback((message: Message) => {
     websocketService.sendMessage(message);
     stopTyping(); // Stop typing when message is sent
   }, [stopTyping]);
 
   // Collaboration state
-
+  const updateCollaborationState = useCallback((updates: Partial<CollaborationState>) => {
     setState(prev => ({
       ...prev,
       collaborationState: prev.collaborationState
@@ -127,16 +132,19 @@ export function useRealtimeCollaboration(options: UseRealtimeCollaborationOption
   }, []);
 
   // Artifact sharing
-
+  const shareArtifact = useCallback((artifact: Artifact) => {
     websocketService.shareArtifact(artifact);
   }, []);
 
   // Event handlers
-
+  const handleConnectionChange = useCallback((data: any) => {
     setState(prev => ({ ...prev, connectionStatus: data.status }));
   }, []);
 
+  const handleUserJoined = useCallback((data: any) => {
     setState(prev => {
+      const updatedUsers = [...prev.activeUsers];
+      const existingIndex = updatedUsers.findIndex(u => u.id === data.userId);
 
       // eslint-disable-next-line security/detect-object-injection
       if (existingIndex >= 0) {
@@ -166,6 +174,7 @@ export function useRealtimeCollaboration(options: UseRealtimeCollaborationOption
     });
   }, []);
 
+  const handleUserLeft = useCallback((data: any) => {
     setState(prev => ({
       ...prev,
       activeUsers: prev.activeUsers.filter(u => u.id !== data.userId),
@@ -173,10 +182,11 @@ export function useRealtimeCollaboration(options: UseRealtimeCollaborationOption
     }));
   }, []);
 
+  const handleUserStartedTyping = useCallback((data: any) => {
     if (data.userId === userId) return; // Ignore own typing events
 
     setState(prev => {
-
+      const updatedUsers = prev.activeUsers.map(user =>
         // eslint-disable-next-line security/detect-object-injection
         user.id === data.userId
           ? { ...user, status: 'typing' as const, lastSeen: new Date() }
@@ -184,7 +194,7 @@ export function useRealtimeCollaboration(options: UseRealtimeCollaborationOption
       );
 
       // eslint-disable-next-line security/detect-object-injection
-
+      const updatedTypingUsers = prev.typingUsers.includes(data.userId)
         ? prev.typingUsers
         : [...prev.typingUsers, data.userId];
 
@@ -196,10 +206,11 @@ export function useRealtimeCollaboration(options: UseRealtimeCollaborationOption
     });
   }, [userId]);
 
+  const handleUserStoppedTyping = useCallback((data: any) => {
     if (data.userId === userId) return; // Ignore own typing events
 
     setState(prev => {
-
+      const updatedUsers = prev.activeUsers.map(user =>
         // eslint-disable-next-line security/detect-object-injection
         user.id === data.userId
           ? { ...user, status: 'online' as const, lastSeen: new Date() }
@@ -207,6 +218,7 @@ export function useRealtimeCollaboration(options: UseRealtimeCollaborationOption
       );
 
       // eslint-disable-next-line security/detect-object-injection
+      const updatedTypingUsers = prev.typingUsers.filter(id => id !== data.userId);
 
       return {
         ...prev,
@@ -216,15 +228,17 @@ export function useRealtimeCollaboration(options: UseRealtimeCollaborationOption
     });
   }, [userId]);
 
+  const handleCollaborationUpdate = useCallback((data: any) => {
     setState(prev => ({
       ...prev,
       collaborationState: data
     }));
   }, []);
 
+  const handleMessageReceived = useCallback((data: any) => {
     // Update user's last seen time
     setState(prev => {
-
+      const updatedUsers = prev.activeUsers.map(user =>
         // eslint-disable-next-line security/detect-object-injection
         user.id === data.userId
           ? { ...user, status: 'online' as const, lastSeen: new Date() }
@@ -239,11 +253,12 @@ export function useRealtimeCollaboration(options: UseRealtimeCollaborationOption
   useEffect(() => {
     if (!conversationId) return;
 
-      'connection_status': handleConnectionStatus,
+    const listeners = {
+      'connection_status': handleConnectionChange,
       'user_joined': handleUserJoined,
       'user_left': handleUserLeft,
-      'typing_start': handleTypingStart,
-      'typing_stop': handleTypingStop,
+      'typing_start': handleUserStartedTyping,
+      'typing_stop': handleUserStoppedTyping,
       'collaboration_update': handleCollaborationUpdate,
       'message_received': handleMessageReceived
     };
@@ -280,11 +295,11 @@ export function useRealtimeCollaboration(options: UseRealtimeCollaborationOption
     conversationId,
     connect,
     disconnect,
-    handleConnectionStatus,
+    handleConnectionChange,
     handleUserJoined,
     handleUserLeft,
-    handleTypingStart,
-    handleTypingStop,
+    handleUserStartedTyping,
+    handleUserStoppedTyping,
     handleCollaborationUpdate,
     handleMessageReceived
   ]);
@@ -299,10 +314,11 @@ export function useRealtimeCollaboration(options: UseRealtimeCollaborationOption
   }, [state.isTyping, stopTyping]);
 
   // Utility functions
-
+  const getTypingUserNames = useCallback(() => {
     return state.typingUsers
       .map(userId => {
         // eslint-disable-next-line security/detect-object-injection
+        const user = state.activeUsers.find(u => u.id === userId);
 
         // eslint-disable-next-line security/detect-object-injection
         return user ? user.name.split(' ')[0] : 'Someone';
@@ -310,10 +326,12 @@ export function useRealtimeCollaboration(options: UseRealtimeCollaborationOption
       .filter(Boolean);
   }, [state.typingUsers, state.activeUsers]);
 
+  const isUserActive = useCallback((userId: string) => {
     // eslint-disable-next-line security/detect-object-injection
     return state.activeUsers.some(user => user.id === userId && user.status !== 'idle');
   }, [state.activeUsers]);
 
+  const getActiveUserCount = useCallback(() => {
     return state.activeUsers.length;
   }, [state.activeUsers]);
 

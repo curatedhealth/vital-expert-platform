@@ -226,10 +226,10 @@ When users select a prompt starter, retrieve the full workflow from the Prompt L
     };
 
     // Validate pathway and complexity to prevent object injection
-    const validPathways = ['510k', 'De Novo', 'PMA'] as const;
-    const validComplexities = ['simple', 'moderate', 'complex'] as const;
-    
-    if (!validPathways.includes(pathway as unknown) || !validComplexities.includes(complexity as unknown)) {
+    const validPathways: readonly ("510k" | "De Novo" | "PMA")[] = ['510k', 'De Novo', 'PMA'];
+    const validComplexities: readonly ("simple" | "moderate" | "complex")[] = ['simple', 'moderate', 'complex'];
+
+    if (!validPathways.includes(pathway) || !validComplexities.includes(complexity)) {
       throw new Error('Invalid pathway or complexity level');
     }
     

@@ -1,10 +1,13 @@
 // ===================================================================
 // Metrics API - Phase 2 Enhanced Monitoring
 // Prometheus-compatible metrics endpoint for system monitoring
+// Now integrates with LangExtract metrics and cost tracking
 // ===================================================================
 
 import { createClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
+import { getMetricsCollector } from '@/lib/services/monitoring/langextract-metrics-collector'
+import { getCostTracker } from '@/lib/services/monitoring/cost-tracker'
 
 interface MetricValue {
   name: string
@@ -18,10 +21,14 @@ interface MetricValue {
 // GET /api/metrics - Prometheus-compatible metrics endpoint
 export async function GET(request: NextRequest) {
   try {
+    const searchParams = request.nextUrl.searchParams;
+    const format = searchParams.get('format') || 'prometheus';
+    const startTime = Date.now();
+
     // Create Supabase client inside the function to avoid build-time validation
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-    
+
     if (!supabaseUrl || !supabaseServiceKey) {
       return NextResponse.json(
         { error: 'Supabase configuration missing' },
@@ -31,19 +38,35 @@ export async function GET(request: NextRequest) {
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
+    // Get LangExtract metrics
+    const metricsCollector = getMetricsCollector();
+    let langExtractMetrics = '';
 
+    if (format === 'prometheus') {
+      langExtractMetrics = await metricsCollector.exportPrometheusMetrics();
+    }
 
     // Collect all metrics
+    const metrics = await collectMetrics(supabase);
 
     if (format === 'json') {
+      // Include LangExtract metrics in JSON format
+      const langExtractJson = await metricsCollector.getCurrentMetrics();
+      const costTracker = getCostTracker();
+      const costBreakdown = await costTracker.getDailyCost();
+
       return NextResponse.json({
-        metrics,
+        platform_metrics: metrics,
+        langextract_metrics: langExtractJson,
+        cost_metrics: costBreakdown,
         collection_time_ms: Date.now() - startTime,
         timestamp: new Date().toISOString()
       })
     }
 
     // Default: Prometheus format
+    const platformMetrics = formatPrometheusMetrics(metrics);
+    const prometheusOutput = `${langExtractMetrics}\n\n${platformMetrics}`;
 
     return new NextResponse(prometheusOutput, {
       status: 200,
@@ -54,14 +77,51 @@ export async function GET(request: NextRequest) {
     })
 
   } catch (error) {
-    // console.error('Metrics collection error')
+    console.error('Metrics collection error:', error)
     return NextResponse.json({
       error: 'Failed to collect metrics'
     }, { status: 500 })
   }
 }
 
-async function collectMetrics(): Promise<MetricValue[]> {
+// POST /api/metrics - Record metrics (internal use)
+export async function POST(request: NextRequest) {
+  try {
+    const body = await request.json();
+    const { type, data } = body;
+
+    const metricsCollector = getMetricsCollector();
+    const costTracker = getCostTracker();
+
+    switch (type) {
+      case 'extraction':
+        await metricsCollector.recordExtraction(data);
+        return NextResponse.json({ success: true }, { status: 200 });
+
+      case 'cost':
+        await costTracker.recordCost(data);
+        return NextResponse.json({ success: true }, { status: 200 });
+
+      case 'error':
+        await metricsCollector.recordError(data.error_type);
+        return NextResponse.json({ success: true }, { status: 200 });
+
+      default:
+        return NextResponse.json(
+          { error: 'Invalid metric type' },
+          { status: 400 }
+        );
+    }
+  } catch (error: any) {
+    console.error('Error recording metrics:', error);
+    return NextResponse.json(
+      { error: 'Failed to record metrics', details: error.message },
+      { status: 500 }
+    );
+  }
+}
+
+async function collectMetrics(supabase: ReturnType<typeof createClient>): Promise<MetricValue[]> {
   const metrics: MetricValue[] = []
 
   // System metrics
@@ -80,25 +140,25 @@ async function collectMetrics(): Promise<MetricValue[]> {
   })
 
   // Database metrics
-
+  const dbMetrics = await collectDatabaseMetrics(supabase);
   metrics.push(...dbMetrics)
 
   // API usage metrics
-
+  const apiMetrics = await collectAPIUsageMetrics(supabase);
   metrics.push(...apiMetrics)
 
   // Service health metrics
-
+  const healthMetrics = await collectHealthMetrics();
   metrics.push(...healthMetrics)
 
   // Business metrics
-
+  const businessMetrics = await collectBusinessMetrics(supabase);
   metrics.push(...businessMetrics)
 
   return metrics
 }
 
-async function collectDatabaseMetrics(): Promise<MetricValue[]> {
+async function collectDatabaseMetrics(supabase: ReturnType<typeof createClient>): Promise<MetricValue[]> {
   const metrics: MetricValue[] = []
 
   try {
@@ -147,11 +207,12 @@ async function collectDatabaseMetrics(): Promise<MetricValue[]> {
   return metrics
 }
 
-async function collectAPIUsageMetrics(): Promise<MetricValue[]> {
+async function collectAPIUsageMetrics(supabase: ReturnType<typeof createClient>): Promise<MetricValue[]> {
   const metrics: MetricValue[] = []
 
   try {
     // Get usage analytics from the last hour
+    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
 
     const { data: usageData } = await supabase
       .from('usage_analytics')
@@ -172,7 +233,7 @@ async function collectAPIUsageMetrics(): Promise<MetricValue[]> {
       }, {});
 
       // Add metrics for each event type
-      Object.entries(eventCounts).forEach(([eventType, count]) => {
+      Object.entries(eventsByType).forEach(([eventType, count]) => {
         metrics.push({
           name: 'vital_path_api_requests_total',
           help: 'Total number of API requests',
@@ -183,7 +244,7 @@ async function collectAPIUsageMetrics(): Promise<MetricValue[]> {
       })
 
       // Add metrics for each resource type
-      Object.entries(resourceCounts).forEach(([resourceType, count]) => {
+      Object.entries(eventsByResource).forEach(([resourceType, count]) => {
         metrics.push({
           name: 'vital_path_resource_usage_total',
           help: 'Total resource usage by type',
@@ -220,9 +281,11 @@ async function collectHealthMetrics(): Promise<MetricValue[]> {
       const serviceUrl = process.env[`${service.toUpperCase()}_SERVICE_URL`];
       if (!serviceUrl) continue;
 
+      const startTime = Date.now();
       const response = await fetch(`${serviceUrl}/health`, {
         signal: AbortSignal.timeout(5000)
       })
+      const responseTime = Date.now() - startTime;
 
       metrics.push(
         {
@@ -255,10 +318,11 @@ async function collectHealthMetrics(): Promise<MetricValue[]> {
   return metrics
 }
 
-async function collectBusinessMetrics(): Promise<MetricValue[]> {
+async function collectBusinessMetrics(supabase: ReturnType<typeof createClient>): Promise<MetricValue[]> {
   const metrics: MetricValue[] = []
 
   try {
+    const last24Hours = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
 
     // Orchestration requests
     const { data: orchestrationData } = await supabase
@@ -384,6 +448,8 @@ function formatPrometheusMetrics(metrics: MetricValue[]): string {
 
     // Add metric values
     metricList.forEach(metric => {
+
+      let metricLine = metricName;
 
       // Add labels if present
       if (metric.labels && Object.keys(metric.labels).length > 0) {

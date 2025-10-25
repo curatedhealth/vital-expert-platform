@@ -339,6 +339,7 @@ const DashboardMain: React.FC = () => {
   useEffect(() => {
     if (!autoRefresh) return;
 
+    const interval = setInterval(() => {
       // Simulate data updates
       setKpiData(prev => prev.map(metric => ({
         ...metric,
@@ -350,6 +351,7 @@ const DashboardMain: React.FC = () => {
     return () => clearInterval(interval);
   }, [autoRefresh]);
 
+  const handleAcknowledgeAlert = (alertId: string) => {
     setAlerts(prev => prev.map(alert =>
       alert.id === alertId ? { ...alert, acknowledged: true } : alert
     ));

@@ -267,7 +267,7 @@ export const EnhancedChatInterface: React.FC<EnhancedChatInterfaceProps> = ({
   }, [transcript, isListening]);
 
   // Message submission
-
+  const sendMessage = useCallback((e?: React.FormEvent) => {
     e?.preventDefault();
 
     if (!input.trim() || isProcessing) return;
@@ -316,15 +316,18 @@ export const EnhancedChatInterface: React.FC<EnhancedChatInterfaceProps> = ({
   }, [input, isProcessing, maxMessages, conversationId, userId, onMessageSent]);
 
   // Message actions
-
+  const copyMessage = useCallback((message: Message) => {
     navigator.clipboard.writeText(message.content);
   }, []);
 
+  const toggleStar = useCallback((messageId: string) => {
     setMessages(prev => prev.map(msg =>
       msg.id === messageId ? { ...msg, starred: !msg.starred } : msg
     ));
   }, []);
 
+  const exportConversation = useCallback(() => {
+    const data = {
       conversationId,
       messages: messages.map(({ id, role, content, timestamp, confidence, evidenceLevel }) => ({
         id, role, content, timestamp, confidence, evidenceLevel
@@ -332,6 +335,9 @@ export const EnhancedChatInterface: React.FC<EnhancedChatInterfaceProps> = ({
       exportedAt: new Date().toISOString()
     };
 
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
     a.href = url;
     a.download = `vital-conversation-${conversationId}.json`;
     a.click();
@@ -339,7 +345,8 @@ export const EnhancedChatInterface: React.FC<EnhancedChatInterfaceProps> = ({
   }, [conversationId, messages]);
 
   // Render message component
-
+  const renderMessage = (message: Message, index: number) => {
+    const isUser = message.role === 'user';
     return (
       <div
         key={message.id}

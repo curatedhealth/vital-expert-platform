@@ -17,6 +17,7 @@ type CodeBlockContextType = {
   code: string;
 };
 
+const CodeBlockContext = createContext<CodeBlockContextType>({
   code: '',
 });
 
@@ -144,3 +145,7 @@ export const __CodeBlockCopyButton = ({
     </Button>
   );
 };
+
+// Export aliases
+export const CodeBlock = __CodeBlock;
+export const CodeBlockCopyButton = __CodeBlockCopyButton;

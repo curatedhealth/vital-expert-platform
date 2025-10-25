@@ -1,0 +1,27 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "lib": ["DOM", "DOM.Iterable", "ES2020"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "noEmit": true,
+    "jsx": "preserve",
+    "incremental": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "allowJs": true
+  },
+  "exclude": [
+    "node_modules",
+    "**/node_modules",
+    "archive",
+    "**/dist",
+    "**/.next",
+    "**/build",
+    "**/coverage"
+  ],
+  "include": []
+}

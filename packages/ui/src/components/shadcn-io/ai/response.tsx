@@ -60,10 +60,11 @@ function parseIncompleteMarkdown(text: string): string {
 
   if (singleAsteriskMatch) {
     // Count single asterisks that aren't part of **
-
+    const singleAsterisks = result.split('').reduce((acc, char, index) => {
       if (char === '*') {
         // Check if it's part of a ** pair
-
+        const prevChar = result[index - 1];
+        const nextChar = result[index + 1];
         if (prevChar !== '*' && nextChar !== '*') {
           return acc + 1;
         }
@@ -81,10 +82,11 @@ function parseIncompleteMarkdown(text: string): string {
 
   if (singleUnderscoreMatch) {
     // Count single underscores that aren't part of __
-
+    const singleUnderscores = result.split('').reduce((acc, char, index) => {
       if (char === '_') {
         // Check if it's part of a __ pair
-
+        const prevChar = result[index - 1];
+        const nextChar = result[index + 1];
         if (prevChar !== '_' && nextChar !== '_') {
           return acc + 1;
         }

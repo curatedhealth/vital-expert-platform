@@ -151,4 +151,4 @@ export function FDASaMDSelector({
   );
 }
 
-export { FDA_SAMD_OPTIONS };
+export { SAMD_OPTIONS as FDA_SAMD_OPTIONS };

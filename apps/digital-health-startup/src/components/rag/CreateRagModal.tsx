@@ -95,12 +95,14 @@ export const CreateRagModal: React.FC<CreateRagModalProps> = ({
   const [customDomain, setCustomDomain] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
+  const handleInputChange = (field: string, value: any) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
     }));
   };
 
+  const handleToggleDomain = (domain: string) => {
     setFormData(prev => ({
       ...prev,
       knowledge_domains: prev.knowledge_domains.includes(domain)
@@ -109,6 +111,7 @@ export const CreateRagModal: React.FC<CreateRagModalProps> = ({
     }));
   };
 
+  const handleAddCustomDomain = () => {
     if (customDomain.trim() && !formData.knowledge_domains.includes(customDomain.trim())) {
       setFormData(prev => ({
         ...prev,
@@ -118,12 +121,14 @@ export const CreateRagModal: React.FC<CreateRagModalProps> = ({
     }
   };
 
+  const handleRemoveDomain = (domain: string) => {
     setFormData(prev => ({
       ...prev,
       knowledge_domains: prev.knowledge_domains.filter(d => d !== domain)
     }));
   };
 
+  const generateRagName = (displayName: string): string => {
     return displayName
       .toLowerCase()
       .replace(/[^a-z0-9]/g, '-')
@@ -131,6 +136,7 @@ export const CreateRagModal: React.FC<CreateRagModalProps> = ({
       .replace(/^-|-$/g, '');
   };
 
+  const handleSubmit = async () => {
     setIsLoading(true);
 
     try {

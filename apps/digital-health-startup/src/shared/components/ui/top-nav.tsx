@@ -37,6 +37,7 @@ import { cn } from '@/shared/services/utils';
 
 // import { useAuth } from '@vital/sdk/lib/supabase/auth-context';
 
+const navigation = [
   {
     title: 'Overview',
     href: '/dashboard',
@@ -60,6 +61,7 @@ import { cn } from '@/shared/services/utils';
   },
 ];
 
+const processSteps = [
   {
     title: 'Vision',
     href: '/dashboard/vision',
@@ -98,7 +100,7 @@ export function TopNav() {
   // const { user, signOut } = useAuth();
 
   // Mock user for demo - in real app this would come from auth context
-
+  const getInitials = (email: string) => {
     return email
       .split('@')[0]
       .split('.')

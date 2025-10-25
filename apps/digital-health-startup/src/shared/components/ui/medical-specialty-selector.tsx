@@ -2,6 +2,7 @@ import React from 'react';
 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './select';
 
+const MEDICAL_SPECIALTIES = [
   { value: 'cardiology', label: 'Cardiology' },
   { value: 'dermatology', label: 'Dermatology' },
   { value: 'endocrinology', label: 'Endocrinology' },

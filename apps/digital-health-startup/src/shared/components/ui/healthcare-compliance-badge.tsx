@@ -18,7 +18,7 @@ export function HealthcareComplianceBadge({
   status,
   className
 }: HealthcareComplianceBadgeProps) {
-
+  const getBadgeContent = () => {
     switch (type) {
       case 'hipaa':
         return {
@@ -45,7 +45,7 @@ export function HealthcareComplianceBadge({
         };
 
       case 'clinical':
-
+        const clinicalStatus = status as ClinicalValidationStatus;
         switch (clinicalStatus) {
           case ClinicalValidationStatus.VALIDATED:
             return {
@@ -94,7 +94,8 @@ export function HealthcareComplianceBadge({
         };
 
       case 'medical_accuracy':
-
+        const accuracy = typeof status === 'number' ? status : 0;
+        const isHighAccuracy = accuracy >= 0.90;
         return {
           icon: isHighAccuracy ? CheckCircle : AlertTriangle,
           text: `Medical Accuracy: ${(accuracy * 100).toFixed(1)}%`,

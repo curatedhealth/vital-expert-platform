@@ -95,4 +95,4 @@ export function ClinicalValidationSelector({
   );
 }
 
-export { CLINICAL_VALIDATION_OPTIONS };
+export { VALIDATION_OPTIONS as CLINICAL_VALIDATION_OPTIONS };

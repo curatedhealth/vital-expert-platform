@@ -74,8 +74,10 @@ export const RagKnowledgeBaseSelector: React.FC<RagKnowledgeBaseSelectorProps> =
     setSelectedRag([]);
   };
 
+  const renderQualityBadge = (score: number | undefined) => {
     if (!score) return null;
 
+    const percentage = Math.round(score * 100);
     let variant: 'default' | 'secondary' | 'destructive' = 'secondary';
 
     if (percentage >= 90) variant = 'default';

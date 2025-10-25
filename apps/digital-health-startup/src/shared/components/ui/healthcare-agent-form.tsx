@@ -45,7 +45,9 @@ export function HealthcareAgentForm({
   mode = 'create',
   className
 }: HealthcareAgentFormProps) {
+  const isReadOnly = mode === 'view';
 
+  const handleChange = (field: keyof HealthcareAgentFormData, value: any) => {
     onChange({ [field]: value });
   };
 

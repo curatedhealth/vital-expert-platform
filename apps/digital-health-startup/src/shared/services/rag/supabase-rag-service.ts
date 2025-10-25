@@ -136,7 +136,7 @@ export class SupabaseRAGService {
     domain?: string,
     category?: string
   ): Promise<KnowledgeSource[]> {
-
+    let query = this.supabase
       .from('knowledge_sources')
       .select('*')
       .eq('status', 'active')
@@ -178,7 +178,7 @@ export class SupabaseRAGService {
     entities?: Record<string, string[]>;
     quality_score?: number;
   }[]): Promise<DocumentChunk[]> {
-
+    const chunksToInsert = chunks.map((chunk) => ({
       knowledge_source_id: chunk.knowledge_source_id,
       content: chunk.content,
       content_length: chunk.content.length,
@@ -230,6 +230,7 @@ export class SupabaseRAGService {
 
     // First, get the embedding for the query text
     // In a real implementation, you would call your embedding service here
+    const queryEmbedding = await this.getQueryEmbedding(text, embedding_model);
 
     // Log the query for analytics
     if (agent_id) {
@@ -270,12 +271,14 @@ export class SupabaseRAGService {
     maxResults: number = 10
   ): Promise<SearchResult[]> {
     // Get agent's primary domain and capabilities
+    const agent = await agentService.getAgentById(agentId);
 
     if (!agent) {
       throw new Error('Agent not found');
     }
 
     // Get query embedding
+    const queryEmbedding = await this.getQueryEmbedding(queryText, 'openai');
 
     // Use the agent-optimized search function
     const { data, error } = await this.supabase.rpc('search_knowledge_for_agent', {
@@ -315,13 +318,13 @@ export class SupabaseRAGService {
     contextWeight: number = 0.3
   ): Promise<SearchResult[]> {
     // Combine query with recent conversation context
-
+    const contextualQuery = [
       ...conversationHistory.slice(-3), // Last 3 messages
       query.text
     ].join(' ');
 
     // Perform search with enhanced context
-
+    const results = await this.searchKnowledge({
       ...query,
       text: contextualQuery
     });
@@ -464,6 +467,10 @@ export class SupabaseRAGService {
       .select('id, content_length')
       .in('knowledge_source_id', stats?.map(s => s.id) || []);
 
+    const totalSources = stats?.length || 0;
+    const totalChunks = chunkStats?.length || 0;
+    const totalSizeMB = (chunkStats?.reduce((sum, chunk) => sum + (chunk.content_length || 0), 0) || 0) / (1024 * 1024);
+
     await this.supabase
       .from('knowledge_domains')
       .update({
@@ -521,6 +528,9 @@ export class SupabaseRAGService {
 
   private calculateContextRelevance(content: string, context: string[]): number {
     // Simple keyword overlap scoring
+    const contentWords = new Set(content.toLowerCase().split(/\s+/));
+    const contextWords = new Set(context.join(' ').toLowerCase().split(/\s+/));
+    const overlap = [...contentWords].filter(word => contextWords.has(word)).length;
 
     return overlap / Math.max(contentWords.size, 1);
   }
@@ -618,6 +628,9 @@ export class SupabaseRAGService {
       domainCounts[source.domain] = (domainCounts[source.domain] || 0) + 1;
     });
 
+    const totalSize = chunksCount.data?.reduce((sum, chunk) => sum + (chunk.content_length || 0), 0) || 0;
+    const avgTime = avgQueryTime.data?.reduce((sum, log) => sum + (log.retrieval_time_ms || 0), 0) / Math.max(avgQueryTime.data?.length || 1, 1);
+
     return {
       total_sources: sourcesCount.count || 0,
       total_chunks: chunksCount.count || 0,
@@ -644,7 +657,7 @@ export class SupabaseRAGService {
   }> {
     try {
       // Use the existing searchKnowledge method
-
+      const results = await this.searchKnowledge({
         text: question,
         domain: options.agentType,
         max_results: options.maxResults || 5,
@@ -655,7 +668,7 @@ export class SupabaseRAGService {
       });
 
       // Build context from results
-
+      const context = results
         .map((result, index) =>
           `Source ${index + 1}: ${result.source_title}\n${result.content}\n`
         )

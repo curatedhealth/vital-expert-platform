@@ -46,6 +46,7 @@ export class MasterOrchestrator extends AgentOrchestrator {
   }
 
   async routeQuery(query: string, context?: Partial<QueryContext>): Promise<OrchestrationResult> {
+    const queryId = this.generateQueryId();
 
     // Build full context
     const fullContext: QueryContext = {
@@ -61,6 +62,7 @@ export class MasterOrchestrator extends AgentOrchestrator {
       // }...`);
 
       // Step 1: Classify intent
+      const intent = await this.intentClassifier.classifyIntent(query, fullContext);
 
       // `);
 
@@ -70,6 +72,7 @@ export class MasterOrchestrator extends AgentOrchestrator {
       }
 
       // Step 3: Select appropriate agent(s)
+      const selectedAgents = await this.agentSelector.selectAgents(query, intent, fullContext);
 
       // .name).join(', ')}`);
 
@@ -86,10 +89,10 @@ export class MasterOrchestrator extends AgentOrchestrator {
       }
 
       // Step 5: Add timing and metadata
-
+      const responseTime = Date.now() - parseInt(queryId.split('_')[1]);
       result.responseTime = responseTime;
 
-      // return result;
+      return result;
 
     } catch (error) {
       // console.error(`❌ Orchestration error:`, error);
@@ -98,9 +101,11 @@ export class MasterOrchestrator extends AgentOrchestrator {
   }
 
   private isDigitalHealthQuery(query: string, intent: IntentResult): boolean {
+    const lowerQuery = query.toLowerCase();
 
     // Check keywords with higher weight for exact matches
-
+    const hasKeywordMatch = this.digitalHealthKeywords.some(keyword => {
+      const keywordVariations = [
         keyword,
         keyword.replace(/\s+/g, ''),  // Remove spaces
         keyword.replace(/\s+/g, '-'), // Hyphenated
@@ -110,17 +115,19 @@ export class MasterOrchestrator extends AgentOrchestrator {
     });
 
     // Check intent classification
-
-                           intent.primaryDomain === 'digital_health' ||
+    const hasDigitalIntent = intent.primaryDomain === 'digital_health' ||
                            intent.domains.includes('technology') ||
                            intent.domains.includes('innovation');
 
     // Additional context clues
-
+    const hasTechHealthCombination = hasKeywordMatch &&
                            (['healthcare', 'medical', 'clinical', 'patient'].some(domain => lowerQuery.includes(domain)));
+
+    const isDigitalHealth = hasKeywordMatch || hasDigitalIntent || hasTechHealthCombination;
 
     if (isDigitalHealth) {
       // }
+    }
 
     return isDigitalHealth;
   }
@@ -131,11 +138,15 @@ export class MasterOrchestrator extends AgentOrchestrator {
     context: QueryContext
   ): Promise<OrchestrationResult> {
     // Use specialized digital health router
+    const agent = await this.digitalHealthRouter.routeToDigitalHealthAgent(query, intent, context);
 
     if (!agent) {
       // Fallback to general routing
       // return this.routeQuery(query, { ...context, skipDigitalHealth: true });
+      throw new Error('No digital health agent found');
     }
+
+    const result = await this.executeSingleAgent(agent, query, context);
 
     // Mark as digital health priority
     result.orchestration.type = 'digital_health_priority';
@@ -157,7 +168,7 @@ export class MasterOrchestrator extends AgentOrchestrator {
       // .display_name}`);
 
       // Execute agent with primary prompt and query
-
+      const response = await agent.executePrompt(
         agent.getConfig().prompt_starters[0] || 'general-analysis',
         { query },
         {
@@ -188,6 +199,7 @@ export class MasterOrchestrator extends AgentOrchestrator {
       // console.error(`❌ Single agent execution failed for ${agent.getConfig().name}:`, error);
 
       // Try fallback agent
+      const fallback = await this.getFallbackAgent(agent);
 
       if (fallback) {
         // .name}`);
@@ -204,7 +216,7 @@ export class MasterOrchestrator extends AgentOrchestrator {
     context: QueryContext
   ): Promise<OrchestrationResult> {
     // // Execute agents in parallel
-
+    const responses = await Promise.allSettled(
       agents.map(agent =>
         agent.executePrompt(
           agent.getConfig().prompt_starters[0] || 'general-analysis',
@@ -249,8 +261,10 @@ export class MasterOrchestrator extends AgentOrchestrator {
     }
 
     // Synthesize responses
+    const synthesized = await this.synthesizer.synthesizeResponses(successfulResponses, query, intent);
 
     // Calculate combined confidence
+    const confidence = this.confidenceCalc.calculateCombinedConfidence(successfulResponses);
 
     return {
       success: true,
@@ -273,9 +287,11 @@ export class MasterOrchestrator extends AgentOrchestrator {
 
   private async getFallbackAgent(failedAgent: DigitalHealthAgent): Promise<DigitalHealthAgent | null> {
     // Find agent with same domain but different name
+    const domain = failedAgent.getConfig().metadata?.domain;
 
     if (!domain) return null;
 
+    const allAgents = await this.agentSelector.getAllAgents();
     return allAgents.find(a =>
       a.getConfig().metadata?.domain === domain &&
       a.getConfig().name !== failedAgent.getConfig().name
@@ -306,6 +322,10 @@ export class MasterOrchestrator extends AgentOrchestrator {
   }
 
   private handleAllAgentsFailed(query: string, responses: unknown[]): OrchestrationResult {
+    const errors = responses.map(r => ({
+      agent: r.agent,
+      error: r.error
+    }));
 
     return {
       success: false,
@@ -357,8 +377,11 @@ export class MasterOrchestrator extends AgentOrchestrator {
     digital_health_priority: boolean;
     response_time_avg: number;
   }> {
+    const allAgents = await this.agentSelector.getAllAgents();
 
     // Note: status property doesn't exist in DigitalHealthAgentConfig, using total agents
+    const totalAgents = allAgents.length;
+    const activeAgents = allAgents.length; // Assuming all loaded agents are active
 
     return {
       status: activeAgents === totalAgents ? 'healthy' : 'degraded',

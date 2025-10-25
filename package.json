@@ -1,0 +1,35 @@
+{
+  "name": "vital-path",
+  "version": "1.0.0",
+  "description": "VITAL Path - Digital Health Platform",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "pnpm -r dev",
+    "build": "pnpm -r build",
+    "test": "pnpm -r test",
+    "lint": "pnpm -r lint",
+    "type-check": "pnpm -r type-check",
+    "clean": "pnpm -r clean",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
+    "db:migrate": "cd apps/digital-health-startup && pnpm db:migrate",
+    "db:status": "cd apps/digital-health-startup && pnpm db:status",
+    "db:setup": "cd apps/digital-health-startup && pnpm db:setup",
+    "healthcare:check": "cd apps/digital-health-startup && pnpm healthcare:check",
+    "pre-commit": "pnpm lint && pnpm type-check",
+    "pre-deploy": "pnpm build && pnpm test"
+  },
+  "devDependencies": {
+    "@types/node": "^20.19.17",
+    "prettier": "^3.0.0",
+    "typescript": "^5"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "pnpm": ">=8.0.0"
+  },
+  "packageManager": "pnpm@8.15.0"
+}

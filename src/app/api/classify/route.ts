@@ -53,6 +53,7 @@ const INTENT_PATTERNS: Record<string, any> = {
 
 // 🧮 Complexity Assessment Factors
 function calculateComplexity(query: string, category: string): number {
+  let complexity = 0.1;
 
   // Length factor
   if (query.length > 200) complexity += 0.3;
@@ -74,7 +75,8 @@ function calculateComplexity(query: string, category: string): number {
   if (query.includes('?') && query.split('?').length > 2) complexity += 0.2;
 
   // Multi-stakeholder complexity
-
+  const stakeholderTerms = ['regulatory', 'clinical', 'commercial', 'marketing', 'payer'];
+  const stakeholderCount = stakeholderTerms.filter(term => query.toLowerCase().includes(term)).length;
   if (stakeholderCount > 1) complexity += stakeholderCount * 0.05;
 
   return Math.min(complexity, 1.0);
@@ -82,6 +84,7 @@ function calculateComplexity(query: string, category: string): number {
 
 // 🎯 Context Analysis
 function analyzeContext(query: string, category: string) {
+  const queryLower = query.toLowerCase();
 
   // Urgency Analysis
   let urgency: 'low' | 'medium' | 'high' | 'critical' = 'medium';
@@ -123,7 +126,9 @@ function analyzeContext(query: string, category: string) {
 }
 
 // 🔍 Intent Scoring Algorithm
-function scoreIntentMatch(tokens: string[], query: string, pattern: unknown): unknown {
+function scoreIntentMatch(tokens: string[], query: string, pattern: any): { confidence: number; keyTerms: string[] } {
+  let score = 0;
+  const foundKeywords: string[] = [];
 
   // Score keywords
   for (const keyword of pattern.keywords) {
@@ -148,7 +153,7 @@ function scoreIntentMatch(tokens: string[], query: string, pattern: unknown): un
 
 export async function POST(request: NextRequest) {
   try {
-
+    const body = await request.json();
     const { query } = body;
 
     if (!query || query.length < 10) {
@@ -158,27 +163,28 @@ export async function POST(request: NextRequest) {
         complexity: 0.1,
         agents: [],
         context: {
-          urgency: 'low',
-          stakeholder: 'researcher',
-          phase: 'discovery'
+          urgency: 'low' as const,
+          stakeholder: 'researcher' as const,
+          phase: 'discovery' as const
         }
       });
     }
 
-    return NextResponse.json({
+    // Tokenize query for pattern matching
+    const queryLower = query.toLowerCase();
+    const tokens = queryLower.split(/\s+/);
+
+    // Initialize best match
+    let bestMatch = {
       category: 'general',
       confidence: 0.3,
       complexity: 0.1,
-      agents: [] as string[],
-      context: {
-        urgency: 'low' as const,
-        stakeholder: 'researcher' as const,
-        phase: 'discovery' as const
-      }
-    });
+      agents: [] as string[]
+    };
 
     // Fast pattern matching
     for (const [category, pattern] of Object.entries(INTENT_PATTERNS)) {
+      const score = scoreIntentMatch(tokens, queryLower, pattern);
 
       if (score.confidence > bestMatch.confidence) {
         bestMatch = {
@@ -191,6 +197,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Context analysis
+    const context = analyzeContext(query, bestMatch.category);
 
     // Apply contextual boosting
     if (bestMatch.category === 'regulatory' && query.includes('510k')) {

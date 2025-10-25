@@ -103,7 +103,7 @@ export class VitalAIOrchestrator extends ComplianceAwareOrchestrator {
    */
   private async ensureAgentsReady(): Promise<void> {
 
-    if (agentCount === 0) {
+    if (this.availableAgents.length === 0) {
       // await this.initializeBaseAgents();
     }
   }
@@ -119,15 +119,16 @@ export class VitalAIOrchestrator extends ComplianceAwareOrchestrator {
         return this.availableAgents;
       }
 
-      // const __response = await fetch('http://localhost:3000/api/agents');
-      if (!response.ok) {
-        throw new Error(`Failed to fetch agents: ${response.status}`);
-      }
+      // TODO: Implement actual API call
+      // const response = await fetch('http://localhost:3000/api/agents');
+      // if (!response.ok) {
+      //   throw new Error(`Failed to fetch agents: ${response.status}`);
+      // }
+      // const agentsData = await response.json();
+      // this.availableAgents = agentsData.success ? agentsData.data.agents : [];
+      // this.agentsLastFetched = Date.now();
 
-      this.availableAgents = agentsData.success ? agentsData.data.agents : [];
-      this.agentsLastFetched = Date.now();
-
-      // return this.availableAgents;
+      return this.availableAgents;
 
     } catch (error) {
       // console.warn('⚠️ Failed to fetch agents, using fallback:', error);

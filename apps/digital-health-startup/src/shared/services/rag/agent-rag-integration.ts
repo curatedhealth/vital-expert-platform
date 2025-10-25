@@ -3,6 +3,14 @@ export interface AgentRAGConfig {
   agentName: string;
 }
 
+export interface AgentRAGQuery {
+  query: string;
+  agentId: string;
+  context?: string;
+  useMultiRAG?: boolean;
+  maxResults?: number;
+}
+
 export class AgentRAGIntegrationService {
   async queryAgentKnowledge(params: any) {
     return {

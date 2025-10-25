@@ -64,6 +64,7 @@ interface VoiceSession {
   accuracy: number;
 }
 
+const medicalCommands = [
   {
     trigger: ['show patient timeline', 'open timeline', 'patient history'],
     action: 'navigate',
@@ -96,6 +97,7 @@ interface VoiceSession {
   }
 ];
 
+const medicalTermLibrary = [
   { term: 'hypertension', type: 'condition', coding: { system: 'ICD-10', code: 'I10', display: 'Essential hypertension' }},
   { term: 'diabetes mellitus', type: 'condition', coding: { system: 'ICD-10', code: 'E11', display: 'Type 2 diabetes mellitus' }},
   { term: 'myocardial infarction', type: 'condition', coding: { system: 'ICD-10', code: 'I21', display: 'Acute myocardial infarction' }},
@@ -130,9 +132,17 @@ export function VoiceIntegration({
   const [supportedCommands, setSupportedCommands] = useState(medicalCommands);
   const [detectedTerms, setDetectedTerms] = useState<MedicalTerm[]>([]);
 
+  // Refs for speech recognition and audio processing
+  const recognitionRef = useRef<any>(null);
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const analyserRef = useRef<AnalyserNode | null>(null);
+  const microphoneRef = useRef<MediaStreamAudioSourceNode | null>(null);
+  const animationRef = useRef<number | null>(null);
+
   // Initialize speech recognition
   useEffect(() => {
     if (typeof window !== 'undefined' && 'webkitSpeechRecognition' in window) {
+      const recognition = new (window as any).webkitSpeechRecognition();
 
       recognition.continuous = true;
       recognition.interimResults = true;
@@ -140,11 +150,15 @@ export function VoiceIntegration({
       recognition.maxAlternatives = 3;
 
       recognition.onstart = () => {
-        // };
+        setIsListening(true);
+      };
 
-      recognition.onresult = (event: unknown) => {
+      recognition.onresult = (event: any) => {
+        let finalTranscript = '';
+        let interimTranscript = '';
 
-        for (let __i = event.resultIndex; i < event.results.length; i++) {
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          const transcript = event.results[i][0].transcript;
 
           if (event.results[i].isFinal) {
             finalTranscript += transcript;
@@ -153,6 +167,7 @@ export function VoiceIntegration({
           }
         }
 
+        const currentText = finalTranscript || interimTranscript;
         setCurrentTranscription(currentText);
 
         if (finalTranscript) {
@@ -186,8 +201,9 @@ export function VoiceIntegration({
   }, [settings.language]);
 
   // Audio level monitoring
-
+  const startAudioMonitoring = useCallback(async () => {
     try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
 
       audioContextRef.current = new AudioContext();
       analyserRef.current = audioContextRef.current.createAnalyser();
@@ -196,8 +212,12 @@ export function VoiceIntegration({
       analyserRef.current.fftSize = 256;
       microphoneRef.current.connect(analyserRef.current);
 
+      const dataArray = new Uint8Array(analyserRef.current.frequencyBinCount);
+
+      const updateAudioLevel = () => {
         if (analyserRef.current) {
           analyserRef.current.getByteFrequencyData(dataArray);
+          const average = dataArray.reduce((a, b) => a + b) / dataArray.length;
 
           setVoiceLevel(Math.min(100, (average / 128) * 100));
         }
@@ -210,6 +230,7 @@ export function VoiceIntegration({
     }
   }, []);
 
+  const stopAudioMonitoring = useCallback(() => {
     if (audioContextRef.current) {
       audioContextRef.current.close();
       audioContextRef.current = null;
@@ -220,11 +241,12 @@ export function VoiceIntegration({
     setVoiceLevel(0);
   }, []);
 
+  const processTranscription = useCallback((text: string) => {
     setIsProcessing(true);
 
     // Detect medical terms
     const terms: MedicalTerm[] = [];
-    medicalVocabulary.forEach(vocab => {
+    medicalTermLibrary.forEach(vocab => {
       if (text.toLowerCase().includes(vocab.term.toLowerCase())) {
         terms.push({
           term: vocab.term,
@@ -280,6 +302,7 @@ export function VoiceIntegration({
     setTimeout(() => setIsProcessing(false), 500);
   }, [supportedCommands, currentSession, settings.autoCommand, onCommand, onTranscription]);
 
+  const startListening = useCallback(() => {
     if (recognitionRef.current && !isListening) {
       const newSession: VoiceSession = {
         id: `session-${Date.now()}`,
@@ -299,6 +322,7 @@ export function VoiceIntegration({
     }
   }, [isListening, startAudioMonitoring]);
 
+  const stopListening = useCallback(() => {
     if (recognitionRef.current && isListening) {
       recognitionRef.current.stop();
       setIsListening(false);
@@ -311,6 +335,7 @@ export function VoiceIntegration({
     }
   }, [isListening, currentSession, stopAudioMonitoring]);
 
+  const toggleListening = useCallback(() => {
     if (isListening) {
       stopListening();
     } else {

@@ -165,12 +165,17 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    return {
+    return NextResponse.json({
       category: 'general',
       confidence: 0.3,
       complexity: 0.1,
-      agents: [] as string[]
-    };
+      agents: [] as string[],
+      context: {
+        urgency: 'low' as const,
+        stakeholder: 'researcher' as const,
+        phase: 'discovery' as const
+      }
+    });
 
     // Fast pattern matching
     for (const [category, pattern] of Object.entries(INTENT_PATTERNS)) {

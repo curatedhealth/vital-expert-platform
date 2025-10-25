@@ -43,20 +43,23 @@ export const RagKnowledgeBaseSelector: React.FC<RagKnowledgeBaseSelectorProps> =
   const [assignmentPriority, setAssignmentPriority] = useState<number>(50);
 
   // Get unique knowledge domains for filtering
-
+  const uniqueDomains = Array.from(
     new Set(
       availableRagDatabases.flatMap(rag => rag.knowledge_domains)
     )
   ).sort();
 
   // Filter RAG databases based on search and filters
-
+  const filteredRag = availableRagDatabases.filter(rag => {
+    const matchesSearch = rag.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          rag.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          rag.purpose_description.toLowerCase().includes(searchTerm.toLowerCase());
-
+    const matchesType = filterType === 'all' || rag.rag_type === filterType;
+    const matchesDomain = filterDomain === 'all' || rag.knowledge_domains.includes(filterDomain);
     return matchesSearch && matchesType && matchesDomain;
   });
 
+  const handleToggleSelect = (ragId: string) => {
     setSelectedRag(prev =>
       prev.includes(ragId)
         ? prev.filter(id => id !== ragId)
@@ -64,6 +67,7 @@ export const RagKnowledgeBaseSelector: React.FC<RagKnowledgeBaseSelectorProps> =
     );
   };
 
+  const handleAssignSelected = () => {
     selectedRag.forEach(ragId => {
       onAssignRag(ragId, assignmentPriority);
     });

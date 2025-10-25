@@ -32,6 +32,7 @@ interface CreateRagModalProps {
   agentName?: string;
 }
 
+const KNOWLEDGE_DOMAINS = [
   'regulatory',
   'clinical_trials',
   'pharmacovigilance',
@@ -54,6 +55,7 @@ interface CreateRagModalProps {
   'companion_diagnostics'
 ];
 
+const EMBEDDING_MODELS = [
   { value: 'text-embedding-ada-002', label: 'OpenAI Ada-002 (Recommended)' },
   { value: 'text-embedding-3-small', label: 'OpenAI Embedding v3 Small' },
   { value: 'text-embedding-3-large', label: 'OpenAI Embedding v3 Large' },
@@ -61,6 +63,7 @@ interface CreateRagModalProps {
   { value: 'custom', label: 'Custom Model' }
 ];
 
+const ACCESS_LEVELS = [
   { value: 'public', label: 'Public - Available to all users' },
   { value: 'organization', label: 'Organization - Available to organization members' },
   { value: 'private', label: 'Private - Restricted access' }

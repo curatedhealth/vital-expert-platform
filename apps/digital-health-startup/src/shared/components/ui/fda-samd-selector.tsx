@@ -6,6 +6,7 @@ import { FDASaMDClass } from '@/shared/types/agent.types';
 import { Badge } from './badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './select';
 
+const SAMD_OPTIONS = [
   {
     value: FDASaMDClass.NONE,
     label: 'No Classification',

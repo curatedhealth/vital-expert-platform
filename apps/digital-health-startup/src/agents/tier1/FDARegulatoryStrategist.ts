@@ -187,8 +187,8 @@ When users select a prompt starter, retrieve the full workflow from the Prompt L
     // Extract structured data from response
     if (result.success && result.data) {
       return {
-        pathway: result.data.pathway || "510k",
-        confidence: result.data.success_probability || 0.8,
+        pathway: (result.data.pathway as "510k" | "De Novo" | "PMA" | "513g") || "510k",
+        confidence: (result.data.success_probability as number) || 0.8,
         rationale: result.content?.substring(0, 200) + "..." || "Regulatory analysis complete",
         timeline_estimate: result.data.timeline_months ? `${result.data.timeline_months} months` : "6-12 months",
         key_requirements: [

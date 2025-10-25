@@ -4,7 +4,7 @@ import { LayoutGrid, List, Table as TableIcon, BarChart3 } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useState, useEffect, Suspense } from 'react';
 
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@vital/ui/components/tabs';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@vital/ui';
 import { useAgentsFilter } from '@/contexts/agents-filter-context';
 import { AgentDetailsModal } from '@/features/agents/components/agent-details-modal';
 import { AgentsBoard } from '@/features/agents/components/agents-board';

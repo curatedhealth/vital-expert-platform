@@ -98,6 +98,7 @@ export const RagManagement: React.FC<RagManagementProps> = ({
     setGlobalRagDatabases(mockGlobalRag);
   };
 
+  const loadAgentRagDatabases = () => {
     // Simulate loading agent-specific RAG assignments
     const mockAgentRag: RagKnowledgeBase[] = [
       {
@@ -118,6 +119,7 @@ export const RagManagement: React.FC<RagManagementProps> = ({
     setAgentRagDatabases(mockAgentRag);
   };
 
+  const loadAvailableRagDatabases = () => {
     // Simulate loading available RAG databases for assignment
     const mockAvailable: RagKnowledgeBase[] = [
       ...globalRagDatabases,
@@ -138,10 +140,12 @@ export const RagManagement: React.FC<RagManagementProps> = ({
     setAvailableRagDatabases(mockAvailable);
   };
 
+  const handleCreateRag = (type: 'global' | 'agent_specific') => {
     setCreateModalType(type);
     setShowCreateModal(true);
   };
 
+  const handleSaveNewRag = (newRag: RagKnowledgeBase) => {
     if (newRag.rag_type === 'global') {
       setGlobalRagDatabases(prev => [...prev, newRag]);
     } else {
@@ -150,12 +154,13 @@ export const RagManagement: React.FC<RagManagementProps> = ({
     setShowCreateModal(false);
   };
 
+  const handleAssignRag = async (ragId: string, priority: number) => {
     try {
       // In a real implementation, this would be an API call
       // // Update local state
-
+      const ragToAssign = availableRagDatabases.find(rag => rag.id === ragId);
       if (ragToAssign) {
-
+        const assignedRag = {
           ...ragToAssign,
           is_assigned: true,
           assignment_priority: priority
@@ -174,6 +179,7 @@ export const RagManagement: React.FC<RagManagementProps> = ({
     }
   };
 
+  const handleUnassignRag = async (ragId: string) => {
     try {
       // In a real implementation, this would be an API call
       // // Update local state

@@ -6,6 +6,7 @@ import { ClinicalValidationStatus } from '@/shared/types/agent.types';
 import { Badge } from './badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './select';
 
+const VALIDATION_OPTIONS = [
   {
     value: ClinicalValidationStatus.PENDING,
     label: 'Pending',

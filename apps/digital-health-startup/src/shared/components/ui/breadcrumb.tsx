@@ -4,6 +4,7 @@ import * as React from "react"
 
 import { cn } from "@/shared/services/utils"
 
+const Breadcrumb = React.forwardRef<
   HTMLElement,
   React.ComponentPropsWithoutRef<"nav"> & {
     separator?: React.ReactNode
@@ -11,6 +12,7 @@ import { cn } from "@/shared/services/utils"
 >(({ ...props }, ref) => <nav ref={ref} aria-label="breadcrumb" {...props} />)
 Breadcrumb.displayName = "Breadcrumb"
 
+const BreadcrumbList = React.forwardRef<
   HTMLOListElement,
   React.ComponentPropsWithoutRef<"ol">
 >(({ className, ...props }, ref) => (
@@ -25,6 +27,7 @@ Breadcrumb.displayName = "Breadcrumb"
 ))
 BreadcrumbList.displayName = "BreadcrumbList"
 
+const BreadcrumbItem = React.forwardRef<
   HTMLLIElement,
   React.ComponentPropsWithoutRef<"li">
 >(({ className, ...props }, ref) => (
@@ -36,11 +39,13 @@ BreadcrumbList.displayName = "BreadcrumbList"
 ))
 BreadcrumbItem.displayName = "BreadcrumbItem"
 
+const BreadcrumbLink = React.forwardRef<
   HTMLAnchorElement,
   React.ComponentPropsWithoutRef<"a"> & {
     asChild?: boolean
   }
 >(({ asChild, className, ...props }, ref) => {
+  const Comp = asChild ? Slot : "a"
 
   return (
     <Comp
@@ -52,6 +57,7 @@ BreadcrumbItem.displayName = "BreadcrumbItem"
 })
 BreadcrumbLink.displayName = "BreadcrumbLink"
 
+const BreadcrumbPage = React.forwardRef<
   HTMLSpanElement,
   React.ComponentPropsWithoutRef<"span">
 >(({ className, ...props }, ref) => (
@@ -66,6 +72,7 @@ BreadcrumbLink.displayName = "BreadcrumbLink"
 ))
 BreadcrumbPage.displayName = "BreadcrumbPage"
 
+const BreadcrumbSeparator = ({
   children,
   className,
   ...props
@@ -81,6 +88,7 @@ BreadcrumbPage.displayName = "BreadcrumbPage"
 )
 BreadcrumbSeparator.displayName = "BreadcrumbSeparator"
 
+const BreadcrumbEllipsis = ({
   className,
   ...props
 }: React.ComponentProps<"span">) => (

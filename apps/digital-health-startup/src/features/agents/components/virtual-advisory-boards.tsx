@@ -656,7 +656,7 @@ export default function VirtualAdvisoryBoards({
                 <div>
                   <p className="text-sm font-medium text-gray-600">Active Boards</p>
                   <p className="text-2xl font-bold text-blue-600">
-                    {boards.filter(b => b.is_active).length}
+                    {boards.filter((b: any) => b.is_active).length}
                   </p>
                 </div>
                 <Building className="h-8 w-8 text-blue-500" />
@@ -685,7 +685,7 @@ export default function VirtualAdvisoryBoards({
                   <p className="text-sm font-medium text-gray-600">Pending Decisions</p>
                   <p className="text-2xl font-bold text-yellow-600">
                     {boards.reduce((total, board) =>
-                      total + board.recent_decisions.filter(d => d.status === 'pending' || d.status === 'in_review').length, 0
+                      total + board.recent_decisions.filter((d: any) => d.status === 'pending' || d.status === 'in_review').length, 0
                     )}
                   </p>
                 </div>

@@ -178,8 +178,8 @@ export default function PatternLibrary() {
   const handleDeleteNode = (nodeId: string) => {
     setNewPattern(prev => ({
       ...prev,
-      nodes: prev.nodes?.filter(n => n.id !== nodeId),
-      edges: prev.edges?.filter(e => e.from !== nodeId && e.to !== nodeId)
+      nodes: prev.nodes?.filter((n: any) => n.id !== nodeId),
+      edges: prev.edges?.filter((e: any) => e.from !== nodeId && e.to !== nodeId)
     }));
   };
 
@@ -322,7 +322,7 @@ export default function PatternLibrary() {
 
                       {selectedPattern.nodes.map((node, idx) => {
                         const nodeType = NODE_TYPES.find(nt => nt.value === node.type);
-                        const outgoingEdges = selectedPattern.edges.filter(e => e.from === node.id);
+                        const outgoingEdges = selectedPattern.edges.filter((e: any) => e.from === node.id);
 
                         return (
                           <div key={node.id}>
@@ -335,7 +335,7 @@ export default function PatternLibrary() {
                               </div>
                               {outgoingEdges.length > 1 && (
                                 <div className="text-xs text-muted-foreground">
-                                  {outgoingEdges.map(e => (
+                                  {outgoingEdges.map((e: any) => (
                                     <div key={e.to}>{e.condition ? `if ${e.condition} →` : '→'} {e.to}</div>
                                   ))}
                                 </div>

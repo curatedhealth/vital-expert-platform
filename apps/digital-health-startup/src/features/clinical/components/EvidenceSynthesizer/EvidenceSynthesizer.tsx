@@ -252,15 +252,15 @@ export function EvidenceSynthesizer({
   };
 
     if (!selectedStudyTypes.includes('all')) {
-      filtered = filtered.filter(item => selectedStudyTypes.includes(item.studyType));
+      filtered = filtered.filter((item: any) => selectedStudyTypes.includes(item.studyType));
     }
 
     if (selectedEvidenceLevel !== 'all') {
-      filtered = filtered.filter(item => item.evidenceLevel === selectedEvidenceLevel);
+      filtered = filtered.filter((item: any) => item.evidenceLevel === selectedEvidenceLevel);
     }
 
     if (selectedGrade !== 'all') {
-      filtered = filtered.filter(item => item.gradeScore.overall === selectedGrade);
+      filtered = filtered.filter((item: any) => item.gradeScore.overall === selectedGrade);
     }
 
     // Sort results
@@ -279,7 +279,7 @@ export function EvidenceSynthesizer({
     if (checked) {
       setSelectedEvidence(prev => [...prev, evidenceItem]);
     } else {
-      setSelectedEvidence(prev => prev.filter(item => item.id !== evidenceItem.id));
+      setSelectedEvidence(prev => prev.filter((item: any) => item.id !== evidenceItem.id));
     }
   };
 
@@ -513,8 +513,8 @@ export function EvidenceSynthesizer({
                             setSelectedStudyTypes(checked ? ['all'] : []);
                           } else {
 
-                              ? [...selectedStudyTypes.filter(t => t !== 'all'), type]
-                              : selectedStudyTypes.filter(t => t !== type);
+                              ? [...selectedStudyTypes.filter((t: any) => t !== 'all'), type]
+                              : selectedStudyTypes.filter((t: any) => t !== type);
                             setSelectedStudyTypes(newTypes.length ? newTypes : ['all']);
                           }
                         }}

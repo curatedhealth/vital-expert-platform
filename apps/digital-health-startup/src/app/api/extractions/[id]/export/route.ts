@@ -52,7 +52,7 @@ export async function GET(
     }
 
     // Get entity relationships
-    const entityIds = entities.map(e => e.id);
+    const entityIds = entities.map((e: any) => e.id);
     const { data: relationships } = await supabase
       .from('entity_relationships')
       .select('*')
@@ -99,7 +99,7 @@ function exportJSON(extractionId: string, entities: any[], relationships: any[])
     extraction_id: extractionId,
     exported_at: new Date().toISOString(),
     format: 'json',
-    entities: entities.map(e => ({
+    entities: entities.map((e: any) => ({
       id: e.id,
       type: e.entity_type,
       text: e.entity_text,
@@ -133,7 +133,7 @@ function exportJSON(extractionId: string, entities: any[], relationships: any[])
         updated_at: e.updated_at
       }
     })),
-    relationships: relationships.map(r => ({
+    relationships: relationships.map((r: any) => ({
       id: r.id,
       source_entity_id: r.source_entity_id,
       target_entity_id: r.target_entity_id,
@@ -179,7 +179,7 @@ function exportCSV(extractionId: string, entities: any[]) {
     'Created At'
   ];
 
-  const rows = entities.map(e => [
+  const rows = entities.map((e: any) => [
     e.id,
     e.entity_type,
     `"${(e.entity_text || '').replace(/"/g, '""')}"`,
@@ -217,7 +217,7 @@ function exportFHIR(extractionId: string, entities: any[], relationships: any[])
     id: extractionId,
     type: 'collection',
     timestamp: new Date().toISOString(),
-    entry: entities.map(e => ({
+    entry: entities.map((e: any) => ({
       fullUrl: `urn:uuid:${e.id}`,
       resource: convertEntityToFHIR(e)
     }))
@@ -483,7 +483,7 @@ function exportPDF(extractionId: string, entities: any[], relationships: any[]) 
   </div>
 
   <h2>Extracted Entities</h2>
-  ${entities.map(e => `
+  ${entities.map((e: any) => `
     <div class="entity">
       <div class="entity-header">
         <span class="entity-type">${e.entity_type}</span>

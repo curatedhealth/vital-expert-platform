@@ -195,7 +195,7 @@ export class MigrationRunner {
 
       // Check if all applied migrations still exist and have correct checksums
       for (const appliedId of appliedMigrations) {
-        const migration = allMigrations.find(m => m.id === appliedId);
+        const migration = allMigrations.find((m: any) => m.id === appliedId);
         if (!migration) {
           console.warn(`⚠️  Applied migration ${appliedId} no longer exists in filesystem`);
           return false;

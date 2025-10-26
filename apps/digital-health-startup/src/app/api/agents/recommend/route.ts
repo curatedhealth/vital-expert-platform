@@ -136,7 +136,7 @@ export async function POST(request: NextRequest) {
     console.log(`✅ Found ${agents.length} candidate agents`);
 
     // Step 3: Use GPT-4 for semantic ranking (RAG)
-    const agentList = agents.map(agent => ({
+    const agentList = agents.map((agent: any) => ({
       id: agent.id,
       name: agent.display_name || agent.name,
       description: agent.description,
@@ -206,13 +206,13 @@ Example:
 
     // Get full agent details in order of recommendation
     const recommendedAgents = recommendedAgentIds
-      .map((id: string) => agents.find(agent => agent.id === id))
+      .map((id: string) => agents.find((agent: any) => agent.id === id))
       .filter(Boolean);
 
     // If we got less than 2 recommendations, add more agents
     if (recommendedAgents.length < 2 && agents.length >= 2) {
       const additionalAgents = agents
-        .filter(agent => !recommendedAgentIds.includes(agent.id))
+        .filter((agent: any) => !recommendedAgentIds.includes(agent.id))
         .slice(0, 2 - recommendedAgents.length);
       recommendedAgents.push(...additionalAgents);
     }

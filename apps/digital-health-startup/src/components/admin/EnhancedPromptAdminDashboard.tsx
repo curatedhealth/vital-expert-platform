@@ -89,12 +89,12 @@ export function EnhancedPromptAdminDashboard({ className = '' }: EnhancedPromptA
   });
 
   // Get unique domains and complexity levels for filters
-  const domains = [...new Set(prompts.map(p => p.domain))];
-  const complexityLevels = [...new Set(prompts.map(p => p.complexity_level))];
+  const domains = [...new Set(prompts.map((p: any) => p.domain))];
+  const complexityLevels = [...new Set(prompts.map((p: any) => p.complexity_level))];
 
   // Get performance metrics for a specific prompt
   const getPromptMetrics = (promptId: string) => {
-    return performanceData.find(p => p.prompt_id === promptId) || {
+    return performanceData.find((p: any) => p.prompt_id === promptId) || {
       usage_count: 0,
       success_rate: 0,
       average_rating: 0,
@@ -408,7 +408,7 @@ export function EnhancedPromptAdminDashboard({ className = '' }: EnhancedPromptA
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Domains</SelectItem>
-                    {domains.map(domain => (
+                    {domains.map((domain: any) => (
                       <SelectItem key={domain} value={domain}>
                         {domain.replace('_', ' ').toUpperCase()}
                       </SelectItem>
@@ -670,19 +670,19 @@ export function EnhancedPromptAdminDashboard({ className = '' }: EnhancedPromptA
                   <div className="flex items-center justify-between">
                     <span className="text-sm">Excellent (80%+)</span>
                     <span className="text-sm font-medium">
-                      {performanceData.filter(p => p.success_rate >= 80).length}
+                      {performanceData.filter((p: any) => p.success_rate >= 80).length}
                     </span>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-sm">Good (60-79%)</span>
                     <span className="text-sm font-medium">
-                      {performanceData.filter(p => p.success_rate >= 60 && p.success_rate < 80).length}
+                      {performanceData.filter((p: any) => p.success_rate >= 60 && p.success_rate < 80).length}
                     </span>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-sm">Needs Attention (&lt;60%)</span>
                     <span className="text-sm font-medium">
-                      {performanceData.filter(p => p.success_rate < 60).length}
+                      {performanceData.filter((p: any) => p.success_rate < 60).length}
                     </span>
                   </div>
                 </div>

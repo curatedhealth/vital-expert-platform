@@ -416,7 +416,7 @@ export function PromptCRUDManager({ className = '' }: PromptCRUDManagerProps) {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Domains</SelectItem>
-                  {DOMAINS.map(domain => (
+                  {DOMAINS.map((domain: any) => (
                     <SelectItem key={domain} value={domain}>
                       {domain.replace('_', ' ').toUpperCase()}
                     </SelectItem>
@@ -755,7 +755,7 @@ function PromptForm({
                   <SelectValue placeholder="Select domain" />
                 </SelectTrigger>
                 <SelectContent>
-                  {DOMAINS.map(domain => (
+                  {DOMAINS.map((domain: any) => (
                     <SelectItem key={domain} value={domain}>
                       {domain.replace('_', ' ').toUpperCase()}
                     </SelectItem>
@@ -835,7 +835,7 @@ function PromptForm({
                 value={formData.target_users.join(', ')}
                 onChange={(e) => setFormData({ 
                   ...formData, 
-                  target_users: e.target.value.split(',').map(s => s.trim()).filter(Boolean)
+                  target_users: e.target.value.split(',').map((s: any) => s.trim()).filter(Boolean)
                 })}
                 placeholder="healthcare_professionals, regulatory_affairs"
               />
@@ -848,7 +848,7 @@ function PromptForm({
               value={formData.use_cases.join(', ')}
               onChange={(e) => setFormData({ 
                 ...formData, 
-                use_cases: e.target.value.split(',').map(s => s.trim()).filter(Boolean)
+                use_cases: e.target.value.split(',').map((s: any) => s.trim()).filter(Boolean)
               })}
               placeholder="protocol_development, regulatory_submission"
             />
@@ -860,7 +860,7 @@ function PromptForm({
               value={formData.regulatory_requirements.join(', ')}
               onChange={(e) => setFormData({ 
                 ...formData, 
-                regulatory_requirements: e.target.value.split(',').map(s => s.trim()).filter(Boolean)
+                regulatory_requirements: e.target.value.split(',').map((s: any) => s.trim()).filter(Boolean)
               })}
               placeholder="FDA, EMA, ICH"
             />

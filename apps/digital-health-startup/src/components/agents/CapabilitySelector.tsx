@@ -184,7 +184,7 @@ export const CapabilitySelector: React.FC<CapabilitySelectorProps> = ({
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Domains</SelectItem>
-                  {domains.map(domain => (
+                  {domains.map((domain: any) => (
                     <SelectItem key={domain} value={domain}>
                       {domain.replace(/_/g, ' ')}
                     </SelectItem>

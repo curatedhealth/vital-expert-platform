@@ -39,7 +39,7 @@ export function PanelBuilder({
   const { templates } = usePanelStore();
 
   // Get template if templateId is provided
-  const template = templateId ? templates.find(t => t.id === templateId) : null;
+  const template = templateId ? templates.find((t: any) => t.id === templateId) : null;
 
   // Filter experts based on template recommendations
   const filteredExperts = template
@@ -70,7 +70,7 @@ export function PanelBuilder({
       name: panelName,
       description: panelDescription,
       templateId,
-      members: selectedExperts.map(expert => ({
+      members: selectedExperts.map((expert: any) => ({
         agent: expert,
         role: 'expert' as const,
         weight: 1

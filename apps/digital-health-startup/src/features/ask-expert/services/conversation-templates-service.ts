@@ -371,21 +371,21 @@ class ConversationTemplatesService {
    * Get template by ID
    */
   getTemplate(id: string): ConversationTemplate | undefined {
-    return this.templates.find(t => t.id === id);
+    return this.templates.find((t: any) => t.id === id);
   }
 
   /**
    * Get templates by category
    */
   getTemplatesByCategory(category: TemplateCategory): ConversationTemplate[] {
-    return this.templates.filter(t => t.category === category);
+    return this.templates.filter((t: any) => t.category === category);
   }
 
   /**
    * Get templates by industry
    */
   getTemplatesByIndustry(industry: Industry): ConversationTemplate[] {
-    return this.templates.filter(t => t.industry === industry);
+    return this.templates.filter((t: any) => t.industry === industry);
   }
 
   /**
@@ -393,7 +393,7 @@ class ConversationTemplatesService {
    */
   searchTemplates(query: string): ConversationTemplate[] {
     const lowerQuery = query.toLowerCase();
-    return this.templates.filter(t =>
+    return this.templates.filter((t: any) =>
       t.name.toLowerCase().includes(lowerQuery) ||
       t.description.toLowerCase().includes(lowerQuery) ||
       t.tags.some(tag => tag.toLowerCase().includes(lowerQuery))
@@ -461,7 +461,7 @@ class ConversationTemplatesService {
       (progress.completedSteps.length / template.steps.length) * 100;
 
     // Find next step
-    const currentStep = template.steps.find(s => s.id === stepId);
+    const currentStep = template.steps.find((s: any) => s.id === stepId);
     if (currentStep?.nextSteps && currentStep.nextSteps.length > 0) {
       progress.currentStepId = currentStep.nextSteps[0];
     }

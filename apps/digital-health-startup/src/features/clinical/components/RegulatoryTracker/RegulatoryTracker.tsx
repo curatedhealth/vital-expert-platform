@@ -248,8 +248,8 @@ export function RegulatoryTracker({
     const upcoming: { submission: RegulatorySubmission; milestone: unknown }[] = [];
     submissions.forEach(sub => {
       sub.milestones
-        .filter(m => m.status === 'pending' && isAfter(m.date, new Date()))
-        .forEach(m => upcoming.push({ submission: sub, milestone: m }));
+        .filter((m: any) => m.status === 'pending' && isAfter(m.date, new Date()))
+        .forEach((m: any) => upcoming.push({ submission: sub, milestone: m }));
     });
     return upcoming.sort((a, b) => a.milestone.date.getTime() - b.milestone.date.getTime()).slice(0, 5);
   };
@@ -411,7 +411,7 @@ export function RegulatoryTracker({
         <Card>
           <CardContent className="p-4">
             <div className="text-2xl font-bold text-yellow-600">
-              {submissions.filter(s => s.status === 'under_review').length}
+              {submissions.filter((s: any) => s.status === 'under_review').length}
             </div>
             <div className="text-sm text-gray-600">Under Review</div>
           </CardContent>
@@ -427,7 +427,7 @@ export function RegulatoryTracker({
         <Card>
           <CardContent className="p-4">
             <div className="text-2xl font-bold text-green-600">
-              {submissions.filter(s => s.status === 'approved').length}
+              {submissions.filter((s: any) => s.status === 'approved').length}
             </div>
             <div className="text-sm text-gray-600">Approved</div>
           </CardContent>

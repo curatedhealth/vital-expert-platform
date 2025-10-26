@@ -231,7 +231,7 @@ export function AgentDetailsModal({
                           key={domain}
                           className={cn('border', getDomainColor(domain))}
                         >
-                          {domains.find(d => d.value === domain)?.label || domain}
+                          {domains.find((d: any) => d.value === domain)?.label || domain}
                         </Badge>
                       ))}
                     </div>
@@ -341,7 +341,7 @@ export function AgentDetailsModal({
                             key={domain}
                             className={cn('border', getDomainColor(domain))}
                           >
-                            {domains.find(d => d.value === domain)?.label || domain}
+                            {domains.find((d: any) => d.value === domain)?.label || domain}
                           </Badge>
                         ))}
                       </div>

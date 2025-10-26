@@ -178,7 +178,7 @@ Risks/Assumptions:
     for (const persona of personas) {
       // Build context from previous replies
       const priorContext = replies.length > 0
-        ? `\n\nPrevious expert responses:\n${replies.map(r => `${r.persona}: ${r.answer.slice(0, 100)}...`).join('\n')}`
+        ? `\n\nPrevious expert responses:\n${replies.map((r: any) => `${r.persona}: ${r.answer.slice(0, 100)}...`).join('\n')}`
         : '';
 
       const enhancedEvidence = evidenceSummary + priorContext;

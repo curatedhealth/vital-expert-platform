@@ -178,7 +178,7 @@ export class RAGASEvaluator {
       relevancePrompts.map(prompt => this.llm.invoke(prompt))
     );
 
-    const relevanceScores = relevanceResults.map(result => 
+    const relevanceScores = relevanceResults.map((result: any) => 
       this.parseRelevanceScore(result.content as string)
     );
 

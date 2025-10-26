@@ -182,7 +182,7 @@ export class HIPAAComplianceManager {
       if (riskScore > 40) {
         recommendations.push("Implement additional data protection measures");
       }
-      if (violations.some(v => v.type === "PHI_DETECTED")) {
+      if (violations.some((v: any) => v.type === "PHI_DETECTED")) {
         recommendations.push("Consider data de-identification techniques");
       }
       if (!authResult.mfaEnabled) {
@@ -418,7 +418,7 @@ export class HIPAAComplianceManager {
     if (!validationResult.compliant) {
       // console.warn(`🚨 HIPAA Compliance Violation Detected:`, {
       //   user: request.user_id,
-      //   violations: validationResult.violations.map(v => v.type),
+      //   violations: validationResult.violations.map((v: any) => v.type),
       //   riskScore: validationResult.riskScore
       // });
     }

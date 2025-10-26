@@ -212,15 +212,15 @@ IMPORTANT GUIDELINES:
   private buildSummary(actionItems: ActionItem[]): ActionItemSummary {
     return {
       totalItems: actionItems.length,
-      criticalItems: actionItems.filter(a => a.priority === 'critical').length,
-      highPriorityItems: actionItems.filter(a => a.priority === 'high').length,
-      mediumPriorityItems: actionItems.filter(a => a.priority === 'medium').length,
-      lowPriorityItems: actionItems.filter(a => a.priority === 'low').length,
+      criticalItems: actionItems.filter((a: any) => a.priority === 'critical').length,
+      highPriorityItems: actionItems.filter((a: any) => a.priority === 'high').length,
+      mediumPriorityItems: actionItems.filter((a: any) => a.priority === 'medium').length,
+      lowPriorityItems: actionItems.filter((a: any) => a.priority === 'low').length,
 
-      immediateActions: actionItems.filter(a => a.timeline === 'immediate').length,
-      shortTermActions: actionItems.filter(a => a.timeline === 'short-term').length,
-      mediumTermActions: actionItems.filter(a => a.timeline === 'medium-term').length,
-      longTermActions: actionItems.filter(a => a.timeline === 'long-term').length,
+      immediateActions: actionItems.filter((a: any) => a.timeline === 'immediate').length,
+      shortTermActions: actionItems.filter((a: any) => a.timeline === 'short-term').length,
+      mediumTermActions: actionItems.filter((a: any) => a.timeline === 'medium-term').length,
+      longTermActions: actionItems.filter((a: any) => a.timeline === 'long-term').length,
     };
   }
 
@@ -230,19 +230,19 @@ IMPORTANT GUIDELINES:
     actionItems.forEach(item => {
       rolesSet.add(item.responsibleParty);
       rolesSet.add(item.accountableParty);
-      item.consultParties.forEach(p => rolesSet.add(p));
-      item.informParties.forEach(p => rolesSet.add(p));
+      item.consultParties.forEach((p: any) => rolesSet.add(p));
+      item.informParties.forEach((p: any) => rolesSet.add(p));
     });
     const roles = Array.from(rolesSet);
 
     // Build matrix rows
-    const matrix: RACIMatrixRow[] = actionItems.map(item => {
+    const matrix: RACIMatrixRow[] = actionItems.map((item: any) => {
       const assignments: Record<string, 'R' | 'A' | 'C' | 'I'> = {};
 
       assignments[item.responsibleParty] = 'R';
       assignments[item.accountableParty] = 'A';
-      item.consultParties.forEach(p => { assignments[p] = 'C'; });
-      item.informParties.forEach(p => { assignments[p] = 'I'; });
+      item.consultParties.forEach((p: any) => { assignments[p] = 'C'; });
+      item.informParties.forEach((p: any) => { assignments[p] = 'I'; });
 
       return {
         actionItemId: item.id,
@@ -282,7 +282,7 @@ IMPORTANT GUIDELINES:
       phase: phaseInfo.phase,
       timeframe: phaseInfo.timeframe,
       actions: actionItems
-        .filter(item => item.timeline === phaseInfo.timeline)
+        .filter((item: any) => item.timeline === phaseInfo.timeline)
         .sort((a, b) => {
           // Sort by priority within each phase
           const priorityOrder = { critical: 0, high: 1, medium: 2, low: 3 };
@@ -293,7 +293,7 @@ IMPORTANT GUIDELINES:
 
   private calculateCriticalPath(actionItems: ActionItem[]): ActionItem[] {
     // Simple critical path: critical items + their dependencies, in order
-    const criticalItems = actionItems.filter(item => item.priority === 'critical');
+    const criticalItems = actionItems.filter((item: any) => item.priority === 'critical');
     const criticalPath: ActionItem[] = [];
     const added = new Set<string>();
 
@@ -301,7 +301,7 @@ IMPORTANT GUIDELINES:
       // Add dependencies first
       item.dependencies.forEach(depId => {
         if (!added.has(depId)) {
-          const dep = actionItems.find(a => a.id === depId);
+          const dep = actionItems.find((a: any) => a.id === depId);
           if (dep) {
             addItemWithDependencies(dep);
           }

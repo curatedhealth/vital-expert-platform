@@ -236,24 +236,24 @@ function KnowledgePageContent() {
                 <option value="all">All Domains ({domains.length})</option>
 
                 {/* Tier 1: Core Domains */}
-                <option disabled>━━━ TIER 1: CORE ({domains.filter(d => d.tier === 1).length}) ━━━</option>
-                {domains.filter(d => d.tier === 1).map(domain => (
+                <option disabled>━━━ TIER 1: CORE ({domains.filter((d: any) => d.tier === 1).length}) ━━━</option>
+                {domains.filter((d: any) => d.tier === 1).map((domain: any) => (
                   <option key={domain.id} value={domain.slug}>
                     {domain.name}
                   </option>
                 ))}
 
                 {/* Tier 2: Specialized Domains */}
-                <option disabled>━━━ TIER 2: SPECIALIZED ({domains.filter(d => d.tier === 2).length}) ━━━</option>
-                {domains.filter(d => d.tier === 2).map(domain => (
+                <option disabled>━━━ TIER 2: SPECIALIZED ({domains.filter((d: any) => d.tier === 2).length}) ━━━</option>
+                {domains.filter((d: any) => d.tier === 2).map((domain: any) => (
                   <option key={domain.id} value={domain.slug}>
                     {domain.name}
                   </option>
                 ))}
 
                 {/* Tier 3: Emerging Domains */}
-                <option disabled>━━━ TIER 3: EMERGING ({domains.filter(d => d.tier === 3).length}) ━━━</option>
-                {domains.filter(d => d.tier === 3).map(domain => (
+                <option disabled>━━━ TIER 3: EMERGING ({domains.filter((d: any) => d.tier === 3).length}) ━━━</option>
+                {domains.filter((d: any) => d.tier === 3).map((domain: any) => (
                   <option key={domain.id} value={domain.slug}>
                     {domain.name}
                   </option>

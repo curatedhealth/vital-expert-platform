@@ -259,7 +259,7 @@ export default function ChatPage() {
     // Validate key before accessing object
     // eslint-disable-next-line security/detect-object-injection
     const iconName = Object.prototype.hasOwnProperty.call(iconMap, promptText) ? iconMap[promptText] : 'checklist';
-    const icon = promptIcons.find(i => i.name === iconName);
+    const icon = promptIcons.find((i: any) => i.name === iconName);
     return icon?.file_url || '📋'; // Fallback emoji
   };
 
@@ -568,9 +568,9 @@ export default function ChatPage() {
 
   const handleAgentSelect = (agentId: string) => {
     // First try to find in user's agents, then in all system agents
-    let agent = userAgents.find(a => a.id === agentId);
+    let agent = userAgents.find((a: any) => a.id === agentId);
     if (!agent) {
-      agent = agents.find(a => a.id === agentId);
+      agent = agents.find((a: any) => a.id === agentId);
     }
     if (agent) {
       setSelectedAgent(agent);

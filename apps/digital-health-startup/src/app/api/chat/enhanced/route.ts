@@ -269,7 +269,7 @@ export async function GET() {
       performance: performanceMetrics,
       agents: {
         total: orch.getAgentStatus().length,
-        active: orch.getAgentStatus().filter(a => a.status === 'active').length
+        active: orch.getAgentStatus().filter((a: any) => a.status === 'active').length
       }
     });
 

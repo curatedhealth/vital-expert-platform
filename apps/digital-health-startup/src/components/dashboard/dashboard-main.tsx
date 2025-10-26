@@ -605,9 +605,9 @@ const DashboardMain: React.FC = () => {
                   <div className="space-y-4">
                     {[
                       { severity: 'Critical', count: criticalAlerts.length, color: 'text-red-600' },
-                      { severity: 'Error', count: alerts.filter(a => a.severity === 'error' && !a.acknowledged).length, color: 'text-red-500' },
-                      { severity: 'Warning', count: alerts.filter(a => a.severity === 'warning' && !a.acknowledged).length, color: 'text-yellow-600' },
-                      { severity: 'Info', count: alerts.filter(a => a.severity === 'info' && !a.acknowledged).length, color: 'text-blue-600' }
+                      { severity: 'Error', count: alerts.filter((a: any) => a.severity === 'error' && !a.acknowledged).length, color: 'text-red-500' },
+                      { severity: 'Warning', count: alerts.filter((a: any) => a.severity === 'warning' && !a.acknowledged).length, color: 'text-yellow-600' },
+                      { severity: 'Info', count: alerts.filter((a: any) => a.severity === 'info' && !a.acknowledged).length, color: 'text-blue-600' }
                     ].map((item, index) => (
                       <div key={index} className="flex items-center justify-between">
                         <span className="text-sm font-medium">{item.severity}</span>

@@ -324,7 +324,7 @@ const SolutionDesignPlatform: React.FC<SolutionDesignPlatformProps> = ({ userId 
                   <p className="text-gray-600 text-sm mb-4 line-clamp-2">{project.description}</p>
 
                   <div className="flex justify-between items-center text-xs text-gray-500">
-                    <span>{solutionTypes.find(t => t.value === project.type)?.label}</span>
+                    <span>{solutionTypes.find((t: any) => t.value === project.type)?.label}</span>
                     <span>v{project.version}</span>
                   </div>
 
@@ -927,7 +927,7 @@ const SolutionDesignPlatform: React.FC<SolutionDesignPlatformProps> = ({ userId 
               <div>
                 <div className="text-sm text-gray-500">Type</div>
                 <div className="font-medium">
-                  {solutionTypes.find(t => t.value === selectedProject.type)?.label}
+                  {solutionTypes.find((t: any) => t.value === selectedProject.type)?.label}
                 </div>
               </div>
               <div>

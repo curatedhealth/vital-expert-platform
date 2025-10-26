@@ -652,11 +652,11 @@ export default function EnhancedCapabilityManagement({
             <div className="flex items-center space-x-4 text-sm text-gray-600">
               <div className="flex items-center space-x-1">
                 <Star className="h-4 w-4 text-green-500" />
-                <span>{capabilities.filter(c => c.is_new).length} New</span>
+                <span>{capabilities.filter((c: any) => c.is_new).length} New</span>
               </div>
               <div className="flex items-center space-x-1">
                 <Award className="h-4 w-4 text-yellow-500" />
-                <span>{capabilities.filter(c => c.panel_recommended).length} Panel Recommended</span>
+                <span>{capabilities.filter((c: any) => c.panel_recommended).length} Panel Recommended</span>
               </div>
             </div>
           </div>

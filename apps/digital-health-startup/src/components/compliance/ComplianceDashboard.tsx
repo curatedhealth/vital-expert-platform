@@ -118,8 +118,8 @@ export function ComplianceDashboard({
   // Calculate overall compliance
   const overallStats = {
     total: agentCompliance.length,
-    compliant: agentCompliance.filter(c => c.complianceStatus === 'compliant').length,
-    certified: agentCompliance.filter(c => c.isCertified).length,
+    compliant: agentCompliance.filter((c: any) => c.complianceStatus === 'compliant').length,
+    certified: agentCompliance.filter((c: any) => c.isCertified).length,
     avgScore: agentCompliance.length > 0
       ? agentCompliance.reduce((sum, c) => sum + (c.complianceScore || 0), 0) / agentCompliance.length
       : 0
@@ -183,7 +183,7 @@ export function ComplianceDashboard({
                   ? frameworks.filter(fw => fw.code === selectedFramework)
                   : frameworks
                 ).map((framework) => {
-                  const compliance = agentCompliance.find(c => c.frameworkCode === framework.code)
+                  const compliance = agentCompliance.find((c: any) => c.frameworkCode === framework.code)
 
                   return (
                     <FrameworkCard
@@ -418,8 +418,8 @@ export function ComplianceSummaryWidget({ agentId, className = '' }: { agentId?:
     }
   }, [agentId]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const compliantCount = agentCompliance.filter(c => c.complianceStatus === 'compliant').length
-  const certifiedCount = agentCompliance.filter(c => c.isCertified).length
+  const compliantCount = agentCompliance.filter((c: any) => c.complianceStatus === 'compliant').length
+  const certifiedCount = agentCompliance.filter((c: any) => c.isCertified).length
 
   return (
     <div className={`flex items-center gap-4 ${className}`}>

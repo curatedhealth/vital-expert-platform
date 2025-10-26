@@ -103,7 +103,7 @@ export function ExpertAgentCard({
                 <Avatar className="h-10 w-10">
                   <AvatarImage src={agent.avatar} alt={agent.name} />
                   <AvatarFallback className="bg-blue-100 text-blue-700">
-                    {agent.name.split(' ').map(n => n[0]).join('')}
+                    {agent.name.split(' ').map((n: any) => n[0]).join('')}
                   </AvatarFallback>
                 </Avatar>
                 <div className={cn(
@@ -147,7 +147,7 @@ export function ExpertAgentCard({
               )}>
                 <AvatarImage src={agent.avatar} alt={agent.name} />
                 <AvatarFallback className="bg-blue-100 text-blue-700 text-xs">
-                  {agent.name.split(' ').map(n => n[0]).join('')}
+                  {agent.name.split(' ').map((n: any) => n[0]).join('')}
                 </AvatarFallback>
               </Avatar>
               <div className={cn(
@@ -195,7 +195,7 @@ export function ExpertAgentCard({
                 <Avatar className="h-14 w-14">
                   <AvatarImage src={agent.avatar} alt={agent.name} />
                   <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-500 text-white font-semibold">
-                    {agent.name.split(' ').map(n => n[0]).join('')}
+                    {agent.name.split(' ').map((n: any) => n[0]).join('')}
                   </AvatarFallback>
                 </Avatar>
                 <div className={cn(

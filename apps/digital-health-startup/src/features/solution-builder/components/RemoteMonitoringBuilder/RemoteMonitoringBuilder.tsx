@@ -146,7 +146,7 @@ const RemoteMonitoringBuilder: React.FC = () => {
     const pipeline: DataPipeline = {
       id: 'pipeline-1',
       name: 'Patient Remote Monitoring Pipeline',
-      sourceDevices: selectedDevices.map(d => d.id),
+      sourceDevices: selectedDevices.map((d: any) => d.id),
       processors: [
         {
           id: 'proc-1',
@@ -338,13 +338,13 @@ const RemoteMonitoringBuilder: React.FC = () => {
                     <div
                       key={device.id}
                       className={`border rounded-lg p-4 cursor-pointer transition-all ${
-                        selectedDevices.find(d => d.id === device.id)
+                        selectedDevices.find((d: any) => d.id === device.id)
                           ? 'border-blue-500 bg-blue-50'
                           : 'border-gray-200 bg-white hover:border-gray-300'
                       }`}
                       onClick={() => {
-                        if (selectedDevices.find(d => d.id === device.id)) {
-                          setSelectedDevices(selectedDevices.filter(d => d.id !== device.id));
+                        if (selectedDevices.find((d: any) => d.id === device.id)) {
+                          setSelectedDevices(selectedDevices.filter((d: any) => d.id !== device.id));
                         } else {
                           setSelectedDevices([...selectedDevices, device]);
                         }
@@ -399,7 +399,7 @@ const RemoteMonitoringBuilder: React.FC = () => {
                             </div>
                           </div>
                           <button
-                            onClick={() => setSelectedDevices(selectedDevices.filter(d => d.id !== device.id))}
+                            onClick={() => setSelectedDevices(selectedDevices.filter((d: any) => d.id !== device.id))}
                             className="text-red-600 hover:text-red-800"
                           >
                             ✕

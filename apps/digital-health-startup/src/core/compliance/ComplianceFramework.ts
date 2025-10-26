@@ -772,7 +772,7 @@ export class ComplianceFramework extends EventEmitter {
         severity: rule.severity
       })),
       recentViolations: auditEvents
-        .filter(e => e.operation === 'compliance_check' && e.outcome === 'warning')
+        .filter((e: any) => e.operation === 'compliance_check' && e.outcome === 'warning')
         .slice(0, 10)
         .map(this.mapAuditEventToViolationSummary),
       recommendations: this.generateRecommendations(auditEvents),
@@ -840,7 +840,7 @@ export class ComplianceFramework extends EventEmitter {
   createComplianceMiddleware() {
     return async (context: ComplianceContext) => {
 
-      if (violations.some(v => v.severity === 'critical')) {
+      if (violations.some((v: any) => v.severity === 'critical')) {
         throw new Error('Critical compliance violations detected');
       }
 

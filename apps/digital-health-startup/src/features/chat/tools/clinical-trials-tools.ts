@@ -99,17 +99,17 @@ async function searchClinicalTrials(params: any) {
   let filtered = mockTrials;
 
   if (params.condition) {
-    filtered = filtered.filter(t =>
+    filtered = filtered.filter((t: any) =>
       t.condition.toLowerCase().includes(params.condition.toLowerCase())
     );
   }
 
   if (params.phase) {
-    filtered = filtered.filter(t => params.phase.includes(t.phase));
+    filtered = filtered.filter((t: any) => params.phase.includes(t.phase));
   }
 
   if (params.status) {
-    filtered = filtered.filter(t =>
+    filtered = filtered.filter((t: any) =>
       params.status.some((s: string) => t.status.toLowerCase().includes(s.toLowerCase()))
     );
   }

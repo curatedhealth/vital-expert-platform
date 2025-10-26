@@ -315,7 +315,7 @@ const ComplianceTestingSuite: React.FC = () => {
 
     // Update standard status
 
-    setComplianceStandards(prev => prev.map(s =>
+    setComplianceStandards(prev => prev.map((s: any) =>
       s.id === standardId
         ? { ...s, status: standardPassed ? 'passed' : 'failed' }
         : s
@@ -327,8 +327,8 @@ const ComplianceTestingSuite: React.FC = () => {
     // eslint-disable-next-line security/detect-object-injection
 
     const criticalFindings: Finding[] = tests
-      .filter(t => t.status === 'failed')
-      .map(t => ({
+      .filter((t: any) => t.status === 'failed')
+      .map((t: any) => ({
         id: `finding-${t.id}`,
         severity: 'high' as const,
         requirement: t.name,
@@ -460,10 +460,10 @@ const ComplianceTestingSuite: React.FC = () => {
                 <div className="flex justify-between items-start mb-4">
                   <div>
                     <h3 className="text-lg font-medium text-gray-900">
-                      {complianceStandards.find(s => s.id === selectedStandard)?.name}
+                      {complianceStandards.find((s: any) => s.id === selectedStandard)?.name}
                     </h3>
                     <p className="text-gray-600">
-                      Version {complianceStandards.find(s => s.id === selectedStandard)?.version}
+                      Version {complianceStandards.find((s: any) => s.id === selectedStandard)?.version}
                     </p>
                   </div>
                   <button
@@ -476,7 +476,7 @@ const ComplianceTestingSuite: React.FC = () => {
                 </div>
 
                 <div className="space-y-4">
-                  {complianceStandards.find(s => s.id === selectedStandard)?.requirements.map(requirement => (
+                  {complianceStandards.find((s: any) => s.id === selectedStandard)?.requirements.map(requirement => (
                     <div key={requirement.id} className="border border-gray-200 rounded-lg p-4">
                       <div className="flex justify-between items-start mb-2">
                         <div>

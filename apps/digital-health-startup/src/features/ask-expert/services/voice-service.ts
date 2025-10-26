@@ -96,11 +96,11 @@ class VoiceService {
     const voices = this.getAvailableVoices();
 
     if (name) {
-      return voices.find(v => v.name === name && v.lang.startsWith(language));
+      return voices.find((v: any) => v.name === name && v.lang.startsWith(language));
     }
 
     // Default to first voice matching language
-    return voices.find(v => v.lang.startsWith(language));
+    return voices.find((v: any) => v.lang.startsWith(language));
   }
 
   /**

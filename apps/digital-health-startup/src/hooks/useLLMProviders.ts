@@ -160,7 +160,7 @@ export const useLLMProviders = (
   const testProviderHealth = useCallback(async (id: string): Promise<boolean> => {
     try {
       setState(prev => ({ ...prev, error: null }));
-      const provider = state.providers.find(p => p.id === id);
+      const provider = state.providers.find((p: any) => p.id === id);
 
       if (!provider) {
         throw new Error('Provider not found');
@@ -171,7 +171,7 @@ export const useLLMProviders = (
       // Update provider status in local state
       setState(prev => ({
         ...prev,
-        providers: prev.providers.map(p =>
+        providers: prev.providers.map((p: any) =>
           p.id === id
             ? {
                 ...p,

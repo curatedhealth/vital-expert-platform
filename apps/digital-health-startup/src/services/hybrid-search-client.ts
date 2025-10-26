@@ -398,7 +398,7 @@ export class HybridSearchClient {
    */
   private toSnakeCase(obj: any): any {
     if (Array.isArray(obj)) {
-      return obj.map(item => this.toSnakeCase(item));
+      return obj.map((item: any) => this.toSnakeCase(item));
     }
 
     if (obj !== null && typeof obj === 'object') {
@@ -417,7 +417,7 @@ export class HybridSearchClient {
    */
   private toCamelCase(obj: any): any {
     if (Array.isArray(obj)) {
-      return obj.map(item => this.toCamelCase(item));
+      return obj.map((item: any) => this.toCamelCase(item));
     }
 
     if (obj !== null && typeof obj === 'object') {

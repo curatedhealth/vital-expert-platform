@@ -168,7 +168,7 @@ export class RealTimeMetrics {
 
     // Response time calculation
 
-      .map(e => e.data.responseTime)
+      .map((e: any) => e.data.responseTime)
       .filter(Boolean) as number[];
 
       ? responseTimes.reduce((sum, time) => sum + time, 0) / responseTimes.length
@@ -176,7 +176,7 @@ export class RealTimeMetrics {
 
     // Confidence calculation
 
-      .map(e => e.data.confidence)
+      .map((e: any) => e.data.confidence)
       .filter(Boolean) as number[];
 
       ? confidences.reduce((sum, conf) => sum + conf, 0) / confidences.length
@@ -194,7 +194,7 @@ export class RealTimeMetrics {
 
     // Multi-agent usage
 
-      .filter(e => e.type === 'agent_selection' && (e.data.agentCount || 0) > 1).length;
+      .filter((e: any) => e.type === 'agent_selection' && (e.data.agentCount || 0) > 1).length;
 
       ? (multiAgentQueries / queryEvents.length) * 100
       : 0;
@@ -214,10 +214,10 @@ export class RealTimeMetrics {
 
     // Domain distribution (simplified)
     const domainDistribution: Record<string, number> = {
-      'regulatory': responseEvents.filter(e => e.data.agent?.includes('regulatory')).length,
-      'clinical': responseEvents.filter(e => e.data.agent?.includes('clinical')).length,
-      'digital_health': responseEvents.filter(e => e.data.agent?.includes('digital')).length,
-      'compliance': responseEvents.filter(e => e.data.agent?.includes('compliance')).length
+      'regulatory': responseEvents.filter((e: any) => e.data.agent?.includes('regulatory')).length,
+      'clinical': responseEvents.filter((e: any) => e.data.agent?.includes('clinical')).length,
+      'digital_health': responseEvents.filter((e: any) => e.data.agent?.includes('digital')).length,
+      'compliance': responseEvents.filter((e: any) => e.data.agent?.includes('compliance')).length
     };
 
     // System health assessment

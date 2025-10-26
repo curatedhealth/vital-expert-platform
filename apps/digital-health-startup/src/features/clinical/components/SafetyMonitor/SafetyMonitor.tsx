@@ -345,7 +345,7 @@ export function SafetyMonitor({
               <Shield className="h-8 w-8 text-red-500 mr-3" />
               <div>
                 <div className="text-2xl font-bold text-red-600">
-                  {events.filter(e => e.eventType === 'serious_adverse_event').length}
+                  {events.filter((e: any) => e.eventType === 'serious_adverse_event').length}
                 </div>
                 <div className="text-sm text-gray-600">Serious AEs</div>
               </div>
@@ -359,7 +359,7 @@ export function SafetyMonitor({
               <Activity className="h-8 w-8 text-orange-500 mr-3" />
               <div>
                 <div className="text-2xl font-bold text-orange-600">
-                  {events.filter(e => e.regulatoryReporting.required && !e.regulatoryReporting.submitted).length}
+                  {events.filter((e: any) => e.regulatoryReporting.required && !e.regulatoryReporting.submitted).length}
                 </div>
                 <div className="text-sm text-gray-600">Pending Reports</div>
               </div>
@@ -373,7 +373,7 @@ export function SafetyMonitor({
               <TrendingUp className="h-8 w-8 text-green-500 mr-3" />
               <div>
                 <div className="text-2xl font-bold text-green-600">
-                  {getSignalAlerts().filter(a => a.risk === 'high').length}
+                  {getSignalAlerts().filter((a: any) => a.risk === 'high').length}
                 </div>
                 <div className="text-sm text-gray-600">High Risk Signals</div>
               </div>

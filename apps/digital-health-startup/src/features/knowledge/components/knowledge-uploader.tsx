@@ -80,10 +80,10 @@ export function KnowledgeUploader({ onUploadComplete }: KnowledgeUploaderProps) 
   };
 
   // Get domains filtered by selected tier
-  const filteredDomains = domains.filter(d => d.tier === selectedTier);
+  const filteredDomains = domains.filter((d: any) => d.tier === selectedTier);
 
   // Get current domain's information
-  const currentDomain = domains.find(d => d.slug === uploadSettings.domain);
+  const currentDomain = domains.find((d: any) => d.slug === uploadSettings.domain);
 
   // Get recommended models for current domain
   const getRecommendedModels = () => {
@@ -134,7 +134,7 @@ export function KnowledgeUploader({ onUploadComplete }: KnowledgeUploaderProps) 
           setDomains(data);
           // Only set default domain on first load
           if (!domainInitialized) {
-            const tier1Domains = data.filter(d => d.tier === 1);
+            const tier1Domains = data.filter((d: any) => d.tier === 1);
             if (tier1Domains.length > 0) {
               setUploadSettings(prev => ({
                 ...prev,
@@ -155,10 +155,10 @@ export function KnowledgeUploader({ onUploadComplete }: KnowledgeUploaderProps) 
   // Update domain when tier changes
   useEffect(() => {
     if (domains.length > 0 && domainInitialized) {
-      const tierDomains = domains.filter(d => d.tier === selectedTier);
+      const tierDomains = domains.filter((d: any) => d.tier === selectedTier);
       if (tierDomains.length > 0) {
         // Check if current domain is in the selected tier
-        const currentDomainInTier = tierDomains.find(d => d.slug === uploadSettings.domain);
+        const currentDomainInTier = tierDomains.find((d: any) => d.slug === uploadSettings.domain);
         if (!currentDomainInTier) {
           // Set to first domain of the new tier
           setUploadSettings(prev => ({
@@ -255,7 +255,7 @@ export function KnowledgeUploader({ onUploadComplete }: KnowledgeUploaderProps) 
 
   const uploadFile = async (file: UploadFile) => {
     const updateProgress = (progress: number, status: UploadFile['status'], error?: string) => {
-      setFiles(prev => prev.map(f =>
+      setFiles(prev => prev.map((f: any) =>
         f.id === file.id ? { ...f, progress, status, error } : f
       ));
     };
@@ -357,12 +357,12 @@ export function KnowledgeUploader({ onUploadComplete }: KnowledgeUploaderProps) 
   };
 
   const uploadFiles = async () => {
-    const pendingFiles = files.filter(f => f.status === 'pending');
+    const pendingFiles = files.filter((f: any) => f.status === 'pending');
     if (pendingFiles.length === 0) return;
 
     const uploadPromises = pendingFiles.map(uploadFile);
     const results = await Promise.all(uploadPromises);
-    const successfulUploads = results.filter(result => result !== null);
+    const successfulUploads = results.filter((result: any) => result !== null);
 
     if (successfulUploads.length > 0) {
       onUploadComplete(successfulUploads);
@@ -370,7 +370,7 @@ export function KnowledgeUploader({ onUploadComplete }: KnowledgeUploaderProps) 
   };
 
   const clearCompletedFiles = () => {
-    setFiles(prev => prev.filter(f => f.status !== 'completed'));
+    setFiles(prev => prev.filter((f: any) => f.status !== 'completed'));
   };
 
   const getStatusIcon = (status: UploadFile['status']) => {
@@ -416,9 +416,9 @@ export function KnowledgeUploader({ onUploadComplete }: KnowledgeUploaderProps) 
                 onChange={(e) => setSelectedTier(Number(e.target.value))}
                 className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md"
               >
-                <option value={1}>Tier 1: Core ({domains.filter(d => d.tier === 1).length})</option>
-                <option value={2}>Tier 2: Specialized ({domains.filter(d => d.tier === 2).length})</option>
-                <option value={3}>Tier 3: Emerging ({domains.filter(d => d.tier === 3).length})</option>
+                <option value={1}>Tier 1: Core ({domains.filter((d: any) => d.tier === 1).length})</option>
+                <option value={2}>Tier 2: Specialized ({domains.filter((d: any) => d.tier === 2).length})</option>
+                <option value={3}>Tier 3: Emerging ({domains.filter((d: any) => d.tier === 3).length})</option>
               </select>
             </div>
 
@@ -431,7 +431,7 @@ export function KnowledgeUploader({ onUploadComplete }: KnowledgeUploaderProps) 
                 className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md"
               >
                 {filteredDomains.length > 0 ? (
-                  filteredDomains.map(domain => (
+                  filteredDomains.map((domain: any) => (
                     <option key={domain.id} value={domain.slug}>
                       {domain.name}
                     </option>
@@ -667,14 +667,14 @@ export function KnowledgeUploader({ onUploadComplete }: KnowledgeUploaderProps) 
                   variant="outline"
                   size="sm"
                   onClick={clearCompletedFiles}
-                  disabled={!files.some(f => f.status === 'completed')}
+                  disabled={!files.some((f: any) => f.status === 'completed')}
                 >
                   Clear Completed
                 </Button>
                 <Button
                   size="sm"
                   onClick={uploadFiles}
-                  disabled={!files.some(f => f.status === 'pending')}
+                  disabled={!files.some((f: any) => f.status === 'pending')}
                   className="bg-progress-teal hover:bg-progress-teal/90"
                 >
                   <Upload className="mr-2 h-4 w-4" />
@@ -698,7 +698,7 @@ export function KnowledgeUploader({ onUploadComplete }: KnowledgeUploaderProps) 
                             {formatFileSize(file.file.size)}
                           </span>
                           <Badge variant="outline" className="text-xs">
-                            {domains.find(d => d.value === file.domain)?.label}
+                            {domains.find((d: any) => d.value === file.domain)?.label}
                           </Badge>
                           <Badge variant={file.isGlobal ? 'default' : 'secondary'} className="text-xs">
                             {file.isGlobal ? (
@@ -714,7 +714,7 @@ export function KnowledgeUploader({ onUploadComplete }: KnowledgeUploaderProps) 
                           {!file.isGlobal && file.selectedAgents.length > 0 && (
                             <div className="flex flex-wrap gap-1 mt-1">
                               {file.selectedAgents.slice(0, 3).map((agentId) => {
-                                const agent = agents.find(a => a.id === agentId);
+                                const agent = agents.find((a: any) => a.id === agentId);
                                 return agent ? (
                                   <Badge key={agentId} variant="outline" className="text-xs">
                                     {agent.display_name}

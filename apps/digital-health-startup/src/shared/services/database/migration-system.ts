@@ -669,10 +669,10 @@ export class MigrationSystem {
             break;
           case 'depends':
           case 'dependencies':
-            metadata.dependencies = value.split(',').map(d => d.trim());
+            metadata.dependencies = value.split(',').map((d: any) => d.trim());
             break;
           case 'tags':
-            metadata.tags = value.split(',').map(t => t.trim());
+            metadata.tags = value.split(',').map((t: any) => t.trim());
             break;
           case 'duration':
             metadata.estimatedDurationMs = parseInt(value) * 1000; // Convert seconds to ms
@@ -691,7 +691,7 @@ export class MigrationSystem {
       .eq('status', 'completed');
 
     const appliedMap = new Map(
-      (appliedMigrations || []).map(m => [m.migration_id, m.checksum])
+      (appliedMigrations || []).map((m: any) => [m.migration_id, m.checksum])
     );
 
     return migrations.filter(migration => {
@@ -902,7 +902,7 @@ export class MigrationSystem {
   }
 
   private async completeMigrationBatch(batch: MigrationBatch, results: MigrationResult[]): Promise<void> {
-    const status = results.every(r => r.success) ? 'completed' : 'failed';
+    const status = results.every((r: any) => r.success) ? 'completed' : 'failed';
 
     batch.status = status;
     batch.completedAt = new Date();
@@ -941,10 +941,10 @@ export class MigrationSystem {
     ]);
 
     const appliedMap = new Map(
-      (appliedMigrations.data || []).map(m => [m.migration_id, m.status])
+      (appliedMigrations.data || []).map((m: any) => [m.migration_id, m.status])
     );
 
-    const pendingCount = migrations.filter(m => !appliedMap.has(m.id)).length;
+    const pendingCount = migrations.filter((m: any) => !appliedMap.has(m.id)).length;
     const appliedCount = Array.from(appliedMap.values()).filter(status => status === 'completed').length;
     const failedCount = Array.from(appliedMap.values()).filter(status => status === 'failed').length;
 
@@ -989,7 +989,7 @@ export class MigrationSystem {
         .eq('status', 'completed');
 
       const appliedMap = new Map(
-        (appliedMigrations || []).map(m => [m.migration_id, m.checksum])
+        (appliedMigrations || []).map((m: any) => [m.migration_id, m.checksum])
       );
 
       for (const migration of migrations) {

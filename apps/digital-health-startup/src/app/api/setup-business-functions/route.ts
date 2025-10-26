@@ -122,10 +122,10 @@ export async function POST(request: NextRequest) {
       .select('id, code');
 
     if (functions && functions.length > 0) {
-      const regFunction = functions.find(f => f.code === 'REG');
-      const clinFunction = functions.find(f => f.code === 'CLIN');
-      const qualFunction = functions.find(f => f.code === 'QUAL');
-      const mktFunction = functions.find(f => f.code === 'MKT');
+      const regFunction = functions.find((f: any) => f.code === 'REG');
+      const clinFunction = functions.find((f: any) => f.code === 'CLIN');
+      const qualFunction = functions.find((f: any) => f.code === 'QUAL');
+      const mktFunction = functions.find((f: any) => f.code === 'MKT');
 
       const sampleDepartments = [
         {

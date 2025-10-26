@@ -36,9 +36,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: result.success,
       results: result.results,
-      totalProcessed: result.results.filter(r => r.status === 'success').length,
-      totalFailed: result.results.filter(r => r.status === 'error').length,
-      message: `Processed ${result.results.filter(r => r.status === 'success').length} files successfully using LangChain`
+      totalProcessed: result.results.filter((r: any) => r.status === 'success').length,
+      totalFailed: result.results.filter((r: any) => r.status === 'error').length,
+      message: `Processed ${result.results.filter((r: any) => r.status === 'success').length} files successfully using LangChain`
     });
 
   } catch (error) {

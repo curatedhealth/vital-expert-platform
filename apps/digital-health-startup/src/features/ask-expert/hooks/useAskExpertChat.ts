@@ -111,9 +111,9 @@ export function useAskExpertChat(options: UseAskExpertChatOptions) {
       {
         onWorkflowUpdate: (step) => {
           setStreamingState(prev => {
-            const existing = prev.workflowSteps.find(s => s.id === step.id);
+            const existing = prev.workflowSteps.find((s: any) => s.id === step.id);
             const updatedSteps = existing
-              ? prev.workflowSteps.map(s => s.id === step.id ? step : s)
+              ? prev.workflowSteps.map((s: any) => s.id === step.id ? step : s)
               : [...prev.workflowSteps, step];
 
             return {

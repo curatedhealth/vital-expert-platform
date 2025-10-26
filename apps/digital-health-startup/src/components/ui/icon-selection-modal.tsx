@@ -49,7 +49,7 @@ export function IconSelectionModal({
       if (data.success && data.icons) {
         loadedIcons = data.icons;
         console.log(`Loaded ${loadedIcons.length} icons for category ${category}`);
-        console.log('Sample icon URLs:', loadedIcons.slice(0, 3).map(i => i.file_url));
+        console.log('Sample icon URLs:', loadedIcons.slice(0, 3).map((i: any) => i.file_url));
       } else {
         console.warn('No icons returned from API');
       }

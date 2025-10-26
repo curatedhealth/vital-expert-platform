@@ -97,7 +97,7 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({
 
   // Dynamic contextual actions based on stakeholder detection and workspace
   const { contextualActions, detectedStakeholder, welcomeMessage } = useContextualQuickActions({
-    userActivity: messages.map(m => m.content),
+    userActivity: messages.map((m: any) => m.content),
     maxActions: 4,
     stakeholderType: (currentWorkspace?.type === 'general') ? 'auto' : currentWorkspace?.type || 'auto'
   });

@@ -465,7 +465,7 @@ export class SupabaseRAGService {
     const { data: chunkStats } = await this.supabase
       .from('document_chunks')
       .select('id, content_length')
-      .in('knowledge_source_id', stats?.map(s => s.id) || []);
+      .in('knowledge_source_id', stats?.map((s: any) => s.id) || []);
 
     const totalSources = stats?.length || 0;
     const totalChunks = chunkStats?.length || 0;
@@ -519,7 +519,7 @@ export class SupabaseRAGService {
     contextWeight: number
   ): SearchResult[] {
     // Simple context re-ranking - in production, use more sophisticated methods
-    return results.map(result => ({
+    return results.map((result: any) => ({
       ...result,
       similarity: result.similarity * (1 - contextWeight) +
                  this.calculateContextRelevance(result.content, context) * contextWeight

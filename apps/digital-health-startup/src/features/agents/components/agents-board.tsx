@@ -188,7 +188,7 @@ export function AgentsBoard({
   // Helper function to get function name by ID
   const getFunctionName = (functionId?: string | null) => {
     if (!functionId) return null;
-    const func = dbBusinessFunctions.find(f => f.id === functionId);
+    const func = dbBusinessFunctions.find((f: any) => f.id === functionId);
     return func?.department_name || null;
   };
 
@@ -412,7 +412,7 @@ export function AgentsBoard({
       } : null
     });
 
-    return agents.filter(agent => {
+    return agents.filter((agent: any) => {
       // Search filter
       const matchesSearch = !searchQuery ||
         agent.display_name.toLowerCase().includes(searchQuery.toLowerCase()) ||

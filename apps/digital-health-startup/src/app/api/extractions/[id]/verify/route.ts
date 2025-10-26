@@ -41,7 +41,7 @@ export async function GET(
     }
 
     // Get entity relationships
-    const entityIds = entities.map(e => e.id);
+    const entityIds = entities.map((e: any) => e.id);
     const { data: relationships } = await supabase
       .from('entity_relationships')
       .select('*')

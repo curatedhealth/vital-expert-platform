@@ -99,7 +99,7 @@ class EnhancedAgentOrchestrator {
 Your expertise: ${agent.expertise?.join(', ') || 'general AI assistant'}
 
 You have access to ${tools.length} specialized tools:
-${tools.map(t => `- ${t.name}: ${t.description}`).join('\n')}
+${tools.map((t: any) => `- ${t.name}: ${t.description}`).join('\n')}
 
 IMPORTANT INSTRUCTIONS:
 1. **Always cite your sources** - Use tools to find evidence
@@ -395,7 +395,7 @@ When you don't know something, say so clearly and suggest how to find the answer
     if (citations.length >= 3) reasons.push(`${citations.length} sources consulted`);
 
     // High-quality regulatory sources boost confidence
-    const hasRegulatory = citations.some(c =>
+    const hasRegulatory = citations.some((c: any) =>
       c.type === 'fda-approval' || c.type === 'ich-guideline' || c.type === 'iso-standard'
     );
     if (hasRegulatory) {
@@ -404,21 +404,21 @@ When you don't know something, say so clearly and suggest how to find the answer
     }
 
     // Clinical trial evidence
-    const hasClinicalTrial = citations.some(c => c.type === 'clinical-trial');
+    const hasClinicalTrial = citations.some((c: any) => c.type === 'clinical-trial');
     if (hasClinicalTrial) {
       confidence += 0.05;
       reasons.push('Clinical trial data reviewed');
     }
 
     // Peer-reviewed literature
-    const hasPubMed = citations.some(c => c.type === 'pubmed');
+    const hasPubMed = citations.some((c: any) => c.type === 'pubmed');
     if (hasPubMed) {
       confidence += 0.05;
       reasons.push('Peer-reviewed literature consulted');
     }
 
     // Recent sources (within last 2 years)
-    const hasRecentSources = citations.some(c => {
+    const hasRecentSources = citations.some((c: any) => {
       if (!c.date) return false;
       const year = parseInt(c.date.substring(0, 4));
       return year >= new Date().getFullYear() - 2;
@@ -452,11 +452,11 @@ When you don't know something, say so clearly and suggest how to find the answer
   private buildEvidenceSummary(citations: Citation[]) {
     return {
       totalSources: citations.length,
-      clinicalTrials: citations.filter(c => c.type === 'clinical-trial').length,
-      fdaApprovals: citations.filter(c => c.type === 'fda-approval').length,
-      pubmedArticles: citations.filter(c => c.type === 'pubmed').length,
-      guidelines: citations.filter(c => c.type === 'ich-guideline' || c.type === 'iso-standard').length,
-      internalKnowledge: citations.filter(c => c.type === 'knowledge-base').length
+      clinicalTrials: citations.filter((c: any) => c.type === 'clinical-trial').length,
+      fdaApprovals: citations.filter((c: any) => c.type === 'fda-approval').length,
+      pubmedArticles: citations.filter((c: any) => c.type === 'pubmed').length,
+      guidelines: citations.filter((c: any) => c.type === 'ich-guideline' || c.type === 'iso-standard').length,
+      internalKnowledge: citations.filter((c: any) => c.type === 'knowledge-base').length
     };
   }
 

@@ -40,8 +40,8 @@ export async function GET(request: NextRequest) {
       );
     }
     // Get unique departments and categories for filtering
-    const departments = [...new Set(data?.map(bf => bf.department).filter(Boolean))];
-    const categories = [...new Set(data?.map(bf => bf.healthcare_category).filter(Boolean))];
+    const departments = [...new Set(data?.map((bf: any) => bf.department).filter(Boolean))];
+    const categories = [...new Set(data?.map((bf: any) => bf.healthcare_category).filter(Boolean))];
 
     return NextResponse.json({
       businessFunctions: data || [],

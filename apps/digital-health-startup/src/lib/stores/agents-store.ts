@@ -313,13 +313,13 @@ export const useAgentsStore = create<AgentsStore>()(
       // Get agent by ID
       getAgentById: (id: string) => {
         const { agents } = get();
-        return agents.find(agent => agent.id === id) || null;
+        return agents.find((agent: any) => agent.id === id) || null;
       },
 
       // Get agent by name
       getAgentByName: (name: string) => {
         const { agents } = get();
-        return agents.find(agent => agent.name === name || agent.display_name === name) || null;
+        return agents.find((agent: any) => agent.name === name || agent.display_name === name) || null;
       },
 
       // Set selected agent
@@ -365,7 +365,7 @@ export const useAgentsStore = create<AgentsStore>()(
         try {
           await agentService.updateAgent(id, dbUpdates);
           set(state => ({
-            agents: state.agents.map(agent =>
+            agents: state.agents.map((agent: any) =>
               agent.id === id ? { ...agent, ...updates } : agent
             ),
             lastUpdated: new Date(),
@@ -390,7 +390,7 @@ export const useAgentsStore = create<AgentsStore>()(
           await agentService.deleteAgent(id);
 
           set(state => ({
-            agents: state.agents.filter(agent => agent.id !== id),
+            agents: state.agents.filter((agent: any) => agent.id !== id),
             selectedAgent: state.selectedAgent?.id === id ? null : state.selectedAgent,
             lastUpdated: new Date(),
           }));
@@ -501,7 +501,7 @@ export const useAgentsStore = create<AgentsStore>()(
       getUserAgents: () => {
         const { agents } = get();
         // For now, consider custom agents as user agents until we have proper user copy columns
-        return agents.filter(agent => agent.is_user_copy === true || agent.is_custom === true);
+        return agents.filter((agent: any) => agent.is_user_copy === true || agent.is_custom === true);
       },
 
       // Check if user can edit agent

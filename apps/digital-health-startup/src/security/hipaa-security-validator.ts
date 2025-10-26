@@ -577,7 +577,7 @@ export class HIPAASecurityValidator {
   private generateActionItems(results: HIPAAComplianceResult[]): ActionItem[] {
     const actionItems: ActionItem[] = [];
 
-    results.filter(r => r.status === 'non-compliant' || r.status === 'partial')
+    results.filter((r: any) => r.status === 'non-compliant' || r.status === 'partial')
       .forEach((result, index) => {
         actionItems.push({
           id: `action_${index + 1}`,
@@ -626,7 +626,7 @@ export class HIPAASecurityValidator {
       });
     }
 
-    // const __criticalActions = report.action_items.filter(a => a.priority === 'critical').length;
+    // const __criticalActions = report.action_items.filter((a: any) => a.priority === 'critical').length;
     if (criticalActions > 0) {
       // }
 

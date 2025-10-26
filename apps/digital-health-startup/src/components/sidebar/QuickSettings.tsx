@@ -106,7 +106,7 @@ export function QuickSettings() {
             onChange={(e) => updateSetting(setting.id, e.target.value)}
             className="text-xs bg-muted border border-border rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-primary/50"
           >
-            {setting.options?.map(option => (
+            {setting.options?.map((option: any) => (
               <option key={option} value={option}>
                 {option}
               </option>

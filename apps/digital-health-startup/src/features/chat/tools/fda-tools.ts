@@ -93,13 +93,13 @@ async function searchFDADatabase(
   // Filter by search type
   let filtered = mockResults;
   if (searchType) {
-    filtered = filtered.filter(r => r.type === searchType);
+    filtered = filtered.filter((r: any) => r.type === searchType);
   }
   if (deviceClass) {
-    filtered = filtered.filter(r => r.deviceClass === deviceClass);
+    filtered = filtered.filter((r: any) => r.deviceClass === deviceClass);
   }
   if (yearFrom) {
-    filtered = filtered.filter(r => new Date(r.decisionDate).getFullYear() >= yearFrom);
+    filtered = filtered.filter((r: any) => new Date(r.decisionDate).getFullYear() >= yearFrom);
   }
 
   // Simulate API delay

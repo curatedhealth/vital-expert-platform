@@ -370,7 +370,7 @@ const IntegrationMarketplace: React.FC<Props> = ({ organizationId }) => {
   }, [organizationId]);
 
     { key: 'all', label: 'All Categories', count: integrations.length },
-    { key: 'ehr_systems', label: 'EHR Systems', count: integrations.filter(i => i.category === 'ehr_systems').length },
+    { key: 'ehr_systems', label: 'EHR Systems', count: integrations.filter((i: any) => i.category === 'ehr_systems').length },
     { key: 'laboratory_systems', label: 'Laboratory', count: 0 },
     { key: 'imaging_systems', label: 'Medical Imaging', count: 0 },
     { key: 'wearables_iot', label: 'Wearables & IoT', count: 0 },
@@ -783,7 +783,7 @@ const IntegrationMarketplace: React.FC<Props> = ({ organizationId }) => {
                         { feature: 'Testing & Debugging', icon: '🧪' },
                         { feature: 'Deployment Pipeline', icon: '🚀' },
                         { feature: 'Monitoring & Alerts', icon: '📊' }
-                      ].map(item => (
+                      ].map((item: any) => (
                         <div key={item.feature} className="flex items-center">
                           <span className="text-xl mr-3">{item.icon}</span>
                           <span className="text-sm text-gray-900">{item.feature}</span>

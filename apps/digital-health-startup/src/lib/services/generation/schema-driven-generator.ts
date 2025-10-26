@@ -200,10 +200,10 @@ export class SchemaDrivenGenerator {
     params?: Record<string, any>
   ): Promise<ClinicalSummary> {
     // Group entities by type
-    const medications = entities.filter(e => e.entity_type === 'medication');
-    const diagnoses = entities.filter(e => e.entity_type === 'diagnosis' || e.entity_type === 'condition');
-    const procedures = entities.filter(e => e.entity_type === 'procedure');
-    const labResults = entities.filter(e => e.entity_type === 'lab_result');
+    const medications = entities.filter((e: any) => e.entity_type === 'medication');
+    const diagnoses = entities.filter((e: any) => e.entity_type === 'diagnosis' || e.entity_type === 'condition');
+    const procedures = entities.filter((e: any) => e.entity_type === 'procedure');
+    const labResults = entities.filter((e: any) => e.entity_type === 'lab_result');
 
     // Build clinical summary
     const summary: ClinicalSummary = {
@@ -289,9 +289,9 @@ export class SchemaDrivenGenerator {
     entities: any[],
     params?: Record<string, any>
   ): Promise<RegulatoryDocument> {
-    const adverseEvents = entities.filter(e => e.entity_type === 'adverse_event');
-    const outcomes = entities.filter(e => e.entity_type === 'outcome' || e.entity_type === 'endpoint');
-    const populations = entities.filter(e => e.entity_type === 'population');
+    const adverseEvents = entities.filter((e: any) => e.entity_type === 'adverse_event');
+    const outcomes = entities.filter((e: any) => e.entity_type === 'outcome' || e.entity_type === 'endpoint');
+    const populations = entities.filter((e: any) => e.entity_type === 'population');
 
     return {
       schema_type: 'regulatory_document',
@@ -326,7 +326,7 @@ export class SchemaDrivenGenerator {
           }
         })),
         serious_adverse_events: adverseEvents
-          .filter(e => e.attributes?.serious === true)
+          .filter((e: any) => e.attributes?.serious === true)
           .map(entity => ({
             event: entity.entity_text,
             outcome: entity.attributes?.outcome || 'recovered',
@@ -361,7 +361,7 @@ export class SchemaDrivenGenerator {
       metadata: {
         total_sources: this.countSources(entities),
         character_level_attribution: true,
-        verification_complete: entities.every(e => e.verification_status === 'approved'),
+        verification_complete: entities.every((e: any) => e.verification_status === 'approved'),
         audit_trail_available: true
       }
     };
@@ -440,8 +440,8 @@ export class SchemaDrivenGenerator {
     entities: any[],
     params?: Record<string, any>
   ): Promise<MarketAccessDocument> {
-    const populations = entities.filter(e => e.entity_type === 'population');
-    const outcomes = entities.filter(e => e.entity_type === 'outcome');
+    const populations = entities.filter((e: any) => e.entity_type === 'population');
+    const outcomes = entities.filter((e: any) => e.entity_type === 'outcome');
 
     return {
       schema_type: 'market_access',
@@ -476,8 +476,8 @@ export class SchemaDrivenGenerator {
       target_population: {
         description: this.describePopulation(entities),
         size_estimate: params?.population_size,
-        characteristics: populations.map(e => e.entity_text),
-        entities: populations.map(e => this.entityToReference(e))
+        characteristics: populations.map((e: any) => e.entity_text),
+        entities: populations.map((e: any) => this.entityToReference(e))
       },
 
       recommendations: {
@@ -550,28 +550,28 @@ export class SchemaDrivenGenerator {
   }
 
   private countSources(entities: any[]): number {
-    const uniqueDocuments = new Set(entities.map(e => e.document_id));
+    const uniqueDocuments = new Set(entities.map((e: any) => e.document_id));
     return uniqueDocuments.size;
   }
 
   private countCharacterAttributions(entities: any[]): number {
-    return entities.filter(e =>
+    return entities.filter((e: any) =>
       typeof e.char_start === 'number' && typeof e.char_end === 'number'
     ).length;
   }
 
   private getVerificationStats(entities: any[]) {
     return {
-      approved: entities.filter(e => e.verification_status === 'approved').length,
-      pending: entities.filter(e => e.verification_status === 'pending').length,
-      rejected: entities.filter(e => e.verification_status === 'rejected').length,
-      flagged: entities.filter(e => e.verification_status === 'flagged').length
+      approved: entities.filter((e: any) => e.verification_status === 'approved').length,
+      pending: entities.filter((e: any) => e.verification_status === 'pending').length,
+      rejected: entities.filter((e: any) => e.verification_status === 'rejected').length,
+      flagged: entities.filter((e: any) => e.verification_status === 'flagged').length
     };
   }
 
   private async getSourceDocuments(entities: any[]) {
     const uniqueDocs = new Map();
-    entities.forEach(e => {
+    entities.forEach((e: any) => {
       if (e.document_id && !uniqueDocs.has(e.document_id)) {
         uniqueDocs.set(e.document_id, {
           id: e.document_id,
@@ -590,9 +590,9 @@ export class SchemaDrivenGenerator {
 
   private extractKeyFindings(entities: any[]): string[] {
     return entities
-      .filter(e => e.confidence >= 0.9)
+      .filter((e: any) => e.confidence >= 0.9)
       .slice(0, 5)
-      .map(e => e.entity_text);
+      .map((e: any) => e.entity_text);
   }
 
   private generateExecutiveSummary(entities: any[], params?: any): string {
@@ -620,20 +620,20 @@ export class SchemaDrivenGenerator {
   }
 
   private describePopulation(entities: any[]): string {
-    const populations = entities.filter(e => e.entity_type === 'population');
-    return populations.map(e => e.entity_text).join(', ') || 'Population not specified';
+    const populations = entities.filter((e: any) => e.entity_type === 'population');
+    return populations.map((e: any) => e.entity_text).join(', ') || 'Population not specified';
   }
 
   private describeInterventions(entities: any[]): string[] {
     return entities
-      .filter(e => e.entity_type === 'medication' || e.entity_type === 'procedure')
-      .map(e => e.entity_text);
+      .filter((e: any) => e.entity_type === 'medication' || e.entity_type === 'procedure')
+      .map((e: any) => e.entity_text);
   }
 
   private describeOutcomes(entities: any[]): string[] {
     return entities
-      .filter(e => e.entity_type === 'outcome' || e.entity_type === 'endpoint')
-      .map(e => e.entity_text);
+      .filter((e: any) => e.entity_type === 'outcome' || e.entity_type === 'endpoint')
+      .map((e: any) => e.entity_text);
   }
 
   private generateResultsSummary(entities: any[]): string {
@@ -642,7 +642,7 @@ export class SchemaDrivenGenerator {
 
   private groupFindingsByCategory(entities: any[]) {
     const categories = new Map<string, any[]>();
-    entities.forEach(e => {
+    entities.forEach((e: any) => {
       const category = e.entity_type;
       if (!categories.has(category)) {
         categories.set(category, []);
@@ -653,7 +653,7 @@ export class SchemaDrivenGenerator {
     return Array.from(categories.entries()).map(([category, ents]) => ({
       category,
       description: `${ents.length} ${category} entities identified`,
-      entities: ents.map(e => this.entityToReference(e))
+      entities: ents.map((e: any) => this.entityToReference(e))
     }));
   }
 

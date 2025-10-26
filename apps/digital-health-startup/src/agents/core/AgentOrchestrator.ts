@@ -208,7 +208,7 @@ export class AgentOrchestrator {
       const stepOrder = this.calculateStepOrder(workflow.steps);
 
       for (const stepId of stepOrder) {
-        const step = workflow.steps.find(s => s.step_id === stepId);
+        const step = workflow.steps.find((s: any) => s.step_id === stepId);
         if (!step) continue;
         const stepResult = await this.executeStep(step, execution);
         // Validate stepId before using as object key
@@ -382,7 +382,7 @@ export class AgentOrchestrator {
 
       visiting.add(stepId);
 
-      const step = steps.find(s => s.step_id === stepId);
+      const step = steps.find((s: any) => s.step_id === stepId);
       if (step?.depends_on) {
         step.depends_on.forEach(depId => visit(depId));
       }
@@ -477,7 +477,7 @@ export class AgentOrchestrator {
     capabilities_loaded: number;
     prompts_loaded: number;
   }> {
-    return Array.from(this.agents.values()).map(agent => agent.getStatus());
+    return Array.from(this.agents.values()).map((agent: any) => agent.getStatus());
   }
 
   /**

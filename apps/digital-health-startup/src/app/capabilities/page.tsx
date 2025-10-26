@@ -695,7 +695,7 @@ export default function CapabilitiesPage() {
   });
 
   const getMaturityColor = (level: string) => {
-    const maturity = maturityLevels.find(m => m.level === level);
+    const maturity = maturityLevels.find((m: any) => m.level === level);
     return maturity?.color || 'bg-gray-100 text-gray-800';
   };
 
@@ -801,7 +801,7 @@ export default function CapabilitiesPage() {
             </div>
 
             <div className="flex flex-wrap gap-1">
-              {capability.supported_agents.slice(0, 2).map(agent => (
+              {capability.supported_agents.slice(0, 2).map((agent: any) => (
                 <Badge key={agent} variant="outline" className="text-xs">
                   {agent}
                 </Badge>
@@ -935,7 +935,7 @@ export default function CapabilitiesPage() {
                 <div className="font-semibold">{level.name}</div>
                 <div className="text-xs text-muted-foreground">{level.description}</div>
                 <div className="text-sm font-medium">
-                  {capabilities.filter(c => c.maturity_level === level.level).length} capabilities
+                  {capabilities.filter((c: any) => c.maturity_level === level.level).length} capabilities
                 </div>
               </div>
             ))}
@@ -963,7 +963,7 @@ export default function CapabilitiesPage() {
               <div>
                 <div className="text-sm text-muted-foreground">Active</div>
                 <div className="text-2xl font-bold">
-                  {capabilities.filter(c => c.status === 'active').length}
+                  {capabilities.filter((c: any) => c.status === 'active').length}
                 </div>
               </div>
             </div>
@@ -976,7 +976,7 @@ export default function CapabilitiesPage() {
               <div>
                 <div className="text-sm text-muted-foreground">Premium</div>
                 <div className="text-2xl font-bold">
-                  {capabilities.filter(c => c.is_premium).length}
+                  {capabilities.filter((c: any) => c.is_premium).length}
                 </div>
               </div>
             </div>
@@ -1029,7 +1029,7 @@ export default function CapabilitiesPage() {
             <SelectValue placeholder="Domain" />
           </SelectTrigger>
           <SelectContent>
-            {domains.map(domain => (
+            {domains.map((domain: any) => (
               <SelectItem key={domain} value={domain}>
                 {domain}
               </SelectItem>
@@ -1069,13 +1069,13 @@ export default function CapabilitiesPage() {
         <Tabs value={statusFilter} onValueChange={setStatusFilter}>
           <TabsList>
             <TabsTrigger value="active">
-              Active ({capabilities.filter(c => c.status === 'active').length})
+              Active ({capabilities.filter((c: any) => c.status === 'active').length})
             </TabsTrigger>
             <TabsTrigger value="development">
-              Development ({capabilities.filter(c => c.status === 'development').length})
+              Development ({capabilities.filter((c: any) => c.status === 'development').length})
             </TabsTrigger>
             <TabsTrigger value="deprecated">
-              Deprecated ({capabilities.filter(c => c.status === 'deprecated').length})
+              Deprecated ({capabilities.filter((c: any) => c.status === 'deprecated').length})
             </TabsTrigger>
           </TabsList>
         </Tabs>
@@ -1142,7 +1142,7 @@ export default function CapabilitiesPage() {
               <div className="space-y-6">
                 <div className="flex flex-wrap gap-2">
                   <Badge className={getMaturityColor(selectedCapability.maturity_level)}>
-                    {selectedCapability.maturity_level} - {maturityLevels.find(m => m.level === selectedCapability.maturity_level)?.name}
+                    {selectedCapability.maturity_level} - {maturityLevels.find((m: any) => m.level === selectedCapability.maturity_level)?.name}
                   </Badge>
                   <Badge variant="secondary">{selectedCapability.category}</Badge>
                   <Badge className={getComplexityColor(selectedCapability.complexity_level)}>
@@ -1216,7 +1216,7 @@ export default function CapabilitiesPage() {
                 <div>
                   <h3 className="font-semibold mb-2">🤖 Supported Agents</h3>
                   <div className="flex flex-wrap gap-2">
-                    {selectedCapability.supported_agents.map(agent => (
+                    {selectedCapability.supported_agents.map((agent: any) => (
                       <Badge key={agent} variant="outline">
                         {agent}
                       </Badge>

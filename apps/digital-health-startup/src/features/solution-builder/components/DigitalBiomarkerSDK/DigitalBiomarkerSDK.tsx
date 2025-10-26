@@ -496,7 +496,7 @@ class ${biomarker.name.replace(/\s+/g, '')}Biomarker {
 
         ${biomarker.algorithm.features.map(feature => `
         // ${feature.description}
-        features.${feature.name} = this.calculate${feature.name.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join('')}(data);`).join('')}
+        features.${feature.name} = this.calculate${feature.name.split('_').map((w: any) => w.charAt(0).toUpperCase() + w.slice(1)).join('')}(data);`).join('')}
 
         return features;
     }

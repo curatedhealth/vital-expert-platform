@@ -197,7 +197,7 @@ export default function AskExpertComplete() {
   }, []);
 
   const handleAgentSelect = useCallback((agentId: string) => {
-    const agent = agents.find(a => a.id === agentId);
+    const agent = agents.find((a: any) => a.id === agentId);
     if (agent) {
       setSelectedAgent(agent);
     }
@@ -585,7 +585,7 @@ Would you like me to elaborate on any of these areas?`,
             <div>
               <h3 className="text-lg font-semibold mb-4">Select Your Expert</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {agents.slice(0, 6).map(agent => (
+                {agents.slice(0, 6).map((agent: any) => (
                   <ExpertAgentCard
                     key={agent.id}
                     agent={{

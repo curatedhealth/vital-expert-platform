@@ -100,7 +100,7 @@ export function useRealTimeCollaboration(options: UseRealTimeCollaborationOption
         setUsers(prev => {
 
           if (existing) {
-            return prev.map(u => u.id === event.userId ? { ...u, isOnline: true, lastSeen: event.timestamp } : u);
+            return prev.map((u: any) => u.id === event.userId ? { ...u, isOnline: true, lastSeen: event.timestamp } : u);
           }
           return [...prev, newUser];
         });
@@ -109,7 +109,7 @@ export function useRealTimeCollaboration(options: UseRealTimeCollaborationOption
         break;
 
       case 'user_left':
-        setUsers(prev => prev.map(u =>
+        setUsers(prev => prev.map((u: any) =>
           u.id === event.userId
             ? { ...u, isOnline: false, lastSeen: event.timestamp }
             : u
@@ -122,7 +122,7 @@ export function useRealTimeCollaboration(options: UseRealTimeCollaborationOption
         break;
 
       case 'cursor_moved':
-        setUsers(prev => prev.map(u =>
+        setUsers(prev => prev.map((u: any) =>
           u.id === event.userId
             ? { ...u, cursor: event.data.cursor }
             : u

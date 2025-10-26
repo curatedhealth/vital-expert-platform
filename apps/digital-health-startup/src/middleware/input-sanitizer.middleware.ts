@@ -217,7 +217,7 @@ function sanitizeObjectRecursive(obj: unknown, warnings: string[]): unknown {
   }
 
   if (Array.isArray(obj)) {
-    return obj.map(item => sanitizeObjectRecursive(item, warnings));
+    return obj.map((item: any) => sanitizeObjectRecursive(item, warnings));
   }
 
   if (typeof obj === 'object') {
@@ -230,7 +230,7 @@ function sanitizeObjectRecursive(obj: unknown, warnings: string[]): unknown {
         // Determine appropriate sanitization based on key name
 
         if (result.warnings.length > 0) {
-          warnings.push(...result.warnings.map(w => `${key}: ${w}`));
+          warnings.push(...result.warnings.map((w: any) => `${key}: ${w}`));
         }
 
         // eslint-disable-next-line security/detect-object-injection

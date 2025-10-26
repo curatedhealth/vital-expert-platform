@@ -197,11 +197,11 @@ export const createICHGuidelinesSearchTool = () => {
         // Filter by category if specified
         let filteredGuidelines = category === 'All'
           ? ichGuidelines
-          : ichGuidelines.filter(g => g.category === category);
+          : ichGuidelines.filter((g: any) => g.category === category);
 
         // Filter by query (fuzzy match)
         const queryLower = query.toLowerCase();
-        filteredGuidelines = filteredGuidelines.filter(g =>
+        filteredGuidelines = filteredGuidelines.filter((g: any) =>
           g.title?.toLowerCase().includes(queryLower) ||
           g.code?.toLowerCase().includes(queryLower) ||
           g.description?.toLowerCase().includes(queryLower)
@@ -328,14 +328,14 @@ export const createISOStandardsSearchTool = () => {
         // Filter by scope if specified
         let filteredStandards = scope === 'All'
           ? isoStandards
-          : isoStandards.filter(s => s.scope === scope);
+          : isoStandards.filter((s: any) => s.scope === scope);
 
         // Filter by query (fuzzy match)
         const queryLower = query.toLowerCase();
-        filteredStandards = filteredStandards.filter(s =>
+        filteredStandards = filteredStandards.filter((s: any) =>
           s.title?.toLowerCase().includes(queryLower) ||
           s.standardNumber?.toLowerCase().includes(queryLower) ||
-          s.relevantFor?.some(r => r.toLowerCase().includes(queryLower))
+          s.relevantFor?.some((r: any) => r.toLowerCase().includes(queryLower))
         );
 
         return JSON.stringify({
@@ -446,11 +446,11 @@ export const createDiMeResourcesSearchTool = () => {
         // Filter by resource type if specified
         let filteredResources = resourceType === 'All'
           ? dimeResources
-          : dimeResources.filter(r => r.type === resourceType);
+          : dimeResources.filter((r: any) => r.type === resourceType);
 
         // Filter by query (fuzzy match)
         const queryLower = query.toLowerCase();
-        filteredResources = filteredResources.filter(r =>
+        filteredResources = filteredResources.filter((r: any) =>
           r.title?.toLowerCase().includes(queryLower) ||
           r.category?.toLowerCase().includes(queryLower) ||
           r.description?.toLowerCase().includes(queryLower)

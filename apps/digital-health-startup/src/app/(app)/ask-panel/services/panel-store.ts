@@ -215,7 +215,7 @@ export const __usePanelStore = create<PanelState>()(
 
       selectPanel: (panelId: string) => {
         set(state => {
-          const panel = state.panels.find(p => p.id === panelId);
+          const panel = state.panels.find((p: any) => p.id === panelId);
           if (panel) {
             return { currentPanel: panel };
           }
@@ -250,7 +250,7 @@ export const __usePanelStore = create<PanelState>()(
             panel.id === panelId
               ? {
                   ...panel,
-                  members: panel.members.filter(m => m.agent.id !== memberId),
+                  members: panel.members.filter((m: any) => m.agent.id !== memberId),
                   updated_at: new Date()
                 }
               : panel
@@ -258,7 +258,7 @@ export const __usePanelStore = create<PanelState>()(
           currentPanel: state.currentPanel?.id === panelId
             ? {
                 ...state.currentPanel,
-                members: state.currentPanel.members.filter(m => m.agent.id !== memberId),
+                members: state.currentPanel.members.filter((m: any) => m.agent.id !== memberId),
                 updated_at: new Date()
               }
             : state.currentPanel

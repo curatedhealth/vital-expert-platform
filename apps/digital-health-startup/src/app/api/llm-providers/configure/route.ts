@@ -75,7 +75,7 @@ export async function POST(request: NextRequest) {
 
     if (updatePromises) {
       const results = await Promise.all(updatePromises);
-      const errors = results.filter(result => result.error);
+      const errors = results.filter((result: any) => result.error);
 
       if (errors.length > 0) {
         console.error('Errors updating providers:', errors);

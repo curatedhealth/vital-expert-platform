@@ -289,9 +289,9 @@ export async function GET(request: NextRequest) {
     const dashboardSummary = {
       overall_risk_level: signalAnalysis?.risk_level || 'minimal',
       total_active_signals: activeSignals?.length || 0,
-      critical_signals: activeSignals?.filter(s => s.clinical_significance === 'critical').length || 0,
+      critical_signals: activeSignals?.filter((s: any) => s.clinical_significance === 'critical').length || 0,
       recent_events_count: recentEvents?.length || 0,
-      high_severity_events: recentEvents?.filter(e => ['severe', 'life_threatening'].includes(e.severity)).length || 0,
+      high_severity_events: recentEvents?.filter((e: any) => ['severe', 'life_threatening'].includes(e.severity)).length || 0,
       trending_event_types: { /* TODO: implement */ } // Would implement trend analysis
     }
 

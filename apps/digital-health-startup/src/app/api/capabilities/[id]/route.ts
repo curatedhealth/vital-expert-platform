@@ -235,12 +235,12 @@ async function calculateCapabilityMetrics(capabilityId: string) {
       return { /* TODO: implement */ };
     }
 
-    const totalUsage = agentUsage?.reduce((sum, usage) => sum + (usage.usage_count || 0), 0) || 0;
+    const totalUsage = agentUsage?.reduce((sum: number, usage: any) => sum + (usage.usage_count || 0), 0) || 0;
     const averageSuccessRate = agentUsage?.length > 0
-      ? agentUsage.reduce((sum, usage) => sum + (usage.success_rate || 0), 0) / agentUsage.length
+      ? agentUsage.reduce((sum: number, usage: any) => sum + (usage.success_rate || 0), 0) / agentUsage.length
       : 0;
 
-    const lastUsed = agentUsage?.reduce((latest, usage) => {
+    const lastUsed = agentUsage?.reduce((latest: any, usage: any) => {
       const usageDate = new Date(usage.last_used_at || 0);
       const latestDate = new Date(latest || 0);
       return usageDate > latestDate ? usage.last_used_at : latest;

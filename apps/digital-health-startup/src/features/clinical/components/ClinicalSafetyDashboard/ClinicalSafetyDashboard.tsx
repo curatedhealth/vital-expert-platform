@@ -265,7 +265,7 @@ export const ClinicalSafetyDashboard: React.FC = () => {
   };
 
     setExpertReviewQueue(queue =>
-      queue.map(item =>
+      queue.map((item: any) =>
         item.id === itemId
           ? { ...item, status: 'in_review' as const, assignedExpert: expertId }
           : item
@@ -589,7 +589,7 @@ const MedicalAlertsPanel: React.FC<{
             <AlertTriangle className="mr-2 h-5 w-5 text-red-500" />
             Medical Alerts ({alerts.length})
           </div>
-          {alerts.some(a => a.severity === 'critical') && (
+          {alerts.some((a: any) => a.severity === 'critical') && (
             <Badge variant="destructive" className="animate-pulse">
               CRITICAL
             </Badge>
@@ -708,7 +708,7 @@ const ExpertReviewPanel: React.FC<{
             Expert Review Queue
           </div>
           <Badge variant="outline" className="bg-purple-100 text-purple-800">
-            {queue.filter(item => item.status === 'pending').length} Pending
+            {queue.filter((item: any) => item.status === 'pending').length} Pending
           </Badge>
         </CardTitle>
       </CardHeader>

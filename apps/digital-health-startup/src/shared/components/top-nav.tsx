@@ -35,6 +35,8 @@ import {
 } from '@vital/ui';
 import { cn } from '@vital/ui/lib/utils';
 
+import { TenantSwitcher } from '@/components/tenant/TenantSwitcher';
+
 // import { useAuth } from '@vital/sdk/lib/supabase/auth-context';
 
 const mainNavItems = [
@@ -100,8 +102,9 @@ export function TopNav() {
   // const { user, signOut } = useAuth();
 
   // Mock user for demo - in real app this would come from auth context
-// const user = // Unused variable pathname?.startsWith('/dashboard') ? { email: 'demo@vitalpath.com' } : null;
-  const signOut = () => const isAuthenticated = !!user;
+  const user = pathname?.startsWith('/dashboard') ? { email: 'demo@vitalpath.com' } : null;
+  const signOut = () => console.log('Sign out');
+  const isAuthenticated = !!user;
 
   const getInitials = (email: string) => {
     return email
@@ -223,6 +226,9 @@ export function TopNav() {
             ) : (
               /* Dashboard Actions */
               <>
+                {/* Tenant Switcher */}
+                <TenantSwitcher />
+
                 {/* Demo Mode Badge */}
                 <Badge variant="outline" className="text-xs font-medium hidden sm:inline-flex">
                   Demo Mode

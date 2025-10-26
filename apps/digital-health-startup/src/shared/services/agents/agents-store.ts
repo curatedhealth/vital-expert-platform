@@ -98,7 +98,7 @@ export const __useAgentsStore = create<AgentsState>()(
       },
 
       getAgent: (id: string) => {
-        return get().agents.find(agent => agent.id === id);
+        return get().agents.find((agent: any) => agent.id === id);
       },
 
       setSelectedAgent: (agent: Agent | null) => {
@@ -113,7 +113,7 @@ export const __useAgentsStore = create<AgentsState>()(
 
       updateAgent: (id: string, updates: Partial<Agent>) => {
         set(state => ({
-          agents: state.agents.map(agent =>
+          agents: state.agents.map((agent: any) =>
             agent.id === id ? { ...agent, ...updates } : agent
           )
         }));
@@ -121,7 +121,7 @@ export const __useAgentsStore = create<AgentsState>()(
 
       deleteAgent: (id: string) => {
         set(state => ({
-          agents: state.agents.filter(agent => agent.id !== id),
+          agents: state.agents.filter((agent: any) => agent.id !== id),
           selectedAgent: state.selectedAgent?.id === id ? null : state.selectedAgent
         }));
       },
@@ -142,14 +142,14 @@ export const __useAgentsStore = create<AgentsState>()(
 
 // Helper functions for agent management
 export const __getAgentsByCategory = (category: string, agents: Agent[]) => {
-  return agents.filter(agent =>
+  return agents.filter((agent: any) =>
     agent.businessFunction === category ||
     agent.category === category
   );
 };
 
 export const __getAgentsByCapability = (capability: string, agents: Agent[]) => {
-  return agents.filter(agent =>
+  return agents.filter((agent: any) =>
     agent.capabilities?.some(cap =>
       cap.toLowerCase().includes(capability.toLowerCase())
     )
@@ -158,7 +158,7 @@ export const __getAgentsByCapability = (capability: string, agents: Agent[]) => 
 
 export const __searchAgents = (query: string, agents: Agent[]) => {
 
-  return agents.filter(agent =>
+  return agents.filter((agent: any) =>
     agent.name.toLowerCase().includes(searchTerm) ||
     agent.description.toLowerCase().includes(searchTerm) ||
     agent.businessFunction?.toLowerCase().includes(searchTerm) ||

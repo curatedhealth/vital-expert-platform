@@ -167,7 +167,7 @@ export class OpenAIEmbeddingService {
         // Extract embeddings in order
         const batchEmbeddings = response.data
           .sort((a, b) => a.index - b.index)
-          .map(item => item.embedding);
+          .map((item: any) => item.embedding);
 
         allEmbeddings.push(...batchEmbeddings);
         totalTokens += response.usage.total_tokens;

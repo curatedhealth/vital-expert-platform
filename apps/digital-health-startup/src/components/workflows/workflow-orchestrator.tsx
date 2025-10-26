@@ -602,10 +602,10 @@ const WorkflowOrchestrator: React.FC = () => {
   });
 
     total: workflows.length,
-    active: workflows.filter(w => w.status === 'active').length,
-    completed: workflows.filter(w => w.status === 'completed').length,
-    failed: workflows.filter(w => w.status === 'failed').length,
-    draft: workflows.filter(w => w.status === 'draft').length
+    active: workflows.filter((w: any) => w.status === 'active').length,
+    completed: workflows.filter((w: any) => w.status === 'completed').length,
+    failed: workflows.filter((w: any) => w.status === 'failed').length,
+    draft: workflows.filter((w: any) => w.status === 'draft').length
   };
 
   return (

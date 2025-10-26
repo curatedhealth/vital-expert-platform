@@ -869,7 +869,7 @@ export class ProductionObservabilitySystem {
 
     this.metrics.set(
       metricKey,
-      metricsList.filter(m => m.timestamp > cutoffTime)
+      metricsList.filter((m: any) => m.timestamp > cutoffTime)
     );
   }
 

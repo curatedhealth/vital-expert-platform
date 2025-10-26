@@ -106,7 +106,7 @@ export const CreateRagModal: React.FC<CreateRagModalProps> = ({
     setFormData(prev => ({
       ...prev,
       knowledge_domains: prev.knowledge_domains.includes(domain)
-        ? prev.knowledge_domains.filter(d => d !== domain)
+        ? prev.knowledge_domains.filter((d: any) => d !== domain)
         : [...prev.knowledge_domains, domain]
     }));
   };
@@ -124,7 +124,7 @@ export const CreateRagModal: React.FC<CreateRagModalProps> = ({
   const handleRemoveDomain = (domain: string) => {
     setFormData(prev => ({
       ...prev,
-      knowledge_domains: prev.knowledge_domains.filter(d => d !== domain)
+      knowledge_domains: prev.knowledge_domains.filter((d: any) => d !== domain)
     }));
   };
 
@@ -276,7 +276,7 @@ export const CreateRagModal: React.FC<CreateRagModalProps> = ({
           <div className="space-y-3">
             <Label>Knowledge Domains *</Label>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 max-h-40 overflow-y-auto p-2 border rounded">
-              {HEALTHCARE_DOMAINS.map(domain => (
+              {HEALTHCARE_DOMAINS.map((domain: any) => (
                 <div key={domain} className="flex items-center space-x-2">
                   <Checkbox
                     id={domain}
@@ -311,7 +311,7 @@ export const CreateRagModal: React.FC<CreateRagModalProps> = ({
             {/* Selected Domains */}
             {formData.knowledge_domains.length > 0 && (
               <div className="flex flex-wrap gap-1">
-                {formData.knowledge_domains.map(domain => (
+                {formData.knowledge_domains.map((domain: any) => (
                   <Badge key={domain} variant="secondary" className="text-xs">
                     {domain.replace('_', ' ')}
                     <button
@@ -338,7 +338,7 @@ export const CreateRagModal: React.FC<CreateRagModalProps> = ({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {EMBEDDING_MODELS.map(model => (
+                  {EMBEDDING_MODELS.map((model: any) => (
                     <SelectItem key={model.value} value={model.value}>
                       {model.label}
                     </SelectItem>

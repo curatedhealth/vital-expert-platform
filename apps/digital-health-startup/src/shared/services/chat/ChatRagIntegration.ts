@@ -244,7 +244,7 @@ export class ChatRagIntegration {
       metadata: {
         agent_name: context.agent_name,
         conversation_id: context.conversation_id,
-        rag_databases_queried: ragSources.map(s => s.rag_name),
+        rag_databases_queried: ragSources.map((s: any) => s.rag_name),
         total_rag_sources: ragSources.length,
         avg_relevance_score: ragSources.length > 0
           ? ragSources.reduce((sum, s) => sum + s.relevance_score, 0) / ragSources.length

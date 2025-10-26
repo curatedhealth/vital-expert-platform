@@ -333,7 +333,7 @@ export class RollbackRecoverySystem {
       strategy,
       estimatedTime: this.calculateEstimatedTime(strategy),
       steps: await this.generateRollbackSteps(strategy),
-      triggers: this.triggers.filter(t => t.enabled),
+      triggers: this.triggers.filter((t: any) => t.enabled),
       healthcareValidation: {
         preRollback: true,
         postRollback: true,

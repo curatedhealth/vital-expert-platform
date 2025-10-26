@@ -328,10 +328,10 @@ function calculateValidationStats(validations: unknown[]) {
     total: validations.length,
     byType: { /* TODO: implement */ } as Record<string, number>,
     byEntityType: { /* TODO: implement */ } as Record<string, number>,
-    recent: validations.filter(v => new Date(v.validation_date) >= thirtyDaysAgo).length,
-    expired: validations.filter(v => v.expiration_date && new Date(v.expiration_date) < now).length,
+    recent: validations.filter((v: any) => new Date(v.validation_date) >= thirtyDaysAgo).length,
+    expired: validations.filter((v: any) => v.expiration_date && new Date(v.expiration_date) < now).length,
     averageAccuracy: 0,
-    validatorsCount: new Set(validations.map(v => v.validator_id).filter(Boolean)).size
+    validatorsCount: new Set(validations.map((v: any) => v.validator_id).filter(Boolean)).size
   };
 
   // Calculate by type
@@ -342,7 +342,7 @@ function calculateValidationStats(validations: unknown[]) {
 
   // Calculate average accuracy
   const accuracyScores = validations
-    .map(v => v.accuracy_score)
+    .map((v: any) => v.accuracy_score)
     .filter(score => score !== null && score !== undefined);
 
   if (accuracyScores.length > 0) {

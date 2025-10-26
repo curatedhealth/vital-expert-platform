@@ -105,7 +105,7 @@ export class DigitalHealthRouter {
     // Add general digital health scoring
     for (const [agentId, agent] of this.digitalHealthAgents.entries()) {
 
-      if (generalScore > 30 && !candidates.some(c => c.agent.getConfig().name === agentId)) {
+      if (generalScore > 30 && !candidates.some((c: any) => c.agent.getConfig().name === agentId)) {
         candidates.push({
           agent,
           score: generalScore,
@@ -191,7 +191,7 @@ export class DigitalHealthRouter {
     // Domain matching
     for (const domain of domains) {
 
-      if (intent.domains.some(d => domainLower.includes(d)) ||
+      if (intent.domains.some((d: any) => domainLower.includes(d)) ||
           intent.keywords.some(kw => domainLower.includes(kw))) {
         score += 6;
       }

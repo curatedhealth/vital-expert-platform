@@ -247,6 +247,12 @@ async function handleAgentRegistration(
   organizationId: string,
   token: string
 ) {
+  // Create Supabase client
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+
   // Validate registration data
   if (!registrationData.name || !registrationData.primary_specialty) {
     return NextResponse.json({
@@ -358,6 +364,12 @@ async function handleAgentRouting(
   organizationId: string,
   token: string
 ) {
+  // Create Supabase client
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+
   // Validate routing data
   if (!routingData.case_description || !routingData.primary_specialty_needed) {
     return NextResponse.json({
@@ -433,7 +445,7 @@ async function handleAgentRouting(
       .eq('enabled', true)
       .limit(routingData.max_agents || 5)
 
-    const matchedAgents = (agents || []).filter(agent => {
+    const matchedAgents = (agents || []).filter((agent: any) => {
       const metadata = agent.metadata as any;
       return metadata.primary_specialty === routingData.primary_specialty_needed ||
              metadata.secondary_specialties?.includes(routingData.primary_specialty_needed)
@@ -442,7 +454,7 @@ async function handleAgentRouting(
     return NextResponse.json({
       success: true,
       routing_id: `fallback_${Date.now()}`,
-      matched_agents: matchedAgents.map(agent => ({
+      matched_agents: matchedAgents.map((agent: any) => ({
         agent_id: agent.id,
         name: agent.name,
         specialty: agent.metadata?.primary_specialty,

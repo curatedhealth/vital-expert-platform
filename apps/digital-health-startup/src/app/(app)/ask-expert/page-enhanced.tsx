@@ -102,7 +102,7 @@ export default function AskExpertPageEnhanced() {
   };
 
   const handleAgentSelect = (agentId: string) => {
-    const agent = agents.find(a => a.id === agentId);
+    const agent = agents.find((a: any) => a.id === agentId);
     setState(prev => ({ ...prev, selectedAgent: agent || null }));
 
     // Auto-switch to chat tab when agent is selected

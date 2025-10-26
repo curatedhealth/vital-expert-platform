@@ -529,7 +529,7 @@ const WorkflowAutomationEngine: React.FC<WorkflowAutomationEngineProps> = ({ cla
         setTemplates(mockTemplates);
         setMetrics({
           totalWorkflows: mockWorkflows.length,
-          activeWorkflows: mockWorkflows.filter(w => w.status === 'active').length,
+          activeWorkflows: mockWorkflows.filter((w: any) => w.status === 'active').length,
           executionsToday: 47,
           successRate: 94.3,
           avgExecutionTime: 62.8,

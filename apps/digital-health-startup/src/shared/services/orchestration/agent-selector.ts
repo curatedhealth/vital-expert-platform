@@ -59,9 +59,9 @@ export class AgentSelector {
     if (intent.requiresMultiAgent || intent.complexity === 'very-high') {
       // Multi-agent selection - take top 2-3 agents with score > 60
       selectedAgents = candidates
-        .filter(c => c.score > 60)
+        .filter((c: any) => c.score > 60)
         .slice(0, 3)
-        .map(c => c.agent);
+        .map((c: any) => c.agent);
 
       // } else {
       // Single agent selection - take best match if score > 70
@@ -107,7 +107,7 @@ export class AgentSelector {
 
       for (const agentId of domainAgents) {
 
-        if (agent && !candidates.some(c => c.agent.getConfig().name === agentId)) {
+        if (agent && !candidates.some((c: any) => c.agent.getConfig().name === agentId)) {
 
           if (score > 0) {
             candidates.push({
@@ -123,7 +123,7 @@ export class AgentSelector {
 
     // 3. Keyword and capability matching
     for (const [agentId, agent] of this.agents.entries()) {
-      if (!candidates.some(c => c.agent.getConfig().name === agentId)) {
+      if (!candidates.some((c: any) => c.agent.getConfig().name === agentId)) {
 
         if (score > 40) { // Only include if reasonably relevant
           candidates.push({

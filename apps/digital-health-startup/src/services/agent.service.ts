@@ -231,7 +231,7 @@ export class AgentService {
 
     for (const agent of agents) {
       // Skip agents with validation errors
-      if (errors.some(e => e.agent === agent.name)) {
+      if (errors.some((e: any) => e.agent === agent.name)) {
         continue;
       }
 
@@ -271,7 +271,7 @@ export class AgentService {
     }
 
     return {
-      success: errors.filter(e => e.severity === 'error').length === 0,
+      success: errors.filter((e: any) => e.severity === 'error').length === 0,
       imported,
       total: agents.length,
       errors,

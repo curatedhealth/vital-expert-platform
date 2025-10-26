@@ -451,8 +451,8 @@ const UniversalTestingPlatform: React.FC<UniversalTestingPlatformProps> = ({ cla
         setDigitalTrials(mockDigitalTrials);
         setStats({
           totalProtocols: mockProtocols.length,
-          activeTrials: mockProtocols.filter(p => p.status === 'active').length,
-          completedTrials: mockProtocols.filter(p => p.status === 'completed').length,
+          activeTrials: mockProtocols.filter((p: any) => p.status === 'active').length,
+          completedTrials: mockProtocols.filter((p: any) => p.status === 'completed').length,
           participantsEnrolled: 1250,
           digitalTrials: mockDigitalTrials.length,
           decentralizedTrials: 0

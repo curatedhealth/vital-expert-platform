@@ -392,7 +392,7 @@ export const EnhancedChatInterface: React.FC<EnhancedChatInterfaceProps> = ({
 
                   {message.agents && message.agents.length > 0 && (
                     <div className="flex flex-wrap gap-1">
-                      {message.agents.map(agent => (
+                      {message.agents.map((agent: any) => (
                         <Badge
                           key={agent.id}
                           variant={agent.status === 'completed' ? 'default' : 'outline'}

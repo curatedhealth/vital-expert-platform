@@ -241,9 +241,9 @@ export class CachedRAGService extends CloudRAGService {
     averageResponseTime: number;
   } {
     const totalQueries = results.length;
-    const cacheHits = results.filter(r => r.cached).length;
-    const exactHits = results.filter(r => r.cacheType === 'exact').length;
-    const semanticHits = results.filter(r => r.cacheType === 'semantic').length;
+    const cacheHits = results.filter((r: any) => r.cached).length;
+    const exactHits = results.filter((r: any) => r.cacheType === 'exact').length;
+    const semanticHits = results.filter((r: any) => r.cacheType === 'semantic').length;
     const hitRate = totalQueries > 0 ? (cacheHits / totalQueries) * 100 : 0;
     const averageResponseTime = results.reduce((sum, r) => sum + r.responseTime, 0) / totalQueries;
 

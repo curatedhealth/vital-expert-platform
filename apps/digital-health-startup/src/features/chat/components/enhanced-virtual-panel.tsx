@@ -157,7 +157,7 @@ export function EnhancedVirtualPanel({
     return new Promise((resolve) => {
 
         progress += 5;
-        setPhases(prev => prev.map(p =>
+        setPhases(prev => prev.map((p: any) =>
           p.id === phase.id ? { ...p, progress: Math.min(progress, 100) } : p
         ));
 
@@ -328,7 +328,7 @@ export function EnhancedVirtualPanel({
               <Card className="p-4">
                 <div className="text-center">
                   <div className="text-2xl font-bold text-blue-600">
-                    {phases.filter(p => p.status === 'completed').length}
+                    {phases.filter((p: any) => p.status === 'completed').length}
                   </div>
                   <div className="text-xs text-muted-foreground">Phases Done</div>
                 </div>

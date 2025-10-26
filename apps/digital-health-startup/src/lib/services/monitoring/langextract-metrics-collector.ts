@@ -278,7 +278,7 @@ export class LangExtractMetricsCollector {
   // ==========================================================================
 
   private getMetricValue(metrics: any[], name: string): number {
-    const metric = metrics.find(m => m.name === name);
+    const metric = metrics.find((m: any) => m.name === name);
     if (!metric || !metric.values || metric.values.length === 0) {
       return 0;
     }
@@ -286,7 +286,7 @@ export class LangExtractMetricsCollector {
   }
 
   private getHistogramValues(metrics: any[], name: string): number[] {
-    const metric = metrics.find(m => m.name === name);
+    const metric = metrics.find((m: any) => m.name === name);
     if (!metric || !metric.values) {
       return [];
     }

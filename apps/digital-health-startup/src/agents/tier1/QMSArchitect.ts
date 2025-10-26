@@ -310,7 +310,7 @@ You have 15+ years implementing QMS for medical device companies, including FDA 
       .filter(assessment => assessment.risk_level === "critical")
       .map(assessment => assessment.hazard_id);
 
-    const highRiskCount = riskAssessments.filter(a => a.risk_level === "high" || a.risk_level === "critical").length;
+    const highRiskCount = riskAssessments.filter((a: any) => a.risk_level === "high" || a.risk_level === "critical").length;
     const overallRiskProfile = highRiskCount === 0
       ? "Low overall risk profile"
       : highRiskCount <= 2

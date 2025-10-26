@@ -267,7 +267,7 @@ export class ExtractionQualityEvaluator {
     for (const gtEntity of groundTruth.entities) {
       if (!gtEntity.attributes) continue;
 
-      const extractedEntity = extraction.entities.find(e =>
+      const extractedEntity = extraction.entities.find((e: any) =>
         this.entitiesMatch(e, gtEntity)
       );
 
@@ -295,7 +295,7 @@ export class ExtractionQualityEvaluator {
     // For now, use confidence variance as a proxy for consistency
     if (extraction.entities.length === 0) return 1.0;
 
-    const confidences = extraction.entities.map(e => e.confidence);
+    const confidences = extraction.entities.map((e: any) => e.confidence);
     const avgConfidence = confidences.reduce((a, b) => a + b, 0) / confidences.length;
     const variance = confidences.reduce((sum, c) => sum + Math.pow(c - avgConfidence, 2), 0) / confidences.length;
     const stdDev = Math.sqrt(variance);
@@ -313,7 +313,7 @@ export class ExtractionQualityEvaluator {
   ): Promise<number> {
     // For now, use confidence as a proxy
     // In production, would validate against medical knowledge bases
-    const medicalEntities = extraction.entities.filter(e =>
+    const medicalEntities = extraction.entities.filter((e: any) =>
       ['medication', 'diagnosis', 'procedure', 'condition'].includes(e.type)
     );
 
@@ -383,17 +383,17 @@ export class ExtractionQualityEvaluator {
     groundTruth: GroundTruth
   ): Record<string, { precision: number; recall: number; f1_score: number; count: number }> {
     const types = new Set([
-      ...extraction.entities.map(e => e.type),
-      ...groundTruth.entities.map(e => e.type)
+      ...extraction.entities.map((e: any) => e.type),
+      ...groundTruth.entities.map((e: any) => e.type)
     ]);
 
     const breakdown: Record<string, any> = {};
 
     for (const type of types) {
-      const extractedOfType = extraction.entities.filter(e => e.type === type);
-      const groundTruthOfType = groundTruth.entities.filter(e => e.type === type);
+      const extractedOfType = extraction.entities.filter((e: any) => e.type === type);
+      const groundTruthOfType = groundTruth.entities.filter((e: any) => e.type === type);
 
-      const truePositives = extractedOfType.filter(e =>
+      const truePositives = extractedOfType.filter((e: any) =>
         groundTruthOfType.some(gt => this.entitiesMatch(e, gt))
       ).length;
 
@@ -422,9 +422,9 @@ export class ExtractionQualityEvaluator {
     medium: { count: number; accuracy: number };
     low: { count: number; accuracy: number };
   } {
-    const high = extraction.entities.filter(e => e.confidence >= 0.8);
-    const medium = extraction.entities.filter(e => e.confidence >= 0.5 && e.confidence < 0.8);
-    const low = extraction.entities.filter(e => e.confidence < 0.5);
+    const high = extraction.entities.filter((e: any) => e.confidence >= 0.8);
+    const medium = extraction.entities.filter((e: any) => e.confidence >= 0.5 && e.confidence < 0.8);
+    const low = extraction.entities.filter((e: any) => e.confidence < 0.5);
 
     return {
       high: {

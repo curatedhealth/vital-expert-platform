@@ -95,7 +95,7 @@ export default function PromptLibrary() {
     );
   }
 
-  const activeSuite = PRISM_SUITES.find(s => s.name === activeTab);
+  const activeSuite = PRISM_SUITES.find((s: any) => s.name === activeTab);
   const activePrompts = getPromptsForSuite(activeTab);
 
   return (

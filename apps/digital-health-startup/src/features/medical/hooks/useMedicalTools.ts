@@ -117,7 +117,7 @@ export function useMedicalTools(options: UseMedicalToolsOptions = { /* TODO: imp
       // Validate all required inputs are filled
 
       if (missingInputs.length > 0) {
-        throw new Error(`Missing required inputs: ${missingInputs.map(i => i.label).join(', ')}`);
+        throw new Error(`Missing required inputs: ${missingInputs.map((i: any) => i.label).join(', ')}`);
       }
 
       let result: MedicalCalculation['result'];

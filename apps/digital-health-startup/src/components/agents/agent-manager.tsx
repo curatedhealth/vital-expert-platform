@@ -487,13 +487,13 @@ const AgentManager: React.FC = () => {
   const [filterStatus, setFilterStatus] = useState<string>('all');
 
   const handleStart = (agentId: string) => {
-    setAgents(prev => prev.map(agent =>
+    setAgents(prev => prev.map((agent: any) =>
       agent.id === agentId ? { ...agent, status: 'active' as const } : agent
     ));
   };
 
   const handleStop = (agentId: string) => {
-    setAgents(prev => prev.map(agent =>
+    setAgents(prev => prev.map((agent: any) =>
       agent.id === agentId ? { ...agent, status: 'idle' as const } : agent
     ));
   };
@@ -505,13 +505,13 @@ const AgentManager: React.FC = () => {
 
   const handleSaveConfig = (config: unknown) => {
     if (selectedAgent) {
-      setAgents(prev => prev.map(agent =>
+      setAgents(prev => prev.map((agent: any) =>
         agent.id === selectedAgent.id ? { ...agent, config } : agent
       ));
     }
   };
 
-  const filteredAgents = agents.filter(agent => {
+  const filteredAgents = agents.filter((agent: any) => {
     const matchesSearch = agent.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          agent.description.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = filterStatus === 'all' || agent.status === filterStatus;
@@ -520,10 +520,10 @@ const AgentManager: React.FC = () => {
 
   const agentStats = {
     total: agents.length,
-    active: agents.filter(a => a.status === 'active').length,
-    busy: agents.filter(a => a.status === 'busy').length,
-    idle: agents.filter(a => a.status === 'idle').length,
-    error: agents.filter(a => a.status === 'error').length
+    active: agents.filter((a: any) => a.status === 'active').length,
+    busy: agents.filter((a: any) => a.status === 'busy').length,
+    idle: agents.filter((a: any) => a.status === 'idle').length,
+    error: agents.filter((a: any) => a.status === 'error').length
   };
 
   return (

@@ -128,7 +128,7 @@ export function ReviewQueuePanel({
     }
   }
 
-  const filteredQueue = selectedStatus === 'all' ? queue : queue.filter(item => item.status === selectedStatus)
+  const filteredQueue = selectedStatus === 'all' ? queue : queue.filter((item: any) => item.status === selectedStatus)
 
   if (loading && queue.length === 0) {
     return (
@@ -196,19 +196,19 @@ export function ReviewQueuePanel({
                 All ({queue.length})
               </TabsTrigger>
               <TabsTrigger value="pending">
-                Pending ({queue.filter(i => i.status === 'pending').length})
+                Pending ({queue.filter((i: any) => i.status === 'pending').length})
               </TabsTrigger>
               <TabsTrigger value="in_review">
-                In Review ({queue.filter(i => i.status === 'in_review').length})
+                In Review ({queue.filter((i: any) => i.status === 'in_review').length})
               </TabsTrigger>
               <TabsTrigger value="approved">
-                Approved ({queue.filter(i => i.status === 'approved').length})
+                Approved ({queue.filter((i: any) => i.status === 'approved').length})
               </TabsTrigger>
               <TabsTrigger value="rejected">
-                Rejected ({queue.filter(i => i.status === 'rejected').length})
+                Rejected ({queue.filter((i: any) => i.status === 'rejected').length})
               </TabsTrigger>
               <TabsTrigger value="escalated">
-                Escalated ({queue.filter(i => i.status === 'escalated').length})
+                Escalated ({queue.filter((i: any) => i.status === 'escalated').length})
               </TabsTrigger>
             </TabsList>
 
@@ -224,7 +224,7 @@ export function ReviewQueuePanel({
                       key={item.id}
                       item={item}
                       onReview={() => setSelectedItem(item)}
-                      isBreached={breached.some(b => b.id === item.id)}
+                      isBreached={breached.some((b: any) => b.id === item.id)}
                     />
                   ))}
                 </div>
@@ -417,7 +417,7 @@ export function QueueStatsWidget({ className = '' }: { className?: string }) {
 
   const stats = {
     total: queue.length,
-    pending: queue.filter(i => i.status === 'pending').length,
+    pending: queue.filter((i: any) => i.status === 'pending').length,
     breached: breached.length,
     avgPriority: queue.length > 0
       ? (queue.reduce((sum, i) => sum + i.priority, 0) / queue.length).toFixed(1)

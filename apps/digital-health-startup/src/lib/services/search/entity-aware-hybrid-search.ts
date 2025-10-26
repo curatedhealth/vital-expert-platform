@@ -151,7 +151,7 @@ export class EntityAwareHybridSearch {
       filter: query.domain ? { domain: query.domain } : undefined,
     });
 
-    return results.map(result => ({
+    return results.map((result: any) => ({
       chunk_id: result.chunk_id,
       document_id: result.document_id,
       content: result.content,
@@ -225,11 +225,11 @@ export class EntityAwareHybridSearch {
 
     // Build entity search query
     // This searches in the metadata->>'entities' JSONB field
-    const entityTexts = queryEntities.map(e => e.text.toLowerCase());
+    const entityTexts = queryEntities.map((e: any) => e.text.toLowerCase());
 
     const { data, error } = await this.supabase.rpc('search_by_entities', {
       entity_texts: entityTexts,
-      entity_types: queryEntities.map(e => e.type),
+      entity_types: queryEntities.map((e: any) => e.type),
       max_results: 50,
     }).catch(async () => {
       // Fallback if function doesn't exist - use direct query
@@ -380,7 +380,7 @@ export class EntityAwareHybridSearch {
   ): SearchResult[] {
     if (queryEntities.length === 0) return results;
 
-    return results.map(result => {
+    return results.map((result: any) => {
       // Boost score based on entity matches
       const entityBoost = (result.matched_entities?.length || 0) / queryEntities.length;
       const boostedScore = result.scores.combined * (1 + entityBoost * 0.3); // 30% boost

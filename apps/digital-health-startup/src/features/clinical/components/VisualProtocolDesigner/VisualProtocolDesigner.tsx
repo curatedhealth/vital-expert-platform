@@ -185,8 +185,8 @@ export function VisualProtocolDesigner({
 
     setWorkflow(prev => ({
       ...prev,
-      nodes: prev.nodes.filter(n => n.id !== nodeId),
-      edges: prev.edges.filter(e => e.source !== nodeId && e.target !== nodeId),
+      nodes: prev.nodes.filter((n: any) => n.id !== nodeId),
+      edges: prev.edges.filter((e: any) => e.source !== nodeId && e.target !== nodeId),
       metadata: { ...prev.metadata, modified: new Date() }
     }));
     setSelectedNode(null);
@@ -196,7 +196,7 @@ export function VisualProtocolDesigner({
 
     setWorkflow(prev => ({
       ...prev,
-      edges: prev.edges.filter(e => e.id !== edgeId),
+      edges: prev.edges.filter((e: any) => e.id !== edgeId),
       metadata: { ...prev.metadata, modified: new Date() }
     }));
     setSelectedEdge(null);
@@ -356,7 +356,7 @@ export function VisualProtocolDesigner({
                           onChange={(e) => {
                             setWorkflow(prev => ({
                               ...prev,
-                              nodes: prev.nodes.map(n =>
+                              nodes: prev.nodes.map((n: any) =>
                                 n.id === selectedNode
                                   ? { ...n, label: e.target.value }
                                   : n
@@ -375,7 +375,7 @@ export function VisualProtocolDesigner({
                           onChange={(e) => {
                             setWorkflow(prev => ({
                               ...prev,
-                              nodes: prev.nodes.map(n =>
+                              nodes: prev.nodes.map((n: any) =>
                                 n.id === selectedNode
                                   ? { ...n, description: e.target.value }
                                   : n
@@ -396,7 +396,7 @@ export function VisualProtocolDesigner({
                           onChange={(e) => {
                             setWorkflow(prev => ({
                               ...prev,
-                              nodes: prev.nodes.map(n =>
+                              nodes: prev.nodes.map((n: any) =>
                                 n.id === selectedNode
                                   ? { ...n, data: { ...n.data, durationEstimate: parseInt(e.target.value) || undefined }}
                                   : n
@@ -414,7 +414,7 @@ export function VisualProtocolDesigner({
                           onValueChange={(value) => {
                             setWorkflow(prev => ({
                               ...prev,
-                              nodes: prev.nodes.map(n =>
+                              nodes: prev.nodes.map((n: any) =>
                                 n.id === selectedNode
                                   ? { ...n, data: { ...n.data, requiredRole: value }}
                                   : n
@@ -478,7 +478,7 @@ export function VisualProtocolDesigner({
                           onChange={(e) => {
                             setWorkflow(prev => ({
                               ...prev,
-                              edges: prev.edges.map(e =>
+                              edges: prev.edges.map((e: any) =>
                                 e.id === selectedEdge
                                   ? { ...e, label: e.target.value }
                                   : e
@@ -497,7 +497,7 @@ export function VisualProtocolDesigner({
                           onChange={(e) => {
                             setWorkflow(prev => ({
                               ...prev,
-                              edges: prev.edges.map(e =>
+                              edges: prev.edges.map((e: any) =>
                                 e.id === selectedEdge
                                   ? { ...e, condition: e.target.value }
                                   : e

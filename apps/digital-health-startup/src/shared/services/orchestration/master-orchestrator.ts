@@ -217,7 +217,7 @@ export class MasterOrchestrator extends AgentOrchestrator {
   ): Promise<OrchestrationResult> {
     // // Execute agents in parallel
     const responses = await Promise.allSettled(
-      agents.map(agent =>
+      agents.map((agent: any) =>
         agent.executePrompt(
           agent.getConfig().prompt_starters[0] || 'general-analysis',
           { query },
@@ -272,8 +272,8 @@ export class MasterOrchestrator extends AgentOrchestrator {
       confidence,
       orchestration: {
         type: 'multi_agent',
-        agents: successfulResponses.map(r => r.agent),
-        individualConfidences: successfulResponses.map(r => ({
+        agents: successfulResponses.map((r: any) => r.agent),
+        individualConfidences: successfulResponses.map((r: any) => ({
           agent: r.agent,
           confidence: r.confidence
         }))
@@ -292,7 +292,7 @@ export class MasterOrchestrator extends AgentOrchestrator {
     if (!domain) return null;
 
     const allAgents = await this.agentSelector.getAllAgents();
-    return allAgents.find(a =>
+    return allAgents.find((a: any) =>
       a.getConfig().metadata?.domain === domain &&
       a.getConfig().name !== failedAgent.getConfig().name
     ) || null;
@@ -322,7 +322,7 @@ export class MasterOrchestrator extends AgentOrchestrator {
   }
 
   private handleAllAgentsFailed(query: string, responses: unknown[]): OrchestrationResult {
-    const errors = responses.map(r => ({
+    const errors = responses.map((r: any) => ({
       agent: r.agent,
       error: r.error
     }));

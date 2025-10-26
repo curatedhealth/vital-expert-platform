@@ -749,7 +749,7 @@ ${result.healthcareCompliance.recommendedActions.map(action => `- ${action}`).jo
   }
 
   getPipeline(id: string): DeploymentPipeline | undefined {
-    return this.pipelines.find(p => p.id === id);
+    return this.pipelines.find((p: any) => p.id === id);
   }
 
   async cancelDeployment(pipelineId: string): Promise<void> {

@@ -174,12 +174,12 @@ export class SecurityMonitoringSystem {
       try {
         switch (action) {
           case 'block_ip':
-            await this.blockIPAddress(alert.indicators.find(i => i.type === 'ip')?.value);
+            await this.blockIPAddress(alert.indicators.find((i: any) => i.type === 'ip')?.value);
             response.details = 'IP address blocked successfully';
             break;
 
           case 'disable_user':
-            await this.disableUserAccount(alert.indicators.find(i => i.type === 'user')?.value);
+            await this.disableUserAccount(alert.indicators.find((i: any) => i.type === 'user')?.value);
             response.details = 'User account disabled';
             break;
 
@@ -582,7 +582,7 @@ export class SecurityMonitoringSystem {
   }
 
   getActiveIncidents(): IncidentResponse[] {
-    return Array.from(this.incidentQueue.values()).filter(i => i.status !== 'closed');
+    return Array.from(this.incidentQueue.values()).filter((i: any) => i.status !== 'closed');
   }
 
   private async aggregateSecurityMetrics(): Promise<void> {

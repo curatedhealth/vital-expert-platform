@@ -49,11 +49,11 @@ export class ComplianceAwareOrchestrator extends AgentOrchestrator {
       context
     );
 
-    if (!preWorkflowValidation.compliant && preWorkflowValidation.violations.some(v => v.severity === 'critical')) {
+    if (!preWorkflowValidation.compliant && preWorkflowValidation.violations.some((v: any) => v.severity === 'critical')) {
       throw new ComplianceError(
         `Critical compliance violations prevent workflow execution: ${preWorkflowValidation.violations
-          .filter(v => v.severity === 'critical')
-          .map(v => v.description)
+          .filter((v: any) => v.severity === 'critical')
+          .map((v: any) => v.description)
           .join('; ')}`,
         'WORKFLOW_COMPLIANCE_VIOLATION',
         'critical'
@@ -172,7 +172,7 @@ export class ComplianceAwareOrchestrator extends AgentOrchestrator {
     const complianceReport = this.complianceMiddleware.generateComplianceReport(timeRange);
     const agentStatuses = this.getAgentStatus();
 
-    const agentComplianceStatus = agentStatuses.map(agent => ({
+    const agentComplianceStatus = agentStatuses.map((agent: any) => ({
       ...agent,
       compliance: this.complianceMiddleware.getAgentComplianceStatus(agent.name)
     }));

@@ -963,13 +963,13 @@ Provide comprehensive analysis of patient populations with focus on health outco
           results.failed.push({
             batch: Math.floor(i/batchSize) + 1,
             error: insertError.message,
-            agents: batch.map(a => a.name)
+            agents: batch.map((a: any) => a.name)
           });
         } else {
           console.log(`✅ Batch ${Math.floor(i/batchSize) + 1} successful: ${insertData.length} agents inserted`);
           results.successful.push({
             batch: Math.floor(i/batchSize) + 1,
-            agents: insertData.map(a => a.name)
+            agents: insertData.map((a: any) => a.name)
           });
         }
       } catch (error) {
@@ -977,7 +977,7 @@ Provide comprehensive analysis of patient populations with focus on health outco
         results.failed.push({
           batch: Math.floor(i/batchSize) + 1,
           error: error instanceof Error ? error.message : 'Unknown error',
-          agents: batch.map(a => a.name)
+          agents: batch.map((a: any) => a.name)
         });
       }
     }

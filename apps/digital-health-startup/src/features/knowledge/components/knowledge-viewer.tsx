@@ -154,7 +154,7 @@ export function KnowledgeViewer() {
     } catch (error) {
       console.error('Search error:', error);
       // Fallback to mock results on error
-      const filteredResults = mockResults.filter(result => {
+      const filteredResults = mockResults.filter((result: any) => {
         const domainMatch = selectedDomain === 'all' || result.domain === selectedDomain;
         const scopeMatch = selectedScope === 'all' ||
           (selectedScope === 'global' && result.isGlobal) ||
@@ -257,7 +257,7 @@ export function KnowledgeViewer() {
             onChange={(e) => setSelectedDomain(e.target.value)}
             className="px-3 py-1 border border-gray-300 rounded-md text-sm"
           >
-            {domains.map(domain => (
+            {domains.map((domain: any) => (
               <option key={domain.value} value={domain.value}>
                 {domain.label}
               </option>
@@ -325,7 +325,7 @@ export function KnowledgeViewer() {
                         </div>
                         <div className="flex items-center gap-2">
                           <Badge className={getDomainColor(result.domain)}>
-                            {domains.find(d => d.value === result.domain)?.label}
+                            {domains.find((d: any) => d.value === result.domain)?.label}
                           </Badge>
                           <Badge variant={result.isGlobal ? 'default' : 'secondary'}>
                             {result.isGlobal ? (

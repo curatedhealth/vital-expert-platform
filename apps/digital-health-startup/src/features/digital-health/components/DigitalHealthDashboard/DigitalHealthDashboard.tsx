@@ -153,7 +153,7 @@ const DigitalHealthDashboard: React.FC<DigitalHealthDashboardProps> = ({ provide
           </div>
           <div className="bg-red-50 p-4 rounded-lg">
             <div className="text-2xl font-bold text-red-600">
-              {filteredAlerts.filter(a => !a.acknowledged).length}
+              {filteredAlerts.filter((a: any) => !a.acknowledged).length}
             </div>
             <div className="text-sm text-gray-600">Pending Alerts</div>
           </div>

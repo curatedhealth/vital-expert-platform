@@ -195,7 +195,7 @@ Respond with only the JSON object.`;
    * Step 2: Select board members based on requirements
    */
   private async selectBoardMembers(requirements: BoardRequirements): Promise<typeof AVAILABLE_AGENTS> {
-    const candidates = AVAILABLE_AGENTS.filter(agent => {
+    const candidates = AVAILABLE_AGENTS.filter((agent: any) => {
       // Check if agent's domain matches requirements
       const domainMatch = agent.domains.includes(requirements.domain);
 
@@ -211,7 +211,7 @@ Respond with only the JSON object.`;
     });
 
     // Score candidates by relevance
-    const scoredCandidates = candidates.map(agent => {
+    const scoredCandidates = candidates.map((agent: any) => {
       let score = 0;
 
       // Domain match score
@@ -233,7 +233,7 @@ Respond with only the JSON object.`;
     const selectedAgents = scoredCandidates
       .sort((a, b) => b.score - a.score)
       .slice(0, requirements.suggestedBoardSize)
-      .map(item => item.agent);
+      .map((item: any) => item.agent);
 
     return selectedAgents;
   }
@@ -330,7 +330,7 @@ Respond with only the JSON object.`;
     const improvementPrompt = `Based on this board composition and session transcript, suggest improvements:
 
 Current Board:
-${currentBoard.map(m => `- ${m.persona} (${m.role}): ${m.expertise.join(', ')}`).join('\n')}
+${currentBoard.map((m: any) => `- ${m.persona} (${m.role}): ${m.expertise.join(', ')}`).join('\n')}
 
 Session Excerpt:
 ${sessionTranscript.slice(0, 1000)}...

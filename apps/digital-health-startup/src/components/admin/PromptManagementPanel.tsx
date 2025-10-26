@@ -62,8 +62,8 @@ export function PromptManagementPanel({ className = '' }: PromptManagementPanelP
   });
 
   // Get unique domains and complexity levels for filters
-  const domains = [...new Set(prompts.map(p => p.domain))];
-  const complexityLevels = [...new Set(prompts.map(p => p.complexity_level))];
+  const domains = [...new Set(prompts.map((p: any) => p.domain))];
+  const complexityLevels = [...new Set(prompts.map((p: any) => p.complexity_level))];
 
   // Load performance data
   useEffect(() => {
@@ -146,7 +146,7 @@ export function PromptManagementPanel({ className = '' }: PromptManagementPanelP
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Domains</SelectItem>
-                    {domains.map(domain => (
+                    {domains.map((domain: any) => (
                       <SelectItem key={domain} value={domain}>
                         {domain.replace('_', ' ').toUpperCase()}
                       </SelectItem>

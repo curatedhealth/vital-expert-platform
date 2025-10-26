@@ -109,8 +109,8 @@ export class HuggingFaceService {
     // For most instruction-tuned models, use this format:
     // <s>[INST] <<SYS>>system_message<</SYS>>user_message [/INST]
 
-    const systemMessage = messages.find(m => m.role === 'system');
-    const chatMessages = messages.filter(m => m.role !== 'system');
+    const systemMessage = messages.find((m: any) => m.role === 'system');
+    const chatMessages = messages.filter((m: any) => m.role !== 'system');
 
     let prompt = '';
 

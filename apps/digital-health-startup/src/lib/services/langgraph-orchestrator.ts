@@ -626,7 +626,7 @@ export class LangGraphOrchestrator {
   private createConditionFunction(condition: string, truePath: string, allEdges: PatternEdge[]) {
     return (state: OrchestrationState): string => {
       // Find alternative path (else path)
-      const falsePath = allEdges.find(e =>
+      const falsePath = allEdges.find((e: any) =>
         e.from === allEdges.find(e2 => e2.to === truePath)?.from &&
         e.to !== truePath
       )?.to || END;
@@ -678,7 +678,7 @@ export class LangGraphOrchestrator {
       }
     }
 
-    const repliesMap = new Map(newReplies.map(r => [r.persona, r]));
+    const repliesMap = new Map(newReplies.map((r: any) => [r.persona, r]));
 
     return {
       replies: repliesMap,
@@ -697,7 +697,7 @@ export class LangGraphOrchestrator {
     for (const persona of state.personas) {
       // Build context from previous replies
       const previousContext = newReplies.length > 0
-        ? `\n\nPrevious expert opinions:\n${newReplies.map(r => `${r.persona}: ${r.text.slice(0, 200)}...`).join('\n')}`
+        ? `\n\nPrevious expert opinions:\n${newReplies.map((r: any) => `${r.persona}: ${r.text.slice(0, 200)}...`).join('\n')}`
         : '';
 
       const reply = await this.runExpert(
@@ -711,7 +711,7 @@ export class LangGraphOrchestrator {
       logs.push(`  ✓ ${persona} responded`);
     }
 
-    const repliesMap = new Map(newReplies.map(r => [r.persona, r]));
+    const repliesMap = new Map(newReplies.map((r: any) => [r.persona, r]));
 
     return {
       replies: repliesMap,
@@ -767,7 +767,7 @@ export class LangGraphOrchestrator {
 
     // Analyze minority opinions
     logs.push('Analyzing minority opinions...');
-    const minorityReplies: MinorityAgentReply[] = replies.map(r => ({
+    const minorityReplies: MinorityAgentReply[] = replies.map((r: any) => ({
       persona: r.persona,
       message: r.text,
       confidence: r.confidence,
@@ -792,7 +792,7 @@ export class LangGraphOrchestrator {
     ];
 
     // Extract dissent (enhanced with minority analysis)
-    const lowConfReplies = replies.filter(r => r.confidence < 0.5);
+    const lowConfReplies = replies.filter((r: any) => r.confidence < 0.5);
     const dissent: string[] = [];
 
     if (minorityAnalysis.minorityPositions.length > 0) {
@@ -819,20 +819,20 @@ export class LangGraphOrchestrator {
 ${state.question}
 
 ## Expert Panel (${state.personas.length} experts, ${state.currentRound} rounds)
-${state.personas.map(p => `- ${p}`).join('\n')}
+${state.personas.map((p: any) => `- ${p}`).join('\n')}
 
 ## Consensus
-${consensus.map(c => `- ${c}`).join('\n')}
+${consensus.map((c: any) => `- ${c}`).join('\n')}
 
-${dissent.length > 0 ? `## Dissent\n${dissent.map(d => `- ${d}`).join('\n')}` : ''}
+${dissent.length > 0 ? `## Dissent\n${dissent.map((d: any) => `- ${d}`).join('\n')}` : ''}
 
 ${minorityReport}
 
 ## Key Risks & Assumptions
-${risks.map(r => `- **${r.risk}**: ${r.assumption}`).join('\n')}
+${risks.map((r: any) => `- **${r.risk}**: ${r.assumption}`).join('\n')}
 
 ## Individual Expert Responses
-${replies.map(r => `
+${replies.map((r: any) => `
 ### ${r.persona} (Confidence: ${(r.confidence * 100).toFixed(0)}%)
 ${r.text}
 ${r.citations.length > 0 ? `\n**Citations:** ${r.citations.join(', ')}` : ''}
@@ -864,7 +864,7 @@ ${r.citations.length > 0 ? `\n**Citations:** ${r.citations.join(', ')}` : ''}
     conversationContext: string = ''
   ): Promise<AgentReply> {
     const evidenceSummary = evidenceSources.length > 0
-      ? `\n\nEvidence:\n${evidenceSources.map(e => `- ${e.title}: ${e.summary}`).join('\n')}`
+      ? `\n\nEvidence:\n${evidenceSources.map((e: any) => `- ${e.title}: ${e.summary}`).join('\n')}`
       : '';
 
     // Get all available tools for this expert
@@ -953,7 +953,7 @@ Citations: [list]`
 
       // Extract citations
       const citations = Array.from(text.matchAll(/\(([A-Z][a-z]+\s+\d{4})\)/g))
-        .map(m => m[1]);
+        .map((m: any) => m[1]);
 
       return {
         persona,
@@ -996,7 +996,7 @@ Citations: [list]`;
       const confMatch = text.match(/confidence[:\s]+([0-9.]+)/i);
       const confidence = confMatch ? parseFloat(confMatch[1]) : 0.7;
       const citations = Array.from(text.matchAll(/\(([A-Z][a-z]+\s+\d{4})\)/g))
-        .map(m => m[1]);
+        .map((m: any) => m[1]);
 
       return {
         persona,

@@ -283,7 +283,7 @@ class LLMOrchestrator {
     models: ModelType[]
   ): Promise<ConsensusResponse> {
 
-      models.map(model => this.query(question, context, model))
+      models.map((model: any) => this.query(question, context, model))
     );
 
     // Analyze agreement between models

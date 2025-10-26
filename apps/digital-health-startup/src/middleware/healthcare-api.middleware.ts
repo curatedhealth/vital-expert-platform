@@ -106,7 +106,7 @@ export async function healthcareAPIMiddleware(
       await auditLogger.logComplianceViolation('HIPAA_VIOLATION', {
         requestId,
         userId: authResult.user?.id,
-        violations: hipaaValidation.violations.map(v => `${v.type}: ${v.description}`),
+        violations: hipaaValidation.violations.map((v: any) => `${v.type}: ${v.description}`),
         endpoint: sanitizedRequest.nextUrl.pathname
       });
       return createErrorResponse(

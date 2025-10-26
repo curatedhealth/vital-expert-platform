@@ -212,12 +212,12 @@ export class KnowledgeDomainDetector {
       const merged = this.mergeDetections(regexDetected, ragDetected);
 
       return merged
-        .filter(d => d.confidence >= minConfidence)
+        .filter((d: any) => d.confidence >= minConfidence)
         .slice(0, maxDomains);
     }
 
     return regexDetected
-      .filter(d => d.confidence >= minConfidence)
+      .filter((d: any) => d.confidence >= minConfidence)
       .slice(0, maxDomains);
   }
 
@@ -307,7 +307,7 @@ export class KnowledgeDomainDetector {
       );
 
       return similarities
-        .filter(s => s.confidence > 0.3)
+        .filter((s: any) => s.confidence > 0.3)
         .sort((a, b) => {
           // Sort by priority first, then confidence
           if (a.priority !== b.priority) return a.priority - b.priority;

@@ -193,7 +193,7 @@ export function PanelSidebar({
                               <Avatar key={index} className="h-6 w-6 border-2 border-background">
                                 <AvatarImage src={member.agent.avatar?.startsWith('http') ? member.agent.avatar : undefined} />
                                 <AvatarFallback className="text-xs">
-                                  {member.agent.name.split(' ').map(n => n[0]).join('')}
+                                  {member.agent.name.split(' ').map((n: any) => n[0]).join('')}
                                 </AvatarFallback>
                               </Avatar>
                             ))}

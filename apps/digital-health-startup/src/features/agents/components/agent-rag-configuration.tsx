@@ -359,7 +359,7 @@ export const AgentRAGConfiguration: React.FC<AgentRAGConfigurationProps> = ({
                   <h4 className="font-medium mb-3">Add RAG System</h4>
                   <div className="grid grid-cols-2 gap-4">
                     {availableRAGSystems
-                      .filter(system => !currentConfig.ragSystems.some(s => s.systemId === system.systemId))
+                      .filter(system => !currentConfig.ragSystems.some((s: any) => s.systemId === system.systemId))
                       .map((system) => (
                         <Button
                           key={system.systemId}

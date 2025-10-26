@@ -94,7 +94,7 @@ export async function GET(request: NextRequest) {
 
     console.log('[Org Structure API] Fetched', functions?.length || 0, 'functions');
     if (functions && functions.length > 0) {
-      console.log('[Org Structure API] Sample:', functions.slice(0, 3).map(f => f.name));
+      console.log('[Org Structure API] Sample:', functions.slice(0, 3).map((f: any) => f.name));
     }
 
     // Fetch all departments

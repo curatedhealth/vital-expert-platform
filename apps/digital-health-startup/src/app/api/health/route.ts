@@ -107,7 +107,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const services = searchParams.get('services')?.split(',')
     const servicesToCheck = services
-      ? SERVICE_ENDPOINTS.filter(s => services.includes(s.name))
+      ? SERVICE_ENDPOINTS.filter((s: any) => services.includes(s.name))
       : SERVICE_ENDPOINTS
 
     const serviceHealthResults = await Promise.all(servicesToCheck.map(service =>
@@ -320,11 +320,11 @@ async function getActiveConnectionsCount(): Promise<number> {
 
 function determineOverallStatus(healthChecks: ServiceHealthCheck[]): 'healthy' | 'degraded' | 'unhealthy' {
   const criticalServices = ['database', 'orchestrator', 'agent_registry']
-  const unhealthyCount = healthChecks.filter(h => h.status === 'unhealthy').length
-  const degradedCount = healthChecks.filter(h => h.status === 'degraded').length
+  const unhealthyCount = healthChecks.filter((h: any) => h.status === 'unhealthy').length
+  const degradedCount = healthChecks.filter((h: any) => h.status === 'degraded').length
 
   // Check if any critical service is unhealthy
-  const criticalUnhealthy = healthChecks.some(h =>
+  const criticalUnhealthy = healthChecks.some((h: any) =>
     criticalServices.includes(h.service_name) && h.status === 'unhealthy'
   )
 

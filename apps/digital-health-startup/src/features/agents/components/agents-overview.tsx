@@ -27,19 +27,19 @@ export function AgentsOverview() {
 
   const statistics = useMemo(() => {
     const total = agents.length;
-    const active = agents.filter(a => a.status === 'active').length;
-    const custom = agents.filter(a => a.is_custom).length;
+    const active = agents.filter((a: any) => a.status === 'active').length;
+    const custom = agents.filter((a: any) => a.is_custom).length;
     const byTier = {
-      core: agents.filter(a => a.tier === 0).length,
-      tier1: agents.filter(a => a.tier === 1).length,
-      tier2: agents.filter(a => a.tier === 2).length,
-      tier3: agents.filter(a => a.tier === 3).length,
+      core: agents.filter((a: any) => a.tier === 0).length,
+      tier1: agents.filter((a: any) => a.tier === 1).length,
+      tier2: agents.filter((a: any) => a.tier === 2).length,
+      tier3: agents.filter((a: any) => a.tier === 3).length,
     };
     const byStatus = {
-      active: agents.filter(a => a.status === 'active').length,
-      development: agents.filter(a => a.status === 'development').length,
-      testing: agents.filter(a => a.status === 'testing').length,
-      inactive: agents.filter(a => a.status === 'inactive').length,
+      active: agents.filter((a: any) => a.status === 'active').length,
+      development: agents.filter((a: any) => a.status === 'development').length,
+      testing: agents.filter((a: any) => a.status === 'testing').length,
+      inactive: agents.filter((a: any) => a.status === 'inactive').length,
     };
     const byFunction = agents.reduce((acc, agent) => {
       const func = agent.business_function || 'Unassigned';

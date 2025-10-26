@@ -495,7 +495,7 @@ export class AgentSystemTestSuite {
 
     const validResult = await this.complianceManager.validateCompliance(validRequest);
     if (!validResult.compliant) {
-      throw new Error(`Valid request flagged as non-compliant: ${validResult.violations.map(v => v.description).join('; ')}`);
+      throw new Error(`Valid request flagged as non-compliant: ${validResult.violations.map((v: any) => v.description).join('; ')}`);
     }
 
     // Test invalid request
@@ -567,10 +567,10 @@ export class AgentSystemTestSuite {
     }
 
     const agentStatuses = this.orchestrator.getAgentStatus();
-    const unhealthyAgents = agentStatuses.filter(agent => agent.status !== 'active');
+    const unhealthyAgents = agentStatuses.filter((agent: any) => agent.status !== 'active');
 
     if (unhealthyAgents.length > 0) {
-      throw new Error(`Unhealthy agents detected: ${unhealthyAgents.map(a => a.name).join(', ')}`);
+      throw new Error(`Unhealthy agents detected: ${unhealthyAgents.map((a: any) => a.name).join(', ')}`);
     }
   }
 
@@ -639,9 +639,9 @@ export class AgentSystemTestSuite {
     recommendations: string[];
   } {
     const total = this.testResults.length;
-    const passed = this.testResults.filter(r => r.status === 'PASS').length;
-    const failed = this.testResults.filter(r => r.status === 'FAIL').length;
-    const skipped = this.testResults.filter(r => r.status === 'SKIP').length;
+    const passed = this.testResults.filter((r: any) => r.status === 'PASS').length;
+    const failed = this.testResults.filter((r: any) => r.status === 'FAIL').length;
+    const skipped = this.testResults.filter((r: any) => r.status === 'SKIP').length;
     const successRate = total > 0 ? (passed / total) * 100 : 0;
 
     const recommendations = [];
@@ -652,7 +652,7 @@ export class AgentSystemTestSuite {
       recommendations.push('System requires significant debugging before production use');
     }
     if (failed > 0) {
-      const failedTests = this.testResults.filter(r => r.status === 'FAIL').map(r => r.test);
+      const failedTests = this.testResults.filter((r: any) => r.status === 'FAIL').map((r: any) => r.test);
       recommendations.push(`Failed tests: ${failedTests.join(', ')}`);
     }
 

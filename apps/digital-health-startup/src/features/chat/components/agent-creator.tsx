@@ -495,7 +495,7 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
 
       // If no UUID but has name, try to find UUID from loaded data
       if (!businessFunctionValue && editingAgent.business_function && businessFunctions.length > 0) {
-        const matchedFunction = businessFunctions.find(f =>
+        const matchedFunction = businessFunctions.find((f: any) =>
           (f.department_name || f.name) === editingAgent.business_function
         );
         if (matchedFunction) {
@@ -504,7 +504,7 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
       }
 
       if (!departmentValue && editingAgent.department && departments.length > 0) {
-        const matchedDept = departments.find(d =>
+        const matchedDept = departments.find((d: any) =>
           (d.department_name || d.name) === editingAgent.department
         );
         if (matchedDept) {
@@ -513,7 +513,7 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
       }
 
       if (!roleValue && editingAgent.role && healthcareRoles.length > 0) {
-        const matchedRole = healthcareRoles.find(r =>
+        const matchedRole = healthcareRoles.find((r: any) =>
           (r.role_name || r.name) === editingAgent.role
         );
         if (matchedRole) {
@@ -742,11 +742,11 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
       const deptsForFunction = departmentsByFunction[formData.businessFunction] || [];
 
       console.log('[Agent Creator] Looking up departments for function ID:', formData.businessFunction);
-      console.log('[Agent Creator] Found departments:', deptsForFunction.length, deptsForFunction.map(d => d.name));
+      console.log('[Agent Creator] Found departments:', deptsForFunction.length, deptsForFunction.map((d: any) => d.name));
       setAvailableDepartments(deptsForFunction);
 
       // If current department is not in available departments, reset it
-      const deptIds = deptsForFunction.map(d => d.id);
+      const deptIds = deptsForFunction.map((d: any) => d.id);
       if (formData.department && deptsForFunction.length > 0 && !deptIds.includes(formData.department)) {
         setFormData(prev => ({ ...prev, department: '', role: '' }));
       }
@@ -793,7 +793,7 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
 
       console.log('[Agent Creator] After function filter:', filteredRoles.length, 'roles');
       if (filteredRoles.length > 0) {
-        console.log('[Agent Creator] Sample roles after function filter:', filteredRoles.slice(0, 3).map(r => ({
+        console.log('[Agent Creator] Sample roles after function filter:', filteredRoles.slice(0, 3).map((r: any) => ({
           name: r.name,
           business_function_id: r.business_function_id,
           department_id: r.department_id
@@ -813,7 +813,7 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
       console.log('[Agent Creator] Final filtered roles:', filteredRoles.length, 'for function:', formData.businessFunction, 'dept:', formData.department);
 
       // If current role is not in available roles, reset it
-      const roleIds = filteredRoles.map(r => r.id);
+      const roleIds = filteredRoles.map((r: any) => r.id);
       if (formData.role && filteredRoles.length > 0 && !roleIds.includes(formData.role)) {
         setFormData(prev => ({ ...prev, role: '' }));
       }
@@ -879,7 +879,7 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
   const handleCapabilityRemove = (capability: string) => {
     setFormData(prev => ({
       ...prev,
-      capabilities: prev.capabilities.filter(c => c !== capability)
+      capabilities: prev.capabilities.filter((c: any) => c !== capability)
     }));
   };
 
@@ -896,7 +896,7 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
   const handleKnowledgeUrlRemove = (url: string) => {
     setFormData(prev => ({
       ...prev,
-      knowledgeUrls: prev.knowledgeUrls.filter(u => u !== url)
+      knowledgeUrls: prev.knowledgeUrls.filter((u: any) => u !== url)
     }));
   };
 
@@ -906,7 +906,7 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
 
     setFormData(prev => {
       const newTools = prev.tools.includes(tool)
-        ? prev.tools.filter(t => t !== tool)
+        ? prev.tools.filter((t: any) => t !== tool)
         : [...prev.tools, tool];
 
       console.log('🔧 New tools after toggle:', newTools);
@@ -922,7 +922,7 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
     setFormData(prev => ({
       ...prev,
       knowledgeDomains: prev.knowledgeDomains.includes(domain)
-        ? prev.knowledgeDomains.filter(d => d !== domain)
+        ? prev.knowledgeDomains.filter((d: any) => d !== domain)
         : [...prev.knowledgeDomains, domain]
     }));
   };
@@ -1074,7 +1074,7 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
 
   // Calculate model fitness score
   const calculateModelFitness = (modelId: string) => {
-    const selectedModel = modelOptions.find(m => m.id === modelId);
+    const selectedModel = modelOptions.find((m: any) => m.id === modelId);
     if (!selectedModel) {
       setModelFitnessScore(null);
       return;
@@ -1091,7 +1091,7 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
       requiresMedicalKnowledge: !!(formData.medicalSpecialty ||
         formData.businessFunction?.toLowerCase().includes('medical') ||
         formData.businessFunction?.toLowerCase().includes('clinical')),
-      requiresCodeGeneration: formData.capabilities.some(c =>
+      requiresCodeGeneration: formData.capabilities.some((c: any) =>
         c.toLowerCase().includes('code') ||
         c.toLowerCase().includes('technical') ||
         c.toLowerCase().includes('development')
@@ -1430,9 +1430,9 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
           await createUserCopy(userCopyData as unknown);
         } else {
           // Look up names from UUIDs for display
-          const selectedFunction = businessFunctions.find(f => f.id === formData.businessFunction);
-          const selectedDept = availableDepartments.find(d => d.id === formData.department);
-          const selectedRole = availableRoles.find(r => r.id === formData.role);
+          const selectedFunction = businessFunctions.find((f: any) => f.id === formData.businessFunction);
+          const selectedDept = availableDepartments.find((d: any) => d.id === formData.department);
+          const selectedRole = availableRoles.find((r: any) => r.id === formData.role);
 
           console.log('[Agent Creator] Save - Looking up names from UUIDs:');
           console.log('  Business Function UUID:', formData.businessFunction);
@@ -2353,8 +2353,8 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
 
       // Get function, department, and role names from UUIDs for the API
       const selectedFunction = businessFunctions.find(bf => bf.id === formData.businessFunction);
-      const selectedDept = availableDepartments.find(d => d.id === formData.department);
-      const selectedRole = availableRoles.find(r => r.id === formData.role);
+      const selectedDept = availableDepartments.find((d: any) => d.id === formData.department);
+      const selectedRole = availableRoles.find((r: any) => r.id === formData.role);
 
       console.log('[Persona Generation] Selected context:', {
         function: selectedFunction?.name,
@@ -2371,7 +2371,7 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
         },
         intent: personaIntent,
         // Include existing agent templates for learning
-        existingAgents: agentTemplates.slice(0, 5).map(a => ({
+        existingAgents: agentTemplates.slice(0, 5).map((a: any) => ({
           name: a.display_name,
           description: a.description,
           tier: a.tier,
@@ -3741,7 +3741,7 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
                     <Label>Selected Knowledge Domains</Label>
                     <div className="flex flex-wrap gap-2 mt-2">
                       {formData.knowledgeDomains.map((domain) => {
-                        const domainInfo = knowledgeDomains.find(d => d.value === domain);
+                        const domainInfo = knowledgeDomains.find((d: any) => d.value === domain);
                         return (
                           <Badge
                             key={domain}
@@ -3844,7 +3844,7 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
                       {formData.tools.length > 0 ? (
                         formData.tools.map((toolName) => {
                           // Tools are stored by name, not ID
-                          const tool = availableToolsFromDB.find(t => t.name === toolName);
+                          const tool = availableToolsFromDB.find((t: any) => t.name === toolName);
                           return (
                             <Badge
                               key={toolName}
@@ -3938,7 +3938,7 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
                         id="model"
                         value={formData.model}
                         onChange={(e) => {
-                          const selectedModel = modelOptions.find(m => m.id === e.target.value);
+                          const selectedModel = modelOptions.find((m: any) => m.id === e.target.value);
                           setFormData(prev => ({
                             ...prev,
                             model: e.target.value,
@@ -4451,7 +4451,7 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
                             <Label>Selected Medical Capabilities</Label>
                             <div className="flex flex-wrap gap-2 mt-2">
                               {formData.selectedMedicalCapabilities.map((capabilityId) => {
-                                const capability = medicalCapabilities.find(c => c.id === capabilityId);
+                                const capability = medicalCapabilities.find((c: any) => c.id === capabilityId);
                                 return capability ? (
                                   <Badge
                                     key={capabilityId}
@@ -4575,7 +4575,7 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
                       <textarea
                         value={(formData.metadata?.safety_compliance?.prohibitions || []).join('\n')}
                         onChange={(e) => {
-                          const prohibitions = e.target.value.split('\n').filter(p => p.trim());
+                          const prohibitions = e.target.value.split('\n').filter((p: any) => p.trim());
                           setFormData(prev => ({
                             ...prev,
                             metadata: {
@@ -4600,7 +4600,7 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
                       <textarea
                         value={(formData.metadata?.safety_compliance?.mandatory_protections || []).join('\n')}
                         onChange={(e) => {
-                          const mandatory_protections = e.target.value.split('\n').filter(p => p.trim());
+                          const mandatory_protections = e.target.value.split('\n').filter((p: any) => p.trim());
                           setFormData(prev => ({
                             ...prev,
                             metadata: {
@@ -4625,7 +4625,7 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
                       <textarea
                         value={(formData.metadata?.safety_compliance?.regulatory_standards || []).join('\n')}
                         onChange={(e) => {
-                          const regulatory_standards = e.target.value.split('\n').filter(p => p.trim());
+                          const regulatory_standards = e.target.value.split('\n').filter((p: any) => p.trim());
                           setFormData(prev => ({
                             ...prev,
                             metadata: {
@@ -4888,7 +4888,7 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
           if (editingPromptId) {
             setFormData(prev => ({
               ...prev,
-              promptStarters: prev.promptStarters.map(p =>
+              promptStarters: prev.promptStarters.map((p: any) =>
                 p.id === editingPromptId ? { ...p, iconUrl: icon.file_url, icon: icon.name } : p
               )
             }));
@@ -4896,7 +4896,7 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
             setEditingPromptId(null);
           }
         }}
-        selectedIcon={editingPromptId ? formData.promptStarters.find(p => p.id === editingPromptId)?.iconUrl : undefined}
+        selectedIcon={editingPromptId ? formData.promptStarters.find((p: any) => p.id === editingPromptId)?.iconUrl : undefined}
         category="prompt"
       />
     </div>

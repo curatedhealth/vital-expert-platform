@@ -273,7 +273,7 @@ const ClinicalTrialDesigner: React.FC = () => {
       },
       statistical_plan: trialDesign.statisticalDesign,
       risk_mitigation: simulationResults?.risk_factors || [],
-      estimated_cost: simulationResults?.cost_projection.find(p => p.scenario === 'realistic' && p.month === trialDesign.duration)?.value || 0,
+      estimated_cost: simulationResults?.cost_projection.find((p: any) => p.scenario === 'realistic' && p.month === trialDesign.duration)?.value || 0,
       success_probability: simulationResults?.success_probability || 0
     };
 
@@ -441,7 +441,7 @@ const ClinicalTrialDesigner: React.FC = () => {
 
                   <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 text-center">
                     <div className="text-2xl font-bold text-blue-600">
-                      ${(simulationResults.cost_projection.find(p => p.scenario === 'realistic' && p.month === trialDesign.duration)?.value / 1000000 || 0).toFixed(1)}M
+                      ${(simulationResults.cost_projection.find((p: any) => p.scenario === 'realistic' && p.month === trialDesign.duration)?.value / 1000000 || 0).toFixed(1)}M
                     </div>
                     <div className="text-sm text-gray-600">Estimated Cost</div>
                   </div>

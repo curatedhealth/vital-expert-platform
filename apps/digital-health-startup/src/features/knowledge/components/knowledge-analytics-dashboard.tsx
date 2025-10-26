@@ -165,7 +165,7 @@ const getChartData = (ragCategories: unknown) => {
     chunks: stats.chunks,
     size: stats.size,
     color: CHART_COLORS[category as keyof typeof CHART_COLORS]
-  })).filter(item => item.documents > 0);
+  })).filter((item: any) => item.documents > 0);
 };
 
 interface KnowledgeAnalyticsDashboardProps {

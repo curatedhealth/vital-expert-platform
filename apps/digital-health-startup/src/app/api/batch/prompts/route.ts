@@ -65,10 +65,10 @@ function validatePromptTemplate(template: string): { valid: boolean; errors: str
 
   // Extract placeholder variables
   const placeholders = template.match(/\{([^}]+)\}/g) || [];
-  const variables = placeholders.map(p => p.slice(1, -1));
+  const variables = placeholders.map((p: any) => p.slice(1, -1));
 
   // Check for empty placeholders
-  if (variables.some(v => v.trim() === '')) {
+  if (variables.some((v: any) => v.trim() === '')) {
     errors.push('Empty placeholder variables found');
   }
 

@@ -266,7 +266,7 @@ export const UsageAnalyticsDashboard: React.FC<UsageAnalyticsDashboardProps> = (
             <CardContent>
               {costLoading ? (
                 <div className="space-y-3">
-                  {[1, 2, 3].map(i => (
+                  {[1, 2, 3].map((i: any) => (
                     <div key={i} className="h-12 bg-gray-200 rounded animate-pulse"></div>
                   ))}
                 </div>
@@ -302,7 +302,7 @@ export const UsageAnalyticsDashboard: React.FC<UsageAnalyticsDashboardProps> = (
             <CardContent>
               {costLoading ? (
                 <div className="space-y-3">
-                  {[1, 2, 3].map(i => (
+                  {[1, 2, 3].map((i: any) => (
                     <div key={i} className="h-12 bg-gray-200 rounded animate-pulse"></div>
                   ))}
                 </div>
@@ -338,7 +338,7 @@ export const UsageAnalyticsDashboard: React.FC<UsageAnalyticsDashboardProps> = (
             <CardContent>
               {costLoading ? (
                 <div className="space-y-3">
-                  {[1, 2, 3, 4, 5].map(i => (
+                  {[1, 2, 3, 4, 5].map((i: any) => (
                     <div key={i} className="h-8 bg-gray-200 rounded animate-pulse"></div>
                   ))}
                 </div>

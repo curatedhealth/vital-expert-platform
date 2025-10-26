@@ -65,7 +65,7 @@ export default function CaseStudies() {
                   <div className="flex items-center gap-3 mb-6">
                     <div className="w-12 h-12 bg-vital-blue-100 rounded-full flex items-center justify-center">
                       <span className="text-vital-blue-600 font-bold text-lg">
-                        {study.author.split(' ').map(n => n[0]).join('')}
+                        {study.author.split(' ').map((n: any) => n[0]).join('')}
                       </span>
                     </div>
                     <div>

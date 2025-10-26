@@ -104,9 +104,9 @@ export class PromptPerformanceMonitor {
 
       // Calculate metrics
       const totalUsage = usageData.length;
-      const successfulUsage = usageData.filter(u => u.success).length;
-      const ratedUsage = usageData.filter(u => u.rating !== null);
-      const errorUsage = usageData.filter(u => !u.success);
+      const successfulUsage = usageData.filter((u: any) => u.success).length;
+      const ratedUsage = usageData.filter((u: any) => u.rating !== null);
+      const errorUsage = usageData.filter((u: any) => !u.success);
 
       const successRate = totalUsage > 0 ? (successfulUsage / totalUsage) * 100 : 0;
       const averageRating = ratedUsage.length > 0 
@@ -120,7 +120,7 @@ export class PromptPerformanceMonitor {
 
       // Get most common errors
       const errorMessages = errorUsage
-        .map(u => u.error_message)
+        .map((u: any) => u.error_message)
         .filter(Boolean)
         .reduce((acc, error) => {
           acc[error] = (acc[error] || 0) + 1;
@@ -134,7 +134,7 @@ export class PromptPerformanceMonitor {
 
       // Get usage by agent
       const usageByAgent = usageData
-        .filter(u => u.agent_id)
+        .filter((u: any) => u.agent_id)
         .reduce((acc, u) => {
           acc[u.agent_id!] = (acc[u.agent_id!] || 0) + 1;
           return acc;
@@ -272,11 +272,11 @@ export class PromptPerformanceMonitor {
             value = usages.length;
             break;
           case 'success_rate':
-            const successful = usages.filter(u => u.success).length;
+            const successful = usages.filter((u: any) => u.success).length;
             value = usages.length > 0 ? (successful / usages.length) * 100 : 0;
             break;
           case 'average_rating':
-            const rated = usages.filter(u => u.rating !== null);
+            const rated = usages.filter((u: any) => u.rating !== null);
             value = rated.length > 0 
               ? rated.reduce((sum, u) => sum + (u.rating || 0), 0) / rated.length 
               : 0;
@@ -323,14 +323,14 @@ export class PromptPerformanceMonitor {
       const topPrompts = sorted.slice(0, limit);
 
       // Get prompt details
-      const promptIds = topPrompts.map(p => p.prompt_id);
+      const promptIds = topPrompts.map((p: any) => p.prompt_id);
       const { data: prompts } = await supabase
         .from('prompts')
         .select('id, name, display_name, domain, description')
         .in('id', promptIds);
 
       return topPrompts.map(metrics => ({
-        prompt: prompts?.find(p => p.id === metrics.prompt_id),
+        prompt: prompts?.find((p: any) => p.id === metrics.prompt_id),
         metrics
       }));
     } catch (error) {

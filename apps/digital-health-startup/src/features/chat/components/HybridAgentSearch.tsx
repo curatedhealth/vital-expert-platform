@@ -448,7 +448,7 @@ export function HybridAgentSearch({
                     {agent.escalationPaths && agent.escalationPaths.length > 0 && (
                       <div className="mt-3 text-xs text-gray-600">
                         <Users className="h-3 w-3 inline mr-1" />
-                        Works with: {agent.escalationPaths.slice(0, 2).map(p => p.toAgentName).join(', ')}
+                        Works with: {agent.escalationPaths.slice(0, 2).map((p: any) => p.toAgentName).join(', ')}
                         {agent.escalationPaths.length > 2 && ` +${agent.escalationPaths.length - 2} more`}
                       </div>
                     )}

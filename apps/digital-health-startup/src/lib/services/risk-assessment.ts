@@ -106,7 +106,7 @@ export class RiskAssessmentService {
     synthesis: string
   ): Promise<Partial<Risk>[]> {
     const discussionText = expertReplies
-      .map(r => `${r.persona}: ${r.text}`)
+      .map((r: any) => `${r.persona}: ${r.text}`)
       .join('\n\n');
 
     const prompt = `You are a risk assessment expert analyzing a pharmaceutical advisory board discussion.
@@ -204,7 +204,7 @@ Return as JSON array:
     // Initialize 3x3 matrix (prob on Y-axis, impact on X-axis)
     const matrix: RiskMatrixCell[][] = probabilities.reverse().map(prob =>
       impacts.map(impact => {
-        const cellRisks = risks.filter(r => r.probability === prob && r.impact === impact);
+        const cellRisks = risks.filter((r: any) => r.probability === prob && r.impact === impact);
         return {
           probability: prob,
           impact,
@@ -233,7 +233,7 @@ Return as JSON array:
    */
   private async addMitigationStrategies(risks: Risk[]): Promise<Risk[]> {
     // Focus on high-impact or high-probability risks
-    const highPriorityRisks = risks.filter(r =>
+    const highPriorityRisks = risks.filter((r: any) =>
       r.probability === 'high' || r.impact === 'high' || r.riskScore > 0.4
     );
 
@@ -286,13 +286,13 @@ Return as JSON array of arrays (mitigation strategies for each risk):
    * Generate summary statistics
    */
   private generateSummary(risks: Risk[]) {
-    const highRisks = risks.filter(r => r.riskScore > 0.4).length;
-    const mediumRisks = risks.filter(r => r.riskScore > 0.2 && r.riskScore <= 0.4).length;
-    const lowRisks = risks.filter(r => r.riskScore <= 0.2).length;
+    const highRisks = risks.filter((r: any) => r.riskScore > 0.4).length;
+    const mediumRisks = risks.filter((r: any) => r.riskScore > 0.2 && r.riskScore <= 0.4).length;
+    const lowRisks = risks.filter((r: any) => r.riskScore <= 0.2).length;
 
     // Count by category
     const categoryCount: Record<string, number> = {};
-    risks.forEach(r => {
+    risks.forEach((r: any) => {
       categoryCount[r.category] = (categoryCount[r.category] || 0) + 1;
     });
 
@@ -323,13 +323,13 @@ Return as JSON array of arrays (mitigation strategies for each risk):
     }
 
     // High-probability risks
-    const highProbRisks = risks.filter(r => r.probability === 'high');
+    const highProbRisks = risks.filter((r: any) => r.probability === 'high');
     if (highProbRisks.length > 0) {
       recommendations.push(`⚠️  ${highProbRisks.length} high-probability risk(s) detected - develop preventive measures`);
     }
 
     // High-impact risks
-    const highImpactRisks = risks.filter(r => r.impact === 'high');
+    const highImpactRisks = risks.filter((r: any) => r.impact === 'high');
     if (highImpactRisks.length > 0) {
       recommendations.push(`⚡ ${highImpactRisks.length} high-impact risk(s) identified - prepare contingency plans`);
     }

@@ -319,7 +319,7 @@ export const __useWorkspaceManager = ({
     };
 
     // Update workspace conversation list
-    setWorkspaces(prev => prev.map(w =>
+    setWorkspaces(prev => prev.map((w: any) =>
       w.id === workspaceId
         ? {
             ...w,
@@ -350,7 +350,7 @@ export const __useWorkspaceManager = ({
 
   // Update workspace metadata
 
-    setWorkspaces(prev => prev.map(w =>
+    setWorkspaces(prev => prev.map((w: any) =>
       w.id === workspaceId
         ? {
             ...w,
@@ -368,7 +368,7 @@ export const __useWorkspaceManager = ({
 
   // Get workspace-specific settings
 
-      ? workspaces.find(w => w.id === workspaceId)
+      ? workspaces.find((w: any) => w.id === workspaceId)
       : currentWorkspace;
     return workspace?.customSettings;
   }, [workspaces, currentWorkspace]);
@@ -390,9 +390,9 @@ export const __useWorkspaceManager = ({
     detectWorkspaceFromContext,
 
     // Utilities
-    getWorkspaceById: (id: string) => workspaces.find(w => w.id === id),
-    getWorkspaceByType: (type: WorkspaceType) => workspaces.find(w => w.type === type),
-    getDefaultWorkspace: () => workspaces.find(w => w.type === 'general') || workspaces[0]
+    getWorkspaceById: (id: string) => workspaces.find((w: any) => w.id === id),
+    getWorkspaceByType: (type: WorkspaceType) => workspaces.find((w: any) => w.type === type),
+    getDefaultWorkspace: () => workspaces.find((w: any) => w.type === 'general') || workspaces[0]
   };
 };
 

@@ -340,7 +340,7 @@ const RealWorldEvidencePlatform: React.FC<RealWorldEvidencePlatformProps> = ({ c
         setRweStudies(mockRWEStudies);
         setMetrics({
           totalPatients: mockDataSources.reduce((sum, ds) => sum + ds.patients, 0),
-          activeStudies: mockRWEStudies.filter(s => s.status === 'active').length,
+          activeStudies: mockRWEStudies.filter((s: any) => s.status === 'active').length,
           dataPoints: 47200000,
           realWorldOutcomes: 156,
           safetySignals: 23,

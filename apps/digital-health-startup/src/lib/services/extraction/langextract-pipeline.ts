@@ -156,7 +156,7 @@ export class LangExtractPipeline {
         model_used: schema.preferredModel || 'gemini-2.5-flash',
         prompt_version: '1.0',
         extraction_duration_ms: Date.now() - startTime,
-        source_documents: documents.map(d => d.metadata.id || 'unknown'),
+        source_documents: documents.map((d: any) => d.metadata.id || 'unknown'),
         created_at: new Date().toISOString(),
         created_by: 'langextract-pipeline',
       },
@@ -474,13 +474,13 @@ Do NOT infer or add information not present.`,
     const relationships: EntityRelationship[] = [];
 
     // Find medication-diagnosis relationships
-    const medications = entities.filter(e => e.type === 'medication');
-    const diagnoses = entities.filter(e => e.type === 'diagnosis');
+    const medications = entities.filter((e: any) => e.type === 'medication');
+    const diagnoses = entities.filter((e: any) => e.type === 'diagnosis');
 
     medications.forEach(med => {
       const indication = med.attributes.indication;
       if (indication) {
-        const relatedDiagnosis = diagnoses.find(d =>
+        const relatedDiagnosis = diagnoses.find((d: any) =>
           indication.toLowerCase().includes(d.text.toLowerCase()) ||
           d.text.toLowerCase().includes(indication.toLowerCase())
         );
@@ -514,7 +514,7 @@ Do NOT infer or add information not present.`,
       };
     }
 
-    const confidences = entities.map(e => e.confidence);
+    const confidences = entities.map((e: any) => e.confidence);
     const mean = confidences.reduce((a, b) => a + b, 0) / confidences.length;
 
     const sorted = [...confidences].sort((a, b) => a - b);
@@ -527,16 +527,16 @@ Do NOT infer or add information not present.`,
       mean: Math.round(mean * 100) / 100,
       median: Math.round(median * 100) / 100,
       std_dev: Math.round(std_dev * 100) / 100,
-      high_confidence_count: confidences.filter(c => c >= 0.85).length,
-      medium_confidence_count: confidences.filter(c => c >= 0.7 && c < 0.85).length,
-      low_confidence_count: confidences.filter(c => c < 0.7).length,
+      high_confidence_count: confidences.filter((c: any) => c >= 0.85).length,
+      medium_confidence_count: confidences.filter((c: any) => c >= 0.7 && c < 0.85).length,
+      low_confidence_count: confidences.filter((c: any) => c < 0.7).length,
     };
   }
 
   // Helper methods
 
   private generateCacheKey(documents: Document[], extractionType: string): string {
-    const docIds = documents.map(d => d.metadata.id || '').join('-');
+    const docIds = documents.map((d: any) => d.metadata.id || '').join('-');
     return `${extractionType}:${docIds}`;
   }
 

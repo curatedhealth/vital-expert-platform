@@ -272,7 +272,7 @@ export default function PromptEditor({ prompt, isOpen, onClose, onSave, mode }: 
                   <SelectValue placeholder="Select domain" />
                 </SelectTrigger>
                 <SelectContent>
-                  {DOMAINS.map(domain => (
+                  {DOMAINS.map((domain: any) => (
                     <SelectItem key={domain.value} value={domain.value}>
                       {domain.label}
                     </SelectItem>

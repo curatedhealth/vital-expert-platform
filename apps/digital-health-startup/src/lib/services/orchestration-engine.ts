@@ -430,7 +430,7 @@ Identify Early Warning Indicators (EWIs) and no-regrets actions.
 
   private buildDebateContext(replies: AgentReply[]): string {
     return replies
-      .map(r => `${r.persona}: ${r.answer.slice(0, 150)}...`)
+      .map((r: any) => `${r.persona}: ${r.answer.slice(0, 150)}...`)
       .join('\n');
   }
 
@@ -450,7 +450,7 @@ Identify Early Warning Indicators (EWIs) and no-regrets actions.
   }
 
   private analyzeState(replies: AgentReply[]) {
-    const confidences = replies.map(r => r.confidence);
+    const confidences = replies.map((r: any) => r.confidence);
     const avgConfidence = confidences.reduce((a, b) => a + b) / confidences.length;
     const variance = confidences.reduce((sum, c) => sum + Math.pow(c - avgConfidence, 2), 0) / confidences.length;
 

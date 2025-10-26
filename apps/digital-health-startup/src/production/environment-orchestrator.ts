@@ -736,7 +736,7 @@ export class EnvironmentOrchestrator {
           rollbacksTriggered
         },
         healthcareCompliance: {
-          validated: healthcareValidationsPassed === plan.stages.filter(s => s.healthcareValidation.required).length,
+          validated: healthcareValidationsPassed === plan.stages.filter((s: any) => s.healthcareValidation.required).length,
           patientSafetyMaintained: patientSafetyIncidents === 0,
           phiProtectionActive: true,
           auditTrailComplete: true,
@@ -994,9 +994,9 @@ Generated: ${new Date().toISOString()}
 ## Orchestration Summary
 - **Plan**: ${plan.name}
 - **Strategy**: ${plan.strategy.toUpperCase()}
-- **Environments**: ${plan.environments.map(e => e.name).join(', ')}
+- **Environments**: ${plan.environments.map((e: any) => e.name).join(', ')}
 - **Total Stages**: ${plan.stages.length}
-- **Completed Stages**: ${plan.stages.filter(s => s.status === 'completed').length}
+- **Completed Stages**: ${plan.stages.filter((s: any) => s.status === 'completed').length}
 
 ## Healthcare Compliance Status
 - **Pre-deployment Validation**: ${plan.healthcareValidation.preDeployment ? '✅ COMPLETED' : '❌ PENDING'}

@@ -254,7 +254,7 @@ Context: Healthcare professional seeking expert guidance.`;
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Domains</SelectItem>
-                    {DOMAINS.map(domain => (
+                    {DOMAINS.map((domain: any) => (
                       <SelectItem key={domain} value={domain}>
                         {domain.replace('_', ' ').toUpperCase()}
                       </SelectItem>

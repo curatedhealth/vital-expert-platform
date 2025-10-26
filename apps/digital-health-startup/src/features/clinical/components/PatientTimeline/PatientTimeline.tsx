@@ -289,8 +289,8 @@ export function PatientTimeline({
                       setSelectedEventTypes(['all']);
                     } else {
 
-                        ? selectedEventTypes.filter(t => t !== type)
-                        : [...selectedEventTypes.filter(t => t !== 'all'), type];
+                        ? selectedEventTypes.filter((t: any) => t !== type)
+                        : [...selectedEventTypes.filter((t: any) => t !== 'all'), type];
                       setSelectedEventTypes(newTypes.length ? newTypes : ['all']);
                     }
                   }}
@@ -316,7 +316,7 @@ export function PatientTimeline({
         <Card>
           <CardContent className="p-4">
             <div className="text-2xl font-bold text-red-600">
-              {filteredEvents.filter(e => e.severity === 'critical' || e.severity === 'high').length}
+              {filteredEvents.filter((e: any) => e.severity === 'critical' || e.severity === 'high').length}
             </div>
             <div className="text-sm text-gray-600">High Priority</div>
           </CardContent>
@@ -325,7 +325,7 @@ export function PatientTimeline({
         <Card>
           <CardContent className="p-4">
             <div className="text-2xl font-bold text-green-600">
-              {data.treatmentPeriods.filter(p => p.status === 'active').length}
+              {data.treatmentPeriods.filter((p: any) => p.status === 'active').length}
             </div>
             <div className="text-sm text-gray-600">Active Treatments</div>
           </CardContent>

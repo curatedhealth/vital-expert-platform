@@ -328,7 +328,7 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
         <div className="flex items-center justify-between text-xs text-muted-foreground">
           <div className="flex items-center gap-4">
             <span>{conversations.length} total</span>
-            <span>{conversations.filter(c => c.starred).length} starred</span>
+            <span>{conversations.filter((c: any) => c.starred).length} starred</span>
           </div>
           <div className="flex items-center gap-1">
             <Calendar className="h-3 w-3" />

@@ -125,7 +125,7 @@ export function useChatActions({
     setHasUserSelectedAgent: (value: boolean) => void,
     setUseDirectLLM: (value: boolean) => void
   ) => {
-    const agent = agents.find(a => a.id === agentId);
+    const agent = agents.find((a: any) => a.id === agentId);
     if (agent) {
       setSelectedAgent(agent);
       setHasUserSelectedAgent(true); // Mark that user has explicitly selected an agent

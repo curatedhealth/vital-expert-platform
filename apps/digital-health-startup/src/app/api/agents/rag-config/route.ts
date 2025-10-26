@@ -120,8 +120,8 @@ export async function GET(request: NextRequest) {
         configurations,
         availableRAGSystems: (agentRAGIntegration as any).getAvailableRAGSystems(),
         summary: {
-          configuredAgents: configurations.filter(c => c.isConfigured).length,
-          unconfiguredAgents: configurations.filter(c => !c.isConfigured).length,
+          configuredAgents: configurations.filter((c: any) => c.isConfigured).length,
+          unconfiguredAgents: configurations.filter((c: any) => !c.isConfigured).length,
           ragSystemsInUse: [
             ...new Set(
               configurations
@@ -172,7 +172,7 @@ export async function POST(request: NextRequest) {
 
     // Validate RAG systems
     const availableSystems = (agentRAGIntegration as any).getAvailableRAGSystems();
-    const availableSystemIds = availableSystems.map(s => s.id);
+    const availableSystemIds = availableSystems.map((s: any) => s.id);
 
     for (const ragSystem of body.ragSystems) {
       if (!availableSystemIds.includes(ragSystem.systemId)) {
@@ -201,7 +201,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate default RAG system
-    if (!body.ragSystems.some(s => s.systemId === body.defaultRAG)) {
+    if (!body.ragSystems.some((s: any) => s.systemId === body.defaultRAG)) {
       return NextResponse.json({
         success: false,
         error: `Default RAG system ${body.defaultRAG} must be included in ragSystems`
@@ -286,7 +286,7 @@ export async function PUT(request: NextRequest) {
           confidence: ragResponse.confidence,
           ragSystemsUsed: ragResponse.ragSystemsUsed,
           knowledgeDomains: ragResponse.agentContext.knowledgeDomains,
-          sources: ragResponse.sources.slice(0, 3).map(source => ({
+          sources: ragResponse.sources.slice(0, 3).map((source: any) => ({
             title: source.title || source.sourceMetadata?.title || 'Unknown',
             snippet: source.content.substring(0, 200) + '...',
             relevance: source.similarity || source.relevanceScore || 0

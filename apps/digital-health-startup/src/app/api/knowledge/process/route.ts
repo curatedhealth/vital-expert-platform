@@ -93,8 +93,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       results,
-      totalProcessed: results.filter(r => r.status === 'success').length,
-      totalFailed: results.filter(r => r.status === 'error').length
+      totalProcessed: results.filter((r: any) => r.status === 'success').length,
+      totalFailed: results.filter((r: any) => r.status === 'error').length
     });
 
   } catch (error) {
@@ -216,7 +216,7 @@ async function processAndChunkContent(content: string, sourceId: string): Promis
   length: number;
 }>> {
   // Simple chunking strategy - split by paragraphs and combine to ~500 tokens
-  const paragraphs = content.split(/\n\s*\n/).filter(p => p.trim().length > 0);
+  const paragraphs = content.split(/\n\s*\n/).filter((p: any) => p.trim().length > 0);
   const chunks = [];
   let currentChunk = '';
   let chunkIndex = 0;

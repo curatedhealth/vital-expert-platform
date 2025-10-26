@@ -157,8 +157,8 @@ export async function GET(
     // Safety assessment
     const safetyAssessment = {
       total_events: safetyEvents?.length || 0,
-      high_severity_events: safetyEvents?.filter(e => ['severe', 'life_threatening'].includes(e.severity)).length || 0,
-      recent_events_7d: safetyEvents?.filter(e =>
+      high_severity_events: safetyEvents?.filter((e: any) => ['severe', 'life_threatening'].includes(e.severity)).length || 0,
+      recent_events_7d: safetyEvents?.filter((e: any) =>
         new Date(e.created_at) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
       ).length || 0,
       risk_level: calculateRiskLevel(safetyEvents || [])

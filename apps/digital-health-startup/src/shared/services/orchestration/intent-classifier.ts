@@ -269,7 +269,7 @@ export class IntentClassifier {
     // Check for partial matches
 
     for (const kw of keywordWords) {
-      if (words.some(w => w.includes(kw) || kw.includes(w))) {
+      if (words.some((w: any) => w.includes(kw) || kw.includes(w))) {
         matchedWords++;
       }
     }

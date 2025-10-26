@@ -302,7 +302,7 @@ export default function AskPanelPage() {
     if (useCase.experts && useCase.experts.length > 0) {
       // Load agents from store and filter by expert tags
       const { agents } = useAgentsStore.getState();
-      const matchedAgents = agents.filter(agent =>
+      const matchedAgents = agents.filter((agent: any) =>
         useCase.experts.some((expertTag: string) =>
           agent.name.toLowerCase().includes(expertTag.toLowerCase()) ||
           agent.capabilities?.some((cap: any) =>
@@ -347,7 +347,7 @@ export default function AskPanelPage() {
 
     try {
       // Convert agents to PanelMembers
-      const panelMembers: PanelMember[] = panelAgents.map(agent => ({
+      const panelMembers: PanelMember[] = panelAgents.map((agent: any) => ({
         agent: agent as any,
         role: 'expert' as const,
         weight: 1,

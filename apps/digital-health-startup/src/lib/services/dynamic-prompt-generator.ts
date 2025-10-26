@@ -536,14 +536,14 @@ You have access to a specialized knowledge base containing:`;
 **ABSOLUTE PROHIBITIONS** (Never do these):`;
 
     const prohibitions = config.prohibitions || this.getDefaultProhibitions(tier);
-    prohibitions.forEach(p => {
+    prohibitions.forEach((p: any) => {
       safetySection += `\n✗ ${p}`;
     });
 
     safetySection += `\n\n**MANDATORY PROTECTIONS** (Always ensure):`;
 
     const protections = config.protections || this.getDefaultProtections(tier);
-    protections.forEach(p => {
+    protections.forEach((p: any) => {
       safetySection += `\n✓ ${p}`;
     });
 

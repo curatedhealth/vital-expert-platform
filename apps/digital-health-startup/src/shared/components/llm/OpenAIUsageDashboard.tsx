@@ -129,7 +129,7 @@ export const OpenAIUsageDashboard: React.FC = () => {
           </div>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {[1, 2, 3].map(i => (
+          {[1, 2, 3].map((i: any) => (
             <Card key={i}>
               <CardContent className="pt-6">
                 <div className="animate-pulse">

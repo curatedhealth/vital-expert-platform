@@ -373,7 +373,7 @@ export class CloudRAGService {
     
     return Array.from(docScores.values())
       .sort((a, b) => b.score - a.score)
-      .map(item => item.doc);
+      .map((item: any) => item.doc);
   }
 
   /**

@@ -81,9 +81,9 @@ export class ComplianceMiddleware {
 
     // Step 2: Handle compliance violations
     if (!validationResult.compliant && this.config.strictMode) {
-      const criticalViolations = validationResult.violations.filter(v => v.severity === 'critical');
+      const criticalViolations = validationResult.violations.filter((v: any) => v.severity === 'critical');
       if (criticalViolations.length > 0) {
-        const violationMessages = criticalViolations.map(v => v.description).join('; ');
+        const violationMessages = criticalViolations.map((v: any) => v.description).join('; ');
 
         // Create compliance record for blocked access
         await this.complianceManager.createComplianceRecord(preExecutionRequest, validationResult);

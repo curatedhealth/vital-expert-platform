@@ -211,9 +211,9 @@ export async function GET(request: NextRequest) {
     // Calculate some basic statistics
     const totalQueries = queries?.length || 0;
     const averageRating = queries
-      ?.filter(q => q.feedback_rating)
+      ?.filter((q: any) => q.feedback_rating)
       .reduce((sum, q) => sum + q.feedback_rating!, 0) /
-      (queries?.filter(q => q.feedback_rating).length || 1);
+      (queries?.filter((q: any) => q.feedback_rating).length || 1);
 
     const averageConfidence = queries
       ?.reduce((sum, q) => sum + (q.confidence_score || 0), 0) / totalQueries;
@@ -229,7 +229,7 @@ export async function GET(request: NextRequest) {
         totalQueries,
         averageRating: averageRating || null,
         averageConfidence: averageConfidence || null,
-        queriesWithFeedback: queries?.filter(q => q.feedback_rating).length || 0,
+        queriesWithFeedback: queries?.filter((q: any) => q.feedback_rating).length || 0,
       },
     });
 

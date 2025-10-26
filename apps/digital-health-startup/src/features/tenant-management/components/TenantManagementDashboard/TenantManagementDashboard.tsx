@@ -413,7 +413,7 @@ const TenantManagementDashboard: React.FC<Props> = ({ organizationId, userRole }
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {members.map(member => (
+                  {members.map((member: any) => (
                     <tr key={member.id}>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">

@@ -204,7 +204,7 @@ export class PineconeVectorService {
     });
 
     // Step 2: Enrich with Supabase metadata and apply filters
-    const chunkIds = pineconeResults.map(r => r.chunk_id);
+    const chunkIds = pineconeResults.map((r: any) => r.chunk_id);
 
     if (chunkIds.length === 0) return [];
 
@@ -232,7 +232,7 @@ export class PineconeVectorService {
 
     // Step 3: Merge Pinecone scores with Supabase metadata
     const enrichedResults = pineconeResults.map(pineconeResult => {
-      const supabaseData = chunks?.find(c => c.id === pineconeResult.chunk_id);
+      const supabaseData = chunks?.find((c: any) => c.id === pineconeResult.chunk_id);
 
       if (!supabaseData) return pineconeResult;
 
@@ -252,12 +252,12 @@ export class PineconeVectorService {
     let filtered = enrichedResults;
 
     if (query.filter?.domain) {
-      filtered = filtered.filter(r => r.domain === query.filter!.domain);
+      filtered = filtered.filter((r: any) => r.domain === query.filter!.domain);
     }
 
     if (query.filter?.tags) {
-      filtered = filtered.filter(r => {
-        const chunkData = chunks?.find(c => c.id === r.chunk_id);
+      filtered = filtered.filter((r: any) => {
+        const chunkData = chunks?.find((c: any) => c.id === r.chunk_id);
         const docTags = chunkData?.knowledge_documents?.tags || [];
         return query.filter!.tags.some((tag: string) => docTags.includes(tag));
       });
@@ -298,7 +298,7 @@ export class PineconeVectorService {
     });
 
     // Apply domain boosting
-    const boosted = results.map(result => {
+    const boosted = results.map((result: any) => {
       let boost = 1.0;
 
       // 30% boost for matching domain

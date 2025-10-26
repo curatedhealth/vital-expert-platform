@@ -425,7 +425,7 @@ const ClinicalDecisionSupport: React.FC<ClinicalDecisionSupportProps> = ({ class
         setIntegrations(mockIntegrations);
         setMetrics({
           totalRules: mockRules.length,
-          activeAlerts: mockAlerts.filter(a => a.status === 'active').length,
+          activeAlerts: mockAlerts.filter((a: any) => a.status === 'active').length,
           accuracyRate: 91.2,
           responseTime: 8.1,
           userAdoption: 87.4,

@@ -128,7 +128,7 @@ export class AutomaticAgentOrchestrator {
     });
     const domainDetectionTime = Date.now() - domainDetectionStart;
 
-    console.log('[AutomaticOrchestrator] Detected domains:', detectedDomains.map(d => ({
+    console.log('[AutomaticOrchestrator] Detected domains:', detectedDomains.map((d: any) => ({
       domain: d.domain,
       confidence: d.confidence.toFixed(2),
       method: d.method,
@@ -137,7 +137,7 @@ export class AutomaticAgentOrchestrator {
     // Phase 2: PostgreSQL Filtering (~50ms)
     const filteringStart = Date.now();
     const candidates = await this.filterCandidates({
-      detectedDomains: detectedDomains.map(d => d.domain),
+      detectedDomains: detectedDomains.map((d: any) => d.domain),
       maxTier,
       maxCandidates: maxCandidates * 2, // Get more for ranking
     });
@@ -152,14 +152,14 @@ export class AutomaticAgentOrchestrator {
     // Phase 3: RAG Ranking (~200ms)
     const rankingStart = Date.now();
     const rankedAgents = await agentRanker.rankAgents(query, candidates, {
-      detectedDomains: detectedDomains.map(d => d.domain),
+      detectedDomains: detectedDomains.map((d: any) => d.domain),
       minScore: minConfidence,
       maxResults: maxCandidates,
       useCache: true,
     });
     const rankingTime = Date.now() - rankingStart;
 
-    console.log('[AutomaticOrchestrator] Top ranked agents:', rankedAgents.slice(0, 3).map(r => ({
+    console.log('[AutomaticOrchestrator] Top ranked agents:', rankedAgents.slice(0, 3).map((r: any) => ({
       name: r.agent.name,
       score: r.scores.final.toFixed(3),
       confidence: r.confidence,
@@ -319,7 +319,7 @@ export class AutomaticAgentOrchestrator {
     if (detectedDomains.length > 0) {
       const topDomains = detectedDomains
         .slice(0, 3)
-        .map(d => d.domain)
+        .map((d: any) => d.domain)
         .join(', ');
       parts.push(`Detected domains: ${topDomains}`);
     }
@@ -340,7 +340,7 @@ export class AutomaticAgentOrchestrator {
     if (rankedAgents.length > 1) {
       const alternatives = rankedAgents
         .slice(1, 3)
-        .map(r => `${r.agent.display_name || r.agent.name} (${r.scores.final.toFixed(2)})`)
+        .map((r: any) => `${r.agent.display_name || r.agent.name} (${r.scores.final.toFixed(2)})`)
         .join(', ');
       parts.push(`Other considered agents: ${alternatives}`);
     }
@@ -375,7 +375,7 @@ export class AutomaticAgentOrchestrator {
 
     // Phase 2: Filtering
     const candidates = await this.filterCandidates({
-      detectedDomains: detectedDomains.map(d => d.domain),
+      detectedDomains: detectedDomains.map((d: any) => d.domain),
       maxTier,
       maxCandidates: maxCandidates * 2,
     });
@@ -386,7 +386,7 @@ export class AutomaticAgentOrchestrator {
 
     // Phase 3: Ranking
     const rankedAgents = await agentRanker.rankAgents(query, candidates, {
-      detectedDomains: detectedDomains.map(d => d.domain),
+      detectedDomains: detectedDomains.map((d: any) => d.domain),
       minScore: minConfidence,
       maxResults: maxCandidates,
       useCache: true,

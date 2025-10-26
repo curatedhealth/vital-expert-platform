@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
         sessionId: result.sessionId,
         consensus: result.synthesis?.consensus || [],
         dissent: result.synthesis?.dissent || [],
-        expertResponses: result.replies.map(r => ({
+        expertResponses: result.replies.map((r: any) => ({
           expertId: r.persona,
           expertName: r.persona,
           content: r.text,

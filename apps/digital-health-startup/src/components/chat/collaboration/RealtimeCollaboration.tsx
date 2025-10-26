@@ -232,7 +232,7 @@ export const RealtimeCollaboration: React.FC<RealtimeCollaborationProps> = ({
       });
     };
 
-      setActiveUsers(prev => prev.filter(u => u.id !== data.userId));
+      setActiveUsers(prev => prev.filter((u: any) => u.id !== data.userId));
     };
 
       setTypingUsers(prev => new Set([...prev, data.userId]));
@@ -283,7 +283,7 @@ export const RealtimeCollaboration: React.FC<RealtimeCollaborationProps> = ({
           {activeUsers.slice(0, 3).map((user) => (
             <Avatar key={user.id} className="h-6 w-6 border-2 border-background">
               <AvatarFallback className="text-xs">
-                {user.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)}
+                {user.name.split(' ').map((n: any) => n[0]).join('').toUpperCase().slice(0, 2)}
               </AvatarFallback>
               {user.avatar && (
                 <AvatarImage src={user.avatar} alt={user.name} />

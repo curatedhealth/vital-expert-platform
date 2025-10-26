@@ -94,7 +94,7 @@ export class AgentService {
         console.error('❌ Fallback also failed:', dbError);
         throw new Error('Failed to fetch agents from both API and database');
       }
-      return data?.map(agent => ({
+      return data?.map((agent: any) => ({
         ...agent,
         categories: []
       })) || [];
@@ -120,7 +120,7 @@ export class AgentService {
       throw new Error('Failed to fetch agents by tier');
     }
 
-    return data?.map(agent => ({
+    return data?.map((agent: any) => ({
       ...agent,
       categories: agent.agent_category_mapping?.map((mapping: unknown) => mapping.agent_categories) || []
     })) || [];
@@ -145,7 +145,7 @@ export class AgentService {
       throw new Error('Failed to fetch agents by phase');
     }
 
-    return data?.map(agent => ({
+    return data?.map((agent: any) => ({
       ...agent,
       categories: agent.agent_category_mapping?.map((mapping: unknown) => mapping.agent_categories) || []
     })) || [];
@@ -170,7 +170,7 @@ export class AgentService {
       throw new Error('Failed to fetch agents by category');
     }
 
-    return data?.map(agent => ({
+    return data?.map((agent: any) => ({
       ...agent,
       categories: agent.agent_category_mapping?.map((mapping: unknown) => mapping.agent_categories) || []
     })) || [];
@@ -272,7 +272,7 @@ export class AgentService {
       throw new Error('Failed to fetch agents with metrics');
     }
 
-    return data?.map(agent => ({
+    return data?.map((agent: any) => ({
       ...agent,
       performance_metrics: agent.agent_performance_metrics?.[0] || undefined
     })) || [];
@@ -419,7 +419,7 @@ export class AgentService {
       throw new Error('Failed to search agents');
     }
 
-    return data?.map(agent => ({
+    return data?.map((agent: any) => ({
       ...agent,
       categories: agent.agent_category_mapping?.map((mapping: unknown) => mapping.agent_categories) || []
     })) || [];
@@ -533,7 +533,7 @@ export class AgentService {
       throw new Error('Failed to fetch agents by capability');
     }
 
-    return data?.map(agent => ({
+    return data?.map((agent: any) => ({
       ...agent,
       categories: agent.agent_category_mapping?.map((mapping: unknown) => mapping.agent_categories) || []
     })) || [];

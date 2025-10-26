@@ -387,7 +387,7 @@ export function EnhancedChatInterface({
                       <p className="text-xs text-muted-foreground mt-1">Start a conversation to engage experts</p>
                     </div>
                   ) : (
-                    activeAgents.map(agent => (
+                    activeAgents.map((agent: any) => (
                       <Card key={agent.id} className="p-3 hover:bg-muted/50 transition-colors">
                         <div className="flex items-start space-x-3">
                           <div className="text-lg">{agent.avatar}</div>

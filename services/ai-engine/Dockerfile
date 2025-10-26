@@ -23,8 +23,5 @@ COPY . .
 # Expose port
 EXPOSE 8000
 
-# Use a startup script to handle PORT variable
-COPY docker-entrypoint.sh /app/
-RUN chmod +x /app/docker-entrypoint.sh
-
-ENTRYPOINT ["/app/docker-entrypoint.sh"]
+# Start uvicorn on port 8000 (Railway will override via $PORT env var)
+CMD ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000"]

@@ -76,7 +76,7 @@ export class LangGraphPanelOrchestrator {
 
       // Consult all experts in parallel
       const responses = await Promise.all(
-        state.panelMembers.map(member =>
+        state.panelMembers.map((member: any) =>
           this.consultExpert(member.agent, state.query)
         )
       );
@@ -86,7 +86,7 @@ export class LangGraphPanelOrchestrator {
         expertResponsesMap.set(response.expertId, response);
       });
 
-      const messages = responses.map(r =>
+      const messages = responses.map((r: any) =>
         `✅ ${r.expertName} responded (confidence: ${(r.confidence * 100).toFixed(0)}%)`
       );
 
@@ -126,7 +126,7 @@ export class LangGraphPanelOrchestrator {
       const deliberationPromises = state.panelMembers.map(async (member) => {
         const currentResponse = state.expertResponses.get(member.agent.id);
         const otherResponses = Array.from(state.expertResponses.values())
-          .filter(r => r.expertId !== member.agent.id);
+          .filter((r: any) => r.expertId !== member.agent.id);
 
         return this.conductDeliberation(
           member.agent,
@@ -266,7 +266,7 @@ Format your response as JSON:
           recommendation: content,
           confidence: 0.7,
           reasoning: "Expert analysis based on domain knowledge",
-          evidence: sources.map(s => s.title),
+          evidence: sources.map((s: any) => s.title),
           concerns: [],
         };
       }
@@ -313,7 +313,7 @@ Your initial response:
 ${JSON.stringify(currentResponse, null, 2)}
 
 Your colleagues' responses:
-${otherResponses.map(r => `
+${otherResponses.map((r: any) => `
 ${r.expertName}: ${r.content}
 Confidence: ${r.confidence}
 Reasoning: ${r.reasoning}
@@ -388,7 +388,7 @@ Respond in the same JSON format as before.`;
     const analysisPrompt = `You are analyzing responses from an expert advisory panel. Determine the level of consensus.
 
 Expert Responses:
-${responses.map(r => `
+${responses.map((r: any) => `
 ${r.expertName} (Confidence: ${r.confidence}):
 ${r.content}
 Reasoning: ${r.reasoning}
@@ -442,7 +442,7 @@ Respond in JSON format:
 
     // Simple voting: experts with similar recommendations
     const expertVotes = new Map<string, 'agree' | 'disagree' | 'neutral'>();
-    responses.forEach(r => {
+    responses.forEach((r: any) => {
       expertVotes.set(r.expertId, 'agree'); // Simplified for prototype
     });
 
@@ -472,7 +472,7 @@ Panel Consensus:
 - Primary Recommendation: ${consensus.primaryRecommendation}
 
 Expert Panel Members (${expertResponses.length}):
-${expertResponses.map(r => `
+${expertResponses.map((r: any) => `
 **${r.expertName}** (Confidence: ${(r.confidence * 100).toFixed(0)}%)
 Position: ${r.content}
 Reasoning: ${r.reasoning}
@@ -481,7 +481,7 @@ ${r.citations.length > 0 ? `Citations: ${r.citations.join(', ')}` : ''}
 
 ${consensus.dissenting.length > 0 ? `
 Dissenting Opinions:
-${consensus.dissenting.map(d => `- ${d}`).join('\n')}
+${consensus.dissenting.map((d: any) => `- ${d}`).join('\n')}
 ` : ''}
 
 Generate a professional advisory board report with:

@@ -193,7 +193,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Transform agents (no organizational structure mapping needed since columns don't exist)
-    const transformedAgents = (data || []).map(agent => ({
+    const transformedAgents = (data || []).map((agent: any) => ({
       ...agent,
       department: null, // Column doesn't exist
       organizational_role: agent.role // Use existing role field

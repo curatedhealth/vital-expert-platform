@@ -294,7 +294,7 @@ class LLMOrchestrator {
     models: ModelType[]
   ): Promise<ConsensusResponse> {
     const responses = await Promise.all(
-      models.map(model => this.query(question, context, model))
+      models.map((model: any) => this.query(question, context, model))
     );
 
     // Analyze agreement between models
@@ -331,7 +331,7 @@ class LLMOrchestrator {
     if (responses.length < 2) return 1.0;
 
     // Simple agreement calculation based on shared keywords
-    const keywordSets = responses.map(response =>
+    const keywordSets = responses.map((response: any) =>
       new Set(response.content.toLowerCase().match(/\b\w+\b/g) || [])
     );
 
@@ -349,7 +349,7 @@ class LLMOrchestrator {
         const setJ = keywordSets.slice(j, j + 1)[0];
         if (!setI || !setJ) continue;
         
-        const intersection = new Set([...setI].filter(x => setJ.has(x)));
+        const intersection = new Set([...setI].filter((x: any) => setJ.has(x)));
         const union = new Set([...setI, ...setJ]);
         const similarity = intersection.size / union.size;
 
@@ -374,10 +374,10 @@ class LLMOrchestrator {
     ];
 
     for (const [positive, negative] of conflictIndicators) {
-      const positiveCount = responses.filter(r =>
+      const positiveCount = responses.filter((r: any) =>
         r.content.toLowerCase().includes(positive)
       ).length;
-      const negativeCount = responses.filter(r =>
+      const negativeCount = responses.filter((r: any) =>
         r.content.toLowerCase().includes(negative)
       ).length;
 

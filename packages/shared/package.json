@@ -1,0 +1,15 @@
+{
+  "name": "@vital/shared",
+  "version": "1.0.0",
+  "private": true,
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    "./lib/*": "./src/lib/*",
+    "./types/*": "./src/types/*"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.45.0",
+    "next": "^14.2.33"
+  }
+}

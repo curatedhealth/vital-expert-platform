@@ -110,8 +110,8 @@ export const AgentCapabilitiesDisplay: React.FC<AgentCapabilitiesDisplayProps> =
     // Use Map for safe access
     const aCategory = capabilitiesByCategoryMap.get(a) || [];
     const bCategory = capabilitiesByCategoryMap.get(b) || [];
-    const aHasPrimary = aCategory.some(c => c.is_primary);
-    const bHasPrimary = bCategory.some(c => c.is_primary);
+    const aHasPrimary = aCategory.some((c: any) => c.is_primary);
+    const bHasPrimary = bCategory.some((c: any) => c.is_primary);
 
     if (aHasPrimary && !bHasPrimary) return -1;
     if (!aHasPrimary && bHasPrimary) return 1;

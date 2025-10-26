@@ -20,13 +20,10 @@ import { createAutoLearningMemory } from '@/features/chat/memory/long-term-memor
  */
 export async function POST(request: NextRequest) {
   try {
-    // Parse request body with error handling
-    let body;
-    try {
     // Create Supabase client inside the function to avoid build-time validation
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-    
+
     if (!supabaseUrl || !supabaseServiceKey) {
       return NextResponse.json(
         { error: 'Supabase configuration missing' },
@@ -36,7 +33,9 @@ export async function POST(request: NextRequest) {
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-
+    // Parse request body with error handling
+    let body;
+    try {
       body = await request.json();
     } catch (parseError) {
       console.error('Failed to parse request body:', parseError);
@@ -101,7 +100,7 @@ export async function POST(request: NextRequest) {
     let personalizedContext = null;
     if (autoLearning) {
       try {
-        personalizedContext = await autoLearning.getEnhancedContext(message);
+        personalizedContext = await autoLearning.getEnhancedContext(userId, message);
       } catch (memoryError) {
         console.warn('Failed to load long-term memory context:', memoryError);
         personalizedContext = null;
@@ -117,10 +116,11 @@ export async function POST(request: NextRequest) {
     };
 
     if (personalizedContext) {
+      const context = personalizedContext as any; // Type assertion for flexible context
       console.log('🧠 Long-term memory context:', {
-        factsCount: personalizedContext.relevantFacts.length,
-        projectsCount: personalizedContext.activeProjects.length,
-        goalsCount: personalizedContext.activeGoals.length,
+        factsCount: context.relevantFacts?.length || 0,
+        projectsCount: context.activeProjects?.length || 0,
+        goalsCount: context.activeGoals?.length || 0,
       });
     } else {
       console.log('⚠️  Long-term memory disabled (invalid userId or error)');
@@ -250,6 +250,13 @@ async function handleStreamingResponse(
       // Enhance message with context
       const enhancedMessage = `${personalizedContext.contextSummary}\n\nUser Query: ${message}`;
 
+      // TODO: Fix supabase scope issue - need to pass supabase client as parameter
+      // For now, fetch agent profile using direct createClient
+      const { createClient: createSupabaseClient } = await import('@supabase/supabase-js');
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+      const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+      const supabase = createSupabaseClient(supabaseUrl, supabaseServiceKey);
+
       // Fetch agent profile
       const { data: agentProfile } = await supabase
         .from('agents')
@@ -328,6 +335,13 @@ async function saveChatMessages(
   userMessage: string,
   assistantMessage: string
 ) {
+  // Create supabase client in function scope
+  const { createClient } = await import('@supabase/supabase-js');
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+
   await supabase.from('chat_messages').insert([
     {
       session_id: sessionId,
@@ -377,7 +391,7 @@ export async function GET(request: NextRequest) {
     }
 
     const autoLearning = createAutoLearningMemory(userId);
-    const profile = await autoLearning.getUserProfile();
+    const profile = await autoLearning.getUserProfile(userId);
 
     return NextResponse.json({
       success: true,

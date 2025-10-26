@@ -119,7 +119,7 @@ export const MeditronSetup: React.FC = () => {
     setIsLoading(true);
     setTestProgress(0);
 
-    const tests: ConnectionTest[] = models.map(model => ({
+    const tests: ConnectionTest[] = models.map((model: any) => ({
       model: model.provider_name,
       status: 'pending'
     }));
@@ -180,7 +180,7 @@ export const MeditronSetup: React.FC = () => {
 
       if (response.ok) {
         setModels(prev =>
-          prev.map(model =>
+          prev.map((model: any) =>
             model.id === modelId
               ? { ...model, is_active: !currentStatus }
               : model

@@ -469,19 +469,19 @@ export class OutcomeTracker {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
               <div className="bg-green-50 p-4 rounded-lg">
                 <div className="text-2xl font-bold text-green-600">
-                  {validationResults.filter(r => r.status === 'passed').length}
+                  {validationResults.filter((r: any) => r.status === 'passed').length}
                 </div>
                 <div className="text-sm text-gray-600">Passed</div>
               </div>
               <div className="bg-yellow-50 p-4 rounded-lg">
                 <div className="text-2xl font-bold text-yellow-600">
-                  {validationResults.filter(r => r.status === 'warning').length}
+                  {validationResults.filter((r: any) => r.status === 'warning').length}
                 </div>
                 <div className="text-sm text-gray-600">Warnings</div>
               </div>
               <div className="bg-red-50 p-4 rounded-lg">
                 <div className="text-2xl font-bold text-red-600">
-                  {validationResults.filter(r => r.status === 'failed').length}
+                  {validationResults.filter((r: any) => r.status === 'failed').length}
                 </div>
                 <div className="text-sm text-gray-600">Failed</div>
               </div>
@@ -491,7 +491,7 @@ export class OutcomeTracker {
               <h3 className="text-lg font-medium text-gray-900 mb-4">Validation Results</h3>
 
               <div className="space-y-4">
-                {validationResults.map(result => (
+                {validationResults.map((result: any) => (
                   <div key={result.id} className="border border-gray-200 rounded-lg p-4">
                     <div className="flex justify-between items-start mb-2">
                       <div>

@@ -1,5 +1,6 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
+import { tenantMiddleware } from './middleware/tenant-middleware';
 
 export async function middleware(request: NextRequest) {
   const url = request.nextUrl.clone();
@@ -114,6 +115,9 @@ export async function middleware(request: NextRequest) {
   );
 
   await supabase.auth.getUser();
+
+  // Apply tenant middleware to add tenant headers
+  response = await tenantMiddleware(request, response);
 
   return response;
 }

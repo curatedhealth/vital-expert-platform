@@ -151,9 +151,9 @@ const IndustryTemplateLibrary: React.FC<Props> = ({ organizationId }) => {
   ];
 
     { key: 'all', label: 'All Templates', count: templates.length },
-    { key: 'chronic_disease', label: 'Chronic Disease', count: templates.filter(t => t.category === 'chronic_disease').length },
-    { key: 'mental_health', label: 'Mental Health', count: templates.filter(t => t.category === 'mental_health').length },
-    { key: 'medication_adherence', label: 'Medication Adherence', count: templates.filter(t => t.category === 'medication_adherence').length },
+    { key: 'chronic_disease', label: 'Chronic Disease', count: templates.filter((t: any) => t.category === 'chronic_disease').length },
+    { key: 'mental_health', label: 'Mental Health', count: templates.filter((t: any) => t.category === 'mental_health').length },
+    { key: 'medication_adherence', label: 'Medication Adherence', count: templates.filter((t: any) => t.category === 'medication_adherence').length },
     { key: 'clinical_decision_support', label: 'Clinical Decision Support', count: 0 },
     { key: 'population_health', label: 'Population Health', count: 0 },
     { key: 'telemedicine', label: 'Telemedicine', count: 0 }
@@ -491,7 +491,7 @@ const IndustryTemplateLibrary: React.FC<Props> = ({ organizationId }) => {
                   </div>
                   <p className="text-gray-600 mb-4">{feature.description}</p>
                   <div className="space-y-2">
-                    {feature.features.map(item => (
+                    {feature.features.map((item: any) => (
                       <div key={item} className="flex items-center text-sm text-gray-600">
                         <span className="w-1.5 h-1.5 bg-green-400 rounded-full mr-2"></span>
                         {item}

@@ -354,7 +354,7 @@ export const createPubMedSearchTool = () => {
  */
 export const getToolsByName = (toolNames: string[]) => {
   const allTools = getAllExpertTools();
-  return allTools.filter(tool => toolNames.includes(tool.name));
+  return allTools.filter((tool: any) => toolNames.includes(tool.name));
 };
 
 /**

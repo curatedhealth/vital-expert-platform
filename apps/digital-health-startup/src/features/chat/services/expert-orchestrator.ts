@@ -315,7 +315,7 @@ export class ExpertOrchestrator {
       });
 
       // Extract domain insights from RAG results
-      const ragDomains = ragResults.map(result => result.domain || 'general');
+      const ragDomains = ragResults.map((result: any) => result.domain || 'general');
 
       // Map RAG domains to required expertise
       ragDomains.forEach(domain => {
@@ -383,7 +383,7 @@ export class ExpertOrchestrator {
   }
 
   private async matchExperts(requiredExpertise: string[]): Promise<ExpertAgent[]> {
-    return this.expertLibrary.filter(expert =>
+    return this.expertLibrary.filter((expert: any) =>
       expert.expertise.primary.some(exp =>
         requiredExpertise.some(req =>
           exp.toLowerCase().includes(req.toLowerCase()) ||
@@ -499,11 +499,11 @@ export class ExpertOrchestrator {
     // If we have an agents store, load real agents and convert them to ExpertAgent format
     if (this.agentsStore) {
       const realAgents = await this.agentsStore.getAgentsByIds(expertIds);
-      return realAgents.map(agent => this.convertToExpertAgent(agent));
+      return realAgents.map((agent: any) => this.convertToExpertAgent(agent));
     }
 
     // Fallback to mock experts
-    return this.expertLibrary.filter(expert => expertIds.includes(expert.id));
+    return this.expertLibrary.filter((expert: any) => expertIds.includes(expert.id));
   }
 
   private convertToExpertAgent(agent: unknown): ExpertAgent {
@@ -551,7 +551,7 @@ export class ExpertOrchestrator {
     // Simulate facilitation process
     return {
       phases: strategy.phases,
-      responses: panel.experts.map(expert => ({
+      responses: panel.experts.map((expert: any) => ({
         expertId: expert.id,
         responses: ['Sample response from ' + expert.name],
         confidence: 0.85
@@ -620,7 +620,7 @@ export class ExpertOrchestrator {
         ...response,
         evidence: [
           ...response.evidence,
-          ...ragResults.map(result => `Knowledge Source: ${result.source_name} - ${result.content.substring(0, 200)}...`)
+          ...ragResults.map((result: any) => `Knowledge Source: ${result.source_name} - ${result.content.substring(0, 200)}...`)
         ]
       }));
 
@@ -640,7 +640,7 @@ export class ExpertOrchestrator {
         topic: 'Primary Approach',
         statement: 'The panel agrees on the fundamental approach to addressing the issue',
         agreementLevel: 0.87,
-        expertsInAgreement: experts.slice(0, Math.floor(experts.length * 0.87)).map(e => e.id),
+        expertsInAgreement: experts.slice(0, Math.floor(experts.length * 0.87)).map((e: any) => e.id),
         confidence: 0.85,
         supportingEvidence: [
           'Clinical evidence supports this approach',
@@ -654,7 +654,7 @@ export class ExpertOrchestrator {
           topic: 'Implementation Strategy',
           statement: 'Phased implementation approach is recommended',
           agreementLevel: 0.75,
-          expertsInAgreement: experts.slice(0, Math.floor(experts.length * 0.75)).map(e => e.id),
+          expertsInAgreement: experts.slice(0, Math.floor(experts.length * 0.75)).map((e: any) => e.id),
           confidence: 0.78,
           supportingEvidence: [
             'Reduces implementation risk',
@@ -674,10 +674,10 @@ export class ExpertOrchestrator {
     if (experts.length > 2) {
       // Simulated divergence analysis
 
-        e.expertise.primary.some(p => p.toLowerCase().includes('regulatory'))
+        e.expertise.primary.some((p: any) => p.toLowerCase().includes('regulatory'))
       );
 
-        e.expertise.primary.some(p => p.toLowerCase().includes('clinical'))
+        e.expertise.primary.some((p: any) => p.toLowerCase().includes('clinical'))
       );
 
       if (regulatoryExperts.length > 0 && clinicalExperts.length > 0) {
@@ -750,11 +750,11 @@ export class ExpertOrchestrator {
 A panel of ${expertCount} experts conducted a comprehensive review, resulting in ${consensusCount} areas of strong consensus and ${divergenceCount} points requiring further consideration.
 
 **Key Consensus Areas:**
-${consensus.map(c => `• ${c.statement} (${Math.round(c.agreementLevel * 100)}% agreement)`).join('\n')}
+${consensus.map((c: any) => `• ${c.statement} (${Math.round(c.agreementLevel * 100)}% agreement)`).join('\n')}
 
 **Areas of Divergence:**
 ${divergence.length > 0
-  ? divergence.map(d => `• ${d.issue} - requires alignment session`).join('\n')
+  ? divergence.map((d: any) => `• ${d.issue} - requires alignment session`).join('\n')
   : '• No significant divergence identified'
 }
 
@@ -784,7 +784,7 @@ The panel demonstrates strong alignment on fundamental approach with tactical di
         content: 'Detailed action plan with timelines, owners, and dependencies',
         metadata: {
           recommendationCount: recommendations.length,
-          highPriorityActions: recommendations.filter(r => r.priority === 'high').length
+          highPriorityActions: recommendations.filter((r: any) => r.priority === 'high').length
         }
       }
     ];
@@ -830,9 +830,9 @@ export class FacilitationEngine {
 
   private async collectResponses(experts: ExpertAgent[], questions: FacilitationQuestion[]): Promise<unknown[]> {
     // Simulate collecting responses from experts
-    return experts.map(expert => ({
+    return experts.map((expert: any) => ({
       expertId: expert.id,
-      responses: questions.map(q => `Response from ${expert.name} to ${q.text}`)
+      responses: questions.map((q: any) => `Response from ${expert.name} to ${q.text}`)
     }));
   }
 

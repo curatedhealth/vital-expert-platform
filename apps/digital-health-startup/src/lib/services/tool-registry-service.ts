@@ -130,7 +130,7 @@ class ToolRegistryService {
     if (error) throw error;
 
     // Transform tags
-    return (data || []).map(tool => ({
+    return (data || []).map((tool: any) => ({
       ...tool,
       tags: tool.tags?.map((t: any) => t.tag) || []
     }));
@@ -177,7 +177,7 @@ class ToolRegistryService {
 
     if (error) throw error;
 
-    return (data || []).map(tool => ({
+    return (data || []).map((tool: any) => ({
       ...tool,
       tags: tool.tags?.map((t: any) => t.tag) || []
     }));
@@ -344,7 +344,7 @@ class ToolRegistryService {
     }
   ): Promise<void> {
     const tools = await this.getToolsByCategory(categoryName);
-    const toolIds = tools.map(t => t.id);
+    const toolIds = tools.map((t: any) => t.id);
     await this.bulkAssignToolsToAgent(agentId, toolIds, options);
   }
 
@@ -361,7 +361,7 @@ class ToolRegistryService {
     }
   ): Promise<void> {
     const tools = await this.getToolsByTags(tagNames);
-    const toolIds = tools.map(t => t.id);
+    const toolIds = tools.map((t: any) => t.id);
     await this.bulkAssignToolsToAgent(agentId, toolIds, options);
   }
 
@@ -480,7 +480,7 @@ class ToolRegistryService {
     // Get all available tool instances from expert-tools
     const allToolInstances = getAllExpertTools();
     const toolMap = new Map(
-      allToolInstances.map(tool => [tool.name, tool])
+      allToolInstances.map((tool: any) => [tool.name, tool])
     );
 
     // Return only the tools assigned to this agent, sorted by priority

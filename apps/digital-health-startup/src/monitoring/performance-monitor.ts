@@ -662,7 +662,7 @@ Generated: ${new Date().toISOString()}
 ## Active Alerts
 - **Total Active Alerts**: ${activeAlerts.length}
 - **Critical Alerts**: ${criticalAlerts.length}
-- **Patient Safety Related**: ${activeAlerts.filter(a => a.healthcareImpact === 'patient_safety').length}
+- **Patient Safety Related**: ${activeAlerts.filter((a: any) => a.healthcareImpact === 'patient_safety').length}
 
 ## Healthcare Compliance Status
 ${this.generateComplianceStatus(latestMetrics)}

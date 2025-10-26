@@ -39,9 +39,9 @@ export async function GET() {
         workflows: workflows,
         total_count: workflows.length,
         categories: {
-          regulatory: workflows.filter(w => w.name.toLowerCase().includes('regulatory')).length,
-          clinical: workflows.filter(w => w.name.toLowerCase().includes('clinical')).length,
-          market_access: workflows.filter(w => w.name.toLowerCase().includes('market')).length
+          regulatory: workflows.filter((w: any) => w.name.toLowerCase().includes('regulatory')).length,
+          clinical: workflows.filter((w: any) => w.name.toLowerCase().includes('clinical')).length,
+          market_access: workflows.filter((w: any) => w.name.toLowerCase().includes('market')).length
         }
       },
       timestamp: new Date().toISOString()

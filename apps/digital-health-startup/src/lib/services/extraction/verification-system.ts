@@ -470,7 +470,7 @@ ${this.renderDocumentWithHighlights(documents[0], extraction)}
 
     let content = document.content;
     const entities = extraction.entities
-      .filter(e => e.source.document_id === document.id)
+      .filter((e: any) => e.source.document_id === document.id)
       .sort((a, b) => b.source.char_start - a.source.char_start); // Reverse order for replacement
 
     // Replace entity text with highlighted spans
@@ -500,7 +500,7 @@ ${this.renderDocumentWithHighlights(documents[0], extraction)}
       return '<p style="color: #999; font-size: 13px;">No coding suggestions available</p>';
     }
 
-    return suggestions.slice(0, 5).map(s => `
+    return suggestions.slice(0, 5).map((s: any) => `
       <div class="coding-suggestion">
         <span class="coding-system">${s.coding_system}</span>
         <span class="coding-code">${s.code}</span>
@@ -652,7 +652,7 @@ ${this.renderDocumentWithHighlights(documents[0], extraction)}
     const suggestions: CodingSuggestion[] = [];
 
     // ICD-10 for diagnoses
-    const diagnoses = extraction.entities.filter(e => e.type === 'diagnosis');
+    const diagnoses = extraction.entities.filter((e: any) => e.type === 'diagnosis');
     for (const diagnosis of diagnoses.slice(0, 5)) {
       // Mock ICD-10 lookup - in production would call real API
       suggestions.push({
@@ -665,7 +665,7 @@ ${this.renderDocumentWithHighlights(documents[0], extraction)}
     }
 
     // RxNorm for medications
-    const medications = extraction.entities.filter(e => e.type === 'medication');
+    const medications = extraction.entities.filter((e: any) => e.type === 'medication');
     for (const medication of medications.slice(0, 5)) {
       suggestions.push({
         entity: medication,
@@ -677,7 +677,7 @@ ${this.renderDocumentWithHighlights(documents[0], extraction)}
     }
 
     // CPT for procedures
-    const procedures = extraction.entities.filter(e => e.type === 'procedure');
+    const procedures = extraction.entities.filter((e: any) => e.type === 'procedure');
     for (const procedure of procedures.slice(0, 5)) {
       suggestions.push({
         entity: procedure,
@@ -700,7 +700,7 @@ ${this.renderDocumentWithHighlights(documents[0], extraction)}
       ? entities.reduce((sum, e) => sum + e.confidence, 0) / entities.length
       : 0;
 
-    const pendingCount = entities.filter(e =>
+    const pendingCount = entities.filter((e: any) =>
       !e.verification_status || e.verification_status === 'pending'
     ).length;
 

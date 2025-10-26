@@ -109,7 +109,7 @@ export class RAGIntegrationService {
       primaryIndexes,
       embeddingModel,
       retrievalStrategy,
-      knowledgeDomains: knowledgeDomains.map(d => d.name),
+      knowledgeDomains: knowledgeDomains.map((d: any) => d.name),
       filterConfig
     };
   }
@@ -129,7 +129,7 @@ export class RAGIntegrationService {
       }
     });
 
-    return Array.from(domains).map(domain =>
+    return Array.from(domains).map((domain: any) =>
       this.knowledgeDomainMap.get(domain)!
     );
   }
@@ -160,7 +160,7 @@ export class RAGIntegrationService {
       'text-embedding-ada-002' // General content
     ];
 
-    const domainModels = domains.map(d => d.embeddingModel);
+    const domainModels = domains.map((d: any) => d.embeddingModel);
 
     for (const model of modelPriority) {
       if (domainModels.includes(model)) {
@@ -175,7 +175,7 @@ export class RAGIntegrationService {
    * Determine retrieval strategy based on agent type
    */
   private determineRetrievalStrategy(agent: AgentWithCapabilities): 'semantic' | 'hybrid' | 'keyword' {
-    const primaryCapabilities = agent.primary_capabilities.map(c => c.capability.name);
+    const primaryCapabilities = agent.primary_capabilities.map((c: any) => c.capability.name);
 
     // Regulatory agents benefit from hybrid search (semantic + keyword)
     if (primaryCapabilities.some(cap => cap.includes('regulatory') || cap.includes('compliance'))) {
@@ -366,7 +366,7 @@ export class RAGIntegrationService {
     let searchDomain: string | undefined;
 
     if (capability) {
-      const cap = agent.capabilities_detail.find(c => c.capability.name === capability);
+      const cap = agent.capabilities_detail.find((c: any) => c.capability.name === capability);
       if (cap) {
         searchDomain = cap.capability.domain;
       }

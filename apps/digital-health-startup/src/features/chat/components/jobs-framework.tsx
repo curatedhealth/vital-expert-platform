@@ -217,7 +217,7 @@ export function JobsFramework({ jobDescription, onJobComplete, className }: Jobs
             </div>
           </div>
           <Badge variant="secondary">
-            {outcomes.filter(o => o.status === 'completed').length} / {outcomes.length} Complete
+            {outcomes.filter((o: any) => o.status === 'completed').length} / {outcomes.length} Complete
           </Badge>
         </div>
         <div className="space-y-2">
@@ -359,19 +359,19 @@ export function JobsFramework({ jobDescription, onJobComplete, className }: Jobs
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
               <div className="text-center">
                 <div className="text-2xl font-bold text-orange-600">
-                  {outcomes.filter(o => o.status === 'completed').length}
+                  {outcomes.filter((o: any) => o.status === 'completed').length}
                 </div>
                 <div className="text-muted-foreground">Completed</div>
               </div>
               <div className="text-center">
                 <div className="text-2xl font-bold text-blue-600">
-                  {outcomes.filter(o => o.status === 'in-progress').length}
+                  {outcomes.filter((o: any) => o.status === 'in-progress').length}
                 </div>
                 <div className="text-muted-foreground">In Progress</div>
               </div>
               <div className="text-center">
                 <div className="text-2xl font-bold text-red-600">
-                  {outcomes.filter(o => o.status === 'blocked').length}
+                  {outcomes.filter((o: any) => o.status === 'blocked').length}
                 </div>
                 <div className="text-muted-foreground">Blocked</div>
               </div>

@@ -124,10 +124,10 @@ const LearningManagementSystem: React.FC<Props> = ({ organizationId }) => {
   ];
 
     { key: 'all', label: 'All Courses', count: courses.length },
-    { key: 'platform', label: 'Platform Training', count: courses.filter(c => c.category === 'platform').length },
-    { key: 'healthcare', label: 'Healthcare', count: courses.filter(c => c.category === 'healthcare').length },
-    { key: 'compliance', label: 'Compliance', count: courses.filter(c => c.category === 'compliance').length },
-    { key: 'technical', label: 'Technical', count: courses.filter(c => c.category === 'technical').length }
+    { key: 'platform', label: 'Platform Training', count: courses.filter((c: any) => c.category === 'platform').length },
+    { key: 'healthcare', label: 'Healthcare', count: courses.filter((c: any) => c.category === 'healthcare').length },
+    { key: 'compliance', label: 'Compliance', count: courses.filter((c: any) => c.category === 'compliance').length },
+    { key: 'technical', label: 'Technical', count: courses.filter((c: any) => c.category === 'technical').length }
   ];
 
     { key: 'courses', label: 'Courses', icon: '📚' },

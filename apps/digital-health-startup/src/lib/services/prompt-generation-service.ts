@@ -293,7 +293,7 @@ ${comp.prompt_snippet}
 
 You have access to the following medical tools and databases:
 
-${tools.map(tool => `## ${tool.name}
+${tools.map((tool: any) => `## ${tool.name}
 **Type**: ${tool.tool_type}
 **Database**: ${tool.medical_database}
 **HIPAA Compliant**: ${tool.hipaa_compliant ? 'Yes' : 'No'}

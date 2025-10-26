@@ -321,7 +321,7 @@ Helpful Answer:`;
     const result = await this.fallbackQuery(query, {});
     return {
       answer: result.answer,
-      sources: result.sources.map(s => s.content),
+      sources: result.sources.map((s: any) => s.content),
     };
   }
 }

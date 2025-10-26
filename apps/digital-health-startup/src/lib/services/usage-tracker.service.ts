@@ -347,7 +347,7 @@ export class UsageTracker {
     endDate: Date
   ): ProviderUsageSummary {
     const totalRequests = data.length;
-    const successfulRequests = data.filter(d => d.success).length;
+    const successfulRequests = data.filter((d: any) => d.success).length;
     const failedRequests = totalRequests - successfulRequests;
 
     const totalInputTokens = data.reduce((sum, d) => sum + (d.input_tokens || 0), 0);

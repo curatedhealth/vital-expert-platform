@@ -129,7 +129,7 @@ export function PanelTemplates({ onTemplateSelect, onCreateExpertPanel }: PanelT
             </p>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {filteredTemplates.filter(t => ['regulatory-advisory', 'clinical-design'].includes(t.id)).map((template) => (
+              {filteredTemplates.filter((t: any) => ['regulatory-advisory', 'clinical-design'].includes(t.id)).map((template) => (
                 <Card
                   key={template.id}
                   className="cursor-pointer hover:shadow-lg transition-all duration-200 hover:border-primary/50 group"

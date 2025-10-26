@@ -136,7 +136,7 @@ export const MedicalModelsDashboard: React.FC<MedicalModelsDashboardProps> = ({
           </div>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {[1, 2, 3].map(i => (
+          {[1, 2, 3].map((i: any) => (
             <Card key={i}>
               <CardContent className="pt-6">
                 <div className="animate-pulse">
@@ -181,7 +181,7 @@ export const MedicalModelsDashboard: React.FC<MedicalModelsDashboardProps> = ({
 
   // If a specific model is selected, show its details
   if (selectedModel) {
-    const model = models.find(m =>
+    const model = models.find((m: any) =>
       m.provider_name.toLowerCase().includes(selectedModel.toLowerCase())
     );
 

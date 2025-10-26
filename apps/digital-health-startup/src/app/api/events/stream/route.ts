@@ -325,7 +325,7 @@ export async function GET(request: NextRequest) {
       stream_statistics: streamStats,
       system_status: {
         total_streams: streams?.length || 0,
-        active_streams: streams?.filter(s => s.is_active).length || 0,
+        active_streams: streams?.filter((s: any) => s.is_active).length || 0,
         total_events_24h: streamStats.reduce((sum, s) => sum + s.events_24h, 0),
         overall_success_rate: streamStats.length > 0
           ? streamStats.reduce((sum, s) => sum + s.success_rate, 0) / streamStats.length

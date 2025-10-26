@@ -105,7 +105,7 @@ class PerformanceTracker {
 
     return {
       averageTime: avgClassificationTime,
-      underTarget: recentMetrics.filter(m => (m.classificationTime || 0) < 100).length,
+      underTarget: recentMetrics.filter((m: any) => (m.classificationTime || 0) < 100).length,
       total: recentMetrics.length
     };
   }
@@ -327,7 +327,7 @@ export class VitalAIOrchestrator extends ComplianceAwareOrchestrator {
 
       // Score agents based on capability match and query keywords
       const queryLower = query.toLowerCase();
-      const agentScores = Array.from(this.agents.values()).map(agent => {
+      const agentScores = Array.from(this.agents.values()).map((agent: any) => {
         const agentCapabilities = (agent as any).metadata?.capabilities || (agent as any).capabilities || [];
         let score = 0;
 

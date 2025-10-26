@@ -90,7 +90,7 @@ export class MinorityOpinionAnalyzer {
 
     return {
       minorityPositions,
-      hasHighValueDissent: minorityPositions.some(p => p.isHighValue),
+      hasHighValueDissent: minorityPositions.some((p: any) => p.isHighValue),
       dissentThemes,
       recommendedActions
     };
@@ -299,27 +299,27 @@ export class MinorityOpinionAnalyzer {
   private generateRecommendedActions(positions: MinorityPosition[]): string[] {
     const actions: string[] = [];
 
-    const highValuePositions = positions.filter(p => p.isHighValue);
+    const highValuePositions = positions.filter((p: any) => p.isHighValue);
 
     if (highValuePositions.length > 0) {
       actions.push(`Review ${highValuePositions.length} high-value dissenting opinion(s) before finalizing decision`);
     }
 
-    const safetyDissent = positions.some(p =>
+    const safetyDissent = positions.some((p: any) =>
       p.riskIfIgnored.toLowerCase().includes('safety')
     );
     if (safetyDissent) {
       actions.push('Conduct additional safety analysis to address concerns');
     }
 
-    const regulatoryDissent = positions.some(p =>
+    const regulatoryDissent = positions.some((p: any) =>
       p.riskIfIgnored.toLowerCase().includes('regulatory')
     );
     if (regulatoryDissent) {
       actions.push('Verify regulatory strategy with FDA/EMA guidance');
     }
 
-    const evidenceDissent = positions.some(p =>
+    const evidenceDissent = positions.some((p: any) =>
       p.riskIfIgnored.toLowerCase().includes('evidence')
     );
     if (evidenceDissent) {
@@ -343,14 +343,14 @@ export class MinorityOpinionAnalyzer {
 
     let report = '\n\n## 🔍 Minority Opinion Report\n\n';
     report += `**${analysis.minorityPositions.length} dissenting opinion(s) identified** `;
-    report += `(${analysis.minorityPositions.filter(p => p.isHighValue).length} high-value)\n\n`;
+    report += `(${analysis.minorityPositions.filter((p: any) => p.isHighValue).length} high-value)\n\n`;
 
     if (analysis.hasHighValueDissent) {
       report += '⚠️ **HIGH-VALUE DISSENT DETECTED** - Review recommended before final decision\n\n';
     }
 
     // Show high-value dissents first
-    const highValue = analysis.minorityPositions.filter(p => p.isHighValue);
+    const highValue = analysis.minorityPositions.filter((p: any) => p.isHighValue);
     if (highValue.length > 0) {
       report += '### High-Value Dissenting Opinions\n\n';
       for (const position of highValue) {
@@ -359,7 +359,7 @@ export class MinorityOpinionAnalyzer {
     }
 
     // Show other dissents
-    const other = analysis.minorityPositions.filter(p => !p.isHighValue);
+    const other = analysis.minorityPositions.filter((p: any) => !p.isHighValue);
     if (other.length > 0) {
       report += '\n### Additional Dissenting Views\n\n';
       for (const position of other) {

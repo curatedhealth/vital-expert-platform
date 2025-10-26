@@ -93,8 +93,8 @@ export const LLMProviderDashboard: React.FC<LLMProviderDashboardProps> = ({ clas
     try {
       // Calculate metrics from providers
       const totalProviders = providers.length;
-      const activeProviders = providers.filter(p => p.is_active && p.status === ProviderStatus.ACTIVE).length;
-      const healthyProviders = providers.filter(p => p.uptime_percentage > 95).length;
+      const activeProviders = providers.filter((p: any) => p.is_active && p.status === ProviderStatus.ACTIVE).length;
+      const healthyProviders = providers.filter((p: any) => p.uptime_percentage > 95).length;
 
       setDashboardMetrics({
         totalProviders,
@@ -130,7 +130,7 @@ export const LLMProviderDashboard: React.FC<LLMProviderDashboardProps> = ({ clas
           await llmProviderService.deleteProvider(providerId);
           break;
         case 'test':
-          const provider = providers.find(p => p.id === providerId);
+          const provider = providers.find((p: any) => p.id === providerId);
           if (provider) {
             await llmProviderService.testProviderHealth(provider);
           }

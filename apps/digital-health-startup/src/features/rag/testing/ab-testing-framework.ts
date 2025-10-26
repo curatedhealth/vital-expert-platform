@@ -287,7 +287,7 @@ export class ABTestingFramework {
    */
   private calculateStrategyMetrics(results: QueryResult[]): any {
     const totalQueries = results.length;
-    const validResults = results.filter(r => r.evaluation);
+    const validResults = results.filter((r: any) => r.evaluation);
 
     if (validResults.length === 0) {
       return {
@@ -322,7 +322,7 @@ export class ABTestingFramework {
       sum + r.responseTime, 0) / results.length;
 
     // Calculate confidence interval
-    const scores = validResults.map(r => r.evaluation?.metrics?.overall_score || 0);
+    const scores = validResults.map((r: any) => r.evaluation?.metrics?.overall_score || 0);
     const confidenceInterval = this.calculateConfidenceInterval(scores, 0.95);
 
     return {
@@ -463,9 +463,9 @@ export class ABTestingFramework {
     if (queries.length <= sampleSize) return queries;
 
     // Stratified sampling by difficulty
-    const easyQueries = queries.filter(q => q.difficulty === 'easy');
-    const mediumQueries = queries.filter(q => q.difficulty === 'medium');
-    const hardQueries = queries.filter(q => q.difficulty === 'hard');
+    const easyQueries = queries.filter((q: any) => q.difficulty === 'easy');
+    const mediumQueries = queries.filter((q: any) => q.difficulty === 'medium');
+    const hardQueries = queries.filter((q: any) => q.difficulty === 'hard');
 
     const easySample = Math.ceil(sampleSize * 0.3);
     const mediumSample = Math.ceil(sampleSize * 0.5);

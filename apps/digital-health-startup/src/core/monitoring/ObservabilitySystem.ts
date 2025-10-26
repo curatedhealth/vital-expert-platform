@@ -753,7 +753,7 @@ export class ObservabilitySystem extends EventEmitter {
       health: health.status,
       services: health.services,
       activeAlerts: activeAlerts.length,
-      criticalAlerts: activeAlerts.filter(a => a.severity === 'critical').length,
+      criticalAlerts: activeAlerts.filter((a: any) => a.severity === 'critical').length,
       activeTraces: activeSpans.length,
       timestamp: new Date().toISOString()
     };

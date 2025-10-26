@@ -313,7 +313,7 @@ export class PRISMPromptService {
         }));
 
       // Quality metrics
-      const ratings = data.map(p => p.averageRating).filter(r => r > 0);
+      const ratings = data.map((p: any) => p.averageRating).filter((r: any) => r > 0);
       const averageRating = ratings.length > 0
         ? ratings.reduce((a, b) => a + b, 0) / ratings.length
         : 0;

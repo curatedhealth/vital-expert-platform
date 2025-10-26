@@ -118,13 +118,13 @@ export async function POST(req: NextRequest) {
     // Create streaming response
     const stream = new ReadableStream({
       async start(controller) {
-        try {
           // Helper to send SSE events
           const sendEvent = (event: string, data: any) => {
             const message = `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
             controller.enqueue(encoder.encode(message));
           };
 
+        try {
           // Step 1: Context Retrieval
           sendEvent('workflow', {
             step: {

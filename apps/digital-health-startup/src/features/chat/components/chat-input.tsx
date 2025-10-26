@@ -475,10 +475,10 @@ export function ChatInput({
                 {!loadingModels && (
                   <>
                     {/* OpenAI Models */}
-                    {availableModels.filter(m => m.category === 'OpenAI').length > 0 && (
+                    {availableModels.filter((m: any) => m.category === 'OpenAI').length > 0 && (
                       <>
                         <DropdownMenuLabel className="text-xs text-gray-500">OpenAI</DropdownMenuLabel>
-                        {availableModels.filter(m => m.category === 'OpenAI').map((model) => (
+                        {availableModels.filter((m: any) => m.category === 'OpenAI').map((model) => (
                   <DropdownMenuItem
                     key={model.id}
                     onClick={() => handleModelChange(model)}
@@ -498,10 +498,10 @@ export function ChatInput({
                     )}
 
                     {/* Anthropic Models */}
-                    {availableModels.filter(m => m.category === 'Anthropic').length > 0 && (
+                    {availableModels.filter((m: any) => m.category === 'Anthropic').length > 0 && (
                       <>
                         <DropdownMenuLabel className="text-xs text-gray-500">Anthropic</DropdownMenuLabel>
-                        {availableModels.filter(m => m.category === 'Anthropic').map((model) => (
+                        {availableModels.filter((m: any) => m.category === 'Anthropic').map((model) => (
                   <DropdownMenuItem
                     key={model.id}
                     onClick={() => handleModelChange(model)}
@@ -521,10 +521,10 @@ export function ChatInput({
                     )}
 
                     {/* Hugging Face Models */}
-                    {availableModels.filter(m => m.category === 'Hugging Face').length > 0 && (
+                    {availableModels.filter((m: any) => m.category === 'Hugging Face').length > 0 && (
                       <>
                         <DropdownMenuLabel className="text-xs text-gray-500">Hugging Face (Open Source)</DropdownMenuLabel>
-                        {availableModels.filter(m => m.category === 'Hugging Face').map((model) => (
+                        {availableModels.filter((m: any) => m.category === 'Hugging Face').map((model) => (
                   <DropdownMenuItem
                     key={model.id}
                     onClick={() => handleModelChange(model)}
@@ -544,10 +544,10 @@ export function ChatInput({
                     )}
 
                     {/* CuratedHealth Custom Models */}
-                    {availableModels.filter(m => m.category === 'CuratedHealth').length > 0 && (
+                    {availableModels.filter((m: any) => m.category === 'CuratedHealth').length > 0 && (
                       <>
                         <DropdownMenuLabel className="text-xs text-gray-500">CuratedHealth (Custom Medical Models)</DropdownMenuLabel>
-                        {availableModels.filter(m => m.category === 'CuratedHealth').map((model) => (
+                        {availableModels.filter((m: any) => m.category === 'CuratedHealth').map((model) => (
                   <DropdownMenuItem
                     key={model.id}
                     onClick={() => handleModelChange(model)}

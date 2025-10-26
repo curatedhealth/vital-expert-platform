@@ -420,19 +420,19 @@ export function PromptPerformanceDashboard({ className = '' }: PromptPerformance
                   <div className="flex items-center justify-between">
                     <span className="text-sm">Excellent (80%+)</span>
                     <span className="text-sm font-medium">
-                      {performanceData.filter(p => p.success_rate >= 80).length}
+                      {performanceData.filter((p: any) => p.success_rate >= 80).length}
                     </span>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-sm">Good (60-79%)</span>
                     <span className="text-sm font-medium">
-                      {performanceData.filter(p => p.success_rate >= 60 && p.success_rate < 80).length}
+                      {performanceData.filter((p: any) => p.success_rate >= 60 && p.success_rate < 80).length}
                     </span>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-sm">Needs Attention (&lt;60%)</span>
                     <span className="text-sm font-medium">
-                      {performanceData.filter(p => p.success_rate < 60).length}
+                      {performanceData.filter((p: any) => p.success_rate < 60).length}
                     </span>
                   </div>
                 </div>

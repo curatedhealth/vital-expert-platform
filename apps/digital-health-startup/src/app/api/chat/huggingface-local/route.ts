@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
       // Generate responses from multiple models for comparison
       const modelsToCompare = availableModels.slice(0, 3);
       const responses = await Promise.all(
-        modelsToCompare.map(m =>
+        modelsToCompare.map((m: any) =>
           huggingFaceLocalService.generateResponse(message, { model: m, systemPrompt })
         )
       );

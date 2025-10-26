@@ -1011,7 +1011,7 @@ ${this.generateRecommendations(execution)}
   }
 
   getExecution(id: string): PipelineExecution | undefined {
-    return this.executions.find(e => e.id === id);
+    return this.executions.find((e: any) => e.id === id);
   }
 
   async cancelExecution(id: string): Promise<void> {

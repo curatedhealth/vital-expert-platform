@@ -85,7 +85,7 @@ export async function selectAgentWithReasoning(
     .sort((a, b) => (a.tier || 1) - (b.tier || 1))
     .slice(0, 20);
     
-  const agentContext = limitedAgents.map(agent => ({
+  const agentContext = limitedAgents.map((agent: any) => ({
     id: agent.id,
     name: agent.display_name,
     description: agent.description.substring(0, 100) + '...', // Truncate description
@@ -98,7 +98,7 @@ export async function selectAgentWithReasoning(
   const systemPrompt = `Select the best expert agent for this query. Respond in JSON format.
 
 Available agents:
-${agentContext.map(a => `${a.id}: ${a.name} (Tier ${a.tier}, ${a.domain}) - ${a.expertise}`).join('\n')}
+${agentContext.map((a: any) => `${a.id}: ${a.name} (Tier ${a.tier}, ${a.domain}) - ${a.expertise}`).join('\n')}
 
 JSON format:
 {"selectedAgentId": "agent-id", "confidence": 95, "reasoning": "Brief reason", "alternatives": [{"agentId": "alt-1", "score": 85}], "escalationPath": ["Tier X: Agent Name"], "matchedCriteria": ["keyword1", "keyword2"]}`;
@@ -137,7 +137,7 @@ JSON format:
 
     // Map alternative agents
     const alternativeAgents = result.alternatives.map((alt: any) => {
-      const agent = availableAgents.find(a => a.id === alt.agentId);
+      const agent = availableAgents.find((a: any) => a.id === alt.agentId);
       return {
         agent: agent!,
         score: alt.score,
@@ -176,12 +176,12 @@ function fallbackAgentSelection(
   const queryLower = query.toLowerCase();
 
   // Simple keyword-based scoring
-  const scoredAgents = agents.map(agent => {
+  const scoredAgents = agents.map((agent: any) => {
     let score = 0;
     const agentText = `${agent.display_name} ${agent.description} ${agent.key_expertise || ''} ${(agent.focus_areas || []).join(' ')}`.toLowerCase();
 
     // Check for keyword matches
-    const keywords = queryLower.split(' ').filter(w => w.length > 3);
+    const keywords = queryLower.split(' ').filter((w: any) => w.length > 3);
     keywords.forEach(keyword => {
       if (agentText.includes(keyword)) {
         score += 10;
@@ -282,7 +282,7 @@ export async function* streamAgentSelection(
 
   yield {
     step: `Evaluating ${agents.length} expert agents`,
-    details: `Found agents across ${new Set(agents.map(a => a.tier)).size} tiers`,
+    details: `Found agents across ${new Set(agents.map((a: any) => a.tier)).size} tiers`,
     timestamp: Date.now(),
   };
 

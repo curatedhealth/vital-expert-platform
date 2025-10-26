@@ -377,7 +377,7 @@ export const __useModelSelection = (defaultModel = 'gpt-4o-mini') => {
   // Load from localStorage on mount
   useEffect(() => {
 
-    if (saved && AVAILABLE_MODELS.find(m => m.id === saved)) {
+    if (saved && AVAILABLE_MODELS.find((m: any) => m.id === saved)) {
       setSelectedModel(saved);
     }
   }, []);

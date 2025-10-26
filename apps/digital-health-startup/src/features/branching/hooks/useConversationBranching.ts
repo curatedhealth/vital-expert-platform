@@ -146,7 +146,7 @@ export function useConversationBranching(
       if (!sourceBranch) return prev;
 
         ? prev.mainBranch
-        : prev.branches.find(b => b.id === targetBranchId);
+        : prev.branches.find((b: any) => b.id === targetBranchId);
 
       if (!targetBranch) return prev;
 
@@ -172,7 +172,7 @@ export function useConversationBranching(
             return { ...branch, messages: mergedMessages };
           }
           return branch;
-        }).filter(b => b.id !== sourceBranchId);
+        }).filter((b: any) => b.id !== sourceBranchId);
 
         options.onBranchMerged?.(sourceBranchId, targetBranchId);
 
@@ -187,7 +187,7 @@ export function useConversationBranching(
     if (conversationTree.activeBranchId === 'main') {
       return conversationTree.mainBranch;
     }
-    return conversationTree.branches.find(b => b.id === conversationTree.activeBranchId) || conversationTree.mainBranch;
+    return conversationTree.branches.find((b: any) => b.id === conversationTree.activeBranchId) || conversationTree.mainBranch;
   }, [conversationTree]);
 
     content: string;

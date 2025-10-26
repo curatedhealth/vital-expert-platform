@@ -77,7 +77,7 @@ export class VotingSystem {
       const voteCounts: Record<string, number> = {};
 
       for (const [persona, ranking] of Object.entries(currentRankings)) {
-        const firstChoice = ranking.find(c => remainingCandidates.includes(c));
+        const firstChoice = ranking.find((c: any) => remainingCandidates.includes(c));
         if (firstChoice) {
           const weight = weights[persona] || 1.0;
           voteCounts[firstChoice] = (voteCounts[firstChoice] || 0) + weight;
@@ -102,7 +102,7 @@ export class VotingSystem {
         count < (voteCounts[min] || Infinity) ? candidate : min
       , Object.keys(voteCounts)[0]);
 
-      remainingCandidates = remainingCandidates.filter(c => c !== loser);
+      remainingCandidates = remainingCandidates.filter((c: any) => c !== loser);
     }
 
     // Fallback: return last remaining candidate

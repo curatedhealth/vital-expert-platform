@@ -295,7 +295,7 @@ How can I help you navigate the complex world of digital health today?`,
 - Regulatory submission timeline
 
 Would you like me to dive deeper into any of these areas? I can also generate specific documents like checklists or protocols. [1]`,
-        availableAgents.find(a => a.type === 'fda-regulatory-strategist'),
+        availableAgents.find((a: any) => a.type === 'fda-regulatory-strategist'),
         [
           {
             id: 'cite-2',
@@ -597,7 +597,7 @@ Would you like me to dive deeper into any of these areas? I can also generate sp
                 value={inputValue}
                 onChange={handleInputChange}
                 onKeyDown={handleKeyDown}
-                placeholder={`Ask about ${CHAT_MODES.find(m => m.id === selectedMode)?.name.toLowerCase()} questions...`}
+                placeholder={`Ask about ${CHAT_MODES.find((m: any) => m.id === selectedMode)?.name.toLowerCase()} questions...`}
                 className="min-h-[60px] max-h-[120px] pr-24 resize-none"
                 disabled={isLoading}
               />
@@ -667,7 +667,7 @@ Would you like me to dive deeper into any of these areas? I can also generate sp
             <div className="flex items-center justify-between text-xs text-muted-foreground">
               <div className="flex items-center gap-4">
                 <span>
-                  Mode: <strong>{CHAT_MODES.find(m => m.id === selectedMode)?.name}</strong>
+                  Mode: <strong>{CHAT_MODES.find((m: any) => m.id === selectedMode)?.name}</strong>
                 </span>
                 {isListening && (
                   <Badge variant="outline" className="bg-red-50 text-red-700 animate-pulse">

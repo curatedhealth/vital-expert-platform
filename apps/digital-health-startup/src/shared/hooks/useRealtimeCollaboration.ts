@@ -177,7 +177,7 @@ export function useRealtimeCollaboration(options: UseRealtimeCollaborationOption
   const handleUserLeft = useCallback((data: any) => {
     setState(prev => ({
       ...prev,
-      activeUsers: prev.activeUsers.filter(u => u.id !== data.userId),
+      activeUsers: prev.activeUsers.filter((u: any) => u.id !== data.userId),
       typingUsers: prev.typingUsers.filter(id => id !== data.userId)
     }));
   }, []);
@@ -318,7 +318,7 @@ export function useRealtimeCollaboration(options: UseRealtimeCollaborationOption
     return state.typingUsers
       .map(userId => {
         // eslint-disable-next-line security/detect-object-injection
-        const user = state.activeUsers.find(u => u.id === userId);
+        const user = state.activeUsers.find((u: any) => u.id === userId);
 
         // eslint-disable-next-line security/detect-object-injection
         return user ? user.name.split(' ')[0] : 'Someone';

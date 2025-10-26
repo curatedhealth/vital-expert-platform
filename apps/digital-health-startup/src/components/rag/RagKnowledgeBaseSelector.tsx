@@ -136,7 +136,7 @@ export const RagKnowledgeBaseSelector: React.FC<RagKnowledgeBaseSelectorProps> =
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Domains</SelectItem>
-                {allDomains.map(domain => (
+                {allDomains.map((domain: any) => (
                   <SelectItem key={domain} value={domain}>
                     {domain.replace('_', ' ')}
                   </SelectItem>

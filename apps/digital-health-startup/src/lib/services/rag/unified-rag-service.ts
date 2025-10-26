@@ -208,7 +208,7 @@ export class UnifiedRAGService {
     });
 
     // Convert to Document format
-    const sources = results.map(result => new Document({
+    const sources = results.map((result: any) => new Document({
       pageContent: result.content,
       metadata: {
         id: result.chunk_id,
@@ -251,7 +251,7 @@ export class UnifiedRAGService {
     );
 
     // Convert to Document format
-    const sources = results.map(result => new Document({
+    const sources = results.map((result: any) => new Document({
       pageContent: result.content,
       metadata: {
         id: result.chunk_id,
@@ -291,7 +291,7 @@ export class UnifiedRAGService {
       });
 
       // Convert to Document format
-      const sources = results.map(result => new Document({
+      const sources = results.map((result: any) => new Document({
         pageContent: result.content,
         metadata: {
           id: result.chunk_id,
@@ -390,7 +390,7 @@ export class UnifiedRAGService {
       });
 
       // Convert to Document format
-      const sources = results.map(result => new Document({
+      const sources = results.map((result: any) => new Document({
         pageContent: result.content,
         metadata: {
           id: result.chunk_id,
@@ -720,7 +720,7 @@ export class UnifiedRAGService {
   }
 
   private convertToDocuments(results: any[]): Document[] {
-    return results.map(result => new Document({
+    return results.map((result: any) => new Document({
       pageContent: result.content,
       metadata: {
         id: result.id || result.chunk_id,

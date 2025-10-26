@@ -150,7 +150,7 @@ export class AgentRanker {
 
     // Sort by final score and filter
     return ranked
-      .filter(r => r.scores.final >= minScore)
+      .filter((r: any) => r.scores.final >= minScore)
       .sort((a, b) => b.scores.final - a.scores.final)
       .slice(0, maxResults);
   }
@@ -218,7 +218,7 @@ export class AgentRanker {
 
     // Add tools
     if (agent.tools && agent.tools.length > 0) {
-      const toolNames = agent.tools.map(t =>
+      const toolNames = agent.tools.map((t: any) =>
         typeof t === 'string' ? t : t.name
       ).join(', ');
       parts.push(`Tools: ${toolNames}`);
@@ -264,7 +264,7 @@ export class AgentRanker {
     }
 
     // Calculate overlap between agent domains and detected domains
-    const overlap = agent.knowledge_domains.filter(d =>
+    const overlap = agent.knowledge_domains.filter((d: any) =>
       detectedDomains.includes(d)
     ).length;
 
@@ -413,7 +413,7 @@ export class AgentRanker {
     if (domainScore >= 0.9 && detectedDomains.length > 0) {
       reasons.push(`Perfect match for ${detectedDomains.join(', ')}`);
     } else if (domainScore >= 0.7 && detectedDomains.length > 0) {
-      const matchedDomains = agent.knowledge_domains?.filter(d =>
+      const matchedDomains = agent.knowledge_domains?.filter((d: any) =>
         detectedDomains.includes(d)
       ) || [];
       reasons.push(`Covers ${matchedDomains.join(', ')}`);

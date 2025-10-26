@@ -139,11 +139,12 @@ async function handleStreamingResponse(
           );
 
           // Collect final result
-          if (event.data.answer) {
-            fullAnswer = event.data.answer;
-            sources = event.data.sources || [];
-            citations = event.data.citations || [];
-            tokenUsage = event.data.tokenUsage || {};
+          const eventData = event.data as any;
+          if (eventData.answer) {
+            fullAnswer = eventData.answer;
+            sources = eventData.sources || [];
+            citations = eventData.citations || [];
+            tokenUsage = eventData.tokenUsage || {};
           }
         }
 
@@ -223,8 +224,9 @@ async function handleNonStreamingResponse(
 
     let finalResult: any = {};
     for await (const event of result) {
-      if (event.data.answer) {
-        finalResult = event.data;
+      const eventData = event.data as any;
+      if (eventData.answer) {
+        finalResult = eventData;
       }
     }
 

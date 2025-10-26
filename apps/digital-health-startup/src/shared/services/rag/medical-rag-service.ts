@@ -419,7 +419,7 @@ export class MedicalRAGService {
     evidenceLevelDistribution: Record<string, number>;
     sourceTypeDistribution: Record<string, number>;
   } {
-    const qualityScores = results.map(r => r.qualityScore || 0.5);
+    const qualityScores = results.map((r: any) => r.qualityScore || 0.5);
     const averageQualityScore = qualityScores.length > 0
       ? qualityScores.reduce((a, b) => a + b, 0) / qualityScores.length
       : 0;

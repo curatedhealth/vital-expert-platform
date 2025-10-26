@@ -331,7 +331,7 @@ export class OWASPSecurityValidator {
       category: 'Components',
       owaspId: 'A06:2021',
       title: 'Vulnerable and Outdated Components',
-      severity: findings.some(f => f.includes('critical')) ? 'critical' : 'medium',
+      severity: findings.some((f: any) => f.includes('critical')) ? 'critical' : 'medium',
       status: findings.length === 0 ? 'compliant' : 'non-compliant',
       description: 'Assessment of third-party component security',
       findings,
@@ -662,12 +662,12 @@ export class OWASPSecurityValidator {
 
   private generateSummary(results: OWASPTestResult[]) {
     return {
-      compliant: results.filter(r => r.status === 'compliant').length,
-      nonCompliant: results.filter(r => r.status === 'non-compliant').length,
-      partial: results.filter(r => r.status === 'partial').length,
-      notApplicable: results.filter(r => r.status === 'not-applicable').length,
-      criticalIssues: results.filter(r => r.severity === 'critical' && r.status === 'non-compliant').length,
-      healthcareRisks: results.filter(r => r.healthcareImpact.length > 0).length
+      compliant: results.filter((r: any) => r.status === 'compliant').length,
+      nonCompliant: results.filter((r: any) => r.status === 'non-compliant').length,
+      partial: results.filter((r: any) => r.status === 'partial').length,
+      notApplicable: results.filter((r: any) => r.status === 'not-applicable').length,
+      criticalIssues: results.filter((r: any) => r.severity === 'critical' && r.status === 'non-compliant').length,
+      healthcareRisks: results.filter((r: any) => r.healthcareImpact.length > 0).length
     };
   }
 

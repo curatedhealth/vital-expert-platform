@@ -367,7 +367,7 @@ Important considerations:
     if (selectedResponse && onExport) {
 
       content += `Answer: ${selectedResponse.answer}\n\n`;
-      content += `Citations:\n${selectedResponse.citations.map(c => `- ${c.title} (${c.journal}, ${c.year})`).join('\n')}`;
+      content += `Citations:\n${selectedResponse.citations.map((c: any) => `- ${c.title} (${c.journal}, ${c.year})`).join('\n')}`;
 
       onExport(format, content);
     }

@@ -208,7 +208,7 @@ export class SupabaseRAGService {
     const strategyNames: string[] = [];
 
     strategies.forEach((strategy) => {
-      allResults.push(...strategy.results.map(result => ({
+      allResults.push(...strategy.results.map((result: any) => ({
         ...result,
         similarity: result.similarity * strategy.weight,
       })));

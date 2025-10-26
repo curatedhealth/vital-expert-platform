@@ -332,29 +332,29 @@ export function DashboardSidebar({
   // Get selected function ID from name
   const selectedFunctionId = useMemo(() => {
     if (!filters?.selectedBusinessFunction || filters.selectedBusinessFunction === 'all') return null;
-    return uniqueBusinessFunctions.find(f => f.name === filters.selectedBusinessFunction)?.id;
+    return uniqueBusinessFunctions.find((f: any) => f.name === filters.selectedBusinessFunction)?.id;
   }, [filters?.selectedBusinessFunction, uniqueBusinessFunctions]);
 
   // Get selected department ID from name
   const selectedDepartmentId = useMemo(() => {
     if (!filters?.selectedDepartment || filters.selectedDepartment === 'all') return null;
-    return uniqueDepartments.find(d => d.name === filters.selectedDepartment)?.id;
+    return uniqueDepartments.find((d: any) => d.name === filters.selectedDepartment)?.id;
   }, [filters?.selectedDepartment, uniqueDepartments]);
 
   // Filter departments based on selected function
   const filteredDepartments = useMemo(() => {
     if (!selectedFunctionId) return uniqueDepartments;
-    return uniqueDepartments.filter(d => d.business_function_id === selectedFunctionId);
+    return uniqueDepartments.filter((d: any) => d.business_function_id === selectedFunctionId);
   }, [selectedFunctionId, uniqueDepartments]);
 
   // Filter roles based on selected function and department
   const filteredRoles = useMemo(() => {
     if (selectedDepartmentId) {
       // Filter by department
-      return uniqueRoles.filter(r => r.department_id === selectedDepartmentId);
+      return uniqueRoles.filter((r: any) => r.department_id === selectedDepartmentId);
     } else if (selectedFunctionId) {
       // Filter by function
-      return uniqueRoles.filter(r => r.business_function_id === selectedFunctionId);
+      return uniqueRoles.filter((r: any) => r.business_function_id === selectedFunctionId);
     }
     return uniqueRoles;
   }, [selectedFunctionId, selectedDepartmentId, uniqueRoles]);

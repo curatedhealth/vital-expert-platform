@@ -291,7 +291,7 @@ export class LLMProviderService {
   // Provider Selection and Routing
   async selectOptimalProvider(criteria: ProviderSelectionCriteria): Promise<ProviderRecommendation | null> {
     const activeProviders = Array.from(this.providers.values())
-      .filter(p => p.is_active && p.status === ProviderStatus.ACTIVE);
+      .filter((p: any) => p.is_active && p.status === ProviderStatus.ACTIVE);
 
     if (activeProviders.length === 0) {
       return null;
@@ -776,7 +776,7 @@ export class LLMProviderService {
     // Run health checks every 5 minutes
     this.healthCheckInterval = setInterval(async () => {
       const activeProviders = Array.from(this.providers.values())
-        .filter(p => p.is_active && p.health_check_enabled);
+        .filter((p: any) => p.is_active && p.health_check_enabled);
 
       for (const provider of activeProviders) {
         try {

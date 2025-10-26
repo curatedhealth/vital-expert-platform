@@ -75,7 +75,7 @@ export default function AskExpertPage() {
   }, [state.messages]);
 
   const handleAgentSelect = (agentId: string) => {
-    const agent = agents.find(a => a.id === agentId);
+    const agent = agents.find((a: any) => a.id === agentId);
     setState(prev => ({ ...prev, selectedAgent: agent || null }));
   };
 

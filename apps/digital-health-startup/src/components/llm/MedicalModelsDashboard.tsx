@@ -135,7 +135,7 @@ export const MedicalModelsDashboard: React.FC<MedicalModelsDashboardProps> = ({
           </div>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {[1, 2, 3].map(i => (
+          {[1, 2, 3].map((i: any) => (
             <Card key={i}>
               <CardContent className="pt-6">
                 <div className="animate-pulse">
@@ -174,9 +174,9 @@ export const MedicalModelsDashboard: React.FC<MedicalModelsDashboardProps> = ({
     );
   }
 
-  const activeModels = models.filter(m => m.is_active);
-  const hipaaCompliantModels = models.filter(m => m.is_hipaa_compliant);
-  const clinicalTrialModels = models.filter(m => (m as unknown)?.capabilities?.clinical_trials);
+  const activeModels = models.filter((m: any) => m.is_active);
+  const hipaaCompliantModels = models.filter((m: any) => m.is_hipaa_compliant);
+  const clinicalTrialModels = models.filter((m: any) => (m as unknown)?.capabilities?.clinical_trials);
   const avgAccuracy = models.length > 0
     ? models.reduce((sum, m) => sum + (m.medical_accuracy_score || 0), 0) / models.length
     : 0;
@@ -184,7 +184,7 @@ export const MedicalModelsDashboard: React.FC<MedicalModelsDashboardProps> = ({
   // If a specific model is selected, show its details
   if (selectedModel) {
     // eslint-disable-next-line security/detect-object-injection
-    const model = models.find(m =>
+    const model = models.find((m: any) =>
       m.provider_name.toLowerCase().includes(selectedModel.toLowerCase())
     );
 

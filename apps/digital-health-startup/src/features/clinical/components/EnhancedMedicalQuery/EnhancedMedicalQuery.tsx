@@ -413,7 +413,7 @@ This recommendation is supported by Level A evidence from multiple systematic re
     if (response) {
 
       content += `Answer: ${response.content}\n\n`;
-      content += `Citations:\n${response.citations.map(c => `- ${c.title} (${c.journal}, ${c.year})`).join('\n')}`;
+      content += `Citations:\n${response.citations.map((c: any) => `- ${c.title} (${c.journal}, ${c.year})`).join('\n')}`;
       // }
   };
 
@@ -708,7 +708,7 @@ const AdvancedQueryOptions: React.FC<{
           value={context.medicalHistory?.join(', ') || ''}
           onChange={(e) => onContextChange({
             ...context,
-            medicalHistory: e.target.value ? e.target.value.split(',').map(s => s.trim()) : []
+            medicalHistory: e.target.value ? e.target.value.split(',').map((s: any) => s.trim()) : []
           })}
           rows={2}
         />

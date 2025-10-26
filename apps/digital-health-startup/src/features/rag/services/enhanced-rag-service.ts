@@ -382,7 +382,7 @@ export class EnhancedRAGService {
     try {
       const totalChunks = sources.length;
       const averageChunkSize = sources.reduce((sum, source) => sum + source.pageContent.length, 0) / totalChunks;
-      const chunkSizes = sources.map(source => source.pageContent.length);
+      const chunkSizes = sources.map((source: any) => source.pageContent.length);
       const minChunkSize = Math.min(...chunkSizes);
       const maxChunkSize = Math.max(...chunkSizes);
 
@@ -423,9 +423,9 @@ export class EnhancedRAGService {
   } {
     const totalQueries = results.length;
     const averageResponseTime = results.reduce((sum, r) => sum + r.metadata.responseTime, 0) / totalQueries;
-    const cacheHits = results.filter(r => r.metadata.cached).length;
+    const cacheHits = results.filter((r: any) => r.metadata.cached).length;
     const cacheHitRate = (cacheHits / totalQueries) * 100;
-    const errors = results.filter(r => r.metadata.error).length;
+    const errors = results.filter((r: any) => r.metadata.error).length;
     const errorRate = (errors / totalQueries) * 100;
 
     return {

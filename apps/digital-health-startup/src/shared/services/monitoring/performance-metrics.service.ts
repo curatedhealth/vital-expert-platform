@@ -169,13 +169,13 @@ class PerformanceMetricsService {
   // Analytics methods
   getPerformanceSnapshot(timeWindow: number = 3600000): PerformanceSnapshot {
     const cutoff = Date.now() - timeWindow;
-    const recentMetrics = this.metrics.filter(m => m.timestamp >= cutoff);
+    const recentMetrics = this.metrics.filter((m: any) => m.timestamp >= cutoff);
 
     // Agent performance analysis
-    const agentMetrics = recentMetrics.filter(m => m.type === 'agent_execution');
+    const agentMetrics = recentMetrics.filter((m: any) => m.type === 'agent_execution');
     const agentStats = new Map<string, { count: number; totalTime: number }>();
 
-    agentMetrics.forEach(m => {
+    agentMetrics.forEach((m: any) => {
       const agentId = m.metadata?.agentId || 'unknown';
       const current = agentStats.get(agentId) || { count: 0, totalTime: 0 };
       agentStats.set(agentId, {
@@ -194,21 +194,21 @@ class PerformanceMetricsService {
       .slice(0, 5);
 
     // RAG performance analysis
-    const ragMetrics = recentMetrics.filter(m => m.type === 'rag_query');
+    const ragMetrics = recentMetrics.filter((m: any) => m.type === 'rag_query');
     const ragQueries = ragMetrics.length;
     const ragAvgTime = ragMetrics.reduce((sum, m) => sum + m.duration, 0) / ragQueries || 0;
-    const ragSuccessRate = ragMetrics.filter(m => !m.error).length / ragQueries || 0;
+    const ragSuccessRate = ragMetrics.filter((m: any) => !m.error).length / ragQueries || 0;
 
     // Orchestrator performance analysis
-    const orchestratorMetrics = recentMetrics.filter(m => m.type === 'orchestration');
+    const orchestratorMetrics = recentMetrics.filter((m: any) => m.type === 'orchestration');
     const orchestratorDecisions = orchestratorMetrics.length;
-    const multiAgentRate = orchestratorMetrics.filter(m =>
+    const multiAgentRate = orchestratorMetrics.filter((m: any) =>
       m.metadata?.agentCount > 1
     ).length / orchestratorDecisions || 0;
 
     const totalRequests = recentMetrics.length;
     const averageResponseTime = recentMetrics.reduce((sum, m) => sum + m.duration, 0) / totalRequests || 0;
-    const errorRate = recentMetrics.filter(m => m.error).length / totalRequests || 0;
+    const errorRate = recentMetrics.filter((m: any) => m.error).length / totalRequests || 0;
 
     return {
       timestamp: Date.now(),
@@ -231,12 +231,12 @@ class PerformanceMetricsService {
 
   getMetricsByType(eventType: MetricEvent['eventType'], timeWindow: number = 3600000): MetricEvent[] {
 
-    return this.metrics.filter(m => m.eventType === eventType && m.timestamp >= cutoff);
+    return this.metrics.filter((m: any) => m.eventType === eventType && m.timestamp >= cutoff);
   }
 
   getErrorMetrics(timeWindow: number = 3600000): Array<{ operation: string; count: number; lastError: string }> {
 
-    errorMetrics.forEach(m => {
+    errorMetrics.forEach((m: any) => {
 
       errorsByOperation.set(key, {
         count: current.count + 1,
@@ -344,7 +344,7 @@ class PerformanceMetricsService {
   exportMetrics(format: 'json' | 'csv' = 'json'): string {
     if (format === 'csv') {
       const headers = ['timestamp', 'sessionId', 'eventType', 'operation', 'duration', 'success', 'error'];
-      const rows = this.metrics.map(m => [
+      const rows = this.metrics.map((m: any) => [
         m.timestamp,
         m.sessionId,
         m.eventType,

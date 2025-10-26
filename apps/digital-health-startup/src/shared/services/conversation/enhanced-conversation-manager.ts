@@ -155,7 +155,7 @@ export class EnhancedConversationManager {
         session_id: sessionId,
         compliance_level: session.context.complianceLevel,
         audit_required: session.context.complianceLevel === 'critical',
-        previousMessages: session.messages.slice(-5).map(m => m.content) // Last 5 messages for context
+        previousMessages: session.messages.slice(-5).map((m: any) => m.content) // Last 5 messages for context
       });
 
       // Track response
@@ -458,7 +458,7 @@ export class EnhancedConversationManager {
       activeSessions: sessions.length,
       totalMessages: sessions.reduce((sum, s) => sum + s.metrics.messageCount, 0),
       avgResponseTime: sessions.reduce((sum, s) => sum + s.metrics.avgResponseTime, 0) / sessions.length || 0,
-      digitalHealthUsage: sessions.filter(s => s.context.digitalHealthFocus).length,
+      digitalHealthUsage: sessions.filter((s: any) => s.context.digitalHealthFocus).length,
       multiAgentUsage: sessions.reduce((sum, s) => sum + s.metrics.multiAgentQueries, 0)
     };
   }

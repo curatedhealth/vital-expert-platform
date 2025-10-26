@@ -29,7 +29,7 @@ export async function GET() {
 
     // Get agent statuses
     const agentStatuses = orch.getAgentStatus();
-    const activeAgents = agentStatuses.filter(agent => agent.status === 'active').length;
+    const activeAgents = agentStatuses.filter((agent: any) => agent.status === 'active').length;
 
     // Get active executions
     const activeExecutions = orch.getActiveExecutions();
@@ -76,7 +76,7 @@ export async function GET() {
       data: {
         system_health: systemHealth,
         detailed_metrics: {
-          agents: agentStatuses.map(agent => ({
+          agents: agentStatuses.map((agent: any) => ({
             name: agent.name,
             display_name: agent.display_name,
             status: agent.status,

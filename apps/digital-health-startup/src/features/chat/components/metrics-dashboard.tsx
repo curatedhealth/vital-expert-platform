@@ -290,7 +290,7 @@ export function MetricsDashboard({ className }: MetricsDashboardProps) {
           <CardTitle className="flex items-center justify-between">
             <div className="flex items-center">
               <AlertTriangle className="h-5 w-5 mr-2 text-yellow-500" />
-              System Alerts ({alerts.filter(a => !a.resolved).length} active)
+              System Alerts ({alerts.filter((a: any) => !a.resolved).length} active)
             </div>
           </CardTitle>
         </CardHeader>

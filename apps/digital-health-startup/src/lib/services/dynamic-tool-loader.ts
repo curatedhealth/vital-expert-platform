@@ -142,12 +142,12 @@ class DynamicToolLoader {
     try {
       const assignments = await toolRegistryService.getAgentTools(agentId, true); // Only enabled
       const tools = assignments
-        .filter(a => a.tool)
-        .map(a => a.tool!)
+        .filter((a: any) => a.tool)
+        .map((a: any) => a.tool!)
         .sort((a, b) => {
           // Sort by priority (assignments have priority)
-          const priorityA = assignments.find(x => x.tool_id === a.id)?.priority || 0;
-          const priorityB = assignments.find(x => x.tool_id === b.id)?.priority || 0;
+          const priorityA = assignments.find((x: any) => x.tool_id === a.id)?.priority || 0;
+          const priorityB = assignments.find((x: any) => x.tool_id === b.id)?.priority || 0;
           return priorityB - priorityA;
         });
 

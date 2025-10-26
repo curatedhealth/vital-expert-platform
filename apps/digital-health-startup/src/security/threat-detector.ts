@@ -510,7 +510,7 @@ export class AdvancedThreatDetector {
 
   private determineAction(riskScore: number, threats: DetectedThreat[]): 'allow' | 'monitor' | 'block' | 'quarantine' {
     // Critical threats always block
-    if (threats.some(t => t.severity === 'critical' && t.confidence > 0.7)) {
+    if (threats.some((t: any) => t.severity === 'critical' && t.confidence > 0.7)) {
       return 'quarantine';
     }
 

@@ -274,7 +274,7 @@ export function ExpertPanelSelector({ isOpen, onClose, onCreatePanel }: ExpertPa
 
     // First filter by template domain/expertise if a template is selected
     if (selectedTemplate && selectedTemplate.id !== 'custom-panel') {
-      filtered = agents.filter(agent => {
+      filtered = agents.filter((agent: any) => {
         // Match by knowledge domains
         const domainMatch = (agent.knowledge_domains || []).some(domain =>
           selectedTemplate.recommendedExperts.some(expertise =>
@@ -304,7 +304,7 @@ export function ExpertPanelSelector({ isOpen, onClose, onCreatePanel }: ExpertPa
 
     // Then apply search filter on top
     if (searchTerm) {
-      filtered = filtered.filter(agent =>
+      filtered = filtered.filter((agent: any) =>
         agent.display_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         agent.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
         (agent.knowledge_domains || []).some(domain =>
@@ -353,7 +353,7 @@ export function ExpertPanelSelector({ isOpen, onClose, onCreatePanel }: ExpertPa
 
     if (template.id !== 'custom-panel') {
       // Auto-select recommended experts based on template
-      const recommendedAgents = agents.filter(agent =>
+      const recommendedAgents = agents.filter((agent: any) =>
         template.recommendedExperts.some(expertise =>
           agent.display_name.toLowerCase().includes(expertise) ||
           agent.description.toLowerCase().includes(expertise) ||
@@ -371,9 +371,9 @@ export function ExpertPanelSelector({ isOpen, onClose, onCreatePanel }: ExpertPa
 
   const handleExpertToggle = (agent: AgentsStoreAgent) => {
     setSelectedExperts(prev => {
-      const exists = prev.find(expert => expert.id === agent.id);
+      const exists = prev.find((expert: any) => expert.id === agent.id);
       if (exists) {
-        return prev.filter(expert => expert.id !== agent.id);
+        return prev.filter((expert: any) => expert.id !== agent.id);
       } else {
         return [...prev, agent];
       }
@@ -534,7 +534,7 @@ export function ExpertPanelSelector({ isOpen, onClose, onCreatePanel }: ExpertPa
                   <div
                     key={agent.id}
                     className={`p-3 border rounded-lg cursor-pointer transition-all ${
-                      selectedExperts.find(expert => expert.id === agent.id)
+                      selectedExperts.find((expert: any) => expert.id === agent.id)
                         ? 'border-green-500 bg-green-50 dark:bg-green-900/20'
                         : 'border-gray-200 dark:border-gray-700 hover:border-gray-300'
                     }`}
@@ -562,7 +562,7 @@ export function ExpertPanelSelector({ isOpen, onClose, onCreatePanel }: ExpertPa
                           </div>
                         )}
                       </div>
-                      {selectedExperts.find(expert => expert.id === agent.id) && (
+                      {selectedExperts.find((expert: any) => expert.id === agent.id) && (
                         <span className="text-green-500">✓</span>
                       )}
                     </div>

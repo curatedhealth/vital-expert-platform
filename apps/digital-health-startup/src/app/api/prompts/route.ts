@@ -88,7 +88,7 @@ export async function GET(request: NextRequest) {
 
     // Apply suite filter
     const filteredPrompts = suite
-      ? enrichedPrompts.filter(p => p.suite === suite)
+      ? enrichedPrompts.filter((p: any) => p.suite === suite)
       : enrichedPrompts;
 
     return NextResponse.json(filteredPrompts);

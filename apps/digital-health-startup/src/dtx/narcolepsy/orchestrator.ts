@@ -371,7 +371,7 @@ export class NarcolepsyDTxOrchestrator extends ComplianceAwareOrchestrator {
   private validateMetrics(recommendations: NarcolepsyRecommendation[]): number {
     // Validate measurable outcomes
 
-      rec.monitoring && rec.monitoring.some(m =>
+      rec.monitoring && rec.monitoring.some((m: any) =>
         m.includes('ess') || m.includes('cataplexy') || m.includes('adherence')
       )
     );
@@ -442,7 +442,7 @@ export class NarcolepsyDTxOrchestrator extends ComplianceAwareOrchestrator {
         type: 'adherence',
         severity: 'high',
         title: 'Medication Adherence Concern',
-        message: `Poor adherence detected for ${lowAdherenceMeds.map(m => m.name).join(', ')}`,
+        message: `Poor adherence detected for ${lowAdherenceMeds.map((m: any) => m.name).join(', ')}`,
         action: 'adherence_intervention',
         timestamp: new Date().toISOString()
       });

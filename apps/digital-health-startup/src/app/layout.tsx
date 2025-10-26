@@ -6,6 +6,7 @@ import type { Metadata } from 'next'
 
 import './globals.css'
 import { SupabaseAuthProvider } from '@/lib/auth/supabase-auth-context'
+import { TenantProvider } from '@/contexts/TenantContext'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -23,7 +24,9 @@ export default function RootLayout({
     <html lang="en">
       <body className={inter.className}>
         <SupabaseAuthProvider>
-          {children}
+          <TenantProvider>
+            {children}
+          </TenantProvider>
         </SupabaseAuthProvider>
       </body>
     </html>

@@ -102,7 +102,7 @@ export class AgentToolLoader {
         return { agentId, toolCount: 0, tools: [] };
       }
 
-      const toolIds = toolAssignments.map(a => a.tool_id);
+      const toolIds = toolAssignments.map((a: any) => a.tool_id);
 
       const { data: tools } = await supabase
         .from('tools')
@@ -135,7 +135,7 @@ export class AgentToolLoader {
         return false;
       }
 
-      const toolIds = toolAssignments.map(a => a.tool_id);
+      const toolIds = toolAssignments.map((a: any) => a.tool_id);
 
       const { data: tools } = await supabase
         .from('tools')

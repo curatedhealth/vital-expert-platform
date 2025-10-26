@@ -146,7 +146,7 @@ export const AgentPanel: React.FC<AgentPanelProps> = ({
 
     // Convert to agent types for parent component
 
-      .map(id => agents.find(a => a.id === id)?.type)
+      .map(id => agents.find((a: any) => a.id === id)?.type)
       .filter(Boolean) as AgentType[];
 
     onAgentSelect(selectedTypes);
@@ -350,7 +350,7 @@ export const AgentPanel: React.FC<AgentPanelProps> = ({
         <div className="space-y-3">
           <div className="flex items-center justify-between text-xs text-muted-foreground">
             <span>{agents.length} total agents</span>
-            <span>{agents.filter(a => a.availability === 'online').length} online</span>
+            <span>{agents.filter((a: any) => a.availability === 'online').length} online</span>
           </div>
 
           {selectedAgentIds.size > 0 && (

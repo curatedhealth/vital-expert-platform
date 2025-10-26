@@ -119,6 +119,21 @@ export async function middleware(request: NextRequest) {
   // Apply tenant middleware to add tenant headers
   response = await tenantMiddleware(request, response);
 
+  // Restrict client-only pages to non-platform tenants
+  const clientOnlyPages = ['/agents', '/ask-expert', '/ask-panel', '/chat'];
+  const isClientOnlyPage = clientOnlyPages.some(page => url.pathname === page || url.pathname.startsWith(page + '/'));
+
+  if (isClientOnlyPage) {
+    const tenantId = response.headers.get('x-tenant-id');
+    const PLATFORM_TENANT_ID = '00000000-0000-0000-0000-000000000001';
+
+    // If on platform tenant, redirect to marketing home
+    if (tenantId === PLATFORM_TENANT_ID) {
+      console.log(`[Middleware] Blocking access to ${url.pathname} on Platform Tenant - redirecting to /`);
+      return NextResponse.redirect(new URL('/', request.url));
+    }
+  }
+
   return response;
 }
 

@@ -19,17 +19,17 @@ import {
 } from 'lucide-react';
 import React, { useState, useEffect } from 'react';
 
-import { Alert, AlertDescription } from '@vital/ui/components/alert';
-import { Badge } from '@vital/ui/components/badge';
-import { Button } from '@vital/ui/components/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@vital/ui/components/card';
+import { Alert, AlertDescription } from '@vital/ui';
+import { Badge } from '@vital/ui';
+import { Button } from '@vital/ui';
+import { Card, CardContent, CardHeader, CardTitle } from '@vital/ui';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger
-} from '@vital/ui/components/dropdown-menu';
-import { Progress } from '@vital/ui/components/progress';
+} from '@vital/ui';
+import { Progress } from '@vital/ui';
 import {
   Table,
   TableBody,
@@ -37,8 +37,8 @@ import {
   TableHead,
   TableHeader,
   TableRow
-} from '@vital/ui/components/table';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@vital/ui/components/tabs';
+} from '@vital/ui';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@vital/ui';
 import { llmProviderService } from '@/shared/services/llm/llm-provider.service';
 import {
   LLMProvider,

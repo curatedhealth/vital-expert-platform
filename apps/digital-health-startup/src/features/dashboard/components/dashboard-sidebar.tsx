@@ -36,9 +36,9 @@ import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { useMemo, Suspense } from 'react';
 
-import { Badge } from '@vital/ui/components/badge';
-import { Button } from '@vital/ui/components/button';
-import { Separator } from '@vital/ui/components/separator';
+import { Badge } from '@vital/ui';
+import { Button } from '@vital/ui';
+import { Separator } from '@vital/ui';
 import { cn } from '@vital/ui/lib/utils';
 
 interface NavItem {

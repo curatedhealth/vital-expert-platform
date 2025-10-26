@@ -4,8 +4,8 @@ import { ShoppingCart, UserPlus, X } from 'lucide-react';
 import Image from 'next/image';
 import * as React from 'react';
 
-import { Button } from '@vital/ui/components/button';
-import { Separator } from '@vital/ui/components/separator';
+import { Button } from '@vital/ui';
+import { Separator } from '@vital/ui';
 import { cn } from '@vital/ui/lib/utils';
 
 interface Agent {

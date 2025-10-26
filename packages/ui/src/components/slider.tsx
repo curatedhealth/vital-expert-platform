@@ -12,9 +12,10 @@ interface SliderProps {
   disabled?: boolean
 }
 
-export const __Slider = React.forwardRef<HTMLInputElement, SliderProps>(
+export const Slider = React.forwardRef<HTMLInputElement, SliderProps>(
   ({ className = "", min = 0, max = 100, step = 1, value = [50], onValueChange, disabled = false, ...props }, ref) => {
-
+    const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+      const newValue = parseFloat(event.target.value)
       onValueChange?.([newValue])
     }
 

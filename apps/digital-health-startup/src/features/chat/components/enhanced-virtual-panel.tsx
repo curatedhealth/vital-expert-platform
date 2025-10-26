@@ -14,9 +14,9 @@ import {
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
-import { Badge } from '@vital/ui/components/badge';
-import { Card, CardContent, CardHeader, CardTitle } from '@vital/ui/components/card';
-import { Progress } from '@vital/ui/components/progress';
+import { Badge } from '@vital/ui';
+import { Card, CardContent, CardHeader, CardTitle } from '@vital/ui';
+import { Progress } from '@vital/ui';
 import { useAgentsStore } from '@/lib/stores/agents-store';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/components/ui/tabs';
 import { cn } from '@/shared/services/utils';

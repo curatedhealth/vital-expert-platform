@@ -12,16 +12,16 @@ import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import remarkGfm from 'remark-gfm';
 
-import { Avatar, AvatarFallback, AvatarImage } from '@vital/ui/components/avatar';
-import { Badge } from '@vital/ui/components/badge';
-import { Button } from '@vital/ui/components/button';
-import { Card, CardContent } from '@vital/ui/components/card';
+import { Avatar, AvatarFallback, AvatarImage } from '@vital/ui';
+import { Badge } from '@vital/ui';
+import { Button } from '@vital/ui';
+import { Card, CardContent } from '@vital/ui';
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from '@vital/ui/components/tooltip';
+} from '@vital/ui';
 import { cn } from '@vital/ui/lib/utils';
 
 interface Source {

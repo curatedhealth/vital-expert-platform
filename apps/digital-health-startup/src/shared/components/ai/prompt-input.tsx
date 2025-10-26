@@ -3,7 +3,7 @@
 import { Send } from 'lucide-react';
 import * as React from 'react';
 
-import { Button } from '@vital/ui/components/button';
+import { Button } from '@vital/ui';
 import { cn } from '@vital/ui/lib/utils';
 
 // Context for managing the prompt input state

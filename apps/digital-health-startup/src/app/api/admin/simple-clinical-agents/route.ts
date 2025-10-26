@@ -58,9 +58,10 @@ export async function POST(request: NextRequest) {
       }
     ];
 
-    // const __successCount = 0;
+    let successCount = 0;
+    const errors: any[] = [];
 
-    for (const agent of clinicalAgents) {
+    for (const agent of simpleAgents) {
       try {
         const { data, error } = await supabase
           .from('agents')
@@ -71,7 +72,7 @@ export async function POST(request: NextRequest) {
           // console.error(`Error inserting agent ${agent.name}:`, error);
           errors.push({ agent: agent.name, error: error.message });
         } else {
-          // successCount++;
+          successCount++;
         }
       } catch (err) {
         // console.error(`Exception inserting agent ${agent.name}:`, err);
@@ -83,7 +84,7 @@ export async function POST(request: NextRequest) {
       success: true,
       message: `Clinical intelligence agents added successfully`,
       inserted: successCount,
-      total: clinicalAgents.length,
+      total: simpleAgents.length,
       errors: errors
     });
 

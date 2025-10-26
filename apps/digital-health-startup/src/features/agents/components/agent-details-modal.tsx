@@ -17,11 +17,11 @@ import {
   UserCircle,
 } from 'lucide-react';
 
-import { AgentAvatar } from '@vital/ui/components/agent-avatar';
-import { Badge } from '@vital/ui/components/badge';
-import { Button } from '@vital/ui/components/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@vital/ui/components/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@vital/ui/components/tabs';
+import { AgentAvatar } from '@vital/ui';
+import { Badge } from '@vital/ui';
+import { Button } from '@vital/ui';
+import { Card, CardContent, CardHeader, CardTitle } from '@vital/ui';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@vital/ui';
 import { type Agent, useChatStore } from '@/lib/stores/chat-store';
 import { cn } from '@vital/ui/lib/utils';
 

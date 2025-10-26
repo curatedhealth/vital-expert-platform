@@ -12,10 +12,10 @@ import {
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
-import { AgentAvatar } from '@vital/ui/components/agent-avatar';
-import { Badge } from '@vital/ui/components/badge';
-import { Card, CardContent, CardHeader, CardTitle } from '@vital/ui/components/card';
-import { Progress } from '@vital/ui/components/progress';
+import { AgentAvatar } from '@vital/ui';
+import { Badge } from '@vital/ui';
+import { Card, CardContent, CardHeader, CardTitle } from '@vital/ui';
+import { Progress } from '@vital/ui';
 import { cn } from '@/shared/services/utils';
 
 interface PanelAgent {

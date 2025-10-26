@@ -4,7 +4,7 @@ import { motion } from 'framer-motion'
 import { Check, X } from 'lucide-react'
 import { useState } from 'react'
 
-import { Button } from '@vital/ui/components/button'
+import { Button } from '@vital/ui'
 
 
 export default function PricingTable() {

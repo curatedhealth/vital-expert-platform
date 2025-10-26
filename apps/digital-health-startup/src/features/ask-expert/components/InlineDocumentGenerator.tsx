@@ -8,18 +8,18 @@ import {
 } from 'lucide-react';
 import { useState, useCallback } from 'react';
 
-import { Badge } from '@vital/ui/components/badge';
-import { Button } from '@vital/ui/components/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@vital/ui/components/card';
+import { Badge } from '@vital/ui';
+import { Button } from '@vital/ui';
+import { Card, CardContent, CardHeader, CardTitle } from '@vital/ui';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@vital/ui/components/select';
-import { Progress } from '@vital/ui/components/progress';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@vital/ui/components/tabs';
+} from '@vital/ui';
+import { Progress } from '@vital/ui';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@vital/ui';
 import { cn } from '@vital/ui/lib/utils';
 
 interface DocumentTemplate {

@@ -5,6 +5,7 @@
 
 import { createClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
+import { supabase } from '@vital/sdk/client'
 
 // Advisory Board Session Types
 const SESSION_TYPES = [

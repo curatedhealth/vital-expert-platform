@@ -17,9 +17,9 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 
-import { Button } from '@vital/ui/components/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@vital/ui/components/card';
-import { Progress } from '@vital/ui/components/progress';
+import { Button } from '@vital/ui';
+import { Card, CardContent, CardHeader, CardTitle } from '@vital/ui';
+import { Progress } from '@vital/ui';
 
 const vitalPhases = [
   {

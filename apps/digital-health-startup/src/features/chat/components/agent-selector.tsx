@@ -13,11 +13,11 @@ import {
 import { useState } from 'react';
 import { toast } from 'sonner';
 
-import { AgentAvatar } from '@vital/ui/components/agent-avatar';
-import { Badge } from '@vital/ui/components/badge';
-import { Button } from '@vital/ui/components/button';
-import { Card, CardContent } from '@vital/ui/components/card';
-import { EnhancedAgentCard, AgentCardGrid } from '@vital/ui/components/enhanced-agent-card';
+import { AgentAvatar } from '@vital/ui';
+import { Badge } from '@vital/ui';
+import { Button } from '@vital/ui';
+import { Card, CardContent } from '@vital/ui';
+import { EnhancedAgentCard, AgentCardGrid } from '@vital/ui';
 import { useChatStore } from '@/lib/stores/chat-store';
 import { cn } from '@vital/ui/lib/utils';
 

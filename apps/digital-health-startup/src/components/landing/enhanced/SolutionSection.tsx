@@ -3,7 +3,7 @@
 import { motion } from 'framer-motion'
 import { ArrowRight, Check } from 'lucide-react'
 
-import { Button } from '@vital/ui/components/button'
+import { Button } from '@vital/ui'
 
 export default function SolutionSection() {
   const solutions = [

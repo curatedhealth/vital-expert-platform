@@ -17,7 +17,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/sha
 import { Input } from '@/shared/components/ui/input';
 import { cn } from '@/shared/utils';
 
-import { usePanelStore } from '../services/panel-store';
+import { __usePanelStore as usePanelStore } from '../services/panel-store';
 
 interface PanelTemplatesProps {
   onTemplateSelect: (template: unknown) => void;

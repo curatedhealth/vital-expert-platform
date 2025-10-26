@@ -14,11 +14,11 @@ import {
 } from 'lucide-react';
 import React, { useState, useEffect } from 'react';
 
-import { Alert, AlertDescription } from '@vital/ui/components/alert';
-import { Badge } from '@vital/ui/components/badge';
-import { Button } from '@vital/ui/components/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@vital/ui/components/card';
-import { Progress } from '@vital/ui/components/progress';
+import { Alert, AlertDescription } from '@vital/ui';
+import { Badge } from '@vital/ui';
+import { Button } from '@vital/ui';
+import { Card, CardContent, CardHeader, CardTitle } from '@vital/ui';
+import { Progress } from '@vital/ui';
 
 interface OpenAICurrentUsage {
   totalCost: number;

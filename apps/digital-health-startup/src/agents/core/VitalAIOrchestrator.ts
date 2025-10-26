@@ -263,7 +263,7 @@ export class VitalAIOrchestrator extends ComplianceAwareOrchestrator {
       keyTerms: [],
       complexity: this.calculateQueryComplexityAdvanced(query),
       processingTime: 0,
-      contextualFactors: this.analyzeContextualFactors(query, context),
+      contextualFactors: this.analyzeContextualFactors(query, context, 'general'),
       semanticVector: []
     };
 

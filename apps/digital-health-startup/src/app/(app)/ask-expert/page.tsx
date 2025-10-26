@@ -9,18 +9,18 @@ import { useRouter } from 'next/navigation';
 import { useState, useEffect, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
 
-import { Avatar, AvatarFallback, AvatarImage } from '@vital/ui/components/avatar';
-import { Badge } from '@vital/ui/components/badge';
-import { Button } from '@vital/ui/components/button';
-import { Progress } from '@vital/ui/components/progress';
+import { Avatar, AvatarFallback, AvatarImage } from '@vital/ui';
+import { Badge } from '@vital/ui';
+import { Button } from '@vital/ui';
+import { Progress } from '@vital/ui';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@vital/ui/components/select';
-import { Textarea } from '@vital/ui/components/textarea';
+} from '@vital/ui';
+import { Textarea } from '@vital/ui';
 import { useAuth } from '@/lib/auth/supabase-auth-context';
 import { useAgentsStore, Agent } from '@/lib/stores/agents-store';
 
@@ -406,8 +406,8 @@ export default function AskExpertPage() {
                         <AvatarFallback>{state.selectedAgent?.name[0]}</AvatarFallback>
                       </Avatar>
                     )}
-                    <div className="flex-1">
-                      <ReactMarkdown className="prose prose-sm max-w-none">
+                    <div className="flex-1 prose prose-sm max-w-none">
+                      <ReactMarkdown>
                         {message.content}
                       </ReactMarkdown>
                       

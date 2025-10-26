@@ -10,7 +10,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-} from '@vital/ui/components/sidebar';
+} from '@vital/ui';
 
 interface NavRagCategoriesProps {
   onCategoryClick: (category: string) => void;

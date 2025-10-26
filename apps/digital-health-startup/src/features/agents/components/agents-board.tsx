@@ -15,12 +15,12 @@ import {
 } from 'lucide-react';
 import { useState, useMemo, useEffect } from 'react';
 
-import { AgentAvatar } from '@vital/ui/components/agent-avatar';
-import { Badge } from '@vital/ui/components/badge';
-import { Button } from '@vital/ui/components/button';
-import { Card, CardContent } from '@vital/ui/components/card';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@vital/ui/components/dropdown-menu';
-import { EnhancedAgentCard, AgentCardGrid } from '@vital/ui/components/enhanced-agent-card';
+import { AgentAvatar } from '@vital/ui';
+import { Badge } from '@vital/ui';
+import { Button } from '@vital/ui';
+import { Card, CardContent } from '@vital/ui';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@vital/ui';
+import { EnhancedAgentCard, AgentCardGrid } from '@vital/ui';
 import { DEPARTMENTS_BY_FUNCTION, ROLES_BY_DEPARTMENT } from '@/config/organizational-structure';
 import { AgentCreator } from '@/features/chat/components/agent-creator';
 import type { AgentWithCategories } from '@/lib/agents/agent-service';

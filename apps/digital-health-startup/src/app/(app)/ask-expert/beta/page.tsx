@@ -16,9 +16,9 @@
 import { useRouter } from 'next/navigation';
 import { useState, useEffect, useRef, useCallback } from 'react';
 
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@vital/ui/components/tabs';
-import { Button } from '@vital/ui/components/button';
-import { Separator } from '@vital/ui/components/separator';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@vital/ui';
+import { Button } from '@vital/ui';
+import { Separator } from '@vital/ui';
 import { useAuth } from '@/lib/auth/supabase-auth-context';
 import { useAgentsStore, Agent } from '@/lib/stores/agents-store';
 import {
@@ -101,9 +101,9 @@ interface Conversation {
 interface SessionStats {
   totalConversations: number;
   totalMessages: number;
-  totalDuration: number;
+  avgSessionDuration: string;
   mostUsedMode: string;
-  mostContactedAgent: string;
+  mostUsedAgent: string;
 }
 
 // ============================================================================
@@ -166,9 +166,9 @@ export default function AskExpertComplete() {
   const [sessionStats, setSessionStats] = useState<SessionStats>({
     totalConversations: 0,
     totalMessages: 0,
-    totalDuration: 0,
+    avgSessionDuration: '0m',
     mostUsedMode: 'mode-1-query-automatic',
-    mostContactedAgent: ''
+    mostUsedAgent: ''
   });
 
   const [showDocumentGenerator, setShowDocumentGenerator] = useState(false);
@@ -324,9 +324,9 @@ export default function AskExpertComplete() {
     setSessionStats({
       totalConversations: 45,
       totalMessages: 523,
-      totalDuration: 18600000,
+      avgSessionDuration: '5h 10m',
       mostUsedMode: 'mode-1-query-automatic',
-      mostContactedAgent: selectedAgent?.name || 'Expert Agent'
+      mostUsedAgent: selectedAgent?.name || 'Expert Agent'
     });
   };
 
@@ -491,7 +491,7 @@ Would you like me to elaborate on any of these areas?`,
           }
         },
         agentName: selectedAgent?.name || 'Expert Agent',
-        agentAvatar: selectedAgent?.avatar_url
+        agentAvatar: (selectedAgent as any)?.avatar_url || (selectedAgent as any)?.avatar
       };
 
       setMessages(prev => [...prev, assistantMessage]);
@@ -548,7 +548,7 @@ Would you like me to elaborate on any of these areas?`,
                   <div className="text-sm">
                     <div className="font-medium">{selectedAgent.name}</div>
                     <div className="text-xs text-muted-foreground">
-                      {selectedAgent.specialty || selectedAgent.type}
+                      {(selectedAgent as any).specialty || (selectedAgent as any).type}
                     </div>
                   </div>
                 </div>
@@ -592,8 +592,8 @@ Would you like me to elaborate on any of these areas?`,
                       id: agent.id,
                       name: agent.name,
                       description: agent.description || '',
-                      specialty: agent.specialty,
-                      avatar: agent.avatar_url,
+                      specialty: (agent as any).specialty,
+                      avatar: (agent as any).avatar_url,
                       expertise: agent.capabilities?.slice(0, 4),
                       availability: 'online' as const,
                       responseTime: 25,
@@ -641,7 +641,7 @@ Would you like me to elaborate on any of these areas?`,
                 messages.map(msg => (
                   <EnhancedMessageDisplay
                     key={msg.id}
-                    {...msg}
+                    {...(msg as any)}
                     onCopy={() => handleCopyMessage(msg)}
                     onRegenerate={() => handleRegenerateMessage(msg)}
                     onFeedback={(type) => handleFeedback(msg, type)}
@@ -666,12 +666,12 @@ Would you like me to elaborate on any of these areas?`,
                 {showDocumentGenerator && (
                   <InlineDocumentGenerator
                     conversationId={currentConversationId}
-                    conversationContext={{
+                    conversationContext={JSON.stringify({
                       messages,
                       expertName: selectedAgent?.name || 'Expert Agent',
                       topic: 'Expert Consultation'
-                    }}
-                    onGenerate={handleGenerateDocument}
+                    })}
+                    onGenerate={handleGenerateDocument as any}
                   />
                 )}
               </div>

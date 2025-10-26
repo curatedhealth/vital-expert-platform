@@ -16,12 +16,12 @@ import {
 } from 'lucide-react';
 import React, { useState, useEffect, useRef } from 'react';
 
-import { Badge } from '@vital/ui/components/badge';
-import { Button } from '@vital/ui/components/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@vital/ui/components/card';
-import { Progress } from '@vital/ui/components/progress';
-import { ScrollArea } from '@vital/ui/components/scroll-area';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@vital/ui/components/tabs';
+import { Badge } from '@vital/ui';
+import { Button } from '@vital/ui';
+import { Card, CardContent, CardHeader, CardTitle } from '@vital/ui';
+import { Progress } from '@vital/ui';
+import { ScrollArea } from '@vital/ui';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@vital/ui';
 import { RealTimeMetrics } from '@/shared/services/monitoring/real-time-metrics';
 import { cn } from '@/shared/services/utils';
 

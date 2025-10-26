@@ -2,8 +2,8 @@
 
 import Image from 'next/image';
 
-import { Badge } from '@vital/ui/components/badge';
-import { Button } from '@vital/ui/components/button';
+import { Badge } from '@vital/ui';
+import { Button } from '@vital/ui';
 import type { Agent } from '@/lib/stores/chat-store';
 
 interface AgentProfileHeaderProps {

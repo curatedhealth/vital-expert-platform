@@ -17,10 +17,10 @@ import { Badge } from '@/shared/components/ui/badge';
 import { Button } from '@/shared/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card';
 
-import { usePanelStore } from '../services/panel-store';
+import { __usePanelStore as usePanelStore } from '../services/panel-store';
 
 interface PanelInterfaceProps {
-  panel: unknown;
+  panel: any;
   onBackToBuilder: () => void;
   onBackToTemplates: () => void;
 }
@@ -94,7 +94,7 @@ export function PanelInterface({
             {/* Panel Members */}
             <div className="flex items-center gap-2">
               <div className="flex -space-x-2">
-                {panel.members.slice(0, 4).map((member: unknown, index: number) => (
+                {panel.members.slice(0, 4).map((member: any, index: number) => (
                   <Avatar key={index} className="h-8 w-8 border-2 border-background">
                     <AvatarImage src={member.agent.avatar?.startsWith('http') ? member.agent.avatar : undefined} />
                     <AvatarFallback className="text-xs">
@@ -156,7 +156,7 @@ export function PanelInterface({
                   <div>
                     <h4 className="font-semibold mb-3">Panel Members</h4>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      {panel.members.map((member: unknown, index: number) => (
+                      {panel.members.map((member: any, index: number) => (
                         <div
                           key={index}
                           className="flex items-center gap-3 p-3 border rounded-lg"

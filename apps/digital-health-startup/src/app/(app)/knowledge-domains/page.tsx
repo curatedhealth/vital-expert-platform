@@ -3,15 +3,15 @@
 import { Plus, Search, Filter, Info } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
-import { Badge } from '@vital/ui/components/badge';
-import { Button } from '@vital/ui/components/button';
+import { Badge } from '@vital/ui';
+import { Button } from '@vital/ui';
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@vital/ui/components/card';
+} from '@vital/ui';
 import {
   Dialog,
   DialogContent,
@@ -19,18 +19,18 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@vital/ui/components/dialog';
-import { Input } from '@vital/ui/components/input';
-import { Label } from '@vital/ui/components/label';
+} from '@vital/ui';
+import { Input } from '@vital/ui';
+import { Label } from '@vital/ui';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@vital/ui/components/select';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@vital/ui/components/tabs';
-import { Textarea } from '@vital/ui/components/textarea';
+} from '@vital/ui';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@vital/ui';
+import { Textarea } from '@vital/ui';
 import { modelSelector } from '@/lib/services/model-selector';
 import type { KnowledgeDomain } from '@/lib/services/model-selector';
 import { createClient } from '@vital/sdk/client';
@@ -64,10 +64,10 @@ export default function KnowledgeDomainsPage() {
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       filtered = filtered.filter(
-        (d) =>
+        (d: any) =>
           d.name.toLowerCase().includes(query) ||
           d.description?.toLowerCase().includes(query) ||
-          d.keywords.some((k) => k.toLowerCase().includes(query))
+          d.keywords.some((k: string) => k.toLowerCase().includes(query))
       );
     }
 
@@ -260,7 +260,7 @@ export default function KnowledgeDomainsPage() {
 
         <TabsContent value="grid" className="mt-6">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filteredDomains.map((domain) => (
+            {filteredDomains.map((domain: any) => (
               <DomainCard
                 key={domain.id}
                 domain={domain}
@@ -307,8 +307,8 @@ function TieredDomainsView({
   domains,
   onSelectDomain,
 }: {
-  domains: KnowledgeDomain[];
-  onSelectDomain: (domain: KnowledgeDomain) => void;
+  domains: any[];
+  onSelectDomain: (domain: any) => void;
 }) {
   const tier1Domains = domains.filter((d) => d.tier === 1).sort((a, b) => a.priority - b.priority);
   const tier2Domains = domains.filter((d) => d.tier === 2).sort((a, b) => a.priority - b.priority);
@@ -325,7 +325,7 @@ function TieredDomainsView({
     title: string;
     subtitle: string;
     tierNumber: number;
-    tierDomains: KnowledgeDomain[];
+    tierDomains: any[];
     badgeColor: string;
     borderColor: string;
   }) => {
@@ -350,7 +350,7 @@ function TieredDomainsView({
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {tierDomains.map((domain) => (
+          {tierDomains.map((domain: any) => (
             <DomainCard
               key={domain.id}
               domain={domain}
@@ -411,7 +411,7 @@ function DomainCard({
   domain,
   onClick,
 }: {
-  domain: KnowledgeDomain;
+  domain: any;
   onClick: () => void;
 }) {
   const getTierBadge = (tier: number) => {
@@ -480,8 +480,8 @@ function DomainTable({
   domains,
   onSelectDomain,
 }: {
-  domains: KnowledgeDomain[];
-  onSelectDomain: (domain: KnowledgeDomain) => void;
+  domains: any[];
+  onSelectDomain: (domain: any) => void;
 }) {
   return (
     <div className="rounded-md border">
@@ -497,7 +497,7 @@ function DomainTable({
           </tr>
         </thead>
         <tbody>
-          {domains.map((domain) => (
+          {domains.map((domain: any) => (
             <tr
               key={domain.id}
               className="border-b hover:bg-muted/50 cursor-pointer"
@@ -542,7 +542,7 @@ function DomainDetailsDialog({
   domain,
   onClose,
 }: {
-  domain: KnowledgeDomain;
+  domain: any;
   onClose: () => void;
 }) {
   return (
@@ -611,7 +611,7 @@ function DomainDetailsDialog({
                 )}
                 <div className="text-sm">
                   <span className="font-semibold">Alternatives:</span>{' '}
-                  {domain.recommended_models?.embedding?.alternatives?.map((alt, i) => (
+                  {domain.recommended_models?.embedding?.alternatives?.map((alt: any, i: number) => (
                     <code key={i} className="bg-muted px-2 py-0.5 rounded ml-1">
                       {alt}
                     </code>
@@ -645,7 +645,7 @@ function DomainDetailsDialog({
                 )}
                 <div className="text-sm">
                   <span className="font-semibold">Alternatives:</span>{' '}
-                  {domain.recommended_models?.chat?.alternatives?.map((alt, i) => (
+                  {domain.recommended_models?.chat?.alternatives?.map((alt: any, i: number) => (
                     <code key={i} className="bg-muted px-2 py-0.5 rounded ml-1">
                       {alt}
                     </code>
@@ -665,7 +665,7 @@ function DomainDetailsDialog({
             <div>
               <Label className="text-sm font-medium">Keywords</Label>
               <div className="flex flex-wrap gap-2 mt-2">
-                {domain.keywords.map((keyword, i) => (
+                {domain.keywords.map((keyword: any, i: number) => (
                   <Badge key={i} variant="secondary" className="text-xs">
                     {keyword}
                   </Badge>
@@ -679,7 +679,7 @@ function DomainDetailsDialog({
             <div>
               <Label className="text-sm font-medium">Sub-domains</Label>
               <div className="flex flex-wrap gap-2 mt-2">
-                {domain.sub_domains.map((sub, i) => (
+                {domain.sub_domains.map((sub: any, i: number) => (
                   <Badge key={i} variant="outline" className="text-xs">
                     {sub}
                   </Badge>
@@ -743,11 +743,11 @@ function CreateDomainDialog({
       // Parse keywords and sub_domains
       const keywords = formData.keywords
         .split(',')
-        .map((k) => k.trim())
+        .map((k: any) => k.trim())
         .filter(Boolean);
       const sub_domains = formData.sub_domains
         .split(',')
-        .map((s) => s.trim())
+        .map((s: any) => s.trim())
         .filter(Boolean);
 
       // Get next priority
@@ -937,7 +937,7 @@ function CreateDomainDialog({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {embeddingModels.map((model) => (
+                {embeddingModels.map((model: any) => (
                   <SelectItem key={model.value} value={model.value}>
                     {model.label} - {model.provider}
                   </SelectItem>
@@ -958,7 +958,7 @@ function CreateDomainDialog({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {chatModels.map((model) => (
+                {chatModels.map((model: any) => (
                   <SelectItem key={model.value} value={model.value}>
                     {model.label} - {model.provider}
                   </SelectItem>

@@ -17,16 +17,16 @@ import {
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
-import { Badge } from '@vital/ui/components/badge';
-import { Button } from '@vital/ui/components/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@vital/ui/components/card';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@vital/ui/components/dialog';
-import { Input } from '@vital/ui/components/input';
-import { Label } from '@vital/ui/components/label';
-import { ScrollArea } from '@vital/ui/components/scroll-area';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@vital/ui/components/select';
-import { Skeleton } from '@vital/ui/components/skeleton';
-import { Textarea } from '@vital/ui/components/textarea';
+import { Badge } from '@vital/ui';
+import { Button } from '@vital/ui';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@vital/ui';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@vital/ui';
+import { Input } from '@vital/ui';
+import { Label } from '@vital/ui';
+import { ScrollArea } from '@vital/ui';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@vital/ui';
+import { Skeleton } from '@vital/ui';
+import { Textarea } from '@vital/ui';
 
 interface Prompt {
   id: string;

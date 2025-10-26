@@ -7,10 +7,10 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 
-import { Button } from '@vital/ui/components/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@vital/ui/components/card';
-import { Input } from '@vital/ui/components/input';
-import { Label } from '@vital/ui/components/label';
+import { Button } from '@vital/ui';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@vital/ui';
+import { Input } from '@vital/ui';
+import { Label } from '@vital/ui';
 import { useAuth } from '@/lib/auth/supabase-auth-context';
 
 const forgotPasswordSchema = z.object({
@@ -20,7 +20,7 @@ const forgotPasswordSchema = z.object({
 type ForgotPasswordForm = z.infer<typeof forgotPasswordSchema>;
 
 export default function ForgotPasswordPage() {
-  const { resetPassword } = useAuth();
+  const { resetPassword } = useAuth() as any;
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
@@ -41,7 +41,7 @@ export default function ForgotPasswordPage() {
       await resetPassword(data.email);
       setSuccess(true);
     } catch (error: unknown) {
-      setError(error.message || 'Failed to send reset email');
+      setError((error as any).message || 'Failed to send reset email');
     } finally {
       setIsLoading(false);
     }

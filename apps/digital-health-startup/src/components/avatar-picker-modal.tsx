@@ -4,9 +4,9 @@ import { X, Search, User, Grid, List } from 'lucide-react';
 import Image from 'next/image';
 import { useState, useEffect } from 'react';
 
-import { Badge } from '@vital/ui/components/badge';
-import { Button } from '@vital/ui/components/button';
-import { Input } from '@vital/ui/components/input';
+import { Badge } from '@vital/ui';
+import { Button } from '@vital/ui';
+import { Input } from '@vital/ui';
 import { IconService, type Icon } from '@/lib/services/icon-service';
 
 interface AvatarPickerModalProps {

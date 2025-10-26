@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { Button } from '@vital/ui/components/button';
+import { Button } from '@vital/ui';
 
 interface Agent {
   id: string;

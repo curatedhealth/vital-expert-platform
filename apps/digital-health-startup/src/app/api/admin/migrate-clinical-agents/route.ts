@@ -293,7 +293,8 @@ Ensure all analyses comply with privacy regulations. Provide detailed cohort cha
       }
     ];
 
-    // const __successCount = 0;
+    let successCount = 0;
+    const errors: any[] = [];
 
     for (const agent of clinicalAgents) {
       try {
@@ -306,7 +307,7 @@ Ensure all analyses comply with privacy regulations. Provide detailed cohort cha
           // console.error(`Error inserting agent ${agent.name}:`, error);
           errors.push({ agent: agent.name, error: error.message });
         } else {
-          // successCount++;
+          successCount++;
         }
       } catch (err) {
         // console.error(`Exception inserting agent ${agent.name}:`, err);

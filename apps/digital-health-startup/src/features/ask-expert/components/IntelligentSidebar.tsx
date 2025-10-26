@@ -7,19 +7,19 @@ import {
 } from 'lucide-react';
 import { useState, useCallback, useMemo } from 'react';
 
-import { Avatar, AvatarFallback, AvatarImage } from '@vital/ui/components/avatar';
-import { Badge } from '@vital/ui/components/badge';
-import { Button } from '@vital/ui/components/button';
-import { Card, CardContent } from '@vital/ui/components/card';
-import { Input } from '@vital/ui/components/input';
+import { Avatar, AvatarFallback, AvatarImage } from '@vital/ui';
+import { Badge } from '@vital/ui';
+import { Button } from '@vital/ui';
+import { Card, CardContent } from '@vital/ui';
+import { Input } from '@vital/ui';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@vital/ui/components/dropdown-menu';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@vital/ui/components/tabs';
+} from '@vital/ui';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@vital/ui';
 import { cn } from '@vital/ui/lib/utils';
 
 interface Conversation {

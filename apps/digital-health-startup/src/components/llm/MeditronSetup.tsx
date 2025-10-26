@@ -16,14 +16,14 @@ import {
 } from 'lucide-react';
 import React, { useState, useEffect } from 'react';
 
-import { Alert, AlertDescription } from '@vital/ui/components/alert';
-import { Badge } from '@vital/ui/components/badge';
-import { Button } from '@vital/ui/components/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@vital/ui/components/card';
-import { Input } from '@vital/ui/components/input';
-import { Label } from '@vital/ui/components/label';
-import { Progress } from '@vital/ui/components/progress';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@vital/ui/components/tabs';
+import { Alert, AlertDescription } from '@vital/ui';
+import { Badge } from '@vital/ui';
+import { Button } from '@vital/ui';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@vital/ui';
+import { Input } from '@vital/ui';
+import { Label } from '@vital/ui';
+import { Progress } from '@vital/ui';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@vital/ui';
 
 interface MeditronModel {
   id: string;

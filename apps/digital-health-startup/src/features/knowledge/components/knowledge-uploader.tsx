@@ -11,15 +11,15 @@ import {
 } from 'lucide-react';
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 
-import { AgentAvatar } from '@vital/ui/components/agent-avatar';
-import { Badge } from '@vital/ui/components/badge';
-import { Button } from '@vital/ui/components/button';
-import { Card, CardContent } from '@vital/ui/components/card';
-import { Checkbox } from '@vital/ui/components/checkbox';
-import { Label } from '@vital/ui/components/label';
-import { Progress } from '@vital/ui/components/progress';
-import { ScrollArea } from '@vital/ui/components/scroll-area';
-import { Separator } from '@vital/ui/components/separator';
+import { AgentAvatar } from '@vital/ui';
+import { Badge } from '@vital/ui';
+import { Button } from '@vital/ui';
+import { Card, CardContent } from '@vital/ui';
+import { Checkbox } from '@vital/ui';
+import { Label } from '@vital/ui';
+import { Progress } from '@vital/ui';
+import { ScrollArea } from '@vital/ui';
+import { Separator } from '@vital/ui';
 import type { KnowledgeDomain } from '@/lib/services/model-selector';
 import { useAgentsStore } from '@/lib/stores/agents-store';
 import { createClient } from '@vital/sdk/client';

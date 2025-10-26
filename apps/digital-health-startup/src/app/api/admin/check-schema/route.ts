@@ -16,6 +16,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Get the columns from the first row (if any)
+    const columns = data && data.length > 0 ? Object.keys(data[0]) : [];
 
     return NextResponse.json({
       success: true,

@@ -2,8 +2,8 @@
 
 import React, { useState } from 'react';
 
-import { Button } from '@vital/ui/components/button';
-import { Card } from '@vital/ui/components/card';
+import { Button } from '@vital/ui';
+import { Card } from '@vital/ui';
 
 import {
   Reasoning,

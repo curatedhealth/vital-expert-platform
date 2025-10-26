@@ -22,9 +22,9 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
 
-import { Avatar, AvatarFallback } from '@vital/ui/components/avatar';
-import { Badge } from '@vital/ui/components/badge';
-import { Button } from '@vital/ui/components/button';
+import { Avatar, AvatarFallback } from '@vital/ui';
+import { Badge } from '@vital/ui';
+import { Button } from '@vital/ui';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -32,7 +32,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger
-} from '@vital/ui/components/dropdown-menu';
+} from '@vital/ui';
 import { cn } from '@vital/ui/lib/utils';
 
 // import { useAuth } from '@vital/sdk/lib/supabase/auth-context';

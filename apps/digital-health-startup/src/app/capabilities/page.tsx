@@ -32,16 +32,16 @@ import {
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
-import { Badge } from '@vital/ui/components/badge';
-import { Button } from '@vital/ui/components/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@vital/ui/components/card';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@vital/ui/components/dialog';
-import { Input } from '@vital/ui/components/input';
-import { Progress } from '@vital/ui/components/progress';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@vital/ui/components/select';
-import { Separator } from '@vital/ui/components/separator';
-import { Skeleton } from '@vital/ui/components/skeleton';
-import { Tabs, TabsList, TabsTrigger } from '@vital/ui/components/tabs';
+import { Badge } from '@vital/ui';
+import { Button } from '@vital/ui';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@vital/ui';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@vital/ui';
+import { Input } from '@vital/ui';
+import { Progress } from '@vital/ui';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@vital/ui';
+import { Separator } from '@vital/ui';
+import { Skeleton } from '@vital/ui';
+import { Tabs, TabsList, TabsTrigger } from '@vital/ui';
 
 interface Capability {
   id: string;

@@ -7,8 +7,8 @@ import {
   Target
 } from 'lucide-react';
 
-import { Badge } from '@vital/ui/components/badge';
-import { Card, CardContent, CardHeader, CardTitle } from '@vital/ui/components/card';
+import { Badge } from '@vital/ui';
+import { Card, CardContent, CardHeader, CardTitle } from '@vital/ui';
 import { cn } from '@/shared/services/utils';
 
 export type ChatMode = 'single-agent' | 'virtual-panel' | 'orchestrated-workflow' | 'jobs-framework';

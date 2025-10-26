@@ -3,12 +3,12 @@
 import { Loader2, Sparkles, Copy, Edit, Plus, RefreshCw } from 'lucide-react';
 import React, { useState, useEffect } from 'react';
 
-import { Alert, AlertDescription } from '@vital/ui/components/alert';
-import { Badge } from '@vital/ui/components/badge';
-import { Button } from '@vital/ui/components/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@vital/ui/components/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@vital/ui/components/tabs';
-import { Textarea } from '@vital/ui/components/textarea';
+import { Alert, AlertDescription } from '@vital/ui';
+import { Badge } from '@vital/ui';
+import { Button } from '@vital/ui';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@vital/ui';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@vital/ui';
+import { Textarea } from '@vital/ui';
 import usePromptEnhancement from '@/hooks/usePromptEnhancement';
 import { PromptStarter } from '@/lib/services/prompt-enhancement-service';
 

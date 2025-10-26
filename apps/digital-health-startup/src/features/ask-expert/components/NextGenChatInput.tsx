@@ -7,16 +7,16 @@ import {
 } from 'lucide-react';
 import { useState, useRef, useCallback, useEffect } from 'react';
 
-import { Badge } from '@vital/ui/components/badge';
-import { Button } from '@vital/ui/components/button';
-import { Progress } from '@vital/ui/components/progress';
-import { Textarea } from '@vital/ui/components/textarea';
+import { Badge } from '@vital/ui';
+import { Button } from '@vital/ui';
+import { Progress } from '@vital/ui';
+import { Textarea } from '@vital/ui';
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from '@vital/ui/components/tooltip';
+} from '@vital/ui';
 import { cn } from '@vital/ui/lib/utils';
 
 interface Attachment {

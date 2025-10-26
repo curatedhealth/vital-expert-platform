@@ -3,13 +3,13 @@
 import { ChevronLeft, ChevronRight, Zap, User } from 'lucide-react';
 import * as React from 'react';
 
-import { Button } from '@vital/ui/components/button';
+import { Button } from '@vital/ui';
 import {
   Sidebar,
   SidebarContent,
   SidebarHeader,
-} from '@vital/ui/components/sidebar';
-import { Switch } from '@vital/ui/components/switch';
+} from '@vital/ui';
+import { Switch } from '@vital/ui';
 import { cn } from '@vital/ui/lib/utils';
 import { VitalLogo } from '@/shared/components/vital-logo';
 

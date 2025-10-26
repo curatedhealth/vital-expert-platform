@@ -4,8 +4,8 @@
  * Provides visual feedback while content loads
  */
 
-import { Card } from '@vital/ui/components/card';
-import { Skeleton } from '@vital/ui/components/skeleton';
+import { Card } from '@vital/ui';
+import { Skeleton } from '@vital/ui';
 import { cn } from '@vital/ui/lib/utils';
 
 // ===========================

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { createClient } from '@vital/sdk';
+import { createClient } from '@supabase/supabase-js';
 
 /**
  * Hybrid Agent Query API - Routes to Python AI Services

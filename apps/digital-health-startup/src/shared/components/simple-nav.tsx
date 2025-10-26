@@ -8,7 +8,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
 
-import { Button } from '@vital/ui/components/button';
+import { Button } from '@vital/ui';
 
 export function SimpleNav() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);

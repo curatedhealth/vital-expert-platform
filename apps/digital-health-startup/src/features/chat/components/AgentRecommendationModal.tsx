@@ -3,9 +3,9 @@
 import { X } from 'lucide-react';
 import Image from 'next/image';
 
-import { Badge } from '@vital/ui/components/badge';
-import { Button } from '@vital/ui/components/button';
-import { Card } from '@vital/ui/components/card';
+import { Badge } from '@vital/ui';
+import { Button } from '@vital/ui';
+import { Card } from '@vital/ui';
 
 interface RecommendedAgent {
   id: string;

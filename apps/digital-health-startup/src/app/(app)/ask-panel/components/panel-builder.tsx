@@ -17,7 +17,7 @@ import { Input } from '@/shared/components/ui/input';
 import { Textarea } from '@/shared/components/ui/textarea';
 import { cn } from '@/shared/utils';
 
-import { usePanelStore } from '../services/panel-store';
+import { __usePanelStore as usePanelStore } from '../services/panel-store';
 
 interface PanelBuilderProps {
   templateId?: string | null;
@@ -187,7 +187,7 @@ export function PanelBuilder({
                 <div className="mb-6">
                   <h4 className="text-sm font-medium mb-3">Selected Experts</h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    {selectedExperts.map((expert) => (
+                    {selectedExperts.map((expert: any) => (
                       <div
                         key={expert.id}
                         className="flex items-center gap-3 p-3 border rounded-lg bg-primary/5 border-primary/20"

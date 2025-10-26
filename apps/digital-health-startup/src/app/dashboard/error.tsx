@@ -3,8 +3,8 @@
 import { AlertCircle, RefreshCw, LayoutDashboard } from 'lucide-react';
 import { useEffect } from 'react';
 
-import { Button } from '@vital/ui/components/button';
-import { Card } from '@vital/ui/components/card';
+import { Button } from '@vital/ui';
+import { Card } from '@vital/ui';
 
 export default function DashboardError({
   error,

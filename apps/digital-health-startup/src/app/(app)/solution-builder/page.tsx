@@ -3,9 +3,9 @@
 import { Rocket, Star, CheckCircle, ArrowRight, Layers } from 'lucide-react';
 import { useState } from 'react';
 
-import { Badge } from '@vital/ui/components/badge';
-import { Button } from '@vital/ui/components/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@vital/ui/components/card';
+import { Badge } from '@vital/ui';
+import { Button } from '@vital/ui';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@vital/ui';
 
 // Simplified solution templates - directly embedded for simplicity
 const SOLUTION_TEMPLATES = [

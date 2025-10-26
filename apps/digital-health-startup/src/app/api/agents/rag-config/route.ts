@@ -46,14 +46,14 @@ export async function GET(request: NextRequest) {
     if (agentId) {
       // Get specific agent configuration
       // Try to get from integration service first
-      const config = await agentRAGIntegration.getAgentConfiguration(agentId);
+      const config = await (agentRAGIntegration as any).getAgentConfiguration(agentId);
 
       if (config) {
         return NextResponse.json({
           success: true,
           agentId,
           configuration: config,
-          availableRAGSystems: agentRAGIntegration.getAvailableRAGSystems()
+          availableRAGSystems: (agentRAGIntegration as any).getAvailableRAGSystems()
         });
       } else {
         return NextResponse.json({
@@ -90,7 +90,7 @@ export async function GET(request: NextRequest) {
       const configurations = await Promise.all(
         (agents || []).map(async (agent) => {
           try {
-            const config = await agentRAGIntegration.getAgentConfiguration(agent.id);
+            const config = await (agentRAGIntegration as any).getAgentConfiguration(agent.id);
 
             return {
               agentId: agent.id,
@@ -118,15 +118,15 @@ export async function GET(request: NextRequest) {
         success: true,
         totalAgents: configurations.length,
         configurations,
-        availableRAGSystems: agentRAGIntegration.getAvailableRAGSystems(),
+        availableRAGSystems: (agentRAGIntegration as any).getAvailableRAGSystems(),
         summary: {
           configuredAgents: configurations.filter(c => c.isConfigured).length,
           unconfiguredAgents: configurations.filter(c => !c.isConfigured).length,
           ragSystemsInUse: [
             ...new Set(
               configurations
-                .filter(c => c.configuration)
-                .flatMap(c => c.configuration?.ragSystems.map(r => r.systemId))
+                .filter((c: any) => c.configuration)
+                .flatMap((c: any) => c.configuration?.ragSystems.map((r: any) => r.systemId))
             )
           ]
         }
@@ -171,7 +171,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate RAG systems
-    const availableSystems = agentRAGIntegration.getAvailableRAGSystems();
+    const availableSystems = (agentRAGIntegration as any).getAvailableRAGSystems();
     const availableSystemIds = availableSystems.map(s => s.id);
 
     for (const ragSystem of body.ragSystems) {
@@ -209,7 +209,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Update configuration
-    await agentRAGIntegration.updateAgentRAGConfig(body.agentId, {
+    await (agentRAGIntegration as any).updateAgentRAGConfig(body.agentId, {
       ragSystems: body.ragSystems,
       defaultRAG: body.defaultRAG,
       knowledgeDomains: body.knowledgeDomains || [],
@@ -217,7 +217,7 @@ export async function POST(request: NextRequest) {
     });
 
     // Get updated configuration to return
-    const updatedConfig = await agentRAGIntegration.getAgentConfiguration(body.agentId);
+    const updatedConfig = await (agentRAGIntegration as any).getAgentConfiguration(body.agentId);
 
     return NextResponse.json({
       success: true,
@@ -266,7 +266,7 @@ export async function PUT(request: NextRequest) {
 
     // Test the agent's RAG system
     const testStart = Date.now();
-    const ragResponse = await agentRAGIntegration.queryAgentRAG({
+    const ragResponse = await (agentRAGIntegration as any).queryAgentRAG({
       query: testQuery,
       agentId,
       context: 'RAG system test',
@@ -345,7 +345,7 @@ export async function DELETE(request: NextRequest) {
       filterPreferences: { /* TODO: implement */ }
     };
 
-    await agentRAGIntegration.updateAgentRAGConfig(agentId, defaultConfig);
+    await (agentRAGIntegration as any).updateAgentRAGConfig(agentId, defaultConfig);
 
     return NextResponse.json({
       success: true,

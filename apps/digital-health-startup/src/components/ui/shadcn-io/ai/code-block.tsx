@@ -8,7 +8,7 @@ import {
   oneLight
 } from 'react-syntax-highlighter/dist/esm/styles/prism';
 
-import { Button } from '@vital/ui/components/button';
+import { Button } from '@vital/ui';
 import { cn } from '@vital/ui/lib/utils';
 
 import type { ComponentProps, HTMLAttributes, ReactNode } from 'react';

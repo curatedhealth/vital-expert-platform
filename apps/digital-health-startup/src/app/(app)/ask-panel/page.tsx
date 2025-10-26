@@ -5,18 +5,18 @@ import { useState, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 
 import { PanelMember } from '@/app/(app)/ask-panel/services/panel-store';
-import { AgentAvatar } from '@vital/ui/components/agent-avatar';
-import { Badge } from '@vital/ui/components/badge';
-import { Button } from '@vital/ui/components/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@vital/ui/components/card';
-import { Input } from '@vital/ui/components/input';
+import { AgentAvatar } from '@vital/ui';
+import { Badge } from '@vital/ui';
+import { Button } from '@vital/ui';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@vital/ui';
+import { Input } from '@vital/ui';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@vital/ui/components/select';
+} from '@vital/ui';
 import { ExpertPanelSelector } from '@/features/chat/components/expert-panel-selector';
 import { useAgentsStore, Agent } from '@/lib/stores/agents-store';
 
@@ -348,7 +348,7 @@ export default function AskPanelPage() {
     try {
       // Convert agents to PanelMembers
       const panelMembers: PanelMember[] = panelAgents.map(agent => ({
-        agent,
+        agent: agent as any,
         role: 'expert' as const,
         weight: 1,
       }));

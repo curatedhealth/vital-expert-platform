@@ -12,20 +12,20 @@ import Image from 'next/image';
 import { useRouter, usePathname } from 'next/navigation';
 import { useState, useEffect, useRef, useMemo } from 'react';
 
-import { Badge } from '@vital/ui/components/badge';
-import { Button } from '@vital/ui/components/button';
-import { Card } from '@vital/ui/components/card';
-import { EnhancedAgentCard, AgentCardGrid } from '@vital/ui/components/enhanced-agent-card';
+import { Badge } from '@vital/ui';
+import { Button } from '@vital/ui';
+import { Card } from '@vital/ui';
+import { EnhancedAgentCard, AgentCardGrid } from '@vital/ui';
 import { ChatInput } from '@/features/chat/components/chat-input';
 import { ChatMessages } from '@/features/chat/components/chat-messages';
 import { ChatSidebar } from '@/features/chat/components/chat-sidebar';
 // Lazy-loaded heavy components for code splitting
-import type { AgentWithCategories } from '@/lib/agents/agent-service';
+import type { AgentWithCategories } from '@/features/agents/services/agent-service';
 import { useAuth } from '@/lib/auth/supabase-auth-context';
 import { IconService, type Icon } from '@/lib/services/icon-service';
 import { useAgentsStore } from '@/lib/stores/agents-store';
 import { useChatStore, Agent } from '@/lib/stores/chat-store';
-import { cn } from '@vital/ui/lib/utils';
+import { cn } from '@vital/ui';
 import { LazyAgentCreator } from '@/lib/utils/lazy-components';
 import {
   SidebarInset,
@@ -364,7 +364,7 @@ export default function ChatPage() {
             }));
 
             console.log('🎯 About to set recommendations:', enrichedAgents.length, 'agents');
-            console.log('🎯 Enriched agents:', JSON.stringify(enrichedAgents.map(a => ({ id: a.id, name: a.name })), null, 2));
+            console.log('🎯 Enriched agents:', JSON.stringify(enrichedAgents.map((a: any) => ({ id: a.id, name: a.name })), null, 2));
             setRecommendedAgents(enrichedAgents);
             console.log('✅ setRecommendedAgents called');
           } else {
@@ -403,14 +403,14 @@ export default function ChatPage() {
     const agent: Agent = {
       id: recommendedAgent.id,
       name: recommendedAgent.name,
-      display_name: recommendedAgent.display_name,
+      display_name: (recommendedAgent as any).display_name,
       description: recommendedAgent.description,
       avatar: recommendedAgent.avatar,
       systemPrompt: recommendedAgent.system_prompt,
       tier: recommendedAgent.tier,
       capabilities: recommendedAgent.capabilities || [],
       model: selectedModel || recommendedAgent.model || 'gpt-4-turbo-preview', // Use selected model from dropdown
-    };
+    } as any;
 
     setSelectedAgent(agent);
 
@@ -419,7 +419,7 @@ export default function ChatPage() {
     const message = pendingMessage;
     setPendingMessage('');
 
-    console.log('✅ User selected agent:', agent.display_name || agent.name, 'with model:', agent.model);
+    console.log('✅ User selected agent:', (agent as any).display_name || agent.name, 'with model:', agent.model);
     await sendMessage(message);
   };
 
@@ -515,12 +515,12 @@ export default function ChatPage() {
           knowledge_domains: agent.knowledgeDomains || [],
           business_function: agent.businessFunction || '',
           role: agent.role || '',
-        } as unknown);
+        } as any);
 
         // Convert to chat store format and add to user's agents
         const chatAgent: Agent = {
           id: userCopy.id,
-          name: userCopy.display_name,
+          name: (userCopy as any).display_name,
           description: userCopy.description,
           systemPrompt: userCopy.system_prompt,
           model: userCopy.model,
@@ -799,7 +799,7 @@ export default function ChatPage() {
           </div>
 
           {/* Agent Recommendations - Step 1 */}
-          {console.log('🔍 Rendering check - recommendedAgents.length:', recommendedAgents.length)}
+          {/* {console.log('🔍 Rendering check - recommendedAgents.length:', recommendedAgents.length)} */}
           {recommendedAgents.length > 0 ? (
             <div className="w-full max-w-3xl mb-6">
               <div className="mb-4">
@@ -823,7 +823,7 @@ export default function ChatPage() {
                         {agent.avatar && (agent.avatar.startsWith('/') || agent.avatar.includes('avatar_')) ? (
                           <Image
                             src={agent.avatar}
-                            alt={agent.display_name || agent.name}
+                            alt={(agent as any).display_name || agent.name}
                             width={48}
                             height={48}
                             className="object-cover w-full h-full"
@@ -835,7 +835,7 @@ export default function ChatPage() {
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-1">
                           <h4 className="font-semibold text-gray-900">
-                            {agent.display_name || agent.name}
+                            {(agent as any).display_name || agent.name}
                           </h4>
                           {index === 0 && (
                             <Badge variant="default" className="bg-blue-600">
@@ -874,9 +874,7 @@ export default function ChatPage() {
                 </Button>
               </div>
             </div>
-          ) : (
-            console.log('❌ Not rendering recommendations - length is 0')
-          )}
+          ) : null}
 
           {/* Single chat input - always visible */}
           {recommendedAgents.length === 0 && (
@@ -911,7 +909,7 @@ export default function ChatPage() {
               {selectedExpert.avatar && (selectedExpert.avatar.startsWith('/') || selectedExpert.avatar?.includes('avatar_')) ? (
                 <Image
                   src={selectedExpert.avatar}
-                  alt={selectedExpert.display_name || selectedExpert.name}
+                  alt={(selectedExpert as any).display_name || selectedExpert.name}
                   width={40}
                   height={40}
                   className="object-cover w-full h-full"
@@ -921,7 +919,7 @@ export default function ChatPage() {
               )}
             </div>
             <div className="flex-1 min-w-0">
-              <h3 className="font-semibold text-gray-900 text-sm truncate">{selectedExpert.display_name || selectedExpert.name}</h3>
+              <h3 className="font-semibold text-gray-900 text-sm truncate">{(selectedExpert as any).display_name || selectedExpert.name}</h3>
               <p className="text-xs text-gray-600 truncate">{selectedExpert.description}</p>
             </div>
             <Button
@@ -946,7 +944,7 @@ export default function ChatPage() {
                 {selectedAgent?.avatar && (selectedAgent.avatar.startsWith('/') || selectedAgent.avatar.includes('avatar_')) ? (
                   <Image
                     src={selectedAgent.avatar}
-                    alt={selectedAgent.display_name || selectedAgent.name || "AI Assistant"}
+                    alt={(selectedAgent as any).display_name || selectedAgent.name || "AI Assistant"}
                     width={96}
                     height={96}
                     className="object-cover w-full h-full"
@@ -956,7 +954,7 @@ export default function ChatPage() {
                 )}
               </div>
               <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                {selectedAgent?.display_name || selectedAgent?.name || "AI Assistant"}
+                {(selectedAgent as any)?.display_name || selectedAgent?.name || "AI Assistant"}
               </h1>
               <p className="text-base text-gray-600 max-w-2xl mx-auto">
                 {selectedAgent?.description || "Your AI assistant"}
@@ -1015,7 +1013,7 @@ export default function ChatPage() {
           </div>
 
           {/* Agent Recommendations overlay - Step 1 */}
-          {console.log('🎨 Chat interface - recommendedAgents.length:', recommendedAgents.length)}
+          {/* {console.log('🎨 Chat interface - recommendedAgents.length:', recommendedAgents.length)} */}
           {recommendedAgents.length > 0 && (
             <div className="absolute inset-0 bg-white/95 backdrop-blur-sm z-50 flex items-center justify-center p-6">
               <div className="w-full max-w-3xl">

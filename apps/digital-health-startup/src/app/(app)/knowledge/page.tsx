@@ -16,9 +16,9 @@ import {
 import { useSearchParams } from 'next/navigation';
 import { useState, useCallback, useEffect, Suspense } from 'react';
 
-import { Badge } from '@vital/ui/components/badge';
-import { Button } from '@vital/ui/components/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@vital/ui/components/card';
+import { Badge } from '@vital/ui';
+import { Button } from '@vital/ui';
+import { Card, CardContent, CardHeader, CardTitle } from '@vital/ui';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -26,8 +26,8 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger
-} from '@vital/ui/components/dropdown-menu';
-import { Input } from '@vital/ui/components/input';
+} from '@vital/ui';
+import { Input } from '@vital/ui';
 import {
   Table,
   TableBody,
@@ -35,7 +35,7 @@ import {
   TableHead,
   TableHeader,
   TableRow
-} from '@vital/ui/components/table';
+} from '@vital/ui';
 import { KnowledgeAnalyticsDashboard } from '@/features/knowledge/components/knowledge-analytics-dashboard';
 import { KnowledgeUploader } from '@/features/knowledge/components/knowledge-uploader';
 import { KnowledgeViewer } from '@/features/knowledge/components/knowledge-viewer';

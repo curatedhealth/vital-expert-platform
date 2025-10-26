@@ -15,8 +15,8 @@ import {
 import { useState, useRef, useEffect } from 'react';
 
 import { PromptEnhancementModal } from '@/components/chat/PromptEnhancementModal';
-import { Badge } from '@vital/ui/components/badge';
-import { Button } from '@vital/ui/components/button';
+import { Badge } from '@vital/ui';
+import { Button } from '@vital/ui';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -24,8 +24,8 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@vital/ui/components/dropdown-menu';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@vital/ui/components/tooltip';
+} from '@vital/ui';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@vital/ui';
 import { Agent } from '@/lib/stores/chat-store';
 import { cn } from '@vital/ui/lib/utils';
 import {

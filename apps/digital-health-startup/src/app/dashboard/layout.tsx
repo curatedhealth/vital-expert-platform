@@ -21,8 +21,8 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useState } from 'react';
 
-import { Badge } from '@vital/ui/components/badge';
-import { Button } from '@vital/ui/components/button';
+import { Badge } from '@vital/ui';
+import { Button } from '@vital/ui';
 import { DashboardSidebarWithSuspense } from '@/features/dashboard/components/dashboard-sidebar';
 // import { useAuth } from '@/lib/auth/auth-context';
 import { cn } from '@vital/ui/lib/utils';

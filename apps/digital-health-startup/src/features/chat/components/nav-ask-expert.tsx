@@ -3,9 +3,9 @@
 import { MessageSquare, FileText, Zap, User } from 'lucide-react';
 import * as React from 'react';
 
-import { Button } from '@vital/ui/components/button';
-import { Input } from '@vital/ui/components/input';
-import { ScrollArea } from '@vital/ui/components/scroll-area';
+import { Button } from '@vital/ui';
+import { Input } from '@vital/ui';
+import { ScrollArea } from '@vital/ui';
 import { cn } from '@vital/ui/lib/utils';
 
 interface Chat {

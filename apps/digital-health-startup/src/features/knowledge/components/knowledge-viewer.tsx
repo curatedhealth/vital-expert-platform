@@ -14,10 +14,10 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 
-import { Badge } from '@vital/ui/components/badge';
-import { Button } from '@vital/ui/components/button';
-import { Card, CardContent } from '@vital/ui/components/card';
-import { Input } from '@vital/ui/components/input';
+import { Badge } from '@vital/ui';
+import { Button } from '@vital/ui';
+import { Card, CardContent } from '@vital/ui';
+import { Input } from '@vital/ui';
 import { cn } from '@vital/ui/lib/utils';
 
 interface KnowledgeChunk {

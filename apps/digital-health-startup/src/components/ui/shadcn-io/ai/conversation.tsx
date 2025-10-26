@@ -4,7 +4,7 @@ import { ArrowDownIcon } from 'lucide-react';
 import { useCallback } from 'react';
 import { StickToBottom, useStickToBottomContext } from 'use-stick-to-bottom';
 
-import { Button } from '@vital/ui/components/button';
+import { Button } from '@vital/ui';
 import { cn } from '@vital/ui/lib/utils';
 
 import type { ComponentProps } from 'react';

@@ -1,9 +1,9 @@
 import { Star, CheckCircle, Zap, Shield, Target } from 'lucide-react';
 import React from 'react';
 
-import { AgentAvatar } from '@vital/ui/components/agent-avatar';
-import { Badge } from '@vital/ui/components/badge';
-import { Card, CardContent } from '@vital/ui/components/card';
+import { AgentAvatar } from '@vital/ui';
+import { Badge } from '@vital/ui';
+import { Card, CardContent } from '@vital/ui';
 import { type Agent } from '@/lib/stores/chat-store';
 import { cn } from '@vital/ui/lib/utils';
 

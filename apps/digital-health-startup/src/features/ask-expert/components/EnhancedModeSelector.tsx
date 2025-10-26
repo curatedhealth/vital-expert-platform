@@ -8,10 +8,10 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@vital/ui/components/card';
-import { Badge } from '@vital/ui/components/badge';
-import { Button } from '@vital/ui/components/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@vital/ui/components/tabs';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@vital/ui';
+import { Badge } from '@vital/ui';
+import { Button } from '@vital/ui';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@vital/ui';
 import { cn } from '@vital/ui/lib/utils';
 
 interface ModeOption {

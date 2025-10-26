@@ -214,10 +214,13 @@ export const __usePanelStore = create<PanelState>()(
       },
 
       selectPanel: (panelId: string) => {
-
-        if (panel) {
-          set({ currentPanel: panel });
-        }
+        set(state => {
+          const panel = state.panels.find(p => p.id === panelId);
+          if (panel) {
+            return { currentPanel: panel };
+          }
+          return state;
+        });
       },
 
       addMemberToPanel: (panelId: string, member: PanelMember) => {
@@ -263,8 +266,8 @@ export const __usePanelStore = create<PanelState>()(
       },
 
       sendMessageToPanel: async (content: string) => {
-
-        if (!state.currentPanel) return;
+        const currentPanel = get().currentPanel;
+        if (!currentPanel) return;
 
         const userMessage: PanelMessage = {
           id: `msg_${Date.now()}`,
@@ -292,8 +295,8 @@ export const __usePanelStore = create<PanelState>()(
             body: JSON.stringify({
               message: content,
               panel: {
-                id: state.currentPanel.id,
-                members: state.currentPanel.members
+                id: currentPanel.id,
+                members: currentPanel.members
               },
               context: {
                 timestamp: new Date().toISOString()

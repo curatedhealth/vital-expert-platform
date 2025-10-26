@@ -19,11 +19,11 @@ import {
   ReasoningContent,
 } from '@/components/ai/reasoning';
 import { Response } from '@/components/ai/response';
-import { AgentAvatar } from '@vital/ui/components/agent-avatar';
-import { Badge } from '@vital/ui/components/badge';
-import { Button } from '@vital/ui/components/button';
-import { Card } from '@vital/ui/components/card';
-import { Textarea } from '@vital/ui/components/textarea';
+import { AgentAvatar } from '@vital/ui';
+import { Badge } from '@vital/ui';
+import { Button } from '@vital/ui';
+import { Card } from '@vital/ui';
+import { Textarea } from '@vital/ui';
 import { ChatMessage, useChatStore } from '@/lib/stores/chat-store';
 import { cn } from '@vital/ui/lib/utils';
 import { renderTextWithCitations } from '@/shared/components/ui/inline-citation';

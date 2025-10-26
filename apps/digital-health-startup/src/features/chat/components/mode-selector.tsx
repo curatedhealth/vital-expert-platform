@@ -2,7 +2,7 @@
 
 import { Bot, Users, Zap } from 'lucide-react';
 
-import { Switch } from '@vital/ui/components/switch';
+import { Switch } from '@vital/ui';
 import { useChatStore } from '@/lib/stores/chat-store';
 import { cn } from '@vital/ui/lib/utils';
 import { Badge } from '@/shared/components/badge';

@@ -2,7 +2,7 @@ import {
   Avatar,
   AvatarFallback,
   AvatarImage,
-} from '@vital/ui/components/avatar';
+} from '@vital/ui';
 import { cn } from '@vital/ui/lib/utils';
 
 import type { UIMessage } from 'ai';

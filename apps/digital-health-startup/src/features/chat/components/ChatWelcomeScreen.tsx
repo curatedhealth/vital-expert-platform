@@ -3,9 +3,9 @@
 import { Zap } from 'lucide-react';
 import Image from 'next/image';
 
-import { Badge } from '@vital/ui/components/badge';
-import { Button } from '@vital/ui/components/button';
-import { Card } from '@vital/ui/components/card';
+import { Badge } from '@vital/ui';
+import { Button } from '@vital/ui';
+import { Card } from '@vital/ui';
 import { ChatInput } from '@/features/chat/components/chat-input';
 import type { AIModel } from '@/lib/stores/chat-store';
 

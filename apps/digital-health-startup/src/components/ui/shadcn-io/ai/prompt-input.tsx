@@ -3,11 +3,11 @@
 import { Loader2Icon, SquareIcon, XIcon } from 'lucide-react';
 import { Children } from 'react';
 
-import { Button } from '@vital/ui/components/button';
+import { Button } from '@vital/ui';
 import {
   Select
-} from '@vital/ui/components/select';
-import { Textarea } from '@vital/ui/components/textarea';
+} from '@vital/ui';
+import { Textarea } from '@vital/ui';
 import { cn } from '@vital/ui/lib/utils';
 
 import type { ChatStatus } from 'ai';

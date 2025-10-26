@@ -113,7 +113,6 @@ function AgentsPageContent() {
       priority: 1,
       implementation_phase: 1,
       is_custom: agent.isCustom || false,
-      is_public: false,
     };
 
     setEditingAgent(agentForEditing);
@@ -155,7 +154,7 @@ function AgentsPageContent() {
         const userAgents = existingAgents ? JSON.parse(existingAgents) : [];
 
         // Check if agent is already added (by original agent id)
-        const isAlreadyAdded = userAgents.some((ua: unknown) => ua.original_agent_id === agent.id);
+        const isAlreadyAdded = userAgents.some((ua: any) => ua.original_agent_id === agent.id);
 
         if (!isAlreadyAdded) {
           // Add user copy to localStorage
@@ -193,7 +192,7 @@ function AgentsPageContent() {
         const userAgents = existingAgents ? JSON.parse(existingAgents) : [];
 
         // Check if agent is already added
-        const isAlreadyAdded = userAgents.some((ua: unknown) => ua.id === agent.id);
+        const isAlreadyAdded = userAgents.some((ua: any) => ua.id === agent.id);
 
         if (!isAlreadyAdded) {
           // Add existing user copy to localStorage
@@ -215,7 +214,7 @@ function AgentsPageContent() {
 
       const existingAgents = localStorage.getItem('user-chat-agents');
       const userAgents = existingAgents ? JSON.parse(existingAgents) : [];
-      const isAlreadyAdded = userAgents.some((ua: unknown) => ua.id === agent.id);
+      const isAlreadyAdded = userAgents.some((ua: any) => ua.id === agent.id);
 
       if (!isAlreadyAdded) {
         const newUserAgents = [...userAgents, chatAgent];
@@ -313,7 +312,7 @@ function AgentsPageContent() {
               window.location.reload();
             }
           }}
-          editingAgent={editingAgent as unknown}
+          editingAgent={editingAgent as any}
         />
       )}
     </div>

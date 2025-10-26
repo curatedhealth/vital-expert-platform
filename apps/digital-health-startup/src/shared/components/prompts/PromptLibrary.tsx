@@ -3,10 +3,10 @@
 import { Copy, Star } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
-import { Badge } from '@vital/ui/components/badge';
-import { Button } from '@vital/ui/components/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@vital/ui/components/card';
-import { useToast } from '@vital/ui/components/use-toast';
+import { Badge } from '@vital/ui';
+import { Button } from '@vital/ui';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@vital/ui';
+import { useToast } from '@vital/ui';
 
 interface Prompt {
   id: string;

@@ -989,7 +989,7 @@ Provide comprehensive analysis of patient populations with focus on health outco
         total_agents: comprehensiveAgents.length,
         successful_batches: results.successful.length,
         failed_batches: results.failed.length,
-        total_successful: results.successful.reduce((sum, batch) => sum + batch.agents.length, 0)
+        total_successful: results.successful.reduce((sum: number, batch: any) => sum + batch.agents.length, 0)
       },
       results: results
     });

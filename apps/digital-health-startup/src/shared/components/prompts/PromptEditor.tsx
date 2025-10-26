@@ -1,15 +1,15 @@
 import { Save, Copy, Eye, EyeOff } from 'lucide-react';
 import React, { useState, useEffect } from 'react';
 
-import { Badge } from '@vital/ui/components/badge';
-import { Button } from '@vital/ui/components/button';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@vital/ui/components/dialog';
-import { Input } from '@vital/ui/components/input';
-import { Label } from '@vital/ui/components/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@vital/ui/components/select';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@vital/ui/components/tabs';
-import { Textarea } from '@vital/ui/components/textarea';
-import { useToast } from '@vital/ui/components/use-toast';
+import { Badge } from '@vital/ui';
+import { Button } from '@vital/ui';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@vital/ui';
+import { Input } from '@vital/ui';
+import { Label } from '@vital/ui';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@vital/ui';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@vital/ui';
+import { Textarea } from '@vital/ui';
+import { useToast } from '@vital/ui';
 
 interface Prompt {
   id?: string;

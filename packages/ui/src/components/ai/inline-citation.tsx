@@ -3,9 +3,9 @@
 import { ExternalLink } from "lucide-react"
 import * as React from "react"
 
-import { Badge } from "@/components/ui/badge"
-import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card"
-import { cn } from "@/lib/utils"
+import { Badge } from "../badge"
+import { HoverCard, HoverCardContent, HoverCardTrigger } from "../hover-card"
+import { cn } from "../../lib/utils"
 
 interface Source {
   url: string

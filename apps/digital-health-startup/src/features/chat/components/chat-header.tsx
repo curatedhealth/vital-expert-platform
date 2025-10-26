@@ -15,9 +15,9 @@ import {
   User,
 } from 'lucide-react';
 
-import { AgentAvatar } from '@vital/ui/components/agent-avatar';
-import { Badge } from '@vital/ui/components/badge';
-import { Button } from '@vital/ui/components/button';
+import { AgentAvatar } from '@vital/ui';
+import { Badge } from '@vital/ui';
+import { Button } from '@vital/ui';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -25,8 +25,8 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@vital/ui/components/dropdown-menu';
-import { Switch } from '@vital/ui/components/switch';
+} from '@vital/ui';
+import { Switch } from '@vital/ui';
 import { Agent } from '@/lib/stores/chat-store';
 
 interface ChatHeaderProps {

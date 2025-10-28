@@ -89,10 +89,13 @@ export function NavAskExpert({
           <Button
             variant="ghost"
             className={cn(
-              'w-full',
-              isCollapsed ? 'justify-center px-2' : 'justify-start',
+              'transition-colors',
+              isCollapsed
+                ? 'mx-auto flex h-10 w-10 items-center justify-center rounded-lg'
+                : 'w-full justify-start'
             )}
             onClick={onNewChat}
+            aria-label="Start a new chat"
           >
             <MessageSquare className="h-4 w-4" />
             {!isCollapsed && <span className="ml-2">New Chat</span>}
@@ -100,9 +103,12 @@ export function NavAskExpert({
           <Button
             variant="ghost"
             className={cn(
-              'w-full',
-              isCollapsed ? 'justify-center px-2' : 'justify-start',
+              'transition-colors',
+              isCollapsed
+                ? 'mx-auto flex h-10 w-10 items-center justify-center rounded-lg'
+                : 'w-full justify-start'
             )}
+            aria-label={isCollapsed ? 'Manage chats' : undefined}
           >
             <FileText className="h-4 w-4" />
             {!isCollapsed && <span className="ml-2">Manage Chats</span>}

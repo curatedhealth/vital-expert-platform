@@ -284,7 +284,7 @@ export class SupabaseRAGService {
     const { data, error } = await this.supabase.rpc('search_knowledge_for_agent', {
       agent_id_param: agentId,
       query_text_param: queryText,
-      query_embedding_param: JSON.stringify(queryEmbedding.openai),
+      query_embedding_param: queryEmbedding.openai,
       max_results: maxResults
     });
 

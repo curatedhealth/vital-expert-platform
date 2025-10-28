@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
       if (infoError) {
         console.error('Cannot access table info:', infoError);
       } else {
-        const columns = tableInfo?.map(col => col.column_name) || [];
+        const columns = tableInfo?.map((col: any) => col.column_name) || [];
       }
 
       return NextResponse.json({

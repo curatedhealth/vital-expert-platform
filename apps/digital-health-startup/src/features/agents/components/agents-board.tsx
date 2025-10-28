@@ -215,10 +215,15 @@ export function AgentsBoard({
           console.log('[Agents Board] Loaded business functions:', functions?.length || 0);
           setDbBusinessFunctions(functions || []);
         } else {
-          console.error('[Agents Board] Failed to load business functions:', result.error);
+          console.warn(
+            '[Agents Board] Business functions unavailable, using empty list:',
+            result?.error || 'Unknown error'
+          );
+          setDbBusinessFunctions([]);
         }
       } catch (error) {
-        console.error('[Agents Board] Error loading business functions:', error);
+        console.warn('[Agents Board] Error loading business functions, using empty list:', error);
+        setDbBusinessFunctions([]);
       }
     }
 
@@ -503,15 +508,16 @@ export function AgentsBoard({
 
       {/* Agents Grid/List */}
       {viewMode === 'grid' ? (
-        <AgentCardGrid columns={4} className="gap-4">
+        <AgentCardGrid columns={3} className="gap-6">
           {filteredAgents.map((agent) => (
             <EnhancedAgentCard
               key={agent.id}
               agent={agent}
               onClick={() => onAgentSelect?.(agent)}
+              onAddToChat={onAddToChat ? () => onAddToChat(agent) : undefined}
               showReasoning={false}
               showTier={true}
-              size="md"
+              size="lg"
             />
           ))}
         </AgentCardGrid>

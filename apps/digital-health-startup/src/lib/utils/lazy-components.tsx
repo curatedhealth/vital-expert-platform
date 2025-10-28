@@ -279,14 +279,15 @@ export const LazyEnhancedChatInterface = dynamic(
 
 /**
  * Autonomous Chat Interface - Heavy AI agent interface
+ * DISABLED: Not currently used
  */
-export const LazyAutonomousChatInterface = dynamic(
-  () => import('@/components/chat/autonomous/AutonomousChatInterface'),
-  {
-    loading: () => <ComponentLoadingFallback />,
-    ssr: false,
-  }
-);
+// export const LazyAutonomousChatInterface = dynamic(
+//   () => import('@/components/chat/autonomous/AutonomousChatInterface'),
+//   {
+//     loading: () => <ComponentLoadingFallback />,
+//     ssr: false,
+//   }
+// );
 
 /**
  * Dashboard Main - Heavy dashboard with widgets

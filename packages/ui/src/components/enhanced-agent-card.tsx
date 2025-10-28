@@ -1,17 +1,19 @@
-import { Star, CheckCircle, Zap, Shield, Target } from 'lucide-react';
+import { Star, CheckCircle, Zap, Shield, Target, MessageSquarePlus } from 'lucide-react';
 import React from 'react';
 
-import { AgentAvatar } from '@/components/ui/agent-avatar';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent } from '@/components/ui/card';
+import { AgentAvatar } from '@vital/ui';
+import { Badge } from '@vital/ui';
+import { Button } from '@vital/ui';
+import { Card, CardContent } from '@vital/ui';
 import { type Agent } from '@/lib/stores/chat-store';
-import { cn } from '@/lib/utils';
+import { cn } from '@vital/ui/lib/utils';
 
 interface EnhancedAgentCardProps {
   agent: Agent;
   isSelected?: boolean;
   isBestMatch?: boolean;
   onClick?: () => void;
+  onAddToChat?: (agent: Agent) => void;
   className?: string;
   showReasoning?: boolean;
   showTier?: boolean;
@@ -73,6 +75,7 @@ export function EnhancedAgentCard({
   isSelected = false,
   isBestMatch = false,
   onClick,
+  onAddToChat,
   className,
   showReasoning = true,
   showTier = true,
@@ -245,6 +248,24 @@ export function EnhancedAgentCard({
                 </Badge>
               </div>
             )}
+
+            {/* Add to Chat Button */}
+            {onAddToChat && (
+              <div className="mt-3 pt-3 border-t border-gray-200">
+                <Button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onAddToChat(agent);
+                  }}
+                  variant="outline"
+                  size="sm"
+                  className="w-full border-blue-500 text-blue-600 hover:bg-blue-50 hover:text-blue-700"
+                >
+                  <MessageSquarePlus className="w-4 h-4 mr-2" />
+                  Add to Chat
+                </Button>
+              </div>
+            )}
           </div>
         </div>
       </CardContent>
@@ -281,3 +302,4 @@ export function AgentCardGrid({
     </div>
   );
 }
+/* Cache bust 1761607345 */

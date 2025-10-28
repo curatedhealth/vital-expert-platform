@@ -58,7 +58,7 @@ export async function POST(request: NextRequest) {
         const content = await fetchContentFromUrl(url);
 
         // Step 2: Create knowledge source record
-        const knowledgeSource = await createKnowledgeSource({
+        const knowledgeSource = await createKnowledgeSource(supabase, {
           url,
           title: extractTitleFromContent(content) || `Document from ${new URL(url).hostname}`,
           domain,
@@ -71,7 +71,7 @@ export async function POST(request: NextRequest) {
         const chunks = await processAndChunkContent(content, knowledgeSource.id);
 
         // Step 4: Generate embeddings for each chunk
-        await generateEmbeddings(chunks, knowledgeSource.id);
+        await generateEmbeddings(supabase, chunks, knowledgeSource.id);
 
         results.push({
           url,
@@ -166,7 +166,7 @@ function extractTitleFromContent(content: string): string | null {
   return null;
 }
 
-async function createKnowledgeSource(source: KnowledgeSource, content: string) {
+async function createKnowledgeSource(supabase: any, source: KnowledgeSource, content: string) {
   const contentHash = crypto.createHash('sha256').update(content).digest('hex');
 
   // Determine access level and restrictions based on isGlobal and agentId
@@ -250,7 +250,7 @@ async function processAndChunkContent(content: string, sourceId: string): Promis
   return chunks;
 }
 
-async function generateEmbeddings(chunks: Array<{
+async function generateEmbeddings(supabase: any, chunks: Array<{
   content: string;
   index: number;
   length: number;

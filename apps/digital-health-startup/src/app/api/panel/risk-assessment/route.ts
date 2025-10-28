@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
 
     console.log(`✅ Risk assessment completed`);
     console.log(`🎲 Total Risks: ${riskMatrix.summary.totalRisks}`);
-    console.log(`🔴 Critical Risks: ${riskMatrix.summary.criticalRisks}`);
+    console.log(`🔴 Critical Risks: ${(riskMatrix.summary as any).criticalRisks || 0}`);
     console.log(`🟠 High Risks: ${riskMatrix.summary.highRisks}`);
     console.log(`🟡 Medium Risks: ${riskMatrix.summary.mediumRisks}`);
     console.log(`🟢 Low Risks: ${riskMatrix.summary.lowRisks}\n`);

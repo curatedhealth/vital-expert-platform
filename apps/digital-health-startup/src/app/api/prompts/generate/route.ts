@@ -42,21 +42,22 @@ export async function POST(request: NextRequest) {
     }
 
     // Log prompt generation request
-    const agentCapabilities = body.capabilities || [];
-    await supabase.from('usage_analytics').insert({
-      organization_id: userProfile.organization_id,
-      user_id: user.user.id,
-      event_type: 'prompt_generation_requested',
-      resource_type: 'prompt_generation',
-      metrics: {
-        businessFunction: body.medicalContext.businessFunction,
-        role: body.medicalContext.role,
-        capabilitiesCount: agentCapabilities.length,
-        medicalSpecialty: body.medicalContext.medicalSpecialty,
-        pharmaEnabled: body.pharmaProtocolRequired,
-        verifyEnabled: body.verifyProtocolRequired
-      }
-    });
+    // TODO: Implement proper logging with authentication
+    // const agentCapabilities = (body as any).capabilities || [];
+    // await supabase.from('usage_analytics').insert({
+    //   organization_id: userProfile.organization_id,
+    //   user_id: user.user.id,
+    //   event_type: 'prompt_generation_requested',
+    //   resource_type: 'prompt_generation',
+    //   metrics: {
+    //     businessFunction: body.medicalContext.businessFunction,
+    //     role: body.medicalContext.role,
+    //     capabilitiesCount: agentCapabilities.length,
+    //     medicalSpecialty: body.medicalContext.medicalSpecialty,
+    //     pharmaEnabled: body.pharmaProtocolRequired,
+    //     verifyEnabled: body.verifyProtocolRequired
+    //   }
+    // });
 
     // Generate the system prompt
     const startTime = Date.now();
@@ -193,7 +194,7 @@ export async function GET(request: NextRequest) {
 /**
  * Calculate estimated accuracy based on capabilities
  */
-function calculateEstimatedAccuracy(capabilities: unknown[]): number {
+function calculateEstimatedAccuracy(capabilities: any[]): number {
   if (capabilities.length === 0) return 0.95; // Default
 
   const accuracySum = capabilities.reduce((sum, cap) => sum + (cap.accuracy_threshold || 0.95), 0);
@@ -220,9 +221,9 @@ async function getPromptExamples(specialty?: string | null) {
     }
   };
 
-  if (specialty && (examples as unknown)[specialty]) {
+  if (specialty && (examples as any)[specialty]) {
     // eslint-disable-next-line security/detect-object-injection
-    return (examples as unknown)[specialty];
+    return (examples as any)[specialty];
   }
 
   return specialty ? null : examples;

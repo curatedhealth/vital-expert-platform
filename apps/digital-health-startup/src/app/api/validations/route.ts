@@ -335,7 +335,7 @@ function calculateValidationStats(validations: unknown[]) {
   };
 
   // Calculate by type
-  validations.forEach(validation => {
+  validations.forEach((validation: any) => {
     stats.byType[validation.validation_type] = (stats.byType[validation.validation_type] || 0) + 1;
     stats.byEntityType[validation.entity_type] = (stats.byEntityType[validation.entity_type] || 0) + 1;
   });

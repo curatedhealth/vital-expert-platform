@@ -200,20 +200,26 @@ export async function DELETE(request: NextRequest) {
         case 'keep-newest':
           keepIndex = group.reduce((newest: number, doc: unknown, index: number) => {
             // eslint-disable-next-line security/detect-object-injection
-            return new Date(doc.uploadedAt) > new Date(group[newest].uploadedAt) ? index : newest;
+            const docWithDate = doc as { uploadedAt: string | Date };
+            const groupDoc = group[newest] as { uploadedAt: string | Date };
+            return new Date(docWithDate.uploadedAt) > new Date(groupDoc.uploadedAt) ? index : newest;
           }, 0);
           break;
         case 'keep-largest':
           keepIndex = group.reduce((largest: number, doc: unknown, index: number) => {
             // eslint-disable-next-line security/detect-object-injection
-            return doc.size > group[largest].size ? index : largest;
+            const docWithSize = doc as { size: number };
+            const groupDoc = group[largest] as { size: number };
+            return docWithSize.size > groupDoc.size ? index : largest;
           }, 0);
           break;
         case 'keep-oldest':
         default:
           keepIndex = group.reduce((oldest: number, doc: unknown, index: number) => {
             // eslint-disable-next-line security/detect-object-injection
-            return new Date(doc.uploadedAt) < new Date(group[oldest].uploadedAt) ? index : oldest;
+            const docWithDate = doc as { uploadedAt: string | Date };
+            const groupDoc = group[oldest] as { uploadedAt: string | Date };
+            return new Date(docWithDate.uploadedAt) < new Date(groupDoc.uploadedAt) ? index : oldest;
           }, 0);
           break;
       }

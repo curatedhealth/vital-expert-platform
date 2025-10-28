@@ -19,7 +19,6 @@ export async function POST(request: NextRequest) {
     // Use LangChain service to search knowledge
     const results = await langchainRAGService.searchKnowledge(query, {
       domain: domain !== 'all' ? domain : undefined,
-      isGlobal: scope === 'global' ? true : scope === 'agent' ? false : undefined,
       limit,
       agentId,
     });

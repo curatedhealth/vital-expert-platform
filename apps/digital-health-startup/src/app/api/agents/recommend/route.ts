@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { OpenAI } from 'openai';
 
-import { createClient } from '@vital/sdk';
+import { createClient } from '@supabase/supabase-js';
 
 // Initialize OpenAI
 const openai = new OpenAI({
@@ -79,7 +79,9 @@ export async function POST(request: NextRequest) {
     // Step 2: Get ALL active agents for GPT-4 ranking
     // Note: knowledge_domains in DB contains descriptive strings like "FDA regulations"
     // So we'll let GPT-4 do the semantic matching instead of .overlaps()
-    const supabase = await createClient();
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
     const { data: agents, error } = await supabase
       .from('agents')
       .select('id, name, display_name, description, capabilities, tier, system_prompt, avatar, knowledge_domains, model')

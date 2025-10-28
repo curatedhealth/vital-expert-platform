@@ -211,7 +211,7 @@ export class ComplianceMiddleware {
     validationResult: ComplianceValidationResult,
     auditTrailId: string
   ): Promise<void> {
-
+    const alert = {
       timestamp: new Date().toISOString(),
       type: 'COMPLIANCE_RISK',
       severity: validationResult.riskScore >= 80 ? 'CRITICAL' : 'HIGH',
@@ -226,7 +226,7 @@ export class ComplianceMiddleware {
     };
 
     // In production, send to monitoring system, security team, etc.
-    // console.warn(`🚨 COMPLIANCE ALERT:`, alert);
+    console.warn(`🚨 COMPLIANCE ALERT:`, alert);
 
     // Log to compliance manager for reporting
     // Could integrate with external alerting systems (Slack, PagerDuty, etc.)

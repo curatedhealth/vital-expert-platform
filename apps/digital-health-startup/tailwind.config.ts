@@ -18,16 +18,13 @@ const config: Config = {
   	},
   	extend: {
   		colors: {
-  			// VITAL.expert Brand Colors
   			'vital-black': '#0A0A0A',
   			'vital-white': '#FFFFFF',
   			'vital-gray-95': '#FAFAFA',
   			'vital-gray-90': '#F5F5F5',
   			'vital-gray-80': '#E5E5E5',
-  			'vital-gray-60': '#757575', // Updated for WCAG AA compliance (4.6:1 contrast ratio)
+  			'vital-gray-60': '#757575',
   			'vital-gray-40': '#666666',
-
-  			// Service Line Colors
   			'regulatory-blue': '#0066FF',
   			'clinical-green': '#00CC88',
   			'safety-red': '#FF3366',
@@ -36,48 +33,46 @@ const config: Config = {
   			'research-cyan': '#00CCFF',
   			'quality-gold': '#FFAA00',
   			'strategy-navy': '#003399',
-
-  			// Legacy colors (for backwards compatibility)
   			'trust-blue': '#0066FF',
   			'progress-teal': '#00CC88',
   			'deep-charcoal': '#0A0A0A',
   			'regulatory-gold': '#FFAA00',
   			'market-purple': '#9933FF',
-  			'medical-gray': '#757575', // Updated for WCAG AA compliance
+  			'medical-gray': '#757575',
   			'light-gray': '#E5E5E5',
   			'background-gray': '#FAFAFA',
-  			border: 'var(--border)',
-  			input: 'var(--input)',
-  			ring: 'var(--ring)',
-  			background: 'var(--background)',
-  			foreground: 'var(--foreground)',
+  			border: 'hsl(var(--border))',
+  			input: 'hsl(var(--input))',
+  			ring: 'hsl(var(--ring))',
+  			background: 'hsl(var(--background))',
+  			foreground: 'hsl(var(--foreground))',
   			primary: {
-  				DEFAULT: 'var(--primary)',
-  				foreground: 'var(--primary-foreground)'
+  				DEFAULT: 'hsl(var(--primary))',
+  				foreground: 'hsl(var(--primary-foreground))'
   			},
   			secondary: {
-  				DEFAULT: 'var(--secondary)',
-  				foreground: 'var(--secondary-foreground)'
+  				DEFAULT: 'hsl(var(--secondary))',
+  				foreground: 'hsl(var(--secondary-foreground))'
   			},
   			destructive: {
-  				DEFAULT: 'var(--destructive)',
-  				foreground: 'var(--destructive-foreground)'
+  				DEFAULT: 'hsl(var(--destructive))',
+  				foreground: 'hsl(var(--destructive-foreground))'
   			},
   			muted: {
-  				DEFAULT: 'var(--muted)',
-  				foreground: 'var(--muted-foreground)'
+  				DEFAULT: 'hsl(var(--muted))',
+  				foreground: 'hsl(var(--muted-foreground))'
   			},
   			accent: {
-  				DEFAULT: 'var(--accent)',
-  				foreground: 'var(--accent-foreground)'
+  				DEFAULT: 'hsl(var(--accent))',
+  				foreground: 'hsl(var(--accent-foreground))'
   			},
   			popover: {
-  				DEFAULT: 'var(--popover)',
-  				foreground: 'var(--popover-foreground)'
+  				DEFAULT: 'hsl(var(--popover))',
+  				foreground: 'hsl(var(--popover-foreground))'
   			},
   			card: {
-  				DEFAULT: 'var(--card)',
-  				foreground: 'var(--card-foreground)'
+  				DEFAULT: 'hsl(var(--card))',
+  				foreground: 'hsl(var(--card-foreground))'
   			},
   			sidebar: {
   				DEFAULT: 'hsl(var(--sidebar-background))',
@@ -90,11 +85,11 @@ const config: Config = {
   				ring: 'hsl(var(--sidebar-ring))'
   			},
   			chart: {
-  				'1': 'var(--chart-1)',
-  				'2': 'var(--chart-2)',
-  				'3': 'var(--chart-3)',
-  				'4': 'var(--chart-4)',
-  				'5': 'var(--chart-5)'
+  				'1': 'hsl(var(--chart-1))',
+  				'2': 'hsl(var(--chart-2))',
+  				'3': 'hsl(var(--chart-3))',
+  				'4': 'hsl(var(--chart-4))',
+  				'5': 'hsl(var(--chart-5))'
   			}
   		},
   		fontFamily: {

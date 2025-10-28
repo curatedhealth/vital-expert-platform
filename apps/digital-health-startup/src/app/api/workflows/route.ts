@@ -115,7 +115,7 @@ export async function POST(request: NextRequest) {
           action: interaction.action,
           success: interaction.success,
           execution_time: interaction.execution_time,
-          compliance_status: (interaction.outputs as unknown).compliance_status
+          compliance_status: (interaction.outputs as any)?.compliance_status
         }))
       },
       timestamp: new Date().toISOString()

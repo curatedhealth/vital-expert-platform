@@ -105,7 +105,7 @@ export async function POST(request: NextRequest) {
           description: agentData.description,
           system_prompt: agentData.system_prompt,
           model: agentData.model || 'gpt-4',
-          avatar: agentData.avatar || '🤖',
+          avatar_url: agentData.avatar || '🤖',
           color: agentData.color || '#3B82F6',
           capabilities: agentData.capabilities || [],
           rag_enabled: agentData.rag_enabled ?? false,

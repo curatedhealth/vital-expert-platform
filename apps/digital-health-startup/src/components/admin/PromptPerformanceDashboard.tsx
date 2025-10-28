@@ -94,7 +94,7 @@ export function PromptPerformanceDashboard({ className = '' }: PromptPerformance
 
   // Get performance alerts
   const getPerformanceAlerts = () => {
-    const alerts = [];
+    const alerts: any[] = [];
     
     performanceData.forEach(metrics => {
       if (metrics.error_rate > 20) {

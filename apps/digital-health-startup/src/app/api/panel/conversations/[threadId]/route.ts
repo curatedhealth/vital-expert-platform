@@ -23,7 +23,7 @@ export async function GET(
     }
 
     // Get session info
-    const session = await langGraphOrchestrator.getSessionInfo(threadId);
+    const session = await (langGraphOrchestrator as any).getSessionInfo(threadId);
 
     if (!session) {
       return NextResponse.json(

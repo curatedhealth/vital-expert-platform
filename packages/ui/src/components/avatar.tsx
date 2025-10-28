@@ -1,50 +1,106 @@
 "use client"
 
-import * as AvatarPrimitive from "@radix-ui/react-avatar"
 import * as React from "react"
 
 import { cn } from "@/shared/services/utils"
 
-const Avatar = React.forwardRef<
-  React.ElementRef<typeof AvatarPrimitive.Root>,
-  React.ComponentPropsWithoutRef<typeof AvatarPrimitive.Root>
->(({ className, ...props }, ref) => (
-  <AvatarPrimitive.Root
-    ref={ref}
-    className={cn(
-      "relative flex h-10 w-10 shrink-0 overflow-hidden rounded-full",
-      className
-    )}
-    {...props}
-  />
-))
-Avatar.displayName = AvatarPrimitive.Root.displayName
+interface AvatarProps extends React.HTMLAttributes<HTMLSpanElement> {}
 
-const AvatarImage = React.forwardRef<
-  React.ElementRef<typeof AvatarPrimitive.Image>,
-  React.ComponentPropsWithoutRef<typeof AvatarPrimitive.Image>
->(({ className, ...props }, ref) => (
-  <AvatarPrimitive.Image
-    ref={ref}
-    className={cn("aspect-square h-full w-full", className)}
-    {...props}
-  />
-))
-AvatarImage.displayName = AvatarPrimitive.Image.displayName
+const Avatar = React.forwardRef<HTMLSpanElement, AvatarProps>(
+  ({ className, ...props }, ref) => (
+    <span
+      ref={ref}
+      className={cn(
+        "relative flex h-10 w-10 shrink-0 overflow-hidden rounded-full",
+        className
+      )}
+      {...props}
+    />
+  )
+)
+Avatar.displayName = "Avatar"
 
-const AvatarFallback = React.forwardRef<
-  React.ElementRef<typeof AvatarPrimitive.Fallback>,
-  React.ComponentPropsWithoutRef<typeof AvatarPrimitive.Fallback>
->(({ className, ...props }, ref) => (
-  <AvatarPrimitive.Fallback
-    ref={ref}
-    className={cn(
-      "flex h-full w-full items-center justify-center rounded-full bg-muted",
-      className
-    )}
-    {...props}
-  />
-))
-AvatarFallback.displayName = AvatarPrimitive.Fallback.displayName
+interface AvatarImageProps extends React.ImgHTMLAttributes<HTMLImageElement> {}
+
+const AvatarImage = React.forwardRef<HTMLImageElement, AvatarImageProps>(
+  ({ className, src, alt, onLoad, onError, ...props }, ref) => {
+    const [imageStatus, setImageStatus] = React.useState<"loading" | "loaded" | "error">("loading")
+
+    React.useEffect(() => {
+      if (!src) {
+        setImageStatus("error")
+        return
+      }
+
+      setImageStatus("loading")
+
+      const img = new Image()
+      img.src = src
+
+      img.onload = (e) => {
+        setImageStatus("loaded")
+        onLoad?.(e as any)
+      }
+
+      img.onerror = (e) => {
+        setImageStatus("error")
+        onError?.(e as any)
+      }
+    }, [src, onLoad, onError])
+
+    if (imageStatus !== "loaded") {
+      return null
+    }
+
+    return (
+      <img
+        ref={ref}
+        src={src}
+        alt={alt || "Avatar"}
+        className={cn("aspect-square h-full w-full object-cover", className)}
+        {...props}
+      />
+    )
+  }
+)
+AvatarImage.displayName = "AvatarImage"
+
+interface AvatarFallbackProps extends React.HTMLAttributes<HTMLSpanElement> {
+  delayMs?: number
+}
+
+const AvatarFallback = React.forwardRef<HTMLSpanElement, AvatarFallbackProps>(
+  ({ className, delayMs, children, ...props }, ref) => {
+    const [canRender, setCanRender] = React.useState(delayMs === undefined)
+
+    React.useEffect(() => {
+      if (delayMs !== undefined) {
+        const timeout = setTimeout(() => {
+          setCanRender(true)
+        }, delayMs)
+
+        return () => clearTimeout(timeout)
+      }
+    }, [delayMs])
+
+    if (!canRender) {
+      return null
+    }
+
+    return (
+      <span
+        ref={ref}
+        className={cn(
+          "flex h-full w-full items-center justify-center rounded-full bg-muted",
+          className
+        )}
+        {...props}
+      >
+        {children}
+      </span>
+    )
+  }
+)
+AvatarFallback.displayName = "AvatarFallback"
 
 export { Avatar, AvatarImage, AvatarFallback }

@@ -87,6 +87,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Authentication
+    const token = request.headers.get('authorization')?.replace('Bearer ', '');
 
     if (!token) {
       return NextResponse.json({
@@ -117,6 +118,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Create processing request for Python service
+    const requestId = `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     const processingRequest = {
       request_id: requestId,
       user_id: user.user.id,
@@ -222,7 +224,7 @@ export async function GET(request: NextRequest) {
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-
+    const token = request.headers.get('authorization')?.replace('Bearer ', '');
 
     if (!token) {
       return NextResponse.json({
@@ -357,14 +359,16 @@ export async function GET(request: NextRequest) {
 
 // Integrated prompt processing fallback
 async function processWithIntegratedPromptManager(
-  request: unknown,
-  supabase: unknown,
+  request: any,
+  supabase: any,
   organizationId: string
 ): Promise<PromptProcessingResponse> {
 
-  try {
+  const startTime = Date.now();
 
+  try {
     // 1. Classify prompt category
+    const category = request.category || 'general';
 
     // 2. Assess clinical safety
     const { safetyLevel, clinicalWarnings } = await assessClinicalSafety(
@@ -383,6 +387,8 @@ async function processWithIntegratedPromptManager(
     }
 
     // 4. Optimize prompt if requested
+    let optimizationResult: any = null;
+    let processedPrompt = request.prompt_text;
 
     if (request.optimization_requested) {
       optimizationResult = await optimizePrompt(
@@ -401,12 +407,14 @@ async function processWithIntegratedPromptManager(
     )
 
     // 6. Calculate confidence score
-    const confidenceScore = calculateConfidenceScore(
+    const confidenceScore = calculatePromptConfidence(
       category,
       safetyLevel,
       complianceStatus,
       optimizationResult
     )
+
+    const processingTime = Date.now() - startTime;
 
     return {
       success: true,
@@ -414,10 +422,10 @@ async function processWithIntegratedPromptManager(
       processed_prompt: processedPrompt,
       category,
       safety_level: safetyLevel,
-      compliance_status: complianceStatus,
+      compliance_status: complianceStatus as any,
       optimization_result: optimizationResult || undefined,
       clinical_warnings: clinicalWarnings,
-      recommendations,
+      recommendations: recommendations as any,
       confidence_score: confidenceScore,
       processing_time: processingTime,
       metadata: {
@@ -462,7 +470,7 @@ function classifyPromptCategory(promptText: string, suggestedCategory?: string) 
   return bestCategory
 }
 
-async function assessClinicalSafety(promptText: string, medicalContext: unknown) {
+async function assessClinicalSafety(promptText: string, medicalContext: any) {
   const warnings: string[] = []
   let safetyLevel: 'safe' | 'cautionary' | 'restricted' | 'prohibited' = 'safe'
 
@@ -514,6 +522,8 @@ async function validateCompliance(promptText: string, requirement: string) {
     }
   }
 
+  const check = complianceChecks[requirement];
+
   if (!check) {
     return {
       is_compliant: false,
@@ -538,7 +548,7 @@ async function validateCompliance(promptText: string, requirement: string) {
   }
 }
 
-async function optimizePrompt(promptText: string, category: string, medicalContext: unknown) {
+async function optimizePrompt(promptText: string, category: string, medicalContext: any) {
   // Clinical precision optimization
   const clinicalTerms = {
     'probably': 'likely (>70% probability)',
@@ -597,7 +607,7 @@ function generatePromptRecommendations(
 
   // Add compliance-based recommendations
   for (const [requirement, status] of Object.entries(complianceStatus)) {
-    if (!status.is_compliant) {
+    if (!(status as any).is_compliant) {
       recommendations.push(`Address ${requirement} compliance issues`)
     }
   }
@@ -615,16 +625,18 @@ function calculatePromptConfidence(
   complianceStatus: Record<string, unknown>,
   optimizationResult: unknown
 ): number {
+  let score = 0.4; // Base score
 
   // Category confidence
   score += 0.2
 
   // Safety level
-
+  const safetyScores = { safe: 0.2, cautionary: 0.1, restricted: 0.05, prohibited: 0 };
   score += safetyScores[safetyLevel as keyof typeof safetyScores] || 0
 
   // Compliance
-
+  const complianceCount = Object.keys(complianceStatus).length;
+  const compliantCount = Object.values(complianceStatus).filter((s: any) => s?.is_compliant).length;
   score += complianceCount > 0 ? (compliantCount / complianceCount) * 0.2 : 0.2
 
   // Optimization
@@ -647,4 +659,18 @@ function extractMedicalEntities(promptText: string): string[] {
 function getCategoryConfidence(category: string): number {
   // Return confidence based on category classification
   return 0.85 // Simplified
+}
+
+async function generateRecommendations(category: string, complianceStatus: any, clinicalWarnings: any[]) {
+  // TODO: Implement recommendation generation
+  const recommendations: Array<Record<string, unknown>> = [];
+
+  if (clinicalWarnings.length > 0) {
+    recommendations.push({
+      type: 'warning',
+      message: 'Review clinical warnings before proceeding'
+    });
+  }
+
+  return recommendations;
 }

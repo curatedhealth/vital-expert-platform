@@ -172,7 +172,7 @@ export async function POST(request: NextRequest) {
               name: agent.name,
               display_name: agent.display_name,
               description: agent.description,
-              avatar: agent.avatar || '🤖',
+              avatar_url: agent.avatar || '🤖',
               color: agent.color || '#6366f1',
               model: agent.model,
               system_prompt: agent.system_prompt,

@@ -18,7 +18,7 @@ export * from './components/label';
 export * from './components/loading-skeletons';
 export * from './components/popover';
 export * from './components/progress';
-export * from './components/resizable';
+// export * from './components/resizable'; // Requires react-resizable-panels dependency
 export * from './components/scroll-area';
 export * from './components/select';
 export * from './components/separator';

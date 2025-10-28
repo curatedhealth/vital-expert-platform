@@ -3,7 +3,7 @@ import { z } from 'zod';
 
 import { SupabaseRAGService } from '@/features/chat/services/supabase-rag-service';
 import { llmOrchestrator } from '@/lib/llm/orchestrator';
-import { createClient } from '@vital/sdk';
+import { createClient } from '@supabase/supabase-js';
 import { ModelType } from '@/types';
 
 const querySchema = z.object({
@@ -235,7 +235,7 @@ export async function POST(request: NextRequest) {
 
 // Helper function to update usage metrics
 async function updateUsageMetrics(
-  supabase: unknown,
+  supabase: any,
   organizationId: string,
   metrics: { queries?: number; tokens?: number }
 ) {

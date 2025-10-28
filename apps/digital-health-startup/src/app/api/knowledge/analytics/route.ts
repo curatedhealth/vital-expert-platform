@@ -82,9 +82,10 @@ export async function GET(request: NextRequest) {
     // Helper function to determine document category
     const getDocumentCategory = (doc: unknown): string => {
       let category = 'other';
-      const tags = doc.tags || [];
-      const title = (doc.title || '').toLowerCase();
-      const description = (doc.description || '').toLowerCase();
+      const docRecord = doc as Record<string, any>;
+      const tags = docRecord?.tags || [];
+      const title = (docRecord?.title || '').toLowerCase();
+      const description = (docRecord?.description || '').toLowerCase();
 
       if (tags.includes('regulatory') || title.includes('regulation') || title.includes('fda') || title.includes('directive')) {
         category = 'regulatory';
@@ -113,7 +114,9 @@ export async function GET(request: NextRequest) {
 
       // eslint-disable-next-line security/detect-object-injection
       const agentCategories = agentMapping[agentName] || [];
-      return agentCategories.includes(category) || doc.is_public;
+      // Type assertion for doc properties
+      const docWithProps = doc as { is_public?: boolean };
+      return agentCategories.includes(category) || (docWithProps.is_public === true);
     };
 
     // Filter documents based on parameters
@@ -226,7 +229,8 @@ export async function GET(request: NextRequest) {
     // Convert Sets to arrays for agent domains
     Object.keys(agentStats).forEach(agent => {
       // eslint-disable-next-line security/detect-object-injection
-      (agentStats as unknown)[agent].domains = Array.from((agentStats as unknown)[agent].domains);
+      const agentKey = agent as keyof typeof agentStats;
+      (agentStats[agentKey] as any).domains = Array.from(agentStats[agentKey].domains);
     });
 
     // Content statistics (use filtered documents when applicable)

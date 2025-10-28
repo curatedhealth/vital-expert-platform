@@ -81,8 +81,8 @@ export async function GET(request: NextRequest) {
       );
     }
     // Get unique departments and seniority levels for filtering
-    const departments = [...new Set(data?.map(role => role.department).filter(Boolean))];
-    const seniorityLevels = [...new Set(data?.map(role => role.seniority_level).filter(Boolean))];
+    const departments = [...new Set(data?.map((role: any) => role.department).filter(Boolean))];
+    const seniorityLevels = [...new Set(data?.map((role: any) => role.seniority_level).filter(Boolean))];
 
     return NextResponse.json({
       roles: data || [],

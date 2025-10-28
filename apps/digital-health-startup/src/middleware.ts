@@ -1,16 +1,63 @@
+/**
+ * Edge Middleware
+ *
+ * Security and authentication layer for all requests.
+ * Runs on Vercel Edge runtime.
+ *
+ * @module middleware
+ */
+
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 import { tenantMiddleware } from './middleware/tenant-middleware';
+import {
+  checkRateLimit,
+  createRateLimitHeaders,
+  getIdentifier,
+  getRateLimitTier,
+} from './lib/security/rate-limiter';
+import {
+  validateCsrfToken,
+  validateOrigin,
+  needsCsrfProtection,
+  createCsrfErrorResponse,
+  createOriginErrorResponse,
+  generateCsrfToken,
+  setCsrfCookie,
+  getCsrfToken,
+} from './lib/security/csrf';
+import { applySecurityHeaders, createCorsPreflightResponse } from './lib/security/headers';
 
 export async function middleware(request: NextRequest) {
   const url = request.nextUrl.clone();
+  const { pathname } = request.nextUrl;
+
+  // ========================================================================
+  // 1. CORS PREFLIGHT
+  // ========================================================================
+
+  if (request.method === 'OPTIONS') {
+    const origin = request.headers.get('origin');
+    if (origin) {
+      return createCorsPreflightResponse(origin);
+    }
+  }
+
+  // ========================================================================
+  // 2. ORIGIN VALIDATION
+  // ========================================================================
+
+  if (pathname.startsWith('/api') && !validateOrigin(request)) {
+    console.warn('[Middleware] Invalid origin:', request.headers.get('origin'));
+    return createOriginErrorResponse();
+  }
 
   // Public routes that don't require authentication
-  const publicRoutes = ['/', '/login', '/register', '/forgot-password', '/platform', '/services', '/framework'];
-  const isPublicRoute = publicRoutes.includes(url.pathname);
+  const publicRoutes = ['/', '/login', '/register', '/forgot-password', '/platform', '/services', '/framework', '/auth/callback'];
+  const isPublicRoute = publicRoutes.includes(url.pathname) || url.pathname.startsWith('/auth/');
 
   // Allow Ask Expert API routes without authentication (uses service role key internally)
-  const publicApiRoutes = ['/api/ask-expert/chat', '/api/ask-expert/generate-document'];
+  const publicApiRoutes = ['/api/ask-expert/chat', '/api/ask-expert/generate-document', '/api/user-agents'];
   const isPublicApiRoute = publicApiRoutes.some(route => url.pathname.startsWith(route));
 
   if (isPublicApiRoute) {
@@ -114,13 +161,99 @@ export async function middleware(request: NextRequest) {
     }
   );
 
-  await supabase.auth.getUser();
+  const { data: { user }, error } = await supabase.auth.getUser();
+  const userId = user?.id;
+  const isAuthenticated = !!user && !error;
+
+  // Redirect unauthenticated users to login page (except for public routes)
+  if (!isAuthenticated && !isPublicRoute) {
+    const loginUrl = new URL('/login', request.url);
+    loginUrl.searchParams.set('redirect', url.pathname);
+    return NextResponse.redirect(loginUrl);
+  }
+
+  // ========================================================================
+  // 3. RATE LIMITING
+  // ========================================================================
+
+  if (process.env.ENABLE_RATE_LIMITING === 'true') {
+    const identifier = getIdentifier(request, userId);
+    const tier = getRateLimitTier(request, isAuthenticated);
+
+    const rateLimitResult = await checkRateLimit(identifier, tier);
+    const rateLimitHeaders = createRateLimitHeaders(rateLimitResult);
+
+    if (!rateLimitResult.success) {
+      console.warn('[Middleware] Rate limit exceeded:', { identifier, tier, pathname });
+
+      return new Response(
+        JSON.stringify({
+          error: 'Too many requests',
+          message: 'Rate limit exceeded. Please try again later.',
+          retryAfter: rateLimitResult.retryAfter,
+        }),
+        {
+          status: 429,
+          headers: {
+            'Content-Type': 'application/json',
+            ...rateLimitHeaders,
+          },
+        }
+      );
+    }
+
+    // Add rate limit headers to response
+    Object.entries(rateLimitHeaders).forEach(([key, value]) => {
+      response.headers.set(key, value);
+    });
+  }
+
+  // ========================================================================
+  // 4. CSRF PROTECTION
+  // ========================================================================
+
+  if (process.env.ENABLE_CSRF_PROTECTION !== 'false') {
+    // Generate CSRF token if not present
+    let csrfToken = getCsrfToken(request);
+    if (!csrfToken) {
+      csrfToken = generateCsrfToken();
+    }
+
+    // Validate CSRF for protected requests
+    if (needsCsrfProtection(request)) {
+      if (!(await validateCsrfToken(request))) {
+        console.warn('[Middleware] CSRF validation failed:', pathname);
+        return createCsrfErrorResponse();
+      }
+    }
+
+    // Set CSRF cookie
+    setCsrfCookie(response, csrfToken);
+  }
+
+  // Add user ID to headers (for API routes)
+  if (userId) {
+    response.headers.set('x-user-id', userId);
+  }
+
+  // Add request ID for tracing
+  const requestId = `${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
+  response.headers.set('x-request-id', requestId);
+
+  // ========================================================================
+  // 5. SECURITY HEADERS
+  // ========================================================================
+
+  const origin = request.headers.get('origin') || undefined;
+  applySecurityHeaders(response, origin);
 
   // Apply tenant middleware to add tenant headers
   response = await tenantMiddleware(request, response);
 
   // Restrict client-only pages to non-platform tenants
-  const clientOnlyPages = ['/agents', '/ask-expert', '/ask-panel', '/chat'];
+  // Note: /ask-expert, /ask-panel, and /agents are allowed on Platform for demo/testing
+  // Only /chat requires tenant-specific access
+  const clientOnlyPages = ['/chat'];
   const isClientOnlyPage = clientOnlyPages.some(page => url.pathname === page || url.pathname.startsWith(page + '/'));
 
   if (isClientOnlyPage) {

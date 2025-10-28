@@ -122,112 +122,57 @@ function AgentsPageContent() {
 
   const handleAddAgentToChat = async (agent: AgentsStoreAgent) => {
     try {
-      // Check if this is an admin agent that needs to be copied
-      if (!agent.is_user_copy) {
-        // Create user copy through the store
-        const userCopy = await createUserCopy(agent);
-
-        // Convert to chat store format
-        const chatAgent: Agent = {
-          id: userCopy.id,
-          name: userCopy.display_name,
-          description: userCopy.description,
-          systemPrompt: userCopy.system_prompt,
-          model: userCopy.model,
-          avatar: userCopy.avatar,
-          color: userCopy.color,
-          capabilities: userCopy.capabilities,
-          ragEnabled: userCopy.rag_enabled,
-          temperature: userCopy.temperature,
-          maxTokens: userCopy.max_tokens,
-          isCustom: userCopy.is_custom,
-          knowledgeDomains: userCopy.knowledge_domains,
-          businessFunction: userCopy.business_function || undefined,
-          department: userCopy.department || undefined,
-          organizationalRole: (userCopy as any).organizational_role || userCopy.role || undefined,
-          tier: userCopy.tier || undefined,
-          role: userCopy.role || undefined,
-        };
-
-        // Get existing user agents from localStorage
-        const existingAgents = localStorage.getItem('user-chat-agents');
-        const userAgents = existingAgents ? JSON.parse(existingAgents) : [];
-
-        // Check if agent is already added (by original agent id)
-        const isAlreadyAdded = userAgents.some((ua: any) => ua.original_agent_id === agent.id);
-
-        if (!isAlreadyAdded) {
-          // Add user copy to localStorage
-          const newUserAgents = [...userAgents, chatAgent];
-          localStorage.setItem('user-chat-agents', JSON.stringify(newUserAgents));
-        } else { /* TODO: implement */ }
-
-        // Navigate to chat page
-        router.push('/chat');
-      } else {
-        // This is already a user copy, convert to chat format
-        const chatAgent: Agent = {
-          id: agent.id,
-          name: agent.display_name,
-          description: agent.description,
-          systemPrompt: agent.system_prompt,
-          model: agent.model,
-          avatar: agent.avatar || '🤖',
-          color: agent.color,
-          capabilities: agent.capabilities,
-          ragEnabled: agent.rag_enabled,
-          temperature: agent.temperature,
-          maxTokens: agent.max_tokens,
-          isCustom: agent.is_custom,
-          knowledgeDomains: agent.knowledge_domains,
-          businessFunction: agent.business_function || undefined,
-          department: agent.department || undefined,
-          organizationalRole: (agent as any).organizational_role || agent.role || undefined,
-          tier: agent.tier || undefined,
-          role: agent.role || undefined,
-        };
-
-        // Get existing user agents from localStorage
-        const existingAgents = localStorage.getItem('user-chat-agents');
-        const userAgents = existingAgents ? JSON.parse(existingAgents) : [];
-
-        // Check if agent is already added
-        const isAlreadyAdded = userAgents.some((ua: any) => ua.id === agent.id);
-
-        if (!isAlreadyAdded) {
-          // Add existing user copy to localStorage
-          const newUserAgents = [...userAgents, chatAgent];
-          localStorage.setItem('user-chat-agents', JSON.stringify(newUserAgents));
-        }
-
-        // Navigate to chat page
-        router.push('/chat');
-      }
-    } catch (error) {
-      console.error('Failed to add agent to chat:', error);
-      // Fallback to old behavior if copy fails
-      const chatAgent = {
+      console.log('🔍 [Add to Chat] Adding agent to user list:', {
         id: agent.id,
-        name: agent.display_name,
-        avatar: agent.avatar || '🤖'
-      };
+        name: agent.display_name
+      });
 
-      const existingAgents = localStorage.getItem('user-chat-agents');
-      const userAgents = existingAgents ? JSON.parse(existingAgents) : [];
-      const isAlreadyAdded = userAgents.some((ua: any) => ua.id === agent.id);
-
-      if (!isAlreadyAdded) {
-        const newUserAgents = [...userAgents, chatAgent];
-        localStorage.setItem('user-chat-agents', JSON.stringify(newUserAgents));
+      // Check if user is authenticated
+      if (!user?.id) {
+        console.error('❌ User not authenticated. Please log in first.');
+        return;
       }
 
-      router.push('/chat');
+      // Add agent to user's list via API
+      const response = await fetch('/api/user-agents', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId: user.id,
+          agentId: agent.id,
+          originalAgentId: agent.original_agent_id || null,
+          isUserCopy: agent.is_user_copy || false,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        if (response.status === 409) {
+          console.log(`ℹ️ Agent "${agent.display_name}" is already in your chat list`);
+        } else {
+          console.error('❌ Failed to add agent to chat:', errorData.error || 'Unknown error');
+        }
+        // Navigate to ask-expert page anyway
+        router.push('/ask-expert');
+        return;
+      }
+
+      const result = await response.json();
+      console.log(`✅ Agent "${agent.display_name}" added to user's chat list:`, result);
+      
+      // Navigate to ask-expert page to see the added agent
+      router.push('/ask-expert');
+      
+    } catch (error) {
+      console.error('❌ Failed to add agent to chat:', error);
     }
   };
 
   return (
     <div className="space-y-6">
-      <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full relative z-10">
+      <Tabs value={activeTab} onValueChange={handleTabChange}>
         <TabsList className="grid w-full max-w-md grid-cols-4 relative z-10 pointer-events-auto">
           <TabsTrigger value="overview" className="flex items-center gap-2 cursor-pointer">
             <BarChart3 className="h-4 w-4" />
@@ -294,6 +239,33 @@ function AgentsPageContent() {
           agent={selectedAgent}
           onClose={() => setSelectedAgent(null)}
           onEdit={handleEditAgent}
+          onAddToChat={(agent) => {
+            // Convert chat-store Agent to agents-store Agent format
+            const agentForStore: AgentsStoreAgent = {
+              id: agent.id,
+              name: agent.name,
+              display_name: agent.name,
+              description: agent.description,
+              system_prompt: agent.systemPrompt || '',
+              model: agent.model || 'gpt-4',
+              avatar: agent.avatar || '🤖',
+              color: agent.color || 'text-market-purple',
+              capabilities: agent.capabilities || [],
+              rag_enabled: agent.ragEnabled || false,
+              temperature: agent.temperature || 0.7,
+              max_tokens: agent.maxTokens || 2000,
+              knowledge_domains: agent.knowledgeDomains || [],
+              business_function: agent.businessFunction || '',
+              department: agent.department || '',
+              role: agent.organizationalRole || agent.role || '',
+              status: 'active',
+              tier: agent.tier || 1,
+              priority: 1,
+              implementation_phase: 1,
+              is_custom: agent.isCustom || false,
+            };
+            handleAddAgentToChat(agentForStore);
+          }}
         />
       )}
 

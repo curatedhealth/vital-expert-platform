@@ -8,6 +8,9 @@ import { createClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
 import { getMetricsCollector } from '@/lib/services/monitoring/langextract-metrics-collector'
 import { getCostTracker } from '@/lib/services/monitoring/cost-tracker'
+import { ragLatencyTracker } from '@/lib/services/monitoring/rag-latency-tracker'
+import { ragCostTracker } from '@/lib/services/monitoring/rag-cost-tracker'
+import { circuitBreakerManager } from '@/lib/services/monitoring/circuit-breaker'
 
 interface MetricValue {
   name: string
@@ -121,7 +124,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
-async function collectMetrics(supabase: ReturnType<typeof createClient>): Promise<MetricValue[]> {
+async function collectMetrics(supabase: any): Promise<MetricValue[]> {
   const metrics: MetricValue[] = []
 
   // System metrics
@@ -154,6 +157,10 @@ async function collectMetrics(supabase: ReturnType<typeof createClient>): Promis
   // Business metrics
   const businessMetrics = await collectBusinessMetrics(supabase);
   metrics.push(...businessMetrics)
+
+  // Phase 1 RAG monitoring metrics
+  const ragMetrics = await collectRAGMetrics();
+  metrics.push(...ragMetrics)
 
   return metrics
 }
@@ -411,6 +418,208 @@ async function collectBusinessMetrics(supabase: ReturnType<typeof createClient>)
   }
 
   return metrics
+}
+
+async function collectRAGMetrics(): Promise<MetricValue[]> {
+  const metrics: MetricValue[] = [];
+
+  try {
+    // === LATENCY METRICS ===
+    const latencyBreakdown = ragLatencyTracker.getLatencyBreakdown(60) as any; // Last 60 minutes
+
+    // Overall latency percentiles (only if data exists)
+    if (latencyBreakdown.overall?.total) {
+      metrics.push(
+        {
+          name: 'rag_latency_p50_milliseconds',
+          help: 'RAG query latency P50 (median) in milliseconds',
+          type: 'gauge',
+          value: latencyBreakdown.overall.total.p50 || 0
+        },
+        {
+          name: 'rag_latency_p95_milliseconds',
+          help: 'RAG query latency P95 in milliseconds',
+          type: 'gauge',
+          value: latencyBreakdown.overall.total.p95 || 0
+        },
+        {
+          name: 'rag_latency_p99_milliseconds',
+          help: 'RAG query latency P99 in milliseconds',
+          type: 'gauge',
+          value: latencyBreakdown.overall.total.p99 || 0
+        },
+        {
+          name: 'rag_latency_mean_milliseconds',
+          help: 'RAG query latency mean in milliseconds',
+          type: 'gauge',
+          value: latencyBreakdown.overall.total.mean || 0
+        }
+      );
+
+      // Cache performance
+      metrics.push({
+        name: 'rag_cache_hit_rate',
+        help: 'RAG cache hit rate (0-1)',
+        type: 'gauge',
+        value: latencyBreakdown.overall.cacheHitRate || 0
+      });
+
+      // Query count
+      metrics.push({
+        name: 'rag_queries_total',
+        help: 'Total number of RAG queries',
+        type: 'counter',
+        value: latencyBreakdown.overall.total.count || 0
+      });
+    }
+
+    // Latency by component (only if data exists)
+    if (latencyBreakdown.byComponent?.queryEmbedding?.p95) {
+      metrics.push({
+        name: 'rag_component_latency_milliseconds',
+        help: 'RAG component latency P95 in milliseconds',
+        type: 'gauge',
+        value: latencyBreakdown.byComponent.queryEmbedding.p95,
+        labels: { component: 'query_embedding' }
+      });
+    }
+
+    if (latencyBreakdown.byComponent?.vectorSearch?.p95) {
+      metrics.push({
+        name: 'rag_component_latency_milliseconds',
+        help: 'RAG component latency P95 in milliseconds',
+        type: 'gauge',
+        value: latencyBreakdown.byComponent.vectorSearch.p95,
+        labels: { component: 'vector_search' }
+      });
+    }
+
+    if (latencyBreakdown.byComponent?.reranking?.p95) {
+      metrics.push({
+        name: 'rag_component_latency_milliseconds',
+        help: 'RAG component latency P95 in milliseconds',
+        type: 'gauge',
+        value: latencyBreakdown.byComponent.reranking.p95,
+        labels: { component: 'reranking' }
+      });
+    }
+
+    // === COST METRICS ===
+    const costStats = ragCostTracker.getCostStats(60); // Last 60 minutes
+
+    metrics.push(
+      {
+        name: 'rag_cost_total_usd',
+        help: 'Total RAG cost in USD',
+        type: 'counter',
+        value: costStats.totalCostUsd
+      },
+      {
+        name: 'rag_cost_per_query_usd',
+        help: 'Average RAG cost per query in USD',
+        type: 'gauge',
+        value: costStats.avgCostPerQuery
+      },
+      {
+        name: 'rag_queries_count',
+        help: 'Total number of queries processed',
+        type: 'counter',
+        value: costStats.queryCount
+      }
+    );
+
+    // Cost breakdown by provider
+    if (costStats.breakdown && typeof costStats.breakdown === 'object') {
+      Object.entries(costStats.breakdown).forEach(([provider, cost]) => {
+        metrics.push({
+          name: 'rag_cost_by_provider_usd',
+          help: 'RAG cost breakdown by provider in USD',
+          type: 'counter',
+          value: cost,
+          labels: { provider }
+        });
+      });
+    }
+
+    // Budget status
+    const budgetStatus = ragCostTracker.checkBudget();
+
+    if (budgetStatus?.dailyStatus && budgetStatus?.monthlyStatus) {
+      metrics.push(
+        {
+          name: 'rag_budget_daily_usage_percent',
+          help: 'RAG daily budget usage percentage',
+          type: 'gauge',
+          value: budgetStatus.dailyStatus.percent || 0
+        },
+        {
+          name: 'rag_budget_monthly_usage_percent',
+          help: 'RAG monthly budget usage percentage',
+          type: 'gauge',
+          value: budgetStatus.monthlyStatus.percent || 0
+        }
+      );
+    }
+
+    // === CIRCUIT BREAKER METRICS ===
+    const allCircuitBreakers = circuitBreakerManager.getAllStats();
+
+    if (allCircuitBreakers && typeof allCircuitBreakers === 'object') {
+      Object.entries(allCircuitBreakers).forEach(([service, stats]) => {
+      // Circuit breaker state (CLOSED=0, HALF_OPEN=1, OPEN=2)
+      const stateValue = stats.state === 'CLOSED' ? 0 : stats.state === 'HALF_OPEN' ? 1 : 2;
+
+      metrics.push(
+        {
+          name: 'rag_circuit_breaker_state',
+          help: 'Circuit breaker state (0=CLOSED, 1=HALF_OPEN, 2=OPEN)',
+          type: 'gauge',
+          value: stateValue,
+          labels: { service }
+        },
+        {
+          name: 'rag_circuit_breaker_failures_total',
+          help: 'Total circuit breaker failures',
+          type: 'counter',
+          value: stats.failures,
+          labels: { service }
+        },
+        {
+          name: 'rag_circuit_breaker_successes_total',
+          help: 'Total circuit breaker successes',
+          type: 'counter',
+          value: stats.successes,
+          labels: { service }
+        },
+        {
+          name: 'rag_circuit_breaker_requests_total',
+          help: 'Total circuit breaker requests',
+          type: 'counter',
+          value: stats.totalRequests,
+          labels: { service }
+        },
+        {
+          name: 'rag_circuit_breaker_rejected_total',
+          help: 'Total rejected requests (circuit open)',
+          type: 'counter',
+          value: stats.rejectedRequests,
+          labels: { service }
+        }
+      );
+      });
+    }
+
+  } catch (error) {
+    console.error('RAG metrics collection failed:', error);
+    metrics.push({
+      name: 'rag_metrics_collection_errors_total',
+      help: 'Total RAG metrics collection errors',
+      type: 'counter',
+      value: 1
+    });
+  }
+
+  return metrics;
 }
 
 function getServiceURL(serviceName: string): string | null {

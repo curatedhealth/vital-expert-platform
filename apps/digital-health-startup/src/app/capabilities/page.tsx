@@ -1,5 +1,6 @@
 'use client';
 
+import React from 'react';
 import {
   Search,
   Plus,
@@ -718,7 +719,7 @@ export default function CapabilitiesPage() {
   };
 
   const CapabilityCard = ({ capability }: { capability: Capability }) => {
-    const IconComponent = capability.icon;
+    const IconComponent = capability.icon as any;
 
     return (
       <Card className="cursor-pointer transition-all hover:shadow-lg">
@@ -1130,7 +1131,10 @@ export default function CapabilitiesPage() {
             <>
               <DialogHeader>
                 <DialogTitle className="flex items-center gap-3">
-                  <selectedCapability.icon className="h-6 w-6" style={{ color: selectedCapability.color }} />
+                  {React.createElement(selectedCapability.icon as any, {
+                    className: "h-6 w-6",
+                    style: { color: selectedCapability.color }
+                  })}
                   {selectedCapability.display_name}
                   {selectedCapability.is_premium && <Star className="h-4 w-4 text-yellow-500 fill-current" />}
                 </DialogTitle>

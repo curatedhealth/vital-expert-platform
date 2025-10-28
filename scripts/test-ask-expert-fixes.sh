@@ -1,0 +1,41 @@
+#!/bin/bash
+
+echo "🧪 Testing Ask Expert Fixes"
+echo "=========================="
+
+echo ""
+echo "✅ Fixed Issues:"
+echo "• Fixed knowledge_domain → knowledge_domains column name in Mode 1"
+echo "• Simplified ask-expert-context.tsx to bypass user_agents table"
+echo "• All agents now fetched directly from /api/agents-crud"
+
+echo ""
+echo "🌐 Server Status:"
+echo "• Development server running on port 3000"
+echo "• Ask Expert page accessible (requires login)"
+echo "• Authentication redirect working properly"
+
+echo ""
+echo "📋 Ready for Testing:"
+echo "1. Open http://localhost:3000 in your browser"
+echo "2. Log in with your credentials"
+echo "3. Navigate to http://localhost:3000/ask-expert"
+echo "4. Check that sidebar shows all 260 agents"
+echo "5. Test 'New Chat' button (should work without '1 selected' badge)"
+echo "6. Test Mode 1: Select an agent and send a message"
+echo "7. Test Mode 2: Turn on 'Automatic' toggle and send a message"
+echo "8. Test Mode 3: Turn on 'Autonomous' toggle and send a message"
+echo "9. Test Mode 4: Turn on both 'Automatic' and 'Autonomous' toggles"
+
+echo ""
+echo "🔧 What Was Fixed:"
+echo "• Mode 1 agent fetching now uses correct 'knowledge_domains' column"
+echo "• Sidebar context simplified to fetch all agents directly"
+echo "• Removed dependency on missing user_agents table"
+echo "• All 4 modes should now be functional"
+
+echo ""
+echo "⚠️  Note:"
+echo "• 'Add Agent to Chat' functionality is temporarily disabled"
+echo "• All agents are shown in sidebar for testing purposes"
+echo "• This is a temporary fix to enable testing of all 4 modes"

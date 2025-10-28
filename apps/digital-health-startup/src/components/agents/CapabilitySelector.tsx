@@ -55,12 +55,14 @@ interface CapabilitySelectorProps {
   isLoading?: boolean;
 }
 
+const complexityLevelStyles: Record<string, string> = {
   basic: 'bg-green-100 text-green-800 border-green-200',
   intermediate: 'bg-blue-100 text-blue-800 border-blue-200',
   advanced: 'bg-purple-100 text-purple-800 border-purple-200',
   expert: 'bg-red-100 text-red-800 border-red-200'
 };
 
+const proficiencyLevels = [
   { value: 'basic', label: 'Basic', description: 'Learning or limited experience' },
   { value: 'intermediate', label: 'Intermediate', description: 'Moderate proficiency' },
   { value: 'advanced', label: 'Advanced', description: 'High proficiency' },
@@ -85,15 +87,21 @@ export const CapabilitySelector: React.FC<CapabilitySelectorProps> = ({
   }>>({ /* TODO: implement */ });
 
   // Filter capabilities
-
+  const filteredCapabilities = availableCapabilities.filter(capability => {
+    const matchesSearch = searchQuery === '' ||
+                         capability.display_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          capability.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          capability.bullet_points.some(point => point.toLowerCase().includes(searchQuery.toLowerCase()));
+
+    const matchesDomain = selectedDomain === 'all' || capability.domain === selectedDomain;
+    const matchesComplexity = selectedComplexity === 'all' || capability.complexity_level === selectedComplexity;
 
     return matchesSearch && matchesDomain && matchesComplexity;
   });
 
   // Group by category
-
+  const groupedByCategory = filteredCapabilities.reduce((acc, capability) => {
+    const _category = capability.category || 'general';
     // Validate key before accessing object
     if (!Object.prototype.hasOwnProperty.call(acc, _category)) {
       // eslint-disable-next-line security/detect-object-injection
@@ -102,10 +110,14 @@ export const CapabilitySelector: React.FC<CapabilitySelectorProps> = ({
     // eslint-disable-next-line security/detect-object-injection
     acc[_category].push(capability);
     return acc;
-  }, { /* TODO: implement */ } as Record<string, AvailableCapability[]>);
+  }, {} as Record<string, AvailableCapability[]>);
 
   // Get unique domains and categories
+  const uniqueDomains = Array.from(new Set(availableCapabilities.map(cap => cap.domain)));
+  const uniqueComplexities = ['basic', 'intermediate', 'advanced', 'expert'];
+  const selectedCount = Object.values(selectedCapabilities).filter(config => config.selected).length;
 
+  const toggleCapability = (capabilityId: string) => {
     setSelectedCapabilities(prev => ({
       ...prev,
       // eslint-disable-next-line security/detect-object-injection
@@ -114,12 +126,13 @@ export const CapabilitySelector: React.FC<CapabilitySelectorProps> = ({
         selected: !prev[capabilityId]?.selected,
         // eslint-disable-next-line security/detect-object-injection
         proficiencyLevel: prev[capabilityId]?.proficiencyLevel || 'intermediate',
-        // eslint-disable-next-line security/detect-object-injection
+        // eslint:disable-next-line security/detect-object-injection
         isPrimary: prev[capabilityId]?.isPrimary || false
       }
     }));
   };
 
+  const updateProficiency = (capabilityId: string, proficiencyLevel: string) => {
     setSelectedCapabilities(prev => ({
       ...prev,
       // eslint-disable-next-line security/detect-object-injection
@@ -131,6 +144,7 @@ export const CapabilitySelector: React.FC<CapabilitySelectorProps> = ({
     }));
   };
 
+  const togglePrimary = (capabilityId: string) => {
     setSelectedCapabilities(prev => ({
       ...prev,
       // eslint-disable-next-line security/detect-object-injection
@@ -143,6 +157,8 @@ export const CapabilitySelector: React.FC<CapabilitySelectorProps> = ({
     }));
   };
 
+  const handleConfirm = () => {
+    const selected = Object.entries(selectedCapabilities)
       .filter(([_, config]) => config.selected)
       .map(([capabilityId, config]) => ({
         capabilityId,
@@ -184,7 +200,7 @@ export const CapabilitySelector: React.FC<CapabilitySelectorProps> = ({
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Domains</SelectItem>
-                  {domains.map((domain: any) => (
+                  {uniqueDomains.map((domain: any) => (
                     <SelectItem key={domain} value={domain}>
                       {domain.replace(/_/g, ' ')}
                     </SelectItem>
@@ -198,7 +214,7 @@ export const CapabilitySelector: React.FC<CapabilitySelectorProps> = ({
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Levels</SelectItem>
-                  {complexityLevels.map(level => (
+                  {uniqueComplexities.map(level => (
                     <SelectItem key={level} value={level}>
                       {level.charAt(0).toUpperCase() + level.slice(1)}
                     </SelectItem>
@@ -238,25 +254,28 @@ export const CapabilitySelector: React.FC<CapabilitySelectorProps> = ({
                   ))}
                 </div>
               ) : (
-                Object.keys(capabilitiesByCategory).map((category) => (
+                Object.keys(groupedByCategory).map((category) => (
                   <div key={category}>
                     <h3 className="text-sm font-semibold text-foreground mb-3 capitalize flex items-center gap-2">
                       <div className="h-2 w-2 rounded-full bg-primary"></div>
                       {category.replace(/_/g, ' ')}
                       <Badge variant="secondary" className="text-xs">
                         {/* eslint-disable-next-line security/detect-object-injection */}
-                        {capabilitiesByCategory[category].length}
+                        {groupedByCategory[category].length}
                       </Badge>
                     </h3>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {/* eslint-disable-next-line security/detect-object-injection */}
-                      {capabilitiesByCategory[category].map((capability) => {
+                      {groupedByCategory[category].map((capability) => {
                         // eslint-disable-next-line security/detect-object-injection
-
+                        const capConfig = selectedCapabilities[capability.id] || { selected: false, proficiencyLevel: 'intermediate', isPrimary: false };
                         // eslint-disable-next-line security/detect-object-injection
-
+                        const isSelected = capConfig.selected;
                         // eslint-disable-next-line security/detect-object-injection
+                        const isPrimary = capConfig.isPrimary;
+                        // eslint-disable-next-line security/detect-object-injection
+                        const proficiencyLevel = capConfig.proficiencyLevel;
 
                         return (
                           <motion.div
@@ -274,7 +293,7 @@ export const CapabilitySelector: React.FC<CapabilitySelectorProps> = ({
                                   <div className="flex items-start gap-3">
                                     <Checkbox
                                       checked={isSelected}
-                                      onCheckedChange={() => handleCapabilityToggle(capability.id)}
+                                      onCheckedChange={() => toggleCapability(capability.id)}
                                       className="mt-1"
                                     />
 
@@ -289,7 +308,7 @@ export const CapabilitySelector: React.FC<CapabilitySelectorProps> = ({
                                       <div className="flex items-center gap-2 mb-2">
                                         <Badge
                                           variant="outline"
-                                          className={cn("text-xs", complexityColors[capability.complexity_level as keyof typeof complexityColors])}
+                                          className={cn("text-xs", complexityLevelStyles[capability.complexity_level as keyof typeof complexityLevelStyles])}
                                         >
                                           {capability.complexity_level}
                                         </Badge>
@@ -332,7 +351,7 @@ export const CapabilitySelector: React.FC<CapabilitySelectorProps> = ({
                                         </label>
                                         <Select
                                           value={proficiencyLevel}
-                                          onValueChange={(value) => handleProficiencyChange(capability.id, value)}
+                                          onValueChange={(value) => updateProficiency(capability.id, value)}
                                         >
                                           <SelectTrigger className="h-8 text-xs">
                                             <SelectValue />
@@ -354,7 +373,7 @@ export const CapabilitySelector: React.FC<CapabilitySelectorProps> = ({
                                         <Checkbox
                                           id={`primary-${capability.id}`}
                                           checked={isPrimary}
-                                          onCheckedChange={() => handlePrimaryToggle(capability.id)}
+                                          onCheckedChange={() => togglePrimary(capability.id)}
                                         />
                                         <label
                                           htmlFor={`primary-${capability.id}`}
@@ -390,7 +409,7 @@ export const CapabilitySelector: React.FC<CapabilitySelectorProps> = ({
                 Cancel
               </Button>
               <Button
-                onClick={handleSave}
+                onClick={handleConfirm}
                 disabled={selectedCount === 0}
               >
                 Add {selectedCount} Capability{selectedCount !== 1 ? 's' : ''}

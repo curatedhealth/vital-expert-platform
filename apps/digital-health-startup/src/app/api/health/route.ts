@@ -159,6 +159,12 @@ export async function GET(request: NextRequest) {
 async function checkDatabaseHealth(): Promise<ServiceHealthCheck> {
   const startTime = Date.now()
   try {
+    // Create Supabase client
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    )
+
     // Test database connectivity with a simple query
     const { data, error } = await supabase
       .from('agents')

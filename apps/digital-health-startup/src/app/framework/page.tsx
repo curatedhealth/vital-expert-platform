@@ -107,7 +107,10 @@ export default function FrameworkPage() {
           {pillars.map((pillar, idx) => (
             <div key={pillar.letter} className={`grid grid-cols-1 md:grid-cols-2 gap-[var(--space-3xl)] items-center mb-[var(--space-4xl)] ${idx % 2 === 1 ? 'md:flex-row-reverse' : ''}`}>
               <div className={`${idx % 2 === 1 ? 'md:order-2' : ''}`}>
-                <div className={`inline-flex w-15 h-15 items-center justify-center bg-[var(--${pillar.color})] text-[var(--vital-white)] rounded-full text-2xl font-extrabold mb-[var(--space-lg)]`}>
+                <div
+                  className="inline-flex w-15 h-15 items-center justify-center text-[var(--vital-white)] rounded-full text-2xl font-extrabold mb-[var(--space-lg)]"
+                  style={{ backgroundColor: `var(--${pillar.color})` }}
+                >
                   {pillar.letter}
                 </div>
                 <h2 className="h2 mb-[var(--space-md)]">{pillar.title}</h2>
@@ -116,8 +119,11 @@ export default function FrameworkPage() {
 
                 <ul className="space-y-[var(--space-sm)] mb-[var(--space-xl)]">
                   {pillar.features.map((feature, fidx) => (
-                    <li key={fidx} className={`body text-[var(--vital-gray-60)] pl-8 relative before:content-['→'] before:absolute before:left-0 before:text-[var(--${pillar.color})] before:font-bold`}>
-                      {feature}
+                    <li key={fidx} className="body text-[var(--vital-gray-60)] flex items-start gap-2">
+                      <span className="font-bold flex-shrink-0" style={{ color: `var(--${pillar.color})` }}>
+                        →
+                      </span>
+                      <span>{feature}</span>
                     </li>
                   ))}
                 </ul>
@@ -129,7 +135,10 @@ export default function FrameworkPage() {
               </div>
 
               <div className={`flex items-center justify-center ${idx % 2 === 1 ? 'md:order-1' : ''}`}>
-                <div className={`w-full max-w-md aspect-square bg-[var(--vital-gray-95)] rounded-[var(--radius-xl)] flex items-center justify-center text-6xl font-black text-[var(--${pillar.color})] opacity-20`}>
+                <div
+                  className="w-full max-w-md aspect-square bg-[var(--vital-gray-95)] rounded-[var(--radius-xl)] flex items-center justify-center text-6xl font-black opacity-20"
+                  style={{ color: `var(--${pillar.color})` }}
+                >
                   {pillar.letter}
                 </div>
               </div>

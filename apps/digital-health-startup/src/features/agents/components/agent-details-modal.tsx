@@ -4,6 +4,7 @@ import {
   X,
   Brain,
   MessageSquare,
+  MessageSquarePlus,
   Database,
   Star,
   Thermometer,
@@ -31,6 +32,7 @@ interface AgentDetailsModalProps {
   onEdit?: (agent: Agent) => void;
   onDuplicate?: (agent: Agent) => void;
   onStartChat?: (agent: Agent) => void;
+  onAddToChat?: (agent: Agent) => void;
 }
 
 export function AgentDetailsModal({
@@ -39,6 +41,7 @@ export function AgentDetailsModal({
   onEdit,
   onDuplicate,
   onStartChat,
+  onAddToChat,
 }: AgentDetailsModalProps) {
   const { createCustomAgent } = useChatStore();
 
@@ -437,6 +440,19 @@ export function AgentDetailsModal({
               <Button variant="outline" onClick={() => onEdit(agent)}>
                 <Edit className="h-4 w-4 mr-2" />
                 Edit
+              </Button>
+            )}
+            {onAddToChat && (
+              <Button
+                variant="outline"
+                onClick={() => {
+                  onAddToChat(agent);
+                  onClose();
+                }}
+                className="border-blue-500 text-blue-600 hover:bg-blue-50"
+              >
+                <MessageSquarePlus className="h-4 w-4 mr-2" />
+                Add to Chat
               </Button>
             )}
             {onStartChat && (

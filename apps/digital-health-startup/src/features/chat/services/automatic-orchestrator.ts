@@ -249,14 +249,14 @@ export class AutomaticAgentOrchestrator {
     let query = supabaseAdmin
       .from('agents')
       .select('*')
-      .eq('status', 'active')
       .lte('tier', maxTier)
       .order('tier', { ascending: true })
       .order('priority', { ascending: false });
 
     // Filter by knowledge domains if detected
+    // Note: knowledge_domains column doesn't exist - using capabilities instead
     if (detectedDomains.length > 0) {
-      query = query.overlaps('knowledge_domains', detectedDomains);
+      query = query.overlaps('capabilities', detectedDomains);
     }
 
     query = query.limit(maxCandidates);
@@ -275,7 +275,6 @@ export class AutomaticAgentOrchestrator {
       const { data: fallbackAgents, error: fallbackError } = await supabaseAdmin
         .from('agents')
         .select('*')
-        .eq('status', 'active')
         .lte('tier', maxTier)
         .order('tier', { ascending: true })
         .order('priority', { ascending: false })

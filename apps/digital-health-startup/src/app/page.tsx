@@ -1,6 +1,5 @@
 import { Metadata } from 'next'
-
-import EnhancedLandingPage from '@/components/landing/enhanced/EnhancedLandingPage'
+import { redirect } from 'next/navigation'
 
 export const metadata: Metadata = {
   title: 'VITAL Expert - AI-Powered Healthcare Innovation Platform',
@@ -21,5 +20,7 @@ export const metadata: Metadata = {
 }
 
 export default function Home() {
-  return <EnhancedLandingPage />
+  // Temporary emergency fix: redirect to dashboard to avoid styled-jsx SSR error
+  // TODO: Restore EnhancedLandingPage after Phase 2-3 UI library rebuild
+  redirect('/dashboard')
 }

@@ -78,6 +78,9 @@ export async function POST(request: NextRequest) {
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
+    // Extract token from Authorization header
+    const authHeader = request.headers.get('authorization');
+    const token = authHeader?.replace('Bearer ', '');
 
     const body: InterventionRequest = await request.json()
     const {
@@ -212,7 +215,7 @@ export async function POST(request: NextRequest) {
     const { data: lifecycleRecords, error: lifecycleError } = await supabase
       .from('intervention_lifecycle')
       .insert(
-        lifecyclePhases.map(phase => ({
+        initialLifecyclePhases.map(phase => ({
           organization_id: userProfile.organization_id,
           intervention_id: intervention.id,
           ...phase,
@@ -312,8 +315,19 @@ export async function GET(request: NextRequest) {
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
+    // Extract token from Authorization header
+    const authHeader = request.headers.get('authorization');
+    const token = authHeader?.replace('Bearer ', '');
 
     const { searchParams } = new URL(request.url)
+
+    // Extract query parameters
+    const interventionType = searchParams.get('intervention_type')
+    const therapeuticArea = searchParams.get('therapeutic_area')
+    const developmentStage = searchParams.get('development_stage')
+    const regulatoryStatus = searchParams.get('regulatory_status')
+    const offset = parseInt(searchParams.get('offset') || '0', 10)
+    const limit = parseInt(searchParams.get('limit') || '50', 10)
 
     if (!token) {
       return NextResponse.json({
@@ -344,7 +358,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Build query with filters
-    const query = supabase
+    let query = supabase
       .from('digital_interventions')
       .select(`
         *,
@@ -361,22 +375,22 @@ export async function GET(request: NextRequest) {
       .range(offset, offset + limit - 1)
 
     if (interventionType) {
-      interventionsQuery = interventionsQuery.eq('intervention_type', interventionType)
+      query = query.eq('intervention_type', interventionType)
     }
 
     if (therapeuticArea) {
-      interventionsQuery = interventionsQuery.contains('therapeutic_area', [therapeuticArea])
+      query = query.contains('therapeutic_area', [therapeuticArea])
     }
 
     if (developmentStage) {
-      interventionsQuery = interventionsQuery.eq('development_stage', developmentStage)
+      query = query.eq('development_stage', developmentStage)
     }
 
     if (regulatoryStatus) {
-      interventionsQuery = interventionsQuery.eq('regulatory_status', regulatoryStatus)
+      query = query.eq('regulatory_status', regulatoryStatus)
     }
 
-    const { data: interventions, error: interventionsError } = await interventionsQuery
+    const { data: interventions, error: interventionsError } = await query
 
     if (interventionsError) {
       // console.error('Interventions query error:', interventionsError)
@@ -401,18 +415,18 @@ export async function GET(request: NextRequest) {
 
     if (!statsError && stats) {
       interventionStats.total_interventions = stats.length
-      interventionStats.by_type = stats.reduce((acc: unknown, item: unknown) => {
+      interventionStats.by_type = stats.reduce((acc: Record<string, number>, item: any) => {
         acc[item.intervention_type] = (acc[item.intervention_type] || 0) + 1
         return acc
-      }, { /* TODO: implement */ })
-      interventionStats.by_development_stage = stats.reduce((acc: unknown, item: unknown) => {
+      }, {})
+      interventionStats.by_development_stage = stats.reduce((acc: Record<string, number>, item: any) => {
         acc[item.development_stage] = (acc[item.development_stage] || 0) + 1
         return acc
-      }, { /* TODO: implement */ })
-      interventionStats.by_regulatory_status = stats.reduce((acc: unknown, item: unknown) => {
+      }, {})
+      interventionStats.by_regulatory_status = stats.reduce((acc: Record<string, number>, item: any) => {
         acc[item.regulatory_status] = (acc[item.regulatory_status] || 0) + 1
         return acc
-      }, { /* TODO: implement */ })
+      }, {})
     }
 
     // Process interventions with lifecycle summary

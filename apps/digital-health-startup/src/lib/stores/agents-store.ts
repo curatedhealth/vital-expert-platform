@@ -126,38 +126,39 @@ const agentEventEmitter = new AgentEventEmitter();
 
 // Convert database agent to store format
 const convertDbAgentToStoreFormat = (dbAgent: DbAgent): Agent => {
+  const metadata = dbAgent.metadata || {};
+  
   const converted = {
     id: dbAgent.id,
     name: dbAgent.name,
-    display_name: dbAgent.display_name,
+    display_name: metadata.display_name || dbAgent.name,
     description: dbAgent.description,
     system_prompt: dbAgent.system_prompt,
-    model: dbAgent.model,
-    avatar: dbAgent.avatar || '',
-    color: dbAgent.color || '#6366f1',
+    model: metadata.model || 'gpt-4',
+    avatar: metadata.avatar || '🤖',
+    color: metadata.color || '#6366f1',
     capabilities: Array.isArray(dbAgent.capabilities) ? dbAgent.capabilities as string[] : [],
-    rag_enabled: dbAgent.rag_enabled ?? false,
-    temperature: dbAgent.temperature ?? 0.7,
-    max_tokens: dbAgent.max_tokens ?? 2000,
-    is_custom: dbAgent.is_custom ?? false,
-    status: (dbAgent.status as "development" | "testing" | "active" | "deprecated") || "active",
-    tier: dbAgent.tier ?? 1,
-    priority: dbAgent.priority ?? 1,
-    implementation_phase: dbAgent.implementation_phase ?? 1,
-    knowledge_domains: Array.isArray(dbAgent.knowledge_domains) ? dbAgent.knowledge_domains as string[] : [],
-    business_function: dbAgent.business_function ?? '',
-    department: dbAgent.department ?? '',
-    role: dbAgent.role ?? '',
-    organizational_role: (dbAgent as any).organizational_role ?? '',
-    // Foreign key IDs
-    business_function_id: dbAgent.business_function_id ?? null,
-    department_id: dbAgent.department_id ?? null,
-    role_id: dbAgent.role_id ?? null,
+    rag_enabled: metadata.rag_enabled ?? false,
+    temperature: metadata.temperature ?? 0.7,
+    max_tokens: metadata.max_tokens ?? 2000,
+    is_custom: metadata.is_custom ?? false,
+    status: metadata.status || "active",
+    tier: metadata.tier ?? 1,
+    priority: 1, // Default priority since it's not in the actual schema
+    implementation_phase: metadata.implementation_phase ?? 1,
+    knowledge_domains: metadata.knowledge_domains || [],
+    business_function: metadata.business_function || '',
+    department: metadata.department || '',
+    role: metadata.role || '',
+    organizational_role: metadata.organizational_role || metadata.role || '',
+    is_user_copy: metadata.is_user_copy ?? false,
+    original_agent_id: metadata.original_agent_id || null,
+    copied_at: metadata.copied_at || null,
     created_at: dbAgent.created_at || new Date().toISOString(),
     updated_at: dbAgent.updated_at || new Date().toISOString(),
   };
 
-  console.log(`🔄 Converted agent "${dbAgent.display_name}": tier=${converted.tier}, status=${converted.status}`);
+  console.log(`🔄 Converted agent "${converted.display_name}": tier=${converted.tier}, status=${converted.status}`);
   return converted;
 };
 
@@ -165,24 +166,30 @@ const convertDbAgentToStoreFormat = (dbAgent: DbAgent): Agent => {
 const convertStoreAgentToDbFormat = (storeAgent: Agent): Partial<DbAgent> => {
   return {
     name: storeAgent.name,
-    display_name: storeAgent.display_name,
     description: storeAgent.description,
     system_prompt: storeAgent.system_prompt,
-    model: storeAgent.model,
-    avatar: storeAgent.avatar,
-    color: storeAgent.color,
     capabilities: storeAgent.capabilities,
-    rag_enabled: storeAgent.rag_enabled,
-    temperature: storeAgent.temperature,
-    max_tokens: storeAgent.max_tokens,
-    is_custom: storeAgent.is_custom,
-    status: storeAgent.status as "development" | "testing" | "active" | "deprecated",
-    tier: storeAgent.tier,
-    priority: storeAgent.priority,
-    implementation_phase: storeAgent.implementation_phase,
-    knowledge_domains: storeAgent.knowledge_domains,
-    business_function: storeAgent.business_function,
-    role: storeAgent.role,
+    metadata: {
+      display_name: storeAgent.display_name,
+      model: storeAgent.model,
+      avatar: storeAgent.avatar,
+      color: storeAgent.color,
+      temperature: storeAgent.temperature,
+      max_tokens: storeAgent.max_tokens,
+      rag_enabled: storeAgent.rag_enabled,
+      implementation_phase: storeAgent.implementation_phase,
+      business_function: storeAgent.business_function,
+      department: storeAgent.department,
+      role: storeAgent.role,
+      tier: storeAgent.tier,
+      status: storeAgent.status,
+      is_custom: storeAgent.is_custom,
+      knowledge_domains: storeAgent.knowledge_domains,
+      is_user_copy: storeAgent.is_user_copy,
+      original_agent_id: storeAgent.original_agent_id,
+      copied_at: storeAgent.copied_at,
+      ...storeAgent.metadata,
+    },
   };
 };
 
@@ -331,11 +338,13 @@ export const useAgentsStore = create<AgentsStore>()(
       createCustomAgent: async (agentData: Partial<Agent>) => {
         const fullAgentData: Partial<DbAgent> = {
           ...convertStoreAgentToDbFormat(agentData as Agent),
-          is_custom: true,
-          status: 'active',
-          tier: 1,
-          priority: 100,
-          implementation_phase: 1,
+          metadata: {
+            ...convertStoreAgentToDbFormat(agentData as Agent).metadata,
+            is_custom: true,
+            status: 'active',
+            tier: 1,
+            implementation_phase: 1,
+          },
         };
 
         try {

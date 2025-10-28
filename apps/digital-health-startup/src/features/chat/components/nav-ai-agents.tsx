@@ -48,26 +48,35 @@ export function NavAiAgents({ onAgentStoreClick, onCreateAgentClick, onAgentSele
               return (
                 <div key={agent.id} className="group relative">
                   <Button
-                    variant={isSelected ? "secondary" : "ghost"}
+                    variant="ghost"
                     className={cn(
-                      'w-full',
-                      isCollapsed ? 'justify-center px-2' : 'justify-start pr-8',
-                      isSelected && 'bg-blue-100 border-blue-200 text-blue-900',
+                      'transition-colors',
+                      isCollapsed
+                        ? 'mx-auto flex h-10 w-10 items-center justify-center rounded-full border border-transparent'
+                        : 'w-full justify-start pr-8',
+                      isSelected &&
+                        (isCollapsed
+                          ? 'border-blue-300 bg-blue-100 text-blue-900'
+                          : 'bg-blue-100 border border-blue-200 text-blue-900')
                     )}
                     onClick={() => onAgentSelect?.(agent.id)}
+                    aria-label={isCollapsed ? agent.name : undefined}
                   >
-                    <div className="relative w-4 h-4 flex-shrink-0">
+                    <div className={cn('relative flex-shrink-0', isCollapsed ? 'h-6 w-6' : 'h-5 w-5')}>
                       {agent.avatar && (agent.avatar.startsWith('/') || agent.avatar.startsWith('http')) ? (
                         <Image
                           src={agent.avatar}
                           alt={agent.name}
-                          width={16}
-                          height={16}
-                          className="rounded-full"
+                          width={isCollapsed ? 24 : 20}
+                          height={isCollapsed ? 24 : 20}
+                          className="rounded-full object-cover"
                         />
                       ) : (
-                        <div className="w-4 h-4 rounded-full bg-gray-100 flex items-center justify-center text-xs">
-                          {agent.avatar || '🤖'}
+                        <div className={cn(
+                          'flex items-center justify-center rounded-full bg-gray-100 text-xs font-medium text-gray-600',
+                          isCollapsed ? 'h-6 w-6 text-sm' : 'h-5 w-5'
+                        )}>
+                          {(agent.avatar && agent.avatar.trim()) || '🤖'}
                         </div>
                       )}
                     </div>

@@ -1,15 +1,16 @@
 'use client';
 
-import { 
-  Plus, 
-  Edit, 
-  Copy, 
-  Trash2, 
-  Search, 
-  BarChart3, 
+import {
+  Plus,
+  Edit,
+  Copy,
+  Trash2,
+  Search,
+  BarChart3,
   TrendingUp,
   AlertTriangle,
-  CheckCircle
+  CheckCircle,
+  Star
 } from 'lucide-react';
 import React, { useState, useEffect } from 'react';
 
@@ -206,8 +207,8 @@ export function PromptManagementPanel({ className = '' }: PromptManagementPanelP
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        <Badge variant={prompt.status === 'active' ? 'default' : 'secondary'}>
-                          {prompt.status}
+                        <Badge variant={(prompt as any).status === 'active' ? 'default' : 'secondary'}>
+                          {(prompt as any).status || 'active'}
                         </Badge>
                       </TableCell>
                       <TableCell>

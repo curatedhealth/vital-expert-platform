@@ -21,6 +21,13 @@ export async function PUT(
 
     const { id } = params;
     const updates = await request.json();
+    
+    // Map avatar field to avatar_url for database compatibility
+    if (updates.avatar !== undefined) {
+      updates.avatar_url = updates.avatar;
+      delete updates.avatar;
+    }
+    
     // Use admin client to bypass RLS
     const { data, error } = await supabaseAdmin
       .from('agents')

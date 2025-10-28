@@ -172,9 +172,10 @@ export async function POST(req: NextRequest) {
             contextResults = data;
           } else if (config.searchFunction === 'search_knowledge_for_agent') {
             const { data, error } = await supabase.rpc('search_knowledge_for_agent', {
-              p_agent_id: agentId,
-              query_embedding: embedding,
-              ...config.params,
+              agent_id_param: agentId,
+              query_text_param: message,
+              query_embedding_param: embedding,
+              max_results: config.params.max_results || 10
             });
             if (error) throw error;
             contextResults = data;
@@ -182,7 +183,10 @@ export async function POST(req: NextRequest) {
             const { data, error } = await supabase.rpc('hybrid_search', {
               query_text: message,
               query_embedding: embedding,
-              ...config.params,
+              max_results: config.params.max_results || 15,
+              semantic_weight: config.params.semantic_weight || 0.7,
+              keyword_weight: config.params.keyword_weight || 0.3,
+              similarity_threshold: 0.6 // Fixed threshold since it's not in config.params
             });
             if (error) throw error;
             contextResults = data;

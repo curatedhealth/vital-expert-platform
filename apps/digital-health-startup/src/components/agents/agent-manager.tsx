@@ -639,9 +639,9 @@ const AgentManager: React.FC = () => {
               <AgentCard
                 key={agent.id}
                 agent={agent}
-                onStart={handleStartAgent}
-                onStop={handleStopAgent}
-                onConfigure={handleConfigureAgent}
+                onStart={() => handleStart(agent.id)}
+                onStop={() => handleStop(agent.id)}
+                onConfigure={() => handleConfigure(agent)}
               />
             ))}
           </div>

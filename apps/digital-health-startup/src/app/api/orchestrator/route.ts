@@ -69,6 +69,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Get authentication context
+    const token = request.headers.get('authorization')?.replace('Bearer ', '');
 
     if (!token) {
       return NextResponse.json({
@@ -126,7 +127,7 @@ export async function POST(request: NextRequest) {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify(orchestrationRequest),
+        body: JSON.stringify(orchestrationPayload),
         signal: AbortSignal.timeout(30000) // 30 second timeout
       })
 
@@ -135,12 +136,12 @@ export async function POST(request: NextRequest) {
 
         orchestrationResult = {
           success: true,
-          request_id: data.request_id,
-          response: data.response,
-          clinical_validation: data.clinical_validation,
-          confidence_score: data.confidence_score,
-          evidence_level: data.evidence_level,
-          processing_time: data.processing_time
+          request_id: result.request_id,
+          response: result.response,
+          clinical_validation: result.clinical_validation,
+          confidence_score: result.confidence_score,
+          evidence_level: result.evidence_level,
+          processing_time: result.processing_time
         }
       } else {
         throw new Error(`Orchestrator service error: ${response.status}`)
@@ -148,7 +149,7 @@ export async function POST(request: NextRequest) {
     } catch (orchestratorError) {
       // // Fallback to integrated processing
       orchestrationResult = await processWithIntegratedOrchestrator(
-        orchestrationRequest,
+        orchestrationPayload,
         supabase,
         userProfile.organization_id
       )
@@ -201,7 +202,8 @@ export async function GET(request: NextRequest) {
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-
+    // Get authentication context
+    const token = request.headers.get('authorization')?.replace('Bearer ', '');
 
     if (!token) {
       return NextResponse.json({
@@ -277,23 +279,31 @@ export async function GET(request: NextRequest) {
 
 // Integrated orchestrator fallback
 async function processWithIntegratedOrchestrator(
-  request: unknown,
-  supabase: unknown,
+  request: any,
+  supabase: any,
   organizationId: string
 ): Promise<OrchestrationResponse> {
 
+  const startTime = Date.now();
+
   try {
     // 1. VITAL Framework Processing
+    const vitalResults: Record<string, unknown> = {};
 
     // 2. Clinical Validation if required
+    let clinicalValidation: any = null;
 
     if (request.requires_clinical_validation) {
       clinicalValidation = await performClinicalValidation(request.query, supabase, organizationId)
     }
 
     // 3. Agent Consultation
+    const agentsConsulted: string[] = [];
 
     // 4. Generate Recommendations
+    const recommendations: Array<Record<string, unknown>> = [];
+
+    const processingTime = Date.now() - startTime;
 
     return {
       success: true,
@@ -319,8 +329,8 @@ async function processWithIntegratedOrchestrator(
   }
 }
 
-async function processVITALFramework(request: unknown, supabase: unknown, organizationId: string) {
-  return {
+async function processVITALFramework(request: any, supabase: any, organizationId: string) {
+  const stageProcessors = {
     value: async () => ({
       clinical_value: 0.85,
       business_value: 0.72,
@@ -368,10 +378,11 @@ async function processVITALFramework(request: unknown, supabase: unknown, organi
     })
   }
 
+  const processor = stageProcessors[request.vital_stage as keyof typeof stageProcessors];
   return processor ? await processor() : await stageProcessors.intelligence()
 }
 
-async function performClinicalValidation(query: string, supabase: unknown, organizationId: string) {
+async function performClinicalValidation(query: string, supabase: any, organizationId: string) {
   // Simplified clinical validation
   return {
     is_valid: true,
@@ -385,7 +396,7 @@ async function performClinicalValidation(query: string, supabase: unknown, organ
   }
 }
 
-async function consultAgents(request: unknown, supabase: unknown, organizationId: string): Promise<string[]> {
+async function consultAgents(request: any, supabase: any, organizationId: string): Promise<string[]> {
   // Get relevant agents for consultation
   const { data: agents } = await supabase
     .from('agents')
@@ -394,10 +405,11 @@ async function consultAgents(request: unknown, supabase: unknown, organizationId
     .eq('enabled', true)
     .limit(3)
 
-  return agents?.map((agent: unknown) => `${agent.name} (${agent.type})`) || ['General Medical Agent']
+  return agents?.map((agent: any) => `${agent.name} (${agent.type})`) || ['General Medical Agent']
 }
 
-function generateRecommendations(request: unknown, vitalResults: unknown, clinicalValidation: unknown) {
+function generateRecommendations(request: any, vitalResults: any, clinicalValidation: any) {
+  const recommendations: Array<Record<string, unknown>> = [];
 
   if (vitalResults.clinical_value > 0.8) {
     recommendations.push({
@@ -427,7 +439,8 @@ function generateRecommendations(request: unknown, vitalResults: unknown, clinic
   return recommendations
 }
 
-function calculateConfidenceScore(vitalResults: unknown, clinicalValidation: unknown): number {
+function calculateConfidenceScore(vitalResults: any, clinicalValidation: any): number {
+  let score = 0.4; // Base score
 
   if (vitalResults?.confidence) {
     score += vitalResults.confidence * 0.3

@@ -1,30 +1,126 @@
 "use client"
-
-import * as TooltipPrimitive from "@radix-ui/react-tooltip"
 import * as React from "react"
-
+import { createPortal } from "react-dom"
 import { cn } from "@/lib/utils"
 
-const TooltipProvider = TooltipPrimitive.Provider
+interface TooltipContextValue {
+  open: boolean
+  onOpenChange: (open: boolean) => void
+}
 
-const Tooltip = TooltipPrimitive.Root
+const TooltipContext = React.createContext<TooltipContextValue | undefined>(undefined)
 
-const TooltipTrigger = TooltipPrimitive.Trigger
+export interface TooltipProviderProps {
+  children: React.ReactNode
+}
 
-const TooltipContent = React.forwardRef<
-  React.ElementRef<typeof TooltipPrimitive.Content>,
-  React.ComponentPropsWithoutRef<typeof TooltipPrimitive.Content>
->(({ className, sideOffset = 4, ...props }, ref) => (
-  <TooltipPrimitive.Content
-    ref={ref}
-    sideOffset={sideOffset}
-    className={cn(
-      "z-50 overflow-hidden rounded-md border bg-popover px-3 py-1.5 text-sm text-popover-foreground shadow-md animate-in fade-in-0 zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 origin-[--radix-tooltip-content-transform-origin]",
-      className
-    )}
-    {...props}
-  />
-))
-TooltipContent.displayName = TooltipPrimitive.Content.displayName
+export const TooltipProvider = ({ children }: TooltipProviderProps) => <>{children}</>
 
-export { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider }
+export interface TooltipProps {
+  open?: boolean
+  onOpenChange?: (open: boolean) => void
+  defaultOpen?: boolean
+  delayDuration?: number
+  children: React.ReactNode
+}
+
+export const Tooltip = ({ open: controlledOpen, onOpenChange, defaultOpen = false, children }: TooltipProps) => {
+  const [uncontrolledOpen, setUncontrolledOpen] = React.useState(defaultOpen)
+  const open = controlledOpen !== undefined ? controlledOpen : uncontrolledOpen
+  const handleOpenChange = onOpenChange || setUncontrolledOpen
+
+  return (
+    <TooltipContext.Provider value={{ open, onOpenChange: handleOpenChange }}>
+      {children}
+    </TooltipContext.Provider>
+  )
+}
+
+export interface TooltipTriggerProps extends React.HTMLAttributes<HTMLButtonElement> {
+  asChild?: boolean
+}
+
+export const TooltipTrigger = React.forwardRef<HTMLButtonElement, TooltipTriggerProps>(
+  ({ asChild, children, onMouseEnter, onMouseLeave, onFocus, onBlur, ...props }, ref) => {
+    const context = React.useContext(TooltipContext)
+
+    const handleMouseEnter = (e: React.MouseEvent<HTMLButtonElement>) => {
+      context?.onOpenChange(true)
+      onMouseEnter?.(e)
+    }
+
+    const handleMouseLeave = (e: React.MouseEvent<HTMLButtonElement>) => {
+      context?.onOpenChange(false)
+      onMouseLeave?.(e)
+    }
+
+    const handleFocus = (e: React.FocusEvent<HTMLButtonElement>) => {
+      context?.onOpenChange(true)
+      onFocus?.(e)
+    }
+
+    const handleBlur = (e: React.FocusEvent<HTMLButtonElement>) => {
+      context?.onOpenChange(false)
+      onBlur?.(e)
+    }
+
+    if (asChild && React.isValidElement(children)) {
+      return React.cloneElement(children, {
+        ...props,
+        ...children.props,
+        onMouseEnter: handleMouseEnter,
+        onMouseLeave: handleMouseLeave,
+        onFocus: handleFocus,
+        onBlur: handleBlur,
+        ref,
+      } as any)
+    }
+
+    return (
+      <button
+        ref={ref}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+        onFocus={handleFocus}
+        onBlur={handleBlur}
+        {...props}
+      >
+        {children}
+      </button>
+    )
+  }
+)
+TooltipTrigger.displayName = "TooltipTrigger"
+
+export interface TooltipContentProps extends React.HTMLAttributes<HTMLDivElement> {
+  sideOffset?: number
+}
+
+export const TooltipContent = React.forwardRef<HTMLDivElement, TooltipContentProps>(
+  ({ className, sideOffset = 4, children, ...props }, ref) => {
+    const context = React.useContext(TooltipContext)
+    const [mounted, setMounted] = React.useState(false)
+
+    React.useEffect(() => {
+      setMounted(true)
+    }, [])
+
+    if (!mounted || !context?.open) return null
+
+    return createPortal(
+      <div
+        ref={ref}
+        role="tooltip"
+        className={cn(
+          "z-50 overflow-hidden rounded-md border bg-popover px-3 py-1.5 text-sm text-popover-foreground shadow-md animate-in fade-in-0 zoom-in-95",
+          className
+        )}
+        {...props}
+      >
+        {children}
+      </div>,
+      document.body
+    )
+  }
+)
+TooltipContent.displayName = "TooltipContent"

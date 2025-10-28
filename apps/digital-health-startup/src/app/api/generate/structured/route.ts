@@ -126,7 +126,13 @@ function getSchemaDescription(schemaType: SchemaType): string {
     clinical_summary: 'Comprehensive clinical summary with medications, diagnoses, procedures, and lab results',
     regulatory_document: 'FDA/EMA regulatory submission document with safety, efficacy, and compliance data',
     research_report: 'Academic research report with introduction, methods, results, and discussion',
-    market_access: 'Market access dossier with clinical and economic value propositions'
+    clinical_operations: 'Clinical operations document with trial management, site coordination, and monitoring',
+    market_access: 'Market access dossier with clinical and economic value propositions',
+    medical_affairs: 'Medical affairs document with scientific communications and education materials',
+    business_strategy: 'Business strategy document with market analysis, competitive landscape, and growth plans',
+    marketing_commercial: 'Marketing and commercial strategy with positioning, messaging, and launch plans',
+    product_management: 'Product management document with roadmap, requirements, and stakeholder analysis',
+    digital_health_technical: 'Digital health technical specification with architecture, APIs, and integration details'
   };
 
   return descriptions[schemaType];

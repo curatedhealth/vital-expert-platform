@@ -1,0 +1,67 @@
+# Prometheus Configuration for VITAL Path RAG Monitoring
+# This configuration scrapes RAG metrics from the Next.js application
+
+global:
+  scrape_interval: 15s      # Scrape targets every 15 seconds
+  evaluation_interval: 15s  # Evaluate rules every 15 seconds
+
+  # External labels for all time series
+  external_labels:
+    cluster: 'vital-path-production'
+    environment: 'production'
+
+# Alertmanager configuration
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+          # - 'alertmanager:9093'  # Uncomment when Alertmanager is deployed
+
+# Load rules once and periodically evaluate them
+rule_files:
+  - 'alerts/rag-alerts.yml'
+  - 'alerts/platform-alerts.yml'
+
+# Scrape configurations
+scrape_configs:
+  # VITAL Path Application - RAG Metrics
+  - job_name: 'vital-path-rag'
+    scrape_interval: 15s
+    scrape_timeout: 10s
+    metrics_path: '/api/metrics'
+    params:
+      format: ['prometheus']
+    static_configs:
+      - targets:
+          - 'host.docker.internal:3001'  # Local development (Mac/Windows Docker)
+          # - 'localhost:3001'            # Alternative for Linux
+          # - 'vital-path.vercel.app'     # Production (uncomment and adjust)
+        labels:
+          service: 'vital-path'
+          component: 'rag-service'
+          tier: 'application'
+
+  # Additional scrape configs (examples)
+
+  # Prometheus self-monitoring
+  - job_name: 'prometheus'
+    scrape_interval: 30s
+    static_configs:
+      - targets:
+          - 'localhost:9090'
+        labels:
+          service: 'prometheus'
+          tier: 'monitoring'
+
+  # Node Exporter (system metrics) - Optional
+  # - job_name: 'node-exporter'
+  #   scrape_interval: 30s
+  #   static_configs:
+  #     - targets:
+  #         - 'localhost:9100'
+  #       labels:
+  #         service: 'node-exporter'
+  #         tier: 'infrastructure'
+
+# Storage configuration is set via command-line flags in docker-compose.yml
+# See: --storage.tsdb.path and --storage.tsdb.retention.time

@@ -36,62 +36,74 @@ export const AgentConfigurationExample: React.FC<AgentConfigurationExampleProps>
     loadAgentCapabilities();
   }, [agentName]);
 
+  const loadAgentCapabilities = async () => {
     setIsLoadingCapabilities(true);
     try {
-
+      const loader = new DatabaseLibraryLoader();
+      const caps = agentId ? await loader.getAgentCapabilitiesDetailed(agentName) : [];
       setCapabilities(caps);
-      // } catch (error) {
-      // console.error('❌ Failed to load agent capabilities:', error);
+    } catch (error) {
+      console.error('Failed to load agent capabilities:', error);
+      setCapabilities([]);
     } finally {
       setIsLoadingCapabilities(false);
     }
   };
 
+  const loadAvailableCapabilities = async () => {
     setIsLoadingAvailable(true);
     try {
-
-      setAvailableCapabilities(available);
-      // } catch (error) {
-      // console.error('❌ Failed to load available capabilities:', error);
+      // For now, just return empty array
+      // TODO: Implement getAllCapabilities in DatabaseLibraryLoader
+      setAvailableCapabilities([]);
+    } catch (error) {
+      console.error('Failed to load available capabilities:', error);
+      setAvailableCapabilities([]);
     } finally {
       setIsLoadingAvailable(false);
     }
   };
 
+  const handleAddCapability = async () => {
     await loadAvailableCapabilities();
     setShowCapabilitySelector(true);
   };
 
+  const handleCapabilitySelection = async (selectedCapabilities: Array<{
     capabilityId: string;
     proficiencyLevel: string;
     isPrimary: boolean;
   }>) => {
-    // // In a real implementation, you would save these to the database
+    const loader = new DatabaseLibraryLoader();
+    // In a real implementation, you would save these to the database
     // For now, just simulate the addition
     for (const selected of selectedCapabilities) {
       if (agentId) {
         try {
           await loader.addCapabilityToAgent(agentId, selected.capabilityId, selected.proficiencyLevel, selected.isPrimary);
         } catch (error) {
-          // console.error('❌ Failed to add capability:', error);
+          console.error('Failed to add capability:', error);
         }
       }
     }
 
     // Reload capabilities to show the updates
     await loadAgentCapabilities();
+    setShowCapabilitySelector(false);
   };
 
-    // if (agentId) {
+  const handleRemoveCapability = async (capabilityId: string) => {
+    const loader = new DatabaseLibraryLoader();
+    if (agentId) {
       try {
         await loader.removeCapabilityFromAgent(agentId, capabilityId);
         await loadAgentCapabilities();
       } catch (error) {
-        // console.error('❌ Failed to remove capability:', error);
+        console.error('Failed to remove capability:', error);
       }
     } else {
       // For demo purposes, just remove from local state
-      setCapabilities(prev => prev.filter(cap => cap.capability_id !== capabilityId));
+      setCapabilities(prev => prev.filter((cap: any) => cap.capability_id !== capabilityId));
     }
   };
 
@@ -139,7 +151,7 @@ export const AgentConfigurationExample: React.FC<AgentConfigurationExampleProps>
               <AgentCapabilitiesDisplay
                 agentName={agentName}
                 agentDisplayName={agentDisplayName}
-                capabilities={capabilities}
+                capabilities={capabilities as any}
                 isLoading={isLoadingCapabilities}
                 showAddCapability={true}
                 onAddCapability={handleAddCapability}
@@ -157,13 +169,13 @@ export const AgentConfigurationExample: React.FC<AgentConfigurationExampleProps>
               <CardContent>
                 <div className="bg-muted/50 rounded-lg p-4">
                   <h4 className="font-medium text-sm mb-2 flex items-center gap-2">
-                    {capabilities[0].icon} {capabilities[0].display_name}
+                    {(capabilities[0] as any).icon} {(capabilities[0] as any).display_name}
                   </h4>
                   <p className="text-sm text-muted-foreground mb-3">
                     This capability provides concrete, actionable functionality:
                   </p>
                   <ul className="space-y-1">
-                    {capabilities[0].bullet_points?.slice(0, 3).map((point: string, index: number) => (
+                    {(capabilities[0] as any).bullet_points?.slice(0, 3).map((point: string, index: number) => (
                       <li key={index} className="text-sm text-foreground flex items-start gap-2">
                         <div className="h-1.5 w-1.5 rounded-full bg-primary mt-1.5 flex-shrink-0"></div>
                         <span>{point.replace(/^•\s*/, '').trim()}</span>
@@ -171,9 +183,9 @@ export const AgentConfigurationExample: React.FC<AgentConfigurationExampleProps>
                     ))}
                   </ul>
                   <p className="text-xs text-muted-foreground mt-3">
-                    <strong>Proficiency:</strong> {capabilities[0].proficiency_level} •
-                    <strong> Domain:</strong> {capabilities[0].domain} •
-                    <strong> Complexity:</strong> {capabilities[0].complexity_level}
+                    <strong>Proficiency:</strong> {(capabilities[0] as any).proficiency_level} •
+                    <strong> Domain:</strong> {(capabilities[0] as any).domain} •
+                    <strong> Complexity:</strong> {(capabilities[0] as any).complexity_level}
                   </p>
                 </div>
               </CardContent>
@@ -231,9 +243,9 @@ export const AgentConfigurationExample: React.FC<AgentConfigurationExampleProps>
         isOpen={showCapabilitySelector}
         onClose={() => setShowCapabilitySelector(false)}
         onSelect={handleCapabilitySelection}
-        availableCapabilities={availableCapabilities}
+        availableCapabilities={availableCapabilities as any}
         isLoading={isLoadingAvailable}
-        selectedCapabilityIds={capabilities.map(cap => cap.capability_id)}
+        selectedCapabilityIds={capabilities.map((cap: any) => cap.capability_id)}
       />
     </div>
   );

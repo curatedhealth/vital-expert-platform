@@ -66,17 +66,21 @@ export default function Navigation() {
 
           {/* Desktop CTA Buttons */}
           <div className="hidden md:flex items-center space-x-4">
-            <Button 
-              variant="ghost" 
-              className={isScrolled ? 'text-gray-700' : 'text-white hover:bg-white/10'}
-            >
-              Sign In
-            </Button>
-            <Button 
-              className="bg-vital-blue-600 hover:bg-vital-blue-700 text-white"
-            >
-              Book Demo
-            </Button>
+            <Link href="/login">
+              <Button
+                variant="ghost"
+                className={isScrolled ? 'text-gray-700' : 'text-white hover:bg-white/10'}
+              >
+                Sign In
+              </Button>
+            </Link>
+            <Link href="/register">
+              <Button
+                className="bg-vital-blue-600 hover:bg-vital-blue-700 text-white"
+              >
+                Book Demo
+              </Button>
+            </Link>
           </div>
 
           {/* Mobile Menu Button */}
@@ -114,19 +118,23 @@ export default function Navigation() {
               </Link>
             ))}
             <div className="pt-4 space-y-2">
-              <Button 
-                variant="ghost" 
-                className="w-full justify-start text-gray-700"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                Sign In
-              </Button>
-              <Button 
-                className="w-full bg-vital-blue-600 hover:bg-vital-blue-700 text-white"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                Book Demo
-              </Button>
+              <Link href="/login" className="block">
+                <Button
+                  variant="ghost"
+                  className="w-full justify-start text-gray-700"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Sign In
+                </Button>
+              </Link>
+              <Link href="/register" className="block">
+                <Button
+                  className="w-full bg-vital-blue-600 hover:bg-vital-blue-700 text-white"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Book Demo
+                </Button>
+              </Link>
             </div>
           </div>
         </motion.div>

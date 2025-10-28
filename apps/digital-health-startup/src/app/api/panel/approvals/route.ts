@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
     const sessions = await langGraphOrchestrator.listSessions();
 
     // Filter for interrupted sessions (pending approval)
-    const pendingApprovals = sessions.filter(session => {
+    const pendingApprovals = sessions.filter((session: any) => {
       // Check if session is waiting for human approval
       return (
         session.humanGateRequired ||

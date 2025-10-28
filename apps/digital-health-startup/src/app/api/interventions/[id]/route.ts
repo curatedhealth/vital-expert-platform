@@ -45,7 +45,12 @@ export async function GET(
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
+    // Extract intervention ID from params
+    const interventionId = params.id;
 
+    // Extract token from Authorization header
+    const authHeader = request.headers.get('authorization');
+    const token = authHeader?.replace('Bearer ', '');
 
     if (!token) {
       return NextResponse.json({
@@ -125,7 +130,7 @@ export async function GET(
     }
 
     // Get FHIR medication record if DTx
-
+    let fhirMedication = null;
     if (intervention.intervention_type === 'dtx') {
       const { data: medication, error: medicationError } = await supabase
         .from('fhir_medications')
@@ -140,6 +145,11 @@ export async function GET(
     }
 
     // Calculate lifecycle metrics
+    const lifecycleMetrics = {
+      total_phases: lifecyclePhases?.length || 0,
+      current_phase: lifecyclePhases?.[lifecyclePhases.length - 1]?.phase_name || 'N/A',
+      phase_duration_days: lifecyclePhases?.[lifecyclePhases.length - 1]?.duration_days || 0
+    };
 
     // Get recent activity
     const { data: recentActivity, error: activityError } = await supabase
@@ -206,7 +216,12 @@ export async function PUT(
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
+    // Extract intervention ID from params
+    const interventionId = params.id;
 
+    // Extract token from Authorization header
+    const authHeader = request.headers.get('authorization');
+    const token = authHeader?.replace('Bearer ', '');
 
     const body: InterventionUpdateRequest = await request.json()
 
@@ -258,7 +273,7 @@ export async function PUT(
     // Update FHIR medication if DTx and relevant fields changed
     if (updatedIntervention.intervention_type === 'dtx' &&
         (body.therapeutic_area || body.regulatory_status || body.delivery_modalities)) {
-      const updateData: unknown = { /* TODO: implement */ }
+      const updateData: any = {}
 
       if (body.therapeutic_area) {
         updateData.therapeutic_area = body.therapeutic_area
@@ -338,7 +353,12 @@ export async function DELETE(
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
+    // Extract intervention ID from params
+    const interventionId = params.id;
 
+    // Extract token from Authorization header
+    const authHeader = request.headers.get('authorization');
+    const token = authHeader?.replace('Bearer ', '');
 
     if (!token) {
       return NextResponse.json({
@@ -479,7 +499,7 @@ function calculateLifecycleMetrics(lifecyclePhases: any[]) {
     progress_percentage: totalPhases > 0 ? (completedPhases / totalPhases) * 100 : 0,
     current_phase: currentPhase?.phase || 'unknown',
     current_stage: currentPhase?.stage || 'unknown',
-    overdue_tasks: overdueTasks,
+    overdue_tasks: overdueMilestones,
     estimated_completion: estimateCompletion(lifecyclePhases)
   }
 }

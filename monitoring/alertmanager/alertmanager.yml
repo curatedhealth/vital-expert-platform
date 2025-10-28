@@ -1,0 +1,105 @@
+# Alertmanager Configuration
+# Routes alerts to appropriate notification channels
+
+global:
+  resolve_timeout: 5m
+  # Slack webhook (configure in production)
+  # slack_api_url: 'https://hooks.slack.com/services/YOUR/WEBHOOK/URL'
+
+# Templates for alert notifications
+templates:
+  - '/etc/alertmanager/templates/*.tmpl'
+
+# Root route - all alerts start here
+route:
+  group_by: ['alertname', 'component', 'severity']
+  group_wait: 10s
+  group_interval: 10s
+  repeat_interval: 12h
+  receiver: 'default'
+
+  # Child routes for specific alert types
+  routes:
+    # Critical RAG alerts go to PagerDuty
+    - match:
+        severity: critical
+        component: rag
+      receiver: 'pagerduty'
+      continue: true
+
+    # Warning RAG alerts go to Slack
+    - match:
+        severity: warning
+        component: rag
+      receiver: 'slack'
+
+    # Cost alerts go to email
+    - match:
+        component: rag
+      match_re:
+        alertname: '^RAG.*Budget.*'
+      receiver: 'email'
+
+# Notification receivers
+receivers:
+  # Default receiver (logs only)
+  - name: 'default'
+    # webhook_configs:
+    #   - url: 'http://localhost:5001/'
+
+  # Slack notifications
+  - name: 'slack'
+    slack_configs:
+      - send_resolved: true
+        # api_url: '{{ global.slack_api_url }}'
+        channel: '#vital-path-alerts'
+        title: '{{ .GroupLabels.alertname }}'
+        text: |-
+          {{ range .Alerts }}
+          *Alert:* {{ .Labels.alertname }}
+          *Severity:* {{ .Labels.severity }}
+          *Description:* {{ .Annotations.description }}
+          *Runbook:* {{ .Annotations.runbook_url }}
+          {{ end }}
+        # Uncomment in production:
+        # username: 'VITAL Path Monitoring'
+        # icon_emoji: ':chart_with_upwards_trend:'
+
+  # Email notifications
+  - name: 'email'
+    email_configs:
+      - send_resolved: true
+        # to: 'ops@vital-path.com'
+        # from: 'alertmanager@vital-path.com'
+        # smarthost: 'smtp.gmail.com:587'
+        # auth_username: 'alertmanager@vital-path.com'
+        # auth_password: 'PASSWORD'
+        headers:
+          Subject: 'RAG Cost Alert: {{ .GroupLabels.alertname }}'
+
+  # PagerDuty for critical alerts
+  - name: 'pagerduty'
+    pagerduty_configs:
+      - send_resolved: true
+        # routing_key: 'YOUR_PAGERDUTY_INTEGRATION_KEY'
+        description: '{{ .GroupLabels.alertname }}: {{ .Annotations.summary }}'
+        details:
+          severity: '{{ .Labels.severity }}'
+          component: '{{ .Labels.component }}'
+          runbook: '{{ .Annotations.runbook_url }}'
+
+# Inhibition rules - suppress alerts based on other active alerts
+inhibit_rules:
+  # Suppress warnings if critical alert is firing
+  - source_match:
+      severity: 'critical'
+    target_match:
+      severity: 'warning'
+    equal: ['alertname', 'component']
+
+  # Suppress HALF_OPEN alerts if OPEN alert is firing
+  - source_match:
+      alertname: 'RAGCircuitBreakerOpen'
+    target_match:
+      alertname: 'RAGCircuitBreakerHalfOpen'
+    equal: ['service']

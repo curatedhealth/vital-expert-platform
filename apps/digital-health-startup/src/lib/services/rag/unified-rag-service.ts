@@ -10,6 +10,10 @@ import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { embeddingService } from '../embeddings/openai-embedding-service';
 import { pineconeVectorService, PineconeVectorService } from '../vectorstore/pinecone-vector-service';
 import { redisCacheService } from '../../../features/rag/caching/redis-cache-service';
+import { ragLatencyTracker } from '../monitoring/rag-latency-tracker';
+import { ragCostTracker } from '../monitoring/rag-cost-tracker';
+import { RAG_CIRCUIT_BREAKERS } from '../monitoring/circuit-breaker';
+import { v4 as uuidv4 } from 'uuid';
 
 export interface RAGQuery {
   text: string;
@@ -102,19 +106,49 @@ export class UnifiedRAGService {
   async query(query: RAGQuery): Promise<RAGResult> {
     const startTime = Date.now();
     const strategy = query.strategy || this.config.defaultStrategy;
+    const queryId = uuidv4();
+
+    // Timing trackers for latency breakdown
+    let cacheCheckStartTime = startTime;
+    let cacheCheckMs = 0;
+    let embeddingStartTime = 0;
+    let embeddingMs = 0;
+    let vectorSearchStartTime = 0;
+    let vectorSearchMs = 0;
+    let rerankingStartTime = 0;
+    let rerankingMs = 0;
+    let cacheHit = false;
 
     try {
       // Check Redis cache first (exact match)
       if (this.config.enableCaching) {
         const exactCached = await redisCacheService.getCachedRAGResult(query.text, strategy);
+        cacheCheckMs = Date.now() - cacheCheckStartTime;
+
         if (exactCached) {
+          cacheHit = true;
           console.log('📦 Returning Redis cached result (exact match)');
+
+          // Track latency metrics
+          const totalRetrievalMs = Date.now() - startTime;
+          ragLatencyTracker.trackOperation({
+            queryId,
+            timestamp: new Date().toISOString(),
+            strategy,
+            cacheHit: true,
+            cacheCheckMs,
+            queryEmbeddingMs: 0,
+            vectorSearchMs: 0,
+            rerankingMs: 0,
+            totalRetrievalMs,
+          });
+
           return {
             ...exactCached,
             metadata: {
               ...exactCached.metadata,
               cached: true,
-              responseTime: Date.now() - startTime,
+              responseTime: totalRetrievalMs,
             },
           };
         }
@@ -122,14 +156,30 @@ export class UnifiedRAGService {
         // Check semantic cache (similar queries with 85% similarity)
         const semanticCached = await redisCacheService.findSimilarQuery(query.text, strategy);
         if (semanticCached) {
+          cacheHit = true;
           console.log(`🔍 Returning Redis semantic cache hit (${(semanticCached.similarity * 100).toFixed(1)}% similar)`);
+
+          // Track latency metrics
+          const totalRetrievalMs = Date.now() - startTime;
+          ragLatencyTracker.trackOperation({
+            queryId,
+            timestamp: new Date().toISOString(),
+            strategy,
+            cacheHit: true,
+            cacheCheckMs,
+            queryEmbeddingMs: 0,
+            vectorSearchMs: 0,
+            rerankingMs: 0,
+            totalRetrievalMs,
+          });
+
           return {
             ...semanticCached.result,
             metadata: {
               ...semanticCached.result.metadata,
               cached: true,
               similarity: semanticCached.similarity,
-              responseTime: Date.now() - startTime,
+              responseTime: totalRetrievalMs,
             },
           };
         }
@@ -137,20 +187,39 @@ export class UnifiedRAGService {
         // Fallback to in-memory cache
         const memCached = this.getFromCache(query.text);
         if (memCached) {
+          cacheHit = true;
           console.log('📦 Returning in-memory cached result');
+
+          // Track latency metrics
+          const totalRetrievalMs = Date.now() - startTime;
+          ragLatencyTracker.trackOperation({
+            queryId,
+            timestamp: new Date().toISOString(),
+            strategy,
+            cacheHit: true,
+            cacheCheckMs,
+            queryEmbeddingMs: 0,
+            vectorSearchMs: 0,
+            rerankingMs: 0,
+            totalRetrievalMs,
+          });
+
           return {
             ...memCached,
             metadata: {
               ...memCached.metadata,
               cached: true,
-              responseTime: Date.now() - startTime,
+              responseTime: totalRetrievalMs,
             },
           };
         }
       }
 
-      // Route to appropriate strategy
+      // Route to appropriate strategy (with timing tracking)
       let result: RAGResult;
+
+      // Track embedding timing
+      embeddingStartTime = Date.now();
 
       switch (strategy) {
         case 'agent-optimized':
@@ -172,9 +241,28 @@ export class UnifiedRAGService {
           result = await this.hybridSearch(query);
       }
 
+      // Calculate timing (rough estimates - actual embedding/search split varies by strategy)
+      const totalStrategyMs = Date.now() - embeddingStartTime;
+      embeddingMs = Math.min(totalStrategyMs * 0.3, totalStrategyMs); // ~30% for embedding
+      vectorSearchMs = totalStrategyMs - embeddingMs; // Remainder for search
+
       // Add timing metadata
-      result.metadata.responseTime = Date.now() - startTime;
+      const totalRetrievalMs = Date.now() - startTime;
+      result.metadata.responseTime = totalRetrievalMs;
       result.metadata.cached = false;
+
+      // Track latency metrics
+      ragLatencyTracker.trackOperation({
+        queryId,
+        timestamp: new Date().toISOString(),
+        strategy,
+        cacheHit: false,
+        cacheCheckMs,
+        queryEmbeddingMs: embeddingMs,
+        vectorSearchMs,
+        rerankingMs: 0, // No re-ranking in basic strategies
+        totalRetrievalMs,
+      });
 
       // Cache the result in Redis with semantic similarity
       if (this.config.enableCaching) {
@@ -188,7 +276,22 @@ export class UnifiedRAGService {
 
     } catch (error) {
       console.error('❌ Query failed:', error);
-      return this.handleQueryError(error, Date.now() - startTime);
+
+      // Track failed operation
+      const totalRetrievalMs = Date.now() - startTime;
+      ragLatencyTracker.trackOperation({
+        queryId,
+        timestamp: new Date().toISOString(),
+        strategy,
+        cacheHit: false,
+        cacheCheckMs,
+        queryEmbeddingMs: 0,
+        vectorSearchMs: 0,
+        rerankingMs: 0,
+        totalRetrievalMs,
+      });
+
+      return this.handleQueryError(error, totalRetrievalMs);
     }
   }
 
@@ -196,16 +299,65 @@ export class UnifiedRAGService {
    * Semantic search using vector similarity (Pinecone)
    */
   private async semanticSearch(query: RAGQuery): Promise<RAGResult> {
-    // Generate query embedding
-    const embedding = await embeddingService.generateQueryEmbedding(query.text);
+    const queryId = uuidv4();
 
-    // Perform vector search using Pinecone
-    const results = await this.pinecone.search({
-      embedding: embedding,
-      topK: query.maxResults || 10,
-      minScore: query.similarityThreshold || 0.7,
-      filter: query.domain ? { domain: query.domain } : undefined,
-    });
+    // Generate query embedding with circuit breaker protection
+    const embedding = await RAG_CIRCUIT_BREAKERS.openai.execute(
+      async () => {
+        const result = await embeddingService.generateQueryEmbedding(query.text);
+
+        // Track embedding cost (estimate ~8 tokens per query)
+        const estimatedTokens = Math.ceil(query.text.length / 4); // Rough estimate
+        ragCostTracker.trackEmbedding(
+          queryId,
+          'text-embedding-3-large',
+          estimatedTokens,
+          {
+            userId: query.userId,
+            agentId: query.agentId,
+            sessionId: query.sessionId,
+          }
+        );
+
+        return result;
+      },
+      async () => {
+        // Fallback: return zero embedding if OpenAI is down
+        console.warn('OpenAI circuit breaker open, using fallback');
+        return new Array(1536).fill(0);
+      }
+    );
+
+    // Perform vector search using Pinecone with circuit breaker protection
+    const results = await RAG_CIRCUIT_BREAKERS.pinecone.execute(
+      async () => {
+        const searchResults = await this.pinecone.search({
+          embedding: embedding,
+          topK: query.maxResults || 10,
+          minScore: query.similarityThreshold || 0.7,
+          filter: query.domain ? { domain: query.domain } : undefined,
+        });
+
+        // Track vector search cost
+        ragCostTracker.trackVectorSearch(
+          queryId,
+          query.maxResults || 10,
+          false, // Read operation
+          {
+            userId: query.userId,
+            agentId: query.agentId,
+            sessionId: query.sessionId,
+          }
+        );
+
+        return searchResults;
+      },
+      async () => {
+        // Fallback: return empty results if Pinecone is down
+        console.warn('Pinecone circuit breaker open, using fallback');
+        return [];
+      }
+    );
 
     // Convert to Document format
     const sources = results.map((result: any) => new Document({

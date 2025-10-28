@@ -14,8 +14,8 @@ export async function GET(request: NextRequest) {
 
     // Filter sessions that have message history
     const conversations = sessions
-      .filter(session => session.messageHistory && session.messageHistory.length > 0)
-      .map(session => ({
+      .filter((session: any) => session.messageHistory && session.messageHistory.length > 0)
+      .map((session: any) => ({
         threadId: session.sessionId,
         mode: session.mode,
         lastMessage: session.messageHistory[session.messageHistory.length - 1],

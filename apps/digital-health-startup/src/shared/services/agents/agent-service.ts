@@ -44,11 +44,12 @@ class AgentService {
 
   async getActiveAgents(): Promise<Agent[]> {
     try {
-
+      const response = await fetch(this.baseUrl);
       if (!response.ok) {
         throw new Error(`Failed to fetch agents: ${response.statusText}`);
       }
 
+      const data = await response.json();
       return data.agents || [];
     } catch (error) {
       // console.error('Failed to fetch active agents:', error);
@@ -58,11 +59,12 @@ class AgentService {
 
   async searchAgents(searchTerm: string): Promise<Agent[]> {
     try {
-
+      const response = await fetch(`${this.baseUrl}?search=${encodeURIComponent(searchTerm)}`);
       if (!response.ok) {
         throw new Error(`Failed to search agents: ${response.statusText}`);
       }
 
+      const data = await response.json();
       return data.agents || [];
     } catch (error) {
       // console.error('Failed to search agents:', error);
@@ -72,7 +74,7 @@ class AgentService {
 
   async getAgentsByCategory(categoryName: string): Promise<Agent[]> {
     try {
-
+      const response = await fetch(`${this.baseUrl}?category=${encodeURIComponent(categoryName)}`);
       if (!response.ok) {
         throw new Error(`Failed to fetch agents by category: ${response.statusText}`);
       }
@@ -85,7 +87,7 @@ class AgentService {
 
   async getAgentsByTier(tier: number): Promise<Agent[]> {
     try {
-
+      const response = await fetch(`${this.baseUrl}?tier=${tier}`);
       if (!response.ok) {
         throw new Error(`Failed to fetch agents by tier: ${response.statusText}`);
       }
@@ -98,7 +100,7 @@ class AgentService {
 
   async getAgentsByPhase(phase: number): Promise<Agent[]> {
     try {
-
+      const response = await fetch(`${this.baseUrl}?phase=${phase}`);
       if (!response.ok) {
         throw new Error(`Failed to fetch agents by phase: ${response.statusText}`);
       }
@@ -111,7 +113,7 @@ class AgentService {
 
   async getAgentById(id: string): Promise<Agent | null> {
     try {
-
+      const response = await fetch(`${this.baseUrl}?id=${id}`);
       if (!response.ok) {
         if (response.status === 404) {
           return null;
@@ -127,7 +129,7 @@ class AgentService {
 
   async getCategories(): Promise<AgentCategory[]> {
     try {
-
+      const response = await fetch('/api/agent-categories');
       if (!response.ok) {
         throw new Error(`Failed to fetch categories: ${response.statusText}`);
       }
@@ -260,7 +262,7 @@ class AgentService {
 
   async updateAgent(id: string, agentData: Partial<Agent>): Promise<{ success: boolean; agent?: Agent; error?: string }> {
     try {
-
+      const response = await fetch(`/api/agents-crud?id=${id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -269,10 +271,11 @@ class AgentService {
       });
 
       if (!response.ok) {
-
+        const errorData = await response.json().catch(() => ({}));
         throw new Error(errorData.error || `Failed to update agent: ${response.statusText}`);
       }
 
+      const agent = await response.json();
       return { success: true, agent };
     } catch (error) {
       // console.error('Failed to update agent:', error);
@@ -285,12 +288,12 @@ class AgentService {
 
   async deleteAgent(id: string): Promise<{ success: boolean; error?: string }> {
     try {
-
+      const response = await fetch(`/api/agents-crud?id=${id}`, {
         method: 'DELETE',
       });
 
       if (!response.ok) {
-
+        const errorData = await response.json().catch(() => ({}));
         throw new Error(errorData.error || `Failed to delete agent: ${response.statusText}`);
       }
 

@@ -1,5 +1,5 @@
 import { supabase } from '@vital/sdk/client';
-import type { Database } from '@vital/sdk/lib/supabase/types';
+import type { Database } from '@/lib/db/supabase/database.types';
 
 export type Agent = Database['public']['Tables']['agents']['Row'];
 export type AgentCategory = Database['public']['Tables']['agent_categories']['Row'];
@@ -37,22 +37,68 @@ export class AgentService {
     return this.supabase;
   }
 
+  // Helper: Retry fetch with exponential backoff for Next.js dev server cold starts
+  private async fetchWithRetry(url: string, maxRetries: number = 3): Promise<Response> {
+    let lastError: Error | null = null;
+
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        console.log(`🔄 AgentService: Fetch attempt ${attempt}/${maxRetries} for ${url}`);
+
+        const response = await fetch(url, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+
+        // If successful or client error (not server/compilation issues), return immediately
+        if (response.ok || (response.status >= 400 && response.status < 500 && response.status !== 404)) {
+          if (response.ok) {
+            console.log(`✅ AgentService: Fetch succeeded on attempt ${attempt}`);
+          }
+          return response;
+        }
+
+        // 404 or 5xx: likely Next.js compilation or database warmup issue
+        lastError = new Error(`HTTP ${response.status}: ${response.statusText}`);
+        console.warn(`⚠️  AgentService: Attempt ${attempt} failed with ${response.status}, retrying...`);
+
+        // Wait before retry: 500ms, 1000ms, 1500ms
+        if (attempt < maxRetries) {
+          const delayMs = attempt * 500;
+          console.log(`⏱️  Waiting ${delayMs}ms before retry...`);
+          await new Promise(resolve => setTimeout(resolve, delayMs));
+        }
+
+      } catch (fetchError) {
+        lastError = fetchError instanceof Error ? fetchError : new Error(String(fetchError));
+        console.warn(`⚠️  AgentService: Attempt ${attempt} threw error:`, lastError.message);
+
+        // Wait before retry
+        if (attempt < maxRetries) {
+          const delayMs = attempt * 500;
+          await new Promise(resolve => setTimeout(resolve, delayMs));
+        }
+      }
+    }
+
+    // All retries exhausted
+    throw lastError || new Error('All retry attempts failed');
+  }
+
   // Get all active agents
   async getActiveAgents(showAll: boolean = false): Promise<AgentWithCategories[]> {
     try {
       console.log(`🔍 AgentService: Fetching ${showAll ? 'all' : 'active/testing'} agents from /api/agents-crud...`);
-      // Use API route to bypass RLS issues
+
+      // Use API route with retry logic to handle Next.js dev server cold starts
       const url = showAll ? '/api/agents-crud?showAll=true' : '/api/agents-crud';
-      const response = await fetch(url, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
+      const response = await this.fetchWithRetry(url);
 
       if (!response.ok) {
-        const errorData = await response.json();
-        console.error('❌ AgentService: API error');
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        console.error('❌ AgentService: API error after retries');
         console.error('- Status:', response.status);
         console.error('- Error data:', errorData);
 
@@ -77,11 +123,12 @@ export class AgentService {
       return transformedAgents;
 
     } catch (error) {
-      console.error('❌ AgentService: Request error');
+      console.error('❌ AgentService: All attempts failed');
       console.error('- Error:', error);
 
       // Fallback to direct Supabase call (might fail due to RLS but worth trying)
       // Only fetch agents with status 'active' or 'testing' (ready for use)
+      console.log('🔄 Attempting direct Supabase fallback...');
       const { data, error: dbError } = await this.getSupabaseClient()
         .from('agents')
         .select('*')
@@ -94,6 +141,8 @@ export class AgentService {
         console.error('❌ Fallback also failed:', dbError);
         throw new Error('Failed to fetch agents from both API and database');
       }
+
+      console.log(`✅ Fallback successful: ${data?.length || 0} agents from Supabase`);
       return data?.map((agent: any) => ({
         ...agent,
         categories: []
@@ -181,7 +230,14 @@ export class AgentService {
     const { data, error } = await this.getSupabaseClient()
       .from('agents')
       .select(`
-        *,
+        id,
+        name,
+        description,
+        system_prompt,
+        capabilities,
+        metadata,
+        created_at,
+        updated_at,
         agent_category_mapping(
           agent_categories(*)
         )
@@ -278,44 +334,52 @@ export class AgentService {
     })) || [];
   }
 
-  // Create custom agent
+  // Create custom agent (via API route to leverage service role key)
   async createCustomAgent(
     agentData: Database['public']['Tables']['agents']['Insert'],
     categoryIds: string[] = []
   ): Promise<AgentWithCategories> {
-    const { data, error } = await this.getSupabaseClient()
-      .from('agents')
-      .insert({
-        ...agentData,
-        is_custom: true
-      })
-      .select()
-      .single();
+    try {
+      const response = await fetch('/api/agents-crud', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          agentData: {
+            ...agentData,
+            is_custom: true,
+          },
+          categoryIds,
+        }),
+      });
 
-    if (error) {
+      if (!response.ok) {
+        const errorPayload = await response.json().catch(() => ({}));
+        console.error('Error creating custom agent:', errorPayload);
+        throw new Error(errorPayload.error || 'Failed to create custom agent');
+      }
+
+      const result = await response.json();
+      if (!result?.success || !result?.agent) {
+        console.error('Error creating custom agent:', result);
+        throw new Error(result?.error || 'Failed to create custom agent');
+      }
+
+      const createdAgent = await this.getAgentById(result.agent.id);
+      if (!createdAgent) {
+        // Fallback: convert response agent directly if follow-up fetch fails
+        return {
+          ...(result.agent as AgentWithCategories),
+          categories: result.agent.categories || [],
+        };
+      }
+
+      return createdAgent;
+    } catch (error) {
       console.error('Error creating custom agent:', error);
-      throw new Error('Failed to create custom agent');
+      throw new Error(error instanceof Error ? error.message : 'Failed to create custom agent');
     }
-
-    // Add category mappings if provided
-    if (categoryIds.length > 0) {
-      const mappings = categoryIds.map(categoryId => ({
-        agent_id: data.id,
-        category_id: categoryId
-      }));
-
-      await this.getSupabaseClient()
-        .from('agent_category_mapping')
-        .insert(mappings);
-    }
-
-    // Return the created agent with categories
-    const createdAgent = await this.getAgentById(data.id);
-    if (!createdAgent) {
-      throw new Error('Failed to retrieve created agent');
-    }
-
-    return createdAgent;
   }
 
   // Update agent

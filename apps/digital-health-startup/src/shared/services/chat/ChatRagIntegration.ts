@@ -87,7 +87,7 @@ export class ChatRagIntegration {
     }>;
   }> {
     try {
-      // const ragSources: Array<{
+      const ragSources: Array<{
         rag_id: string;
         rag_name: string;
         content: string;
@@ -96,7 +96,7 @@ export class ChatRagIntegration {
       }> = [];
 
       // Determine which RAG databases to query
-
+      const ragsToQuery = context.rag_assignments.length <= 3
         ? context.rag_assignments
         : context.rag_assignments
             .sort((a, b) => {
@@ -107,12 +107,10 @@ export class ChatRagIntegration {
             })
             .slice(0, 3); // Query top 3 RAGs by default
 
-      // ...`);
-
       // Query each RAG database
       for (const rag of ragsToQuery) {
         try {
-
+          const results = await this.ragService.queryRAG(rag.id, query, {
             maxResults: options.maxRagResults || 5,
             similarityThreshold: options.similarityThreshold || 0.7,
             agentId: context.agent_id,
@@ -130,8 +128,8 @@ export class ChatRagIntegration {
             });
           });
 
-          // } catch (error) {
-          // console.error(`❌ Failed to query RAG ${rag.name}:`, error);
+        } catch (error) {
+          console.error(`❌ Failed to query RAG ${rag.name}:`, error);
         }
       }
 

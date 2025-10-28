@@ -1,9 +1,8 @@
 "use client"
 
-import { Slot } from "@radix-ui/react-slot"
+import * as React from "react"
 import { VariantProps, cva } from "class-variance-authority"
 import { PanelLeft } from "lucide-react"
-import * as React from "react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -442,8 +441,9 @@ const SidebarGroupLabel = React.forwardRef<
   HTMLDivElement,
   React.ComponentProps<"div"> & { asChild?: boolean }
 >(({ className, asChild = false, ...props }, ref) => {
-  const Comp = asChild ? Slot : "div"
-
+  if (asChild && React.isValidElement(children)) {
+    return React.cloneElement(children, { ...props, ...children.props, ref, className: cn(className, children.props.className) } as any)
+  }
   return (
     <Comp
       ref={ref}
@@ -463,8 +463,9 @@ const SidebarGroupAction = React.forwardRef<
   HTMLButtonElement,
   React.ComponentProps<"button"> & { asChild?: boolean }
 >(({ className, asChild = false, ...props }, ref) => {
-  const Comp = asChild ? Slot : "button"
-
+  if (asChild && React.isValidElement(children)) {
+    return React.cloneElement(children, { ...props, ...children.props, onClick, ref, className: cn(className, children.props.className) } as any)
+  }
   return (
     <Comp
       ref={ref}
@@ -563,31 +564,10 @@ const SidebarMenuButton = React.forwardRef<
     },
     ref
   ) => {
-    const Comp = asChild ? Slot : "button"
-    const { isMobile, state } = useSidebar()
-
-    const button = (
-      <Comp
-        ref={ref}
-        data-sidebar="menu-button"
-        data-size={size}
-        data-active={isActive}
-        className={cn(sidebarMenuButtonVariants({ variant, size }), className)}
-        {...props}
-      />
-    )
-
-    if (!tooltip) {
-      return button
-    }
-
-    if (typeof tooltip === "string") {
-      tooltip = {
-        children: tooltip,
-      }
-    }
-
-    return (
+  if (asChild && React.isValidElement(children)) {
+    return React.cloneElement(children, { ...props, ...children.props, onClick, ref, className: cn(className, children.props.className) } as any)
+  }
+  return (
       <Tooltip>
         <TooltipTrigger asChild>{button}</TooltipTrigger>
         <TooltipContent
@@ -609,8 +589,9 @@ const SidebarMenuAction = React.forwardRef<
     showOnHover?: boolean
   }
 >(({ className, asChild = false, showOnHover = false, ...props }, ref) => {
-  const Comp = asChild ? Slot : "button"
-
+  if (asChild && React.isValidElement(children)) {
+    return React.cloneElement(children, { ...props, ...children.props, onClick, ref, className: cn(className, children.props.className) } as any)
+  }
   return (
     <Comp
       ref={ref}

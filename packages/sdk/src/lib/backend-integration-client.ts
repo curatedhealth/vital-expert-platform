@@ -61,8 +61,8 @@ export interface SearchResponse {
   }
 }
 
-// Session Types
-export interface UserSession {
+// Session Types - Renamed to avoid conflict
+export interface SessionData {
   id: string
   userId: string
   sessionToken: string
@@ -248,7 +248,7 @@ export class BackendIntegrationClient {
   /**
    * Create or get active session
    */
-  async getOrCreateSession(userId: string): Promise<UserSession> {
+  async getOrCreateSession(userId: string): Promise<SessionData> {
     const { data, error } = await this.supabase
       .rpc('get_or_create_session', {
         p_user_id: userId,

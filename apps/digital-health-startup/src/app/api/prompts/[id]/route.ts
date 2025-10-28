@@ -80,7 +80,7 @@ export async function PUT(
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-
+    const body = await request.json();
 
     const {
       name,

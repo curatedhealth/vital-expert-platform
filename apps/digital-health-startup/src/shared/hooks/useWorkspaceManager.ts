@@ -362,12 +362,13 @@ export const __useWorkspaceManager = ({
   }, []);
 
   // Get contextual agents for current workspace
-
+  const getContextualAgents = useCallback(() => {
     return currentWorkspace?.defaultAgents || ['clinical-trial'];
   }, [currentWorkspace]);
 
   // Get workspace-specific settings
-
+  const getWorkspaceSettings = useCallback((workspaceId?: string) => {
+    const workspace = workspaceId
       ? workspaces.find((w: any) => w.id === workspaceId)
       : currentWorkspace;
     return workspace?.customSettings;

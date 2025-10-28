@@ -14,6 +14,9 @@
 import { OpenAIEmbeddings , ChatOpenAI } from '@langchain/openai';
 import { createClient } from '@supabase/supabase-js';
 import { Document } from 'langchain/document';
+import { ragCostTracker } from '@/lib/services/monitoring/rag-cost-tracker';
+import { RAG_CIRCUIT_BREAKERS } from '@/lib/services/monitoring/circuit-breaker';
+import { v4 as uuidv4 } from 'uuid';
 
 export interface RAGConfig {
   strategy: 'basic' | 'rag_fusion' | 'rag_fusion_rerank' | 'hybrid' | 'hybrid_rerank' | 'multi_query' | 'compression' | 'self_query';
@@ -21,6 +24,8 @@ export interface RAGConfig {
   maxTokens?: number;
   temperature?: number;
   enableReranking?: boolean;
+  userId?: string;
+  sessionId?: string;
 }
 
 export interface RAGResult {
@@ -74,22 +79,25 @@ export class CloudRAGService {
   async query(
     question: string,
     agentId: string,
-    config: RAGConfig = { strategy: 'hybrid_rerank' }
+    config: RAGConfig = { strategy: 'hybrid_rerank' },
+    queryId?: string
   ): Promise<RAGResult> {
+    const qid = queryId || uuidv4();
+
     try {
       console.log(`🔍 RAG Query: ${question.substring(0, 50)}...`);
       console.log(`📊 Strategy: ${config.strategy}, Domain: ${config.domain || 'all'}`);
 
       // Step 1: Retrieve relevant documents
-      const documents = await this.retrieveDocuments(question, config);
+      const documents = await this.retrieveDocuments(question, config, qid, agentId);
       console.log(`📚 Retrieved ${documents.length} documents`);
 
       // Step 2: Build context from documents
       const context = this.buildContext(documents);
-      
+
       // Step 3: Generate answer
       const answer = await this.generateAnswer(question, context, agentId, config);
-      
+
       // Step 4: Extract sources and citations
       const sources = this.extractSources(documents);
       const citations = this.generateCitations(sources);
@@ -115,31 +123,31 @@ export class CloudRAGService {
   /**
    * Retrieve documents using specified strategy
    */
-  private async retrieveDocuments(question: string, config: RAGConfig): Promise<Document[]> {
+  private async retrieveDocuments(question: string, config: RAGConfig, queryId: string, agentId: string): Promise<Document[]> {
     const queryEmbedding = await this.embeddings.embedQuery(question);
-    
+
     switch (config.strategy) {
       case 'basic':
         return await this.basicRetrieval(queryEmbedding, config);
-      
+
       case 'rag_fusion':
         return await this.ragFusionRetrieval(question, config);
-      
+
       case 'rag_fusion_rerank':
-        return await this.ragFusionWithReranking(question, config);
-      
+        return await this.ragFusionWithReranking(question, config, queryId, agentId);
+
       case 'hybrid':
         return await this.hybridRetrieval(question, queryEmbedding, config);
-      
+
       case 'hybrid_rerank':
-        return await this.hybridRetrievalWithReranking(question, queryEmbedding, config);
-      
+        return await this.hybridRetrievalWithReranking(question, queryEmbedding, config, queryId, agentId);
+
       case 'multi_query':
         return await this.multiQueryRetrieval(question, config);
-      
+
       case 'compression':
         return await this.compressionRetrieval(question, config);
-      
+
       case 'self_query':
         return await this.selfQueryRetrieval(question, config);
       
@@ -196,7 +204,7 @@ export class CloudRAGService {
   /**
    * Hybrid search with Cohere re-ranking
    */
-  private async hybridRetrievalWithReranking(question: string, queryEmbedding: number[], config: RAGConfig): Promise<Document[]> {
+  private async hybridRetrievalWithReranking(question: string, queryEmbedding: number[], config: RAGConfig, queryId: string, agentId: string): Promise<Document[]> {
     // Get more documents for re-ranking
     const { data, error } = await this.supabase.rpc('hybrid_search', {
       query_embedding: queryEmbedding,
@@ -218,7 +226,7 @@ export class CloudRAGService {
 
     // Re-rank with Cohere if available
     if (this.cohereApiKey && config.enableReranking !== false) {
-      return await this.rerankWithCohere(question, documents);
+      return await this.rerankWithCohere(question, documents, queryId, agentId, config);
     }
 
     return documents.slice(0, 5);
@@ -260,13 +268,13 @@ export class CloudRAGService {
   /**
    * RAG Fusion with re-ranking
    */
-  private async ragFusionWithReranking(question: string, config: RAGConfig): Promise<Document[]> {
+  private async ragFusionWithReranking(question: string, config: RAGConfig, queryId: string, agentId: string): Promise<Document[]> {
     const documents = await this.ragFusionRetrieval(question, config);
-    
+
     if (this.cohereApiKey && config.enableReranking !== false) {
-      return await this.rerankWithCohere(question, documents);
+      return await this.rerankWithCohere(question, documents, queryId, agentId, config);
     }
-    
+
     return documents;
   }
 
@@ -425,41 +433,65 @@ export class CloudRAGService {
 
   /**
    * Re-rank documents with Cohere
+   *
+   * Includes circuit breaker and cost tracking for production monitoring
    */
-  private async rerankWithCohere(question: string, documents: Document[]): Promise<Document[]> {
+  private async rerankWithCohere(
+    question: string,
+    documents: Document[],
+    queryId: string,
+    agentId: string,
+    config: RAGConfig
+  ): Promise<Document[]> {
     if (!this.cohereApiKey) {
       console.log('⚠️ Cohere API key not found, skipping re-ranking');
       return documents.slice(0, 5);
     }
 
-    try {
-      const response = await fetch('https://api.cohere.ai/v1/rerank', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${this.cohereApiKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          model: 'rerank-english-v3.0',
-          query: question,
-          documents: documents.map(doc => doc.pageContent),
-          top_n: 5
-        })
-      });
+    // Wrap in circuit breaker for fault tolerance
+    return await RAG_CIRCUIT_BREAKERS.cohere.execute(
+      async () => {
+        const response = await fetch('https://api.cohere.ai/v1/rerank', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${this.cohereApiKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            model: 'rerank-english-v3.0',
+            query: question,
+            documents: documents.map(doc => doc.pageContent),
+            top_n: 5
+          })
+        });
 
-      if (!response.ok) {
-        throw new Error(`Cohere API error: ${response.status}`);
+        if (!response.ok) {
+          throw new Error(`Cohere API error: ${response.status}`);
+        }
+
+        const data = await response.json();
+        const rerankedDocs = data.results.map((result: any) => documents[result.index]);
+
+        // Track cost for monitoring
+        ragCostTracker.trackReranking(
+          queryId,
+          documents.length,
+          {
+            userId: config.userId,
+            agentId,
+            sessionId: config.sessionId,
+          }
+        );
+
+        console.log('✅ Cohere re-ranking enabled');
+        return rerankedDocs;
+      },
+      async () => {
+        // Fallback if circuit breaker is open
+        console.warn('⚠️ Cohere circuit breaker open, skipping re-ranking');
+        return documents.slice(0, 5);
       }
-
-      const data = await response.json();
-      const rerankedDocs = data.results.map((result: any) => documents[result.index]);
-      
-      console.log('✅ Cohere re-ranking enabled');
-      return rerankedDocs;
-    } catch (error) {
-      console.error('Cohere re-ranking failed:', error);
-      return documents.slice(0, 5);
-    }
+    );
   }
 
   /**

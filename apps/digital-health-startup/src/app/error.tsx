@@ -3,8 +3,8 @@
 import { AlertCircle, RefreshCw, Home } from 'lucide-react';
 import { useEffect } from 'react';
 
-import { Button } from '@vital/ui';
-import { Card } from '@vital/ui';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 
 export default function Error({
   error,

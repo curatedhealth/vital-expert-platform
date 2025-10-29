@@ -9,11 +9,8 @@ import {
   Clock,
   CheckCircle,
   AlertTriangle,
-  Users,
-  FileText,
-  Brain,
-  Target,
 } from 'lucide-react';
+import Image from 'next/image';
 
 import { Badge } from '@vital/ui';
 import { Button } from '@vital/ui';
@@ -29,7 +26,7 @@ const sampleWorkflows = [
     nextRun: 'In 4 hours',
     steps: 8,
     successRate: 94,
-    icon: Target,
+    icon: '/icons/png/general/Algorithm.png',
     color: 'text-clinical-green',
     bgColor: 'bg-clinical-green/10',
   },
@@ -42,7 +39,7 @@ const sampleWorkflows = [
     nextRun: 'Manual trigger',
     steps: 12,
     successRate: 87,
-    icon: FileText,
+    icon: '/icons/png/general/AI Ethics.png',
     color: 'text-regulatory-gold',
     bgColor: 'bg-regulatory-gold/10',
   },
@@ -55,7 +52,7 @@ const sampleWorkflows = [
     nextRun: 'In 2 hours',
     steps: 6,
     successRate: 96,
-    icon: Brain,
+    icon: '/icons/png/general/AI Brain.png',
     color: 'text-trust-blue',
     bgColor: 'bg-trust-blue/10',
   },
@@ -68,7 +65,7 @@ const sampleWorkflows = [
     nextRun: 'Manual intervention required',
     steps: 10,
     successRate: 78,
-    icon: Users,
+    icon: '/icons/png/general/Data Analysis.png',
     color: 'text-red-500',
     bgColor: 'bg-red-500/10',
   },
@@ -129,12 +126,21 @@ export default function WorkflowsPage() {
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {sampleWorkflows.map((workflow) => (
-              <Card key={workflow.id} className="border-l-4 border-l-trust-blue">
+              <Card 
+                key={workflow.id} 
+                className="border-l-4 border-l-vital-primary-500 hover:shadow-lg transition-all duration-200"
+              >
                 <CardContent className="p-6">
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex items-center gap-3">
-                      <div className={`p-2 rounded-lg ${workflow.bgColor}`}>
-                        <workflow.icon className={`h-5 w-5 ${workflow.color}`} />
+                      <div className={`p-2 rounded-lg ${workflow.bgColor} w-10 h-10 flex items-center justify-center`}>
+                        <Image
+                          src={workflow.icon}
+                          alt=""
+                          width={20}
+                          height={20}
+                          className="object-contain"
+                        />
                       </div>
                       <div>
                         <h3 className="font-semibold text-deep-charcoal">
@@ -202,7 +208,10 @@ export default function WorkflowsPage() {
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {workflowTemplates.map((template, index) => (
-              <Card key={index} className="hover:shadow-md transition-shadow cursor-pointer">
+              <Card 
+                key={index} 
+                className="cursor-pointer hover:border-vital-primary-300 hover:shadow-md transition-all duration-200"
+              >
                 <CardContent className="p-4">
                   <h3 className="font-semibold text-deep-charcoal mb-2">
                     {template.name}

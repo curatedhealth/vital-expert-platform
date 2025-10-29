@@ -12,7 +12,8 @@ const PLATFORM_TENANT_ID = '00000000-0000-0000-0000-000000000001';
 
 export async function tenantMiddleware(
   request: NextRequest,
-  response: NextResponse
+  response: NextResponse,
+  userId?: string
 ): Promise<NextResponse> {
   let tenantId = PLATFORM_TENANT_ID;
   let detectionMethod = 'fallback';
@@ -56,7 +57,34 @@ export async function tenantMiddleware(
     }
   }
 
-  // 2. HEADER DETECTION (second priority)
+  // 2. USER PROFILE DETECTION (second priority if authenticated)
+  // Check user's profile for tenant_id
+  if (userId && tenantId === PLATFORM_TENANT_ID) {
+    try {
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+      const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+
+      if (supabaseUrl && supabaseServiceKey) {
+        const adminSupabase = createClient(supabaseUrl, supabaseServiceKey);
+
+        const { data: profile } = await adminSupabase
+          .from('profiles')
+          .select('tenant_id')
+          .eq('id', userId)
+          .single();
+
+        if (profile?.tenant_id && profile.tenant_id !== PLATFORM_TENANT_ID) {
+          tenantId = profile.tenant_id;
+          detectionMethod = 'user_profile';
+          console.log(`[Tenant Middleware] Detected tenant from user profile: ${tenantId}`);
+        }
+      }
+    } catch (error) {
+      console.error('[Tenant Middleware] Error querying user profile:', error);
+    }
+  }
+
+  // 3. HEADER DETECTION (third priority)
   // Allow clients to override with x-tenant-id header
   if (tenantId === PLATFORM_TENANT_ID) {
     const headerTenantId = request.headers.get('x-tenant-id');
@@ -67,7 +95,7 @@ export async function tenantMiddleware(
     }
   }
 
-  // 3. COOKIE DETECTION (third priority)
+  // 4. COOKIE DETECTION (fourth priority)
   // Check for tenant_id cookie
   if (tenantId === PLATFORM_TENANT_ID) {
     const cookieTenantId = request.cookies.get('tenant_id')?.value;
@@ -78,7 +106,7 @@ export async function tenantMiddleware(
     }
   }
 
-  // 4. FALLBACK to Platform Tenant (default)
+  // 5. FALLBACK to Platform Tenant (default)
   if (!tenantId || tenantId === PLATFORM_TENANT_ID) {
     detectionMethod = 'fallback';
     console.log('[Tenant Middleware] Using Platform Tenant (fallback)');

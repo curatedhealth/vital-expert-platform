@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
             agent_id: agentId,
             original_agent_id: originalAgentId || null,
             is_user_copy: isUserCopy,
-            added_at: new Date().toISOString(),
+            created_at: new Date().toISOString(),
           },
           message: 'Agent added to user list successfully (simulated)'
         });
@@ -96,7 +96,7 @@ export async function POST(request: NextRequest) {
             agent_id: agentId,
             original_agent_id: originalAgentId || null,
             is_user_copy: isUserCopy,
-            added_at: new Date().toISOString(),
+            created_at: new Date().toISOString(),
           },
           message: 'Agent added to user list successfully (simulated)'
         });
@@ -135,7 +135,7 @@ export async function GET(request: NextRequest) {
         .from('user_agents')
         .select('*')
         .eq('user_id', userId)
-        .order('added_at', { ascending: false });
+        .order('created_at', { ascending: false });
 
       console.log('🔍 [GET] Supabase response:', { data, error });
 

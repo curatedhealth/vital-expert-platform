@@ -236,7 +236,8 @@ export default function ChatPage() {
   }, [iconService]);
 
   // Helper function to get icon for prompt starter
-  const getPromptIcon = (promptText: string) => {
+  const getPromptIcon = (promptText: string): string => {
+    // First, try to find icon from database
     const iconMap: Record<string, string> = {
       '510(k) vs PMA requirements': 'medical_document',
       'Regulatory strategy guidance': 'healthcare_analysis',
@@ -260,7 +261,33 @@ export default function ChatPage() {
     // eslint-disable-next-line security/detect-object-injection
     const iconName = Object.prototype.hasOwnProperty.call(iconMap, promptText) ? iconMap[promptText] : 'checklist';
     const icon = promptIcons.find((i: any) => i.name === iconName);
-    return icon?.file_url || '📋'; // Fallback emoji
+    
+    // If icon found in database and it's a valid path, use it
+    if (icon?.file_url && (icon.file_url.startsWith('http') || icon.file_url.startsWith('/'))) {
+      return icon.file_url;
+    }
+    
+    // Map to PNG icons from general directory
+    const pngIconMap: Record<string, string> = {
+      '510(k) vs PMA requirements': '/icons/png/general/AI Ethics.png',
+      'Regulatory strategy guidance': '/icons/png/general/AI Ethics.png',
+      'De Novo vs 510(k) pathways': '/icons/png/general/Decision Making.png',
+      'Submission checklist review': '/icons/png/general/Algorithm.png',
+      'Clinical trial design': '/icons/png/general/Data Analysis.png',
+      'Sample size calculation': '/icons/png/general/Predictive Analytics.png',
+      'Biostatistics review': '/icons/png/general/Data Analysis.png',
+      'Endpoint selection': '/icons/png/general/Decision Making.png',
+      'Market access strategy': '/icons/png/general/Predictive Analytics.png',
+      'Payer engagement': '/icons/png/general/Decision Making.png',
+      'Health economics model': '/icons/png/general/Predictive Analytics.png',
+      'Coverage determination': '/icons/png/general/Decision Making.png',
+      'Protocol development': '/icons/png/general/Algorithm.png',
+      'Regulatory writing': '/icons/png/general/AI Ethics.png',
+      'Clinical study report': '/icons/png/general/Data Analysis.png',
+      'Medical communication': '/icons/png/general/Virtual Assistant.png'
+    };
+    
+    return pngIconMap[promptText] || '/icons/png/general/AI Brain.png'; // Default fallback to AI Brain
   };
 
   // State for agent-specific prompt starters
@@ -723,17 +750,13 @@ export default function ChatPage() {
                     prompt.color === 'purple' && "bg-purple-100 group-hover:bg-purple-200",
                     prompt.color === 'orange' && "bg-orange-100 group-hover:bg-orange-200"
                   )}>
-                    {getPromptIcon(prompt.text).startsWith('http') || getPromptIcon(prompt.text).startsWith('/') ? (
-                      <Image
-                        src={getPromptIcon(prompt.text)}
-                        alt={prompt.text}
-                        width={20}
-                        height={20}
-                        className="w-5 h-5"
-                      />
-                    ) : (
-                      <span className="text-lg">{getPromptIcon(prompt.text)}</span>
-                    )}
+                    <Image
+                      src={getPromptIcon(prompt.text)}
+                      alt={prompt.text}
+                      width={20}
+                      height={20}
+                      className="w-5 h-5 object-contain"
+                    />
                   </div>
                   <div>
                     <h4 className="font-semibold text-gray-900 mb-1">{prompt.text}</h4>

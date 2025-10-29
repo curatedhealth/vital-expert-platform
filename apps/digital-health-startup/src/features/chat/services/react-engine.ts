@@ -55,6 +55,19 @@ export class ReActEngine {
   }> {
     console.log('🔄 [ReAct] Starting ReAct loop execution...');
 
+    // Validate agent is provided and has required properties
+    if (!agent) {
+      throw new Error('Agent is required for ReAct execution but was not provided');
+    }
+
+    if (!agent.id) {
+      throw new Error('Agent ID is required for ReAct execution but was not provided');
+    }
+
+    if (!agent.name && !agent.display_name) {
+      throw new Error('Agent name or display_name is required for ReAct execution');
+    }
+
     const iterations: ReActIteration[] = [];
     let currentIteration = 0;
     let overallConfidence = 0;
@@ -202,7 +215,7 @@ Current Context:
 - Previous Iterations: ${previousIterations.length}
 
 Agent Profile:
-- Name: ${agent.name}
+- Name: ${agent.name || agent.display_name || 'Unknown Agent'}
 - Specialties: ${agent.specialties?.join(', ') || 'General'}
 - Capabilities: ${agent.capabilities?.join(', ') || 'General'}
 
@@ -267,10 +280,12 @@ Available Actions:
 5. "validate_answer" - Check if a question has been answered
 6. "move_to_next_phase" - Progress to next execution phase
 
-Based on the thinking and current state, decide the most appropriate action.
+CRITICAL: You MUST respond in this EXACT format:
+ACTION: [action_type] | PARAMETERS: [json_parameters] | REASONING: [why this action]
 
-Return a structured action description:
-"ACTION: [action_type] | PARAMETERS: [json_parameters] | REASONING: [why this action]"
+Examples:
+ACTION: search_knowledge | PARAMETERS: {"query": "clinical trial requirements"} | REASONING: Need regulatory information
+ACTION: analyze_data | PARAMETERS: {"data": "market research"} | REASONING: Analyze market data for strategy
 `;
 
     const messages = [
@@ -314,14 +329,38 @@ What action should we take next?
     console.log('⚡ [ReAct] Executing action...');
 
     try {
-      // Parse action
-      const actionMatch = action.match(/ACTION: (\w+) \| PARAMETERS: (.+) \| REASONING: (.+)/);
+      // Parse action with more flexible regex
+      let actionMatch = action.match(/ACTION:\s*(\w+)\s*\|\s*PARAMETERS:\s*(.+?)\s*\|\s*REASONING:\s*(.+)/);
+      
+      // If strict format fails, try to extract action type from the text
       if (!actionMatch) {
-        throw new Error('Invalid action format');
+        const actionTypeMatch = action.match(/(?:ACTION|action):\s*(\w+)/i);
+        if (actionTypeMatch) {
+          const actionType = actionTypeMatch[1].toLowerCase();
+          // Create a default action structure
+          actionMatch = [action, actionType, '{}', action];
+        }
+      }
+      
+      if (!actionMatch) {
+        // If no action format found, treat as a general reasoning action
+        console.log('⚠️ [ReAct] No structured action found, treating as general reasoning');
+        return {
+          result: `General reasoning: ${action}`,
+          toolsUsed: [],
+          ragContext: undefined
+        };
       }
 
       const [, actionType, parametersStr, reasoning] = actionMatch;
-      const parameters = JSON.parse(parametersStr);
+      let parameters: any = {};
+      
+      try {
+        parameters = JSON.parse(parametersStr);
+      } catch (parseError) {
+        console.log('⚠️ [ReAct] Could not parse parameters, using empty object');
+        parameters = {};
+      }
 
       let result: string;
       let toolsUsed: string[] = [];
@@ -574,7 +613,7 @@ Be comprehensive but concise, and ensure the answer is valuable to the user.
       new SystemMessage(systemPrompt),
       new HumanMessage(`
 Original Goal: ${goalUnderstanding.translatedGoal}
-Agent: ${agent.name} (${agent.specialties?.join(', ') || 'General'})
+Agent: ${agent.name || agent.display_name || 'Unknown Agent'} (${agent.specialties?.join(', ') || 'General'})
 
 Iterations Summary:
 ${iterationSummary}
@@ -665,7 +704,7 @@ Create a comprehensive final answer.
     console.log('🔍 [ReAct] Analyzing data...');
     
     const systemPrompt = `
-You are ${agent.name}, an expert in ${agent.specialties?.join(', ') || 'data analysis'}.
+You are ${agent.name || agent.display_name || 'an expert'}, an expert in ${agent.specialties?.join(', ') || 'data analysis'}.
 
 Analyze the provided data and provide insights:
 1. What patterns do you see?
@@ -693,8 +732,16 @@ Be specific and actionable in your analysis.
   private async synthesizeInformation(sources: any[], agent: Agent): Promise<string> {
     console.log('📝 [ReAct] Synthesizing information...');
     
+    // Limit sources to prevent context length issues
+    const maxSources = 5;
+    const limitedSources = sources.slice(0, maxSources);
+    
+    if (sources.length > maxSources) {
+      console.log(`⚠️ [ReAct] Limiting sources from ${sources.length} to ${maxSources} to prevent context overflow`);
+    }
+    
     const systemPrompt = `
-You are ${agent.name}, an expert in ${agent.specialties?.join(', ') || 'information synthesis'}.
+You are ${agent.name || agent.display_name || 'an expert'}, an expert in ${agent.specialties?.join(', ') || 'information synthesis'}.
 
 Synthesize information from multiple sources into a coherent, comprehensive response:
 1. Identify common themes and patterns
@@ -702,12 +749,18 @@ Synthesize information from multiple sources into a coherent, comprehensive resp
 3. Provide a unified perspective
 4. Highlight key insights and recommendations
 
-Be thorough but concise in your synthesis.
+Be thorough but concise in your synthesis. Focus on the most important information.
 `;
 
-    const sourceTexts = sources.map((source, index) => 
-      `Source ${index + 1}:\n${typeof source === 'string' ? source : JSON.stringify(source, null, 2)}`
-    ).join('\n\n');
+    // Truncate source content to prevent context overflow
+    const sourceTexts = limitedSources.map((source, index) => {
+      let content = typeof source === 'string' ? source : JSON.stringify(source, null, 2);
+      // Limit each source to 1000 characters
+      if (content.length > 1000) {
+        content = content.substring(0, 1000) + '... [truncated]';
+      }
+      return `Source ${index + 1}:\n${content}`;
+    }).join('\n\n');
 
     const messages = [
       new SystemMessage(systemPrompt),

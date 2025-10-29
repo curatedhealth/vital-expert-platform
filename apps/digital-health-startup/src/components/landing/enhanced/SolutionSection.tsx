@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion'
 import { ArrowRight, Check } from 'lucide-react'
+import Image from 'next/image'
 
 import { Button } from '@vital/ui'
 
@@ -24,7 +25,7 @@ export default function SolutionSection() {
       textColor: "text-vital-teal-600"
     },
     {
-      icon: "👥",
+      icon: "/icons/png/general/Smart Chatbot.png",
       title: "Ask Panel", 
       price: "$10,000/month",
       description: "Virtual Advisory Boards On-Demand",
@@ -41,7 +42,7 @@ export default function SolutionSection() {
       popular: true
     },
     {
-      icon: "🔄",
+      icon: "/icons/png/general/Automation.png",
       title: "JTBD & Workflows",
       price: "$15,000/month", 
       description: "Automated Healthcare Workflows",
@@ -107,8 +108,18 @@ export default function SolutionSection() {
                   : 'border-gray-200 hover:border-gray-300'
               } bg-white`}>
                 <div className="text-center mb-6">
-                  <div className={`w-16 h-16 mx-auto mb-4 rounded-2xl ${solution.bgColor} flex items-center justify-center text-2xl`}>
-                    {solution.icon}
+                  <div className={`w-16 h-16 mx-auto mb-4 rounded-2xl ${solution.bgColor} flex items-center justify-center overflow-hidden`}>
+                    {solution.icon.startsWith('/') ? (
+                      <Image
+                        src={solution.icon}
+                        alt=""
+                        width={64}
+                        height={64}
+                        className="object-contain p-2"
+                      />
+                    ) : (
+                      <span className="text-2xl">{solution.icon}</span>
+                    )}
                   </div>
                   <h3 className="text-2xl font-bold text-gray-900 mb-2">
                     {solution.title}

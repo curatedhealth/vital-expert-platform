@@ -208,7 +208,6 @@ export class AgentSelectorService {
         .select(`
           id,
           name,
-          display_name,
           description,
           system_prompt,
           tier,
@@ -245,41 +244,25 @@ export class AgentSelectorService {
     console.log('🔄 [AgentSelector] Using fallback database search...');
 
     try {
-      let queryBuilder = this.supabase
+      // Simplified search - just get any available agents
+      const { data: agents, error } = await this.supabase
         .from('agents')
         .select(`
           id,
           name,
-          display_name,
           description,
           system_prompt,
-          tier,
           capabilities,
-          knowledge_domains,
           specialties,
           model,
           metadata
         `)
         .limit(limit);
 
-      // Add domain filter if specified
-      if (domains.length > 0) {
-        queryBuilder = queryBuilder.overlaps('knowledge_domains', domains);
-      }
-
-      // Add text search on name and description
-      const searchTerms = query.toLowerCase().split(' ').filter(term => term.length > 2);
-      if (searchTerms.length > 0) {
-        queryBuilder = queryBuilder.or(
-          searchTerms.map(term => `name.ilike.%${term}%,description.ilike.%${term}%`).join(',')
-        );
-      }
-
-      const { data: agents, error } = await queryBuilder;
-
       if (error) {
         console.error('❌ [AgentSelector] Fallback search failed:', error);
-        return [];
+        // Return any available agent as last resort
+        return await this.getAnyAvailableAgent(limit);
       }
 
       console.log(`✅ [AgentSelector] Fallback search found ${agents?.length || 0} agents`);
@@ -287,6 +270,41 @@ export class AgentSelectorService {
 
     } catch (error) {
       console.error('❌ [AgentSelector] Fallback search error:', error);
+      // Return any available agent as last resort
+      return await this.getAnyAvailableAgent(limit);
+    }
+  }
+
+  /**
+   * Get any available agent as a last resort fallback
+   */
+  private async getAnyAvailableAgent(limit: number = 5): Promise<Agent[]> {
+    console.log('🔄 [AgentSelector] Getting any available agent as fallback...');
+    
+    try {
+      const { data: agents, error } = await this.supabase
+        .from('agents')
+        .select(`
+          id,
+          name,
+          description,
+          system_prompt,
+          capabilities,
+          specialties,
+          model,
+          metadata
+        `)
+        .limit(limit);
+
+      if (error) {
+        console.error('❌ [AgentSelector] Failed to get any agent:', error);
+        return [];
+      }
+
+      console.log(`✅ [AgentSelector] Found ${agents?.length || 0} agents as fallback`);
+      return agents || [];
+    } catch (error) {
+      console.error('❌ [AgentSelector] Error getting fallback agents:', error);
       return [];
     }
   }

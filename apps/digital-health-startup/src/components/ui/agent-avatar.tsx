@@ -1,3 +1,5 @@
+import { useState } from 'react';
+import Image from 'next/image';
 import { type Agent } from '@/lib/stores/chat-store';
 import { cn } from '@vital/ui/lib/utils';
 
@@ -10,23 +12,25 @@ interface AgentAvatarProps {
   className?: string;
 }
 
-const sizeClasses = {
-  sm: 'w-6 h-6',
-  md: 'w-10 h-10',
-  lg: 'w-12 h-12',
-  xl: 'w-16 h-16',
-  '2xl': 'w-20 h-20',
-  list: 'w-[30px] h-[30px]',
-  card: 'w-[50px] h-[50px]'
+const sizeMap = {
+  sm: { container: 'w-6 h-6', image: 24 },
+  md: { container: 'w-10 h-10', image: 40 },
+  lg: { container: 'w-12 h-12', image: 48 },
+  xl: { container: 'w-16 h-16', image: 64 },
+  '2xl': { container: 'w-20 h-20', image: 80 },
+  list: { container: 'w-[30px] h-[30px]', image: 30 },
+  card: { container: 'w-[50px] h-[50px]', image: 50 }
 };
 
 export function AgentAvatar({ agent, avatar: avatarProp, name: nameProp, size = 'md', className }: AgentAvatarProps) {
+  const [imageError, setImageError] = useState(false);
+  
   // Support both old and new interfaces
-  const avatar = agent?.avatar || avatarProp || '🤖';
-  const name = agent?.name || nameProp || 'Agent';
+  const avatar = agent?.avatar || avatarProp || 'avatar_0001';
+  const name = agent?.name || agent?.display_name || nameProp || 'Agent';
 
   // Function to get the proper icon URL with simplified PNG naming
-  const getIconUrl = (iconUrl: string) => {
+  const getIconUrl = (iconUrl: string): string => {
     // Handle full URLs (Supabase storage or external URLs)
     if (iconUrl.startsWith('http://') || iconUrl.startsWith('https://')) {
       return iconUrl;
@@ -39,7 +43,6 @@ export function AgentAvatar({ agent, avatar: avatarProp, name: nameProp, size = 
 
     // For avatar names that match our database icons, use them directly
     if (iconUrl.match(/^avatar_\d{4}$/)) {
-      // Use 4-digit PNG filenames
       return `/icons/png/avatars/${iconUrl}.png`;
     }
 
@@ -50,77 +53,49 @@ export function AgentAvatar({ agent, avatar: avatarProp, name: nameProp, size = 
       return `/icons/png/avatars/avatar_${paddedNum}.png`;
     }
 
-    return iconUrl;
+    // Default fallback
+    return '/icons/png/avatars/avatar_0001.png';
   };
 
-  // Check if avatar is a file path, URL, or our avatar naming pattern
-  const isImagePath = avatar && (
-    avatar.startsWith('/') ||
-    avatar.startsWith('http') ||
-    avatar.match(/^avatar_\d{3,4}$/) // Support both 3-digit and 4-digit avatar patterns
-  );
+  const iconUrl = getIconUrl(avatar);
+  const sizeConfig = sizeMap[size as keyof typeof sizeMap] || sizeMap.md;
+  const fallbackAvatar = '/icons/png/avatars/avatar_0001.png';
 
-  if (isImagePath) {
-    const iconUrl = getIconUrl(avatar);
-    const fallbackAvatar = '/icons/png/avatars/avatar_0001.png';
-
-    return (
-      <div
-        className={cn(
-          'flex items-center justify-center rounded-lg overflow-hidden flex-shrink-0',
-          sizeClasses[size as keyof typeof sizeClasses] || sizeClasses.md,
-          className
-        )}
-        style={{
-          minWidth: size === 'card' ? '50px' : size === 'list' ? '30px' : undefined,
-          minHeight: size === 'card' ? '50px' : size === 'list' ? '30px' : undefined,
-          maxWidth: size === 'card' ? '50px' : size === 'list' ? '30px' : undefined,
-          maxHeight: size === 'card' ? '50px' : size === 'list' ? '30px' : undefined,
-        }}
-      >
-        <img
+  return (
+    <div
+      className={cn(
+        'flex items-center justify-center rounded-lg overflow-hidden flex-shrink-0 bg-vital-slate-100 border border-vital-slate-200 shadow-sm',
+        sizeConfig.container,
+        className
+      )}
+      style={{
+        minWidth: size === 'card' ? '50px' : size === 'list' ? '30px' : undefined,
+        minHeight: size === 'card' ? '50px' : size === 'list' ? '30px' : undefined,
+        maxWidth: size === 'card' ? '50px' : size === 'list' ? '30px' : undefined,
+        maxHeight: size === 'card' ? '50px' : size === 'list' ? '30px' : undefined,
+      }}
+    >
+      {!imageError ? (
+        <Image
           src={iconUrl}
           alt={name}
-          className="w-full h-full object-contain"
-          onError={(e) => {
-            const target = e.target as HTMLImageElement;
-            if (target.src !== fallbackAvatar) {
-              target.src = fallbackAvatar;
-            } else {
-              // If fallback also fails, show emoji
-              target.style.display = 'none';
-              if (target.parentNode) {
-                const fallback = document.createElement('span');
-                fallback.textContent = '🤖';
-                fallback.className = 'text-2xl';
-                target.parentNode.appendChild(fallback);
-              }
-            }
+          width={sizeConfig.image}
+          height={sizeConfig.image}
+          className="w-full h-full object-cover"
+          onError={() => {
+            setImageError(true);
           }}
+          loading="lazy"
         />
-      </div>
-    );
-  }
-
-  // For emoji avatars, display them with proper sizing
-  return (
-    <div className={cn(
-      'flex items-center justify-center rounded-sm bg-gray-50 border border-gray-200',
-      sizeClasses[size as keyof typeof sizeClasses] || sizeClasses.md,
-      className
-    )}>
-      <span className={cn(
-        'text-center',
-        size === 'sm' && 'text-xs',
-        size === 'md' && 'text-sm',
-        size === 'lg' && 'text-base',
-        size === 'xl' && 'text-lg',
-        size === '2xl' && 'text-2xl',
-        size === 'list' && 'text-xs',
-        size === 'card' && 'text-sm'
-      )}>
-        {avatar || '🤖'}
-      </span>
+      ) : (
+        <Image
+          src={fallbackAvatar}
+          alt={name}
+          width={sizeConfig.image}
+          height={sizeConfig.image}
+          className="w-full h-full object-cover opacity-60"
+        />
+      )}
     </div>
   );
 }

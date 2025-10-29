@@ -39,7 +39,7 @@ function getBreadcrumbs(pathname: string) {
     'solution-builder': 'Build Solution',
     agents: 'Agents',
     knowledge: 'Knowledge',
-    prism: 'Prompt PRISM',
+    prism: 'PROMPTS',
     capabilities: 'Capabilities',
     workflows: 'Workflows',
     admin: 'Admin',

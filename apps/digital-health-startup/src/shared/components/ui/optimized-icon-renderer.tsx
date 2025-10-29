@@ -26,19 +26,22 @@ export function OptimizedIconRenderer({
 
   const iconUrl = icon.icon || icon.file_url;
   const isImagePath = iconUrl?.startsWith('/') || iconUrl?.startsWith('http');
+  
+  // Default fallback icon from general PNG directory
+  const defaultFallback = '/icons/png/general/AI Brain.png';
 
   if (isImagePath && !imageError) {
     return (
       <div
         className={`w-full h-full flex items-center justify-center p-1 cursor-pointer transition-all ${
-          isSelected ? 'ring-2 ring-blue-500' : ''
+          isSelected ? 'ring-2 ring-vital-primary-500' : ''
         }`}
         onClick={onClick}
       >
         <div className="relative w-full h-full">
           <Image
             src={iconUrl}
-            alt={icon.display_name}
+            alt={icon.display_name || 'Icon'}
             width={size}
             height={size}
             className="object-cover rounded"
@@ -51,15 +54,23 @@ export function OptimizedIconRenderer({
     );
   }
 
-  // Fallback to emoji or text
+  // Fallback to default PNG icon
   return (
     <div
       className={`w-full h-full flex items-center justify-center cursor-pointer transition-all ${
-        isSelected ? 'ring-2 ring-blue-500' : ''
+        isSelected ? 'ring-2 ring-vital-primary-500' : ''
       }`}
       onClick={onClick}
     >
-      <span className="text-2xl">{icon.file_url || '🤖'}</span>
+      <Image
+        src={defaultFallback}
+        alt={icon.display_name || 'Icon'}
+        width={size}
+        height={size}
+        className="object-cover rounded opacity-60"
+        loading="lazy"
+        quality={75}
+      />
     </div>
   );
 }

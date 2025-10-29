@@ -32,6 +32,13 @@
     "db:studio": "drizzle-kit studio",
     "db:check": "drizzle-kit check:pg",
     "supabase:types": "supabase gen types typescript --project-id <project-id> > src/lib/db/supabase/database.types.ts",
+    "sync:notion": "tsx scripts/sync-notion-prompts-to-supabase.ts",
+    "test:notion": "tsx scripts/test-notion-connection.ts",
+    "migrate:notion": "tsx scripts/generate-notion-migration.ts",
+    "fetch:prompts": "tsx scripts/fetch-prompts-direct.ts",
+    "inspect:database": "tsx scripts/inspect-database.ts",
+    "sync:csv": "tsx scripts/sync-csv-prompts-to-supabase.ts",
+    "find:databases": "tsx scripts/find-accessible-databases.ts",
     "ci": "pnpm lint && pnpm format:check && pnpm type-check && pnpm test:ci"
   },
   "dependencies": {

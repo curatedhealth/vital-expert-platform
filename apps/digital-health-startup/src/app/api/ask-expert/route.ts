@@ -328,7 +328,7 @@ export async function GET(request: NextRequest) {
       .select(`
         session_id,
         agent_id,
-        agents!inner(name, description, avatar),
+        agents!inner(name, description, avatar_url),
         created_at
       `)
       .eq('user_id', userId)

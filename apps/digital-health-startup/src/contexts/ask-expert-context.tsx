@@ -261,6 +261,12 @@ export function AskExpertProvider({ children }: { children: React.ReactNode }) {
 
       if (user?.id) {
         try {
+          console.log('🆕 [AskExpertContext] Creating new session:', {
+            title: options?.title || 'New Conversation',
+            agentId: options?.agentId,
+            userId: user.id,
+          });
+
           const response = await fetch('/api/chat/conversations', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -271,11 +277,18 @@ export function AskExpertProvider({ children }: { children: React.ReactNode }) {
             }),
           });
 
+          console.log('📡 [AskExpertContext] API Response status:', response.status, response.statusText);
+
           if (response.ok) {
             const payload = await response.json();
-            const conversation = payload?.data?.conversation;
+            console.log('📦 [AskExpertContext] API Response payload:', payload);
+            
+            const conversation = payload?.data?.conversation || payload?.conversation;
+            
             if (conversation?.id) {
               sessionId = conversation.id;
+              console.log('✅ [AskExpertContext] Created conversation with ID:', sessionId);
+              
               const sessionRecord: AskExpertSession = {
                 sessionId,
                 agent: conversation.agent
@@ -305,12 +318,28 @@ export function AskExpertProvider({ children }: { children: React.ReactNode }) {
                 const filtered = prev.filter((session) => session.sessionId !== sessionId);
                 return [sessionRecord, ...filtered];
               });
+            } else {
+              console.error('❌ [AskExpertContext] No conversation ID in response:', payload);
             }
           } else {
+            const errorBody = await response.text();
             console.error('❌ [AskExpertContext] Failed to create conversation via API');
+            console.error('   Status:', response.status, response.statusText);
+            console.error('   Response body:', errorBody);
+            
+            try {
+              const errorJson = JSON.parse(errorBody);
+              console.error('   Error details:', errorJson);
+            } catch {
+              // Not JSON, that's fine
+            }
           }
         } catch (error) {
           console.error('❌ [AskExpertContext] Error creating conversation via API:', error);
+          if (error instanceof Error) {
+            console.error('   Error message:', error.message);
+            console.error('   Error stack:', error.stack);
+          }
         }
       }
 

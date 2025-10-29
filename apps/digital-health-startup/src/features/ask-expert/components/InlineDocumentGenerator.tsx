@@ -206,14 +206,14 @@ export function InlineDocumentGenerator({
                   <Card
                     key={template.id}
                     className={cn(
-                      "cursor-pointer transition-all hover:shadow-md",
-                      selectedTemplate?.id === template.id && "ring-2 ring-blue-600 bg-blue-50/50"
+                      "cursor-pointer transition-all hover:shadow-md hover:border-vital-primary-300",
+                      selectedTemplate?.id === template.id && "ring-2 ring-vital-primary-500 bg-vital-primary-100/50 border-vital-primary-500 border-2"
                     )}
                     onClick={() => handleTemplateSelect(template)}
                   >
                     <CardContent className="p-4">
                       <div className="flex items-start gap-3">
-                        <div className="p-2 bg-blue-100 rounded-lg text-blue-600">
+                        <div className="p-2 bg-vital-primary-100 rounded-lg text-vital-primary-600">
                           {template.icon}
                         </div>
                         <div className="flex-1 min-w-0">
@@ -229,7 +229,7 @@ export function InlineDocumentGenerator({
                           </div>
                         </div>
                         {selectedTemplate?.id === template.id && (
-                          <Check className="h-4 w-4 text-blue-600 flex-shrink-0" />
+                          <Check className="h-4 w-4 text-vital-primary-600 flex-shrink-0" />
                         )}
                       </div>
                     </CardContent>

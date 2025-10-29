@@ -10,6 +10,8 @@
 
 import { StateGraph, START, END } from '@langchain/langgraph';
 import { BaseMessage, HumanMessage, AIMessage } from '@langchain/core/messages';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import type { CompiledStateGraph } from '@langchain/langgraph';
 import { 
   Mode4Config, 
   Mode4State, 
@@ -28,9 +30,18 @@ import { reActEngine } from './react-engine';
 // ============================================================================
 
 export class Mode4AutonomousManualHandler {
-  private workflow: any;
+  private workflow: CompiledStateGraph<Mode4State, Partial<Mode4State>>;
+  private supabase: SupabaseClient;
 
   constructor() {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    
+    if (!supabaseUrl || !supabaseKey) {
+      throw new Error('Supabase configuration missing: NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required');
+    }
+    
+    this.supabase = createClient(supabaseUrl, supabaseKey);
     this.workflow = this.buildMode4Workflow();
   }
 
@@ -38,16 +49,26 @@ export class Mode4AutonomousManualHandler {
    * Execute Mode 4: Autonomous-Manual
    */
   async execute(config: Mode4Config): Promise<AsyncGenerator<AutonomousStreamChunk>> {
-    console.log('🤖 [Mode 4] Starting Autonomous-Manual execution...');
-    console.log(`   Query: ${config.message}`);
-    console.log(`   Agent: ${config.agentId}`);
-    console.log(`   RAG: ${config.enableRAG ? 'enabled' : 'disabled'}`);
-    console.log(`   Tools: ${config.enableTools ? 'enabled' : 'disabled'}`);
-    console.log(`   Max Iterations: ${config.maxIterations || 10}`);
+    const executionId = `mode4-${Date.now()}`;
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.log(`🤖 [Mode 4] Starting Autonomous-Manual execution [${executionId}]`);
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.log(`📝 Query: "${config.message.substring(0, 100)}${config.message.length > 100 ? '...' : ''}"`);
+    console.log(`👤 Agent ID: ${config.agentId}`);
+    console.log(`🔧 RAG: ${config.enableRAG ? '✅ enabled' : '❌ disabled'}`);
+    console.log(`🛠️  Tools: ${config.enableTools ? '✅ enabled' : '❌ disabled'}`);
+    console.log(`🔁 Max Iterations: ${config.maxIterations || 10}`);
+    console.log(`🎯 Confidence Threshold: ${config.confidenceThreshold || 0.95}`);
+    console.log(`🤖 Model: ${config.model || 'default'}`);
+    console.log(`💬 Conversation History: ${config.conversationHistory?.length || 0} messages`);
 
     const startTime = Date.now();
+    const stepStartTimes: Record<string, number> = {};
 
     try {
+      console.log(`\n📋 [Mode 4:${executionId}] Step 1: Preparing conversation history...`);
+      stepStartTimes.preparation = Date.now();
+      
       // Convert conversation history to BaseMessage format
       const baseMessages: BaseMessage[] = (config.conversationHistory || []).map(msg => {
         if (msg.role === 'user') {
@@ -56,14 +77,13 @@ export class Mode4AutonomousManualHandler {
           return new AIMessage(msg.content);
         }
       });
+      console.log(`✅ [Mode 4:${executionId}] Converted ${baseMessages.length} messages to BaseMessage format`);
 
-      // Initialize state
-      const initialState: Mode4State = {
+      // Initialize state (partial - will be populated by workflow nodes)
+      const initialState: Partial<Mode4State> = {
         query: config.message,
         conversationHistory: baseMessages,
         config,
-        goalUnderstanding: {} as GoalUnderstanding,
-        executionPlan: {} as ExecutionPlan,
         subQuestions: [],
         iterations: [],
         currentPhase: 'initial',
@@ -74,26 +94,105 @@ export class Mode4AutonomousManualHandler {
         ragContexts: [],
         executionTime: 0,
         timestamp: new Date().toISOString(),
-        selectedAgent: {} as Agent,
         agentExpertise: []
       };
+      console.log(`✅ [Mode 4:${executionId}] Initial state prepared`);
+      console.log(`\n🔄 [Mode 4:${executionId}] Step 2: Executing LangGraph workflow...`);
+      stepStartTimes.workflow = Date.now();
 
-      // Execute LangGraph workflow
-      const result = await this.workflow.invoke(initialState);
+      let result: Mode4State;
+      try {
+        // Execute LangGraph workflow
+        // Type assertion needed because LangGraph returns partial state updates
+        result = await this.workflow.invoke(initialState as Mode4State) as Mode4State;
+        
+        const workflowTime = Date.now() - stepStartTimes.workflow;
+        console.log(`✅ [Mode 4:${executionId}] Workflow completed in ${workflowTime}ms`);
+      } catch (workflowError) {
+        const workflowTime = Date.now() - stepStartTimes.workflow;
+        console.error(`❌ [Mode 4:${executionId}] Workflow invocation failed after ${workflowTime}ms`);
+        console.error(`❌ [Mode 4:${executionId}] Workflow error:`, workflowError);
+        if (workflowError instanceof Error) {
+          console.error(`❌ [Mode 4:${executionId}] Error message:`, workflowError.message);
+          console.error(`❌ [Mode 4:${executionId}] Error stack:`, workflowError.stack);
+        }
+        throw new Error(`LangGraph workflow failed: ${workflowError instanceof Error ? workflowError.message : 'Unknown workflow error'}`);
+      }
+
+      console.log(`\n🔍 [Mode 4:${executionId}] Step 3: Validating workflow results...`);
+      stepStartTimes.validation = Date.now();
+
+      // Check for errors in the result
+      if (result.error) {
+        console.error(`❌ [Mode 4:${executionId}] Workflow returned error: ${result.error}`);
+        throw new Error(result.error);
+      }
+
+      // Validate required fields are present
+      if (!result.selectedAgent || !result.selectedAgent.id) {
+        console.error(`❌ [Mode 4:${executionId}] Validation failed: selectedAgent is missing`);
+        console.error(`   selectedAgent:`, result.selectedAgent);
+        throw new Error('Agent loading failed: selectedAgent is missing');
+      }
+      console.log(`✅ [Mode 4:${executionId}] Agent loaded: ${result.selectedAgent.display_name || result.selectedAgent.name}`);
+
+      if (!result.goalUnderstanding || !result.goalUnderstanding.translatedGoal) {
+        console.error(`❌ [Mode 4:${executionId}] Validation failed: goalUnderstanding is missing`);
+        console.error(`   goalUnderstanding:`, result.goalUnderstanding);
+        throw new Error('Goal understanding failed: goalUnderstanding is missing');
+      }
+      console.log(`✅ [Mode 4:${executionId}] Goal understood: "${result.goalUnderstanding.translatedGoal.substring(0, 80)}..."`);
+
+      if (!result.finalAnswer && result.iterations.length === 0) {
+        console.error(`❌ [Mode 4:${executionId}] Validation failed: No iterations and no final answer`);
+        console.error(`   iterations: ${result.iterations.length}, finalAnswer length: ${result.finalAnswer?.length || 0}`);
+        throw new Error('Execution failed: No iterations completed and no final answer');
+      }
+      console.log(`✅ [Mode 4:${executionId}] Execution completed: ${result.iterations.length} iterations, finalAnswer: ${result.finalAnswer ? 'present' : 'missing'}`);
+      console.log(`✅ [Mode 4:${executionId}] Final confidence: ${(result.confidence * 100).toFixed(1)}%`);
+
+      const validationTime = Date.now() - stepStartTimes.validation;
+      console.log(`✅ [Mode 4:${executionId}] Validation completed in ${validationTime}ms`);
+
+      console.log(`\n📡 [Mode 4:${executionId}] Step 4: Streaming results...`);
+      stepStartTimes.streaming = Date.now();
 
       // Stream the results
-      return this.streamMode4Results(result, startTime);
+      return this.streamMode4Results(result, startTime, executionId);
 
     } catch (error) {
-      console.error('❌ [Mode 4] Execution failed:', error);
-      throw error;
+      const errorTime = Date.now() - startTime;
+      console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      console.error(`❌ [Mode 4:${executionId}] Execution failed after ${errorTime}ms`);
+      console.error(`❌ [Mode 4:${executionId}] Error type: ${error instanceof Error ? error.constructor.name : typeof error}`);
+      console.error(`❌ [Mode 4:${executionId}] Error message: ${error instanceof Error ? error.message : String(error)}`);
+      if (error instanceof Error && error.stack) {
+        console.error(`❌ [Mode 4:${executionId}] Stack trace:`);
+        console.error(error.stack);
+      }
+      console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      
+      // Yield error chunk for proper error handling in frontend
+      return (async function* () {
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+        yield {
+          type: 'error' as const,
+          content: errorMessage,
+          message: errorMessage,
+          metadata: {
+            executionId,
+            executionTime: errorTime
+          },
+          timestamp: new Date().toISOString()
+        };
+      })();
     }
   }
 
   /**
    * Build LangGraph workflow for Mode 4
    */
-  private buildMode4Workflow() {
+  private buildMode4Workflow(): CompiledStateGraph<Mode4State, Partial<Mode4State>> {
     const workflow = new StateGraph<Mode4State>({
       channels: {
         query: { value: (x: string, y: string) => y ?? x },
@@ -125,7 +224,7 @@ export class Mode4AutonomousManualHandler {
     workflow.addNode('execute_react', this.executeReActNode.bind(this));
     workflow.addNode('synthesize_answer', this.synthesizeAnswerNode.bind(this));
 
-    // Define workflow edges
+    // Define workflow edges (linear flow - errors are checked in validation phase)
     workflow.addEdge(START, 'load_agent');
     workflow.addEdge('load_agent', 'understand_goal');
     workflow.addEdge('understand_goal', 'decompose_goal');
@@ -142,40 +241,74 @@ export class Mode4AutonomousManualHandler {
   // ============================================================================
 
   /**
-   * Node 1: Load Selected Agent
+   * Node 1: Load Selected Agent from Database
    */
   private async loadAgentNode(state: Mode4State): Promise<Partial<Mode4State>> {
-    console.log('👤 [Mode 4] Loading selected agent...');
+    const nodeStartTime = Date.now();
+    console.log(`\n  📍 [Mode 4] Workflow Node 1/6: Loading agent (ID: ${state.config.agentId})...`);
 
     try {
-      // In a real implementation, this would fetch the agent from the database
-      // For now, we'll create a mock agent based on the agentId
+      const { data, error } = await this.supabase
+        .from('agents')
+        .select('id, name, display_name, system_prompt, model, capabilities, metadata, specialties, tier, description')
+        .eq('id', state.config.agentId)
+        .single();
+
+      if (error) {
+        console.error(`  ❌ [Mode 4] Node 1 failed: Database error fetching agent`);
+        console.error(`  ❌ [Mode 4] Error code: ${error.code}, message: ${error.message}`);
+        return { error: `Agent not found: ${state.config.agentId}` };
+      }
+
+      if (!data) {
+        console.error(`  ❌ [Mode 4] Node 1 failed: Agent not found in database`);
+        console.error(`  ❌ [Mode 4] Agent ID queried: ${state.config.agentId}`);
+        return { error: `Agent not found: ${state.config.agentId}` };
+      }
+
+      console.log(`  ✅ [Mode 4] Node 1: Agent data retrieved from database`);
+
+      // Extract tools from metadata if present
+      const tools = data.metadata?.tools || [];
+      const capabilities = data.capabilities || [];
+      const specialties = data.specialties ? (typeof data.specialties === 'string' ? [data.specialties] : data.specialties) : [];
+
       const selectedAgent: Agent = {
-        id: state.config.agentId,
-        name: `Agent ${state.config.agentId}`,
-        display_name: `Expert Agent ${state.config.agentId}`,
-        system_prompt: `You are an expert agent specialized in autonomous reasoning and problem-solving.`,
-        model: 'gpt-4',
-        capabilities: ['reasoning', 'analysis', 'problem-solving'],
-        tools: ['rag_search', 'data_analysis', 'synthesis'],
-        knowledge_domain: 'general',
-        tier: 1,
-        specialties: ['autonomous reasoning', 'chain-of-thought', 'react methodology']
+        id: data.id,
+        name: data.name,
+        display_name: data.display_name || data.name,
+        system_prompt: data.system_prompt || 'You are an expert assistant.',
+        model: data.model || 'gpt-4',
+        capabilities: capabilities,
+        tools: tools,
+        knowledge_domain: specialties[0] || 'general',
+        tier: data.tier || 1,
+        specialties: specialties
       };
 
       const agentExpertise = [
-        ...(selectedAgent.specialties || []),
-        ...(selectedAgent.capabilities || []),
-        selectedAgent.knowledge_domain || 'general'
-      ];
+        ...specialties,
+        ...capabilities,
+        data.description || 'general knowledge'
+      ].filter((item, index, self) => self.indexOf(item) === index); // Remove duplicates
 
-      console.log(`✅ [Mode 4] Agent loaded: ${selectedAgent.name}`);
+      const nodeTime = Date.now() - nodeStartTime;
+      console.log(`  ✅ [Mode 4] Node 1 completed in ${nodeTime}ms`);
+      console.log(`     Agent: ${selectedAgent.display_name} (ID: ${selectedAgent.id})`);
+      console.log(`     Model: ${selectedAgent.model} | Tier: ${selectedAgent.tier}`);
+      console.log(`     Capabilities: ${capabilities.length} | Tools: ${tools.length} | Specialties: ${specialties.length}`);
+      if (agentExpertise.length > 0) {
+        console.log(`     Expertise: ${agentExpertise.slice(0, 3).join(', ')}${agentExpertise.length > 3 ? '...' : ''}`);
+      }
+      
       return { 
         selectedAgent,
         agentExpertise
       };
     } catch (error) {
-      console.error('❌ [Mode 4] Agent loading failed:', error);
+      const nodeTime = Date.now() - nodeStartTime;
+      console.error(`  ❌ [Mode 4] Node 1 failed after ${nodeTime}ms`);
+      console.error(`  ❌ [Mode 4] Error:`, error);
       return { error: `Agent loading failed: ${error instanceof Error ? error.message : 'Unknown error'}` };
     }
   }
@@ -184,7 +317,8 @@ export class Mode4AutonomousManualHandler {
    * Node 2: Understand Goal with Selected Agent
    */
   private async understandGoalNode(state: Mode4State): Promise<Partial<Mode4State>> {
-    console.log('🧠 [Mode 4] Understanding goal with selected agent...');
+    const nodeStartTime = Date.now();
+    console.log(`\n  📍 [Mode 4] Workflow Node 2/6: Understanding goal...`);
 
     try {
       const goalUnderstanding = await chainOfThoughtEngine.understandGoal(
@@ -192,10 +326,18 @@ export class Mode4AutonomousManualHandler {
         state.selectedAgent
       );
       
-      console.log('✅ [Mode 4] Goal understanding completed');
+      const nodeTime = Date.now() - nodeStartTime;
+      console.log(`  ✅ [Mode 4] Node 2 completed in ${nodeTime}ms`);
+      console.log(`     Goal Type: ${goalUnderstanding.goalType} | Complexity: ${goalUnderstanding.complexity}`);
+      console.log(`     Translated Goal: "${goalUnderstanding.translatedGoal.substring(0, 80)}..."`);
+      console.log(`     Estimated Steps: ${goalUnderstanding.estimatedSteps}`);
+      console.log(`     Required Domains: ${goalUnderstanding.requiredDomains.join(', ') || 'none'}`);
+      
       return { goalUnderstanding };
     } catch (error) {
-      console.error('❌ [Mode 4] Goal understanding failed:', error);
+      const nodeTime = Date.now() - nodeStartTime;
+      console.error(`  ❌ [Mode 4] Node 2 failed after ${nodeTime}ms`);
+      console.error(`  ❌ [Mode 4] Error:`, error);
       return { error: `Goal understanding failed: ${error instanceof Error ? error.message : 'Unknown error'}` };
     }
   }
@@ -204,7 +346,8 @@ export class Mode4AutonomousManualHandler {
    * Node 3: Decompose Goal with Selected Agent
    */
   private async decomposeGoalNode(state: Mode4State): Promise<Partial<Mode4State>> {
-    console.log('🔍 [Mode 4] Decomposing goal with selected agent...');
+    const nodeStartTime = Date.now();
+    console.log(`\n  📍 [Mode 4] Workflow Node 3/6: Decomposing goal...`);
 
     try {
       const subQuestions = await chainOfThoughtEngine.decomposeGoal(
@@ -214,10 +357,18 @@ export class Mode4AutonomousManualHandler {
 
       const prioritizedQuestions = await chainOfThoughtEngine.prioritizeQuestions(subQuestions);
 
-      console.log(`✅ [Mode 4] Goal decomposed into ${prioritizedQuestions.length} sub-questions`);
+      const nodeTime = Date.now() - nodeStartTime;
+      const criticalCount = prioritizedQuestions.filter(q => q.priority === 'critical').length;
+      const importantCount = prioritizedQuestions.filter(q => q.priority === 'important').length;
+      console.log(`  ✅ [Mode 4] Node 3 completed in ${nodeTime}ms`);
+      console.log(`     Sub-questions: ${prioritizedQuestions.length} total`);
+      console.log(`     Priority breakdown: ${criticalCount} critical, ${importantCount} important, ${prioritizedQuestions.length - criticalCount - importantCount} nice-to-have`);
+      
       return { subQuestions: prioritizedQuestions };
     } catch (error) {
-      console.error('❌ [Mode 4] Goal decomposition failed:', error);
+      const nodeTime = Date.now() - nodeStartTime;
+      console.error(`  ❌ [Mode 4] Node 3 failed after ${nodeTime}ms`);
+      console.error(`  ❌ [Mode 4] Error:`, error);
       return { error: `Goal decomposition failed: ${error instanceof Error ? error.message : 'Unknown error'}` };
     }
   }
@@ -226,7 +377,8 @@ export class Mode4AutonomousManualHandler {
    * Node 4: Create Execution Plan
    */
   private async createPlanNode(state: Mode4State): Promise<Partial<Mode4State>> {
-    console.log('📋 [Mode 4] Creating execution plan...');
+    const nodeStartTime = Date.now();
+    console.log(`\n  📍 [Mode 4] Workflow Node 4/6: Creating execution plan...`);
 
     try {
       const executionPlan = await chainOfThoughtEngine.createExecutionPlan(
@@ -235,10 +387,21 @@ export class Mode4AutonomousManualHandler {
         state.selectedAgent
       );
 
-      console.log(`✅ [Mode 4] Execution plan created with ${executionPlan.phases.length} phases`);
+      const nodeTime = Date.now() - nodeStartTime;
+      console.log(`  ✅ [Mode 4] Node 4 completed in ${nodeTime}ms`);
+      console.log(`     Phases: ${executionPlan.phases.length}`);
+      console.log(`     Estimated Duration: ${executionPlan.estimatedDuration}s`);
+      console.log(`     Max Iterations: ${executionPlan.maxIterations}`);
+      console.log(`     Checkpoint Strategy: ${executionPlan.checkpointStrategy}`);
+      executionPlan.phases.forEach((phase, idx) => {
+        console.log(`       Phase ${idx + 1}: ${phase.name} (${phase.estimatedIterations} iterations, ${phase.subQuestions.length} sub-questions)`);
+      });
+      
       return { executionPlan };
     } catch (error) {
-      console.error('❌ [Mode 4] Execution plan creation failed:', error);
+      const nodeTime = Date.now() - nodeStartTime;
+      console.error(`  ❌ [Mode 4] Node 4 failed after ${nodeTime}ms`);
+      console.error(`  ❌ [Mode 4] Error:`, error);
       return { error: `Execution plan creation failed: ${error instanceof Error ? error.message : 'Unknown error'}` };
     }
   }
@@ -247,7 +410,35 @@ export class Mode4AutonomousManualHandler {
    * Node 5: Execute ReAct Loop
    */
   private async executeReActNode(state: Mode4State): Promise<Partial<Mode4State>> {
-    console.log('🔄 [Mode 4] Executing ReAct loop...');
+    const nodeStartTime = Date.now();
+    console.log(`\n  📍 [Mode 4] Workflow Node 5/6: Executing ReAct loop...`);
+    console.log(`     Max Iterations: ${state.config.maxIterations || 10}`);
+    console.log(`     Confidence Threshold: ${(state.config.confidenceThreshold || 0.95) * 100}%`);
+
+    // Validate required state is present
+    if (!state.selectedAgent || !state.selectedAgent.id) {
+      console.error(`  ❌ [Mode 4] Node 5 failed: selectedAgent is missing`);
+      console.error(`     selectedAgent:`, state.selectedAgent);
+      return { error: 'ReAct execution failed: selectedAgent is missing' };
+    }
+
+    if (!state.goalUnderstanding || !state.goalUnderstanding.translatedGoal) {
+      console.error(`  ❌ [Mode 4] Node 5 failed: goalUnderstanding is missing`);
+      console.error(`     goalUnderstanding:`, state.goalUnderstanding);
+      return { error: 'ReAct execution failed: goalUnderstanding is missing' };
+    }
+
+    if (!state.executionPlan || !state.executionPlan.phases || state.executionPlan.phases.length === 0) {
+      console.error(`  ❌ [Mode 4] Node 5 failed: executionPlan is missing or invalid`);
+      console.error(`     executionPlan:`, state.executionPlan);
+      return { error: 'ReAct execution failed: executionPlan is missing or invalid' };
+    }
+
+    if (!state.subQuestions || state.subQuestions.length === 0) {
+      console.error(`  ❌ [Mode 4] Node 5 failed: subQuestions is missing or empty`);
+      console.error(`     subQuestions:`, state.subQuestions);
+      return { error: 'ReAct execution failed: subQuestions is missing or empty' };
+    }
 
     try {
       const reactResult = await reActEngine.executeReActLoop(
@@ -259,7 +450,12 @@ export class Mode4AutonomousManualHandler {
         state.config.confidenceThreshold || 0.95
       );
 
-      console.log(`✅ [Mode 4] ReAct loop completed after ${reactResult.iterations.length} iterations`);
+      const nodeTime = Date.now() - nodeStartTime;
+      console.log(`  ✅ [Mode 4] Node 5 completed in ${nodeTime}ms`);
+      console.log(`     Iterations: ${reactResult.iterations.length}`);
+      console.log(`     Final Confidence: ${(reactResult.confidence * 100).toFixed(1)}%`);
+      console.log(`     Tools Used: ${reactResult.toolsUsed.length > 0 ? reactResult.toolsUsed.join(', ') : 'none'}`);
+      console.log(`     Final Answer Length: ${reactResult.finalAnswer.length} characters`);
       
       return {
         iterations: reactResult.iterations,
@@ -268,7 +464,9 @@ export class Mode4AutonomousManualHandler {
         toolsUsed: reactResult.toolsUsed
       };
     } catch (error) {
-      console.error('❌ [Mode 4] ReAct execution failed:', error);
+      const nodeTime = Date.now() - nodeStartTime;
+      console.error(`  ❌ [Mode 4] Node 5 failed after ${nodeTime}ms`);
+      console.error(`  ❌ [Mode 4] Error:`, error);
       return { error: `ReAct execution failed: ${error instanceof Error ? error.message : 'Unknown error'}` };
     }
   }
@@ -277,18 +475,26 @@ export class Mode4AutonomousManualHandler {
    * Node 6: Synthesize Final Answer
    */
   private async synthesizeAnswerNode(state: Mode4State): Promise<Partial<Mode4State>> {
-    console.log('📝 [Mode 4] Synthesizing final answer...');
+    const nodeStartTime = Date.now();
+    console.log(`\n  📍 [Mode 4] Workflow Node 6/6: Synthesizing final answer...`);
 
     try {
       // The final answer is already synthesized in the ReAct loop
-      // This node can add additional formatting or validation
+      // This node calculates execution time and validates the answer
       
       const executionTime = Date.now() - new Date(state.timestamp).getTime();
       
-      console.log('✅ [Mode 4] Final answer synthesis completed');
+      const nodeTime = Date.now() - nodeStartTime;
+      console.log(`  ✅ [Mode 4] Node 6 completed in ${nodeTime}ms`);
+      console.log(`     Total Execution Time: ${executionTime}ms (${(executionTime / 1000).toFixed(2)}s)`);
+      console.log(`     Final Answer Ready: ${state.finalAnswer ? '✅ Yes' : '❌ No'}`);
+      console.log(`     Answer Length: ${state.finalAnswer?.length || 0} characters`);
+      
       return { executionTime };
     } catch (error) {
-      console.error('❌ [Mode 4] Final answer synthesis failed:', error);
+      const nodeTime = Date.now() - nodeStartTime;
+      console.error(`  ❌ [Mode 4] Node 6 failed after ${nodeTime}ms`);
+      console.error(`  ❌ [Mode 4] Error:`, error);
       return { error: `Final answer synthesis failed: ${error instanceof Error ? error.message : 'Unknown error'}` };
     }
   }
@@ -299,15 +505,17 @@ export class Mode4AutonomousManualHandler {
 
   private async *streamMode4Results(
     result: Mode4State, 
-    startTime: number
+    startTime: number,
+    executionId?: string
   ): AsyncGenerator<AutonomousStreamChunk> {
-    console.log('📡 [Mode 4] Streaming results...');
+    const streamStartTime = Date.now();
+    console.log(`  📡 [Mode 4:${executionId}] Starting to stream results...`);
 
     try {
       // Stream agent loading
       yield {
         type: 'agent_selection',
-        content: `Using Agent: ${result.selectedAgent.name}`,
+        content: `Using Agent: ${result.selectedAgent?.name || result.selectedAgent?.display_name || 'Unknown Agent'}`,
         metadata: {
           agent: result.selectedAgent,
           confidence: 1.0 // Manual selection has full confidence
@@ -417,8 +625,23 @@ export class Mode4AutonomousManualHandler {
         timestamp: new Date().toISOString()
       };
 
+      const streamTime = Date.now() - streamStartTime;
+      const totalTime = Date.now() - startTime;
+      console.log(`  ✅ [Mode 4:${executionId}] Streaming completed in ${streamTime}ms`);
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      console.log(`✅ [Mode 4:${executionId}] EXECUTION COMPLETE`);
+      console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
+      console.log(`⏱️  Total Time: ${totalTime}ms (${(totalTime / 1000).toFixed(2)}s)`);
+      console.log(`🔄 Iterations: ${result.iterations.length}`);
+      console.log(`🎯 Confidence: ${(result.confidence * 100).toFixed(1)}%`);
+      console.log(`🛠️  Tools Used: ${result.toolsUsed.length}`);
+      console.log(`📝 Answer Length: ${result.finalAnswer.length} characters`);
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+
     } catch (error) {
-      console.error('❌ [Mode 4] Streaming failed:', error);
+      const streamTime = Date.now() - streamStartTime;
+      console.error(`  ❌ [Mode 4:${executionId}] Streaming failed after ${streamTime}ms`);
+      console.error(`  ❌ [Mode 4:${executionId}] Error:`, error);
       yield {
         type: 'error',
         content: `Streaming failed: ${error instanceof Error ? error.message : 'Unknown error'}`,

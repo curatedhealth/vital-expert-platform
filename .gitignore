@@ -189,6 +189,7 @@ checkpoints.sqlite-shm
 checkpoints.sqlite-wal
 checkpoints.sqlite-waldatabase/backups/*.sql
 .env.local.backup
+.env.local.bak
 .env.production
 .env.vercel
 deprecate-local-supabase.js

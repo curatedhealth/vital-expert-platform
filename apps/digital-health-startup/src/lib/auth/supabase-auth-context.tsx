@@ -215,9 +215,15 @@ export function SupabaseAuthProvider({ children }: AuthProviderProps) {
         .single();
 
       if (!error && data) {
-        // Update with database profile if available
-        setUserProfile(data as UserProfile);
-        log.info('Profile updated from database:', data.email);
+        // Merge database profile with session data, prioritizing database values
+        const mergedProfile: UserProfile = {
+          ...fallbackProfile,
+          ...data,
+          // Ensure we have a proper name
+          full_name: data.full_name || fallbackProfile.full_name || data.email?.split('@')[0] || 'User'
+        };
+        setUserProfile(mergedProfile);
+        log.info('Profile updated from database:', mergedProfile.email, 'Name:', mergedProfile.full_name);
       } else {
         log.info('Using session-based profile (database profile not found)');
       }

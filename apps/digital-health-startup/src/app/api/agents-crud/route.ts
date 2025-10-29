@@ -1,13 +1,64 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { createClient } from '@/lib/supabase/server';
 
-// Get Supabase credentials from environment variables
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+// Note: We'll create the Supabase client per request to access cookies
 
-const supabase = createClient(supabaseUrl, supabaseServiceKey);
+/**
+ * Resolve avatar URL from icons table
+ * If avatar is a reference like "avatar_0001", fetch from icons table
+ * Otherwise return the avatar as-is (could be emoji, URL, or path)
+ */
+async function resolveAvatarUrl(avatar: string | undefined, adminSupabase: any): Promise<string> {
+  if (!avatar || avatar === '🤖') {
+    return '🤖'; // Default emoji fallback
+  }
 
-function normalizeAgent(agent: any) {
+  // If it's already a URL or path, return as-is
+  if (avatar.startsWith('http://') || avatar.startsWith('https://') || avatar.startsWith('/')) {
+    return avatar;
+  }
+
+  // If it matches avatar pattern (avatar_0001, avatar_001, etc.), resolve from icons table
+  const avatarPattern = /^avatar_(\d{3,4})$/;
+  const match = avatar.match(avatarPattern);
+  
+  if (match) {
+    try {
+      // Normalize to 4-digit format for lookup
+      const num = match[1];
+      const paddedNum = num.padStart(4, '0');
+      const iconName = `avatar_${paddedNum}`;
+      
+      // Try to fetch from icons table
+      const { data: icon, error } = await adminSupabase
+        .from('icons')
+        .select('file_url, file_path')
+        .eq('name', iconName)
+        .eq('category', 'avatar')
+        .eq('is_active', true)
+        .single();
+      
+      if (!error && icon) {
+        // Prefer file_url if it's a full URL, otherwise use file_path
+        return icon.file_url || icon.file_path || `/icons/png/avatars/${iconName}.png`;
+      }
+      
+      // Fallback to local path if icon not found in DB
+      return `/icons/png/avatars/${iconName}.png`;
+    } catch (error) {
+      console.warn(`Failed to resolve avatar ${avatar} from icons table:`, error);
+      // Fallback to local path
+      const num = match[1];
+      const paddedNum = num.padStart(4, '0');
+      return `/icons/png/avatars/avatar_${paddedNum}.png`;
+    }
+  }
+
+  // Return as-is for emoji or unknown formats
+  return avatar;
+}
+
+async function normalizeAgent(agent: any, adminSupabase: any) {
   if (!agent) return null;
 
   // Normalize capabilities
@@ -27,17 +78,21 @@ function normalizeAgent(agent: any) {
   // Extract data from metadata
   const metadata = agent.metadata || {};
   
+  // Resolve avatar URL from icons table if needed
+  const avatarValue = metadata.avatar || '🤖';
+  const resolvedAvatar = await resolveAvatarUrl(avatarValue, adminSupabase);
+  
   return {
     id: agent.id,
-    name: agent.name,
-    display_name: metadata.display_name || agent.name,
+    name: agent.name, // Keep unique ID for internal use
+    display_name: metadata.display_name || agent.display_name || agent.name, // Prefer display_name, fallback to name
     description: agent.description,
     system_prompt: agent.system_prompt,
     capabilities: normalizedCapabilities,
     knowledge_domains: metadata.knowledge_domains || [],
     tier: metadata.tier || 1,
     model: metadata.model || 'gpt-4',
-    avatar: metadata.avatar || '🤖',
+    avatar: resolvedAvatar, // Resolved avatar URL/path
     color: metadata.color || '#3B82F6',
     temperature: metadata.temperature || 0.7,
     max_tokens: metadata.max_tokens || 2000,
@@ -54,18 +109,44 @@ function normalizeAgent(agent: any) {
 
 export async function GET(request: Request) {
   try {
-    // Get tenant ID from headers (set by middleware)
-    const tenantId = request.headers.get('x-tenant-id');
-    const PLATFORM_TENANT_ID = '00000000-0000-0000-0000-000000000001';
+    // Create Supabase client for this request
+    const supabase = await createClient();
+    
+    // Try to get user from session (optional - for tenant filtering)
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    
+    let userTenantId: string | null = null;
+    let userRole: string = 'user';
+    
+    // If user is authenticated, get their tenant
+    if (user && !userError) {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('tenant_id, role')
+        .eq('id', user.id)
+        .single();
 
-    console.log(`🔍 [Agents CRUD] Fetching agents for tenant: ${tenantId || 'unknown'}`);
+      userTenantId = profile?.tenant_id || null;
+      userRole = profile?.role || 'user';
+    }
+    
+    console.log(`🔍 [Agents CRUD] Fetching agents - User: ${user?.email || 'unauthenticated'}, Tenant: ${userTenantId || 'none'}, Role: ${userRole}`);
+
+    const PLATFORM_TENANT_ID = '00000000-0000-0000-0000-000000000001';
+    const STARTUP_TENANT_ID = '11111111-1111-1111-1111-111111111111';
 
     // Get query parameters
     const { searchParams } = new URL(request.url);
     const showAll = searchParams.get('showAll') === 'true';
 
     // Query agents - use minimal set of columns that definitely exist
-    const query = supabase
+    // Create admin client for query since we're using service role
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+    const { createClient: createSupabaseClient } = await import('@supabase/supabase-js');
+    const adminSupabase = createSupabaseClient(supabaseUrl, supabaseServiceKey);
+    
+    const query = adminSupabase
       .from('agents')
       .select(`
         id,
@@ -74,6 +155,7 @@ export async function GET(request: Request) {
         system_prompt,
         capabilities,
         metadata,
+        tenant_id,
         created_at,
         updated_at
       `);
@@ -81,19 +163,24 @@ export async function GET(request: Request) {
     // Add ordering by name
     query.order('name', { ascending: true });
 
-    // No status filtering since status column doesn't exist
-
     // TENANT FILTERING: Show tenant-specific agents + global shared agents
-    // For now, DISABLE tenant filtering to show all agents (superadmin view)
-    // TODO: Re-enable once tenant_id column is properly populated and user roles are implemented
-    console.log(`📊 [Agents CRUD] Showing all agents (tenant filtering disabled for superadmin)`);
-
-    // FUTURE: When tenant filtering is ready, uncomment this:
-    // if (tenantId && tenantId !== PLATFORM_TENANT_ID) {
-    //   query.or(`tenant_id.eq.${tenantId},tenant_id.eq.${PLATFORM_TENANT_ID}`);
-    // } else {
-    //   query.eq('tenant_id', PLATFORM_TENANT_ID);
-    // }
+    if (showAll || userRole === 'admin') {
+      // Admin users can see all agents
+      console.log(`📊 [Agents CRUD] Admin view - showing all agents`);
+    } else if (userTenantId) {
+      // User has a tenant: show their tenant's agents + platform agents
+      if (userTenantId === STARTUP_TENANT_ID || userTenantId !== PLATFORM_TENANT_ID) {
+        query.or(`tenant_id.eq.${userTenantId},tenant_id.eq.${PLATFORM_TENANT_ID}`);
+        console.log(`📊 [Agents CRUD] Showing tenant-specific + platform agents`);
+      } else {
+        // User is on Platform tenant: only show global/platform agents
+        query.eq('tenant_id', PLATFORM_TENANT_ID);
+        console.log(`📊 [Agents CRUD] Showing only platform agents`);
+      }
+    } else {
+      // No user or no tenant: show all agents (fallback for development)
+      console.log(`📊 [Agents CRUD] No tenant info - showing all agents`);
+    }
 
     const { data: agents, error } = await query;
 
@@ -108,14 +195,18 @@ export async function GET(request: Request) {
     console.log(`✅ [Agents CRUD] Successfully fetched ${agents?.length || 0} agents`);
 
     // Normalize agents data to match frontend expectations
-    const normalizedAgents = (agents || [])
-      .map((agent: any) => normalizeAgent(agent))
-      .filter(Boolean);
+    // Resolve avatars from icons table
+    const normalizedAgents = await Promise.all(
+      (agents || []).map(async (agent: any) => await normalizeAgent(agent, adminSupabase))
+    );
+    
+    // Filter out any null values
+    const validAgents = normalizedAgents.filter(Boolean);
 
     return NextResponse.json({
       success: true,
-      agents: normalizedAgents,
-      count: normalizedAgents.length
+      agents: validAgents,
+      count: validAgents.length
     });
   } catch (error) {
     console.error('❌ [Agents CRUD] Unexpected error:', error);
@@ -128,6 +219,12 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
+    // Create admin client for database operations
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+    const { createClient: createSupabaseClient } = await import('@supabase/supabase-js');
+    const adminSupabase = createSupabaseClient(supabaseUrl, supabaseServiceKey);
+    
     const body = await request.json();
     const agentData = body?.agentData;
     const categoryIds: string[] = Array.isArray(body?.categoryIds) ? body.categoryIds : [];
@@ -150,7 +247,7 @@ export async function POST(request: Request) {
       },
     };
 
-    const { data, error } = await supabase
+    const { data, error } = await adminSupabase
       .from('agents')
       .insert(payload)
       .select()
@@ -170,7 +267,7 @@ export async function POST(request: Request) {
         category_id: categoryId,
       }));
 
-      const { error: categoryError } = await supabase
+      const { error: categoryError } = await adminSupabase
         .from('agent_category_mapping')
         .insert(mappings);
 

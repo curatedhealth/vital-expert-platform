@@ -114,10 +114,14 @@ export function IconSelectionModal({
       );
     }
 
-    // Non-image values: show emoji fallback only
+    // Non-image values: show default PNG icon fallback
     return (
       <div className={cellClass}>
-        <span className="text-2xl" aria-label="Fallback icon">🤖</span>
+        <img
+          src="/icons/png/general/AI Brain.png"
+          alt="Fallback icon"
+          className="w-full h-full object-cover rounded opacity-60"
+        />
       </div>
     );
   };

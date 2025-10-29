@@ -831,7 +831,7 @@ function DefaultNavigationContent() {
     { title: 'Build Solution', href: '/solution-builder', icon: Wrench },
     { title: 'Agents', href: '/agents', icon: UsersIcon },
     { title: 'Knowledge', href: '/knowledge', icon: BookOpen },
-    { title: 'Prompt PRISM', href: '/prism', icon: Lightbulb },
+    { title: 'PROMPTS', href: '/prism', icon: Lightbulb },
     { title: 'Capabilities', href: '/capabilities', icon: Shield },
     { title: 'Workflows', href: '/workflows', icon: Workflow },
     { title: 'Admin', href: '/admin', icon: Settings, badge: 'Admin' },

@@ -138,71 +138,153 @@ export async function POST(request: NextRequest) {
               });
 
               // Stream autonomous chunks
-              for await (const chunk of mode3Stream) {
-                const event = {
-                  type: chunk.type,
-                  content: chunk.content,
-                  metadata: chunk.metadata,
-                  timestamp: chunk.timestamp
-                };
-                controller.enqueue(encoder.encode(`data: ${JSON.stringify(event)}\n\n`));
-              }
+              try {
+                for await (const chunk of mode3Stream) {
+                  if (controller.desiredSize === null) {
+                    console.log('⚠️ [Orchestrate] Controller closed, stopping Mode 3 stream');
+                    break;
+                  }
+                  
+                  const event = {
+                    type: chunk.type,
+                    content: chunk.content,
+                    metadata: chunk.metadata,
+                    timestamp: chunk.timestamp
+                  };
+                  controller.enqueue(encoder.encode(`data: ${JSON.stringify(event)}\n\n`));
+                }
 
-              controller.enqueue(encoder.encode('data: {"type":"done"}\n\n'));
+                if (controller.desiredSize !== null) {
+                  controller.enqueue(encoder.encode('data: {"type":"done"}\n\n'));
+                }
+              } catch (error) {
+                console.error('❌ [Orchestrate] Error streaming Mode 3:', error);
+                if (controller.desiredSize !== null) {
+                  controller.enqueue(encoder.encode(`data: {"error":"${error instanceof Error ? error.message : 'Unknown error'}"}\n\n`));
+                }
+              }
               break;
             }
 
             case 'multi-expert': {
               // MODE 4: Autonomous-Manual
               if (!body.agentId) {
-                controller.enqueue(encoder.encode('data: {"error":"Agent ID required for multi-expert mode"}\n\n'));
+                const errorEvent = {
+                  type: 'error',
+                  message: 'Agent ID required for multi-expert mode',
+                  content: 'Agent ID required for multi-expert mode',
+                  timestamp: new Date().toISOString()
+                };
+                controller.enqueue(encoder.encode(`data: ${JSON.stringify(errorEvent)}\n\n`));
                 controller.close();
                 return;
               }
 
               console.log('🎯 [Orchestrate] Routing to Mode 4: Autonomous-Manual');
 
-              const mode4Stream = await executeMode4({
-                agentId: body.agentId,
-                message: body.message,
-                conversationHistory: body.conversationHistory,
-                enableRAG: body.enableRAG ?? true,
-                enableTools: body.enableTools ?? true,
-                model: body.model,
-                temperature: body.temperature ?? 0.7,
-                maxTokens: body.maxTokens ?? 2000,
-                maxIterations: body.maxIterations ?? 10,
-                confidenceThreshold: body.confidenceThreshold ?? 0.95
-              });
+              try {
+                const mode4Stream = await executeMode4({
+                  agentId: body.agentId,
+                  message: body.message,
+                  conversationHistory: body.conversationHistory,
+                  enableRAG: body.enableRAG ?? true,
+                  enableTools: body.enableTools ?? true,
+                  model: body.model,
+                  temperature: body.temperature ?? 0.7,
+                  maxTokens: body.maxTokens ?? 2000,
+                  maxIterations: body.maxIterations ?? 10,
+                  confidenceThreshold: body.confidenceThreshold ?? 0.95
+                });
 
-              // Stream autonomous chunks
-              for await (const chunk of mode4Stream) {
-                const event = {
-                  type: chunk.type,
-                  content: chunk.content,
-                  metadata: chunk.metadata,
-                  timestamp: chunk.timestamp
-                };
-                controller.enqueue(encoder.encode(`data: ${JSON.stringify(event)}\n\n`));
+                // Stream autonomous chunks
+                try {
+                  for await (const chunk of mode4Stream) {
+                    if (controller.desiredSize === null) {
+                      console.log('⚠️ [Orchestrate] Controller closed, stopping Mode 4 stream');
+                      break;
+                    }
+                    
+                    // If chunk is an error, forward it directly
+                    if (chunk.type === 'error') {
+                      const errorEvent = {
+                        type: 'error',
+                        message: chunk.content || 'Error during Mode 4 execution',
+                        content: chunk.content || 'Error during Mode 4 execution',
+                        metadata: chunk.metadata,
+                        timestamp: chunk.timestamp || new Date().toISOString()
+                      };
+                      controller.enqueue(encoder.encode(`data: ${JSON.stringify(errorEvent)}\n\n`));
+                      break; // Stop streaming on error
+                    }
+                    
+                    const event = {
+                      type: chunk.type,
+                      content: chunk.content,
+                      metadata: chunk.metadata,
+                      timestamp: chunk.timestamp
+                    };
+                    controller.enqueue(encoder.encode(`data: ${JSON.stringify(event)}\n\n`));
+                  }
+
+                  if (controller.desiredSize !== null) {
+                    controller.enqueue(encoder.encode('data: {"type":"done"}\n\n'));
+                  }
+                } catch (streamError) {
+                  console.error('❌ [Orchestrate] Error streaming Mode 4:', streamError);
+                  if (controller.desiredSize !== null) {
+                    const errorMessage = streamError instanceof Error ? streamError.message : 'Unknown error during Mode 4 streaming';
+                    const errorEvent = {
+                      type: 'error',
+                      message: errorMessage,
+                      content: errorMessage,
+                      timestamp: new Date().toISOString()
+                    };
+                    controller.enqueue(encoder.encode(`data: ${JSON.stringify(errorEvent)}\n\n`));
+                  }
+                }
+              } catch (mode4Error) {
+                console.error('❌ [Orchestrate] Error executing Mode 4:', mode4Error);
+                if (controller.desiredSize !== null) {
+                  const errorMessage = mode4Error instanceof Error ? mode4Error.message : 'Unknown error during Mode 4 execution';
+                  const errorEvent = {
+                    type: 'error',
+                    message: errorMessage,
+                    content: errorMessage,
+                    timestamp: new Date().toISOString()
+                  };
+                  controller.enqueue(encoder.encode(`data: ${JSON.stringify(errorEvent)}\n\n`));
+                }
               }
-
-              controller.enqueue(encoder.encode('data: {"type":"done"}\n\n'));
               break;
             }
 
             default:
-              controller.enqueue(encoder.encode('data: {"error":"Invalid mode"}\n\n'));
+              const errorEvent = {
+                type: 'error',
+                message: 'Invalid mode',
+                content: 'Invalid mode',
+                timestamp: new Date().toISOString()
+              };
+              controller.enqueue(encoder.encode(`data: ${JSON.stringify(errorEvent)}\n\n`));
           }
 
           controller.close();
         } catch (error) {
-          console.error('❌ [Orchestrate] Error:', error);
+          console.error('❌ [Orchestrate] Top-level error:', error);
+          const errorMessage = error instanceof Error ? error.message : 'Unknown error';
           const errorEvent = {
             type: 'error',
-            message: error instanceof Error ? error.message : 'Unknown error',
+            message: errorMessage,
+            content: errorMessage,
             timestamp: new Date().toISOString()
           };
-          controller.enqueue(encoder.encode(`data: ${JSON.stringify(errorEvent)}\n\n`));
+          try {
+            if (controller.desiredSize !== null) {
+              controller.enqueue(encoder.encode(`data: ${JSON.stringify(errorEvent)}\n\n`));
+            }
+          } catch (enqueueError) {
+            console.error('❌ [Orchestrate] Failed to enqueue error:', enqueueError);
+          }
           controller.close();
         }
       }

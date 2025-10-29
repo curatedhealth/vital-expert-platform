@@ -3,6 +3,7 @@
 import { Users, Star, ArrowRight, Send, Loader2, MessageSquare, Settings2 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
+import Image from 'next/image';
 
 import { PanelMember } from '@/app/(app)/ask-panel/services/panel-store';
 import { AgentAvatar } from '@vital/ui';
@@ -26,7 +27,7 @@ const PANEL_DOMAINS = [
   {
     id: 'regulatory',
     name: 'Regulatory Affairs',
-    icon: '⚖️',
+    icon: '/icons/png/general/AI Ethics.png',
     description: 'FDA guidance, regulatory strategy, and compliance',
     subdomains: [
       {
@@ -66,7 +67,7 @@ const PANEL_DOMAINS = [
   {
     id: 'clinical',
     name: 'Clinical Research',
-    icon: '🔬',
+    icon: '/icons/png/general/Data Analysis.png',
     description: 'Clinical trial design, patient safety, and medical research',
     subdomains: [
       {
@@ -105,7 +106,7 @@ const PANEL_DOMAINS = [
   {
     id: 'market-access',
     name: 'Market Access',
-    icon: '💼',
+    icon: '/icons/png/general/Decision Making.png',
     description: 'Pricing, reimbursement, and payer strategy',
     subdomains: [
       {
@@ -143,7 +144,7 @@ const PANEL_DOMAINS = [
   {
     id: 'digital-health',
     name: 'Digital Health',
-    icon: '📱',
+    icon: '/icons/png/general/AI Chip.png',
     description: 'Digital therapeutics, SaMD, and health technology',
     subdomains: [
       {
@@ -191,7 +192,7 @@ const PANEL_DOMAINS = [
   {
     id: 'commercial',
     name: 'Commercial Strategy',
-    icon: '📊',
+    icon: '/icons/png/general/Predictive Analytics.png',
     description: 'Market analysis, competitive intelligence, and go-to-market',
     subdomains: [
       {
@@ -247,21 +248,21 @@ const ORCHESTRATION_MODES: { value: OrchestrationMode; label: string; descriptio
 ];
 
 const BOARD_ARCHETYPES: { value: BoardArchetype; label: string; description: string; icon: string }[] = [
-  { value: 'SAB', label: 'Scientific Advisory Board', description: 'R&D and clinical strategy guidance', icon: '🔬' },
-  { value: 'CAB', label: 'Clinical Advisory Board', description: 'Real-world clinical insights from practitioners', icon: '👨‍⚕️' },
-  { value: 'Market', label: 'Market Access Board', description: 'Payer, reimbursement, and access strategy', icon: '💼' },
-  { value: 'Strategic', label: 'Strategic Board', description: 'Business strategy and portfolio decisions', icon: '📊' },
-  { value: 'Ethics', label: 'Ethics & Compliance Board', description: 'Ethical review and regulatory compliance', icon: '⚖️' },
-  { value: 'Innovation', label: 'Innovation Board', description: 'Digital health and emerging technologies', icon: '💡' },
-  { value: 'Risk', label: 'Risk Management Board', description: 'Safety, pharmacovigilance, and risk mitigation', icon: '🛡️' },
+  { value: 'SAB', label: 'Scientific Advisory Board', description: 'R&D and clinical strategy guidance', icon: '/icons/png/general/Data Analysis.png' },
+  { value: 'CAB', label: 'Clinical Advisory Board', description: 'Real-world clinical insights from practitioners', icon: '/icons/png/general/Cognitive Computing.png' },
+  { value: 'Market', label: 'Market Access Board', description: 'Payer, reimbursement, and access strategy', icon: '/icons/png/general/Decision Making.png' },
+  { value: 'Strategic', label: 'Strategic Board', description: 'Business strategy and portfolio decisions', icon: '/icons/png/general/Predictive Analytics.png' },
+  { value: 'Ethics', label: 'Ethics & Compliance Board', description: 'Ethical review and regulatory compliance', icon: '/icons/png/general/AI Ethics.png' },
+  { value: 'Innovation', label: 'Innovation Board', description: 'Digital health and emerging technologies', icon: '/icons/png/general/AI Chip.png' },
+  { value: 'Risk', label: 'Risk Management Board', description: 'Safety, pharmacovigilance, and risk mitigation', icon: '/icons/png/general/Algorithm.png' },
 ];
 
 const FUSION_MODELS: { value: FusionModel; label: string; description: string; icon: string }[] = [
-  { value: 'human-led', label: 'Human-Led', description: 'Humans chair, AI provides evidence & drafts', icon: '👤' },
-  { value: 'agent-facilitated', label: 'Agent-Facilitated', description: 'AI facilitates discussion, humans make decisions', icon: '🤝' },
-  { value: 'symbiotic', label: 'Symbiotic', description: 'Equal partnership between humans and AI', icon: '⚡' },
-  { value: 'autonomous', label: 'Autonomous', description: 'AI-led with human approval gates', icon: '🤖' },
-  { value: 'continuous', label: 'Continuous Intelligence', description: 'Always-on board monitoring signals', icon: '♾️' },
+  { value: 'human-led', label: 'Human-Led', description: 'Humans chair, AI provides evidence & drafts', icon: '/icons/png/general/Virtual Assistant.png' },
+  { value: 'agent-facilitated', label: 'Agent-Facilitated', description: 'AI facilitates discussion, humans make decisions', icon: '/icons/png/general/Smart Chatbot.png' },
+  { value: 'symbiotic', label: 'Symbiotic', description: 'Equal partnership between humans and AI', icon: '/icons/png/general/Cognitive Computing.png' },
+  { value: 'autonomous', label: 'Autonomous', description: 'AI-led with human approval gates', icon: '/icons/png/general/AI Brain.png' },
+  { value: 'continuous', label: 'Continuous Intelligence', description: 'Always-on board monitoring signals', icon: '/icons/png/general/Machine Learning.png' },
 ];
 
 export default function AskPanelPage() {
@@ -279,6 +280,22 @@ export default function AskPanelPage() {
   const [selectedFusionModel, setSelectedFusionModel] = useState<FusionModel>('symbiotic');
 
   const { loadAgents } = useAgentsStore();
+
+  // Helper function to render icon (PNG or emoji)
+  const renderIcon = (icon: string, size: number = 32) => {
+    if (icon.startsWith('/')) {
+      return (
+        <Image
+          src={icon}
+          alt=""
+          width={size}
+          height={size}
+          className="object-contain"
+        />
+      );
+    }
+    return <span style={{ fontSize: `${size}px` }}>{icon}</span>;
+  };
 
   useEffect(() => {
     loadAgents();
@@ -525,7 +542,7 @@ export default function AskPanelPage() {
                   {/* Panel Response */}
                   {panelResponse && (
                     <div className="space-y-4 mt-6">
-                      <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                      <div className="p-4 bg-vital-primary-100 dark:bg-vital-primary-500/20 rounded-lg border border-vital-slate-200 dark:border-vital-primary-600/30">
                         <h3 className="font-semibold text-sm mb-2">Question:</h3>
                         <p className="text-sm">{panelResponse.question}</p>
                       </div>
@@ -592,7 +609,7 @@ export default function AskPanelPage() {
           {/* Breadcrumb Navigation */}
           {(selectedDomain || selectedSubdomain) && panelAgents.length === 0 && (
             <div className="mb-6 flex items-center gap-2 text-sm">
-              <button onClick={handleBackToDomains} className="text-blue-600 hover:text-blue-700 hover:underline">
+              <button onClick={handleBackToDomains} className="text-vital-primary-500 hover:text-vital-primary-600 hover:underline">
                 All Domains
               </button>
               {selectedDomain && (
@@ -600,9 +617,9 @@ export default function AskPanelPage() {
                   <span className="text-gray-400">/</span>
                   <button
                     onClick={handleBackToSubdomains}
-                    className="text-blue-600 hover:text-blue-700 hover:underline flex items-center gap-2"
+                    className="text-vital-primary-500 hover:text-vital-primary-600 hover:underline flex items-center gap-2"
                   >
-                    <span className="text-2xl">{selectedDomain.icon}</span>
+                    <div className="w-6 h-6">{renderIcon(selectedDomain.icon, 24)}</div>
                     {selectedDomain.name}
                   </button>
                 </>
@@ -620,7 +637,7 @@ export default function AskPanelPage() {
           {!selectedDomain && panelAgents.length === 0 && (
             <div className="mb-8">
               <div className="flex items-center gap-2 mb-4">
-                <Star className="h-5 w-5 text-blue-500" />
+                <Star className="h-5 w-5 text-vital-primary-500" />
                 <h2 className="text-xl font-semibold">Select Board Archetype</h2>
               </div>
               <p className="text-muted-foreground mb-6">
@@ -633,13 +650,15 @@ export default function AskPanelPage() {
                     key={archetype.value}
                     className={`cursor-pointer hover:shadow-lg transition-all duration-200 ${
                       selectedArchetype === archetype.value
-                        ? 'border-primary border-2 bg-primary/5'
-                        : 'hover:border-primary/50'
+                        ? 'border-vital-primary-500 border-2 bg-vital-primary-100/50 dark:bg-vital-primary-500/20 ring-2 ring-vital-primary-200'
+                        : 'hover:border-vital-primary-300'
                     }`}
                     onClick={() => setSelectedArchetype(archetype.value)}
                   >
                     <CardHeader className="pb-3">
-                      <div className="text-3xl mb-2">{archetype.icon}</div>
+                      <div className="flex justify-center mb-2 h-12 w-12 mx-auto">
+                        {renderIcon(archetype.icon, 48)}
+                      </div>
                       <CardTitle className="text-sm">{archetype.label}</CardTitle>
                     </CardHeader>
                     <CardContent>
@@ -668,13 +687,15 @@ export default function AskPanelPage() {
                     key={model.value}
                     className={`cursor-pointer hover:shadow-lg transition-all duration-200 ${
                       selectedFusionModel === model.value
-                        ? 'border-purple-500 border-2 bg-purple-50/50 dark:bg-purple-900/20'
-                        : 'hover:border-purple-300'
+                        ? 'border-vital-primary-500 border-2 bg-vital-primary-100/50 dark:bg-vital-primary-500/20'
+                        : 'hover:border-vital-primary-300'
                     }`}
                     onClick={() => setSelectedFusionModel(model.value)}
                   >
                     <CardHeader className="pb-3 text-center">
-                      <div className="text-3xl mb-2">{model.icon}</div>
+                      <div className="flex justify-center mb-2 h-12 w-12 mx-auto">
+                        {renderIcon(model.icon, 48)}
+                      </div>
                       <CardTitle className="text-xs">{model.label}</CardTitle>
                     </CardHeader>
                     <CardContent>
@@ -701,18 +722,18 @@ export default function AskPanelPage() {
                 {PANEL_DOMAINS.map((domain) => (
                   <Card
                     key={domain.id}
-                    className="cursor-pointer hover:shadow-lg transition-all duration-200 hover:border-primary/50 group"
+                    className="cursor-pointer hover:shadow-lg transition-all duration-200 hover:border-vital-primary-300 group"
                     onClick={() => handleDomainClick(domain)}
                   >
                     <CardHeader className="pb-4">
                       <div className="flex items-center gap-3 mb-3">
-                        <div className="text-4xl">{domain.icon}</div>
+                        <div className="w-12 h-12 flex-shrink-0">{renderIcon(domain.icon, 48)}</div>
                         <CardTitle className="text-lg">{domain.name}</CardTitle>
                       </div>
                       <CardDescription>{domain.description}</CardDescription>
                     </CardHeader>
                     <CardContent>
-                      <div className="flex items-center justify-between text-sm text-blue-600 dark:text-blue-400">
+                      <div className="flex items-center justify-between text-sm text-vital-primary-500 dark:text-vital-primary-300">
                         <span>{domain.subdomains.length} subdomains</span>
                         <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
                       </div>
@@ -727,7 +748,7 @@ export default function AskPanelPage() {
           {selectedDomain && !selectedSubdomain && panelAgents.length === 0 && (
             <div className="mb-8">
               <div className="flex items-center gap-3 mb-4">
-                <span className="text-4xl">{selectedDomain.icon}</span>
+                <div className="w-12 h-12">{renderIcon(selectedDomain.icon, 48)}</div>
                 <h2 className="text-2xl font-semibold">{selectedDomain.name}</h2>
               </div>
               <p className="text-muted-foreground mb-6">

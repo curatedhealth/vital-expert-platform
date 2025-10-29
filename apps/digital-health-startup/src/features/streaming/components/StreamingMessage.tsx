@@ -1,6 +1,8 @@
 'use client';
 
 import React from 'react';
+import Image from 'next/image';
+import { AgentAvatar } from '@/shared/components/agent-avatar';
 
 import { StreamingMessage as StreamingMessageType } from '@/hooks/useStreamingResponse';
 
@@ -10,17 +12,18 @@ interface StreamingMessageProps {
 }
 
 export function StreamingMessage({ message, className }: StreamingMessageProps) {
-
+  // Map agent types to PNG icons from general directory
+  const getAgentIcon = (agentType?: string): string => {
     const iconMap: Record<string, string> = {
-      'clinical-trial-designer': '🧪',
-      'digital-therapeutics-expert': '📱',
-      'medical-safety-officer': '🛡️',
-      'fda-regulatory-strategist': '📋',
-      'ai-ml-clinical-specialist': '🧠',
-      'health-economics-analyst': '📊',
-      'biomedical-informatics-specialist': '🔬',
-      'market-access-strategist': '🎯',
-      'default': '🤖'
+      'clinical-trial-designer': '/icons/png/general/Data Analysis.png',
+      'digital-therapeutics-expert': '/icons/png/general/AI Chip.png',
+      'medical-safety-officer': '/icons/png/general/AI Ethics.png',
+      'fda-regulatory-strategist': '/icons/png/general/AI Ethics.png',
+      'ai-ml-clinical-specialist': '/icons/png/general/AI Brain.png',
+      'health-economics-analyst': '/icons/png/general/Predictive Analytics.png',
+      'biomedical-informatics-specialist': '/icons/png/general/Data Analysis.png',
+      'market-access-strategist': '/icons/png/general/Decision Making.png',
+      'default': '/icons/png/general/AI Brain.png'
     };
     return iconMap[agentType || 'default'] || iconMap.default;
   };
@@ -29,9 +32,19 @@ export function StreamingMessage({ message, className }: StreamingMessageProps) 
     <div className={`flex gap-3 p-4 ${className}`}>
       {/* Avatar */}
       <div className="flex-shrink-0">
-        <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center text-sm">
-          {message.role === 'user' ? '👤' : getAgentIcon(message.agentType)}
-        </div>
+        {message.role === 'user' ? (
+          <AgentAvatar size="sm" avatar="avatar_0001" />
+        ) : (
+          <div className="w-8 h-8 bg-vital-primary-100 rounded-lg flex items-center justify-center border border-vital-slate-200 overflow-hidden">
+            <Image
+              src={getAgentIcon(message.agentType)}
+              alt={message.agentType || 'Agent'}
+              width={32}
+              height={32}
+              className="object-cover"
+            />
+          </div>
+        )}
       </div>
 
       {/* Message Content */}

@@ -28,7 +28,7 @@ const tierConfig = {
   },
   1: { 
     label: 'Tier 1', 
-    color: 'bg-blue-50 text-blue-700 border-blue-200',
+    color: 'bg-vital-primary-100 text-vital-primary-700 border-vital-primary-200',
     icon: Shield
   },
   2: { 
@@ -88,10 +88,10 @@ export function EnhancedAgentCard({
   return (
     <Card
       className={cn(
-        'group cursor-pointer transition-all duration-200 border-2',
-        'hover:shadow-lg hover:scale-[1.02] hover:border-blue-300',
-        'focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2',
-        isSelected && 'ring-2 ring-blue-500 bg-blue-50/50 border-blue-300',
+        'group cursor-pointer transition-all duration-200',
+        'hover:shadow-lg hover:scale-[1.02] hover:border-vital-primary-300',
+        'focus:outline-none focus:ring-2 focus:ring-vital-primary-500 focus:ring-offset-2',
+        isSelected && 'ring-2 ring-vital-primary-500 bg-vital-primary-100/50 border-vital-primary-500 border-2',
         config.card,
         className
       )}
@@ -112,8 +112,8 @@ export function EnhancedAgentCard({
           <div className="flex-shrink-0 relative">
             <div className={cn(
               'rounded-xl overflow-hidden border-2 transition-all duration-200',
-              'group-hover:border-blue-300 group-hover:shadow-md',
-              isSelected && 'border-blue-400 shadow-md',
+              'group-hover:border-vital-primary-300 group-hover:shadow-md',
+              isSelected && 'border-vital-primary-400 shadow-md',
               config.avatar
             )}>
               <AgentAvatar
@@ -137,7 +137,7 @@ export function EnhancedAgentCard({
             <div className="flex items-start justify-between gap-2 mb-2">
               <div className="flex-1 min-w-0">
                 <h4 className={cn(
-                  'text-gray-900 truncate group-hover:text-blue-700 transition-colors',
+                  'text-gray-900 truncate group-hover:text-vital-primary-700 transition-colors',
                   config.title
                 )}>
                   {agent.display_name || agent.name}
@@ -239,7 +239,7 @@ export function EnhancedAgentCard({
                 <Badge
                   variant="outline"
                   className={cn(
-                    'text-xs px-2 py-0.5 bg-blue-50 text-blue-700 border-blue-200',
+                    'text-xs px-2 py-0.5 bg-vital-primary-100 text-vital-primary-700 border-vital-primary-200',
                     config.badge
                   )}
                 >
@@ -259,7 +259,7 @@ export function EnhancedAgentCard({
                   }}
                   variant="outline"
                   size="sm"
-                  className="w-full border-blue-500 text-blue-600 hover:bg-blue-50 hover:text-blue-700"
+                  className="w-full border-vital-primary-500 text-vital-primary-600 hover:bg-vital-primary-100 hover:text-vital-primary-700"
                 >
                   <MessageSquarePlus className="w-4 h-4 mr-2" />
                   Add to Chat

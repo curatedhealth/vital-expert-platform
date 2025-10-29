@@ -547,7 +547,7 @@ export function AgentsBoard({
                 <div className="flex flex-col h-full">
                   {/* Header with Avatar and Actions */}
                   <div className="flex items-start gap-3 mb-3">
-                    <AgentAvatar avatar={agent.avatar} name={agent.name} size="card" className="flex-shrink-0" />
+                    <AgentAvatar avatar={agent.avatar} name={agent.display_name || agent.name} size="card" className="flex-shrink-0" />
 
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between gap-2">
@@ -714,7 +714,7 @@ export function AgentsBoard({
               {/* List View Layout */}
               {viewMode === 'list' && (
                 <>
-                  <AgentAvatar avatar={agent.avatar} name={agent.name} size="list" />
+                  <AgentAvatar avatar={agent.avatar} name={agent.display_name || agent.name} size="list" />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <h3 className="font-semibold text-deep-charcoal group-hover:text-progress-teal transition-colors">

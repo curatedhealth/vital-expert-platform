@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo } from "react"
+import { useMemo, useEffect, useState } from "react"
 import { usePathname } from "next/navigation"
 
 import { useAuth } from "@/lib/auth/supabase-auth-context"
@@ -11,6 +11,8 @@ import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
+  SidebarHeader,
+  SidebarProvider,
 } from "@/components/ui/sidebar"
 import {
   SidebarDashboardContent,
@@ -27,15 +29,27 @@ export function AppSidebar({
   ...props
 }: React.ComponentProps<typeof Sidebar>) {
   const pathname = usePathname()
-  const { user } = useAuth()
+  const { user, userProfile } = useAuth()
+  const [mounted, setMounted] = useState(false)
+
+  // Ensure component only renders on client side after mount
+  useEffect(() => {
+    // Use requestAnimationFrame to ensure DOM is ready
+    requestAnimationFrame(() => {
+      setMounted(true)
+    })
+  }, [])
 
   const sidebarUser = {
-    name: user?.user_metadata?.full_name || user?.email || "Anonymous User",
+    name: userProfile?.full_name || user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email || "Anonymous User",
     email: user?.email || "",
-    avatar: user?.user_metadata?.avatar_url || "",
+    avatar: userProfile?.avatar_url || user?.user_metadata?.avatar_url || "",
   }
 
-  const content = useMemo(() => {
+  // Render content based on pathname - only compute after mount
+  const renderContent = () => {
+    if (!mounted) return <SidebarDashboardContent />
+    
     if (!pathname) return <SidebarDashboardContent />
     if (pathname.startsWith("/ask-expert")) {
       return <SidebarAskExpert />
@@ -59,15 +73,40 @@ export function AppSidebar({
       return <SidebarPromptPrismContent />
     }
     return <SidebarDashboardContent />
-  }, [pathname])
+  }
+
+  // Don't render Sidebar until mounted (prevents SSR/hydration issues with context)
+  // This ensures SidebarProvider context is available before Sidebar component renders
+  if (!mounted) {
+    return (
+      <aside className={cn("border-r w-64 bg-sidebar flex flex-col", className)}>
+        <div className="px-3 py-2 border-b">
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+            <span className="text-sm font-medium text-foreground">Startup</span>
+          </div>
+        </div>
+        <div className="flex-1 overflow-y-auto" />
+        <div className="px-3 pb-4 border-t">
+          <div className="h-16" />
+        </div>
+      </aside>
+    )
+  }
 
   return (
     <Sidebar collapsible="icon" className={cn("border-r", className)} {...props}>
+      <SidebarHeader className="px-3 py-2 border-b">
+        <div className="flex items-center gap-2">
+          <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+          <span className="text-sm font-medium text-foreground">Startup</span>
+        </div>
+      </SidebarHeader>
       <SidebarContent className="px-3 py-4 space-y-4 overflow-y-auto">
-        {content}
+        {renderContent()}
       </SidebarContent>
       <SidebarFooter className="px-3 pb-4">
-        <NavUser user={sidebarUser} />
+        {mounted ? <NavUser user={sidebarUser} /> : <div className="h-16" />}
       </SidebarFooter>
     </Sidebar>
   )

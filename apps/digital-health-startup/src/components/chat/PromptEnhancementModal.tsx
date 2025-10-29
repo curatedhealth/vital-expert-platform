@@ -203,7 +203,7 @@ Context: Healthcare professional seeking expert guidance.`;
             Prompt Enhancement Library
           </DialogTitle>
           <DialogDescription>
-            Enhance your prompts using our PRISM library or create custom enhancements
+            Enhance your prompts using our PROMPTS library or create custom enhancements
           </DialogDescription>
         </DialogHeader>
 

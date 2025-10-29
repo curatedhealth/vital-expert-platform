@@ -2,10 +2,24 @@
 
 import { Rocket, Star, CheckCircle, ArrowRight, Layers } from 'lucide-react';
 import { useState } from 'react';
+import Image from 'next/image';
 
 import { Badge } from '@vital/ui';
 import { Button } from '@vital/ui';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@vital/ui';
+
+// Helper function to render icons
+const renderIcon = (iconPath: string, size: number = 48) => {
+  return (
+    <Image
+      src={iconPath}
+      alt=""
+      width={size}
+      height={size}
+      className="object-contain"
+    />
+  );
+};
 
 // Simplified solution templates - directly embedded for simplicity
 const SOLUTION_TEMPLATES = [
@@ -14,7 +28,7 @@ const SOLUTION_TEMPLATES = [
     name: 'Digital Therapeutic (DTx)',
     description: 'Evidence-based software interventions for medical conditions',
     category: 'Digital Health',
-    icon: '💊',
+    icon: '/icons/png/general/AI Chip.png',
     complexity: 'high' as const,
     timeframe: '6-12 months',
     features: [
@@ -35,7 +49,7 @@ const SOLUTION_TEMPLATES = [
     name: 'Remote Patient Monitoring',
     description: 'Real-time patient monitoring with AI-powered analytics',
     category: 'Telehealth',
-    icon: '📊',
+    icon: '/icons/png/general/Data Analysis.png',
     complexity: 'medium' as const,
     timeframe: '4-8 months',
     features: [
@@ -56,7 +70,7 @@ const SOLUTION_TEMPLATES = [
     name: 'Clinical Trial Platform',
     description: 'Digital infrastructure for clinical research and trial management',
     category: 'Research',
-    icon: '🔬',
+    icon: '/icons/png/general/Algorithm.png',
     complexity: 'high' as const,
     timeframe: '8-14 months',
     features: [
@@ -77,7 +91,7 @@ const SOLUTION_TEMPLATES = [
     name: 'Telemedicine Platform',
     description: 'Virtual care delivery and consultation platform',
     category: 'Telehealth',
-    icon: '🏥',
+    icon: '/icons/png/general/Predictive Analytics.png',
     complexity: 'medium' as const,
     timeframe: '3-6 months',
     features: [
@@ -98,7 +112,7 @@ const SOLUTION_TEMPLATES = [
     name: 'Patient Engagement App',
     description: 'Mobile-first platform for patient education and engagement',
     category: 'Patient Experience',
-    icon: '📱',
+    icon: '/icons/png/general/Virtual Assistant.png',
     complexity: 'low' as const,
     timeframe: '2-4 months',
     features: [
@@ -119,7 +133,7 @@ const SOLUTION_TEMPLATES = [
     name: 'Biomarker Analytics Platform',
     description: 'AI-powered analytics for digital biomarker discovery and validation',
     category: 'Data Science',
-    icon: '🧬',
+    icon: '/icons/png/general/Machine Learning.png',
     complexity: 'high' as const,
     timeframe: '10-16 months',
     features: [
@@ -189,13 +203,13 @@ export default function SolutionBuilderPage() {
               {SOLUTION_TEMPLATES.map((template) => (
                 <Card
                   key={template.id}
-                  className="cursor-pointer hover:shadow-lg transition-all duration-200 hover:border-primary/50 group"
+                  className="cursor-pointer hover:shadow-lg transition-all duration-200 hover:border-vital-primary-300 group"
                   onClick={() => setSelectedTemplate(template)}
                 >
                   <CardHeader className="pb-4">
                     <div className="flex items-start justify-between">
                       <div className="flex items-center gap-3">
-                        <div className="text-3xl">{template.icon}</div>
+                        <div className="w-12 h-12 flex-shrink-0">{renderIcon(template.icon, 48)}</div>
                         <div>
                           <CardTitle className="text-base leading-tight">{template.name}</CardTitle>
                           <div className="flex items-center gap-2 mt-2">
@@ -272,7 +286,7 @@ export default function SolutionBuilderPage() {
             <div className="mt-8 border-t pt-8">
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-4">
-                  <div className="text-5xl">{selectedTemplate.icon}</div>
+                  <div className="w-16 h-16 flex-shrink-0">{renderIcon(selectedTemplate.icon, 64)}</div>
                   <div>
                     <h2 className="text-2xl font-bold">{selectedTemplate.name}</h2>
                     <p className="text-muted-foreground">{selectedTemplate.description}</p>

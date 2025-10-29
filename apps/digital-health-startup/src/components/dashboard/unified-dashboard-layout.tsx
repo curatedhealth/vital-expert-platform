@@ -54,7 +54,7 @@ const routeLabels: Record<string, string> = {
 
 function DashboardHeader() {
   const pathname = usePathname()
-  const { user, signOut } = useAuth()
+  const { user, userProfile, signOut } = useAuth()
 
   // Generate breadcrumb items from pathname
   const getBreadcrumbs = () => {
@@ -148,7 +148,7 @@ function DashboardHeader() {
               <div className="flex flex-col space-y-1">
                 <p className="text-sm font-medium">My Account</p>
                 {user?.email && (
-                  <p className="text-xs text-muted-foreground">{user.email}</p>
+                  <p className="text-xs text-muted-foreground">{userProfile?.full_name || user.email}</p>
                 )}
               </div>
             </DropdownMenuLabel>

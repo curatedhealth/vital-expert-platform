@@ -88,7 +88,7 @@ export default function PromptLibrary() {
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-            <p className="text-gray-600">Loading PRISM™ Library...</p>
+            <p className="text-gray-600">Loading PROMPTS Library...</p>
           </div>
         </div>
       </div>
@@ -100,9 +100,9 @@ export default function PromptLibrary() {
 
   return (
     <div className="container mx-auto p-6">
-      <h1 className="text-3xl font-bold mb-4">PRISM™ Prompt Library</h1>
+      <h1 className="text-3xl font-bold mb-4">PROMPTS Library</h1>
       <p className="text-gray-600 mb-8">
-        Professional Regulatory Intelligence & Scientific Methodology
+        Professional Healthcare Prompt Templates & Strategies
       </p>
 
       {/* Tabs */}

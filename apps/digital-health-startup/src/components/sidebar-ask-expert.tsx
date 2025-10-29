@@ -360,10 +360,8 @@ export function SidebarAskExpert() {
                                 )}
                                 <div className="ml-auto flex gap-1">
                                   {!agent.isUserAdded ? (
-                                    <Button
-                                      size="sm"
-                                      variant="ghost"
-                                      className="h-6 w-6 p-0"
+                                    <div
+                                      className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-6 w-6 p-0 cursor-pointer"
                                       onClick={(e) => {
                                         console.log('🔍 [Button Click] Add button clicked for agent:', agent.id);
                                         e.stopPropagation()
@@ -372,12 +370,10 @@ export function SidebarAskExpert() {
                                       title="Add to chat list"
                                     >
                                       <PlusIcon className="h-3 w-3" />
-                                    </Button>
+                                    </div>
                                   ) : (
-                                    <Button
-                                      size="sm"
-                                      variant="ghost"
-                                      className="h-6 w-6 p-0 text-red-500 hover:text-red-700 hover:bg-red-50"
+                                    <div
+                                      className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-6 w-6 p-0 text-red-500 hover:text-red-700 hover:bg-red-50 cursor-pointer"
                                       onClick={(e) => {
                                         e.stopPropagation()
                                         removeAgentFromUserList(agent.id)
@@ -385,7 +381,7 @@ export function SidebarAskExpert() {
                                       title="Remove from chat list"
                                     >
                                       <Trash2Icon className="h-3 w-3" />
-                                    </Button>
+                                    </div>
                                   )}
                                 </div>
                               </div>

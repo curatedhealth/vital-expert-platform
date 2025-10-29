@@ -40,9 +40,11 @@ import {
 import { PromptInput } from '@/components/prompt-input';
 import { type Agent as SidebarAgent } from '@/components/ask-expert-sidebar';
 import { AskExpertProvider, useAskExpert } from '@/contexts/ask-expert-context';
+import { ChatHistoryProvider, useChatHistory } from '@/contexts/chat-history-context';
 import { PromptStarters, type PromptStarter } from '@/components/prompt-starters';
 import { ThumbsUpDown } from '@/components/feedback/ThumbsUpDown';
 import { useAuth } from '@/lib/auth/supabase-auth-context';
+import { ChatHistorySidebar } from '@/components/chat-history-sidebar';
 
 // ============================================================================
 // TYPES
@@ -101,6 +103,15 @@ function AskExpertPageContent() {
   // Get agents and selection from context (loaded by layout sidebar)
   const { selectedAgents } = useAskExpert();
   const { user } = useAuth();
+  
+  // Chat history context
+  const { 
+    currentSession, 
+    messages: chatMessages, 
+    addMessage, 
+    createSession,
+    updateSession 
+  } = useChatHistory();
 
   // State management
   const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -122,6 +133,21 @@ function AskExpertPageContent() {
   const [attachments, setAttachments] = useState<File[]>([]);
   const [tokenCount, setTokenCount] = useState(0);
   const [showSettings, setShowSettings] = useState(false);
+
+  // Determine current mode based on toggles
+  const getCurrentMode = () => {
+    if (isAutonomous && isAutomatic) {
+      return { id: 3, name: 'Autonomous Automatic', description: 'AI selects agent + autonomous reasoning', color: 'purple' };
+    } else if (isAutonomous && !isAutomatic) {
+      return { id: 4, name: 'Autonomous Manual', description: 'You select agent + autonomous reasoning', color: 'green' };
+    } else if (!isAutonomous && isAutomatic) {
+      return { id: 2, name: 'Automatic Selection', description: 'AI selects best agent for you', color: 'blue' };
+    } else {
+      return { id: 1, name: 'Manual Interactive', description: 'You select agent + interactive chat', color: 'gray' };
+    }
+  };
+
+  const currentMode = getCurrentMode();
 
   // Prompt starters
   const [promptStarters, setPromptStarters] = useState<PromptStarter[]>([]);
@@ -380,8 +406,10 @@ function AskExpertPageContent() {
                 reasoning = data.reasoning || [];
                 console.log('✅ Execution completed');
               } else if (data.type === 'error') {
-                console.error(`[${mode}] Error:`, data.message);
-                throw new Error(data.message || `Unknown error from ${mode}`);
+                const errorMessage = data.message || data.content || `Unknown error from ${mode}`;
+                console.error(`[${mode}] Error:`, errorMessage);
+                console.error(`[${mode}] Full error data:`, data);
+                throw new Error(errorMessage);
               }
               // Fallback: Support old format for backward compatibility
               else if (data.token) {
@@ -563,6 +591,15 @@ function AskExpertPageContent() {
           <h1 className="text-sm font-medium text-gray-900 dark:text-white">
             Ask the Experts
           </h1>
+          {/* Current Mode Badge */}
+          <div className={`px-3 py-1 rounded-full text-xs font-medium ${
+            currentMode.color === 'purple' ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300' :
+            currentMode.color === 'green' ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300' :
+            currentMode.color === 'blue' ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300' :
+            'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300'
+          }`}>
+            Mode {currentMode.id}: {currentMode.name}
+          </div>
         </div>
 
           <div className="flex items-center gap-2">
@@ -623,107 +660,139 @@ function AskExpertPageContent() {
                   </select>
                 </div>
 
-                {/* Mode Toggles */}
-                <div className="grid grid-cols-2 gap-4">
-                  {/* Automatic Toggle */}
-                  <div className="flex items-center justify-between p-3 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
-                    <div>
-                      <div className="text-sm font-medium text-gray-900 dark:text-white">
-                        Automatic
-                      </div>
-                      <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                        AI selects best agent
-                      </div>
-                    </div>
+                {/* Mode Selector Grid - Large Quadrant Style */}
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-3">
+                    Select Mode
+                  </label>
+                  <div className="grid grid-cols-2 gap-3">
+                    {/* Mode 1 */}
                     <button
-                      onClick={() => setIsAutomatic(!isAutomatic)}
-                      className={`relative w-11 h-6 rounded-full transition-colors ${
-                        isAutomatic ? 'bg-blue-500' : 'bg-gray-300 dark:bg-gray-600'
+                      onClick={() => {
+                        setIsAutomatic(false);
+                        setIsAutonomous(false);
+                      }}
+                      className={`p-4 rounded-lg border-2 text-left transition-all ${
+                        currentMode.id === 1
+                          ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 dark:border-blue-400'
+                          : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 bg-white dark:bg-gray-800'
                       }`}
                     >
-                      <motion.div
-                        animate={{ x: isAutomatic ? 20 : 2 }}
-                        transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-                        className="absolute top-1 w-4 h-4 bg-white rounded-full shadow"
-                      />
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                          Mode 1: Manual Interactive
+                        </span>
+                        {currentMode.id === 1 && (
+                          <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                        )}
+                      </div>
+                      <p className="text-xs text-gray-600 dark:text-gray-400">
+                        You select agent + interactive chat
+                      </p>
                     </button>
-                  </div>
 
-                  {/* Autonomous Toggle */}
-                  <div className="flex items-center justify-between p-3 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
-                    <div>
-                      <div className="text-sm font-medium text-gray-900 dark:text-white">
-                        Autonomous
-                      </div>
-                      <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                        ReAct + Chain-of-Thought reasoning
-                      </div>
-                    </div>
+                    {/* Mode 2 */}
                     <button
-                      onClick={() => setIsAutonomous(!isAutonomous)}
-                      className={`relative w-11 h-6 rounded-full transition-colors ${
-                        isAutonomous ? 'bg-blue-500' : 'bg-gray-300 dark:bg-gray-600'
+                      onClick={() => {
+                        setIsAutomatic(true);
+                        setIsAutonomous(false);
+                      }}
+                      className={`p-4 rounded-lg border-2 text-left transition-all ${
+                        currentMode.id === 2
+                          ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 dark:border-blue-400'
+                          : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 bg-white dark:bg-gray-800'
                       }`}
                     >
-                      <motion.div
-                        animate={{ x: isAutonomous ? 20 : 2 }}
-                        transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-                        className="absolute top-1 w-4 h-4 bg-white rounded-full shadow"
-                      />
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                          Mode 2: Automatic Selection
+                        </span>
+                        {currentMode.id === 2 && (
+                          <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                        )}
+                      </div>
+                      <p className="text-xs text-gray-600 dark:text-gray-400">
+                        AI selects best agent for you
+                      </p>
+                    </button>
+
+                    {/* Mode 3 */}
+                    <button
+                      onClick={() => {
+                        setIsAutomatic(true);
+                        setIsAutonomous(true);
+                      }}
+                      className={`p-4 rounded-lg border-2 text-left transition-all ${
+                        currentMode.id === 3
+                          ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20 dark:border-purple-400'
+                          : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 bg-white dark:bg-gray-800'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                          Mode 3: Autonomous Automatic
+                        </span>
+                        {currentMode.id === 3 && (
+                          <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+                        )}
+                      </div>
+                      <p className="text-xs text-gray-600 dark:text-gray-400">
+                        AI selects agent + autonomous reasoning
+                      </p>
+                    </button>
+
+                    {/* Mode 4 */}
+                    <button
+                      onClick={() => {
+                        setIsAutomatic(false);
+                        setIsAutonomous(true);
+                      }}
+                      className={`p-4 rounded-lg border-2 text-left transition-all ${
+                        currentMode.id === 4
+                          ? 'border-green-500 bg-green-50 dark:bg-green-900/20 dark:border-green-400'
+                          : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 bg-white dark:bg-gray-800'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                          Mode 4: Autonomous Manual
+                        </span>
+                        {currentMode.id === 4 && (
+                          <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                        )}
+                      </div>
+                      <p className="text-xs text-gray-600 dark:text-gray-400">
+                        You select agent + autonomous reasoning
+                      </p>
                     </button>
                   </div>
                 </div>
 
-                {/* RAG and Tools Toggles */}
-                <div className="grid grid-cols-2 gap-4">
-                  {/* RAG Toggle */}
-                  <div className="flex items-center justify-between p-3 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
-                    <div>
-                      <div className="text-sm font-medium text-gray-900 dark:text-white">
-                        Knowledge Base
-                      </div>
-                      <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                        Use RAG context
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => setEnableRAG(!enableRAG)}
-                      className={`relative w-11 h-6 rounded-full transition-colors ${
-                        enableRAG ? 'bg-green-500' : 'bg-gray-300 dark:bg-gray-600'
-                      }`}
-                    >
-                      <motion.div
-                        animate={{ x: enableRAG ? 20 : 2 }}
-                        transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-                        className="absolute top-1 w-4 h-4 bg-white rounded-full shadow"
-                      />
-                    </button>
+                {/* Current Mode Display */}
+                <div className="p-3 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-lg border border-blue-200 dark:border-blue-700">
+                  <div className="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wide mb-1">
+                    Active Mode
                   </div>
-
-                  {/* Tools Toggle */}
-                  <div className="flex items-center justify-between p-3 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+                  <div className="flex items-center justify-between">
                     <div>
-                      <div className="text-sm font-medium text-gray-900 dark:text-white">
-                        Tools
+                      <div className="text-sm font-bold text-gray-900 dark:text-white">
+                        Mode {currentMode.id}: {currentMode.name}
                       </div>
-                      <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                        Enable tool usage
+                      <div className="text-xs text-gray-600 dark:text-gray-400 mt-0.5">
+                        {currentMode.description}
                       </div>
                     </div>
-                    <button
-                      onClick={() => setEnableTools(!enableTools)}
-                      className={`relative w-11 h-6 rounded-full transition-colors ${
-                        enableTools ? 'bg-purple-500' : 'bg-gray-300 dark:bg-gray-600'
-                      }`}
-                    >
-                      <motion.div
-                        animate={{ x: enableTools ? 20 : 2 }}
-                        transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-                        className="absolute top-1 w-4 h-4 bg-white rounded-full shadow"
-                      />
-                    </button>
+                    <div className={`px-2 py-1 rounded-full text-xs font-medium ${
+                      currentMode.color === 'purple' ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300' :
+                      currentMode.color === 'green' ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300' :
+                      currentMode.color === 'blue' ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300' :
+                      'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300'
+                    }`}>
+                      {currentMode.id}
+                    </div>
                   </div>
                 </div>
+
               </div>
             </motion.div>
           )}
@@ -743,7 +812,7 @@ function AskExpertPageContent() {
                 </p>
 
                 {/* Show agent selection prompt for Mode 1 and Mode 4 */}
-                {selectedAgents.length === 0 && !isAutomatic && (
+                {selectedAgents.length === 0 && (currentMode.id === 1 || currentMode.id === 4) && (
                   <div className="w-full max-w-md mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-700">
                     <div className="flex items-center gap-2 mb-2">
                       <Bot className="w-4 h-4 text-blue-600 dark:text-blue-400" />
@@ -752,7 +821,7 @@ function AskExpertPageContent() {
                       </span>
                     </div>
                     <p className="text-xs text-blue-700 dark:text-blue-300">
-                      Choose an expert from the sidebar to get started with Mode 1 (Manual Interactive) or Mode 4 (Autonomous Manual).
+                      Choose an expert from the sidebar to get started with {currentMode.name}.
                     </p>
                   </div>
                 )}
@@ -978,5 +1047,10 @@ function AskExpertPageContent() {
 
 // Default export - no provider needed (provided by layout sidebar)
 export default function AskExpertPage() {
-  return <AskExpertPageContent />;
+  return (
+    <ChatHistoryProvider>
+      <AskExpertPageContent />
+    </ChatHistoryProvider>
+  );
 }
+

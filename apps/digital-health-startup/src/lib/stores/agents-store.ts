@@ -125,40 +125,50 @@ class AgentEventEmitter {
 const agentEventEmitter = new AgentEventEmitter();
 
 // Convert database agent to store format
-const convertDbAgentToStoreFormat = (dbAgent: DbAgent): Agent => {
+// Note: The API already normalizes display_name and resolves avatar URLs, so we preserve those values
+const convertDbAgentToStoreFormat = (dbAgent: DbAgent | any): Agent => {
   const metadata = dbAgent.metadata || {};
+  
+  // The API already provides normalized data, so we should preserve it
+  // Check if dbAgent already has display_name (from API normalization)
+  const displayName = dbAgent.display_name || metadata.display_name || dbAgent.name;
+  
+  // The API already resolves avatar URLs from icons table, so preserve the resolved value
+  const avatarValue = dbAgent.avatar || metadata.avatar || '🤖';
   
   const converted = {
     id: dbAgent.id,
-    name: dbAgent.name,
-    display_name: metadata.display_name || dbAgent.name,
+    name: dbAgent.name, // Keep unique ID for internal use
+    display_name: displayName, // Prefer API-normalized display_name
     description: dbAgent.description,
     system_prompt: dbAgent.system_prompt,
-    model: metadata.model || 'gpt-4',
-    avatar: metadata.avatar || '🤖',
-    color: metadata.color || '#6366f1',
+    model: dbAgent.model || metadata.model || 'gpt-4',
+    avatar: avatarValue, // Use API-resolved avatar URL/path
+    color: dbAgent.color || metadata.color || '#6366f1',
     capabilities: Array.isArray(dbAgent.capabilities) ? dbAgent.capabilities as string[] : [],
-    rag_enabled: metadata.rag_enabled ?? false,
-    temperature: metadata.temperature ?? 0.7,
-    max_tokens: metadata.max_tokens ?? 2000,
-    is_custom: metadata.is_custom ?? false,
-    status: metadata.status || "active",
-    tier: metadata.tier ?? 1,
+    rag_enabled: dbAgent.rag_enabled ?? metadata.rag_enabled ?? false,
+    temperature: dbAgent.temperature ?? metadata.temperature ?? 0.7,
+    max_tokens: dbAgent.max_tokens ?? metadata.max_tokens ?? 2000,
+    is_custom: dbAgent.is_custom ?? metadata.is_custom ?? false,
+    status: dbAgent.status || metadata.status || "active",
+    tier: dbAgent.tier ?? metadata.tier ?? 1,
     priority: 1, // Default priority since it's not in the actual schema
-    implementation_phase: metadata.implementation_phase ?? 1,
-    knowledge_domains: metadata.knowledge_domains || [],
-    business_function: metadata.business_function || '',
-    department: metadata.department || '',
-    role: metadata.role || '',
-    organizational_role: metadata.organizational_role || metadata.role || '',
-    is_user_copy: metadata.is_user_copy ?? false,
-    original_agent_id: metadata.original_agent_id || null,
-    copied_at: metadata.copied_at || null,
+    implementation_phase: dbAgent.implementation_phase ?? metadata.implementation_phase ?? 1,
+    knowledge_domains: dbAgent.knowledge_domains || metadata.knowledge_domains || [],
+    business_function: dbAgent.business_function || metadata.business_function || '',
+    department: dbAgent.department || metadata.department || '',
+    role: dbAgent.role || metadata.role || '',
+    organizational_role: dbAgent.organizational_role || metadata.organizational_role || metadata.role || '',
+    is_user_copy: dbAgent.is_user_copy ?? metadata.is_user_copy ?? false,
+    original_agent_id: dbAgent.original_agent_id || metadata.original_agent_id || null,
+    copied_at: dbAgent.copied_at || metadata.copied_at || null,
     created_at: dbAgent.created_at || new Date().toISOString(),
     updated_at: dbAgent.updated_at || new Date().toISOString(),
+    // Preserve metadata for any additional fields
+    metadata: dbAgent.metadata || metadata,
   };
 
-  console.log(`🔄 Converted agent "${converted.display_name}": tier=${converted.tier}, status=${converted.status}`);
+  console.log(`🔄 Converted agent "${converted.display_name}" (${converted.name}): tier=${converted.tier}, status=${converted.status}, avatar=${converted.avatar}`);
   return converted;
 };
 
@@ -532,7 +542,7 @@ export const useAgentsStore = create<AgentsStore>()(
     }),
     {
       name: 'vitalpath-agents-store',
-      version: 2, // Incremented to clear old cache
+      version: 3, // Incremented to clear old cache and force refresh with new display_name/avatar format
       partialize: (state) => ({
         // Don't persist agents array - always fetch fresh from API
         // agents: state.agents,

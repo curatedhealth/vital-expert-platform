@@ -41,7 +41,7 @@ export interface Agent {
   model?: string;
   capabilities?: string[];
   tools?: string[];
-  knowledge_domains?: string; // RAG domain for this agent (plural)
+  specialties?: string; // RAG domain for this agent (using specialties instead of knowledge_domains)
   metadata?: any;
 }
 
@@ -76,8 +76,8 @@ export class Mode1ManualInteractiveHandler {
     }
 
     // Log agent's RAG domain
-    if (agent.knowledge_domains) {
-      console.log(`   Agent RAG Domain: ${agent.knowledge_domains}`);
+    if (agent.specialties) {
+      console.log(`   Agent RAG Domain: ${agent.specialties}`);
     }
 
     // Step 2: Initialize LLM (use model from config or agent default)
@@ -109,7 +109,7 @@ export class Mode1ManualInteractiveHandler {
   private async getAgent(agentId: string): Promise<Agent | null> {
     const { data, error } = await this.supabase
       .from('agents')
-      .select('id, name, system_prompt, model, capabilities, metadata, knowledge_domains')
+      .select('id, name, system_prompt, model, capabilities, metadata, specialties')
       .eq('id', agentId)
       .single();
 
@@ -124,7 +124,7 @@ export class Mode1ManualInteractiveHandler {
     return {
       ...data,
       tools,
-      knowledge_domains: data.knowledge_domains
+      specialties: data.specialties
     };
   }
 
@@ -213,8 +213,8 @@ export class Mode1ManualInteractiveHandler {
     console.log('📚 [Mode 1] Executing with RAG');
 
     try {
-      // Retrieve relevant context (using agent's knowledge_domains)
-      const ragContext = await this.retrieveRAGContext(config.message, agent, agent.knowledge_domains);
+      // Retrieve relevant context (using agent's specialties)
+      const ragContext = await this.retrieveRAGContext(config.message, agent, agent.specialties);
 
       // Inject RAG context into system message
       const enhancedMessages = [...messages];
@@ -284,8 +284,8 @@ export class Mode1ManualInteractiveHandler {
     console.log('📚🛠️  [Mode 1] Executing with RAG + Tools (simplified)');
 
     try {
-      // Get RAG context (using agent's knowledge_domains)
-      const ragContext = await this.retrieveRAGContext(config.message, agent, agent.knowledge_domains);
+      // Get RAG context (using agent's specialties)
+      const ragContext = await this.retrieveRAGContext(config.message, agent, agent.specialties);
 
       // Build enhanced system prompt with RAG context and tools
       const systemPrompt = `${agent.system_prompt}\n\n## Available Tools:\n${agent.tools?.join(', ') || 'None'}\n\n## Relevant Context:\n${ragContext}`;

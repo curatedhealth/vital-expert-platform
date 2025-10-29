@@ -57,7 +57,17 @@ export async function middleware(request: NextRequest) {
   const isPublicRoute = publicRoutes.includes(url.pathname) || url.pathname.startsWith('/auth/');
 
   // Allow Ask Expert API routes without authentication (uses service role key internally)
-  const publicApiRoutes = ['/api/ask-expert/chat', '/api/ask-expert/generate-document', '/api/user-agents'];
+  // Also allow monitoring/metrics endpoints for internal use
+  const publicApiRoutes = [
+    '/api/ask-expert/chat', 
+    '/api/ask-expert/generate-document', 
+    '/api/user-agents', 
+    '/api/chat/conversations', 
+    '/api/chat/sessions', 
+    '/api/chat/messages',
+    '/api/metrics',  // Prometheus metrics endpoint
+    '/api/health',    // Health check endpoint
+  ];
   const isPublicApiRoute = publicApiRoutes.some(route => url.pathname.startsWith(route));
 
   if (isPublicApiRoute) {
@@ -247,8 +257,8 @@ export async function middleware(request: NextRequest) {
   const origin = request.headers.get('origin') || undefined;
   applySecurityHeaders(response, origin);
 
-  // Apply tenant middleware to add tenant headers
-  response = await tenantMiddleware(request, response);
+  // Apply tenant middleware to add tenant headers (pass userId for profile lookup)
+  response = await tenantMiddleware(request, response, userId);
 
   // Restrict client-only pages to non-platform tenants
   // Note: /ask-expert, /ask-panel, and /agents are allowed on Platform for demo/testing
@@ -260,10 +270,10 @@ export async function middleware(request: NextRequest) {
     const tenantId = response.headers.get('x-tenant-id');
     const PLATFORM_TENANT_ID = '00000000-0000-0000-0000-000000000001';
 
-    // If on platform tenant, redirect to marketing home
+    // If on platform tenant, redirect to dashboard instead of marketing home
     if (tenantId === PLATFORM_TENANT_ID) {
-      console.log(`[Middleware] Blocking access to ${url.pathname} on Platform Tenant - redirecting to /`);
-      return NextResponse.redirect(new URL('/', request.url));
+      console.log(`[Middleware] Blocking access to ${url.pathname} on Platform Tenant - redirecting to /dashboard`);
+      return NextResponse.redirect(new URL('/dashboard', request.url));
     }
   }
 

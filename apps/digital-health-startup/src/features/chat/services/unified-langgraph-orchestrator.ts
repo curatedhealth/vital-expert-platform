@@ -1239,6 +1239,9 @@ Return the most relevant domains (1-3 typically).`;
 
   /**
    * Node 4: Retrieve Context - Enhanced with Advanced RAG
+   * 
+   * ⚠️ IMPORTANT: RAG is ALWAYS enabled for all modes - this node always executes.
+   * All queries benefit from knowledge base context retrieval.
    *
    * Integrates multiple RAG services for optimal context retrieval:
    * - UnifiedRAGService: Production-grade multi-strategy RAG
@@ -1255,6 +1258,7 @@ Return the most relevant domains (1-3 typically).`;
    */
   private async retrieveContext(state: UnifiedState): Promise<Partial<UnifiedState>> {
     const startTime = Date.now();
+    // RAG is always enabled - this node always executes for all modes
 
     try {
       // Import advanced RAG services

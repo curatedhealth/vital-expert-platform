@@ -427,16 +427,38 @@ export class AgentService {
     }
   }
 
-  // Delete agent (soft delete by setting status to 'deprecated')
+  // Delete agent (hard delete via API route)
   async deleteAgent(id: string): Promise<void> {
-    const { error } = await this.getSupabaseClient()
-      .from('agents')
-      .update({ status: 'deprecated' })
-      .eq('id', id);
+    try {
+      // Use API route to handle permissions and RLS
+      const response = await fetch(`/api/agents/${id}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
 
-    if (error) {
-      console.error('Error deleting agent:', error);
-      throw new Error('Failed to delete agent');
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        console.error('❌ AgentService.deleteAgent: API error');
+        console.error('- Status:', response.status);
+        console.error('- Error data:', errorData);
+
+        throw new Error(errorData.error || 'Failed to delete agent');
+      }
+
+      const result = await response.json();
+      console.log('✅ AgentService.deleteAgent: Agent deleted successfully', result);
+    } catch (error) {
+      console.error('❌ AgentService.deleteAgent: Request error');
+      console.error('- Error:', error);
+
+      let errorMessage = 'Failed to delete agent';
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+
+      throw new Error(errorMessage);
     }
   }
 

@@ -502,6 +502,271 @@ export class PineconeVectorService {
 
     console.log(`✅ Bulk sync complete: ${completed} chunks synced to Pinecone`);
   }
+
+  // ============================================================================
+  // AGENT EMBEDDING METHODS (GraphRAG)
+  // ============================================================================
+
+  /**
+   * Sync agent embedding to Pinecone
+   * Stores agent in 'agents' namespace for GraphRAG search
+   */
+  async syncAgentToPinecone(agentEmbedding: {
+    agentId: string;
+    embedding: number[];
+    metadata: Record<string, any>;
+  }): Promise<void> {
+    const index = this.pinecone.Index(this.indexName);
+    const namespace = 'agents'; // Separate namespace for agents
+
+    try {
+      await index.namespace(namespace).upsert([
+        {
+          id: agentEmbedding.agentId,
+          values: agentEmbedding.embedding,
+          metadata: {
+            ...agentEmbedding.metadata,
+            entity_type: 'agent',
+            timestamp: new Date().toISOString(),
+          },
+        },
+      ]);
+
+      console.log(`✅ Synced agent ${agentEmbedding.agentId} to Pinecone (agents namespace)`);
+    } catch (error) {
+      console.error(`❌ Failed to sync agent to Pinecone:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Search agents in Pinecone using vector similarity
+   */
+  async searchAgents(
+    query: {
+      text?: string;
+      embedding?: number[];
+      topK?: number;
+      minScore?: number;
+      filter?: Record<string, any>;
+    }
+  ): Promise<Array<{
+    agentId: string;
+    similarity: number;
+    metadata: Record<string, any>;
+  }>> {
+    const index = this.pinecone.Index(this.indexName);
+    const namespace = 'agents';
+
+    try {
+      // Generate embedding if text provided
+      let queryVector: number[];
+      if (query.embedding) {
+        queryVector = query.embedding;
+      } else if (query.text) {
+        const { embeddingService } = await import('@/lib/services/embeddings/openai-embedding-service');
+        const result = await embeddingService.generateEmbedding(query.text, {
+          useCache: true,
+        });
+        queryVector = result.embedding;
+      } else {
+        throw new Error('Either text or embedding must be provided');
+      }
+
+      // Perform vector search
+      const searchResponse = await index.namespace(namespace).query({
+        vector: queryVector,
+        topK: query.topK || 10,
+        includeMetadata: true,
+        filter: query.filter ? {
+          $or: Object.entries(query.filter).map(([key, value]) => ({
+            [key]: { $eq: value },
+          })),
+        } : undefined,
+      });
+
+      // Filter by minimum score
+      const minScore = query.minScore || 0.7;
+      const filtered = searchResponse.matches?.filter(match => match.score! >= minScore) || [];
+
+      // Convert to result format
+      const results = filtered.map(match => ({
+        agentId: match.id,
+        similarity: match.score!,
+        metadata: match.metadata as Record<string, any>,
+      }));
+
+      console.log(`🔍 Found ${results.length} agents in Pinecone (similarity >= ${minScore})`);
+      return results;
+    } catch (error) {
+      console.error('❌ Pinecone agent search failed:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Hybrid agent search: Pinecone (vectors) + Supabase (metadata filtering)
+   */
+  async hybridAgentSearch(query: {
+    text?: string;
+    embedding?: number[];
+    topK?: number;
+    minScore?: number;
+    filters?: {
+      tier?: number;
+      status?: string;
+      business_function?: string;
+      knowledge_domain?: string;
+    };
+  }): Promise<Array<{
+    agentId: string;
+    similarity: number;
+    agent: any; // Full agent data from Supabase
+    metadata: Record<string, any>;
+  }>> {
+    // Step 1: Get candidates from Pinecone
+    const pineconeResults = await this.searchAgents({
+      ...query,
+      topK: (query.topK || 10) * 2, // Get more candidates for filtering
+      minScore: Math.max((query.minScore || 0.7) - 0.1, 0.5), // Lower threshold
+    });
+
+    if (pineconeResults.length === 0) {
+      return [];
+    }
+
+    // Step 2: Fetch full agent data from Supabase and apply filters
+    const agentIds = pineconeResults.map(r => r.agentId);
+
+    let supabaseQuery = this.supabase
+      .from('agents')
+      .select('*')
+      .in('id', agentIds);
+
+    // Apply filters
+    if (query.filters?.tier) {
+      supabaseQuery = supabaseQuery.eq('tier', query.filters.tier);
+    }
+
+    if (query.filters?.status) {
+      supabaseQuery = supabaseQuery.eq('status', query.filters.status);
+    }
+
+    if (query.filters?.business_function) {
+      supabaseQuery = supabaseQuery.eq('business_function', query.filters.business_function);
+    }
+
+    if (query.filters?.knowledge_domain) {
+      supabaseQuery = supabaseQuery.contains('knowledge_domains', [query.filters.knowledge_domain]);
+    }
+
+    const { data: agents, error } = await supabaseQuery;
+
+    if (error) {
+      console.error('❌ Supabase agent query failed:', error);
+      // Return Pinecone results without enrichment
+      return pineconeResults.map(result => ({
+        agentId: result.agentId,
+        similarity: result.similarity,
+        agent: null,
+        metadata: result.metadata,
+      }));
+    }
+
+    // Step 3: Merge Pinecone scores with Supabase data
+    const enrichedResults = pineconeResults
+      .map(pineconeResult => {
+        const agent = agents?.find((a: any) => a.id === pineconeResult.agentId);
+        if (!agent) return null;
+
+        return {
+          agentId: pineconeResult.agentId,
+          similarity: pineconeResult.similarity,
+          agent,
+          metadata: {
+            ...pineconeResult.metadata,
+            ...agent.metadata,
+          },
+        };
+      })
+      .filter((result): result is NonNullable<typeof result> => result !== null);
+
+    // Step 4: Re-sort by similarity and return top K
+    return enrichedResults
+      .sort((a, b) => b.similarity - a.similarity)
+      .slice(0, query.topK || 10);
+  }
+
+  /**
+   * Bulk sync all agents to Pinecone
+   */
+  async bulkSyncAgentsToPinecone(
+    options: {
+      batchSize?: number;
+      onProgress?: (completed: number, total: number) => void;
+    } = {}
+  ): Promise<void> {
+    const { agentEmbeddingService } = await import('../agents/agent-embedding-service');
+
+    // Get all active agents from Supabase
+    const { data: agents, error, count } = await this.supabase
+      .from('agents')
+      .select('*', { count: 'exact' })
+      .in('status', ['active', 'testing']);
+
+    if (error) {
+      throw new Error(`Failed to fetch agents: ${error.message}`);
+    }
+
+    if (!agents || agents.length === 0) {
+      console.log('⚠️ No agents found to sync');
+      return;
+    }
+
+    console.log(`📊 Starting bulk sync of ${agents.length} agents to Pinecone...`);
+
+    // Generate embeddings for all agents
+    const embeddings = await agentEmbeddingService.generateAgentEmbeddingsBatch(
+      agents,
+      options.onProgress
+    );
+
+    // Sync to Pinecone in batches
+    const batchSize = options.batchSize || 10;
+    for (let i = 0; i < embeddings.length; i += batchSize) {
+      const batch = embeddings.slice(i, i + batchSize);
+
+      await Promise.all(
+        batch.map(embedding =>
+          this.syncAgentToPinecone({
+            agentId: embedding.agentId,
+            embedding: embedding.embedding,
+            metadata: embedding.metadata,
+          })
+        )
+      );
+
+      console.log(`  Progress: ${Math.min(i + batchSize, embeddings.length)}/${embeddings.length} agents synced`);
+    }
+
+    console.log(`✅ Bulk sync complete: ${embeddings.length} agents synced to Pinecone`);
+  }
+
+  /**
+   * Delete agent from Pinecone
+   */
+  async deleteAgentFromPinecone(agentId: string): Promise<void> {
+    const index = this.pinecone.Index(this.indexName);
+    const namespace = 'agents';
+
+    try {
+      await index.namespace(namespace).deleteMany([agentId]);
+      console.log(`✅ Deleted agent ${agentId} from Pinecone`);
+    } catch (error) {
+      console.error(`❌ Failed to delete agent from Pinecone:`, error);
+      throw error;
+    }
+  }
 }
 
 // Singleton instance

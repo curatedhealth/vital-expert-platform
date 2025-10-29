@@ -66,7 +66,7 @@ export async function POST(request: NextRequest) {
                 agentId: body.agentId,
                 message: body.message,
                 conversationHistory: body.conversationHistory,
-                enableRAG: body.enableRAG ?? false,
+                enableRAG: body.enableRAG !== false, // Default to true, only disable if explicitly false
                 enableTools: body.enableTools ?? false,
                 model: body.model,
                 temperature: body.temperature ?? 0.7,
@@ -127,7 +127,7 @@ export async function POST(request: NextRequest) {
               const mode3Stream = await executeMode3({
                 message: body.message,
                 conversationHistory: body.conversationHistory,
-                enableRAG: body.enableRAG ?? true,
+                enableRAG: body.enableRAG !== false, // Default to true, only disable if explicitly false
                 enableTools: body.enableTools ?? true,
                 model: body.model,
                 temperature: body.temperature ?? 0.7,
@@ -187,14 +187,14 @@ export async function POST(request: NextRequest) {
                   agentId: body.agentId,
                   message: body.message,
                   conversationHistory: body.conversationHistory,
-                  enableRAG: body.enableRAG ?? true,
-                  enableTools: body.enableTools ?? true,
-                  model: body.model,
-                  temperature: body.temperature ?? 0.7,
-                  maxTokens: body.maxTokens ?? 2000,
-                  maxIterations: body.maxIterations ?? 10,
-                  confidenceThreshold: body.confidenceThreshold ?? 0.95
-                });
+                enableRAG: body.enableRAG !== false, // Default to true, only disable if explicitly false
+                enableTools: body.enableTools ?? true,
+                model: body.model,
+                temperature: body.temperature ?? 0.7,
+                maxTokens: body.maxTokens ?? 2000,
+                maxIterations: body.maxIterations ?? 10,
+                confidenceThreshold: body.confidenceThreshold ?? 0.95
+              });
 
                 // Stream autonomous chunks
                 try {

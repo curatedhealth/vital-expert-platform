@@ -17,10 +17,12 @@ import { useRouter } from "next/navigation"
 
 import { useAskExpert } from "@/contexts/ask-expert-context"
 import { useAuth } from "@/lib/auth/supabase-auth-context"
+import { AgentAvatar } from "@vital/ui"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import { cn } from "@/lib/utils"
 import {
   SidebarGroup,
   SidebarGroupContent,
@@ -342,70 +344,86 @@ export function SidebarAskExpert() {
                               console.log('🔍 [Agent Click] New selection:', nextSelection);
                               setSelectedAgents(nextSelection)
                             }}
-                            className={`items-start ${agent.isUserAdded ? 'bg-green-50 border-l-2 border-l-green-500' : ''} ${isSelected ? 'bg-blue-100 border-l-4 border-l-blue-600 shadow-sm' : ''}`}
+                            className={cn(
+                              'items-center transition-all p-2 rounded-lg',
+                              agent.isUserAdded && !isSelected && 'bg-green-50/50 border-l-2 border-l-green-500',
+                              isSelected && 'bg-vital-primary-100 border-l-4 border-l-vital-primary-600 shadow-sm'
+                            )}
                           >
-                            <div className="flex flex-1 flex-col gap-1">
-                              <div className="flex items-center gap-2">
+                            {/* Avatar, Name, and Action Button in single row */}
+                            <div className="flex items-center gap-2 flex-1 min-w-0">
+                              {/* Avatar */}
+                              <div className="flex-shrink-0">
+                                <AgentAvatar
+                                  agent={agent}
+                                  size="sm"
+                                  className={cn(
+                                    'w-7 h-7 rounded-lg border-2 transition-all',
+                                    isSelected 
+                                      ? 'border-vital-primary-500 shadow-sm' 
+                                      : 'border-gray-200'
+                                  )}
+                                />
+                              </div>
+
+                              {/* Name with Check Icon */}
+                              <div className="flex-1 min-w-0 flex items-center gap-1.5">
                                 {isSelected && (
-                                  <CheckIcon className="h-4 w-4 text-blue-600 flex-shrink-0" />
+                                  <CheckIcon className="h-3 w-3 text-vital-primary-600 flex-shrink-0" />
                                 )}
-                                <span className={`text-sm font-medium ${isSelected ? 'text-blue-900 font-semibold' : ''}`}>
+                                <span className={cn(
+                                  'text-xs font-medium leading-tight break-words',
+                                  isSelected && 'text-vital-primary-900 font-semibold'
+                                )}>
                                   {agent.displayName}
                                 </span>
-                                <Badge variant="outline">T{agent.tier}</Badge>
-                                {agent.isUserAdded && (
-                                  <Badge variant="secondary" className="text-xs bg-green-100 text-green-700">
-                                    Added
-                                  </Badge>
-                                )}
-                                <div className="ml-auto flex gap-1">
-                                  {!agent.isUserAdded ? (
-                                    <div
-                                      className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-6 w-6 p-0 cursor-pointer"
-                                      onClick={(e) => {
-                                        console.log('🔍 [Button Click] Add button clicked for agent:', agent.id);
+                              </div>
+
+                              {/* Action Button */}
+                              <div className="flex-shrink-0">
+                                {!agent.isUserAdded ? (
+                                  <div
+                                    role="button"
+                                    tabIndex={0}
+                                    className="inline-flex items-center justify-center h-5 w-5 p-0 rounded-md hover:bg-gray-100 transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-vital-primary-500 focus:ring-offset-1"
+                                    onClick={(e) => {
+                                      console.log('🔍 [Button Click] Add button clicked for agent:', agent.id);
+                                      e.stopPropagation()
+                                      addAgentToUserList(agent.id)
+                                    }}
+                                    onKeyDown={(e) => {
+                                      if (e.key === 'Enter' || e.key === ' ') {
+                                        e.preventDefault()
                                         e.stopPropagation()
                                         addAgentToUserList(agent.id)
-                                      }}
-                                      title="Add to chat list"
-                                    >
-                                      <PlusIcon className="h-3 w-3" />
-                                    </div>
-                                  ) : (
-                                    <div
-                                      className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-6 w-6 p-0 text-red-500 hover:text-red-700 hover:bg-red-50 cursor-pointer"
-                                      onClick={(e) => {
+                                      }
+                                    }}
+                                    title="Add to chat list"
+                                  >
+                                    <PlusIcon className="h-3 w-3" />
+                                  </div>
+                                ) : (
+                                  <div
+                                    role="button"
+                                    tabIndex={0}
+                                    className="inline-flex items-center justify-center h-5 w-5 p-0 rounded-md hover:bg-red-50 text-red-500 hover:text-red-700 transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1"
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      removeAgentFromUserList(agent.id)
+                                    }}
+                                    onKeyDown={(e) => {
+                                      if (e.key === 'Enter' || e.key === ' ') {
+                                        e.preventDefault()
                                         e.stopPropagation()
                                         removeAgentFromUserList(agent.id)
-                                      }}
-                                      title="Remove from chat list"
-                                    >
-                                      <Trash2Icon className="h-3 w-3" />
-                                    </div>
-                                  )}
-                                </div>
+                                      }
+                                    }}
+                                    title="Remove from chat list"
+                                  >
+                                    <Trash2Icon className="h-3 w-3" />
+                                  </div>
+                                )}
                               </div>
-                              <p className="line-clamp-2 text-xs text-muted-foreground">
-                                {agent.description}
-                              </p>
-                              {agent.capabilities?.length > 0 && (
-                                <div className="flex flex-wrap gap-1">
-                                  {agent.capabilities.slice(0, 2).map((capability) => (
-                                    <Badge
-                                      key={capability}
-                                      variant="outline"
-                                      className="text-[10px] font-normal"
-                                    >
-                                      {capability}
-                                    </Badge>
-                                  ))}
-                                  {agent.capabilities.length > 2 && (
-                                    <span className="text-[10px] text-muted-foreground">
-                                      +{agent.capabilities.length - 2}
-                                    </span>
-                                  )}
-                                </div>
-                              )}
                             </div>
                           </SidebarMenuButton>
                         </SidebarMenuItem>

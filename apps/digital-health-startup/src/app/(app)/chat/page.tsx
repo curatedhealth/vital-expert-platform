@@ -27,6 +27,7 @@ import { useAgentsStore } from '@/lib/stores/agents-store';
 import { useChatStore, Agent } from '@/lib/stores/chat-store';
 import { cn } from '@vital/ui';
 import { LazyAgentCreator } from '@/lib/utils/lazy-components';
+import { useUserAgents } from '@/lib/hooks/use-user-agents';
 import {
   SidebarInset,
   SidebarProvider
@@ -177,28 +178,74 @@ export default function ChatPage() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // Load userAgents from localStorage after component mounts to prevent hydration issues
+  // Use user agents hook for database-backed persistence
+  const {
+    userAgents: userAgentsFromDb,
+    isLoading: isLoadingUserAgents,
+    addAgentAsync,
+    removeAgentAsync,
+    migrateFromLocalStorage,
+    isMigrating,
+    migrationResult,
+  } = useUserAgents(user?.id || null);
+
+  // Migration effect: migrate from localStorage on mount (one-time)
+  const migrationCompletedRef = useRef(false);
   useEffect(() => {
     setMounted(true);
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('user-chat-agents');
-      if (saved) {
-        try {
-          const agents = JSON.parse(saved);
-          // Ensure all existing agents are marked as user copies for edit permissions
-          const markedAgents = agents.map((agent: Agent) => ({
-            ...agent,
-            is_user_copy: true, // Mark existing agents as user copies
-            isCustom: true, // Also mark as custom for backwards compatibility
-          }));
-          setUserAgents(markedAgents);
-        } catch (error) {
-          console.error('Failed to parse user agents from localStorage:', error);
-          setUserAgents([]);
-        }
+    
+    // Migrate from localStorage if needed (one-time operation)
+    if (user?.id && typeof window !== 'undefined' && !migrationCompletedRef.current) {
+      const hasLocalStorage = localStorage.getItem('user-chat-agents');
+      if (hasLocalStorage) {
+        console.log('🔄 [Chat] Migrating agents from localStorage to database...');
+        migrateFromLocalStorage();
+        migrationCompletedRef.current = true;
       }
     }
-  }, []);
+  }, [user?.id, migrateFromLocalStorage]);
+
+  // Sync userAgents from database to local state
+  useEffect(() => {
+    if (userAgentsFromDb && userAgentsFromDb.length > 0) {
+      // Convert UserAgent format to Agent format for chat interface
+      const agents = userAgentsFromDb
+        .map((ua) => {
+          // Use agent data if available (from join), otherwise create minimal agent
+          const agentData = ua.agent || {
+            id: ua.agent_id,
+            name: 'Unknown Agent',
+            display_name: 'Unknown Agent',
+            description: '',
+            system_prompt: '',
+            model: 'gpt-4',
+            temperature: 0.7,
+            max_tokens: 2000,
+            avatar: '🤖',
+            color: '#3B82F6',
+            capabilities: [],
+            rag_enabled: false,
+            status: 'active',
+            tier: 3,
+            priority: 1,
+            implementation_phase: 1,
+          };
+
+          return {
+            ...agentData,
+            is_user_copy: ua.is_user_copy,
+            isCustom: ua.is_user_copy,
+            original_agent_id: ua.original_agent_id,
+          };
+        })
+        .filter((agent): agent is Agent => agent !== null);
+
+      setUserAgents(agents);
+    } else if (!isLoadingUserAgents) {
+      // Only clear if we're done loading and got no results
+      setUserAgents([]);
+    }
+  }, [userAgentsFromDb, isLoadingUserAgents]);
 
   // Helper function to get user initials
   const getUserInitials = (email: string) => {
@@ -565,30 +612,69 @@ export default function ChatPage() {
 
         // Check if agent is already in user's chat list
         const isAlreadyAdded = userAgents.some(ua => ua.id === agent.id || ua.name === agent.name);
-        if (!isAlreadyAdded) {
-          const newUserAgents = [...userAgents, chatAgent];
-          setUserAgents(newUserAgents);
-          // Persist to localStorage
-          localStorage.setItem('user-chat-agents', JSON.stringify(newUserAgents));
+        if (!isAlreadyAdded && user?.id) {
+          try {
+            // Add to database via service
+            await addAgentAsync({
+              agentId: userCopy.id,
+              options: {
+                originalAgentId: agent.id,
+                isUserCopy: true,
+              },
+            });
+            // Local state will be updated via useEffect watching userAgentsFromDb
+            const newUserAgents = [...userAgents, chatAgent];
+            setUserAgents(newUserAgents);
+          } catch (error) {
+            console.error('Failed to add agent to database:', error);
+            // Fallback: add to local state only (will be lost on refresh, but better than nothing)
+            const newUserAgents = [...userAgents, chatAgent];
+            setUserAgents(newUserAgents);
+          }
         } else { /* TODO: implement */ }
       } else {
         // This is already a user copy, just add it directly
         const isAlreadyAdded = userAgents.some(ua => ua.id === agent.id);
-        if (!isAlreadyAdded) {
-          const newUserAgents = [...userAgents, agent];
-          setUserAgents(newUserAgents);
-          // Persist to localStorage
-          localStorage.setItem('user-chat-agents', JSON.stringify(newUserAgents));
+        if (!isAlreadyAdded && user?.id) {
+          try {
+            // Add to database via service
+            await addAgentAsync({
+              agentId: agent.id,
+              options: {
+                isUserCopy: true,
+              },
+            });
+            // Local state will be updated via useEffect watching userAgentsFromDb
+            const newUserAgents = [...userAgents, agent];
+            setUserAgents(newUserAgents);
+          } catch (error) {
+            console.error('Failed to add agent to database:', error);
+            // Fallback: add to local state only
+            const newUserAgents = [...userAgents, agent];
+            setUserAgents(newUserAgents);
+          }
         } else { /* TODO: implement */ }
       }
     } catch (error) {
       console.error('Failed to add agent to chat:', error);
-      // Fallback to old behavior if copy fails
+      // Fallback: try to add directly to database if we have user ID
       const isAlreadyAdded = userAgents.some(ua => ua.id === agent.id);
-      if (!isAlreadyAdded) {
-        const newUserAgents = [...userAgents, agent];
-        setUserAgents(newUserAgents);
-        localStorage.setItem('user-chat-agents', JSON.stringify(newUserAgents));
+      if (!isAlreadyAdded && user?.id) {
+        try {
+          await addAgentAsync({
+            agentId: agent.id,
+            options: {
+              isUserCopy: false,
+            },
+          });
+          const newUserAgents = [...userAgents, agent];
+          setUserAgents(newUserAgents);
+        } catch (dbError) {
+          console.error('Failed to add agent to database in fallback:', dbError);
+          // Last resort: add to local state only
+          const newUserAgents = [...userAgents, agent];
+          setUserAgents(newUserAgents);
+        }
       }
     }
   };
@@ -608,16 +694,35 @@ export default function ChatPage() {
     }
   };
 
-  const handleAgentRemove = (agentId: string) => {
-    // Remove agent from user's collection
-    const updatedAgents = userAgents.filter(ua => ua.id !== agentId);
-    setUserAgents(updatedAgents);
-    localStorage.setItem('user-chat-agents', JSON.stringify(updatedAgents));
+  const handleAgentRemove = async (agentId: string) => {
+    if (!user?.id) {
+      console.warn('Cannot remove agent: user not authenticated');
+      return;
+    }
 
-    // If this was the selected agent, clear selection
-    if (selectedAgent?.id === agentId) {
-      setSelectedAgent(null);
-      setHasUserSelectedAgent(false);
+    try {
+      // Remove from database
+      await removeAgentAsync(agentId);
+      
+      // Update local state immediately for better UX
+      const updatedAgents = userAgents.filter(ua => ua.id !== agentId);
+      setUserAgents(updatedAgents);
+
+      // If this was the selected agent, clear selection
+      if (selectedAgent?.id === agentId) {
+        setSelectedAgent(null);
+        setHasUserSelectedAgent(false);
+      }
+    } catch (error) {
+      console.error('Failed to remove agent from database:', error);
+      // Fallback: remove from local state only
+      const updatedAgents = userAgents.filter(ua => ua.id !== agentId);
+      setUserAgents(updatedAgents);
+      
+      if (selectedAgent?.id === agentId) {
+        setSelectedAgent(null);
+        setHasUserSelectedAgent(false);
+      }
     }
   };
 
@@ -672,16 +777,10 @@ export default function ChatPage() {
                       variant="ghost"
                       size="icon"
                       className="h-6 w-6"
-                      onClick={(e) => {
+                      onClick={async (e) => {
                         e.stopPropagation();
-                        // Remove agent from user's collection
-                        const updatedAgents = userAgents.filter(ua => ua.id !== agent.id);
-                        setUserAgents(updatedAgents);
-                        localStorage.setItem('user-chat-agents', JSON.stringify(updatedAgents));
-                        // If this was the selected agent, clear selection
-                        if (selectedAgent?.id === agent.id) {
-                          setSelectedAgent(null);
-                        }
+                        // Remove agent from user's collection (reuse handleAgentRemove)
+                        await handleAgentRemove(agent.id);
                       }}
                     >
                       <span className="text-xs">×</span>
@@ -1212,17 +1311,8 @@ export default function ChatPage() {
               // Refresh agents list after saving and sync with global store
               loadAgentsFromDatabase();
               syncWithGlobalStore();
-              // Also refresh userAgents from localStorage
-              const saved = localStorage.getItem('user-chat-agents');
-              if (saved) {
-                const agents = JSON.parse(saved);
-                const markedAgents = agents.map((agent: Agent) => ({
-                  ...agent,
-                  is_user_copy: true,
-                  isCustom: true,
-                }));
-                setUserAgents(markedAgents);
-              }
+              // UserAgents will be automatically refreshed via useUserAgents hook
+              // No need to read from localStorage anymore
             }}
             editingAgent={editingAgent}
           />

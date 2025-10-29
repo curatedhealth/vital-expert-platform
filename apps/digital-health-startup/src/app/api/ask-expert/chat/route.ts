@@ -23,6 +23,8 @@ const openai = new OpenAI({
 });
 
 // Mode configuration - maps UI modes to backend search strategies
+// All modes search across all domains (including Digital Health and Regulatory Affairs)
+// Domain filtering removed to allow searching both RAG domains
 const MODE_CONFIG = {
   'mode-1-query-automatic': {
     searchFunction: 'search_knowledge_by_embedding',
@@ -39,6 +41,7 @@ const MODE_CONFIG = {
   'mode-3-chat-automatic': {
     searchFunction: 'hybrid_search',
     params: {
+      domain_filter: null,
       max_results: 12,
       keyword_weight: 0.3,
       semantic_weight: 0.7
@@ -180,14 +183,19 @@ export async function POST(req: NextRequest) {
             if (error) throw error;
             contextResults = data;
           } else if (config.searchFunction === 'hybrid_search') {
-            const { data, error } = await supabase.rpc('hybrid_search', {
+            const hybridParams: any = {
               query_text: message,
               query_embedding: embedding,
               max_results: config.params.max_results || 15,
               semantic_weight: config.params.semantic_weight || 0.7,
               keyword_weight: config.params.keyword_weight || 0.3,
               similarity_threshold: 0.6 // Fixed threshold since it's not in config.params
-            });
+            };
+            // Add domain_filter if specified in config
+            if (config.params.domain_filter) {
+              hybridParams.domain_filter = config.params.domain_filter;
+            }
+            const { data, error } = await supabase.rpc('hybrid_search', hybridParams);
             if (error) throw error;
             contextResults = data;
           }

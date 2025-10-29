@@ -14,7 +14,8 @@ import type { ChatStatus } from 'ai';
 import type {
   ComponentProps,
   HTMLAttributes,
-  KeyboardEventHandler
+  KeyboardEventHandler,
+  ReactElement
 } from 'react';
 
 export type PromptInputProps = HTMLAttributes<HTMLFormElement>;
@@ -52,6 +53,7 @@ export const __PromptInputTextarea = ({
       // Submit on Enter (without Shift)
       e.preventDefault();
 
+      const form = e.currentTarget.closest('form');
       if (form) {
         form.requestSubmit();
       }
@@ -144,6 +146,7 @@ export const __PromptInputSubmit = ({
   children,
   ...props
 }: PromptInputSubmitProps) => {
+  let Icon: ReactElement | null = null;
 
   if (status === 'submitted') {
     Icon = <Loader2Icon className="size-4 animate-spin" />;

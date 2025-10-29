@@ -18,19 +18,51 @@ async function resolveAvatarUrl(avatar: string | undefined, adminSupabase: any):
     return avatar;
   }
 
-  // If it matches avatar pattern (avatar_0001, avatar_001, etc.), resolve from icons table
-  const avatarPattern = /^avatar_(\d{3,4})$/;
-  const match = avatar.match(avatarPattern);
-  
-  if (match) {
-    try {
+  try {
+    // Step 1: Try to look up by exact name first (supports original icon names from database)
+    const { data: iconByExactName, error: exactNameError } = await adminSupabase
+      .from('icons')
+      .select('file_url, file_path, name')
+      .eq('name', avatar)
+      .eq('category', 'avatar')
+      .eq('is_active', true)
+      .single();
+    
+    if (!exactNameError && iconByExactName) {
+      // Found by exact name - prefer file_url if it's a full URL, otherwise use file_path
+      let resolvedUrl = iconByExactName.file_url || iconByExactName.file_path;
+      
+      // If we have a resolved URL that's already a full path or URL, use it
+      if (resolvedUrl && (resolvedUrl.startsWith('http://') || resolvedUrl.startsWith('https://') || resolvedUrl.startsWith('/'))) {
+        return resolvedUrl;
+      }
+      
+      // If file_path exists but doesn't start with /, make it absolute
+      if (resolvedUrl && !resolvedUrl.startsWith('/') && !resolvedUrl.startsWith('http')) {
+        resolvedUrl = `/${resolvedUrl}`;
+      }
+      
+      // If still no valid path, construct from icon name (original name, not normalized)
+      if (!resolvedUrl) {
+        const iconName = iconByExactName.name || avatar;
+        // Use the actual icon name for path construction
+        resolvedUrl = `/icons/png/avatars/${iconName}.png`;
+      }
+      
+      return resolvedUrl;
+    }
+
+    // Step 2: If not found by exact name, try normalized pattern (avatar_XXXX)
+    const avatarPattern = /^avatar_(\d{3,4})$/;
+    const match = avatar.match(avatarPattern);
+    
+    if (match) {
       // Normalize to 4-digit format for lookup
       const num = match[1];
       const paddedNum = num.padStart(4, '0');
       const iconName = `avatar_${paddedNum}`;
       
-      // Try to fetch from icons table
-      const { data: icon, error } = await adminSupabase
+      const { data: iconByNormalized, error: normalizedError } = await adminSupabase
         .from('icons')
         .select('file_url, file_path')
         .eq('name', iconName)
@@ -38,23 +70,64 @@ async function resolveAvatarUrl(avatar: string | undefined, adminSupabase: any):
         .eq('is_active', true)
         .single();
       
-      if (!error && icon) {
+      if (!normalizedError && iconByNormalized) {
         // Prefer file_url if it's a full URL, otherwise use file_path
-        return icon.file_url || icon.file_path || `/icons/png/avatars/${iconName}.png`;
+        let resolvedUrl = iconByNormalized.file_url || iconByNormalized.file_path;
+        
+        if (resolvedUrl && (resolvedUrl.startsWith('http://') || resolvedUrl.startsWith('https://') || resolvedUrl.startsWith('/'))) {
+          return resolvedUrl;
+        }
+        
+        // If file_path doesn't start with /, make it absolute
+        if (resolvedUrl && !resolvedUrl.startsWith('/') && !resolvedUrl.startsWith('http')) {
+          resolvedUrl = `/${resolvedUrl}`;
+        }
+        
+        return resolvedUrl || `/icons/png/avatars/${iconName}.png`;
       }
       
-      // Fallback to local path if icon not found in DB
+      // Fallback: try the normalized path, but also log that icon wasn't found
+      console.warn(`[Avatar Resolution] Icon "${iconName}" not found in database, using fallback path`);
       return `/icons/png/avatars/${iconName}.png`;
-    } catch (error) {
-      console.warn(`Failed to resolve avatar ${avatar} from icons table:`, error);
-      // Fallback to local path
-      const num = match[1];
-      const paddedNum = num.padStart(4, '0');
-      return `/icons/png/avatars/avatar_${paddedNum}.png`;
     }
+
+    // Step 3: Try to extract number from various formats and normalize
+    // Handle formats like "01arab_male..." or "avatar-011" or "avatar_png_0118"
+    const leadingNumMatch = avatar.match(/^(\d{1,4})/);
+    const dashMatch = avatar.match(/^avatar-(\d{1,4})$/);
+    const pngMatch = avatar.match(/^avatar_png_(\d{3,4})$/);
+    
+    let extractedNum: string | null = null;
+    if (pngMatch) {
+      extractedNum = pngMatch[1];
+    } else if (dashMatch) {
+      extractedNum = dashMatch[1].padStart(3, '0');
+    } else if (leadingNumMatch) {
+      extractedNum = leadingNumMatch[1].padStart(3, '0');
+    }
+    
+    if (extractedNum) {
+      const normalizedName = `avatar_${extractedNum.padStart(4, '0')}`;
+      const { data: iconByExtracted, error: extractedError } = await adminSupabase
+        .from('icons')
+        .select('file_url, file_path')
+        .eq('name', normalizedName)
+        .eq('category', 'avatar')
+        .eq('is_active', true)
+        .single();
+      
+      if (!extractedError && iconByExtracted) {
+        return iconByExtracted.file_url || iconByExtracted.file_path || `/icons/png/avatars/${normalizedName}.png`;
+      }
+      
+      // Fallback to local path
+      return `/icons/png/avatars/${normalizedName}.png`;
+    }
+  } catch (error) {
+    console.warn(`Failed to resolve avatar ${avatar} from icons table:`, error);
   }
 
-  // Return as-is for emoji or unknown formats
+  // Final fallback: return as-is (might be emoji or unknown format)
   return avatar;
 }
 
@@ -281,6 +354,32 @@ export async function POST(request: Request) {
           { status: 500 }
         );
       }
+    }
+
+    // Sync agent to Pinecone for GraphRAG (fire and forget - don't block response)
+    try {
+      const { agentEmbeddingService } = await import('@/lib/services/agents/agent-embedding-service');
+      const { pineconeVectorService } = await import('@/lib/services/vectorstore/pinecone-vector-service');
+
+      const embeddingData = await agentEmbeddingService.generateAgentEmbedding(data);
+      await pineconeVectorService.syncAgentToPinecone({
+        agentId: embeddingData.agentId,
+        embedding: embeddingData.embedding,
+        metadata: embeddingData.metadata,
+      });
+
+      // Also store in Supabase
+      await agentEmbeddingService.storeAgentEmbeddingInSupabase(
+        embeddingData.agentId,
+        embeddingData.embedding,
+        embeddingData.embeddingType,
+        embeddingData.text
+      );
+
+      console.log(`✅ [Agents CRUD] Agent synced to Pinecone for GraphRAG`);
+    } catch (error) {
+      // Non-critical - log but don't fail
+      console.warn('⚠️ [Agents CRUD] Failed to sync agent to Pinecone (non-critical):', error);
     }
 
     return NextResponse.json({

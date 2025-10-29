@@ -36,7 +36,7 @@ export interface ModeConfig {
 export const MODE_CONFIG_MAP: Record<string, ModeConfig> = {
   'mode-1-query-automatic': {
     searchFunction: 'search_knowledge_by_embedding',
-    params: { domain_filter: null, max_results: 10 },
+    params: { domain_filter: null, max_results: 10 }, // null = search all domains (Digital Health + Regulatory Affairs)
     requiresAgentSelection: false,
     supportsChatHistory: false,
     supportsCheckpoints: false,
@@ -44,7 +44,7 @@ export const MODE_CONFIG_MAP: Record<string, ModeConfig> = {
   },
   'mode-2-query-manual': {
     searchFunction: 'search_knowledge_for_agent',
-    params: { max_results: 15 },
+    params: { max_results: 15 }, // Agent-specific search uses agent's assigned domains
     requiresAgentSelection: true,
     supportsChatHistory: false,
     supportsCheckpoints: false,
@@ -52,7 +52,7 @@ export const MODE_CONFIG_MAP: Record<string, ModeConfig> = {
   },
   'mode-3-chat-automatic': {
     searchFunction: 'hybrid_search',
-    params: { keyword_weight: 0.3, semantic_weight: 0.7 },
+    params: { domain_filter: null, keyword_weight: 0.3, semantic_weight: 0.7 }, // null = search all domains
     requiresAgentSelection: false,
     supportsChatHistory: true,
     supportsCheckpoints: false,

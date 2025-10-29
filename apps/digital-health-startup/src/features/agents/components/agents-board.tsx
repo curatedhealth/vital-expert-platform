@@ -23,6 +23,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { EnhancedAgentCard, AgentCardGrid } from '@vital/ui';
 import { DEPARTMENTS_BY_FUNCTION, ROLES_BY_DEPARTMENT } from '@/config/organizational-structure';
 import { AgentCreator } from '@/features/chat/components/agent-creator';
+import { useUserRole } from '@/hooks/useUserRole';
 import type { AgentWithCategories } from '@/lib/agents/agent-service';
 import { useAgentsStore, type Agent } from '@/lib/stores/agents-store';
 import { cn } from '@vital/ui/lib/utils';
@@ -171,6 +172,7 @@ export function AgentsBoard({
   onViewModeChange: externalOnViewModeChange,
 }: AgentsBoardProps) {
   const { agents, createCustomAgent, updateAgent, deleteAgent, loadAgents } = useAgentsStore();
+  const { canEditAgent, canDeleteAgent, isSuperAdmin } = useUserRole();
 
   // Use external state if provided, otherwise use internal state
   const searchQuery = externalSearchQuery ?? '';
@@ -258,9 +260,17 @@ export function AgentsBoard({
   };
 
   const handleDeleteAgent = (agent: Agent) => {
+    // Super admin can delete any agent
+    if (isSuperAdmin()) {
+      if (confirm(`Are you sure you want to delete "${agent.display_name || agent.name}"? This action cannot be undone.`)) {
+        deleteAgent(agent.id);
+      }
+      return;
+    }
+
+    // Regular users can only delete their own custom agents
     if (agent.is_custom) {
-      // Only allow deleting custom agents, not default ones
-      if (confirm(`Are you sure you want to delete "${agent.display_name}"? This action cannot be undone.`)) {
+      if (confirm(`Are you sure you want to delete "${agent.display_name || agent.name}"? This action cannot be undone.`)) {
         deleteAgent(agent.id);
       }
     } else {
@@ -508,18 +518,27 @@ export function AgentsBoard({
 
       {/* Agents Grid/List */}
       {viewMode === 'grid' ? (
-        <AgentCardGrid columns={3} className="gap-6">
-          {filteredAgents.map((agent) => (
-            <EnhancedAgentCard
-              key={agent.id}
-              agent={agent}
-              onClick={() => onAgentSelect?.(agent)}
-              onAddToChat={onAddToChat ? () => onAddToChat(agent) : undefined}
-              showReasoning={false}
-              showTier={true}
-              size="lg"
-            />
-          ))}
+        <AgentCardGrid columns={3} className="gap-4">
+          {filteredAgents.map((agent) => {
+            const agentCanEdit = canEditAgent(agent);
+            const agentCanDelete = canDeleteAgent(agent);
+            
+            return (
+              <EnhancedAgentCard
+                key={agent.id}
+                agent={agent}
+                onClick={() => onAgentSelect?.(agent)}
+                onAddToChat={onAddToChat ? () => onAddToChat(agent) : undefined}
+                onEdit={agentCanEdit ? () => handleEditAgent(agent) : undefined}
+                onDelete={agentCanDelete ? () => handleDeleteAgent(agent) : undefined}
+                canEdit={agentCanEdit}
+                canDelete={agentCanDelete}
+                showReasoning={false}
+                showTier={true}
+                size="md"
+              />
+            );
+          })}
         </AgentCardGrid>
       ) : (
         <div className="space-y-3">

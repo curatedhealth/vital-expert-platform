@@ -87,26 +87,51 @@ export function AskExpertProvider({ children }: { children: React.ReactNode }) {
       const data = await response.json();
       const userAgentRelationships = data.agents || [];
 
-      const mappedAgents: Agent[] = userAgentRelationships.map((relationship: any) => {
-        const agent = relationship.agents;
-        const metadata = agent.metadata || {};
-        const agentId = agent.id;
-        
-        // Add to userAddedAgentIds set
-        setUserAddedAgentIds(prev => new Set([...prev, agentId]));
-        
-        return {
-          id: agentId,
-          name: agent.name,
-          displayName: metadata.display_name || agent.name,
-          description: agent.description || '',
-          tier: metadata.tier || 3,
-          status: metadata.status || 'active',
-          capabilities: Array.isArray(agent.capabilities) ? agent.capabilities : [],
-          avatar: metadata.avatar || undefined,
-          isUserAdded: true, // Mark as user-added
-        };
-      });
+      // Process user-added agents (if the relationship includes agent data)
+      // Supabase foreign key relationships return data in the relationship object
+      const mappedAgents: Agent[] = userAgentRelationships
+        .map((relationship: any) => {
+          // Handle both cases: agent data from join, or just agent_id
+          const agent = relationship.agents;
+          const agentId = relationship.agent_id || agent?.id;
+          
+          if (!agentId) {
+            return null;
+          }
+          
+          // If we have full agent data from the join, use it
+          if (agent && agent.id) {
+            const metadata = agent.metadata || {};
+            
+            // Clean up display name - remove "(My Copy)" or "(Copy)" suffixes
+            let displayName = metadata.display_name || agent.name;
+            displayName = displayName.replace(/\s*\(My Copy\)\s*/gi, '').replace(/\s*\(Copy\)\s*/gi, '').trim();
+            
+            // Add to userAddedAgentIds set
+            setUserAddedAgentIds(prev => new Set([...prev, agentId]));
+            
+            return {
+              id: agentId,
+              name: agent.name,
+              displayName: displayName,
+              description: agent.description || '',
+              tier: metadata.tier || 3,
+              status: metadata.status || 'active',
+              capabilities: Array.isArray(agent.capabilities) ? agent.capabilities : [],
+              avatar: metadata.avatar || undefined,
+              isUserAdded: true, // Mark as user-added
+            };
+          }
+          
+          // If we only have agent_id but no agent data, just track it for now
+          // The agent details will be fetched from /api/agents-crud and merged later
+          if (relationship.agent_id) {
+            setUserAddedAgentIds(prev => new Set([...prev, relationship.agent_id]));
+          }
+          
+          return null;
+        })
+        .filter((agent): agent is Agent => agent !== null);
 
       setAgents(mappedAgents);
       console.log(`✅ [AskExpertContext] Loaded ${mappedAgents.length} user agents for sidebar`);
@@ -142,20 +167,43 @@ export function AskExpertProvider({ children }: { children: React.ReactNode }) {
           }, {});
           
           // Show ALL available agents from the store (not just a sample)
-          const allAvailableAgents: Agent[] = availableAgents.map((agent: any) => ({
-            id: agent.id,
-            name: agent.name,
-            displayName: agent.display_name || agent.name,
-            description: agent.description || '',
-            tier: agent.tier || 3,
-            status: agent.status || 'active',
-            capabilities: Array.isArray(agent.capabilities) ? agent.capabilities : [],
-            avatar: agent.avatar || undefined,
-            isUserAdded: userAddedAgentIds.has(agent.id), // Check if agent is user-added
-          }));
+          const allAvailableAgents: Agent[] = availableAgents.map((agent: any) => {
+            // Clean up display name - remove "(My Copy)" or "(Copy)" suffixes
+            let displayName = agent.display_name || agent.name;
+            displayName = displayName.replace(/\s*\(My Copy\)\s*/gi, '').replace(/\s*\(Copy\)\s*/gi, '').trim();
+            
+            return {
+              id: agent.id,
+              name: agent.name,
+              displayName: displayName,
+              description: agent.description || '',
+              tier: agent.tier || 3,
+              status: agent.status || 'active',
+              capabilities: Array.isArray(agent.capabilities) ? agent.capabilities : [],
+              avatar: agent.avatar || undefined,
+              isUserAdded: userAddedAgentIds.has(agent.id), // Check if agent is user-added
+            };
+          });
           
-          // Combine user-added agents with all available agents
-          const allAgents = [...mappedAgents, ...allAvailableAgents];
+          // Combine user-added agents with all available agents, avoiding duplicates
+          const agentMap = new Map<string, Agent>();
+          
+          // First, add all available agents
+          allAvailableAgents.forEach(agent => {
+            agentMap.set(agent.id, agent);
+          });
+          
+          // Then, update with user-added agents (they may override with isUserAdded=true)
+          mappedAgents.forEach(agent => {
+            const existingAgent = agentMap.get(agent.id);
+            agentMap.set(agent.id, {
+              ...(existingAgent || {}), // Keep existing data if available
+              ...agent, // Override with user-added data (isUserAdded=true, etc.)
+              isUserAdded: true, // Ensure this is set
+            });
+          });
+          
+          const allAgents = Array.from(agentMap.values());
           
           setAgents(allAgents);
           console.log(`✅ [AskExpertContext] Loaded ${allAgents.length} total agents:`, {

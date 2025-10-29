@@ -151,13 +151,8 @@ async function checkBudget(state: AskExpertState): Promise<Partial<AskExpertStat
  * @returns Partial state update with context and sources
  */
 async function retrieveContext(state: AskExpertState): Promise<Partial<AskExpertState>> {
-  // Skip RAG if disabled (useful for simple queries or when context isn't needed)
-  if (!state.ragEnabled) {
-    console.log('⏭️ RAG disabled, skipping context retrieval');
-    return { context: '', sources: [] };
-  }
-
-  console.log('🔍 Retrieving context from knowledge base using Pinecone + Supabase...');
+  // RAG is always enabled for all modes - all queries benefit from knowledge base context
+  console.log('🔍 Retrieving context from knowledge base using Pinecone + Supabase (RAG always enabled)...');
 
   try {
     // Use UnifiedRAGService with Pinecone for vector search and Supabase for metadata

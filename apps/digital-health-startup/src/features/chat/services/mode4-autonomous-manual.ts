@@ -212,7 +212,8 @@ export class Mode4AutonomousManualHandler {
         timestamp: { value: (x: string, y: string) => y ?? x },
         error: { value: (x: string | undefined, y: string | undefined) => y ?? x },
         selectedAgent: { value: (x: Agent, y: Agent) => y ?? x },
-        agentExpertise: { value: (x: string[], y: string[]) => y ?? x }
+        agentExpertise: { value: (x: string[], y: string[]) => y ?? x },
+        streamingSteps: { value: (x: any[], y: any[]) => y ?? x }
       }
     });
 
@@ -441,14 +442,25 @@ export class Mode4AutonomousManualHandler {
     }
 
     try {
+      // Create a streaming callback that will yield steps in real-time
+      const streamingSteps: Array<{ type: string; content: string; metadata?: any }> = [];
+      
       const reactResult = await reActEngine.executeReActLoop(
         state.goalUnderstanding,
         state.subQuestions,
         state.executionPlan,
         state.selectedAgent,
         state.config.maxIterations || 10,
-        state.config.confidenceThreshold || 0.95
+        state.config.confidenceThreshold || 0.95,
+        state.config.enableRAG !== false, // Default to true, only disable if explicitly false
+        (step) => {
+          // Collect steps for streaming
+          streamingSteps.push(step);
+        }
       );
+
+      // Store streaming steps in state for later streaming
+      state.streamingSteps = streamingSteps;
 
       const nodeTime = Date.now() - nodeStartTime;
       console.log(`  ✅ [Mode 4] Node 5 completed in ${nodeTime}ms`);
@@ -545,60 +557,76 @@ export class Mode4AutonomousManualHandler {
         timestamp: new Date().toISOString()
       };
 
-      // Stream ReAct iterations
-      for (const iteration of result.iterations) {
-        yield {
-          type: 'iteration_start',
-          content: `Iteration ${iteration.iteration + 1}`,
-          metadata: {
-            iteration: iteration.iteration,
-            confidence: iteration.confidence
-          },
-          timestamp: new Date().toISOString()
-        };
+      // Stream all detailed ReAct steps in real-time
+      // First stream the detailed steps collected during execution
+      if (result.streamingSteps && result.streamingSteps.length > 0) {
+        for (const step of result.streamingSteps) {
+          yield {
+            type: step.type,
+            content: step.content,
+            metadata: {
+              ...step.metadata,
+              timestamp: new Date().toISOString()
+            },
+            timestamp: new Date().toISOString()
+          };
+        }
+      } else {
+        // Fallback: Stream iterations if detailed steps aren't available
+        for (const iteration of result.iterations) {
+          yield {
+            type: 'iteration_start',
+            content: `Iteration ${iteration.iteration + 1}`,
+            metadata: {
+              iteration: iteration.iteration,
+              confidence: iteration.confidence
+            },
+            timestamp: new Date().toISOString()
+          };
 
-        yield {
-          type: 'thought',
-          content: iteration.thought,
-          metadata: {
-            iteration: iteration.iteration,
-            phase: 'thinking'
-          },
-          timestamp: new Date().toISOString()
-        };
+          yield {
+            type: 'thought',
+            content: iteration.thought,
+            metadata: {
+              iteration: iteration.iteration,
+              phase: 'thinking'
+            },
+            timestamp: new Date().toISOString()
+          };
 
-        yield {
-          type: 'action',
-          content: iteration.action,
-          metadata: {
-            iteration: iteration.iteration,
-            phase: 'acting',
-            toolsUsed: iteration.toolsUsed
-          },
-          timestamp: new Date().toISOString()
-        };
+          yield {
+            type: 'action',
+            content: iteration.action,
+            metadata: {
+              iteration: iteration.iteration,
+              phase: 'acting',
+              toolsUsed: iteration.toolsUsed
+            },
+            timestamp: new Date().toISOString()
+          };
 
-        yield {
-          type: 'observation',
-          content: iteration.observation,
-          metadata: {
-            iteration: iteration.iteration,
-            phase: 'observing',
-            ragContext: iteration.ragContext
-          },
-          timestamp: new Date().toISOString()
-        };
+          yield {
+            type: 'observation',
+            content: iteration.observation,
+            metadata: {
+              iteration: iteration.iteration,
+              phase: 'observing',
+              ragContext: iteration.ragContext
+            },
+            timestamp: new Date().toISOString()
+          };
 
-        yield {
-          type: 'reflection',
-          content: iteration.reflection,
-          metadata: {
-            iteration: iteration.iteration,
-            phase: 'reflecting',
-            confidence: iteration.confidence
-          },
-          timestamp: new Date().toISOString()
-        };
+          yield {
+            type: 'reflection',
+            content: iteration.reflection,
+            metadata: {
+              iteration: iteration.iteration,
+              phase: 'reflecting',
+              confidence: iteration.confidence
+            },
+            timestamp: new Date().toISOString()
+          };
+        }
       }
 
       // Stream final answer

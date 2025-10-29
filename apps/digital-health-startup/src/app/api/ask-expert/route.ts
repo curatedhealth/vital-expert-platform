@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
       userId = 'anonymous',
       sessionId,
       chatHistory = [],
-      ragEnabled = true,
+      ragEnabled = true, // Always enabled - all modes use RAG
       stream = true,
     } = body;
 
@@ -123,7 +123,7 @@ async function handleStreamingResponse(
           sessionId,
           userId,
           agent,
-          ragEnabled,
+          ragEnabled: ragEnabled !== false, // Ensure RAG is enabled (default to true)
           chatHistory: [],
         })) {
           // Send workflow step

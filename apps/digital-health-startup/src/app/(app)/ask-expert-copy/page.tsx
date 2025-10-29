@@ -28,6 +28,11 @@ import {
   Sun,
   Settings2,
   Brain,
+  Paperclip,
+  Zap,
+  X,
+  FileText,
+  Image as ImageIcon,
 } from 'lucide-react';
 import { type Agent as SidebarAgent } from '@/components/ask-expert-sidebar';
 import { AskExpertProvider, useAskExpert } from '@/contexts/ask-expert-context';
@@ -52,12 +57,12 @@ import {
   __PromptInputTextarea as PromptInputTextarea,
   __PromptInputToolbar as PromptInputToolbar,
   __PromptInputSubmit as PromptInputSubmit,
+  __PromptInputButton as PromptInputButton,
+  __PromptInputTools as PromptInputTools,
 } from '@/components/ui/shadcn-io/ai/prompt-input';
 import { Reasoning, ReasoningTrigger, ReasoningContent, ReasoningStep } from '@/components/ai/reasoning';
 import { Sources, SourcesTrigger, SourcesContent } from '@/components/ai/sources';
-
-// Import existing prompt input for compatibility (we'll enhance it later)
-import { PromptInput } from '@/components/prompt-input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@vital/ui';
 
 // ============================================================================
 // TYPES
@@ -360,54 +365,125 @@ function AskExpertCopyPageContent() {
             try {
               const data = JSON.parse(line.slice(6));
 
-              // Handle different chunk types based on mode
+              // Handle different chunk types from all 4 modes
+              
+              // Mode 1: Simple chunk streaming
               if (data.type === 'chunk' && data.content) {
                 fullResponse += data.content;
                 setStreamingMessage(fullResponse);
-              } else if (data.type === 'agent_selection' && data.agent) {
-                selectedAgent = {
-                  id: data.agent.id,
-                  name: data.agent.name,
-                  display_name: data.agent.display_name || data.agent.name
-                };
-                confidence = data.confidence;
-              } else if (data.type === 'selection_reason' && data.selectionReason) {
-                selectionReason = data.selectionReason;
-              } else if (data.type === 'goal_understanding') {
+              }
+              // Mode 2: Agent selection events
+              else if (data.type === 'agent_selection' && (data.agent || data.metadata?.agent)) {
+                const agent = data.agent || data.metadata?.agent;
+                if (agent) {
+                  selectedAgent = {
+                    id: agent.id,
+                    name: agent.name || agent.display_name || '',
+                    display_name: agent.display_name || agent.name || ''
+                  };
+                  confidence = data.confidence || data.metadata?.confidence;
+                  // Also capture selection reason if provided in same event
+                  if (data.selectionReason) {
+                    selectionReason = data.selectionReason;
+                  }
+                  console.log('✅ [Mode 2] Agent selected:', selectedAgent.display_name, 'Confidence:', confidence);
+                }
+              }
+              // Mode 2: Selection reason (can come as separate event or with agent_selection)
+              else if (data.type === 'selection_reason' || data.selectionReason) {
+                selectionReason = data.selectionReason || data.content;
+                console.log('✅ [Mode 2] Selection reason:', selectionReason);
+              }
+              // Mode 3 & 4: Autonomous reasoning events
+              else if (data.type === 'goal_understanding') {
                 autonomousMetadata.goalUnderstanding = data.content;
-              } else if (data.type === 'execution_plan') {
+                console.log('🎯 [Mode 3/4] Goal understanding:', data.content);
+              }
+              else if (data.type === 'execution_plan') {
                 autonomousMetadata.executionPlan = data.content;
-              } else if (data.type === 'iteration_start') {
+                console.log('📋 [Mode 3/4] Execution plan:', data.content);
+              }
+              // Mode 3: Agent selection (for autonomous automatic)
+              else if (data.type === 'agent_selection' && data.metadata?.agent) {
+                selectedAgent = {
+                  id: data.metadata.agent.id,
+                  name: data.metadata.agent.name || '',
+                  display_name: data.metadata.agent.display_name || data.metadata.agent.name || ''
+                };
+                confidence = data.metadata.confidence;
+                console.log('✅ [Mode 3] Agent selected:', selectedAgent.display_name);
+              }
+              else if (data.type === 'phase_start') {
+                autonomousMetadata.currentPhase = data.metadata?.phase || data.content;
+                console.log('🚀 [Mode 3/4] Phase start:', autonomousMetadata.currentPhase);
+              }
+              else if (data.type === 'iteration_start') {
                 autonomousMetadata.currentIteration = data.metadata?.iteration;
-              } else if (data.type === 'thought') {
+                autonomousMetadata.currentPhase = 'reasoning';
+                console.log(`🔄 [Mode 3/4] Iteration ${data.metadata?.iteration} starting`);
+              }
+              else if (data.type === 'thought') {
                 autonomousMetadata.currentThought = data.content;
-              } else if (data.type === 'action') {
+                autonomousMetadata.currentPhase = 'reasoning';
+                console.log('🧠 [Mode 3/4] Thought:', data.content);
+              }
+              else if (data.type === 'action') {
                 autonomousMetadata.currentAction = data.content;
-              } else if (data.type === 'observation') {
+                autonomousMetadata.currentPhase = 'action';
+                console.log('⚡ [Mode 3/4] Action:', data.content);
+              }
+              else if (data.type === 'observation') {
                 autonomousMetadata.currentObservation = data.content;
-              } else if (data.type === 'reflection') {
+                autonomousMetadata.currentPhase = 'observation';
+                console.log('👁️ [Mode 3/4] Observation:', data.content);
+              }
+              else if (data.type === 'reflection') {
                 autonomousMetadata.currentReflection = data.content;
-              } else if (data.type === 'final_answer') {
-                fullResponse = data.content;
+                autonomousMetadata.currentPhase = 'reflection';
+                console.log('🤔 [Mode 3/4] Reflection:', data.content);
+              }
+              else if (data.type === 'phase_complete') {
+                autonomousMetadata.currentPhase = 'completed';
+                console.log('✅ [Mode 3/4] Phase complete:', data.metadata?.phase);
+              }
+              else if (data.type === 'final_answer') {
+                fullResponse = data.content || fullResponse;
                 setStreamingMessage(fullResponse);
                 autonomousMetadata.finalAnswer = data.content;
                 autonomousMetadata.finalConfidence = data.metadata?.confidence;
                 autonomousMetadata.totalIterations = data.metadata?.iterations;
-              } else if (data.type === 'sources' && data.sources) {
+                console.log('✅ [Mode 3/4] Final answer received, confidence:', data.metadata?.confidence);
+              }
+              // Sources (from RAG)
+              else if (data.type === 'sources' && data.sources) {
                 sources = data.sources;
-              } else if (data.type === 'done') {
+                console.log('📚 Sources found:', sources.length);
+              }
+              // Completion
+              else if (data.type === 'done') {
                 reasoning = data.reasoning || [];
-                console.log('✅ Execution completed');
-              } else if (data.type === 'error') {
+                console.log('✅ Execution completed for mode:', mode);
+              }
+              // Errors
+              else if (data.type === 'error') {
                 const errorMessage = data.message || data.content || `Unknown error from ${mode}`;
+                console.error(`❌ [${mode}] Error:`, errorMessage);
                 throw new Error(errorMessage);
-              } else if (data.token) {
+              }
+              // Fallback: Support old format for backward compatibility
+              else if (data.token) {
                 fullResponse += data.token;
                 setStreamingMessage(fullResponse);
-              } else if (data.done && !data.type) {
+              }
+              else if (data.done && !data.type) {
                 reasoning = data.reasoning || [];
-              } else if (data.error) {
+              }
+              else if (data.error) {
                 throw new Error(data.error);
+              }
+              // Log unhandled chunk types for debugging
+              else if (data.type) {
+                console.log('⚠️ Unhandled chunk type:', data.type, data);
               }
             } catch (e) {
               if (!(e instanceof SyntaxError)) {
@@ -849,7 +925,7 @@ function AskExpertCopyPageContent() {
                       </div>
                     </MessageContent>
                     <MessageAvatar
-                      src={msg.role === 'user' ? '' : ''}
+                      src=""
                       name={msg.role === 'user' ? 'You' : msg.selectedAgent?.display_name || 'Expert'}
                     />
                   </Message>
@@ -864,7 +940,10 @@ function AskExpertCopyPageContent() {
                         <span className="inline-block w-0.5 h-4 bg-blue-500 ml-1 animate-pulse" />
                       </div>
                     </MessageContent>
-                    <MessageAvatar src="" name="Expert" />
+                    <MessageAvatar
+                      src=""
+                      name="Expert"
+                    />
                   </Message>
                 )}
               </>
@@ -873,44 +952,129 @@ function AskExpertCopyPageContent() {
           <ConversationScrollButton />
         </Conversation>
 
-        {/* Prompt Input using shadcn AI components */}
-        <div className="border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-4">
-          <PromptInputForm onSubmit={handleSend}>
+        {/* Enhanced Prompt Input using shadcn AI components with all features */}
+        <div className="border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
+          {/* Attachments Preview */}
+          {attachments.length > 0 && (
+            <div className="flex flex-wrap gap-2 px-4 pt-3 pb-2">
+              {attachments.map((file, index) => (
+                <div
+                  key={index}
+                  className="flex items-center gap-2 px-2.5 py-1.5 bg-blue-50 dark:bg-blue-900/20 rounded-lg text-xs border border-blue-200 dark:border-blue-800"
+                >
+                  {file.type.startsWith('image/') ? (
+                    <ImageIcon className="w-3.5 h-3.5 text-blue-500" />
+                  ) : (
+                    <FileText className="w-3.5 h-3.5 text-blue-500" />
+                  )}
+                  <span className="text-gray-700 dark:text-gray-300 max-w-[150px] truncate">
+                    {file.name}
+                  </span>
+                  <span className="text-gray-500 dark:text-gray-400">
+                    ({Math.round(file.size / 1024)}KB)
+                  </span>
+                  <button
+                    onClick={() => setAttachments(prev => prev.filter((_, i) => i !== index))}
+                    className="p-0.5 hover:bg-blue-100 dark:hover:bg-blue-900/40 rounded transition-colors"
+                  >
+                    <X className="w-3 h-3 text-gray-500" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Model & Mode Controls Bar */}
+          <div className="flex items-center gap-2 px-4 py-2 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
+            {/* Model Selector */}
+            <Select value={selectedModel} onValueChange={setSelectedModel}>
+              <SelectTrigger className="w-[160px] h-8 text-xs">
+                <Sparkles className="w-3 h-3 mr-1.5" />
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="gpt-4">GPT-4 Turbo</SelectItem>
+                <SelectItem value="gpt-3.5-turbo">GPT-3.5 Turbo</SelectItem>
+                <SelectItem value="claude-3-opus">Claude 3 Opus</SelectItem>
+                <SelectItem value="claude-3-sonnet">Claude 3 Sonnet</SelectItem>
+                <SelectItem value="claude-3-haiku">Claude 3 Haiku</SelectItem>
+                <SelectItem value="llama-medical">Llama 3.2 Medical</SelectItem>
+                <SelectItem value="llama-clinical">Llama 3.2 Clinical</SelectItem>
+                <SelectItem value="biogpt">BioGPT Research</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <div className="h-4 w-px bg-gray-300 dark:bg-gray-600" />
+
+            {/* Automatic Toggle */}
+            <button
+              onClick={() => setIsAutomatic(!isAutomatic)}
+              className={`flex items-center gap-1.5 px-2.5 py-1 h-8 text-xs font-medium rounded-md transition-all ${
+                isAutomatic
+                  ? 'bg-blue-500 text-white hover:bg-blue-600'
+                  : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
+              }`}
+            >
+              <Zap className="w-3 h-3" />
+              Automatic
+            </button>
+
+            {/* Autonomous Toggle */}
+            <button
+              onClick={() => setIsAutonomous(!isAutonomous)}
+              className={`flex items-center gap-1.5 px-2.5 py-1 h-8 text-xs font-medium rounded-md transition-all ${
+                isAutonomous
+                  ? 'bg-purple-500 text-white hover:bg-purple-600'
+                  : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
+              }`}
+            >
+              <Brain className="w-3 h-3" />
+              Autonomous
+            </button>
+
+            {/* Token Count */}
+            <div className="ml-auto flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+              {tokenCount > 0 && <span>~{tokenCount} tokens</span>}
+            </div>
+          </div>
+
+          {/* Main Input Form */}
+          <PromptInputForm onSubmit={handleSend} className="rounded-none border-0">
             <PromptInputTextarea
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               placeholder="How can I help you today?"
+              minHeight={56}
+              maxHeight={200}
             />
             <PromptInputToolbar>
-              <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
-                {tokenCount > 0 && <span>~{tokenCount} tokens</span>}
-              </div>
+              <PromptInputTools>
+                {/* File Attachment */}
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  multiple
+                  accept="image/*,.pdf,.doc,.docx,.txt"
+                  onChange={(e) => {
+                    const files = Array.from(e.target.files || []);
+                    setAttachments(prev => [...prev, ...files]);
+                  }}
+                  className="hidden"
+                />
+                <PromptInputButton
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  title="Attach file"
+                >
+                  <Paperclip className="w-4 h-4" />
+                </PromptInputButton>
+              </PromptInputTools>
               <PromptInputSubmit
                 disabled={!inputValue.trim() || isLoading}
                 status={isLoading ? 'submitted' : undefined}
               />
             </PromptInputToolbar>
           </PromptInputForm>
-
-          {/* Additional Controls - Compatibility layer */}
-          <div className="mt-2 flex items-center gap-2">
-            <PromptInput
-              value={inputValue}
-              onChange={setInputValue}
-              onSubmit={handleSend}
-              isLoading={isLoading}
-              placeholder=""
-              selectedModel={selectedModel}
-              onModelChange={setSelectedModel}
-              isAutomatic={isAutomatic}
-              onAutomaticChange={setIsAutomatic}
-              isAutonomous={isAutonomous}
-              onAutonomousChange={setIsAutonomous}
-              attachments={attachments}
-              onAttachmentsChange={setAttachments}
-              tokenCount={tokenCount}
-            />
-          </div>
         </div>
       </div>
     </div>

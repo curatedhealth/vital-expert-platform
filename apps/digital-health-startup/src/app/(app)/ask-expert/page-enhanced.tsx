@@ -46,18 +46,19 @@ interface AskExpertState {
 }
 
 // Mode configuration mapping to backend search strategies
+// All modes search across all domains (Digital Health + Regulatory Affairs)
 const MODE_CONFIG = {
   'mode-1-query-automatic': {
     searchFunction: 'search_knowledge_by_embedding',
-    params: { domain_filter: null, max_results: 10, similarity_threshold: 0.7 }
+    params: { domain_filter: null, max_results: 10, similarity_threshold: 0.7 } // null = all domains
   },
   'mode-2-query-manual': {
     searchFunction: 'search_knowledge_for_agent',
-    params: { max_results: 15 }
+    params: { max_results: 15 } // Uses agent's assigned domains
   },
   'mode-3-chat-automatic': {
     searchFunction: 'hybrid_search',
-    params: { semantic_weight: 0.7, keyword_weight: 0.3, max_results: 12 }
+    params: { domain_filter: null, semantic_weight: 0.7, keyword_weight: 0.3, max_results: 12 } // null = all domains
   },
   'mode-4-chat-manual': {
     searchFunction: 'search_knowledge_for_agent',

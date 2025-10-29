@@ -4,6 +4,7 @@
  * Connects to Unified RAG Service for document ingestion
  */
 
+import pdf from 'pdf-parse';
 import { unifiedRAGService } from '@/lib/services/rag/unified-rag-service';
 
 export interface LangChainConfig {
@@ -85,10 +86,55 @@ export class LangChainRAGService {
           continue;
         }
 
-        // Read file content
+        // Extract text content based on file type
         const arrayBuffer = await file.arrayBuffer();
         const buffer = Buffer.from(arrayBuffer);
-        const content = buffer.toString('utf-8');
+        let content: string;
+
+        if (file.type === 'application/pdf') {
+          // Parse PDF files using pdf-parse
+          try {
+            const pdfData = await pdf(buffer);
+            content = pdfData.text;
+          } catch (pdfError) {
+            throw new Error(`Failed to parse PDF: ${pdfError instanceof Error ? pdfError.message : 'Unknown PDF error'}`);
+          }
+        } else if (
+          file.type === 'text/plain' ||
+          file.type === 'text/csv' ||
+          file.name.endsWith('.txt') ||
+          file.name.endsWith('.csv')
+        ) {
+          // Text files can be safely converted to UTF-8
+          content = buffer.toString('utf-8');
+        } else if (
+          file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
+          file.type === 'application/msword' ||
+          file.type === 'application/vnd.ms-excel' ||
+          file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        ) {
+          // Word and Excel files need proper parsing (not yet implemented)
+          // For now, return an informative error
+          throw new Error(
+            `Word and Excel file parsing is not yet fully implemented. ` +
+            `Please convert the file to PDF or text format for now.`
+          );
+        } else {
+          // Fallback: try UTF-8 but catch errors
+          try {
+            content = buffer.toString('utf-8');
+            // If the content looks like binary data (many null bytes or control chars), reject it
+            if (content.match(/[\x00-\x08\x0E-\x1F]/g)?.length && content.match(/[\x00-\x08\x0E-\x1F]/g)!.length > content.length * 0.1) {
+              throw new Error('File appears to contain binary data and cannot be parsed as text');
+            }
+          } catch (utfError) {
+            throw new Error(
+              `Unsupported file format: ${file.type}. ` +
+              `The file contains binary data that cannot be converted to text. ` +
+              `Please convert to PDF or text format.`
+            );
+          }
+        }
 
         // Prepare document for RAG service
         const document = {

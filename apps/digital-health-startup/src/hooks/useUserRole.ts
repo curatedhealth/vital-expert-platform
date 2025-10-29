@@ -33,35 +33,82 @@ export function useUserRole() {
         return;
       }
 
-      // Fetch user profile
-      const { data, error } = await supabase
-        .from('user_profiles')
-        .select('*')
+      let role: UserRole = 'user';
+      let email = user.email || '';
+      let full_name: string | undefined;
+
+      // First, try to get role from user_roles table (new multi-tenant system)
+      const { data: userRoleData } = await supabase
+        .from('user_roles')
+        .select('role')
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
 
-      if (error) {
-        // User doesn't have a profile yet - create default user profile
-        const { data: newProfile, error: createError } = await supabase
-          .from('user_profiles')
-          .insert({
-            user_id: user.id,
-            email: user.email!,
-            full_name: user.user_metadata?.full_name || user.email,
-            role: 'user' // Default role
-          })
-          .select()
-          .single();
+      // Priority 1: Check user_roles table (highest priority - multi-tenant system)
+      if (userRoleData?.role) {
+        // Keep the role as-is from user_roles table (don't normalize)
+        // We'll check for both 'superadmin' and 'super_admin' in the isSuperAdmin/isAdmin functions
+        role = (userRoleData.role === 'superadmin' || userRoleData.role === 'super_admin' || userRoleData.role === 'admin')
+          ? (userRoleData.role === 'superadmin' ? 'super_admin' : userRoleData.role as UserRole)
+          : 'user';
+      }
 
-        if (createError) {
-          console.error('Error creating user profile:', createError);
-          setUserProfile(null);
-        } else {
-          setUserProfile(newProfile);
+      // Then fetch user profile from profiles table for additional info
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .maybeSingle();
+
+      if (profileData) {
+        email = profileData.email || email;
+        full_name = profileData.full_name;
+        // Only use role from profiles if we didn't find role in user_roles (lower priority)
+        if (!userRoleData?.role && profileData.role) {
+          role = (profileData.role === 'super_admin' || profileData.role === 'admin') 
+            ? profileData.role as UserRole 
+            : 'user';
         }
       } else {
-        setUserProfile(data);
+        // Fallback to user_profiles table
+        const { data: fallbackData } = await supabase
+          .from('user_profiles')
+          .select('*')
+          .eq('user_id', user.id)
+          .maybeSingle();
+
+        if (fallbackData) {
+          email = fallbackData.email || email;
+          full_name = fallbackData.full_name;
+          // Only use role from user_profiles if we didn't find role in user_roles or profiles
+          if (!userRoleData?.role && fallbackData.role) {
+            role = (fallbackData.role === 'super_admin' || fallbackData.role === 'admin')
+              ? fallbackData.role as UserRole
+              : 'user';
+          }
+        }
       }
+
+      // Set the user profile
+      setUserProfile({
+        id: user.id,
+        user_id: user.id,
+        email,
+        full_name,
+        role,
+        created_at: user.created_at || new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      });
+
+      console.log('[useUserRole] Loaded profile:', { 
+        email, 
+        role, 
+        fromUserRoles: !!userRoleData?.role,
+        rawRoleFromUserRoles: userRoleData?.role,
+        profileRole: profileData?.role,
+        isSuperAdminResult: role === 'super_admin' || role === 'superadmin',
+        isAdminResult: role === 'admin' || role === 'super_admin' || role === 'superadmin'
+      });
     } catch (error) {
       console.error('Error loading user profile:', error);
       setUserProfile(null);
@@ -71,11 +118,15 @@ export function useUserRole() {
   };
 
   const isSuperAdmin = () => {
-    return userProfile?.role === 'super_admin';
+    // Check both normalized and raw role formats
+    const role = userProfile?.role;
+    return role === 'super_admin' || role === 'superadmin';
   };
 
   const isAdmin = () => {
-    return userProfile?.role === 'admin' || userProfile?.role === 'super_admin';
+    // Check both normalized and raw role formats
+    const role = userProfile?.role;
+    return role === 'admin' || role === 'super_admin' || role === 'superadmin';
   };
 
   const canEditAgent = (agent: any) => {

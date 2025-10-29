@@ -24,6 +24,7 @@ const supabase = createClient(supabaseUrl, supabaseServiceKey);
 interface AvatarIcon {
   name: string;
   display_name: string;
+  originalName?: string;
 }
 
 interface Agent {
@@ -33,42 +34,61 @@ interface Agent {
 }
 
 /**
- * Normalize avatar name to ensure consistent format
- * Handles multiple formats:
- * - "avatar_001" or "avatar_0001" → "avatar_0001"
+ * Extract icon name in the format expected by the API: avatar_XXXX (3-4 digits)
+ * The API's resolveAvatarUrl expects pattern: /^avatar_(\d{3,4})$/
+ * 
+ * Handles multiple formats from icons table:
+ * - "avatar_001" or "avatar_0001" → "avatar_0001" (4 digits preferred)
  * - "avatar-011" → "avatar_0011"
- * - "01arab_male..." → Extract number and convert to "avatar_0001"
- * - Other formats → Use as-is
+ * - "avatar_png_0118" → Extract "0118" → "avatar_0118"
+ * - "01arab_male..." → Extract "01" → "avatar_0001"
+ * - If icon name is in icons table format, use the name as-is if it matches pattern
  */
-function normalizeAvatarName(avatarName: string): string {
-  if (!avatarName) return avatarName;
+function normalizeAvatarNameForStorage(iconName: string): string | null {
+  if (!iconName) return null;
 
-  // Handle "avatar_001" or "avatar_0001" format
-  const avatarUnderScoreMatch = avatarName.match(/^avatar_(\d{1,4})$/);
-  if (avatarUnderScoreMatch) {
-    const num = avatarUnderScoreMatch[1];
-    const paddedNum = num.padStart(4, '0');
-    return `avatar_${paddedNum}`;
+  // Perfect format already: "avatar_0001" or "avatar_001" (3-4 digits)
+  const perfectMatch = iconName.match(/^avatar_(\d{3,4})$/);
+  if (perfectMatch) {
+    const num = perfectMatch[1];
+    // Keep as 3-4 digits (API accepts both)
+    return `avatar_${num}`;
   }
 
-  // Handle "avatar-011" format
-  const avatarDashMatch = avatarName.match(/^avatar-(\d{1,4})$/);
-  if (avatarDashMatch) {
-    const num = avatarDashMatch[1];
-    const paddedNum = num.padStart(4, '0');
-    return `avatar_${paddedNum}`;
+  // Format: "avatar-011" → "avatar_0011"
+  const dashMatch = iconName.match(/^avatar-(\d{1,4})$/);
+  if (dashMatch) {
+    const num = dashMatch[1];
+    // Use 3-4 digits
+    return num.length >= 3 ? `avatar_${num}` : `avatar_${num.padStart(3, '0')}`;
   }
 
-  // Handle "01arab..." or "001arab..." format - extract leading numbers
-  const leadingNumMatch = avatarName.match(/^(\d{1,4})/);
+  // Format: "avatar_png_0118" → Extract number → "avatar_0118"
+  const pngMatch = iconName.match(/^avatar_png_(\d{3,4})$/);
+  if (pngMatch) {
+    const num = pngMatch[1];
+    return `avatar_${num}`;
+  }
+
+  // Extract leading numbers: "01arab..." → "avatar_0001"
+  const leadingNumMatch = iconName.match(/^(\d{1,4})/);
   if (leadingNumMatch) {
     const num = leadingNumMatch[1];
-    const paddedNum = num.padStart(4, '0');
-    return `avatar_${paddedNum}`;
+    // Use 3-4 digits
+    return num.length >= 3 ? `avatar_${num}` : `avatar_${num.padStart(3, '0')}`;
   }
 
-  // Return as-is if no pattern matches
-  return avatarName;
+  // If it contains "avatar" but doesn't match patterns, try to extract
+  if (iconName.toLowerCase().includes('avatar')) {
+    // Try to find any number sequence
+    const anyNumMatch = iconName.match(/(\d{3,4})/);
+    if (anyNumMatch) {
+      return `avatar_${anyNumMatch[1]}`;
+    }
+  }
+
+  // Can't normalize - return null (will skip this icon)
+  return null;
 }
 
 async function assignAvatarsToAgents() {
@@ -111,18 +131,51 @@ async function assignAvatarsToAgents() {
 
     console.log(`✅ Found ${agents.length} agents\n`);
 
-    // Step 3: Normalize and prepare avatar list
-    const normalizedAvatars: AvatarIcon[] = avatarIcons.map(icon => ({
-      name: normalizeAvatarName(icon.name),
-      display_name: icon.display_name,
+    // Step 3: Prepare avatar list
+    // Use the actual icon name from the database, but normalize for grouping/usage tracking
+    // The API will resolve the icon name from the icons table
+    const processedAvatars: Array<AvatarIcon & { originalName: string; normalizedForLookup: string }> = avatarIcons
+      .map(icon => {
+        // Try to normalize to see if it matches API pattern
+        const normalizedForLookup = normalizeAvatarNameForStorage(icon.name);
+        // Use original icon name for storage (API will look it up)
+        // But track by normalized name for usage counting
+        return {
+          name: icon.name, // Store original name from icons table
+          display_name: icon.display_name,
+          originalName: icon.name,
+          normalizedForLookup: normalizedForLookup || icon.name, // For usage tracking
+        };
+      })
+      .filter(avatar => {
+        // Only keep icons that can potentially be resolved (have numeric patterns)
+        return avatar.normalizedForLookup && /^avatar_(\d{3,4})$/.test(avatar.normalizedForLookup);
+      });
+
+    // Group by normalized name for usage tracking, but keep all original names
+    const groupedByNormalized = new Map<string, Array<AvatarIcon & { originalName: string; normalizedForLookup: string }>>();
+    processedAvatars.forEach(avatar => {
+      const key = avatar.normalizedForLookup;
+      if (!groupedByNormalized.has(key)) {
+        groupedByNormalized.set(key, []);
+      }
+      groupedByNormalized.get(key)!.push(avatar);
+    });
+
+    // For each normalized group, use the first original icon name
+    const uniqueAvatars: Array<AvatarIcon & { normalizedForLookup: string }> = Array.from(
+      groupedByNormalized.entries()
+    ).map(([normalized, originals]) => ({
+      name: originals[0].name, // Use first original name in group
+      display_name: originals[0].display_name,
+      normalizedForLookup: normalized,
     }));
 
-    // Remove duplicates by name
-    const uniqueAvatars = Array.from(
-      new Map(normalizedAvatars.map(avatar => [avatar.name, avatar])).values()
-    );
-
-    console.log(`📊 Using ${uniqueAvatars.length} unique avatar icons\n`);
+    console.log(`📊 Using ${uniqueAvatars.length} unique avatar icons (from ${processedAvatars.length} total icons)\n`);
+    
+    if (uniqueAvatars.length === 0) {
+      throw new Error('No valid avatar icons found after normalization. Check icon naming in database.');
+    }
 
     // Check if we have enough avatars
     const maxAgentsPerAvatar = 3;
@@ -134,9 +187,16 @@ async function assignAvatarsToAgents() {
     }
 
     // Step 4: Count current avatar usage
+    // Track usage by normalized name for the 3-use limit, but store original icon name
     const avatarUsageCount = new Map<string, number>();
     uniqueAvatars.forEach(avatar => {
-      avatarUsageCount.set(avatar.name, 0);
+      avatarUsageCount.set(avatar.normalizedForLookup, 0);
+    });
+
+    // Map normalized names to original icon names
+    const normalizedToOriginal = new Map<string, string>();
+    uniqueAvatars.forEach(avatar => {
+      normalizedToOriginal.set(avatar.normalizedForLookup, avatar.name);
     });
 
     // Count existing avatar assignments
@@ -144,8 +204,9 @@ async function assignAvatarsToAgents() {
       const metadata = agent.metadata || {};
       const currentAvatar = metadata.avatar;
       if (currentAvatar) {
-        const normalizedCurrent = normalizeAvatarName(currentAvatar);
-        if (avatarUsageCount.has(normalizedCurrent)) {
+        // Try to normalize current avatar to check usage
+        const normalizedCurrent = normalizeAvatarNameForStorage(currentAvatar);
+        if (normalizedCurrent && avatarUsageCount.has(normalizedCurrent)) {
           avatarUsageCount.set(
             normalizedCurrent,
             (avatarUsageCount.get(normalizedCurrent) || 0) + 1
@@ -163,9 +224,9 @@ async function assignAvatarsToAgents() {
     const assignmentLog: Array<{ agentName: string; avatarName: string }> = [];
 
     // Create a pool of avatars that haven't reached max usage
-    const getAvailableAvatars = (): AvatarIcon[] => {
+    const getAvailableAvatars = (): Array<AvatarIcon & { normalizedForLookup: string }> => {
       return uniqueAvatars.filter(
-        avatar => (avatarUsageCount.get(avatar.name) || 0) < maxAgentsPerAvatar
+        avatar => (avatarUsageCount.get(avatar.normalizedForLookup) || 0) < maxAgentsPerAvatar
       );
     };
 
@@ -178,16 +239,17 @@ async function assignAvatarsToAgents() {
       
       // Skip if agent already has an avatar assigned and it's within usage limits
       if (currentAvatar) {
-        const normalizedCurrent = normalizeAvatarName(currentAvatar);
-        const currentUsage = avatarUsageCount.get(normalizedCurrent) || 0;
+        // Normalize current avatar to check usage
+        const normalizedCurrent = normalizeAvatarNameForStorage(currentAvatar);
+        const currentUsage = normalizedCurrent ? (avatarUsageCount.get(normalizedCurrent) || 0) : 0;
         
-        // If avatar exists and is within limits, keep it
-        if (avatarUsageCount.has(normalizedCurrent) && currentUsage < maxAgentsPerAvatar) {
-          console.log(`⏭️  Skipping ${agent.name} - already has valid avatar: "${normalizedCurrent}"`);
+        // If avatar can be normalized, exists in our pool, and is within limits, keep it
+        if (normalizedCurrent && avatarUsageCount.has(normalizedCurrent) && currentUsage < maxAgentsPerAvatar) {
+          console.log(`⏭️  Skipping ${agent.name} - already has valid avatar: "${currentAvatar}" (normalized: ${normalizedCurrent})`);
           skippedCount++;
           continue;
         }
-        // If avatar is over limit or doesn't exist, reassign
+        // If avatar is over limit, wrong format, or doesn't exist, reassign
       }
 
       // Get available avatars
@@ -201,26 +263,29 @@ async function assignAvatarsToAgents() {
         continue;
       }
 
-      // Round-robin: use the least-used avatar
+      // Round-robin: use the least-used avatar (by normalized name)
       const sortedAvailable = availableAvatars.sort((a, b) => {
-        const usageA = avatarUsageCount.get(a.name) || 0;
-        const usageB = avatarUsageCount.get(b.name) || 0;
+        const usageA = avatarUsageCount.get(a.normalizedForLookup) || 0;
+        const usageB = avatarUsageCount.get(b.normalizedForLookup) || 0;
         return usageA - usageB;
       });
 
       const assignedAvatar = sortedAvailable[0];
-      const avatarName = assignedAvatar.name;
+      // Store the ORIGINAL icon name from the icons table (not normalized)
+      // The API will look this up in the icons table
+      const avatarNameToStore = assignedAvatar.name;
+      const normalizedForTracking = assignedAvatar.normalizedForLookup;
 
-      // Update avatar usage count
+      // Update avatar usage count (track by normalized name)
       avatarUsageCount.set(
-        avatarName,
-        (avatarUsageCount.get(avatarName) || 0) + 1
+        normalizedForTracking,
+        (avatarUsageCount.get(normalizedForTracking) || 0) + 1
       );
 
-      // Update agent metadata
+      // Update agent metadata with ORIGINAL icon name
       const updatedMetadata = {
         ...metadata,
-        avatar: avatarName,
+        avatar: avatarNameToStore, // Store original icon name from icons table
       };
 
       const { error: updateError } = await supabase
@@ -234,20 +299,20 @@ async function assignAvatarsToAgents() {
         console.error(`❌ Failed to update ${agent.name}:`, updateError.message);
         // Rollback usage count
         avatarUsageCount.set(
-          avatarName,
-          (avatarUsageCount.get(avatarName) || 0) - 1
+          normalizedForTracking,
+          (avatarUsageCount.get(normalizedForTracking) || 0) - 1
         );
         continue;
       }
 
       assignmentLog.push({
         agentName: agent.name,
-        avatarName: avatarName,
+        avatarName: avatarNameToStore,
       });
 
-      const usage = avatarUsageCount.get(avatarName) || 0;
+      const usage = avatarUsageCount.get(normalizedForTracking) || 0;
       console.log(
-        `✅ Assigned "${avatarName}" to ${agent.name} (${usage}/${maxAgentsPerAvatar} uses)`
+        `✅ Assigned "${avatarNameToStore}" to ${agent.name} (${usage}/${maxAgentsPerAvatar} uses, normalized: ${normalizedForTracking})`
       );
       assignedCount++;
       updatedCount++;

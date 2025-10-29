@@ -172,6 +172,9 @@ export interface Mode4State extends BaseAutonomousState {
   // Fixed Agent
   selectedAgent: Agent;
   agentExpertise: string[];
+  
+  // Real-time streaming steps
+  streamingSteps?: Array<{ type: string; content: string; metadata?: any }>;
 }
 
 // ============================================================================
@@ -187,9 +190,16 @@ export type AutonomousStreamChunkType =
   | 'agent_selection'
   | 'phase_start'
   | 'iteration_start'
+  | 'thinking_start'
   | 'thought'
+  | 'action_decision_start'
+  | 'action_decided'
+  | 'action_execution_start'
+  | 'action_executed'
   | 'action'
+  | 'observation_start'
   | 'observation'
+  | 'reflection_start'
   | 'reflection'
   | 'phase_complete'
   | 'final_answer'

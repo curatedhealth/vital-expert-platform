@@ -130,10 +130,21 @@ export async function GET(request: NextRequest) {
     try {
       console.log('🔍 [GET] Attempting to fetch user agents for userId:', userId);
       
-      // Get all agents that the user has added
+      // Get all agents that the user has added, including agent details
       const { data, error } = await supabaseAdmin
         .from('user_agents')
-        .select('*')
+        .select(`
+          *,
+          agents (
+            id,
+            name,
+            description,
+            capabilities,
+            metadata,
+            created_at,
+            updated_at
+          )
+        `)
         .eq('user_id', userId)
         .order('created_at', { ascending: false });
 

@@ -26,6 +26,7 @@ import { unifiedRAGService } from '../../../lib/services/rag/unified-rag-service
 export class ReActEngine {
   private llm: ChatOpenAI;
   private availableTools: Map<string, AutonomousTool> = new Map();
+  private enableRAG: boolean = true; // Default to enabled
 
   constructor() {
     this.llm = new ChatOpenAI({
@@ -38,7 +39,7 @@ export class ReActEngine {
   }
 
   /**
-   * Execute the ReAct loop for autonomous reasoning
+   * Execute the ReAct loop for autonomous reasoning with streaming support
    */
   async executeReActLoop(
     goalUnderstanding: GoalUnderstanding,
@@ -46,7 +47,9 @@ export class ReActEngine {
     executionPlan: ExecutionPlan,
     agent: Agent,
     maxIterations: number = 10,
-    confidenceThreshold: number = 0.95
+    confidenceThreshold: number = 0.95,
+    enableRAG: boolean = true, // Default to true - RAG is essential for reasoning
+    onStep?: (step: { type: string; content: string; metadata?: any }) => void // Streaming callback
   ): Promise<{
     iterations: ReActIteration[];
     finalAnswer: string;
@@ -54,6 +57,7 @@ export class ReActEngine {
     toolsUsed: string[];
   }> {
     console.log('🔄 [ReAct] Starting ReAct loop execution...');
+    console.log(`   RAG: ${enableRAG ? '✅ enabled' : '❌ disabled'}`);
 
     // Validate agent is provided and has required properties
     if (!agent) {
@@ -72,6 +76,9 @@ export class ReActEngine {
     let currentIteration = 0;
     let overallConfidence = 0;
     const toolsUsed: string[] = [];
+    
+    // Store enableRAG for use in action execution
+    this.enableRAG = enableRAG;
 
     // Initialize state
     let currentPhase = executionPlan.phases[0]?.id || 'initial';
@@ -81,7 +88,24 @@ export class ReActEngine {
       console.log(`🔄 [ReAct] Iteration ${currentIteration + 1}/${maxIterations}`);
 
       try {
+        // Stream iteration start
+        if (onStep) {
+          onStep({
+            type: 'iteration_start',
+            content: `Starting iteration ${currentIteration + 1}`,
+            metadata: { iteration: currentIteration }
+          });
+        }
+
         // THINK: Reason about current state
+        if (onStep) {
+          onStep({
+            type: 'thinking_start',
+            content: 'Analyzing current state and determining next steps...',
+            metadata: { iteration: currentIteration, phase: 'thinking' }
+          });
+        }
+        
         const thought = await this.think(
           goalUnderstanding,
           activeSubQuestions,
@@ -90,7 +114,23 @@ export class ReActEngine {
           agent
         );
 
+        if (onStep) {
+          onStep({
+            type: 'thought',
+            content: thought,
+            metadata: { iteration: currentIteration, phase: 'thinking' }
+          });
+        }
+
         // ACT: Decide and execute action
+        if (onStep) {
+          onStep({
+            type: 'action_decision_start',
+            content: 'Deciding on next action...',
+            metadata: { iteration: currentIteration, phase: 'deciding' }
+          });
+        }
+
         const action = await this.decideAction(
           thought,
           activeSubQuestions,
@@ -98,17 +138,70 @@ export class ReActEngine {
           agent
         );
 
+        if (onStep) {
+          onStep({
+            type: 'action_decided',
+            content: action,
+            metadata: { iteration: currentIteration, phase: 'deciding' }
+          });
+        }
+
+        if (onStep) {
+          onStep({
+            type: 'action_execution_start',
+            content: 'Executing action...',
+            metadata: { iteration: currentIteration, phase: 'executing' }
+          });
+        }
+
         const actionResult = await this.executeAction(action, agent);
         toolsUsed.push(...actionResult.toolsUsed);
 
+        if (onStep) {
+          onStep({
+            type: 'action_executed',
+            content: `Action executed. Result: ${actionResult.result.substring(0, 200)}${actionResult.result.length > 200 ? '...' : ''}`,
+            metadata: {
+              iteration: currentIteration,
+              phase: 'executing',
+              toolsUsed: actionResult.toolsUsed,
+              ragContext: actionResult.ragContext ? 'Available' : 'None'
+            }
+          });
+        }
+
         // OBSERVE: Process the result
+        if (onStep) {
+          onStep({
+            type: 'observation_start',
+            content: 'Processing action results...',
+            metadata: { iteration: currentIteration, phase: 'observing' }
+          });
+        }
+
         const observation = await this.observe(
           actionResult,
           activeSubQuestions,
           iterations
         );
 
+        if (onStep) {
+          onStep({
+            type: 'observation',
+            content: observation,
+            metadata: { iteration: currentIteration, phase: 'observing' }
+          });
+        }
+
         // REFLECT: Learn from the observation
+        if (onStep) {
+          onStep({
+            type: 'reflection_start',
+            content: 'Reflecting on what we learned...',
+            metadata: { iteration: currentIteration, phase: 'reflecting' }
+          });
+        }
+
         const reflection = await this.reflect(
           observation,
           thought,
@@ -116,6 +209,14 @@ export class ReActEngine {
           activeSubQuestions,
           agent
         );
+
+        if (onStep) {
+          onStep({
+            type: 'reflection',
+            content: reflection,
+            metadata: { iteration: currentIteration, phase: 'reflecting' }
+          });
+        }
 
         // Update sub-questions based on new information
         activeSubQuestions = await this.updateSubQuestions(
@@ -368,7 +469,7 @@ What action should we take next?
 
       switch (actionType) {
         case 'search_knowledge':
-          const ragResult = await this.executeRAGSearch(parameters.query, agent);
+          const ragResult = await this.executeRAGSearch(parameters.query, agent, this.enableRAG);
           result = ragResult.content;
           ragContext = ragResult.context;
           toolsUsed.push('rag_search');
@@ -641,7 +742,15 @@ Create a comprehensive final answer.
   // ACTION EXECUTION HELPERS
   // ============================================================================
 
-  private async executeRAGSearch(query: string, agent: Agent): Promise<{ content: string; context: string }> {
+  private async executeRAGSearch(query: string, agent: Agent, enableRAG: boolean = true): Promise<{ content: string; context: string }> {
+    if (!enableRAG) {
+      console.log('⚠️  [ReAct] RAG is disabled - skipping knowledge search');
+      return {
+        content: 'RAG is disabled. Using only agent knowledge base.',
+        context: ''
+      };
+    }
+
     try {
       // Use real unifiedRAGService with proper parameters
       const ragResult = await unifiedRAGService.query({

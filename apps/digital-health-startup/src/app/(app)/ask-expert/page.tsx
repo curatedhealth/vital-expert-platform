@@ -45,10 +45,30 @@ import { PromptStarters, type PromptStarter } from '@/components/prompt-starters
 import { ThumbsUpDown } from '@/components/feedback/ThumbsUpDown';
 import { useAuth } from '@/lib/auth/supabase-auth-context';
 import { ChatHistorySidebar } from '@/components/chat-history-sidebar';
+import { SelectedAgentsList } from '@/components/selected-agent-card';
+import { Reasoning, ReasoningTrigger, ReasoningContent } from '@/components/ui/shadcn-io/ai/reasoning';
+import { 
+  __Message as Message, 
+  __MessageContent as MessageContent, 
+  __MessageAvatar as MessageAvatar 
+} from '@/components/ui/shadcn-io/ai/message';
+import { CitedResponse } from '@/components/ui/shadcn-io/ai/cited-response';
+import { __Response as Response } from '@/components/ui/shadcn-io/ai/response';
+import { __Conversation as Conversation, __ConversationContent as ConversationContent } from '@/components/ui/shadcn-io/ai/conversation';
+import { AgentAvatar } from '@/components/ui/agent-avatar';
 
 // ============================================================================
 // TYPES
 // ============================================================================
+
+interface Source {
+  id?: string;
+  url: string;
+  title?: string;
+  description?: string;
+  excerpt?: string;
+  similarity?: number;
+}
 
 interface Message {
   id: string;
@@ -57,6 +77,7 @@ interface Message {
   timestamp: number;
   attachments?: AttachmentInfo[];
   reasoning?: string[];
+  sources?: Source[];
   selectedAgent?: {
     id: string;
     name: string;
@@ -101,7 +122,7 @@ interface Conversation {
 
 function AskExpertPageContent() {
   // Get agents and selection from context (loaded by layout sidebar)
-  const { selectedAgents } = useAskExpert();
+  const { selectedAgents, agents, setSelectedAgents } = useAskExpert();
   const { user } = useAuth();
   
   // Chat history context
@@ -122,6 +143,8 @@ function AskExpertPageContent() {
   const [darkMode, setDarkMode] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [streamingMessage, setStreamingMessage] = useState('');
+  const [streamingReasoning, setStreamingReasoning] = useState<string>('');
+  const [isStreamingReasoning, setIsStreamingReasoning] = useState(false);
   const [selectedModel, setSelectedModel] = useState('gpt-4');
 
   // Simple toggles (like Claude.ai)
@@ -298,7 +321,13 @@ function AskExpertPageContent() {
     setMessages(prev => [...prev, userMessage]);
     setInputValue('');
     setAttachments([]);
+    
+    // Show reasoning component immediately when starting a request
+    setStreamingReasoning('Thinking...');
+    setIsStreamingReasoning(true);
     setIsLoading(true);
+    
+    // Reset streaming message
     setStreamingMessage('');
 
     try {
@@ -333,6 +362,7 @@ function AskExpertPageContent() {
 
       let fullResponse = '';
       let reasoning: string[] = [];
+      let sources: Source[] = [];
       let selectedAgent: Message['selectedAgent'] = undefined;
       let selectionReason: string | undefined = undefined;
       let confidence: number | undefined = undefined;
@@ -355,6 +385,11 @@ function AskExpertPageContent() {
                 // Mode 1: Simple chunk
                 fullResponse += data.content;
                 setStreamingMessage(fullResponse);
+                // Update reasoning to show we're processing
+                if (!streamingReasoning || streamingReasoning === 'Thinking...') {
+                  setStreamingReasoning('Processing your request...');
+                  setIsStreamingReasoning(true);
+                }
               } else if (data.type === 'agent_selection' && data.agent) {
                 // Mode 2 & Mode 3: Agent selection info
                 selectedAgent = {
@@ -363,36 +398,98 @@ function AskExpertPageContent() {
                   display_name: data.agent.display_name || data.agent.name
                 };
                 confidence = data.confidence;
+                // Add agent selection to reasoning
+                setStreamingReasoning(prev => {
+                  const agentInfo = `🤖 Selected Agent: ${data.agent.display_name || data.agent.name}`;
+                  return prev && prev !== 'Thinking...' && prev !== 'Processing your request...'
+                    ? `${prev}\n\n${agentInfo}`
+                    : agentInfo;
+                });
+                setIsStreamingReasoning(true);
               } else if (data.type === 'selection_reason' && data.selectionReason) {
                 // Mode 2 & Mode 3: Selection reason
                 selectionReason = data.selectionReason;
+                // Add selection reason to reasoning
+                setStreamingReasoning(prev => {
+                  const reasonText = `💡 Selection Reason: ${data.selectionReason}`;
+                  return prev ? `${prev}\n\n${reasonText}` : reasonText;
+                });
+                setIsStreamingReasoning(true);
               } else if (data.type === 'goal_understanding') {
                 // Mode 3 & Mode 4: Goal understanding
                 autonomousMetadata.goalUnderstanding = data.content;
+                // Accumulate reasoning for display
+                setStreamingReasoning(prev => `🎯 Goal Understanding: ${data.content}` + (prev ? '\n\n' + prev : ''));
+                setIsStreamingReasoning(true);
                 console.log('🎯 Goal Understanding:', data.content);
               } else if (data.type === 'execution_plan') {
                 // Mode 3 & Mode 4: Execution plan
                 autonomousMetadata.executionPlan = data.content;
+                // Accumulate reasoning for display
+                setStreamingReasoning(prev => prev + (prev ? '\n\n' : '') + `📋 Execution Plan: ${data.content}`);
+                setIsStreamingReasoning(true);
                 console.log('📋 Execution Plan:', data.content);
               } else if (data.type === 'iteration_start') {
                 // Mode 3 & Mode 4: ReAct iteration start
                 autonomousMetadata.currentIteration = data.metadata?.iteration;
+                setStreamingReasoning(prev => prev + (prev ? '\n\n' : '') + `🔄 Iteration ${data.metadata?.iteration + 1}: Starting`);
+                setIsStreamingReasoning(true);
                 console.log(`🔄 Iteration ${data.metadata?.iteration}: Starting`);
+              } else if (data.type === 'thinking_start') {
+                // Detailed step: Starting thinking
+                setStreamingReasoning(prev => prev + (prev ? '\n\n' : '') + `🧠 Analyzing current state...`);
+                setIsStreamingReasoning(true);
               } else if (data.type === 'thought') {
                 // Mode 3 & Mode 4: ReAct thought
                 autonomousMetadata.currentThought = data.content;
+                // Accumulate reasoning for display
+                setStreamingReasoning(prev => prev + (prev ? '\n\n' : '') + `🧠 Thought: ${data.content}`);
+                setIsStreamingReasoning(true);
                 console.log('🧠 Thought:', data.content);
+              } else if (data.type === 'action_decision_start') {
+                // Detailed step: Starting action decision
+                setStreamingReasoning(prev => prev + (prev ? '\n\n' : '') + `🎯 Deciding on next action...`);
+                setIsStreamingReasoning(true);
+              } else if (data.type === 'action_decided') {
+                // Detailed step: Action decided
+                setStreamingReasoning(prev => prev + (prev ? '\n\n' : '') + `✅ Action Decided: ${data.content}`);
+                setIsStreamingReasoning(true);
+              } else if (data.type === 'action_execution_start') {
+                // Detailed step: Starting action execution
+                setStreamingReasoning(prev => prev + (prev ? '\n\n' : '') + `⚙️ Executing action...`);
+                setIsStreamingReasoning(true);
+              } else if (data.type === 'action_executed') {
+                // Detailed step: Action executed
+                setStreamingReasoning(prev => prev + (prev ? '\n\n' : '') + `✅ Action Executed: ${data.content}`);
+                setIsStreamingReasoning(true);
               } else if (data.type === 'action') {
-                // Mode 3 & Mode 4: ReAct action
+                // Mode 3 & Mode 4: ReAct action (fallback for old format)
                 autonomousMetadata.currentAction = data.content;
+                // Accumulate reasoning for display
+                setStreamingReasoning(prev => prev + (prev ? '\n\n' : '') + `⚡ Action: ${data.content}`);
+                setIsStreamingReasoning(true);
                 console.log('⚡ Action:', data.content);
+              } else if (data.type === 'observation_start') {
+                // Detailed step: Starting observation
+                setStreamingReasoning(prev => prev + (prev ? '\n\n' : '') + `🔍 Processing action results...`);
+                setIsStreamingReasoning(true);
               } else if (data.type === 'observation') {
                 // Mode 3 & Mode 4: ReAct observation
                 autonomousMetadata.currentObservation = data.content;
+                // Accumulate reasoning for display
+                setStreamingReasoning(prev => prev + (prev ? '\n\n' : '') + `👁️ Observation: ${data.content}`);
+                setIsStreamingReasoning(true);
                 console.log('👁️ Observation:', data.content);
+              } else if (data.type === 'reflection_start') {
+                // Detailed step: Starting reflection
+                setStreamingReasoning(prev => prev + (prev ? '\n\n' : '') + `💭 Reflecting on what we learned...`);
+                setIsStreamingReasoning(true);
               } else if (data.type === 'reflection') {
                 // Mode 3 & Mode 4: ReAct reflection
                 autonomousMetadata.currentReflection = data.content;
+                // Accumulate reasoning for display
+                setStreamingReasoning(prev => prev + (prev ? '\n\n' : '') + `🤔 Reflection: ${data.content}`);
+                setIsStreamingReasoning(true);
                 console.log('🤔 Reflection:', data.content);
               } else if (data.type === 'final_answer') {
                 // Mode 3 & Mode 4: Final answer
@@ -402,8 +499,30 @@ function AskExpertPageContent() {
                 autonomousMetadata.finalConfidence = data.metadata?.confidence;
                 autonomousMetadata.totalIterations = data.metadata?.iterations;
                 console.log('✅ Final Answer:', data.content);
+              } else if (data.type === 'sources' && data.sources) {
+                // RAG sources from the API
+                sources = data.sources.map((src: any) => ({
+                  id: src.id,
+                  url: src.url || src.link || '#',
+                  title: src.title || src.name || 'Source',
+                  description: src.description || src.excerpt || src.summary,
+                  excerpt: src.excerpt || src.content?.substring(0, 200),
+                  similarity: src.similarity || src.score,
+                }));
+                console.log('📚 Sources received:', sources.length);
               } else if (data.type === 'done') {
                 reasoning = data.reasoning || [];
+                // Sources might also come in the done event
+                if (data.sources) {
+                  sources = data.sources.map((src: any) => ({
+                    id: src.id,
+                    url: src.url || src.link || '#',
+                    title: src.title || src.name || 'Source',
+                    description: src.description || src.excerpt || src.summary,
+                    excerpt: src.excerpt || src.content?.substring(0, 200),
+                    similarity: src.similarity || src.score,
+                  }));
+                }
                 console.log('✅ Execution completed');
               } else if (data.type === 'error') {
                 const errorMessage = data.message || data.content || `Unknown error from ${mode}`;
@@ -411,12 +530,41 @@ function AskExpertPageContent() {
                 console.error(`[${mode}] Full error data:`, data);
                 throw new Error(errorMessage);
               }
+              // Handle generic reasoning events
+              else if (data.type === 'reasoning' || data.reasoning) {
+                // Generic reasoning data
+                const reasoningText = data.content || data.reasoning || '';
+                if (reasoningText) {
+                  setStreamingReasoning(prev => {
+                    return prev && prev !== 'Thinking...' && prev !== 'Processing your request...'
+                      ? `${prev}\n\n${reasoningText}`
+                      : reasoningText;
+                  });
+                  setIsStreamingReasoning(true);
+                  // Also accumulate into reasoning array
+                  if (typeof reasoningText === 'string') {
+                    reasoning.push(reasoningText);
+                  } else if (Array.isArray(reasoningText)) {
+                    reasoning = [...reasoning, ...reasoningText];
+                  }
+                }
+              }
               // Fallback: Support old format for backward compatibility
               else if (data.token) {
                 fullResponse += data.token;
                 setStreamingMessage(fullResponse);
+                // Show reasoning during token streaming
+                if (!isStreamingReasoning || streamingReasoning === 'Thinking...' || streamingReasoning === 'Processing your request...') {
+                  setStreamingReasoning('Generating response...');
+                  setIsStreamingReasoning(true);
+                }
               } else if (data.done && !data.type) {
                 reasoning = data.reasoning || [];
+                // If reasoning was provided, show it
+                if (reasoning && reasoning.length > 0) {
+                  setStreamingReasoning(reasoning.join('\n\n'));
+                  setIsStreamingReasoning(true);
+                }
               } else if (data.error) {
                 throw new Error(data.error);
               }
@@ -437,6 +585,7 @@ function AskExpertPageContent() {
         content: fullResponse,
         timestamp: Date.now(),
         reasoning,
+        sources,
         selectedAgent,
         selectionReason,
         confidence,
@@ -446,6 +595,8 @@ function AskExpertPageContent() {
 
       setMessages(prev => [...prev, assistantMessage]);
       setStreamingMessage('');
+      setStreamingReasoning('');
+      setIsStreamingReasoning(false);
 
       if (activeConversationId) {
         setConversations(prev =>
@@ -799,8 +950,37 @@ function AskExpertPageContent() {
         </AnimatePresence>
 
         {/* Messages Area */}
-        <div className="flex-1 overflow-y-auto px-4 py-6">
-          <div className="max-w-3xl mx-auto space-y-6">
+        <Conversation className="flex-1">
+          <ConversationContent className="max-w-3xl mx-auto px-4 py-6">
+            {/* Selected Agents Display */}
+            {selectedAgents.length > 0 && (
+              <div className="mb-6">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                    Selected Expert{selectedAgents.length > 1 ? 's' : ''}
+                  </h3>
+                  <span className="text-xs text-gray-500 dark:text-gray-400">
+                    {selectedAgents.length} selected
+                  </span>
+                </div>
+                <SelectedAgentsList
+                  agents={agents.filter((agent) => selectedAgents.includes(agent.id))}
+                  selectedAgentIds={selectedAgents}
+                  onAgentClick={(agentId) => {
+                    // Toggle selection on click
+                    setSelectedAgents(
+                      selectedAgents.includes(agentId)
+                        ? selectedAgents.filter((id) => id !== agentId)
+                        : [...selectedAgents, agentId]
+                    );
+                  }}
+                  onAgentRemove={(agentId) => {
+                    setSelectedAgents(selectedAgents.filter((id) => id !== agentId));
+                  }}
+                />
+              </div>
+            )}
+
             {messages.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full text-center py-12">
                 <Sparkles className="w-12 h-12 text-blue-500 mb-3" />
@@ -843,184 +1023,259 @@ function AskExpertPageContent() {
               </div>
             ) : (
               <>
-                {messages.map(msg => (
-                  <motion.div
-                    key={msg.id}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="flex gap-3"
-                  >
-                    <div className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 ${
-                      msg.role === 'user'
-                        ? 'bg-gray-200 dark:bg-gray-700'
-                        : 'bg-blue-500'
-                    }`}>
-                      {msg.role === 'user' ? (
-                        <User className="w-4 h-4 text-gray-600 dark:text-gray-300" />
-                      ) : (
-                        <Bot className="w-4 h-4 text-white" />
-                      )}
-                    </div>
+                {messages.map(msg => {
+                  // Get agent info for assistant messages
+                  const agentInfo = msg.role === 'assistant' && msg.selectedAgent 
+                    ? agents.find(a => a.id === msg.selectedAgent?.id)
+                    : null;
 
-                    <div className="flex-1 space-y-2 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-medium text-gray-900 dark:text-white">
-                          {msg.role === 'user' ? 'You' : 'Expert'}
-                        </span>
-                        <span className="text-xs text-gray-500 dark:text-gray-400">
-                          {new Date(msg.timestamp).toLocaleTimeString()}
-                        </span>
-                      </div>
+                  // Get avatar URL
+                  const avatarUrl = msg.role === 'user' 
+                    ? undefined 
+                    : agentInfo?.avatar 
+                      ? `/icons/png/avatars/${agentInfo.avatar}.png`
+                      : undefined;
 
-                      <div className="text-sm text-gray-800 dark:text-gray-200 leading-relaxed">
-                        {msg.content}
-                      </div>
-
-                      {/* Show selected agent info for Mode 2 & Mode 3 */}
-                      {msg.selectedAgent && (
-                        <div className="text-xs text-gray-500 dark:text-gray-400 mt-2 p-2 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
-                          <div className="flex items-center gap-2">
-                            <Bot className="w-3 h-3" />
-                            <span className="font-medium">Selected Agent:</span>
-                            <span className="text-blue-600 dark:text-blue-400">
-                              {msg.selectedAgent.display_name || msg.selectedAgent.name}
-                            </span>
-                            {msg.confidence && (
-                              <span className="text-green-600 dark:text-green-400">
-                                ({(msg.confidence * 100).toFixed(1)}% confidence)
+                  return (
+                    <Message key={msg.id} from={msg.role}>
+                      <MessageAvatar
+                        src={avatarUrl || (msg.role === 'user' ? undefined : '/icons/png/avatars/avatar_0001.png')}
+                        name={msg.role === 'user' ? 'You' : (agentInfo?.display_name || agentInfo?.name || 'Expert')}
+                      />
+                      <MessageContent>
+                        {/* Show selected agent info for Mode 2 & Mode 3 */}
+                        {msg.selectedAgent && (
+                          <div className="mb-3 text-xs text-muted-foreground p-2 bg-muted rounded-lg">
+                            <div className="flex items-center gap-2">
+                              <Bot className="w-3 h-3" />
+                              <span className="font-medium">Selected Agent:</span>
+                              <span className="text-primary">
+                                {msg.selectedAgent.display_name || msg.selectedAgent.name}
                               </span>
-                            )}
-                          </div>
-                          {msg.selectionReason && (
-                            <div className="mt-1 text-gray-600 dark:text-gray-300">
-                              {msg.selectionReason}
-                            </div>
-                          )}
-                        </div>
-                      )}
-
-                      {/* Show autonomous metadata for Mode 3 & Mode 4 */}
-                      {msg.autonomousMetadata && (
-                        <div className="text-xs text-gray-500 dark:text-gray-400 mt-2 p-3 bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 rounded-lg border border-purple-200 dark:border-purple-700">
-                          <div className="flex items-center gap-2 mb-2">
-                            <Brain className="w-3 h-3 text-purple-600 dark:text-purple-400" />
-                            <span className="font-medium text-purple-700 dark:text-purple-300">
-                              Autonomous Reasoning Process
-                            </span>
-                          </div>
-                          
-                          {msg.autonomousMetadata.goalUnderstanding && (
-                            <div className="mb-2">
-                              <span className="font-medium text-gray-700 dark:text-gray-300">🎯 Goal:</span>
-                              <div className="mt-1 text-gray-600 dark:text-gray-300">
-                                {msg.autonomousMetadata.goalUnderstanding}
-                              </div>
-                            </div>
-                          )}
-                          
-                          {msg.autonomousMetadata.executionPlan && (
-                            <div className="mb-2">
-                              <span className="font-medium text-gray-700 dark:text-gray-300">📋 Plan:</span>
-                              <div className="mt-1 text-gray-600 dark:text-gray-300">
-                                {msg.autonomousMetadata.executionPlan}
-                              </div>
-                            </div>
-                          )}
-                          
-                          {msg.autonomousMetadata.totalIterations && (
-                            <div className="mb-2">
-                              <span className="font-medium text-gray-700 dark:text-gray-300">🔄 Iterations:</span>
-                              <span className="ml-1 text-gray-600 dark:text-gray-300">
-                                {msg.autonomousMetadata.totalIterations} ReAct cycles completed
-                              </span>
-                            </div>
-                          )}
-                          
-                          {msg.autonomousMetadata.finalConfidence && (
-                            <div className="mb-2">
-                              <span className="font-medium text-gray-700 dark:text-gray-300">🎯 Final Confidence:</span>
-                              <span className="ml-1 text-green-600 dark:text-green-400">
-                                {(msg.autonomousMetadata.finalConfidence * 100).toFixed(1)}%
-                              </span>
-                            </div>
-                          )}
-                        </div>
-                      )}
-
-                      {msg.attachments && msg.attachments.length > 0 && (
-                        <div className="flex flex-wrap gap-2">
-                          {msg.attachments.map(att => (
-                            <div
-                              key={att.id}
-                              className="flex items-center gap-2 px-2 py-1.5 bg-gray-100 dark:bg-gray-800 rounded-md text-xs"
-                            >
-                              {att.type.startsWith('image/') ? (
-                                <ImageIcon className="w-3 h-3 text-blue-500" />
-                              ) : (
-                                <FileText className="w-3 h-3 text-blue-500" />
+                              {msg.confidence && (
+                                <span className="text-green-600 dark:text-green-400">
+                                  ({(msg.confidence * 100).toFixed(1)}% confidence)
+                                </span>
                               )}
-                              <span className="text-gray-700 dark:text-gray-300">{att.name}</span>
                             </div>
-                          ))}
-                        </div>
-                      )}
-
-                      {msg.role === 'assistant' && (
-                        <div className="flex items-center gap-1 pt-1">
-                          <button
-                            onClick={() => handleCopy(msg.content, msg.id)}
-                            className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded transition-colors"
-                          >
-                            {copiedId === msg.id ? (
-                              <Check className="w-3.5 h-3.5 text-green-500" />
-                            ) : (
-                              <Copy className="w-3.5 h-3.5 text-gray-500" />
+                            {msg.selectionReason && (
+                              <div className="mt-1">
+                                {msg.selectionReason}
+                              </div>
                             )}
-                          </button>
-                          <ThumbsUpDown
-                            messageId={msg.id}
-                            queryText={(() => {
-                              // Find the previous user message
-                              const msgIndex = messages.findIndex(m => m.id === msg.id);
-                              const userMsg = msgIndex > 0 ? messages[msgIndex - 1] : null;
-                              return userMsg?.role === 'user' ? userMsg.content : '';
-                            })()}
-                            responseText={msg.content}
-                            onFeedbackSubmitted={(feedback) => {
-                              console.log('Feedback submitted:', feedback);
-                            }}
+                          </div>
+                        )}
+
+                        {/* Response content with markdown support and inline citations */}
+                        {msg.sources && msg.sources.length > 0 ? (
+                          <CitedResponse 
+                            content={msg.content} 
+                            sources={msg.sources}
                           />
+                        ) : (
+                          <Response>
+                            {msg.content}
+                          </Response>
+                        )}
+
+                        {/* Reasoning Component - Show LangGraph reasoning steps */}
+                        {(msg.reasoning && msg.reasoning.length > 0) || (msg.autonomousMetadata && Object.keys(msg.autonomousMetadata).length > 0) ? (
+                          <div className="mt-3">
+                            <Reasoning isStreaming={false} defaultOpen={false}>
+                              <ReasoningTrigger title="Thinking Process" />
+                              <ReasoningContent>
+                                {/* Show reasoning steps from reasoning array */}
+                                {msg.reasoning && msg.reasoning.length > 0 && (
+                                  <div className="space-y-2 mb-4">
+                                    {msg.reasoning.map((step, idx) => (
+                                      <div key={idx} className="text-xs text-muted-foreground pb-2 border-b border-border/50 last:border-0">
+                                        <span className="font-semibold">Step {idx + 1}:</span> {step}
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+
+                                {/* Show autonomous metadata reasoning steps (Mode 3 & Mode 4) */}
+                                {msg.autonomousMetadata && (
+                                  <div className="space-y-3">
+                                    {msg.autonomousMetadata.goalUnderstanding && (
+                                      <div>
+                                        <div className="font-semibold text-sm mb-1 flex items-center gap-1">
+                                          🎯 Goal Understanding
+                                        </div>
+                                        <div className="text-xs text-muted-foreground pl-4">
+                                          {msg.autonomousMetadata.goalUnderstanding}
+                                        </div>
+                                      </div>
+                                    )}
+                                    
+                                    {msg.autonomousMetadata.executionPlan && (
+                                      <div>
+                                        <div className="font-semibold text-sm mb-1 flex items-center gap-1">
+                                          📋 Execution Plan
+                                        </div>
+                                        <div className="text-xs text-muted-foreground pl-4">
+                                          {msg.autonomousMetadata.executionPlan}
+                                        </div>
+                                      </div>
+                                    )}
+
+                                    {/* ReAct Loop Steps */}
+                                    {(msg.autonomousMetadata.currentThought || 
+                                      msg.autonomousMetadata.currentAction || 
+                                      msg.autonomousMetadata.currentObservation ||
+                                      msg.autonomousMetadata.currentReflection) && (
+                                      <div>
+                                        <div className="font-semibold text-sm mb-2 flex items-center gap-1">
+                                          🔄 ReAct Reasoning Loop
+                                        </div>
+                                        <div className="space-y-2 pl-4">
+                                          {msg.autonomousMetadata.currentIteration && (
+                                            <div className="text-xs">
+                                              <span className="font-medium">Iteration {msg.autonomousMetadata.currentIteration}</span>
+                                            </div>
+                                          )}
+                                          {msg.autonomousMetadata.currentThought && (
+                                            <div className="text-xs text-muted-foreground">
+                                              <span className="font-medium text-purple-500">🧠 Thought:</span> {msg.autonomousMetadata.currentThought}
+                                            </div>
+                                          )}
+                                          {msg.autonomousMetadata.currentAction && (
+                                            <div className="text-xs text-muted-foreground">
+                                              <span className="font-medium text-blue-500">⚡ Action:</span> {msg.autonomousMetadata.currentAction}
+                                            </div>
+                                          )}
+                                          {msg.autonomousMetadata.currentObservation && (
+                                            <div className="text-xs text-muted-foreground">
+                                              <span className="font-medium text-green-500">👁️ Observation:</span> {msg.autonomousMetadata.currentObservation}
+                                            </div>
+                                          )}
+                                          {msg.autonomousMetadata.currentReflection && (
+                                            <div className="text-xs text-muted-foreground">
+                                              <span className="font-medium text-orange-500">🤔 Reflection:</span> {msg.autonomousMetadata.currentReflection}
+                                            </div>
+                                          )}
+                                        </div>
+                                      </div>
+                                    )}
+
+                                    {msg.autonomousMetadata.totalIterations && (
+                                      <div className="text-xs">
+                                        <span className="font-semibold">Total Iterations:</span> {msg.autonomousMetadata.totalIterations} ReAct cycles
+                                      </div>
+                                    )}
+                                    
+                                    {msg.autonomousMetadata.finalConfidence && (
+                                      <div className="text-xs">
+                                        <span className="font-semibold">Final Confidence:</span>{' '}
+                                        <span className="text-green-600 dark:text-green-400">
+                                          {(msg.autonomousMetadata.finalConfidence * 100).toFixed(1)}%
+                                        </span>
+                                      </div>
+                                    )}
+                                  </div>
+                                )}
+                              </ReasoningContent>
+                            </Reasoning>
+                          </div>
+                        ) : null}
+
+                        {/* Attachments */}
+                        {msg.attachments && msg.attachments.length > 0 && (
+                          <div className="mt-3 flex flex-wrap gap-2">
+                            {msg.attachments.map(att => (
+                              <div
+                                key={att.id}
+                                className="flex items-center gap-2 px-2 py-1.5 bg-muted rounded-md text-xs"
+                              >
+                                {att.type.startsWith('image/') ? (
+                                  <ImageIcon className="w-3 h-3 text-primary" />
+                                ) : (
+                                  <FileText className="w-3 h-3 text-primary" />
+                                )}
+                                <span>{att.name}</span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+
+                        {/* Message Actions */}
+                        {msg.role === 'assistant' && (
+                          <div className="mt-3 flex items-center gap-2">
+                            <button
+                              onClick={() => handleCopy(msg.content, msg.id)}
+                              className="p-1.5 hover:bg-muted rounded transition-colors"
+                              aria-label="Copy message"
+                            >
+                              {copiedId === msg.id ? (
+                                <Check className="w-4 h-4 text-green-500" />
+                              ) : (
+                                <Copy className="w-4 h-4 text-muted-foreground" />
+                              )}
+                            </button>
+                            <ThumbsUpDown
+                              messageId={msg.id}
+                              queryText={(() => {
+                                // Find the previous user message
+                                const msgIndex = messages.findIndex(m => m.id === msg.id);
+                                const userMsg = msgIndex > 0 ? messages[msgIndex - 1] : null;
+                                return userMsg?.role === 'user' ? userMsg.content : '';
+                              })()}
+                              responseText={msg.content}
+                              onFeedbackSubmitted={(feedback) => {
+                                console.log('Feedback submitted:', feedback);
+                              }}
+                            />
+                          </div>
+                        )}
+                      </MessageContent>
+                    </Message>
+                  );
+                })}
+
+                {/* Show reasoning and streaming response as soon as loading starts */}
+                {(isLoading || streamingMessage || isStreamingReasoning) && (
+                  <Message from="assistant">
+                    <MessageAvatar
+                      src={selectedAgents.length > 0 && agents.find(a => selectedAgents.includes(a.id))
+                        ? `/icons/png/avatars/${agents.find(a => selectedAgents.includes(a.id))?.avatar || 'avatar_0001'}.png`
+                        : '/icons/png/avatars/avatar_0001.png'}
+                      name="Expert"
+                    />
+                    <MessageContent>
+                      {/* Reasoning during streaming - Show immediately when loading starts */}
+                      {(isLoading || isStreamingReasoning) && (
+                        <div className="mb-3">
+                          <Reasoning isStreaming={isLoading} defaultOpen={true}>
+                            <ReasoningTrigger title="Thinking..." />
+                            <ReasoningContent>
+                              <div className="text-xs text-muted-foreground whitespace-pre-wrap">
+                                {streamingReasoning || 'Processing your request...'}
+                              </div>
+                            </ReasoningContent>
+                          </Reasoning>
                         </div>
                       )}
-                    </div>
-                  </motion.div>
-                ))}
-
-                {streamingMessage && (
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    className="flex gap-3"
-                  >
-                    <div className="w-7 h-7 rounded-full bg-blue-500 flex items-center justify-center flex-shrink-0">
-                      <Bot className="w-4 h-4 text-white" />
-                    </div>
-                    <div className="flex-1">
-                      <div className="text-sm font-medium text-gray-900 dark:text-white mb-2">
-                        Expert
-                      </div>
-                      <div className="text-sm text-gray-800 dark:text-gray-200 leading-relaxed">
-                        {streamingMessage}
-                        <span className="inline-block w-0.5 h-4 bg-blue-500 ml-1 animate-pulse" />
-                      </div>
-                    </div>
-                  </motion.div>
+                      
+                      {/* Streaming response - Show when we have content */}
+                      {streamingMessage && (
+                        <div className="inline-flex items-baseline gap-1">
+                          <Response>
+                            {streamingMessage}
+                          </Response>
+                          {isLoading && (
+                            <span className="inline-block w-0.5 h-4 bg-primary animate-pulse" />
+                          )}
+                        </div>
+                      )}
+                    </MessageContent>
+                  </Message>
                 )}
               </>
             )}
             <div ref={messagesEndRef} />
-          </div>
-        </div>
+          </ConversationContent>
+        </Conversation>
 
         {/* Enhanced Prompt Input */}
         <div className="border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-4">

@@ -17,6 +17,7 @@ type CodeBlockContextType = {
   code: string;
 };
 
+const CodeBlockContext = createContext<CodeBlockContextType>({
   code: '',
 });
 
@@ -117,6 +118,7 @@ export const __CodeBlockCopyButton = ({
   const [isCopied, setIsCopied] = useState(false);
   const { code } = useContext(CodeBlockContext);
 
+  const copyToClipboard = async () => {
     if (typeof window === 'undefined' || !navigator.clipboard.writeText) {
       onError?.(new Error('Clipboard API not available'));
       return;
@@ -140,7 +142,7 @@ export const __CodeBlockCopyButton = ({
       variant="ghost"
       {...props}
     >
-      {children ?? <Icon size={14} />}
+      {children ?? (isCopied ? <CheckIcon size={14} /> : <CopyIcon size={14} />)}
     </Button>
   );
 };

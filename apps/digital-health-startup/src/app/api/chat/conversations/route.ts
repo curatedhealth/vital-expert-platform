@@ -147,6 +147,29 @@ export async function POST(request: NextRequest) {
 
     console.log('🔍 [Chat Conversations API] Attempting to insert into conversations table...');
     
+    // Get user's tenant_id from profile
+    let tenantId: string | null = null;
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('tenant_id')
+      .eq('id', user_id)
+      .maybeSingle();
+
+    tenantId = profile?.tenant_id || null;
+    
+    // Fallback to platform tenant if no tenant_id found
+    const PLATFORM_TENANT_ID = '00000000-0000-0000-0000-000000000001';
+    const STARTUP_TENANT_ID = '11111111-1111-1111-1111-111111111111';
+    
+    // Use user's tenant, or fallback to platform tenant
+    const finalTenantId = tenantId || PLATFORM_TENANT_ID;
+    
+    console.log('🔍 [Chat Conversations API] Tenant ID:', {
+      fromProfile: tenantId,
+      finalTenantId,
+      userId: user_id.substring(0, 8) + '...'
+    });
+    
     // Try to create conversation in database
     const { data: conversation, error } = await supabase
       .from('conversations')
@@ -154,6 +177,7 @@ export async function POST(request: NextRequest) {
         title: title || 'New Conversation',
         user_id: user_id,
         agent_id: agent_id || null,
+        tenant_id: finalTenantId,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       })

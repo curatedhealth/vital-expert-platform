@@ -8,7 +8,7 @@ import remarkMath from 'remark-math';
 
 import { cn } from '@vital/ui/lib/utils';
 
-import { CodeBlock, CodeBlockCopyButton } from './code-block';
+import { __CodeBlock as CodeBlock, __CodeBlockCopyButton as CodeBlockCopyButton } from './code-block';
 
 import type { HTMLAttributes, ComponentProps } from 'react';
 import type { Options } from 'react-markdown';
@@ -25,20 +25,22 @@ function parseIncompleteMarkdown(text: string): string {
     return text;
   }
 
+  let result = text;
+
   // Handle incomplete links and images
   // Pattern: [...] or ?[...] where the closing ] is missing
-
+  const linkMatch = result.match(/\[[^\]]*$/);
   if (linkMatch) {
     // If we have an unterminated [ or ?[, remove it and everything after
-
+    const startIndex = linkMatch.index ?? 0;
     result = result.substring(0, startIndex);
   }
 
   // Handle incomplete bold formatting (**)
-
+  const boldMatch = result.match(/\*\*/g);
   if (boldMatch) {
     // Count the number of ** in the entire string
-
+    const asteriskPairs = boldMatch.length;
     // If odd number of **, we have an incomplete bold - complete it
     if (asteriskPairs % 2 === 1) {
       result = `${result}**`;
@@ -46,10 +48,10 @@ function parseIncompleteMarkdown(text: string): string {
   }
 
   // Handle incomplete italic formatting (__)
-
+  const italicMatch = result.match(/__/g);
   if (italicMatch) {
     // Count the number of __ in the entire string
-
+    const underscorePairs = italicMatch.length;
     // If odd number of __, we have an incomplete italic - complete it
     if (underscorePairs % 2 === 1) {
       result = `${result}__`;
@@ -57,13 +59,14 @@ function parseIncompleteMarkdown(text: string): string {
   }
 
   // Handle incomplete single asterisk italic (*)
-
+  const singleAsteriskMatch = result.includes('*');
   if (singleAsteriskMatch) {
     // Count single asterisks that aren't part of **
-
+    const singleAsterisks = result.split('').reduce((acc, char, index) => {
       if (char === '*') {
         // Check if it's part of a ** pair
-
+        const prevChar = result[index - 1];
+        const nextChar = result[index + 1];
         if (prevChar !== '*' && nextChar !== '*') {
           return acc + 1;
         }
@@ -78,13 +81,14 @@ function parseIncompleteMarkdown(text: string): string {
   }
 
   // Handle incomplete single underscore italic (_)
-
+  const singleUnderscoreMatch = result.includes('_');
   if (singleUnderscoreMatch) {
     // Count single underscores that aren't part of __
-
+    const singleUnderscores = result.split('').reduce((acc, char, index) => {
       if (char === '_') {
         // Check if it's part of a __ pair
-
+        const prevChar = result[index - 1];
+        const nextChar = result[index + 1];
         if (prevChar !== '_' && nextChar !== '_') {
           return acc + 1;
         }
@@ -99,22 +103,23 @@ function parseIncompleteMarkdown(text: string): string {
   }
 
   // Handle incomplete inline code blocks (`) - but avoid code blocks (```)
-
+  const inlineCodeMatch = result.includes('`');
   if (inlineCodeMatch) {
     // Check if we're dealing with a code block (triple backticks)
+    const codeBlockMatches = result.match(/```/g);
+    const insideIncompleteCodeBlock = codeBlockMatches && codeBlockMatches.length % 2 === 1;
 
     // If we have an odd number of ``` sequences, we're inside an incomplete code block
     // In this case, don't complete inline code
-
     if (!insideIncompleteCodeBlock) {
       // Count the number of single backticks that are NOT part of triple backticks
-
-      for (let __i = 0; i < result.length; i++) {
+      let singleBacktickCount = 0;
+      for (let i = 0; i < result.length; i++) {
         if (result[i] === '`') {
           // Check if this backtick is part of a triple backtick sequence
-
-          const isTripleMiddle =
-            i > 0 && result.substring(i - 1, i + 2) === '```';
+          const isTripleStart = i >= 0 && result.substring(i, i + 3) === '```';
+          const isTripleMiddle = i > 0 && result.substring(i - 1, i + 2) === '```';
+          const isTripleEnd = i >= 2 && result.substring(i - 2, i + 1) === '```';
 
           if (!(isTripleStart || isTripleMiddle || isTripleEnd)) {
             singleBacktickCount++;
@@ -130,10 +135,10 @@ function parseIncompleteMarkdown(text: string): string {
   }
 
   // Handle incomplete strikethrough formatting (~~)
-
+  const strikethroughMatch = result.match(/~~/g);
   if (strikethroughMatch) {
     // Count the number of ~~ in the entire string
-
+    const tildePairs = strikethroughMatch.length;
     // If odd number of ~~, we have an incomplete strikethrough - complete it
     if (tildePairs % 2 === 1) {
       result = `${result}~~`;
@@ -144,6 +149,7 @@ function parseIncompleteMarkdown(text: string): string {
 }
 
 // Create a hardened version of ReactMarkdown
+const HardenedMarkdown = hardenReactMarkdown(ReactMarkdown);
 
 export type ResponseProps = HTMLAttributes<HTMLDivElement> & {
   options?: Options;
@@ -282,8 +288,7 @@ const components: Options['components'] = {
       {children}
     </blockquote>
   ),
-  code: ({ node, className, ...props }) => {
-
+  code: ({ node, className, inline, ...props }) => {
     if (!inline) {
       return <code className={className} {...props} />;
     }
@@ -299,13 +304,14 @@ const components: Options['components'] = {
     );
   },
   pre: ({ node, className, children }) => {
+    let language = '';
+    let code = '';
 
     if (typeof node?.properties?.className === 'string') {
       language = node.properties.className.replace('language-', '');
     }
 
     // Extract code content from children safely
-
     if (
       isValidElement(children) &&
       children.props &&
@@ -373,4 +379,6 @@ export const __Response = memo(
   (prevProps, nextProps) => prevProps.children === nextProps.children
 );
 
-Response.displayName = 'Response';
+__Response.displayName = 'Response';
+
+export const Response = __Response;

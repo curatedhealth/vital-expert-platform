@@ -174,8 +174,9 @@ export class AgentSelectorService {
       // Generate embedding for the query
       const queryEmbedding = await this.generateEmbedding(query);
 
-      // Search Pinecone for similar agents
+      // Search Pinecone for similar agents - CRITICAL: Use 'agents' namespace
       const index = this.pinecone.index(process.env.PINECONE_INDEX_NAME!);
+      const agentsNamespace = index.namespace('agents'); // ← FIX: Use dedicated agents namespace
       
       const searchParams: any = {
         vector: queryEmbedding,
@@ -190,7 +191,7 @@ export class AgentSelectorService {
         };
       }
 
-      const searchResults = await index.query(searchParams);
+      const searchResults = await agentsNamespace.query(searchParams);
 
       // Extract agent IDs from Pinecone results
       const agentIds = searchResults.matches
@@ -229,6 +230,10 @@ export class AgentSelectorService {
 
     } catch (error) {
       console.error('❌ [AgentSelector] Pinecone search failed:', error);
+      // Log namespace error specifically for debugging
+      if (error instanceof Error && error.message.includes('namespace')) {
+        console.error('⚠️ [AgentSelector] Namespace error detected - using fallback search');
+      }
       return await this.fallbackAgentSearch(query, domains, limit);
     }
   }
@@ -244,20 +249,33 @@ export class AgentSelectorService {
     console.log('🔄 [AgentSelector] Using fallback database search...');
 
     try {
-      // Simplified search - just get any available agents
-      const { data: agents, error } = await this.supabase
+      // Build optimized query with proper filtering
+      let queryBuilder = this.supabase
         .from('agents')
         .select(`
           id,
           name,
           description,
           system_prompt,
+          tier,
           capabilities,
+          knowledge_domains,
           specialties,
           model,
           metadata
-        `)
-        .limit(limit);
+        `);
+
+      // Add domain filtering if available
+      if (domains.length > 0) {
+        queryBuilder = queryBuilder.overlaps('knowledge_domains', domains);
+      }
+
+      // Order by tier and priority (higher tier = better)
+      queryBuilder = queryBuilder
+        .order('tier', { ascending: true })
+        .limit(limit * 2); // Get more candidates for filtering
+
+      const { data: agents, error } = await queryBuilder;
 
       if (error) {
         console.error('❌ [AgentSelector] Fallback search failed:', error);
@@ -265,8 +283,22 @@ export class AgentSelectorService {
         return await this.getAnyAvailableAgent(limit);
       }
 
-      console.log(`✅ [AgentSelector] Fallback search found ${agents?.length || 0} agents`);
-      return agents || [];
+      // If no domain-specific results, relax filters
+      if (!agents || agents.length === 0) {
+        console.log('⚠️ [AgentSelector] No domain-specific agents found, using general fallback');
+        
+        const { data: generalAgents } = await this.supabase
+          .from('agents')
+          .select('*')
+          .order('tier', { ascending: true })
+          .limit(limit);
+        
+        console.log(`✅ [AgentSelector] General fallback found ${generalAgents?.length || 0} agents`);
+        return generalAgents || [];
+      }
+
+      console.log(`✅ [AgentSelector] Fallback search found ${agents.length} agents`);
+      return agents;
 
     } catch (error) {
       console.error('❌ [AgentSelector] Fallback search error:', error);
@@ -279,21 +311,14 @@ export class AgentSelectorService {
    * Get any available agent as a last resort fallback
    */
   private async getAnyAvailableAgent(limit: number = 5): Promise<Agent[]> {
-    console.log('🔄 [AgentSelector] Getting any available agent as fallback...');
+    console.log('🔄 [AgentSelector] Getting any available agent as emergency fallback...');
     
     try {
       const { data: agents, error } = await this.supabase
         .from('agents')
-        .select(`
-          id,
-          name,
-          description,
-          system_prompt,
-          capabilities,
-          specialties,
-          model,
-          metadata
-        `)
+        .select('*')
+        .order('tier', { ascending: true })
+        .order('priority', { ascending: false })
         .limit(limit);
 
       if (error) {

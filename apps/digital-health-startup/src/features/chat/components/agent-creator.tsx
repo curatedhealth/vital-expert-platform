@@ -40,6 +40,7 @@ import { promptGenerationService } from '@/lib/services/prompt-generation-servic
 import { useAgentsStore } from '@/lib/stores/agents-store';
 import { useChatStore } from '@/lib/stores/chat-store';
 import { supabase } from '@vital/sdk/client';
+import { useUserRole } from '@/hooks/useUserRole';
 import { cn } from '@vital/ui/lib/utils';
 import type {
   MedicalCapability,
@@ -201,8 +202,23 @@ const roles = [
 export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCreatorProps) {
   const { createCustomAgent } = useChatStore();
   const { updateAgent, createUserCopy, deleteAgent } = useAgentsStore();
+  const { isSuperAdmin, isAdmin, loading: roleLoading } = useUserRole();
   const [agentService] = useState(() => new AgentService());
   const [iconService] = useState(() => new IconService());
+  
+  // Debug role state
+  useEffect(() => {
+    if (editingAgent && isOpen) {
+      console.log('[Agent Creator] Role check:', {
+        isSuperAdmin: isSuperAdmin(),
+        isAdmin: isAdmin(),
+        roleLoading,
+        isUserCopy: (editingAgent as unknown).is_user_copy,
+        isCustom: editingAgent.is_custom,
+        shouldShowDelete: isSuperAdmin() || isAdmin() || (editingAgent as unknown).is_user_copy || editingAgent.is_custom,
+      });
+    }
+  }, [editingAgent, isOpen, isSuperAdmin, isAdmin, roleLoading]);
   const [agentTemplates, setAgentTemplates] = useState<AgentWithCategories[]>([]);
   const [availableAvatars, setAvailableAvatars] = useState<string[]>([]);
   const [availableIcons, setAvailableIcons] = useState<Icon[]>([]);
@@ -1242,9 +1258,11 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
   const handleDelete = async () => {
     if (!editingAgent) return;
 
+    // Super admin can delete any agent, otherwise only user's own agents
     const isUserAgent = (editingAgent as unknown).is_user_copy || editingAgent.is_custom;
+    const canDelete = isSuperAdmin() || isAdmin() || isUserAgent;
 
-    if (!isUserAgent) {
+    if (!canDelete) {
       alert('You can only delete your own agents.');
       return;
     }
@@ -1278,7 +1296,20 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
 
     } catch (error) {
       console.error('❌ Failed to delete agent:', error);
-      alert('Failed to delete agent. Please try again.');
+      
+      // Show more detailed error message
+      let errorMessage = 'Failed to delete agent. Please try again.';
+      if (error instanceof Error) {
+        errorMessage = error.message || errorMessage;
+        // Check for specific error codes
+        if (error.message.includes('23503')) {
+          errorMessage = 'Cannot delete agent: It is being used in conversations or by other users. Please remove all references first.';
+        } else if (error.message.includes('not found')) {
+          errorMessage = 'Agent not found. It may have already been deleted.';
+        }
+      }
+      
+      alert(errorMessage);
     }
   };
 
@@ -1443,6 +1474,7 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
           console.log('  Found role:', selectedRole);
 
           // Update existing agent - Only send updateable fields
+          // Note: business_function, department, and role should be stored in metadata, not as direct columns
           const updates = {
             display_name: formData.name,
             description: formData.description,
@@ -1458,10 +1490,12 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
             temperature: formData.temperature,
             max_tokens: formData.maxTokens,
             knowledge_domains: formData.knowledgeDomains,
-            // Organization names for display (agents table only has text fields, not foreign keys)
-            business_function: selectedFunction?.name || selectedFunction?.department_name || null,
-            department: selectedDept?.name || selectedDept?.department_name || null,
-            role: selectedRole?.name || selectedRole?.role_name || null,
+            // Store organization info in metadata (not as direct columns to avoid schema errors)
+            metadata: {
+              business_function: selectedFunction?.name || selectedFunction?.department_name || null,
+              department: selectedDept?.name || selectedDept?.department_name || null,
+              role: selectedRole?.name || selectedRole?.role_name || null,
+            },
           };
 
           console.log('[Agent Creator] Updating agent:', editingAgent.id);
@@ -4842,7 +4876,7 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
             <p className="text-sm text-medical-gray">
               * Required fields
             </p>
-            {editingAgent && ((editingAgent as unknown).is_user_copy || editingAgent.is_custom) && (
+            {editingAgent && (isSuperAdmin() || isAdmin() || (editingAgent as unknown).is_user_copy || editingAgent.is_custom) && (
               <Button
                 variant="outline"
                 onClick={handleDelete}

@@ -255,14 +255,25 @@ export class Mode3AutonomousAutomaticHandler {
     console.log('🔄 [Mode 3] Executing ReAct loop...');
 
     try {
+      // Create a streaming callback that will yield steps in real-time
+      const streamingSteps: Array<{ type: string; content: string; metadata?: any }> = [];
+      
       const reactResult = await reActEngine.executeReActLoop(
         state.goalUnderstanding,
         state.subQuestions,
         state.executionPlan,
         state.selectedAgent,
         state.config.maxIterations || 10,
-        state.config.confidenceThreshold || 0.95
+        state.config.confidenceThreshold || 0.95,
+        state.config.enableRAG !== false, // Default to true, only disable if explicitly false
+        (step) => {
+          // Collect steps for streaming
+          streamingSteps.push(step);
+        }
       );
+
+      // Store streaming steps in state for later streaming
+      (state as any).streamingSteps = streamingSteps;
 
       console.log(`✅ [Mode 3] ReAct loop completed after ${reactResult.iterations.length} iterations`);
       
@@ -342,60 +353,77 @@ export class Mode3AutonomousAutomaticHandler {
         timestamp: new Date().toISOString()
       };
 
-      // Stream ReAct iterations
-      for (const iteration of result.iterations) {
-        yield {
-          type: 'iteration_start',
-          content: `Iteration ${iteration.iteration + 1}`,
-          metadata: {
-            iteration: iteration.iteration,
-            confidence: iteration.confidence
-          },
-          timestamp: new Date().toISOString()
-        };
+      // Stream all detailed ReAct steps in real-time
+      // First stream the detailed steps collected during execution
+      const streamingSteps = (result as any).streamingSteps;
+      if (streamingSteps && streamingSteps.length > 0) {
+        for (const step of streamingSteps) {
+          yield {
+            type: step.type as any,
+            content: step.content,
+            metadata: {
+              ...step.metadata,
+              timestamp: new Date().toISOString()
+            },
+            timestamp: new Date().toISOString()
+          };
+        }
+      } else {
+        // Fallback: Stream iterations if detailed steps aren't available
+        for (const iteration of result.iterations) {
+          yield {
+            type: 'iteration_start',
+            content: `Iteration ${iteration.iteration + 1}`,
+            metadata: {
+              iteration: iteration.iteration,
+              confidence: iteration.confidence
+            },
+            timestamp: new Date().toISOString()
+          };
 
-        yield {
-          type: 'thought',
-          content: iteration.thought,
-          metadata: {
-            iteration: iteration.iteration,
-            phase: 'thinking'
-          },
-          timestamp: new Date().toISOString()
-        };
+          yield {
+            type: 'thought',
+            content: iteration.thought,
+            metadata: {
+              iteration: iteration.iteration,
+              phase: 'thinking'
+            },
+            timestamp: new Date().toISOString()
+          };
 
-        yield {
-          type: 'action',
-          content: iteration.action,
-          metadata: {
-            iteration: iteration.iteration,
-            phase: 'acting',
-            toolsUsed: iteration.toolsUsed
-          },
-          timestamp: new Date().toISOString()
-        };
+          yield {
+            type: 'action',
+            content: iteration.action,
+            metadata: {
+              iteration: iteration.iteration,
+              phase: 'acting',
+              toolsUsed: iteration.toolsUsed
+            },
+            timestamp: new Date().toISOString()
+          };
 
-        yield {
-          type: 'observation',
-          content: iteration.observation,
-          metadata: {
-            iteration: iteration.iteration,
-            phase: 'observing',
-            ragContext: iteration.ragContext
-          },
-          timestamp: new Date().toISOString()
-        };
+          yield {
+            type: 'observation',
+            content: iteration.observation,
+            metadata: {
+              iteration: iteration.iteration,
+              phase: 'observing',
+              ragContext: iteration.ragContext
+            },
+            timestamp: new Date().toISOString()
+          };
 
-        yield {
-          type: 'reflection',
-          content: iteration.reflection,
-          metadata: {
-            iteration: iteration.iteration,
-            phase: 'reflecting',
-            confidence: iteration.confidence
-          },
-          timestamp: new Date().toISOString()
-        };
+          yield {
+            type: 'reflection',
+            content: iteration.reflection,
+            metadata: {
+              iteration: iteration.iteration,
+              phase: 'reflecting',
+              confidence: iteration.confidence
+            },
+            timestamp: new Date().toISOString()
+          };
+        }
       }
 
       // Stream final answer

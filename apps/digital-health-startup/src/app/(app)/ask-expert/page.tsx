@@ -44,6 +44,7 @@ import { ChatHistoryProvider, useChatHistory } from '@/contexts/chat-history-con
 import { PromptStarters, type PromptStarter } from '@/components/prompt-starters';
 import { ThumbsUpDown } from '@/components/feedback/ThumbsUpDown';
 import { useAuth } from '@/lib/auth/supabase-auth-context';
+import { useConversations } from '@/lib/hooks/use-conversations';
 import { ChatHistorySidebar } from '@/components/chat-history-sidebar';
 import { SelectedAgentsList } from '@/components/selected-agent-card';
 import { Reasoning, ReasoningTrigger, ReasoningContent } from '@/components/ui/shadcn-io/ai/reasoning';

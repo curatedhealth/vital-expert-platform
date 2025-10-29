@@ -92,6 +92,10 @@ isMedicalModel('gpt-4-turbo'); // false
 
 ### Add to `.env.local`:
 
+**⚠️ All environment variables are consolidated in ONE file**
+
+See `ENVIRONMENT_SETUP.md` for complete configuration.
+
 ```bash
 # HuggingFace API Key for medical models
 HUGGINGFACE_API_KEY="YOUR_HUGGINGFACE_API_KEY_HERE"

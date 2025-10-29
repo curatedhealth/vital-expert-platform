@@ -54,6 +54,9 @@ Route (app)                              Size     First Load JS
 
 ### Required Environment Variables for Vercel:
 
+**⚠️ See `ENVIRONMENT_SETUP.md` for complete environment variable list**
+
+Key variables for Vercel:
 ```bash
 # Supabase Configuration (Production)
 NEXT_PUBLIC_SUPABASE_URL=https://xazinxsiglqokwfmogyk.supabase.co
@@ -66,6 +69,7 @@ OPENAI_API_KEY=YOUR_OPENAI_API_KEY_HERE
 # Pinecone Vector Database
 PINECONE_API_KEY=pcsk_Cgs4a_8qZxwe7FZZKvKbrsBV3KTYVL1cqVBDCWuJrcxsGq9BJ4SwAkPnHQPusw4ECrKLR
 PINECONE_INDEX_NAME=vital-knowledge
+```
 
 # Gemini API
 GEMINI_API_KEY=AIzaSyDeOjggoNgBU0Z6mlpUiiZKsFM43vHjFX0

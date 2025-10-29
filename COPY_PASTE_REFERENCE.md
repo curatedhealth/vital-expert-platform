@@ -58,26 +58,13 @@ NEXT_PUBLIC_ENABLE_ANALYTICS=true
 NEXT_PUBLIC_ENABLE_DEBUG=false
 ```
 
-**Secret Variables:**
-```
-SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhhemlueHNpZ2xxb2t3Zm1vZ3lrIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTczNDY4OTM3OCwiZXhwIjoyMDUwMjY1Mzc4fQ.VkX0iMyTp93d8yLKrMWJQUaHYbeBhlF_p4sGKN8xdes
+**⚠️ IMPORTANT: All environment variables are now consolidated in ONE file**
 
-OPENAI_API_KEY=YOUR_OPENAI_API_KEY_HERE
+**Location:** `apps/digital-health-startup/.env.local`
 
-PINECONE_API_KEY=pcsk_Cgs4a_8qZxwe7FZZKvKbrsBV3KTYVL1cqVBDCWuJrcxsGq9BJ4SwAkPnHQPusw4ECrKLR
+**Setup:** See `ENVIRONMENT_SETUP.md` for complete configuration guide.
 
-PINECONE_INDEX_NAME=vital-knowledge
-
-GEMINI_API_KEY=AIzaSyDeOjggoNgBU0Z6mlpUiiZKsFM43vHjFX0
-
-UPSTASH_REDIS_REST_URL=https://square-halibut-35639.upstash.io
-
-UPSTASH_REDIS_REST_TOKEN=AYs3AAIncDE1Y2RmMGUwYmY1Mzk0YTU4OWFhNjAzMjk0MWVjYzhmM3AxMzU2Mzk
-
-LANGFUSE_PUBLIC_KEY=b1fe4bae-221e-4c74-8e97-6bd73c0ab30e
-
-LANGFUSE_HOST=https://cloud.langfuse.com
-```
+All API keys, secrets, and configuration should be added to `.env.local` only.
 
 ### Domains
 ```

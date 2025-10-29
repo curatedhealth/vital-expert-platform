@@ -52,7 +52,10 @@ Go to: Settings → Environment Variables
 
 ### Add/Update These Variables:
 
-```
+**⚠️ See `ENVIRONMENT_SETUP.md` for complete environment variable list**
+
+Key variables for Vercel:
+```bash
 # Supabase
 NEXT_PUBLIC_SUPABASE_URL=https://xazinxsiglqokwfmogyk.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhhemlueHNpZ2xxb2t3Zm1vZ3lrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzQ2ODkzNzgsImV4cCI6MjA1MDI2NTM3OH0.5qrfkThPewEuFize6meh47xngCvg_9FRKcepFZ7IxsY
@@ -67,6 +70,7 @@ PINECONE_INDEX_NAME=vital-knowledge
 
 # Gemini
 GEMINI_API_KEY=AIzaSyDeOjggoNgBU0Z6mlpUiiZKsFM43vHjFX0
+```
 
 # Redis (Upstash)
 UPSTASH_REDIS_REST_URL=https://square-halibut-35639.upstash.io

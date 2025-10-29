@@ -42,23 +42,17 @@ The Dockerfile already has: `CMD ["python3", "/app/start.py"]`
 
 ### Environment Variables
 
-Add these in the Variables tab:
+**⚠️ Reference:** See `ENVIRONMENT_SETUP.md` for all environment variables.
 
+Add required variables in Railway Variables tab. Key variables:
 ```
 OPENAI_API_KEY=YOUR_OPENAI_API_KEY_HERE
-
 SUPABASE_URL=https://xazinxsiglqokwfmogyk.supabase.co
-
 SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhhemlueHNpZ2xxb2t3Zm1vZ3lrIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTczNDY4OTM3OCwiZXhwIjoyMDUwMjY1Mzc4fQ.VkX0iMyTp93d8yLKrMWJQUaHYbeBhlF_p4sGKN8xdes
-
 PINECONE_API_KEY=pcsk_Cgs4a_8qZxwe7FZZKvKbrsBV3KTYVL1cqVBDCWuJrcxsGq9BJ4SwAkPnHQPusw4ECrKLR
-
 PINECONE_INDEX_NAME=vital-knowledge
-
 GEMINI_API_KEY=AIzaSyDeOjggoNgBU0Z6mlpUiiZKsFM43vHjFX0
-
 ENVIRONMENT=production
-
 LOG_LEVEL=info
 ```
 

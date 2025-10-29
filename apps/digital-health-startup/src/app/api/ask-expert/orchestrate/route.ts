@@ -67,29 +67,64 @@ export async function POST(request: NextRequest) {
 
               console.log('🎯 [Orchestrate] Routing to Mode 1: Manual Interactive');
 
-              const mode1Stream = await executeMode1({
-                agentId: body.agentId,
-                message: body.message,
-                conversationHistory: body.conversationHistory,
-                enableRAG: body.enableRAG !== false, // Default to true, only disable if explicitly false
-                enableTools: body.enableTools ?? false,
-                model: body.model,
-                temperature: body.temperature ?? 0.7,
-                maxTokens: body.maxTokens ?? 2000
-              });
+              try {
+                // Execute Mode 1 - returns AsyncGenerator
+                const mode1Stream = executeMode1({
+                  agentId: body.agentId,
+                  message: body.message,
+                  conversationHistory: body.conversationHistory,
+                  enableRAG: body.enableRAG !== false, // Default to true, only disable if explicitly false
+                  enableTools: body.enableTools ?? false,
+                  model: body.model,
+                  temperature: body.temperature ?? 0.7,
+                  maxTokens: body.maxTokens ?? 2000
+                });
 
-              // Stream chunks
-              for await (const chunk of mode1Stream) {
-                const event = {
-                  type: 'chunk',
-                  content: chunk,
+                // Stream chunks with timeout protection
+                const startTime = Date.now();
+                try {
+                  for await (const chunk of mode1Stream) {
+                    // Check if we've exceeded the full request timeout
+                    const elapsed = Date.now() - startTime;
+                    if (elapsed >= MODE1_TIMEOUTS.FULL_REQUEST) {
+                      throw new TimeoutError(
+                        'Request timed out after 60 seconds',
+                        MODE1_TIMEOUTS.FULL_REQUEST
+                      );
+                    }
+
+                    const event = {
+                      type: 'chunk',
+                      content: chunk,
+                      timestamp: new Date().toISOString()
+                    };
+                    controller.enqueue(encoder.encode(`data: ${JSON.stringify(event)}\n\n`));
+                  }
+
+                  // Send completion
+                  controller.enqueue(encoder.encode('data: {"type":"done"}\n\n'));
+                } catch (streamError) {
+                  if (streamError instanceof TimeoutError) {
+                    const errorEvent = {
+                      type: 'error',
+                      message: streamError.message,
+                      code: 'TIMEOUT_ERROR',
+                      timestamp: new Date().toISOString()
+                    };
+                    controller.enqueue(encoder.encode(`data: ${JSON.stringify(errorEvent)}\n\n`));
+                  } else {
+                    throw streamError;
+                  }
+                }
+              } catch (error) {
+                const errorEvent = {
+                  type: 'error',
+                  message: error instanceof Error ? error.message : 'Unknown error',
+                  code: error instanceof TimeoutError ? 'TIMEOUT_ERROR' : 'EXECUTION_ERROR',
                   timestamp: new Date().toISOString()
                 };
-                controller.enqueue(encoder.encode(`data: ${JSON.stringify(event)}\n\n`));
+                controller.enqueue(encoder.encode(`data: ${JSON.stringify(errorEvent)}\n\n`));
               }
-
-              // Send completion
-              controller.enqueue(encoder.encode('data: {"type":"done"}\n\n'));
               break;
             }
 

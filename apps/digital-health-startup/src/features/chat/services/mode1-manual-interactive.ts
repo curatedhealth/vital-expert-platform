@@ -28,6 +28,8 @@ import { ToolRegistry } from '../../ask-expert/mode-1/tools/tool-registry';
 import { convertRegistryToLangChainTools } from '../../ask-expert/mode-1/tools/langchain-tool-adapter';
 import { Mode1ErrorHandler, withRetry, Mode1ErrorCode } from '../../ask-expert/mode-1/utils/error-handler';
 import { llmCircuitBreaker, ragCircuitBreaker, toolCircuitBreaker } from '../../ask-expert/mode-1/utils/circuit-breaker';
+import { mode1MetricsService, Mode1Metrics } from '../../ask-expert/mode-1/services/mode1-metrics';
+import { v4 as uuidv4 } from 'uuid';
 
 // ============================================================================
 // TYPES
@@ -83,60 +85,260 @@ export class Mode1ManualInteractiveHandler {
    * Main entry point for Mode 1
    */
   async execute(config: Mode1Config): Promise<AsyncGenerator<string>> {
+    const requestId = uuidv4();
+    const startTime = Date.now();
+    let agentFetchStart = Date.now();
+    
     console.log('🎯 [Mode 1] Starting Manual Interactive mode');
+    console.log(`   Request ID: ${requestId}`);
     console.log(`   Agent ID: ${config.agentId}`);
     console.log(`   RAG: ${config.enableRAG ? 'ON' : 'OFF'}`);
     console.log(`   Tools: ${config.enableTools ? 'ON' : 'OFF'}`);
     console.log(`   Model: ${config.model || 'default'}`);
 
-    // Step 1: Get agent from database (with error handling)
-    const agent = await withRetry(
-      () => this.getAgent(config.agentId),
-      {
-        maxRetries: 2,
-        retryableErrors: [
-          Mode1ErrorCode.DATABASE_CONNECTION_ERROR,
-          Mode1ErrorCode.NETWORK_ERROR,
-        ],
-      }
-    );
+    // Initialize metrics
+    const metrics: Mode1Metrics = {
+      requestId,
+      agentId: config.agentId,
+      executionPath: this.determineExecutionPath(config),
+      startTime,
+      success: false,
+      latency: {
+        totalMs: 0,
+      },
+      metadata: {
+        model: config.model,
+        temperature: config.temperature,
+        enableRAG: config.enableRAG,
+        enableTools: config.enableTools,
+      },
+    };
 
-    if (!agent) {
-      const error = Mode1ErrorHandler.createError(
-        new Error(`Agent not found: ${config.agentId}`),
-        { agentId: config.agentId, operation: 'getAgent' }
+    try {
+      // Step 1: Get agent from database (with error handling)
+      const agent = await withRetry(
+        () => this.getAgent(config.agentId),
+        {
+          maxRetries: 2,
+          retryableErrors: [
+            Mode1ErrorCode.DATABASE_CONNECTION_ERROR,
+            Mode1ErrorCode.NETWORK_ERROR,
+          ],
+        }
       );
-      error.code = Mode1ErrorCode.AGENT_NOT_FOUND;
-      error.userMessage = `The requested expert agent could not be found. Please verify the agent ID or select a different agent.`;
-      Mode1ErrorHandler.logError(error);
-      throw error;
-    }
+
+      metrics.latency.agentFetchMs = Date.now() - agentFetchStart;
+
+      if (!agent) {
+        const error = Mode1ErrorHandler.createError(
+          new Error(`Agent not found: ${config.agentId}`),
+          { agentId: config.agentId, operation: 'getAgent' }
+        );
+        error.code = Mode1ErrorCode.AGENT_NOT_FOUND;
+        error.userMessage = `The requested expert agent could not be found. Please verify the agent ID or select a different agent.`;
+        Mode1ErrorHandler.logError(error);
+        
+        metrics.success = false;
+        metrics.errorCode = error.code;
+        metrics.latency.totalMs = Date.now() - startTime;
+        mode1MetricsService.trackRequest(metrics);
+        
+        throw error;
+      }
 
     // Log agent's RAG domains
     if (agent.knowledge_domains && agent.knowledge_domains.length > 0) {
       console.log(`   Agent RAG Domains: ${agent.knowledge_domains.join(', ')}`);
     }
 
-    // Step 2: Initialize LLM (use model from config or agent default)
-    const modelToUse = config.model || agent.model || 'gpt-4-turbo-preview';
-    this.llm = this.initializeLLM(modelToUse, config.temperature, config.maxTokens);
+      // Step 2: Initialize LLM (use model from config or agent default)
+      const modelToUse = config.model || agent.model || 'gpt-4-turbo-preview';
+      this.llm = this.initializeLLM(modelToUse, config.temperature, config.maxTokens);
 
-    // Step 3: Build conversation context
-    const messages = this.buildMessages(agent, config.message, config.conversationHistory);
+      // Step 3: Build conversation context
+      const messages = this.buildMessages(agent, config.message, config.conversationHistory);
 
-    // Step 4: Execute based on options
-    if (config.enableRAG && config.enableTools) {
-      // RAG + Tools: Full LangGraph workflow
-      return this.executeWithRAGAndTools(agent, messages, config);
-    } else if (config.enableRAG) {
-      // RAG only: Retrieve context and call LLM
-      return this.executeWithRAG(agent, messages, config);
-    } else if (config.enableTools) {
-      // Tools only: LangGraph with tool execution
-      return this.executeWithTools(agent, messages, config);
-    } else {
-      // Simple: Direct LLM call
-      return this.executeDirect(messages);
+      // Step 4: Execute based on options (with metrics tracking)
+      if (config.enableRAG && config.enableTools) {
+        return this.executeWithRAGAndToolsWithMetrics(agent, messages, config, metrics);
+      } else if (config.enableRAG) {
+        return this.executeWithRAGWithMetrics(agent, messages, config, metrics);
+      } else if (config.enableTools) {
+        return this.executeWithToolsWithMetrics(agent, messages, config, metrics);
+      } else {
+        return this.executeDirectWithMetrics(messages, metrics);
+      }
+    } catch (error) {
+      const mode1Error = Mode1ErrorHandler.createError(error, {
+        requestId,
+        agentId: config.agentId,
+      });
+      metrics.success = false;
+      metrics.errorCode = mode1Error.code;
+      metrics.latency.totalMs = Date.now() - startTime;
+      mode1MetricsService.trackRequest(metrics);
+      throw mode1Error;
+    }
+  }
+
+  /**
+   * Determine execution path from config
+   */
+  private determineExecutionPath(config: Mode1Config): Mode1Metrics['executionPath'] {
+    if (config.enableRAG && config.enableTools) return 'rag+tools';
+    if (config.enableRAG) return 'rag';
+    if (config.enableTools) return 'tools';
+    return 'direct';
+  }
+
+  /**
+   * Execute direct with metrics tracking
+   */
+  private async *executeDirectWithMetrics(
+    messages: any[],
+    metrics: Mode1Metrics
+  ): AsyncGenerator<string> {
+    const llmStart = Date.now();
+    let success = false;
+
+    try {
+      for await (const chunk of this.executeDirect(messages)) {
+        yield chunk;
+        success = true;
+      }
+
+      metrics.success = true;
+      metrics.latency.llmCallMs = Date.now() - llmStart;
+      metrics.latency.totalMs = Date.now() - metrics.startTime;
+    } catch (error) {
+      metrics.success = false;
+      metrics.errorCode = Mode1ErrorHandler.createError(error).code;
+      metrics.latency.llmCallMs = Date.now() - llmStart;
+      metrics.latency.totalMs = Date.now() - metrics.startTime;
+      throw error;
+    } finally {
+      mode1MetricsService.trackRequest(metrics);
+    }
+  }
+
+  /**
+   * Execute with RAG and metrics tracking
+   */
+  private async *executeWithRAGWithMetrics(
+    agent: Agent,
+    messages: any[],
+    config: Mode1Config,
+    metrics: Mode1Metrics
+  ): AsyncGenerator<string> {
+    const ragStart = Date.now();
+    let ragContextRetrieved = false;
+    let ragSourcesCount = 0;
+
+    try {
+      for await (const chunk of this.executeWithRAG(agent, messages, config)) {
+        yield chunk;
+        if (chunk && !chunk.startsWith('Error:')) {
+          metrics.success = true;
+        }
+      }
+
+      // Try to get RAG metrics if available
+      const ragContext = await this.retrieveRAGContext(config.message, agent);
+      if (ragContext) {
+        ragContextRetrieved = true;
+        // Estimate sources from context (rough approximation)
+        ragSourcesCount = (ragContext.match(/\[Source/g) || []).length;
+      }
+
+      metrics.rag = {
+        sourcesFound: ragSourcesCount,
+        domainsSearched: agent.knowledge_domains || [],
+        strategy: 'agent-optimized',
+        cacheHit: false, // Would be set by RAG service
+      };
+      metrics.latency.ragRetrievalMs = Date.now() - ragStart;
+      metrics.latency.totalMs = Date.now() - metrics.startTime;
+    } catch (error) {
+      metrics.success = false;
+      metrics.errorCode = Mode1ErrorHandler.createError(error).code;
+      metrics.latency.ragRetrievalMs = Date.now() - ragStart;
+      metrics.latency.totalMs = Date.now() - metrics.startTime;
+      throw error;
+    } finally {
+      mode1MetricsService.trackRequest(metrics);
+    }
+  }
+
+  /**
+   * Execute with Tools and metrics tracking
+   */
+  private async *executeWithToolsWithMetrics(
+    agent: Agent,
+    messages: any[],
+    config: Mode1Config,
+    metrics: Mode1Metrics
+  ): AsyncGenerator<string> {
+    const toolsStart = Date.now();
+    const toolsUsed: string[] = [];
+    let toolCalls = 0;
+    let toolSuccesses = 0;
+    let toolFailures = 0;
+
+    try {
+      // Note: Tool tracking would need to be added to executeWithTools
+      for await (const chunk of this.executeWithTools(agent, messages, config)) {
+        yield chunk;
+        metrics.success = true;
+      }
+
+      metrics.tools = {
+        calls: toolCalls,
+        successCount: toolSuccesses,
+        failureCount: toolFailures,
+        toolsUsed,
+        totalToolTimeMs: Date.now() - toolsStart,
+      };
+      metrics.latency.toolExecutionMs = Date.now() - toolsStart;
+      metrics.latency.totalMs = Date.now() - metrics.startTime;
+    } catch (error) {
+      metrics.success = false;
+      metrics.errorCode = Mode1ErrorHandler.createError(error).code;
+      metrics.latency.toolExecutionMs = Date.now() - toolsStart;
+      metrics.latency.totalMs = Date.now() - metrics.startTime;
+      throw error;
+    } finally {
+      mode1MetricsService.trackRequest(metrics);
+    }
+  }
+
+  /**
+   * Execute with RAG + Tools and metrics tracking
+   */
+  private async *executeWithRAGAndToolsWithMetrics(
+    agent: Agent,
+    messages: any[],
+    config: Mode1Config,
+    metrics: Mode1Metrics
+  ): AsyncGenerator<string> {
+    const ragStart = Date.now();
+    const toolsStart = Date.now();
+    
+    try {
+      for await (const chunk of this.executeWithRAGAndTools(agent, messages, config)) {
+        yield chunk;
+        metrics.success = true;
+      }
+
+      metrics.latency.ragRetrievalMs = Date.now() - ragStart;
+      metrics.latency.toolExecutionMs = Date.now() - toolsStart;
+      metrics.latency.totalMs = Date.now() - metrics.startTime;
+    } catch (error) {
+      metrics.success = false;
+      metrics.errorCode = Mode1ErrorHandler.createError(error).code;
+      metrics.latency.totalMs = Date.now() - metrics.startTime;
+      throw error;
+    } finally {
+      mode1MetricsService.trackRequest(metrics);
     }
   }
 

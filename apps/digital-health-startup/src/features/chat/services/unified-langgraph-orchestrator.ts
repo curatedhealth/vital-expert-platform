@@ -793,7 +793,11 @@ Be precise and confident in your classifications.`;
         performance: { intentClassification: latency }
       };
     } catch (error) {
-      console.error('❌ Intent classification failed:', error);
+      this.logger.error(
+        'intent_classification_failed',
+        error instanceof Error ? error : new Error(String(error)),
+        { operation: 'classifyIntent' }
+      );
       // Graceful degradation - use keyword-based fallback
       return {
         intent: {
@@ -870,7 +874,11 @@ Be precise and confident in your classifications.`;
         performance: { domainDetection: latency }
       };
     } catch (error) {
-      console.error('❌ Domain detection failed:', error);
+      this.logger.error(
+        'domain_detection_failed',
+        error instanceof Error ? error : new Error(String(error)),
+        { operation: 'detectDomains' }
+      );
       // Fallback to intent domains or general
       return {
         domains: state.intent?.domains || ['general'],
@@ -928,7 +936,11 @@ Return the most relevant domains (1-3 typically).`;
       return result.domains || [];
 
     } catch (error) {
-      console.warn('⚠️  LLM domain detection failed, using fallback:', error);
+      this.logger.warn('llm_domain_detection_failed_fallback', {
+        operation: 'detectDomains',
+        error: error instanceof Error ? error.message : String(error),
+        fallback: 'keyword',
+      });
 
       // Minimal fallback: return generic domain
       return ['general'];
@@ -1407,7 +1419,12 @@ Return the most relevant domains (1-3 typically).`;
           useEnhancedRAG = false;
       }
 
-      console.log(`🔍 Retrieving context using ${ragStrategy} strategy (Enhanced: ${useEnhancedRAG})`);
+      this.logger.info('context_retrieval_started', {
+        operation: 'retrieveContext',
+        ragStrategy,
+        useEnhancedRAG,
+        queryPreview: state.query.substring(0, 100),
+      });
 
       // Get primary agent for agent-optimized search
       const primaryAgentId = state.selectedAgents?.[0]?.id;
@@ -1427,7 +1444,11 @@ Return the most relevant domains (1-3 typically).`;
         retrievedDocs = result.sources;
         ragMetadata = result.metadata;
 
-        console.log(`  ✅ Enhanced RAG: ${retrievedDocs.length} sources (cached: ${result.metadata.cached})`);
+        this.logger.info('enhanced_rag_retrieval_completed', {
+          operation: 'retrieveContext',
+          sourceCount: retrievedDocs.length,
+          cached: result.metadata.cached,
+        });
 
       } else {
         // Use Unified RAG for direct, fast retrieval
@@ -1446,7 +1467,11 @@ Return the most relevant domains (1-3 typically).`;
         retrievedDocs = result.sources;
         ragMetadata = result.metadata;
 
-        console.log(`  ✅ Unified RAG: ${retrievedDocs.length} sources (strategy: ${ragStrategy})`);
+        this.logger.info('unified_rag_retrieval_completed', {
+          operation: 'retrieveContext',
+          sourceCount: retrievedDocs.length,
+          strategy: ragStrategy,
+        });
       }
 
       // Build context string
@@ -1491,14 +1516,22 @@ Return the most relevant domains (1-3 typically).`;
       };
 
     } catch (error) {
-      console.error('❌ Context retrieval failed:', error);
+      this.logger.error(
+        'context_retrieval_failed',
+        error instanceof Error ? error : new Error(String(error)),
+        { operation: 'retrieveContext', ragStrategy }
+      );
 
       // Fallback: Try basic retrieval
       try {
         const { retrieveContext } = await import('./unified-langgraph-orchestrator-nodes');
         return retrieveContext(state);
       } catch (fallbackError) {
-        console.error('❌ Fallback context retrieval also failed:', fallbackError);
+        this.logger.error(
+          'fallback_context_retrieval_failed',
+          fallbackError instanceof Error ? fallbackError : new Error(String(fallbackError)),
+          { operation: 'retrieveContext', fallback: true }
+        );
 
         return {
           retrievedContext: [],
@@ -1617,7 +1650,11 @@ Consider:
         ]
       };
     } catch (error) {
-      console.error('❌ Task planning failed:', error);
+      this.logger.error(
+        'task_planning_failed',
+        error instanceof Error ? error : new Error(String(error)),
+        { operation: 'planTasks' }
+      );
 
       // Return error state instead of null
       return {
@@ -1776,7 +1813,15 @@ Consider:
 
       return result;
     } catch (error) {
-      console.error('❌ Orchestration error:', error);
+      this.logger.error(
+        'orchestration_error',
+        error instanceof Error ? error : new Error(String(error)),
+        {
+          operation: 'execute',
+          mode: state.mode,
+          queryPreview: state.query.substring(0, 100),
+        }
+      );
       throw error;
     }
   }

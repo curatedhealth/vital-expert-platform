@@ -67,9 +67,24 @@ export async function GET(request: NextRequest) {
       })
     }
 
+    // Get Prometheus metrics from structured logger exporter
+    let agentOperationMetrics = '';
+    try {
+      const { getPrometheusExporter } = await import('@/lib/services/observability/prometheus-exporter');
+      const exporter = getPrometheusExporter();
+      agentOperationMetrics = await exporter.exportMetrics();
+    } catch (error) {
+      // Don't fail if Prometheus export fails
+      console.error('Failed to export agent operation metrics:', error);
+    }
+
     // Default: Prometheus format
     const platformMetrics = formatPrometheusMetrics(metrics);
-    const prometheusOutput = `${langExtractMetrics}\n\n${platformMetrics}`;
+    const prometheusOutput = [
+      langExtractMetrics,
+      agentOperationMetrics,
+      platformMetrics,
+    ].filter(Boolean).join('\n\n');
 
     return new NextResponse(prometheusOutput, {
       status: 200,
@@ -161,6 +176,10 @@ async function collectMetrics(supabase: any): Promise<MetricValue[]> {
   // Phase 1 RAG monitoring metrics
   const ragMetrics = await collectRAGMetrics();
   metrics.push(...ragMetrics)
+
+  // Agent operation metrics from structured logger
+  const agentOperationMetrics = await collectAgentOperationMetrics();
+  metrics.push(...agentOperationMetrics)
 
   return metrics
 }

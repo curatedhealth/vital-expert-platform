@@ -126,6 +126,19 @@ export class StructuredLogger {
       console.log(output);
     }
 
+    // Export to Prometheus metrics
+    try {
+      const { getPrometheusExporter } = await import('./prometheus-exporter');
+      const exporter = getPrometheusExporter();
+      exporter.recordLogEntry(logEntry);
+    } catch (promError) {
+      // Don't fail on Prometheus export errors
+      // Just log a warning in development
+      if (this.isDevelopment) {
+        console.warn('Prometheus export failed:', promError);
+      }
+    }
+
     // Integration with error tracking (Sentry, etc.)
     if (level === LogLevel.ERROR && error) {
       this.sendToErrorTracking(logEntry, error);

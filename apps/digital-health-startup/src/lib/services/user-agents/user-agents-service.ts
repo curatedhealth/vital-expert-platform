@@ -14,6 +14,9 @@
 
 import { createClient } from '@supabase/supabase-js';
 import type { Agent } from '@/lib/types/agent.types';
+import { withRetry } from '../resilience/retry';
+import { createLogger } from '../observability/structured-logger';
+import { getSupabaseCircuitBreaker } from '../resilience/circuit-breaker';
 
 // ============================================================================
 // TYPES
@@ -75,12 +78,16 @@ export interface IUserAgentsService {
 export class UserAgentsService implements IUserAgentsService {
   private supabase;
   private apiBaseUrl: string;
+  private logger;
+  private circuitBreaker;
 
   constructor() {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
     const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
     this.supabase = createClient(supabaseUrl, supabaseServiceKey);
     this.apiBaseUrl = typeof window !== 'undefined' ? window.location.origin : '';
+    this.logger = createLogger();
+    this.circuitBreaker = getSupabaseCircuitBreaker();
   }
 
   /**
@@ -91,38 +98,47 @@ export class UserAgentsService implements IUserAgentsService {
       throw new Error('User ID is required');
     }
 
-    try {
-      const response = await fetch(`${this.apiBaseUrl}/api/user-agents?userId=${encodeURIComponent(userId)}`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+    return withRetry(async () => {
+      return this.circuitBreaker.execute(async () => {
+        const response = await fetch(`${this.apiBaseUrl}/api/user-agents?userId=${encodeURIComponent(userId)}`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error(`Failed to fetch user agents: ${response.statusText}`);
+        }
+
+        const data = await response.json();
+        return (data.agents || []).map((item: any) => ({
+          id: item.id,
+          user_id: item.user_id,
+          agent_id: item.agent_id,
+          original_agent_id: item.original_agent_id,
+          is_user_copy: item.is_user_copy || false,
+          added_at: item.added_at || item.created_at,
+          last_used_at: item.last_used_at,
+          usage_count: item.usage_count || 0,
+          is_active: item.is_active !== false,
+          metadata: item.metadata || {},
+          created_at: item.created_at,
+          updated_at: item.updated_at,
+          agent: item.agents ? this.normalizeAgentData(item.agents) : undefined,
+        }));
       });
-
-      if (!response.ok) {
-        throw new Error(`Failed to fetch user agents: ${response.statusText}`);
-      }
-
-      const data = await response.json();
-      return (data.agents || []).map((item: any) => ({
-        id: item.id,
-        user_id: item.user_id,
-        agent_id: item.agent_id,
-        original_agent_id: item.original_agent_id,
-        is_user_copy: item.is_user_copy || false,
-        added_at: item.added_at || item.created_at,
-        last_used_at: item.last_used_at,
-        usage_count: item.usage_count || 0,
-        is_active: item.is_active !== false,
-        metadata: item.metadata || {},
-        created_at: item.created_at,
-        updated_at: item.updated_at,
-        agent: item.agents ? this.normalizeAgentData(item.agents) : undefined,
-      }));
-    } catch (error) {
-      console.error('❌ [UserAgentsService] Failed to get user agents:', error);
-      throw error;
-    }
+    }, {
+      maxRetries: 3,
+      initialDelayMs: 1000,
+      onRetry: (attempt, error) => {
+        this.logger.warn('user_agents_fetch_retry', {
+          attempt,
+          userId,
+          error: error.message,
+        });
+      },
+    });
   }
 
   /**

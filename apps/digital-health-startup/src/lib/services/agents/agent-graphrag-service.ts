@@ -11,6 +11,10 @@
 import { pineconeVectorService } from '../vectorstore/pinecone-vector-service';
 import { createClient } from '@supabase/supabase-js';
 import type { Agent } from '@/lib/types/agent.types';
+import { getEmbeddingCache } from '../cache/embedding-cache';
+import { embeddingService } from '../embeddings/openai-embedding-service';
+import { getTracingService } from '../observability/tracing';
+import { createLogger } from '../observability/structured-logger';
 
 export interface AgentSearchQuery {
   query?: string;
@@ -36,6 +40,9 @@ export interface AgentSearchResult {
 
 export class AgentGraphRAGService {
   private supabase: ReturnType<typeof createClient>;
+  private embeddingCache;
+  private tracing;
+  private logger;
 
   constructor() {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -46,12 +53,22 @@ export class AgentGraphRAGService {
     }
 
     this.supabase = createClient(supabaseUrl, supabaseKey);
+    this.embeddingCache = getEmbeddingCache();
+    this.tracing = getTracingService();
+    this.logger = createLogger();
   }
 
   /**
    * Hybrid search: Pinecone (semantic) + Supabase (metadata)
+   * With embedding cache and distributed tracing
    */
   async searchAgents(query: AgentSearchQuery): Promise<AgentSearchResult[]> {
+    const spanId = this.tracing.startSpan('AgentGraphRAGService.searchAgents', undefined, {
+      operation: 'searchAgents',
+      topK: query.topK,
+      minSimilarity: query.minSimilarity,
+    });
+
     const {
       query: queryText,
       embedding,
@@ -60,21 +77,57 @@ export class AgentGraphRAGService {
       filters = {},
     } = query;
 
-    console.log(`🔍 Hybrid agent search - Query: ${queryText || 'embedding'}, Filters:`, filters);
+    const startTime = Date.now();
+    const operationId = `graphrag_search_${Date.now()}`;
 
-    // Step 1: Vector search in Pinecone
-    const pineconeResults = await pineconeVectorService.hybridAgentSearch({
-      text: queryText,
-      embedding,
-      topK: topK * 2, // Get more candidates for filtering
-      minScore: minSimilarity - 0.1, // Slightly lower threshold
-      filters: {
-        tier: filters.tier,
-        status: filters.status || 'active',
-        business_function: filters.business_function,
-        knowledge_domain: filters.knowledge_domain,
-      },
+    this.logger.info('graphrag_search_started', {
+      operation: 'searchAgents',
+      operationId,
+      queryPreview: queryText?.substring(0, 100),
+      hasEmbedding: !!embedding,
+      filters,
     });
+
+    try {
+      // Step 1: Get or generate query embedding (with cache)
+      let queryEmbedding = embedding;
+      
+      if (!queryEmbedding && queryText) {
+        // Check cache first
+        const cached = this.embeddingCache.get(queryText);
+        if (cached) {
+          this.logger.debug('graphrag_cache_hit', {
+            operationId,
+            queryPreview: queryText.substring(0, 50),
+          });
+          queryEmbedding = cached;
+          this.tracing.addTags(spanId, { cacheHit: true });
+        } else {
+          // Generate and cache
+          const embeddingResult = await embeddingService.generateQueryEmbedding(queryText);
+          queryEmbedding = embeddingResult;
+          this.embeddingCache.set(queryText, embeddingResult);
+          this.logger.debug('graphrag_cache_miss', {
+            operationId,
+            queryPreview: queryText.substring(0, 50),
+          });
+          this.tracing.addTags(spanId, { cacheHit: false });
+        }
+      }
+
+      // Step 2: Vector search in Pinecone
+      const pineconeResults = await pineconeVectorService.hybridAgentSearch({
+        text: queryText,
+        embedding: queryEmbedding,
+        topK: topK * 2, // Get more candidates for filtering
+        minScore: minSimilarity - 0.1, // Slightly lower threshold
+        filters: {
+          tier: filters.tier,
+          status: filters.status || 'active',
+          business_function: filters.business_function,
+          knowledge_domain: filters.knowledge_domain,
+        },
+      });
 
     // Step 2: Additional metadata filtering in Supabase
     let filteredResults = pineconeResults;
@@ -138,9 +191,32 @@ export class AgentGraphRAGService {
         };
       });
 
-    console.log(`✅ Found ${enhancedResults.length} agents via hybrid search`);
+      const duration = Date.now() - startTime;
+      this.logger.infoWithMetrics('graphrag_search_completed', duration, {
+        operation: 'searchAgents',
+        operationId,
+        resultCount: enhancedResults.length,
+        topSimilarity: enhancedResults[0]?.similarity,
+      });
 
-    return enhancedResults;
+      this.tracing.endSpan(spanId, true);
+
+      return enhancedResults;
+    } catch (error) {
+      const duration = Date.now() - startTime;
+      this.logger.error(
+        'graphrag_search_failed',
+        error instanceof Error ? error : new Error(String(error)),
+        {
+          operation: 'searchAgents',
+          operationId,
+          duration,
+        }
+      );
+      
+      this.tracing.endSpan(spanId, false, error instanceof Error ? error : new Error(String(error)));
+      throw error;
+    }
   }
 
   /**

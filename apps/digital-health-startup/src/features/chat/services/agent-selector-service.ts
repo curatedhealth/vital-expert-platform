@@ -29,6 +29,9 @@ import {
 } from '@/lib/validators/user-agents-schema';
 import { agentGraphRAGService } from '@/lib/services/agents/agent-graphrag-service';
 import type { AgentSearchResult } from '@/lib/services/agents/agent-graphrag-service';
+import { getSupabaseCircuitBreaker } from '@/lib/services/resilience/circuit-breaker';
+import { getEmbeddingCache } from '@/lib/services/cache/embedding-cache';
+import { getTracingService } from '@/lib/services/observability/tracing';
 
 // ============================================================================
 // TYPES
@@ -86,6 +89,9 @@ export class AgentSelectorService {
   private pinecone: Pinecone;
   private openaiApiKey: string;
   private logger;
+  private supabaseCircuitBreaker;
+  private embeddingCache;
+  private tracing;
 
   constructor(options?: { requestId?: string; userId?: string }) {
     // Initialize Supabase client
@@ -105,6 +111,11 @@ export class AgentSelectorService {
       requestId: options?.requestId,
       userId: options?.userId,
     });
+
+    // Initialize circuit breaker, cache, and tracing for resilience and observability
+    this.supabaseCircuitBreaker = getSupabaseCircuitBreaker();
+    this.embeddingCache = getEmbeddingCache();
+    this.tracing = getTracingService();
   }
 
   /**
@@ -214,6 +225,13 @@ export class AgentSelectorService {
     domains: string[],
     limit: number = 10
   ): Promise<Agent[]> {
+    const spanId = this.tracing.startSpan('AgentSelectorService.findCandidateAgents', undefined, {
+      operation: 'findCandidateAgents',
+      queryLength: query.length,
+      domains: domains.join(','),
+      limit,
+    });
+
     const operationId = `search_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
     const startTime = Date.now();
 
@@ -273,6 +291,8 @@ export class AgentSelectorService {
           topSimilarity: graphRAGResults[0]?.similarity,
         });
 
+        this.tracing.addTags(spanId, { method: 'graphrag', resultCount: agents.length });
+        this.tracing.endSpan(spanId, true);
         return agents;
       } catch (graphRAGError) {
         // GraphRAG failed, fall back to database search
@@ -282,6 +302,7 @@ export class AgentSelectorService {
           fallback: 'database',
         });
 
+        this.tracing.addTags(spanId, { fallback: 'database', graphragError: true });
         throw new GraphRAGSearchError(
           'GraphRAG search failed, falling back to database',
           {
@@ -293,7 +314,10 @@ export class AgentSelectorService {
     } catch (error) {
       // If it's a GraphRAG error, fall back to database
       if (error instanceof GraphRAGSearchError) {
-        return await this.fallbackAgentSearch(query, domains, limit, operationId);
+        const fallbackAgents = await this.fallbackAgentSearch(query, domains, limit, operationId);
+        this.tracing.addTags(spanId, { method: 'fallback', resultCount: fallbackAgents.length });
+        this.tracing.endSpan(spanId, true);
+        return fallbackAgents;
       }
 
       // For other errors, log and fall back
@@ -308,7 +332,10 @@ export class AgentSelectorService {
         }
       );
 
-      return await this.fallbackAgentSearch(query, domains, limit, operationId);
+      const fallbackAgents = await this.fallbackAgentSearch(query, domains, limit, operationId);
+      this.tracing.addTags(spanId, { method: 'error_fallback', resultCount: fallbackAgents.length });
+      this.tracing.endSpan(spanId, false, error instanceof Error ? error : new Error(String(error)));
+      return fallbackAgents;
     }
   }
 
@@ -334,33 +361,37 @@ export class AgentSelectorService {
     });
 
     try {
-      // Build optimized query with proper filtering
-      let queryBuilder = this.supabase
-        .from('agents')
-        .select(`
-          id,
-          name,
-          description,
-          system_prompt,
-          tier,
-          capabilities,
-          knowledge_domains,
-          specialties,
-          model,
-          metadata
-        `);
+      // Use circuit breaker for database query resilience
+      const { data: agents, error } = await this.supabaseCircuitBreaker.execute(async () => {
+        // Build optimized query with proper filtering
+        let queryBuilder = this.supabase
+          .from('agents')
+          .select(`
+            id,
+            name,
+            description,
+            system_prompt,
+            tier,
+            capabilities,
+            knowledge_domains,
+            specialties,
+            model,
+            metadata
+          `);
 
-      // Add domain filtering if available
-      if (domains.length > 0) {
-        queryBuilder = queryBuilder.overlaps('knowledge_domains', domains);
-      }
+        // Add domain filtering if available
+        if (domains.length > 0) {
+          queryBuilder = queryBuilder.overlaps('knowledge_domains', domains);
+        }
 
-      // Order by tier and priority (higher tier = better, tier 1 is best)
-      queryBuilder = queryBuilder
-        .order('tier', { ascending: true })
-        .limit(limit * 2); // Get more candidates for filtering
+        // Order by tier and priority (higher tier = better, tier 1 is best)
+        queryBuilder = queryBuilder
+          .order('tier', { ascending: true })
+          .limit(limit * 2); // Get more candidates for filtering
 
-      const { data: agents, error } = await queryBuilder;
+        const result = await queryBuilder;
+        return result;
+      });
 
       if (error) {
         this.logger.error(
@@ -383,12 +414,14 @@ export class AgentSelectorService {
         });
 
         const generalStartTime = Date.now();
-        const { data: generalAgents, error: generalError } = await this.supabase
-          .from('agents')
-          .select('*')
-          .eq('status', 'active') // Filter by active status
-          .order('tier', { ascending: true })
-          .limit(limit);
+        const { data: generalAgents, error: generalError } = await this.supabaseCircuitBreaker.execute(async () => {
+          return await this.supabase
+            .from('agents')
+            .select('*')
+            .eq('status', 'active') // Filter by active status
+            .order('tier', { ascending: true })
+            .limit(limit);
+        });
 
         if (generalError) {
           this.logger.error(
@@ -448,13 +481,15 @@ export class AgentSelectorService {
     });
 
     try {
-      const { data: agents, error } = await this.supabase
-        .from('agents')
-        .select('*')
-        .eq('status', 'active') // Filter by active status
-        .order('tier', { ascending: true }) // Prefer higher tier agents
-        .order('priority', { ascending: false }) // Then by priority
-        .limit(limit);
+      const { data: agents, error } = await this.supabaseCircuitBreaker.execute(async () => {
+        return await this.supabase
+          .from('agents')
+          .select('*')
+          .eq('status', 'active') // Filter by active status
+          .order('tier', { ascending: true }) // Prefer higher tier agents
+          .order('priority', { ascending: false }) // Then by priority
+          .limit(limit);
+      });
 
       if (error) {
         this.logger.error(

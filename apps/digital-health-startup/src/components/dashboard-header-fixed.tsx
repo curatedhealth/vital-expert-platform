@@ -1,6 +1,5 @@
 'use client'
 
-import { usePathname } from 'next/navigation'
 import Link from 'next/link'
 import {
   SidebarTrigger,
@@ -19,7 +18,6 @@ import { useAuth } from '@/lib/auth/supabase-auth-context'
 import { Separator } from '@/components/ui/separator'
 
 export function DashboardHeader() {
-  const pathname = usePathname()
   const { user, signOut } = useAuth()
 
   const handleSignOut = async () => {

@@ -2,7 +2,6 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
 import { ChevronRight, User, Settings, LogOut, ChevronDown } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { SidebarTrigger } from '@/components/ui/sidebar';
@@ -18,7 +17,6 @@ import { Button } from '@/components/ui/button';
 import { useAuth } from '@/lib/auth/supabase-auth-context';
 
 export function DashboardHeader() {
-  const pathname = usePathname();
   const { user, userProfile, signOut } = useAuth();
 
   // Get display name from user or userProfile

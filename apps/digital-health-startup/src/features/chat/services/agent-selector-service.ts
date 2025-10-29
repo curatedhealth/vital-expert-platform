@@ -156,11 +156,14 @@ export class AgentSelectorService {
       const data = await response.json();
       const analysis = JSON.parse(data.choices[0].message.content);
 
-      console.log(`✅ [AgentSelector] Query analysis complete:`, {
+      const duration = Date.now() - startTime;
+      this.logger.infoWithMetrics('query_analysis_completed', duration, {
+        operation: 'analyzeQuery',
+        operationId,
         intent: analysis.intent,
         domains: analysis.domains,
         complexity: analysis.complexity,
-        confidence: analysis.confidence
+        confidence: analysis.confidence,
       });
 
       return {
@@ -173,7 +176,16 @@ export class AgentSelectorService {
       };
 
     } catch (error) {
-      console.error('❌ [AgentSelector] Query analysis failed:', error);
+      const duration = Date.now() - startTime;
+      this.logger.error(
+        'query_analysis_failed',
+        error instanceof Error ? error : new Error(String(error)),
+        {
+          operation: 'analyzeQuery',
+          operationId,
+          duration,
+        }
+      );
       
       // Fallback analysis
       return {
@@ -302,13 +314,24 @@ export class AgentSelectorService {
 
   /**
    * Fallback agent search using database text search
+   * Enhanced with structured logging and error handling
    */
   private async fallbackAgentSearch(
     query: string,
     domains: string[],
-    limit: number
+    limit: number,
+    operationId?: string
   ): Promise<Agent[]> {
-    console.log('🔄 [AgentSelector] Using fallback database search...');
+    const fallbackId = operationId || `fallback_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+    const startTime = Date.now();
+
+    this.logger.info('fallback_agent_search_started', {
+      operation: 'fallbackAgentSearch',
+      operationId: fallbackId,
+      queryPreview: query.substring(0, 100),
+      domains,
+      limit,
+    });
 
     try {
       // Build optimized query with proper filtering
@@ -332,7 +355,7 @@ export class AgentSelectorService {
         queryBuilder = queryBuilder.overlaps('knowledge_domains', domains);
       }
 
-      // Order by tier and priority (higher tier = better)
+      // Order by tier and priority (higher tier = better, tier 1 is best)
       queryBuilder = queryBuilder
         .order('tier', { ascending: true })
         .limit(limit * 2); // Get more candidates for filtering
@@ -340,58 +363,125 @@ export class AgentSelectorService {
       const { data: agents, error } = await queryBuilder;
 
       if (error) {
-        console.error('❌ [AgentSelector] Fallback search failed:', error);
-        // Return any available agent as last resort
-        return await this.getAnyAvailableAgent(limit);
+        this.logger.error(
+          'fallback_agent_search_failed',
+          new AgentSelectionError('Database fallback search failed', {
+            cause: error as Error,
+            context: { operationId: fallbackId, domains, limit },
+          }),
+          { operation: 'fallbackAgentSearch', operationId: fallbackId }
+        );
+        return await this.getAnyAvailableAgent(limit, fallbackId);
       }
 
       // If no domain-specific results, relax filters
       if (!agents || agents.length === 0) {
-        console.log('⚠️ [AgentSelector] No domain-specific agents found, using general fallback');
-        
-        const { data: generalAgents } = await this.supabase
+        this.logger.warn('no_domain_specific_agents', {
+          operationId: fallbackId,
+          domains,
+          fallingBackToGeneral: true,
+        });
+
+        const generalStartTime = Date.now();
+        const { data: generalAgents, error: generalError } = await this.supabase
           .from('agents')
           .select('*')
+          .eq('status', 'active') // Filter by active status
           .order('tier', { ascending: true })
           .limit(limit);
-        
-        console.log(`✅ [AgentSelector] General fallback found ${generalAgents?.length || 0} agents`);
+
+        if (generalError) {
+          this.logger.error(
+            'general_fallback_search_failed',
+            generalError as Error,
+            { operationId: fallbackId }
+          );
+          return await this.getAnyAvailableAgent(limit, fallbackId);
+        }
+
+        const duration = Date.now() - generalStartTime;
+        this.logger.infoWithMetrics('general_fallback_search_completed', duration, {
+          operation: 'fallbackAgentSearch',
+          operationId: fallbackId,
+          resultCount: generalAgents?.length || 0,
+          method: 'general_fallback',
+        });
+
         return generalAgents || [];
       }
 
-      console.log(`✅ [AgentSelector] Fallback search found ${agents.length} agents`);
-      return agents;
+      const duration = Date.now() - startTime;
+      this.logger.infoWithMetrics('fallback_agent_search_completed', duration, {
+        operation: 'fallbackAgentSearch',
+        operationId: fallbackId,
+        resultCount: agents.length,
+        method: 'domain_filtered',
+      });
 
+      return agents;
     } catch (error) {
-      console.error('❌ [AgentSelector] Fallback search error:', error);
-      // Return any available agent as last resort
-      return await this.getAnyAvailableAgent(limit);
+      this.logger.error(
+        'fallback_agent_search_error',
+        error instanceof Error ? error : new Error(String(error)),
+        { operation: 'fallbackAgentSearch', operationId: fallbackId }
+      );
+      // Last resort: get any available agents
+      return await this.getAnyAvailableAgent(limit, fallbackId);
     }
   }
 
   /**
-   * Get any available agent as a last resort fallback
+   * Get any available agent as last resort
+   * Enhanced with structured logging and status filtering
    */
-  private async getAnyAvailableAgent(limit: number = 5): Promise<Agent[]> {
-    console.log('🔄 [AgentSelector] Getting any available agent as emergency fallback...');
-    
+  private async getAnyAvailableAgent(
+    limit: number = 5,
+    operationId?: string
+  ): Promise<Agent[]> {
+    const emergencyId = operationId || `emergency_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+    const startTime = Date.now();
+
+    this.logger.warn('using_emergency_agent_fallback', {
+      operation: 'getAnyAvailableAgent',
+      operationId: emergencyId,
+      limit,
+    });
+
     try {
       const { data: agents, error } = await this.supabase
         .from('agents')
         .select('*')
-        .order('tier', { ascending: true })
-        .order('priority', { ascending: false })
+        .eq('status', 'active') // Filter by active status
+        .order('tier', { ascending: true }) // Prefer higher tier agents
+        .order('priority', { ascending: false }) // Then by priority
         .limit(limit);
 
       if (error) {
-        console.error('❌ [AgentSelector] Failed to get any agent:', error);
+        this.logger.error(
+          'emergency_fallback_failed',
+          new AgentSelectionError('Emergency fallback failed', {
+            cause: error as Error,
+            context: { operationId: emergencyId, limit },
+          }),
+          { operation: 'getAnyAvailableAgent', operationId: emergencyId }
+        );
         return [];
       }
 
-      console.log(`✅ [AgentSelector] Found ${agents?.length || 0} agents as fallback`);
+      const duration = Date.now() - startTime;
+      this.logger.infoWithMetrics('emergency_fallback_success', duration, {
+        operation: 'getAnyAvailableAgent',
+        operationId: emergencyId,
+        resultCount: agents?.length || 0,
+      });
+
       return agents || [];
     } catch (error) {
-      console.error('❌ [AgentSelector] Error getting fallback agents:', error);
+      this.logger.error(
+        'emergency_fallback_error',
+        error instanceof Error ? error : new Error(String(error)),
+        { operation: 'getAnyAvailableAgent', operationId: emergencyId }
+      );
       return [];
     }
   }
@@ -408,27 +498,63 @@ export class AgentSelectorService {
     query: string,
     analysis: QueryAnalysis
   ): AgentRanking[] {
-    console.log(`📊 [AgentSelector] Ranking ${agents.length} agents...`);
+    const operationId = `ranking_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+    const startTime = Date.now();
 
-    const rankings: AgentRanking[] = agents.map(agent => {
-      const breakdown = this.calculateScoreBreakdown(agent, query, analysis);
-      const totalScore = this.calculateTotalScore(breakdown);
-      const reason = this.generateRankingReason(agent, breakdown, analysis);
-
-      return {
-        agent,
-        score: totalScore,
-        reason,
-        breakdown
-      };
+    this.logger.info('agent_ranking_started', {
+      operation: 'rankAgents',
+      operationId,
+      candidateCount: agents.length,
+      queryPreview: query.substring(0, 100),
+      intent: analysis.intent,
     });
 
-    // Sort by score (highest first)
-    rankings.sort((a, b) => b.score - a.score);
+    try {
+      const rankings: AgentRanking[] = agents.map(agent => {
+        const breakdown = this.calculateScoreBreakdown(agent, query, analysis);
+        const totalScore = this.calculateTotalScore(breakdown);
+        const reason = this.generateRankingReason(agent, breakdown, analysis);
 
-    console.log(`✅ [AgentSelector] Agent ranking complete. Top agent: ${rankings[0]?.agent.name} (score: ${rankings[0]?.score.toFixed(3)})`);
+        return {
+          agent,
+          score: totalScore,
+          reason,
+          breakdown
+        };
+      });
 
-    return rankings;
+      // Sort by score (highest first)
+      rankings.sort((a, b) => b.score - a.score);
+
+      const duration = Date.now() - startTime;
+      
+      this.logger.infoWithMetrics('agent_ranking_completed', duration, {
+        operation: 'rankAgents',
+        operationId,
+        rankedCount: rankings.length,
+        topAgent: rankings[0]?.agent.name,
+        topScore: rankings[0]?.score,
+        scoreDistribution: {
+          min: rankings.length > 0 ? Math.min(...rankings.map(r => r.score)) : 0,
+          max: rankings.length > 0 ? Math.max(...rankings.map(r => r.score)) : 0,
+          avg: rankings.length > 0
+            ? rankings.reduce((sum, r) => sum + r.score, 0) / rankings.length
+            : 0,
+        },
+      });
+
+      return rankings;
+    } catch (error) {
+      this.logger.error(
+        'agent_ranking_failed',
+        error instanceof Error ? error : new Error(String(error)),
+        { operation: 'rankAgents', operationId }
+      );
+      throw new AgentSelectionError('Ranking failed', {
+        cause: error instanceof Error ? error : new Error(String(error)),
+        context: { operationId, agentCount: agents.length },
+      });
+    }
   }
 
   /**
@@ -588,7 +714,11 @@ export class AgentSelectorService {
       return data.data[0].embedding;
 
     } catch (error) {
-      console.error('❌ [AgentSelector] Embedding generation failed:', error);
+      this.logger.error(
+        'embedding_generation_failed',
+        error instanceof Error ? error : new Error(String(error)),
+        { operation: 'generateEmbedding' }
+      );
       throw error;
     }
   }
@@ -598,7 +728,14 @@ export class AgentSelectorService {
    * Combines query analysis, agent search, and ranking
    */
   async selectBestAgent(query: string): Promise<AgentSelectionResult> {
-    console.log('🎯 [AgentSelector] Starting complete agent selection workflow...');
+    const workflowId = `workflow_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+    const startTime = Date.now();
+
+    this.logger.info('agent_selection_workflow_started', {
+      operation: 'selectAgent',
+      workflowId,
+      queryPreview: query.substring(0, 100),
+    });
 
     try {
       // Step 1: Analyze query
@@ -618,7 +755,10 @@ export class AgentSelectorService {
       const selectedAgent = rankings[0];
       const confidence = Math.min(selectedAgent.score + analysis.confidence, 1);
 
-      console.log(`✅ [AgentSelector] Agent selection complete:`, {
+      const duration = Date.now() - startTime;
+      this.logger.infoWithMetrics('agent_selection_workflow_completed', duration, {
+        operation: 'selectAgent',
+        workflowId,
         selectedAgent: selectedAgent.agent.name,
         confidence: confidence.toFixed(3),
         totalCandidates: candidates.length
@@ -633,7 +773,16 @@ export class AgentSelectorService {
       };
 
     } catch (error) {
-      console.error('❌ [AgentSelector] Agent selection failed:', error);
+      const duration = Date.now() - startTime;
+      this.logger.error(
+        'agent_selection_workflow_failed',
+        error instanceof Error ? error : new Error(String(error)),
+        {
+          operation: 'selectAgent',
+          workflowId,
+          duration,
+        }
+      );
       throw error;
     }
   }

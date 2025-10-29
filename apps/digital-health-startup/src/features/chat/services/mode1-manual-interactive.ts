@@ -15,7 +15,7 @@
 
 import { ChatOpenAI } from '@langchain/openai';
 import { ChatAnthropic } from '@langchain/anthropic';
-import { HumanMessage, SystemMessage, AIMessage } from '@langchain/core/messages';
+import { HumanMessage, SystemMessage, AIMessage, ToolMessage } from '@langchain/core/messages';
 import { createClient } from '@supabase/supabase-js';
 import { validateMode1Env } from '../../../lib/config/env-validation';
 import {
@@ -24,6 +24,8 @@ import {
   MODE1_TIMEOUTS,
   TimeoutError,
 } from '../../ask-expert/mode-1/utils/timeout-handler';
+import { ToolRegistry } from '../../ask-expert/mode-1/tools/tool-registry';
+import { convertRegistryToLangChainTools } from '../../ask-expert/mode-1/tools/langchain-tool-adapter';
 
 // ============================================================================
 // TYPES
@@ -59,12 +61,20 @@ export interface Agent {
 export class Mode1ManualInteractiveHandler {
   private supabase;
   private llm: any;
+  private toolRegistry: ToolRegistry;
 
   constructor() {
     // Validate environment variables on initialization
     const env = validateMode1Env();
     
     this.supabase = createClient(env.supabaseUrl, env.supabaseServiceKey);
+    
+    // Initialize tool registry
+    this.toolRegistry = new ToolRegistry(
+      env.supabaseUrl,
+      env.supabaseServiceKey,
+      process.env.TAVILY_API_KEY || process.env.BRAVE_API_KEY
+    );
   }
 
   /**
@@ -285,36 +295,119 @@ export class Mode1ManualInteractiveHandler {
   }
 
   /**
-   * OPTION 3: With Tools (simplified implementation)
+   * OPTION 3: With Tools (real execution)
+   * Uses LangChain function calling to execute tools dynamically
    */
   private async *executeWithTools(
     agent: Agent,
     messages: any[],
     config: Mode1Config
   ): AsyncGenerator<string> {
-    console.log('🛠️  [Mode 1] Executing with tools (simplified)');
+    console.log('🛠️  [Mode 1] Executing with tools (real execution)');
 
     try {
-      // Build enhanced system prompt with tool context
-      const systemPrompt = `${agent.system_prompt}\n\n## Available Tools:\n${agent.tools?.join(', ') || 'None'}`;
+      // Convert tools to LangChain format
+      const langchainTools = convertRegistryToLangChainTools(this.toolRegistry);
+      
+      // Bind tools to LLM for function calling
+      const llmWithTools = this.llm.bindTools(langchainTools);
+
+      // Build enhanced system prompt
+      const systemPrompt = `${agent.system_prompt}\n\n## Available Tools:\n${langchainTools.map(t => `- ${t.name}: ${t.description}`).join('\n')}\n\nUse tools when you need current information, calculations, or database queries.`;
       const enhancedMessages = [
         new SystemMessage(systemPrompt),
-        ...messages
+        ...messages.slice(1) // Skip existing system message if any
       ];
 
-      // Stream response with timeout
-      const stream = await withTimeout(
-        this.llm.stream(enhancedMessages),
-        MODE1_TIMEOUTS.LLM_CALL,
-        'LLM call timed out after 30 seconds'
-      );
+      // Execute tool calling loop (max 5 iterations to prevent infinite loops)
+      let currentMessages = enhancedMessages;
+      let iterations = 0;
+      const maxIterations = 5;
+      let finalResponse = '';
 
-      const generator = this.streamChunks(stream);
-      yield* withTimeoutGenerator(
-        generator,
-        MODE1_TIMEOUTS.LLM_CALL,
-        'LLM streaming timed out'
-      );
+      while (iterations < maxIterations) {
+        iterations++;
+        console.log(`   [Mode 1] Tool execution iteration ${iterations}/${maxIterations}`);
+
+        // Call LLM with tools
+        const response = await withTimeout(
+          llmWithTools.invoke(currentMessages),
+          MODE1_TIMEOUTS.LLM_CALL,
+          'LLM call timed out after 30 seconds'
+        );
+
+        // Check if LLM wants to call a tool
+        // In LangChain, tool calls are in response.tool_calls (array)
+        const toolCalls = (response as any).tool_calls || [];
+        
+        if (toolCalls.length === 0) {
+          // No tool calls, this is the final response
+          finalResponse = response.content;
+          break;
+        }
+
+        // Execute tool calls
+        const toolMessages: ToolMessage[] = [];
+        for (const toolCall of toolCalls) {
+          const toolName = toolCall.name || toolCall.function?.name;
+          const toolArgs = toolCall.args || (toolCall.function?.arguments ? JSON.parse(toolCall.function.arguments) : {});
+          const toolCallId = toolCall.id || toolCall.tool_call_id || `call_${Date.now()}`;
+          
+          console.log(`   [Mode 1] Executing tool: ${toolName}`);
+          
+          try {
+            const toolResult = await withTimeout(
+              this.toolRegistry.executeTool(
+                toolName,
+                toolArgs,
+                {
+                  agent_id: agent.id,
+                }
+              ),
+              MODE1_TIMEOUTS.TOOL_EXECUTION,
+              `Tool ${toolName} execution timed out`
+            );
+
+            toolMessages.push(
+              new ToolMessage({
+                content: toolResult.success 
+                  ? JSON.stringify(toolResult.result)
+                  : `Error: ${toolResult.error}`,
+                tool_call_id: toolCallId,
+              })
+            );
+          } catch (error) {
+            toolMessages.push(
+              new ToolMessage({
+                content: `Error executing tool: ${error instanceof Error ? error.message : 'Unknown error'}`,
+                tool_call_id: toolCallId,
+              })
+            );
+          }
+        }
+
+        // Add response and tool results to messages for next iteration
+        currentMessages = [
+          ...currentMessages,
+          response,
+          ...toolMessages,
+        ];
+      }
+
+      // Stream final response
+      if (finalResponse) {
+        // Simulate streaming by yielding in chunks (word by word for realistic effect)
+        const words = finalResponse.split(' ');
+        for (const word of words) {
+          yield word + ' ';
+          // Small delay for realistic streaming effect
+          await new Promise(resolve => setTimeout(resolve, 20));
+        }
+      } else if (iterations >= maxIterations) {
+        yield 'Maximum tool execution iterations reached. Please try with a more specific query.';
+      } else {
+        yield 'Tool execution completed. Generating response...';
+      }
 
       console.log('✅ [Mode 1] Tool execution completed');
     } catch (error) {
@@ -328,14 +421,15 @@ export class Mode1ManualInteractiveHandler {
   }
 
   /**
-   * OPTION 4: With RAG + Tools (simplified implementation)
+   * OPTION 4: With RAG + Tools (real execution)
+   * Combines RAG context retrieval with tool execution
    */
   private async *executeWithRAGAndTools(
     agent: Agent,
     messages: any[],
     config: Mode1Config
   ): AsyncGenerator<string> {
-    console.log('📚🛠️  [Mode 1] Executing with RAG + Tools (simplified)');
+    console.log('📚🛠️  [Mode 1] Executing with RAG + Tools (real execution)');
 
     try {
       // Get RAG context with timeout (using agent's first knowledge domain)
@@ -346,26 +440,106 @@ export class Mode1ManualInteractiveHandler {
         'RAG retrieval timed out after 10 seconds'
       );
 
+      // Convert tools to LangChain format
+      const langchainTools = convertRegistryToLangChainTools(this.toolRegistry);
+      
+      // Bind tools to LLM for function calling
+      const llmWithTools = this.llm.bindTools(langchainTools);
+
       // Build enhanced system prompt with RAG context and tools
-      const systemPrompt = `${agent.system_prompt}\n\n## Available Tools:\n${agent.tools?.join(', ') || 'None'}\n\n## Relevant Context:\n${ragContext}`;
+      const systemPrompt = `${agent.system_prompt}\n\n## Available Tools:\n${langchainTools.map(t => `- ${t.name}: ${t.description}`).join('\n')}\n\n## Relevant Context from Knowledge Base:\n${ragContext || 'No additional context found.'}\n\nUse tools when you need current information, calculations, or database queries beyond the provided context.`;
+      
       const enhancedMessages = [
         new SystemMessage(systemPrompt),
-        ...messages
+        ...messages.slice(1) // Skip existing system message if any
       ];
 
-      // Stream response with timeout
-      const stream = await withTimeout(
-        this.llm.stream(enhancedMessages),
-        MODE1_TIMEOUTS.LLM_CALL,
-        'LLM call timed out after 30 seconds'
-      );
+      // Execute tool calling loop (max 5 iterations)
+      let currentMessages = enhancedMessages;
+      let iterations = 0;
+      const maxIterations = 5;
+      let finalResponse = '';
 
-      const generator = this.streamChunks(stream);
-      yield* withTimeoutGenerator(
-        generator,
-        MODE1_TIMEOUTS.LLM_CALL,
-        'LLM streaming timed out'
-      );
+      while (iterations < maxIterations) {
+        iterations++;
+        console.log(`   [Mode 1] RAG + Tools iteration ${iterations}/${maxIterations}`);
+
+        // Call LLM with tools
+        const response = await withTimeout(
+          llmWithTools.invoke(currentMessages),
+          MODE1_TIMEOUTS.LLM_CALL,
+          'LLM call timed out after 30 seconds'
+        );
+
+        // Check if LLM wants to call a tool
+        const toolCalls = (response as any).tool_calls || [];
+        
+        if (toolCalls.length === 0) {
+          // No tool calls, this is the final response
+          finalResponse = response.content;
+          break;
+        }
+
+        // Execute tool calls
+        const toolMessages: ToolMessage[] = [];
+        for (const toolCall of toolCalls) {
+          const toolName = toolCall.name || toolCall.function?.name;
+          const toolArgs = toolCall.args || (toolCall.function?.arguments ? JSON.parse(toolCall.function.arguments) : {});
+          const toolCallId = toolCall.id || toolCall.tool_call_id || `call_${Date.now()}`;
+          
+          console.log(`   [Mode 1] Executing tool: ${toolName}`);
+          
+          try {
+            const toolResult = await withTimeout(
+              this.toolRegistry.executeTool(
+                toolName,
+                toolArgs,
+                {
+                  agent_id: agent.id,
+                }
+              ),
+              MODE1_TIMEOUTS.TOOL_EXECUTION,
+              `Tool ${toolName} execution timed out`
+            );
+
+            toolMessages.push(
+              new ToolMessage({
+                content: toolResult.success 
+                  ? JSON.stringify(toolResult.result)
+                  : `Error: ${toolResult.error}`,
+                tool_call_id: toolCallId,
+              })
+            );
+          } catch (error) {
+            toolMessages.push(
+              new ToolMessage({
+                content: `Error executing tool: ${error instanceof Error ? error.message : 'Unknown error'}`,
+                tool_call_id: toolCallId,
+              })
+            );
+          }
+        }
+
+        // Add response and tool results to messages for next iteration
+        currentMessages = [
+          ...currentMessages,
+          response,
+          ...toolMessages,
+        ];
+      }
+
+      // Stream final response
+      if (finalResponse) {
+        const words = finalResponse.split(' ');
+        for (const word of words) {
+          yield word + ' ';
+          await new Promise(resolve => setTimeout(resolve, 20));
+        }
+      } else if (iterations >= maxIterations) {
+        yield 'Maximum tool execution iterations reached. Please try with a more specific query.';
+      } else {
+        yield 'RAG + Tool execution completed. Generating response...';
+      }
 
       console.log('✅ [Mode 1] RAG + Tools execution completed');
     } catch (error) {

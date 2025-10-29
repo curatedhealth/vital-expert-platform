@@ -6,13 +6,29 @@
  * 
  * Features:
  * - Query analysis using OpenAI to extract intent and domains
- * - Pinecone semantic search for candidate agents
+ * - GraphRAG hybrid search for candidate agents (Pinecone + Supabase)
  * - Multi-criteria agent ranking (similarity, domain, tier, capabilities)
  * - Confidence scoring and reasoning generation
+ * - Enterprise-grade observability and error handling
  */
 
 import { createClient } from '@supabase/supabase-js';
 import { Pinecone } from '@pinecone-database/pinecone';
+import { createLogger } from '@/lib/services/observability/structured-logger';
+import {
+  AgentSelectionError,
+  PineconeConnectionError,
+  GraphRAGSearchError,
+  AgentNotFoundError,
+} from '@/lib/errors/agent-errors';
+import {
+  validateAgentSearchQuery,
+  safeValidate,
+  getValidationErrors,
+  AgentSearchQuerySchema,
+} from '@/lib/validators/user-agents-schema';
+import { agentGraphRAGService } from '@/lib/services/agents/agent-graphrag-service';
+import type { AgentSearchResult } from '@/lib/services/agents/agent-graphrag-service';
 
 // ============================================================================
 // TYPES
@@ -69,8 +85,9 @@ export class AgentSelectorService {
   private supabase;
   private pinecone: Pinecone;
   private openaiApiKey: string;
+  private logger;
 
-  constructor() {
+  constructor(options?: { requestId?: string; userId?: string }) {
     // Initialize Supabase client
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
     const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
@@ -82,6 +99,12 @@ export class AgentSelectorService {
     });
 
     this.openaiApiKey = process.env.OPENAI_API_KEY!;
+
+    // Initialize structured logger
+    this.logger = createLogger({
+      requestId: options?.requestId,
+      userId: options?.userId,
+    });
   }
 
   /**
@@ -89,7 +112,15 @@ export class AgentSelectorService {
    * Uses OpenAI to classify medical query characteristics
    */
   async analyzeQuery(query: string): Promise<QueryAnalysis> {
-    console.log('🔍 [AgentSelector] Analyzing query for intent and domains...');
+    const operationId = `analysis_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+    const startTime = Date.now();
+
+    this.logger.info('query_analysis_started', {
+      operation: 'analyzeQuery',
+      operationId,
+      queryLength: query.length,
+      queryPreview: query.substring(0, 100),
+    });
 
     try {
       const response = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -157,84 +188,115 @@ export class AgentSelectorService {
   }
 
   /**
-   * Search for candidate agents using Pinecone semantic search
-   * Filters by domains and capabilities
+   * Search for candidate agents using GraphRAG hybrid search
+   * Falls back to database search if GraphRAG fails
+   * 
+   * Uses enterprise-grade:
+   * - Zod validation
+   * - Structured logging
+   * - Typed error handling
+   * - Performance metrics
    */
   async findCandidateAgents(
     query: string,
     domains: string[],
     limit: number = 10
   ): Promise<Agent[]> {
-    console.log('🔍 [AgentSelector] Searching for candidate agents...');
-    console.log(`   Query: "${query}"`);
-    console.log(`   Domains: ${domains.join(', ')}`);
-    console.log(`   Limit: ${limit}`);
+    const operationId = `search_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+    const startTime = Date.now();
+
+    this.logger.info('agent_search_started', {
+      operation: 'findCandidateAgents',
+      operationId,
+      queryLength: query.length,
+      queryPreview: query.substring(0, 100),
+      domains,
+      limit,
+    });
 
     try {
-      // Generate embedding for the query
-      const queryEmbedding = await this.generateEmbedding(query);
+      // Validate inputs with Zod
+      const queryValidation = safeValidate(
+        AgentSearchQuerySchema,
+        {
+          query,
+          topK: limit,
+          minSimilarity: 0.6,
+          filters: {
+            knowledge_domain: domains.length > 0 ? domains[0] : undefined,
+            status: 'active',
+          },
+        }
+      );
 
-      // Search Pinecone for similar agents - CRITICAL: Use 'agents' namespace
-      const index = this.pinecone.index(process.env.PINECONE_INDEX_NAME!);
-      const agentsNamespace = index.namespace('agents'); // ← FIX: Use dedicated agents namespace
-      
-      const searchParams: any = {
-        vector: queryEmbedding,
-        topK: limit,
-        includeMetadata: true
-      };
-
-      // Add domain filter if domains are specified
-      if (domains.length > 0) {
-        searchParams.filter = {
-          knowledge_domains: { $in: domains }
-        };
+      if (!queryValidation.success) {
+        const errors = getValidationErrors(queryValidation.errors);
+        this.logger.warn('agent_search_validation_failed', {
+          operationId,
+          errors,
+        });
+        // Continue with defaults, but log the issue
       }
 
-      const searchResults = await agentsNamespace.query(searchParams);
+      // Step 1: Try GraphRAG hybrid search first (preferred method)
+      try {
+        const graphRAGResults = await agentGraphRAGService.searchAgents({
+          query,
+          topK: limit,
+          minSimilarity: 0.6,
+          filters: {
+            knowledge_domain: domains.length > 0 ? domains[0] : undefined,
+            status: 'active',
+          },
+        });
 
-      // Extract agent IDs from Pinecone results
-      const agentIds = searchResults.matches
-        .map(match => match.metadata?.agent_id)
-        .filter(Boolean);
+        const agents = graphRAGResults.map((result: AgentSearchResult) => result.agent);
 
-      if (agentIds.length === 0) {
-        console.log('⚠️  [AgentSelector] No agents found in Pinecone, falling back to database search');
-        return await this.fallbackAgentSearch(query, domains, limit);
+        const duration = Date.now() - startTime;
+        this.logger.infoWithMetrics('agent_search_completed', duration, {
+          operation: 'findCandidateAgents',
+          operationId,
+          method: 'graphrag_hybrid',
+          resultCount: agents.length,
+          topSimilarity: graphRAGResults[0]?.similarity,
+        });
+
+        return agents;
+      } catch (graphRAGError) {
+        // GraphRAG failed, fall back to database search
+        this.logger.warn('graphrag_search_failed', {
+          operationId,
+          error: graphRAGError instanceof Error ? graphRAGError.message : String(graphRAGError),
+          fallback: 'database',
+        });
+
+        throw new GraphRAGSearchError(
+          'GraphRAG search failed, falling back to database',
+          {
+            cause: graphRAGError instanceof Error ? graphRAGError : new Error(String(graphRAGError)),
+            context: { operationId, query: query.substring(0, 100), domains },
+          }
+        );
       }
-
-      // Fetch full agent details from Supabase
-      const { data: agents, error } = await this.supabase
-        .from('agents')
-        .select(`
-          id,
-          name,
-          description,
-          system_prompt,
-          tier,
-          capabilities,
-          knowledge_domains,
-          specialties,
-          model,
-          metadata
-        `)
-        .in('id', agentIds);
-
-      if (error) {
-        console.error('❌ [AgentSelector] Failed to fetch agent details:', error);
-        return await this.fallbackAgentSearch(query, domains, limit);
-      }
-
-      console.log(`✅ [AgentSelector] Found ${agents?.length || 0} candidate agents`);
-      return agents || [];
-
     } catch (error) {
-      console.error('❌ [AgentSelector] Pinecone search failed:', error);
-      // Log namespace error specifically for debugging
-      if (error instanceof Error && error.message.includes('namespace')) {
-        console.error('⚠️ [AgentSelector] Namespace error detected - using fallback search');
+      // If it's a GraphRAG error, fall back to database
+      if (error instanceof GraphRAGSearchError) {
+        return await this.fallbackAgentSearch(query, domains, limit, operationId);
       }
-      return await this.fallbackAgentSearch(query, domains, limit);
+
+      // For other errors, log and fall back
+      this.logger.error(
+        'agent_search_error',
+        error instanceof Error ? error : new Error(String(error)),
+        {
+          operation: 'findCandidateAgents',
+          operationId,
+          query: query.substring(0, 100),
+          domains,
+        }
+      );
+
+      return await this.fallbackAgentSearch(query, domains, limit, operationId);
     }
   }
 

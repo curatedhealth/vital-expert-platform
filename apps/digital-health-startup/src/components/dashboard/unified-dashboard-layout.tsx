@@ -108,30 +108,6 @@ function DashboardHeader() {
             );
           })}
         </nav>
-
-        {/* Breadcrumbs */}
-        <Breadcrumb>
-          <BreadcrumbList>
-            {breadcrumbs.map((breadcrumb, index) => {
-              const isLast = index === breadcrumbs.length - 1
-
-              return (
-                <div key={breadcrumb.href} className="flex items-center gap-2">
-                  {index > 0 && <BreadcrumbSeparator />}
-                  <BreadcrumbItem>
-                    {isLast ? (
-                      <BreadcrumbPage>{breadcrumb.label}</BreadcrumbPage>
-                    ) : (
-                      <BreadcrumbLink asChild>
-                        <Link href={breadcrumb.href}>{breadcrumb.label}</Link>
-                      </BreadcrumbLink>
-                    )}
-                  </BreadcrumbItem>
-                </div>
-              )
-            })}
-          </BreadcrumbList>
-        </Breadcrumb>
       </div>
 
       {/* User Menu */}

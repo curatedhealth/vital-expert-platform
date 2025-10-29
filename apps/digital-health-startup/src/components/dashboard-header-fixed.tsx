@@ -78,28 +78,6 @@ export function DashboardHeader() {
       <div className="flex items-center gap-2 flex-1">
         <SidebarTrigger className="-ml-1" />
         <Separator orientation="vertical" className="mr-2 h-4" />
-        <Breadcrumb>
-          <BreadcrumbList>
-            {breadcrumbs.map((breadcrumb, index) => {
-              const isLast = index === breadcrumbs.length - 1
-
-              return (
-                <div key={breadcrumb.href} className="flex items-center gap-2">
-                  {index > 0 && <BreadcrumbSeparator />}
-                  <BreadcrumbItem>
-                    {isLast ? (
-                      <BreadcrumbPage>{breadcrumb.label}</BreadcrumbPage>
-                    ) : (
-                      <BreadcrumbLink asChild>
-                        <Link href={breadcrumb.href}>{breadcrumb.label}</Link>
-                      </BreadcrumbLink>
-                    )}
-                  </BreadcrumbItem>
-                </div>
-              )
-            })}
-          </BreadcrumbList>
-        </Breadcrumb>
       </div>
 
       <div className="flex items-center gap-2">

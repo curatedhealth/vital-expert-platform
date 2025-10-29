@@ -74,32 +74,6 @@ export function DashboardHeader() {
       <SidebarTrigger className="-ml-1" />
       <Separator orientation="vertical" className="mr-2 h-4" />
 
-      {/* Breadcrumb Navigation */}
-      <Breadcrumb>
-        <BreadcrumbList>
-          <BreadcrumbItem className="hidden md:block">
-            <BreadcrumbLink href="/dashboard">
-              Home
-            </BreadcrumbLink>
-          </BreadcrumbItem>
-
-          {breadcrumbs.map((breadcrumb, index) => (
-            <React.Fragment key={breadcrumb.href}>
-              <BreadcrumbSeparator className="hidden md:block" />
-              <BreadcrumbItem>
-                {index === breadcrumbs.length - 1 ? (
-                  <BreadcrumbPage>{breadcrumb.label}</BreadcrumbPage>
-                ) : (
-                  <BreadcrumbLink href={breadcrumb.href}>
-                    {breadcrumb.label}
-                  </BreadcrumbLink>
-                )}
-              </BreadcrumbItem>
-            </React.Fragment>
-          ))}
-        </BreadcrumbList>
-      </Breadcrumb>
-
       {/* Spacer */}
       <div className="ml-auto flex items-center gap-2">
         {/* User Dropdown */}

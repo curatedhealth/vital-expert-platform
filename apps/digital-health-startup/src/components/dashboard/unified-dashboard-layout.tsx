@@ -56,26 +56,6 @@ function DashboardHeader() {
   const pathname = usePathname()
   const { user, userProfile, signOut } = useAuth()
 
-  // Generate breadcrumb items from pathname
-  const getBreadcrumbs = () => {
-    if (!pathname) return []
-
-    const paths = pathname.split('/').filter(Boolean)
-    const breadcrumbs = []
-
-    let currentPath = ''
-    for (const path of paths) {
-      currentPath += `/${path}`
-      breadcrumbs.push({
-        label: routeLabels[path] || path,
-        href: currentPath,
-      })
-    }
-
-    return breadcrumbs
-  }
-
-  const breadcrumbs = getBreadcrumbs()
 
   const handleSignOut = async () => {
     try {

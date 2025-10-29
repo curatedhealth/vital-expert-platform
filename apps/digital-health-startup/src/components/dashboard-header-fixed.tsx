@@ -6,14 +6,6 @@ import {
   SidebarTrigger,
 } from '@/components/ui/sidebar'
 import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from '@/components/ui/breadcrumb'
-import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -26,44 +18,9 @@ import { UserCircle, LogOut, Settings as SettingsIcon } from 'lucide-react'
 import { useAuth } from '@/lib/auth/supabase-auth-context'
 import { Separator } from '@/components/ui/separator'
 
-// Route label mapping
-const routeLabels: Record<string, string> = {
-  dashboard: 'Dashboard',
-  'ask-expert': 'Ask Expert',
-  'ask-panel': 'Ask Panel',
-  agents: 'Agents',
-  knowledge: 'Knowledge',
-  prism: 'Prompt Prism',
-  workflows: 'Workflows',
-  admin: 'Admin',
-  settings: 'Settings',
-  profile: 'Profile',
-}
-
 export function DashboardHeader() {
   const pathname = usePathname()
   const { user, signOut } = useAuth()
-
-  // Generate breadcrumb items from pathname
-  const getBreadcrumbs = () => {
-    if (!pathname) return []
-
-    const paths = pathname.split('/').filter(Boolean)
-    const breadcrumbs = []
-
-    let currentPath = ''
-    for (const path of paths) {
-      currentPath += `/${path}`
-      breadcrumbs.push({
-        label: routeLabels[path] || path,
-        href: currentPath,
-      })
-    }
-
-    return breadcrumbs
-  }
-
-  const breadcrumbs = getBreadcrumbs()
 
   const handleSignOut = async () => {
     try {

@@ -4,14 +4,6 @@ import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { ChevronRight, User, Settings, LogOut, ChevronDown } from 'lucide-react';
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from '@/components/ui/breadcrumb';
 import { Separator } from '@/components/ui/separator';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import {
@@ -25,40 +17,9 @@ import {
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/lib/auth/supabase-auth-context';
 
-// Helper function to get breadcrumb items from pathname
-function getBreadcrumbs(pathname: string) {
-  const segments = pathname.split('/').filter(Boolean);
-  const breadcrumbs: Array<{ label: string; href: string }> = [];
-
-  // Map route segments to readable labels
-  const labelMap: Record<string, string> = {
-    dashboard: 'Dashboard',
-    'ask-expert': 'Ask Expert',
-    'ask-panel': 'Ask Panel',
-    'jobs-to-be-done': 'Jobs-to-be-Done',
-    'solution-builder': 'Build Solution',
-    agents: 'Agents',
-    knowledge: 'Knowledge',
-    prism: 'PROMPTS',
-    capabilities: 'Capabilities',
-    workflows: 'Workflows',
-    admin: 'Admin',
-  };
-
-  let currentPath = '';
-  segments.forEach((segment, index) => {
-    currentPath += `/${segment}`;
-    const label = labelMap[segment] || segment.charAt(0).toUpperCase() + segment.slice(1);
-    breadcrumbs.push({ label, href: currentPath });
-  });
-
-  return breadcrumbs;
-}
-
 export function DashboardHeader() {
   const pathname = usePathname();
   const { user, userProfile, signOut } = useAuth();
-  const breadcrumbs = getBreadcrumbs(pathname);
 
   // Get display name from user or userProfile
   const displayName =

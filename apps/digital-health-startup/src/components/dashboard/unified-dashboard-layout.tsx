@@ -5,14 +5,6 @@ import { AppSidebar } from '@/components/app-sidebar'
 import { Separator } from '@/components/ui/separator'
 import { cn } from '@/shared/services/utils'
 import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from '@/components/ui/breadcrumb'
-import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -26,7 +18,7 @@ import { useAuth } from '@/lib/auth/supabase-auth-context'
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
 
-// Route label mapping for breadcrumbs
+// Top navigation routes
 const topNavRoutes = [
   { label: 'Dashboard', href: '/dashboard' },
   { label: 'Ask Expert', href: '/ask-expert' },
@@ -37,20 +29,6 @@ const topNavRoutes = [
   { label: 'Knowledge', href: '/knowledge' },
   { label: 'Prompt Prism', href: '/prism' },
 ];
-
-const routeLabels: Record<string, string> = {
-  dashboard: 'Dashboard',
-  'ask-expert': 'Ask Expert',
-  'ask-panel': 'Ask Panel',
-  workflows: 'Workflows',
-  'solution-builder': 'Solution Builder',
-  agents: 'Agents',
-  knowledge: 'Knowledge',
-  prism: 'Prompt Prism',
-  admin: 'Admin',
-  settings: 'Settings',
-  profile: 'Profile',
-}
 
 function DashboardHeader() {
   const pathname = usePathname()

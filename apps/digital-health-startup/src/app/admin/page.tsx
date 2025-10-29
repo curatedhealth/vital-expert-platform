@@ -1,20 +1,40 @@
 /**
  * Admin Dashboard
- * Simple redirect to the LLM Management admin view
+ * Main admin page with navigation to different admin views
  */
 
 'use client';
 
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect } from 'react';
+import { AgentAnalyticsDashboard } from '@/components/admin/AgentAnalyticsDashboard';
 
 export default function AdminPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const view = searchParams.get('view');
 
+  // If no view specified, redirect to agent analytics (new default)
   useEffect(() => {
-    // Redirect to the LLM management admin view
-    router.replace('/dashboard/llm-management?view=admin');
-  }, [router]);
+    if (!view) {
+      router.replace('/admin?view=agent-analytics');
+    }
+  }, [view, router]);
+
+  if (view === 'agent-analytics') {
+    return (
+      <div className="container mx-auto py-8">
+        <AgentAnalyticsDashboard />
+      </div>
+    );
+  }
+
+  // Default: redirect to LLM management (legacy)
+  useEffect(() => {
+    if (view !== 'agent-analytics') {
+      router.replace('/dashboard/llm-management?view=admin');
+    }
+  }, [view, router]);
 
   return (
     <div className="flex items-center justify-center min-h-screen">

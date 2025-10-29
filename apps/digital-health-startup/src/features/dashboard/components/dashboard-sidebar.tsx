@@ -108,6 +108,11 @@ const knowledgeAgents: NavItem[] = [];
 // LLM Management specific navigation
 const llmManagementNavItems: NavItem[] = [
   {
+    title: 'Agent Analytics',
+    href: '/admin?view=agent-analytics',
+    icon: BarChart3,
+  },
+  {
     title: 'Provider Dashboard',
     href: '/dashboard/llm-management?view=providers',
     icon: Server,

@@ -107,7 +107,7 @@ async function fetchAllPages() {
   // First verify database access
   try {
     const db = await notion.databases.retrieve({ database_id: DATABASE_ID });
-    console.log(`✅ Database accessible: "${extractText(db.title)}"\n`);
+    console.log(`✅ Database accessible: "${db.title ? extractText(db.title) : 'Unknown'}"\n`);
     console.log(`📊 Database has ${Object.keys(db.properties || {}).length} properties\n`);
   } catch (error: any) {
     console.error('❌ Cannot access database:', error.message);

@@ -17,6 +17,13 @@ import { ChatOpenAI } from '@langchain/openai';
 import { ChatAnthropic } from '@langchain/anthropic';
 import { HumanMessage, SystemMessage, AIMessage } from '@langchain/core/messages';
 import { createClient } from '@supabase/supabase-js';
+import { validateMode1Env } from '../../../lib/config/env-validation';
+import {
+  withTimeout,
+  withTimeoutGenerator,
+  MODE1_TIMEOUTS,
+  TimeoutError,
+} from '../../ask-expert/mode-1/utils/timeout-handler';
 
 // ============================================================================
 // TYPES
@@ -41,7 +48,7 @@ export interface Agent {
   model?: string;
   capabilities?: string[];
   tools?: string[];
-  specialties?: string; // RAG domain for this agent (using specialties instead of knowledge_domains)
+  knowledge_domains?: string[]; // RAG domains for this agent (array of domain strings)
   metadata?: any;
 }
 
@@ -54,9 +61,10 @@ export class Mode1ManualInteractiveHandler {
   private llm: any;
 
   constructor() {
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-    this.supabase = createClient(supabaseUrl, supabaseKey);
+    // Validate environment variables on initialization
+    const env = validateMode1Env();
+    
+    this.supabase = createClient(env.supabaseUrl, env.supabaseServiceKey);
   }
 
   /**
@@ -75,9 +83,9 @@ export class Mode1ManualInteractiveHandler {
       throw new Error(`Agent not found: ${config.agentId}`);
     }
 
-    // Log agent's RAG domain
-    if (agent.specialties) {
-      console.log(`   Agent RAG Domain: ${agent.specialties}`);
+    // Log agent's RAG domains
+    if (agent.knowledge_domains && agent.knowledge_domains.length > 0) {
+      console.log(`   Agent RAG Domains: ${agent.knowledge_domains.join(', ')}`);
     }
 
     // Step 2: Initialize LLM (use model from config or agent default)
@@ -109,7 +117,7 @@ export class Mode1ManualInteractiveHandler {
   private async getAgent(agentId: string): Promise<Agent | null> {
     const { data, error } = await this.supabase
       .from('agents')
-      .select('id, name, system_prompt, model, capabilities, metadata, specialties')
+      .select('id, name, system_prompt, model, capabilities, metadata, knowledge_domains')
       .eq('id', agentId)
       .single();
 
@@ -124,7 +132,7 @@ export class Mode1ManualInteractiveHandler {
     return {
       ...data,
       tools,
-      specialties: data.specialties
+      knowledge_domains: data.knowledge_domains || []
     };
   }
 
@@ -187,18 +195,40 @@ export class Mode1ManualInteractiveHandler {
     console.log('💬 [Mode 1] Executing direct LLM call');
 
     try {
-      const stream = await this.llm.stream(messages);
+      // Wrap LLM streaming with timeout
+      const stream = await withTimeout(
+        this.llm.stream(messages),
+        MODE1_TIMEOUTS.LLM_CALL,
+        'LLM call timed out after 30 seconds'
+      );
 
-      for await (const chunk of stream) {
-        if (chunk.content) {
-          yield chunk.content;
-        }
-      }
+      // Stream chunks with timeout protection
+      const generator = this.streamChunks(stream);
+      yield* withTimeoutGenerator(
+        generator,
+        MODE1_TIMEOUTS.LLM_CALL,
+        'LLM streaming timed out'
+      );
 
       console.log('✅ [Mode 1] Direct execution completed');
     } catch (error) {
       console.error('❌ [Mode 1] Direct execution failed:', error);
-      yield `Error: ${error instanceof Error ? error.message : 'Unknown error'}`;
+      if (error instanceof TimeoutError) {
+        yield `Error: Request timed out. Please try again with a shorter message or contact support if the issue persists.`;
+      } else {
+        yield `Error: ${error instanceof Error ? error.message : 'Unknown error'}`;
+      }
+    }
+  }
+
+  /**
+   * Helper to stream chunks from LLM
+   */
+  private async *streamChunks(stream: any): AsyncGenerator<string> {
+    for await (const chunk of stream) {
+      if (chunk.content) {
+        yield chunk.content;
+      }
     }
   }
 
@@ -213,8 +243,13 @@ export class Mode1ManualInteractiveHandler {
     console.log('📚 [Mode 1] Executing with RAG');
 
     try {
-      // Retrieve relevant context (using agent's specialties)
-      const ragContext = await this.retrieveRAGContext(config.message, agent, agent.specialties);
+      // Retrieve relevant context with timeout (using agent's first knowledge domain)
+      const ragDomain = agent.knowledge_domains?.[0];
+      const ragContext = await withTimeout(
+        this.retrieveRAGContext(config.message, agent, ragDomain),
+        MODE1_TIMEOUTS.RAG_RETRIEVAL,
+        'RAG retrieval timed out after 10 seconds'
+      );
 
       // Inject RAG context into system message
       const enhancedMessages = [...messages];
@@ -224,19 +259,28 @@ export class Mode1ManualInteractiveHandler {
         );
       }
 
-      // Stream response
-      const stream = await this.llm.stream(enhancedMessages);
+      // Stream response with timeout
+      const stream = await withTimeout(
+        this.llm.stream(enhancedMessages),
+        MODE1_TIMEOUTS.LLM_CALL,
+        'LLM call timed out after 30 seconds'
+      );
 
-      for await (const chunk of stream) {
-        if (chunk.content) {
-          yield chunk.content;
-        }
-      }
+      const generator = this.streamChunks(stream);
+      yield* withTimeoutGenerator(
+        generator,
+        MODE1_TIMEOUTS.LLM_CALL,
+        'LLM streaming timed out'
+      );
 
       console.log('✅ [Mode 1] RAG execution completed');
     } catch (error) {
       console.error('❌ [Mode 1] RAG execution failed:', error);
-      yield `Error: ${error instanceof Error ? error.message : 'Unknown error'}`;
+      if (error instanceof TimeoutError) {
+        yield `Error: ${error.message}. Please try again.`;
+      } else {
+        yield `Error: ${error instanceof Error ? error.message : 'Unknown error'}`;
+      }
     }
   }
 
@@ -258,18 +302,28 @@ export class Mode1ManualInteractiveHandler {
         ...messages
       ];
 
-      const stream = await this.llm.stream(enhancedMessages);
+      // Stream response with timeout
+      const stream = await withTimeout(
+        this.llm.stream(enhancedMessages),
+        MODE1_TIMEOUTS.LLM_CALL,
+        'LLM call timed out after 30 seconds'
+      );
 
-      for await (const chunk of stream) {
-        if (chunk.content) {
-          yield chunk.content;
-        }
-      }
+      const generator = this.streamChunks(stream);
+      yield* withTimeoutGenerator(
+        generator,
+        MODE1_TIMEOUTS.LLM_CALL,
+        'LLM streaming timed out'
+      );
 
       console.log('✅ [Mode 1] Tool execution completed');
     } catch (error) {
       console.error('❌ [Mode 1] Tool execution failed:', error);
-      yield `Error: ${error instanceof Error ? error.message : 'Unknown error'}`;
+      if (error instanceof TimeoutError) {
+        yield `Error: ${error.message}. Please try again.`;
+      } else {
+        yield `Error: ${error instanceof Error ? error.message : 'Unknown error'}`;
+      }
     }
   }
 
@@ -284,8 +338,13 @@ export class Mode1ManualInteractiveHandler {
     console.log('📚🛠️  [Mode 1] Executing with RAG + Tools (simplified)');
 
     try {
-      // Get RAG context (using agent's specialties)
-      const ragContext = await this.retrieveRAGContext(config.message, agent, agent.specialties);
+      // Get RAG context with timeout (using agent's first knowledge domain)
+      const ragDomain = agent.knowledge_domains?.[0];
+      const ragContext = await withTimeout(
+        this.retrieveRAGContext(config.message, agent, ragDomain),
+        MODE1_TIMEOUTS.RAG_RETRIEVAL,
+        'RAG retrieval timed out after 10 seconds'
+      );
 
       // Build enhanced system prompt with RAG context and tools
       const systemPrompt = `${agent.system_prompt}\n\n## Available Tools:\n${agent.tools?.join(', ') || 'None'}\n\n## Relevant Context:\n${ragContext}`;
@@ -294,18 +353,28 @@ export class Mode1ManualInteractiveHandler {
         ...messages
       ];
 
-      const stream = await this.llm.stream(enhancedMessages);
+      // Stream response with timeout
+      const stream = await withTimeout(
+        this.llm.stream(enhancedMessages),
+        MODE1_TIMEOUTS.LLM_CALL,
+        'LLM call timed out after 30 seconds'
+      );
 
-      for await (const chunk of stream) {
-        if (chunk.content) {
-          yield chunk.content;
-        }
-      }
+      const generator = this.streamChunks(stream);
+      yield* withTimeoutGenerator(
+        generator,
+        MODE1_TIMEOUTS.LLM_CALL,
+        'LLM streaming timed out'
+      );
 
       console.log('✅ [Mode 1] RAG + Tools execution completed');
     } catch (error) {
       console.error('❌ [Mode 1] RAG + Tools execution failed:', error);
-      yield `Error: ${error instanceof Error ? error.message : 'Unknown error'}`;
+      if (error instanceof TimeoutError) {
+        yield `Error: ${error.message}. Please try again.`;
+      } else {
+        yield `Error: ${error instanceof Error ? error.message : 'Unknown error'}`;
+      }
     }
   }
 

@@ -8,7 +8,7 @@ import { langGraphOrchestrator } from '@/lib/services/langgraph-orchestrator';
  */
 export async function POST(
   request: NextRequest,
-  { params }: { params: { threadId: string } }
+  { params }: { params: Promise<{ threadId: string }> }
 ) {
   try {
     const body = await request.json();
@@ -25,8 +25,10 @@ export async function POST(
       );
     }
 
+    const { threadId } = await params;
+
     await langGraphOrchestrator.updateState({
-      threadId: params.threadId,
+      threadId,
       updates: {
         humanApproval: approved,
         humanFeedback: feedback || null,
@@ -37,7 +39,7 @@ export async function POST(
 
     let result;
     try {
-      result = await langGraphOrchestrator.resumeSession(params.threadId);
+      result = await langGraphOrchestrator.resumeSession(threadId);
     } catch (resumeError: any) {
       console.warn('Resume failed after approval:', resumeError);
       result = {
@@ -49,19 +51,19 @@ export async function POST(
 
     return NextResponse.json({
       success: true,
-      threadId: params.threadId,
+      threadId,
       approved,
       feedback: feedback || null,
       result,
       timestamp: new Date().toISOString()
     });
   } catch (error: any) {
-    console.error(`Error processing approval for thread ${params.threadId}:`, error);
+    console.error(`Error processing approval for thread ${threadId}:`, error);
     return NextResponse.json(
       {
         success: false,
         error: error.message || 'Failed to process approval',
-        threadId: params.threadId,
+        threadId,
         timestamp: new Date().toISOString()
       },
       { status: 500 }
@@ -75,24 +77,26 @@ export async function POST(
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { threadId: string } }
+  { params }: { params: Promise<{ threadId: string }> }
 ) {
   try {
-    const history = await langGraphOrchestrator.getSessionHistory(params.threadId);
+    const { threadId } = await params;
+    const history = await langGraphOrchestrator.getSessionHistory(threadId);
 
     return NextResponse.json({
       success: true,
-      threadId: params.threadId,
+      threadId,
       history,
       timestamp: new Date().toISOString()
     });
   } catch (error: any) {
-    console.error(`Error fetching approval details for thread ${params.threadId}:`, error);
+    const { threadId } = await params;
+    console.error(`Error fetching approval details for thread ${threadId}:`, error);
     return NextResponse.json(
       {
         success: false,
         error: error.message || 'Failed to fetch approval details',
-        threadId: params.threadId,
+        threadId,
         timestamp: new Date().toISOString()
       },
       { status: 500 }

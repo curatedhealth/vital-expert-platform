@@ -7,10 +7,10 @@ import { langGraphOrchestrator } from '@/lib/services/langgraph-orchestrator';
  */
 export async function POST(
   request: NextRequest,
-  { params }: { params: { threadId: string } }
+  { params }: { params: Promise<{ threadId: string }> }
 ) {
   try {
-    const threadId = params.threadId;
+    const { threadId } = await params;
     const body = await request.json();
     const { additionalInput } = body;
 

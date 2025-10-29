@@ -10,10 +10,10 @@ export const runtime = 'nodejs';
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { threadId: string } }
+  { params }: { params: Promise<{ threadId: string }> }
 ) {
   try {
-    const { threadId } = params;
+    const { threadId } = await params;
 
     if (!threadId) {
       return NextResponse.json(
@@ -50,7 +50,8 @@ export async function GET(
     });
 
   } catch (error: any) {
-    console.error(`❌ Error fetching conversation ${params.threadId}:`, error);
+    const { threadId } = await params;
+    console.error(`❌ Error fetching conversation ${threadId}:`, error);
 
     return NextResponse.json(
       {

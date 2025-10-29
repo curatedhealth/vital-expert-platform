@@ -7,10 +7,10 @@ import { langGraphOrchestrator } from '@/lib/services/langgraph-orchestrator';
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { threadId: string } }
+  { params }: { params: Promise<{ threadId: string }> }
 ) {
   try {
-    const threadId = params.threadId;
+    const { threadId } = await params;
     const history = await langGraphOrchestrator.getSessionHistory(threadId);
 
     return NextResponse.json({
@@ -36,10 +36,10 @@ export async function GET(
  */
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { threadId: string } }
+  { params }: { params: Promise<{ threadId: string }> }
 ) {
   try {
-    const threadId = params.threadId;
+    const { threadId } = await params;
     await langGraphOrchestrator.deleteSession(threadId);
 
     return NextResponse.json({

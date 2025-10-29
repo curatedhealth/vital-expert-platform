@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Create Supabase client inside the function to avoid build-time validation
@@ -19,7 +19,7 @@ export async function PUT(
 
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 
-    const { id } = params;
+    const { id } = await params;
     const updates = await request.json();
     
     // Get current agent to merge metadata properly
@@ -178,7 +178,7 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -229,7 +229,7 @@ export async function DELETE(
       console.log('[Agent API Delete] No authenticated user - proceeding with admin privileges');
     }
 
-    const { id } = params;
+    const { id } = await params;
     console.log('[Agent API Delete] Attempting to delete agent:', id);
 
     // Check if agent exists
@@ -312,7 +312,7 @@ export async function DELETE(
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -326,7 +326,7 @@ export async function GET(
     }
 
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
-    const { id } = params;
+    const { id } = await params;
 
     const { data, error } = await supabaseAdmin
       .from('agents')

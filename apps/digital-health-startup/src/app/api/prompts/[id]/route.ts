@@ -5,7 +5,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Create Supabase client inside the function to avoid build-time validation
@@ -21,11 +21,12 @@ export async function GET(
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
+    const { id } = await params;
 
     const { data: prompt, error } = await supabase
       .from('prompts')
       .select('*')
-      .eq('id', params.id)
+      .eq('id', id)
       .single();
 
     if (error) {
@@ -64,7 +65,7 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Create Supabase client inside the function to avoid build-time validation
@@ -109,7 +110,7 @@ export async function PUT(
         updated_by,
         updated_at: new Date().toISOString()
       })
-      .eq('id', params.id)
+      .eq('id', id)
       .select()
       .single();
 
@@ -127,7 +128,7 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Create Supabase client inside the function to avoid build-time validation
@@ -143,11 +144,12 @@ export async function DELETE(
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
+    const { id } = await params;
 
     const { error } = await supabase
       .from('prompts')
       .delete()
-      .eq('id', params.id);
+      .eq('id', id);
 
     if (error) {
       // console.error('Error deleting prompt:', error);

@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Create Supabase client inside the function to avoid build-time validation
@@ -19,7 +19,7 @@ export async function GET(
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const agentId = params.id;
+    const { id: agentId } = await params;
 
     // First verify the agent exists
     const { data: agent, error: agentError } = await supabase

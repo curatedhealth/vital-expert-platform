@@ -10,10 +10,10 @@ import { supabase } from '@vital/sdk/client';
 // GET /api/capabilities/[id] - Fetch specific capability with full details
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params;
+    const { id } = await params;
     const searchParams = request.nextUrl.searchParams;
     const includeCompetencies = searchParams.get('includeCompetencies') !== 'false';
     const includeTools = searchParams.get('includeTools') === 'true';
@@ -79,10 +79,10 @@ export async function GET(
 // PUT /api/capabilities/[id] - Update specific capability
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params;
+    const { id } = await params;
     const updateData = await request.json();
     // Validate capability exists
     const { data: existingCapability, error: fetchError } = await supabase
@@ -152,10 +152,10 @@ export async function PUT(
 // DELETE /api/capabilities/[id] - Deactivate specific capability
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params;
+    const { id } = await params;
     const searchParams = request.nextUrl.searchParams;
     const reason = searchParams.get('reason') || 'Deactivated via API';
     // Check if capability is in use by agents

@@ -13,6 +13,11 @@ import { executeMode1 } from '@/features/chat/services/mode1-manual-interactive'
 import { executeMode2 } from '@/features/chat/services/mode2-automatic-agent-selection';
 import { executeMode3 } from '@/features/chat/services/mode3-autonomous-automatic';
 import { executeMode4 } from '@/features/chat/services/mode4-autonomous-manual';
+import {
+  withTimeout,
+  MODE1_TIMEOUTS,
+  TimeoutError,
+} from '@/features/ask-expert/mode-1/utils/timeout-handler';
 
 interface OrchestrateRequest {
   mode: 'manual' | 'automatic' | 'autonomous' | 'multi-expert';

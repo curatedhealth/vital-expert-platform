@@ -29,7 +29,7 @@ interface InterventionUpdateRequest {
 // GET /api/interventions/[id] - Get specific intervention details
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Create Supabase client inside the function to avoid build-time validation
@@ -46,7 +46,7 @@ export async function GET(
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     // Extract intervention ID from params
-    const interventionId = params.id;
+    const { id: interventionId } = await params;
 
     // Extract token from Authorization header
     const authHeader = request.headers.get('authorization');
@@ -200,7 +200,7 @@ export async function GET(
 // PUT /api/interventions/[id] - Update intervention
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Create Supabase client inside the function to avoid build-time validation
@@ -217,7 +217,7 @@ export async function PUT(
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     // Extract intervention ID from params
-    const interventionId = params.id;
+    const { id: interventionId } = await params;
 
     // Extract token from Authorization header
     const authHeader = request.headers.get('authorization');
@@ -337,7 +337,7 @@ export async function PUT(
 // DELETE /api/interventions/[id] - Delete intervention
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Create Supabase client inside the function to avoid build-time validation
@@ -354,7 +354,7 @@ export async function DELETE(
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     // Extract intervention ID from params
-    const interventionId = params.id;
+    const { id: interventionId } = await params;
 
     // Extract token from Authorization header
     const authHeader = request.headers.get('authorization');

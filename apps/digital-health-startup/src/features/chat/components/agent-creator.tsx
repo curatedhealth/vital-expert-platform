@@ -1274,21 +1274,34 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
     if (!confirmDelete) return;
 
     try {
-      // If it's a localStorage-only agent, just remove it from localStorage
-      const isLocalStorageOnly = (editingAgent as unknown).is_user_copy && editingAgent.is_custom;
+      // All agents are now stored in the database via UserAgentsService
+      // User copies are stored in user_agents table with is_user_copy=true
+      // We need to check if this is a user copy and remove it from user_agents table
+      const isUserCopy = (editingAgent as unknown).is_user_copy || editingAgent.is_custom;
 
-      if (isLocalStorageOnly) {
-        // Remove from localStorage
-        const saved = localStorage.getItem('user-chat-agents');
-        if (saved) {
-          const userAgents = JSON.parse(saved);
-          const filteredAgents = userAgents.filter((agent: unknown) => agent.id !== editingAgent.id);
-          localStorage.setItem('user-chat-agents', JSON.stringify(filteredAgents));
+      if (isUserCopy && user?.id) {
+        // Remove from user_agents table via API
+        try {
+          const response = await fetch('/api/user-agents', {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              userId: user.id,
+              agentId: editingAgent.id,
+            }),
+          });
+
+          if (!response.ok) {
+            throw new Error(`Failed to remove agent: ${response.statusText}`);
+          }
+        } catch (removeError) {
+          console.error('❌ Failed to remove user agent:', removeError);
+          // Continue to delete from agents table as fallback
         }
-      } else {
-        // Delete from database
-        await deleteAgent(editingAgent.id);
       }
+
+      // Delete from agents table (for custom agents created by user)
+      await deleteAgent(editingAgent.id);
 
       // Close modal and refresh
       onClose();

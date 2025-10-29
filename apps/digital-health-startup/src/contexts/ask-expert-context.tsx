@@ -461,6 +461,33 @@ export function AskExpertProvider({ children }: { children: React.ReactNode }) {
 
   const addAgentToUserList = useCallback(async (agentId: string) => {
     if (!user?.id) {
+      console.warn('[AskExpertContext] Cannot add agent: user not authenticated');
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/user-agents', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: user.id,
+          agentId,
+          isUserCopy: false,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to add agent: ${response.statusText}`);
+      }
+
+      // Refresh agents after adding
+      await refreshAgents();
+    } catch (error) {
+      console.error('[AskExpertContext] Failed to add agent to user list:', error);
+      throw error;
+    }
+  }, [user?.id]);
+    if (!user?.id) {
       console.error('❌ User not authenticated');
       return;
     }
@@ -492,6 +519,32 @@ export function AskExpertProvider({ children }: { children: React.ReactNode }) {
   }, [user?.id, refreshAgents]);
 
   const removeAgentFromUserList = useCallback(async (agentId: string) => {
+    if (!user?.id) {
+      console.warn('[AskExpertContext] Cannot remove agent: user not authenticated');
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/user-agents', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: user.id,
+          agentId,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to remove agent: ${response.statusText}`);
+      }
+
+      // Refresh agents after removing
+      await refreshAgents();
+    } catch (error) {
+      console.error('[AskExpertContext] Failed to remove agent from user list:', error);
+      throw error;
+    }
+  }, [user?.id]);
     if (!user?.id) {
       console.error('❌ User not authenticated');
       return;

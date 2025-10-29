@@ -553,44 +553,69 @@ export class Mode1ManualInteractiveHandler {
   }
 
   /**
-   * Retrieve RAG context from knowledge base using Pinecone + Supabase
+   * Retrieve enhanced RAG context from knowledge base
+   * Uses multiple strategies and domains for better results
    */
   private async retrieveRAGContext(query: string, agent: Agent, ragDomain?: string): Promise<string> {
-    console.log('🔍 [Mode 1] Retrieving RAG context using Pinecone + Supabase...');
-    if (ragDomain) {
-      console.log(`   📁 Filtering by domain: ${ragDomain}`);
-    }
-
+    console.log('🔍 [Mode 1] Retrieving enhanced RAG context...');
+    
     try {
-      // Import UnifiedRAGService dynamically
-      const { unifiedRAGService } = await import('../../../lib/services/rag/unified-rag-service');
+      // Import EnhancedRAGService
+      const { enhancedRAGService } = await import('../../ask-expert/mode-1/services/enhanced-rag-service');
       
-      // Use UnifiedRAGService with Pinecone for vector search and Supabase for metadata
-      const ragResult = await unifiedRAGService.query({
-        text: query,
+      // Use all knowledge domains if available, otherwise use single domain
+      const knowledgeDomains = agent.knowledge_domains && agent.knowledge_domains.length > 0
+        ? agent.knowledge_domains
+        : ragDomain
+        ? [ragDomain]
+        : [];
+
+      // Retrieve enhanced context
+      const ragContext = await enhancedRAGService.retrieveContext({
+        query,
         agentId: agent.id,
-        domain: ragDomain,
+        knowledgeDomains,
         maxResults: 5,
         similarityThreshold: 0.7,
-        strategy: 'agent-optimized', // Uses Pinecone with agent domain boosting
-        includeMetadata: true
+        includeUrls: true,
       });
 
-      if (ragResult.sources && ragResult.sources.length > 0) {
-        // Format retrieved documents with source attribution
-        const context = ragResult.sources
-          .map((doc, i) => `[${i + 1}] ${doc.pageContent}\n   Source: ${doc.metadata?.source_title || doc.metadata?.title || 'Document'}`)
-          .join('\n\n');
-
-        console.log(`✅ [Mode 1] Retrieved ${ragResult.sources.length} documents using Pinecone + Supabase` + (ragDomain ? ` from domain ${ragDomain}` : ''));
-        return context;
+      if (ragContext.totalSources > 0) {
+        console.log(`✅ [Mode 1] Retrieved ${ragContext.totalSources} sources from ${ragContext.domainsSearched.join(', ')} (${ragContext.retrievalTime}ms)`);
+        
+        // Return formatted context with metadata
+        return ragContext.context;
       }
 
-      console.log('ℹ️  [Mode 1] No relevant documents found' + (ragDomain ? ` for domain ${ragDomain}` : ''));
-      return '';
+      console.log('ℹ️  [Mode 1] No relevant documents found');
+      return ''; // Return empty string - Mode 1 will proceed without RAG context
 
     } catch (error) {
-      console.error('❌ [Mode 1] RAG retrieval error:', error);
+      console.error('❌ [Mode 1] Enhanced RAG retrieval error:', error);
+      // Fallback to basic retrieval on error
+      try {
+        const { unifiedRAGService } = await import('../../../lib/services/rag/unified-rag-service');
+        const ragResult = await unifiedRAGService.query({
+          text: query,
+          agentId: agent.id,
+          domain: ragDomain,
+          maxResults: 3,
+          similarityThreshold: 0.7,
+          strategy: 'semantic',
+          includeMetadata: true,
+        });
+
+        if (ragResult.sources && ragResult.sources.length > 0) {
+          const context = ragResult.sources
+            .map((doc, i) => `[${i + 1}] ${doc.pageContent}\n   Source: ${doc.metadata?.source_title || doc.metadata?.title || 'Document'}`)
+            .join('\n\n');
+          console.log(`✅ [Mode 1] Fallback retrieval: ${ragResult.sources.length} documents`);
+          return context;
+        }
+      } catch (fallbackError) {
+        console.error('❌ [Mode 1] Fallback RAG retrieval also failed:', fallbackError);
+      }
+      
       return '';
     }
   }

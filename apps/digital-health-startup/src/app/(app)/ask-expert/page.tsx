@@ -383,12 +383,22 @@ function AskExpertPageContent() {
               // Handle different chunk types based on mode
               if (data.type === 'chunk' && data.content) {
                 // Mode 1: Simple chunk
-                fullResponse += data.content;
-                setStreamingMessage(fullResponse);
-                // Update reasoning to show we're processing
-                if (!streamingReasoning || streamingReasoning === 'Thinking...') {
-                  setStreamingReasoning('Processing your request...');
+                // Skip error messages that start with "Error:"
+                if (data.content.startsWith('Error:')) {
+                  // Extract error message for display
+                  const errorMessage = data.content.replace(/^Error:\s*/, '');
+                  setStreamingReasoning(prev => `❌ Error: ${errorMessage}`);
                   setIsStreamingReasoning(true);
+                  // Still accumulate for final error message
+                  fullResponse += data.content;
+                } else {
+                  fullResponse += data.content;
+                  setStreamingMessage(fullResponse);
+                  // Update reasoning to show we're processing
+                  if (!streamingReasoning || streamingReasoning === 'Thinking...' || streamingReasoning.startsWith('❌')) {
+                    setStreamingReasoning('Processing your request...');
+                    setIsStreamingReasoning(true);
+                  }
                 }
               } else if (data.type === 'agent_selection' && data.agent) {
                 // Mode 2 & Mode 3: Agent selection info
@@ -525,10 +535,42 @@ function AskExpertPageContent() {
                 }
                 console.log('✅ Execution completed');
               } else if (data.type === 'error') {
+                // Handle structured error events from backend
+                const errorCode = data.code || 'UNKNOWN_ERROR';
                 const errorMessage = data.message || data.content || `Unknown error from ${mode}`;
-                console.error(`[${mode}] Error:`, errorMessage);
+                console.error(`[${mode}] Error (${errorCode}):`, errorMessage);
                 console.error(`[${mode}] Full error data:`, data);
-                throw new Error(errorMessage);
+                
+                // Map error codes to user-friendly messages
+                let userFriendlyMessage = errorMessage;
+                if (errorCode === 'TIMEOUT_ERROR') {
+                  userFriendlyMessage = 'The request took too long to complete. Please try again with a shorter message.';
+                } else if (errorCode === 'AGENT_NOT_FOUND') {
+                  userFriendlyMessage = 'The selected expert agent could not be found. Please select a different agent.';
+                } else if (errorCode === 'LLM_TIMEOUT' || errorCode === 'LLM_RATE_LIMIT') {
+                  userFriendlyMessage = 'The AI service is temporarily unavailable. Please try again in a moment.';
+                } else if (errorCode === 'RAG_TIMEOUT' || errorCode === 'RAG_SERVICE_UNAVAILABLE') {
+                  userFriendlyMessage = 'The knowledge base search is temporarily unavailable. The response may be less detailed.';
+                } else if (errorCode === 'NETWORK_ERROR') {
+                  userFriendlyMessage = 'Network connection issue. Please check your internet connection and try again.';
+                } else if (errorCode === 'DATABASE_CONNECTION_ERROR') {
+                  userFriendlyMessage = 'Database service is temporarily unavailable. Please try again in a moment.';
+                }
+
+                // Update streaming message with error
+                if (fullResponse.trim() === '') {
+                  fullResponse = userFriendlyMessage;
+                  setStreamingMessage(fullResponse);
+                }
+                
+                setStreamingReasoning(prev => {
+                  const errorText = `❌ ${userFriendlyMessage}`;
+                  return prev ? `${prev}\n\n${errorText}` : errorText;
+                });
+                setIsStreamingReasoning(true);
+                
+                // Don't throw - let the stream complete to show the error message
+                // The error will be shown in the final message
               }
               // Handle generic reasoning events
               else if (data.type === 'reasoning' || data.reasoning) {

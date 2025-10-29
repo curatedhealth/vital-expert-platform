@@ -486,36 +486,6 @@ export function AskExpertProvider({ children }: { children: React.ReactNode }) {
       console.error('[AskExpertContext] Failed to add agent to user list:', error);
       throw error;
     }
-  }, [user?.id]);
-    if (!user?.id) {
-      console.error('❌ User not authenticated');
-      return;
-    }
-
-    try {
-      const response = await fetch('/api/user-agents', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          userId: user.id,
-          agentId: agentId,
-          originalAgentId: null,
-          isUserCopy: false,
-        }),
-      });
-
-      if (response.ok) {
-        console.log(`✅ Agent ${agentId} added to user list`);
-        setUserAddedAgentIds(prev => new Set([...prev, agentId]));
-        await refreshAgents(); // Refresh to update UI
-      } else {
-        console.error('❌ Failed to add agent to user list');
-      }
-    } catch (error) {
-      console.error('❌ Error adding agent to user list:', error);
-    }
   }, [user?.id, refreshAgents]);
 
   const removeAgentFromUserList = useCallback(async (agentId: string) => {
@@ -543,38 +513,6 @@ export function AskExpertProvider({ children }: { children: React.ReactNode }) {
     } catch (error) {
       console.error('[AskExpertContext] Failed to remove agent from user list:', error);
       throw error;
-    }
-  }, [user?.id]);
-    if (!user?.id) {
-      console.error('❌ User not authenticated');
-      return;
-    }
-
-    try {
-      const response = await fetch('/api/user-agents', {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          userId: user.id,
-          agentId: agentId,
-        }),
-      });
-
-      if (response.ok) {
-        console.log(`✅ Agent ${agentId} removed from user list`);
-        setUserAddedAgentIds(prev => {
-          const newSet = new Set(prev);
-          newSet.delete(agentId);
-          return newSet;
-        });
-        await refreshAgents(); // Refresh to update UI
-      } else {
-        console.error('❌ Failed to remove agent from user list');
-      }
-    } catch (error) {
-      console.error('❌ Error removing agent from user list:', error);
     }
   }, [user?.id, refreshAgents]);
 

@@ -88,8 +88,7 @@ export async function POST(request: NextRequest) {
                     const elapsed = Date.now() - startTime;
                     if (elapsed >= MODE1_TIMEOUTS.FULL_REQUEST) {
                       throw new TimeoutError(
-                        'Request timed out after 60 seconds',
-                        MODE1_TIMEOUTS.FULL_REQUEST
+                        'Request timed out after 60 seconds'
                       );
                     }
 

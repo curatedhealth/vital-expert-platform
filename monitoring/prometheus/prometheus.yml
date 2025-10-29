@@ -21,6 +21,7 @@ alerting:
 rule_files:
   - 'alerts/rag-alerts.yml'
   - 'alerts/platform-alerts.yml'
+  - 'alerts/agent-operations-alerts.yml'
 
 # Scrape configurations
 scrape_configs:

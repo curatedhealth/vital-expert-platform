@@ -272,19 +272,6 @@ private log(level, message, context, error) {
 
 ---
 
-### C. Structured Logger → LangSmith Integration
-
-**Current Status**: Already works via LangChain (automatic).
-
-**Enhancement**: Add structured logger metadata to LangSmith traces.
-
-**Implementation**: LangChain already captures traces automatically. We just need to ensure:
-1. Environment variables are set
-2. Metadata from structured logger is passed to LangChain callbacks
-
-**Current**: ✅ Should work automatically if env vars configured  
-**Enhancement**: Pass structured logger context to LangChain callbacks
-
 ---
 
 ## 🎯 Recommended Integration Plan
@@ -441,7 +428,6 @@ private log(level, message, context, error) {
 | Structured Logger → Prometheus | 2-3h | High | **1** | To Do |
 | Structured Logger → Langfuse | 3-4h | Medium | **2** | To Do |
 | Structured Logger → Sentry | 1h | High | **3** | Ready |
-| Enhanced LangSmith | 1h | Low | **4** | Optional |
 
 ---
 
@@ -458,7 +444,8 @@ private log(level, message, context, error) {
 - Enhanced error tracking (Sentry)
 
 **📚 Documented**:
-- LangSmith setup guide
+- Grafana dashboard templates
+- Prometheus alert rules
 
 **✅ Production Ready**:
 - Monitoring infrastructure
@@ -484,7 +471,7 @@ private log(level, message, context, error) {
 - Infrastructure metrics (Prometheus)
 - LLM operations (Langfuse)
 - Application logs (Structured Logger)
-- Workflow debugging (LangSmith)
+- Performance tracking (Prometheus metrics)
 
 ---
 

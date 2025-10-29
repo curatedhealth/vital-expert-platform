@@ -17,6 +17,12 @@ import { StateGraph, START, END } from '@langchain/langgraph';
 import { BaseMessage, HumanMessage, AIMessage } from '@langchain/core/messages';
 import { Mode1ManualInteractiveHandler, type Mode1Config } from './mode1-manual-interactive';
 import { agentSelectorService, type Agent, type QueryAnalysis, type AgentSelectionResult } from './agent-selector-service';
+import { createLogger } from '@/lib/services/observability/structured-logger';
+import {
+  AgentSelectionError,
+  serializeError,
+  getErrorStatusCode,
+} from '@/lib/errors/agent-errors';
 
 // ============================================================================
 // TYPES
@@ -79,9 +85,14 @@ export interface Mode2StreamChunk {
 
 export class Mode2AutomaticAgentSelectionHandler {
   private mode1Handler: Mode1ManualInteractiveHandler;
+  private logger;
 
-  constructor() {
+  constructor(options?: { requestId?: string; userId?: string }) {
     this.mode1Handler = new Mode1ManualInteractiveHandler();
+    this.logger = createLogger({
+      requestId: options?.requestId,
+      userId: options?.userId,
+    });
   }
 
   /**
@@ -89,13 +100,18 @@ export class Mode2AutomaticAgentSelectionHandler {
    * Returns streaming generator with agent selection and response
    */
   async execute(config: Mode2Config): Promise<AsyncGenerator<Mode2StreamChunk>> {
-    console.log('🎯 [Mode 2] Starting Automatic Agent Selection mode');
-    console.log(`   Query: "${config.message}"`);
-    console.log(`   RAG: ${config.enableRAG ? 'ON' : 'OFF'}`);
-    console.log(`   Tools: ${config.enableTools ? 'ON' : 'OFF'}`);
-    console.log(`   Model: ${config.model || 'default'}`);
-
+    const workflowId = `mode2_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
     const startTime = Date.now();
+
+    this.logger.info('mode2_execution_started', {
+      operation: 'Mode2Execute',
+      workflowId,
+      queryPreview: config.message.substring(0, 100),
+      enableRAG: config.enableRAG ?? true,
+      enableTools: config.enableTools ?? true,
+      model: config.model || 'default',
+      userId: config.userId,
+    });
 
     try {
       // Convert conversation history to BaseMessage format
@@ -141,7 +157,17 @@ export class Mode2AutomaticAgentSelectionHandler {
       return this.createStreamingGenerator(result);
 
     } catch (error) {
-      console.error('❌ [Mode 2] Execution failed:', error);
+      const executionTime = Date.now() - startTime;
+      this.logger.error(
+        'mode2_execution_failed',
+        error instanceof Error ? error : new Error(String(error)),
+        {
+          operation: 'Mode2Execute',
+          workflowId,
+          executionTime,
+          queryPreview: config.message.substring(0, 100),
+        }
+      );
       throw error;
     }
   }
@@ -196,12 +222,21 @@ export class Mode2AutomaticAgentSelectionHandler {
    * Node 1: Analyze query to extract intent and domains
    */
   private async analyzeQueryNode(state: Mode2State): Promise<Partial<Mode2State>> {
-    console.log('🔍 [Mode 2] Analyzing query for intent and domains...');
+    this.logger.info('mode2_query_analysis_started', {
+      operation: 'analyzeQuery',
+      queryPreview: state.query.substring(0, 100),
+    });
 
     try {
       const analysis = await agentSelectorService.analyzeQuery(state.query);
 
-      console.log(`✅ [Mode 2] Query analysis complete:`, {
+      this.logger.info('mode2_query_analysis_completed', {
+        operation: 'analyzeQuery',
+        intent: analysis.intent,
+        domains: analysis.domains,
+        complexity: analysis.complexity,
+        confidence: analysis.confidence,
+      });
         intent: analysis.intent,
         domains: analysis.domains,
         complexity: analysis.complexity,
@@ -215,7 +250,11 @@ export class Mode2AutomaticAgentSelectionHandler {
       };
 
     } catch (error) {
-      console.error('❌ [Mode 2] Query analysis failed:', error);
+      this.logger.error(
+        'mode2_query_analysis_failed',
+        error instanceof Error ? error : new Error(String(error)),
+        { operation: 'analyzeQuery' }
+      );
       
       // Fallback analysis
       return {
@@ -237,7 +276,10 @@ export class Mode2AutomaticAgentSelectionHandler {
    * Node 2: Find candidate agents using Pinecone semantic search
    */
   private async findCandidatesNode(state: Mode2State): Promise<Partial<Mode2State>> {
-    console.log('🔍 [Mode 2] Searching for candidate agents...');
+    this.logger.info('mode2_agent_search_started', {
+      operation: 'searchCandidateAgents',
+      domains: state.detectedDomains,
+    });
 
     try {
       const candidates = await agentSelectorService.findCandidateAgents(
@@ -246,14 +288,21 @@ export class Mode2AutomaticAgentSelectionHandler {
         10
       );
 
-      console.log(`✅ [Mode 2] Found ${candidates.length} candidate agents`);
+      this.logger.info('mode2_agent_search_completed', {
+        operation: 'searchCandidateAgents',
+        candidateCount: candidates.length,
+      });
 
       return {
         candidateAgents: candidates
       };
 
     } catch (error) {
-      console.error('❌ [Mode 2] Agent search failed:', error);
+      this.logger.error(
+        'mode2_agent_search_failed',
+        error instanceof Error ? error : new Error(String(error)),
+        { operation: 'searchCandidateAgents' }
+      );
       
       // Return empty array as fallback
       return {
@@ -266,7 +315,10 @@ export class Mode2AutomaticAgentSelectionHandler {
    * Node 3: Rank agents and select the best one
    */
   private async rankAndSelectNode(state: Mode2State): Promise<Partial<Mode2State>> {
-    console.log('📊 [Mode 2] Ranking and selecting best agent...');
+    this.logger.info('mode2_agent_ranking_started', {
+      operation: 'rankAndSelectAgent',
+      candidateCount: state.candidateAgents.length,
+    });
 
     try {
       if (state.candidateAgents.length === 0) {
@@ -282,7 +334,13 @@ export class Mode2AutomaticAgentSelectionHandler {
       const selectedAgent = rankings[0];
       const confidence = Math.min(selectedAgent.score + state.queryAnalysis.confidence, 1);
 
-      console.log(`✅ [Mode 2] Agent selection complete:`, {
+      this.logger.info('mode2_agent_selection_completed', {
+        operation: 'rankAndSelectAgent',
+        selectedAgent: selectionResult.selectedAgent.name,
+        agentId: selectionResult.selectedAgent.id,
+        confidence: selectionResult.confidence,
+        alternativeCount: selectionResult.alternativeAgents.length,
+      });
         selectedAgent: selectedAgent.agent.name,
         confidence: confidence.toFixed(3),
         reason: selectedAgent.reason
@@ -295,7 +353,11 @@ export class Mode2AutomaticAgentSelectionHandler {
       };
 
     } catch (error) {
-      console.error('❌ [Mode 2] Agent ranking failed:', error);
+      this.logger.error(
+        'mode2_agent_ranking_failed',
+        error instanceof Error ? error : new Error(String(error)),
+        { operation: 'rankAndSelectAgent' }
+      );
       
       // Fallback to first available agent
       if (state.candidateAgents.length > 0) {
@@ -315,8 +377,11 @@ export class Mode2AutomaticAgentSelectionHandler {
    * Node 4: Execute with Mode 1 handler
    */
   private async executeMode1Node(state: Mode2State): Promise<Partial<Mode2State>> {
-    console.log('🚀 [Mode 2] Executing with Mode 1 handler...');
-    console.log(`   Selected Agent: ${state.selectedAgent.name}`);
+    this.logger.info('mode2_mode1_execution_started', {
+      operation: 'executeMode1',
+      selectedAgent: state.selectedAgent.name,
+      agentId: state.selectedAgent.id,
+    });
 
     try {
       // Create Mode 1 configuration
@@ -343,7 +408,10 @@ export class Mode2AutomaticAgentSelectionHandler {
         fullResponse += chunk;
       }
 
-      console.log(`✅ [Mode 2] Mode 1 execution completed`);
+      this.logger.info('mode2_mode1_execution_completed', {
+        operation: 'executeMode1',
+        selectedAgent: state.selectedAgent.name,
+      });
 
       return {
         mode1Response: fullResponse,
@@ -351,7 +419,11 @@ export class Mode2AutomaticAgentSelectionHandler {
       };
 
     } catch (error) {
-      console.error('❌ [Mode 2] Mode 1 execution failed:', error);
+      this.logger.error(
+        'mode2_mode1_execution_failed',
+        error instanceof Error ? error : new Error(String(error)),
+        { operation: 'executeMode1', selectedAgent: state.selectedAgent.name }
+      );
       
       return {
         mode1Response: `Error: ${error instanceof Error ? error.message : 'Unknown error'}`,

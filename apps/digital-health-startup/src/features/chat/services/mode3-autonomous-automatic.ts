@@ -23,6 +23,11 @@ import {
 import { chainOfThoughtEngine } from './chain-of-thought-engine';
 import { reActEngine } from './react-engine';
 import { agentSelectorService } from './agent-selector-service';
+import { createLogger } from '@/lib/services/observability/structured-logger';
+import {
+  AgentSelectionError,
+  serializeError,
+} from '@/lib/errors/agent-errors';
 
 // ============================================================================
 // MODE 3 SERVICE CLASS
@@ -30,22 +35,32 @@ import { agentSelectorService } from './agent-selector-service';
 
 export class Mode3AutonomousAutomaticHandler {
   private workflow: any;
+  private logger;
 
-  constructor() {
+  constructor(options?: { requestId?: string; userId?: string }) {
     this.workflow = this.buildMode3Workflow();
+    this.logger = createLogger({
+      requestId: options?.requestId,
+      userId: options?.userId,
+    });
   }
 
   /**
    * Execute Mode 3: Autonomous-Automatic
    */
   async execute(config: Mode3Config): Promise<AsyncGenerator<AutonomousStreamChunk>> {
-    console.log('🤖 [Mode 3] Starting Autonomous-Automatic execution...');
-    console.log(`   Query: ${config.message}`);
-    console.log(`   RAG: ${config.enableRAG ? 'enabled' : 'disabled'}`);
-    console.log(`   Tools: ${config.enableTools ? 'enabled' : 'disabled'}`);
-    console.log(`   Max Iterations: ${config.maxIterations || 10}`);
-
+    const workflowId = `mode3_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
     const startTime = Date.now();
+
+    this.logger.info('mode3_execution_started', {
+      operation: 'Mode3Execute',
+      workflowId,
+      queryPreview: config.message.substring(0, 100),
+      enableRAG: config.enableRAG ?? true,
+      enableTools: config.enableTools ?? true,
+      maxIterations: config.maxIterations || 10,
+      userId: config.userId,
+    });
 
     try {
       // Convert conversation history to BaseMessage format
@@ -87,7 +102,17 @@ export class Mode3AutonomousAutomaticHandler {
       return this.streamMode3Results(result, startTime);
 
     } catch (error) {
-      console.error('❌ [Mode 3] Execution failed:', error);
+      const executionTime = Date.now() - startTime;
+      this.logger.error(
+        'mode3_execution_failed',
+        error instanceof Error ? error : new Error(String(error)),
+        {
+          operation: 'Mode3Execute',
+          workflowId,
+          executionTime,
+          queryPreview: config.message.substring(0, 100),
+        }
+      );
       throw error;
     }
   }
@@ -149,15 +174,25 @@ export class Mode3AutonomousAutomaticHandler {
    * Node 1: Understand Goal
    */
   private async understandGoalNode(state: Mode3State): Promise<Partial<Mode3State>> {
-    console.log('🧠 [Mode 3] Understanding goal...');
+    this.logger.info('mode3_goal_understanding_started', {
+      operation: 'understandGoal',
+      queryPreview: state.query.substring(0, 100),
+    });
 
     try {
       const goalUnderstanding = await chainOfThoughtEngine.understandGoal(state.query);
       
-      console.log('✅ [Mode 3] Goal understanding completed');
+      this.logger.info('mode3_goal_understanding_completed', {
+        operation: 'understandGoal',
+        goalSummary: goalUnderstanding.summary?.substring(0, 200),
+      });
       return { goalUnderstanding };
     } catch (error) {
-      console.error('❌ [Mode 3] Goal understanding failed:', error);
+      this.logger.error(
+        'mode3_goal_understanding_failed',
+        error instanceof Error ? error : new Error(String(error)),
+        { operation: 'understandGoal' }
+      );
       return { error: `Goal understanding failed: ${error instanceof Error ? error.message : 'Unknown error'}` };
     }
   }
@@ -166,7 +201,10 @@ export class Mode3AutonomousAutomaticHandler {
    * Node 2: Select Best Agent
    */
   private async selectAgentNode(state: Mode3State): Promise<Partial<Mode3State>> {
-    console.log('🎯 [Mode 3] Selecting best agent...');
+    this.logger.info('mode3_agent_selection_started', {
+      operation: 'selectAgent',
+      goalSummary: state.goalUnderstanding.summary?.substring(0, 100),
+    });
 
     try {
       // Analyze query for agent selection
@@ -191,7 +229,12 @@ export class Mode3AutonomousAutomaticHandler {
       const selectionReason = `Selected ${selectedAgent.name} based on ${selectedAgent.reason}`;
       const selectionConfidence = selectedAgent.score;
 
-      console.log(`✅ [Mode 3] Agent selected: ${selectedAgent.name} (confidence: ${selectionConfidence.toFixed(2)})`);
+      this.logger.info('mode3_agent_selection_completed', {
+        operation: 'selectAgent',
+        selectedAgent: selectedAgent.name,
+        agentId: selectedAgent.id,
+        confidence: selectionConfidence,
+      });
       
       return {
         candidateAgents,
@@ -200,7 +243,11 @@ export class Mode3AutonomousAutomaticHandler {
         selectionConfidence
       };
     } catch (error) {
-      console.error('❌ [Mode 3] Agent selection failed:', error);
+      this.logger.error(
+        'mode3_agent_selection_failed',
+        error instanceof Error ? error : new Error(String(error)),
+        { operation: 'selectAgent' }
+      );
       return { error: `Agent selection failed: ${error instanceof Error ? error.message : 'Unknown error'}` };
     }
   }
@@ -209,7 +256,10 @@ export class Mode3AutonomousAutomaticHandler {
    * Node 3: Decompose Goal with Selected Agent
    */
   private async decomposeGoalNode(state: Mode3State): Promise<Partial<Mode3State>> {
-    console.log('🔍 [Mode 3] Decomposing goal with selected agent...');
+    this.logger.info('mode3_goal_decomposition_started', {
+      operation: 'decomposeGoal',
+      selectedAgent: state.selectedAgent.name,
+    });
 
     try {
       const subQuestions = await chainOfThoughtEngine.decomposeGoal(
@@ -219,10 +269,17 @@ export class Mode3AutonomousAutomaticHandler {
 
       const prioritizedQuestions = await chainOfThoughtEngine.prioritizeQuestions(subQuestions);
 
-      console.log(`✅ [Mode 3] Goal decomposed into ${prioritizedQuestions.length} sub-questions`);
+      this.logger.info('mode3_goal_decomposition_completed', {
+        operation: 'decomposeGoal',
+        subQuestionCount: prioritizedQuestions.length,
+      });
       return { subQuestions: prioritizedQuestions };
     } catch (error) {
-      console.error('❌ [Mode 3] Goal decomposition failed:', error);
+      this.logger.error(
+        'mode3_goal_decomposition_failed',
+        error instanceof Error ? error : new Error(String(error)),
+        { operation: 'decomposeGoal' }
+      );
       return { error: `Goal decomposition failed: ${error instanceof Error ? error.message : 'Unknown error'}` };
     }
   }
@@ -231,7 +288,10 @@ export class Mode3AutonomousAutomaticHandler {
    * Node 4: Create Execution Plan
    */
   private async createPlanNode(state: Mode3State): Promise<Partial<Mode3State>> {
-    console.log('📋 [Mode 3] Creating execution plan...');
+    this.logger.info('mode3_plan_creation_started', {
+      operation: 'createExecutionPlan',
+      subQuestionCount: state.subQuestions.length,
+    });
 
     try {
       const executionPlan = await chainOfThoughtEngine.createExecutionPlan(
@@ -240,10 +300,17 @@ export class Mode3AutonomousAutomaticHandler {
         state.selectedAgent
       );
 
-      console.log(`✅ [Mode 3] Execution plan created with ${executionPlan.phases.length} phases`);
+      this.logger.info('mode3_plan_creation_completed', {
+        operation: 'createExecutionPlan',
+        phaseCount: executionPlan.phases.length,
+      });
       return { executionPlan };
     } catch (error) {
-      console.error('❌ [Mode 3] Execution plan creation failed:', error);
+      this.logger.error(
+        'mode3_plan_creation_failed',
+        error instanceof Error ? error : new Error(String(error)),
+        { operation: 'createExecutionPlan' }
+      );
       return { error: `Execution plan creation failed: ${error instanceof Error ? error.message : 'Unknown error'}` };
     }
   }
@@ -252,7 +319,10 @@ export class Mode3AutonomousAutomaticHandler {
    * Node 5: Execute ReAct Loop
    */
   private async executeReActNode(state: Mode3State): Promise<Partial<Mode3State>> {
-    console.log('🔄 [Mode 3] Executing ReAct loop...');
+    this.logger.info('mode3_react_loop_started', {
+      operation: 'executeReActLoop',
+      maxIterations: state.config.maxIterations || 10,
+    });
 
     try {
       // Create a streaming callback that will yield steps in real-time
@@ -275,7 +345,11 @@ export class Mode3AutonomousAutomaticHandler {
       // Store streaming steps in state for later streaming
       (state as any).streamingSteps = streamingSteps;
 
-      console.log(`✅ [Mode 3] ReAct loop completed after ${reactResult.iterations.length} iterations`);
+      this.logger.info('mode3_react_loop_completed', {
+        operation: 'executeReActLoop',
+        iterationCount: reactResult.iterations.length,
+        toolsUsed: reactResult.toolsUsed.length,
+      });
       
       return {
         iterations: reactResult.iterations,
@@ -284,7 +358,11 @@ export class Mode3AutonomousAutomaticHandler {
         toolsUsed: reactResult.toolsUsed
       };
     } catch (error) {
-      console.error('❌ [Mode 3] ReAct execution failed:', error);
+      this.logger.error(
+        'mode3_react_loop_failed',
+        error instanceof Error ? error : new Error(String(error)),
+        { operation: 'executeReActLoop' }
+      );
       return { error: `ReAct execution failed: ${error instanceof Error ? error.message : 'Unknown error'}` };
     }
   }
@@ -293,7 +371,10 @@ export class Mode3AutonomousAutomaticHandler {
    * Node 6: Synthesize Final Answer
    */
   private async synthesizeAnswerNode(state: Mode3State): Promise<Partial<Mode3State>> {
-    console.log('📝 [Mode 3] Synthesizing final answer...');
+    this.logger.info('mode3_synthesis_started', {
+      operation: 'synthesizeFinalAnswer',
+      iterationCount: state.iterations.length,
+    });
 
     try {
       // The final answer is already synthesized in the ReAct loop
@@ -301,10 +382,17 @@ export class Mode3AutonomousAutomaticHandler {
       
       const executionTime = Date.now() - new Date(state.timestamp).getTime();
       
-      console.log('✅ [Mode 3] Final answer synthesis completed');
+      this.logger.info('mode3_synthesis_completed', {
+        operation: 'synthesizeFinalAnswer',
+        answerLength: finalAnswer.length,
+      });
       return { executionTime };
     } catch (error) {
-      console.error('❌ [Mode 3] Final answer synthesis failed:', error);
+      this.logger.error(
+        'mode3_synthesis_failed',
+        error instanceof Error ? error : new Error(String(error)),
+        { operation: 'synthesizeFinalAnswer' }
+      );
       return { error: `Final answer synthesis failed: ${error instanceof Error ? error.message : 'Unknown error'}` };
     }
   }
@@ -317,7 +405,10 @@ export class Mode3AutonomousAutomaticHandler {
     result: Mode3State, 
     startTime: number
   ): AsyncGenerator<AutonomousStreamChunk> {
-    console.log('📡 [Mode 3] Streaming results...');
+    this.logger.info('mode3_streaming_started', {
+      operation: 'streamResults',
+      resultSummary: result.finalAnswer?.substring(0, 100),
+    });
 
     try {
       // Stream goal understanding

@@ -26,6 +26,8 @@ import {
 } from '../../ask-expert/mode-1/utils/timeout-handler';
 import { ToolRegistry } from '../../ask-expert/mode-1/tools/tool-registry';
 import { convertRegistryToLangChainTools } from '../../ask-expert/mode-1/tools/langchain-tool-adapter';
+import { Mode1ErrorHandler, withRetry, Mode1ErrorCode } from '../../ask-expert/mode-1/utils/error-handler';
+import { llmCircuitBreaker, ragCircuitBreaker, toolCircuitBreaker } from '../../ask-expert/mode-1/utils/circuit-breaker';
 
 // ============================================================================
 // TYPES
@@ -87,10 +89,27 @@ export class Mode1ManualInteractiveHandler {
     console.log(`   Tools: ${config.enableTools ? 'ON' : 'OFF'}`);
     console.log(`   Model: ${config.model || 'default'}`);
 
-    // Step 1: Get agent from database
-    const agent = await this.getAgent(config.agentId);
+    // Step 1: Get agent from database (with error handling)
+    const agent = await withRetry(
+      () => this.getAgent(config.agentId),
+      {
+        maxRetries: 2,
+        retryableErrors: [
+          Mode1ErrorCode.DATABASE_CONNECTION_ERROR,
+          Mode1ErrorCode.NETWORK_ERROR,
+        ],
+      }
+    );
+
     if (!agent) {
-      throw new Error(`Agent not found: ${config.agentId}`);
+      const error = Mode1ErrorHandler.createError(
+        new Error(`Agent not found: ${config.agentId}`),
+        { agentId: config.agentId, operation: 'getAgent' }
+      );
+      error.code = Mode1ErrorCode.AGENT_NOT_FOUND;
+      error.userMessage = `The requested expert agent could not be found. Please verify the agent ID or select a different agent.`;
+      Mode1ErrorHandler.logError(error);
+      throw error;
     }
 
     // Log agent's RAG domains
@@ -122,28 +141,56 @@ export class Mode1ManualInteractiveHandler {
   }
 
   /**
-   * Get agent from database
+   * Get agent from database (with error handling)
    */
   private async getAgent(agentId: string): Promise<Agent | null> {
-    const { data, error } = await this.supabase
-      .from('agents')
-      .select('id, name, system_prompt, model, capabilities, metadata, knowledge_domains')
-      .eq('id', agentId)
-      .single();
+    try {
+      const { data, error } = await this.supabase
+        .from('agents')
+        .select('id, name, system_prompt, model, capabilities, metadata, knowledge_domains')
+        .eq('id', agentId)
+        .single();
 
-    if (error) {
-      console.error('❌ [Mode 1] Failed to fetch agent:', error);
-      return null;
+      if (error) {
+        const mode1Error = Mode1ErrorHandler.createError(error, {
+          agentId,
+          operation: 'getAgent',
+        });
+        Mode1ErrorHandler.logError(mode1Error);
+        throw mode1Error;
+      }
+
+      if (!data) {
+        return null;
+      }
+
+      // Check if agent is active
+      if (data.metadata?.status === 'inactive') {
+        const error = Mode1ErrorHandler.createError(
+          new Error(`Agent ${agentId} is inactive`),
+          { agentId, operation: 'getAgent' }
+        );
+        error.code = Mode1ErrorCode.AGENT_INACTIVE;
+        error.userMessage = 'This expert agent is currently unavailable. Please select a different agent.';
+        Mode1ErrorHandler.logError(error);
+        throw error;
+      }
+
+      // Extract tools from metadata if present
+      const tools = data.metadata?.tools || [];
+
+      return {
+        ...data,
+        tools,
+        knowledge_domains: data.knowledge_domains || []
+      };
+    } catch (error) {
+      const mode1Error = Mode1ErrorHandler.createError(error, {
+        agentId,
+        operation: 'getAgent',
+      });
+      throw mode1Error;
     }
-
-    // Extract tools from metadata if present
-    const tools = data.metadata?.tools || [];
-
-    return {
-      ...data,
-      tools,
-      knowledge_domains: data.knowledge_domains || []
-    };
   }
 
   /**
@@ -205,11 +252,21 @@ export class Mode1ManualInteractiveHandler {
     console.log('💬 [Mode 1] Executing direct LLM call');
 
     try {
-      // Wrap LLM streaming with timeout
-      const stream = await withTimeout(
-        this.llm.stream(messages),
-        MODE1_TIMEOUTS.LLM_CALL,
-        'LLM call timed out after 30 seconds'
+      // Use circuit breaker for LLM calls
+      const stream = await llmCircuitBreaker.execute(
+        async () => {
+          return await withTimeout(
+            this.llm.stream(messages),
+            MODE1_TIMEOUTS.LLM_CALL,
+            'LLM call timed out after 30 seconds'
+          );
+        },
+        async () => {
+          // Fallback: return empty stream
+          return (async function* () {
+            yield '';
+          })();
+        }
       );
 
       // Stream chunks with timeout protection
@@ -222,12 +279,11 @@ export class Mode1ManualInteractiveHandler {
 
       console.log('✅ [Mode 1] Direct execution completed');
     } catch (error) {
-      console.error('❌ [Mode 1] Direct execution failed:', error);
-      if (error instanceof TimeoutError) {
-        yield `Error: Request timed out. Please try again with a shorter message or contact support if the issue persists.`;
-      } else {
-        yield `Error: ${error instanceof Error ? error.message : 'Unknown error'}`;
-      }
+      const mode1Error = Mode1ErrorHandler.createError(error, {
+        operation: 'executeDirect',
+      });
+      Mode1ErrorHandler.logError(mode1Error);
+      yield Mode1ErrorHandler.formatUserMessage(mode1Error);
     }
   }
 
@@ -285,12 +341,12 @@ export class Mode1ManualInteractiveHandler {
 
       console.log('✅ [Mode 1] RAG execution completed');
     } catch (error) {
-      console.error('❌ [Mode 1] RAG execution failed:', error);
-      if (error instanceof TimeoutError) {
-        yield `Error: ${error.message}. Please try again.`;
-      } else {
-        yield `Error: ${error instanceof Error ? error.message : 'Unknown error'}`;
-      }
+      const mode1Error = Mode1ErrorHandler.createError(error, {
+        operation: 'executeWithRAG',
+        agentId: agent.id,
+      });
+      Mode1ErrorHandler.logError(mode1Error);
+      yield Mode1ErrorHandler.formatUserMessage(mode1Error);
     }
   }
 
@@ -411,12 +467,12 @@ export class Mode1ManualInteractiveHandler {
 
       console.log('✅ [Mode 1] Tool execution completed');
     } catch (error) {
-      console.error('❌ [Mode 1] Tool execution failed:', error);
-      if (error instanceof TimeoutError) {
-        yield `Error: ${error.message}. Please try again.`;
-      } else {
-        yield `Error: ${error instanceof Error ? error.message : 'Unknown error'}`;
-      }
+      const mode1Error = Mode1ErrorHandler.createError(error, {
+        operation: 'executeWithTools',
+        agentId: agent.id,
+      });
+      Mode1ErrorHandler.logError(mode1Error);
+      yield Mode1ErrorHandler.formatUserMessage(mode1Error);
     }
   }
 
@@ -543,12 +599,12 @@ export class Mode1ManualInteractiveHandler {
 
       console.log('✅ [Mode 1] RAG + Tools execution completed');
     } catch (error) {
-      console.error('❌ [Mode 1] RAG + Tools execution failed:', error);
-      if (error instanceof TimeoutError) {
-        yield `Error: ${error.message}. Please try again.`;
-      } else {
-        yield `Error: ${error instanceof Error ? error.message : 'Unknown error'}`;
-      }
+      const mode1Error = Mode1ErrorHandler.createError(error, {
+        operation: 'executeWithRAGAndTools',
+        agentId: agent.id,
+      });
+      Mode1ErrorHandler.logError(mode1Error);
+      yield Mode1ErrorHandler.formatUserMessage(mode1Error);
     }
   }
 
@@ -560,25 +616,46 @@ export class Mode1ManualInteractiveHandler {
     console.log('🔍 [Mode 1] Retrieving enhanced RAG context...');
     
     try {
-      // Import EnhancedRAGService
-      const { enhancedRAGService } = await import('../../ask-expert/mode-1/services/enhanced-rag-service');
-      
-      // Use all knowledge domains if available, otherwise use single domain
-      const knowledgeDomains = agent.knowledge_domains && agent.knowledge_domains.length > 0
-        ? agent.knowledge_domains
-        : ragDomain
-        ? [ragDomain]
-        : [];
+      // Use circuit breaker for RAG retrieval
+      const ragContext = await ragCircuitBreaker.execute(
+        async () => {
+          // Import EnhancedRAGService
+          const { enhancedRAGService } = await import('../../ask-expert/mode-1/services/enhanced-rag-service');
+          
+          // Use all knowledge domains if available, otherwise use single domain
+          const knowledgeDomains = agent.knowledge_domains && agent.knowledge_domains.length > 0
+            ? agent.knowledge_domains
+            : ragDomain
+            ? [ragDomain]
+            : [];
 
-      // Retrieve enhanced context
-      const ragContext = await enhancedRAGService.retrieveContext({
-        query,
-        agentId: agent.id,
-        knowledgeDomains,
-        maxResults: 5,
-        similarityThreshold: 0.7,
-        includeUrls: true,
-      });
+          // Retrieve enhanced context with retry
+          return await withRetry(
+            async () => {
+              return await enhancedRAGService.retrieveContext({
+                query,
+                agentId: agent.id,
+                knowledgeDomains,
+                maxResults: 5,
+                similarityThreshold: 0.7,
+                includeUrls: true,
+              });
+            },
+            {
+              maxRetries: 2,
+              retryableErrors: [
+                Mode1ErrorCode.RAG_TIMEOUT,
+                Mode1ErrorCode.NETWORK_ERROR,
+              ],
+            }
+          );
+        },
+        async () => {
+          // Fallback: return empty context if RAG is down
+          console.warn('⚠️  [Mode 1] RAG circuit breaker OPEN - proceeding without RAG context');
+          return { context: '', sources: [], totalSources: 0, strategy: 'fallback', retrievalTime: 0, domainsSearched: [] };
+        }
+      );
 
       if (ragContext.totalSources > 0) {
         console.log(`✅ [Mode 1] Retrieved ${ragContext.totalSources} sources from ${ragContext.domainsSearched.join(', ')} (${ragContext.retrievalTime}ms)`);

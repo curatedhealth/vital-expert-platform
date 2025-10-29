@@ -195,35 +195,84 @@ function AskExpertPageContent() {
     scrollToBottom();
   }, [messages, streamingMessage, scrollToBottom]);
 
-  // Load conversations from localStorage
+  // Conversations management with database (replaces localStorage)
+  const {
+    conversations: dbConversations,
+    isLoading: conversationsLoading,
+    createMutation,
+    updateMutation,
+    deleteMutation,
+    migrateMutation,
+  } = useConversations(user?.id || null);
+  const migrationCompleted = useRef(false);
+
+  // Migrate from localStorage on mount (one-time)
   useEffect(() => {
-    const saved = localStorage.getItem('vital-conversations');
-    if (saved) {
-      const parsed = JSON.parse(saved);
-      setConversations(parsed);
-      if (parsed.length > 0) {
-        setActiveConversationId(parsed[0].id);
-        setMessages(parsed[0].messages);
+    if (user?.id && typeof window !== 'undefined' && !migrationCompleted.current) {
+      const hasLocalStorage = localStorage.getItem('vital-conversations');
+      if (hasLocalStorage && !migrationCompleted.current) {
+        migrateMutation.mutate(undefined, {
+          onSuccess: () => {
+            migrationCompleted.current = true;
+          },
+        });
       }
-    } else {
+    }
+  }, [user?.id, migrateMutation]);
+
+  // Load conversations from database
+  useEffect(() => {
+    if (dbConversations && dbConversations.length > 0) {
+      setConversations(dbConversations);
+      if (!activeConversationId && dbConversations[0]) {
+        setActiveConversationId(dbConversations[0].id);
+        setMessages(dbConversations[0].messages);
+      }
+    } else if (!conversationsLoading && (!dbConversations || dbConversations.length === 0)) {
+      // Create first conversation if none exist
       const newConv: Conversation = {
-        id: Date.now().toString(),
+        id: `temp_${Date.now()}`,
         title: 'New Conversation',
         messages: [],
         createdAt: Date.now(),
         updatedAt: Date.now(),
       };
-      setConversations([newConv]);
-      setActiveConversationId(newConv.id);
+      if (user?.id) {
+        createMutation.mutate({
+          title: newConv.title,
+          messages: newConv.messages,
+          createdAt: newConv.createdAt,
+          updatedAt: newConv.updatedAt,
+        }, {
+          onSuccess: (created) => {
+            setConversations([created]);
+            setActiveConversationId(created.id);
+          },
+        });
+      } else {
+        setConversations([newConv]);
+        setActiveConversationId(newConv.id);
+      }
     }
-  }, []);
+  }, [dbConversations, conversationsLoading, user?.id, createMutation, activeConversationId]);
 
-  // Save conversations
+  // Save conversation updates to database
   useEffect(() => {
-    if (conversations.length > 0) {
-      localStorage.setItem('vital-conversations', JSON.stringify(conversations));
+    if (conversations.length > 0 && user?.id && !conversationsLoading) {
+      const activeConv = conversations.find(c => c.id === activeConversationId);
+      if (activeConv && activeConv.id && !activeConv.id.startsWith('temp_')) {
+        // Only update existing conversations (not temp ones)
+        updateMutation.mutate({
+          conversationId: activeConv.id,
+          updates: {
+            messages: activeConv.messages,
+            title: activeConv.title,
+            isPinned: activeConv.isPinned,
+          },
+        });
+      }
     }
-  }, [conversations]);
+  }, [conversations, activeConversationId, user?.id, conversationsLoading, updateMutation]);
 
   // Fetch prompt starters when selected agents change
   useEffect(() => {

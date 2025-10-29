@@ -7,6 +7,7 @@ import {
   safeValidate,
   getValidationErrors,
   validateMigrationRequest,
+  UserAgentCreateSchema,
 } from '@/lib/validators/user-agents-schema';
 import {
   UserAgentOperationError,
@@ -47,10 +48,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     
     // Validate request body
-    const validation = safeValidate(
-      require('@/lib/validators/user-agents-schema').UserAgentCreateSchema,
-      body
-    );
+    const validation = safeValidate(UserAgentCreateSchema, body);
 
     if (!validation.success) {
       const errors = getValidationErrors(validation.errors);

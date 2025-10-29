@@ -542,7 +542,11 @@ export class Mode3AutonomousAutomaticHandler {
       };
 
     } catch (error) {
-      console.error('❌ [Mode 3] Streaming failed:', error);
+      this.logger.error(
+        'mode3_streaming_failed',
+        error instanceof Error ? error : new Error(String(error)),
+        { operation: 'streamResults' }
+      );
       yield {
         type: 'error',
         content: `Streaming failed: ${error instanceof Error ? error.message : 'Unknown error'}`,

@@ -37,6 +37,12 @@ import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { z } from 'zod';
 import { Document } from '@langchain/core/documents';
 import { RunnableSequence } from '@langchain/core/runnables';
+import { createLogger } from '@/lib/services/observability/structured-logger';
+import { agentGraphRAGService } from '@/lib/services/agents/agent-graphrag-service';
+import {
+  AgentSelectionError,
+  GraphRAGSearchError,
+} from '@/lib/errors/agent-errors';
 
 // ============================================================================
 // TYPE DEFINITIONS & VALIDATION SCHEMAS
@@ -552,6 +558,7 @@ export class UnifiedLangGraphOrchestrator {
   private supabase: SupabaseClient | null = null;
   private workflow: any = null;
   private checkpointer: MemorySaver;
+  private logger;
 
   /**
    * Private constructor for singleton pattern
@@ -577,6 +584,11 @@ export class UnifiedLangGraphOrchestrator {
 
     // Initialize checkpointer for state persistence
     this.checkpointer = new MemorySaver();
+
+    // Initialize structured logger
+    this.logger = createLogger({
+      service: 'UnifiedLangGraphOrchestrator',
+    });
 
     // Initialize Supabase connection
     this.initializeSupabase();
@@ -605,7 +617,10 @@ export class UnifiedLangGraphOrchestrator {
     const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
     if (!supabaseUrl || !supabaseKey) {
-      console.warn('⚠️  Supabase not configured - RAG features will be disabled');
+      this.logger.warn('supabase_not_configured', {
+        operation: 'initializeSupabase',
+        message: 'RAG features will be disabled',
+      });
       return;
     }
 
@@ -618,9 +633,15 @@ export class UnifiedLangGraphOrchestrator {
         queryName: 'match_documents'
       });
 
-      console.log('✅ Supabase vector store initialized');
+      this.logger.info('supabase_initialized', {
+        operation: 'initializeSupabase',
+      });
     } catch (error) {
-      console.error('❌ Failed to initialize Supabase:', error);
+      this.logger.error(
+        'supabase_initialization_failed',
+        error instanceof Error ? error : new Error(String(error)),
+        { operation: 'initializeSupabase' }
+      );
     }
   }
 
@@ -930,14 +951,83 @@ Return the most relevant domains (1-3 typically).`;
    */
   private async selectAgents(state: UnifiedState): Promise<Partial<UnifiedState>> {
     const startTime = Date.now();
+    const operationId = `select_agents_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+
+    this.logger.info('agent_selection_started', {
+      operation: 'selectAgents',
+      operationId,
+      queryPreview: state.query.substring(0, 100),
+      domains: state.domains,
+      mode: state.mode,
+    });
 
     try {
+      // Try GraphRAG hybrid search first (preferred method)
+      try {
+        const graphRAGResults = await agentGraphRAGService.searchAgents({
+          query: state.query,
+          topK: 20,
+          minSimilarity: 0.6,
+          filters: {
+            knowledge_domain: state.domains.length > 0 ? state.domains[0] : undefined,
+            status: 'active',
+          },
+        });
+
+        const candidates = graphRAGResults.map(result => result.agent);
+        const ranked = graphRAGResults.map(result => ({
+          agent: result.agent,
+          score: result.similarity,
+          reasoning: result.matchReason.join(', '),
+          factors: {
+            semanticSimilarity: result.similarity,
+            domainMatch: result.similarity > 0.8 ? 1 : 0.5,
+            tierBoost: result.agent.tier ? (4 - result.agent.tier) / 3 : 0.5,
+            popularityScore: 0.5,
+            availabilityScore: 1,
+          },
+        }));
+
+        ranked.sort((a, b) => b.score - a.score);
+        const selected = ranked.slice(0, 3); // Top 3 agents
+
+        const latency = Date.now() - startTime;
+        this.logger.infoWithMetrics('agent_selection_completed', latency, {
+          operation: 'selectAgents',
+          operationId,
+          method: 'graphrag_hybrid',
+          candidateCount: candidates.length,
+          selectedCount: selected.length,
+          topScore: selected[0]?.score,
+        });
+
+        return {
+          candidateAgents: candidates,
+          rankedAgents: ranked,
+          selectedAgents: selected.map(r => r.agent),
+          logs: [
+            `✅ Agent selection completed (GraphRAG)`,
+            `   Candidates: ${candidates.length}`,
+            `   Selected: ${selected.length}`,
+            `   Top agent: ${selected[0]?.agent.name} (score: ${(selected[0]?.score * 100).toFixed(1)}%)`,
+            `   Latency: ${latency}ms`
+          ],
+          performance: { agentSelection: latency }
+        };
+      } catch (graphRAGError) {
+        this.logger.warn('graphrag_search_failed', {
+          operationId,
+          error: graphRAGError instanceof Error ? graphRAGError.message : String(graphRAGError),
+          fallback: 'database',
+        });
+        // Fall through to database search
+      }
+
+      // Fallback: Database search
       if (!this.supabase) {
         throw new Error('Supabase client not initialized');
       }
 
-      // Step 1: Filter candidate agents from database (fast)
-      // Note: Removed knowledge_domains filter - column doesn't exist in schema
       const { data: candidates, error } = await this.supabase
         .from('agents')
         .select('*')
@@ -1034,13 +1124,22 @@ Return the most relevant domains (1-3 typically).`;
         performance: { agentSelection: latency }
       };
     } catch (error) {
-      console.error('❌ Agent selection failed:', error);
+      const latency = Date.now() - startTime;
+      this.logger.error(
+        'agent_selection_failed',
+        error instanceof Error ? error : new Error(String(error)),
+        {
+          operation: 'selectAgents',
+          operationId,
+          latency,
+        }
+      );
       return {
         candidateAgents: [],
         selectedAgents: [],
         rankedAgents: [],
         logs: ['⚠️  Agent selection failed, no agents available'],
-        performance: { agentSelection: Date.now() - startTime }
+        performance: { agentSelection: latency }
       };
     }
   }
@@ -1054,7 +1153,10 @@ Return the most relevant domains (1-3 typically).`;
       const agentEmbedding = await this.embeddings.embedQuery(agentDescription);
       return this.cosineSimilarity(queryEmbedding, agentEmbedding);
     } catch (error) {
-      console.warn('Failed to calculate semantic similarity:', error);
+      this.logger.warn('semantic_similarity_calculation_failed', {
+        operation: 'calculateSemanticSimilarity',
+        error: error instanceof Error ? error.message : String(error),
+      });
       return 0.5; // Fallback to neutral score
     }
   }

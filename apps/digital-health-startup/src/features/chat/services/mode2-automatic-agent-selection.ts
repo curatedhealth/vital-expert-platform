@@ -149,9 +149,13 @@ export class Mode2AutomaticAgentSelectionHandler {
       const executionTime = Date.now() - startTime;
       result.executionTime = executionTime;
 
-      console.log(`✅ [Mode 2] Execution completed in ${executionTime}ms`);
-      console.log(`   Selected Agent: ${result.selectedAgent.name}`);
-      console.log(`   Confidence: ${result.selectionConfidence.toFixed(3)}`);
+      this.logger.infoWithMetrics('mode2_execution_completed', executionTime, {
+        operation: 'Mode2Execute',
+        workflowId,
+        selectedAgent: result.selectedAgent.name,
+        agentId: result.selectedAgent.id,
+        confidence: result.selectionConfidence,
+      });
 
       // Return streaming generator
       return this.createStreamingGenerator(result);
@@ -236,11 +240,6 @@ export class Mode2AutomaticAgentSelectionHandler {
         domains: analysis.domains,
         complexity: analysis.complexity,
         confidence: analysis.confidence,
-      });
-        intent: analysis.intent,
-        domains: analysis.domains,
-        complexity: analysis.complexity,
-        confidence: analysis.confidence
       });
 
       return {
@@ -340,10 +339,6 @@ export class Mode2AutomaticAgentSelectionHandler {
         agentId: selectionResult.selectedAgent.id,
         confidence: selectionResult.confidence,
         alternativeCount: selectionResult.alternativeAgents.length,
-      });
-        selectedAgent: selectedAgent.agent.name,
-        confidence: confidence.toFixed(3),
-        reason: selectedAgent.reason
       });
 
       return {

@@ -1,6 +1,6 @@
 'use client';
 
-import { Plus, Search, Filter, Info } from 'lucide-react';
+import { Plus, Search, Filter, Info, Edit, Trash2, Save } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
 import { Badge } from '@vital/ui';
@@ -288,11 +288,16 @@ export default function KnowledgeDomainsPage() {
         }}
       />
 
-      {/* Domain Details Dialog */}
+      {/* Domain Details/Edit Dialog */}
       {selectedDomain && (
         <DomainDetailsDialog
           domain={selectedDomain}
           onClose={() => setSelectedDomain(null)}
+          onUpdate={() => loadDomains()}
+          onDelete={() => {
+            setSelectedDomain(null);
+            loadDomains();
+          }}
         />
       )}
     </div>
@@ -541,10 +546,107 @@ function DomainTable({
 function DomainDetailsDialog({
   domain,
   onClose,
+  onUpdate,
+  onDelete,
 }: {
   domain: any;
   onClose: () => void;
+  onUpdate?: () => void;
+  onDelete?: () => void;
 }) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [formData, setFormData] = useState({
+    name: domain.name,
+    description: domain.description,
+    tier: domain.tier,
+    priority: domain.priority,
+    keywords: Array.isArray(domain.keywords) ? domain.keywords.join(', ') : '',
+    sub_domains: Array.isArray(domain.sub_domains) ? domain.sub_domains.join(', ') : '',
+    color: domain.color || '#3B82F6',
+    embedding_model: domain.recommended_models?.embedding?.primary || 'mxbai-embed-large-v1',
+    chat_model: domain.recommended_models?.chat?.primary || 'gpt-4-turbo-preview',
+  });
+  const [loading, setLoading] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const supabase = createClient();
+
+  const handleUpdate = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    setLoading(true);
+
+    try {
+      const response = await fetch(`/api/admin/knowledge-domains/${domain.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: formData.name,
+          description: formData.description,
+          tier: formData.tier,
+          priority: formData.priority,
+          keywords: formData.keywords.split(',').map((k: string) => k.trim()).filter(Boolean),
+          sub_domains: formData.sub_domains.split(',').map((s: string) => s.trim()).filter(Boolean),
+          color: formData.color,
+          recommended_models: {
+            embedding: {
+              primary: formData.embedding_model,
+              alternatives: [],
+            },
+            chat: {
+              primary: formData.chat_model,
+              alternatives: [],
+            },
+          },
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to update domain');
+      }
+
+      setIsEditing(false);
+      if (onUpdate) onUpdate();
+      alert('Domain updated successfully!');
+    } catch (error) {
+      console.error('Failed to update domain:', error);
+      alert(`Failed to update domain: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!confirm(`Are you sure you want to delete "${domain.name}"? This action cannot be undone.`)) {
+      return;
+    }
+
+    setDeleting(true);
+
+    try {
+      const response = await fetch(`/api/admin/knowledge-domains/${domain.id}`, {
+        method: 'DELETE',
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to delete domain');
+      }
+
+      if (onDelete) onDelete();
+      alert('Domain deleted successfully!');
+    } catch (error) {
+      console.error('Failed to delete domain:', error);
+      alert(`Failed to delete domain: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  const embeddingModels = modelSelector.getAvailableEmbeddingModels();
+  const chatModels = modelSelector.getAvailableChatModels();
+
   return (
     <Dialog open={true} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
@@ -554,12 +656,14 @@ function DomainDetailsDialog({
               className="w-4 h-4 rounded"
               style={{ backgroundColor: domain.color }}
             />
-            {domain.name}
+            {isEditing ? 'Edit Domain' : domain.name}
           </DialogTitle>
-          <DialogDescription>{domain.description}</DialogDescription>
+          <DialogDescription>
+            {isEditing ? 'Update domain settings and tier mapping' : domain.description}
+          </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-6">
+        <form onSubmit={handleUpdate} className="space-y-6">
           {/* Basic Info */}
           <div className="grid grid-cols-2 gap-4">
             <div>
@@ -570,26 +674,130 @@ function DomainDetailsDialog({
               <Label className="text-xs text-muted-foreground">Slug</Label>
               <div className="font-mono text-sm">{domain.slug}</div>
             </div>
+            
+            {/* Tier Mapping - Editable */}
             <div>
-              <Label className="text-xs text-muted-foreground">Tier</Label>
-              <div className="text-sm">
-                {domain.tier === 1 && 'Tier 1: Core'}
-                {domain.tier === 2 && 'Tier 2: Specialized'}
-                {domain.tier === 3 && 'Tier 3: Emerging'}
-              </div>
+              <Label htmlFor="tier">Tier *</Label>
+              {isEditing ? (
+                <Select
+                  value={formData.tier.toString()}
+                  onValueChange={(value) => setFormData({ ...formData, tier: parseInt(value) })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="1">Tier 1: Core</SelectItem>
+                    <SelectItem value="2">Tier 2: Specialized</SelectItem>
+                    <SelectItem value="3">Tier 3: Emerging</SelectItem>
+                  </SelectContent>
+                </Select>
+              ) : (
+                <div className="text-sm">
+                  {domain.tier === 1 && 'Tier 1: Core'}
+                  {domain.tier === 2 && 'Tier 2: Specialized'}
+                  {domain.tier === 3 && 'Tier 3: Emerging'}
+                </div>
+              )}
             </div>
+            
+            {/* Priority - Editable */}
             <div>
-              <Label className="text-xs text-muted-foreground">Priority</Label>
-              <div className="text-sm">{domain.priority}</div>
+              <Label htmlFor="priority">Priority</Label>
+              {isEditing ? (
+                <Input
+                  id="priority"
+                  type="number"
+                  min="1"
+                  value={formData.priority}
+                  onChange={(e) => setFormData({ ...formData, priority: parseInt(e.target.value) || 1 })}
+                />
+              ) : (
+                <div className="text-sm">{domain.priority}</div>
+              )}
             </div>
           </div>
 
-          {/* LLM Recommendations */}
+          {/* Name - Editable */}
           <div>
-            <h3 className="font-semibold mb-3 flex items-center gap-2">
-              <Info className="h-4 w-4" />
-              Recommended LLM Models
-            </h3>
+            <Label htmlFor="name">Domain Name *</Label>
+            {isEditing ? (
+              <Input
+                id="name"
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                required
+              />
+            ) : (
+              <div className="text-sm font-medium">{domain.name}</div>
+            )}
+          </div>
+
+          {/* Description - Editable */}
+          <div>
+            <Label htmlFor="description">Description</Label>
+            {isEditing ? (
+              <Textarea
+                id="description"
+                value={formData.description}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                rows={3}
+              />
+            ) : (
+              <div className="text-sm text-muted-foreground">{domain.description}</div>
+            )}
+          </div>
+
+          {/* LLM Recommendations - Editable */}
+          {isEditing && (
+            <>
+              <div>
+                <Label htmlFor="embedding_model">Recommended Embedding Model *</Label>
+                <Select
+                  value={formData.embedding_model}
+                  onValueChange={(value) => setFormData({ ...formData, embedding_model: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {embeddingModels.map((model: any) => (
+                      <SelectItem key={model.value} value={model.value}>
+                        {model.label} - {model.provider}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label htmlFor="chat_model">Recommended Chat Model *</Label>
+                <Select
+                  value={formData.chat_model}
+                  onValueChange={(value) => setFormData({ ...formData, chat_model: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {chatModels.map((model: any) => (
+                      <SelectItem key={model.value} value={model.value}>
+                        {model.label} - {model.provider}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </>
+          )}
+
+          {/* LLM Recommendations (View Mode) */}
+          {!isEditing && (
+            <div>
+              <h3 className="font-semibold mb-3 flex items-center gap-2">
+                <Info className="h-4 w-4" />
+                Recommended LLM Models
+              </h3>
 
             {/* Embedding Models */}
             <div className="space-y-2 mb-4">
@@ -697,10 +905,99 @@ function DomainDetailsDialog({
           )}
         </div>
 
+          {/* Keywords - Editable */}
+          {isEditing && (
+            <div>
+              <Label htmlFor="keywords">Keywords (comma-separated)</Label>
+              <Input
+                id="keywords"
+                value={formData.keywords}
+                onChange={(e) => setFormData({ ...formData, keywords: e.target.value })}
+                placeholder="e.g., fda, ema, regulatory"
+              />
+            </div>
+          )}
+
+          {/* Color - Editable */}
+          <div>
+            <Label htmlFor="color">Color</Label>
+            {isEditing ? (
+              <div className="flex items-center gap-2">
+                <Input
+                  id="color"
+                  type="color"
+                  value={formData.color}
+                  onChange={(e) => setFormData({ ...formData, color: e.target.value })}
+                  className="w-20 h-10"
+                />
+                <Input
+                  value={formData.color}
+                  onChange={(e) => setFormData({ ...formData, color: e.target.value })}
+                  className="flex-1"
+                />
+              </div>
+            ) : (
+              <div className="flex items-center gap-2">
+                <span
+                  className="w-8 h-8 rounded"
+                  style={{ backgroundColor: domain.color }}
+                />
+                <span className="text-sm">{domain.color}</span>
+              </div>
+            )}
+          </div>
+        </form>
+
         <DialogFooter>
-          <Button variant="outline" onClick={onClose}>
-            Close
-          </Button>
+          {isEditing ? (
+            <>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setIsEditing(false);
+                  // Reset form data
+                  setFormData({
+                    name: domain.name,
+                    description: domain.description,
+                    tier: domain.tier,
+                    priority: domain.priority,
+                    keywords: Array.isArray(domain.keywords) ? domain.keywords.join(', ') : '',
+                    sub_domains: Array.isArray(domain.sub_domains) ? domain.sub_domains.join(', ') : '',
+                    color: domain.color || '#3B82F6',
+                    embedding_model: domain.recommended_models?.embedding?.primary || 'mxbai-embed-large-v1',
+                    chat_model: domain.recommended_models?.chat?.primary || 'gpt-4-turbo-preview',
+                  });
+                }}
+                disabled={loading}
+              >
+                Cancel
+              </Button>
+              <Button type="button" onClick={handleUpdate} disabled={loading}>
+                <Save className="h-4 w-4 mr-2" />
+                {loading ? 'Saving...' : 'Save Changes'}
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button
+                type="button"
+                variant="destructive"
+                onClick={handleDelete}
+                disabled={deleting}
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                {deleting ? 'Deleting...' : 'Delete'}
+              </Button>
+              <Button type="button" variant="default" onClick={() => setIsEditing(true)}>
+                <Edit className="h-4 w-4 mr-2" />
+                Edit
+              </Button>
+              <Button type="button" variant="outline" onClick={onClose}>
+                Close
+              </Button>
+            </>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -733,66 +1030,58 @@ function CreateDomainDialog({
     chat_model: 'gpt-4-turbo-preview',
   });
   const [loading, setLoading] = useState(false);
-  const supabase = createClient();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      // Parse keywords and sub_domains
-      const keywords = formData.keywords
-        .split(',')
-        .map((k: any) => k.trim())
-        .filter(Boolean);
-      const sub_domains = formData.sub_domains
-        .split(',')
-        .map((s: any) => s.trim())
-        .filter(Boolean);
-
-      // Get next priority
-      const { data: existingDomains } = await supabase
-        .from('knowledge_domains')
-        .select('priority')
-        .order('priority', { ascending: false })
-        .limit(1);
-
-      const nextPriority = existingDomains?.[0]?.priority
-        ? existingDomains[0].priority + 1
-        : 1;
-
-      // Create domain
-      const { error } = await supabase.from('knowledge_domains').insert({
-        code: formData.code.toUpperCase().replace(/\s+/g, '_'),
-        name: formData.name,
-        slug: formData.slug.toLowerCase().replace(/\s+/g, '_'),
-        description: formData.description,
-        tier: formData.tier,
-        priority: nextPriority,
-        keywords,
-        sub_domains,
-        color: formData.color,
-        recommended_models: {
-          embedding: {
-            primary: formData.embedding_model,
-            alternatives: ['text-embedding-ada-002'],
-            specialized: null,
+      // Create domain via admin API (superadmin only)
+      const response = await fetch('/api/admin/knowledge-domains', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          code: formData.code,
+          name: formData.name,
+          slug: formData.slug,
+          description: formData.description,
+          tier: formData.tier,
+          keywords: formData.keywords
+            .split(',')
+            .map((k: string) => k.trim())
+            .filter(Boolean),
+          sub_domains: formData.sub_domains
+            .split(',')
+            .map((s: string) => s.trim())
+            .filter(Boolean),
+          color: formData.color,
+          recommended_models: {
+            embedding: {
+              primary: formData.embedding_model,
+              alternatives: [],
+            },
+            chat: {
+              primary: formData.chat_model,
+              alternatives: [],
+            },
           },
-          chat: {
-            primary: formData.chat_model,
-            alternatives: ['gpt-3.5-turbo'],
-            specialized: null,
-          },
-        },
-        is_active: true,
+        }),
       });
 
-      if (error) throw error;
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to create domain');
+      }
 
       onSuccess();
     } catch (error) {
       console.error('Failed to create domain:', error);
-      alert('Failed to create domain. Please try again.');
+      alert(`Failed to create domain: ${error instanceof Error ? error.message : 'Please try again'}`);
+    } finally {
+      setLoading(false);
+    }
+  };
     } finally {
       setLoading(false);
     }

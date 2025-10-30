@@ -7,7 +7,9 @@
 import { Document } from '@langchain/core/documents';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
-import { embeddingService } from '../embeddings/openai-embedding-service';
+// Use factory to support both OpenAI and HuggingFace embeddings
+import { getEmbeddingService, EmbeddingServiceFactory } from '../embeddings/embedding-service-factory';
+import { getEmbeddingModelForDomain } from '../embeddings/domain-embedding-selector';
 import { pineconeVectorService, PineconeVectorService } from '../vectorstore/pinecone-vector-service';
 import { redisCacheService } from '../../../features/rag/caching/redis-cache-service';
 import { ragLatencyTracker } from '../monitoring/rag-latency-tracker';
@@ -21,11 +23,17 @@ export interface RAGQuery {
   userId?: string;
   sessionId?: string;
   domain?: string;
+  domains?: string[];
   phase?: string;
   maxResults?: number;
   similarityThreshold?: number;
   strategy?: 'semantic' | 'hybrid' | 'keyword' | 'agent-optimized' | 'entity-aware';
   includeMetadata?: boolean;
+  filter?: {
+    domain?: string;
+    domains?: string[];
+    tags?: string[];
+  };
 }
 
 export interface RAGResult {
@@ -39,6 +47,8 @@ export interface RAGResult {
     similarity?: number;
     totalSources: number;
     queryCost?: number;
+    domain?: string;
+    domains?: string[];
   };
 }
 
@@ -98,6 +108,53 @@ export class UnifiedRAGService {
     this.cache = new Map();
 
     console.log('✅ Unified RAG Service initialized (Pinecone + Supabase)');
+  }
+
+  private extractDomains(query: RAGQuery): string[] {
+    const domains = new Set<string>();
+
+    const addDomain = (value?: string | null) => {
+      if (typeof value !== 'string') {
+        return;
+      }
+      const trimmed = value.trim();
+      if (trimmed.length > 0) {
+        domains.add(trimmed);
+      }
+    };
+
+    const addDomainArray = (values?: string[] | null) => {
+      if (!Array.isArray(values)) {
+        return;
+      }
+      values.forEach(addDomain);
+    };
+
+    addDomain(query.domain);
+    addDomainArray(query.domains);
+    addDomain(query.filter?.domain);
+    addDomainArray(query.filter?.domains);
+
+    return Array.from(domains);
+  }
+
+  private getPrimaryDomain(query: RAGQuery): string | undefined {
+    const domains = this.extractDomains(query);
+    return domains.length > 0 ? domains[0] : undefined;
+  }
+
+  private buildPineconeFilter(query: RAGQuery): Record<string, unknown> | undefined {
+    const domains = this.extractDomains(query);
+
+    if (domains.length === 0) {
+      return undefined;
+    }
+
+    if (domains.length === 1) {
+      return { domain: domains[0] };
+    }
+
+    return { domain: { $in: domains } };
   }
 
   /**
@@ -300,10 +357,17 @@ export class UnifiedRAGService {
    */
   private async semanticSearch(query: RAGQuery): Promise<RAGResult> {
     const queryId = uuidv4();
+    const domains = this.extractDomains(query);
+    const primaryDomain = this.getPrimaryDomain(query);
+    const pineconeFilter = this.buildPineconeFilter(query);
 
     // Generate query embedding with circuit breaker protection
+    // Use domain-specific model if domain filter is provided
     const embedding = await RAG_CIRCUIT_BREAKERS.openai.execute(
       async () => {
+        const embeddingService = getEmbeddingService({
+          domain: primaryDomain,
+        });
         const result = await embeddingService.generateQueryEmbedding(query.text);
 
         // Track embedding cost (estimate ~8 tokens per query)
@@ -335,7 +399,7 @@ export class UnifiedRAGService {
           embedding: embedding,
           topK: query.maxResults || 10,
           minScore: query.similarityThreshold || 0.7,
-          filter: query.domain ? { domain: query.domain } : undefined,
+          filter: pineconeFilter,
         });
 
         // Track vector search cost
@@ -383,6 +447,8 @@ export class UnifiedRAGService {
         responseTime: 0, // Will be set by caller
         cached: false,
         totalSources: sources.length,
+        domain: primaryDomain,
+        domains,
       },
     };
   }
@@ -434,12 +500,16 @@ export class UnifiedRAGService {
    */
   private async hybridSearch(query: RAGQuery): Promise<RAGResult> {
     try {
+      const domains = this.extractDomains(query);
+      const primaryDomain = this.getPrimaryDomain(query);
+      const pineconeFilter = this.buildPineconeFilter(query);
+
       // Perform hybrid search using Pinecone (which enriches with Supabase metadata)
       const results = await this.pinecone.hybridSearch({
         text: query.text,
         topK: query.maxResults || 10,
         minScore: query.similarityThreshold || 0.7,
-        filter: query.domain ? { domain: query.domain } : undefined,
+        filter: pineconeFilter,
       });
 
       // Convert to Document format
@@ -465,6 +535,8 @@ export class UnifiedRAGService {
           responseTime: 0,
           cached: false,
           totalSources: sources.length,
+          domain: primaryDomain,
+          domains,
         },
       };
     } catch (error) {
@@ -477,7 +549,10 @@ export class UnifiedRAGService {
    * Keyword-based full-text search
    */
   private async keywordSearch(query: RAGQuery): Promise<RAGResult> {
-    const { data, error } = await this.supabase
+    const domains = this.extractDomains(query);
+    const primaryDomain = this.getPrimaryDomain(query);
+
+    let queryBuilder = this.supabase
       .from('document_chunks')
       .select(`
         id,
@@ -493,8 +568,15 @@ export class UnifiedRAGService {
       .textSearch('content', query.text, {
         type: 'websearch',
         config: 'english',
-      })
-      .limit(query.maxResults || 10);
+      });
+
+    if (domains.length === 1) {
+      queryBuilder = queryBuilder.eq('knowledge_documents.domain', domains[0]);
+    } else if (domains.length > 1) {
+      queryBuilder = queryBuilder.in('knowledge_documents.domain', domains);
+    }
+
+    const { data, error } = await queryBuilder.limit(query.maxResults || 10);
 
     if (error) {
       throw new Error(`Keyword search failed: ${error.message}`);
@@ -511,6 +593,8 @@ export class UnifiedRAGService {
         responseTime: 0,
         cached: false,
         totalSources: sources.length,
+        domain: primaryDomain,
+        domains,
       },
     };
   }
@@ -528,13 +612,15 @@ export class UnifiedRAGService {
     try {
       const { EntityAwareHybridSearch } = await import('../search/entity-aware-hybrid-search');
       const entitySearch = new EntityAwareHybridSearch();
+      const domains = this.extractDomains(query);
+      const primaryDomain = this.getPrimaryDomain(query);
 
       // Perform entity-aware search
       const results = await entitySearch.search({
         text: query.text,
         agentId: query.agentId,
         userId: query.userId,
-        domain: query.domain,
+        domain: primaryDomain ?? query.domain,
         phase: query.phase,
         maxResults: query.maxResults || 10,
         similarityThreshold: query.similarityThreshold || 0.7,
@@ -565,6 +651,8 @@ export class UnifiedRAGService {
           responseTime: 0, // Will be set by caller
           cached: false,
           totalSources: sources.length,
+          domain: primaryDomain,
+          domains,
         },
       };
 
@@ -636,7 +724,8 @@ export class UnifiedRAGService {
     }
 
     // Chunk and process in background
-    this.processDocumentAsync(document.id, doc.content);
+    // Pass domain for optimal model selection
+    this.processDocumentAsync(document.id, doc.content, doc.domain);
 
     return document.id;
   }
@@ -644,12 +733,31 @@ export class UnifiedRAGService {
   /**
    * Process document asynchronously (chunking + embedding + Pinecone sync)
    */
-  private async processDocumentAsync(documentId: string, content: string): Promise<void> {
+  private async processDocumentAsync(documentId: string, content: string, domain?: string): Promise<void> {
     try {
       // Chunk the content
       const chunks = this.chunkText(content, 1500, 300);
 
       // Generate embeddings for all chunks
+      // Uses HuggingFace if available (FREE), falls back to OpenAI
+      // Auto-selects best model based on document domain
+      let documentDomain = domain;
+      
+      // Fetch domain from DB if not provided
+      if (!documentDomain) {
+        const { data: document } = await this.supabase
+          .from('knowledge_documents')
+          .select('domain')
+          .eq('id', documentId)
+          .single();
+        documentDomain = document?.domain;
+      }
+
+      // Get domain-specific embedding service
+      const embeddingService = getEmbeddingService({
+        domain: documentDomain || undefined,
+      });
+      
       const texts = chunks.map(chunk => chunk.content);
       const batchResult = await embeddingService.generateBatchEmbeddings(texts);
 

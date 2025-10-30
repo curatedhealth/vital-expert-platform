@@ -14,6 +14,8 @@ export interface Agent {
   capabilities: string[];
   avatar?: string;
   isUserAdded?: boolean; // Track if agent is in user's list
+  tools?: string[];
+  knowledge_domains?: string[];
 }
 
 export interface AskExpertSession {
@@ -49,6 +51,65 @@ interface AskExpertContextType {
 }
 
 const AskExpertContext = createContext<AskExpertContextType | undefined>(undefined);
+
+function parseAgentStringList(rawValue: unknown): string[] {
+  if (!rawValue) {
+    return [];
+  }
+
+  if (Array.isArray(rawValue)) {
+    return rawValue
+      .map((item) => (typeof item === 'string' ? item.trim() : ''))
+      .filter((item): item is string => item.length > 0);
+  }
+
+  if (typeof rawValue === 'string') {
+    try {
+      const parsed = JSON.parse(rawValue);
+      if (Array.isArray(parsed)) {
+        return parsed
+          .map((item) => (typeof item === 'string' ? item.trim() : ''))
+          .filter((item): item is string => item.length > 0);
+      }
+    } catch {
+      // Fall back to comma-separated parsing
+    }
+
+    return rawValue
+      .split(',')
+      .map((item) => item.trim())
+      .filter((item) => item.length > 0);
+  }
+
+  if (typeof rawValue === 'object') {
+    const values = Object.values(rawValue as Record<string, unknown>);
+    return values
+      .map((item) => (typeof item === 'string' ? item.trim() : ''))
+      .filter((item): item is string => item.length > 0);
+  }
+
+  return [];
+}
+
+const DEFAULT_AGENT_TOOLS = ['web_search', 'calculator', 'database_query'];
+
+function parseAgentTools(rawTools: unknown): string[] {
+  const parsed = parseAgentStringList(rawTools);
+  const normalized = new Set<string>();
+
+  DEFAULT_AGENT_TOOLS.forEach((tool) => normalized.add(tool));
+  parsed.forEach((tool) => {
+    if (tool.length > 0) {
+      normalized.add(tool);
+    }
+  });
+
+  return Array.from(normalized);
+}
+
+function parseAgentKnowledgeDomains(rawDomains: unknown): string[] {
+  return parseAgentStringList(rawDomains);
+}
 
 export function AskExpertProvider({ children }: { children: React.ReactNode }) {
   const [agents, setAgents] = useState<Agent[]>([]);
@@ -119,8 +180,19 @@ export function AskExpertProvider({ children }: { children: React.ReactNode }) {
               status: metadata.status || 'active',
               capabilities: Array.isArray(agent.capabilities) ? agent.capabilities : [],
               avatar: metadata.avatar || undefined,
-              isUserAdded: true, // Mark as user-added
-            };
+            isUserAdded: true, // Mark as user-added
+              tools: parseAgentTools(
+                metadata.tools ??
+                  metadata.allowed_tools ??
+                  metadata.available_tools ??
+                  agent.tools ??
+                  agent.tool_access
+              ),
+              knowledge_domains: parseAgentKnowledgeDomains(
+                metadata.knowledge_domains ??
+                  agent.knowledge_domains
+              ),
+          };
           }
           
           // If we only have agent_id but no agent data, just track it for now
@@ -172,17 +244,26 @@ export function AskExpertProvider({ children }: { children: React.ReactNode }) {
             let displayName = agent.display_name || agent.name;
             displayName = displayName.replace(/\s*\(My Copy\)\s*/gi, '').replace(/\s*\(Copy\)\s*/gi, '').trim();
             
-            return {
-              id: agent.id,
-              name: agent.name,
-              displayName: displayName,
-              description: agent.description || '',
-              tier: agent.tier || 3,
-              status: agent.status || 'active',
-              capabilities: Array.isArray(agent.capabilities) ? agent.capabilities : [],
-              avatar: agent.avatar || undefined,
-              isUserAdded: userAddedAgentIds.has(agent.id), // Check if agent is user-added
-            };
+          return {
+            id: agent.id,
+            name: agent.name,
+            displayName: displayName,
+            description: agent.description || '',
+            tier: agent.tier || 3,
+            status: agent.status || 'active',
+            capabilities: Array.isArray(agent.capabilities) ? agent.capabilities : [],
+            avatar: agent.avatar || undefined,
+            isUserAdded: userAddedAgentIds.has(agent.id), // Check if agent is user-added
+            tools: parseAgentTools(
+              (agent.metadata && (agent.metadata.tools ?? agent.metadata.allowed_tools ?? agent.metadata.available_tools)) ??
+                agent.tools ??
+                agent.tool_access
+            ),
+            knowledge_domains: parseAgentKnowledgeDomains(
+              (agent.metadata && (agent.metadata.knowledge_domains ?? agent.metadata.knowledgeDomains)) ??
+                agent.knowledge_domains
+            ),
+          };
           });
           
           // Combine user-added agents with all available agents, avoiding duplicates
@@ -449,6 +530,17 @@ export function AskExpertProvider({ children }: { children: React.ReactNode }) {
           status: metadata.status || 'active',
           capabilities: Array.isArray(agent.capabilities) ? agent.capabilities : [],
           avatar: metadata.avatar || undefined,
+          tools: parseAgentTools(
+            metadata.tools ??
+              metadata.allowed_tools ??
+              metadata.available_tools ??
+              agent.tools ??
+              agent.tool_access
+          ),
+          knowledge_domains: parseAgentKnowledgeDomains(
+            metadata.knowledge_domains ??
+              agent.knowledge_domains
+          ),
         };
       });
 

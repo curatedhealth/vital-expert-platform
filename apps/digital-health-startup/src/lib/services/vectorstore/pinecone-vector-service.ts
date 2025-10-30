@@ -159,11 +159,16 @@ export class PineconeVectorService {
       }
 
       // Perform vector search in Pinecone
+      const filter =
+        query.filter && Object.keys(query.filter).length > 0
+          ? query.filter
+          : undefined;
+
       const searchResponse = await index.namespace(query.namespace || '').query({
         vector: queryVector,
         topK: query.topK || 10,
         includeMetadata: true,
-        filter: query.filter,
+        filter,
       });
 
       // Filter by minimum score
@@ -286,15 +291,14 @@ export class PineconeVectorService {
       throw new Error(`Agent ${agentId} not found`);
     }
 
-    const agentDomain = agent.metadata?.primary_domain || 'general';
+    const agentDomain = typeof agent.metadata?.primary_domain === 'string'
+      ? agent.metadata.primary_domain.trim()
+      : 'general';
 
-    // Perform search with domain filter
+    // Perform search without enforcing a filter to keep broader recall
     const results = await this.hybridSearch({
       text: queryText,
       topK: topK * 2, // Get more candidates
-      filter: {
-        // Prefer agent's domain but don't require it
-      },
     });
 
     // Apply domain boosting

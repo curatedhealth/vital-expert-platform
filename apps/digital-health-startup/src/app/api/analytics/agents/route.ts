@@ -2,11 +2,19 @@
  * Agent Analytics API
  * 
  * Provides agent operation metrics and analytics for admin dashboard
- * Integrates with Prometheus metrics and Mode 1 metrics
+ * Integrates with:
+ * - Prometheus metrics (real-time)
+ * - Database agent_metrics table (historical)
+ * - Mode 1 metrics endpoint
+ * 
+ * @module app/api/analytics/agents
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getPrometheusExporter } from '@/lib/services/observability/prometheus-exporter';
+import { getAgentMetricsService } from '@/lib/services/observability/agent-metrics-service';
+import { createLogger } from '@/lib/services/observability/structured-logger';
+import { createClient } from '@/lib/supabase/server';
 
 export interface AgentAnalyticsResponse {
   summary: {
@@ -72,120 +80,336 @@ export interface AgentAnalyticsResponse {
  * Get comprehensive agent operation analytics
  */
 export async function GET(request: NextRequest) {
+  const logger = createLogger();
+  const operationId = `analytics_agents_get_${Date.now()}`;
+  const startTime = Date.now();
+
   try {
     const { searchParams } = new URL(request.url);
-    const timeRange = searchParams.get('timeRange') || '1h'; // 1h, 6h, 24h, 7d
-    
-    // Convert timeRange to minutes for Prometheus queries
-    const timeRangeMinutes = {
-      '1h': 60,
-      '6h': 360,
-      '24h': 1440,
-      '7d': 10080,
-    }[timeRange] || 60;
+    const timeRange = (searchParams.get('timeRange') || '24h') as
+      | '1h'
+      | '6h'
+      | '24h'
+      | '7d';
+    const agentId = searchParams.get('agentId') || undefined;
 
-    // For now, return structured metrics based on Prometheus exporter
-    // We'll need to query /api/metrics and parse it, or directly access the registry
-    // Let's use the simpler approach: query our own metrics endpoint
-    let metricsJson: any[] = [];
-    
-    try {
-      const metricsResponse = await fetch(`${request.nextUrl.origin}/api/metrics?format=json`);
-      if (metricsResponse.ok) {
-        const metricsData = await metricsResponse.json();
-        // Parse Prometheus text format from the response if needed
-        // For now, we'll create a simplified structure
-        metricsJson = []; // Will be populated from actual metrics
-      }
-    } catch (err) {
-      console.warn('Could not fetch metrics:', err);
+    logger.info('analytics_agents_get_started', {
+      operation: 'GET /api/analytics/agents',
+      operationId,
+      timeRange,
+      agentId,
+    });
+
+    // Convert timeRange to period for metrics service
+    const period = timeRange;
+
+    // Get user session for tenant ID
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    let tenantId: string | undefined;
+    if (user) {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('tenant_id')
+        .eq('id', user.id)
+        .single();
+
+      tenantId = profile?.tenant_id || undefined;
     }
 
-    // For now, return mock/placeholder data until we have actual metrics
-    // In production, this would parse from Prometheus metrics
-    const summary = {
-      totalSearches: 0,
-      averageLatency: 0,
-      p95Latency: 0,
-      errorRate: 0,
-      graphragHitRate: 0,
-      fallbackRate: 0,
-    };
-    const searchMetrics = {
-      total: 0,
-      byMethod: {},
-      errors: 0,
-      errorRate: 0,
-    };
-    const graphragMetrics = {
-      hits: 0,
-      fallbacks: 0,
-      hitRate: 0,
-    };
-    const selectionMetrics = {
-      total: 0,
-      byConfidence: { high: 0, medium: 0, low: 0 },
-      averageLatency: 0,
-    };
-    const modeMetrics = {
-      mode2: {
-        total: 0,
-        success: 0,
-        error: 0,
-        averageLatency: 0,
-        p95Latency: 0,
-      },
-      mode3: {
-        total: 0,
-        success: 0,
-        error: 0,
-        averageLatency: 0,
-        p95Latency: 0,
-        averageIterations: 0,
-      },
-    };
-    
-    // TODO: Replace with actual Prometheus metrics parsing
-    // For now return structured empty data - metrics will populate as operations occur
+    // Get aggregated metrics from database
+    const metricsService = getAgentMetricsService();
+    const aggregatedMetrics = await metricsService.getAggregatedMetrics(
+      agentId,
+      tenantId,
+      period
+    );
 
-    // Get Mode 1 metrics if available
-    const mode1Response = await fetch(`${request.nextUrl.origin}/api/ask-expert/mode1/metrics?endpoint=stats&windowMinutes=${timeRangeMinutes}`)
-      .catch(() => null);
-    
-    const mode1Data = mode1Response?.ok 
+    // Get detailed metrics for recent operations
+    const endDate = new Date();
+    const startDate = new Date();
+    switch (period) {
+      case '1h':
+        startDate.setHours(startDate.getHours() - 1);
+        break;
+      case '6h':
+        startDate.setHours(startDate.getHours() - 6);
+        break;
+      case '24h':
+        startDate.setDate(startDate.getDate() - 1);
+        break;
+      case '7d':
+        startDate.setDate(startDate.getDate() - 7);
+        break;
+    }
+
+    const detailedMetrics = await metricsService.getMetrics({
+      agentId,
+      tenantId,
+      startDate,
+      endDate,
+      limit: 100, // Last 100 operations for recent operations
+    });
+
+    // Get Prometheus metrics for real-time stats (complementary)
+    let prometheusMetrics: any = null;
+    try {
+      const exporter = getPrometheusExporter();
+      prometheusMetrics = await exporter.getMetricsAsJSON();
+    } catch (err) {
+      logger.warn('analytics_prometheus_fetch_failed', {
+        operationId,
+        error: err instanceof Error ? err.message : String(err),
+      });
+    }
+
+    // Calculate summary from aggregated metrics + Prometheus
+    const summary = aggregatedMetrics
+      ? {
+          totalSearches: aggregatedMetrics.totalOperations,
+          averageLatency: aggregatedMetrics.averageLatencyMs,
+          p95Latency: aggregatedMetrics.p95LatencyMs,
+          errorRate: aggregatedMetrics.errorRate,
+          graphragHitRate: aggregatedMetrics.graphragHitRate,
+          fallbackRate: 100 - aggregatedMetrics.graphragHitRate, // Inverse of hit rate
+        }
+      : {
+          totalSearches: 0,
+          averageLatency: 0,
+          p95Latency: 0,
+          errorRate: 0,
+          graphragHitRate: 0,
+          fallbackRate: 0,
+        };
+
+    // Calculate search metrics
+    const searchMetrics = aggregatedMetrics
+      ? {
+          total: aggregatedMetrics.totalOperations,
+          byMethod: aggregatedMetrics.operationsBySearchMethod,
+          errors: aggregatedMetrics.failedOperations,
+          errorRate: aggregatedMetrics.errorRate,
+        }
+      : {
+          total: 0,
+          byMethod: {},
+          errors: 0,
+          errorRate: 0,
+        };
+
+    // Calculate GraphRAG metrics from detailed metrics
+    const graphragOps = detailedMetrics.filter(
+      (m) => m.operation_type === 'search'
+    );
+    const graphragHits = graphragOps.filter((m) => m.graphrag_hit === true)
+      .length;
+    const graphragFallbacks = graphragOps.filter(
+      (m) => m.graphrag_fallback === true
+    ).length;
+    const graphragTotal = graphragHits + graphragFallbacks;
+
+    const graphragMetrics = {
+      hits: graphragHits,
+      fallbacks: graphragFallbacks,
+      hitRate: graphragTotal > 0 ? (graphragHits / graphragTotal) * 100 : 0,
+    };
+
+    // Calculate selection metrics from detailed metrics
+    const selectionOps = detailedMetrics.filter(
+      (m) => m.operation_type === 'selection'
+    );
+    const highConfidence = selectionOps.filter(
+      (m) => m.confidence_score && m.confidence_score >= 0.8
+    ).length;
+    const mediumConfidence = selectionOps.filter(
+      (m) =>
+        m.confidence_score &&
+        m.confidence_score >= 0.5 &&
+        m.confidence_score < 0.8
+    ).length;
+    const lowConfidence = selectionOps.filter(
+      (m) => m.confidence_score && m.confidence_score < 0.5
+    ).length;
+
+    const avgSelectionLatency =
+      selectionOps.length > 0
+        ? selectionOps.reduce(
+            (sum, m) => sum + (m.response_time_ms || 0),
+            0
+          ) / selectionOps.length
+        : 0;
+
+    const selectionMetrics = {
+      total: selectionOps.length,
+      byConfidence: {
+        high: highConfidence,
+        medium: mediumConfidence,
+        low: lowConfidence,
+      },
+      averageLatency: Math.round(avgSelectionLatency),
+    };
+
+    // Calculate mode metrics from detailed metrics
+    const mode1Ops = detailedMetrics.filter((m) => {
+      if (m.operation_type === 'mode1') {
+        return true;
+      }
+      if (m.operation_type !== 'execution') {
+        return false;
+      }
+
+      const payload = m.metadata;
+      if (!payload) {
+        return false;
+      }
+
+      if (typeof payload === 'string') {
+        try {
+          const parsed = JSON.parse(payload);
+          return parsed?.mode === 'mode1';
+        } catch {
+          return false;
+        }
+      }
+
+      if (typeof payload === 'object') {
+        return (payload as Record<string, unknown>)?.mode === 'mode1';
+      }
+
+      return false;
+    });
+    const mode2Ops = detailedMetrics.filter(
+      (m) => m.operation_type === 'mode2'
+    );
+    const mode3Ops = detailedMetrics.filter(
+      (m) => m.operation_type === 'mode3'
+    );
+
+    const calculateModeStats = (ops: any[]) => {
+      if (ops.length === 0) {
+        return {
+          total: 0,
+          success: 0,
+          error: 0,
+          averageLatency: 0,
+          p95Latency: 0,
+        };
+      }
+
+      const latencies = ops
+        .map((m) => m.response_time_ms)
+        .filter((l) => l && l > 0)
+        .sort((a, b) => a - b);
+
+      const avgLatency =
+        latencies.length > 0
+          ? latencies.reduce((sum, l) => sum + l, 0) / latencies.length
+          : 0;
+
+      const p95Index = Math.floor(latencies.length * 0.95);
+      const p95Latency = latencies[p95Index] || 0;
+
+      return {
+        total: ops.length,
+        success: ops.filter((m) => m.success === true).length,
+        error: ops.filter((m) => m.success === false || m.error_occurred === true).length,
+        averageLatency: Math.round(avgLatency),
+        p95Latency: Math.round(p95Latency),
+      };
+    };
+
+    const modeMetrics = {
+      mode1: calculateModeStats(mode1Ops),
+      mode2: calculateModeStats(mode2Ops),
+      mode3: {
+        ...calculateModeStats(mode3Ops),
+        averageIterations: mode3Ops.length > 0
+          ? Math.round(
+              mode3Ops.reduce((sum, m) => sum + (m.metadata?.iterations || 0), 0) /
+                mode3Ops.length
+            )
+          : 0,
+      },
+    };
+
+    // Also try to get Mode 1 metrics from separate endpoint (as fallback/enhancement)
+    const timeRangeMinutes =
+      period === '1h' ? 60 : period === '6h' ? 360 : period === '24h' ? 1440 : 10080;
+
+    const mode1Response = await fetch(
+      `${request.nextUrl.origin}/api/ask-expert/mode1/metrics?endpoint=stats&windowMinutes=${timeRangeMinutes}`
+    ).catch(() => null);
+
+    const mode1Data = mode1Response?.ok
       ? await mode1Response.json().catch(() => null)
       : null;
+
+    // Build recent operations list from detailed metrics
+    const recentOperations = detailedMetrics.slice(0, 20).map((m) => ({
+      timestamp: m.created_at,
+      operation: m.operation_type,
+      duration: m.response_time_ms,
+      method: m.search_method || undefined,
+      status: m.success ? 'success' : 'error',
+      agentId: m.agent_id,
+      errorMessage: m.error_message || undefined,
+    }));
 
     const response: AgentAnalyticsResponse = {
       summary,
       searchMetrics,
       graphragMetrics,
       selectionMetrics,
-      modeMetrics: {
-        ...modeMetrics,
-        // Include Mode 1 if available
-        mode1: mode1Data?.success ? {
-          total: mode1Data.data.totalRequests || 0,
-          success: mode1Data.data.successfulRequests || 0,
-          error: (mode1Data.data.totalRequests || 0) - (mode1Data.data.successfulRequests || 0),
-          averageLatency: mode1Data.data.averageLatency || 0,
-          p95Latency: mode1Data.data.p95Latency || 0,
-        } : undefined,
-      } as any,
-      recentOperations: [], // Would need to fetch from logs/storage
+            modeMetrics: {
+              // Use database metrics as primary source, enhance with separate endpoint if available
+              mode1: mode1Data?.success && modeMetrics.mode1.total === 0
+                ? {
+                    total: mode1Data.data.totalRequests || modeMetrics.mode1.total,
+                    success: mode1Data.data.successfulRequests || modeMetrics.mode1.success,
+                    error:
+                      (mode1Data.data.totalRequests || 0) -
+                      (mode1Data.data.successfulRequests || 0) || modeMetrics.mode1.error,
+                    averageLatency: mode1Data.data.averageLatency || modeMetrics.mode1.averageLatency,
+                    p95Latency: mode1Data.data.p95Latency || modeMetrics.mode1.p95Latency,
+                  }
+                : modeMetrics.mode1, // Use database metrics
+              mode2: modeMetrics.mode2,
+              mode3: modeMetrics.mode3,
+            },
+      recentOperations,
       timeRange: {
-        from: new Date(Date.now() - timeRangeMinutes * 60 * 1000).toISOString(),
-        to: new Date().toISOString(),
+        from: startDate.toISOString(),
+        to: endDate.toISOString(),
       },
     };
+
+    const duration = Date.now() - startTime;
+    logger.infoWithMetrics('analytics_agents_get_completed', duration, {
+      operation: 'GET /api/analytics/agents',
+      operationId,
+      timeRange: period,
+      totalOperations: summary.totalSearches,
+    });
 
     return NextResponse.json({
       success: true,
       data: response,
     });
-
   } catch (error) {
-    console.error('Agent analytics error:', error);
+    const duration = Date.now() - startTime;
+    logger.error(
+      'analytics_agents_get_error',
+      error instanceof Error ? error : new Error(String(error)),
+      {
+        operation: 'GET /api/analytics/agents',
+        operationId,
+        duration,
+      }
+    );
+
     return NextResponse.json(
       {
         success: false,
@@ -394,4 +618,3 @@ function calculateHistogramP95(metric: any): number {
   // If not found, return max bucket
   return parseFloat(buckets[buckets.length - 1].labels.le) * 1000;
 }
-

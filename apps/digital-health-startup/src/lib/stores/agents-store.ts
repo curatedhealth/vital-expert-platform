@@ -56,6 +56,17 @@ export interface Agent {
   average_latency_ms?: number;
   audit_trail?: Record<string, unknown>;
 
+  // Agent Statistics (for Expert Agent Card)
+  totalConsultations?: number;
+  satisfactionScore?: number; // 0-5
+  successRate?: number; // 0-100
+  averageResponseTime?: number; // in seconds (ms converted)
+  certifications?: string[]; // Array of certification names
+  totalTokensUsed?: number;
+  totalCost?: number; // Total cost in USD
+  confidenceLevel?: number; // Computed based on stats (0-100)
+  availability?: 'online' | 'busy' | 'offline'; // Computed availability status
+
   created_at?: string;
   updated_at?: string;
 }
@@ -106,6 +117,28 @@ export interface AgentsStore {
   // Global synchronization
   syncAcrossViews: () => void;
   subscribeToChanges: (callback: (agents: Agent[]) => void) => () => void;
+
+  // Agent Statistics
+  loadAgentStats: (agentId: string) => Promise<AgentStats | null>;
+  getAgentWithStats: (agentId: string) => Promise<AgentWithStats | null>;
+}
+
+export interface AgentStats {
+  totalConsultations: number;
+  satisfactionScore: number;
+  successRate: number;
+  averageResponseTime: number;
+  certifications: string[];
+  totalTokensUsed: number;
+  totalCost: number;
+  confidenceLevel: number;
+  availability: 'online' | 'busy' | 'offline';
+}
+
+export interface AgentWithStats {
+  agent: Agent;
+  stats: AgentStats | null;
+  isLoadingStats: boolean;
 }
 
 // Global event emitter for cross-component synchronization
@@ -538,6 +571,44 @@ export const useAgentsStore = create<AgentsStore>()(
       // Subscribe to changes
       subscribeToChanges: (callback: (agents: Agent[]) => void) => {
         return agentEventEmitter.subscribe(callback);
+      },
+
+      // Agent Statistics
+      loadAgentStats: async (agentId: string): Promise<AgentStats | null> => {
+        try {
+          const response = await fetch(`/api/agents/${agentId}/stats`);
+          if (!response.ok) {
+            console.warn(`[AgentsStore] Failed to load stats for agent ${agentId}`);
+            return null;
+          }
+
+          const data = await response.json();
+          if (data.success && data.data) {
+            return data.data as AgentStats;
+          }
+
+          return null;
+        } catch (error) {
+          console.error(`[AgentsStore] Error loading agent stats:`, error);
+          return null;
+        }
+      },
+
+      getAgentWithStats: async (agentId: string): Promise<AgentWithStats | null> => {
+        const { getAgentById, loadAgentStats } = get();
+        
+        const agent = getAgentById(agentId);
+        if (!agent) {
+          return null;
+        }
+
+        const stats = await loadAgentStats(agentId);
+        
+        return {
+          agent,
+          stats,
+          isLoadingStats: false,
+        };
       },
     }),
     {

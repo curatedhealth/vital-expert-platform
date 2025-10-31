@@ -14,17 +14,16 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { useAuth } from '@/lib/auth/supabase-auth-context';
+import { useAuth, sanitizeDisplayName } from '@/lib/auth/supabase-auth-context';
 
 export function DashboardHeader() {
   const { user, userProfile, signOut } = useAuth();
 
   // Get display name from user or userProfile
-  const displayName =
-    user?.user_metadata?.name ||
-    userProfile?.full_name ||
-    user?.email?.split('@')[0] ||
-    'User';
+  const displayName = sanitizeDisplayName(
+    userProfile?.full_name || user?.user_metadata?.full_name || user?.user_metadata?.name,
+    user?.email || userProfile?.email
+  );
 
   const displayEmail = user?.email || userProfile?.email || '';
 

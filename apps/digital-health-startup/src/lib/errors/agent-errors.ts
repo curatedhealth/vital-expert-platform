@@ -194,6 +194,24 @@ export class UserAgentOperationError extends AgentError {
 }
 
 /**
+ * Conversation operation error (create/update/delete failed)
+ */
+export class ConversationOperationError extends AgentError {
+  readonly code = 'CONVERSATION_OPERATION_FAILED';
+  readonly statusCode = 500;
+
+  constructor(
+    message: string,
+    options?: {
+      cause?: Error;
+      context?: ErrorContext;
+    }
+  ) {
+    super(`Conversation operation failed: ${message}`, options);
+  }
+}
+
+/**
  * Rate limit error
  */
 export class RateLimitError extends AgentError {

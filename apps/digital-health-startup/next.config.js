@@ -27,8 +27,31 @@ const nextConfig = {
   },
 
   // Turbopack configuration (Next.js 16 default bundler)
-  // Empty config silences the webpack warning
+  // Exclude Node.js modules from client bundle
   turbopack: {},
+  
+  // Webpack configuration for compatibility (if webpack is used instead of Turbopack)
+  webpack: (config, { isServer, webpack }) => {
+    if (!isServer) {
+      // Exclude Node.js modules from client bundle
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        cluster: false,
+        fs: false,
+        net: false,
+        tls: false,
+        child_process: false,
+      };
+      
+      // Ignore prom-client in client bundle
+      config.plugins.push(
+        new webpack.IgnorePlugin({
+          resourceRegExp: /^prom-client$/,
+        })
+      );
+    }
+    return config;
+  },
 
   // Skip build-time errors in development
   onDemandEntries: {
@@ -37,7 +60,8 @@ const nextConfig = {
   },
 
   // External packages for server components (moved from experimental)
-  serverExternalPackages: ['@supabase/supabase-js', '@supabase/realtime-js'],
+  // These packages are excluded from client bundle
+  serverExternalPackages: ['@supabase/supabase-js', '@supabase/realtime-js', 'prom-client'],
 
   // Experimental features
   experimental: {

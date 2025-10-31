@@ -300,6 +300,63 @@ export const UnifiedOrchestrationState = Annotation.Root({
     default: () => []
   }),
 
+  // ===== DEEP AGENT ARCHITECTURE (Phase 3) =====
+  /** Reasoning steps from Chain of Thought */
+  reasoningSteps: Annotation<Array<{
+    step: number;
+    content: string;
+    confidence: number;
+    supportingEvidence?: string[];
+    timestamp: Date;
+  }>>({
+    reducer: (current, update) => [...current, ...(Array.isArray(update) ? update : [update])],
+    default: () => []
+  }),
+
+  /** Confidence scores per reasoning step */
+  confidenceScores: Annotation<number[]>({
+    reducer: (current, update) => [...current, ...(Array.isArray(update) ? update : [update])],
+    default: () => []
+  }),
+
+  /** Critique history from self-evaluation */
+  critiqueHistory: Annotation<Array<{
+    agentId: string;
+    timestamp: Date;
+    aspect: string;
+    score: number;
+    feedback: string;
+    suggestions: string[];
+    criteria: string[];
+  }>>({
+    reducer: (current, update) => [...current, ...(Array.isArray(update) ? update : [update])],
+    default: () => []
+  }),
+
+  /** Improvement suggestions from critiques */
+  improvementSuggestions: Annotation<string[]>({
+    reducer: (current, update) => [...current, ...(Array.isArray(update) ? update : [update])],
+    default: () => []
+  }),
+
+  /** Agent hierarchy level (master/expert/specialist/worker/tool) */
+  agentLevel: Annotation<string | null>({
+    reducer: (_current, update) => update,
+    default: () => null
+  }),
+
+  /** Parent agent ID in hierarchy */
+  parentAgentId: Annotation<string | null>({
+    reducer: (_current, update) => update,
+    default: () => null
+  }),
+
+  /** Child agent IDs in hierarchy */
+  childAgentIds: Annotation<string[]>({
+    reducer: (current, update) => [...current, ...(Array.isArray(update) ? update : [update])],
+    default: () => []
+  }),
+
   // ===== CONSENSUS & SYNTHESIS =====
   /** Whether consensus reached in multi-agent mode */
   consensusReached: Annotation<boolean>({

@@ -5,6 +5,23 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 
 import { createClient } from '@/lib/supabase/client';
 
+export const sanitizeDisplayName = (
+  candidate: string | null | undefined,
+  fallbackEmail?: string | null,
+): string => {
+  const trimmed = candidate?.trim();
+  if (!trimmed) {
+    return fallbackEmail?.split('@')[0] || 'User';
+  }
+
+  const normalized = trimmed.toLowerCase();
+  if (['anonymous', 'anonymous user', 'user'].includes(normalized)) {
+    return fallbackEmail?.split('@')[0] || 'User';
+  }
+
+  return trimmed;
+};
+
 // Production-ready TypeScript interfaces
 interface UserProfile {
   id: string;
@@ -69,25 +86,13 @@ export function SupabaseAuthProvider({ children }: AuthProviderProps) {
            SUPABASE_URL === 'YOUR_SUPABASE_URL');
 
         if (useMockAuth) {
-          log.warn('Supabase not configured - using mock authentication');
-
-          const mockUserData = localStorage.getItem('vital-mock-user');
-          const mockSessionData = localStorage.getItem('vital-mock-session');
-
-          if (mockUserData && mockSessionData) {
-            try {
-              const mockUser = JSON.parse(mockUserData) as User;
-              const mockSession = JSON.parse(mockSessionData) as Session;
-              if (mounted) {
-                setUser(mockUser);
-                setSession(mockSession);
-                log.info('Mock user loaded:', mockUser.email);
-              }
-            } catch (error) {
-              log.error('Error parsing mock user data:', error);
-            }
+          log.warn('Supabase configuration missing; authentication disabled in this environment.');
+          if (mounted) {
+            setUser(null);
+            setSession(null);
+            setUserProfile(null);
+            setLoading(false);
           }
-          if (mounted) setLoading(false);
           return;
         }
 

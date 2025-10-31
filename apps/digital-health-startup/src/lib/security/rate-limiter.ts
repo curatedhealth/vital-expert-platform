@@ -185,7 +185,11 @@ export function getRateLimitTier(
   const pathname = request.nextUrl.pathname;
 
   // Orchestration endpoints (most expensive)
-  if (pathname.startsWith('/api/orchestrate') || pathname.startsWith('/api/chat')) {
+  if (
+    pathname.startsWith('/api/orchestrate') ||
+    pathname.startsWith('/api/chat') ||
+    pathname.startsWith('/api/ask-expert/orchestrate')
+  ) {
     return 'orchestration';
   }
 

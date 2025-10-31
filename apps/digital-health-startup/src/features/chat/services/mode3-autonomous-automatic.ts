@@ -24,6 +24,7 @@ import { chainOfThoughtEngine } from './chain-of-thought-engine';
 import { reActEngine } from './react-engine';
 import { agentSelectorService } from './agent-selector-service';
 import { createLogger } from '@/lib/services/observability/structured-logger';
+import { getAgentMetricsService } from '@/lib/services/observability/agent-metrics-service';
 import {
   AgentSelectionError,
   serializeError,
@@ -98,11 +99,69 @@ export class Mode3AutonomousAutomaticHandler {
       // Execute LangGraph workflow
       const result = await this.workflow.invoke(initialState);
 
+      // Calculate execution time
+      const executionTime = Date.now() - startTime;
+      result.executionTime = executionTime;
+
+      // Record Mode 3 execution metrics (fire-and-forget)
+      if (config.tenantId && result.selectedAgent?.id) {
+        const metricsService = getAgentMetricsService();
+        const iterations = result.iterations?.length || 0;
+        metricsService.recordOperation({
+          agentId: result.selectedAgent.id,
+          tenantId: config.tenantId,
+          operationType: 'mode3',
+          responseTimeMs: executionTime,
+          success: true,
+          queryText: config.message.substring(0, 1000),
+          selectedAgentId: result.selectedAgent.id,
+          confidenceScore: result.confidence,
+          sessionId: config.sessionId,
+          userId: config.userId || null,
+          metadata: {
+            workflowId,
+            iterations,
+            finalAnswer: result.finalAnswer?.substring(0, 200),
+            toolsUsed: result.toolsUsed || [],
+            candidateCount: result.candidateAgents?.length || 0,
+            executionTime,
+          },
+        }).catch(() => {
+          // Silent fail - metrics should never break main flow
+        });
+      }
+
       // Stream the results
       return this.streamMode3Results(result, startTime);
 
     } catch (error) {
       const executionTime = Date.now() - startTime;
+
+      // Record Mode 3 error metrics (fire-and-forget)
+      if (config.tenantId) {
+        const metricsService = getAgentMetricsService();
+        const agentId = 'system'; // We don't have result here in catch block
+        metricsService.recordOperation({
+          agentId,
+          tenantId: config.tenantId,
+          operationType: 'mode3',
+          responseTimeMs: executionTime,
+          success: false,
+          errorOccurred: true,
+          errorType: error instanceof Error ? error.constructor.name : 'UnknownError',
+          errorMessage: error instanceof Error ? error.message.substring(0, 500) : String(error),
+          queryText: config.message.substring(0, 1000),
+          sessionId: config.sessionId,
+          userId: config.userId || null,
+          metadata: {
+            workflowId,
+            executionTime,
+          },
+        }).catch(() => {
+          // Silent fail
+        });
+      }
+
       this.logger.error(
         'mode3_execution_failed',
         error instanceof Error ? error : new Error(String(error)),

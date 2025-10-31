@@ -248,7 +248,7 @@ export function requireAdmin(handler: (request: NextRequest, user: Authenticated
 export function requireSuperAdmin(handler: (request: NextRequest, user: AuthenticatedUser) => Promise<NextResponse>) {
   return async (request: NextRequest) => {
     const auth = AuthMiddleware.getInstance();
-// const user = // Unused variable await auth.authenticateRequest(request);
+    const user = await auth.authenticateRequest(request);
 
     if (!user) {
       await auth.logSecurityEvent(request, null, 'UNAUTHORIZED_ACCESS', 'api', request.nextUrl.pathname, false, 'No valid session');

@@ -7,7 +7,7 @@
 
 import { DynamicStructuredTool } from '@langchain/core/tools';
 import type { StructuredToolInterface } from '@langchain/core/tools';
-import { BaseTool, ToolContext } from './base-tool';
+import { BaseTool, ToolContext, ToolSchema } from './base-tool';
 import { ToolRegistry } from './tool-registry';
 import { z } from 'zod';
 
@@ -18,23 +18,24 @@ export function convertToolToLangChain(
   tool: BaseTool,
   registry: ToolRegistry
 ): StructuredToolInterface {
-  const schema = tool.getSchema();
+  const schema: ToolSchema = tool.getSchema();
   const paramsSchema = schema.function.parameters;
 
   // Convert JSON Schema to Zod schema
   const zodSchema = convertJSONSchemaToZod(paramsSchema);
 
+  // Infer input type from Zod schema
+  type InputType = z.infer<typeof zodSchema>;
+
   return new DynamicStructuredTool({
     name: tool.name,
     description: tool.description,
     schema: zodSchema,
-    func: async (input: any) => {
+    func: async (input: InputType): Promise<string> => {
       // Execute tool through registry
-      const context: ToolContext = {
-        // Context will be passed when executing
-      };
+      const context: ToolContext = {};
 
-      const result = await registry.executeTool(tool.name, input, context);
+      const result = await registry.executeTool(tool.name, input as Record<string, unknown>, context);
 
       if (!result.success) {
         throw new Error(result.error || 'Tool execution failed');
@@ -50,23 +51,53 @@ export function convertToolToLangChain(
  * Convert all tools in registry to LangChain tools
  */
 export function convertRegistryToLangChainTools(
-  registry: ToolRegistry
+  registry: ToolRegistry,
+  allowedToolNames?: string[]
 ): StructuredToolInterface[] {
-  return registry
-    .getAllTools()
-    .map((tool) => convertToolToLangChain(tool, registry));
+  const hasExplicitList = Array.isArray(allowedToolNames);
+  const normalizedNames = hasExplicitList
+    ? allowedToolNames
+        .map((name) => (typeof name === 'string' ? name.trim() : ''))
+        .filter((name): name is string => name.length > 0)
+    : [];
+
+  if (hasExplicitList) {
+    if (normalizedNames.length === 0) {
+      return [];
+    }
+
+    const allowedSet = new Set(normalizedNames);
+    const tools = Array.from(allowedSet)
+      .map((name) => registry.getTool(name))
+      .filter((tool): tool is BaseTool => Boolean(tool));
+
+    return tools.map((tool) => convertToolToLangChain(tool, registry));
+  }
+
+  const allTools = registry.getAllTools();
+
+  return allTools.map((tool) => convertToolToLangChain(tool, registry));
 }
 
 /**
  * Convert JSON Schema to Zod schema (simplified version)
  * This is a basic converter - in production, you might want a more robust solution
  */
+type JSONSchemaProperty = {
+  type: string;
+  enum?: string[];
+  description?: string;
+  properties?: Record<string, JSONSchemaProperty>;
+  required?: string[];
+  items?: JSONSchemaProperty;
+};
+
 function convertJSONSchemaToZod(jsonSchema: {
   type: string;
-  properties: Record<string, any>;
+  properties: Record<string, JSONSchemaProperty>;
   required?: string[];
   additionalProperties?: boolean;
-}): z.ZodObject<any> {
+}): z.ZodObject<Record<string, z.ZodTypeAny>> {
   const shape: Record<string, z.ZodTypeAny> = {};
 
   for (const [key, prop] of Object.entries(jsonSchema.properties || {})) {
@@ -75,7 +106,7 @@ function convertJSONSchemaToZod(jsonSchema: {
     switch (prop.type) {
       case 'string':
         zodType = z.string();
-        if (prop.enum) {
+        if (prop.enum && prop.enum.length > 0) {
           zodType = z.enum(prop.enum as [string, ...string[]]);
         }
         break;
@@ -102,11 +133,20 @@ function convertJSONSchemaToZod(jsonSchema: {
         break;
 
       case 'array':
-        zodType = z.array(z.any());
+        // If items type is specified, use it; otherwise use unknown
+        if (prop.items) {
+          const itemType = prop.items.type === 'string' ? z.string() :
+                          prop.items.type === 'number' || prop.items.type === 'integer' ? z.number() :
+                          prop.items.type === 'boolean' ? z.boolean() :
+                          z.unknown();
+          zodType = z.array(itemType);
+        } else {
+          zodType = z.array(z.unknown());
+        }
         break;
 
       default:
-        zodType = z.any();
+        zodType = z.unknown();
     }
 
     if (prop.description) {
@@ -122,4 +162,3 @@ function convertJSONSchemaToZod(jsonSchema: {
 
   return z.object(shape);
 }
-

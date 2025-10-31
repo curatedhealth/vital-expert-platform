@@ -67,6 +67,35 @@ export class Mode1ErrorHandler {
       return this.mapErrorToMode1Error(error, context);
     }
 
+    // Handle error-like objects (e.g., Supabase/Postgrest errors)
+    if (typeof error === 'object' && error !== null) {
+      const { message, code, ...rest } = error as Record<string, unknown>;
+      let normalizedMessage: string;
+
+      if (typeof message === 'string' && message.trim().length > 0) {
+        normalizedMessage = message;
+      } else {
+        try {
+          normalizedMessage = JSON.stringify(error);
+        } catch {
+          normalizedMessage = String(error);
+        }
+      }
+
+      const normalizedError = new Error(normalizedMessage) as Mode1Error;
+      const mappedError = this.mapErrorToMode1Error(normalizedError, context);
+
+      mappedError.metadata = {
+        ...(mappedError.metadata || {}),
+        ...(context || {}),
+        originalError: error,
+        ...(typeof code === 'string' ? { originalCode: code } : {}),
+        ...(Object.keys(rest).length > 0 ? { originalDetails: rest } : {}),
+      };
+
+      return mappedError;
+    }
+
     // Handle unknown errors
     const mode1Error = new Error(String(error)) as Mode1Error;
     mode1Error.code = Mode1ErrorCode.UNKNOWN_ERROR;
@@ -196,17 +225,30 @@ export class Mode1ErrorHandler {
   }
 
   /**
-   * Log error with context
+   * Log error with context using structured logging
    */
   static logError(error: Mode1Error, context?: Record<string, any>): void {
-    console.error('❌ [Mode 1 Error]', {
-      code: error.code,
-      message: error.message,
-      userMessage: error.userMessage,
-      statusCode: error.statusCode,
-      retryable: error.retryable,
-      metadata: { ...error.metadata, ...context },
-      stack: error.stack,
+    // Import StructuredLogger dynamically to avoid circular dependencies
+    import('@/lib/services/observability/structured-logger').then(({ StructuredLogger, LogLevel }) => {
+      const logger = new StructuredLogger({ minLevel: LogLevel.ERROR });
+      logger.error('Mode 1 error occurred', {
+        operation: error.metadata?.operation || 'mode1_unknown',
+        errorCode: error.code,
+        statusCode: error.statusCode,
+        retryable: error.retryable,
+        metadata: { ...error.metadata, ...context },
+      }, new Error(error.message));
+    }).catch(() => {
+      // Fallback to console if StructuredLogger not available
+      console.error('❌ [Mode 1 Error]', {
+        code: error.code,
+        message: error.message,
+        userMessage: error.userMessage,
+        statusCode: error.statusCode,
+        retryable: error.retryable,
+        metadata: { ...error.metadata, ...context },
+        stack: error.stack,
+      });
     });
   }
 }
@@ -264,4 +306,3 @@ export async function withRetry<T>(
 
   throw lastError!;
 }
-

@@ -78,17 +78,23 @@ interface AnalyticsData {
   }>;
   contentStats: {
     totalDocuments: number;
-    totalChunks: number;
-    totalSize: number;
-    avgDocumentSize: number;
-    avgChunksPerDocument: number;
-    avgChunkQuality: number;
-    domains: string[];
-    categories: string[];
-    filteredBy?: {
-      category?: string;
-      agent?: string;
-    };
+      totalChunks: number;
+      totalSize: number;
+      avgDocumentSize: number;
+      avgChunksPerDocument: number;
+      avgChunkQuality: number;
+      domains: string[];
+      categories: string[];
+      statusBreakdown?: {
+        completed: number;
+        processing: number;
+        failed: number;
+        pending: number;
+      };
+      filteredBy?: {
+        category?: string;
+        agent?: string;
+      };
   };
   recentActivity: {
     todayUploads: number;
@@ -129,6 +135,42 @@ interface AnalyticsData {
     url?: string;
     is_public?: boolean;
   }>;
+  // NEW: Pinecone integration
+  pinecone?: {
+    totalVectors: number;
+    dimension: number;
+    indexFullness: number;
+    domainsWithContent: number;
+    totalDomains: number;
+    domainStats?: Array<{
+      domain: string;
+      totalChunks: number;
+      totalDocuments: number;
+      lastUpdated?: Date;
+    }>;
+    error?: string;
+  };
+  domainCoverage?: Array<{
+    domain: string;
+    domainName: string;
+    tier: number;
+    documents: number;
+    chunks: number;
+    coveragePercent: number;
+    color?: string;
+  }>;
+  dataSources?: {
+    supabase: {
+      documents: number;
+      chunks: number;
+      enabled: boolean;
+    };
+    pinecone: {
+      vectors: number;
+      enabled: boolean;
+      namespace: string;
+    };
+  };
 }
 
 const ragCategoryIcons = {
@@ -317,7 +359,14 @@ export function KnowledgeAnalyticsDashboard({
                 <div>
                   <p className="text-blue-600 text-sm font-medium">Total Documents</p>
                   <p className="text-3xl font-bold text-blue-900">{analytics.contentStats.totalDocuments}</p>
-                  <p className="text-xs text-blue-700 mt-1">+{analytics.recentActivity.last7dUploads} this week</p>
+                  <p className="text-xs text-blue-700 mt-1">
+                    +{analytics.recentActivity.last7dUploads} this week
+                    {analytics.contentStats.totalDocuments > analytics.contentStats.totalChunks && (
+                      <span className="ml-2 text-orange-600">
+                        • {analytics.contentStats.totalDocuments - Math.round(analytics.contentStats.totalChunks / Math.max(analytics.contentStats.avgChunksPerDocument || 1, 1))} may need processing
+                      </span>
+                    )}
+                  </p>
                 </div>
                 <div className="relative">
                   <Database className="w-10 h-10 text-blue-500" />
@@ -333,7 +382,12 @@ export function KnowledgeAnalyticsDashboard({
                 <div>
                   <p className="text-green-600 text-sm font-medium">Knowledge Chunks</p>
                   <p className="text-3xl font-bold text-green-900">{analytics.contentStats.totalChunks}</p>
-                  <p className="text-xs text-green-700 mt-1">Avg {Math.round(analytics.contentStats.avgChunksPerDocument)}/doc</p>
+                  <p className="text-xs text-green-700 mt-1">
+                    Avg {Math.round(analytics.contentStats.avgChunksPerDocument)}/doc
+                    {analytics.pinecone && analytics.pinecone.totalVectors > 0 && (
+                      <span className="ml-2">• {analytics.pinecone.totalVectors} vectors in Pinecone</span>
+                    )}
+                  </p>
                 </div>
                 <div className="relative">
                   <Brain className="w-10 h-10 text-green-500" />
@@ -365,7 +419,23 @@ export function KnowledgeAnalyticsDashboard({
                 <div>
                   <p className="text-orange-600 text-sm font-medium">Today's Uploads</p>
                   <p className="text-3xl font-bold text-orange-900">{analytics.recentActivity.todayUploads}</p>
-                  <p className="text-xs text-orange-700 mt-1">{analytics.recentActivity.last24hUploads} in 24h</p>
+                  <p className="text-xs text-orange-700 mt-1">
+                    {analytics.recentActivity.last24hUploads} in 24h
+                    {analytics.contentStats.statusBreakdown && (
+                      <>
+                        {analytics.contentStats.statusBreakdown.failed > 0 && (
+                          <span className="ml-2 text-red-600">
+                            • {analytics.contentStats.statusBreakdown.failed} failed
+                          </span>
+                        )}
+                        {analytics.contentStats.statusBreakdown.processing > 0 && (
+                          <span className="ml-2 text-blue-600">
+                            • {analytics.contentStats.statusBreakdown.processing} processing
+                          </span>
+                        )}
+                      </>
+                    )}
+                  </p>
                 </div>
                 <div className="relative">
                   <Upload className="w-10 h-10 text-orange-500" />
@@ -621,6 +691,135 @@ export function KnowledgeAnalyticsDashboard({
             </CardContent>
           </Card>
         </div>
+
+        {/* Pinecone & Domain Coverage Section */}
+        {analytics.pinecone && analytics.pinecone.totalVectors > 0 && (
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <Card className="bg-gradient-to-br from-indigo-50 to-indigo-100 border-indigo-200 hover:shadow-lg transition-all duration-200">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-indigo-900">
+                  <Database className="w-5 h-5" />
+                  Pinecone Vector Store
+                  <Badge variant="secondary" className="ml-2">
+                    <Activity className="w-3 h-3 mr-1" />
+                    Live
+                  </Badge>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-indigo-700">Total Vectors</span>
+                    <span className="text-2xl font-bold text-indigo-900">{analytics.pinecone.totalVectors.toLocaleString()}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-indigo-700">Dimension</span>
+                    <span className="text-lg font-semibold text-indigo-900">{analytics.pinecone.dimension}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-indigo-700">Index Fullness</span>
+                    <span className="text-lg font-semibold text-indigo-900">
+                      {(analytics.pinecone.indexFullness * 100).toFixed(2)}%
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-indigo-700">Domains with Content</span>
+                    <span className="text-lg font-semibold text-indigo-900">
+                      {analytics.pinecone.domainsWithContent} / {analytics.pinecone.totalDomains}
+                    </span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200 hover:shadow-lg transition-all duration-200">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-purple-900">
+                  <Globe className="w-5 h-5" />
+                  Data Sources
+                  <Badge variant="secondary" className="ml-2">Hybrid</Badge>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <Database className="w-4 h-4 text-blue-600" />
+                      <span className="text-sm font-medium text-blue-900">PostgreSQL</span>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-lg font-bold text-blue-900">
+                        {analytics.dataSources?.supabase?.documents || 0} docs
+                      </div>
+                      <div className="text-xs text-blue-700">
+                        {analytics.dataSources?.supabase?.chunks || 0} chunks
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between p-3 bg-indigo-50 rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <Brain className="w-4 h-4 text-indigo-600" />
+                      <span className="text-sm font-medium text-indigo-900">Pinecone</span>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-lg font-bold text-indigo-900">
+                        {analytics.dataSources?.pinecone?.vectors || 0} vectors
+                      </div>
+                      <div className="text-xs text-indigo-700">
+                        {analytics.dataSources?.pinecone?.namespace || 'default'} namespace
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {analytics.domainCoverage && analytics.domainCoverage.length > 0 && (
+              <Card className="bg-gradient-to-br from-teal-50 to-teal-100 border-teal-200 hover:shadow-lg transition-all duration-200">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-teal-900">
+                    <TrendingUp className="w-5 h-5" />
+                    Domain Richness
+                    <Badge variant="secondary" className="ml-2">
+                      {analytics.domainCoverage.filter((d: any) => d.documents > 0).length} Active
+                    </Badge>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2 max-h-64 overflow-y-auto">
+                    {analytics.domainCoverage
+                      .filter((d: any) => d.documents > 0)
+                      .sort((a: any, b: any) => b.documents - a.documents)
+                      .slice(0, 5)
+                      .map((domain: any) => (
+                        <div key={domain.domain} className="flex items-center justify-between p-2 bg-white rounded">
+                          <div className="flex-1 min-w-0">
+                            <div className="text-sm font-medium text-teal-900 truncate">
+                              {domain.domainName}
+                            </div>
+                            <div className="text-xs text-teal-700">
+                              Tier {domain.tier} • {domain.chunks} chunks
+                            </div>
+                          </div>
+                          <div className="text-right ml-2">
+                            <div className="text-lg font-bold text-teal-900">
+                              {domain.documents}
+                            </div>
+                            <div className="text-xs text-teal-700">docs</div>
+                          </div>
+                        </div>
+                      ))}
+                  </div>
+                  {analytics.domainCoverage.filter((d: any) => d.documents > 0).length > 5 && (
+                    <p className="text-xs text-teal-700 mt-2 text-center">
+                      +{analytics.domainCoverage.filter((d: any) => d.documents > 0).length - 5} more domains
+                    </p>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        )}
 
         {/* Recent Activity and Content Stats */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">

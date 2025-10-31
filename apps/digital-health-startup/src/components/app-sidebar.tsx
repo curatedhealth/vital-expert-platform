@@ -3,7 +3,7 @@
 import { useMemo, useEffect, useState } from "react"
 import { usePathname } from "next/navigation"
 
-import { useAuth } from "@/lib/auth/supabase-auth-context"
+import { useAuth, sanitizeDisplayName } from "@/lib/auth/supabase-auth-context"
 import { cn } from "@/shared/services/utils"
 import { NavUser } from "@/components/nav-user"
 import { SidebarAskExpert } from "@/components/sidebar-ask-expert"
@@ -41,7 +41,12 @@ export function AppSidebar({
   }, [])
 
   const sidebarUser = {
-    name: userProfile?.full_name || user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email || "Anonymous User",
+    name: sanitizeDisplayName(
+      userProfile?.full_name ||
+        user?.user_metadata?.full_name ||
+        user?.user_metadata?.name,
+      user?.email || userProfile?.email
+    ),
     email: user?.email || "",
     avatar: userProfile?.avatar_url || user?.user_metadata?.avatar_url || "",
   }

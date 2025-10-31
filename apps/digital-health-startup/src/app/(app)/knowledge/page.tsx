@@ -90,15 +90,32 @@ function KnowledgePageContent() {
       const response = await fetch(`/api/knowledge/documents?${params.toString()}`);
 
       if (!response.ok) {
-        throw new Error(`Failed to fetch documents: ${response.statusText}`);
+        let errorMessage = response.statusText;
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.error || errorData.details || errorData.message || response.statusText;
+          console.error('[Knowledge Page] API error response:', errorData);
+        } catch (parseError) {
+          // Response is not JSON, get text instead
+          const textError = await response.text().catch(() => response.statusText);
+          errorMessage = textError || response.statusText;
+          console.error('[Knowledge Page] Failed to parse error response:', parseError);
+        }
+        throw new Error(`Failed to fetch documents: ${errorMessage}`);
       }
 
-      const data = await response.json();
+      let data;
+      try {
+        data = await response.json();
+      } catch (parseError) {
+        console.error('[Knowledge Page] Failed to parse response JSON:', parseError);
+        throw new Error('Invalid response from server');
+      }
 
       if (data.success) {
         setDocuments(data.documents || []);
       } else {
-        throw new Error(data.error || 'Failed to fetch documents');
+        throw new Error(data.error || data.details || 'Failed to fetch documents');
       }
     } catch (err) {
       console.error('Error fetching documents:', err);

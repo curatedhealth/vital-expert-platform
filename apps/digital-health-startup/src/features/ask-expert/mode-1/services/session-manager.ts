@@ -285,7 +285,21 @@ export class SessionManager {
   /**
    * Map database record to AskExpertSession
    */
-  private mapToSession(data: any): AskExpertSession {
+  private mapToSession(data: {
+    id: string;
+    tenant_id: string;
+    user_id: string;
+    agent_id: string;
+    mode: string;
+    status: string;
+    metadata: Record<string, unknown> | null;
+    total_messages: number;
+    total_tokens: number;
+    total_cost: number;
+    created_at: string;
+    updated_at: string;
+    ended_at: string | null;
+  }): AskExpertSession {
     return {
       id: data.id,
       tenant_id: data.tenant_id,

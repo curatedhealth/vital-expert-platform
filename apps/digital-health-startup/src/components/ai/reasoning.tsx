@@ -1,229 +1,315 @@
-'use client';
+'use client'
 
-import { ChevronDown, ChevronUp, Loader2 } from 'lucide-react';
-import * as React from 'react';
+import * as React from 'react'
+import { Brain, ChevronDown, ChevronUp, Loader2 } from 'lucide-react'
 
-import { cn } from '@/lib/utils';
+import { cn } from '@/lib/utils'
+
+const AUTO_CLOSE_DELAY = 1_000
+const DURATION_TICK_MS = 120
 
 interface ReasoningContextValue {
-  isStreaming: boolean;
-  isOpen: boolean;
-  setIsOpen: (open: boolean) => void;
-  startTime: number;
-  duration: number;
+  isStreaming: boolean
+  isOpen: boolean
+  setOpen: (open: boolean) => void
+  durationMs: number
 }
 
-const ReasoningContext = React.createContext<ReasoningContextValue>({
-  isStreaming: false,
-  isOpen: false,
-  setIsOpen: () => {},
-  startTime: 0,
-  duration: 0,
-});
+const ReasoningContext = React.createContext<ReasoningContextValue | null>(null)
 
-interface ReasoningProps {
-  children: React.ReactNode;
-  isStreaming?: boolean;
-  className?: string;
+function useReasoningContext(component: string): ReasoningContextValue {
+  const context = React.useContext(ReasoningContext)
+  if (!context) {
+    throw new Error(`${component} must be used within <Reasoning>`)
+  }
+  return context
 }
 
-export function Reasoning({ children, isStreaming = false, className }: ReasoningProps) {
-  const [isOpen, setIsOpen] = React.useState(false);
-  const [startTime] = React.useState(Date.now());
-  const [duration, setDuration] = React.useState(0);
+export interface ReasoningProps {
+  children: React.ReactNode
+  isStreaming?: boolean
+  open?: boolean
+  defaultOpen?: boolean
+  onOpenChange?: (open: boolean) => void
+  duration?: number
+  className?: string
+}
 
-  // Auto-open when streaming starts
+export function Reasoning({
+  children,
+  isStreaming = false,
+  open,
+  defaultOpen = false,
+  onOpenChange,
+  duration,
+  className,
+}: ReasoningProps) {
+  const isControlled = open !== undefined
+  const [internalOpen, setInternalOpen] = React.useState(defaultOpen)
+  const effectiveOpen = isControlled ? Boolean(open) : internalOpen
+
+  const [internalDuration, setInternalDuration] = React.useState(0)
+  const effectiveDuration = duration ?? internalDuration
+
+  const startTimeRef = React.useRef<number | null>(null)
+  const autoCloseTimeoutRef = React.useRef<number | null>(null)
+  const tickerRef = React.useRef<number | null>(null)
+
+  const clearAutoCloseTimeout = () => {
+    if (autoCloseTimeoutRef.current !== null) {
+      window.clearTimeout(autoCloseTimeoutRef.current)
+      autoCloseTimeoutRef.current = null
+    }
+  }
+
+  const clearTicker = () => {
+    if (tickerRef.current !== null) {
+      window.clearInterval(tickerRef.current)
+      tickerRef.current = null
+    }
+  }
+
+  const setOpen = React.useCallback(
+    (value: boolean) => {
+      if (!isControlled) {
+        setInternalOpen(value)
+      }
+      onOpenChange?.(value)
+    },
+    [isControlled, onOpenChange]
+  )
+
   React.useEffect(() => {
     if (isStreaming) {
-      setIsOpen(true);
+      startTimeRef.current = Date.now()
+      clearAutoCloseTimeout()
+      setOpen(true)
+      if (duration === undefined) {
+        clearTicker()
+        tickerRef.current = window.setInterval(() => {
+          if (startTimeRef.current) {
+            setInternalDuration(Date.now() - startTimeRef.current)
+          }
+        }, DURATION_TICK_MS)
+      }
+    } else {
+      clearTicker()
+      if (startTimeRef.current && duration === undefined) {
+        setInternalDuration(Date.now() - startTimeRef.current)
+      }
+      if (!isControlled) {
+        clearAutoCloseTimeout()
+        autoCloseTimeoutRef.current = window.setTimeout(() => {
+          setInternalOpen(false)
+          onOpenChange?.(false)
+        }, AUTO_CLOSE_DELAY)
+      }
     }
-  }, [isStreaming]);
 
-  // Update duration while streaming
-  React.useEffect(() => {
-    if (!isStreaming) return;
-
-    const interval = setInterval(() => {
-      setDuration(Date.now() - startTime);
-    }, 100);
-
-    return () => clearInterval(interval);
-  }, [isStreaming, startTime]);
-
-  // Auto-close when streaming completes
-  React.useEffect(() => {
-    if (!isStreaming && isOpen) {
-      // Delay close slightly to allow user to see final state
-      const timeout = setTimeout(() => {
-        setIsOpen(false);
-      }, 1000);
-
-      return () => clearTimeout(timeout);
+    return () => {
+      clearAutoCloseTimeout()
+      clearTicker()
     }
-  }, [isStreaming, isOpen]);
+  }, [isStreaming, isControlled, duration, setOpen, onOpenChange])
 
-  const value = React.useMemo(
+  React.useEffect(() => {
+    return () => {
+      clearAutoCloseTimeout()
+      clearTicker()
+    }
+  }, [])
+
+  const contextValue = React.useMemo<ReasoningContextValue>(
     () => ({
       isStreaming,
-      isOpen,
-      setIsOpen,
-      startTime,
-      duration,
+      isOpen: effectiveOpen,
+      setOpen,
+      durationMs: effectiveDuration,
     }),
-    [isStreaming, isOpen, startTime, duration]
-  );
+    [effectiveDuration, effectiveOpen, isStreaming, setOpen]
+  )
 
   return (
-    <ReasoningContext.Provider value={value}>
+    <ReasoningContext.Provider value={contextValue}>
       <div
+        data-state={effectiveOpen ? 'open' : 'closed'}
         className={cn(
-          'rounded-lg border border-gray-200 bg-gray-50/50 overflow-hidden transition-all',
+          'rounded-lg border border-muted bg-muted/40 shadow-sm transition-colors',
           className
         )}
       >
         {children}
       </div>
     </ReasoningContext.Provider>
-  );
+  )
 }
 
-interface ReasoningTriggerProps {
-  title?: string;
-  className?: string;
+export interface ReasoningTriggerProps
+  extends React.ComponentPropsWithoutRef<'button'> {
+  title?: string
 }
 
-export function ReasoningTrigger({ title = 'Thinking', className }: ReasoningTriggerProps) {
-  const { isStreaming, isOpen, setIsOpen, duration } = React.useContext(ReasoningContext);
+export function ReasoningTrigger({
+  title = 'Reasoning',
+  className,
+  ...triggerProps
+}: ReasoningTriggerProps) {
+  const { isStreaming, isOpen, setOpen, durationMs } = useReasoningContext(
+    'ReasoningTrigger'
+  )
 
-  const formatDuration = (ms: number) => {
-    if (ms < 1000) return `${ms}ms`;
-    return `${(ms / 1000).toFixed(1)}s`;
-  };
+  const formatDuration = React.useCallback((ms: number) => {
+    if (ms <= 0) return null
+    if (ms < 1_000) return `${Math.round(ms)} ms`
+    if (ms < 60_000) return `${(ms / 1_000).toFixed(1)} s`
+    const seconds = Math.round(ms / 1_000)
+    const minutes = Math.floor(seconds / 60)
+    const remainingSeconds = seconds % 60
+    return `${minutes}m ${remainingSeconds}s`
+  }, [])
+
+  const durationLabel = formatDuration(durationMs)
 
   return (
     <button
-      onClick={() => setIsOpen(!isOpen)}
+      type="button"
+      aria-expanded={isOpen}
+      aria-controls="ai-reasoning-content"
+      onClick={() => setOpen(!isOpen)}
       className={cn(
-        'w-full flex items-center justify-between px-4 py-3 text-sm font-medium transition-colors hover:bg-gray-100/50',
+        'flex w-full items-center justify-between gap-3 px-4 py-3 text-left text-sm font-medium transition-colors hover:bg-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2',
         className
       )}
-      aria-expanded={isOpen}
-      aria-controls="reasoning-content"
+      {...triggerProps}
     >
-      <div className="flex items-center gap-2">
-        {isStreaming ? (
-          <Loader2 className="h-4 w-4 animate-spin text-blue-600" />
-        ) : (
-          <div className="h-4 w-4 rounded-full bg-green-500 flex items-center justify-center">
-            <svg
-              className="h-3 w-3 text-white"
-              fill="none"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path d="M5 13l4 4L19 7" />
-            </svg>
-          </div>
-        )}
-        <span className="text-gray-700">
-          {title}
-          {isStreaming ? '...' : ''}
+      <span className="flex items-center gap-2">
+        <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary/10 text-primary">
+          {isStreaming ? (
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          ) : (
+            <Brain className="h-3.5 w-3.5" />
+          )}
         </span>
-        {duration > 0 && (
-          <span className="text-xs text-gray-500">
-            {formatDuration(duration)}
+        <span className="text-muted-foreground">
+          {title}
+          {isStreaming ? '…' : ''}
+        </span>
+        {durationLabel && (
+          <span className="text-xs text-muted-foreground">
+            Thought for {durationLabel}
           </span>
         )}
-      </div>
+      </span>
       {isOpen ? (
-        <ChevronUp className="h-4 w-4 text-gray-500" />
+        <ChevronUp className="h-4 w-4 text-muted-foreground" />
       ) : (
-        <ChevronDown className="h-4 w-4 text-gray-500" />
+        <ChevronDown className="h-4 w-4 text-muted-foreground" />
       )}
     </button>
-  );
+  )
 }
 
-interface ReasoningContentProps {
-  children: React.ReactNode;
-  className?: string;
+export interface ReasoningContentProps
+  extends React.ComponentPropsWithoutRef<'div'> {
+  children: React.ReactNode
 }
 
-export function ReasoningContent({ children, className }: ReasoningContentProps) {
-  const { isOpen } = React.useContext(ReasoningContext);
-  const contentRef = React.useRef<HTMLDivElement>(null);
-  const [height, setHeight] = React.useState<number | undefined>(0);
+const isBrowser = typeof window !== 'undefined'
+
+export function ReasoningContent({
+  children,
+  className,
+  ...contentProps
+}: ReasoningContentProps) {
+  const { isOpen } = useReasoningContext('ReasoningContent')
+  const containerRef = React.useRef<HTMLDivElement>(null)
+  const contentRef = React.useRef<HTMLDivElement>(null)
+  const [height, setHeight] = React.useState<number>(isOpen ? undefined : 0)
 
   React.useEffect(() => {
-    if (contentRef.current) {
-      const resizeObserver = new ResizeObserver((entries) => {
-        if (entries[0]) {
-          setHeight(entries[0].contentRect.height);
-        }
-      });
-
-      resizeObserver.observe(contentRef.current);
-
-      return () => {
-        resizeObserver.disconnect();
-      };
+    if (!isBrowser || !contentRef.current) {
+      return
     }
-  }, []);
+
+    const updateHeight = () => {
+      if (contentRef.current) {
+        const nextHeight = contentRef.current.getBoundingClientRect().height
+        setHeight(nextHeight)
+      }
+    }
+
+    updateHeight()
+
+    const observer = new ResizeObserver(() => updateHeight())
+    observer.observe(contentRef.current)
+
+    return () => observer.disconnect()
+  }, [children])
+
+  React.useEffect(() => {
+    if (!isBrowser) {
+      return
+    }
+
+    if (isOpen) {
+      if (contentRef.current) {
+        const measuredHeight = contentRef.current.getBoundingClientRect().height
+        setHeight(measuredHeight)
+      }
+    } else {
+      setHeight(0)
+    }
+  }, [isOpen])
 
   return (
     <div
-      id="reasoning-content"
+      id="ai-reasoning-content"
+      ref={containerRef}
       style={{
-        maxHeight: isOpen ? height : 0,
-        overflow: 'hidden',
-        transition: 'max-height 0.3s ease-in-out',
+        maxHeight: height === undefined ? 'none' : `${height}px`,
       }}
+      className={cn(
+        'overflow-hidden transition-[max-height] duration-300 ease-in-out',
+        className
+      )}
+      {...contentProps}
     >
-      <div ref={contentRef}>
-        <div
-          className={cn(
-            'px-4 py-3 text-sm text-gray-600 border-t border-gray-200 bg-white',
-            className
-          )}
-        >
-          {children}
-        </div>
+      <div
+        ref={contentRef}
+        className="space-y-3 border-t border-muted px-4 py-3 text-sm text-muted-foreground"
+      >
+        {children}
       </div>
     </div>
-  );
+  )
 }
 
-// Convenience component for step-by-step reasoning
 interface ReasoningStepProps {
-  step: number;
-  children: React.ReactNode;
-  className?: string;
+  step: number
+  children: React.ReactNode
+  className?: string
 }
 
-export function ReasoningStep({ step, children, className }: ReasoningStepProps) {
+export function ReasoningStep({
+  step,
+  children,
+  className,
+}: ReasoningStepProps) {
   return (
-    <div className={cn('flex gap-3 mb-3 last:mb-0', className)}>
-      <div className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-100 text-blue-700 text-xs font-semibold flex items-center justify-center">
+    <div className={cn('flex items-start gap-3 text-sm', className)}>
+      <span className="mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
         {step}
-      </div>
-      <div className="flex-1 pt-0.5">{children}</div>
+      </span>
+      <div className="flex-1 space-y-1 text-muted-foreground">{children}</div>
     </div>
-  );
+  )
 }
 
-// Convenience component for reasoning with markdown-style formatting
 interface ReasoningTextProps {
-  children: React.ReactNode;
-  className?: string;
+  children: React.ReactNode
+  className?: string
 }
 
 export function ReasoningText({ children, className }: ReasoningTextProps) {
-  return (
-    <div className={cn('prose prose-sm max-w-none', className)}>
-      {children}
-    </div>
-  );
+  return <div className={cn('prose prose-sm max-w-none', className)}>{children}</div>
 }

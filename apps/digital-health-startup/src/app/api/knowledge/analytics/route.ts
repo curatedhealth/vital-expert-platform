@@ -1,5 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 import { NextRequest, NextResponse } from 'next/server';
+import { domainSpecificRAGService } from '@/lib/services/rag/domain-specific-rag-service';
+import { pineconeVectorService } from '@/lib/services/vectorstore/pinecone-vector-service';
 
 // Force dynamic rendering for this route
 export const dynamic = 'force-dynamic';
@@ -26,9 +28,12 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const categoryFilter = searchParams.get('category');
     const agentFilter = searchParams.get('agent');
-    // Get all documents with metadata from RAG tables
+    
+    // Get all documents with metadata from knowledge_documents table
+    // This is the table used by the upload process (UnifiedRAGService)
+    // Include all statuses (completed, processing, failed) so we can see what's happening
     const { data: documents, error: docsError } = await supabase
-      .from('rag_knowledge_sources')
+      .from('knowledge_documents')
       .select('*')
       .order('created_at', { ascending: false });
 
@@ -37,10 +42,11 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to fetch documents' }, { status: 500 });
     }
 
-    // Get all chunks with metadata from RAG tables
+    // Get all chunks with metadata from document_chunks table
+    // This matches the table used by UnifiedRAGService
     const { data: chunks, error: chunksError } = await supabase
-      .from('rag_knowledge_chunks')
-      .select('source_id, word_count, quality_score, created_at');
+      .from('document_chunks')
+      .select('document_id, content, metadata, created_at');
 
     if (chunksError) {
       console.error('Error fetching chunks:', chunksError);
@@ -79,13 +85,29 @@ export async function GET(request: NextRequest) {
     let totalSize = 0;
     let avgChunkQuality = 0;
 
-    // Helper function to determine document category
+    // Helper function to map domain to category
     const getDocumentCategory = (doc: unknown): string => {
       let category = 'other';
       const docRecord = doc as Record<string, any>;
-      const tags = docRecord?.tags || [];
+      const domain = (docRecord?.domain || '').toLowerCase();
+      const tags = Array.isArray(docRecord?.tags) ? docRecord.tags : [];
       const title = (docRecord?.title || '').toLowerCase();
       const description = (docRecord?.description || '').toLowerCase();
+      
+      // Map domain to category first
+      if (domain.includes('regulatory') || domain === 'regulatory') {
+        category = 'regulatory';
+      } else if (domain.includes('clinical') || domain === 'clinical') {
+        category = 'clinical';
+      } else if (domain.includes('research') || domain === 'research') {
+        category = 'research';
+      } else if (domain.includes('reimbursement') || domain === 'reimbursement') {
+        category = 'reimbursement';
+      } else if (domain.includes('digital') || domain.includes('technology') || domain.includes('tech')) {
+        category = 'technology';
+      }
+      
+      // Fallback to tag/title based detection if domain didn't match
 
       if (tags.includes('regulatory') || title.includes('regulation') || title.includes('fda') || title.includes('directive')) {
         category = 'regulatory';
@@ -130,25 +152,25 @@ export async function GET(request: NextRequest) {
       filteredDocuments = documents.filter(doc => matchesAgent(doc, agentFilter));
     }
 
-    // Process all documents for global stats (when no filters applied)
-    if (!categoryFilter && !agentFilter) {
-      documents.forEach(doc => {
-        const docDate = new Date(doc.created_at);
-        const docChunks = chunks.filter(chunk => chunk.source_id === doc.id);
+      // Process all documents for global stats (when no filters applied)
+      if (!categoryFilter && !agentFilter) {
+        documents.forEach(doc => {
+          const docDate = new Date(doc.created_at);
+          const docChunks = chunks.filter(chunk => chunk.document_id === doc.id);
 
         // Time-based counting
         if (docDate >= today) todayUploads++;
         if (docDate >= last24h) last24hUploads++;
         if (docDate >= last7d) last7dUploads++;
 
-        totalSize += doc.file_size;
+        totalSize += doc.file_size || 0;
 
         const category = getDocumentCategory(doc);
 
         if (category in ragCategories) {
           ragCategories[category as keyof typeof ragCategories].documents++;
           ragCategories[category as keyof typeof ragCategories].chunks += docChunks.length;
-          ragCategories[category as keyof typeof ragCategories].size += doc.file_size;
+          ragCategories[category as keyof typeof ragCategories].size += doc.file_size || 0;
         }
 
         // Agent statistics (in RAG system, all documents are tenant-scoped)
@@ -165,14 +187,14 @@ export async function GET(request: NextRequest) {
       // Process filtered documents
       filteredDocuments.forEach(doc => {
         const docDate = new Date(doc.created_at);
-        const docChunks = chunks.filter(chunk => chunk.source_id === doc.id);
+        const docChunks = chunks.filter(chunk => chunk.document_id === doc.id);
 
         // Time-based counting
         if (docDate >= today) todayUploads++;
         if (docDate >= last24h) last24hUploads++;
         if (docDate >= last7d) last7dUploads++;
 
-        totalSize += doc.file_size;
+        totalSize += doc.file_size || 0;
 
         const category = getDocumentCategory(doc);
 
@@ -181,14 +203,14 @@ export async function GET(request: NextRequest) {
           if (category === categoryFilter && category in ragCategories) {
             ragCategories[category as keyof typeof ragCategories].documents++;
             ragCategories[category as keyof typeof ragCategories].chunks += docChunks.length;
-            ragCategories[category as keyof typeof ragCategories].size += doc.file_size;
+            ragCategories[category as keyof typeof ragCategories].size += doc.file_size || 0;
           }
         } else {
           // Show all categories for agent filter
           if (category in ragCategories) {
             ragCategories[category as keyof typeof ragCategories].documents++;
             ragCategories[category as keyof typeof ragCategories].chunks += docChunks.length;
-            ragCategories[category as keyof typeof ragCategories].size += doc.file_size;
+            ragCategories[category as keyof typeof ragCategories].size += doc.file_size || 0;
           }
         }
 
@@ -222,8 +244,13 @@ export async function GET(request: NextRequest) {
     }
 
     // Calculate average chunk quality
+    // Note: document_chunks may not have quality_score field, use metadata if available
     if (chunks.length > 0) {
-      avgChunkQuality = chunks.reduce((sum, chunk) => sum + (chunk.quality_score || 0), 0) / chunks.length;
+      avgChunkQuality = chunks.reduce((sum, chunk) => {
+        const chunkRecord = chunk as Record<string, any>;
+        const quality = chunkRecord?.quality_score || chunkRecord?.metadata?.quality_score || 0.8;
+        return sum + quality;
+      }, 0) / chunks.length;
     }
 
     // Convert Sets to arrays for agent domains
@@ -236,8 +263,16 @@ export async function GET(request: NextRequest) {
     // Content statistics (use filtered documents when applicable)
     const statsDocuments = (categoryFilter || agentFilter) ? filteredDocuments : documents;
     const statsChunks = (categoryFilter || agentFilter) ?
-      chunks.filter(chunk => statsDocuments.some(doc => doc.id === chunk.source_id)) :
+      chunks.filter(chunk => statsDocuments.some(doc => doc.id === (chunk as any).document_id)) :
       chunks;
+
+    // Calculate status breakdown
+    const statusBreakdown = {
+      completed: statsDocuments.filter(d => (d.status === 'completed' || d.processing_status === 'completed')).length,
+      processing: statsDocuments.filter(d => (d.status === 'processing' || d.processing_status === 'processing')).length,
+      failed: statsDocuments.filter(d => (d.status === 'failed' || d.processing_status === 'failed')).length,
+      pending: statsDocuments.filter(d => (d.status === 'pending' || d.processing_status === 'pending')).length
+    };
 
     const contentStats = {
       totalDocuments: statsDocuments.length,
@@ -248,6 +283,7 @@ export async function GET(request: NextRequest) {
       avgChunkQuality: avgChunkQuality,
       domains: [...new Set(statsDocuments.map(doc => doc.domain))],
       categories: [...new Set(statsDocuments.map(doc => getDocumentCategory(doc)))],
+      statusBreakdown: statusBreakdown, // NEW: Show processing status breakdown
       filteredBy: {
         category: categoryFilter,
         agent: agentFilter
@@ -266,14 +302,14 @@ export async function GET(request: NextRequest) {
         return docDate === dateStr;
       }).length;
 
-      const chunksOnDate = documents
-        .filter(doc => {
-          const docDate = new Date(doc.created_at).toISOString().split('T')[0];
-          return docDate === dateStr;
-        })
-        .reduce((sum, doc) => {
-          return sum + chunks.filter(chunk => chunk.source_id === doc.id).length;
-        }, 0);
+        const chunksOnDate = documents
+          .filter(doc => {
+            const docDate = new Date(doc.created_at).toISOString().split('T')[0];
+            return docDate === dateStr;
+          })
+          .reduce((sum, doc) => {
+            return sum + chunks.filter(chunk => (chunk as any).document_id === doc.id).length;
+          }, 0);
 
       timeSeriesData.push({
         date: dateStr,
@@ -292,34 +328,70 @@ export async function GET(request: NextRequest) {
       timeSeriesData,
       recentDocuments: statsDocuments.slice(0, 5).map(doc => ({
         id: doc.id,
-        name: doc.name,
-        title: doc.title || doc.name,
-        size: doc.file_size,
-        chunks: chunks.filter(chunk => chunk.source_id === doc.id).length,
+        name: doc.title || doc.file_name || doc.name || 'Untitled',
+        title: doc.title || doc.file_name || doc.name || 'Untitled',
+        size: doc.file_size || 0,
+        chunks: chunks.filter(chunk => (chunk as any).document_id === doc.id).length,
         uploadedAt: doc.created_at,
         category: getDocumentCategory(doc),
         domain: doc.domain,
-        status: doc.processing_status || 'processed'
+        status: doc.status || doc.processing_status || 'completed'
       }))
     };
 
     // Add filtered documents for table view
     const filteredDocumentsList = statsDocuments.map(doc => ({
       id: doc.id,
-      name: doc.name,
-      title: doc.title || doc.name,
-      description: doc.description,
-      size: doc.file_size,
-      chunks: chunks.filter(chunk => chunk.source_id === doc.id).length,
+      name: doc.title || doc.file_name || doc.name || 'Untitled',
+      title: doc.title || doc.file_name || doc.name || 'Untitled',
+      description: doc.description || doc.metadata?.description,
+      size: doc.file_size || 0,
+      chunks: chunks.filter(chunk => (chunk as any).document_id === doc.id).length,
       uploadedAt: doc.created_at,
       category: getDocumentCategory(doc),
       domain: doc.domain,
-      status: doc.processing_status || 'processed',
-      tags: doc.tags || [],
-      file_type: doc.mime_type,
-      url: doc.file_path,
+      status: doc.status || doc.processing_status || 'completed',
+      tags: Array.isArray(doc.tags) ? doc.tags : [],
+      file_type: doc.file_type || doc.mime_type,
+      url: doc.upload_url || doc.file_path,
       is_public: false // RAG system uses tenant-based access, not is_public
     }));
+
+    // ============================================================================
+    // PINECONE STATISTICS (New - Domain-Specific RAG Integration)
+    // ============================================================================
+    let pineconeStats = null;
+    let domainCoverage = null;
+    
+    try {
+      // Get Pinecone index stats
+      const indexStats = await pineconeVectorService.getIndexStats('');
+      
+      // Get domain coverage from domain-specific RAG service
+      domainCoverage = await domainSpecificRAGService.getDomainCoverage();
+      
+      // Get all domain stats to show richness
+      const allDomainStats = await domainSpecificRAGService.getAllDomainsStats();
+      
+      pineconeStats = {
+        totalVectors: indexStats.totalVectorCount || 0,
+        dimension: indexStats.dimension || 3072,
+        indexFullness: indexStats.indexFullness || 0,
+        domainsWithContent: allDomainStats.filter(s => s.totalDocuments > 0).length,
+        totalDomains: allDomainStats.length,
+        domainStats: allDomainStats
+      };
+    } catch (pineconeError) {
+      console.warn('Could not fetch Pinecone stats:', pineconeError);
+      pineconeStats = {
+        error: 'Pinecone stats unavailable',
+        totalVectors: 0,
+        dimension: 3072,
+        indexFullness: 0,
+        domainsWithContent: 0,
+        totalDomains: 0
+      };
+    }
 
     const analytics = {
       success: true,
@@ -328,6 +400,22 @@ export async function GET(request: NextRequest) {
       contentStats,
       recentActivity,
       documents: filteredDocumentsList,
+      // NEW: Pinecone integration
+      pinecone: pineconeStats,
+      domainCoverage: domainCoverage,
+      // Data source info
+      dataSources: {
+        supabase: {
+          documents: statsDocuments.length,
+          chunks: statsChunks.length,
+          enabled: true
+        },
+        pinecone: {
+          vectors: pineconeStats?.totalVectors || 0,
+          enabled: !pineconeStats?.error,
+          namespace: 'default'
+        }
+      },
       generatedAt: new Date().toISOString()
     };
     return NextResponse.json(analytics);

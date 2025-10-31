@@ -15,6 +15,9 @@ import { getEmbeddingCache } from '../cache/embedding-cache';
 import { embeddingService } from '../embeddings/openai-embedding-service';
 import { getTracingService } from '../observability/tracing';
 import { createLogger } from '../observability/structured-logger';
+import { agentGraphService } from './agent-graph-service';
+import { getSupabaseCircuitBreaker } from '../resilience/circuit-breaker';
+import { withRetry } from '../resilience/retry';
 
 export interface AgentSearchQuery {
   query?: string;
@@ -38,11 +41,39 @@ export interface AgentSearchResult {
   metadata: Record<string, any>;
 }
 
+/**
+ * Graph traversal configuration
+ */
+interface GraphTraversalConfig {
+  maxDepth?: number; // Maximum hops in graph traversal (default: 2)
+  maxCandidates?: number; // Maximum candidate agents from graph (default: 10)
+  relationshipWeights?: {
+    collaborates: number;
+    supervises: number;
+    delegates: number;
+    consults: number;
+    reports_to: number;
+  };
+}
+
+const DEFAULT_GRAPH_CONFIG: Required<GraphTraversalConfig> = {
+  maxDepth: 2,
+  maxCandidates: 10,
+  relationshipWeights: {
+    collaborates: 0.8,
+    supervises: 0.6,
+    delegates: 0.7,
+    consults: 0.75,
+    reports_to: 0.5,
+  },
+};
+
 export class AgentGraphRAGService {
   private supabase: ReturnType<typeof createClient>;
   private embeddingCache;
   private tracing;
   private logger;
+  private circuitBreaker;
 
   constructor() {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -56,6 +87,7 @@ export class AgentGraphRAGService {
     this.embeddingCache = getEmbeddingCache();
     this.tracing = getTracingService();
     this.logger = createLogger();
+    this.circuitBreaker = getSupabaseCircuitBreaker();
   }
 
   /**
@@ -115,7 +147,7 @@ export class AgentGraphRAGService {
         }
       }
 
-      // Step 2: Vector search in Pinecone
+      // Step 2: Vector search in Pinecone (primary search)
       const pineconeResults = await pineconeVectorService.hybridAgentSearch({
         text: queryText,
         embedding: queryEmbedding,
@@ -129,8 +161,41 @@ export class AgentGraphRAGService {
         },
       });
 
-    // Step 2: Additional metadata filtering in Supabase
-    let filteredResults = pineconeResults;
+      this.tracing.addTags(spanId, {
+        pineconeResultsCount: pineconeResults.length,
+      });
+
+      // Step 3: Graph traversal - Multi-hop reasoning
+      const graphResults = await this.traverseAgentGraph(
+        pineconeResults.map((r) => r.agentId),
+        queryText,
+        {
+          maxDepth: 2,
+          maxCandidates: topK,
+        }
+      );
+
+      this.tracing.addTags(spanId, {
+        graphResultsCount: graphResults.length,
+        graphTraversalEnabled: true,
+      });
+
+      // Step 4: Merge vector search + graph traversal results
+      const mergedResults = this.mergeSearchResults(
+        pineconeResults,
+        graphResults,
+        topK
+      );
+
+      this.logger.debug('graphrag_search_merged', {
+        operationId,
+        pineconeCount: pineconeResults.length,
+        graphCount: graphResults.length,
+        mergedCount: mergedResults.length,
+      });
+
+      // Step 5: Additional metadata filtering in Supabase
+      let filteredResults = mergedResults;
 
     // Filter by department if specified
     if (filters.department) {
@@ -183,11 +248,30 @@ export class AgentGraphRAGService {
           }
         }
 
+        // Add knowledge graph node matches (if available)
+        if (result.metadata.knowledgeNodes && result.metadata.knowledgeNodes.length > 0) {
+          reasons.push(
+            `${result.metadata.knowledgeNodes.length} knowledge entity match(es)`
+          );
+        }
+
+        // Add relationship-based match reasons
+        if (result.metadata.relationshipType) {
+          reasons.push(
+            `Graph relationship: ${result.metadata.relationshipType}`
+          );
+        }
+
         return {
           agent: result.agent,
           similarity: result.similarity,
           matchReason: reasons,
-          metadata: result.metadata,
+          metadata: {
+            ...result.metadata,
+            searchMethod: result.metadata.fromGraph
+              ? 'graph_traversal'
+              : 'vector_search',
+          },
         };
       });
 
@@ -243,7 +327,9 @@ export class AgentGraphRAGService {
     }
 
     // Build search query from agent description
-    const searchQuery = agent.description || agent.display_name || agent.name;
+    // Type assertion needed as Supabase returns generic type
+    const agentData = agent as Agent;
+    const searchQuery = agentData.description || agentData.display_name || agentData.name;
 
     // Search for similar agents
     const results = await this.searchAgents({
@@ -302,6 +388,363 @@ export class AgentGraphRAGService {
         status: 'active',
       },
     });
+  }
+
+  /**
+   * Traverse agent relationship graph for multi-hop reasoning
+   * 
+   * Implements graph traversal following SOLID principles:
+   * - Single Responsibility: Dedicated graph traversal logic
+   * - Dependency Injection: Uses agentGraphService (testable)
+   * - Interface Segregation: Clean interface with config
+   * 
+   * @param seedAgentIds - Initial agent IDs from vector search
+   * @param queryText - Original query text for knowledge graph matching
+   * @param config - Graph traversal configuration
+   * @returns Enhanced search results from graph traversal
+   */
+  private async traverseAgentGraph(
+    seedAgentIds: string[],
+    queryText?: string,
+    config: GraphTraversalConfig = {}
+  ): Promise<
+    Array<{
+      agent: Agent;
+      similarity: number;
+      metadata: Record<string, any>;
+    }>
+  > {
+    const graphSpanId = this.tracing.startSpan(
+      'AgentGraphRAGService.traverseAgentGraph',
+      undefined,
+      {
+        seedCount: seedAgentIds.length,
+        maxDepth: config.maxDepth || DEFAULT_GRAPH_CONFIG.maxDepth,
+      }
+    );
+
+    const graphStartTime = Date.now();
+    const finalConfig = { ...DEFAULT_GRAPH_CONFIG, ...config };
+
+    try {
+      const discoveredAgents = new Map<
+        string,
+        {
+          agent: Agent;
+          similarity: number;
+          relationshipPath: string[];
+          relationshipTypes: string[];
+          metadata: Record<string, any>;
+        }
+      >();
+
+      // Step 1: For each seed agent, find collaborators and related agents
+      const traversalPromises = seedAgentIds.map(async (seedId) => {
+        return withRetry(
+          async () => {
+            return this.circuitBreaker.execute(async () => {
+              // Find collaborators (1 hop)
+              const collaborators = await agentGraphService.findCollaborators(
+                seedId
+              );
+
+              // Find supervisors (1 hop)
+              const supervisors = await agentGraphService.findSupervisors(
+                seedId
+              );
+
+              // Find delegation targets (1 hop)
+              const delegates =
+                await agentGraphService.findDelegationTargets(seedId);
+
+              // Combine 1-hop relationships
+              const oneHopIds = Array.from(
+                new Set([...collaborators, ...supervisors, ...delegates])
+              ).slice(0, finalConfig.maxCandidates);
+
+              // Fetch agent details
+              const { data: agents, error } = await this.supabase
+                .from('agents')
+                .select('*')
+                .in('id', oneHopIds)
+                .eq('is_active', true)
+                .limit(finalConfig.maxCandidates);
+
+              if (error) {
+                this.logger.warn('graphrag_traversal_query_failed', {
+                  seedId,
+                  error: error.message,
+                });
+                return [];
+              }
+
+              // Get knowledge graph nodes for query matching (if query provided)
+              const knowledgeMatches: Array<{
+                agentId: string;
+                nodes: string[];
+              }> = [];
+
+              if (queryText) {
+                for (const agentId of oneHopIds) {
+                  try {
+                    const expertise =
+                      await agentGraphService.getAgentExpertise(agentId);
+                    const queryLower = queryText.toLowerCase();
+
+                    // Match knowledge nodes against query
+                    const matchingNodes = expertise
+                      .filter(
+                        (node) =>
+                          node.entity_name.toLowerCase().includes(queryLower) ||
+                          queryLower.includes(
+                            node.entity_name.toLowerCase()
+                          )
+                      )
+                      .map((node) => node.entity_name);
+
+                    if (matchingNodes.length > 0) {
+                      knowledgeMatches.push({
+                        agentId,
+                        nodes: matchingNodes,
+                      });
+                    }
+                  } catch (err) {
+                    // Non-critical - log and continue
+                    this.logger.debug('graphrag_knowledge_lookup_failed', {
+                      agentId,
+                      error:
+                        err instanceof Error ? err.message : String(err),
+                    });
+                  }
+                }
+              }
+
+              // Build relationship-aware results
+              return (agents || []).map((agent: Agent) => {
+                const relationshipTypes: string[] = [];
+                let relationshipWeight = 0.5; // Default weight
+
+                if (collaborators.includes(agent.id!)) {
+                  relationshipTypes.push('collaborates');
+                  relationshipWeight +=
+                    finalConfig.relationshipWeights.collaborates;
+                }
+                if (supervisors.includes(agent.id!)) {
+                  relationshipTypes.push('supervises');
+                  relationshipWeight +=
+                    finalConfig.relationshipWeights.supervises;
+                }
+                if (delegates.includes(agent.id!)) {
+                  relationshipTypes.push('delegates');
+                  relationshipWeight +=
+                    finalConfig.relationshipWeights.delegates;
+                }
+
+                // Boost similarity if knowledge graph matches
+                let knowledgeBoost = 0;
+                const knowledgeMatch = knowledgeMatches.find(
+                  (km) => km.agentId === agent.id
+                );
+                if (knowledgeMatch) {
+                  knowledgeBoost = Math.min(0.2, knowledgeMatch.nodes.length * 0.05);
+                }
+
+                // Calculate relationship-adjusted similarity
+                // Base similarity from graph traversal (moderate, since it's indirect)
+                const baseSimilarity = 0.6;
+                const adjustedSimilarity = Math.min(
+                  1.0,
+                  baseSimilarity + relationshipWeight * 0.2 + knowledgeBoost
+                );
+
+                return {
+                  agent,
+                  similarity: adjustedSimilarity,
+                  relationshipPath: [seedId, agent.id!],
+                  relationshipTypes,
+                  metadata: {
+                    fromGraph: true,
+                    relationshipType: relationshipTypes[0] || 'related',
+                    relationshipTypes,
+                    knowledgeNodes: knowledgeMatch?.nodes || [],
+                    graphDepth: 1,
+                  },
+                };
+              });
+            });
+          },
+          {
+            maxRetries: 2,
+            initialDelayMs: 100,
+            onRetry: (attempt, error) => {
+              this.logger.warn('graphrag_traversal_retry', {
+                seedId,
+                attempt,
+                error: error instanceof Error ? error.message : String(error),
+              });
+            },
+          }
+        );
+      });
+
+      const traversalResults = await Promise.all(traversalPromises);
+      const flatResults = traversalResults.flat();
+
+      // Deduplicate and aggregate results
+      for (const result of flatResults) {
+        const existing = discoveredAgents.get(result.agent.id!);
+        if (!existing || result.similarity > existing.similarity) {
+          discoveredAgents.set(result.agent.id!, result);
+        } else {
+          // Merge relationship types
+          existing.relationshipTypes = Array.from(
+            new Set([
+              ...existing.relationshipTypes,
+              ...result.relationshipTypes,
+            ])
+          );
+          existing.metadata = {
+            ...existing.metadata,
+            ...result.metadata,
+          };
+        }
+      }
+
+      const graphDuration = Date.now() - graphStartTime;
+      this.logger.infoWithMetrics(
+        'graphrag_traversal_completed',
+        graphDuration,
+        {
+          operation: 'traverseAgentGraph',
+          seedCount: seedAgentIds.length,
+          discoveredCount: discoveredAgents.size,
+        }
+      );
+
+      this.tracing.endSpan(graphSpanId, true);
+
+      // Convert to standard format and sort by similarity
+      return Array.from(discoveredAgents.values())
+        .sort((a, b) => b.similarity - a.similarity)
+        .slice(0, finalConfig.maxCandidates);
+    } catch (error) {
+      const graphDuration = Date.now() - graphStartTime;
+      this.logger.warn('graphrag_traversal_failed', {
+        operation: 'traverseAgentGraph',
+        duration: graphDuration,
+        error: error instanceof Error ? error.message : String(error),
+      });
+
+      this.tracing.endSpan(
+        graphSpanId,
+        false,
+        error instanceof Error ? error : new Error(String(error))
+      );
+
+      // Return empty array on failure (graceful degradation)
+      return [];
+    }
+  }
+
+  /**
+   * Merge vector search results with graph traversal results
+   * 
+   * Implements intelligent fusion:
+   * - Prefers vector search results (higher confidence)
+   * - Adds graph results not already found
+   * - Boosts agents found in both sources
+   * - Relationship-aware ranking
+   * 
+   * @param vectorResults - Results from Pinecone vector search
+   * @param graphResults - Results from graph traversal
+   * @param topK - Final result count
+   * @returns Merged and ranked results
+   */
+  private mergeSearchResults(
+    vectorResults: Array<{
+      agentId: string;
+      similarity: number;
+      agent: Agent;
+      metadata: Record<string, any>;
+    }>,
+    graphResults: Array<{
+      agent: Agent;
+      similarity: number;
+      metadata: Record<string, any>;
+    }>,
+    topK: number
+  ): Array<{
+    agentId: string;
+    similarity: number;
+    agent: Agent;
+    metadata: Record<string, any>;
+  }> {
+    const merged = new Map<
+      string,
+      {
+        agentId: string;
+        similarity: number;
+        agent: Agent;
+        metadata: Record<string, any>;
+        sources: Set<'vector' | 'graph'>;
+      }
+    >();
+
+    // Add vector search results (higher priority)
+    for (const result of vectorResults) {
+      merged.set(result.agentId, {
+        agentId: result.agentId,
+        similarity: result.similarity,
+        agent: result.agent,
+        metadata: { ...result.metadata, searchMethod: 'vector_search' },
+        sources: new Set<'vector' | 'graph'>(['vector']),
+      });
+    }
+
+    // Add graph traversal results (boost if already exists)
+    for (const result of graphResults) {
+      const agentId = result.agent.id!;
+      const existing = merged.get(agentId);
+
+      if (existing) {
+        // Agent found in both sources - boost similarity
+        const boostedSimilarity = Math.min(
+          1.0,
+          existing.similarity * 0.7 + result.similarity * 0.3 + 0.1
+        );
+        existing.similarity = boostedSimilarity;
+        existing.sources.add('graph');
+        existing.metadata = {
+          ...existing.metadata,
+          ...result.metadata,
+          searchMethod: 'hybrid', // Found via both methods
+          foundInBothSources: true,
+        };
+      } else {
+        // New agent from graph traversal
+        merged.set(agentId, {
+          agentId,
+          similarity: result.similarity,
+          agent: result.agent,
+          metadata: result.metadata,
+          sources: new Set<'vector' | 'graph'>(['graph']),
+        });
+      }
+    }
+
+    // Sort by similarity and return top K
+    return Array.from(merged.values())
+      .sort((a, b) => b.similarity - a.similarity)
+      .slice(0, topK)
+      .map((item) => ({
+        agentId: item.agentId,
+        similarity: item.similarity,
+        agent: item.agent,
+        metadata: {
+          ...item.metadata,
+          searchSources: Array.from(item.sources),
+        },
+      }));
   }
 }
 

@@ -12,6 +12,7 @@ interface SelectedAgentCardProps {
     avatar?: string;
   };
   isSelected?: boolean;
+  compact?: boolean;
   onRemove?: () => void;
   onClick?: () => void;
   className?: string;
@@ -20,6 +21,7 @@ interface SelectedAgentCardProps {
 export function SelectedAgentCard({
   agent,
   isSelected = false,
+  compact = false,
   onRemove,
   onClick,
   className,
@@ -29,11 +31,12 @@ export function SelectedAgentCard({
   return (
     <div
       className={cn(
-        'flex items-center gap-2 px-3 py-2 rounded-lg border-2 transition-all cursor-pointer group',
-        'hover:shadow-md hover:scale-[1.02]',
+        'flex items-center gap-2 rounded-md border transition-all cursor-pointer group bg-white/80 dark:bg-gray-900/60',
+        'hover:shadow-sm hover:-translate-y-0.5',
+        compact ? 'px-2.5 py-1.5' : 'px-3.5 py-2.5',
         isSelected
-          ? 'bg-vital-primary-100 border-vital-primary-500 text-vital-primary-900 shadow-sm'
-          : 'bg-white border-gray-200 text-gray-700 hover:border-gray-300',
+          ? 'border-vital-primary-400 shadow-sm'
+          : 'border-gray-200 hover:border-gray-300 dark:border-gray-800',
         className
       )}
       onClick={onClick}
@@ -50,8 +53,12 @@ export function SelectedAgentCard({
       <div className="flex-shrink-0">
         <AgentAvatar
           agent={agent}
-          size="md"
-          className="w-10 h-10 rounded-lg border-2 border-gray-200 group-hover:border-vital-primary-300"
+          size={compact ? 'sm' : 'md'}
+          className={cn(
+            'rounded-full border border-transparent',
+            compact ? 'w-8 h-8' : 'w-10 h-10',
+            isSelected ? 'border-vital-primary-300' : 'border-gray-200'
+          )}
         />
       </div>
 
@@ -98,6 +105,7 @@ interface SelectedAgentsListProps {
     avatar?: string;
   }>;
   selectedAgentIds?: string[];
+  compact?: boolean;
   onAgentClick?: (agentId: string) => void;
   onAgentRemove?: (agentId: string) => void;
   className?: string;
@@ -106,6 +114,7 @@ interface SelectedAgentsListProps {
 export function SelectedAgentsList({
   agents,
   selectedAgentIds = [],
+  compact = false,
   onAgentClick,
   onAgentRemove,
   className,
@@ -121,6 +130,7 @@ export function SelectedAgentsList({
           key={agent.id}
           agent={agent}
           isSelected={selectedAgentIds.includes(agent.id)}
+          compact={compact}
           onClick={() => onAgentClick?.(agent.id)}
           onRemove={() => onAgentRemove?.(agent.id)}
         />

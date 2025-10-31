@@ -1082,10 +1082,6 @@ function CreateDomainDialog({
       setLoading(false);
     }
   };
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const embeddingModels = modelSelector.getAvailableEmbeddingModels();
   const chatModels = modelSelector.getAvailableChatModels();

@@ -138,6 +138,10 @@ async function syncSupabaseToPinecone() {
       }));
 
       // Upsert to Pinecone
+      // Strategy: Use single default namespace ('') for all knowledge domains
+      // Domain filtering is done via metadata filters, not separate namespaces
+      // This enables efficient cross-domain queries while keeping management simple
+      // See: docs/PINECONE_KNOWLEDGE_STORAGE_STRATEGY.md
       try {
         await index.namespace('').upsert(vectors);
         totalSynced += vectors.length;

@@ -8,7 +8,12 @@
 import { BaseTool, ToolContext, ToolExecutionResult } from './base-tool';
 import { CalculatorTool } from './calculator-tool';
 import { DatabaseQueryTool } from './database-query-tool';
-import { WebSearchTool } from './web-search-tool';
+import { WebSearchTool, WebSearchToolConfig } from './web-search-tool';
+
+export interface ToolRegistryOptions {
+  webSearch?: WebSearchToolConfig;
+  additionalTools?: BaseTool[];
+}
 
 export class ToolRegistry {
   private tools: Map<string, BaseTool> = new Map();
@@ -17,7 +22,7 @@ export class ToolRegistry {
   constructor(
     supabaseUrl?: string,
     supabaseKey?: string,
-    webSearchApiKey?: string
+    options: ToolRegistryOptions = {}
   ) {
     // Register default tools
     this.registerTool(new CalculatorTool());
@@ -26,10 +31,52 @@ export class ToolRegistry {
       this.registerTool(new DatabaseQueryTool(supabaseUrl, supabaseKey));
     }
 
-    this.registerTool(new WebSearchTool(webSearchApiKey, 'mock'));
+    if (options.additionalTools && options.additionalTools.length > 0) {
+      options.additionalTools.forEach((tool) => this.registerTool(tool));
+    }
+
+    const webSearchConfig = this.resolveWebSearchConfig(options.webSearch);
+    this.registerTool(new WebSearchTool(webSearchConfig));
 
     // Store default tools for easy access
     this.defaultTools = Array.from(this.tools.values());
+  }
+
+  /**
+   * Determine web search configuration, falling back to environment variables when needed.
+   */
+  private resolveWebSearchConfig(config?: WebSearchToolConfig): WebSearchToolConfig {
+    if (config) {
+      return config;
+    }
+
+    const tavilyKey = process.env.TAVILY_API_KEY;
+    if (tavilyKey) {
+      return {
+        provider: 'tavily',
+        apiKey: tavilyKey,
+      };
+    }
+
+    const braveKey = process.env.BRAVE_API_KEY;
+    if (braveKey) {
+      return {
+        provider: 'brave',
+        apiKey: braveKey,
+      };
+    }
+
+    const googleKey = process.env.GOOGLE_SEARCH_API_KEY;
+    const googleCx = process.env.GOOGLE_SEARCH_ENGINE_ID;
+    if (googleKey && googleCx) {
+      return {
+        provider: 'google',
+        apiKey: googleKey,
+        googleSearchEngineId: googleCx,
+      };
+    }
+
+    return { provider: 'mock' };
   }
 
   /**
@@ -64,7 +111,7 @@ export class ToolRegistry {
       description: string;
       parameters: {
         type: 'object';
-        properties: Record<string, any>;
+        properties: Record<string, unknown>;
         required: string[];
       };
     };
@@ -77,7 +124,7 @@ export class ToolRegistry {
    */
   async executeTool(
     toolName: string,
-    input: Record<string, any>,
+    input: Record<string, unknown>,
     context: ToolContext
   ): Promise<ToolExecutionResult> {
     const tool = this.getTool(toolName);
@@ -126,4 +173,3 @@ export class ToolRegistry {
     return Array.from(this.tools.keys());
   }
 }
-

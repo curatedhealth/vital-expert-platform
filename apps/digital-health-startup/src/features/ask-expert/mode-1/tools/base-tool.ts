@@ -10,21 +10,35 @@ export interface ToolContext {
   user_id?: string;
   session_id?: string;
   agent_id?: string;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
-export interface ToolExecutionResult {
+export interface ToolExecutionResult<TResult = unknown, TMetadata extends Record<string, unknown> = Record<string, unknown>> {
   success: boolean;
-  result?: any;
+  result?: TResult;
   error?: string;
   duration_ms: number;
-  metadata?: Record<string, any>;
+  metadata?: TMetadata;
 }
+
+export type ToolSchema = {
+  type: 'function';
+  function: {
+    name: string;
+    description: string;
+    parameters: {
+      type: 'object';
+      properties: Record<string, unknown>;
+      required: string[];
+      additionalProperties?: boolean;
+    };
+  };
+};
 
 /**
  * Abstract base class for all tools
  */
-export abstract class BaseTool {
+export abstract class BaseTool<TParams extends Record<string, unknown> = Record<string, unknown>, TResult = unknown, TMetadata extends Record<string, unknown> = Record<string, unknown>> {
   abstract readonly name: string;
   abstract readonly description: string;
 
@@ -32,30 +46,19 @@ export abstract class BaseTool {
    * Execute the tool with given input and context
    */
   abstract execute(
-    input: Record<string, any>,
+    input: TParams,
     context: ToolContext
-  ): Promise<ToolExecutionResult>;
+  ): Promise<ToolExecutionResult<TResult, TMetadata>>;
 
   /**
    * Get JSON Schema for tool parameters (for LLM function calling)
    */
-  abstract getSchema(): {
-    type: 'function';
-    function: {
-      name: string;
-      description: string;
-      parameters: {
-        type: 'object';
-        properties: Record<string, any>;
-        required: string[];
-      };
-    };
-  };
+  abstract getSchema(): ToolSchema;
 
   /**
    * Validate input parameters before execution
    */
-  protected validateInput(input: Record<string, any>): void {
+  protected validateInput(input: Partial<TParams> | TParams): void {
     const schema = this.getSchema();
     const required = schema.function.parameters.required || [];
     
@@ -66,4 +69,3 @@ export abstract class BaseTool {
     }
   }
 }
-

@@ -19,7 +19,6 @@
     "react",
     "react-hooks",
     "jsx-a11y",
-    "import",
     "security",
     "sonarjs"
   ],
@@ -31,8 +30,6 @@
     "plugin:react/recommended",
     "plugin:react-hooks/recommended",
     "plugin:jsx-a11y/recommended",
-    "plugin:import/recommended",
-    "plugin:import/typescript",
     "plugin:security/recommended",
     "plugin:sonarjs/recommended",
     "next/core-web-vitals",
@@ -149,51 +146,6 @@
     "jsx-a11y/aria-unsupported-elements": "error",
     "jsx-a11y/role-has-required-aria-props": "error",
     "jsx-a11y/role-supports-aria-props": "error",
-
-    // ========================================================================
-    // IMPORT RULES
-    // ========================================================================
-    "import/order": [
-      "error",
-      {
-        "groups": [
-          "builtin",
-          "external",
-          "internal",
-          "parent",
-          "sibling",
-          "index",
-          "type"
-        ],
-        "pathGroups": [
-          {
-            "pattern": "react",
-            "group": "external",
-            "position": "before"
-          },
-          {
-            "pattern": "next/**",
-            "group": "external",
-            "position": "before"
-          },
-          {
-            "pattern": "@/**",
-            "group": "internal",
-            "position": "after"
-          }
-        ],
-        "pathGroupsExcludedImportTypes": ["react", "type"],
-        "newlines-between": "always",
-        "alphabetize": {
-          "order": "asc",
-          "caseInsensitive": true
-        }
-      }
-    ],
-    "import/no-duplicates": "error",
-    "import/no-cycle": "error",
-    "import/no-unresolved": "error",
-    "import/no-deprecated": "warn",
 
     // ========================================================================
     // SECURITY RULES

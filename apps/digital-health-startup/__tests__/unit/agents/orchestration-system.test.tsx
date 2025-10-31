@@ -3,6 +3,7 @@
  * Tests multi-agent coordination, consensus building, and collaboration
  */
 
+import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { CollaborationPanel } from '@/components/chat/agents/CollaborationPanel';
 import type {
@@ -14,12 +15,17 @@ import type {
 } from '@/shared/types/chat.types';
 
 // Mock framer-motion to avoid animation issues in tests
-jest.mock('framer-motion', () => ({
-  motion: {
-    div: ({ children, ...props }: any) => <div {...props}>{children}</div>,
-  },
-  AnimatePresence: ({ children }: any) => <>{children}</>,
-}));
+jest.mock('framer-motion', () => {
+  const React = require('react');
+  return {
+    motion: {
+      div: React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
+        ({ children, ...props }, ref) => React.createElement('div', { ...props, ref }, children)
+      ),
+    },
+    AnimatePresence: ({ children }: { children: React.ReactNode }) => React.createElement(React.Fragment, {}, children),
+  };
+});
 
 describe('Agent Orchestration System', () => {
   const mockAgents: Agent[] = [

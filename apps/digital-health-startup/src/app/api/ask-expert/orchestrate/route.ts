@@ -18,6 +18,7 @@ import {
   MODE1_TIMEOUTS,
   TimeoutError,
 } from '@/features/ask-expert/mode-1/utils/timeout-handler';
+import { createClient } from '@/lib/supabase/server';
 
 interface OrchestrateRequest {
   mode: 'manual' | 'automatic' | 'autonomous' | 'multi-expert';
@@ -28,6 +29,8 @@ interface OrchestrateRequest {
   // Optional settings (user can toggle)
   enableRAG?: boolean;
   enableTools?: boolean;
+  requestedTools?: string[];
+  selectedRagDomains?: string[];
 
   // Model override from prompt composer
   model?: string;
@@ -51,6 +54,25 @@ export async function POST(request: NextRequest) {
       return new Response('Missing required fields: mode, message', { status: 400 });
     }
 
+    // Get user session and tenant ID for metrics tracking
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    let tenantId: string | undefined;
+    let sessionId: string | undefined;
+    if (user) {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('tenant_id')
+        .eq('id', user.id)
+        .single();
+
+      tenantId = profile?.tenant_id || undefined;
+      sessionId = `session_${Date.now()}_${user.id}`;
+    }
+
     // Create streaming response
     const stream = new ReadableStream({
       async start(controller) {
@@ -69,15 +91,20 @@ export async function POST(request: NextRequest) {
 
               try {
                 // Execute Mode 1 - returns AsyncGenerator
-                const mode1Stream = executeMode1({
-                  agentId: body.agentId,
-                  message: body.message,
-                  conversationHistory: body.conversationHistory,
-                  enableRAG: body.enableRAG !== false, // Default to true, only disable if explicitly false
-                  enableTools: body.enableTools ?? false,
-                  model: body.model,
-                  temperature: body.temperature ?? 0.7,
-                  maxTokens: body.maxTokens ?? 2000
+              const mode1Stream = executeMode1({
+                agentId: body.agentId,
+                message: body.message,
+                conversationHistory: body.conversationHistory,
+                enableRAG: body.enableRAG !== false, // Default to true, only disable if explicitly false
+                enableTools: body.enableTools ?? false,
+                requestedTools: body.requestedTools,
+                selectedRagDomains: body.selectedRagDomains,
+                model: body.model,
+                temperature: body.temperature ?? 0.7,
+                maxTokens: body.maxTokens ?? 2000,
+                userId: user?.id,
+                tenantId,
+                  sessionId,
                 });
 
                 // Stream chunks with timeout protection
@@ -139,7 +166,9 @@ export async function POST(request: NextRequest) {
                 model: body.model,
                 temperature: body.temperature ?? 0.7,
                 maxTokens: body.maxTokens ?? 2000,
-                userId: body.userId
+                userId: body.userId || user?.id,
+                tenantId,
+                sessionId,
               });
 
               // Stream chunks with agent selection info
@@ -171,7 +200,9 @@ export async function POST(request: NextRequest) {
                 model: body.model,
                 temperature: body.temperature ?? 0.7,
                 maxTokens: body.maxTokens ?? 2000,
-                userId: body.userId,
+                userId: body.userId || user?.id,
+                tenantId,
+                sessionId,
                 maxIterations: body.maxIterations ?? 10,
                 confidenceThreshold: body.confidenceThreshold ?? 0.95
               });

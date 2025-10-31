@@ -18,6 +18,7 @@ import { BaseMessage, HumanMessage, AIMessage } from '@langchain/core/messages';
 import { Mode1ManualInteractiveHandler, type Mode1Config } from './mode1-manual-interactive';
 import { agentSelectorService, type Agent, type QueryAnalysis, type AgentSelectionResult } from './agent-selector-service';
 import { createLogger } from '@/lib/services/observability/structured-logger';
+import { getAgentMetricsService } from '@/lib/services/observability/agent-metrics-service';
 import {
   AgentSelectionError,
   serializeError,
@@ -37,6 +38,8 @@ export interface Mode2Config {
   temperature?: number;
   maxTokens?: number;
   userId?: string;
+  tenantId?: string;
+  sessionId?: string;
 }
 
 /**
@@ -148,6 +151,31 @@ export class Mode2AutomaticAgentSelectionHandler {
       // Calculate execution time
       const executionTime = Date.now() - startTime;
       result.executionTime = executionTime;
+
+      // Record Mode 2 execution metrics (fire-and-forget)
+      if (config.tenantId && result.selectedAgent?.id) {
+        const metricsService = getAgentMetricsService();
+        metricsService.recordOperation({
+          agentId: result.selectedAgent.id,
+          tenantId: config.tenantId,
+          operationType: 'mode2',
+          responseTimeMs: executionTime,
+          success: true,
+          queryText: config.message.substring(0, 1000),
+          selectedAgentId: result.selectedAgent.id,
+          confidenceScore: result.selectionConfidence,
+          sessionId: config.sessionId,
+          userId: config.userId || null,
+          metadata: {
+            workflowId,
+            candidateCount: result.candidateAgents?.length || 0,
+            selectionReason: result.agentSelectionReason,
+            executionTime,
+          },
+        }).catch(() => {
+          // Silent fail - metrics should never break main flow
+        });
+      }
 
       this.logger.infoWithMetrics('mode2_execution_completed', executionTime, {
         operation: 'Mode2Execute',

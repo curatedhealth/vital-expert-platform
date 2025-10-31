@@ -32,6 +32,7 @@ import type { AgentSearchResult } from '@/lib/services/agents/agent-graphrag-ser
 import { getSupabaseCircuitBreaker } from '@/lib/services/resilience/circuit-breaker';
 import { getEmbeddingCache } from '@/lib/services/cache/embedding-cache';
 import { getTracingService } from '@/lib/services/observability/tracing';
+import { getAgentMetricsService } from '@/lib/services/observability/agent-metrics-service';
 
 // ============================================================================
 // TYPES
@@ -92,8 +93,10 @@ export class AgentSelectorService {
   private supabaseCircuitBreaker;
   private embeddingCache;
   private tracing;
+  private metricsService;
+  private tenantId?: string;
 
-  constructor(options?: { requestId?: string; userId?: string }) {
+  constructor(options?: { requestId?: string; userId?: string; tenantId?: string }) {
     // Initialize Supabase client
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
     const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
@@ -112,10 +115,12 @@ export class AgentSelectorService {
       userId: options?.userId,
     });
 
-    // Initialize circuit breaker, cache, and tracing for resilience and observability
+    // Initialize circuit breaker, cache, tracing, and metrics for resilience and observability
     this.supabaseCircuitBreaker = getSupabaseCircuitBreaker();
     this.embeddingCache = getEmbeddingCache();
     this.tracing = getTracingService();
+    this.metricsService = getAgentMetricsService();
+    this.tenantId = options?.tenantId;
   }
 
   /**
@@ -283,6 +288,9 @@ export class AgentSelectorService {
         const agents = graphRAGResults.map((result: AgentSearchResult) => result.agent);
 
         const duration = Date.now() - startTime;
+        const graphragHit = true; // GraphRAG succeeded
+        const graphragFallback = false;
+
         this.logger.infoWithMetrics('agent_search_completed', duration, {
           operation: 'findCandidateAgents',
           operationId,
@@ -292,6 +300,31 @@ export class AgentSelectorService {
         });
 
         this.tracing.addTags(spanId, { method: 'graphrag', resultCount: agents.length });
+
+        // Record search metrics (fire-and-forget)
+        if (this.tenantId && agents.length > 0) {
+          // Record for the top agent found
+          this.metricsService.recordOperation({
+            agentId: agents[0].id,
+            tenantId: this.tenantId,
+            operationType: 'search',
+            responseTimeMs: duration,
+            success: true,
+            queryText: query.substring(0, 1000),
+            searchMethod: 'graphrag_hybrid',
+            graphragHit,
+            graphragFallback,
+            graphTraversalDepth: graphRAGResults[0]?.metadata?.graphDepth || 0,
+            metadata: {
+              operationId,
+              resultCount: agents.length,
+              topSimilarity: graphRAGResults[0]?.similarity,
+            },
+          }).catch(() => {
+            // Silent fail
+          });
+        }
+
         this.tracing.endSpan(spanId, true);
         return agents;
       } catch (graphRAGError) {
@@ -439,6 +472,27 @@ export class AgentSelectorService {
           resultCount: generalAgents?.length || 0,
           method: 'general_fallback',
         });
+
+        // Record fallback search metrics (fire-and-forget)
+        if (this.tenantId && generalAgents && generalAgents.length > 0) {
+          this.metricsService.recordOperation({
+            agentId: generalAgents[0].id,
+            tenantId: this.tenantId,
+            operationType: 'search',
+            responseTimeMs: duration,
+            success: true,
+            queryText: 'general_fallback',
+            searchMethod: 'database',
+            graphragHit: false,
+            graphragFallback: true,
+            metadata: {
+              operationId: fallbackId,
+              resultCount: generalAgents.length,
+            },
+          }).catch(() => {
+            // Silent fail
+          });
+        }
 
         return generalAgents || [];
       }
@@ -799,6 +853,27 @@ export class AgentSelectorService {
         totalCandidates: candidates.length
       });
 
+      // Record metrics (fire-and-forget)
+      if (this.tenantId) {
+        this.metricsService.recordOperation({
+          agentId: selectedAgent.agent.id,
+          tenantId: this.tenantId,
+          operationType: 'selection',
+          responseTimeMs: duration,
+          success: true,
+          queryText: query.substring(0, 1000),
+          selectedAgentId: selectedAgent.agent.id,
+          confidenceScore: confidence,
+          metadata: {
+            workflowId,
+            candidateCount: candidates.length,
+            rankingReason: selectedAgent.reason,
+          },
+        }).catch(() => {
+          // Silent fail - metrics recording should never break the main flow
+        });
+      }
+
       return {
         selectedAgent: selectedAgent.agent,
         confidence,
@@ -818,6 +893,25 @@ export class AgentSelectorService {
           duration,
         }
       );
+
+      // Record error metrics (fire-and-forget)
+      if (this.tenantId && rankings && rankings.length > 0) {
+        // If we got rankings but failed afterwards, record with selected agent
+        this.metricsService.recordOperation({
+          agentId: rankings[0].agent.id,
+          tenantId: this.tenantId,
+          operationType: 'selection',
+          responseTimeMs: duration,
+          success: false,
+          errorOccurred: true,
+          errorType: error instanceof Error ? error.constructor.name : 'UnknownError',
+          errorMessage: error instanceof Error ? error.message : String(error),
+          queryText: query.substring(0, 1000),
+        }).catch(() => {
+          // Silent fail
+        });
+      }
+
       throw error;
     }
   }

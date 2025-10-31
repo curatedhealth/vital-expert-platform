@@ -29,11 +29,14 @@ interface ExpertAgent {
   description: string;
   expertise?: string[];
   capabilities?: string[];
+  knowledge_domains?: string[]; // Agent Store format
   certifications?: string[];
   experience?: string;
   availability?: 'online' | 'busy' | 'offline';
   responseTime?: number; // in seconds
+  averageResponseTime?: number; // in seconds (from stats)
   confidence?: number; // 0-1
+  confidenceLevel?: number; // 0-100 (from stats)
   totalConsultations?: number;
   satisfactionScore?: number; // 0-5
   successRate?: number; // 0-100
@@ -239,88 +242,206 @@ export function ExpertAgentCard({
             {agent.description}
           </p>
 
-          {/* Expertise/Capabilities */}
-          {(agent.expertise || agent.capabilities) && (
-            <div className="space-y-2">
-              <h4 className="text-xs font-medium text-muted-foreground">Expertise:</h4>
-              <div className="flex flex-wrap gap-1">
-                {(agent.expertise || agent.capabilities || []).slice(0, 4).map((skill, idx) => (
-                  <Badge key={idx} variant="secondary" className="text-xs">
-                    {skill}
-                  </Badge>
-                ))}
-                {(agent.expertise || agent.capabilities || []).length > 4 && (
-                  <Badge variant="outline" className="text-xs">
-                    +{(agent.expertise || agent.capabilities || []).length - 4} more
-                  </Badge>
+          {/* Expertise/Capabilities - Display all knowledge_domains with color coding */}
+          {(() => {
+            const expertiseList = agent.knowledge_domains || agent.expertise || agent.capabilities || [];
+            if (expertiseList.length === 0) return null;
+            
+            const displayedCount = 2;
+            const remainingCount = expertiseList.length - displayedCount;
+            
+            // Color mapping for domains (healthcare-focused)
+            const getDomainColor = (domain: string) => {
+              const lower = domain.toLowerCase();
+              if (lower.includes('regulatory') || lower.includes('fda')) return 'bg-blue-100 text-blue-700 border-blue-200';
+              if (lower.includes('clinical') || lower.includes('trial')) return 'bg-green-100 text-green-700 border-green-200';
+              if (lower.includes('safety') || lower.includes('pharmacovigilance')) return 'bg-red-100 text-red-700 border-red-200';
+              if (lower.includes('market') || lower.includes('access')) return 'bg-purple-100 text-purple-700 border-purple-200';
+              return 'bg-gray-100 text-gray-700 border-gray-200';
+            };
+            
+            return (
+              <div className="space-y-2">
+                <h4 className="text-xs font-medium text-muted-foreground">Expertise Areas:</h4>
+                <div className="flex flex-wrap gap-1">
+                  {expertiseList.slice(0, displayedCount).map((domain, idx) => (
+                    <Badge 
+                      key={idx} 
+                      variant="secondary" 
+                      className={cn("text-xs border", getDomainColor(domain))}
+                    >
+                      {domain}
+                    </Badge>
+                  ))}
+                  {remainingCount > 0 && (
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Badge variant="outline" className="text-xs cursor-help">
+                            +{remainingCount} more
+                          </Badge>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <div className="space-y-1">
+                            {expertiseList.slice(displayedCount).map((domain, idx) => (
+                              <p key={idx} className="text-xs">{domain}</p>
+                            ))}
+                          </div>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  )}
+                </div>
+              </div>
+            );
+          })()}
+
+          {/* Full Statistics Grid */}
+          {showStats && (
+            <div className="space-y-3 pt-3 border-t">
+              <div className="grid grid-cols-2 gap-3">
+                {/* Response Time with average calculation */}
+                {(agent.responseTime !== undefined || agent.averageResponseTime !== undefined) && (
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                      <Clock className="h-3 w-3" />
+                      <span>Response Time</span>
+                    </div>
+                    <p className="text-sm font-medium">
+                      {(agent.averageResponseTime ?? agent.responseTime ?? 0).toFixed(1)}s avg
+                    </p>
+                  </div>
+                )}
+
+                {/* Success Rate with checkmark indicator */}
+                {agent.successRate !== undefined && (
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                      <CheckCircle className={cn(
+                        "h-3 w-3",
+                        agent.successRate >= 90 ? "text-green-600" :
+                        agent.successRate >= 70 ? "text-yellow-600" : "text-red-600"
+                      )} />
+                      <span>Success Rate</span>
+                    </div>
+                    <p className="text-sm font-medium">{agent.successRate}%</p>
+                    <Progress 
+                      value={agent.successRate} 
+                      className={cn(
+                        "h-1.5",
+                        agent.successRate >= 90 ? "[&>div]:bg-green-600" :
+                        agent.successRate >= 70 ? "[&>div]:bg-yellow-600" : "[&>div]:bg-red-600"
+                      )} 
+                    />
+                  </div>
+                )}
+
+                {/* Satisfaction Score with 5-star visualization */}
+                {agent.satisfactionScore !== undefined && (
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                      <Star className={cn(
+                        "h-3 w-3",
+                        agent.satisfactionScore >= 4.5 ? "text-yellow-500 fill-yellow-500" :
+                        agent.satisfactionScore >= 3.5 ? "text-yellow-400 fill-yellow-400" : "text-gray-400"
+                      )} />
+                      <span>Satisfaction</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <p className="text-sm font-medium">{agent.satisfactionScore.toFixed(1)}</p>
+                      <span className="text-xs text-muted-foreground">/ 5.0</span>
+                    </div>
+                    {/* Star visualization */}
+                    <div className="flex gap-0.5">
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <Star
+                          key={star}
+                          className={cn(
+                            "h-3 w-3",
+                            star <= Math.round(agent.satisfactionScore)
+                              ? "text-yellow-500 fill-yellow-500"
+                              : "text-gray-300"
+                          )}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Total Consultations with formatted number */}
+                {agent.totalConsultations !== undefined && (
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                      <MessageSquare className="h-3 w-3" />
+                      <span>Consultations</span>
+                    </div>
+                    <p className="text-sm font-medium">
+                      {agent.totalConsultations.toLocaleString()}
+                    </p>
+                  </div>
                 )}
               </div>
-            </div>
-          )}
 
-          {/* Stats */}
-          {showStats && (
-            <div className="grid grid-cols-2 gap-3 pt-3 border-t">
-              {/* Response Time */}
-              {agent.responseTime !== undefined && (
-                <div className="space-y-1">
-                  <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                    <Clock className="h-3 w-3" />
-                    <span>Response</span>
+              {/* Confidence Progress Bar */}
+              {(agent.confidenceLevel !== undefined || agent.confidence !== undefined) && (
+                <div className="space-y-1.5 pt-2 border-t">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-muted-foreground font-medium">Confidence Level</span>
+                    <span className="font-semibold">
+                      {Math.round(agent.confidenceLevel ?? (agent.confidence ?? 0) * 100)}%
+                    </span>
                   </div>
-                  <p className="text-sm font-medium">{agent.responseTime}s avg</p>
-                </div>
-              )}
-
-              {/* Total Consultations */}
-              {agent.totalConsultations !== undefined && (
-                <div className="space-y-1">
-                  <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                    <MessageSquare className="h-3 w-3" />
-                    <span>Sessions</span>
-                  </div>
-                  <p className="text-sm font-medium">{agent.totalConsultations.toLocaleString()}</p>
-                </div>
-              )}
-
-              {/* Satisfaction Score */}
-              {agent.satisfactionScore !== undefined && (
-                <div className="space-y-1">
-                  <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                    <Star className="h-3 w-3" />
-                    <span>Rating</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <p className="text-sm font-medium">{agent.satisfactionScore.toFixed(1)}</p>
-                    <span className="text-xs text-muted-foreground">/ 5.0</span>
-                  </div>
-                </div>
-              )}
-
-              {/* Success Rate */}
-              {agent.successRate !== undefined && (
-                <div className="space-y-1">
-                  <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                    <TrendingUp className="h-3 w-3" />
-                    <span>Success</span>
-                  </div>
-                  <p className="text-sm font-medium">{agent.successRate}%</p>
-                  <Progress value={agent.successRate} className="h-1" />
+                  <Progress 
+                    value={agent.confidenceLevel ?? (agent.confidence ?? 0) * 100} 
+                    className={cn(
+                      "h-2",
+                      (agent.confidenceLevel ?? (agent.confidence ?? 0) * 100) > 80 ? "[&>div]:bg-green-600" :
+                      (agent.confidenceLevel ?? (agent.confidence ?? 0) * 100) >= 50 ? "[&>div]:bg-yellow-600" : "[&>div]:bg-red-600"
+                    )} 
+                  />
                 </div>
               )}
             </div>
           )}
 
-          {/* Certifications */}
+          {/* Certifications & Awards */}
           {agent.certifications && agent.certifications.length > 0 && (
             <div className="space-y-2 pt-3 border-t">
-              <div className="flex items-center gap-1 text-xs font-medium text-muted-foreground">
-                <Award className="h-3 w-3" />
-                <span>Certifications</span>
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1 text-xs font-medium text-muted-foreground">
+                  <Award className="h-3 w-3" />
+                  <span>Certifications</span>
+                </div>
+                {/* Top-rated indicator for score >= 4.5 */}
+                {agent.satisfactionScore !== undefined && agent.satisfactionScore >= 4.5 && (
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <div className="flex items-center gap-0.5 text-xs text-yellow-600">
+                          <Award className="h-3 w-3 fill-yellow-500" />
+                          <span className="font-medium">Top-Rated</span>
+                        </div>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p className="text-xs">Rated {agent.satisfactionScore.toFixed(1)}/5.0 by users</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                )}
               </div>
               <div className="flex flex-wrap gap-1">
-                {agent.certifications.slice(0, 2).map((cert, idx) => (
-                  <Badge key={idx} variant="outline" className="text-xs">
+                {agent.certifications.map((cert, idx) => (
+                  <Badge 
+                    key={idx} 
+                    variant="outline" 
+                    className={cn(
+                      "text-xs",
+                      // Badge variants based on certification type
+                      cert.toLowerCase().includes('fda') && "border-blue-300 text-blue-700 bg-blue-50",
+                      cert.toLowerCase().includes('iso') && "border-green-300 text-green-700 bg-green-50",
+                      cert.toLowerCase().includes('hipaa') && "border-purple-300 text-purple-700 bg-purple-50"
+                    )}
+                  >
                     {cert}
                   </Badge>
                 ))}

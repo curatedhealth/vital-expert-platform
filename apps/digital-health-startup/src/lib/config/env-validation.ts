@@ -10,6 +10,10 @@ export interface Mode1EnvConfig {
   supabaseServiceKey: string;
   openaiApiKey: string;
   anthropicApiKey?: string; // Optional, only needed for Claude models
+  tavilyApiKey?: string;
+  braveApiKey?: string;
+  googleSearchApiKey?: string;
+  googleSearchEngineId?: string;
 }
 
 /**
@@ -21,6 +25,10 @@ export function validateMode1Env(): Mode1EnvConfig {
   const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
   const openaiApiKey = process.env.OPENAI_API_KEY;
   const anthropicApiKey = process.env.ANTHROPIC_API_KEY;
+  const tavilyApiKey = process.env.TAVILY_API_KEY;
+  const braveApiKey = process.env.BRAVE_API_KEY;
+  const googleSearchApiKey = process.env.GOOGLE_SEARCH_API_KEY;
+  const googleSearchEngineId = process.env.GOOGLE_SEARCH_ENGINE_ID;
 
   const missing: string[] = [];
 
@@ -48,6 +56,10 @@ export function validateMode1Env(): Mode1EnvConfig {
     supabaseServiceKey,
     openaiApiKey,
     anthropicApiKey,
+    tavilyApiKey,
+    braveApiKey,
+    googleSearchApiKey,
+    googleSearchEngineId,
   };
 }
 
@@ -56,11 +68,20 @@ export function validateMode1Env(): Mode1EnvConfig {
  */
 export function validateOptionalEnv(): void {
   const anthropicApiKey = process.env.ANTHROPIC_API_KEY;
+  const tavilyApiKey = process.env.TAVILY_API_KEY;
+  const braveApiKey = process.env.BRAVE_API_KEY;
+  const googleSearchApiKey = process.env.GOOGLE_SEARCH_API_KEY;
+  const googleSearchEngineId = process.env.GOOGLE_SEARCH_ENGINE_ID;
 
   if (!anthropicApiKey) {
     console.warn(
       '⚠️  [Env Validation] ANTHROPIC_API_KEY not set. Claude models will not be available.'
     );
   }
-}
 
+  if (!tavilyApiKey && !braveApiKey && (!googleSearchApiKey || !googleSearchEngineId)) {
+    console.warn(
+      '⚠️  [Env Validation] No web search provider configured (TAVILY_API_KEY, BRAVE_API_KEY, or GOOGLE_SEARCH_API_KEY + GOOGLE_SEARCH_ENGINE_ID). Mode 1 web search tool will operate in mock mode.'
+    );
+  }
+}

@@ -26,6 +26,7 @@ interface PromptInputProps {
   onSubmit: () => void;
   isLoading?: boolean;
   placeholder?: string;
+  textareaRef?: React.RefObject<HTMLTextAreaElement>;
 
   // Model selection
   selectedModel: string;
@@ -64,6 +65,7 @@ export function PromptInput({
   onSubmit,
   isLoading = false,
   placeholder = 'How can I help you today?',
+  textareaRef,
   selectedModel,
   onModelChange,
   models = [
@@ -82,7 +84,7 @@ export function PromptInput({
   tokenCount,
   enableRAG = false,
   onEnableRAGChange,
-  enableTools = false,
+  enableTools = true,
   onEnableToolsChange,
   availableTools = [],
   selectedTools = [],
@@ -91,7 +93,8 @@ export function PromptInput({
   selectedRagDomains = [],
   onSelectedRagDomainsChange,
 }: PromptInputProps) {
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const fallbackTextareaRef = useRef<HTMLTextAreaElement>(null);
+  const internalTextareaRef = textareaRef ?? fallbackTextareaRef;
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [showModelDropdown, setShowModelDropdown] = useState(false);
   const [showToolsDropdown, setShowToolsDropdown] = useState(false);
@@ -549,7 +552,7 @@ export function PromptInput({
         {/* Textarea */}
         <div className="relative bg-white dark:bg-gray-800">
           <textarea
-            ref={textareaRef}
+            ref={internalTextareaRef}
             value={value}
             onChange={handleInput}
             onKeyDown={handleKeyDown}

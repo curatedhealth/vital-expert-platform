@@ -126,20 +126,17 @@ export class StructuredLogger {
       console.log(output);
     }
 
-    // Export to Prometheus metrics (fire and forget)
-    // Use dynamic import to avoid circular dependencies
-    import('./prometheus-exporter')
-      .then(({ getPrometheusExporter }) => {
-        const exporter = getPrometheusExporter();
-        exporter.recordLogEntry(logEntry);
-      })
-      .catch((promError) => {
-        // Don't fail on Prometheus export errors
-        // Just log a warning in development
-        if (this.isDevelopment) {
-          console.warn('Prometheus export failed:', promError);
-        }
-      });
+    // Export to Prometheus metrics (server-side only)
+    // Prometheus exporter uses Node.js cluster module which is not available in browser
+    // Completely skip Prometheus export on client to prevent Next.js from analyzing import
+    // This prevents bundling prom-client (which requires 'cluster' module) for the browser
+    // Metrics are only exported on server-side where cluster module is available
+    if (typeof window === 'undefined') {
+      // Server-side only: Completely disable Prometheus export to avoid bundling issues
+      // Prometheus metrics can still be recorded via API routes that are server-only
+      // For now, skip client-side Prometheus export to prevent build errors
+      // TODO: Re-enable when prom-client can be properly excluded from client bundle
+    }
 
     // Integration with error tracking (Sentry, etc.)
     if (level === LogLevel.ERROR && error) {

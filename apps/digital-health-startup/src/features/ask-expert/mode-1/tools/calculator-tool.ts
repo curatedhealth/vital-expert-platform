@@ -7,7 +7,22 @@
 
 import { BaseTool, ToolContext, ToolExecutionResult } from './base-tool';
 
-export class CalculatorTool extends BaseTool {
+type CalculationType = 'dosing' | 'statistics' | 'cost' | 'general';
+
+export interface CalculatorToolInput {
+  calculation_type: CalculationType;
+  formula: string;
+  parameters?: Record<string, number | string | boolean>;
+}
+
+export interface CalculatorToolResult {
+  calculation_type: CalculationType;
+  formula: string;
+  result: number;
+  parameters: Record<string, number | string | boolean>;
+}
+
+export class CalculatorTool extends BaseTool<CalculatorToolInput, CalculatorToolResult> {
   readonly name = 'calculator';
   readonly description =
     'Perform mathematical calculations for dosing, statistics, cost analysis, or general math expressions. Returns precise numerical results.';
@@ -43,9 +58,9 @@ export class CalculatorTool extends BaseTool {
   }
 
   async execute(
-    input: Record<string, any>,
+    input: CalculatorToolInput,
     context: ToolContext
-  ): Promise<ToolExecutionResult> {
+  ): Promise<ToolExecutionResult<CalculatorToolResult>> {
     const startTime = Date.now();
 
     try {
@@ -53,7 +68,7 @@ export class CalculatorTool extends BaseTool {
 
       const calcType = input.calculation_type;
       const formula = input.formula;
-      const params = input.parameters || {};
+      const params = input.parameters ?? {};
 
       console.log(`🧮 [Calculator] Executing ${calcType} calculation: ${formula}`);
 
@@ -95,7 +110,7 @@ export class CalculatorTool extends BaseTool {
   /**
    * Safely evaluate basic mathematical formulas
    */
-  private evaluateSafeFormula(formula: string, params: Record<string, any>): number {
+  private evaluateSafeFormula(formula: string, params: Record<string, number | string | boolean>): number {
     // Replace parameter placeholders with values
     let expression = formula;
     for (const [key, value] of Object.entries(params)) {
@@ -125,7 +140,7 @@ export class CalculatorTool extends BaseTool {
   private async evaluateSpecialized(
     type: string,
     formula: string,
-    params: Record<string, any>
+    params: Record<string, number | string | boolean>
   ): Promise<number> {
     switch (type) {
       case 'dosing':
@@ -145,4 +160,3 @@ export class CalculatorTool extends BaseTool {
     }
   }
 }
-

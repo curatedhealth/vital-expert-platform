@@ -49,25 +49,45 @@ export interface MigrationResult {
 }
 
 export class ConversationsService {
-  private supabase;
+  private supabase: ReturnType<typeof createClient> | null = null;
   private logger;
 
   constructor() {
+    // Lazy initialization - don't throw on missing env vars
+    // Will be checked when actually used
+    this.logger = createLogger();
+    
+    // Try to initialize if env vars are available
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-    if (!supabaseUrl || !supabaseServiceKey) {
-      throw new Error('Supabase configuration missing for ConversationsService');
+    if (supabaseUrl && supabaseServiceKey) {
+      this.supabase = createClient(supabaseUrl, supabaseServiceKey);
     }
+  }
 
-    this.supabase = createClient(supabaseUrl, supabaseServiceKey);
-    this.logger = createLogger();
+  /**
+   * Initialize Supabase client if not already initialized
+   */
+  private ensureInitialized(): void {
+    if (!this.supabase) {
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+      const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+      if (!supabaseUrl || !supabaseServiceKey) {
+        throw new Error('Supabase configuration missing for ConversationsService. Please set NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY environment variables.');
+      }
+
+      this.supabase = createClient(supabaseUrl, supabaseServiceKey);
+    }
   }
 
   /**
    * Get all conversations for a user
    */
   async getUserConversations(userId: string): Promise<Conversation[]> {
+    this.ensureInitialized();
+    
     const operationId = `get_conversations_${Date.now()}`;
     const startTime = Date.now();
 
@@ -139,6 +159,8 @@ export class ConversationsService {
     userId: string,
     conversation: Omit<Conversation, 'id' | 'createdAt' | 'updatedAt'>
   ): Promise<Conversation> {
+    this.ensureInitialized();
+    
     const operationId = `create_conversation_${Date.now()}`;
     const startTime = Date.now();
 
@@ -233,6 +255,8 @@ export class ConversationsService {
     conversationId: string,
     updates: Partial<Pick<Conversation, 'title' | 'messages' | 'isPinned' | 'agentId' | 'mode'>>
   ): Promise<Conversation> {
+    this.ensureInitialized();
+    
     const operationId = `update_conversation_${Date.now()}`;
     const startTime = Date.now();
 
@@ -316,6 +340,8 @@ export class ConversationsService {
    * Delete a conversation
    */
   async deleteConversation(userId: string, conversationId: string): Promise<void> {
+    this.ensureInitialized();
+    
     const operationId = `delete_conversation_${Date.now()}`;
     const startTime = Date.now();
 
@@ -372,6 +398,23 @@ export class ConversationsService {
    * Migrate conversations from localStorage to database
    */
   async migrateFromLocalStorage(userId: string): Promise<MigrationResult> {
+    // For migration, we can proceed even if Supabase isn't configured
+    // (it will fail gracefully when trying to insert)
+    if (typeof window === 'undefined') {
+      return { success: true, migrated: 0, errors: 0 };
+    }
+
+    try {
+      this.ensureInitialized();
+    } catch (error) {
+      // If Supabase isn't configured, just return success with no migration
+      this.logger.warn('conversations_migration_skipped_no_supabase', {
+        userId,
+        reason: 'Supabase not configured',
+      });
+      return { success: true, migrated: 0, errors: 0 };
+    }
+    
     const operationId = `migrate_conversations_${Date.now()}`;
     const startTime = Date.now();
 
@@ -380,10 +423,6 @@ export class ConversationsService {
       operationId,
       userId,
     });
-
-    if (typeof window === 'undefined') {
-      return { success: true, migrated: 0, errors: 0 };
-    }
 
     try {
       const saved = localStorage.getItem('vital-conversations');

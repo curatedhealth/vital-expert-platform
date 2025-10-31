@@ -43,6 +43,7 @@ export interface Mode1Metrics {
     domainsSearched: string[];
     strategy: string;
     cacheHit: boolean;
+    retrievalTimeMs?: number;
   };
   
   // Cost tracking
@@ -127,6 +128,43 @@ export class Mode1MetricsService {
 
     // Log metrics
     this.logMetrics(metrics);
+  }
+
+  /**
+   * Track circuit breaker state changes
+   */
+  trackCircuitBreakerStateChange(event: {
+    circuitName: string;
+    state: string;
+    timestamp: number;
+    failureCount: number;
+  }): void {
+    const logData = {
+      type: 'circuit_breaker_state_change',
+      circuitName: event.circuitName,
+      state: event.state,
+      timestamp: event.timestamp,
+      failureCount: event.failureCount,
+    };
+
+    // Use StructuredLogger if available (lazy import to avoid circular deps)
+    import('@/lib/services/observability/structured-logger').then(({ StructuredLogger, LogLevel }) => {
+      const logger = new StructuredLogger({ minLevel: LogLevel.INFO });
+      logger.info('Circuit breaker state change', {
+        operation: 'circuit_breaker_state_change',
+        circuitName: event.circuitName,
+        state: event.state,
+        failureCount: event.failureCount,
+      });
+    }).catch(() => {
+      // Fallback to console if StructuredLogger not available
+      console.log(`🔌 [Circuit Breaker Metrics] ${JSON.stringify(logData)}`);
+    });
+
+    // In a production system, this could also:
+    // - Send to monitoring service (DataDog, New Relic, etc.)
+    // - Trigger alerts for critical state changes (OPEN state)
+    // - Store in time-series database for analysis
   }
 
   /**
@@ -354,4 +392,3 @@ export class Mode1MetricsService {
 
 // Export singleton instance
 export const mode1MetricsService = new Mode1MetricsService();
-

@@ -278,7 +278,17 @@ export class MessageManager {
   /**
    * Map database record to Message
    */
-  private mapToMessage(data: any): Message {
+  private mapToMessage(data: {
+    id: string;
+    session_id: string;
+    role: 'user' | 'assistant' | 'system';
+    content: string;
+    agent_id: string | null;
+    metadata: Record<string, unknown> | null;
+    tokens: number | null;
+    cost: number | null;
+    created_at: string;
+  }): Message {
     return {
       id: data.id,
       session_id: data.session_id,

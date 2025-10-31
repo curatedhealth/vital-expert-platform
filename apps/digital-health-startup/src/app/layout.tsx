@@ -1,6 +1,7 @@
 import { Inter } from 'next/font/google'
 
 import '@/lib/polyfills/location-polyfill'
+import '@/lib/polyfills/dom-polyfill'
 
 import type { Metadata } from 'next'
 

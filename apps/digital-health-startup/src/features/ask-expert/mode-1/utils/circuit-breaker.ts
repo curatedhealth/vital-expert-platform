@@ -5,10 +5,14 @@
  * and temporarily stopping requests when services are down
  */
 
+import { CIRCUIT_BREAKER_CONFIG } from './circuit-breaker-config';
+
 export interface CircuitBreakerOptions {
   failureThreshold?: number;
+  successThreshold?: number;
   resetTimeout?: number;
   monitoringWindow?: number;
+  halfOpenMaxAttempts?: number;
 }
 
 export enum CircuitState {
@@ -17,11 +21,24 @@ export enum CircuitState {
   HALF_OPEN = 'HALF_OPEN', // Testing if service recovered
 }
 
+export type CircuitBreakerStateChangeEvent = {
+  circuitName: string;
+  fromState: CircuitState;
+  toState: CircuitState;
+  timestamp: number;
+  failureCount: number;
+  successCount: number;
+  reason?: string;
+};
+
+type StateChangeCallback = (event: CircuitBreakerStateChangeEvent) => void;
+
 export class CircuitBreaker {
   private state: CircuitState = CircuitState.CLOSED;
   private failureCount = 0;
   private lastFailureTime?: number;
   private successCount = 0;
+  private stateChangeCallbacks: StateChangeCallback[] = [];
 
   constructor(
     private name: string,
@@ -29,9 +46,51 @@ export class CircuitBreaker {
   ) {
     this.options = {
       failureThreshold: options.failureThreshold ?? 5,
+      successThreshold: options.successThreshold ?? 2,
       resetTimeout: options.resetTimeout ?? 60000, // 60 seconds
       monitoringWindow: options.monitoringWindow ?? 60000, // 60 seconds
+      halfOpenMaxAttempts: options.halfOpenMaxAttempts ?? 2,
     };
+  }
+
+  /**
+   * Subscribe to state change events for metrics tracking
+   */
+  onStateChange(callback: StateChangeCallback): () => void {
+    this.stateChangeCallbacks.push(callback);
+    return () => {
+      const index = this.stateChangeCallbacks.indexOf(callback);
+      if (index > -1) {
+        this.stateChangeCallbacks.splice(index, 1);
+      }
+    };
+  }
+
+  /**
+   * Emit state change event to all subscribers
+   */
+  private emitStateChange(
+    fromState: CircuitState,
+    toState: CircuitState,
+    reason?: string
+  ): void {
+    const event: CircuitBreakerStateChangeEvent = {
+      circuitName: this.name,
+      fromState,
+      toState,
+      timestamp: Date.now(),
+      failureCount: this.failureCount,
+      successCount: this.successCount,
+      reason,
+    };
+    
+    this.stateChangeCallbacks.forEach(callback => {
+      try {
+        callback(event);
+      } catch (error) {
+        console.error(`[Circuit Breaker: ${this.name}] Error in state change callback:`, error);
+      }
+    });
   }
 
   /**
@@ -44,9 +103,11 @@ export class CircuitBreaker {
     // Check if circuit is open
     if (this.state === CircuitState.OPEN) {
       if (this.shouldAttemptReset()) {
+        const previousState = this.state;
         this.state = CircuitState.HALF_OPEN;
         this.successCount = 0;
         console.log(`🔄 [Circuit Breaker: ${this.name}] Attempting reset (HALF_OPEN)`);
+        this.emitStateChange(previousState, CircuitState.HALF_OPEN, 'Reset timeout reached, attempting recovery');
       } else {
         console.warn(`⚠️  [Circuit Breaker: ${this.name}] Circuit OPEN - using fallback`);
         if (fallback) {
@@ -83,10 +144,14 @@ export class CircuitBreaker {
       this.successCount++;
       
       // If we have enough successes, close the circuit
-      if (this.successCount >= 2) {
+      const successThreshold = this.options.successThreshold ?? 2;
+      if (this.successCount >= successThreshold) {
+        const previousState = this.state;
+        const successCountAtTransition = this.successCount;
         this.state = CircuitState.CLOSED;
         this.successCount = 0;
         console.log(`✅ [Circuit Breaker: ${this.name}] Circuit CLOSED - service recovered`);
+        this.emitStateChange(previousState, CircuitState.CLOSED, `Recovered after ${successCountAtTransition} successful attempts`);
       }
     }
   }
@@ -103,10 +168,12 @@ export class CircuitBreaker {
       this.failureCount >= this.options.failureThreshold! &&
       this.state !== CircuitState.OPEN
     ) {
+      const previousState = this.state;
       this.state = CircuitState.OPEN;
       console.error(
         `🚨 [Circuit Breaker: ${this.name}] Circuit OPENED after ${this.failureCount} failures`
       );
+      this.emitStateChange(previousState, CircuitState.OPEN, `Threshold exceeded: ${this.failureCount} failures`);
     }
   }
 
@@ -153,18 +220,42 @@ export class CircuitBreaker {
 }
 
 // Export circuit breaker instances for common services
-export const llmCircuitBreaker = new CircuitBreaker('LLM', {
-  failureThreshold: 5,
-  resetTimeout: 30000, // 30 seconds
-});
+// Using centralized configuration constants
+export const llmCircuitBreaker = new CircuitBreaker('LLM', CIRCUIT_BREAKER_CONFIG.LLM);
 
-export const ragCircuitBreaker = new CircuitBreaker('RAG', {
-  failureThreshold: 3,
-  resetTimeout: 60000, // 60 seconds
-});
+export const ragCircuitBreaker = new CircuitBreaker('RAG', CIRCUIT_BREAKER_CONFIG.RAG);
 
-export const toolCircuitBreaker = new CircuitBreaker('Tools', {
-  failureThreshold: 5,
-  resetTimeout: 30000, // 30 seconds
-});
+export const toolCircuitBreaker = new CircuitBreaker('Tools', CIRCUIT_BREAKER_CONFIG.TOOL);
+
+// Metrics integration is lazy-loaded to avoid build-time analysis
+// This prevents Next.js from analyzing the metrics import at build time
+const setupMetricsTracking = () => {
+  if (typeof window !== 'undefined') return; // Client-side, skip
+  
+  // Lazy load metrics service only when needed
+  Promise.resolve().then(async () => {
+    try {
+      const { mode1MetricsService } = await import('../../ask-expert/mode-1/services/mode1-metrics');
+      [llmCircuitBreaker, ragCircuitBreaker, toolCircuitBreaker].forEach(circuitBreaker => {
+        circuitBreaker.onStateChange((event) => {
+          // Track circuit breaker state changes in metrics
+          mode1MetricsService.trackCircuitBreakerStateChange({
+            circuitName: event.circuitName,
+            state: event.toState,
+            timestamp: event.timestamp,
+            failureCount: event.failureCount,
+          });
+        });
+      });
+    } catch {
+      // Metrics service not available, continue without it
+      // Silently fail - metrics are optional
+    }
+  });
+};
+
+// Only set up metrics tracking in server environment
+if (typeof window === 'undefined') {
+  setupMetricsTracking();
+}
 

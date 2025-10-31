@@ -43,18 +43,11 @@ export function Sources({ children, sources = [], className }: SourcesProps) {
     [sources, isOpen]
   );
 
-  // Auto-open if there are sources
-  React.useEffect(() => {
-    if (sources.length > 0) {
-      setIsOpen(true);
-    }
-  }, [sources.length]);
-
   return (
     <SourcesContext.Provider value={value}>
       <div
         className={cn(
-          'rounded-lg border border-gray-200 bg-gray-50/50 overflow-hidden transition-all',
+          'rounded-xl border border-gray-100 bg-white/90 shadow-sm overflow-hidden transition-colors dark:border-gray-800 dark:bg-gray-900/50',
           className
         )}
       >
@@ -77,14 +70,14 @@ export function SourcesTrigger({ className }: SourcesTriggerProps) {
     <button
       onClick={() => setIsOpen(!isOpen)}
       className={cn(
-        'w-full flex items-center justify-between px-4 py-3 text-sm font-medium transition-colors hover:bg-gray-100/50',
+        'w-full flex items-center justify-between gap-2 px-4 py-3 text-sm font-medium text-blue-700 transition-colors hover:bg-blue-50/50 dark:text-blue-200',
         className
       )}
       aria-expanded={isOpen}
       aria-controls="sources-content"
     >
       <div className="flex items-center gap-2">
-        <span className="text-gray-700">
+        <span>
           Used {sources.length} source{sources.length !== 1 ? 's' : ''}
         </span>
       </div>
@@ -135,7 +128,7 @@ export function SourcesContent({ children, className }: SourcesContentProps) {
       <div ref={contentRef}>
         <div
           className={cn(
-            'px-4 py-3 border-t border-gray-200 bg-white',
+            'px-4 py-3 border-t border-gray-100 bg-white/95 dark:border-gray-800 dark:bg-gray-900/40',
             className
           )}
         >
@@ -183,4 +176,3 @@ export function SourcesContent({ children, className }: SourcesContentProps) {
     </div>
   );
 }
-

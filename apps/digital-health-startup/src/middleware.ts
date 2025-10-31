@@ -66,6 +66,7 @@ export async function middleware(request: NextRequest) {
     '/api/chat/sessions', 
     '/api/chat/messages',
     '/api/agents-crud',  // Agents CRUD endpoint (uses service role internally)
+    '/api/knowledge',    // Knowledge management endpoints (uses service role internally)
     '/api/metrics',  // Prometheus metrics endpoint
     '/api/health',    // Health check endpoint
   ];

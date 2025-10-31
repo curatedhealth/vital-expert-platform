@@ -3,20 +3,15 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Copy, Check, ThumbsUp, ThumbsDown, RefreshCw, Edit,
-  FileText, ExternalLink, Code, ChevronDown, ChevronUp,
-  Sparkles, BookOpen, AlertCircle, Info, Bookmark, Share2
+  ExternalLink, ChevronDown, ChevronUp,
+  Sparkles, BookOpen, AlertCircle, Info, Bookmark, Share2, Wrench, GitBranch
 } from 'lucide-react';
 import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
-import ReactMarkdown from 'react-markdown';
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
-import remarkGfm from 'remark-gfm';
-import rehypeRaw from 'rehype-raw';
-
-import { Avatar, AvatarFallback, AvatarImage } from '@vital/ui';
 import { Badge } from '@vital/ui';
 import { Button } from '@vital/ui';
 import { Card, CardContent } from '@vital/ui';
+import { AgentAvatar } from '@vital/ui';
+import { Avatar, AvatarFallback } from '@vital/ui';
 import {
   Tooltip,
   TooltipContent,
@@ -24,6 +19,36 @@ import {
   TooltipTrigger,
 } from '@vital/ui';
 import { cn } from '@vital/ui/lib/utils';
+import { Response as AIResponse } from '@/components/ai/response';
+import {
+  Sources,
+  SourcesContent,
+  SourcesTrigger,
+} from '@/components/ai/sources';
+import {
+  Branch,
+  BranchMessages,
+  BranchSelector,
+  BranchPrevious,
+  BranchNext,
+  BranchPage,
+} from '@/components/ai/branch';
+import {
+  InlineCitation,
+  InlineCitationCard,
+  InlineCitationCardBody,
+  InlineCitationCardTrigger,
+  InlineCitationCarousel,
+  InlineCitationCarouselContent,
+  InlineCitationCarouselControls,
+  InlineCitationCarouselHeader,
+  InlineCitationCarouselIndex,
+  InlineCitationCarouselItem,
+  InlineCitationQuote,
+  InlineCitationSource,
+} from '@/components/ai/inline-citation';
+import type { Components } from 'react-markdown';
+import type { PluggableList } from 'unified';
 
 interface Source {
   id: string;
@@ -44,6 +69,7 @@ interface Citation {
   number: number;
   text: string;
   sourceId?: string;
+  sources?: Source[];
 }
 
 interface MessageBranch {
@@ -59,6 +85,24 @@ interface MessageBranch {
 interface MessageMetadata {
   sources?: Source[];
   citations?: Citation[];
+  ragSummary?: {
+    totalSources: number;
+    strategy?: string;
+    domains?: string[];
+    cacheHit?: boolean;
+    warning?: string;
+    retrievalTimeMs?: number;
+  };
+  toolSummary?: {
+    allowed: string[];
+    used: string[];
+    totals: {
+      calls: number;
+      success: number;
+      failure: number;
+      totalTimeMs: number;
+    };
+  };
   tokenUsage?: {
     prompt: number;
     completion: number;
@@ -89,6 +133,83 @@ interface EnhancedMessageDisplayProps {
   allowRegenerate?: boolean;
 }
 
+function createInlineCitationRemarkPlugin(citationMap: Map<number, Source[]>) {
+  return function inlineCitations() {
+    return function transformer(tree: any) {
+      transformNode(tree);
+    };
+  };
+
+  function transformNode(node: any) {
+    if (!node || !Array.isArray(node.children)) {
+      return;
+    }
+
+    if (['link', 'code', 'inlineCode', 'image'].includes(node.type)) {
+      return;
+    }
+
+    const transformed: any[] = [];
+
+    node.children.forEach((child: any) => {
+      if (child?.type === 'citation') {
+        transformed.push(child);
+        return;
+      }
+
+      if (child?.type === 'text' && typeof child.value === 'string') {
+        const value = child.value;
+        const regex = /\[(\d+(?:\s*,\s*\d+)*)\]/g;
+        let lastIndex = 0;
+        let match: RegExpExecArray | null;
+
+        while ((match = regex.exec(value)) !== null) {
+          const preceding = value.slice(lastIndex, match.index);
+          if (preceding) {
+            transformed.push({ type: 'text', value: preceding });
+          }
+
+          const numbers = match[1]
+            .split(',')
+            .map((part) => parseInt(part.trim(), 10))
+            .filter((num) => Number.isFinite(num));
+
+          numbers.forEach((number, idx) => {
+            const sources = citationMap.get(number) ?? [];
+            if (sources.length === 0) {
+              transformed.push({ type: 'text', value: `[${number}]` });
+            } else {
+              transformed.push({
+                type: 'citation',
+                data: {
+                  citationNumber: String(number),
+                  sources,
+                },
+              });
+            }
+
+            if (idx < numbers.length - 1) {
+              transformed.push({ type: 'text', value: ' ' });
+            }
+          });
+
+          lastIndex = match.index + match[0].length;
+        }
+
+        const trailing = value.slice(lastIndex);
+        if (trailing) {
+          transformed.push({ type: 'text', value: trailing });
+        }
+      } else {
+        transformNode(child);
+        transformed.push(child);
+      }
+    });
+
+    node.children = transformed;
+  }
+}
+
 export function EnhancedMessageDisplay({
   id,
   role,
@@ -109,7 +230,6 @@ export function EnhancedMessageDisplay({
   allowRegenerate = true,
 }: EnhancedMessageDisplayProps) {
   const [copied, setCopied] = useState(false);
-  const [showSources, setShowSources] = useState(false);
   const [showReasoning, setShowReasoning] = useState(false);
   const [feedback, setFeedback] = useState<'positive' | 'negative' | null>(null);
   const [activeBranch, setActiveBranch] = useState(currentBranch);
@@ -117,6 +237,21 @@ export function EnhancedMessageDisplay({
   const [shareStatus, setShareStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const messageRef = useRef<HTMLDivElement>(null);
   const sourceRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const isUser = role === 'user';
+
+  const resolvedAgentName = useMemo(() => {
+    if (isUser) {
+      return 'You';
+    }
+    if (!agentName) {
+      return 'AI Assistant';
+    }
+    if (/\s/.test(agentName)) {
+      return agentName.trim();
+    }
+    const cleaned = agentName.replace(/[_-]+/g, ' ').trim();
+    return cleaned.replace(/\b\w/g, (char) => char.toUpperCase());
+  }, [agentName, isUser]);
 
   // Get active branch content or fallback to main content
   const displayContent = branches && branches[activeBranch] 
@@ -133,11 +268,11 @@ export function EnhancedMessageDisplay({
   }, [onBranchChange]);
 
   const handleCopy = useCallback(() => {
-    navigator.clipboard.writeText(content);
+    navigator.clipboard.writeText(displayContent);
     setCopied(true);
     onCopy?.();
     setTimeout(() => setCopied(false), 2000);
-  }, [content, onCopy]);
+  }, [displayContent, onCopy]);
 
   const handleFeedback = useCallback((type: 'positive' | 'negative') => {
     setFeedback(type);
@@ -156,7 +291,7 @@ export function EnhancedMessageDisplay({
     try {
       if (navigator.share) {
         await navigator.share({
-          title: agentName || 'VITAL Expert Response',
+          title: resolvedAgentName || 'VITAL Expert Response',
           text: displayContent,
         });
       } else {
@@ -169,7 +304,7 @@ export function EnhancedMessageDisplay({
       setShareStatus('error');
       setTimeout(() => setShareStatus('idle'), 2500);
     }
-  }, [agentName, displayContent]);
+  }, [displayContent, resolvedAgentName]);
 
   const formatTimestamp = useCallback((date: Date) => {
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -181,7 +316,7 @@ export function EnhancedMessageDisplay({
   );
 
   const keyInsights = useMemo(() => {
-    if (role === 'user') {
+    if (isUser) {
       return [];
     }
     const sentences = displayContent.split(/(?<=[.!?])\s+/).filter(Boolean);
@@ -192,26 +327,17 @@ export function EnhancedMessageDisplay({
         )
       )
       .slice(0, 3);
-  }, [displayContent, keyInsightKeywords, role]);
+  }, [displayContent, isUser, keyInsightKeywords]);
 
-  // Parse content for inline citations like [1], [2]
-  const contentWithCitations = useMemo(() => {
-    const textToUse = displayContent;
-    if (!metadata?.sources || metadata.sources.length === 0) {
-      return textToUse;
-    }
-
-    return textToUse.replace(/\[(\d+)\]/g, (match, num) => {
-      const source = metadata.sources?.[parseInt(num) - 1];
-      if (source) {
-        return `<sup class="citation-link cursor-pointer text-blue-600" data-source-id="${source.id}">[${num}]</sup>`;
-      }
-      return match;
-    });
-  }, [displayContent, metadata?.sources]);
+  const activeBranchMeta = branches?.[activeBranch];
+  const showBranchSelector = !isUser && Array.isArray(branches) && branches.length > 1;
+  const ragSummary = metadata?.ragSummary;
+  const toolSummary = metadata?.toolSummary;
+  const toolTotals = toolSummary?.totals ?? { calls: 0, success: 0, failure: 0, totalTimeMs: 0 };
+  const toolUsed = toolSummary?.used ?? [];
+  const hasToolUsage = !!toolSummary && (toolTotals.calls > 0 || toolUsed.length > 0);
 
   const scrollToSource = useCallback((sourceId: string) => {
-    setShowSources(true);
     requestAnimationFrame(() => {
       const element = sourceRefs.current[sourceId];
       if (element) {
@@ -222,109 +348,137 @@ export function EnhancedMessageDisplay({
     });
   }, []);
 
-  useEffect(() => {
-    if (!messageRef.current) {
-      return;
+  const citationSources = metadata?.sources ?? [];
+
+  const citationNumberMap = useMemo(() => {
+    const map = new Map<number, Source[]>();
+
+    citationSources.forEach((source, index) => {
+      if (source) {
+        map.set(index + 1, [source]);
+      }
+    });
+
+    metadata?.citations?.forEach((citation) => {
+      const number = citation.number;
+      if (!Number.isFinite(number)) {
+        return;
+      }
+
+      const bucket = map.get(number) ?? [];
+      const addSource = (candidate?: Source) => {
+        if (!candidate) {
+          return;
+        }
+        if (!bucket.some((existing) => existing?.id === candidate.id && existing?.url === candidate.url)) {
+          bucket.push(candidate);
+        }
+      };
+
+      if (citation.sourceId) {
+        const resolvedById = citationSources.find((source) => source?.id === citation.sourceId);
+        addSource(resolvedById);
+      }
+
+      if (Array.isArray(citation.sources)) {
+        citation.sources.forEach(addSource);
+      }
+
+      // Fallback to sequential source list if nothing matched
+      if (!bucket.length) {
+        addSource(citationSources[number - 1]);
+      }
+
+      if (bucket.length) {
+        map.set(number, bucket);
+      }
+    });
+
+    return map;
+  }, [citationSources, metadata?.citations]);
+
+  const normalizedContent = useMemo(() => {
+    if (!displayContent) {
+      return displayContent;
     }
 
-    const citationElements = Array.from(
-      messageRef.current.querySelectorAll<HTMLElement>('.citation-link')
-    );
+    let text = displayContent;
 
-    const handler = (event: Event) => {
-      const el = event.currentTarget as HTMLElement;
-      const sourceId = el.dataset.sourceId;
-      if (sourceId) {
-        scrollToSource(sourceId);
+    text = text.replace(/\[\s*Source\s+([\d,\s]+)\s*\]/gi, '[$1]');
+    text = text.replace(/\((?:source|Source)\s+([\d,\s]+)\)/gi, '[$1]');
+    text = text.replace(/Source\s+([\d,\s]+)/gi, '[$1]');
+
+    text = text.replace(/\[\s+/g, '[').replace(/\s+\]/g, ']');
+
+    return text;
+  }, [displayContent]);
+
+  const citationRemarkPlugins = useMemo<PluggableList | undefined>(() => {
+    if (!citationSources.length) {
+      return undefined;
+    }
+    return [createInlineCitationRemarkPlugin(citationNumberMap)];
+  }, [citationNumberMap]);
+
+  const citationComponents = useMemo<Partial<Components>>(() => ({
+    citation({ node }) {
+      const data = (node as any)?.data ?? {};
+      const number = data.citationNumber as string | undefined;
+      const sources: Source[] = Array.isArray(data.sources) ? data.sources : [];
+      const primarySourceId: string | undefined = sources[0]?.id;
+
+      if (!sources.length) {
+        return <sup className="text-blue-600">[{number || '?'}]</sup>;
       }
-    };
 
-    citationElements.forEach((el) => el.addEventListener('click', handler));
-
-    return () => {
-      citationElements.forEach((el) => el.removeEventListener('click', handler));
-    };
-  }, [contentWithCitations, scrollToSource]);
+      return (
+        <InlineCitation>
+          <span className="text-blue-600">[{number || '?'}]</span>
+          <InlineCitationCard>
+            <InlineCitationCardTrigger
+              sources={sources.map((source) => source.url || '')}
+              onClick={() => {
+                if (primarySourceId) {
+                  scrollToSource(primarySourceId);
+                }
+              }}
+            />
+            <InlineCitationCardBody>
+              <InlineCitationCarousel>
+                <InlineCitationCarouselHeader>
+                  <InlineCitationCarouselIndex />
+                  <InlineCitationCarouselControls />
+                </InlineCitationCarouselHeader>
+                <InlineCitationCarouselContent>
+                  {sources.map((source, idx) => (
+                    <InlineCitationCarouselItem key={source.id || idx}>
+                      <InlineCitationSource
+                        title={source.title || `Source ${number || idx + 1}`}
+                        url={source.url || '#'}
+                        description={source.organization || source.domain || undefined}
+                      />
+                      {source.excerpt && (
+                        <InlineCitationQuote>{source.excerpt}</InlineCitationQuote>
+                      )}
+                    </InlineCitationCarouselItem>
+                  ))}
+                </InlineCitationCarouselContent>
+              </InlineCitationCarousel>
+            </InlineCitationCardBody>
+          </InlineCitationCard>
+        </InlineCitation>
+      );
+    },
+  }), [scrollToSource, citationNumberMap]);
 
   useEffect(() => {
     setShareStatus('idle');
     setCopied(false);
   }, [id, activeBranch, displayContent]);
 
-  const canShowRegenerate = !!onRegenerate && allowRegenerate && role !== 'user';
-  const showFeedbackControls = !!onFeedback && role !== 'user';
-  const showShare = role !== 'user';
-
-  // Custom markdown components
-  const markdownComponents = {
-    code({ node, inline, className, children, ...props }: any) {
-      const match = /language-(\w+)/.exec(className || '');
-      return !inline && match ? (
-        <div className="relative group">
-          <SyntaxHighlighter
-            style={oneDark}
-            language={match[1]}
-            PreTag="div"
-            className="rounded-md my-4"
-            {...props}
-          >
-            {String(children).replace(/\n$/, '')}
-          </SyntaxHighlighter>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
-            onClick={() => navigator.clipboard.writeText(String(children))}
-          >
-            <Copy className="h-3 w-3" />
-          </Button>
-        </div>
-      ) : (
-        <code className={cn("bg-muted px-1.5 py-0.5 rounded text-sm", className)} {...props}>
-          {children}
-        </code>
-      );
-    },
-    a({ children, href, ...props }: any) {
-      return (
-        <a
-          href={href}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-blue-600 hover:text-blue-800 underline inline-flex items-center gap-1"
-          {...props}
-        >
-          {children}
-          <ExternalLink className="h-3 w-3" />
-        </a>
-      );
-    },
-    table({ children, ...props }: any) {
-      return (
-        <div className="overflow-x-auto my-4">
-          <table className="min-w-full divide-y divide-gray-200 border" {...props}>
-            {children}
-          </table>
-        </div>
-      );
-    },
-    th({ children, ...props }: any) {
-      return (
-        <th className="px-4 py-2 bg-gray-50 text-left text-xs font-medium text-gray-700 uppercase tracking-wider" {...props}>
-          {children}
-        </th>
-      );
-    },
-    td({ children, ...props }: any) {
-      return (
-        <td className="px-4 py-2 border-t text-sm text-gray-900" {...props}>
-          {children}
-        </td>
-      );
-    },
-  };
-
-  const isUser = role === 'user';
+  const canShowRegenerate = !!onRegenerate && allowRegenerate && !isUser;
+  const showFeedbackControls = !!onFeedback && !isUser;
+  const showShare = !isUser;
 
   return (
     <motion.div
@@ -339,29 +493,41 @@ export function EnhancedMessageDisplay({
     >
       <div
         className={cn(
-          "max-w-3xl rounded-lg p-4 shadow-sm",
+          "max-w-3xl rounded-2xl px-5 py-4 transition-colors",
           isUser
-            ? "bg-blue-600 text-white"
-            : "bg-white border border-gray-200"
+            ? "bg-white text-gray-900 shadow-none"
+            : "bg-white text-gray-900 shadow-sm"
         )}
       >
         {/* Message Header */}
         <div className="flex items-start gap-3 mb-2">
-          {!isUser && agentAvatar && (
-            <Avatar className="h-8 w-8 mt-0.5">
-              <AvatarImage src={agentAvatar} />
-              <AvatarFallback>{agentName?.[0] || 'AI'}</AvatarFallback>
-            </Avatar>
-          )}
+          <div className="mt-0.5">
+            {isUser ? (
+              <Avatar className="h-8 w-8 bg-gray-200 text-gray-700">
+                <AvatarFallback>
+                  {resolvedAgentName?.[0]?.toUpperCase() || 'U'}
+                </AvatarFallback>
+              </Avatar>
+            ) : (
+              <AgentAvatar
+                avatar={agentAvatar}
+                name={resolvedAgentName}
+                size="list"
+                className="rounded-full"
+              />
+            )}
+          </div>
 
           <div className="flex-1 min-w-0">
             <div className="flex items-center justify-between mb-1">
               <div className="flex items-center gap-2">
-                <span className={cn(
-                  "text-sm font-medium",
-                  isUser ? "text-blue-100" : "text-gray-900"
-                )}>
-                  {isUser ? 'You' : agentName || 'AI Assistant'}
+                <span
+                  className={cn(
+                    "text-sm font-medium",
+                    isUser ? "text-gray-900" : "text-gray-900"
+                  )}
+                >
+                  {resolvedAgentName}
                 </span>
                 {!isUser && metadata?.confidence && (
                   <TooltipProvider>
@@ -378,89 +544,19 @@ export function EnhancedMessageDisplay({
                   </TooltipProvider>
                 )}
               </div>
-              <span className={cn(
-                "text-xs",
-                isUser ? "text-blue-200" : "text-gray-500"
-              )}>
+              <span className="text-xs text-gray-500">
                 {formatTimestamp(timestamp)}
               </span>
             </div>
 
-            {/* Branch Selector (for assistant messages with multiple branches) */}
-            {!isUser && branches && branches.length > 1 && (
-              <div className="flex items-center gap-2 mb-3 pt-2 border-t border-gray-200">
-                <span className="text-xs font-medium text-muted-foreground">Alternatives:</span>
-                <div className="flex gap-1">
-                  {branches.map((branch, idx) => (
-                    <TooltipProvider key={branch.id}>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button
-                            variant={activeBranch === idx ? "default" : "outline"}
-                            size="sm"
-                            className={cn(
-                              "h-7 w-7 p-0 text-xs font-medium transition-all",
-                              activeBranch === idx && "ring-2 ring-blue-600"
-                            )}
-                            onClick={() => handleBranchChange(idx)}
-                          >
-                            {idx + 1}
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <div className="space-y-1">
-                            <p className="text-xs font-medium">Branch {idx + 1}</p>
-                            {branch.confidence !== undefined && (
-                              <p className="text-xs text-muted-foreground">
-                                Confidence: {Math.round(branch.confidence * 100)}%
-                              </p>
-                            )}
-                            {branch.reasoning && (
-                              <p className="text-xs text-muted-foreground line-clamp-2">
-                                {branch.reasoning}
-                              </p>
-                            )}
-                          </div>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Message Content */}
-            <div
-              ref={messageRef}
-              className={cn(
-              "prose prose-sm max-w-none",
-              isUser ? "prose-invert" : "prose-gray"
-            )}>
-              <ReactMarkdown
-                remarkPlugins={[remarkGfm]}
-                rehypePlugins={[rehypeRaw]}
-                components={markdownComponents}
-              >
-                {contentWithCitations}
-              </ReactMarkdown>
-
-              {isStreaming && (
-                <motion.span
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  className="inline-block w-2 h-4 bg-current ml-1 animate-pulse rounded-sm"
-                />
-              )}
-            </div>
-
             {/* Reasoning Section */}
             {!isUser && metadata?.reasoning && metadata.reasoning.length > 0 && (
-              <div className="mt-4 border-t pt-4">
+              <div className="mt-3 rounded-xl border border-gray-100 bg-gray-50/80 p-3 dark:border-gray-700 dark:bg-gray-900/40">
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={() => setShowReasoning(!showReasoning)}
-                  className="text-xs"
+                  className="text-xs mb-2"
                 >
                   <Sparkles className="h-3 w-3 mr-1" />
                   {showReasoning ? 'Hide' : 'Show'} AI Reasoning
@@ -477,12 +573,12 @@ export function EnhancedMessageDisplay({
                       initial={{ height: 0, opacity: 0 }}
                       animate={{ height: 'auto', opacity: 1 }}
                       exit={{ height: 0, opacity: 0 }}
-                      className="mt-2 space-y-2"
+                      className="space-y-2"
                     >
                       {metadata.reasoning.map((step, idx) => (
                         <div
                           key={idx}
-                          className="flex items-start gap-2 text-xs text-gray-600 bg-gray-50 p-2 rounded"
+                          className="flex items-start gap-2 rounded-lg bg-white/90 p-2 text-xs text-gray-700 dark:bg-gray-800/70 dark:text-gray-200"
                         >
                           <Info className="h-3 w-3 mt-0.5 text-blue-500 flex-shrink-0" />
                           <span>{step}</span>
@@ -494,153 +590,249 @@ export function EnhancedMessageDisplay({
               </div>
             )}
 
-            {/* Sources Section */}
-            {!isUser && metadata?.sources && metadata.sources.length > 0 && (
-              <div className="mt-4 border-t pt-4">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setShowSources(!showSources)}
-                  className="text-xs"
-                >
-                  <BookOpen className="h-3 w-3 mr-1" />
-                  {metadata.sources.length} Source{metadata.sources.length > 1 ? 's' : ''}
-                  {showSources ? (
-                    <ChevronUp className="h-3 w-3 ml-1" />
-                  ) : (
-                    <ChevronDown className="h-3 w-3 ml-1" />
+            {/* Message Content */}
+            <div ref={messageRef}>
+              {isUser ? (
+                <div className="whitespace-pre-wrap text-sm text-gray-900 leading-relaxed">
+                  {displayContent}
+                </div>
+              ) : (
+                <AIResponse
+                  className={cn(
+                    'prose prose-sm max-w-none dark:prose-invert leading-relaxed text-gray-800'
                   )}
-                </Button>
+                  remarkPlugins={citationRemarkPlugins}
+                  components={citationComponents}
+                >
+                  {normalizedContent}
+                </AIResponse>
+              )}
 
-                <AnimatePresence>
-                  {showSources && (
-                    <motion.div
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: 'auto', opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      className="mt-2 space-y-2"
-                    >
-                      {metadata.sources.map((source, idx) => {
-                        // Get evidence level color
-                        const evidenceLevelConfig = {
-                          'A': { color: 'bg-green-100 text-green-700 border-green-300', label: 'High Quality' },
-                          'B': { color: 'bg-blue-100 text-blue-700 border-blue-300', label: 'Good' },
-                          'C': { color: 'bg-yellow-100 text-yellow-700 border-yellow-300', label: 'Moderate' },
-                          'D': { color: 'bg-orange-100 text-orange-700 border-orange-300', label: 'Low' },
-                        };
-                        
-                        const evidenceConfig = source.evidenceLevel 
-                          ? evidenceLevelConfig[source.evidenceLevel]
-                          : { color: 'bg-gray-100 text-gray-700 border-gray-300', label: 'Unknown' };
+              {isStreaming && (
+                <motion.span
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="inline-block w-2 h-4 bg-current ml-1 animate-pulse rounded-sm"
+                />
+              )}
+            </div>
 
-                        const sourceTypeConfig: Record<string, { label: string; prefix: string }> = {
-                          fda_guidance: { label: 'FDA Guidance', prefix: '🏛️' },
-                          clinical_trial: { label: 'Clinical Trial', prefix: '🔬' },
-                          research_paper: { label: 'Research Paper', prefix: '📄' },
-                          guideline: { label: 'Guideline', prefix: '📋' },
-                          regulatory_filing: { label: 'Regulation', prefix: '⚖️' },
-                          company_document: { label: 'Company Document', prefix: '🏢' },
-                        };
+            {/* Inline citations now rendered in-line; no separate block required */}
 
-                        const sourceType = source.sourceType ? sourceTypeConfig[source.sourceType] : undefined;
+            {showBranchSelector && branches && (
+              <Branch
+                className="mt-3"
+                currentBranch={activeBranch}
+                totalBranches={branches.length}
+                onBranchChange={handleBranchChange}
+              >
+                <BranchMessages className="hidden">
+                  {branches.map((branch) => (
+                    <span key={branch.id} />
+                  ))}
+                </BranchMessages>
+                <BranchSelector
+                  from="assistant"
+                  className="flex flex-col gap-2 rounded-xl border border-gray-100 bg-gray-50/80 px-3 py-2 text-xs text-muted-foreground dark:border-gray-700 dark:bg-gray-900/40"
+                >
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div className="flex items-center gap-2">
+                      <GitBranch className="h-3.5 w-3.5 text-blue-500 dark:text-blue-300" />
+                      <span className="font-medium text-gray-700 dark:text-gray-200">
+                        Alternate responses
+                      </span>
+                      <BranchPage className="rounded-full bg-white px-2 py-0.5 text-[11px] font-medium text-gray-600 dark:bg-gray-800/60 dark:text-gray-200" />
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <BranchPrevious className="h-7 w-7 rounded-full border border-gray-200 bg-white p-0 text-gray-600 hover:bg-gray-100 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200" />
+                      <BranchNext className="h-7 w-7 rounded-full border border-gray-200 bg-white p-0 text-gray-600 hover:bg-gray-100 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200" />
+                    </div>
+                  </div>
+                  {(activeBranchMeta?.confidence !== undefined || activeBranchMeta?.createdAt) && (
+                    <div className="flex flex-wrap items-center gap-3 text-[11px] text-gray-600 dark:text-gray-300">
+                      {activeBranchMeta?.confidence !== undefined && (
+                        <span>
+                          Confidence {Math.round(activeBranchMeta.confidence * 100)}%
+                        </span>
+                      )}
+                      {activeBranchMeta?.createdAt && (
+                        <span>
+                          Generated {new Date(activeBranchMeta.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                      )}
+                    </div>
+                  )}
+                </BranchSelector>
+              </Branch>
+            )}
 
-                        return (
-                          <Card
-                            key={source.id}
-                            ref={(el) => {
-                              if (el) {
-                                sourceRefs.current[source.id] = el;
-                              } else {
-                                delete sourceRefs.current[source.id];
-                              }
-                            }}
-                            className="overflow-hidden border-l-4 transition-all"
-                            style={{
-                            borderLeftColor: source.evidenceLevel === 'A' ? '#10b981' :
-                                           source.evidenceLevel === 'B' ? '#3b82f6' :
-                                           source.evidenceLevel === 'C' ? '#eab308' : '#f97316'
-                          }}>
-                            <CardContent className="p-3">
-                              <div className="flex items-start justify-between gap-2">
-                                <div className="flex-1 min-w-0">
-                                  <div className="flex items-center gap-2 mb-1">
-                                    <Badge variant="outline" className="text-xs shrink-0">
-                                      [{idx + 1}]
-                                    </Badge>
-                                    <h4 className="text-sm font-medium truncate">
-                                      {source.title}
-                                    </h4>
-                                  </div>
+            {!isUser && ragSummary && metadata?.sources && metadata.sources.length > 0 && (
+              <Sources
+                className="mt-3 rounded-xl border border-gray-100 bg-gray-50/80 text-xs dark:border-gray-700 dark:bg-gray-900/40"
+                sources={metadata.sources.map((source, index) => ({
+                  id: source.id || `source-${index}`,
+                  title: source.title || `Source ${index + 1}`,
+                  url: source.url,
+                  excerpt: source.excerpt,
+                  similarity: source.similarity,
+                }))}
+              >
+                <SourcesTrigger className="px-4 py-3 text-blue-700 dark:text-blue-200">
+                  <div className="flex items-center gap-2">
+                    <BookOpen className="h-3 w-3" />
+                    <span>
+                      Evidence summary: {ragSummary.totalSources ?? metadata.sources.length} source
+                      {(ragSummary.totalSources ?? metadata.sources.length) === 1 ? '' : 's'}
+                      {ragSummary.strategy ? ` • ${ragSummary.strategy}` : ''}
+                    </span>
+                    {typeof ragSummary.retrievalTimeMs === 'number' && (
+                      <span className="text-[11px] text-gray-500 dark:text-gray-400">
+                        {Math.round(ragSummary.retrievalTimeMs)} ms
+                      </span>
+                    )}
+                    {ragSummary.cacheHit && (
+                      <span className="rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-medium text-green-700 dark:bg-green-900/40 dark:text-green-300">
+                        Cache hit
+                      </span>
+                    )}
+                  </div>
+                </SourcesTrigger>
+                <SourcesContent className="bg-white/95">
+                  {Array.isArray(ragSummary.domains) && ragSummary.domains.length > 0 && (
+                    <div className="mb-3 flex flex-wrap gap-1 text-[11px] text-gray-500 dark:text-gray-400">
+                      {Array.from(new Set(ragSummary.domains.filter(Boolean))).map((domain) => (
+                        <span
+                          key={domain as string}
+                          className="rounded-full border border-gray-200 bg-white px-2 py-0.5 dark:border-gray-600 dark:bg-gray-900/70"
+                        >
+                          {domain as string}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                  {(ragSummary.warning || (!ragSummary.totalSources || ragSummary.totalSources === 0)) && (
+                    <div className="mb-3 flex items-start gap-2 text-amber-600 dark:text-amber-400">
+                      <AlertCircle className="mt-0.5 h-3 w-3 flex-shrink-0" />
+                      <span>{ragSummary.warning || 'Evidence required: add supporting documents, broaden the query, or explicitly allow model-only answers.'}</span>
+                    </div>
+                  )}
+                  <div className="space-y-2 text-xs text-gray-700 dark:text-gray-300">
+                    {metadata.sources.map((source, idx) => {
+                      const evidenceLevelConfig = {
+                        A: { badge: 'bg-green-100 text-green-700 border-green-200', label: 'High quality' },
+                        B: { badge: 'bg-blue-100 text-blue-700 border-blue-200', label: 'Good' },
+                        C: { badge: 'bg-yellow-100 text-yellow-700 border-yellow-200', label: 'Moderate' },
+                        D: { badge: 'bg-orange-100 text-orange-700 border-orange-200', label: 'Low' },
+                      } as const;
 
-                                  {/* Source Type and Evidence Level */}
-                                  <div className="flex items-center gap-2 mb-1 flex-wrap">
-                                    {sourceType && (
-                                      <Badge variant="outline" className={cn("text-xs flex items-center gap-1", evidenceConfig.color)}>
-                                        <span>{sourceType.prefix}</span>
-                                        <span>{sourceType.label}</span>
-                                      </Badge>
-                                    )}
-                                    {source.evidenceLevel && (
-                                      <Badge variant="outline" className={cn("text-xs", evidenceConfig.color)}>
-                                        Level {source.evidenceLevel}: {evidenceConfig.label}
-                                      </Badge>
-                                    )}
-                                  </div>
+                      const evidenceConfig = source.evidenceLevel
+                        ? evidenceLevelConfig[source.evidenceLevel as keyof typeof evidenceLevelConfig] ?? {
+                            badge: 'bg-gray-100 text-gray-600 border-gray-200',
+                            label: 'Unrated',
+                          }
+                        : { badge: 'bg-gray-100 text-gray-600 border-gray-200', label: 'Unrated' };
 
-                                  {source.excerpt && (
-                                    <p className="text-xs text-gray-600 line-clamp-2 mb-2">
-                                      {source.excerpt}
-                                    </p>
-                                  )}
-
-                                  {/* Metadata Row */}
-                                  <div className="flex items-center gap-2 flex-wrap mt-2">
-                                    {source.organization && (
-                                      <Badge variant="secondary" className="text-xs">
-                                        {source.organization}
-                                      </Badge>
-                                    )}
-                                    {source.domain && (
-                                      <Badge variant="secondary" className="text-xs">
-                                        {source.domain}
-                                      </Badge>
-                                    )}
-                                    {source.similarity !== undefined && (
-                                      <span className="text-xs text-gray-500">
-                                        {Math.round(source.similarity * 100)}% match
-                                      </span>
-                                    )}
-                                    {source.reliabilityScore !== undefined && (
-                                      <span className="text-xs text-gray-500">
-                                        Reliability: {Math.round(source.reliabilityScore * 100)}%
-                                      </span>
-                                    )}
-                                    {source.lastUpdated && (
-                                      <span className="text-xs text-gray-500">
-                                        Updated: {new Date(source.lastUpdated).toLocaleDateString()}
-                                      </span>
-                                    )}
-                                  </div>
+                      return (
+                        <Card
+                          key={source.id || `source-${idx}`}
+                          ref={(el) => {
+                            if (el) {
+                              sourceRefs.current[source.id || `source-${idx}`] = el;
+                            } else {
+                              delete sourceRefs.current[source.id || `source-${idx}`];
+                            }
+                          }}
+                          className="border border-gray-100 bg-white/90 shadow-sm transition-all hover:shadow-md dark:border-gray-800 dark:bg-gray-900/50"
+                        >
+                          <CardContent className="flex flex-col gap-2 p-3">
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2">
+                                  <Badge variant="outline" className="text-[11px]">
+                                    [{idx + 1}]
+                                  </Badge>
+                                  <p className="truncate text-sm font-medium text-gray-900 dark:text-gray-100">
+                                    {source.title || `Source ${idx + 1}`}
+                                  </p>
                                 </div>
-                                {source.url && (
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    asChild
-                                  >
-                                    <a href={source.url} target="_blank" rel="noopener noreferrer">
-                                      <ExternalLink className="h-3 w-3" />
-                                    </a>
-                                  </Button>
+                                {source.excerpt && (
+                                  <p className="mt-1 line-clamp-2 text-xs text-gray-600 dark:text-gray-300">
+                                    {source.excerpt}
+                                  </p>
                                 )}
                               </div>
-                            </CardContent>
-                          </Card>
-                        );
-                      })}
-                    </motion.div>
-                  )}
-                </AnimatePresence>
+                              {source.url && (
+                                <Button variant="ghost" size="sm" asChild>
+                                  <a href={source.url} target="_blank" rel="noopener noreferrer">
+                                    <ExternalLink className="h-3.5 w-3.5" />
+                                  </a>
+                                </Button>
+                              )}
+                            </div>
+                            <div className="flex flex-wrap items-center gap-2 text-[11px] text-gray-500 dark:text-gray-400">
+                              {source.sourceType && (
+                                <Badge variant="outline" className="text-[11px]">
+                                  {source.sourceType.replace(/_/g, ' ')}
+                                </Badge>
+                              )}
+                              {source.organization && (
+                                <Badge variant="secondary" className="text-[11px]">
+                                  {source.organization}
+                                </Badge>
+                              )}
+                              {source.domain && (
+                                <Badge variant="secondary" className="text-[11px]">
+                                  {source.domain}
+                                </Badge>
+                              )}
+                              <Badge variant="outline" className={cn('text-[11px]', evidenceConfig.badge)}>
+                                {evidenceConfig.label}
+                              </Badge>
+                              {typeof source.similarity === 'number' && (
+                                <span>{Math.round(source.similarity * 100)}% match</span>
+                              )}
+                              {typeof source.reliabilityScore === 'number' && (
+                                <span>Reliability {Math.round(source.reliabilityScore * 100)}%</span>
+                              )}
+                              {source.lastUpdated && (
+                                <span>Updated {new Date(source.lastUpdated).toLocaleDateString()}</span>
+                              )}
+                            </div>
+                          </CardContent>
+                        </Card>
+                      );
+                    })}
+                  </div>
+                </SourcesContent>
+              </Sources>
+            )}
+
+            {!isUser && hasToolUsage && toolSummary && (
+              <div className="mt-3 space-y-2 rounded-xl border border-purple-200/60 bg-purple-50/40 p-3 text-xs dark:border-purple-900/60 dark:bg-purple-900/20">
+                <div className="flex flex-wrap items-center gap-2 text-purple-700 dark:text-purple-200">
+                  <Wrench className="h-3 w-3 flex-shrink-0" />
+                  <span className="font-medium">Tool usage</span>
+                  <span className="text-[11px] text-purple-600/80 dark:text-purple-200/80">
+                    {toolTotals.calls} call{toolTotals.calls === 1 ? '' : 's'} • {toolTotals.success} success / {toolTotals.failure} fail
+                    {toolTotals.totalTimeMs ? ` • ${Math.round(toolTotals.totalTimeMs)} ms` : ''}
+                  </span>
+                </div>
+                {toolUsed.length > 0 ? (
+                  <div className="flex flex-wrap gap-1 text-[11px] text-purple-700/80 dark:text-purple-200/80">
+                    {toolUsed.map((toolName) => (
+                      <span
+                        key={toolName}
+                        className="rounded-full border border-purple-200 bg-white px-2 py-0.5 dark:border-purple-800/60 dark:bg-purple-900/50"
+                      >
+                        {toolName}
+                      </span>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-[11px] text-purple-600/80 dark:text-purple-200/80">
+                    Tools were invoked but no successful outputs were returned.
+                  </div>
+                )}
               </div>
             )}
 
@@ -649,7 +841,7 @@ export function EnhancedMessageDisplay({
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="mt-4 p-3 bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-lg"
+                className="mt-4 rounded-xl border border-blue-100 bg-blue-50/60 p-3"
               >
                 <div className="flex items-start gap-2">
                   <Sparkles className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
@@ -672,6 +864,15 @@ export function EnhancedMessageDisplay({
             )}
 
             {/* Token Usage */}
+            {!isUser && metadata?.sources && metadata.sources.length > 0 && (
+              <div className="mt-3 text-xs text-gray-500 flex gap-2">
+                <span>Sources cited: {metadata.sources.length}</span>
+                {metadata.citations && metadata.citations.length > 0 && (
+                  <span>Inline citations: {metadata.citations.length}</span>
+                )}
+              </div>
+            )}
+
             {!isUser && metadata?.tokenUsage && (
               <div className="mt-3 text-xs text-gray-500">
                 Tokens: {metadata.tokenUsage.total.toLocaleString()}

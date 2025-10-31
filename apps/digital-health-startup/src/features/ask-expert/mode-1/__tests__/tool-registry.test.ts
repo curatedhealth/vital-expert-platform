@@ -13,7 +13,7 @@ describe('ToolRegistry', () => {
     registry = new ToolRegistry(
       'https://test.supabase.co',
       'test-key',
-      'test-api-key'
+      { webSearch: { provider: 'mock' } }
     );
   });
 
@@ -93,4 +93,3 @@ describe('ToolRegistry', () => {
     });
   });
 });
-

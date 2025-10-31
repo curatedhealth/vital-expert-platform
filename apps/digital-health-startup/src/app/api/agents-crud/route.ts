@@ -1,5 +1,8 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, NextRequest } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { withAgentAuth, type AgentPermissionContext } from '@/middleware/agent-auth';
+import { env } from '@/config/environment';
+import { createLogger } from '@/lib/services/observability/structured-logger';
 
 // Note: We'll create the Supabase client per request to access cookies
 
@@ -180,46 +183,35 @@ async function normalizeAgent(agent: any, adminSupabase: any) {
   };
 }
 
-export async function GET(request: Request) {
+export const GET = withAgentAuth(async (
+  request: NextRequest,
+  context: AgentPermissionContext
+) => {
+  const logger = createLogger();
+  const operationId = `agents_crud_get_${Date.now()}`;
+  const startTime = Date.now();
+
   try {
-    // Create Supabase client for this request
+    // Use user session client (RLS automatically applies tenant filtering)
     const supabase = await createClient();
-    
-    // Try to get user from session (optional - for tenant filtering)
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
-    
-    let userTenantId: string | null = null;
-    let userRole: string = 'user';
-    
-    // If user is authenticated, get their tenant
-    if (user && !userError) {
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('tenant_id, role')
-        .eq('id', user.id)
-        .single();
-
-      userTenantId = profile?.tenant_id || null;
-      userRole = profile?.role || 'user';
-    }
-    
-    console.log(`🔍 [Agents CRUD] Fetching agents - User: ${user?.email || 'unauthenticated'}, Tenant: ${userTenantId || 'none'}, Role: ${userRole}`);
-
-    const PLATFORM_TENANT_ID = '00000000-0000-0000-0000-000000000001';
-    const STARTUP_TENANT_ID = '11111111-1111-1111-1111-111111111111';
+    const { profile } = context;
+    const tenantIds = env.getTenantIds();
 
     // Get query parameters
     const { searchParams } = new URL(request.url);
     const showAll = searchParams.get('showAll') === 'true';
 
-    // Query agents - use minimal set of columns that definitely exist
-    // Create admin client for query since we're using service role
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-    const { createClient: createSupabaseClient } = await import('@supabase/supabase-js');
-    const adminSupabase = createSupabaseClient(supabaseUrl, supabaseServiceKey);
-    
-    const query = adminSupabase
+    logger.info('agents_crud_get_started', {
+      operation: 'GET /api/agents-crud',
+      operationId,
+      userId: context.user.id,
+      tenantId: profile.tenant_id,
+      role: profile.role,
+      showAll,
+    });
+
+    // Build query using user session (RLS enabled)
+    let query = supabase
       .from('agents')
       .select(`
         id,
@@ -233,133 +225,210 @@ export async function GET(request: Request) {
         updated_at
       `);
 
-    // Add ordering by name
-    query.order('name', { ascending: true });
-
-    // TENANT FILTERING: Show tenant-specific agents + global shared agents
-    if (showAll || userRole === 'admin') {
-      // Admin users can see all agents
-      console.log(`📊 [Agents CRUD] Admin view - showing all agents`);
-    } else if (userTenantId) {
-      // User has a tenant: show their tenant's agents + platform agents
-      if (userTenantId === STARTUP_TENANT_ID || userTenantId !== PLATFORM_TENANT_ID) {
-        query.or(`tenant_id.eq.${userTenantId},tenant_id.eq.${PLATFORM_TENANT_ID}`);
-        console.log(`📊 [Agents CRUD] Showing tenant-specific + platform agents`);
-      } else {
-        // User is on Platform tenant: only show global/platform agents
-        query.eq('tenant_id', PLATFORM_TENANT_ID);
-        console.log(`📊 [Agents CRUD] Showing only platform agents`);
-      }
+    // Apply tenant filtering
+    if (showAll || profile.role === 'super_admin' || profile.role === 'admin') {
+      // Super admins and admins can see all agents
+      logger.debug('agents_crud_get_admin_view', { operationId });
     } else {
-      // No user or no tenant: show all agents (fallback for development)
-      console.log(`📊 [Agents CRUD] No tenant info - showing all agents`);
+      // Regular users see their tenant's agents + platform agents
+      query = query.or(
+        `tenant_id.eq.${profile.tenant_id},tenant_id.eq.${tenantIds.platform}`
+      );
     }
+
+    // Add ordering
+    query = query.order('name', { ascending: true });
 
     const { data: agents, error } = await query;
 
     if (error) {
-      console.error('❌ [Agents CRUD] Database error:', error);
+      const duration = Date.now() - startTime;
+      logger.error(
+        'agents_crud_get_failed',
+        new Error(error.message),
+        {
+          operation: 'GET /api/agents-crud',
+          operationId,
+          duration,
+          errorCode: error.code,
+        }
+      );
+
       return NextResponse.json(
         { error: 'Failed to fetch agents from database', details: error.message },
         { status: 500 }
       );
     }
 
-    console.log(`✅ [Agents CRUD] Successfully fetched ${agents?.length || 0} agents`);
+    // Normalize agents - need admin client for icon resolution
+    // This is safe because we're only reading public icon data
+    const { createClient: createSupabaseClient } = await import('@supabase/supabase-js');
+    const supabaseConfig = env.getSupabaseConfig();
+    const adminSupabase = createSupabaseClient(
+      supabaseConfig.url,
+      supabaseConfig.serviceRoleKey
+    );
 
-    // Normalize agents data to match frontend expectations
-    // Resolve avatars from icons table
     const normalizedAgents = await Promise.all(
       (agents || []).map(async (agent: any) => await normalizeAgent(agent, adminSupabase))
     );
-    
-    // Filter out any null values
+
     const validAgents = normalizedAgents.filter(Boolean);
+    const duration = Date.now() - startTime;
+
+    logger.infoWithMetrics('agents_crud_get_completed', duration, {
+      operation: 'GET /api/agents-crud',
+      operationId,
+      agentCount: validAgents.length,
+    });
 
     return NextResponse.json({
       success: true,
       agents: validAgents,
-      count: validAgents.length
+      count: validAgents.length,
     });
   } catch (error) {
-    console.error('❌ [Agents CRUD] Unexpected error:', error);
+    const duration = Date.now() - startTime;
+    logger.error(
+      'agents_crud_get_error',
+      error instanceof Error ? error : new Error(String(error)),
+      {
+        operation: 'GET /api/agents-crud',
+        operationId,
+        duration,
+      }
+    );
+
     return NextResponse.json(
-      { error: 'Internal server error', details: error instanceof Error ? error.message : 'Unknown error' },
+      {
+        error: 'Internal server error',
+        details: error instanceof Error ? error.message : 'Unknown error',
+      },
       { status: 500 }
     );
   }
-}
+});
 
-export async function POST(request: Request) {
+export const POST = withAgentAuth(async (
+  request: NextRequest,
+  context: AgentPermissionContext
+) => {
+  const logger = createLogger();
+  const operationId = `agents_crud_post_${Date.now()}`;
+  const startTime = Date.now();
+
   try {
-    // Create admin client for database operations
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-    const { createClient: createSupabaseClient } = await import('@supabase/supabase-js');
-    const adminSupabase = createSupabaseClient(supabaseUrl, supabaseServiceKey);
-    
+    // Use user session client (RLS will enforce tenant isolation)
+    const supabase = await createClient();
+    const { user, profile } = context;
+
+    logger.info('agents_crud_post_started', {
+      operation: 'POST /api/agents-crud',
+      operationId,
+      userId: user.id,
+      tenantId: profile.tenant_id,
+    });
+
     const body = await request.json();
     const agentData = body?.agentData;
     const categoryIds: string[] = Array.isArray(body?.categoryIds) ? body.categoryIds : [];
 
+    // Validate required fields
     if (!agentData || !agentData.name || !agentData.system_prompt) {
+      logger.warn('agents_crud_post_validation_failed', {
+        operation: 'POST /api/agents-crud',
+        operationId,
+        reason: 'missing_required_fields',
+      });
+
       return NextResponse.json(
-        { success: false, error: 'Missing required agent fields' },
+        { success: false, error: 'Missing required agent fields (name and system_prompt)' },
         { status: 400 }
       );
     }
 
+    // Prepare payload with proper ownership
     const { id: _unusedId, display_name, is_custom, ...rest } = agentData;
     const payload = {
       ...rest,
       name: agentData.name.trim(),
+      // Set ownership fields
+      created_by: user.id,
+      tenant_id: profile.tenant_id,
+      is_custom: is_custom !== false, // Default to true for user-created agents
       metadata: {
         display_name: display_name || agentData.name,
-        is_custom: is_custom || false,
+        is_custom: is_custom !== false,
         ...rest.metadata,
       },
     };
 
-    const { data, error } = await adminSupabase
+    // Insert using user session (RLS will enforce tenant isolation)
+    const { data, error } = await supabase
       .from('agents')
       .insert(payload)
       .select()
       .single();
 
     if (error) {
-      console.error('❌ [Agents CRUD] Failed to create agent:', error);
+      const duration = Date.now() - startTime;
+      logger.error(
+        'agents_crud_post_failed',
+        new Error(error.message),
+        {
+          operation: 'POST /api/agents-crud',
+          operationId,
+          duration,
+          errorCode: error.code,
+        }
+      );
+
       return NextResponse.json(
         { success: false, error: error.message || 'Failed to create agent' },
         { status: 500 }
       );
     }
 
+    // Link categories if provided
     if (categoryIds.length > 0) {
-      const mappings = categoryIds.map(categoryId => ({
+      const mappings = categoryIds.map((categoryId) => ({
         agent_id: data.id,
         category_id: categoryId,
       }));
 
-      const { error: categoryError } = await adminSupabase
+      const { error: categoryError } = await supabase
         .from('agent_category_mapping')
         .insert(mappings);
 
       if (categoryError) {
-        console.error('❌ [Agents CRUD] Failed to link categories:', categoryError);
-        return NextResponse.json(
-          {
-            success: false,
-            error: categoryError.message || 'Failed to attach categories to agent',
-          },
-          { status: 500 }
-        );
+        const duration = Date.now() - startTime;
+        logger.warn('agents_crud_post_category_failed', {
+          operation: 'POST /api/agents-crud',
+          operationId,
+          duration,
+          error: categoryError.message,
+        });
+
+        // Category link failure is non-critical - agent was created successfully
       }
     }
 
+    const duration = Date.now() - startTime;
+    logger.infoWithMetrics('agents_crud_post_completed', duration, {
+      operation: 'POST /api/agents-crud',
+      operationId,
+      agentId: data.id,
+      agentName: data.name,
+    });
+
     // Sync agent to Pinecone for GraphRAG (fire and forget - don't block response)
     try {
-      const { agentEmbeddingService } = await import('@/lib/services/agents/agent-embedding-service');
-      const { pineconeVectorService } = await import('@/lib/services/vectorstore/pinecone-vector-service');
+      const { agentEmbeddingService } = await import(
+        '@/lib/services/agents/agent-embedding-service'
+      );
+      const { pineconeVectorService } = await import(
+        '@/lib/services/vectorstore/pinecone-vector-service'
+      );
 
       const embeddingData = await agentEmbeddingService.generateAgentEmbedding(data);
       await pineconeVectorService.syncAgentToPinecone({
@@ -376,10 +445,19 @@ export async function POST(request: Request) {
         embeddingData.text
       );
 
-      console.log(`✅ [Agents CRUD] Agent synced to Pinecone for GraphRAG`);
+      logger.debug('agents_crud_post_pinecone_synced', {
+        operation: 'POST /api/agents-crud',
+        operationId,
+        agentId: data.id,
+      });
     } catch (error) {
       // Non-critical - log but don't fail
-      console.warn('⚠️ [Agents CRUD] Failed to sync agent to Pinecone (non-critical):', error);
+      logger.warn('agents_crud_post_pinecone_failed', {
+        operation: 'POST /api/agents-crud',
+        operationId,
+        agentId: data.id,
+        error: error instanceof Error ? error.message : String(error),
+      });
     }
 
     return NextResponse.json({
@@ -387,7 +465,17 @@ export async function POST(request: Request) {
       agent: data,
     });
   } catch (error) {
-    console.error('❌ [Agents CRUD] Unexpected error (POST):', error);
+    const duration = Date.now() - startTime;
+    logger.error(
+      'agents_crud_post_error',
+      error instanceof Error ? error : new Error(String(error)),
+      {
+        operation: 'POST /api/agents-crud',
+        operationId,
+        duration,
+      }
+    );
+
     return NextResponse.json(
       {
         success: false,
@@ -397,4 +485,4 @@ export async function POST(request: Request) {
       { status: 500 }
     );
   }
-}
+});

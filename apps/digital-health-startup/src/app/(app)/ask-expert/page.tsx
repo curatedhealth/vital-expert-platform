@@ -16,7 +16,7 @@
  * @author VITAL AI Platform Team
  */
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Sparkles,
@@ -33,30 +33,30 @@ import {
   FileText,
   Brain,
   Paperclip,
+  BookOpen,
+  AlertCircle,
   Image as ImageIcon,
   Zap,
   Settings2,
+  Wrench,
 } from 'lucide-react';
 import { PromptInput } from '@/components/prompt-input';
 import { type Agent as SidebarAgent } from '@/components/ask-expert-sidebar';
 import { AskExpertProvider, useAskExpert } from '@/contexts/ask-expert-context';
 import { ChatHistoryProvider, useChatHistory } from '@/contexts/chat-history-context';
 import { PromptStarters, type PromptStarter } from '@/components/prompt-starters';
-import { ThumbsUpDown } from '@/components/feedback/ThumbsUpDown';
 import { useAuth } from '@/lib/auth/supabase-auth-context';
 import { useConversations } from '@/lib/hooks/use-conversations';
 import { ChatHistorySidebar } from '@/components/chat-history-sidebar';
 import { SelectedAgentsList } from '@/components/selected-agent-card';
 import { Reasoning, ReasoningTrigger, ReasoningContent } from '@/components/ui/shadcn-io/ai/reasoning';
-import { 
-  __Message as Message, 
-  __MessageContent as MessageContent, 
-  __MessageAvatar as MessageAvatar 
-} from '@/components/ui/shadcn-io/ai/message';
-import { CitedResponse } from '@/components/ui/shadcn-io/ai/cited-response';
-import { __Response as Response } from '@/components/ui/shadcn-io/ai/response';
-import { __Conversation as Conversation, __ConversationContent as ConversationContent } from '@/components/ui/shadcn-io/ai/conversation';
-import { AgentAvatar } from '@/components/ui/agent-avatar';
+import {
+  __Conversation as Conversation,
+  __ConversationContent as ConversationContent,
+} from '@/components/ui/shadcn-io/ai/conversation';
+import { EnhancedMessageDisplay } from '@/features/ask-expert/components/EnhancedMessageDisplay';
+import { AgentAvatar } from '@vital/ui';
+import { Suggestions, Suggestion } from '@/components/ai/suggestion';
 
 // ============================================================================
 // TYPES
@@ -69,6 +69,11 @@ interface Source {
   description?: string;
   excerpt?: string;
   similarity?: number;
+  domain?: string;
+  evidenceLevel?: 'A' | 'B' | 'C' | 'D' | 'Unknown';
+  organization?: string;
+  reliabilityScore?: number;
+  lastUpdated?: string;
 }
 
 interface Message {
@@ -97,6 +102,48 @@ interface Message {
     finalAnswer?: string;
     finalConfidence?: number;
     totalIterations?: number;
+  };
+  branches?: Array<{
+    id: string;
+    content: string;
+    confidence?: number;
+    citations?: {
+      number: number;
+      text: string;
+      sourceId?: string;
+    }[];
+    sources?: Source[];
+    createdAt?: Date;
+    reasoning?: string | string[];
+  }>;
+  currentBranch?: number;
+  metadata?: {
+    ragSummary?: {
+      totalSources: number;
+      strategy?: string;
+      domains?: string[];
+      cacheHit?: boolean;
+      warning?: string;
+      retrievalTimeMs?: number;
+    };
+    toolSummary?: {
+      allowed: string[];
+      used: string[];
+      totals: {
+        calls: number;
+        success: number;
+        failure: number;
+        totalTimeMs: number;
+      };
+    };
+    sources?: Source[];
+    reasoning?: string[];
+    confidence?: number;
+    citations?: {
+      number: number;
+      text: string;
+      sourceId?: string;
+    }[];
   };
 }
 
@@ -146,6 +193,8 @@ function AskExpertPageContent() {
   const [streamingMessage, setStreamingMessage] = useState('');
   const [streamingReasoning, setStreamingReasoning] = useState<string>('');
   const [isStreamingReasoning, setIsStreamingReasoning] = useState(false);
+  const [recentReasoning, setRecentReasoning] = useState<string[]>([]);
+  const [recentReasoningTimestamp, setRecentReasoningTimestamp] = useState<number | null>(null);
   const [selectedModel, setSelectedModel] = useState('gpt-4');
 
   // Simple toggles (like Claude.ai)
@@ -153,25 +202,270 @@ function AskExpertPageContent() {
   const [isAutomatic, setIsAutomatic] = useState(false);
   const [isAutonomous, setIsAutonomous] = useState(false);
   const [enableRAG, setEnableRAG] = useState(true); // Enable RAG by default
-  const [enableTools, setEnableTools] = useState(false); // Tools disabled by default
+  const [enableTools, setEnableTools] = useState(true); // Tools enabled by default
+  const [hasManualToolsToggle, setHasManualToolsToggle] = useState(false);
   const [attachments, setAttachments] = useState<File[]>([]);
   const [tokenCount, setTokenCount] = useState(0);
   const [showSettings, setShowSettings] = useState(false);
+  const [selectedTools, setSelectedTools] = useState<string[]>([]);
+  const [selectedRagDomains, setSelectedRagDomains] = useState<string[]>([]);
+  const [streamingMeta, setStreamingMeta] = useState<{
+    ragSummary?: NonNullable<Message['metadata']>['ragSummary'];
+    toolSummary?: NonNullable<Message['metadata']>['toolSummary'];
+    sources?: Source[];
+    reasoning: string[];
+  } | null>(null);
 
-  // Determine current mode based on toggles
-  const getCurrentMode = () => {
+
+  const formatReasoningTimestamp = useCallback((value: number | null) => {
+    if (!value) {
+      return '';
+    }
+    try {
+      return new Date(value).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    } catch {
+      return '';
+    }
+  }, []);
+
+  const handleBranchChange = useCallback((messageId: string, branchIndex: number) => {
+    let updatedMessage: Message | undefined;
+
+    setMessages((prev) =>
+      prev.map((message) => {
+        if (message.id !== messageId) {
+          return message;
+        }
+
+        const selectedBranch = message.branches?.[branchIndex];
+        const branchReasoning = selectedBranch?.reasoning
+          ? Array.isArray(selectedBranch.reasoning)
+            ? selectedBranch.reasoning
+            : [selectedBranch.reasoning]
+          : message.metadata?.reasoning ?? message.reasoning ?? [];
+        const branchSources = selectedBranch?.sources && selectedBranch.sources.length > 0
+          ? selectedBranch.sources.map((src) => ({ ...src }))
+          : message.sources;
+
+        const nextMessage: Message = {
+          ...message,
+          currentBranch: branchIndex,
+          content: selectedBranch?.content ?? message.content,
+          sources: branchSources,
+          metadata: message.metadata
+            ? {
+                ...message.metadata,
+                sources: branchSources,
+                reasoning: branchReasoning,
+              }
+            : message.metadata,
+        };
+
+        updatedMessage = nextMessage;
+        return nextMessage;
+      })
+    );
+
+    if (updatedMessage) {
+      setRecentReasoning(
+        updatedMessage.metadata?.reasoning ?? updatedMessage.reasoning ?? []
+      );
+      setRecentReasoningTimestamp(Date.now());
+
+      if (activeConversationId) {
+        setConversations((prev) =>
+          prev.map((conv) =>
+            conv.id === activeConversationId
+              ? {
+                  ...conv,
+                  messages: conv.messages.map((message) =>
+                    message.id === updatedMessage!.id
+                      ? { ...message, ...updatedMessage }
+                      : message
+                  ),
+                  updatedAt: Date.now(),
+                }
+              : conv
+          )
+        );
+      }
+    }
+  }, [activeConversationId, setConversations, setMessages, setRecentReasoning, setRecentReasoningTimestamp]);
+
+  const submitFeedbackForMessage = useCallback(
+    async (message: Message, type: 'positive' | 'negative', previousUserMessage?: Message) => {
+      const vote = type === 'positive' ? 'up' : 'down';
+      try {
+        await fetch('/api/feedback', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            messageId: message.id,
+            vote,
+            rating: vote === 'up' ? 5 : 1,
+            queryText: previousUserMessage?.content ?? '',
+            responseText: message.content,
+            agentId: message.selectedAgent?.id,
+            timestamp: new Date().toISOString(),
+          }),
+        });
+      } catch (error) {
+        console.error('Error submitting feedback:', error);
+      }
+    },
+    []
+  );
+
+  const availableTools = useMemo(() => {
+    if (!selectedAgents.length) {
+      return [] as string[];
+    }
+
+    const toolSet = new Set<string>();
+    selectedAgents.forEach((agentId) => {
+      const agent = agents.find((a) => a.id === agentId);
+      if (agent?.tools && Array.isArray(agent.tools)) {
+        agent.tools.forEach((tool) => {
+          if (typeof tool === 'string' && tool.trim().length > 0) {
+            toolSet.add(tool.trim());
+          }
+        });
+      }
+    });
+
+    return Array.from(toolSet).sort((a, b) => a.localeCompare(b));
+  }, [agents, selectedAgents]);
+
+  useEffect(() => {
+    if (availableTools.length === 0) {
+      setSelectedTools([]);
+      if (enableTools) {
+        setEnableTools(false);
+      }
+      if (hasManualToolsToggle) {
+        setHasManualToolsToggle(false);
+      }
+      return;
+    }
+
+    if (!hasManualToolsToggle && !enableTools) {
+      setEnableTools(true);
+    }
+
+    setSelectedTools((prev) => {
+      const valid = prev.filter((tool) => availableTools.includes(tool));
+      if (valid.length > 0) {
+        return valid;
+      }
+      return [...availableTools];
+    });
+  }, [availableTools, enableTools, hasManualToolsToggle]);
+
+  const currentMode = useMemo(() => {
     if (isAutonomous && isAutomatic) {
       return { id: 3, name: 'Autonomous Automatic', description: 'AI selects agent + autonomous reasoning', color: 'purple' };
-    } else if (isAutonomous && !isAutomatic) {
-      return { id: 4, name: 'Autonomous Manual', description: 'You select agent + autonomous reasoning', color: 'green' };
-    } else if (!isAutonomous && isAutomatic) {
-      return { id: 2, name: 'Automatic Selection', description: 'AI selects best agent for you', color: 'blue' };
-    } else {
-      return { id: 1, name: 'Manual Interactive', description: 'You select agent + interactive chat', color: 'gray' };
     }
-  };
+    if (isAutonomous && !isAutomatic) {
+      return { id: 4, name: 'Autonomous Manual', description: 'You select agent + autonomous reasoning', color: 'green' };
+    }
+    if (!isAutonomous && isAutomatic) {
+      return { id: 2, name: 'Automatic Selection', description: 'AI selects best agent for you', color: 'blue' };
+    }
+    return { id: 1, name: 'Manual Interactive', description: 'You select agent + interactive chat', color: 'gray' };
+  }, [isAutonomous, isAutomatic]);
 
-  const currentMode = getCurrentMode();
+  const primarySelectedAgent = useMemo(() => {
+  if (!selectedAgents.length) {
+    return null;
+  }
+  const agent = agents.find((a) => a.id === selectedAgents[0]);
+    if (!agent) {
+      return null;
+    }
+
+    const displayName =
+      (agent as any).displayName ||
+      (agent as any).display_name ||
+      agent.name;
+
+  return {
+    id: agent.id,
+    avatar: agent.avatar,
+    displayName,
+  };
+  }, [agents, selectedAgents]);
+
+  const latestAssistantMessage = useMemo(() => {
+    for (let i = messages.length - 1; i >= 0; i -= 1) {
+      const message = messages[i];
+      if (message.role === 'assistant' && message.content?.trim()) {
+        return message;
+      }
+    }
+    return undefined;
+  }, [messages]);
+
+  const followUpSuggestions = useMemo(() => {
+    return generateFollowUpSuggestions(
+      latestAssistantMessage,
+      streamingMessage,
+      currentMode.name
+    );
+  }, [latestAssistantMessage, streamingMessage, currentMode]);
+
+  const hasAssistantResponse = useMemo(
+    () => messages.some((message) => message.role === 'assistant' && message.content?.trim()),
+    [messages]
+  );
+
+  const shouldShowSuggestions =
+    followUpSuggestions.length > 0 &&
+    (hasAssistantResponse || Boolean(streamingMessage && streamingMessage.trim().length > 0));
+
+  const availableRagDomains = useMemo(() => {
+    if (!selectedAgents.length) {
+      return [] as string[];
+    }
+
+    const domainSet = new Set<string>();
+    selectedAgents.forEach((agentId) => {
+      const agent = agents.find((a) => a.id === agentId);
+      if (agent?.knowledge_domains && Array.isArray(agent.knowledge_domains)) {
+        agent.knowledge_domains
+          .map((domain) => (typeof domain === 'string' ? domain.trim() : ''))
+          .filter((domain) => domain.length > 0)
+          .forEach((domain) => domainSet.add(domain));
+      }
+    });
+
+    return Array.from(domainSet).sort((a, b) => a.localeCompare(b));
+  }, [agents, selectedAgents]);
+
+  useEffect(() => {
+    if (availableRagDomains.length === 0) {
+      setSelectedRagDomains([]);
+      if (enableRAG) {
+        setEnableRAG(false);
+      }
+      return;
+    }
+
+    setSelectedRagDomains((prev) => {
+      const valid = prev.filter((domain) => availableRagDomains.includes(domain));
+      if (valid.length > 0) {
+        return valid;
+      }
+      return [...availableRagDomains];
+    });
+  }, [availableRagDomains, enableRAG]);
+
+  const handleEnableToolsChange = useCallback((value: boolean) => {
+    if (enableTools === value) {
+      return;
+    }
+    setHasManualToolsToggle(true);
+    setEnableTools(value);
+  }, [enableTools]);
 
   // Prompt starters
   const [promptStarters, setPromptStarters] = useState<PromptStarter[]>([]);
@@ -206,6 +500,7 @@ function AskExpertPageContent() {
     migrateMutation,
   } = useConversations(user?.id || null);
   const migrationCompleted = useRef(false);
+  const conversationsInitialized = useRef(false);
 
   // Migrate from localStorage on mount (one-time)
   useEffect(() => {
@@ -223,14 +518,22 @@ function AskExpertPageContent() {
 
   // Load conversations from database
   useEffect(() => {
+    // Skip if already initialized or if we have an active conversation
+    if (conversationsInitialized.current || activeConversationId) {
+      return;
+    }
+
     if (dbConversations && dbConversations.length > 0) {
       setConversations(dbConversations);
-      if (!activeConversationId && dbConversations[0]) {
+      // Only set active conversation if we don't have one
+      if (dbConversations[0]) {
         setActiveConversationId(dbConversations[0].id);
         setMessages(dbConversations[0].messages);
+        conversationsInitialized.current = true;
       }
     } else if (!conversationsLoading && (!dbConversations || dbConversations.length === 0)) {
       // Create first conversation if none exist
+      conversationsInitialized.current = true; // Set early to prevent re-running
       const newConv: Conversation = {
         id: `temp_${Date.now()}`,
         title: 'New Conversation',
@@ -259,18 +562,23 @@ function AskExpertPageContent() {
 
   // Save conversation updates to database
   useEffect(() => {
-    if (conversations.length > 0 && user?.id && !conversationsLoading) {
+    if (conversations.length > 0 && user?.id && !conversationsLoading && conversationsInitialized.current) {
       const activeConv = conversations.find(c => c.id === activeConversationId);
       if (activeConv && activeConv.id && !activeConv.id.startsWith('temp_')) {
         // Only update existing conversations (not temp ones)
-        updateMutation.mutate({
-          conversationId: activeConv.id,
-          updates: {
-            messages: activeConv.messages,
-            title: activeConv.title,
-            isPinned: activeConv.isPinned,
-          },
-        });
+        // Debounce updates to prevent excessive API calls
+        const timeoutId = setTimeout(() => {
+          updateMutation.mutate({
+            conversationId: activeConv.id,
+            updates: {
+              messages: activeConv.messages,
+              title: activeConv.title,
+              isPinned: activeConv.isPinned,
+            },
+          });
+        }, 500); // Wait 500ms before saving
+        
+        return () => clearTimeout(timeoutId);
       }
     }
   }, [conversations, activeConversationId, user?.id, conversationsLoading, updateMutation]);
@@ -320,8 +628,25 @@ function AskExpertPageContent() {
   };
 
   // Send message
-  const handleSend = async () => {
-    if (!inputValue.trim() || isLoading) return;
+  const handleSend = async ({
+    promptText,
+    attachmentsOverride,
+    existingUserMessage,
+    skipUserMessageAppend = false,
+    conversationOverride,
+  }: {
+    promptText?: string;
+    attachmentsOverride?: File[];
+    existingUserMessage?: Message;
+    skipUserMessageAppend?: boolean;
+    conversationOverride?: Message[];
+  } = {}) => {
+    const pendingPrompt = promptText ?? inputValue;
+    if (!pendingPrompt.trim() || isLoading) return;
+
+    const messageContent = pendingPrompt.trim();
+    const effectiveAttachments = attachmentsOverride ?? attachments;
+    const conversationContext = conversationOverride ?? messages;
 
     // Determine mode based on UI toggles (Mode 1-4 system)
     let mode: 'manual' | 'automatic' | 'autonomous' | 'multi-expert' = 'manual';
@@ -354,12 +679,12 @@ function AskExpertPageContent() {
 
     console.log('✅ [Mode Check] Mode:', mode, 'Agent ID:', agentId, 'Selected Agents:', selectedAgents);
 
-    const userMessage: Message = {
+    const userMessage: Message = existingUserMessage ?? {
       id: Date.now().toString(),
       role: 'user',
-      content: inputValue,
+      content: messageContent,
       timestamp: Date.now(),
-      attachments: attachments.map((file, i) => ({
+      attachments: (effectiveAttachments ?? []).map((file, i) => ({
         id: `${Date.now()}-${i}`,
         name: file.name,
         size: file.size,
@@ -368,14 +693,20 @@ function AskExpertPageContent() {
       })),
     };
 
-    setMessages(prev => [...prev, userMessage]);
-    setInputValue('');
-    setAttachments([]);
+    if (!existingUserMessage && !skipUserMessageAppend) {
+      setMessages(prev => [...prev, userMessage]);
+    }
+    if (!skipUserMessageAppend) {
+      setInputValue('');
+      setAttachments([]);
+    }
     
     // Show reasoning component immediately when starting a request
     setStreamingReasoning('Thinking...');
     setIsStreamingReasoning(true);
     setIsLoading(true);
+    setRecentReasoning([]);
+    setRecentReasoningTimestamp(null);
     
     // Reset streaming message
     setStreamingMessage('');
@@ -387,14 +718,16 @@ function AskExpertPageContent() {
         body: JSON.stringify({
           mode: mode,
           agentId: (mode === 'manual' || mode === 'multi-expert') ? agentId : undefined, // For manual and multi-expert modes
-          message: inputValue,
-          conversationHistory: messages.map(m => ({
+          message: messageContent,
+          conversationHistory: conversationContext.map(m => ({
             role: m.role,
             content: m.content
           })),
           // Optional settings
           enableRAG: enableRAG,
           enableTools: enableTools,
+          requestedTools: enableTools ? selectedTools : undefined,
+          selectedRagDomains: enableRAG ? selectedRagDomains : undefined,
           model: selectedModel,
           temperature: 0.7,
           maxTokens: 2000,
@@ -417,6 +750,36 @@ function AskExpertPageContent() {
       let selectionReason: string | undefined = undefined;
       let confidence: number | undefined = undefined;
       let autonomousMetadata: any = {};
+      let ragSummary = {
+        totalSources: 0,
+        strategy: undefined as string | undefined,
+        domains: enableRAG ? [...selectedRagDomains] : [],
+        cacheHit: false,
+        warning: undefined as string | undefined,
+        retrievalTimeMs: undefined as number | undefined,
+      };
+      let toolSummary = {
+        allowed: enableTools ? [...selectedTools] : [],
+        used: [] as string[],
+        totals: { calls: 0, success: 0, failure: 0, totalTimeMs: 0 },
+      };
+      let finalMeta: any = null;
+      let branches: Message['branches'];
+      let currentBranch = 0;
+
+      const updateStreamingMeta = () => {
+        setStreamingMeta({
+          ragSummary: { ...ragSummary },
+          toolSummary: {
+            ...toolSummary,
+            totals: { ...toolSummary.totals },
+          },
+          sources: [...sources],
+          reasoning: [...reasoning],
+        });
+      };
+
+      updateStreamingMeta();
 
       while (reader) {
         const { done, value } = await reader.read();
@@ -432,19 +795,191 @@ function AskExpertPageContent() {
 
               // Handle different chunk types based on mode
               if (data.type === 'chunk' && data.content) {
+                if (typeof data.content === 'string' && data.content.startsWith('__mode1_meta__')) {
+                  try {
+                    const meta = JSON.parse(data.content.slice('__mode1_meta__'.length));
+                    switch (meta?.event) {
+                      case 'rag_sources': {
+                        const incomingSources = Array.isArray(meta.sources) ? meta.sources : [];
+                        sources = incomingSources.map((source: any, idx: number) => ({
+                          id: source.id || `source-${idx + 1}`,
+                          url: source.url || '#',
+                          title: source.title || `Source ${idx + 1}`,
+                          excerpt: source.excerpt || source.description,
+                          similarity: typeof source.similarity === 'number' ? source.similarity : undefined,
+                          domain: source.domain,
+                          evidenceLevel: source.evidenceLevel || 'Unknown',
+                          organization: source.organization,
+                          reliabilityScore: typeof source.reliabilityScore === 'number' ? source.reliabilityScore : undefined,
+                          lastUpdated: source.lastUpdated,
+                        }));
+                        ragSummary = {
+                          totalSources: typeof meta.total === 'number' ? meta.total : sources.length,
+                          strategy: meta.strategy || ragSummary.strategy,
+                          domains: Array.isArray(meta.domains) ? meta.domains : ragSummary.domains,
+                          cacheHit: typeof meta.cacheHit === 'boolean' ? meta.cacheHit : ragSummary.cacheHit,
+                          warning: undefined,
+                          retrievalTimeMs: typeof meta.retrievalTimeMs === 'number' ? meta.retrievalTimeMs : ragSummary.retrievalTimeMs,
+                        };
+                        setStreamingReasoning(prev => {
+                          const base = `📚 Retrieved ${sources.length} evidence source${sources.length === 1 ? '' : 's'}${meta.strategy ? ` (${meta.strategy})` : ''}`;
+                          return prev ? `${base}\n\n${prev}` : base;
+                        });
+                        setIsStreamingReasoning(true);
+                        reasoning.push(`Retrieved ${sources.length} evidence source${sources.length === 1 ? '' : 's'}${meta.strategy ? ` (${meta.strategy})` : ''}.`);
+                        updateStreamingMeta();
+                        break;
+                      }
+                      case 'rag_warning': {
+                        ragSummary.warning = meta.message;
+                        setStreamingReasoning(prev => {
+                          const base = `⚠️ ${meta.message || 'Evidence could not be retrieved.'}`;
+                          return prev ? `${base}\n\n${prev}` : base;
+                        });
+                        setIsStreamingReasoning(true);
+                        if (meta.message) {
+                          reasoning.push(meta.message);
+                        }
+                        updateStreamingMeta();
+                        break;
+                      }
+                      case 'reasoning': {
+                        const message =
+                          typeof meta.message === 'string'
+                            ? meta.message
+                            : Array.isArray(meta.message)
+                              ? meta.message.join('\n')
+                              : '';
+                        if (message && message.trim().length > 0) {
+                          setStreamingReasoning(prev => {
+                            return prev ? `${prev}\n\n${message}` : message;
+                          });
+                          setIsStreamingReasoning(true);
+                          reasoning.push(message);
+                          updateStreamingMeta();
+                        }
+                        break;
+                      }
+                      case 'tool_execution': {
+                        const tool = meta.tool ?? {};
+                        const toolName = typeof tool.name === 'string' ? tool.name : 'unknown tool';
+                        const durationMs = typeof tool.durationMs === 'number' ? tool.durationMs : 0;
+                        const success = typeof tool.success === 'boolean' ? tool.success : true;
+                        const errorMessage = typeof tool.error === 'string' ? tool.error : undefined;
+                        const outputPreview = typeof tool.outputPreview === 'string' ? tool.outputPreview : undefined;
+
+                        const allowed = toolName && !toolSummary.allowed.includes(toolName)
+                          ? [...toolSummary.allowed, toolName]
+                          : toolSummary.allowed;
+
+                        toolSummary = {
+                          ...toolSummary,
+                          allowed,
+                          used: success && toolName
+                            ? Array.from(new Set([...toolSummary.used, toolName]))
+                            : toolSummary.used,
+                          totals: {
+                            calls: toolSummary.totals.calls + 1,
+                            success: toolSummary.totals.success + (success ? 1 : 0),
+                            failure: toolSummary.totals.failure + (success ? 0 : 1),
+                            totalTimeMs: toolSummary.totals.totalTimeMs + durationMs,
+                          },
+                        };
+
+                        const previewText = outputPreview
+                          ? outputPreview.length > 160
+                            ? `${outputPreview.slice(0, 157)}...`
+                            : outputPreview
+                          : undefined;
+
+                        const base = success
+                          ? `🛠️ Tool ${toolName} succeeded${previewText ? ` → ${previewText}` : ''}`
+                          : `⚠️ Tool ${toolName} failed${errorMessage ? `: ${errorMessage}` : ''}`;
+
+                        setStreamingReasoning(prev => {
+                          return prev ? `${base}\n\n${prev}` : base;
+                        });
+                        setIsStreamingReasoning(true);
+                        reasoning.push(base);
+                        updateStreamingMeta();
+                        break;
+                      }
+                      case 'final': {
+                        finalMeta = meta;
+                        if (meta.rag) {
+                          ragSummary = {
+                            totalSources: meta.rag.totalSources ?? ragSummary.totalSources,
+                            strategy: meta.rag.strategy ?? ragSummary.strategy,
+                            domains: Array.isArray(meta.rag.domains) ? meta.rag.domains : ragSummary.domains,
+                            cacheHit: typeof meta.rag.cacheHit === 'boolean' ? meta.rag.cacheHit : ragSummary.cacheHit,
+                            warning: meta.rag.warning ?? ragSummary.warning,
+                            retrievalTimeMs: typeof meta.rag.retrievalTimeMs === 'number' ? meta.rag.retrievalTimeMs : ragSummary.retrievalTimeMs,
+                          };
+                        }
+                        if (meta.tools) {
+                          toolSummary = {
+                            allowed: Array.isArray(meta.tools.allowed) ? meta.tools.allowed : toolSummary.allowed,
+                            used: Array.isArray(meta.tools.used) ? meta.tools.used : toolSummary.used,
+                            totals: {
+                              calls: meta.tools.totals?.calls ?? toolSummary.totals.calls,
+                              success: meta.tools.totals?.success ?? toolSummary.totals.success,
+                              failure: meta.tools.totals?.failure ?? toolSummary.totals.failure,
+                              totalTimeMs: meta.tools.totals?.totalTimeMs ?? toolSummary.totals.totalTimeMs,
+                            },
+                          };
+                        }
+                        if (Array.isArray(meta.branches) && meta.branches.length > 0) {
+                          branches = meta.branches.map((branch: any, idx: number) => ({
+                            id: branch.id || `branch-${idx + 1}`,
+                            content: typeof branch.content === 'string' ? branch.content : '',
+                            confidence: typeof branch.confidence === 'number' ? branch.confidence : 0,
+                            citations: Array.isArray(branch.citations) ? branch.citations : [],
+                            sources: Array.isArray(branch.sources)
+                              ? branch.sources.map((src: any, sourceIdx: number) => ({
+                                  id: src.id || `branch-${idx + 1}-source-${sourceIdx + 1}`,
+                                  url: src.url || src.link || '#',
+                                  title: src.title || src.name || `Source ${sourceIdx + 1}`,
+                                  excerpt: src.excerpt || src.summary || src.description,
+                                  similarity: typeof src.similarity === 'number' ? src.similarity : undefined,
+                                  domain: src.domain,
+                                  evidenceLevel: src.evidenceLevel || src.level || 'Unknown',
+                                  organization: src.organization,
+                                  reliabilityScore: typeof src.reliabilityScore === 'number' ? src.reliabilityScore : undefined,
+                                  lastUpdated: src.lastUpdated,
+                                }))
+                              : [],
+                            createdAt: branch.createdAt ? new Date(branch.createdAt) : new Date(),
+                            reasoning: Array.isArray(branch.reasoning)
+                              ? branch.reasoning.join('\n')
+                              : branch.reasoning || undefined,
+                          }));
+                          currentBranch = typeof meta.currentBranch === 'number' ? meta.currentBranch : 0;
+                        }
+                        if (typeof meta.confidence === 'number') {
+                          confidence = meta.confidence;
+                        }
+                        updateStreamingMeta();
+                        break;
+                      }
+                      default:
+                        break;
+                    }
+                  } catch (metaError) {
+                    console.warn('[AskExpert] Failed to parse metadata chunk', metaError);
+                  }
+                  continue;
+                }
+
                 // Mode 1: Simple chunk
                 // Skip error messages that start with "Error:"
-                if (data.content.startsWith('Error:')) {
-                  // Extract error message for display
+                if (typeof data.content === 'string' && data.content.startsWith('Error:')) {
                   const errorMessage = data.content.replace(/^Error:\s*/, '');
                   setStreamingReasoning(prev => `❌ Error: ${errorMessage}`);
                   setIsStreamingReasoning(true);
-                  // Still accumulate for final error message
                   fullResponse += data.content;
                 } else {
                   fullResponse += data.content;
                   setStreamingMessage(fullResponse);
-                  // Update reasoning to show we're processing
                   if (!streamingReasoning || streamingReasoning === 'Thinking...' || streamingReasoning.startsWith('❌')) {
                     setStreamingReasoning('Processing your request...');
                     setIsStreamingReasoning(true);
@@ -570,6 +1105,7 @@ function AskExpertPageContent() {
                   similarity: src.similarity || src.score,
                 }));
                 console.log('📚 Sources received:', sources.length);
+                updateStreamingMeta();
               } else if (data.type === 'done') {
                 reasoning = data.reasoning || [];
                 // Sources might also come in the done event
@@ -584,6 +1120,7 @@ function AskExpertPageContent() {
                   }));
                 }
                 console.log('✅ Execution completed');
+                updateStreamingMeta();
               } else if (data.type === 'error') {
                 // Handle structured error events from backend
                 const errorCode = data.code || 'UNKNOWN_ERROR';
@@ -601,6 +1138,8 @@ function AskExpertPageContent() {
                   userFriendlyMessage = 'The AI service is temporarily unavailable. Please try again in a moment.';
                 } else if (errorCode === 'RAG_TIMEOUT' || errorCode === 'RAG_SERVICE_UNAVAILABLE') {
                   userFriendlyMessage = 'The knowledge base search is temporarily unavailable. The response may be less detailed.';
+                } else if (errorCode === 'RAG_NO_RESULTS') {
+                  userFriendlyMessage = 'We could not find supporting evidence in the knowledge base. Please broaden your query, select additional knowledge domains, enable evidence tools, or explicitly permit answers without evidence.';
                 } else if (errorCode === 'NETWORK_ERROR') {
                   userFriendlyMessage = 'Network connection issue. Please check your internet connection and try again.';
                 } else if (errorCode === 'DATABASE_CONNECTION_ERROR') {
@@ -639,6 +1178,7 @@ function AskExpertPageContent() {
                   } else if (Array.isArray(reasoningText)) {
                     reasoning = [...reasoning, ...reasoningText];
                   }
+                  updateStreamingMeta();
                 }
               }
               // Fallback: Support old format for backward compatibility
@@ -671,33 +1211,72 @@ function AskExpertPageContent() {
         }
       }
 
+      const assistantMessageId = (Date.now() + 1).toString();
+      const messageBranches =
+        branches && branches.length > 0
+          ? branches
+          : [
+              {
+                id: `${assistantMessageId}-branch-0`,
+                content: fullResponse,
+                confidence: typeof confidence === 'number' ? confidence : 0,
+                citations: Array.isArray(finalMeta?.citations) ? finalMeta.citations : [],
+                sources: sources.map((src, idx) => ({ ...src, id: src.id || `fallback-source-${idx + 1}` })),
+                createdAt: new Date(),
+                reasoning: reasoning.length > 0 ? reasoning.join('\n') : undefined,
+              },
+            ];
+      const activeBranchIndex = Math.min(currentBranch, messageBranches.length - 1);
+      const activeBranch = messageBranches[activeBranchIndex];
+
       const assistantMessage: Message = {
-        id: (Date.now() + 1).toString(),
+        id: assistantMessageId,
         role: 'assistant',
-        content: fullResponse,
+        content: activeBranch?.content ?? fullResponse,
         timestamp: Date.now(),
         reasoning,
-        sources,
+        sources: activeBranch?.sources && activeBranch.sources.length > 0 ? activeBranch.sources : sources,
         selectedAgent,
         selectionReason,
         confidence,
+        branches: messageBranches,
+        currentBranch: activeBranchIndex,
         // Add autonomous metadata for Mode 3 & Mode 4
         ...(Object.keys(autonomousMetadata).length > 0 && { autonomousMetadata }),
+        metadata: {
+          ragSummary,
+          toolSummary,
+          sources: activeBranch?.sources && activeBranch.sources.length > 0 ? activeBranch.sources : sources,
+          reasoning,
+          confidence,
+          citations: Array.isArray(finalMeta?.citations) ? finalMeta.citations : undefined,
+        },
       };
 
       setMessages(prev => [...prev, assistantMessage]);
+      const branchReasoning = activeBranch?.reasoning;
+      const normalizedRecentReasoning = branchReasoning
+        ? Array.isArray(branchReasoning)
+          ? branchReasoning
+          : [branchReasoning]
+        : reasoning;
+      setRecentReasoning(normalizedRecentReasoning);
+      setRecentReasoningTimestamp(Date.now());
       setStreamingMessage('');
       setStreamingReasoning('');
       setIsStreamingReasoning(false);
+      setStreamingMeta(null);
 
       if (activeConversationId) {
         setConversations(prev =>
           prev.map(conv =>
-            conv.id === activeConversationId
+                  conv.id === activeConversationId
               ? {
                   ...conv,
-                  messages: [...conv.messages, userMessage, assistantMessage],
-                  title: conv.messages.length === 0 ? inputValue.substring(0, 50) : conv.title,
+                  messages: skipUserMessageAppend
+                    ? [...conv.messages, assistantMessage]
+                    : [...conv.messages, userMessage, assistantMessage],
+                  title: conv.messages.length === 0 ? messageContent.substring(0, 50) : conv.title,
                   updatedAt: Date.now(),
                 }
               : conv
@@ -706,6 +1285,10 @@ function AskExpertPageContent() {
       }
     } catch (error) {
       console.error('Error:', error);
+      setStreamingMessage('');
+      setStreamingReasoning('');
+      setIsStreamingReasoning(false);
+      setStreamingMeta(null);
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
@@ -715,6 +1298,53 @@ function AskExpertPageContent() {
       setMessages(prev => [...prev, errorMessage]);
     } finally {
       setIsLoading(false);
+      setStreamingMeta(null);
+    }
+  };
+
+  const handleRegenerate = async (assistantMessageId: string) => {
+    const assistantIndex = messages.findIndex((msg) => msg.id === assistantMessageId);
+    if (assistantIndex === -1) {
+      return;
+    }
+
+    let previousUserMessage: Message | null = null;
+    for (let idx = assistantIndex - 1; idx >= 0; idx--) {
+      if (messages[idx].role === 'user') {
+        previousUserMessage = messages[idx];
+        break;
+      }
+    }
+
+    if (!previousUserMessage) {
+      console.warn('[AskExpert] Regenerate requested but no preceding user message found.');
+      return;
+    }
+
+    const conversationWithoutAssistant = messages.filter((msg) => msg.id !== assistantMessageId);
+    setMessages(conversationWithoutAssistant);
+    if (activeConversationId) {
+      setConversations((prev) =>
+        prev.map((conv) =>
+          conv.id === activeConversationId
+            ? {
+                ...conv,
+                messages: conv.messages.filter((msg) => msg.id !== assistantMessageId),
+              }
+            : conv
+        )
+      );
+    }
+
+    try {
+      await handleSend({
+        promptText: previousUserMessage.content,
+        existingUserMessage: previousUserMessage,
+        skipUserMessageAppend: true,
+        conversationOverride: conversationWithoutAssistant,
+      });
+    } catch (error) {
+      console.error('[AskExpert] Regenerate failed:', error);
     }
   };
 
@@ -775,6 +1405,17 @@ function AskExpertPageContent() {
     [conversations]
   );
 
+  const handleSuggestionClick = useCallback(
+    (suggestion: string) => {
+      setInputValue(suggestion);
+      requestAnimationFrame(() => {
+        inputRef.current?.focus();
+        inputRef.current?.setSelectionRange(suggestion.length, suggestion.length);
+      });
+    },
+    []
+  );
+
   // Copy message
   const handleCopy = useCallback((content: string, id: string) => {
     navigator.clipboard.writeText(content).then(() => {
@@ -829,9 +1470,9 @@ function AskExpertPageContent() {
     <div className={`flex flex-col h-full w-full ${darkMode ? 'dark bg-gray-950' : 'bg-white'}`}>
       {/* Top Bar - Clean like Claude */}
       <header className="h-14 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between px-4 bg-white dark:bg-gray-900">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 flex-wrap">
           <Brain className="w-5 h-5 text-blue-500" />
-          <h1 className="text-sm font-medium text-gray-900 dark:text-white">
+          <h1 className="text-base font-semibold text-gray-900 dark:text-white">
             Ask the Experts
           </h1>
           {/* Current Mode Badge */}
@@ -843,6 +1484,17 @@ function AskExpertPageContent() {
           }`}>
             Mode {currentMode.id}: {currentMode.name}
           </div>
+          {primarySelectedAgent && (
+            <div className="inline-flex items-center gap-2 rounded-full bg-purple-50 px-3 py-1 text-xs font-semibold text-purple-700 shadow-sm dark:bg-purple-900/30 dark:text-purple-200">
+              <AgentAvatar
+                avatar={primarySelectedAgent.avatar}
+                name={primarySelectedAgent.displayName}
+                size="list"
+                className="rounded-full"
+              />
+              <span>{primarySelectedAgent.displayName}</span>
+            </div>
+          )}
         </div>
 
           <div className="flex items-center gap-2">
@@ -1044,22 +1696,14 @@ function AskExpertPageContent() {
         {/* Messages Area */}
         <Conversation className="flex-1">
           <ConversationContent className="max-w-3xl mx-auto px-4 py-6">
-            {/* Selected Agents Display */}
-            {selectedAgents.length > 0 && (
+            {/* Selected Agents Display (for multiple selections) */}
+            {selectedAgents.length > 1 && (
               <div className="mb-6">
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-                    Selected Expert{selectedAgents.length > 1 ? 's' : ''}
-                  </h3>
-                  <span className="text-xs text-gray-500 dark:text-gray-400">
-                    {selectedAgents.length} selected
-                  </span>
-                </div>
                 <SelectedAgentsList
+                  compact
                   agents={agents.filter((agent) => selectedAgents.includes(agent.id))}
                   selectedAgentIds={selectedAgents}
                   onAgentClick={(agentId) => {
-                    // Toggle selection on click
                     setSelectedAgents(
                       selectedAgents.includes(agentId)
                         ? selectedAgents.filter((id) => id !== agentId)
@@ -1115,268 +1759,137 @@ function AskExpertPageContent() {
               </div>
             ) : (
               <>
-                {messages.map(msg => {
-                  // Get agent info for assistant messages
-                  const agentInfo = msg.role === 'assistant' && msg.selectedAgent 
-                    ? agents.find(a => a.id === msg.selectedAgent?.id)
-                    : null;
+                {recentReasoning.length > 0 && (
+                  <div className="mb-4">
+                    <Reasoning defaultOpen={false}>
+                      <ReasoningTrigger
+                        title={`Latest AI Reasoning${formatReasoningTimestamp(recentReasoningTimestamp) ? ` • ${formatReasoningTimestamp(recentReasoningTimestamp)}` : ''}`}
+                      />
+                      <ReasoningContent>
+                        <div className="space-y-2 text-xs text-muted-foreground">
+                      {recentReasoning.map((step, idx) => (
+                        <div
+                          key={`${idx}-${step.slice(0, 20)}`}
+                          className="flex items-start gap-2 rounded-lg bg-muted/30 p-2"
+                        >
+                          <Sparkles className="h-3 w-3 mt-0.5 text-primary flex-shrink-0" />
+                          <span className="whitespace-pre-wrap">{step}</span>
+                        </div>
+                      ))}
+                        </div>
+                      </ReasoningContent>
+                    </Reasoning>
+                  </div>
+                )}
 
-                  // Get avatar URL
-                  const avatarUrl = msg.role === 'user' 
-                    ? undefined 
-                    : agentInfo?.avatar 
-                      ? `/icons/png/avatars/${agentInfo.avatar}.png`
+                {messages.map((msg, index) => {
+                  const agentInfo =
+                    msg.role === 'assistant' && msg.selectedAgent
+                      ? agents.find((a) => a.id === msg.selectedAgent?.id)
+                      : null;
+                  const avatarValue =
+                    msg.role === 'assistant'
+                      ? agentInfo?.avatar
                       : undefined;
 
+                  const previousUserMessage =
+                    index > 0 && messages[index - 1].role === 'user'
+                      ? messages[index - 1]
+                      : undefined;
+
+                  const allowRegenerate =
+                    msg.role === 'assistant' && index === messages.length - 1;
+
                   return (
-                    <Message key={msg.id} from={msg.role}>
-                      <MessageAvatar
-                        src={avatarUrl || (msg.role === 'user' ? undefined : '/icons/png/avatars/avatar_0001.png')}
-                        name={msg.role === 'user' ? 'You' : (agentInfo?.display_name || agentInfo?.name || 'Expert')}
-                      />
-                      <MessageContent>
-                        {/* Show selected agent info for Mode 2 & Mode 3 */}
-                        {msg.selectedAgent && (
-                          <div className="mb-3 text-xs text-muted-foreground p-2 bg-muted rounded-lg">
-                            <div className="flex items-center gap-2">
-                              <Bot className="w-3 h-3" />
-                              <span className="font-medium">Selected Agent:</span>
-                              <span className="text-primary">
-                                {msg.selectedAgent.display_name || msg.selectedAgent.name}
-                              </span>
-                              {msg.confidence && (
-                                <span className="text-green-600 dark:text-green-400">
-                                  ({(msg.confidence * 100).toFixed(1)}% confidence)
-                                </span>
-                              )}
-                            </div>
-                            {msg.selectionReason && (
-                              <div className="mt-1">
-                                {msg.selectionReason}
-                              </div>
-                            )}
-                          </div>
-                        )}
-
-                        {/* Response content with markdown support and inline citations */}
-                        {msg.sources && msg.sources.length > 0 ? (
-                          <CitedResponse 
-                            content={msg.content} 
-                            sources={msg.sources}
-                          />
-                        ) : (
-                          <Response>
-                            {msg.content}
-                          </Response>
-                        )}
-
-                        {/* Reasoning Component - Show LangGraph reasoning steps */}
-                        {(msg.reasoning && msg.reasoning.length > 0) || (msg.autonomousMetadata && Object.keys(msg.autonomousMetadata).length > 0) ? (
-                          <div className="mt-3">
-                            <Reasoning isStreaming={false} defaultOpen={false}>
-                              <ReasoningTrigger title="Thinking Process" />
-                              <ReasoningContent>
-                                {/* Show reasoning steps from reasoning array */}
-                                {msg.reasoning && msg.reasoning.length > 0 && (
-                                  <div className="space-y-2 mb-4">
-                                    {msg.reasoning.map((step, idx) => (
-                                      <div key={idx} className="text-xs text-muted-foreground pb-2 border-b border-border/50 last:border-0">
-                                        <span className="font-semibold">Step {idx + 1}:</span> {step}
-                                      </div>
-                                    ))}
-                                  </div>
-                                )}
-
-                                {/* Show autonomous metadata reasoning steps (Mode 3 & Mode 4) */}
-                                {msg.autonomousMetadata && (
-                                  <div className="space-y-3">
-                                    {msg.autonomousMetadata.goalUnderstanding && (
-                                      <div>
-                                        <div className="font-semibold text-sm mb-1 flex items-center gap-1">
-                                          🎯 Goal Understanding
-                                        </div>
-                                        <div className="text-xs text-muted-foreground pl-4">
-                                          {msg.autonomousMetadata.goalUnderstanding}
-                                        </div>
-                                      </div>
-                                    )}
-                                    
-                                    {msg.autonomousMetadata.executionPlan && (
-                                      <div>
-                                        <div className="font-semibold text-sm mb-1 flex items-center gap-1">
-                                          📋 Execution Plan
-                                        </div>
-                                        <div className="text-xs text-muted-foreground pl-4">
-                                          {msg.autonomousMetadata.executionPlan}
-                                        </div>
-                                      </div>
-                                    )}
-
-                                    {/* ReAct Loop Steps */}
-                                    {(msg.autonomousMetadata.currentThought || 
-                                      msg.autonomousMetadata.currentAction || 
-                                      msg.autonomousMetadata.currentObservation ||
-                                      msg.autonomousMetadata.currentReflection) && (
-                                      <div>
-                                        <div className="font-semibold text-sm mb-2 flex items-center gap-1">
-                                          🔄 ReAct Reasoning Loop
-                                        </div>
-                                        <div className="space-y-2 pl-4">
-                                          {msg.autonomousMetadata.currentIteration && (
-                                            <div className="text-xs">
-                                              <span className="font-medium">Iteration {msg.autonomousMetadata.currentIteration}</span>
-                                            </div>
-                                          )}
-                                          {msg.autonomousMetadata.currentThought && (
-                                            <div className="text-xs text-muted-foreground">
-                                              <span className="font-medium text-purple-500">🧠 Thought:</span> {msg.autonomousMetadata.currentThought}
-                                            </div>
-                                          )}
-                                          {msg.autonomousMetadata.currentAction && (
-                                            <div className="text-xs text-muted-foreground">
-                                              <span className="font-medium text-blue-500">⚡ Action:</span> {msg.autonomousMetadata.currentAction}
-                                            </div>
-                                          )}
-                                          {msg.autonomousMetadata.currentObservation && (
-                                            <div className="text-xs text-muted-foreground">
-                                              <span className="font-medium text-green-500">👁️ Observation:</span> {msg.autonomousMetadata.currentObservation}
-                                            </div>
-                                          )}
-                                          {msg.autonomousMetadata.currentReflection && (
-                                            <div className="text-xs text-muted-foreground">
-                                              <span className="font-medium text-orange-500">🤔 Reflection:</span> {msg.autonomousMetadata.currentReflection}
-                                            </div>
-                                          )}
-                                        </div>
-                                      </div>
-                                    )}
-
-                                    {msg.autonomousMetadata.totalIterations && (
-                                      <div className="text-xs">
-                                        <span className="font-semibold">Total Iterations:</span> {msg.autonomousMetadata.totalIterations} ReAct cycles
-                                      </div>
-                                    )}
-                                    
-                                    {msg.autonomousMetadata.finalConfidence && (
-                                      <div className="text-xs">
-                                        <span className="font-semibold">Final Confidence:</span>{' '}
-                                        <span className="text-green-600 dark:text-green-400">
-                                          {(msg.autonomousMetadata.finalConfidence * 100).toFixed(1)}%
-                                        </span>
-                                      </div>
-                                    )}
-                                  </div>
-                                )}
-                              </ReasoningContent>
-                            </Reasoning>
-                          </div>
-                        ) : null}
-
-                        {/* Attachments */}
-                        {msg.attachments && msg.attachments.length > 0 && (
-                          <div className="mt-3 flex flex-wrap gap-2">
-                            {msg.attachments.map(att => (
-                              <div
-                                key={att.id}
-                                className="flex items-center gap-2 px-2 py-1.5 bg-muted rounded-md text-xs"
-                              >
-                                {att.type.startsWith('image/') ? (
-                                  <ImageIcon className="w-3 h-3 text-primary" />
-                                ) : (
-                                  <FileText className="w-3 h-3 text-primary" />
-                                )}
-                                <span>{att.name}</span>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-
-                        {/* Message Actions */}
-                        {msg.role === 'assistant' && (
-                          <div className="mt-3 flex items-center gap-2">
-                            <button
-                              onClick={() => handleCopy(msg.content, msg.id)}
-                              className="p-1.5 hover:bg-muted rounded transition-colors"
-                              aria-label="Copy message"
-                            >
-                              {copiedId === msg.id ? (
-                                <Check className="w-4 h-4 text-green-500" />
-                              ) : (
-                                <Copy className="w-4 h-4 text-muted-foreground" />
-                              )}
-                            </button>
-                            <ThumbsUpDown
-                              messageId={msg.id}
-                              queryText={(() => {
-                                // Find the previous user message
-                                const msgIndex = messages.findIndex(m => m.id === msg.id);
-                                const userMsg = msgIndex > 0 ? messages[msgIndex - 1] : null;
-                                return userMsg?.role === 'user' ? userMsg.content : '';
-                              })()}
-                              responseText={msg.content}
-                              onFeedbackSubmitted={(feedback) => {
-                                console.log('Feedback submitted:', feedback);
-                              }}
-                            />
-                          </div>
-                        )}
-                      </MessageContent>
-                    </Message>
+                    <EnhancedMessageDisplay
+                      key={msg.id}
+                      id={msg.id}
+                      role={msg.role}
+                      content={msg.content}
+                      timestamp={new Date(msg.timestamp)}
+                      metadata={msg.metadata}
+                      agentName={agentInfo?.displayName || (agentInfo as any)?.display_name || agentInfo?.name}
+                      agentAvatar={avatarValue}
+                      branches={msg.branches}
+                      currentBranch={msg.currentBranch ?? 0}
+                      onBranchChange={
+                        msg.branches && msg.branches.length > 1
+                          ? (branchIndex) => handleBranchChange(msg.id, branchIndex)
+                          : undefined
+                      }
+                      onCopy={() => handleCopy(msg.content, msg.id)}
+                      onFeedback={
+                        msg.role === 'assistant'
+                          ? (type) => submitFeedbackForMessage(msg, type, previousUserMessage)
+                          : undefined
+                      }
+                      onRegenerate={
+                        allowRegenerate
+                          ? () => handleRegenerate(msg.id)
+                          : undefined
+                      }
+                      allowRegenerate={allowRegenerate}
+                    />
                   );
                 })}
 
+
                 {/* Show reasoning and streaming response as soon as loading starts */}
                 {(isLoading || streamingMessage || isStreamingReasoning) && (
-                  <Message from="assistant">
-                    <MessageAvatar
-                      src={selectedAgents.length > 0 && agents.find(a => selectedAgents.includes(a.id))
-                        ? `/icons/png/avatars/${agents.find(a => selectedAgents.includes(a.id))?.avatar || 'avatar_0001'}.png`
-                        : '/icons/png/avatars/avatar_0001.png'}
-                      name="Expert"
-                    />
-                    <MessageContent>
-                      {/* Reasoning during streaming - Show immediately when loading starts */}
-                      {(isLoading || isStreamingReasoning) && (
-                        <div className="mb-3">
-                          <Reasoning isStreaming={isLoading} defaultOpen={true}>
-                            <ReasoningTrigger title="Thinking..." />
-                            <ReasoningContent>
-                              <div className="text-xs text-muted-foreground whitespace-pre-wrap">
-                                {streamingReasoning || 'Processing your request...'}
-                              </div>
-                            </ReasoningContent>
-                          </Reasoning>
-                        </div>
-                      )}
-                      
-                      {/* Streaming response - Show when we have content */}
-                      {streamingMessage && (
-                        <div className="inline-flex items-baseline gap-1">
-                          <Response>
-                            {streamingMessage}
-                          </Response>
-                          {isLoading && (
-                            <span className="inline-block w-0.5 h-4 bg-primary animate-pulse" />
-                          )}
-                        </div>
-                      )}
-                    </MessageContent>
-                  </Message>
+                  <EnhancedMessageDisplay
+                    id="streaming-assistant"
+                    role="assistant"
+                    content={streamingMessage || ''}
+                    timestamp={new Date()}
+                    isStreaming
+                    metadata={streamingMeta || (streamingReasoning ? { reasoning: [streamingReasoning] } : undefined)}
+                    agentName={(() => {
+                      const agent = selectedAgents.length > 0
+                        ? agents.find((a) => selectedAgents.includes(a.id))
+                        : null;
+                      if (!agent) {
+                        return 'Expert';
+                      }
+                      return (agent as any).displayName || (agent as any).display_name || agent.name || 'Expert';
+                    })()}
+                    agentAvatar={(() => {
+                      const agent = selectedAgents.length > 0
+                        ? agents.find((a) => selectedAgents.includes(a.id))
+                        : null;
+                      return agent?.avatar || 'avatar_0001';
+                    })()}
+                  />
                 )}
+                      
               </>
             )}
             <div ref={messagesEndRef} />
           </ConversationContent>
         </Conversation>
 
+        {shouldShowSuggestions && (
+          <div className="border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 px-4 py-2">
+            <Suggestions layout="wrap">
+              {followUpSuggestions.map((suggestion) => (
+                <Suggestion
+                  key={suggestion}
+                  suggestion={suggestion}
+                  onClick={handleSuggestionClick}
+                />
+              ))}
+            </Suggestions>
+          </div>
+        )}
+
         {/* Enhanced Prompt Input */}
-        <div className="border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-4">
+        <div className="border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-4 sticky bottom-0">
           <PromptInput
             value={inputValue}
             onChange={setInputValue}
             onSubmit={handleSend}
             isLoading={isLoading}
             placeholder="How can I help you today?"
+            textareaRef={inputRef}
             selectedModel={selectedModel}
             onModelChange={setSelectedModel}
             isAutomatic={isAutomatic}
@@ -1386,6 +1899,16 @@ function AskExpertPageContent() {
             attachments={attachments}
             onAttachmentsChange={setAttachments}
             tokenCount={tokenCount}
+            enableRAG={enableRAG}
+            onEnableRAGChange={setEnableRAG}
+            enableTools={enableTools}
+            onEnableToolsChange={handleEnableToolsChange}
+            availableTools={availableTools}
+            selectedTools={selectedTools}
+            onSelectedToolsChange={setSelectedTools}
+            availableRagDomains={availableRagDomains}
+            selectedRagDomains={selectedRagDomains}
+            onSelectedRagDomainsChange={setSelectedRagDomains}
           />
         </div>
     </div>
@@ -1401,3 +1924,89 @@ export default function AskExpertPage() {
   );
 }
 
+function generateFollowUpSuggestions(
+  message: Message | undefined,
+  streamingMessage: string | undefined,
+  modeName: string
+): string[] {
+  const suggestions = new Set<string>();
+
+  if (streamingMessage && streamingMessage.trim().length > 0) {
+    suggestions.add('What other details should we explore about this?');
+  }
+
+  if (!message || !message.content) {
+    suggestions.add(`What should I do next in ${modeName.toLowerCase()} mode?`);
+    suggestions.add('Suggest actionable next steps.');
+    suggestions.add('Flag potential risks I should know about.');
+    return Array.from(suggestions).slice(0, 4);
+  }
+
+  const content = message.content.replace(/\s+/g, ' ').trim();
+  const sentences = content
+    .split(/(?<=[.!?])\s+/)
+    .filter((sentence) => sentence.length > 40)
+    .slice(0, 3);
+
+  sentences.forEach((sentence) => {
+    const topic = extractTopic(sentence);
+    if (topic) {
+      suggestions.add(`Can you expand on ${topic}?`);
+    }
+  });
+
+  const bulletTopics = message.content
+    .split('\n')
+    .map((line) => line.trim())
+    .filter((line) => /^[-*•]/.test(line))
+    .slice(0, 2);
+
+  bulletTopics.forEach((line) => {
+    const cleaned = line.replace(/^[-*•]\s*/, '');
+    const topic = extractTopic(cleaned);
+    if (topic) {
+      suggestions.add(`What are the implications of ${topic}?`);
+    }
+  });
+
+  if (message.metadata?.ragSummary?.warning) {
+    suggestions.add('How can we resolve the evidence gaps you mentioned?');
+  }
+
+  const domains = message.metadata?.ragSummary?.domains;
+  if (domains && domains.length > 0) {
+    suggestions.add(`Share more insights on ${domains[0]}.`);
+  }
+
+  const usedTools = message.metadata?.toolSummary?.used;
+  if (usedTools && usedTools.length > 0) {
+    suggestions.add(`What did the ${usedTools[0]} tool uncover?`);
+  }
+
+  suggestions.add('What concrete steps should we prioritize next?');
+  suggestions.add('Are there risks or blockers we should anticipate?');
+
+  return Array.from(suggestions).slice(0, 4);
+}
+
+function extractTopic(sentence: string): string | null {
+  const trimmed = sentence.trim();
+  if (!trimmed) {
+    return null;
+  }
+
+  const separators = [trimmed.indexOf(':'), trimmed.indexOf('—'), trimmed.indexOf('- ')].filter(
+    (index) => index > 0
+  );
+  const cutoff = separators.length ? Math.min(...separators) : Math.min(trimmed.length, 80);
+  let candidate = trimmed.slice(0, cutoff).replace(/^[^A-Za-z0-9]+/, '').trim();
+  if (!candidate) {
+    return null;
+  }
+
+  if (candidate.length > 60) {
+    candidate = `${candidate.slice(0, 57)}...`;
+  }
+
+  return candidate;
+}

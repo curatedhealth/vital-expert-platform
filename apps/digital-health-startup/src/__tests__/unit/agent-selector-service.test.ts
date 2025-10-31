@@ -120,72 +120,127 @@ describe('AgentSelectorService', () => {
   });
 
   describe('analyzeQuery', () => {
-    it('should analyze query and extract intent, domains, and complexity', async () => {
-      const mockOpenAIResponse = {
-        choices: [{
-          message: {
-            content: JSON.stringify({
-              intent: 'diagnosis',
-              domains: ['cardiology', 'endocrinology'],
-              complexity: 'high',
-              keywords: ['symptoms', 'diagnosis', 'treatment'],
-              medicalTerms: ['hypertension', 'diabetes'],
-              confidence: 0.9,
-            }),
-          },
-        }],
-      };
-
-      (global.fetch as any).mockResolvedValue({
-        json: vi.fn().mockResolvedValue(mockOpenAIResponse),
-      });
-
-      const query = 'What are the symptoms of hypertension and diabetes?';
-      const analysis = await service.analyzeQuery(query);
-
-      expect(analysis.intent).toBe('diagnosis');
-      expect(analysis.domains).toEqual(['cardiology', 'endocrinology']);
-      expect(analysis.complexity).toBe('high');
-      expect(analysis.keywords).toContain('symptoms');
-      expect(analysis.confidence).toBe(0.9);
-      expect(global.fetch).toHaveBeenCalledWith(
-        'https://api.openai.com/v1/chat/completions',
-        expect.objectContaining({
-          method: 'POST',
-        })
-      );
+    beforeEach(() => {
+      // Mock API Gateway URL
+      process.env.NEXT_PUBLIC_API_GATEWAY_URL = 'http://localhost:3001';
+      process.env.API_GATEWAY_URL = 'http://localhost:3001';
     });
 
-    it('should handle OpenAI API failures gracefully with fallback', async () => {
-      (global.fetch as any).mockRejectedValue(new Error('API Error'));
+    it('should analyze query via API Gateway', async () => {
+      const mockAnalysis = {
+        intent: 'diagnosis',
+        domains: ['cardiology'],
+        complexity: 'medium',
+        keywords: ['symptoms', 'chest', 'pain'],
+        medical_terms: ['cardiac', 'ECG'],
+        confidence: 0.85,
+      };
 
-      const query = 'Test query';
-      const analysis = await service.analyzeQuery(query);
+      (global.fetch as any).mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockAnalysis,
+      });
 
-      // Should return fallback analysis
-      expect(analysis.intent).toBe('general');
-      expect(analysis.domains).toEqual([]);
-      expect(analysis.complexity).toBe('medium');
-      expect(analysis.confidence).toBe(0.5);
+      const result = await service.analyzeQuery('I have chest pain and need a diagnosis');
+
+      expect(global.fetch).toHaveBeenCalledWith(
+        expect.stringContaining('/api/agents/select'),
+        expect.objectContaining({
+          method: 'POST',
+          headers: expect.objectContaining({
+            'Content-Type': 'application/json',
+          }),
+        })
+      );
+
+      expect(result.intent).toBe('diagnosis');
+      expect(result.domains).toEqual(['cardiology']);
+      expect(result.complexity).toBe('medium');
+      expect(result.keywords).toEqual(['symptoms', 'chest', 'pain']);
+      expect(result.medicalTerms).toEqual(['cardiac', 'ECG']);
+      expect(result.confidence).toBe(0.85);
+    });
+
+    it('should handle API Gateway errors gracefully', async () => {
+      (global.fetch as any).mockResolvedValueOnce({
+        ok: false,
+        status: 500,
+        statusText: 'Internal Server Error',
+        json: async () => ({ message: 'Service unavailable' }),
+      });
+
+      const result = await service.analyzeQuery('test query');
+
+      // Should fallback to basic analysis
+      expect(result.intent).toBe('general');
+      expect(result.domains).toEqual([]);
+      expect(result.confidence).toBe(0.5);
+    });
+
+    it('should handle network errors with fallback', async () => {
+      (global.fetch as any).mockRejectedValueOnce(new Error('Network error'));
+
+      const result = await service.analyzeQuery('test query');
+
+      // Should fallback to basic analysis
+      expect(result.intent).toBe('general');
+      expect(result.domains).toEqual([]);
+      expect(result.confidence).toBe(0.5);
       expect(mockLogger.error).toHaveBeenCalled();
     });
 
-    it('should handle malformed OpenAI responses', async () => {
-      (global.fetch as any).mockResolvedValue({
-        json: vi.fn().mockResolvedValue({
-          choices: [{
-            message: {
-              content: 'invalid json',
-            },
-          }],
-        }),
+    it('should include tenant ID in request', async () => {
+      const mockAnalysis = {
+        intent: 'general',
+        domains: [],
+        complexity: 'medium',
+        keywords: [],
+        medical_terms: [],
+        confidence: 0.7,
+      };
+
+      (global.fetch as any).mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockAnalysis,
       });
 
-      const query = 'Test query';
-      const analysis = await service.analyzeQuery(query);
+      await service.analyzeQuery('test query');
 
-      // Should return fallback
-      expect(analysis.intent).toBe('general');
+      const fetchCall = (global.fetch as any).mock.calls[0];
+      const requestBody = JSON.parse(fetchCall[1].body);
+
+      expect(requestBody.tenant_id).toBe('test-tenant');
+      expect(fetchCall[1].headers['x-tenant-id']).toBe('test-tenant');
+    });
+
+    it('should handle timeout errors gracefully', async () => {
+      (global.fetch as any).mockRejectedValueOnce(new DOMException('The operation was aborted.', 'AbortError'));
+
+      const result = await service.analyzeQuery('test query');
+
+      // Should fallback to basic analysis
+      expect(result.intent).toBe('general');
+      expect(result.confidence).toBe(0.5);
+    });
+
+    it('should map medical_terms correctly from API response', async () => {
+      const mockAnalysis = {
+        intent: 'diagnosis',
+        domains: ['cardiology'],
+        complexity: 'high',
+        keywords: ['symptoms', 'treatment'],
+        medical_terms: ['hypertension', 'ECG'], // Python uses snake_case
+        confidence: 0.9,
+      };
+
+      (global.fetch as any).mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockAnalysis,
+      });
+
+      const result = await service.analyzeQuery('What are symptoms of hypertension?');
+
+      expect(result.medicalTerms).toEqual(['hypertension', 'ECG']);
     });
   });
 

@@ -1,10 +1,10 @@
 /**
- * Edge Middleware
+ * Edge Proxy
  *
  * Security and authentication layer for all requests.
  * Runs on Vercel Edge runtime.
  *
- * @module middleware
+ * @module proxy
  */
 
 import { createServerClient } from '@supabase/ssr';
@@ -28,7 +28,7 @@ import {
 } from './lib/security/csrf';
 import { applySecurityHeaders, createCorsPreflightResponse } from './lib/security/headers';
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const url = request.nextUrl.clone();
   const { pathname } = request.nextUrl;
 
@@ -48,7 +48,7 @@ export async function middleware(request: NextRequest) {
   // ========================================================================
 
   if (pathname.startsWith('/api') && !validateOrigin(request)) {
-    console.warn('[Middleware] Invalid origin:', request.headers.get('origin'));
+    console.warn('[Proxy] Invalid origin:', request.headers.get('origin'));
     return createOriginErrorResponse();
   }
 
@@ -196,7 +196,7 @@ export async function middleware(request: NextRequest) {
     const rateLimitHeaders = createRateLimitHeaders(rateLimitResult);
 
     if (!rateLimitResult.success) {
-      console.warn('[Middleware] Rate limit exceeded:', { identifier, tier, pathname });
+      console.warn('[Proxy] Rate limit exceeded:', { identifier, tier, pathname });
 
       return new Response(
         JSON.stringify({
@@ -234,7 +234,7 @@ export async function middleware(request: NextRequest) {
     // Validate CSRF for protected requests
     if (needsCsrfProtection(request)) {
       if (!(await validateCsrfToken(request))) {
-        console.warn('[Middleware] CSRF validation failed:', pathname);
+        console.warn('[Proxy] CSRF validation failed:', pathname);
         return createCsrfErrorResponse();
       }
     }
@@ -274,7 +274,7 @@ export async function middleware(request: NextRequest) {
 
     // If on platform tenant, redirect to dashboard instead of marketing home
     if (tenantId === PLATFORM_TENANT_ID) {
-      console.log(`[Middleware] Blocking access to ${url.pathname} on Platform Tenant - redirecting to /dashboard`);
+      console.log(`[Proxy] Blocking access to ${url.pathname} on Platform Tenant - redirecting to /dashboard`);
       return NextResponse.redirect(new URL('/dashboard', request.url));
     }
   }
@@ -294,3 +294,4 @@ export const config = {
     '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 };
+

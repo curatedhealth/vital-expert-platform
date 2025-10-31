@@ -758,6 +758,14 @@ function AskExpertPageContent() {
     setStreamingMessage('');
 
     try {
+      console.log('[AskExpert] Sending request to /api/ask-expert/orchestrate', {
+        mode,
+        agentId,
+        messageLength: messageContent.length,
+        enableRAG,
+        enableTools,
+      });
+      
       const response = await fetch('/api/ask-expert/orchestrate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -784,7 +792,23 @@ function AskExpertPageContent() {
         }),
       });
 
-      if (!response.ok) throw new Error('Failed to get response');
+      if (!response.ok) {
+        const errorText = await response.text().catch(() => 'Unknown error');
+        let errorData;
+        try {
+          errorData = JSON.parse(errorText);
+        } catch {
+          errorData = { message: errorText || `HTTP ${response.status}` };
+        }
+        console.error('[AskExpert] Response not OK:', {
+          status: response.status,
+          statusText: response.statusText,
+          error: errorData,
+        });
+        throw new Error(errorData.message || `HTTP ${response.status}: ${response.statusText}`);
+      }
+      
+      console.log('[AskExpert] Response OK, starting stream processing');
 
       const reader = response.body?.getReader();
       const decoder = new TextDecoder();
@@ -1352,18 +1376,46 @@ function AskExpertPageContent() {
         );
       }
     } catch (error) {
-      console.error('Error:', error);
+      console.error('[AskExpert] Error:', error);
+      
+      // Handle fetch failures specifically
+      if (error instanceof TypeError && error.message.includes('fetch')) {
+        console.error('[AskExpert] Fetch failed - network or server error:', error.message);
+        const networkErrorMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          role: 'assistant',
+          content: 'Network error: Unable to connect to the server. Please check your internet connection and try again.',
+          timestamp: Date.now(),
+        };
+        setMessages(prev => [...prev, networkErrorMessage]);
+      } else if (error instanceof Error) {
+        console.error('[AskExpert] Error details:', {
+          message: error.message,
+          stack: error.stack,
+          name: error.name,
+        });
+        const errorMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          role: 'assistant',
+          content: `Sorry, I encountered an error: ${error.message}. Please try again.`,
+          timestamp: Date.now(),
+        };
+        setMessages(prev => [...prev, errorMessage]);
+      } else {
+        console.error('[AskExpert] Unknown error:', error);
+        const errorMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          role: 'assistant',
+          content: 'Sorry, I encountered an unknown error. Please try again.',
+          timestamp: Date.now(),
+        };
+        setMessages(prev => [...prev, errorMessage]);
+      }
+      
       setStreamingMessage('');
       setStreamingReasoning('');
       setIsStreamingReasoning(false);
       setStreamingMeta(null);
-      const errorMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        role: 'assistant',
-        content: 'Sorry, I encountered an error. Please try again.',
-        timestamp: Date.now(),
-      };
-      setMessages(prev => [...prev, errorMessage]);
     } finally {
       setIsLoading(false);
       setStreamingMeta(null);

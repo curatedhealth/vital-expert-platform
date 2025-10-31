@@ -44,7 +44,7 @@ export class Mode4AutonomousManualHandler {
     }
     
     this.supabase = createClient(supabaseUrl, supabaseKey);
-    this.workflow = this.buildMode4Workflow();
+    this.workflow = createMode4Workflow(this);
   }
 
   /**
@@ -332,56 +332,6 @@ export class Mode4AutonomousManualHandler {
       sources: [source],
     }));
   }
-  /**
-   * Build LangGraph workflow for Mode 4
-   */
-  buildMode4Workflow(): CompiledStateGraph<Mode4State, Partial<Mode4State>> {
-    const workflow = new StateGraph<Mode4State>({
-      channels: {
-        query: { value: (x: string, y: string) => y ?? x },
-        conversationHistory: { value: (x: BaseMessage[], y: BaseMessage[]) => y ?? x },
-        config: { value: (x: Mode4Config, y: Mode4Config) => y ?? x },
-        goalUnderstanding: { value: (x: GoalUnderstanding, y: GoalUnderstanding) => y ?? x },
-        executionPlan: { value: (x: ExecutionPlan, y: ExecutionPlan) => y ?? x },
-        subQuestions: { value: (x: CoTSubQuestion[], y: CoTSubQuestion[]) => y ?? x },
-        iterations: { value: (x: ReActIteration[], y: ReActIteration[]) => y ?? x },
-        currentPhase: { value: (x: string, y: string) => y ?? x },
-        currentIteration: { value: (x: number, y: number) => y ?? x },
-        finalAnswer: { value: (x: string, y: string) => y ?? x },
-        confidence: { value: (x: number, y: number) => y ?? x },
-        toolsUsed: { value: (x: string[], y: string[]) => y ?? x },
-        ragContexts: { value: (x: string[], y: string[]) => y ?? x },
-        sources: { value: (x: AutonomousEvidenceSource[], y: AutonomousEvidenceSource[]) => y ?? x },
-        citations: { value: (x: AutonomousCitation[], y: AutonomousCitation[]) => y ?? x },
-        executionTime: { value: (x: number, y: number) => y ?? x },
-        timestamp: { value: (x: string, y: string) => y ?? x },
-        error: { value: (x: string | undefined, y: string | undefined) => y ?? x },
-        selectedAgent: { value: (x: Agent, y: Agent) => y ?? x },
-        agentExpertise: { value: (x: string[], y: string[]) => y ?? x },
-        streamingSteps: { value: (x: any[], y: any[]) => y ?? x }
-      }
-    });
-
-    // Add workflow nodes
-    workflow.addNode('load_agent', this.loadAgentNode.bind(this));
-    workflow.addNode('understand_goal', this.understandGoalNode.bind(this));
-    workflow.addNode('decompose_goal', this.decomposeGoalNode.bind(this));
-    workflow.addNode('create_plan', this.createPlanNode.bind(this));
-    workflow.addNode('execute_react', this.executeReActNode.bind(this));
-    workflow.addNode('synthesize_answer', this.synthesizeAnswerNode.bind(this));
-
-    // Define workflow edges (linear flow - errors are checked in validation phase)
-    workflow.addEdge(START, 'load_agent');
-    workflow.addEdge('load_agent', 'understand_goal');
-    workflow.addEdge('understand_goal', 'decompose_goal');
-    workflow.addEdge('decompose_goal', 'create_plan');
-    workflow.addEdge('create_plan', 'execute_react');
-    workflow.addEdge('execute_react', 'synthesize_answer');
-    workflow.addEdge('synthesize_answer', END);
-
-    return workflow.compile();
-  }
-
   // ============================================================================
   // WORKFLOW NODES
   // ============================================================================
@@ -1022,6 +972,53 @@ export async function* executeMode4(config: Mode4Config): AsyncGenerator<Autonom
     };
     throw error;
   }
+  }
+
 }
 
+function createMode4Workflow(
+  handler: Mode4AutonomousManualHandler
+): CompiledStateGraph<Mode4State, Partial<Mode4State>> {
+  const workflow = new StateGraph<Mode4State>({
+    channels: {
+      query: { value: (x: string, y: string) => y ?? x },
+      conversationHistory: { value: (x: BaseMessage[], y: BaseMessage[]) => y ?? x },
+      config: { value: (x: Mode4Config, y: Mode4Config) => y ?? x },
+      goalUnderstanding: { value: (x: GoalUnderstanding, y: GoalUnderstanding) => y ?? x },
+      executionPlan: { value: (x: ExecutionPlan, y: ExecutionPlan) => y ?? x },
+      subQuestions: { value: (x: CoTSubQuestion[], y: CoTSubQuestion[]) => y ?? x },
+      iterations: { value: (x: ReActIteration[], y: ReActIteration[]) => y ?? x },
+      currentPhase: { value: (x: string, y: string) => y ?? x },
+      currentIteration: { value: (x: number, y: number) => y ?? x },
+      finalAnswer: { value: (x: string, y: string) => y ?? x },
+      confidence: { value: (x: number, y: number) => y ?? x },
+      toolsUsed: { value: (x: string[], y: string[]) => y ?? x },
+      ragContexts: { value: (x: string[], y: string[]) => y ?? x },
+      sources: { value: (x: AutonomousEvidenceSource[], y: AutonomousEvidenceSource[]) => y ?? x },
+      citations: { value: (x: AutonomousCitation[], y: AutonomousCitation[]) => y ?? x },
+      executionTime: { value: (x: number, y: number) => y ?? x },
+      timestamp: { value: (x: string, y: string) => y ?? x },
+      error: { value: (x: string | undefined, y: string | undefined) => y ?? x },
+      selectedAgent: { value: (x: Agent, y: Agent) => y ?? x },
+      agentExpertise: { value: (x: string[], y: string[]) => y ?? x },
+      streamingSteps: { value: (x: any[], y: any[]) => y ?? x },
+    },
+  });
+
+  workflow.addNode('load_agent', handler.loadAgentNode.bind(handler));
+  workflow.addNode('understand_goal', handler.understandGoalNode.bind(handler));
+  workflow.addNode('decompose_goal', handler.decomposeGoalNode.bind(handler));
+  workflow.addNode('create_plan', handler.createPlanNode.bind(handler));
+  workflow.addNode('execute_react', handler.executeReActNode.bind(handler));
+  workflow.addNode('synthesize_answer', handler.synthesizeAnswerNode.bind(handler));
+
+  workflow.addEdge(START, 'load_agent');
+  workflow.addEdge('load_agent', 'understand_goal');
+  workflow.addEdge('understand_goal', 'decompose_goal');
+  workflow.addEdge('decompose_goal', 'create_plan');
+  workflow.addEdge('create_plan', 'execute_react');
+  workflow.addEdge('execute_react', 'synthesize_answer');
+  workflow.addEdge('synthesize_answer', END);
+
+  return workflow.compile();
 }

@@ -10,6 +10,7 @@
  */
 
 import { AgentSelectorService } from '../../../src/features/chat/services/agent-selector-service';
+import { jest } from '@jest/globals';
 
 describe('Integration: API Gateway Agent Selector', () => {
   const API_GATEWAY_URL = process.env.API_GATEWAY_URL || 'http://localhost:3001';

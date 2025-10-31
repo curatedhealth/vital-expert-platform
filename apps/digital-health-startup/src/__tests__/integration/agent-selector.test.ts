@@ -4,7 +4,7 @@
  * Tests agent search, ranking, and selection with API Gateway integration
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, jest } from '@jest/globals';
 import { AgentSelectorService } from '@/features/chat/services/agent-selector-service';
 
 // Mock API Gateway calls for integration tests
@@ -21,7 +21,7 @@ describe('AgentSelectorService Integration', () => {
   let service: AgentSelectorService;
 
   beforeEach(() => {
-    vi.clearAllMocks();
+    jest.clearAllMocks();
     
     // Setup environment
     process.env.NEXT_PUBLIC_API_GATEWAY_URL = 'http://localhost:3001';
@@ -34,7 +34,7 @@ describe('AgentSelectorService Integration', () => {
     });
 
     // Mock API Gateway response
-    global.fetch = vi.fn().mockResolvedValue({
+    global.fetch = jest.fn().mockResolvedValue({
       ok: true,
       json: async () => mockApiGatewayAnalysis,
     });

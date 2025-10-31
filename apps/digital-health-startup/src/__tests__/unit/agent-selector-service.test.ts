@@ -7,86 +7,69 @@
  * Coverage Target: 90%+
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, jest } from '@jest/globals';
 import { AgentSelectorService } from '@/features/chat/services/agent-selector-service';
 import type { Agent, QueryAnalysis, AgentRanking } from '@/features/chat/services/agent-selector-service';
 import { GraphRAGSearchError, AgentSelectionError } from '@/lib/errors/agent-errors';
 
-// Mock dependencies
-const mockSupabase = {
-  from: vi.fn(),
-};
-
-const mockPinecone = {
-  index: vi.fn(),
-};
-
-const mockGraphRAGService = {
-  searchAgents: vi.fn(),
-};
-
-const mockCircuitBreaker = {
-  execute: vi.fn(),
-};
-
-const mockEmbeddingCache = {
-  get: vi.fn(),
-  set: vi.fn(),
-};
-
-const mockTracing = {
-  startSpan: vi.fn(() => 'span-id'),
-  endSpan: vi.fn(),
-  addTags: vi.fn(),
-};
-
-const mockLogger = {
-  info: vi.fn(),
-  error: vi.fn(),
-  warn: vi.fn(),
-  debug: vi.fn(),
-  infoWithMetrics: vi.fn(),
-};
-
-const mockMetricsService = {
-  recordOperation: vi.fn().mockResolvedValue(undefined),
-};
-
-// Setup mocks
-vi.mock('@supabase/supabase-js', () => ({
-  createClient: vi.fn(() => mockSupabase),
+// Setup mocks - must define inline for Jest hoisting
+jest.mock('@supabase/supabase-js', () => ({
+  createClient: jest.fn(() => ({
+    from: jest.fn(),
+  })),
 }));
 
-vi.mock('@pinecone-database/pinecone', () => ({
-  Pinecone: vi.fn(() => mockPinecone),
+jest.mock('@pinecone-database/pinecone', () => ({
+  Pinecone: jest.fn(() => ({
+    index: jest.fn(),
+  })),
 }));
 
-vi.mock('@/lib/services/agents/agent-graphrag-service', () => ({
-  agentGraphRAGService: mockGraphRAGService,
+jest.mock('@/lib/services/agents/agent-graphrag-service', () => ({
+  agentGraphRAGService: {
+    searchAgents: jest.fn(),
+  },
 }));
 
-vi.mock('@/lib/services/resilience/circuit-breaker', () => ({
-  getSupabaseCircuitBreaker: vi.fn(() => mockCircuitBreaker),
+jest.mock('@/lib/services/resilience/circuit-breaker', () => ({
+  getSupabaseCircuitBreaker: jest.fn(() => ({
+    execute: jest.fn(),
+  })),
 }));
 
-vi.mock('@/lib/services/cache/embedding-cache', () => ({
-  getEmbeddingCache: vi.fn(() => mockEmbeddingCache),
+jest.mock('@/lib/services/cache/embedding-cache', () => ({
+  getEmbeddingCache: jest.fn(() => ({
+    get: jest.fn(),
+    set: jest.fn(),
+  })),
 }));
 
-vi.mock('@/lib/services/observability/tracing', () => ({
-  getTracingService: vi.fn(() => mockTracing),
+jest.mock('@/lib/services/observability/tracing', () => ({
+  getTracingService: jest.fn(() => ({
+    startSpan: jest.fn(() => 'span-id'),
+    endSpan: jest.fn(),
+    addTags: jest.fn(),
+  })),
 }));
 
-vi.mock('@/lib/services/observability/structured-logger', () => ({
-  createLogger: vi.fn(() => mockLogger),
+jest.mock('@/lib/services/observability/structured-logger', () => ({
+  createLogger: jest.fn(() => ({
+    info: jest.fn(),
+    error: jest.fn(),
+    warn: jest.fn(),
+    debug: jest.fn(),
+    infoWithMetrics: jest.fn(),
+  })),
 }));
 
-vi.mock('@/lib/services/observability/agent-metrics-service', () => ({
-  getAgentMetricsService: vi.fn(() => mockMetricsService),
+jest.mock('@/lib/services/observability/agent-metrics-service', () => ({
+  getAgentMetricsService: jest.fn(() => ({
+    recordOperation: jest.fn().mockResolvedValue(undefined),
+  })),
 }));
 
-// Mock OpenAI fetch
-global.fetch = vi.fn();
+// Mock fetch
+global.fetch = jest.fn();
 
 describe('AgentSelectorService', () => {
   let service: AgentSelectorService;
@@ -94,7 +77,7 @@ describe('AgentSelectorService', () => {
   let mockSelect: any;
 
   beforeEach(() => {
-    vi.clearAllMocks();
+    jest.clearAllMocks();
 
     // Setup Supabase query builder
     mockQueryBuilder = {
@@ -269,7 +252,7 @@ describe('AgentSelectorService', () => {
     ];
 
     it('should successfully find agents using GraphRAG', async () => {
-      mockGraphRAGService.searchAgents.mockResolvedValue([
+      (mockGraphRAGService.searchAgents as jest.Mock).mockResolvedValue([
         {
           agent: mockAgents[0],
           similarity: 0.92,

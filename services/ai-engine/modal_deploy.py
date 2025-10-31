@@ -22,9 +22,10 @@ image = (
         "fastapi==0.104.1",
         "uvicorn[standard]==0.24.0",
         "pydantic==2.5.0",
-        "langchain==0.1.0",
-        "langchain-openai==0.0.5",
-        "langchain-community==0.0.10",
+        "langchain>=0.1.0,<0.2.0",
+        "langchain-openai>=0.0.5",
+        "langchain-community>=0.0.10",
+        "langsmith>=0.1.0,<0.2.0",  # Compatible with langchain-core>=0.1.25
         "supabase==2.3.0",
         "pinecone-client==2.2.4",
         "httpx>=0.24.0,<0.25.0",  # Compatible with supabase==2.3.0

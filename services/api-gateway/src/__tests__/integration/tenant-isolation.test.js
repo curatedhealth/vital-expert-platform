@@ -3,10 +3,20 @@
  * 
  * Tests that tenants can only access their own resources
  * and shared platform resources.
+ * 
+ * Note: These tests require a running database with test tenants.
+ * Set SKIP_INTEGRATION_TESTS=true to skip these tests.
  */
 
 const request = require('supertest');
 const app = require('../../index');
+
+// Skip integration tests if flag is set
+if (process.env.SKIP_INTEGRATION_TESTS === 'true') {
+  describe.skip('Tenant Isolation Integration Tests', () => {
+    it('Integration tests skipped (SKIP_INTEGRATION_TESTS=true)', () => {});
+  });
+} else {
 
 describe('Tenant Isolation Integration Tests', () => {
   const TENANT_A_ID = '00000000-0000-0000-0000-000000000002';
@@ -180,5 +190,5 @@ describe('Tenant Isolation Integration Tests', () => {
       }
     });
   });
-});
+}
 

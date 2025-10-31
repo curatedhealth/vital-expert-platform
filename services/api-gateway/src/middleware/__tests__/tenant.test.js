@@ -6,7 +6,9 @@ const { tenantMiddleware, extractTenantId, PLATFORM_TENANT_ID } = require('../te
 const { createClient } = require('@supabase/supabase-js');
 
 // Mock Supabase client
-jest.mock('@supabase/supabase-js');
+jest.mock('@supabase/supabase-js', () => ({
+  createClient: jest.fn(),
+}));
 
 describe('Tenant Middleware', () => {
   let req, res, next;
@@ -136,7 +138,10 @@ describe('Tenant Middleware', () => {
 
     it('should continue on error with platform tenant', async () => {
       req.headers.host = 'invalid';
-      extractTenantId.mockRejectedValue(new Error('Test error'));
+      
+      // Mock extractTenantId to throw an error
+      const originalExtractTenantId = extractTenantId;
+      jest.spyOn(require('../tenant'), 'extractTenantId').mockRejectedValue(new Error('Test error'));
 
       await tenantMiddleware(req, res, next);
 
@@ -144,6 +149,9 @@ describe('Tenant Middleware', () => {
       expect(res.locals.tenantId).toBe(PLATFORM_TENANT_ID);
       expect(res.locals.tenantDetectionMethod).toBe('error-fallback');
       expect(next).toHaveBeenCalled();
+      
+      // Restore original function
+      jest.restoreAllMocks();
     });
 
     it('should log tenant detection in development', async () => {

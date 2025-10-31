@@ -1,11 +1,18 @@
 """
 Integration tests for Tenant Isolation in Python AI Engine
+
+Note: These tests require a running database with test tenants.
+Set SKIP_INTEGRATION_TESTS=true to skip these tests.
 """
 
 import pytest
+import os
 from fastapi.testclient import TestClient
 from unittest.mock import AsyncMock, Mock, patch
 from main import app
+
+# Skip integration tests if flag is set
+skip_integration = os.getenv('SKIP_INTEGRATION_TESTS', 'false').lower() == 'true'
 
 # Test tenant IDs
 TENANT_A_ID = "00000000-0000-0000-0000-000000000002"
@@ -13,6 +20,7 @@ TENANT_B_ID = "00000000-0000-0000-0000-000000000003"
 PLATFORM_TENANT_ID = "00000000-0000-0000-0000-000000000001"
 
 
+@pytest.mark.skipif(skip_integration, reason="Integration tests skipped (SKIP_INTEGRATION_TESTS=true)")
 class TestTenantIsolation:
     """Integration tests for tenant isolation"""
 
@@ -112,6 +120,7 @@ class TestTenantIsolation:
         )
 
 
+@pytest.mark.skipif(skip_integration, reason="Integration tests skipped (SKIP_INTEGRATION_TESTS=true)")
 class TestSharedResources:
     """Integration tests for shared resources"""
 

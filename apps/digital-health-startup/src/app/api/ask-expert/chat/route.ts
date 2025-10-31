@@ -10,7 +10,6 @@
 
 import { createClient } from '@supabase/supabase-js';
 import { NextRequest } from 'next/server';
-import OpenAI from 'openai';
 
 // Initialize clients
 const supabase = createClient(
@@ -18,9 +17,8 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY!,
-});
+// API Gateway URL for Python AI Engine
+const API_GATEWAY_URL = process.env.NEXT_PUBLIC_API_GATEWAY_URL || process.env.API_GATEWAY_URL || 'http://localhost:3001';
 
 // Mode configuration - maps UI modes to backend search strategies
 // All modes search across all domains (including Digital Health and Regulatory Affairs)
@@ -148,12 +146,26 @@ export async function POST(req: NextRequest) {
             } as ReasoningStep,
           });
 
-          // Get embedding for user message
-          const embeddingResponse = await openai.embeddings.create({
-            model: 'text-embedding-3-small',
-            input: message,
+          // Get embedding for user message via API Gateway → Python AI Engine
+          const embeddingResponse = await fetch(`${API_GATEWAY_URL}/api/embeddings/generate`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'x-tenant-id': userId || '00000000-0000-0000-0000-000000000001',
+            },
+            body: JSON.stringify({
+              text: message,
+              model: 'text-embedding-3-small',
+              provider: 'openai',
+            }),
           });
-          const embedding = embeddingResponse.data[0].embedding;
+
+          if (!embeddingResponse.ok) {
+            throw new Error(`Embedding generation failed: ${embeddingResponse.statusText}`);
+          }
+
+          const embeddingData = await embeddingResponse.json();
+          const embedding = embeddingData.embedding;
 
           sendEvent('workflow', {
             step: {
@@ -271,49 +283,91 @@ export async function POST(req: NextRequest) {
             } as ReasoningStep,
           });
 
-          // Stream response from OpenAI
-          const completion = await openai.chat.completions.create({
-            model: 'gpt-4-turbo-preview',
-            messages: [
-              { role: 'system', content: systemPrompt },
-              { role: 'user', content: userPrompt },
-            ],
-            stream: true,
-            temperature: 0.7,
-            max_tokens: 2000,
+          // Stream response from Python AI Engine via API Gateway
+          const chatResponse = await fetch(`${API_GATEWAY_URL}/v1/chat/completions`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'x-tenant-id': userId || '00000000-0000-0000-0000-000000000001',
+            },
+            body: JSON.stringify({
+              messages: [
+                { role: 'system', content: systemPrompt },
+                { role: 'user', content: userPrompt },
+              ],
+              model: 'gpt-4-turbo-preview',
+              stream: true,
+              temperature: 0.7,
+              max_tokens: 2000,
+              agent_id: agentId,
+            }),
           });
+
+          if (!chatResponse.ok) {
+            throw new Error(`Chat completion failed: ${chatResponse.statusText}`);
+          }
+
+          // Handle streaming response from API Gateway
+          const reader = chatResponse.body?.getReader();
+          const decoder = new TextDecoder();
+          
+          if (!reader) {
+            throw new Error('Response body is not readable');
+          }
 
           let fullResponse = '';
           let tokenCount = 0;
+          let buffer = '';
 
-          for await (const chunk of completion) {
-            const content = chunk.choices[0]?.delta?.content || '';
-            if (content) {
-              fullResponse += content;
-              tokenCount++;
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
 
-              // Send content chunk
-              sendEvent('content', { content });
+            buffer += decoder.decode(value, { stream: true });
+            const lines = buffer.split('\n\n');
+            buffer = lines.pop() || ''; // Keep incomplete line in buffer
 
-              // Update progress every 50 tokens
-              if (tokenCount % 50 === 0) {
-                const progress = Math.min(95, 30 + (tokenCount / 10));
-                sendEvent('workflow', {
-                  step: {
-                    id: 'step-2',
-                    name: 'Expert Analysis',
-                    status: 'running',
-                    progress,
-                  } as WorkflowStep,
-                });
-              }
+            for (const line of lines) {
+              if (line.startsWith('data: ')) {
+                const data = line.slice(6);
+                if (data === '[DONE]') continue;
 
-              // Send metrics update every 100 tokens
-              if (tokenCount % 100 === 0) {
-                sendEvent('metrics', {
-                  tokensGenerated: tokenCount,
-                  tokensPerSecond: 42, // Approximate
-                });
+                try {
+                  const chunk = JSON.parse(data);
+                  const content = chunk.choices?.[0]?.delta?.content || '';
+                  
+                  if (content) {
+                    fullResponse += content;
+                    tokenCount++;
+
+                    // Send content chunk
+                    sendEvent('content', { content });
+
+                    // Update progress every 50 tokens
+                    if (tokenCount % 50 === 0) {
+                      const progress = Math.min(95, 30 + (tokenCount / 10));
+                      sendEvent('workflow', {
+                        step: {
+                          id: 'step-2',
+                          name: 'Expert Analysis',
+                          status: 'running',
+                          progress,
+                        } as WorkflowStep,
+                      });
+                    }
+
+                    // Send metrics update every 100 tokens
+                    if (tokenCount % 100 === 0) {
+                      sendEvent('metrics', {
+                        tokensGenerated: tokenCount,
+                        tokensPerSecond: 42, // Approximate
+                      });
+                    }
+                  }
+                } catch (e) {
+                  // Ignore JSON parse errors for incomplete chunks
+                  continue;
+                }
               }
             }
           }

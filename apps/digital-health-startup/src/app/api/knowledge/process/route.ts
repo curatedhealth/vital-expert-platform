@@ -2,14 +2,10 @@ import crypto from 'crypto';
 
 import { createClient } from '@supabase/supabase-js';
 import { NextRequest, NextResponse } from 'next/server';
-import { OpenAI } from 'openai';
 import pdf from 'pdf-parse';
 
-
-
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY!,
-});
+// API Gateway URL for Python AI Engine
+const API_GATEWAY_URL = process.env.NEXT_PUBLIC_API_GATEWAY_URL || process.env.API_GATEWAY_URL || 'http://localhost:3001';
 
 interface KnowledgeSource {
   url: string;

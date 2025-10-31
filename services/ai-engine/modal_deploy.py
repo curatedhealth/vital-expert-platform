@@ -71,6 +71,7 @@ def health():
     cpu=2.0,
     memory=4096,
     allow_concurrent_inputs=10,
+    healthcheck_path="/health",
 )
 @modal.asgi_app(label="vital-ai-engine")
 def fastapi_app():
@@ -78,12 +79,12 @@ def fastapi_app():
     import sys
     import os
     
-    # Set Python path
-    sys.path.insert(0, "/app")
-    os.chdir("/app")
+    # Set Python path - Modal runs from /app
+    sys.path.insert(0, "/app/src")
+    os.chdir("/app/src")
     
-    # Import and create FastAPI app
-    from src.main import app
+    # Import and return FastAPI app
+    from main import app
     
     return app
 

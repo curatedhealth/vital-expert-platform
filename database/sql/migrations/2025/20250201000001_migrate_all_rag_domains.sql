@@ -106,7 +106,16 @@ BEGIN
             ELSE 'Low'::exposure_level
         END as pii_sensitivity,
         COALESCE(
-            (kd.recommended_models->>'embedding'->>'primary')::text,
+            CASE 
+                WHEN EXISTS (
+                    SELECT 1 FROM information_schema.columns 
+                    WHERE table_schema = 'public' 
+                    AND table_name = 'knowledge_domains' 
+                    AND column_name = 'recommended_models'
+                ) AND kd.recommended_models IS NOT NULL 
+                THEN (kd.recommended_models->>'embedding'->>'primary')::text
+                ELSE NULL
+            END,
             'text-embedding-3-large'
         ) as embedding_model,
         CASE 
@@ -186,12 +195,24 @@ BEGIN
     -- ============================================================================
     RAISE NOTICE 'Updating recommended models from metadata...';
 
-    UPDATE public.knowledge_domains_new kdn
-    SET recommended_models = kd.recommended_models
-    FROM public.knowledge_domains kd
-    WHERE kdn.slug = kd.slug
-    AND kd.recommended_models IS NOT NULL
-    AND kdn.recommended_models IS NULL;
+    -- Check if recommended_models column exists before updating
+    IF EXISTS (
+        SELECT 1 FROM information_schema.columns 
+        WHERE table_schema = 'public' 
+        AND table_name = 'knowledge_domains' 
+        AND column_name = 'recommended_models'
+    ) THEN
+        UPDATE public.knowledge_domains_new kdn
+        SET recommended_models = kd.recommended_models
+        FROM public.knowledge_domains kd
+        WHERE kdn.slug = kd.slug
+        AND kd.recommended_models IS NOT NULL
+        AND kdn.recommended_models IS NULL;
+        
+        RAISE NOTICE 'Updated recommended_models from knowledge_domains';
+    ELSE
+        RAISE NOTICE 'recommended_models column does not exist in knowledge_domains, skipping update';
+    END IF;
 
     -- Step 5: Verify migration
     -- ============================================================================

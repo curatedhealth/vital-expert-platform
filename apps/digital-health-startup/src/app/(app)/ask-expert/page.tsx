@@ -1217,6 +1217,8 @@ function AskExpertPageContent() {
                   userFriendlyMessage = 'Network connection issue. Please check your internet connection and try again.';
                 } else if (errorCode === 'DATABASE_CONNECTION_ERROR') {
                   userFriendlyMessage = 'Database service is temporarily unavailable. Please try again in a moment.';
+                } else if (errorMessage.includes('Failed to connect to API Gateway') || errorMessage.includes('fetch failed') || errorMessage.includes('ECONNREFUSED')) {
+                  userFriendlyMessage = 'Unable to connect to the AI service. Please ensure the API Gateway server is running on port 3001 and try again.';
                 }
 
                 // Update streaming message with error

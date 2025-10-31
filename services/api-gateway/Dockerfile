@@ -1,63 +1,37 @@
-# Multi-stage Dockerfile for Node.js API Gateway
-FROM node:20-alpine as base
+# VITAL API Gateway - Production Dockerfile
+FROM node:18-alpine
 
-# Set environment variables
-ENV NODE_ENV=production \
-    NPM_CONFIG_LOGLEVEL=warn
-
-# Create app directory
+# Set working directory
 WORKDIR /app
+
+# Install curl for health checks
+RUN apk add --no-cache curl
 
 # Copy package files
 COPY package*.json ./
 
-# Development stage
-FROM base as development
+# Install dependencies
+RUN npm ci --only=production && npm cache clean --force
 
-# Install all dependencies (including dev)
-RUN npm ci
-
-# Copy source code
+# Copy application source
+COPY src/ ./src/
 COPY . .
 
-# Expose port
-EXPOSE 3001
-
-# Run development server
-CMD ["npm", "run", "dev"]
-
-# Production dependencies stage
-FROM base as dependencies
-
-# Install only production dependencies
-RUN npm ci --only=production && \
-    npm cache clean --force
-
-# Production stage
-FROM node:20-alpine as production
-
-WORKDIR /app
-
-# Copy production dependencies
-COPY --from=dependencies /app/node_modules ./node_modules
-
-# Copy application code
-COPY . .
+# Create logs directory
+RUN mkdir -p /app/logs && chmod 777 /app/logs
 
 # Create non-root user
-RUN addgroup -g 1001 -S nodejs && \
-    adduser -S nodejs -u 1001 && \
-    chown -R nodejs:nodejs /app
-
-# Switch to non-root user
-USER nodejs
-
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD node healthcheck.js || exit 1
+RUN addgroup -g 1000 appuser && \
+    adduser -D -u 1000 -G appuser appuser && \
+    chown -R appuser:appuser /app
+USER appuser
 
 # Expose port
 EXPOSE 3001
 
-# Start the server
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+    CMD curl -f http://localhost:3001/health || exit 1
+
+# Start the API Gateway
 CMD ["node", "src/index.js"]

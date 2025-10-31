@@ -36,7 +36,7 @@ services:
   # Node.js API Gateway
   node-gateway:
     build:
-      context: ./backend/node-gateway
+      context: ./services/api-gateway
       dockerfile: Dockerfile
     ports:
       - "3001:3001"
@@ -68,7 +68,7 @@ services:
   # Python AI Services - FastAPI Backend
   python-ai-services:
     build:
-      context: ./backend/python-ai-services
+      context: ./services/ai-engine
       dockerfile: Dockerfile
     ports:
       - "8000:8000"

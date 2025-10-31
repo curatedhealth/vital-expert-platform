@@ -29,6 +29,12 @@ class SupabaseClient:
     async def initialize(self):
         """Initialize Supabase client and vector database"""
         try:
+            # Check required settings
+            if not self.settings.supabase_url or not self.settings.supabase_service_role_key:
+                raise ValueError("SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required")
+            if not self.settings.database_url:
+                raise ValueError("DATABASE_URL is required")
+            
             # Initialize Supabase client
             self.client = create_client(
                 self.settings.supabase_url,

@@ -322,18 +322,21 @@ class Mode4AutonomousManualResponse(BaseModel):
         description="Autonomous reasoning details (iterations, steps, tools used)"
     )
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    """Application lifespan management"""
+async def initialize_services_background():
+    """Initialize services in background - non-blocking"""
     global agent_orchestrator, rag_pipeline, unified_rag_service, metadata_processing_service, supabase_client, websocket_manager
 
-    logger.info("🚀 Starting VITAL Path AI Services")
+    logger.info("🚀 Starting VITAL Path AI Services background initialization")
 
-    # Initialize services with error handling - don't block startup
+    # Initialize services with error handling and timeouts - don't block startup
     try:
         supabase_client = SupabaseClient()
-        await supabase_client.initialize()
+        # Add timeout to prevent hanging
+        await asyncio.wait_for(supabase_client.initialize(), timeout=10.0)
         logger.info("✅ Supabase client initialized")
+    except asyncio.TimeoutError:
+        logger.error("❌ Supabase initialization timed out")
+        supabase_client = None
     except Exception as e:
         logger.error("❌ Failed to initialize Supabase client", error=str(e))
         logger.warning("⚠️ App will start but Supabase-dependent features will be unavailable")
@@ -342,8 +345,11 @@ async def lifespan(app: FastAPI):
     try:
         if supabase_client:
             rag_pipeline = MedicalRAGPipeline(supabase_client)
-            await rag_pipeline.initialize()
+            await asyncio.wait_for(rag_pipeline.initialize(), timeout=5.0)
             logger.info("✅ RAG pipeline initialized")
+    except asyncio.TimeoutError:
+        logger.error("❌ RAG pipeline initialization timed out")
+        rag_pipeline = None
     except Exception as e:
         logger.error("❌ Failed to initialize RAG pipeline", error=str(e))
         rag_pipeline = None
@@ -351,8 +357,11 @@ async def lifespan(app: FastAPI):
     try:
         if supabase_client:
             unified_rag_service = UnifiedRAGService(supabase_client)
-            await unified_rag_service.initialize()
+            await asyncio.wait_for(unified_rag_service.initialize(), timeout=5.0)
             logger.info("✅ Unified RAG service initialized")
+    except asyncio.TimeoutError:
+        logger.error("❌ Unified RAG service initialization timed out")
+        unified_rag_service = None
     except Exception as e:
         logger.error("❌ Failed to initialize Unified RAG service", error=str(e))
         unified_rag_service = None
@@ -370,8 +379,11 @@ async def lifespan(app: FastAPI):
     try:
         if supabase_client and rag_pipeline:
             agent_orchestrator = AgentOrchestrator(supabase_client, rag_pipeline)
-            await agent_orchestrator.initialize()
+            await asyncio.wait_for(agent_orchestrator.initialize(), timeout=5.0)
             logger.info("✅ Agent orchestrator initialized")
+    except asyncio.TimeoutError:
+        logger.error("❌ Agent orchestrator initialization timed out")
+        agent_orchestrator = None
     except Exception as e:
         logger.error("❌ Failed to initialize agent orchestrator", error=str(e))
         agent_orchestrator = None
@@ -390,9 +402,33 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.warning("⚠️ Monitoring setup failed", error=str(e))
 
-    logger.info("✅ AI Services startup complete (some services may be unavailable)")
+    logger.info("✅ AI Services background initialization complete (some services may be unavailable)")
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Application lifespan management - start immediately, initialize services in background"""
+    global agent_orchestrator, rag_pipeline, unified_rag_service, metadata_processing_service, supabase_client, websocket_manager
+
+    logger.info("🚀 Starting VITAL Path AI Services")
+    
+    # Start services initialization in background task - don't block startup
+    # This allows the app to respond to healthchecks immediately
+    init_task = asyncio.create_task(initialize_services_background())
+    
+    # Don't wait for initialization - let it run in background
+    # The app can start responding to requests while services initialize
+    logger.info("✅ FastAPI app ready - services initializing in background")
 
     yield
+    
+    # Cancel background initialization if still running
+    if not init_task.done():
+        init_task.cancel()
+        try:
+            await init_task
+        except asyncio.CancelledError:
+            pass
 
     # Cleanup
     logger.info("🔄 Shutting down AI Services")

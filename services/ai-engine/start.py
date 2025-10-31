@@ -58,10 +58,11 @@ if __name__ == "__main__":
         traceback.print_exc()
         sys.exit(1)
     
-    # Production: use workers=0 (single process) for Docker, set reload=False
+    # Production: use workers=0 for single process mode, set reload=False
     # For development, set reload=True and workers=1
     reload = os.getenv("RELOAD", "false").lower() == "true"
-    workers = int(os.getenv("WORKERS", "1"))
+    # Use 0 workers for single-process mode (recommended for Railway)
+    workers = int(os.getenv("WORKERS", "0"))
     
     print(f"🌐 Starting server on 0.0.0.0:{port_int}")
     
@@ -73,8 +74,9 @@ if __name__ == "__main__":
             port=port_int,
             log_level=log_level,
             reload=reload,
-            workers=workers if not reload else 1,
-            access_log=True
+            workers=workers if not reload else 0,  # 0 workers = single process (better for Railway)
+            access_log=True,
+            timeout_keep_alive=30  # Keep connections alive
         )
     except Exception as e:
         print(f"❌ Failed to start server: {e}", file=sys.stderr)

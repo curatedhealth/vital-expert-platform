@@ -1,8 +1,7 @@
 # Railway Deployment Configuration for VITAL AI Engine
 
 [build]
-builder = "DOCKERFILE"
-dockerfilePath = "Dockerfile"
+builder = "NIXPACKS"
 
 [deploy]
 startCommand = "python3 start.py"

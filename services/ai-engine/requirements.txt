@@ -18,7 +18,7 @@ supabase==2.3.0
 pinecone-client==2.2.4
 
 # HTTP & Utilities
-httpx==0.25.2
+httpx>=0.24.0,<0.25.0  # Compatible with supabase==2.3.0
 python-dotenv==1.0.0
 numpy>=1.26.0  # Updated for Python 3.13 compatibility
 

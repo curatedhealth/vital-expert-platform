@@ -27,7 +27,7 @@ image = (
         "langchain-community==0.0.10",
         "supabase==2.3.0",
         "pinecone-client==2.2.4",
-        "httpx==0.25.2",
+        "httpx>=0.24.0,<0.25.0",  # Compatible with supabase==2.3.0
         "python-dotenv==1.0.0",
         "numpy>=1.26.0",
         "unidecode==1.3.7",

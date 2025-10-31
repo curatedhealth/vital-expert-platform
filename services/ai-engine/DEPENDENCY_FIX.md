@@ -1,63 +1,35 @@
-# ✅ Dependency Conflict Fixed
+# 🔧 Dependency Conflict Fix
 
-## Issue Found
+## Issue
 
-**Build Error:**
+**Error:** `httpx==0.25.2` conflicts with `supabase==2.3.0`
+
 ```
-ERROR: Cannot install -r requirements.txt (line 10) and langsmith==0.0.69 because these package versions have conflicting dependencies.
-
 The conflict is caused by:
-    The user requested langsmith==0.0.69
-    langchain 0.1.0 depends on langsmith<0.1.0 and >=0.0.77
+    The user requested httpx==0.25.2
+    supabase 2.3.0 depends on httpx<0.25.0 and >=0.24.0
 ```
 
 ---
 
 ## ✅ Fix Applied
 
-**Changed:**
-- `langsmith==0.0.69` ❌
-
-**To:**
-- `langsmith>=0.0.77,<0.1.0` ✅
-
----
-
-## 📋 Next Steps
-
-### 1. Push the Fix
-
-The fix is committed locally. Push to GitHub:
-
-```bash
-cd "/Users/hichamnaim/Downloads/Cursor/VITAL path"
-git push origin restructure/world-class-architecture
+**Changed in `requirements.txt`:**
+```diff
+- httpx==0.25.2
++ httpx>=0.24.0,<0.25.0  # Compatible with supabase==2.3.0
 ```
 
-### 2. Railway Will Auto-Redeploy
-
-Once pushed, Railway will:
-1. Detect the change on `restructure/world-class-architecture` branch
-2. Auto-redeploy
-3. Build should succeed now!
-
-### 3. Monitor Build
-
-Watch Railway logs to confirm:
-- ✅ Dependencies install successfully
-- ✅ Docker build completes
-- ✅ Service starts correctly
+**Also updated `modal_deploy.py`** to match.
 
 ---
 
-## ✅ Status
+## 🚀 Next Steps
 
-- ✅ Branch fixed: `restructure/world-class-architecture`
-- ✅ Root Directory fixed: `services/ai-engine`
-- ✅ Dependency conflict fixed: `langsmith>=0.0.77,<0.1.0`
-- ⏳ Push to GitHub → Auto-redeploy
+1. ✅ Dependency conflict fixed
+2. ✅ Changes committed
+3. ⏳ Railway will rebuild automatically
 
 ---
 
-**Next:** Push the fix to GitHub! 🚀
-
+**Status:** Dependency conflict resolved! Railway will redeploy. ✅

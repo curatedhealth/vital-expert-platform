@@ -54,6 +54,18 @@ function mapSimilarityToEvidenceLevel(similarity?: number): EvidenceLevel {
 // MODE 3 SERVICE CLASS
 // ============================================================================
 
+/**
+ * @deprecated This class is deprecated and no longer used.
+ * 
+ * This handler class was replaced by the `executeMode3()` function which
+ * calls the Python AI Engine via API Gateway (Golden Rule compliant).
+ * 
+ * The Python services handle Mode 3 execution with autonomous reasoning.
+ * 
+ * DO NOT USE: Use `executeMode3()` instead.
+ * 
+ * @see executeMode3 - The compliant function that uses API Gateway
+ */
 export class Mode3AutonomousAutomaticHandler {
   private workflow: any;
   private logger;

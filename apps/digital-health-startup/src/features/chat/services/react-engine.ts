@@ -1,8 +1,16 @@
 /**
+ * @deprecated This engine is deprecated and no longer used.
+ * 
  * ReAct Engine for Autonomous Modes
  * 
- * This engine handles the ReAct (Reasoning + Acting) loop for Mode 3 and Mode 4.
- * Implements the Think → Act → Observe → Reflect cycle for autonomous reasoning.
+ * This engine was used by the deprecated `Mode3AutonomousAutomaticHandler` class.
+ * Mode 3 and Mode 4 now use the Python AI Engine via API Gateway (Golden Rule compliant).
+ * 
+ * The Python services handle ReAct logic for autonomous reasoning.
+ * 
+ * DO NOT USE: Mode 3/4 execution now goes through API Gateway → Python AI Engine.
+ * 
+ * This file is kept for reference only and should be removed in a future cleanup.
  */
 
 import { ChatOpenAI } from '@langchain/openai';

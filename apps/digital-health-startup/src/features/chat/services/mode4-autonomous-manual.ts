@@ -31,6 +31,18 @@ import { reActEngine } from './react-engine';
 // MODE 4 SERVICE CLASS
 // ============================================================================
 
+/**
+ * @deprecated This class is deprecated and no longer used.
+ * 
+ * This handler class was replaced by the `executeMode4()` function which
+ * calls the Python AI Engine via API Gateway (Golden Rule compliant).
+ * 
+ * The Python services handle Mode 4 execution with autonomous reasoning.
+ * 
+ * DO NOT USE: Use `executeMode4()` instead.
+ * 
+ * @see executeMode4 - The compliant function that uses API Gateway
+ */
 export class Mode4AutonomousManualHandler {
   private workflow: CompiledStateGraph<Mode4State, Partial<Mode4State>>;
   private supabase: SupabaseClient;

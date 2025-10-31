@@ -1,5 +1,63 @@
 {
   "buildCommand": "cd ../.. && pnpm install && cd apps/digital-health-startup && pnpm run build",
   "installCommand": "cd ../.. && pnpm install --filter=@vital/digital-health-startup...",
-  "framework": "nextjs"
+  "framework": "nextjs",
+  "functions": {
+    "src/app/api/**/*.ts": {
+      "maxDuration": 300
+    },
+    "src/app/api/knowledge/upload/route.ts": {
+      "maxDuration": 300
+    },
+    "src/app/api/panel/**/*.ts": {
+      "maxDuration": 60
+    },
+    "src/app/api/orchestrate/route.ts": {
+      "maxDuration": 10
+    },
+    "src/app/api/ask-expert/**/*.ts": {
+      "maxDuration": 300
+    }
+  },
+  "regions": ["iad1"],
+  "github": {
+    "enabled": true,
+    "autoAlias": true,
+    "silent": false
+  },
+  "git": {
+    "deploymentEnabled": {
+      "restructure/world-class-architecture": true,
+      "main": true
+    }
+  },
+  "headers": [
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "X-XSS-Protection",
+          "value": "1; mode=block"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        }
+      ]
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/$1"
+    }
+  ]
 }

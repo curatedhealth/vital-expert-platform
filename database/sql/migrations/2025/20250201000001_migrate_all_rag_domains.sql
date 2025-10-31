@@ -121,19 +121,8 @@ BEGIN
             THEN 'Medium'::exposure_level
             ELSE 'Low'::exposure_level
         END as pii_sensitivity,
-        COALESCE(
-            CASE 
-                WHEN EXISTS (
-                    SELECT 1 FROM information_schema.columns 
-                    WHERE table_schema = 'public' 
-                    AND table_name = 'knowledge_domains' 
-                    AND column_name = 'recommended_models'
-                ) AND kd.recommended_models IS NOT NULL 
-                THEN (kd.recommended_models->>'embedding'->>'primary')::text
-                ELSE NULL
-            END,
-            'text-embedding-3-large'
-        ) as embedding_model,
+        -- Always use default embedding model (recommended_models will be migrated separately if column exists)
+        'text-embedding-3-large' as embedding_model,
         CASE 
             WHEN kd.tier = 1 THEN 0.9
             WHEN kd.tier = 2 THEN 0.75
@@ -212,18 +201,17 @@ BEGIN
     RAISE NOTICE 'Updating recommended models from metadata...';
 
     -- Check if recommended_models column exists before updating
-    IF EXISTS (
-        SELECT 1 FROM information_schema.columns 
-        WHERE table_schema = 'public' 
-        AND table_name = 'knowledge_domains' 
-        AND column_name = 'recommended_models'
-    ) THEN
-        UPDATE public.knowledge_domains_new kdn
-        SET recommended_models = kd.recommended_models
-        FROM public.knowledge_domains kd
-        WHERE kdn.slug = kd.slug
-        AND kd.recommended_models IS NOT NULL
-        AND kdn.recommended_models IS NULL;
+    -- Use the variable we checked earlier
+    IF has_recommended_models THEN
+        -- Use dynamic SQL to safely access the column
+        EXECUTE format('
+            UPDATE public.knowledge_domains_new kdn
+            SET recommended_models = kd.recommended_models
+            FROM public.knowledge_domains kd
+            WHERE kdn.slug = kd.slug
+            AND kd.recommended_models IS NOT NULL
+            AND (kdn.recommended_models IS NULL OR kdn.recommended_models = ''{}''::jsonb)
+        ');
         
         RAISE NOTICE 'Updated recommended_models from knowledge_domains';
     ELSE

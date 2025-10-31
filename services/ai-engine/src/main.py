@@ -378,8 +378,12 @@ app = FastAPI(
 # CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3002", "http://localhost:3001"],
+    allow_origins=settings.cors_origins if isinstance(settings.cors_origins, list) else 
+                  ["http://localhost:3000", "http://localhost:3001"] + 
+                  (settings.cors_origins.split(",") if isinstance(settings.cors_origins, str) else []),
     allow_credentials=True,
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_headers=["Content-Type", "Authorization", "x-tenant-id"],
     allow_methods=["*"],
     allow_headers=["*"],
 )

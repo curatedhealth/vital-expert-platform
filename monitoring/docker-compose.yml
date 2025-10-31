@@ -25,7 +25,6 @@ services:
       - '--web.enable-lifecycle'
     networks:
       - monitoring
-      - vital-python-network
     labels:
       - "com.vital-path.service=prometheus"
       - "com.vital-path.description=Metrics collection and storage"
@@ -102,10 +101,8 @@ networks:
     labels:
       - "com.vital-path.network=monitoring"
   
-  # Connect to vital-python-network to access Python AI Engine (if exists)
-  # Note: This network should be created by docker-compose.python-only.yml
-  vital-python-network:
-    external: false  # Will be created if doesn't exist
+  # Note: To access Python AI Engine, use host.docker.internal:8000 (Mac/Windows)
+  # For Linux, configure network_mode: "host" or use Docker service discovery
 
 volumes:
   prometheus-data:

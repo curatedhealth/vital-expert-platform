@@ -3,9 +3,11 @@
  * Connects the knowledge_base tool to the existing VITAL RAG system
  */
 
-import { OpenAIEmbeddings } from '@langchain/openai';
-
+import { getEmbeddingService } from '@/lib/services/embeddings/embedding-service-factory';
 import ragService from '@/shared/services/rag/rag-service';
+
+// API Gateway URL for Python AI Engine
+const API_GATEWAY_URL = process.env.NEXT_PUBLIC_API_GATEWAY_URL || process.env.API_GATEWAY_URL || 'http://localhost:3001';
 
 // Map tool categories to RAG domains
 const CATEGORY_TO_DOMAIN_MAP: Record<string, string> = {
@@ -48,12 +50,13 @@ export async function searchKnowledgeBase(
     // Map category to domain
     const domain = category ? CATEGORY_TO_DOMAIN_MAP[category] : undefined;
 
-    // Generate embedding for query using OpenAI
-    const embeddings = new OpenAIEmbeddings({
-      openAIApiKey: process.env.OPENAI_API_KEY
+    // Generate embedding via API Gateway → Python AI Engine
+    const embeddingService = getEmbeddingService({
+      domain: domain,
+      provider: 'openai', // Default to OpenAI, can be configured
     });
 
-    const queryEmbedding = await embeddings.embedQuery(query);
+    const queryEmbedding = await embeddingService.generateQueryEmbedding(query);
 
     // Search knowledge base using existing RAG service
     const results = await ragService.searchKnowledge(query, queryEmbedding, {

@@ -865,113 +865,124 @@ function mapCitationsToSources(citations: Array<Record<string, unknown>>): Array
   }));
 }
 
-export async function* executeMode4(config: Mode4Config): AsyncGenerator<AutonomousStreamChunk> {
-  const requestId = `mode4_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
-  const startTime = Date.now();
+export function executeMode4(
+  config: Mode4Config
+): AsyncGenerator<AutonomousStreamChunk> {
+  async function* run(): AsyncGenerator<AutonomousStreamChunk> {
+    const requestId = `mode4_${Date.now()}_${Math.random()
+      .toString(36)
+      .substring(2, 9)}`;
+    const startTime = Date.now();
 
-  try {
-    const payload = {
-      agent_id: config.agentId,
-      message: config.message,
-      enable_rag: config.enableRAG !== false,
-      enable_tools: config.enableTools ?? true,
-      selected_rag_domains: config.selectedRagDomains ?? [],
-      requested_tools: config.requestedTools ?? [],
-      temperature: config.temperature ?? 0.7,
-      max_tokens: config.maxTokens ?? 2000,
-      max_iterations: config.maxIterations ?? 10,
-      confidence_threshold: config.confidenceThreshold ?? 0.95,
-      user_id: config.userId,
-      tenant_id: config.tenantId,
-      session_id: config.sessionId,
-      conversation_history: config.conversationHistory ?? [],
-    };
+    try {
+      const payload = {
+        agent_id: config.agentId,
+        message: config.message,
+        enable_rag: config.enableRAG !== false,
+        enable_tools: config.enableTools ?? true,
+        selected_rag_domains: config.selectedRagDomains ?? [],
+        requested_tools: config.requestedTools ?? [],
+        temperature: config.temperature ?? 0.7,
+        max_tokens: config.maxTokens ?? 2000,
+        max_iterations: config.maxIterations ?? 10,
+        confidence_threshold: config.confidenceThreshold ?? 0.95,
+        user_id: config.userId,
+        tenant_id: config.tenantId,
+        session_id: config.sessionId,
+        conversation_history: config.conversationHistory ?? [],
+      };
 
-    // Call via API Gateway to comply with Golden Rule (Python services via gateway)
-    const response = await fetch(`${API_GATEWAY_URL}/api/mode4/autonomous-manual`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(payload),
-    });
+      const response = await fetch(
+        `${API_GATEWAY_URL}/api/mode4/autonomous-manual`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(payload),
+        }
+      );
 
-    if (!response.ok) {
-      const errorBody = await response.json().catch(() => ({}));
-      throw new Error(errorBody.detail || errorBody.error || `API Gateway responded with status ${response.status}`);
-    }
+      if (!response.ok) {
+        const errorBody = await response.json().catch(() => ({}));
+        throw new Error(
+          errorBody.detail ||
+            errorBody.error ||
+            `API Gateway responded with status ${response.status}`
+        );
+      }
 
-    const result = (await response.json()) as Mode4AutonomousManualApiResponse;
+      const result =
+        (await response.json()) as Mode4AutonomousManualApiResponse;
 
-    // Emit autonomous reasoning metadata
-    if (result.autonomous_reasoning) {
+      if (result.autonomous_reasoning) {
+        yield {
+          type: 'reasoning_start',
+          metadata: {
+            max_iterations: result.autonomous_reasoning.max_iterations,
+            confidence_threshold:
+              result.autonomous_reasoning.confidence_threshold,
+            agent_id: result.agent_id,
+          },
+          timestamp: new Date().toISOString(),
+        };
+      }
+
+      const sources = mapCitationsToSources(result.citations || []);
+      if (sources.length > 0) {
+        yield buildMetadataChunk({
+          event: 'rag_sources',
+          total: sources.length,
+          sources,
+          strategy: 'python_orchestrator',
+          cacheHit: false,
+          domains: config.selectedRagDomains ?? [],
+        });
+      }
+
+      yield buildMetadataChunk({
+        event: 'final',
+        confidence: result.confidence,
+        rag: {
+          totalSources: sources.length,
+          strategy: 'python_orchestrator',
+          domains: config.selectedRagDomains ?? [],
+          cacheHit: false,
+          retrievalTimeMs: result.processing_time_ms,
+        },
+        autonomous_reasoning: result.autonomous_reasoning,
+        citations: result.citations ?? [],
+      });
+
       yield {
-        type: 'reasoning_start',
+        type: 'content',
+        content: result.content,
         metadata: {
-          max_iterations: result.autonomous_reasoning.max_iterations,
-          confidence_threshold: result.autonomous_reasoning.confidence_threshold,
-          agent_id: result.agent_id,
+          confidence: result.confidence,
+          iterations: result.autonomous_reasoning?.iterations ?? 0,
+          toolsUsed: result.autonomous_reasoning?.tools_used ?? [],
+          agentId: result.agent_id,
         },
         timestamp: new Date().toISOString(),
       };
+
+      yield {
+        type: 'done',
+        timestamp: new Date().toISOString(),
+      };
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error';
+      yield {
+        type: 'error',
+        content: `Error: ${errorMessage}`,
+        timestamp: new Date().toISOString(),
+      };
+      throw error;
     }
-
-    // Emit RAG sources if available
-    const sources = mapCitationsToSources(result.citations || []);
-    if (sources.length > 0) {
-      yield buildMetadataChunk({
-        event: 'rag_sources',
-        total: sources.length,
-        sources,
-        strategy: 'python_orchestrator',
-        cacheHit: false,
-        domains: config.selectedRagDomains ?? [],
-      });
-    }
-
-    // Emit final metadata
-    yield buildMetadataChunk({
-      event: 'final',
-      confidence: result.confidence,
-      rag: {
-        totalSources: sources.length,
-        strategy: 'python_orchestrator',
-        domains: config.selectedRagDomains ?? [],
-        cacheHit: false,
-        retrievalTimeMs: result.processing_time_ms,
-      },
-      autonomous_reasoning: result.autonomous_reasoning,
-      citations: result.citations ?? [],
-    });
-
-    // Emit response content
-    yield {
-      type: 'content',
-      content: result.content,
-      metadata: {
-        confidence: result.confidence,
-        iterations: result.autonomous_reasoning?.iterations ?? 0,
-        toolsUsed: result.autonomous_reasoning?.tools_used ?? [],
-        agentId: result.agent_id,
-      },
-      timestamp: new Date().toISOString(),
-    };
-
-    // Emit completion
-    yield {
-      type: 'done',
-      timestamp: new Date().toISOString(),
-    };
-
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    yield {
-      type: 'error',
-      content: `Error: ${errorMessage}`,
-      timestamp: new Date().toISOString(),
-    };
-    throw error;
   }
+
+  return run();
 }
 
 function createMode4Workflow(

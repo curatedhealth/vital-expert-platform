@@ -1,5 +1,9 @@
 import { agentService } from '@/lib/agents/agent-service';
 import { supabase } from '@vital/sdk/client';
+import { getEmbeddingService } from '@/lib/services/embeddings/embedding-service-factory';
+
+// API Gateway URL for Python AI Engine
+const API_GATEWAY_URL = process.env.NEXT_PUBLIC_API_GATEWAY_URL || process.env.API_GATEWAY_URL || 'http://localhost:3001';
 
 // Types for RAG system - using fallback types for missing tables
 export interface KnowledgeSource {
@@ -486,19 +490,54 @@ export class SupabaseRAGService {
   // ===== HELPER METHODS =====
 
   /**
-   * Get embedding for query text
-   * In a real implementation, this would call OpenAI, Hugging Face, etc.
+   * Get embedding for query text via API Gateway → Python AI Engine
    */
   private async getQueryEmbedding(text: string, model: string): Promise<Partial<EmbeddingModels>> {
-    // Mock implementation - in production, call actual embedding services
-    const mockEmbedding = {
-      openai: Array.from({ length: 1536 }, () => Math.random()),
-      clinical: Array.from({ length: 768 }, () => Math.random()),
-      legal: Array.from({ length: 768 }, () => Math.random()),
-      scientific: Array.from({ length: 768 }, () => Math.random())
-    };
+    try {
+      // Use embedding service factory which routes to API Gateway
+      const embeddingService = getEmbeddingService({
+        provider: model === 'openai' ? 'openai' : 'huggingface',
+        model: model === 'openai' ? 'text-embedding-3-large' : undefined,
+      });
 
-    return mockEmbedding;
+      // Generate primary embedding (OpenAI)
+      const primaryEmbedding = await embeddingService.generateQueryEmbedding(text);
+
+      // For now, return OpenAI embedding as primary
+      // In future, could generate multiple embeddings for different models
+      const embedding: Partial<EmbeddingModels> = {
+        openai: primaryEmbedding,
+      };
+
+      // If model is not OpenAI and we have HuggingFace available, generate that too
+      if (model !== 'openai') {
+        try {
+          const hfService = getEmbeddingService({
+            provider: 'huggingface',
+          });
+          const hfEmbedding = await hfService.generateQueryEmbedding(text);
+          
+          if (model === 'clinical') {
+            embedding.clinical = hfEmbedding;
+          } else if (model === 'legal') {
+            embedding.legal = hfEmbedding;
+          } else if (model === 'scientific') {
+            embedding.scientific = hfEmbedding;
+          }
+        } catch (e) {
+          // Fallback to OpenAI embedding if HuggingFace fails
+          console.warn(`Failed to generate ${model} embedding, using OpenAI:`, e);
+        }
+      }
+
+      return embedding;
+    } catch (error) {
+      console.error('Error generating embedding via API Gateway:', error);
+      // Fallback to zero embedding if API Gateway fails
+      return {
+        openai: Array.from({ length: 1536 }, () => 0),
+      };
+    }
   }
 
   /**

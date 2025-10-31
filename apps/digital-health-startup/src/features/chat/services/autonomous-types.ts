@@ -40,6 +40,7 @@ export interface ReActIteration {
   confidence: number;   // Current confidence level (0-1)
   toolsUsed?: string[]; // Tools that were used in this iteration
   ragContext?: string;  // RAG context retrieved
+  sources?: AutonomousEvidenceSource[]; // Evidence gathered during this iteration
 }
 
 /**
@@ -143,6 +144,8 @@ export interface BaseAutonomousState {
   confidence: number;
   toolsUsed: string[];
   ragContexts: string[];
+  sources: AutonomousEvidenceSource[];
+  citations: AutonomousCitation[];
   
   // Metadata
   executionTime: number;
@@ -185,6 +188,7 @@ export interface Mode4State extends BaseAutonomousState {
  * Stream chunk types for autonomous modes
  */
 export type AutonomousStreamChunkType = 
+  | 'chunk'
   | 'goal_understanding'
   | 'execution_plan'
   | 'agent_selection'
@@ -202,6 +206,7 @@ export type AutonomousStreamChunkType =
   | 'reflection_start'
   | 'reflection'
   | 'phase_complete'
+  | 'sources'
   | 'final_answer'
   | 'error'
   | 'done';
@@ -209,6 +214,7 @@ export type AutonomousStreamChunkType =
 export interface AutonomousStreamChunk {
   type: AutonomousStreamChunkType;
   content?: string;
+  sources?: AutonomousEvidenceSource[];
   metadata?: {
     iteration?: number;
     phase?: string;
@@ -216,6 +222,8 @@ export interface AutonomousStreamChunk {
     agent?: Agent;
     toolsUsed?: string[];
     ragContext?: string;
+    totalSources?: number;
+    domains?: string[];
   };
   timestamp: string;
 }
@@ -328,4 +336,27 @@ export interface AutonomousMetrics {
   confidenceAchieved: number;
   successRate: number;
   errorCount: number;
+}
+
+// ============================================================================
+// EVIDENCE & CITATION TYPES
+// ============================================================================
+
+export interface AutonomousEvidenceSource {
+  id: string;
+  title: string;
+  url?: string;
+  excerpt?: string;
+  similarity?: number;
+  domain?: string;
+  organization?: string;
+  provider?: string;
+  sourceType?: string;
+  lastUpdated?: string;
+}
+
+export interface AutonomousCitation {
+  number: number;
+  sourceId?: string;
+  sources?: AutonomousEvidenceSource[];
 }

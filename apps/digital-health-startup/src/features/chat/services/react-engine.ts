@@ -15,7 +15,9 @@ import {
   ConfidenceAssessment,
   ToolExecutionResult,
   AutonomousTool,
-  Agent
+  Agent,
+  AutonomousEvidenceSource,
+  AutonomousCitation
 } from './autonomous-types';
 import { unifiedRAGService } from '../../../lib/services/rag/unified-rag-service';
 
@@ -27,6 +29,7 @@ export class ReActEngine {
   private llm: ChatOpenAI;
   private availableTools: Map<string, AutonomousTool> = new Map();
   private enableRAG: boolean = true; // Default to enabled
+  private collectedSources: AutonomousEvidenceSource[] = [];
 
   constructor() {
     this.llm = new ChatOpenAI({
@@ -55,6 +58,9 @@ export class ReActEngine {
     finalAnswer: string;
     confidence: number;
     toolsUsed: string[];
+    ragContexts: string[];
+    sources: AutonomousEvidenceSource[];
+    citations: AutonomousCitation[];
   }> {
     console.log('🔄 [ReAct] Starting ReAct loop execution...');
     console.log(`   RAG: ${enableRAG ? '✅ enabled' : '❌ disabled'}`);
@@ -76,6 +82,8 @@ export class ReActEngine {
     let currentIteration = 0;
     let overallConfidence = 0;
     const toolsUsed: string[] = [];
+    this.collectedSources = [];
+    const ragContexts: string[] = [];
     
     // Store enableRAG for use in action execution
     this.enableRAG = enableRAG;
@@ -156,6 +164,10 @@ export class ReActEngine {
 
         const actionResult = await this.executeAction(action, agent);
         toolsUsed.push(...actionResult.toolsUsed);
+        if (actionResult.ragContext) {
+          ragContexts.push(actionResult.ragContext);
+        }
+        const iterationSources = Array.isArray(actionResult.sources) ? actionResult.sources : [];
 
         if (onStep) {
           onStep({
@@ -241,7 +253,8 @@ export class ReActEngine {
           reflection,
           confidence: overallConfidence,
           toolsUsed: actionResult.toolsUsed,
-          ragContext: actionResult.ragContext
+          ragContext: actionResult.ragContext,
+          sources: iterationSources
         };
 
         iterations.push(iteration);
@@ -276,12 +289,16 @@ export class ReActEngine {
       }
     }
 
+    const normalizedSources = this.getNormalizedSources();
+    const citations = this.buildCitationsFromSources(normalizedSources);
+
     // Generate final answer
     const finalAnswer = await this.synthesizeFinalAnswer(
       iterations,
       activeSubQuestions,
       goalUnderstanding,
-      agent
+      agent,
+      normalizedSources
     );
 
     console.log(`✅ [ReAct] Loop completed after ${iterations.length} iterations`);
@@ -290,7 +307,10 @@ export class ReActEngine {
       iterations,
       finalAnswer,
       confidence: overallConfidence,
-      toolsUsed: [...new Set(toolsUsed)] // Remove duplicates
+      toolsUsed: [...new Set(toolsUsed)], // Remove duplicates
+      ragContexts,
+      sources: normalizedSources,
+      citations
     };
   }
 
@@ -426,6 +446,7 @@ What action should we take next?
     result: string;
     toolsUsed: string[];
     ragContext?: string;
+    sources?: AutonomousEvidenceSource[];
   }> {
     console.log('⚡ [ReAct] Executing action...');
 
@@ -466,6 +487,7 @@ What action should we take next?
       let result: string;
       let toolsUsed: string[] = [];
       let ragContext: string | undefined;
+      let evidenceSources: AutonomousEvidenceSource[] = [];
 
       switch (actionType) {
         case 'search_knowledge':
@@ -473,6 +495,7 @@ What action should we take next?
           result = ragResult.content;
           ragContext = ragResult.context;
           toolsUsed.push('rag_search');
+          evidenceSources = ragResult.sources;
           break;
 
         case 'use_tool':
@@ -501,14 +524,15 @@ What action should we take next?
       }
 
       console.log(`✅ [ReAct] Action executed: ${actionType}`);
-      return { result, toolsUsed, ragContext };
+      return { result, toolsUsed, ragContext, sources: evidenceSources };
 
     } catch (error) {
       console.error('❌ [ReAct] Action execution failed:', error);
       return {
         result: `Action execution failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
         toolsUsed: [],
-        ragContext: undefined
+        ragContext: undefined,
+        sources: []
       };
     }
   }
@@ -687,7 +711,8 @@ What have we learned from this iteration?
     iterations: ReActIteration[],
     subQuestions: CoTSubQuestion[],
     goalUnderstanding: GoalUnderstanding,
-    agent: Agent
+    agent: Agent,
+    sources: AutonomousEvidenceSource[]
   ): Promise<string> {
     console.log('📝 [ReAct] Synthesizing final answer...');
 
@@ -702,6 +727,9 @@ Given all the iterations and sub-questions, create a final answer that:
 5. Is well-structured and easy to understand
 
 Be comprehensive but concise, and ensure the answer is valuable to the user.
+
+When referencing factual statements, cite supporting evidence using square brackets with the source number (e.g., [1]).
+Only use numbers that correspond to the provided source list.
 `;
 
     const iterationSummary = iterations.map(iter => 
@@ -709,6 +737,13 @@ Be comprehensive but concise, and ensure the answer is valuable to the user.
     ).join('\n');
 
     const answeredQuestions = subQuestions.filter(q => q.status === 'answered');
+    const sourcesSection = sources.length > 0
+      ? `Available Sources:\n${sources.map((source, idx) => {
+          const base = `[${idx + 1}] ${source.title || 'Untitled source'}`;
+          const urlPart = source.url ? ` (${source.url})` : '';
+          return `${base}${urlPart}`;
+        }).join('\n')}`
+      : 'No external sources were collected. Rely on internal reasoning while noting the lack of evidence.';
 
     const messages = [
       new SystemMessage(systemPrompt),
@@ -721,6 +756,8 @@ ${iterationSummary}
 
 Answered Sub-Questions:
 ${answeredQuestions.map(q => `- ${q.question}: ${q.answer}`).join('\n')}
+
+${sourcesSection}
 
 Create a comprehensive final answer.
 `)
@@ -742,12 +779,17 @@ Create a comprehensive final answer.
   // ACTION EXECUTION HELPERS
   // ============================================================================
 
-  private async executeRAGSearch(query: string, agent: Agent, enableRAG: boolean = true): Promise<{ content: string; context: string }> {
+  private async executeRAGSearch(
+    query: string,
+    agent: Agent,
+    enableRAG: boolean = true
+  ): Promise<{ content: string; context: string; sources: AutonomousEvidenceSource[] }> {
     if (!enableRAG) {
       console.log('⚠️  [ReAct] RAG is disabled - skipping knowledge search');
       return {
         content: 'RAG is disabled. Using only agent knowledge base.',
-        context: ''
+        context: '',
+        sources: []
       };
     }
 
@@ -762,17 +804,151 @@ Create a comprehensive final answer.
         strategy: 'agent-optimized'
       });
 
+      const sources: AutonomousEvidenceSource[] = Array.isArray(ragResult.sources)
+        ? ragResult.sources.map((doc: any, idx: number) => {
+            const metadata = doc.metadata || {};
+            const similarity =
+              typeof metadata.similarity === 'number'
+                ? metadata.similarity
+                : typeof metadata.score === 'number'
+                  ? metadata.score
+                  : undefined;
+            return {
+              id:
+                metadata.id ||
+                doc.id ||
+                metadata.document_id ||
+                metadata.source_id ||
+                `rag-source-${idx + 1}`,
+              title:
+                metadata.source_title ||
+                metadata.title ||
+                doc.title ||
+                `Source ${idx + 1}`,
+              url: metadata.url || metadata.link || undefined,
+              excerpt:
+                doc.pageContent ||
+                metadata.excerpt ||
+                metadata.summary ||
+                undefined,
+              similarity,
+              domain: metadata.domain,
+              organization: metadata.organization,
+              provider: metadata.provider,
+              sourceType: metadata.source_type || metadata.type,
+              lastUpdated: metadata.updated_at || metadata.last_updated || metadata.published_at,
+            };
+          })
+        : [];
+
+      if (sources.length > 0) {
+        this.addEvidenceSources(sources);
+      }
+
       return {
         content: ragResult.answer || 'No relevant context found',
-        context: ragResult.sources?.map((s: any) => s.pageContent).join('\n') || ''
+        context: Array.isArray(ragResult.sources)
+          ? ragResult.sources
+              .map((s: any) => s.pageContent || s.content || '')
+              .filter((segment: string) => segment && segment.trim().length > 0)
+              .join('\n')
+          : '',
+        sources
       };
     } catch (error) {
       console.error('RAG search failed:', error);
       return {
         content: `RAG search failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        context: ''
+        context: '',
+        sources: []
       };
     }
+  }
+
+  private addEvidenceSources(sources: AutonomousEvidenceSource[]): void {
+    for (const source of sources) {
+      if (!source) {
+        continue;
+      }
+      const identifierCandidate =
+        typeof source.url === 'string' && source.url.trim().length > 0
+          ? source.url.trim().toLowerCase()
+          : source.id && source.id.trim().length > 0
+            ? source.id.trim().toLowerCase()
+            : source.title && source.title.trim().length > 0
+              ? source.title.trim().toLowerCase()
+              : undefined;
+
+      const alreadyExists = identifierCandidate
+        ? this.collectedSources.some((existing) => {
+            const existingKey =
+              (existing.url && existing.url.toLowerCase()) ||
+              (existing.id && existing.id.toLowerCase()) ||
+              (existing.title && existing.title.toLowerCase());
+            return existingKey === identifierCandidate;
+          })
+        : false;
+
+      if (alreadyExists) {
+        continue;
+      }
+
+      const normalizedId =
+        source.id && source.id.trim().length > 0
+          ? source.id
+          : identifierCandidate && identifierCandidate.length > 0
+            ? identifierCandidate
+            : `source-${this.collectedSources.length + 1}`;
+
+      this.collectedSources.push({
+        ...source,
+        id: normalizedId,
+      });
+    }
+  }
+
+  private getNormalizedSources(): AutonomousEvidenceSource[] {
+    const unique = new Map<string, AutonomousEvidenceSource>();
+
+    this.collectedSources.forEach((source) => {
+      if (!source) {
+        return;
+      }
+
+      const candidateKey =
+        (typeof source.id === 'string' && source.id.trim().length > 0 && source.id.trim().toLowerCase()) ||
+        (typeof source.url === 'string' && source.url.trim().length > 0 && source.url.trim().toLowerCase()) ||
+        (typeof source.title === 'string' && source.title.trim().length > 0 && source.title.trim().toLowerCase());
+
+      const key = candidateKey ?? `source-${unique.size + 1}`;
+
+      if (!unique.has(key)) {
+        const normalizedId =
+          source.id && source.id.trim().length > 0
+            ? source.id
+            : candidateKey && candidateKey.length > 0
+              ? candidateKey
+              : `source-${unique.size + 1}`;
+
+        unique.set(key, {
+          ...source,
+          id: normalizedId,
+        });
+      }
+    });
+
+    return Array.from(unique.values()).map((source, idx) => ({
+      ...source,
+      id: source.id && source.id.trim().length > 0 ? source.id : `source-${idx + 1}`,
+    }));
+  }
+
+  private buildCitationsFromSources(sources: AutonomousEvidenceSource[]): AutonomousCitation[] {
+    return sources.map((source, index) => ({
+      number: index + 1,
+      sourceId: source.id,
+      sources: [source],
+    }));
   }
 
   private async executeTool(toolName: string, input: any): Promise<ToolExecutionResult> {

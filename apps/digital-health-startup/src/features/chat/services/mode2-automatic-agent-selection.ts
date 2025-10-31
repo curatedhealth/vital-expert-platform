@@ -64,7 +64,8 @@ export interface Mode2State {
   selectionConfidence: number;     // Confidence score (0-1)
   
   // Mode 1 Execution
-  mode1Response: string;           // Response from Mode 1 handler
+  mode1Response: string;           // Aggregated textual response
+  mode1Chunks: string[];           // Raw streaming chunks from Mode 1 (includes metadata markers)
   mode1Config: Mode1Config;        // Configuration passed to Mode 1
   
   // Metadata
@@ -139,6 +140,7 @@ export class Mode2AutomaticAgentSelectionHandler {
         agentSelectionReason: '',
         selectionConfidence: 0,
         mode1Response: '',
+        mode1Chunks: [],
         mode1Config: {} as Mode1Config,
         executionTime: 0,
         timestamp: new Date().toISOString()
@@ -227,6 +229,7 @@ export class Mode2AutomaticAgentSelectionHandler {
         agentSelectionReason: { value: (x: string, y: string) => y ?? x },
         selectionConfidence: { value: (x: number, y: number) => y ?? x },
         mode1Response: { value: (x: string, y: string) => y ?? x },
+        mode1Chunks: { value: (x: string[], y: string[]) => y ?? x },
         mode1Config: { value: (x: Mode1Config, y: Mode1Config) => y ?? x },
         executionTime: { value: (x: number, y: number) => y ?? x },
         timestamp: { value: (x: string, y: string) => y ?? x },
@@ -425,10 +428,14 @@ export class Mode2AutomaticAgentSelectionHandler {
 
       // Execute Mode 1 and collect response
       const mode1Stream = await this.mode1Handler.execute(mode1Config);
+      const mode1Chunks: string[] = [];
       let fullResponse = '';
 
       for await (const chunk of mode1Stream) {
-        fullResponse += chunk;
+        mode1Chunks.push(chunk);
+        if (typeof chunk === 'string' && !chunk.startsWith('__mode1_meta__')) {
+          fullResponse += chunk;
+        }
       }
 
       this.logger.info('mode2_mode1_execution_completed', {
@@ -438,6 +445,7 @@ export class Mode2AutomaticAgentSelectionHandler {
 
       return {
         mode1Response: fullResponse,
+        mode1Chunks,
         mode1Config
       };
 
@@ -450,6 +458,7 @@ export class Mode2AutomaticAgentSelectionHandler {
       
       return {
         mode1Response: `Error: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        mode1Chunks: [`Error: ${error instanceof Error ? error.message : 'Unknown error'}`],
         mode1Config: {} as Mode1Config
       };
     }
@@ -478,18 +487,15 @@ export class Mode2AutomaticAgentSelectionHandler {
     // Stream the actual response from Mode 1
     // For now, we'll stream the full response, but in a real implementation
     // we might want to stream it chunk by chunk as it's generated
-    const responseChunks = result.mode1Response.split(' ');
-    for (let i = 0; i < responseChunks.length; i++) {
-      const chunk = responseChunks[i] + (i < responseChunks.length - 1 ? ' ' : '');
-      
+    for (const chunk of result.mode1Chunks ?? []) {
+      if (!chunk) {
+        continue;
+      }
       yield {
         type: 'chunk',
         content: chunk,
-        timestamp: result.timestamp
+        timestamp: new Date().toISOString()
       };
-
-      // Small delay to simulate streaming
-      await new Promise(resolve => setTimeout(resolve, 10));
     }
 
     // Stream completion

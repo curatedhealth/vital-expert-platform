@@ -16,6 +16,8 @@ import {
   Mode4Config, 
   Mode4State, 
   AutonomousStreamChunk,
+  AutonomousEvidenceSource,
+  AutonomousCitation,
   Agent,
   GoalUnderstanding,
   CoTSubQuestion,
@@ -92,6 +94,8 @@ export class Mode4AutonomousManualHandler {
         confidence: 0,
         toolsUsed: [],
         ragContexts: [],
+        sources: [],
+        citations: [],
         executionTime: 0,
         timestamp: new Date().toISOString(),
         agentExpertise: []
@@ -189,6 +193,147 @@ export class Mode4AutonomousManualHandler {
     }
   }
 
+  private mapSimilarityToEvidenceLevel(similarity?: number) {
+    if (typeof similarity !== 'number') {
+      return 'Unknown';
+    }
+    if (similarity >= 0.85) {
+      return 'A';
+    }
+    if (similarity >= 0.7) {
+      return 'B';
+    }
+    if (similarity >= 0.55) {
+      return 'C';
+    }
+    return 'D';
+  }
+
+  private toBranchSource(
+    source: AutonomousEvidenceSource,
+    index: number
+  ) {
+    return {
+      id: source.id || `source-${index + 1}`,
+      title: source.title || `Source ${index + 1}`,
+      url: source.url,
+      excerpt: source.excerpt,
+      similarity: source.similarity,
+      domain: source.domain,
+      organization: source.organization,
+      evidenceLevel: this.mapSimilarityToEvidenceLevel(source.similarity),
+      lastUpdated: source.lastUpdated,
+    };
+  }
+
+  private formatMetaEvent(event: Record<string, unknown>): string {
+    return `__mode1_meta__${JSON.stringify(event)}`;
+  }
+
+  private buildFinalMetaChunk(
+    result: Mode4State,
+    sources: AutonomousEvidenceSource[],
+    citations: AutonomousCitation[],
+    startTime: number
+  ): string {
+    const branchSources = sources.map((source, idx) => this.toBranchSource(source, idx));
+    const sourceMap = new Map<string, any>();
+    branchSources.forEach((source) => {
+      if (source.id) {
+        sourceMap.set(String(source.id), source);
+      }
+    });
+
+    const normalizedCitations = (citations && citations.length > 0 ? citations : this.defaultCitationsFromSources(sources)).map(
+      (citation, idx) => {
+        const candidateSourceIds = [
+          ...(citation.sources?.map((src) => src.id).filter(Boolean) as string[]),
+          citation.sourceId,
+          branchSources[idx]?.id,
+        ].filter(Boolean) as string[];
+
+        const mappedSources = candidateSourceIds
+          .map((id) => sourceMap.get(String(id)))
+          .filter(Boolean);
+
+        if (mappedSources.length === 0 && branchSources[idx]) {
+          mappedSources.push(branchSources[idx]);
+        }
+
+        const uniqueSources = Array.from(
+          new Map(mappedSources.map((item) => [item.id, item])).values()
+        );
+
+        return {
+          number: citation.number ?? idx + 1,
+          sourceId: uniqueSources[0]?.id ?? citation.sourceId ?? branchSources[idx]?.id,
+          sources: uniqueSources,
+        };
+      }
+    );
+
+    const reasoning = result.iterations
+      ?.map((iteration) => iteration.reflection)
+      .filter((value): value is string => typeof value === 'string' && value.trim().length > 0);
+
+    const durationMs = result.executionTime || Math.max(0, Date.now() - startTime);
+    const uniqueDomains = Array.from(
+      new Set(
+        sources
+          .map((source) => source.domain)
+          .filter((domain): domain is string => typeof domain === 'string' && domain.trim().length > 0)
+      )
+    );
+
+    return this.formatMetaEvent({
+      event: 'final',
+      executionPath: 'mode4_autonomous',
+      durationMs,
+      rag: {
+        totalSources: sources.length,
+        strategy: 'autonomous-react',
+        domains: uniqueDomains,
+        cacheHit: false,
+        retrievalTimeMs: durationMs,
+      },
+      tools: {
+        allowed: Array.from(new Set(result.toolsUsed || [])),
+        used: Array.from(new Set(result.toolsUsed || [])),
+        totals: {
+          calls: result.toolsUsed?.length ?? 0,
+          success: result.toolsUsed?.length ?? 0,
+          failure: 0,
+          totalTimeMs: durationMs,
+        },
+      },
+      branches: [
+        {
+          id: branchSources[0]?.id || 'mode4-branch-0',
+          content: result.finalAnswer,
+          confidence: result.confidence,
+          citations: normalizedCitations,
+          sources: branchSources,
+          createdAt: new Date().toISOString(),
+          reasoning,
+        },
+      ],
+      currentBranch: 0,
+      confidence: result.confidence,
+      citations: normalizedCitations,
+    });
+  }
+
+  private defaultCitationsFromSources(
+    sources: AutonomousEvidenceSource[]
+  ): AutonomousCitation[] {
+    return sources.map((source, idx) => ({
+      number: idx + 1,
+      sourceId: source.id || `source-${idx + 1}`,
+      sources: [source],
+    }));
+  }
+}
+
   /**
    * Build LangGraph workflow for Mode 4
    */
@@ -208,6 +353,8 @@ export class Mode4AutonomousManualHandler {
         confidence: { value: (x: number, y: number) => y ?? x },
         toolsUsed: { value: (x: string[], y: string[]) => y ?? x },
         ragContexts: { value: (x: string[], y: string[]) => y ?? x },
+        sources: { value: (x: AutonomousEvidenceSource[], y: AutonomousEvidenceSource[]) => y ?? x },
+        citations: { value: (x: AutonomousCitation[], y: AutonomousCitation[]) => y ?? x },
         executionTime: { value: (x: number, y: number) => y ?? x },
         timestamp: { value: (x: string, y: string) => y ?? x },
         error: { value: (x: string | undefined, y: string | undefined) => y ?? x },
@@ -473,7 +620,10 @@ export class Mode4AutonomousManualHandler {
         iterations: reactResult.iterations,
         finalAnswer: reactResult.finalAnswer,
         confidence: reactResult.confidence,
-        toolsUsed: reactResult.toolsUsed
+        toolsUsed: reactResult.toolsUsed,
+        ragContexts: reactResult.ragContexts,
+        sources: reactResult.sources,
+        citations: reactResult.citations
       };
     } catch (error) {
       const nodeTime = Date.now() - nodeStartTime;
@@ -629,6 +779,37 @@ export class Mode4AutonomousManualHandler {
         }
       }
 
+      const normalizedSources = Array.isArray(result.sources) ? result.sources : [];
+      const normalizedCitations = Array.isArray(result.citations) ? result.citations : [];
+
+      const finalMetaChunk = this.buildFinalMetaChunk(result, normalizedSources, normalizedCitations, startTime);
+      yield {
+        type: 'chunk',
+        content: finalMetaChunk,
+        timestamp: new Date().toISOString()
+      };
+
+      if (normalizedSources.length > 0) {
+        const sourcePayloads = normalizedSources.map((source, idx) => this.toBranchSource(source, idx));
+        const domains = Array.from(
+          new Set(
+            sourcePayloads
+              .map((source) => source.domain)
+              .filter((domain): domain is string => typeof domain === 'string' && domain.trim().length > 0)
+          )
+        );
+
+        yield {
+          type: 'sources',
+          sources: sourcePayloads,
+          metadata: {
+            totalSources: sourcePayloads.length,
+            domains,
+          },
+          timestamp: new Date().toISOString()
+        };
+      }
+
       // Stream final answer
       yield {
         type: 'final_answer',
@@ -648,8 +829,10 @@ export class Mode4AutonomousManualHandler {
         metadata: {
           executionTime: result.executionTime,
           totalIterations: result.iterations.length,
-          finalConfidence: result.confidence
+          finalConfidence: result.confidence,
+          totalSources: normalizedSources.length
         },
+        sources: normalizedSources.map((source, idx) => this.toBranchSource(source, idx)),
         timestamp: new Date().toISOString()
       };
 

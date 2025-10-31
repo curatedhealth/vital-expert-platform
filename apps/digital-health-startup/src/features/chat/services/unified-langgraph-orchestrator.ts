@@ -1,4 +1,17 @@
 /**
+ * @deprecated This orchestrator is deprecated and no longer used.
+ * 
+ * Unified LangGraph Orchestrator - Enterprise AI/ML Workflow Engine
+ * 
+ * This orchestrator uses LangChain and LangGraph directly, violating the Golden Rule.
+ * All AI/ML services must be in Python and accessed via API Gateway.
+ * 
+ * Modes 1, 2, 3, and 4 now use the Python AI Engine via API Gateway (Golden Rule compliant).
+ * 
+ * DO NOT USE: All orchestration now goes through API Gateway → Python AI Engine.
+ * 
+ * This file is kept for reference only and should be removed in a future cleanup.
+ * 
  * @fileoverview Unified LangGraph Orchestrator - Enterprise AI/ML Workflow Engine
  * @module features/chat/services
  * @description Production-grade, state-machine based orchestration for all AI/ML workflows

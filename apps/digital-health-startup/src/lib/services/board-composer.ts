@@ -1,5 +1,17 @@
 /**
+ * @deprecated This service is deprecated and no longer used.
+ * 
  * Automatic Board Composer
+ * 
+ * This service uses LangChain directly (ChatOpenAI), violating the Golden Rule.
+ * All AI/ML services must be in Python and accessed via API Gateway.
+ * 
+ * Board composition now uses the Python AI Engine via API Gateway (Golden Rule compliant).
+ * 
+ * DO NOT USE: All board composition now goes through API Gateway → Python AI Engine.
+ * 
+ * This file is kept for reference only and should be removed in a future cleanup.
+ * 
  * AI-driven board composition based on query analysis
  * Implements Guide Section 3.2: Automatic Board Composition
  */

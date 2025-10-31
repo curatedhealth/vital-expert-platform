@@ -1,5 +1,17 @@
 /**
+ * @deprecated This service is deprecated and no longer used.
+ * 
  * Cloud RAG Service - Production-Grade Implementation
+ * 
+ * This service uses LangChain directly (ChatOpenAI, OpenAIEmbeddings), violating the Golden Rule.
+ * All AI/ML services must be in Python and accessed via API Gateway.
+ * 
+ * RAG operations now use the Python AI Engine via API Gateway (Golden Rule compliant).
+ * 
+ * DO NOT USE: All RAG operations now go through API Gateway → Python AI Engine.
+ * 
+ * This file is kept for reference only and should be removed in a future cleanup.
+ * 
  * Based on RAG_ENHANCEMENTS.md and KNOWLEDGE_DOMAINS_SETUP.md
  * 
  * Features:

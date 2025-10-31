@@ -11,7 +11,7 @@ langchain==0.1.0
 langchain-openai==0.0.5
 langchain-community==0.0.10
 langgraph==0.0.25
-langsmith==0.0.69
+langsmith>=0.0.77,<0.1.0
 
 # Database & Vector Store
 supabase==2.3.0

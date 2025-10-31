@@ -5,12 +5,13 @@ Medical AI Agent Orchestration with LangChain
 
 import os
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, HTTPException, Depends, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, HTTPException, Depends, WebSocket, WebSocketDisconnect, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, StreamingResponse
 import uvicorn
 import structlog
 from prometheus_client import Counter, Histogram, generate_latest
+from middleware.tenant_context import get_tenant_id, set_tenant_context_in_db
 from typing import List, Dict, Any, Optional
 import asyncio
 import json

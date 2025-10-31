@@ -6,6 +6,8 @@ const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
 const axios = require('axios');
 const redis = require('redis');
+const cookieParser = require('cookie-parser');
+const { tenantMiddleware } = require('./middleware/tenant');
 require('dotenv').config();
 
 const app = express();
@@ -57,6 +59,12 @@ app.use(compression());
 // Body parsing
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// Cookie parsing
+app.use(cookieParser());
+
+// Tenant context middleware (MUST be after body parsing, before routes)
+app.use(tenantMiddleware);
 
 // Logging
 if (NODE_ENV === 'production') {
@@ -115,7 +123,7 @@ app.get('/health', async (req, res) => {
 app.post('/v1/chat/completions', async (req, res) => {
   try {
     const { messages, agent_id, model, temperature, max_tokens, stream = false } = req.body;
-    const tenantId = req.headers['x-tenant-id'] || '00000000-0000-0000-0000-000000000001';
+    const tenantId = req.tenantId || '00000000-0000-0000-0000-000000000001';
 
     // Validate required fields
     if (!messages || !Array.isArray(messages) || messages.length === 0) {
@@ -190,7 +198,7 @@ app.post('/v1/chat/completions', async (req, res) => {
 app.post('/api/rag/query', async (req, res) => {
   try {
     const { query, text, strategy, domain_ids, selectedRagDomains, filters, max_results, maxResults, similarity_threshold, similarityThreshold, agent_id, agentId, user_id, userId, session_id, sessionId } = req.body;
-    const tenantId = req.headers['x-tenant-id'] || '00000000-0000-0000-0000-000000000001';
+    const tenantId = req.tenantId || '00000000-0000-0000-0000-000000000001';
 
     const queryText = query || text;
     if (!queryText) {
@@ -247,7 +255,7 @@ app.post('/api/rag/query', async (req, res) => {
 app.post('/v1/agents/query', async (req, res) => {
   try {
     const { query, agent_id, session_id, enable_rag = true } = req.body;
-    const tenantId = req.headers['x-tenant-id'] || '00000000-0000-0000-0000-000000000001';
+    const tenantId = req.tenantId || '00000000-0000-0000-0000-000000000001';
 
     if (!query || !agent_id) {
       return res.status(400).json({
@@ -318,7 +326,7 @@ app.post('/v1/agents/query', async (req, res) => {
 app.post('/api/mode1/manual', async (req, res) => {
   try {
     const { agent_id, message, enable_rag, enable_tools, selected_rag_domains, requested_tools, temperature, max_tokens, user_id, tenant_id, session_id, conversation_history } = req.body;
-    const tenantId = req.headers['x-tenant-id'] || tenant_id || '00000000-0000-0000-0000-000000000001';
+    const tenantId = req.tenantId || tenant_id || '00000000-0000-0000-0000-000000000001';
 
     if (!agent_id || !message) {
       return res.status(400).json({
@@ -377,7 +385,7 @@ app.post('/api/mode1/manual', async (req, res) => {
 app.post('/api/mode2/automatic', async (req, res) => {
   try {
     const { message, enable_rag, enable_tools, selected_rag_domains, requested_tools, temperature, max_tokens, user_id, tenant_id, session_id, conversation_history } = req.body;
-    const tenantId = req.headers['x-tenant-id'] || tenant_id || '00000000-0000-0000-0000-000000000001';
+    const tenantId = req.tenantId || tenant_id || '00000000-0000-0000-0000-000000000001';
 
     if (!message) {
       return res.status(400).json({
@@ -435,7 +443,7 @@ app.post('/api/mode2/automatic', async (req, res) => {
 app.post('/api/mode3/autonomous-automatic', async (req, res) => {
   try {
     const { message, enable_rag, enable_tools, selected_rag_domains, requested_tools, temperature, max_tokens, max_iterations, confidence_threshold, user_id, tenant_id, session_id, conversation_history } = req.body;
-    const tenantId = req.headers['x-tenant-id'] || tenant_id || '00000000-0000-0000-0000-000000000001';
+    const tenantId = req.tenantId || tenant_id || '00000000-0000-0000-0000-000000000001';
 
     if (!message) {
       return res.status(400).json({
@@ -495,7 +503,7 @@ app.post('/api/mode3/autonomous-automatic', async (req, res) => {
 app.post('/api/mode4/autonomous-manual', async (req, res) => {
   try {
     const { agent_id, message, enable_rag, enable_tools, selected_rag_domains, requested_tools, temperature, max_tokens, max_iterations, confidence_threshold, user_id, tenant_id, session_id, conversation_history } = req.body;
-    const tenantId = req.headers['x-tenant-id'] || tenant_id || '00000000-0000-0000-0000-000000000001';
+    const tenantId = req.tenantId || tenant_id || '00000000-0000-0000-0000-000000000001';
 
     if (!agent_id || !message) {
       return res.status(400).json({
@@ -556,7 +564,7 @@ app.post('/api/mode4/autonomous-manual', async (req, res) => {
 app.post('/api/metadata/process', async (req, res) => {
   try {
     const { filename, file_name, content, text, options } = req.body;
-    const tenantId = req.headers['x-tenant-id'] || '00000000-0000-0000-0000-000000000001';
+    const tenantId = req.tenantId || '00000000-0000-0000-0000-000000000001';
 
     const file_name_final = filename || file_name;
     const content_final = content || text || '';
@@ -609,7 +617,7 @@ app.post('/api/metadata/process', async (req, res) => {
 app.post('/api/metadata/extract', async (req, res) => {
   try {
     const { filename, file_name, content } = req.body;
-    const tenantId = req.headers['x-tenant-id'] || '00000000-0000-0000-0000-000000000001';
+    const tenantId = req.tenantId || '00000000-0000-0000-0000-000000000001';
 
     const file_name_final = filename || file_name;
     const content_final = content;
@@ -660,7 +668,7 @@ app.post('/api/metadata/extract', async (req, res) => {
 app.post('/api/metadata/sanitize', async (req, res) => {
   try {
     const { content, text, options } = req.body;
-    const tenantId = req.headers['x-tenant-id'] || '00000000-0000-0000-0000-000000000001';
+    const tenantId = req.tenantId || '00000000-0000-0000-0000-000000000001';
 
     const content_final = content || text || '';
 
@@ -710,7 +718,7 @@ app.post('/api/metadata/sanitize', async (req, res) => {
 app.post('/api/metadata/copyright-check', async (req, res) => {
   try {
     const { content, text, filename, file_name, metadata, options } = req.body;
-    const tenantId = req.headers['x-tenant-id'] || '00000000-0000-0000-0000-000000000001';
+    const tenantId = req.tenantId || '00000000-0000-0000-0000-000000000001';
 
     const content_final = content || text || '';
     const file_name_final = filename || file_name || 'document';
@@ -763,7 +771,7 @@ app.post('/api/metadata/copyright-check', async (req, res) => {
 app.post('/api/metadata/generate-filename', async (req, res) => {
   try {
     const { metadata, original_filename, filename } = req.body;
-    const tenantId = req.headers['x-tenant-id'] || '00000000-0000-0000-0000-000000000001';
+    const tenantId = req.tenantId || '00000000-0000-0000-0000-000000000001';
 
     if (!metadata) {
       return res.status(400).json({
@@ -811,7 +819,7 @@ app.post('/api/metadata/generate-filename', async (req, res) => {
 app.get('/v1/agents/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const tenantId = req.headers['x-tenant-id'] || '00000000-0000-0000-0000-000000000001';
+    const tenantId = req.tenantId || '00000000-0000-0000-0000-000000000001';
 
     const response = await axios.get(`${AI_ENGINE_URL}/v1/agents/${id}`, {
       headers: { 'x-tenant-id': tenantId },
@@ -840,7 +848,7 @@ app.get('/v1/agents/:id', async (req, res) => {
 app.post('/api/embeddings/generate', async (req, res) => {
   try {
     const { text, model, provider, dimensions, normalize } = req.body;
-    const tenantId = req.headers['x-tenant-id'] || '00000000-0000-0000-0000-000000000001';
+    const tenantId = req.tenantId || '00000000-0000-0000-0000-000000000001';
 
     if (!text) {
       return res.status(400).json({
@@ -897,7 +905,7 @@ app.post('/api/embeddings/generate', async (req, res) => {
 app.post('/api/embeddings/generate/batch', async (req, res) => {
   try {
     const { texts, model, provider, normalize } = req.body;
-    const tenantId = req.headers['x-tenant-id'] || '00000000-0000-0000-0000-000000000001';
+    const tenantId = req.tenantId || '00000000-0000-0000-0000-000000000001';
 
     if (!texts || !Array.isArray(texts) || texts.length === 0) {
       return res.status(400).json({
@@ -953,7 +961,7 @@ app.post('/api/embeddings/generate/batch', async (req, res) => {
 app.post('/api/agents/select', async (req, res) => {
   try {
     const { query, user_id, tenant_id, correlation_id } = req.body;
-    const tenantId = req.headers['x-tenant-id'] || tenant_id || '00000000-0000-0000-0000-000000000001';
+    const tenantId = req.tenantId || tenant_id || '00000000-0000-0000-0000-000000000001';
 
     if (!query) {
       return res.status(400).json({
@@ -1058,7 +1066,7 @@ app.get('/api/agents/:id/stats', async (req, res) => {
   try {
     const { id } = req.params;
     const { days = 7 } = req.query;
-    const tenantId = req.headers['x-tenant-id'] || '00000000-0000-0000-0000-000000000001';
+    const tenantId = req.tenantId || '00000000-0000-0000-0000-000000000001';
 
     if (!id) {
       return res.status(400).json({

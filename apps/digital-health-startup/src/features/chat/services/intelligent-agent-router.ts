@@ -1,7 +1,7 @@
 /**
  * Intelligent Agent Router
  *
- * Uses OpenAI's reasoning capabilities to analyze user queries and select
+ * Uses Python AI Engine via API Gateway to analyze user queries and select
  * the most appropriate agent from the available pool based on:
  * - Query content and domain
  * - Agent expertise and capabilities
@@ -10,11 +10,9 @@
  */
 
 import { createClient } from '@supabase/supabase-js';
-import OpenAI from 'openai';
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+// API Gateway URL for Python AI Engine
+const API_GATEWAY_URL = process.env.NEXT_PUBLIC_API_GATEWAY_URL || process.env.API_GATEWAY_URL || 'http://localhost:3001';
 
 export interface Agent {
   id: string;
@@ -106,24 +104,43 @@ JSON format:
   const userPrompt = `Query: "${userQuery}"`;
 
   try {
-    // Call OpenAI with faster model
-    const completion = await openai.chat.completions.create({
-      model: 'gpt-3.5-turbo', // Faster than GPT-4
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: userPrompt },
-      ],
-      temperature: 0.2,
-      max_tokens: 500, // Limit response size for speed
-      response_format: { type: 'json_object' },
+    // Call Python AI Engine via API Gateway for agent selection
+    const response = await fetch(`${API_GATEWAY_URL}/api/agents/select`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-tenant-id': '00000000-0000-0000-0000-000000000001',
+      },
+      body: JSON.stringify({
+        query: userQuery,
+        context: {
+          available_agents: agentContext,
+          chat_history: chatHistory || [],
+        },
+        correlation_id: `agent-select-${Date.now()}`,
+      }),
     });
 
-    const response = completion.choices[0].message.content;
-    if (!response) {
-      throw new Error('No response from OpenAI');
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ message: response.statusText }));
+      throw new Error(`API Gateway error: ${errorData.message || response.statusText}`);
     }
 
-    const result = JSON.parse(response);
+    const analysis = await response.json();
+
+    // Map Python response to expected format
+    const result = {
+      selectedAgentId: analysis.selected_agent?.id || analysis.agent_rankings?.[0]?.agent?.id,
+      confidence: analysis.confidence || analysis.agent_rankings?.[0]?.score || 75,
+      reasoning: analysis.reasoning || analysis.query_analysis?.summary || 'Agent selected based on query analysis',
+      alternatives: (analysis.agent_rankings || []).slice(1, 4).map((ranking: any) => ({
+        agentId: ranking.agent?.id,
+        score: ranking.score || 0,
+        reason: ranking.reason || '',
+      })),
+      escalationPath: analysis.escalation_path || [],
+      matchedCriteria: analysis.query_analysis?.medical_terms || [],
+    };
 
     // Find the selected agent
     const selectedAgent = availableAgents.find(

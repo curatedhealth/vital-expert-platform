@@ -126,17 +126,44 @@ export class Mode1ManualInteractiveHandler {
       };
 
       // Call via API Gateway to comply with Golden Rule (Python services via gateway)
-      const response = await fetch(`${API_GATEWAY_URL}/api/mode1/manual`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload),
-      });
+      console.log('[Mode1] Calling API Gateway:', `${API_GATEWAY_URL}/api/mode1/manual`);
+      
+      let response: Response;
+      try {
+        response = await fetch(`${API_GATEWAY_URL}/api/mode1/manual`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(payload),
+        });
+      } catch (fetchError) {
+        console.error('[Mode1] Fetch failed:', {
+          error: fetchError instanceof Error ? fetchError.message : String(fetchError),
+          apiGatewayUrl: API_GATEWAY_URL,
+          stack: fetchError instanceof Error ? fetchError.stack : undefined,
+        });
+        throw new Error(
+          `Failed to connect to API Gateway at ${API_GATEWAY_URL}. ` +
+          `Please ensure the API Gateway server is running. ` +
+          `Error: ${fetchError instanceof Error ? fetchError.message : String(fetchError)}`
+        );
+      }
 
       if (!response.ok) {
-        const errorBody = await response.json().catch(() => ({}));
-        throw new Error(errorBody.detail || errorBody.error || `AI engine responded with status ${response.status}`);
+        const errorText = await response.text().catch(() => 'Unknown error');
+        let errorBody;
+        try {
+          errorBody = JSON.parse(errorText);
+        } catch {
+          errorBody = { message: errorText || `HTTP ${response.status}` };
+        }
+        console.error('[Mode1] Response not OK:', {
+          status: response.status,
+          statusText: response.statusText,
+          error: errorBody,
+        });
+        throw new Error(errorBody.detail || errorBody.error || errorBody.message || `API Gateway responded with status ${response.status}`);
       }
 
       const result = (await response.json()) as Mode1ManualApiResponse;

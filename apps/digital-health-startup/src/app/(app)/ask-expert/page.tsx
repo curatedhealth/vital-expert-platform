@@ -1196,7 +1196,10 @@ function AskExpertPageContent() {
                 const errorCode = data.code || 'UNKNOWN_ERROR';
                 const errorMessage = data.message || data.content || `Unknown error from ${mode}`;
                 console.error(`[${mode}] Error (${errorCode}):`, errorMessage);
-                console.error(`[${mode}] Full error data:`, data);
+                console.error(`[${mode}] Full error data:`, JSON.stringify(data, null, 2));
+                if (data.stack) {
+                  console.error(`[${mode}] Error stack:`, data.stack);
+                }
                 
                 // Map error codes to user-friendly messages
                 let userFriendlyMessage = errorMessage;

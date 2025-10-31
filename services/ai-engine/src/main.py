@@ -1037,6 +1037,213 @@ async def get_supabase_client() -> SupabaseClient:
         raise HTTPException(status_code=503, detail="Supabase client not initialized")
     return supabase_client
 
+# Chat Completions Endpoint (OpenAI-compatible)
+class ChatCompletionMessage(BaseModel):
+    """Chat completion message"""
+    role: str = Field(..., description="Message role (system, user, assistant)")
+    content: str = Field(..., description="Message content")
+
+
+class ChatCompletionRequest(BaseModel):
+    """Chat completion request (OpenAI-compatible)"""
+    messages: List[ChatCompletionMessage] = Field(..., min_items=1, description="Conversation messages")
+    model: Optional[str] = Field("gpt-4-turbo-preview", description="Model to use")
+    temperature: Optional[float] = Field(0.7, ge=0.0, le=2.0, description="Sampling temperature")
+    max_tokens: Optional[int] = Field(4096, ge=1, le=16000, description="Maximum tokens to generate")
+    stream: Optional[bool] = Field(False, description="Whether to stream the response")
+    agent_id: Optional[str] = Field(None, description="Optional agent ID for context")
+
+
+@app.post("/v1/chat/completions")
+async def chat_completions(
+    request: ChatCompletionRequest,
+    orchestrator: AgentOrchestrator = Depends(get_agent_orchestrator)
+):
+    """
+    OpenAI-compatible chat completions endpoint
+    
+    Supports both streaming and non-streaming responses.
+    Enterprise-grade implementation with:
+    - Proper error handling and validation
+    - Structured logging with correlation IDs
+    - Performance metrics tracking
+    - Type safety with Pydantic models
+    """
+    REQUEST_COUNT.labels(method="POST", endpoint="/v1/chat/completions").inc()
+    
+    start_time = asyncio.get_event_loop().time()
+    correlation_id = f"chat_{datetime.now().timestamp()}"
+    
+    try:
+        logger.info(
+            "💬 Chat completion request",
+            correlation_id=correlation_id,
+            model=request.model,
+            message_count=len(request.messages),
+            stream=request.stream,
+            agent_id=request.agent_id
+        )
+        
+        # Get system and user messages
+        system_message = None
+        user_messages = []
+        
+        for msg in request.messages:
+            if msg.role == "system":
+                system_message = msg.content
+            elif msg.role == "user":
+                user_messages.append(msg.content)
+        
+        # Combine user messages if multiple
+        user_content = "\n\n".join(user_messages) if user_messages else ""
+        
+        if not user_content:
+            raise HTTPException(status_code=400, detail="At least one user message is required")
+        
+        # Use OpenAI client for chat completions
+        from openai import OpenAI
+        openai_client = OpenAI(api_key=settings.openai_api_key)
+        
+        # Build messages for OpenAI API
+        openai_messages = []
+        if system_message:
+            openai_messages.append({"role": "system", "content": system_message})
+        openai_messages.append({"role": "user", "content": user_content})
+        
+        # Handle streaming
+        if request.stream:
+            async def generate_stream():
+                """Generate streaming response"""
+                try:
+                    stream = openai_client.chat.completions.create(
+                        model=request.model or "gpt-4-turbo-preview",
+                        messages=openai_messages,
+                        temperature=request.temperature,
+                        max_tokens=request.max_tokens,
+                        stream=True,
+                        timeout=120.0
+                    )
+                    
+                    for chunk in stream:
+                        if chunk.choices and len(chunk.choices) > 0:
+                            delta = chunk.choices[0].delta
+                            chunk_data = {
+                                "id": f"chatcmpl-{correlation_id}",
+                                "object": "chat.completion.chunk",
+                                "created": int(datetime.now().timestamp()),
+                                "model": request.model or "gpt-4-turbo-preview",
+                                "choices": [{
+                                    "index": 0,
+                                    "delta": {
+                                        "content": delta.content if delta.content else "",
+                                        "role": delta.role if delta.role else None
+                                    },
+                                    "finish_reason": chunk.choices[0].finish_reason if chunk.choices[0].finish_reason else None
+                                }]
+                            }
+                            
+                            # Format as SSE
+                            yield f"data: {json.dumps(chunk_data)}\n\n"
+                    
+                    # Send [DONE] marker
+                    yield "data: [DONE]\n\n"
+                    
+                    # Log completion
+                    processing_time_ms = (asyncio.get_event_loop().time() - start_time) * 1000
+                    logger.info(
+                        "✅ Chat completion streamed",
+                        correlation_id=correlation_id,
+                        processing_time_ms=processing_time_ms
+                    )
+                    
+                except Exception as e:
+                    logger.error(
+                        "❌ Chat completion streaming failed",
+                        correlation_id=correlation_id,
+                        error=str(e),
+                        error_type=type(e).__name__
+                    )
+                    error_data = {
+                        "error": {
+                            "message": str(e),
+                            "type": type(e).__name__,
+                            "param": None,
+                            "code": None
+                        }
+                    }
+                    yield f"data: {json.dumps(error_data)}\n\n"
+            
+            return StreamingResponse(
+                generate_stream(),
+                media_type="text/event-stream",
+                headers={
+                    "Cache-Control": "no-cache",
+                    "Connection": "keep-alive",
+                }
+            )
+        
+        # Handle non-streaming
+        else:
+            response = openai_client.chat.completions.create(
+                model=request.model or "gpt-4-turbo-preview",
+                messages=openai_messages,
+                temperature=request.temperature,
+                max_tokens=request.max_tokens,
+                timeout=120.0
+            )
+            
+            processing_time_ms = (asyncio.get_event_loop().time() - start_time) * 1000
+            
+            logger.info(
+                "✅ Chat completion completed",
+                correlation_id=correlation_id,
+                processing_time_ms=processing_time_ms,
+                model=response.model,
+                usage=response.usage.dict() if hasattr(response, 'usage') and response.usage else None
+            )
+            
+            return {
+                "id": f"chatcmpl-{correlation_id}",
+                "object": "chat.completion",
+                "created": int(datetime.now().timestamp()),
+                "model": response.model,
+                "choices": [{
+                    "index": 0,
+                    "message": {
+                        "role": "assistant",
+                        "content": response.choices[0].message.content
+                    },
+                    "finish_reason": response.choices[0].finish_reason
+                }],
+                "usage": {
+                    "prompt_tokens": response.usage.prompt_tokens if hasattr(response, 'usage') and response.usage else 0,
+                    "completion_tokens": response.usage.completion_tokens if hasattr(response, 'usage') and response.usage else 0,
+                    "total_tokens": response.usage.total_tokens if hasattr(response, 'usage') and response.usage else 0
+                }
+            }
+    
+    except ValueError as e:
+        logger.error(
+            "❌ Invalid chat completion request",
+            correlation_id=correlation_id,
+            error=str(e)
+        )
+        raise HTTPException(status_code=400, detail=f"Invalid request: {str(e)}")
+        
+    except Exception as e:
+        processing_time_ms = (asyncio.get_event_loop().time() - start_time) * 1000
+        logger.error(
+            "❌ Chat completion failed",
+            correlation_id=correlation_id,
+            error=str(e),
+            error_type=type(e).__name__,
+            processing_time_ms=processing_time_ms
+        )
+        raise HTTPException(
+            status_code=500,
+            detail=f"Chat completion failed: {str(e)}"
+        )
+
 # Embedding Generation Endpoint
 class EmbeddingGenerationRequest(BaseModel):
     """Request for embedding generation"""

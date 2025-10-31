@@ -190,17 +190,31 @@ export function SupabaseAuthProvider({ children }: AuthProviderProps) {
 
   // Create profile immediately from session user data
   const createProfileFromSession = (authUser: User) => {
+    const primaryEmail =
+      authUser.email ||
+      authUser.user_metadata?.email ||
+      authUser.user_metadata?.preferred_username ||
+      authUser.user_metadata?.user_name ||
+      authUser.user_metadata?.login ||
+      '';
+
+    const resolvedFullName =
+      authUser.user_metadata?.full_name ||
+      authUser.user_metadata?.name ||
+      authUser.user_metadata?.display_name ||
+      authUser.user_metadata?.preferred_username ||
+      authUser.user_metadata?.user_name ||
+      primaryEmail.split('@')[0] ||
+      'User';
+
     const profile: UserProfile = {
       id: authUser.id,
-      email: authUser.email || 'user@example.com',
-      full_name: authUser.user_metadata?.full_name ||
-                 authUser.user_metadata?.name ||
-                 authUser.email?.split('@')[0] ||
-                 'User',
+      email: primaryEmail || 'user@example.com',
+      full_name: resolvedFullName,
       role: authUser.user_metadata?.role || 'user',
       tenant_id: authUser.user_metadata?.tenant_id || null,
       created_at: authUser.created_at,
-      updated_at: new Date().toISOString()
+      updated_at: new Date().toISOString(),
     };
 
     setUserProfile(profile);
@@ -225,7 +239,12 @@ export function SupabaseAuthProvider({ children }: AuthProviderProps) {
           ...fallbackProfile,
           ...data,
           // Ensure we have a proper name
-          full_name: data.full_name || fallbackProfile.full_name || data.email?.split('@')[0] || 'User'
+          full_name:
+            data.full_name ||
+            fallbackProfile.full_name ||
+            data.email?.split('@')[0] ||
+            fallbackProfile.email?.split('@')[0] ||
+            'User',
         };
         setUserProfile(mergedProfile);
         log.info('Profile updated from database:', mergedProfile.email, 'Name:', mergedProfile.full_name);

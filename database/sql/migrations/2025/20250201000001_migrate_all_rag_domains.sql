@@ -8,6 +8,7 @@
 DO $$
 DECLARE
     domain_count INTEGER;
+    has_recommended_models BOOLEAN;
 BEGIN
     -- Step 1: Verify knowledge_domains_new table exists
     IF NOT EXISTS (
@@ -17,7 +18,22 @@ BEGIN
         RAISE EXCEPTION 'knowledge_domains_new table does not exist. Please run the unified_rag_domain_architecture migration first.';
     END IF;
 
-    -- Step 2: Migrate existing domains from knowledge_domains to knowledge_domains_new
+    -- Step 2: Check if recommended_models column exists
+    -- ============================================================================
+    SELECT EXISTS (
+        SELECT 1 FROM information_schema.columns 
+        WHERE table_schema = 'public' 
+        AND table_name = 'knowledge_domains' 
+        AND column_name = 'recommended_models'
+    ) INTO has_recommended_models;
+
+    IF has_recommended_models THEN
+        RAISE NOTICE 'Found recommended_models column, will migrate it separately';
+    ELSE
+        RAISE NOTICE 'recommended_models column not found, using default embedding model';
+    END IF;
+
+    -- Step 3: Migrate existing domains from knowledge_domains to knowledge_domains_new
     -- ============================================================================
     RAISE NOTICE 'Starting domain migration from knowledge_domains to knowledge_domains_new...';
 
@@ -191,7 +207,7 @@ BEGIN
         domain_description_llm = EXCLUDED.domain_description_llm,
         updated_at = NOW();
 
-    -- Step 4: Update recommended_models if they exist in metadata
+    -- Step 5: Update recommended_models if they exist in metadata
     -- ============================================================================
     RAISE NOTICE 'Updating recommended models from metadata...';
 
@@ -214,7 +230,7 @@ BEGIN
         RAISE NOTICE 'recommended_models column does not exist in knowledge_domains, skipping update';
     END IF;
 
-    -- Step 5: Verify migration
+    -- Step 6: Verify migration
     -- ============================================================================
     SELECT COUNT(*) INTO domain_count FROM public.knowledge_domains_new;
     RAISE NOTICE '✅ Domain migration completed!';

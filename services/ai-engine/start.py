@@ -10,8 +10,10 @@ import sys
 script_dir = os.path.dirname(os.path.abspath(__file__))
 os.chdir(script_dir)
 
-# Add src to Python path to ensure imports work
-sys.path.insert(0, os.path.join(script_dir, 'src'))
+# Add both src and the parent directory to Python path to ensure imports work
+src_dir = os.path.join(script_dir, 'src')
+sys.path.insert(0, src_dir)
+sys.path.insert(0, script_dir)  # Also add script dir in case needed
 
 if __name__ == "__main__":
     # Get port from environment or default to 8000
@@ -60,16 +62,19 @@ if __name__ == "__main__":
     print(f"🌐 Starting server on 0.0.0.0:{port_int}")
     
     try:
-        # Use string path for uvicorn to allow proper module resolution
+        # Change to src directory so relative imports in main.py work correctly
+        os.chdir(src_dir)
+        print(f"📂 Changed working directory to: {os.getcwd()}")
+        
+        # Use string path for uvicorn - it will look for main.py in current directory
         uvicorn.run(
-            "main:app",  # Use string so uvicorn can resolve relative imports
+            "main:app",  # main.py is now in the current working directory (src/)
             host="0.0.0.0",
             port=port_int,
             log_level=log_level,
             reload=reload,
             workers=workers if not reload else 1,
-            access_log=True,
-            root_path=script_dir  # Set root path
+            access_log=True
         )
     except Exception as e:
         print(f"❌ Failed to start server: {e}", file=sys.stderr)

@@ -9,6 +9,10 @@ DO $$
 DECLARE
     domain_count INTEGER;
     has_recommended_models BOOLEAN;
+    has_icon BOOLEAN;
+    has_code BOOLEAN;
+    has_color BOOLEAN;
+    insert_sql TEXT;
 BEGIN
     -- Step 1: Verify knowledge_domains_new table exists
     IF NOT EXISTS (
@@ -18,7 +22,7 @@ BEGIN
         RAISE EXCEPTION 'knowledge_domains_new table does not exist. Please run the unified_rag_domain_architecture migration first.';
     END IF;
 
-    -- Step 2: Check if recommended_models column exists
+    -- Step 2: Check which optional columns exist
     -- ============================================================================
     SELECT EXISTS (
         SELECT 1 FROM information_schema.columns 
@@ -26,6 +30,27 @@ BEGIN
         AND table_name = 'knowledge_domains' 
         AND column_name = 'recommended_models'
     ) INTO has_recommended_models;
+
+    SELECT EXISTS (
+        SELECT 1 FROM information_schema.columns 
+        WHERE table_schema = 'public' 
+        AND table_name = 'knowledge_domains' 
+        AND column_name = 'icon'
+    ) INTO has_icon;
+
+    SELECT EXISTS (
+        SELECT 1 FROM information_schema.columns 
+        WHERE table_schema = 'public' 
+        AND table_name = 'knowledge_domains' 
+        AND column_name = 'code'
+    ) INTO has_code;
+
+    SELECT EXISTS (
+        SELECT 1 FROM information_schema.columns 
+        WHERE table_schema = 'public' 
+        AND table_name = 'knowledge_domains' 
+        AND column_name = 'color'
+    ) INTO has_color;
 
     IF has_recommended_models THEN
         RAISE NOTICE 'Found recommended_models column, will migrate it separately';
@@ -37,115 +62,120 @@ BEGIN
     -- ============================================================================
     RAISE NOTICE 'Starting domain migration from knowledge_domains to knowledge_domains_new...';
 
-    INSERT INTO public.knowledge_domains_new (
-        domain_id,
-        parent_domain_id,
-        function_id,
-        function_name,
-        domain_name,
-        domain_description_llm,
-        domain_scope,
-        tier,
-        tier_label,
-        priority,
-        maturity_level,
-        regulatory_exposure,
-        pii_sensitivity,
-        embedding_model,
-        rag_priority_weight,
-        access_policy,
-        is_active,
-        -- Legacy fields for backward compatibility
-        code,
-        slug,
-        name,
-        description,
-        keywords,
-        color,
-        icon,
-        metadata
-    )
-    SELECT 
-        COALESCE(kd.slug, 'domain_' || kd.id::text) as domain_id,
-        NULL as parent_domain_id,  -- Can be updated later for hierarchy
-        CASE 
-            WHEN kd.slug LIKE 'regulatory%' OR kd.slug LIKE 'quality%' OR kd.slug LIKE 'compliance%' 
-            THEN 'regulatory_compliance'
-            WHEN kd.slug LIKE 'clinical%' OR kd.slug LIKE 'medical%' OR kd.slug LIKE 'biostat%' 
-            THEN 'clinical_development'
-            WHEN kd.slug LIKE 'market%' OR kd.slug LIKE 'commercial%' OR kd.slug LIKE 'pricing%' 
-            THEN 'market_access'
-            WHEN kd.slug LIKE 'data%' OR kd.slug LIKE 'analytics%' 
-            THEN 'data_science'
-            WHEN kd.slug LIKE 'digital%' OR kd.slug LIKE 'health%' 
-            THEN 'digital_health'
-            ELSE 'general'
-        END as function_id,
-        CASE 
-            WHEN kd.slug LIKE 'regulatory%' OR kd.slug LIKE 'quality%' OR kd.slug LIKE 'compliance%' 
-            THEN 'Regulatory & Compliance'
-            WHEN kd.slug LIKE 'clinical%' OR kd.slug LIKE 'medical%' OR kd.slug LIKE 'biostat%' 
-            THEN 'Clinical Development'
-            WHEN kd.slug LIKE 'market%' OR kd.slug LIKE 'commercial%' OR kd.slug LIKE 'pricing%' 
-            THEN 'Market Access'
-            WHEN kd.slug LIKE 'data%' OR kd.slug LIKE 'analytics%' 
-            THEN 'Data Science'
-            WHEN kd.slug LIKE 'digital%' OR kd.slug LIKE 'health%' 
-            THEN 'Digital Health'
-            ELSE 'General'
-        END as function_name,
-        kd.name as domain_name,
-        COALESCE(kd.description, kd.name || ' domain for healthcare and pharmaceutical knowledge') as domain_description_llm,
-        'global'::domain_scope as domain_scope,
-        COALESCE(kd.tier, 1) as tier,
-        CASE 
-            WHEN kd.tier = 1 THEN 'Core / High Authority'
-            WHEN kd.tier = 2 THEN 'Specialized'
-            WHEN kd.tier = 3 THEN 'Emerging'
-            ELSE 'Core / High Authority'
-        END as tier_label,
-        COALESCE(kd.priority, 1) as priority,
-        CASE 
-            WHEN kd.tier = 1 THEN 'Established'::maturity_level
-            WHEN kd.tier = 2 THEN 'Specialized'::maturity_level
-            WHEN kd.tier = 3 THEN 'Emerging'::maturity_level
-            ELSE 'Established'::maturity_level
-        END as maturity_level,
-        CASE 
-            WHEN kd.slug LIKE 'regulatory%' OR kd.slug LIKE 'safety%' OR kd.slug LIKE 'pharmacovigilance%'
-            THEN 'High'::exposure_level
-            ELSE 'Medium'::exposure_level
-        END as regulatory_exposure,
-        CASE 
-            WHEN kd.slug LIKE 'safety%' OR kd.slug LIKE 'patient%' OR kd.slug LIKE 'clinical%'
-            THEN 'Medium'::exposure_level
-            ELSE 'Low'::exposure_level
-        END as pii_sensitivity,
-        -- Always use default embedding model (recommended_models will be migrated separately if column exists)
-        'text-embedding-3-large' as embedding_model,
-        CASE 
-            WHEN kd.tier = 1 THEN 0.9
-            WHEN kd.tier = 2 THEN 0.75
-            WHEN kd.tier = 3 THEN 0.6
-            ELSE 0.9
-        END as rag_priority_weight,
-        'public'::access_policy_level as access_policy,
-        COALESCE(kd.is_active, true) as is_active,
-        -- Legacy fields
-        kd.code,
-        kd.slug,
-        kd.name,
-        kd.description,
-        COALESCE(kd.keywords, ARRAY[]::TEXT[]) as keywords,
-        COALESCE(kd.color, '#3B82F6') as color,
-        COALESCE(kd.icon, 'book') as icon,
-        COALESCE(kd.metadata, '{}'::jsonb) as metadata
-    FROM public.knowledge_domains kd
-    WHERE NOT EXISTS (
-        SELECT 1 FROM public.knowledge_domains_new kdn 
-        WHERE kdn.domain_id = COALESCE(kd.slug, 'domain_' || kd.id::text)
-    )
-    ON CONFLICT (domain_id) DO NOTHING;
+    -- Build dynamic INSERT SQL based on which columns exist
+    insert_sql := format('
+        INSERT INTO public.knowledge_domains_new (
+            domain_id,
+            parent_domain_id,
+            function_id,
+            function_name,
+            domain_name,
+            domain_description_llm,
+            domain_scope,
+            tier,
+            tier_label,
+            priority,
+            maturity_level,
+            regulatory_exposure,
+            pii_sensitivity,
+            embedding_model,
+            rag_priority_weight,
+            access_policy,
+            is_active,
+            -- Legacy fields for backward compatibility
+            slug,
+            name,
+            description,
+            keywords,
+            metadata%s%s%s
+        )
+        SELECT 
+            COALESCE(kd.slug, ''domain_'' || kd.id::text) as domain_id,
+            NULL as parent_domain_id,
+            CASE 
+                WHEN kd.slug LIKE ''regulatory%%'' OR kd.slug LIKE ''quality%%'' OR kd.slug LIKE ''compliance%%'' 
+                THEN ''regulatory_compliance''
+                WHEN kd.slug LIKE ''clinical%%'' OR kd.slug LIKE ''medical%%'' OR kd.slug LIKE ''biostat%%'' 
+                THEN ''clinical_development''
+                WHEN kd.slug LIKE ''market%%'' OR kd.slug LIKE ''commercial%%'' OR kd.slug LIKE ''pricing%%'' 
+                THEN ''market_access''
+                WHEN kd.slug LIKE ''data%%'' OR kd.slug LIKE ''analytics%%'' 
+                THEN ''data_science''
+                WHEN kd.slug LIKE ''digital%%'' OR kd.slug LIKE ''health%%'' 
+                THEN ''digital_health''
+                ELSE ''general''
+            END as function_id,
+            CASE 
+                WHEN kd.slug LIKE ''regulatory%%'' OR kd.slug LIKE ''quality%%'' OR kd.slug LIKE ''compliance%%'' 
+                THEN ''Regulatory & Compliance''
+                WHEN kd.slug LIKE ''clinical%%'' OR kd.slug LIKE ''medical%%'' OR kd.slug LIKE ''biostat%%'' 
+                THEN ''Clinical Development''
+                WHEN kd.slug LIKE ''market%%'' OR kd.slug LIKE ''commercial%%'' OR kd.slug LIKE ''pricing%%'' 
+                THEN ''Market Access''
+                WHEN kd.slug LIKE ''data%%'' OR kd.slug LIKE ''analytics%%'' 
+                THEN ''Data Science''
+                WHEN kd.slug LIKE ''digital%%'' OR kd.slug LIKE ''health%%'' 
+                THEN ''Digital Health''
+                ELSE ''General''
+            END as function_name,
+            kd.name as domain_name,
+            COALESCE(kd.description, kd.name || '' domain for healthcare and pharmaceutical knowledge'') as domain_description_llm,
+            ''global''::domain_scope as domain_scope,
+            COALESCE(kd.tier, 1) as tier,
+            CASE 
+                WHEN kd.tier = 1 THEN ''Core / High Authority''
+                WHEN kd.tier = 2 THEN ''Specialized''
+                WHEN kd.tier = 3 THEN ''Emerging''
+                ELSE ''Core / High Authority''
+            END as tier_label,
+            COALESCE(kd.priority, 1) as priority,
+            CASE 
+                WHEN kd.tier = 1 THEN ''Established''::maturity_level
+                WHEN kd.tier = 2 THEN ''Specialized''::maturity_level
+                WHEN kd.tier = 3 THEN ''Emerging''::maturity_level
+                ELSE ''Established''::maturity_level
+            END as maturity_level,
+            CASE 
+                WHEN kd.slug LIKE ''regulatory%%'' OR kd.slug LIKE ''safety%%'' OR kd.slug LIKE ''pharmacovigilance%%''
+                THEN ''High''::exposure_level
+                ELSE ''Medium''::exposure_level
+            END as regulatory_exposure,
+            CASE 
+                WHEN kd.slug LIKE ''safety%%'' OR kd.slug LIKE ''patient%%'' OR kd.slug LIKE ''clinical%%''
+                THEN ''Medium''::exposure_level
+                ELSE ''Low''::exposure_level
+            END as pii_sensitivity,
+            ''text-embedding-3-large'' as embedding_model,
+            CASE 
+                WHEN kd.tier = 1 THEN 0.9
+                WHEN kd.tier = 2 THEN 0.75
+                WHEN kd.tier = 3 THEN 0.6
+                ELSE 0.9
+            END as rag_priority_weight,
+            ''public''::access_policy_level as access_policy,
+            COALESCE(kd.is_active, true) as is_active,
+            -- Legacy fields
+            kd.slug,
+            kd.name,
+            kd.description,
+            COALESCE(kd.keywords, ARRAY[]::TEXT[]) as keywords,
+            COALESCE(kd.metadata, ''{}''::jsonb) as metadata%s%s%s
+        FROM public.knowledge_domains kd
+        WHERE NOT EXISTS (
+            SELECT 1 FROM public.knowledge_domains_new kdn 
+            WHERE kdn.domain_id = COALESCE(kd.slug, ''domain_'' || kd.id::text)
+        )
+        ON CONFLICT (domain_id) DO NOTHING
+    ',
+        CASE WHEN has_code THEN ', code' ELSE '' END,
+        CASE WHEN has_color THEN ', color' ELSE '' END,
+        CASE WHEN has_icon THEN ', icon' ELSE '' END,
+        CASE WHEN has_code THEN ', COALESCE(kd.code, NULL) as code' ELSE '' END,
+        CASE WHEN has_color THEN ', COALESCE(kd.color, ''#3B82F6'') as color' ELSE '' END,
+        CASE WHEN has_icon THEN ', COALESCE(kd.icon, ''book'') as icon' ELSE '' END
+    );
+
+    EXECUTE insert_sql;
 
     GET DIAGNOSTICS domain_count = ROW_COUNT;
     RAISE NOTICE 'Migrated % domains from knowledge_domains to knowledge_domains_new', domain_count;

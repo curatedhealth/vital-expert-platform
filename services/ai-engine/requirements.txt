@@ -4,14 +4,13 @@
 # Core FastAPI
 fastapi==0.104.1
 uvicorn[standard]==0.24.0
-pydantic==2.5.0
+pydantic==2.9.0  # Updated to fix langsmith compatibility
 
 # LangChain Ecosystem
 langchain>=0.1.0,<0.2.0
 langchain-openai>=0.0.5
 langchain-community>=0.0.10
 langgraph>=0.0.25
-langsmith>=0.1.0,<0.2.0  # Compatible with langchain-core>=0.1.25
 
 # Database & Vector Store
 supabase==2.3.0

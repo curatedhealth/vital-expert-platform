@@ -143,13 +143,24 @@ export async function POST(request: NextRequest) {
                   }
                 }
               } catch (error) {
+                console.error('❌ [Orchestrate] Mode 1 error:', error);
+                const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+                const errorStack = error instanceof Error ? error.stack : undefined;
                 const errorEvent = {
                   type: 'error',
-                  message: error instanceof Error ? error.message : 'Unknown error',
+                  message: errorMessage,
                   code: error instanceof TimeoutError ? 'TIMEOUT_ERROR' : 'EXECUTION_ERROR',
-                  timestamp: new Date().toISOString()
+                  timestamp: new Date().toISOString(),
+                  ...(errorStack && { stack: errorStack }),
+                  ...(error instanceof Error && { name: error.name }),
                 };
-                controller.enqueue(encoder.encode(`data: ${JSON.stringify(errorEvent)}\n\n`));
+                try {
+                  if (controller.desiredSize !== null) {
+                    controller.enqueue(encoder.encode(`data: ${JSON.stringify(errorEvent)}\n\n`));
+                  }
+                } catch (enqueueError) {
+                  console.error('❌ [Orchestrate] Failed to enqueue error:', enqueueError);
+                }
               }
               break;
             }

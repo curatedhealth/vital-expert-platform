@@ -174,6 +174,25 @@ function createInlineCitationRemarkPlugin(citationMap: Map<number, Source[]>) {
             .map((part) => parseInt(part.trim(), 10))
             .filter((num) => Number.isFinite(num));
 
+          const needsLeadingSpace = (() => {
+            if (transformed.length === 0) {
+              return true;
+            }
+            const last = transformed[transformed.length - 1];
+            return last.type !== 'text' || !/\s$/.test(last.value as string);
+          })();
+
+          if (needsLeadingSpace) {
+            if (
+              transformed.length > 0 &&
+              transformed[transformed.length - 1].type === 'text'
+            ) {
+              transformed[transformed.length - 1].value += ' ';
+            } else {
+              transformed.push({ type: 'text', value: ' ' });
+            }
+          }
+
           numbers.forEach((number, idx) => {
             const sources = citationMap.get(number) ?? [];
             if (sources.length === 0) {
@@ -184,7 +203,13 @@ function createInlineCitationRemarkPlugin(citationMap: Map<number, Source[]>) {
                 data: {
                   citationNumber: String(number),
                   sources,
+                  hName: 'citation',
+                  hProperties: {
+                    citationNumber: String(number),
+                    sources,
+                  },
                 },
+                children: [],
               });
             }
 
@@ -208,6 +233,62 @@ function createInlineCitationRemarkPlugin(citationMap: Map<number, Source[]>) {
 
     node.children = transformed;
   }
+}
+
+function deriveSourceTag(source: Source | undefined): string | null {
+  if (!source) {
+    return null;
+  }
+
+  const domain = source.domain || source.metadata?.domain;
+  const organization = source.organization || source.metadata?.organization;
+  const collection = source.metadata?.collection || source.metadata?.dataset;
+  const provider = source.metadata?.provider || source.metadata?.sourceName;
+
+  const normalize = (value: string) =>
+    value
+      .replace(/[_-]+/g, ' ')
+      .replace(/\b\w/g, (char) => char.toUpperCase())
+      .trim();
+
+  if (collection && /digital\s*health/i.test(collection)) {
+    return 'Digital Health';
+  }
+
+  if (provider) {
+    if (/digital\s*health/i.test(provider)) {
+      return 'Digital Health';
+    }
+    return normalize(provider);
+  }
+
+  if (domain) {
+    if (/digital\s*health/i.test(domain)) {
+      return 'Digital Health';
+    }
+    return normalize(domain);
+  }
+
+  if (organization) {
+    return normalize(organization);
+  }
+
+  if (source.url) {
+    try {
+      const hostname = new URL(source.url).hostname.replace(/^www\./, '');
+      if (hostname) {
+        return normalize(hostname.split('.')[0]);
+      }
+    } catch {
+      // ignore
+    }
+  }
+
+  if (source.sourceType) {
+    return normalize(source.sourceType);
+  }
+
+  return null;
 }
 
 export function EnhancedMessageDisplay({
@@ -423,9 +504,18 @@ export function EnhancedMessageDisplay({
   const citationComponents = useMemo<Partial<Components>>(() => ({
     citation({ node }) {
       const data = (node as any)?.data ?? {};
-      const number = data.citationNumber as string | undefined;
-      const sources: Source[] = Array.isArray(data.sources) ? data.sources : [];
+      const props = data.hProperties ?? data;
+      const number = props.citationNumber as string | undefined;
+      const sources: Source[] = Array.isArray(props.sources)
+        ? props.sources
+        : Array.isArray(data.sources)
+          ? data.sources
+          : [];
       const primarySourceId: string | undefined = sources[0]?.id;
+      const triggerLabel =
+        sources
+          .map((src) => deriveSourceTag(src))
+          .find((value): value is string => typeof value === 'string' && value.trim().length > 0) ?? undefined;
 
       if (!sources.length) {
         return <sup className="text-blue-600">[{number || '?'}]</sup>;
@@ -437,6 +527,7 @@ export function EnhancedMessageDisplay({
           <InlineCitationCard>
             <InlineCitationCardTrigger
               sources={sources.map((source) => source.url || '')}
+              label={triggerLabel}
               onClick={() => {
                 if (primarySourceId) {
                   scrollToSource(primarySourceId);
@@ -455,7 +546,8 @@ export function EnhancedMessageDisplay({
                       <InlineCitationSource
                         title={source.title || `Source ${number || idx + 1}`}
                         url={source.url || '#'}
-                        description={source.organization || source.domain || undefined}
+                        description={source.excerpt || source.organization || source.domain || undefined}
+                        tag={deriveSourceTag(source)}
                       />
                       {source.excerpt && (
                         <InlineCitationQuote>{source.excerpt}</InlineCitationQuote>
@@ -754,6 +846,17 @@ export function EnhancedMessageDisplay({
                                   <p className="truncate text-sm font-medium text-gray-900 dark:text-gray-100">
                                     {source.title || `Source ${idx + 1}`}
                                   </p>
+                                  {(() => {
+                                    const tag = deriveSourceTag(source);
+                                    if (!tag) {
+                                      return null;
+                                    }
+                                    return (
+                                      <Badge variant="secondary" className="text-[11px] bg-blue-50 text-blue-700 dark:bg-blue-900/40 dark:text-blue-200">
+                                        {tag}
+                                      </Badge>
+                                    );
+                                  })()}
                                 </div>
                                 {source.excerpt && (
                                   <p className="mt-1 line-clamp-2 text-xs text-gray-600 dark:text-gray-300">

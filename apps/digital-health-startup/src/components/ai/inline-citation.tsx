@@ -49,6 +49,8 @@ interface CardContextValue {
   toggle: (value?: boolean) => void;
   triggerRef: React.RefObject<HTMLButtonElement>;
   cardRef: React.RefObject<HTMLDivElement>;
+  scheduleClose: (delayMs?: number) => void;
+  cancelClose: () => void;
 }
 
 const CardContext = React.createContext<CardContextValue | null>(null);
@@ -72,6 +74,25 @@ export function InlineCitationCard({
   const [open, setOpen] = React.useState(false);
   const triggerRef = React.useRef<HTMLButtonElement>(null);
   const cardRef = React.useRef<HTMLDivElement>(null);
+  const closeTimeoutRef = React.useRef<number | null>(null);
+
+  const cancelClose = React.useCallback(() => {
+    if (closeTimeoutRef.current !== null) {
+      window.clearTimeout(closeTimeoutRef.current);
+      closeTimeoutRef.current = null;
+    }
+  }, []);
+
+  const scheduleClose = React.useCallback(
+    (delayMs = 120) => {
+      cancelClose();
+      closeTimeoutRef.current = window.setTimeout(() => {
+        setOpen(false);
+        closeTimeoutRef.current = null;
+      }, delayMs);
+    },
+    [cancelClose]
+  );
 
   React.useEffect(() => {
     if (!open) {
@@ -103,6 +124,12 @@ export function InlineCitationCard({
     };
   }, [open]);
 
+  React.useEffect(() => {
+    return () => {
+      cancelClose();
+    };
+  }, [cancelClose]);
+
   const value = React.useMemo<CardContextValue>(
     () => ({
       open,
@@ -111,8 +138,10 @@ export function InlineCitationCard({
       },
       triggerRef,
       cardRef,
+      scheduleClose,
+      cancelClose,
     }),
-    [open]
+    [open, scheduleClose, cancelClose]
   );
 
   return (
@@ -131,24 +160,34 @@ export function InlineCitationCard({
 interface InlineCitationCardTriggerProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   sources: string[];
+  label?: string;
 }
 
 export function InlineCitationCardTrigger({
   sources,
+  label,
   className,
   onClick,
   onMouseEnter,
   onMouseLeave,
+  onFocus,
+  onBlur,
   ...props
 }: InlineCitationCardTriggerProps) {
-  const { toggle, triggerRef, open } = useCardContext(
+  const { toggle, triggerRef, open, scheduleClose, cancelClose } = useCardContext(
     'InlineCitationCardTrigger'
   );
 
   const hostname =
     sources.length > 0 ? extractHostname(sources[0]) : 'source';
   const additional = Math.max(0, sources.length - 1);
-  const label = additional > 0 ? `${hostname} +${additional}` : hostname;
+  const resolvedLabel = (label || hostname).trim() || 'source';
+  const pillText =
+    additional > 0 ? `${resolvedLabel} +${additional}` : resolvedLabel;
+  const ariaLabel =
+    additional > 0
+      ? `View sources from ${resolvedLabel} and ${additional} more`
+      : `View source details for ${resolvedLabel}`;
 
   return (
     <button
@@ -156,24 +195,37 @@ export function InlineCitationCardTrigger({
       ref={triggerRef}
       onClick={(event) => {
         toggle();
+        cancelClose();
         onClick?.(event);
       }}
       onMouseEnter={(event) => {
+        cancelClose();
         toggle(true);
         onMouseEnter?.(event);
       }}
       onMouseLeave={(event) => {
-        toggle(false);
+        scheduleClose();
         onMouseLeave?.(event);
+      }}
+      onFocus={(event) => {
+        cancelClose();
+        toggle(true);
+        onFocus?.(event);
+      }}
+      onBlur={(event) => {
+        scheduleClose();
+        onBlur?.(event);
       }}
       className={cn(
         'inline-flex items-center gap-1 rounded-full bg-blue-100 px-2 py-0.5 text-xs font-semibold text-blue-700 transition-colors hover:bg-blue-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 dark:bg-blue-900/30 dark:text-blue-200 dark:hover:bg-blue-900/50',
         open && 'ring-2 ring-blue-400 dark:ring-blue-300',
         className
       )}
+      aria-expanded={open}
+      aria-label={ariaLabel}
       {...props}
     >
-      <span className="truncate max-w-[10rem]">{label}</span>
+      <span className="truncate max-w-[10rem]">{pillText}</span>
     </button>
   );
 }
@@ -190,7 +242,7 @@ export function InlineCitationCardBody({
   children,
   ...props
 }: InlineCitationCardBodyProps) {
-  const { open, cardRef, toggle } = useCardContext(
+  const { open, cardRef, toggle, scheduleClose, cancelClose } = useCardContext(
     'InlineCitationCardBody'
   );
 
@@ -205,8 +257,13 @@ export function InlineCitationCardBody({
         'absolute left-0 top-full z-50 mt-2 w-72 rounded-xl border border-gray-200 bg-white p-3 shadow-lg ring-1 ring-black/5 dark:border-gray-700 dark:bg-gray-900',
         className
       )}
-      onMouseEnter={() => toggle(true)}
-      onMouseLeave={() => toggle(false)}
+      onMouseEnter={() => {
+        cancelClose();
+        toggle(true);
+      }}
+      onMouseLeave={() => {
+        scheduleClose();
+      }}
       {...props}
     >
       <div className="flex justify-end">
@@ -418,12 +475,14 @@ export interface InlineCitationSourceProps
   title: string;
   url: string;
   description?: string;
+  tag?: string | null;
 }
 
 export function InlineCitationSource({
   title,
   url,
   description,
+  tag,
   className,
   ...props
 }: InlineCitationSourceProps) {
@@ -440,6 +499,11 @@ export function InlineCitationSource({
             {title}
           </p>
           <p className="text-xs text-muted-foreground">{hostname}</p>
+          {tag && (
+            <span className="mt-1 inline-flex items-center rounded-full bg-blue-50 px-2 py-0.5 text-[11px] font-medium text-blue-700 dark:bg-blue-900/40 dark:text-blue-200">
+              {tag}
+            </span>
+          )}
         </div>
         <Button variant="ghost" size="icon" className="h-7 w-7" asChild>
           <a href={url} target="_blank" rel="noopener noreferrer">

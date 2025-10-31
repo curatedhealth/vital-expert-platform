@@ -7,16 +7,18 @@
 
 import { createClient } from '@supabase/supabase-js';
 import { NextRequest, NextResponse } from 'next/server';
-import OpenAI from 'openai';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY!,
-});
+// Use API Gateway URL for compliance with Golden Rule (Python services via gateway)
+const API_GATEWAY_URL =
+  process.env.API_GATEWAY_URL ||
+  process.env.NEXT_PUBLIC_API_GATEWAY_URL ||
+  process.env.AI_ENGINE_URL ||
+  'http://localhost:3001'; // Default to API Gateway
 
 // Document templates
 const TEMPLATES = {
@@ -137,24 +139,35 @@ export async function POST(req: NextRequest) {
       ?.map(msg => `${msg.role === 'user' ? 'User' : 'Assistant'}: ${msg.content}`)
       .join('\n\n') || '';
 
-    // Generate document content using GPT-4
+    // Generate document content using GPT-4 via API Gateway
     const prompt = customPrompt || template.prompt;
-    const completion = await openai.chat.completions.create({
-      model: 'gpt-4-turbo-preview',
-      messages: [
-        {
-          role: 'system',
-          content: `You are a professional medical/regulatory document writer. Generate high-quality, accurate documents based on conversation context.`,
-        },
-        {
-          role: 'user',
-          content: `Based on this conversation:\n\n${conversationContext}\n\n${prompt}`,
-        },
-      ],
-      temperature: 0.7,
-      max_tokens: 4000,
+    const response = await fetch(`${API_GATEWAY_URL}/v1/chat/completions`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'gpt-4-turbo-preview',
+        messages: [
+          {
+            role: 'system',
+            content: `You are a professional medical/regulatory document writer. Generate high-quality, accurate documents based on conversation context.`,
+          },
+          {
+            role: 'user',
+            content: `Based on this conversation:\n\n${conversationContext}\n\n${prompt}`,
+          },
+        ],
+        temperature: 0.7,
+        max_tokens: 4000,
+      }),
     });
 
+    if (!response.ok) {
+      throw new Error(`API Gateway error: ${response.status} ${response.statusText}`);
+    }
+
+    const completion = await response.json();
     const documentContent = completion.choices[0]?.message?.content || '';
 
     // Format based on requested type

@@ -9,7 +9,12 @@
  * - RACI matrix generation (Responsible, Accountable, Consulted, Informed)
  */
 
-import { ChatOpenAI } from '@langchain/openai';
+// Use API Gateway URL for compliance with Golden Rule (Python services via gateway)
+const API_GATEWAY_URL =
+  process.env.API_GATEWAY_URL ||
+  process.env.NEXT_PUBLIC_API_GATEWAY_URL ||
+  process.env.AI_ENGINE_URL ||
+  'http://localhost:3001'; // Default to API Gateway
 
 export type Priority = 'critical' | 'high' | 'medium' | 'low';
 export type Timeline = 'immediate' | 'short-term' | 'medium-term' | 'long-term';
@@ -81,14 +86,33 @@ export interface ActionItemExtractionResult {
 }
 
 class ActionItemExtractorService {
-  private llm: ChatOpenAI;
+  /**
+   * Call LLM via API Gateway (Python AI Engine)
+   */
+  private async callLLM(messages: Array<{ role: string; content: string }>, temperature: number = 0.3): Promise<string> {
+    try {
+      const response = await fetch(`${API_GATEWAY_URL}/v1/chat/completions`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'gpt-4',
+          messages,
+          temperature,
+        }),
+      });
 
-  constructor() {
-    this.llm = new ChatOpenAI({
-      modelName: 'gpt-4',
-      temperature: 0.3, // Lower temperature for more consistent extraction
-      openAIApiKey: process.env.OPENAI_API_KEY,
-    });
+      if (!response.ok) {
+        throw new Error(`API Gateway error: ${response.status} ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      return data.choices[0]?.message?.content || '';
+    } catch (error) {
+      console.error('Error calling LLM via API Gateway:', error);
+      throw error;
+    }
   }
 
   /**
@@ -166,10 +190,12 @@ IMPORTANT GUIDELINES:
 - Priority should reflect both urgency and impact from the discussion`;
 
     try {
-      const response = await this.llm.invoke(prompt);
-      const content = typeof response.content === 'string'
-        ? response.content
-        : JSON.stringify(response.content);
+      const messages = [
+        { role: 'system', content: 'You are an expert project manager analyzing pharmaceutical advisory board discussions. Extract action items and return valid JSON only.' },
+        { role: 'user', content: prompt }
+      ];
+
+      const content = await this.callLLM(messages, 0.3);
 
       // Extract JSON from response
       const jsonMatch = content.match(/\{[\s\S]*\}/);

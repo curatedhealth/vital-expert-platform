@@ -5,8 +5,12 @@
  * Generates probability × impact risk matrices for executive decision-making
  */
 
-import { HumanMessage, SystemMessage } from '@langchain/core/messages';
-import { ChatOpenAI } from '@langchain/openai';
+// Use API Gateway URL for compliance with Golden Rule (Python services via gateway)
+const API_GATEWAY_URL =
+  process.env.API_GATEWAY_URL ||
+  process.env.NEXT_PUBLIC_API_GATEWAY_URL ||
+  process.env.AI_ENGINE_URL ||
+  'http://localhost:3001'; // Default to API Gateway
 
 // ============================================================================
 // TYPES & INTERFACES
@@ -59,14 +63,33 @@ export interface RiskMatrixCell {
 // ============================================================================
 
 export class RiskAssessmentService {
-  private llm: ChatOpenAI;
+  /**
+   * Call LLM via API Gateway (Python AI Engine)
+   */
+  private async callLLM(messages: Array<{ role: string; content: string }>, temperature: number = 0.3): Promise<string> {
+    try {
+      const response = await fetch(`${API_GATEWAY_URL}/v1/chat/completions`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'gpt-4',
+          messages,
+          temperature,
+        }),
+      });
 
-  constructor() {
-    this.llm = new ChatOpenAI({
-      modelName: 'gpt-4',
-      temperature: 0.3, // Lower temperature for consistent risk assessment
-      openAIApiKey: process.env.OPENAI_API_KEY
-    });
+      if (!response.ok) {
+        throw new Error(`API Gateway error: ${response.status} ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      return data.choices[0]?.message?.content || '';
+    } catch (error) {
+      console.error('Error calling LLM via API Gateway:', error);
+      throw error;
+    }
   }
 
   /**
@@ -141,13 +164,14 @@ Return as JSON array:
   }
 ]`;
 
-    const response = await this.llm.invoke([
-      new SystemMessage('You are a risk assessment expert. Extract risks from discussions and return valid JSON only.'),
-      new HumanMessage(prompt)
-    ]);
+    const messages = [
+      { role: 'system', content: 'You are a risk assessment expert. Extract risks from discussions and return valid JSON only.' },
+      { role: 'user', content: prompt }
+    ];
+
+    const content = await this.callLLM(messages, 0.3);
 
     try {
-      const content = response.content.toString();
       // Extract JSON from response (may be wrapped in markdown)
       const jsonMatch = content.match(/\[[\s\S]*\]/);
       if (!jsonMatch) {
@@ -252,12 +276,12 @@ Return as JSON array of arrays (mitigation strategies for each risk):
 ]`;
 
     try {
-      const response = await this.llm.invoke([
-        new SystemMessage('You are a risk mitigation expert. Suggest specific, actionable strategies. Return valid JSON only.'),
-        new HumanMessage(prompt)
-      ]);
+      const messages = [
+        { role: 'system', content: 'You are a risk mitigation expert. Suggest specific, actionable strategies. Return valid JSON only.' },
+        { role: 'user', content: prompt }
+      ];
 
-      const content = response.content.toString();
+      const content = await this.callLLM(messages, 0.3);
       const jsonMatch = content.match(/\[[\s\S]*\]/);
       if (!jsonMatch) {
         return risks;

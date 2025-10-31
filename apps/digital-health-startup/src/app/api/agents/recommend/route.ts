@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { OpenAI } from 'openai';
-
 import { createClient } from '@supabase/supabase-js';
 
-// Initialize OpenAI
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY!,
-});
+// Use API Gateway URL for compliance with Golden Rule (Python services via gateway)
+const API_GATEWAY_URL =
+  process.env.API_GATEWAY_URL ||
+  process.env.NEXT_PUBLIC_API_GATEWAY_URL ||
+  process.env.AI_ENGINE_URL ||
+  'http://localhost:3001'; // Default to API Gateway
 
 /**
  * Step 1: Detect knowledge domains from query
@@ -182,17 +182,29 @@ Example:
   "complexity": "moderate"
 }`;
 
-    const completion = await openai.chat.completions.create({
-      model: 'gpt-4-turbo-preview',
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: `Query: "${query}"\n\nRank these agents and recommend the top 2-3 best matches for the user to choose from.` }
-      ],
-      response_format: { type: 'json_object' },
-      temperature: 0.3,
+    // Call Python AI Engine via API Gateway
+    const response = await fetch(`${API_GATEWAY_URL}/v1/chat/completions`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'gpt-4-turbo-preview',
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: `Query: "${query}"\n\nRank these agents and recommend the top 2-3 best matches for the user to choose from.` }
+        ],
+        response_format: { type: 'json_object' },
+        temperature: 0.3,
+      }),
     });
 
-    const responseText = completion.choices[0].message.content;
+    if (!response.ok) {
+      throw new Error(`API Gateway error: ${response.status} ${response.statusText}`);
+    }
+
+    const completion = await response.json();
+    const responseText = completion.choices[0]?.message?.content;
     if (!responseText) {
       throw new Error('No response from OpenAI');
     }

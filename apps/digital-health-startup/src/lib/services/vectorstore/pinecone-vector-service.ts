@@ -15,7 +15,16 @@ export interface PineconeVectorRecord {
     chunk_id: string;
     document_id: string;
     content: string;
-    domain?: string;
+    domain?: string; // Legacy field for backward compatibility
+    domain_id?: string; // New field: primary domain identifier
+    parent_domain_id?: string; // New field: for hierarchy fallback
+    domain_scope?: string; // New field: global/enterprise/user
+    access_policy?: string; // New field: access control level
+    rag_priority_weight?: number; // New field: priority for ranking (0-1)
+    enterprise_id?: string; // New field: for multi-tenant filtering
+    owner_user_id?: string; // New field: for user-scoped content
+    tier?: number; // New field: domain tier (1=Core, 2=Specialized, 3=Emerging)
+    maturity_level?: string; // New field: domain maturity
     source_title?: string;
     timestamp?: string;
     [key: string]: any;
@@ -29,7 +38,9 @@ export interface VectorSearchResult {
   similarity: number;
   metadata: any;
   source_title?: string;
-  domain?: string;
+  domain?: string; // Legacy field
+  domain_id?: string; // New field
+  rag_priority_weight?: number; // Priority weight for ranking
 }
 
 export interface VectorSearchQuery {
@@ -46,6 +57,7 @@ export class PineconeVectorService {
   private supabase: SupabaseClient;
   private indexName: string;
   private dimension: number;
+  private knowledgeNamespace: string = 'domains-knowledge'; // Named namespace for all knowledge chunks
 
   constructor(config?: {
     pineconeApiKey?: string;
@@ -126,7 +138,7 @@ export class PineconeVectorService {
       for (let i = 0; i < vectors.length; i += batchSize) {
         const batch = vectors.slice(i, i + batchSize);
 
-        await index.namespace(namespace || '').upsert(batch);
+        await index.namespace(namespace || this.knowledgeNamespace).upsert(batch);
 
         console.log(`  Upserted batch ${Math.floor(i / batchSize) + 1}/${Math.ceil(vectors.length / batchSize)}`);
       }
@@ -164,7 +176,7 @@ export class PineconeVectorService {
           ? query.filter
           : undefined;
 
-      const searchResponse = await index.namespace(query.namespace || '').query({
+      const searchResponse = await index.namespace(query.namespace || this.knowledgeNamespace).query({
         vector: queryVector,
         topK: query.topK || 10,
         includeMetadata: true,
@@ -184,7 +196,9 @@ export class PineconeVectorService {
         similarity: match.score!,
         metadata: match.metadata,
         source_title: match.metadata?.source_title as string,
-        domain: match.metadata?.domain as string,
+        domain: match.metadata?.domain as string, // Legacy field
+        domain_id: match.metadata?.domain_id as string, // New field
+        rag_priority_weight: match.metadata?.rag_priority_weight as number | undefined, // Priority weight
       }));
 
       console.log(`🔍 Found ${results.length} results in Pinecone`);
@@ -220,10 +234,14 @@ export class PineconeVectorService {
         content,
         metadata,
         document_id,
+        domain_id,
+        access_policy,
+        rag_priority_weight,
         knowledge_documents!inner(
           id,
           title,
           domain,
+          domain_id,
           tags,
           status
         )
@@ -249,15 +267,26 @@ export class PineconeVectorService {
           ...supabaseData.metadata,
         },
         source_title: supabaseData.knowledge_documents?.title,
-        domain: supabaseData.knowledge_documents?.domain,
+        domain: supabaseData.knowledge_documents?.domain, // Legacy field
+        domain_id: supabaseData.domain_id || supabaseData.knowledge_documents?.domain_id || supabaseData.knowledge_documents?.domain,
+        rag_priority_weight: supabaseData.rag_priority_weight || pineconeResult.metadata?.rag_priority_weight,
       };
     });
 
-    // Step 4: Apply additional filters from Supabase
+    // Step 4: Apply additional filters from Supabase (support both domain and domain_id)
     let filtered = enrichedResults;
 
+    // Support both legacy 'domain' and new 'domain_id' filters
     if (query.filter?.domain) {
-      filtered = filtered.filter((r: any) => r.domain === query.filter!.domain);
+      filtered = filtered.filter((r: any) => 
+        r.domain === query.filter!.domain || 
+        r.domain_id === query.filter!.domain
+      );
+    }
+    
+    // Support explicit domain_id filter
+    if (query.filter?.domain_id) {
+      filtered = filtered.filter((r: any) => r.domain_id === query.filter!.domain_id);
     }
 
     if (query.filter?.tags) {
@@ -333,7 +362,7 @@ export class PineconeVectorService {
     const index = this.pinecone.Index(this.indexName);
 
     try {
-      await index.namespace(namespace || '').deleteMany(ids);
+      await index.namespace(namespace || this.knowledgeNamespace).deleteMany(ids);
       console.log(`✅ Deleted ${ids.length} vectors from Pinecone`);
     } catch (error) {
       console.error('Failed to delete vectors:', error);
@@ -422,9 +451,13 @@ export class PineconeVectorService {
           chunk_id: chunk.id,
           document_id: chunk.document_id,
           content: chunk.content,
-          domain: chunk.knowledge_documents?.domain,
+          domain: chunk.knowledge_documents?.domain, // Legacy field
+          domain_id: chunk.domain_id || chunk.knowledge_documents?.domain_id || chunk.knowledge_documents?.domain, // New field
           source_title: chunk.knowledge_documents?.title,
           timestamp: new Date().toISOString(),
+          // Add new architecture fields if available
+          ...(chunk.access_policy && { access_policy: chunk.access_policy }),
+          ...(chunk.rag_priority_weight !== undefined && { rag_priority_weight: chunk.rag_priority_weight }),
           ...chunk.metadata,
         },
       },
@@ -466,10 +499,14 @@ export class PineconeVectorService {
           embedding,
           metadata,
           document_id,
+          domain_id,
+          access_policy,
+          rag_priority_weight,
           knowledge_documents(
             id,
             title,
-            domain
+            domain,
+            domain_id
           )
         `)
         .not('embedding', 'is', null)
@@ -485,14 +522,18 @@ export class PineconeVectorService {
           chunk_id: chunk.id,
           document_id: chunk.document_id,
           content: chunk.content.substring(0, 40000), // Pinecone metadata limit
-          domain: chunk.knowledge_documents?.domain,
+          domain: chunk.knowledge_documents?.domain, // Legacy field
+          domain_id: chunk.domain_id || chunk.knowledge_documents?.domain_id || chunk.knowledge_documents?.domain, // New field
           source_title: chunk.knowledge_documents?.title,
           timestamp: new Date().toISOString(),
+          // Add new architecture fields if available
+          ...(chunk.access_policy && { access_policy: chunk.access_policy }),
+          ...(chunk.rag_priority_weight !== undefined && { rag_priority_weight: chunk.rag_priority_weight }),
         },
       }));
 
-      // Upsert to Pinecone
-      await this.upsertVectors(vectors, options.namespace);
+      // Upsert to Pinecone (defaults to domains-knowledge namespace)
+      await this.upsertVectors(vectors, options.namespace || this.knowledgeNamespace);
 
       completed += chunks.length;
       offset += batchSize;

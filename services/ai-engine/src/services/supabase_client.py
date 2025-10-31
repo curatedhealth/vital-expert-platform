@@ -238,6 +238,128 @@ class SupabaseClient:
             logger.error("❌ Failed to get user context", user_id=user_id, error=str(e))
             return None
 
+    async def get_documents_metadata(
+        self,
+        document_ids: List[str],
+        domain_ids: Optional[List[str]] = None,
+        additional_filters: Optional[Dict[str, Any]] = None
+    ) -> Dict[str, Dict[str, Any]]:
+        """Get document metadata from Supabase by document IDs"""
+        try:
+            if not document_ids:
+                return {}
+
+            # Build query
+            query = self.client.table("knowledge_documents").select("*").in_("id", document_ids)
+
+            # Add domain filter if provided
+            if domain_ids:
+                query = query.in_("domain_id", domain_ids)
+
+            # Add additional filters
+            if additional_filters:
+                for key, value in additional_filters.items():
+                    if isinstance(value, list):
+                        query = query.in_(key, value)
+                    else:
+                        query = query.eq(key, value)
+
+            result = query.execute()
+
+            # Convert to dictionary keyed by document_id
+            metadata_dict = {}
+            if result.data:
+                for doc in result.data:
+                    doc_id = doc.get("id")
+                    if doc_id:
+                        metadata_dict[doc_id] = {
+                            "content": doc.get("content", ""),
+                            "metadata": doc,
+                        }
+
+            logger.info("📚 Retrieved document metadata", count=len(metadata_dict))
+
+            return metadata_dict
+
+        except Exception as e:
+            logger.error("❌ Failed to get documents metadata", error=str(e))
+            return {}
+
+    async def get_all_agents(self) -> List[Dict[str, Any]]:
+        """Get all active agents from database"""
+        try:
+            result = self.client.table("agents").select("*").eq("status", "active").execute()
+
+            if result.data:
+                logger.info("📚 Retrieved all active agents", count=len(result.data))
+                return result.data
+            else:
+                logger.warning("⚠️ No active agents found")
+                return []
+
+        except Exception as e:
+            logger.error("❌ Failed to get all agents", error=str(e))
+            return []
+
+    async def keyword_search(
+        self,
+        query_text: str,
+        domain_ids: Optional[List[str]] = None,
+        filters: Optional[Dict[str, Any]] = None,
+        max_results: int = 10
+    ) -> List[Dict[str, Any]]:
+        """Perform keyword-based full-text search"""
+        try:
+            # Build query - search in title, content, tags
+            search_terms = query_text.split()
+            
+            query = self.client.table("knowledge_documents").select("*")
+
+            # Add domain filter if provided
+            if domain_ids:
+                query = query.in_("domain_id", domain_ids)
+
+            # Add additional filters
+            if filters:
+                for key, value in filters.items():
+                    if isinstance(value, list):
+                        query = query.in_(key, value)
+                    else:
+                        query = query.eq(key, value)
+
+            # Search in title and content (simple text search)
+            # Note: For better full-text search, use PostgreSQL full-text search features
+            all_results = query.execute()
+
+            # Filter results by keyword matching
+            matched_results = []
+            query_lower = query_text.lower()
+
+            if all_results.data:
+                for doc in all_results.data:
+                    content_lower = (doc.get("content", "") + " " + doc.get("title", "")).lower()
+                    title_lower = doc.get("title", "").lower()
+                    
+                    # Simple keyword matching
+                    matches = sum(1 for term in search_terms if term.lower() in content_lower)
+                    if matches > 0:
+                        matched_results.append({
+                            "content": doc.get("content", ""),
+                            "metadata": doc,
+                            "relevance_score": matches / len(search_terms),
+                        })
+
+            # Sort by relevance
+            matched_results.sort(key=lambda x: x["relevance_score"], reverse=True)
+
+            logger.info("🔍 Keyword search completed", query=query_text[:100], results_count=len(matched_results[:max_results]))
+
+            return matched_results[:max_results]
+
+        except Exception as e:
+            logger.error("❌ Keyword search failed", error=str(e))
+            return []
+
     async def update_agent_metrics(
         self,
         agent_id: str,

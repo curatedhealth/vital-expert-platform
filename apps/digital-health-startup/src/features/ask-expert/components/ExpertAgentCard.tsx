@@ -3,7 +3,7 @@
 import { motion } from 'framer-motion';
 import {
   Award, BookOpen, Clock, MessageSquare, Star,
-  TrendingUp, CheckCircle, Activity, Sparkles
+  TrendingUp, CheckCircle, Activity, Sparkles, Brain
 } from 'lucide-react';
 
 import { Card, CardContent, CardHeader } from '@vital/ui';
@@ -12,12 +12,19 @@ import { Button } from '@vital/ui';
 import { Avatar, AvatarFallback, AvatarImage } from '@vital/ui';
 import { Progress } from '@vital/ui';
 import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@vital/ui';
+import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from '@vital/ui';
 import { cn } from '@vital/ui/lib/utils';
+import type { AgentFeedback, AgentFeedbackFact } from '@/lib/stores/agents-store';
 
 interface ExpertAgent {
   id: string;
@@ -41,6 +48,15 @@ interface ExpertAgent {
   satisfactionScore?: number; // 0-5
   successRate?: number; // 0-100
   recentTopics?: string[];
+  recentFeedback?: AgentFeedback[];
+  longTermMemory?: {
+    history?: Array<{
+      userMessage: string;
+      assistantMessage: string;
+      timestamp: string;
+    }>;
+    facts?: AgentFeedbackFact[];
+  };
 }
 
 interface ExpertAgentCardProps {
@@ -51,6 +67,15 @@ interface ExpertAgentCardProps {
   variant?: 'compact' | 'detailed' | 'minimal';
   showStats?: boolean;
   className?: string;
+  isLoadingStats?: boolean;
+  memory?: {
+    history?: Array<{
+      userMessage: string;
+      assistantMessage: string;
+      timestamp: string;
+    }>;
+    facts?: AgentFeedbackFact[];
+  } | null;
 }
 
 export function ExpertAgentCard({
@@ -60,7 +85,9 @@ export function ExpertAgentCard({
   onSelect,
   variant = 'detailed',
   showStats = true,
-  className
+  className,
+  isLoadingStats = false,
+  memory,
 }: ExpertAgentCardProps) {
 
   const availability = agent.availability || 'online';
@@ -299,6 +326,19 @@ export function ExpertAgentCard({
           {/* Full Statistics Grid */}
           {showStats && (
             <div className="space-y-3 pt-3 border-t">
+              {isLoadingStats && (
+                <div className="grid grid-cols-2 gap-3 animate-pulse">
+                  <div className="space-y-2">
+                    <div className="h-3 w-24 bg-muted-foreground/20 rounded" />
+                    <div className="h-4 w-20 bg-muted-foreground/15 rounded" />
+                  </div>
+                  <div className="space-y-2">
+                    <div className="h-3 w-28 bg-muted-foreground/20 rounded" />
+                    <div className="h-4 w-16 bg-muted-foreground/15 rounded" />
+                    <div className="h-2 w-full bg-muted-foreground/10 rounded" />
+                  </div>
+                </div>
+              )}
               <div className="grid grid-cols-2 gap-3">
                 {/* Response Time with average calculation */}
                 {(agent.responseTime !== undefined || agent.averageResponseTime !== undefined) && (
@@ -403,6 +443,74 @@ export function ExpertAgentCard({
               )}
             </div>
           )}
+
+          {/* User Feedback */}
+          {agent.recentFeedback && agent.recentFeedback.length > 0 && (
+            <div className="pt-3 border-t space-y-2">
+              <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
+                <MessageSquare className="h-3 w-3" />
+                <span>User Feedback</span>
+              </div>
+              <div className="space-y-2">
+                {agent.recentFeedback.slice(0, 3).map((feedback) => (
+                  <div key={feedback.id} className="rounded-lg border border-muted-foreground/10 bg-muted/30 p-2">
+                    <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
+                      <span className="font-medium">Rating: {feedback.rating.toFixed(1)}/5</span>
+                      <span>{new Date(feedback.createdAt).toLocaleDateString()}</span>
+                    </div>
+                    {feedback.comment ? (
+                      <p className="text-xs text-foreground leading-snug">“{feedback.comment}”</p>
+                    ) : (
+                      <p className="text-xs text-muted-foreground">No comment provided</p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Long-Term Memory Insights */}
+          {(() => {
+            const memoryFacts = memory?.facts ?? agent.longTermMemory?.facts ?? [];
+            if (!memoryFacts.length) {
+              return null;
+            }
+
+            return (
+              <div className="pt-3 border-t space-y-2">
+                <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
+                  <Brain className="h-3 w-3" />
+                  <span>Memory Insights</span>
+                </div>
+                <Accordion type="single" collapsible className="w-full">
+                  <AccordionItem value="memory-insights">
+                    <AccordionTrigger className="text-xs">View stored facts</AccordionTrigger>
+                    <AccordionContent>
+                      <div className="space-y-2">
+                        {memoryFacts.slice(0, 3).map((fact) => (
+                          <div key={fact.id} className="rounded-lg border border-muted-foreground/10 bg-muted/20 p-2 text-xs">
+                            <p className="font-medium text-foreground">{fact.fact}</p>
+                            <div className="mt-1 flex flex-wrap gap-2 text-muted-foreground">
+                              <Badge variant="outline" className="text-[10px]">
+                                {fact.category}
+                              </Badge>
+                              <span>Confidence {(fact.confidence * 100).toFixed(0)}%</span>
+                              <span>{new Date(fact.createdAt).toLocaleDateString()}</span>
+                            </div>
+                          </div>
+                        ))}
+                        {memoryFacts.length > 3 && (
+                          <p className="text-[11px] text-muted-foreground">
+                            +{memoryFacts.length - 3} additional memorized items
+                          </p>
+                        )}
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
+                </Accordion>
+              </div>
+            );
+          })()}
 
           {/* Certifications & Awards */}
           {agent.certifications && agent.certifications.length > 0 && (

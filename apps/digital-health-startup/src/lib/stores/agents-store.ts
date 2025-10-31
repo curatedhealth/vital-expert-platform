@@ -66,9 +66,27 @@ export interface Agent {
   totalCost?: number; // Total cost in USD
   confidenceLevel?: number; // Computed based on stats (0-100)
   availability?: 'online' | 'busy' | 'offline'; // Computed availability status
+  recentFeedback?: AgentFeedback[];
+  longTermMemory?: {
+    history?: Array<{
+      userMessage: string;
+      assistantMessage: string;
+      timestamp: string;
+    }>;
+    facts?: AgentFeedbackFact[];
+  };
 
   created_at?: string;
   updated_at?: string;
+}
+
+export interface AgentFeedbackFact {
+  id: string;
+  fact: string;
+  category: string;
+  confidence: number;
+  source: string;
+  createdAt: string;
 }
 
 export interface AgentCategory {
@@ -117,6 +135,7 @@ export interface AgentsStore {
   // Global synchronization
   syncAcrossViews: () => void;
   subscribeToChanges: (callback: (agents: Agent[]) => void) => () => void;
+  mergeExternalAgents: (agents: Partial<Agent>[]) => void;
 
   // Agent Statistics
   loadAgentStats: (agentId: string) => Promise<AgentStats | null>;
@@ -133,12 +152,21 @@ export interface AgentStats {
   totalCost: number;
   confidenceLevel: number;
   availability: 'online' | 'busy' | 'offline';
+  recentFeedback: AgentFeedback[];
 }
 
 export interface AgentWithStats {
   agent: Agent;
   stats: AgentStats | null;
   isLoadingStats: boolean;
+}
+
+export interface AgentFeedback {
+  id: string;
+  rating: number;
+  comment: string | null;
+  userId?: string | null;
+  createdAt: string;
 }
 
 // Global event emitter for cross-component synchronization
@@ -197,6 +225,7 @@ const convertDbAgentToStoreFormat = (dbAgent: DbAgent | any): Agent => {
     copied_at: dbAgent.copied_at || metadata.copied_at || null,
     created_at: dbAgent.created_at || new Date().toISOString(),
     updated_at: dbAgent.updated_at || new Date().toISOString(),
+    recentFeedback: [],
     // Preserve metadata for any additional fields
     metadata: dbAgent.metadata || metadata,
   };
@@ -584,7 +613,31 @@ export const useAgentsStore = create<AgentsStore>()(
 
           const data = await response.json();
           if (data.success && data.data) {
-            return data.data as AgentStats;
+            const stats = data.data as AgentStats;
+
+            set((state) => ({
+              agents: state.agents.map((agent) => {
+                if (agent.id !== agentId) {
+                  return agent;
+                }
+
+                return {
+                  ...agent,
+                  totalConsultations: stats.totalConsultations,
+                  satisfactionScore: stats.satisfactionScore,
+                  successRate: stats.successRate,
+                  averageResponseTime: stats.averageResponseTime,
+                  certifications: stats.certifications,
+                  totalTokensUsed: stats.totalTokensUsed,
+                  totalCost: stats.totalCost,
+                  confidenceLevel: stats.confidenceLevel,
+                  availability: stats.availability,
+                  recentFeedback: stats.recentFeedback,
+                };
+              }),
+            }));
+
+            return stats;
           }
 
           return null;
@@ -609,6 +662,106 @@ export const useAgentsStore = create<AgentsStore>()(
           stats,
           isLoadingStats: false,
         };
+      },
+
+      mergeExternalAgents: (externalAgents: Partial<Agent>[]) => {
+        if (!Array.isArray(externalAgents) || externalAgents.length === 0) {
+          return;
+        }
+
+        set((state) => {
+          const agentMap = new Map<string, Agent>();
+          state.agents.forEach((agent) => {
+            agentMap.set(agent.id, agent);
+          });
+
+          externalAgents.forEach((incoming) => {
+            if (!incoming || !incoming.id) {
+              return;
+            }
+
+            const existing = agentMap.get(incoming.id);
+            if (existing) {
+              agentMap.set(incoming.id, {
+                ...existing,
+                ...incoming,
+                display_name: incoming.display_name ?? existing.display_name ?? existing.name,
+                name: incoming.name ?? existing.name,
+                description: incoming.description ?? existing.description ?? '',
+                capabilities: incoming.capabilities ?? existing.capabilities ?? [],
+                knowledge_domains: incoming.knowledge_domains ?? existing.knowledge_domains ?? [],
+                certifications: incoming.certifications ?? existing.certifications ?? [],
+                recentFeedback: incoming.recentFeedback ?? existing.recentFeedback ?? [],
+                longTermMemory: incoming.longTermMemory ?? existing.longTermMemory,
+              });
+            } else {
+              const baseAgent: Agent = {
+                id: incoming.id,
+                name: incoming.name ?? incoming.display_name ?? 'Unknown Agent',
+                display_name: incoming.display_name ?? incoming.name ?? 'Unknown Agent',
+                description: incoming.description ?? '',
+                system_prompt: incoming.system_prompt ?? '',
+                model: incoming.model ?? 'gpt-4',
+                avatar: incoming.avatar ?? '🤖',
+                color: incoming.color ?? '#6366f1',
+                capabilities: incoming.capabilities ?? [],
+                rag_enabled: incoming.rag_enabled ?? false,
+                temperature: incoming.temperature ?? 0.7,
+                max_tokens: incoming.max_tokens ?? 2000,
+                is_custom: incoming.is_custom ?? false,
+                status: incoming.status ?? 'active',
+                tier: incoming.tier ?? 1,
+                priority: incoming.priority ?? 1,
+                implementation_phase: incoming.implementation_phase ?? 1,
+                knowledge_domains: incoming.knowledge_domains ?? [],
+                business_function: incoming.business_function ?? null,
+                department: incoming.department ?? null,
+                role: incoming.role ?? null,
+                organizational_role: incoming.organizational_role ?? null,
+                business_function_id: incoming.business_function_id ?? null,
+                department_id: incoming.department_id ?? null,
+                role_id: incoming.role_id ?? null,
+                function_id: incoming.function_id ?? null,
+                categories: incoming.categories ?? [],
+                domain_expertise: incoming.domain_expertise ?? undefined,
+                medical_specialty: incoming.medical_specialty,
+                clinical_validation_status: incoming.clinical_validation_status,
+                medical_accuracy_score: incoming.medical_accuracy_score,
+                citation_accuracy: incoming.citation_accuracy,
+                hallucination_rate: incoming.hallucination_rate,
+                medical_error_rate: incoming.medical_error_rate,
+                fda_samd_class: incoming.fda_samd_class,
+                hipaa_compliant: incoming.hipaa_compliant,
+                pharma_enabled: incoming.pharma_enabled,
+                verify_enabled: incoming.verify_enabled,
+                last_clinical_review: incoming.last_clinical_review,
+                medical_reviewer_id: incoming.medical_reviewer_id,
+                cost_per_query: incoming.cost_per_query,
+                average_latency_ms: incoming.average_latency_ms,
+                audit_trail: incoming.audit_trail ?? {},
+                totalConsultations: incoming.totalConsultations ?? 0,
+                satisfactionScore: incoming.satisfactionScore ?? 0,
+                successRate: incoming.successRate ?? 0,
+                averageResponseTime: incoming.averageResponseTime ?? 0,
+                certifications: incoming.certifications ?? [],
+                totalTokensUsed: incoming.totalTokensUsed ?? 0,
+                totalCost: incoming.totalCost ?? 0,
+                confidenceLevel: incoming.confidenceLevel ?? 0,
+                availability: incoming.availability ?? 'offline',
+                recentFeedback: incoming.recentFeedback ?? [],
+                longTermMemory: incoming.longTermMemory,
+                created_at: incoming.created_at ?? new Date().toISOString(),
+                updated_at: incoming.updated_at ?? new Date().toISOString(),
+              };
+
+              agentMap.set(incoming.id, baseAgent);
+            }
+          });
+
+          return {
+            agents: Array.from(agentMap.values()),
+          };
+        });
       },
     }),
     {

@@ -114,6 +114,206 @@ class Mode1ManualResponse(BaseModel):
     metadata: Dict[str, Any] = Field(default_factory=dict, description="Additional metadata")
     processing_time_ms: float = Field(..., description="Processing latency in milliseconds")
 
+
+class Mode2AutomaticRequest(BaseModel):
+    """Payload for Mode 2 automatic agent selection requests"""
+    message: str = Field(..., min_length=1, description="User message")
+    enable_rag: bool = Field(True, description="Enable RAG retrieval")
+    enable_tools: bool = Field(False, description="Enable tool execution")
+    selected_rag_domains: Optional[List[str]] = Field(
+        default=None,
+        description="Optional RAG domain filters"
+    )
+    requested_tools: Optional[List[str]] = Field(
+        default=None,
+        description="Requested tools to enable"
+    )
+    temperature: Optional[float] = Field(
+        default=None,
+        ge=0.0,
+        le=2.0,
+        description="LLM temperature override"
+    )
+    max_tokens: Optional[int] = Field(
+        default=None,
+        ge=100,
+        le=8000,
+        description="LLM max tokens override"
+    )
+    user_id: Optional[str] = Field(
+        default=None,
+        description="User executing the request"
+    )
+    tenant_id: Optional[str] = Field(
+        default=None,
+        description="Tenant/organization identifier"
+    )
+    session_id: Optional[str] = Field(
+        default=None,
+        description="Session identifier for analytics"
+    )
+    conversation_history: Optional[List[ConversationTurn]] = Field(
+        default=None,
+        description="Previous turns for context"
+    )
+
+
+class Mode2AutomaticResponse(BaseModel):
+    """Response payload for Mode 2 automatic agent selection requests"""
+    agent_id: str = Field(..., description="Selected agent ID")
+    content: str = Field(..., description="Generated response content")
+    confidence: float = Field(..., ge=0.0, le=1.0, description="Confidence score")
+    citations: List[Dict[str, Any]] = Field(default_factory=list, description="Supporting citations")
+    metadata: Dict[str, Any] = Field(default_factory=dict, description="Additional metadata")
+    processing_time_ms: float = Field(..., description="Processing latency in milliseconds")
+    agent_selection: Dict[str, Any] = Field(
+        default_factory=dict,
+        description="Agent selection details (selected agent, reason, confidence)"
+    )
+
+
+class Mode3AutonomousAutomaticRequest(BaseModel):
+    """Payload for Mode 3 autonomous-automatic requests"""
+    message: str = Field(..., min_length=1, description="User message")
+    enable_rag: bool = Field(True, description="Enable RAG retrieval")
+    enable_tools: bool = Field(True, description="Enable tool execution")
+    selected_rag_domains: Optional[List[str]] = Field(
+        default=None,
+        description="Optional RAG domain filters"
+    )
+    requested_tools: Optional[List[str]] = Field(
+        default=None,
+        description="Requested tools to enable"
+    )
+    temperature: Optional[float] = Field(
+        default=None,
+        ge=0.0,
+        le=2.0,
+        description="LLM temperature override"
+    )
+    max_tokens: Optional[int] = Field(
+        default=None,
+        ge=100,
+        le=8000,
+        description="LLM max tokens override"
+    )
+    max_iterations: Optional[int] = Field(
+        default=10,
+        ge=1,
+        le=50,
+        description="Maximum ReAct iterations"
+    )
+    confidence_threshold: Optional[float] = Field(
+        default=0.95,
+        ge=0.0,
+        le=1.0,
+        description="Confidence threshold for autonomous reasoning"
+    )
+    user_id: Optional[str] = Field(
+        default=None,
+        description="User executing the request"
+    )
+    tenant_id: Optional[str] = Field(
+        default=None,
+        description="Tenant/organization identifier"
+    )
+    session_id: Optional[str] = Field(
+        default=None,
+        description="Session identifier for analytics"
+    )
+    conversation_history: Optional[List[ConversationTurn]] = Field(
+        default=None,
+        description="Previous turns for context"
+    )
+
+
+class Mode3AutonomousAutomaticResponse(BaseModel):
+    """Response payload for Mode 3 autonomous-automatic requests"""
+    agent_id: str = Field(..., description="Selected agent ID")
+    content: str = Field(..., description="Generated response content")
+    confidence: float = Field(..., ge=0.0, le=1.0, description="Confidence score")
+    citations: List[Dict[str, Any]] = Field(default_factory=list, description="Supporting citations")
+    metadata: Dict[str, Any] = Field(default_factory=dict, description="Additional metadata")
+    processing_time_ms: float = Field(..., description="Processing latency in milliseconds")
+    autonomous_reasoning: Dict[str, Any] = Field(
+        default_factory=dict,
+        description="Autonomous reasoning details (iterations, steps, tools used)"
+    )
+    agent_selection: Dict[str, Any] = Field(
+        default_factory=dict,
+        description="Agent selection details"
+    )
+
+
+class Mode4AutonomousManualRequest(BaseModel):
+    """Payload for Mode 4 autonomous-manual requests"""
+    agent_id: str = Field(..., description="Agent ID to execute")
+    message: str = Field(..., min_length=1, description="User message")
+    enable_rag: bool = Field(True, description="Enable RAG retrieval")
+    enable_tools: bool = Field(True, description="Enable tool execution")
+    selected_rag_domains: Optional[List[str]] = Field(
+        default=None,
+        description="Optional RAG domain filters"
+    )
+    requested_tools: Optional[List[str]] = Field(
+        default=None,
+        description="Requested tools to enable"
+    )
+    temperature: Optional[float] = Field(
+        default=None,
+        ge=0.0,
+        le=2.0,
+        description="LLM temperature override"
+    )
+    max_tokens: Optional[int] = Field(
+        default=None,
+        ge=100,
+        le=8000,
+        description="LLM max tokens override"
+    )
+    max_iterations: Optional[int] = Field(
+        default=10,
+        ge=1,
+        le=50,
+        description="Maximum ReAct iterations"
+    )
+    confidence_threshold: Optional[float] = Field(
+        default=0.95,
+        ge=0.0,
+        le=1.0,
+        description="Confidence threshold for autonomous reasoning"
+    )
+    user_id: Optional[str] = Field(
+        default=None,
+        description="User executing the request"
+    )
+    tenant_id: Optional[str] = Field(
+        default=None,
+        description="Tenant/organization identifier"
+    )
+    session_id: Optional[str] = Field(
+        default=None,
+        description="Session identifier for analytics"
+    )
+    conversation_history: Optional[List[ConversationTurn]] = Field(
+        default=None,
+        description="Previous turns for context"
+    )
+
+
+class Mode4AutonomousManualResponse(BaseModel):
+    """Response payload for Mode 4 autonomous-manual requests"""
+    agent_id: str = Field(..., description="Agent that produced the response")
+    content: str = Field(..., description="Generated response content")
+    confidence: float = Field(..., ge=0.0, le=1.0, description="Confidence score")
+    citations: List[Dict[str, Any]] = Field(default_factory=list, description="Supporting citations")
+    metadata: Dict[str, Any] = Field(default_factory=dict, description="Additional metadata")
+    processing_time_ms: float = Field(..., description="Processing latency in milliseconds")
+    autonomous_reasoning: Dict[str, Any] = Field(
+        default_factory=dict,
+        description="Autonomous reasoning details (iterations, steps, tools used)"
+    )
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Application lifespan management"""
@@ -300,6 +500,302 @@ async def execute_mode1_manual(
     except Exception as exc:
         logger.error("❌ Mode 1 manual execution failed", error=str(exc))
         raise HTTPException(status_code=500, detail=f"Mode 1 execution failed: {str(exc)}")
+
+# Mode 2: Automatic Agent Selection
+@app.post("/api/mode2/automatic", response_model=Mode2AutomaticResponse)
+async def execute_mode2_automatic(
+    request: Mode2AutomaticRequest,
+    orchestrator: AgentOrchestrator = Depends(get_agent_orchestrator)
+):
+    """Execute Mode 2 automatic agent selection workflow via Python orchestration"""
+    REQUEST_COUNT.labels(method="POST", endpoint="/api/mode2/automatic").inc()
+
+    if not supabase_client:
+        raise HTTPException(status_code=503, detail="Supabase client not initialized")
+
+    start_time = asyncio.get_event_loop().time()
+
+    try:
+        # Step 1: Select best agent based on query
+        # For now, use a simple selection algorithm (can be enhanced with full Python agent selection later)
+        logger.info("🔍 Selecting agent for Mode 2", query_preview=request.message[:100])
+
+        # Simple agent selection: query agents table and select based on domain match
+        # TODO: Implement full agent selection with embeddings/ranking in Python
+        # For now, use a default agent or the first available agent
+        agents_result = await supabase_client.get_all_agents()
+        
+        if not agents_result or len(agents_result) == 0:
+            raise HTTPException(status_code=404, detail="No agents available")
+        
+        # Simple selection: use first agent or could enhance with query matching
+        selected_agent = agents_result[0] if isinstance(agents_result, list) else list(agents_result.values())[0]
+        agent_id = selected_agent.get("id") if isinstance(selected_agent, dict) else selected_agent
+        
+        agent_type = (
+            selected_agent.get("type") if isinstance(selected_agent, dict) else None
+            or selected_agent.get("agent_type") if isinstance(selected_agent, dict) else None
+            or "regulatory_expert"
+        )
+
+        # Step 2: Execute query with selected agent (reuse Mode 1 logic)
+        query_request = AgentQueryRequest(
+            agent_id=agent_id,
+            agent_type=agent_type,
+            query=request.message,
+            user_id=request.user_id,
+            organization_id=request.tenant_id,
+            max_context_docs=(
+                0 if not request.enable_rag else 10
+            ),
+            similarity_threshold=0.7,
+            include_citations=True,
+            include_confidence_scores=True,
+            include_medical_context=True,
+            response_format="detailed",
+            pharma_protocol_required=False,
+            verify_protocol_required=True,
+            hipaa_compliant=True,
+        )
+
+        response: AgentQueryResponse = await orchestrator.process_query(query_request)
+
+        processing_time_ms = (asyncio.get_event_loop().time() - start_time) * 1000
+        
+        agent_selection_metadata = {
+            "selected_agent_id": agent_id,
+            "selected_agent_name": selected_agent.get("name") if isinstance(selected_agent, dict) else "Unknown",
+            "selection_method": "simple_selection",  # TODO: Enhance with full Python agent selection
+            "candidate_count": len(agents_result) if isinstance(agents_result, list) else len(agents_result),
+            "selection_confidence": 0.7,  # Placeholder - can be enhanced
+        }
+
+        metadata: Dict[str, Any] = {
+            "processing_metadata": response.processing_metadata,
+            "compliance_protocols": response.compliance_protocols,
+            "medical_context": response.medical_context,
+            "request": {
+                "enable_rag": request.enable_rag,
+                "enable_tools": request.enable_tools,
+                "selected_rag_domains": request.selected_rag_domains or [],
+                "requested_tools": request.requested_tools or [],
+                "temperature": request.temperature,
+                "max_tokens": request.max_tokens,
+                "session_id": request.session_id,
+            },
+            "agent": {
+                "id": agent_id,
+                "name": selected_agent.get("name") if isinstance(selected_agent, dict) else "Unknown",
+                "type": agent_type,
+            },
+        }
+
+        return Mode2AutomaticResponse(
+            agent_id=agent_id,
+            content=response.response,
+            confidence=response.confidence,
+            citations=response.citations or [],
+            metadata=metadata,
+            processing_time_ms=processing_time_ms,
+            agent_selection=agent_selection_metadata,
+        )
+
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.error("❌ Mode 2 automatic execution failed", error=str(exc))
+        raise HTTPException(status_code=500, detail=f"Mode 2 execution failed: {str(exc)}")
+
+# Mode 3: Autonomous-Automatic
+@app.post("/api/mode3/autonomous-automatic", response_model=Mode3AutonomousAutomaticResponse)
+async def execute_mode3_autonomous_automatic(
+    request: Mode3AutonomousAutomaticRequest,
+    orchestrator: AgentOrchestrator = Depends(get_agent_orchestrator)
+):
+    """Execute Mode 3 autonomous-automatic workflow via Python orchestration"""
+    REQUEST_COUNT.labels(method="POST", endpoint="/api/mode3/autonomous-automatic").inc()
+
+    if not supabase_client:
+        raise HTTPException(status_code=503, detail="Supabase client not initialized")
+
+    start_time = asyncio.get_event_loop().time()
+
+    try:
+        # Step 1: Select best agent (similar to Mode 2)
+        logger.info("🔍 Selecting agent for Mode 3", query_preview=request.message[:100])
+
+        agents_result = await supabase_client.get_all_agents()
+        
+        if not agents_result or len(agents_result) == 0:
+            raise HTTPException(status_code=404, detail="No agents available")
+        
+        selected_agent = agents_result[0] if isinstance(agents_result, list) else list(agents_result.values())[0]
+        agent_id = selected_agent.get("id") if isinstance(selected_agent, dict) else selected_agent
+        
+        agent_type = (
+            selected_agent.get("type") if isinstance(selected_agent, dict) else None
+            or selected_agent.get("agent_type") if isinstance(selected_agent, dict) else None
+            or "regulatory_expert"
+        )
+
+        # Step 2: Execute query with autonomous reasoning capabilities
+        # For now, use enhanced query processing (full ReAct/CoT can be added later)
+        query_request = AgentQueryRequest(
+            agent_id=agent_id,
+            agent_type=agent_type,
+            query=request.message,
+            user_id=request.user_id,
+            organization_id=request.tenant_id,
+            max_context_docs=(
+                0 if not request.enable_rag else min(15, request.max_iterations or 10)  # More docs for autonomous
+            ),
+            similarity_threshold=0.7,
+            include_citations=True,
+            include_confidence_scores=True,
+            include_medical_context=True,
+            response_format="detailed",
+            pharma_protocol_required=False,
+            verify_protocol_required=True,
+            hipaa_compliant=True,
+        )
+
+        response: AgentQueryResponse = await orchestrator.process_query(query_request)
+
+        processing_time_ms = (asyncio.get_event_loop().time() - start_time) * 1000
+        
+        # Autonomous reasoning metadata (placeholder - can be enhanced with full ReAct/CoT)
+        autonomous_reasoning_metadata = {
+            "iterations": 1,  # Placeholder - would be actual ReAct iterations
+            "tools_used": request.requested_tools or [],
+            "reasoning_steps": ["Query understanding", "Context retrieval", "Response generation"],
+            "confidence_threshold": request.confidence_threshold or 0.95,
+            "max_iterations": request.max_iterations or 10,
+        }
+
+        agent_selection_metadata = {
+            "selected_agent_id": agent_id,
+            "selected_agent_name": selected_agent.get("name") if isinstance(selected_agent, dict) else "Unknown",
+            "selection_method": "simple_selection",
+            "selection_confidence": 0.7,
+        }
+
+        metadata: Dict[str, Any] = {
+            "processing_metadata": response.processing_metadata,
+            "compliance_protocols": response.compliance_protocols,
+            "medical_context": response.medical_context,
+            "request": {
+                "enable_rag": request.enable_rag,
+                "enable_tools": request.enable_tools,
+                "max_iterations": request.max_iterations,
+                "confidence_threshold": request.confidence_threshold,
+            },
+        }
+
+        return Mode3AutonomousAutomaticResponse(
+            agent_id=agent_id,
+            content=response.response,
+            confidence=response.confidence,
+            citations=response.citations or [],
+            metadata=metadata,
+            processing_time_ms=processing_time_ms,
+            autonomous_reasoning=autonomous_reasoning_metadata,
+            agent_selection=agent_selection_metadata,
+        )
+
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.error("❌ Mode 3 autonomous-automatic execution failed", error=str(exc))
+        raise HTTPException(status_code=500, detail=f"Mode 3 execution failed: {str(exc)}")
+
+# Mode 4: Autonomous-Manual
+@app.post("/api/mode4/autonomous-manual", response_model=Mode4AutonomousManualResponse)
+async def execute_mode4_autonomous_manual(
+    request: Mode4AutonomousManualRequest,
+    orchestrator: AgentOrchestrator = Depends(get_agent_orchestrator)
+):
+    """Execute Mode 4 autonomous-manual workflow via Python orchestration"""
+    REQUEST_COUNT.labels(method="POST", endpoint="/api/mode4/autonomous-manual").inc()
+
+    if not supabase_client:
+        raise HTTPException(status_code=503, detail="Supabase client not initialized")
+
+    start_time = asyncio.get_event_loop().time()
+
+    try:
+        # Get agent record
+        agent_record = await supabase_client.get_agent_by_id(request.agent_id)
+        agent_type = (
+            (agent_record.get("type") if agent_record else None)
+            or (agent_record.get("agent_type") if agent_record else None)
+            or "regulatory_expert"
+        )
+
+        # Execute query with autonomous reasoning capabilities
+        query_request = AgentQueryRequest(
+            agent_id=request.agent_id,
+            agent_type=agent_type,
+            query=request.message,
+            user_id=request.user_id,
+            organization_id=request.tenant_id,
+            max_context_docs=(
+                0 if not request.enable_rag else min(15, request.max_iterations or 10)  # More docs for autonomous
+            ),
+            similarity_threshold=0.7,
+            include_citations=True,
+            include_confidence_scores=True,
+            include_medical_context=True,
+            response_format="detailed",
+            pharma_protocol_required=False,
+            verify_protocol_required=True,
+            hipaa_compliant=True,
+        )
+
+        response: AgentQueryResponse = await orchestrator.process_query(query_request)
+
+        processing_time_ms = (asyncio.get_event_loop().time() - start_time) * 1000
+        
+        # Autonomous reasoning metadata (placeholder - can be enhanced with full ReAct/CoT)
+        autonomous_reasoning_metadata = {
+            "iterations": 1,  # Placeholder - would be actual ReAct iterations
+            "tools_used": request.requested_tools or [],
+            "reasoning_steps": ["Query understanding", "Context retrieval", "Response generation"],
+            "confidence_threshold": request.confidence_threshold or 0.95,
+            "max_iterations": request.max_iterations or 10,
+        }
+
+        metadata: Dict[str, Any] = {
+            "processing_metadata": response.processing_metadata,
+            "compliance_protocols": response.compliance_protocols,
+            "medical_context": response.medical_context,
+            "request": {
+                "enable_rag": request.enable_rag,
+                "enable_tools": request.enable_tools,
+                "max_iterations": request.max_iterations,
+                "confidence_threshold": request.confidence_threshold,
+            },
+            "agent": {
+                "id": agent_record.get("id") if agent_record else request.agent_id,
+                "name": agent_record.get("name") if agent_record else "Unknown",
+                "type": agent_type,
+            },
+        }
+
+        return Mode4AutonomousManualResponse(
+            agent_id=request.agent_id,
+            content=response.response,
+            confidence=response.confidence,
+            citations=response.citations or [],
+            metadata=metadata,
+            processing_time_ms=processing_time_ms,
+            autonomous_reasoning=autonomous_reasoning_metadata,
+        )
+
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.error("❌ Mode 4 autonomous-manual execution failed", error=str(exc))
+        raise HTTPException(status_code=500, detail=f"Mode 4 execution failed: {str(exc)}")
 
 
 # Agent Query Endpoint

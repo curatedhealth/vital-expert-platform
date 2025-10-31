@@ -1,0 +1,528 @@
+{\rtf1\ansi\ansicpg1252\cocoartf2822
+\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fswiss\fcharset0 Helvetica;}
+{\colortbl;\red255\green255\blue255;}
+{\*\expandedcolortbl;;}
+\paperw11900\paperh16840\margl1440\margr1440\vieww11520\viewh8400\viewkind0
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f0\fs24 \cf0 \{\
+  "schema_version": "1.1",\
+  "generated_at": "2025-10-30T09:30:00Z",\
+  "domains": [\
+\
+    ////////////////////////////////////////////////////////////////////////////\
+    // GLOBAL DOMAINS (scope = global)\
+    // These are canonical. They are shared across all enterprises.\
+    ////////////////////////////////////////////////////////////////////////////\
+\
+    \{\
+      "domain_id": "regulatory_affairs",\
+      "parent_domain_id": null,\
+      "function_id": "regulatory_compliance",\
+      "function_name": "Regulatory & Compliance",\
+      "domain_name": "Regulatory Affairs",\
+      "domain_description_llm": "Covers regulatory strategy, submissions, approvals, labeling, lifecycle variations and interactions with authorities for medicinal products and digital health solutions. Use this domain for questions about approval pathways, dossier content, clinical evidence requirements for approval, and post-approval obligations.",\
+\
+      "tenants_primary": ["Pharmaceutical"],\
+      "tenants_secondary": ["Digital Health Startup"],\
+      "is_cross_tenant": true,\
+\
+      "domain_scope": "global",\
+      "enterprise_id": null,\
+      "owner_user_id": null,\
+\
+      "tier": 1,\
+      "tier_label": "Core / High Authority",\
+      "maturity_level": "Established",            // Established | Specialized | Emerging | Draft\
+      "regulatory_exposure": "High",              // High | Medium | Low\
+      "pii_sensitivity": "Low",                   // None | Low | Medium | High\
+      "lifecycle_stage": ["Pre-Launch", "Launch", "Post-Launch"],\
+\
+      "governance_owner": "Regulatory Affairs Function",\
+      "last_review_owner_role": "Head of Regulatory Affairs",\
+\
+      "embedding_model": "text-embedding-3-large",\
+      "rag_priority_weight": 0.95,                // Used to rank retrieval confidence\
+      "access_policy": "public"                   // public | enterprise_confidential | team_confidential | personal_draft\
+    \},\
+\
+    \{\
+      "domain_id": "safety_pharmacovigilance",\
+      "parent_domain_id": null,\
+      "function_id": "regulatory_compliance",\
+      "function_name": "Regulatory & Compliance",\
+      "domain_name": "Pharmacovigilance & Safety Reporting",\
+      "domain_description_llm": "Covers safety surveillance, adverse event collection, signal detection, risk management plans, and benefit-risk monitoring for products in market and in clinical development. Use this domain for questions about safety obligations, safety signal escalation, and post-marketing safety commitments.",\
+\
+      "tenants_primary": ["Pharmaceutical"],\
+      "tenants_secondary": ["Healthcare Provider"],\
+      "is_cross_tenant": true,\
+\
+      "domain_scope": "global",\
+      "enterprise_id": null,\
+      "owner_user_id": null,\
+\
+      "tier": 1,\
+      "tier_label": "Core / High Authority",\
+      "maturity_level": "Established",\
+      "regulatory_exposure": "High",\
+      "pii_sensitivity": "High",\
+      "lifecycle_stage": ["Clinical Development", "Post-Launch"],\
+\
+      "governance_owner": "Drug Safety / PV Function",\
+      "last_review_owner_role": "Safety Officer",\
+\
+      "embedding_model": "text-embedding-3-large",\
+      "rag_priority_weight": 0.9,\
+      "access_policy": "enterprise_confidential"\
+    \},\
+\
+    \{\
+      "domain_id": "data_privacy_ethics",\
+      "parent_domain_id": null,\
+      "function_id": "regulatory_compliance",\
+      "function_name": "Regulatory & Compliance",\
+      "domain_name": "Data Privacy, Consent & Ethics",\
+      "domain_description_llm": "Covers patient consent, lawful basis for processing health data, secondary use of data, de-identification, ethical review, and data sharing governance. Use this domain for questions about whether certain patient/claims/EHR data can be collected, linked, analyzed, or shared legally and ethically.",\
+\
+      "tenants_primary": ["Healthcare Provider", "Payer"],\
+      "tenants_secondary": ["Pharmaceutical", "Digital Health Startup"],\
+      "is_cross_tenant": true,\
+\
+      "domain_scope": "global",\
+      "enterprise_id": null,\
+      "owner_user_id": null,\
+\
+      "tier": 1,\
+      "tier_label": "Core / High Authority",\
+      "maturity_level": "Established",\
+      "regulatory_exposure": "High",\
+      "pii_sensitivity": "High",\
+      "lifecycle_stage": ["Clinical Development", "Post-Launch", "Real-World Evidence"],\
+\
+      "governance_owner": "Privacy / Compliance Office",\
+      "last_review_owner_role": "Data Protection Officer",\
+\
+      "embedding_model": "text-embedding-3-large",\
+      "rag_priority_weight": 0.95,\
+      "access_policy": "enterprise_confidential"\
+    \},\
+\
+    \{\
+      "domain_id": "samd_dtx_regulation",\
+      "parent_domain_id": null,\
+      "function_id": "regulatory_compliance",\
+      "function_name": "Regulatory & Compliance",\
+      "domain_name": "Software as a Medical Device / Digital Therapeutics Regulation",\
+      "domain_description_llm": "Covers classification, regulatory pathways, cybersecurity obligations, clinical validation expectations, and post-market surveillance for software-based medical products and digital therapeutics. Use for questions about how a digital solution is regulated, which approval pathway applies, and what evidence is required.",\
+\
+      "tenants_primary": ["Digital Health Startup"],\
+      "tenants_secondary": ["Pharmaceutical", "Payer"],\
+      "is_cross_tenant": true,\
+\
+      "domain_scope": "global",\
+      "enterprise_id": null,\
+      "owner_user_id": null,\
+\
+      "tier": 1,\
+      "tier_label": "Core / High Authority",\
+      "maturity_level": "Specialized",\
+      "regulatory_exposure": "High",\
+      "pii_sensitivity": "Medium",\
+      "lifecycle_stage": ["Pre-Launch", "Launch", "Post-Launch"],\
+\
+      "governance_owner": "Regulatory / Digital Health Compliance",\
+      "last_review_owner_role": "Digital Regulatory Lead",\
+\
+      "embedding_model": "text-embedding-3-large",\
+      "rag_priority_weight": 0.92,\
+      "access_policy": "public"\
+    \},\
+\
+    \{\
+      "domain_id": "clinical_development_trial_design",\
+      "parent_domain_id": null,\
+      "function_id": "research_clinical_development",\
+      "function_name": "Research & Clinical Development",\
+      "domain_name": "Clinical Development & Trial Design",\
+      "domain_description_llm": "Covers clinical development strategy, trial phase design, endpoints, comparator selection, adaptive trials, and protocol justification for efficacy/safety. Use this domain for questions about how to design, justify, or run a clinical trial.",\
+\
+      "tenants_primary": ["Pharmaceutical"],\
+      "tenants_secondary": ["Digital Health Startup", "Healthcare Provider"],\
+      "is_cross_tenant": true,\
+\
+      "domain_scope": "global",\
+      "enterprise_id": null,\
+      "owner_user_id": null,\
+\
+      "tier": 1,\
+      "tier_label": "Core / High Authority",\
+      "maturity_level": "Established",\
+      "regulatory_exposure": "High",\
+      "pii_sensitivity": "Medium",\
+      "lifecycle_stage": ["Clinical Development", "Pre-Launch"],\
+\
+      "governance_owner": "Clinical Development Function",\
+      "last_review_owner_role": "Head of Clinical Development",\
+\
+      "embedding_model": "text-embedding-3-large",\
+      "rag_priority_weight": 0.95,\
+      "access_policy": "enterprise_confidential"\
+    \},\
+\
+    \{\
+      "domain_id": "rwe_real_world_evidence",\
+      "parent_domain_id": null,\
+      "function_id": "digital_data_ai",\
+      "function_name": "Digital, Data & AI",\
+      "domain_name": "Real-World Data & Real-World Evidence (RWE)",\
+      "domain_description_llm": "Covers use of observational data, claims data, registry data, EHR data, and patient-reported outcomes to generate evidence of effectiveness, safety, burden-of-disease, unmet need, and value. Use this domain for questions about leveraging real-world data for regulatory, market access, clinical, or policy decisions.",\
+\
+      "tenants_primary": ["Pharmaceutical"],\
+      "tenants_secondary": ["Payer", "Healthcare Provider"],\
+      "is_cross_tenant": true,\
+\
+      "domain_scope": "global",\
+      "enterprise_id": null,\
+      "owner_user_id": null,\
+\
+      "tier": 1,\
+      "tier_label": "Core / High Authority",\
+      "maturity_level": "Established",\
+      "regulatory_exposure": "High",\
+      "pii_sensitivity": "High",\
+      "lifecycle_stage": ["Post-Launch", "In-Market Optimization"],\
+\
+      "governance_owner": "RWE / Evidence Generation",\
+      "last_review_owner_role": "RWE Lead",\
+\
+      "embedding_model": "text-embedding-3-large",\
+      "rag_priority_weight": 0.95,\
+      "access_policy": "enterprise_confidential"\
+    \},\
+\
+    \{\
+      "domain_id": "heor_health_economics",\
+      "parent_domain_id": null,\
+      "function_id": "market_access_heor",\
+      "function_name": "Market Access & Health Economics",\
+      "domain_name": "Health Economics & Outcomes Research (HEOR)",\
+      "domain_description_llm": "Covers cost-effectiveness models, budget impact models, QALY analyses, burden-of-disease, and comparative effectiveness. Use this domain for questions about economic value, payer evidence expectations, and how to demonstrate value for money.",\
+\
+      "tenants_primary": ["Pharmaceutical"],\
+      "tenants_secondary": ["Payer"],\
+      "is_cross_tenant": true,\
+\
+      "domain_scope": "global",\
+      "enterprise_id": null,\
+      "owner_user_id": null,\
+\
+      "tier": 1,\
+      "tier_label": "Core / High Authority",\
+      "maturity_level": "Established",\
+      "regulatory_exposure": "Medium",\
+      "pii_sensitivity": "Low",\
+      "lifecycle_stage": ["Launch", "Post-Launch", "Reimbursement Negotiation"],\
+\
+      "governance_owner": "HEOR / Market Access Function",\
+      "last_review_owner_role": "HEOR Lead",\
+\
+      "embedding_model": "text-embedding-3-large",\
+      "rag_priority_weight": 0.95,\
+      "access_policy": "public"\
+    \},\
+\
+    \{\
+      "domain_id": "hta_reimbursement_assessment",\
+      "parent_domain_id": null,\
+      "function_id": "market_access_heor",\
+      "function_name": "Market Access & Health Economics",\
+      "domain_name": "HTA & Reimbursement Assessment",\
+      "domain_description_llm": "Covers health technology assessment, reimbursement decision frameworks, coverage criteria, willingness-to-pay thresholds, and payer evidence standards. Use this domain for questions about whether a therapy or digital intervention will be reimbursed and under what conditions.",\
+\
+      "tenants_primary": ["Payer"],\
+      "tenants_secondary": ["Pharmaceutical"],\
+      "is_cross_tenant": true,\
+\
+      "domain_scope": "global",\
+      "enterprise_id": null,\
+      "owner_user_id": null,\
+\
+      "tier": 1,\
+      "tier_label": "Core / High Authority",\
+      "maturity_level": "Established",\
+      "regulatory_exposure": "Medium",\
+      "pii_sensitivity": "Low",\
+      "lifecycle_stage": ["Launch", "Post-Launch"],\
+\
+      "governance_owner": "Payer / Reimbursement Function",\
+      "last_review_owner_role": "Reimbursement Policy Lead",\
+\
+      "embedding_model": "text-embedding-3-large",\
+      "rag_priority_weight": 0.93,\
+      "access_policy": "public"\
+    \},\
+\
+    \{\
+      "domain_id": "clinical_practice_guidelines",\
+      "parent_domain_id": null,\
+      "function_id": "care_delivery_clinical_practice",\
+      "function_name": "Care Delivery & Clinical Practice",\
+      "domain_name": "Clinical Practice Guidelines & Standard of Care",\
+      "domain_description_llm": "Covers evidence-based clinical guidelines, diagnostic and treatment pathways, dosing protocols, escalation criteria, and monitoring standards in routine care. Use this domain for questions about how clinicians should diagnose, treat, and monitor a given condition today in practice.",\
+\
+      "tenants_primary": ["Healthcare Provider"],\
+      "tenants_secondary": ["Pharmaceutical"],\
+      "is_cross_tenant": true,\
+\
+      "domain_scope": "global",\
+      "enterprise_id": null,\
+      "owner_user_id": null,\
+\
+      "tier": 1,\
+      "tier_label": "Core / High Authority",\
+      "maturity_level": "Established",\
+      "regulatory_exposure": "Medium",\
+      "pii_sensitivity": "Low",\
+      "lifecycle_stage": ["Clinical Practice", "Post-Launch"],\
+\
+      "governance_owner": "Clinical Governance / Medical Leadership",\
+      "last_review_owner_role": "Chief Medical Officer",\
+\
+      "embedding_model": "text-embedding-3-large",\
+      "rag_priority_weight": 0.94,\
+      "access_policy": "public"\
+    \},\
+\
+    \{\
+      "domain_id": "strategic_governance_esg",\
+      "parent_domain_id": null,\
+      "function_id": "corporate_governance_esg",\
+      "function_name": "Corporate, Governance & ESG",\
+      "domain_name": "Risk Management, Governance & ESG",\
+      "domain_description_llm": "Covers corporate governance, compliance risk, responsible innovation, sustainability expectations, and alignment of decisions with environmental/social/governance principles. Use this domain for questions about acceptable conduct, exposure to compliance risk, and long-term sustainability posture.",\
+\
+      "tenants_primary": ["Pharmaceutical"],\
+      "tenants_secondary": ["Payer", "Healthcare Provider", "Digital Health Startup"],\
+      "is_cross_tenant": true,\
+\
+      "domain_scope": "global",\
+      "enterprise_id": null,\
+      "owner_user_id": null,\
+\
+      "tier": 3,\
+      "tier_label": "Emerging / Fast-Evolving",\
+      "maturity_level": "Emerging",\
+      "regulatory_exposure": "Medium",\
+      "pii_sensitivity": "Low",\
+      "lifecycle_stage": ["Corporate Strategy", "Operational Transformation"],\
+\
+      "governance_owner": "Corporate Governance / ESG Office",\
+      "last_review_owner_role": "ESG / Risk Lead",\
+\
+      "embedding_model": "text-embedding-3-large",\
+      "rag_priority_weight": 0.75,\
+      "access_policy": "public"\
+    \},\
+\
+\
+\
+    ////////////////////////////////////////////////////////////////////////////\
+    // ENTERPRISE DOMAINS (scope = enterprise)\
+    // These are localized variants owned by a single enterprise.\
+    // They inherit meaning from a global parent but may refine geography,\
+    // policy, SOPs, or internal playbooks.\
+    ////////////////////////////////////////////////////////////////////////////\
+\
+    \{\
+      "domain_id": "hta_reimbursement_assessment.enterprise_x",\
+      "parent_domain_id": "hta_reimbursement_assessment",\
+      "function_id": "market_access_heor",\
+      "function_name": "Market Access & Health Economics",\
+      "domain_name": "HTA & Reimbursement Assessment (Enterprise X)",\
+      "domain_description_llm": "Enterprise X\'96specific payer assessment logic, internal negotiation playbooks, known payer objections, escalation procedures, and local willingness-to-pay patterns. Use this domain for questions about how Enterprise X prepares and defends value for coverage decisions in its key markets.",\
+\
+      "tenants_primary": ["Payer"],\
+      "tenants_secondary": ["Pharmaceutical"],\
+      "is_cross_tenant": false,\
+\
+      "domain_scope": "enterprise",\
+      "enterprise_id": "enterprise_x",\
+      "owner_user_id": null,\
+\
+      "tier": 1,\
+      "tier_label": "Core / High Authority (Local)",\
+      "maturity_level": "Established",\
+      "regulatory_exposure": "Medium",\
+      "pii_sensitivity": "Medium",\
+      "lifecycle_stage": ["Launch", "Post-Launch"],\
+\
+      "governance_owner": "Market Access / Reimbursement Team - Enterprise X",\
+      "last_review_owner_role": "Local Reimbursement Lead - Enterprise X",\
+\
+      "embedding_model": "text-embedding-3-large",\
+      "rag_priority_weight": 0.97,  // higher: local truth beats generic\
+      "access_policy": "enterprise_confidential"\
+    \},\
+\
+    \{\
+      "domain_id": "rwe_real_world_evidence.enterprise_x",\
+      "parent_domain_id": "rwe_real_world_evidence",\
+      "function_id": "digital_data_ai",\
+      "function_name": "Digital, Data & AI",\
+      "domain_name": "Real-World Evidence (Enterprise X Registry & Claims Data)",\
+      "domain_description_llm": "Enterprise X\'92s internal RWE methods, local registry structures, claims data pipelines, linkage rules, and evidence packages already delivered to stakeholders. Use this for questions about how Enterprise X actually collects, cleans, links, and interprets its real-world data.",\
+      "tenants_primary": ["Pharmaceutical"],\
+      "tenants_secondary": ["Payer", "Healthcare Provider"],\
+      "is_cross_tenant": false,\
+\
+      "domain_scope": "enterprise",\
+      "enterprise_id": "enterprise_x",\
+      "owner_user_id": null,\
+\
+      "tier": 1,\
+      "tier_label": "Core / High Authority (Local)",\
+      "maturity_level": "Specialized",\
+      "regulatory_exposure": "High",\
+      "pii_sensitivity": "High",\
+      "lifecycle_stage": ["Post-Launch", "In-Market Optimization"],\
+\
+      "governance_owner": "Evidence & RWE Analytics - Enterprise X",\
+      "last_review_owner_role": "RWE Data Steward - Enterprise X",\
+\
+      "embedding_model": "text-embedding-3-large",\
+      "rag_priority_weight": 0.98,\
+      "access_policy": "enterprise_confidential"\
+    \},\
+\
+    \{\
+      "domain_id": "clinical_practice_guidelines.enterprise_x",\
+      "parent_domain_id": "clinical_practice_guidelines",\
+      "function_id": "care_delivery_clinical_practice",\
+      "function_name": "Care Delivery & Clinical Practice",\
+      "domain_name": "Clinical Practice Guidelines (Enterprise X Care Network)",\
+      "domain_description_llm": "Locally approved clinical pathways, dosing protocols, referral criteria, escalation/step-up rules, digital triage tools, and quality KPIs enforced across Enterprise X\'92s network. Use this domain for questions about how clinicians inside Enterprise X are expected to behave in day-to-day care.",\
+      "tenants_primary": ["Healthcare Provider"],\
+      "tenants_secondary": ["Payer"],\
+      "is_cross_tenant": false,\
+\
+      "domain_scope": "enterprise",\
+      "enterprise_id": "enterprise_x",\
+      "owner_user_id": null,\
+\
+      "tier": 1,\
+      "tier_label": "Core / High Authority (Local)",\
+      "maturity_level": "Established",\
+      "regulatory_exposure": "Medium",\
+      "pii_sensitivity": "Medium",\
+      "lifecycle_stage": ["Clinical Practice", "Post-Launch"],\
+\
+      "governance_owner": "Clinical Governance - Enterprise X",\
+      "last_review_owner_role": "Chief Medical Officer - Enterprise X",\
+\
+      "embedding_model": "text-embedding-3-large",\
+      "rag_priority_weight": 0.99,\
+      "access_policy": "enterprise_confidential"\
+    \},\
+\
+    \{\
+      "domain_id": "pricing_and_contracting_strategy.enterprise_x",\
+      "parent_domain_id": "heor_health_economics",\
+      "function_id": "market_access_heor",\
+      "function_name": "Market Access & Health Economics",\
+      "domain_name": "Pricing & Contracting Playbook (Enterprise X)",\
+      "domain_description_llm": "Enterprise X\'92s internal pricing corridors, negotiation playbooks, discount guardrails, preferred contract structures, escalation thresholds, and historical payer objection handling. Use for questions about \'91what we actually offer and accept\'92 during price negotiations.",\
+      "tenants_primary": ["Pharmaceutical"],\
+      "tenants_secondary": ["Payer"],\
+      "is_cross_tenant": false,\
+\
+      "domain_scope": "enterprise",\
+      "enterprise_id": "enterprise_x",\
+      "owner_user_id": null,\
+\
+      "tier": 1,\
+      "tier_label": "Core / High Authority (Local)",\
+      "maturity_level": "Established",\
+      "regulatory_exposure": "Medium",\
+      "pii_sensitivity": "High",\
+      "lifecycle_stage": ["Launch", "Post-Launch", "Reimbursement Negotiation"],\
+\
+      "governance_owner": "Market Access / Pricing - Enterprise X",\
+      "last_review_owner_role": "Pricing Lead - Enterprise X",\
+\
+      "embedding_model": "text-embedding-3-large",\
+      "rag_priority_weight": 0.98,\
+      "access_policy": "enterprise_confidential"\
+    \},\
+\
+\
+\
+    ////////////////////////////////////////////////////////////////////////////\
+    // USER DOMAINS (scope = user)\
+    // These are personal or team-level scratchpads. Lower weight.\
+    // They still inherit parent_domain_id, so they stay anchored.\
+    ////////////////////////////////////////////////////////////////////////////\
+\
+    \{\
+      "domain_id": "hta_negotiation_notes_q4.user_a",\
+      "parent_domain_id": "hta_reimbursement_assessment.enterprise_x",\
+      "function_id": "market_access_heor",\
+      "function_name": "Market Access & Health Economics",\
+      "domain_name": "HTA Objection / Negotiation Notes Q4 (User A)",\
+      "domain_description_llm": "Running notes from active reimbursement negotiations, including payer objections, informal arguments that worked, and escalation points. Use this only if the question explicitly asks for current deal status, payer pushback, or in-progress negotiation tactics.",\
+      "tenants_primary": ["Payer"],\
+      "tenants_secondary": ["Pharmaceutical"],\
+      "is_cross_tenant": false,\
+\
+      "domain_scope": "user",\
+      "enterprise_id": "enterprise_x",\
+      "owner_user_id": "user_a",\
+\
+      "tier": 2,\
+      "tier_label": "Specialized / Working Material",\
+      "maturity_level": "Draft",\
+      "regulatory_exposure": "Medium",\
+      "pii_sensitivity": "High",\
+      "lifecycle_stage": ["Post-Launch", "Reimbursement Negotiation"],\
+\
+      "governance_owner": "User A",\
+      "last_review_owner_role": "User A",\
+\
+      "embedding_model": "text-embedding-3-large",\
+      "rag_priority_weight": 0.4,   // low confidence: scratchpad\
+      "access_policy": "personal_draft"\
+    \},\
+\
+    \{\
+      "domain_id": "rwe_local_signal_log.user_a",\
+      "parent_domain_id": "rwe_real_world_evidence.enterprise_x",\
+      "function_id": "digital_data_ai",\
+      "function_name": "Digital, Data & AI",\
+      "domain_name": "RWE Signal Log \'96 Emerging Safety / Outcomes Flags (User A)",\
+      "domain_description_llm": "Early, unvalidated RWE observations captured by User A: unexpected outcomes, adherence drop-offs, site complaints, clinician feedback. Use ONLY if the question is about potential safety signals, operational red flags, or hypotheses to investigate \'97 not for final evidence.",\
+      "tenants_primary": ["Pharmaceutical"],\
+      "tenants_secondary": ["Healthcare Provider"],\
+      "is_cross_tenant": false,\
+\
+      "domain_scope": "user",\
+      "enterprise_id": "enterprise_x",\
+      "owner_user_id": "user_a",\
+\
+      "tier": 3,\
+      "tier_label": "Emerging / Unvalidated Notes",\
+      "maturity_level": "Draft",\
+      "regulatory_exposure": "High",\
+      "pii_sensitivity": "High",\
+      "lifecycle_stage": ["Post-Launch", "In-Market Optimization"],\
+\
+      "governance_owner": "User A",\
+      "last_review_owner_role": "User A",\
+\
+      "embedding_model": "text-embedding-3-large",\
+      "rag_priority_weight": 0.3,\
+      "access_policy": "personal_draft"\
+    \}\
+\
+  ]\
+\}\
+}

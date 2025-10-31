@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link"
+import { useEffect, useState } from "react"
 import {
   Activity,
   ArrowRight,
@@ -30,6 +31,7 @@ import {
 } from "lucide-react"
 
 import { SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar"
+import { createClient } from "@vital/sdk/client"
 
 export function SidebarDashboardContent() {
   return (
@@ -244,6 +246,116 @@ export function SidebarAgentsContent() {
 }
 
 export function SidebarKnowledgeContent() {
+  const [categories, setCategories] = useState<Array<{ function_id: string; function_name: string; domains: Array<{ domain_id: string; domain_name: string }> }>>([])
+  const [loading, setLoading] = useState(true)
+  const supabase = createClient()
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        setLoading(true)
+        // Fetch domains from new architecture
+        const { data: newData, error: newError } = await supabase
+          .from('knowledge_domains_new')
+          .select('domain_id, domain_name, function_id, function_name, tier')
+          .eq('is_active', true)
+          .order('function_id')
+          .order('tier')
+          .order('priority')
+
+        if (!newError && newData && newData.length > 0) {
+          // Group by function_id
+          const grouped = newData.reduce((acc: any, domain: any) => {
+            const funcId = domain.function_id || 'general'
+            const funcName = domain.function_name || 'General'
+            
+            if (!acc[funcId]) {
+              acc[funcId] = {
+                function_id: funcId,
+                function_name: funcName,
+                domains: []
+              }
+            }
+            
+            acc[funcId].domains.push({
+              domain_id: domain.domain_id,
+              domain_name: domain.domain_name || domain.domain_id
+            })
+            
+            return acc
+          }, {})
+
+          setCategories(Object.values(grouped))
+          setLoading(false)
+          return
+        }
+
+        // Fallback: try old table and group by common patterns
+        const { data: oldData, error: oldError } = await supabase
+          .from('knowledge_domains')
+          .select('slug, name, tier')
+          .eq('is_active', true)
+          .order('priority')
+
+        if (!oldError && oldData && oldData.length > 0) {
+          // Map old data to function-based groups
+          const functionMap: Record<string, string> = {
+            'regulatory': 'Regulatory & Compliance',
+            'clinical': 'Clinical Development',
+            'market': 'Market Access',
+            'research': 'Research & Development',
+          }
+
+          const grouped = oldData.reduce((acc: any, domain: any) => {
+            // Try to infer function from slug/name
+            const slug = domain.slug?.toLowerCase() || ''
+            const name = domain.name?.toLowerCase() || ''
+            
+            let funcId = 'general'
+            let funcName = 'General'
+            
+            for (const [key, value] of Object.entries(functionMap)) {
+              if (slug.includes(key) || name.includes(key)) {
+                funcId = key
+                funcName = value
+                break
+              }
+            }
+            
+            if (!acc[funcId]) {
+              acc[funcId] = {
+                function_id: funcId,
+                function_name: funcName,
+                domains: []
+              }
+            }
+            
+            acc[funcId].domains.push({
+              domain_id: domain.slug,
+              domain_name: domain.name || domain.slug
+            })
+            
+            return acc
+          }, {})
+
+          setCategories(Object.values(grouped))
+        }
+      } catch (err) {
+        console.error('Error fetching knowledge categories:', err)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchCategories()
+  }, [])
+
+  // If we have categories from new architecture, show them grouped by function
+  // Otherwise show a simple list
+  const displayCategories = categories.length > 0 
+    ? categories 
+    : [{ function_id: 'general', function_name: 'Categories', domains: [] }]
+
   return (
     <>
       <SidebarGroup>
@@ -270,6 +382,14 @@ export function SidebarKnowledgeContent() {
                 <span>Organize Collections</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild>
+                <Link href="/knowledge?tab=library">
+                  <FileText className="h-4 w-4" />
+                  <span>Documents Library</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
           </SidebarMenu>
         </SidebarGroupContent>
       </SidebarGroup>
@@ -277,16 +397,53 @@ export function SidebarKnowledgeContent() {
       <SidebarGroup>
         <SidebarGroupLabel>Categories</SidebarGroupLabel>
         <SidebarGroupContent>
-          <SidebarMenu>
-            {["Regulatory", "Clinical", "Market", "Research"].map((label) => (
-              <SidebarMenuItem key={label}>
-                <SidebarMenuButton>
-                  <FolderOpen className="h-4 w-4" />
-                  <span>{label}</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            ))}
-          </SidebarMenu>
+          {loading ? (
+            <div className="px-4 py-2 text-sm text-muted-foreground">Loading categories...</div>
+          ) : categories.length > 0 ? (
+            // Show function-based groups
+            <SidebarMenu>
+              {categories.map((category) => (
+                <SidebarMenuItem key={category.function_id}>
+                  <div className="px-3 py-1.5">
+                    <div className="text-xs font-semibold text-muted-foreground mb-1">
+                      {category.function_name}
+                    </div>
+                    <div className="space-y-0.5">
+                      {category.domains.slice(0, 5).map((domain) => (
+                        <SidebarMenuButton
+                          key={domain.domain_id}
+                          asChild
+                          className="h-7 text-xs pl-4"
+                        >
+                          <Link href={`/knowledge?domain=${domain.domain_id}`}>
+                            <FolderOpen className="h-3 w-3" />
+                            <span className="truncate">{domain.domain_name}</span>
+                          </Link>
+                        </SidebarMenuButton>
+                      ))}
+                      {category.domains.length > 5 && (
+                        <div className="text-xs text-muted-foreground pl-4">
+                          +{category.domains.length - 5} more
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          ) : (
+            // Fallback: show default categories
+            <SidebarMenu>
+              {["Regulatory", "Clinical", "Market", "Research"].map((label) => (
+                <SidebarMenuItem key={label}>
+                  <SidebarMenuButton>
+                    <FolderOpen className="h-4 w-4" />
+                    <span>{label}</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          )}
         </SidebarGroupContent>
       </SidebarGroup>
     </>

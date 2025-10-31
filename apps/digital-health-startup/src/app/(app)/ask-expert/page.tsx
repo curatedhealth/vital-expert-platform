@@ -57,6 +57,7 @@ import {
 import { EnhancedMessageDisplay } from '@/features/ask-expert/components/EnhancedMessageDisplay';
 import { AgentAvatar } from '@vital/ui';
 import { Suggestions, Suggestion } from '@/components/ai/suggestion';
+import { useAgentWithStats } from '@/features/ask-expert/hooks/useAgentWithStats';
 
 // ============================================================================
 // TYPES
@@ -394,6 +395,13 @@ function AskExpertPageContent() {
     displayName,
   };
   }, [agents, selectedAgents]);
+
+  const primaryAgentId = selectedAgents.length ? selectedAgents[0] : null;
+  const {
+    stats: primaryAgentStats,
+    memory: primaryAgentMemory,
+    isLoadingMemory: isLoadingPrimaryMemory,
+  } = useAgentWithStats(primaryAgentId, user?.id ?? null);
 
   const latestAssistantMessage = useMemo(() => {
     for (let i = messages.length - 1; i >= 0; i -= 1) {
@@ -1253,6 +1261,28 @@ function AskExpertPageContent() {
         },
       };
 
+      const resolvedAgentId = selectedAgent?.id || agentId || undefined;
+
+      if (
+        user?.id &&
+        resolvedAgentId &&
+        assistantMessage.content &&
+        assistantMessage.content.trim().length > 0
+      ) {
+        void fetch('/api/memory/long-term', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId: user.id,
+            agentId: resolvedAgentId,
+            userMessage: messageContent,
+            assistantMessage: assistantMessage.content,
+          }),
+        }).catch((error) => {
+          console.error('[LongTermMemory] Failed to persist memory', error);
+        });
+      }
+
       setMessages(prev => [...prev, assistantMessage]);
       const branchReasoning = activeBranch?.reasoning;
       const normalizedRecentReasoning = branchReasoning
@@ -1714,6 +1744,88 @@ function AskExpertPageContent() {
                     setSelectedAgents(selectedAgents.filter((id) => id !== agentId));
                   }}
                 />
+              </div>
+            )}
+
+            {primaryAgentId && (
+              <div className="mb-6 space-y-4">
+                {(isLoadingPrimaryMemory || (primaryAgentMemory?.facts?.length ?? 0) > 0) && (
+                  <div className="rounded-xl border border-blue-200/60 bg-blue-50/60 dark:border-blue-800/50 dark:bg-blue-900/20 p-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-2">
+                        <Brain className="w-4 h-4 text-blue-600 dark:text-blue-300" />
+                        <span className="text-sm font-semibold text-blue-900 dark:text-blue-100">
+                          Memory Insights
+                        </span>
+                      </div>
+                      {isLoadingPrimaryMemory && (
+                        <span className="text-xs text-blue-600 dark:text-blue-200 animate-pulse">
+                          Updating…
+                        </span>
+                      )}
+                    </div>
+                    {isLoadingPrimaryMemory ? (
+                      <div className="space-y-2">
+                        {[0, 1, 2].map((i) => (
+                          <div key={i} className="h-10 bg-white/60 dark:bg-blue-900/40 rounded-lg animate-pulse" />
+                        ))}
+                      </div>
+                    ) : (
+                      primaryAgentMemory?.facts &&
+                      primaryAgentMemory.facts.length > 0 && (
+                        <ul className="space-y-2">
+                          {primaryAgentMemory.facts.slice(0, 3).map((fact) => (
+                            <li
+                              key={fact.id}
+                              className="rounded-lg bg-white dark:bg-blue-950/40 border border-blue-200/60 dark:border-blue-800/60 p-2 text-xs text-blue-900 dark:text-blue-100"
+                            >
+                              <p className="font-medium text-blue-800 dark:text-blue-100">{fact.fact}</p>
+                              <div className="mt-1 flex flex-wrap gap-2 text-[10px] text-blue-600 dark:text-blue-300">
+                                <span className="bg-blue-100 dark:bg-blue-900/50 px-2 py-0.5 rounded-full">
+                                  {fact.category}
+                                </span>
+                                <span>Confidence {(fact.confidence * 100).toFixed(0)}%</span>
+                                <span>{new Date(fact.createdAt).toLocaleDateString()}</span>
+                              </div>
+                            </li>
+                          ))}
+                          {primaryAgentMemory.facts.length > 3 && (
+                            <li className="text-[11px] text-blue-600 dark:text-blue-300">
+                              +{primaryAgentMemory.facts.length - 3} more memorized facts
+                            </li>
+                          )}
+                        </ul>
+                      )
+                    )}
+                  </div>
+                )}
+
+                {primaryAgentStats?.recentFeedback && primaryAgentStats.recentFeedback.length > 0 && (
+                  <div className="rounded-xl border border-amber-200/60 bg-amber-50/60 dark:border-amber-900/40 dark:bg-amber-900/20 p-4">
+                    <div className="flex items-center gap-2 mb-3">
+                      <MessageSquare className="w-4 h-4 text-amber-600 dark:text-amber-300" />
+                      <span className="text-sm font-semibold text-amber-900 dark:text-amber-100">
+                        Recent User Feedback
+                      </span>
+                    </div>
+                    <div className="space-y-2">
+                      {primaryAgentStats.recentFeedback.slice(0, 3).map((feedback) => (
+                        <div
+                          key={feedback.id}
+                          className="rounded-lg bg-white dark:bg-amber-950/30 border border-amber-200/60 dark:border-amber-900/40 p-2 text-xs text-amber-900 dark:text-amber-100"
+                        >
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="font-medium">Rating {feedback.rating.toFixed(1)}/5</span>
+                            <span>{new Date(feedback.createdAt).toLocaleDateString()}</span>
+                          </div>
+                          <p className="text-xs text-amber-800 dark:text-amber-200">
+                            {feedback.comment ? `“${feedback.comment}”` : 'No comment provided'}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 

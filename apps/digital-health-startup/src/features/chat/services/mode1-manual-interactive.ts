@@ -41,11 +41,14 @@ interface Mode1ManualApiResponse {
   processing_time_ms: number;
 }
 
-const AI_ENGINE_URL =
-  process.env.AI_ENGINE_URL ||
+// Use API Gateway URL for compliance with Golden Rule (Python services via gateway)
+const API_GATEWAY_URL =
+  process.env.API_GATEWAY_URL ||
+  process.env.NEXT_PUBLIC_API_GATEWAY_URL ||
+  process.env.AI_ENGINE_URL || // Fallback for compatibility
   process.env.MODE1_AI_ENGINE_URL ||
   process.env.NEXT_PUBLIC_AI_ENGINE_URL ||
-  'http://localhost:8000';
+  'http://localhost:3001'; // Default to API Gateway, not direct AI Engine
 
 /**
  * Build metadata chunk string to keep the UI streaming helpers working.
@@ -122,7 +125,8 @@ export class Mode1ManualInteractiveHandler {
         conversation_history: config.conversationHistory ?? [],
       };
 
-      const response = await fetch(`${AI_ENGINE_URL}/api/mode1/manual`, {
+      // Call via API Gateway to comply with Golden Rule (Python services via gateway)
+      const response = await fetch(`${API_GATEWAY_URL}/api/mode1/manual`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

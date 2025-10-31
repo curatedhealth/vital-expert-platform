@@ -7,7 +7,7 @@ import {
   Settings,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import ReactMarkdown from 'react-markdown';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@vital/ui';
@@ -18,6 +18,7 @@ import { Textarea } from '@vital/ui';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@vital/ui';
 import { useAuth } from '@/lib/auth/supabase-auth-context';
 import { useAgentsStore, Agent } from '@/lib/stores/agents-store';
+import { useAgentWithStats } from '@/features/ask-expert/hooks/useAgentWithStats';
 import { EnhancedModeSelector, ExpertAgentCard } from '@/features/ask-expert/components';
 
 interface Message {
@@ -70,6 +71,33 @@ const MODE_CONFIG = {
   }
 } as const;
 
+function AgentCardWithStats({
+  agent,
+  isSelected,
+  onSelect,
+  userId,
+}: {
+  agent: Agent;
+  isSelected: boolean;
+  onSelect: (agentId: string) => void;
+  userId?: string | null;
+}) {
+  const { stats, isLoadingStats, memory, isLoadingMemory } = useAgentWithStats(agent.id, userId);
+  const mergedAgent = stats ? { ...agent, ...stats } : agent;
+
+  return (
+    <ExpertAgentCard
+      agent={mergedAgent}
+      isSelected={isSelected}
+      onSelect={onSelect}
+      variant="detailed"
+      showStats
+      isLoadingStats={isLoadingStats || isLoadingMemory}
+      memory={memory}
+    />
+  );
+}
+
 export default function AskExpertPageEnhanced() {
   const router = useRouter();
   const { user } = useAuth();
@@ -97,6 +125,26 @@ export default function AskExpertPageEnhanced() {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [state.messages]);
+
+  const {
+    agent: selectedAgentFromStore,
+    stats: selectedAgentStats,
+    isLoadingStats: isLoadingSelectedAgentStats,
+    memory: selectedAgentMemory,
+    isLoadingMemory: isLoadingSelectedAgentMemory,
+  } = useAgentWithStats(state.selectedAgent?.id ?? null, user?.id ?? null);
+
+  const selectedAgentDisplay = useMemo(() => {
+    if (!state.selectedAgent) {
+      return null;
+    }
+
+    return {
+      ...state.selectedAgent,
+      ...(selectedAgentFromStore ?? {}),
+      ...(selectedAgentStats ?? {}),
+    };
+  }, [state.selectedAgent, selectedAgentFromStore, selectedAgentStats, selectedAgentMemory]);
 
   const handleModeChange = (modeId: string) => {
     setState(prev => ({ ...prev, selectedMode: modeId }));
@@ -234,9 +282,28 @@ export default function AskExpertPageEnhanced() {
               console.warn('Failed to parse SSE data:', e);
             }
           }
-        }
       }
-    } catch (error) {
+    }
+
+    if (
+      user?.id &&
+      (selectedAgentDisplay?.id || state.selectedAgent?.id) &&
+      fullContent.trim().length > 0
+    ) {
+      void fetch('/api/memory/long-term', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: user.id,
+          agentId: selectedAgentDisplay?.id ?? state.selectedAgent?.id,
+          userMessage: userMessage.content,
+          assistantMessage: fullContent,
+        }),
+      }).catch((error) => {
+        console.error('[LongTermMemory] Failed to persist memory (enhanced page)', error);
+      });
+    }
+  } catch (error) {
       console.error('Ask Expert error:', error);
       const errorMessage: Message = {
         id: `msg-${Date.now() + 2}`,
@@ -260,26 +327,26 @@ export default function AskExpertPageEnhanced() {
   };
 
   const getExpertPrompts = () => {
-    if (!state.selectedAgent) return [];
+    if (!selectedAgentDisplay) return [];
 
     const prompts = [
       {
-        text: `What are the key regulatory considerations for ${state.selectedAgent.name.toLowerCase()}?`,
+        text: `What are the key regulatory considerations for ${selectedAgentDisplay.name.toLowerCase()}?`,
         description: 'Get regulatory guidance',
         icon: '📋',
       },
       {
-        text: `How can I optimize my ${state.selectedAgent.name.toLowerCase()} strategy?`,
+        text: `How can I optimize my ${selectedAgentDisplay.name.toLowerCase()} strategy?`,
         description: 'Strategic optimization',
         icon: '🎯',
       },
       {
-        text: `What are the latest trends in ${state.selectedAgent.name.toLowerCase()}?`,
+        text: `What are the latest trends in ${selectedAgentDisplay.name.toLowerCase()}?`,
         description: 'Industry trends',
         icon: '📈',
       },
       {
-        text: `What are the common challenges in ${state.selectedAgent.name.toLowerCase()}?`,
+        text: `What are the common challenges in ${selectedAgentDisplay.name.toLowerCase()}?`,
         description: 'Challenge analysis',
         icon: '⚠️',
       },
@@ -308,14 +375,16 @@ export default function AskExpertPageEnhanced() {
                 </div>
               </div>
               <div className="flex items-center space-x-2">
-                {state.selectedAgent && (
+                {selectedAgentDisplay && (
                   <Badge variant="outline" className="px-3 py-1">
                     <ExpertAgentCard
-                      agent={state.selectedAgent}
+                      agent={selectedAgentDisplay}
                       variant="minimal"
                       isSelected={true}
+                      isLoadingStats={isLoadingSelectedAgentStats || isLoadingSelectedAgentMemory}
+                      memory={selectedAgentMemory}
                     />
-                    <span className="ml-2">{state.selectedAgent.name}</span>
+                    <span className="ml-2">{selectedAgentDisplay.name}</span>
                   </Badge>
                 )}
                 <Badge variant="secondary">LangGraph</Badge>
@@ -355,21 +424,12 @@ export default function AskExpertPageEnhanced() {
 
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {agents.slice(0, 9).map((agent) => (
-                      <ExpertAgentCard
+                      <AgentCardWithStats
                         key={agent.id}
-                        agent={{
-                          ...agent,
-                          // Mock performance metrics - replace with real data
-                          availability: 'online' as const,
-                          responseTime: Math.floor(Math.random() * 30) + 20,
-                          totalConsultations: Math.floor(Math.random() * 1000) + 500,
-                          satisfactionScore: 4.5 + Math.random() * 0.5,
-                          successRate: 85 + Math.floor(Math.random() * 15),
-                        }}
-                        variant="detailed"
+                        agent={agent}
                         isSelected={state.selectedAgent?.id === agent.id}
                         onSelect={handleAgentSelect}
-                        showStats={true}
+                        userId={user?.id}
                       />
                     ))}
                   </div>
@@ -399,7 +459,7 @@ export default function AskExpertPageEnhanced() {
                         Start a conversation
                       </h3>
                       <p className="text-gray-600 mb-6">
-                        Ask {state.selectedAgent?.name} anything about their expertise
+                        Ask {selectedAgentDisplay?.name || 'your selected expert'} anything about their expertise
                       </p>
 
                       {/* Quick Prompts */}
@@ -439,8 +499,8 @@ export default function AskExpertPageEnhanced() {
                           <div className="flex items-start space-x-3">
                             {message.role === 'assistant' && (
                               <Avatar className="h-8 w-8 mt-1">
-                                <AvatarImage src={state.selectedAgent?.avatar} />
-                                <AvatarFallback>{state.selectedAgent?.name[0]}</AvatarFallback>
+                                <AvatarImage src={selectedAgentDisplay?.avatar} />
+                                <AvatarFallback>{selectedAgentDisplay?.name?.[0]}</AvatarFallback>
                               </Avatar>
                             )}
                             <div className="flex-1 prose prose-sm max-w-none">
@@ -476,7 +536,7 @@ export default function AskExpertPageEnhanced() {
                     <Textarea
                       value={state.input}
                       onChange={(e) => setState(prev => ({ ...prev, input: e.target.value }))}
-                      placeholder={`Ask ${state.selectedAgent?.name} anything...`}
+                      placeholder={`Ask ${selectedAgentDisplay?.name || 'your expert'} anything...`}
                       disabled={state.isLoading}
                       className="flex-1 min-h-[80px] max-h-[200px] resize-none"
                       onKeyDown={(e) => {

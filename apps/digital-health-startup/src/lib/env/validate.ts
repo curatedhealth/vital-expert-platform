@@ -72,6 +72,10 @@ const optionalEnvSchema = z.object({
   PINECONE_ENVIRONMENT: z.string().optional(),
   PINECONE_INDEX_NAME: z.string().optional(),
 
+  // API Gateway (for Python services)
+  API_GATEWAY_URL: z.string().url().optional(),
+  NEXT_PUBLIC_API_GATEWAY_URL: z.string().url().optional(),
+
   // Observability
   SENTRY_DSN: z.string().url().optional(),
   OTEL_EXPORTER_OTLP_ENDPOINT: z.string().url().optional(),

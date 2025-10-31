@@ -150,11 +150,23 @@ export class UnifiedRAGService {
       return undefined;
     }
 
+    // Support both legacy 'domain' and new 'domain_id' fields
+    // Prefer domain_id if available, fallback to domain for backward compatibility
     if (domains.length === 1) {
-      return { domain: domains[0] };
+      return {
+        $or: [
+          { domain_id: { $eq: domains[0] } },
+          { domain: { $eq: domains[0] } }
+        ]
+      };
     }
 
-    return { domain: { $in: domains } };
+    return {
+      $or: [
+        { domain_id: { $in: domains } },
+        { domain: { $in: domains } }
+      ]
+    };
   }
 
   /**
@@ -701,21 +713,119 @@ export class UnifiedRAGService {
   async addDocument(doc: {
     title: string;
     content: string;
-    domain: string;
+    domain: string; // Legacy field
+    domain_id?: string; // New field
     tags?: string[];
     metadata?: any;
+    access_policy?: string;
+    rag_priority_weight?: number;
+    domain_scope?: string;
+    // Comprehensive metadata fields
+    clean_file_name?: string;
+    source_name?: string;
+    source_url?: string;
+    publication_date?: string;
+    author?: string;
+    authors?: string[];
+    organization?: string;
+    publisher?: string;
+    doi?: string;
+    isbn?: string;
+    journal?: string;
+    document_type?: string;
+    language?: string;
+    category?: string;
+    regulatory_body?: string;
+    therapeutic_area?: string;
+    product_name?: string;
+    indication?: string;
+    development_phase?: string;
+    geographic_scope?: string;
+    summary?: string;
+    abstract?: string;
+    keywords?: string[];
+    content_preview?: string;
+    quality_score?: number;
+    page_count?: number;
+    word_count?: number;
+    embedding_model?: string;
+    extraction_confidence?: number;
+    // Copyright & Compliance
+    copyright_status?: string;
+    copyright_risk_level?: string;
+    copyright_notice?: string;
+    copyright_requires_approval?: boolean;
+    copyright_issues?: any[];
+    attribution_required?: boolean;
+    // Data Sanitization
+    sanitization_status?: string;
+    sanitization_risk_level?: string;
+    sanitization_needs_review?: boolean;
+    pii_detected?: any[];
+    removed_content_summary?: any[];
+    // Compliance
+    validation_status?: string;
+    evidence_level?: string;
+    review_date?: string;
+    reviewer?: string;
+    expiration_date?: string;
   }): Promise<string> {
+    // Use domain_id if available, fallback to domain
+    const domainId = doc.domain_id || doc.domain;
+    
+    // Build insert payload with new architecture fields
+    const insertPayload: any = {
+      title: doc.title,
+      content: doc.content,
+      domain: doc.domain, // Legacy field for backward compatibility
+      domain_id: domainId, // New field
+      tags: doc.tags || [],
+      status: 'processing',
+      metadata: doc.metadata || {},
+    };
+    
+    // Add new architecture fields if provided
+    if (doc.access_policy) {
+      insertPayload.access_policy = doc.access_policy;
+    }
+    if (doc.rag_priority_weight !== undefined) {
+      insertPayload.rag_priority_weight = doc.rag_priority_weight;
+    }
+    if (doc.domain_scope) {
+      insertPayload.domain_scope = doc.domain_scope;
+    }
+    
+    // If domain_id is provided, try to fetch domain metadata to inherit missing fields
+    if (domainId && (!doc.access_policy || doc.rag_priority_weight === undefined)) {
+      try {
+        const { data: domainInfo } = await this.supabase
+          .from('knowledge_domains_new')
+          .select('access_policy, rag_priority_weight, domain_scope, embedding_model')
+          .eq('domain_id', domainId)
+          .single();
+        
+        if (domainInfo) {
+          // Inherit from domain if not explicitly provided
+          if (!doc.access_policy && domainInfo.access_policy) {
+            insertPayload.access_policy = domainInfo.access_policy;
+          }
+          if (doc.rag_priority_weight === undefined && domainInfo.rag_priority_weight !== undefined) {
+            insertPayload.rag_priority_weight = domainInfo.rag_priority_weight;
+          }
+          if (!doc.domain_scope && domainInfo.domain_scope) {
+            insertPayload.domain_scope = domainInfo.domain_scope;
+          }
+        }
+      } catch (error) {
+        // Silently fail - domain might not exist in new table yet
+        console.log('Domain metadata lookup skipped:', error);
+      }
+    }
+    
     // Insert document
     const { data: document, error: docError } = await this.supabase
       .from('knowledge_documents')
-      .insert({
-        title: doc.title,
-        content: doc.content,
-        domain: doc.domain,
-        tags: doc.tags || [],
-        status: 'processing',
-        metadata: doc.metadata || {},
-      })
+      .insert(insertPayload)
       .select()
       .single();
 
@@ -725,7 +835,7 @@ export class UnifiedRAGService {
 
     // Chunk and process in background
     // Pass domain for optimal model selection
-    this.processDocumentAsync(document.id, doc.content, doc.domain);
+    this.processDocumentAsync(document.id, doc.content, domainId);
 
     return document.id;
   }
@@ -743,14 +853,14 @@ export class UnifiedRAGService {
       // Auto-selects best model based on document domain
       let documentDomain = domain;
       
-      // Fetch domain from DB if not provided
+      // Fetch domain from DB if not provided (try domain_id first, fallback to domain)
       if (!documentDomain) {
         const { data: document } = await this.supabase
           .from('knowledge_documents')
-          .select('domain')
+          .select('domain_id, domain')
           .eq('id', documentId)
           .single();
-        documentDomain = document?.domain;
+        documentDomain = document?.domain_id || document?.domain;
       }
 
       // Get domain-specific embedding service
@@ -761,13 +871,26 @@ export class UnifiedRAGService {
       const texts = chunks.map(chunk => chunk.content);
       const batchResult = await embeddingService.generateBatchEmbeddings(texts);
 
-      // Insert chunks with embeddings into Supabase
+      // Get document metadata to inherit domain and security settings for chunks
+      const { data: docForChunks } = await this.supabase
+        .from('knowledge_documents')
+        .select('domain_id, access_policy, rag_priority_weight, enterprise_id, owner_user_id')
+        .eq('id', documentId)
+        .single();
+      
+      // Insert chunks with embeddings into Supabase (inherit domain and security settings)
       const chunkInserts = chunks.map((chunk, index) => ({
         document_id: documentId,
         chunk_index: index,
         content: chunk.content,
         embedding: batchResult.embeddings[index],
         metadata: chunk.metadata,
+        // Inherit domain and security settings from parent document
+        domain_id: docForChunks?.domain_id,
+        access_policy: docForChunks?.access_policy,
+        rag_priority_weight: docForChunks?.rag_priority_weight,
+        enterprise_id: docForChunks?.enterprise_id,
+        owner_user_id: docForChunks?.owner_user_id,
       }));
 
       const { data: insertedChunks, error } = await this.supabase
@@ -782,7 +905,7 @@ export class UnifiedRAGService {
       // Get document metadata for Pinecone
       const { data: document } = await this.supabase
         .from('knowledge_documents')
-        .select('title, domain')
+        .select('title, domain_id, domain')
         .eq('id', documentId)
         .single();
 
@@ -795,7 +918,8 @@ export class UnifiedRAGService {
             chunk_id: chunk.id,
             document_id: documentId,
             content: chunks[index].content.substring(0, 40000), // Pinecone metadata limit
-            domain: document?.domain,
+            domain: document?.domain, // Legacy field
+            domain_id: document?.domain_id || document?.domain, // New field
             source_title: document?.title,
             timestamp: new Date().toISOString(),
           },

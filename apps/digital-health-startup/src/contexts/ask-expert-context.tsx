@@ -3,6 +3,8 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { AgentService } from '@/features/agents/services/agent-service';
 import { useAuth } from '@/lib/auth/supabase-auth-context';
+import { useAgentsStore } from '@/lib/stores/agents-store';
+import type { AgentFeedback, AgentFeedbackFact } from '@/lib/stores/agents-store';
 
 export interface Agent {
   id: string;
@@ -16,6 +18,24 @@ export interface Agent {
   isUserAdded?: boolean; // Track if agent is in user's list
   tools?: string[];
   knowledge_domains?: string[];
+  totalConsultations?: number;
+  satisfactionScore?: number;
+  successRate?: number;
+  averageResponseTime?: number;
+  certifications?: string[];
+  totalTokensUsed?: number;
+  totalCost?: number;
+  confidenceLevel?: number;
+  availability?: 'online' | 'busy' | 'offline';
+  longTermMemory?: {
+    history?: Array<{
+      userMessage: string;
+      assistantMessage: string;
+      timestamp: string;
+    }>;
+    facts?: AgentFeedbackFact[];
+  };
+  recentFeedback?: AgentFeedback[];
 }
 
 export interface AskExpertSession {
@@ -120,6 +140,8 @@ export function AskExpertProvider({ children }: { children: React.ReactNode }) {
   const [activeSessionId, setActiveSessionIdState] = useState<string | null>(null);
   const [userAddedAgentIds, setUserAddedAgentIds] = useState<Set<string>>(new Set());
   const { user } = useAuth();
+  const mergeExternalAgents = useAgentsStore((state) => state.mergeExternalAgents);
+  const loadAgentStatsFromStore = useAgentsStore((state) => state.loadAgentStats);
 
   // Method to refresh agents list (useful when user adds agents from store)
   const refreshAgents = useCallback(async () => {
@@ -285,13 +307,61 @@ export function AskExpertProvider({ children }: { children: React.ReactNode }) {
           });
           
           const allAgents = Array.from(agentMap.values());
-          
-          setAgents(allAgents);
-          console.log(`✅ [AskExpertContext] Loaded ${allAgents.length} total agents:`, {
+
+          const agentsWithStats = await Promise.all(
+            allAgents.map(async (agent) => {
+              try {
+                const stats = await loadAgentStatsFromStore(agent.id);
+                if (stats) {
+                  return {
+                    ...agent,
+                    totalConsultations: stats.totalConsultations,
+                    satisfactionScore: stats.satisfactionScore,
+                    successRate: stats.successRate,
+                    averageResponseTime: stats.averageResponseTime,
+                    certifications: stats.certifications,
+                    totalTokensUsed: stats.totalTokensUsed,
+                    totalCost: stats.totalCost,
+                    confidenceLevel: stats.confidenceLevel,
+                    availability: stats.availability,
+                    recentFeedback: stats.recentFeedback,
+                  };
+                }
+              } catch (error) {
+                console.warn(`[AskExpertContext] Failed to fetch stats for agent ${agent.id}:`, error);
+              }
+              return agent;
+            })
+          );
+
+          setAgents(agentsWithStats);
+          mergeExternalAgents(
+            agentsWithStats.map((agent) => ({
+              id: agent.id,
+              name: agent.name,
+              display_name: agent.displayName,
+              description: agent.description,
+              capabilities: agent.capabilities,
+              knowledge_domains: agent.knowledge_domains,
+              certifications: agent.certifications,
+              totalConsultations: agent.totalConsultations,
+              satisfactionScore: agent.satisfactionScore,
+              successRate: agent.successRate,
+              averageResponseTime: agent.averageResponseTime,
+              totalTokensUsed: agent.totalTokensUsed,
+              totalCost: agent.totalCost,
+              confidenceLevel: agent.confidenceLevel,
+              availability: agent.availability,
+              recentFeedback: agent.recentFeedback,
+              avatar: agent.avatar,
+            }))
+          );
+
+          console.log(`✅ [AskExpertContext] Loaded ${agentsWithStats.length} total agents:`, {
             userAdded: mappedAgents.length,
             available: allAvailableAgents.length,
             userAddedAgentIds: Array.from(userAddedAgentIds),
-            agents: allAgents.map(a => ({ 
+            agents: agentsWithStats.map(a => ({ 
               id: a.id, 
               name: a.name, 
               displayName: a.displayName, 
@@ -311,7 +381,7 @@ export function AskExpertProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setAgentsLoading(false);
     }
-  }, [user?.id]);
+  }, [user?.id, loadAgentStatsFromStore, mergeExternalAgents]);
 
   // Initial load of agents based on the signed-in user
   useEffect(() => {

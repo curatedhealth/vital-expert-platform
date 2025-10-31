@@ -148,7 +148,7 @@ export class Mode1MetricsService {
     };
 
     // Use StructuredLogger if available (lazy import to avoid circular deps)
-    import('@/lib/services/observability/structured-logger').then(({ StructuredLogger, LogLevel }) => {
+    import('../../../../lib/services/observability/structured-logger').then(({ StructuredLogger, LogLevel }) => {
       const logger = new StructuredLogger({ minLevel: LogLevel.INFO });
       logger.info('Circuit breaker state change', {
         operation: 'circuit_breaker_state_change',

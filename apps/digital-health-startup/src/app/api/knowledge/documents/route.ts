@@ -47,10 +47,7 @@ export async function GET(request: NextRequest) {
     // Note: Excluding 'content' field as it can be very large and cause performance issues
     // Content is only needed when viewing individual documents, not in list view
     console.log('[Documents API] Building query...');
-    // Query only columns that actually exist in the table
-    // Based on actual schema: id, organization_id, user_id, title, content, file_name, 
-    // file_type, file_size, upload_url, status, domain, tags, metadata, chunk_count, 
-    // embedding, evidence_level, validation_status, created_at, updated_at, processed_at
+    // Query columns with new architecture fields
     let query = supabase
       .from('knowledge_documents')
       .select(`
@@ -60,13 +57,22 @@ export async function GET(request: NextRequest) {
         file_size,
         file_type,
         domain,
+        domain_id,
         status,
         processed_at,
         created_at,
         updated_at,
         tags,
         metadata,
-        chunk_count
+        chunk_count,
+        access_policy,
+        rag_priority_weight,
+        pii_sensitivity,
+        regulatory_exposure,
+        enterprise_id,
+        owner_user_id,
+        user_id,
+        upload_url
       `)
       .order('created_at', { ascending: false });
 

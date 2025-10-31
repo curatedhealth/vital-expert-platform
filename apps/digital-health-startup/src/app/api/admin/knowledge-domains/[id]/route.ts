@@ -83,13 +83,29 @@ export async function PUT(
 
       updates.updated_at = new Date().toISOString();
 
-      // Update domain
-      const { data: domain, error } = await supabase
-        .from('knowledge_domains')
+      // Try new architecture first, fallback to old table
+      // Check if it's a domain_id (new) or id (old)
+      let { data: domain, error } = await supabase
+        .from('knowledge_domains_new')
         .update(updates)
-        .eq('id', domainId)
+        .eq('domain_id', domainId)
         .select()
         .single();
+
+      // If not found in new table, try old table
+      if (error && error.code === 'PGRST116') {
+        const { data: oldDomain, error: oldError } = await supabase
+          .from('knowledge_domains')
+          .update(updates)
+          .eq('id', domainId)
+          .select()
+          .single();
+        
+        if (!oldError && oldDomain) {
+          domain = oldDomain;
+          error = null;
+        }
+      }
 
       if (error) {
         console.error('Error updating domain:', error);
@@ -147,12 +163,26 @@ export async function DELETE(
       
       const domainId = params.id;
 
-      // Check if domain exists
-      const { data: existingDomain, error: fetchError } = await supabase
-        .from('knowledge_domains')
-        .select('id, name')
-        .eq('id', domainId)
+      // Check if domain exists (try new architecture first)
+      let { data: existingDomain, error: fetchError } = await supabase
+        .from('knowledge_domains_new')
+        .select('domain_id, domain_name')
+        .eq('domain_id', domainId)
         .single();
+
+      // If not found in new table, try old table
+      if (fetchError && fetchError.code === 'PGRST116') {
+        const { data: oldDomain, error: oldError } = await supabase
+          .from('knowledge_domains')
+          .select('id, name, slug')
+          .eq('id', domainId)
+          .single();
+        
+        if (!oldError && oldDomain) {
+          existingDomain = { domain_id: oldDomain.id, domain_name: oldDomain.name, slug: oldDomain.slug };
+          fetchError = null;
+        }
+      }
 
       if (fetchError || !existingDomain) {
         return NextResponse.json(
@@ -161,11 +191,14 @@ export async function DELETE(
         );
       }
 
-      // Check if domain has associated documents
+      // Check if domain has associated documents (try domain_id first, then domain)
+      const domainIdentifier = (existingDomain as any).domain_id || (existingDomain as any).slug || 
+                               (existingDomain as any).domain_name?.toLowerCase().replace(/\s+/g, '_');
+      
       const { data: documents, error: docError } = await supabase
         .from('knowledge_documents')
         .select('id')
-        .eq('domain', existingDomain.slug || existingDomain.name.toLowerCase().replace(/\s+/g, '_'))
+        .or(`domain_id.eq.${domainIdentifier},domain.eq.${domainIdentifier}`)
         .limit(1);
 
       if (docError) {
@@ -183,11 +216,19 @@ export async function DELETE(
         );
       }
 
-      // Delete domain
-      const { error } = await supabase
-        .from('knowledge_domains')
+      // Delete domain (try new architecture first, then old table)
+      let { error } = await supabase
+        .from('knowledge_domains_new')
         .delete()
-        .eq('id', domainId);
+        .eq('domain_id', domainId);
+
+      // If not found in new table, try old table
+      if (error && error.code === 'PGRST116') {
+        ({ error } = await supabase
+          .from('knowledge_domains')
+          .delete()
+          .eq('id', domainId));
+      }
 
       if (error) {
         console.error('Error deleting domain:', error);
@@ -197,9 +238,10 @@ export async function DELETE(
         );
       }
 
+      const domainName = (existingDomain as any).domain_name || (existingDomain as any).name || domainId;
       return NextResponse.json({
         success: true,
-        message: `Domain "${existingDomain.name}" deleted successfully`,
+        message: `Domain "${domainName}" deleted successfully`,
       });
     } catch (error) {
       console.error('Unexpected error:', error);

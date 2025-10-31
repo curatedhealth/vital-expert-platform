@@ -24,14 +24,25 @@ class Settings(BaseSettings):
     database_url: str = Field(..., env="DATABASE_URL")
 
     # OpenAI Configuration
-    openai_api_key: str = Field(..., env="OPENAI_API_KEY")
+    openai_api_key: Optional[str] = Field(default=None, env="OPENAI_API_KEY")
     openai_model: str = Field(default="gpt-4-turbo-preview", env="OPENAI_MODEL")
     openai_embedding_model: str = Field(default="text-embedding-3-large", env="OPENAI_EMBEDDING_MODEL")
+    
+    # HuggingFace Configuration
+    huggingface_api_key: Optional[str] = Field(default=None, env="HUGGINGFACE_API_KEY")
+    embedding_provider: str = Field(default="openai", env="EMBEDDING_PROVIDER")  # 'openai' or 'huggingface'
+    huggingface_embedding_model: str = Field(default="bge-base-en-v1.5", env="HUGGINGFACE_EMBEDDING_MODEL")
+    use_huggingface_api: bool = Field(default=False, env="USE_HUGGINGFACE_API")  # Use API vs local model
 
     # Vector Database Configuration
     vector_dimension: int = Field(default=1536, env="VECTOR_DIMENSION")
     similarity_threshold: float = Field(default=0.7, env="SIMILARITY_THRESHOLD")
     max_search_results: int = Field(default=10, env="MAX_SEARCH_RESULTS")
+    
+    # Pinecone Configuration
+    pinecone_api_key: Optional[str] = Field(default=None, env="PINECONE_API_KEY")
+    pinecone_index_name: str = Field(default="vital-knowledge", env="PINECONE_INDEX_NAME")
+    pinecone_environment: Optional[str] = Field(default=None, env="PINECONE_ENVIRONMENT")
 
     # Redis Configuration (for caching and task queue)
     redis_url: str = Field(default="redis://localhost:6379", env="REDIS_URL")

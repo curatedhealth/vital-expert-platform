@@ -531,9 +531,159 @@ export class Mode2AutomaticAgentSelectionHandler {
 /**
  * Execute Mode 2 with automatic agent selection
  */
-export async function executeMode2(config: Mode2Config): Promise<AsyncGenerator<Mode2StreamChunk>> {
-  const handler = new Mode2AutomaticAgentSelectionHandler();
-  return handler.execute(config);
+// Use API Gateway URL for compliance with Golden Rule (Python services via gateway)
+const API_GATEWAY_URL =
+  process.env.API_GATEWAY_URL ||
+  process.env.NEXT_PUBLIC_API_GATEWAY_URL ||
+  process.env.AI_ENGINE_URL || // Fallback for compatibility
+  'http://localhost:3001'; // Default to API Gateway
+
+interface Mode2AutomaticApiResponse {
+  agent_id: string;
+  content: string;
+  confidence: number;
+  citations: Array<Record<string, unknown>>;
+  metadata: Record<string, unknown>;
+  processing_time_ms: number;
+  agent_selection: {
+    selected_agent_id: string;
+    selected_agent_name: string;
+    selection_method: string;
+    candidate_count: number;
+    selection_confidence: number;
+  };
+}
+
+/**
+ * Build metadata chunk string to keep the UI streaming helpers working.
+ */
+function buildMetadataChunk(eventPayload: Record<string, unknown>): string {
+  return `__mode2_meta__${JSON.stringify(eventPayload)}`;
+}
+
+/**
+ * Convert Python response citations into the structure expected by the UI.
+ */
+function mapCitationsToSources(citations: Array<Record<string, unknown>>): Array<Record<string, unknown>> {
+  return citations.map((citation, index) => ({
+    id: String(citation.id ?? `source-${index + 1}`),
+    url: citation.url ?? citation.link ?? '#',
+    title: citation.title ?? citation.name ?? `Source ${index + 1}`,
+    excerpt: citation.relevant_quote ?? citation.excerpt ?? citation.summary ?? '',
+    similarity: citation.similarity ?? citation.confidence_score ?? undefined,
+    domain: citation.domain,
+    evidenceLevel: citation.evidence_level ?? citation.evidenceLevel ?? 'Unknown',
+    organization: citation.organization,
+    reliabilityScore: citation.reliabilityScore,
+    lastUpdated: citation.lastUpdated,
+  }));
+}
+
+export async function* executeMode2(config: Mode2Config): AsyncGenerator<Mode2StreamChunk> {
+  const requestId = `mode2_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+  const startTime = Date.now();
+
+  try {
+    const payload = {
+      message: config.message,
+      enable_rag: config.enableRAG !== false,
+      enable_tools: config.enableTools ?? false,
+      selected_rag_domains: config.selectedRagDomains ?? [],
+      requested_tools: config.requestedTools ?? [],
+      temperature: config.temperature ?? 0.7,
+      max_tokens: config.maxTokens ?? 2000,
+      user_id: config.userId,
+      tenant_id: config.tenantId,
+      session_id: config.sessionId,
+      conversation_history: config.conversationHistory ?? [],
+    };
+
+    // Call via API Gateway to comply with Golden Rule (Python services via gateway)
+    const response = await fetch(`${API_GATEWAY_URL}/api/mode2/automatic`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      const errorBody = await response.json().catch(() => ({}));
+      throw new Error(errorBody.detail || errorBody.error || `API Gateway responded with status ${response.status}`);
+    }
+
+    const result = (await response.json()) as Mode2AutomaticApiResponse;
+
+    // Emit agent selection metadata
+    if (result.agent_selection) {
+      yield {
+        type: 'agent_selection',
+        selectedAgent: {
+          id: result.agent_selection.selected_agent_id,
+          name: result.agent_selection.selected_agent_name,
+        } as Agent,
+        confidence: result.agent_selection.selection_confidence,
+        timestamp: new Date().toISOString(),
+      };
+
+      yield {
+        type: 'selection_reason',
+        content: `Selected ${result.agent_selection.selected_agent_name} (${(result.agent_selection.selection_confidence * 100).toFixed(1)}% confidence)`,
+        selectionReason: `Selected via ${result.agent_selection.selection_method}`,
+        timestamp: new Date().toISOString(),
+      };
+    }
+
+    // Emit RAG sources if available
+    const sources = mapCitationsToSources(result.citations || []);
+    if (sources.length > 0) {
+      yield buildMetadataChunk({
+        event: 'rag_sources',
+        total: sources.length,
+        sources,
+        strategy: 'python_orchestrator',
+        cacheHit: false,
+        domains: config.selectedRagDomains ?? [],
+      });
+    }
+
+    // Emit final metadata
+    yield buildMetadataChunk({
+      event: 'final',
+      confidence: result.confidence,
+      rag: {
+        totalSources: sources.length,
+        strategy: 'python_orchestrator',
+        domains: config.selectedRagDomains ?? [],
+        cacheHit: false,
+        retrievalTimeMs: result.processing_time_ms,
+      },
+      agent_selection: result.agent_selection,
+      citations: result.citations ?? [],
+    });
+
+    // Emit response content
+    yield {
+      type: 'chunk',
+      content: result.content,
+      timestamp: new Date().toISOString(),
+    };
+
+    // Emit completion
+    yield {
+      type: 'done',
+      timestamp: new Date().toISOString(),
+    };
+
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    yield {
+      type: 'chunk',
+      content: `Error: ${errorMessage}`,
+      timestamp: new Date().toISOString(),
+    };
+    throw error;
+  }
 }
 
 /**

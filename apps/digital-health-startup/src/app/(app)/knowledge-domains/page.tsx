@@ -41,6 +41,11 @@ export default function KnowledgeDomainsPage() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTier, setSelectedTier] = useState<'all' | '1' | '2' | '3'>('all');
+  const [selectedFunction, setSelectedFunction] = useState<string>('all');
+  const [selectedMaturity, setSelectedMaturity] = useState<string>('all');
+  const [selectedAccessPolicy, setSelectedAccessPolicy] = useState<string>('all');
+  const [selectedDomainScope, setSelectedDomainScope] = useState<string>('all');
+  const [selectedRegulatoryExposure, setSelectedRegulatoryExposure] = useState<string>('all');
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [selectedDomain, setSelectedDomain] = useState<KnowledgeDomain | null>(null);
 
@@ -51,6 +56,9 @@ export default function KnowledgeDomainsPage() {
     loadDomains();
   }, []);
 
+  // Get unique values for filters
+  const uniqueFunctions = Array.from(new Set(domains.map((d: any) => d.function_name || d.function_id).filter(Boolean)));
+
   // Filter domains
   useEffect(() => {
     let filtered = domains;
@@ -60,28 +68,75 @@ export default function KnowledgeDomainsPage() {
       filtered = filtered.filter((d) => d.tier === parseInt(selectedTier));
     }
 
+    // Filter by function
+    if (selectedFunction !== 'all') {
+      filtered = filtered.filter((d: any) => 
+        (d.function_name === selectedFunction) || (d.function_id === selectedFunction)
+      );
+    }
+
+    // Filter by maturity level
+    if (selectedMaturity !== 'all') {
+      filtered = filtered.filter((d: any) => d.maturity_level === selectedMaturity);
+    }
+
+    // Filter by access policy
+    if (selectedAccessPolicy !== 'all') {
+      filtered = filtered.filter((d: any) => d.access_policy === selectedAccessPolicy);
+    }
+
+    // Filter by domain scope
+    if (selectedDomainScope !== 'all') {
+      filtered = filtered.filter((d: any) => d.domain_scope === selectedDomainScope);
+    }
+
+    // Filter by regulatory exposure
+    if (selectedRegulatoryExposure !== 'all') {
+      filtered = filtered.filter((d: any) => d.regulatory_exposure === selectedRegulatoryExposure);
+    }
+
     // Filter by search query
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       filtered = filtered.filter(
         (d: any) =>
-          d.name.toLowerCase().includes(query) ||
-          d.description?.toLowerCase().includes(query) ||
-          d.keywords.some((k: string) => k.toLowerCase().includes(query))
+          (d.domain_name || d.name || '').toLowerCase().includes(query) ||
+          (d.domain_description_llm || d.description || '').toLowerCase().includes(query) ||
+          (d.domain_id || d.slug || '').toLowerCase().includes(query) ||
+          (d.function_name || '').toLowerCase().includes(query) ||
+          (d.function_id || '').toLowerCase().includes(query) ||
+          (Array.isArray(d.keywords) ? d.keywords : []).some((k: string) => k.toLowerCase().includes(query))
       );
     }
 
     setFilteredDomains(filtered);
-  }, [domains, selectedTier, searchQuery]);
+  }, [domains, selectedTier, selectedFunction, selectedMaturity, selectedAccessPolicy, selectedDomainScope, selectedRegulatoryExposure, searchQuery]);
 
   const loadDomains = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('knowledge_domains')
+      // Try new architecture first, fallback to old table
+      let { data, error } = await supabase
+        .from('knowledge_domains_new')
         .select('*')
         .eq('is_active', true)
-        .order('priority');
+        .order('tier', { ascending: true })
+        .order('priority', { ascending: true });
+
+      // If new table doesn't exist or has no data, fallback to old table
+      if (error || !data || data.length === 0) {
+        const { data: oldData, error: oldError } = await supabase
+          .from('knowledge_domains')
+          .select('*')
+          .eq('is_active', true)
+          .order('tier', { ascending: true })
+          .order('priority', { ascending: true });
+
+        if (!oldError && oldData) {
+          data = oldData;
+          error = null;
+        }
+      }
 
       if (error) throw error;
       setDomains(data || []);
@@ -215,33 +270,171 @@ export default function KnowledgeDomainsPage() {
         </Card>
       </div>
 
-      {/* Filters */}
-      <div className="flex items-center gap-4">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search domains by name, keywords..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-9"
-          />
+      {/* Filters Section */}
+      <Card className="border-2">
+        <CardHeader>
+          <CardTitle className="text-lg flex items-center gap-2">
+            <Filter className="h-5 w-5" />
+            Filters & Search
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {/* Search Bar */}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search domains by name, keywords, function..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9"
+            />
+          </div>
+
+          {/* Filter Dropdowns */}
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+          <div>
+            <Label className="text-xs text-muted-foreground mb-1 block">Tier</Label>
+            <Select
+              value={selectedTier}
+              onValueChange={(value: any) => setSelectedTier(value)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="All Tiers" />
+              </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Tiers</SelectItem>
+              <SelectItem value="1">Tier 1: Core</SelectItem>
+              <SelectItem value="2">Tier 2: Specialized</SelectItem>
+              <SelectItem value="3">Tier 3: Emerging</SelectItem>
+            </SelectContent>
+          </Select>
+          </div>
+
+          {uniqueFunctions.length > 0 && (
+            <div>
+              <Label className="text-xs text-muted-foreground mb-1 block">Function</Label>
+              <Select
+                value={selectedFunction}
+                onValueChange={(value: any) => setSelectedFunction(value)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="All Functions" />
+                </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Functions</SelectItem>
+                {uniqueFunctions.map((func: string) => (
+                  <SelectItem key={func} value={func}>
+                    {func}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            </div>
+          )}
+
+          <div>
+            <Label className="text-xs text-muted-foreground mb-1 block">Maturity Level</Label>
+            <Select
+              value={selectedMaturity}
+              onValueChange={(value: any) => setSelectedMaturity(value)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="All Maturity" />
+              </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Maturity Levels</SelectItem>
+              <SelectItem value="Established">Established</SelectItem>
+              <SelectItem value="Specialized">Specialized</SelectItem>
+              <SelectItem value="Emerging">Emerging</SelectItem>
+              <SelectItem value="Draft">Draft</SelectItem>
+            </SelectContent>
+          </Select>
+          </div>
+
+          <div>
+            <Label className="text-xs text-muted-foreground mb-1 block">Access Policy</Label>
+            <Select
+              value={selectedAccessPolicy}
+              onValueChange={(value: any) => setSelectedAccessPolicy(value)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="All Policies" />
+              </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Access Policies</SelectItem>
+              <SelectItem value="public">Public</SelectItem>
+              <SelectItem value="enterprise_confidential">Enterprise Confidential</SelectItem>
+              <SelectItem value="team_confidential">Team Confidential</SelectItem>
+              <SelectItem value="personal_draft">Personal Draft</SelectItem>
+            </SelectContent>
+          </Select>
+          </div>
+
+          <div>
+            <Label className="text-xs text-muted-foreground mb-1 block">Domain Scope</Label>
+            <Select
+              value={selectedDomainScope}
+              onValueChange={(value: any) => setSelectedDomainScope(value)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="All Scopes" />
+              </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Scopes</SelectItem>
+              <SelectItem value="global">Global</SelectItem>
+              <SelectItem value="enterprise">Enterprise</SelectItem>
+              <SelectItem value="user">User</SelectItem>
+            </SelectContent>
+          </Select>
+          </div>
+
+          <div>
+            <Label className="text-xs text-muted-foreground mb-1 block">Regulatory Exposure</Label>
+            <Select
+              value={selectedRegulatoryExposure}
+              onValueChange={(value: any) => setSelectedRegulatoryExposure(value)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="All Exposure" />
+              </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Exposure Levels</SelectItem>
+              <SelectItem value="High">High</SelectItem>
+              <SelectItem value="Medium">Medium</SelectItem>
+              <SelectItem value="Low">Low</SelectItem>
+            </SelectContent>
+          </Select>
+          </div>
         </div>
-        <Select
-          value={selectedTier}
-          onValueChange={(value: any) => setSelectedTier(value)}
-        >
-          <SelectTrigger className="w-[200px]">
-            <Filter className="h-4 w-4 mr-2" />
-            <SelectValue placeholder="Filter by tier" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Tiers</SelectItem>
-            <SelectItem value="1">Tier 1: Core</SelectItem>
-            <SelectItem value="2">Tier 2: Specialized</SelectItem>
-            <SelectItem value="3">Tier 3: Emerging</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
+
+        {/* Clear Filters Button */}
+        {(selectedTier !== 'all' || 
+          selectedFunction !== 'all' || 
+          selectedMaturity !== 'all' || 
+          selectedAccessPolicy !== 'all' || 
+          selectedDomainScope !== 'all' || 
+          selectedRegulatoryExposure !== 'all' || 
+          searchQuery) && (
+          <div className="flex justify-end pt-2 border-t">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setSelectedTier('all');
+                setSelectedFunction('all');
+                setSelectedMaturity('all');
+                setSelectedAccessPolicy('all');
+                setSelectedDomainScope('all');
+                setSelectedRegulatoryExposure('all');
+                setSearchQuery('');
+              }}
+            >
+              Clear All Filters
+            </Button>
+          </div>
+        )}
+        </CardContent>
+      </Card>
 
       {/* Tabs for different views */}
       <Tabs defaultValue="tiers" className="w-full">
@@ -262,7 +455,7 @@ export default function KnowledgeDomainsPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {filteredDomains.map((domain: any) => (
               <DomainCard
-                key={domain.id}
+                key={domain.domain_id || domain.id}
                 domain={domain}
                 onClick={() => setSelectedDomain(domain)}
               />
@@ -357,7 +550,7 @@ function TieredDomainsView({
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {tierDomains.map((domain: any) => (
             <DomainCard
-              key={domain.id}
+              key={domain.domain_id || domain.id}
               domain={domain}
               onClick={() => onSelectDomain(domain)}
             />
@@ -441,9 +634,9 @@ function DomainCard({
       <CardHeader>
         <div className="flex items-start justify-between">
           <div className="flex-1">
-            <CardTitle className="text-lg">{domain.name}</CardTitle>
+            <CardTitle className="text-lg">{domain.domain_name || domain.name}</CardTitle>
             <CardDescription className="mt-1 text-xs">
-              {domain.code}
+              {domain.code || domain.domain_id}
             </CardDescription>
           </div>
           {getTierBadge(domain.tier)}
@@ -451,13 +644,13 @@ function DomainCard({
       </CardHeader>
       <CardContent>
         <p className="text-sm text-muted-foreground line-clamp-2">
-          {domain.description}
+          {domain.domain_description_llm || domain.description || ''}
         </p>
         <div className="mt-4 space-y-2">
           <div className="flex items-center gap-2 text-xs">
             <span className="font-semibold">Embedding:</span>
             <code className="bg-muted px-2 py-0.5 rounded">
-              {domain.recommended_models?.embedding?.primary || 'N/A'}
+              {domain.embedding_model || domain.recommended_models?.embedding?.primary || 'N/A'}
             </code>
           </div>
           <div className="flex items-center gap-2 text-xs">
@@ -504,15 +697,15 @@ function DomainTable({
         <tbody>
           {domains.map((domain: any) => (
             <tr
-              key={domain.id}
+              key={domain.domain_id || domain.id}
               className="border-b hover:bg-muted/50 cursor-pointer"
               onClick={() => onSelectDomain(domain)}
             >
               <td className="px-4 py-3 text-sm">{domain.priority}</td>
               <td className="px-4 py-3">
                 <div>
-                  <div className="font-medium">{domain.name}</div>
-                  <div className="text-xs text-muted-foreground">{domain.code}</div>
+                  <div className="font-medium">{domain.domain_name || domain.name}</div>
+                  <div className="text-xs text-muted-foreground">{domain.code || domain.domain_id}</div>
                 </div>
               </td>
               <td className="px-4 py-3">
@@ -522,7 +715,7 @@ function DomainTable({
               </td>
               <td className="px-4 py-3">
                 <code className="text-xs bg-muted px-2 py-0.5 rounded">
-                  {domain.recommended_models?.embedding?.primary || 'N/A'}
+                  {domain.embedding_model || domain.recommended_models?.embedding?.primary || 'N/A'}
                 </code>
               </td>
               <td className="px-4 py-3">
@@ -555,16 +748,29 @@ function DomainDetailsDialog({
   onDelete?: () => void;
 }) {
   const [isEditing, setIsEditing] = useState(false);
+  // Get domain identifier (new architecture uses domain_id, old uses id)
+  const domainId = domain.domain_id || domain.id;
+  
   const [formData, setFormData] = useState({
-    name: domain.name,
-    description: domain.description,
+    name: domain.domain_name || domain.name,
+    description: domain.domain_description_llm || domain.description || '',
     tier: domain.tier,
     priority: domain.priority,
     keywords: Array.isArray(domain.keywords) ? domain.keywords.join(', ') : '',
     sub_domains: Array.isArray(domain.sub_domains) ? domain.sub_domains.join(', ') : '',
     color: domain.color || '#3B82F6',
-    embedding_model: domain.recommended_models?.embedding?.primary || 'mxbai-embed-large-v1',
+    embedding_model: domain.embedding_model || domain.recommended_models?.embedding?.primary || 'text-embedding-3-large',
     chat_model: domain.recommended_models?.chat?.primary || 'gpt-4-turbo-preview',
+    // New architecture fields
+    function_id: domain.function_id || '',
+    function_name: domain.function_name || '',
+    domain_description_llm: domain.domain_description_llm || domain.description || '',
+    maturity_level: domain.maturity_level || 'Established',
+    regulatory_exposure: domain.regulatory_exposure || 'Low',
+    pii_sensitivity: domain.pii_sensitivity || 'Low',
+    rag_priority_weight: domain.rag_priority_weight || 0.85,
+    access_policy: domain.access_policy || 'public',
+    domain_scope: domain.domain_scope || 'global',
   });
   const [loading, setLoading] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -575,17 +781,20 @@ function DomainDetailsDialog({
     setLoading(true);
 
     try {
-      const response = await fetch(`/api/admin/knowledge-domains/${domain.id}`, {
+      const response = await fetch(`/api/admin/knowledge-domains/${domainId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name: formData.name,
+          domain_name: formData.name,
           description: formData.description,
+          domain_description_llm: formData.domain_description_llm || formData.description,
           tier: formData.tier,
           priority: formData.priority,
           keywords: formData.keywords.split(',').map((k: string) => k.trim()).filter(Boolean),
           sub_domains: formData.sub_domains.split(',').map((s: string) => s.trim()).filter(Boolean),
           color: formData.color,
+          embedding_model: formData.embedding_model,
           recommended_models: {
             embedding: {
               primary: formData.embedding_model,
@@ -596,6 +805,15 @@ function DomainDetailsDialog({
               alternatives: [],
             },
           },
+          // New architecture fields
+          function_id: formData.function_id,
+          function_name: formData.function_name,
+          maturity_level: formData.maturity_level,
+          regulatory_exposure: formData.regulatory_exposure,
+          pii_sensitivity: formData.pii_sensitivity,
+          rag_priority_weight: formData.rag_priority_weight,
+          access_policy: formData.access_policy,
+          domain_scope: formData.domain_scope,
         }),
       });
 
@@ -617,14 +835,15 @@ function DomainDetailsDialog({
   };
 
   const handleDelete = async () => {
-    if (!confirm(`Are you sure you want to delete "${domain.name}"? This action cannot be undone.`)) {
+    const domainName = domain.domain_name || domain.name || domainId;
+    if (!confirm(`Are you sure you want to delete "${domainName}"? This action cannot be undone.`)) {
       return;
     }
 
     setDeleting(true);
 
     try {
-      const response = await fetch(`/api/admin/knowledge-domains/${domain.id}`, {
+      const response = await fetch(`/api/admin/knowledge-domains/${domainId}`, {
         method: 'DELETE',
       });
 
@@ -656,10 +875,10 @@ function DomainDetailsDialog({
               className="w-4 h-4 rounded"
               style={{ backgroundColor: domain.color }}
             />
-            {isEditing ? 'Edit Domain' : domain.name}
+            {isEditing ? 'Edit Domain' : (domain.domain_name || domain.name)}
           </DialogTitle>
           <DialogDescription>
-            {isEditing ? 'Update domain settings and tier mapping' : domain.description}
+            {isEditing ? 'Update domain settings and tier mapping' : (domain.domain_description_llm || domain.description || '')}
           </DialogDescription>
         </DialogHeader>
 
@@ -667,12 +886,12 @@ function DomainDetailsDialog({
           {/* Basic Info */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label className="text-xs text-muted-foreground">Code</Label>
-              <div className="font-mono text-sm">{domain.code}</div>
+              <Label className="text-xs text-muted-foreground">Domain ID</Label>
+              <div className="font-mono text-sm">{domain.domain_id || domain.slug || domain.id}</div>
             </div>
             <div>
-              <Label className="text-xs text-muted-foreground">Slug</Label>
-              <div className="font-mono text-sm">{domain.slug}</div>
+              <Label className="text-xs text-muted-foreground">Code</Label>
+              <div className="font-mono text-sm">{domain.code || 'N/A'}</div>
             </div>
             
             {/* Tier Mapping - Editable */}
@@ -729,7 +948,7 @@ function DomainDetailsDialog({
                 required
               />
             ) : (
-              <div className="text-sm font-medium">{domain.name}</div>
+              <div className="text-sm font-medium">{domain.domain_name || domain.name}</div>
             )}
           </div>
 
@@ -744,7 +963,7 @@ function DomainDetailsDialog({
                 rows={3}
               />
             ) : (
-              <div className="text-sm text-muted-foreground">{domain.description}</div>
+              <div className="text-sm text-muted-foreground">{domain.domain_description_llm || domain.description || ''}</div>
             )}
           </div>
 
@@ -787,6 +1006,144 @@ function DomainDetailsDialog({
                     ))}
                   </SelectContent>
                 </Select>
+              </div>
+
+              {/* New Architecture Fields - Editable */}
+              <div className="border-t pt-4 mt-4">
+                <h3 className="font-semibold mb-3">New Architecture Fields</h3>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="edit_function_id">Function ID</Label>
+                    <Input
+                      id="edit_function_id"
+                      value={formData.function_id}
+                      onChange={(e) => setFormData({ ...formData, function_id: e.target.value })}
+                      placeholder="e.g., regulatory_compliance"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="edit_function_name">Function Name</Label>
+                    <Input
+                      id="edit_function_name"
+                      value={formData.function_name}
+                      onChange={(e) => setFormData({ ...formData, function_name: e.target.value })}
+                      placeholder="e.g., Regulatory & Compliance"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <Label htmlFor="edit_domain_description_llm">LLM Description</Label>
+                  <Textarea
+                    id="edit_domain_description_llm"
+                    value={formData.domain_description_llm}
+                    onChange={(e) => setFormData({ ...formData, domain_description_llm: e.target.value })}
+                    placeholder="LLM-readable description for domain routing"
+                    rows={2}
+                  />
+                </div>
+
+                <div className="grid grid-cols-3 gap-4">
+                  <div>
+                    <Label htmlFor="edit_maturity_level">Maturity Level</Label>
+                    <Select
+                      value={formData.maturity_level}
+                      onValueChange={(value) => setFormData({ ...formData, maturity_level: value as any })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Established">Established</SelectItem>
+                        <SelectItem value="Specialized">Specialized</SelectItem>
+                        <SelectItem value="Emerging">Emerging</SelectItem>
+                        <SelectItem value="Draft">Draft</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label htmlFor="edit_regulatory_exposure">Regulatory Exposure</Label>
+                    <Select
+                      value={formData.regulatory_exposure}
+                      onValueChange={(value) => setFormData({ ...formData, regulatory_exposure: value as any })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="High">High</SelectItem>
+                        <SelectItem value="Medium">Medium</SelectItem>
+                        <SelectItem value="Low">Low</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label htmlFor="edit_pii_sensitivity">PII Sensitivity</Label>
+                    <Select
+                      value={formData.pii_sensitivity}
+                      onValueChange={(value) => setFormData({ ...formData, pii_sensitivity: value as any })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="None">None</SelectItem>
+                        <SelectItem value="Low">Low</SelectItem>
+                        <SelectItem value="Medium">Medium</SelectItem>
+                        <SelectItem value="High">High</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-3 gap-4">
+                  <div>
+                    <Label htmlFor="edit_rag_priority_weight">RAG Priority Weight</Label>
+                    <Input
+                      id="edit_rag_priority_weight"
+                      type="number"
+                      min="0"
+                      max="1"
+                      step="0.01"
+                      value={formData.rag_priority_weight}
+                      onChange={(e) => setFormData({ ...formData, rag_priority_weight: parseFloat(e.target.value) || 0.85 })}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="edit_access_policy">Access Policy</Label>
+                    <Select
+                      value={formData.access_policy}
+                      onValueChange={(value) => setFormData({ ...formData, access_policy: value as any })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="public">Public</SelectItem>
+                        <SelectItem value="enterprise_confidential">Enterprise Confidential</SelectItem>
+                        <SelectItem value="team_confidential">Team Confidential</SelectItem>
+                        <SelectItem value="personal_draft">Personal Draft</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label htmlFor="edit_domain_scope">Domain Scope</Label>
+                    <Select
+                      value={formData.domain_scope}
+                      onValueChange={(value) => setFormData({ ...formData, domain_scope: value as any })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="global">Global</SelectItem>
+                        <SelectItem value="enterprise">Enterprise</SelectItem>
+                        <SelectItem value="user">User</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
               </div>
             </>
           )}
@@ -1028,6 +1385,16 @@ function CreateDomainDialog({
     color: '#3B82F6',
     embedding_model: 'text-embedding-3-large',
     chat_model: 'gpt-4-turbo-preview',
+    // New architecture fields
+    function_id: '',
+    function_name: '',
+    domain_description_llm: '',
+    maturity_level: 'Established',
+    regulatory_exposure: 'Low',
+    pii_sensitivity: 'Low',
+    rag_priority_weight: 0.85,
+    access_policy: 'public',
+    domain_scope: 'global',
   });
   const [loading, setLoading] = useState(false);
 
@@ -1055,6 +1422,7 @@ function CreateDomainDialog({
             .map((s: string) => s.trim())
             .filter(Boolean),
           color: formData.color,
+          embedding_model: formData.embedding_model,
           recommended_models: {
             embedding: {
               primary: formData.embedding_model,
@@ -1065,6 +1433,16 @@ function CreateDomainDialog({
               alternatives: [],
             },
           },
+          // New architecture fields
+          function_id: formData.function_id || 'general',
+          function_name: formData.function_name || 'General',
+          domain_description_llm: formData.domain_description_llm || formData.description,
+          maturity_level: formData.maturity_level,
+          regulatory_exposure: formData.regulatory_exposure,
+          pii_sensitivity: formData.pii_sensitivity,
+          rag_priority_weight: formData.rag_priority_weight,
+          access_policy: formData.access_policy,
+          domain_scope: formData.domain_scope,
         }),
       });
 
@@ -1250,6 +1628,162 @@ function CreateDomainDialog({
                 ))}
               </SelectContent>
             </Select>
+          </div>
+
+          {/* New Architecture Fields */}
+          <div className="border-t pt-4 mt-4">
+            <h3 className="font-semibold mb-3">New Architecture Fields (Optional)</h3>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="function_id">Function ID</Label>
+                <Input
+                  id="function_id"
+                  value={formData.function_id}
+                  onChange={(e) =>
+                    setFormData({ ...formData, function_id: e.target.value })
+                  }
+                  placeholder="e.g., regulatory_compliance"
+                />
+              </div>
+              <div>
+                <Label htmlFor="function_name">Function Name</Label>
+                <Input
+                  id="function_name"
+                  value={formData.function_name}
+                  onChange={(e) =>
+                    setFormData({ ...formData, function_name: e.target.value })
+                  }
+                  placeholder="e.g., Regulatory & Compliance"
+                />
+              </div>
+            </div>
+
+            <div>
+              <Label htmlFor="domain_description_llm">LLM Description</Label>
+              <Textarea
+                id="domain_description_llm"
+                value={formData.domain_description_llm}
+                onChange={(e) =>
+                  setFormData({ ...formData, domain_description_llm: e.target.value })
+                }
+                placeholder="LLM-readable description for domain routing"
+                rows={2}
+              />
+            </div>
+
+            <div className="grid grid-cols-3 gap-4">
+              <div>
+                <Label htmlFor="maturity_level">Maturity Level</Label>
+                <Select
+                  value={formData.maturity_level}
+                  onValueChange={(value) =>
+                    setFormData({ ...formData, maturity_level: value })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Established">Established</SelectItem>
+                    <SelectItem value="Specialized">Specialized</SelectItem>
+                    <SelectItem value="Emerging">Emerging</SelectItem>
+                    <SelectItem value="Draft">Draft</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="regulatory_exposure">Regulatory Exposure</Label>
+                <Select
+                  value={formData.regulatory_exposure}
+                  onValueChange={(value) =>
+                    setFormData({ ...formData, regulatory_exposure: value })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="High">High</SelectItem>
+                    <SelectItem value="Medium">Medium</SelectItem>
+                    <SelectItem value="Low">Low</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="pii_sensitivity">PII Sensitivity</Label>
+                <Select
+                  value={formData.pii_sensitivity}
+                  onValueChange={(value) =>
+                    setFormData({ ...formData, pii_sensitivity: value })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="None">None</SelectItem>
+                    <SelectItem value="Low">Low</SelectItem>
+                    <SelectItem value="Medium">Medium</SelectItem>
+                    <SelectItem value="High">High</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-3 gap-4">
+              <div>
+                <Label htmlFor="rag_priority_weight">RAG Priority Weight</Label>
+                <Input
+                  id="rag_priority_weight"
+                  type="number"
+                  min="0"
+                  max="1"
+                  step="0.01"
+                  value={formData.rag_priority_weight}
+                  onChange={(e) =>
+                    setFormData({ ...formData, rag_priority_weight: parseFloat(e.target.value) || 0.85 })
+                  }
+                />
+              </div>
+              <div>
+                <Label htmlFor="access_policy">Access Policy</Label>
+                <Select
+                  value={formData.access_policy}
+                  onValueChange={(value) =>
+                    setFormData({ ...formData, access_policy: value })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="public">Public</SelectItem>
+                    <SelectItem value="enterprise_confidential">Enterprise Confidential</SelectItem>
+                    <SelectItem value="team_confidential">Team Confidential</SelectItem>
+                    <SelectItem value="personal_draft">Personal Draft</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="domain_scope">Domain Scope</Label>
+                <Select
+                  value={formData.domain_scope}
+                  onValueChange={(value) =>
+                    setFormData({ ...formData, domain_scope: value })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="global">Global</SelectItem>
+                    <SelectItem value="enterprise">Enterprise</SelectItem>
+                    <SelectItem value="user">User</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
           </div>
 
           <DialogFooter>

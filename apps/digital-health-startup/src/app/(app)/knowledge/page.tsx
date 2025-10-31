@@ -39,6 +39,7 @@ import {
 import { KnowledgeAnalyticsDashboard } from '@/features/knowledge/components/knowledge-analytics-dashboard';
 import { KnowledgeUploader } from '@/features/knowledge/components/knowledge-uploader';
 import { KnowledgeViewer } from '@/features/knowledge/components/knowledge-viewer';
+import { DocumentsLibraryView } from '@/features/knowledge/components/documents-library-view';
 import type { KnowledgeDomain } from '@/lib/services/model-selector';
 import { createClient } from '@vital/sdk/client';
 
@@ -75,6 +76,14 @@ function KnowledgePageContent() {
   const activeTab = searchParams.get('tab') || 'analytics';
   const categoryFilter = searchParams.get('category');
   const agentFilter = searchParams.get('agent');
+  const domainFilter = searchParams.get('domain');
+  
+  // Update selectedDomain if domain param is present
+  useEffect(() => {
+    if (domainFilter && domainFilter !== selectedDomain) {
+      setSelectedDomain(domainFilter);
+    }
+  }, [domainFilter, selectedDomain]);
 
   // Fetch documents from the database
   const fetchDocuments = useCallback(async () => {
@@ -125,9 +134,30 @@ function KnowledgePageContent() {
     }
   }, [selectedDomain]);
 
-  // Fetch knowledge domains
+  // Fetch knowledge domains from new architecture (with fallback)
   const fetchDomains = useCallback(async () => {
     try {
+      // Try new architecture first
+      const { data: newData, error: newError } = await supabase
+        .from('knowledge_domains_new')
+        .select('domain_id, domain_name, domain_scope, tier, priority, access_policy, rag_priority_weight, embedding_model, maturity_level, function_id, function_name, parent_domain_id, slug, name, is_active')
+        .eq('is_active', true)
+        .order('tier', { ascending: true })
+        .order('priority', { ascending: true });
+
+      if (!newError && newData && newData.length > 0) {
+        // Map to compatible format
+        const mappedDomains = newData.map((d: any) => ({
+          ...d,
+          id: d.domain_id,
+          slug: d.domain_id,
+          name: d.domain_name || d.name || d.domain_id,
+        }));
+        setDomains(mappedDomains);
+        return;
+      }
+
+      // Fallback to old table
       const { data, error } = await supabase
         .from('knowledge_domains')
         .select('*')
@@ -160,7 +190,10 @@ function KnowledgePageContent() {
   const filteredDocuments = documents.filter(doc => {
     const matchesSearch = doc.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          doc.summary?.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesDomain = selectedDomain === 'all' || doc.domain === selectedDomain;
+    // Support both domain_id and domain for filtering (backward compatibility)
+    const matchesDomain = selectedDomain === 'all' || 
+                         doc.domain === selectedDomain || 
+                         (doc as any).domain_id === selectedDomain;
     return matchesSearch && matchesDomain;
   });
 
@@ -255,24 +288,24 @@ function KnowledgePageContent() {
                 {/* Tier 1: Core Domains */}
                 <option disabled>━━━ TIER 1: CORE ({domains.filter((d: any) => d.tier === 1).length}) ━━━</option>
                 {domains.filter((d: any) => d.tier === 1).map((domain: any) => (
-                  <option key={domain.id} value={domain.slug}>
-                    {domain.name}
+                  <option key={domain.domain_id || domain.id} value={domain.domain_id || domain.slug}>
+                    {domain.domain_name || domain.name || domain.domain_id || domain.slug}
                   </option>
                 ))}
 
                 {/* Tier 2: Specialized Domains */}
                 <option disabled>━━━ TIER 2: SPECIALIZED ({domains.filter((d: any) => d.tier === 2).length}) ━━━</option>
                 {domains.filter((d: any) => d.tier === 2).map((domain: any) => (
-                  <option key={domain.id} value={domain.slug}>
-                    {domain.name}
+                  <option key={domain.domain_id || domain.id} value={domain.domain_id || domain.slug}>
+                    {domain.domain_name || domain.name || domain.domain_id || domain.slug}
                   </option>
                 ))}
 
                 {/* Tier 3: Emerging Domains */}
                 <option disabled>━━━ TIER 3: EMERGING ({domains.filter((d: any) => d.tier === 3).length}) ━━━</option>
                 {domains.filter((d: any) => d.tier === 3).map((domain: any) => (
-                  <option key={domain.id} value={domain.slug}>
-                    {domain.name}
+                  <option key={domain.domain_id || domain.id} value={domain.domain_id || domain.slug}>
+                    {domain.domain_name || domain.name || domain.domain_id || domain.slug}
                   </option>
                 ))}
               </select>
@@ -535,6 +568,8 @@ function KnowledgePageContent() {
             <KnowledgeViewer />
           </CardContent>
         </Card>
+      ) : activeTab === 'library' ? (
+        <DocumentsLibraryView />
       ) : (
         <KnowledgeAnalyticsDashboard
           categoryFilter={categoryFilter || undefined}

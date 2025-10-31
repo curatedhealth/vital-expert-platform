@@ -13,9 +13,16 @@ export async function POST(request: NextRequest) {
     const files = formData.getAll('files') as File[];
     const agentId = formData.get('agentId') as string;
     const isGlobal = formData.get('isGlobal') === 'true';
-    const domain = formData.get('domain') as string || 'digital-health';
+    // Support both new (domain_id) and legacy (domain) fields
+    const domain_id = formData.get('domain_id') as string;
+    const domain = (domain_id || formData.get('domain') as string) || 'digital-health';
     const embeddingModel = formData.get('embeddingModel') as string || 'text-embedding-3-large';
     const chatModel = formData.get('chatModel') as string || 'gpt-4-turbo-preview';
+    
+    // New architecture fields
+    const access_policy = formData.get('access_policy') as string;
+    const rag_priority_weight = formData.get('rag_priority_weight') ? parseFloat(formData.get('rag_priority_weight') as string) : undefined;
+    const domain_scope = formData.get('domain_scope') as string;
 
     if (!files || files.length === 0) {
       return NextResponse.json(
@@ -28,9 +35,13 @@ export async function POST(request: NextRequest) {
     const result = await langchainRAGService.processDocuments(files, {
       agentId,
       isGlobal,
-      domain,
+      domain: domain_id || domain, // Use domain_id if available, fallback to domain
+      domain_id: domain_id || domain, // Explicitly pass domain_id
       embeddingModel,
       chatModel,
+      access_policy,
+      rag_priority_weight,
+      domain_scope,
     });
 
     return NextResponse.json({

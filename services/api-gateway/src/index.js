@@ -184,6 +184,63 @@ app.post('/v1/chat/completions', async (req, res) => {
 });
 
 /**
+ * POST /api/rag/query
+ * Unified RAG query endpoint - routes to Python ai-engine
+ */
+app.post('/api/rag/query', async (req, res) => {
+  try {
+    const { query, text, strategy, domain_ids, selectedRagDomains, filters, max_results, maxResults, similarity_threshold, similarityThreshold, agent_id, agentId, user_id, userId, session_id, sessionId } = req.body;
+    const tenantId = req.headers['x-tenant-id'] || '00000000-0000-0000-0000-000000000001';
+
+    const queryText = query || text;
+    if (!queryText) {
+      return res.status(400).json({
+        error: 'Invalid request',
+        message: 'query or text is required',
+      });
+    }
+
+    console.log(`[Gateway] RAG query - Tenant: ${tenantId}, Strategy: ${strategy || 'hybrid'}`);
+
+    // Forward to Python AI Engine
+    const response = await axios.post(
+      `${AI_ENGINE_URL}/api/rag/query`,
+      {
+        query: queryText,
+        strategy: strategy || 'hybrid',
+        domain_ids: domain_ids || selectedRagDomains,
+        filters: filters || {},
+        max_results: max_results || maxResults || 10,
+        similarity_threshold: similarity_threshold || similarityThreshold || 0.7,
+        agent_id: agent_id || agentId,
+        user_id: user_id || userId,
+        session_id: session_id || sessionId,
+      },
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          'x-tenant-id': tenantId,
+        },
+        timeout: 30000, // 30 seconds for RAG queries
+      }
+    );
+
+    res.json(response.data);
+  } catch (error) {
+    console.error('[Gateway] RAG query error:', error.message);
+
+    if (error.response) {
+      res.status(error.response.status).json(error.response.data);
+    } else {
+      res.status(500).json({
+        error: 'Gateway error',
+        message: error.message,
+      });
+    }
+  }
+});
+
+/**
  * POST /v1/agents/query
  * Query specific agent with RAG support
  */
@@ -242,6 +299,499 @@ app.post('/v1/agents/query', async (req, res) => {
     res.json(response.data);
   } catch (error) {
     console.error('[Gateway] Agent query error:', error.message);
+
+    if (error.response) {
+      res.status(error.response.status).json(error.response.data);
+    } else {
+      res.status(500).json({
+        error: 'Gateway error',
+        message: error.message,
+      });
+    }
+  }
+});
+
+/**
+ * POST /api/mode1/manual
+ * Mode 1 Manual Interactive - routes to Python ai-engine
+ */
+app.post('/api/mode1/manual', async (req, res) => {
+  try {
+    const { agent_id, message, enable_rag, enable_tools, selected_rag_domains, requested_tools, temperature, max_tokens, user_id, tenant_id, session_id, conversation_history } = req.body;
+    const tenantId = req.headers['x-tenant-id'] || tenant_id || '00000000-0000-0000-0000-000000000001';
+
+    if (!agent_id || !message) {
+      return res.status(400).json({
+        error: 'Invalid request',
+        message: 'agent_id and message are required',
+      });
+    }
+
+    console.log(`[Gateway] Mode 1 Manual - Tenant: ${tenantId}, Agent: ${agent_id}`);
+
+    // Forward to Python AI Engine
+    const response = await axios.post(
+      `${AI_ENGINE_URL}/api/mode1/manual`,
+      {
+        agent_id,
+        message,
+        enable_rag: enable_rag !== false,
+        enable_tools: enable_tools ?? false,
+        selected_rag_domains: selected_rag_domains || [],
+        requested_tools: requested_tools || [],
+        temperature: temperature ?? 0.7,
+        max_tokens: max_tokens ?? 2000,
+        user_id,
+        tenant_id: tenantId,
+        session_id,
+        conversation_history: conversation_history || [],
+      },
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          'x-tenant-id': tenantId,
+        },
+        timeout: 60000, // 60 seconds for Mode 1
+      }
+    );
+
+    res.json(response.data);
+  } catch (error) {
+    console.error('[Gateway] Mode 1 Manual error:', error.message);
+
+    if (error.response) {
+      res.status(error.response.status).json(error.response.data);
+    } else {
+      res.status(500).json({
+        error: 'Gateway error',
+        message: error.message,
+      });
+    }
+  }
+});
+
+/**
+ * POST /api/mode2/automatic
+ * Mode 2 Automatic Agent Selection - routes to Python ai-engine
+ */
+app.post('/api/mode2/automatic', async (req, res) => {
+  try {
+    const { message, enable_rag, enable_tools, selected_rag_domains, requested_tools, temperature, max_tokens, user_id, tenant_id, session_id, conversation_history } = req.body;
+    const tenantId = req.headers['x-tenant-id'] || tenant_id || '00000000-0000-0000-0000-000000000001';
+
+    if (!message) {
+      return res.status(400).json({
+        error: 'Invalid request',
+        message: 'message is required',
+      });
+    }
+
+    console.log(`[Gateway] Mode 2 Automatic - Tenant: ${tenantId}`);
+
+    // Forward to Python AI Engine
+    const response = await axios.post(
+      `${AI_ENGINE_URL}/api/mode2/automatic`,
+      {
+        message,
+        enable_rag: enable_rag !== false,
+        enable_tools: enable_tools ?? false,
+        selected_rag_domains: selected_rag_domains || [],
+        requested_tools: requested_tools || [],
+        temperature: temperature ?? 0.7,
+        max_tokens: max_tokens ?? 2000,
+        user_id,
+        tenant_id: tenantId,
+        session_id,
+        conversation_history: conversation_history || [],
+      },
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          'x-tenant-id': tenantId,
+        },
+        timeout: 90000, // 90 seconds for Mode 2
+      }
+    );
+
+    res.json(response.data);
+  } catch (error) {
+    console.error('[Gateway] Mode 2 Automatic error:', error.message);
+
+    if (error.response) {
+      res.status(error.response.status).json(error.response.data);
+    } else {
+      res.status(500).json({
+        error: 'Gateway error',
+        message: error.message,
+      });
+    }
+  }
+});
+
+/**
+ * POST /api/mode3/autonomous-automatic
+ * Mode 3 Autonomous-Automatic - routes to Python ai-engine
+ */
+app.post('/api/mode3/autonomous-automatic', async (req, res) => {
+  try {
+    const { message, enable_rag, enable_tools, selected_rag_domains, requested_tools, temperature, max_tokens, max_iterations, confidence_threshold, user_id, tenant_id, session_id, conversation_history } = req.body;
+    const tenantId = req.headers['x-tenant-id'] || tenant_id || '00000000-0000-0000-0000-000000000001';
+
+    if (!message) {
+      return res.status(400).json({
+        error: 'Invalid request',
+        message: 'message is required',
+      });
+    }
+
+    console.log(`[Gateway] Mode 3 Autonomous-Automatic - Tenant: ${tenantId}`);
+
+    // Forward to Python AI Engine
+    const response = await axios.post(
+      `${AI_ENGINE_URL}/api/mode3/autonomous-automatic`,
+      {
+        message,
+        enable_rag: enable_rag !== false,
+        enable_tools: enable_tools ?? true,
+        selected_rag_domains: selected_rag_domains || [],
+        requested_tools: requested_tools || [],
+        temperature: temperature ?? 0.7,
+        max_tokens: max_tokens ?? 2000,
+        max_iterations: max_iterations ?? 10,
+        confidence_threshold: confidence_threshold ?? 0.95,
+        user_id,
+        tenant_id: tenantId,
+        session_id,
+        conversation_history: conversation_history || [],
+      },
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          'x-tenant-id': tenantId,
+        },
+        timeout: 120000, // 120 seconds for Mode 3
+      }
+    );
+
+    res.json(response.data);
+  } catch (error) {
+    console.error('[Gateway] Mode 3 Autonomous-Automatic error:', error.message);
+
+    if (error.response) {
+      res.status(error.response.status).json(error.response.data);
+    } else {
+      res.status(500).json({
+        error: 'Gateway error',
+        message: error.message,
+      });
+    }
+  }
+});
+
+/**
+ * POST /api/mode4/autonomous-manual
+ * Mode 4 Autonomous-Manual - routes to Python ai-engine
+ */
+app.post('/api/mode4/autonomous-manual', async (req, res) => {
+  try {
+    const { agent_id, message, enable_rag, enable_tools, selected_rag_domains, requested_tools, temperature, max_tokens, max_iterations, confidence_threshold, user_id, tenant_id, session_id, conversation_history } = req.body;
+    const tenantId = req.headers['x-tenant-id'] || tenant_id || '00000000-0000-0000-0000-000000000001';
+
+    if (!agent_id || !message) {
+      return res.status(400).json({
+        error: 'Invalid request',
+        message: 'agent_id and message are required',
+      });
+    }
+
+    console.log(`[Gateway] Mode 4 Autonomous-Manual - Tenant: ${tenantId}, Agent: ${agent_id}`);
+
+    // Forward to Python AI Engine
+    const response = await axios.post(
+      `${AI_ENGINE_URL}/api/mode4/autonomous-manual`,
+      {
+        agent_id,
+        message,
+        enable_rag: enable_rag !== false,
+        enable_tools: enable_tools ?? true,
+        selected_rag_domains: selected_rag_domains || [],
+        requested_tools: requested_tools || [],
+        temperature: temperature ?? 0.7,
+        max_tokens: max_tokens ?? 2000,
+        max_iterations: max_iterations ?? 10,
+        confidence_threshold: confidence_threshold ?? 0.95,
+        user_id,
+        tenant_id: tenantId,
+        session_id,
+        conversation_history: conversation_history || [],
+      },
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          'x-tenant-id': tenantId,
+        },
+        timeout: 120000, // 120 seconds for Mode 4
+      }
+    );
+
+    res.json(response.data);
+  } catch (error) {
+    console.error('[Gateway] Mode 4 Autonomous-Manual error:', error.message);
+
+    if (error.response) {
+      res.status(error.response.status).json(error.response.data);
+    } else {
+      res.status(500).json({
+        error: 'Gateway error',
+        message: error.message,
+      });
+    }
+  }
+});
+
+/**
+ * POST /api/metadata/process
+ * Process file with all metadata services (extraction, sanitization, copyright, renaming)
+ */
+app.post('/api/metadata/process', async (req, res) => {
+  try {
+    const { filename, file_name, content, text, options } = req.body;
+    const tenantId = req.headers['x-tenant-id'] || '00000000-0000-0000-0000-000000000001';
+
+    const file_name_final = filename || file_name;
+    const content_final = content || text || '';
+
+    if (!file_name_final) {
+      return res.status(400).json({
+        error: 'Invalid request',
+        message: 'filename is required',
+      });
+    }
+
+    console.log(`[Gateway] Metadata processing - Tenant: ${tenantId}, File: ${file_name_final}`);
+
+    // Forward to Python AI Engine
+    const response = await axios.post(
+      `${AI_ENGINE_URL}/api/metadata/process`,
+      {
+        filename: file_name_final,
+        content: content_final,
+        options: options || {},
+      },
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          'x-tenant-id': tenantId,
+        },
+        timeout: 60000, // 60 seconds for metadata processing
+      }
+    );
+
+    res.json(response.data);
+  } catch (error) {
+    console.error('[Gateway] Metadata processing error:', error.message);
+
+    if (error.response) {
+      res.status(error.response.status).json(error.response.data);
+    } else {
+      res.status(500).json({
+        error: 'Gateway error',
+        message: error.message,
+      });
+    }
+  }
+});
+
+/**
+ * POST /api/metadata/extract
+ * Extract metadata from filename and/or content
+ */
+app.post('/api/metadata/extract', async (req, res) => {
+  try {
+    const { filename, file_name, content } = req.body;
+    const tenantId = req.headers['x-tenant-id'] || '00000000-0000-0000-0000-000000000001';
+
+    const file_name_final = filename || file_name;
+    const content_final = content;
+
+    if (!file_name_final) {
+      return res.status(400).json({
+        error: 'Invalid request',
+        message: 'filename is required',
+      });
+    }
+
+    console.log(`[Gateway] Metadata extraction - Tenant: ${tenantId}, File: ${file_name_final}`);
+
+    const response = await axios.post(
+      `${AI_ENGINE_URL}/api/metadata/extract`,
+      {
+        filename: file_name_final,
+        content: content_final,
+      },
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          'x-tenant-id': tenantId,
+        },
+        timeout: 30000,
+      }
+    );
+
+    res.json(response.data);
+  } catch (error) {
+    console.error('[Gateway] Metadata extraction error:', error.message);
+
+    if (error.response) {
+      res.status(error.response.status).json(error.response.data);
+    } else {
+      res.status(500).json({
+        error: 'Gateway error',
+        message: error.message,
+      });
+    }
+  }
+});
+
+/**
+ * POST /api/metadata/sanitize
+ * Sanitize content to remove PII/PHI
+ */
+app.post('/api/metadata/sanitize', async (req, res) => {
+  try {
+    const { content, text, options } = req.body;
+    const tenantId = req.headers['x-tenant-id'] || '00000000-0000-0000-0000-000000000001';
+
+    const content_final = content || text || '';
+
+    if (!content_final) {
+      return res.status(400).json({
+        error: 'Invalid request',
+        message: 'content is required',
+      });
+    }
+
+    console.log(`[Gateway] Content sanitization - Tenant: ${tenantId}`);
+
+    const response = await axios.post(
+      `${AI_ENGINE_URL}/api/metadata/sanitize`,
+      {
+        content: content_final,
+        options: options || {},
+      },
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          'x-tenant-id': tenantId,
+        },
+        timeout: 30000,
+      }
+    );
+
+    res.json(response.data);
+  } catch (error) {
+    console.error('[Gateway] Content sanitization error:', error.message);
+
+    if (error.response) {
+      res.status(error.response.status).json(error.response.data);
+    } else {
+      res.status(500).json({
+        error: 'Gateway error',
+        message: error.message,
+      });
+    }
+  }
+});
+
+/**
+ * POST /api/metadata/copyright-check
+ * Check document for copyright compliance
+ */
+app.post('/api/metadata/copyright-check', async (req, res) => {
+  try {
+    const { content, text, filename, file_name, metadata, options } = req.body;
+    const tenantId = req.headers['x-tenant-id'] || '00000000-0000-0000-0000-000000000001';
+
+    const content_final = content || text || '';
+    const file_name_final = filename || file_name || 'document';
+
+    if (!content_final) {
+      return res.status(400).json({
+        error: 'Invalid request',
+        message: 'content is required',
+      });
+    }
+
+    console.log(`[Gateway] Copyright check - Tenant: ${tenantId}, File: ${file_name_final}`);
+
+    const response = await axios.post(
+      `${AI_ENGINE_URL}/api/metadata/copyright-check`,
+      {
+        content: content_final,
+        filename: file_name_final,
+        metadata: metadata || {},
+        options: options || {},
+      },
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          'x-tenant-id': tenantId,
+        },
+        timeout: 30000,
+      }
+    );
+
+    res.json(response.data);
+  } catch (error) {
+    console.error('[Gateway] Copyright check error:', error.message);
+
+    if (error.response) {
+      res.status(error.response.status).json(error.response.data);
+    } else {
+      res.status(500).json({
+        error: 'Gateway error',
+        message: error.message,
+      });
+    }
+  }
+});
+
+/**
+ * POST /api/metadata/generate-filename
+ * Generate new filename based on metadata and taxonomy
+ */
+app.post('/api/metadata/generate-filename', async (req, res) => {
+  try {
+    const { metadata, original_filename, filename } = req.body;
+    const tenantId = req.headers['x-tenant-id'] || '00000000-0000-0000-0000-000000000001';
+
+    if (!metadata) {
+      return res.status(400).json({
+        error: 'Invalid request',
+        message: 'metadata is required',
+      });
+    }
+
+    console.log(`[Gateway] Filename generation - Tenant: ${tenantId}`);
+
+    const response = await axios.post(
+      `${AI_ENGINE_URL}/api/metadata/generate-filename`,
+      {
+        metadata: metadata,
+        original_filename: original_filename || filename,
+      },
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          'x-tenant-id': tenantId,
+        },
+        timeout: 10000,
+      }
+    );
+
+    res.json(response.data);
+  } catch (error) {
+    console.error('[Gateway] Filename generation error:', error.message);
 
     if (error.response) {
       res.status(error.response.status).json(error.response.data);

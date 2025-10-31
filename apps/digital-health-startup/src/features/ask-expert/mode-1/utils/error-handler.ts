@@ -229,7 +229,7 @@ export class Mode1ErrorHandler {
    */
   static logError(error: Mode1Error, context?: Record<string, any>): void {
     // Import StructuredLogger dynamically to avoid circular dependencies
-    import('@/lib/services/observability/structured-logger').then(({ StructuredLogger, LogLevel }) => {
+    import('../../../../lib/services/observability/structured-logger').then(({ StructuredLogger, LogLevel }) => {
       const logger = new StructuredLogger({ minLevel: LogLevel.ERROR });
       logger.error('Mode 1 error occurred', {
         operation: error.metadata?.operation || 'mode1_unknown',

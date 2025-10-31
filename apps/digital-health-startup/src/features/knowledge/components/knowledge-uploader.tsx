@@ -49,7 +49,11 @@ export function KnowledgeUploader({ onUploadComplete }: KnowledgeUploaderProps) 
   const [files, setFiles] = useState<UploadFile[]>([]);
   const [domains, setDomains] = useState<KnowledgeDomain[]>([]);
   const [dragActive, setDragActive] = useState(false);
-  const [selectedTier, setSelectedTier] = useState<number>(1); // Default to Tier 1
+  const [selectedTier, setSelectedTier] = useState<number | 'all'>(1); // Default to Tier 1, 'all' to show all
+  const [selectedFunction, setSelectedFunction] = useState<string>('all');
+  const [selectedMaturity, setSelectedMaturity] = useState<string>('all');
+  const [selectedAccessPolicy, setSelectedAccessPolicy] = useState<string>('all');
+  const [selectedDomainScope, setSelectedDomainScope] = useState<string>('all');
   const [uploadSettings, setUploadSettings] = useState({
     domain: 'digital_health',
     isGlobal: true,
@@ -79,11 +83,41 @@ export function KnowledgeUploader({ onUploadComplete }: KnowledgeUploaderProps) 
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
-  // Get domains filtered by selected tier
-  const filteredDomains = domains.filter((d: any) => d.tier === selectedTier);
+  // Get unique values for filters
+  const uniqueFunctions = Array.from(new Set(domains.map((d: any) => d.function_name || d.function_id).filter(Boolean)));
 
-  // Get current domain's information
-  const currentDomain = domains.find((d: any) => d.slug === uploadSettings.domain);
+  // Get domains filtered by all selected filters
+  const filteredDomains = domains.filter((d: any) => {
+    // Filter by tier (only if not 'all')
+    if (selectedTier !== 'all' && d.tier !== selectedTier) return false;
+    
+    // Filter by function
+    if (selectedFunction !== 'all' && 
+        d.function_name !== selectedFunction && 
+        d.function_id !== selectedFunction) {
+      return false;
+    }
+    
+    // Filter by maturity level
+    if (selectedMaturity !== 'all' && d.maturity_level !== selectedMaturity) {
+      return false;
+    }
+    
+    // Filter by access policy
+    if (selectedAccessPolicy !== 'all' && d.access_policy !== selectedAccessPolicy) {
+      return false;
+    }
+    
+    // Filter by domain scope
+    if (selectedDomainScope !== 'all' && d.domain_scope !== selectedDomainScope) {
+      return false;
+    }
+    
+    return true;
+  });
+
+  // Get current domain's information (using domain_id)
+  const currentDomain = domains.find((d: any) => d.domain_id === uploadSettings.domain || d.slug === uploadSettings.domain);
 
   // Get recommended models for current domain
   const getRecommendedModels = () => {
@@ -118,27 +152,38 @@ export function KnowledgeUploader({ onUploadComplete }: KnowledgeUploaderProps) 
     }
   };
 
-  // Load knowledge domains from database
+  // Load knowledge domains from database (using new architecture)
   useEffect(() => {
     const fetchDomains = async () => {
       try {
+        // Fetch from knowledge_domains_new (new architecture)
         const { data, error } = await supabase
-          .from('knowledge_domains')
-          .select('*')
+          .from('knowledge_domains_new')
+          .select('domain_id, domain_name, domain_scope, tier, priority, access_policy, rag_priority_weight, embedding_model, maturity_level, function_id, function_name, parent_domain_id, slug, name, is_active')
           .eq('is_active', true)
-          .order('priority');
+          .order('tier', { ascending: true })
+          .order('priority', { ascending: true });
 
         if (error) throw error;
 
         if (data && data.length > 0) {
-          setDomains(data);
-          // Only set default domain on first load
+          // Map to compatible format
+          const mappedDomains = data.map((d: any) => ({
+            ...d,
+            id: d.domain_id,
+            slug: d.domain_id, // Use domain_id as slug for compatibility
+            name: d.domain_name || d.name || d.domain_id,
+            value: d.domain_id,
+            label: d.domain_name || d.name || d.domain_id,
+          }));
+          
+          setDomains(mappedDomains);
+          // Only set default domain on first load (use first domain from any tier)
           if (!domainInitialized) {
-            const tier1Domains = data.filter((d: any) => d.tier === 1);
-            if (tier1Domains.length > 0) {
+            if (mappedDomains.length > 0) {
               setUploadSettings(prev => ({
                 ...prev,
-                domain: tier1Domains[0].slug
+                domain: mappedDomains[0].domain_id
               }));
             }
             setDomainInitialized(true);
@@ -146,29 +191,65 @@ export function KnowledgeUploader({ onUploadComplete }: KnowledgeUploaderProps) 
         }
       } catch (err) {
         console.error('Error fetching knowledge domains:', err);
+        // Fallback to old table if new one doesn't exist
+        try {
+          const { data: fallbackData, error: fallbackError } = await supabase
+            .from('knowledge_domains')
+            .select('*')
+            .eq('is_active', true)
+            .order('priority');
+
+          if (!fallbackError && fallbackData && fallbackData.length > 0) {
+            // Map old format to new format for consistency
+            const mappedFallback = fallbackData.map((d: any) => ({
+              ...d,
+              domain_id: d.slug || d.id,
+              domain_name: d.name,
+              id: d.id || d.slug,
+              slug: d.slug,
+              name: d.name,
+              value: d.slug,
+              label: d.name,
+            }));
+            setDomains(mappedFallback);
+            if (!domainInitialized) {
+              if (mappedFallback.length > 0) {
+                setUploadSettings(prev => ({
+                  ...prev,
+                  domain: mappedFallback[0].domain_id || mappedFallback[0].slug
+                }));
+              }
+              setDomainInitialized(true);
+            }
+          }
+        } catch (fallbackErr) {
+          console.error('Error with fallback domains:', fallbackErr);
+        }
       }
     };
 
     fetchDomains();
   }, [supabase, domainInitialized]);
 
-  // Update domain when tier changes
+  // Update domain when tier/filters change (only if selected domain is no longer in filtered list)
   useEffect(() => {
     if (domains.length > 0 && domainInitialized) {
-      const tierDomains = domains.filter((d: any) => d.tier === selectedTier);
-      if (tierDomains.length > 0) {
-        // Check if current domain is in the selected tier
-        const currentDomainInTier = tierDomains.find((d: any) => d.slug === uploadSettings.domain);
-        if (!currentDomainInTier) {
-          // Set to first domain of the new tier
-          setUploadSettings(prev => ({
-            ...prev,
-            domain: tierDomains[0].slug
-          }));
-        }
+      // Check if current domain is still in filtered list
+      const currentDomainStillAvailable = filteredDomains.some((d: any) => 
+        (d.domain_id === uploadSettings.domain || d.slug === uploadSettings.domain) ||
+        (d.id === uploadSettings.domain)
+      );
+      
+      // If current domain is not in filtered list, select first available domain
+      if (!currentDomainStillAvailable && filteredDomains.length > 0) {
+        setUploadSettings(prev => ({
+          ...prev,
+          domain: filteredDomains[0].domain_id || filteredDomains[0].slug || filteredDomains[0].id
+        }));
       }
     }
-  }, [selectedTier, domains, domainInitialized, uploadSettings.domain]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedTier, selectedFunction, selectedMaturity, selectedAccessPolicy, selectedDomainScope]);
 
   // Update recommended models when domain changes
   useEffect(() => {
@@ -265,10 +346,26 @@ export function KnowledgeUploader({ onUploadComplete }: KnowledgeUploaderProps) 
 
       const formData = new FormData();
       formData.append('files', file.file);
-      formData.append('domain', file.domain);
+      formData.append('domain', file.domain); // Legacy field for backward compatibility
+      formData.append('domain_id', file.domain); // New field: use domain_id
       formData.append('isGlobal', file.isGlobal.toString());
       formData.append('embeddingModel', file.embeddingModel);
       formData.append('chatModel', file.chatModel);
+      
+      // Get domain metadata to include new architecture fields
+      const domainInfo = domains.find((d: any) => (d.domain_id || d.slug) === file.domain);
+      if (domainInfo) {
+        if (domainInfo.access_policy) {
+          formData.append('access_policy', domainInfo.access_policy);
+        }
+        if (domainInfo.rag_priority_weight !== undefined) {
+          formData.append('rag_priority_weight', domainInfo.rag_priority_weight.toString());
+        }
+        if (domainInfo.domain_scope) {
+          formData.append('domain_scope', domainInfo.domain_scope);
+        }
+      }
+      
       if (file.selectedAgents.length > 0) {
         formData.append('selectedAgents', JSON.stringify(file.selectedAgents));
       }
@@ -406,24 +503,113 @@ export function KnowledgeUploader({ onUploadComplete }: KnowledgeUploaderProps) 
     <div className="space-y-6">
       {/* Upload Settings */}
       <Card>
-        <CardContent className="p-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <Label htmlFor="tier">Domain Tier</Label>
-              <select
-                id="tier"
-                value={selectedTier}
-                onChange={(e) => setSelectedTier(Number(e.target.value))}
-                className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md"
-              >
-                <option value={1}>Tier 1: Core ({domains.filter((d: any) => d.tier === 1).length})</option>
-                <option value={2}>Tier 2: Specialized ({domains.filter((d: any) => d.tier === 2).length})</option>
-                <option value={3}>Tier 3: Emerging ({domains.filter((d: any) => d.tier === 3).length})</option>
-              </select>
+        <CardContent className="p-4 space-y-4">
+          {/* Domain Filters */}
+          <div>
+            <h3 className="text-sm font-semibold mb-3">Domain Filters</h3>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+              <div>
+                <Label htmlFor="tier" className="text-xs">Domain Tier</Label>
+                <select
+                  id="tier"
+                  value={selectedTier}
+                  onChange={(e) => setSelectedTier(e.target.value === 'all' ? 'all' : Number(e.target.value))}
+                  className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md text-sm"
+                >
+                  <option value="all">All Tiers ({domains.length})</option>
+                  <option value={1}>Tier 1: Core ({domains.filter((d: any) => d.tier === 1).length})</option>
+                  <option value={2}>Tier 2: Specialized ({domains.filter((d: any) => d.tier === 2).length})</option>
+                  <option value={3}>Tier 3: Emerging ({domains.filter((d: any) => d.tier === 3).length})</option>
+                </select>
+              </div>
+
+              {uniqueFunctions.length > 0 && (
+                <div>
+                  <Label htmlFor="function-filter" className="text-xs">Function</Label>
+                  <select
+                    id="function-filter"
+                    value={selectedFunction}
+                    onChange={(e) => setSelectedFunction(e.target.value)}
+                    className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md text-sm"
+                  >
+                    <option value="all">All Functions</option>
+                    {uniqueFunctions.map((func: string) => (
+                      <option key={func} value={func}>{func}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              <div>
+                <Label htmlFor="maturity-filter" className="text-xs">Maturity Level</Label>
+                <select
+                  id="maturity-filter"
+                  value={selectedMaturity}
+                  onChange={(e) => setSelectedMaturity(e.target.value)}
+                  className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md text-sm"
+                >
+                  <option value="all">All Maturity</option>
+                  <option value="Established">Established</option>
+                  <option value="Specialized">Specialized</option>
+                  <option value="Emerging">Emerging</option>
+                  <option value="Draft">Draft</option>
+                </select>
+              </div>
+
+              <div>
+                <Label htmlFor="access-policy-filter" className="text-xs">Access Policy</Label>
+                <select
+                  id="access-policy-filter"
+                  value={selectedAccessPolicy}
+                  onChange={(e) => setSelectedAccessPolicy(e.target.value)}
+                  className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md text-sm"
+                >
+                  <option value="all">All Policies</option>
+                  <option value="public">Public</option>
+                  <option value="enterprise_confidential">Enterprise Confidential</option>
+                  <option value="team_confidential">Team Confidential</option>
+                  <option value="personal_draft">Personal Draft</option>
+                </select>
+              </div>
+
+              <div>
+                <Label htmlFor="scope-filter" className="text-xs">Domain Scope</Label>
+                <select
+                  id="scope-filter"
+                  value={selectedDomainScope}
+                  onChange={(e) => setSelectedDomainScope(e.target.value)}
+                  className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md text-sm"
+                >
+                  <option value="all">All Scopes</option>
+                  <option value="global">Global</option>
+                  <option value="enterprise">Enterprise</option>
+                  <option value="user">User</option>
+                </select>
+              </div>
             </div>
 
+            {(selectedFunction !== 'all' || selectedMaturity !== 'all' || selectedAccessPolicy !== 'all' || selectedDomainScope !== 'all') && (
+              <div className="mt-2 flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedFunction('all');
+                    setSelectedMaturity('all');
+                    setSelectedAccessPolicy('all');
+                    setSelectedDomainScope('all');
+                  }}
+                  className="text-xs text-blue-600 hover:text-blue-800 underline"
+                >
+                  Clear Filters
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Domain Selection & Upload Settings */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2 border-t">
             <div>
-              <Label htmlFor="domain">Knowledge Domain</Label>
+              <Label htmlFor="domain">Knowledge Domain *</Label>
               <select
                 id="domain"
                 value={uploadSettings.domain}
@@ -432,14 +618,21 @@ export function KnowledgeUploader({ onUploadComplete }: KnowledgeUploaderProps) 
               >
                 {filteredDomains.length > 0 ? (
                   filteredDomains.map((domain: any) => (
-                    <option key={domain.id} value={domain.slug}>
-                      {domain.name}
+                    <option key={domain.domain_id || domain.id} value={domain.domain_id || domain.slug}>
+                      {domain.domain_name || domain.name || domain.domain_id || domain.slug}
                     </option>
                   ))
                 ) : (
-                  <option disabled>No domains available</option>
+                  <option disabled>
+                    No domains match filters 
+                    {selectedTier !== 'all' && ` (${domains.filter((d: any) => d.tier === selectedTier).length} in tier ${selectedTier})`}
+                    {selectedTier === 'all' && ` (${domains.length} total domains)`}
+                  </option>
                 )}
               </select>
+              <p className="text-xs text-muted-foreground mt-1">
+                Showing {filteredDomains.length} domain{filteredDomains.length !== 1 ? 's' : ''}
+              </p>
             </div>
 
             <div>
@@ -698,7 +891,10 @@ export function KnowledgeUploader({ onUploadComplete }: KnowledgeUploaderProps) 
                             {formatFileSize(file.file.size)}
                           </span>
                           <Badge variant="outline" className="text-xs">
-                            {domains.find((d: any) => d.value === file.domain)?.label}
+                            {domains.find((d: any) => (d.domain_id || d.slug || d.value) === file.domain)?.domain_name || 
+                             domains.find((d: any) => (d.domain_id || d.slug || d.value) === file.domain)?.name ||
+                             domains.find((d: any) => (d.domain_id || d.slug || d.value) === file.domain)?.label ||
+                             file.domain}
                           </Badge>
                           <Badge variant={file.isGlobal ? 'default' : 'secondary'} className="text-xs">
                             {file.isGlobal ? (

@@ -31,6 +31,15 @@ export interface AgentStats {
   totalCost: number; // USD
   confidenceLevel: number; // 0-100 computed
   availability: 'online' | 'busy' | 'offline';
+  recentFeedback: AgentFeedback[];
+}
+
+interface AgentFeedback {
+  id: string;
+  rating: number;
+  comment: string | null;
+  userId?: string | null;
+  createdAt: string;
 }
 
 /**
@@ -41,7 +50,7 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
-    const agentId = params.id;
+    const { id: agentId } = await Promise.resolve(params);
 
     if (!agentId) {
       return NextResponse.json(
@@ -70,6 +79,8 @@ export async function GET(
       });
     }
 
+    const recentFeedback = await fetchAgentFeedback(agentId);
+
     // Calculate statistics
     const stats: AgentStats = {
       totalConsultations: agentMetrics?.requestCount || 0,
@@ -81,6 +92,7 @@ export async function GET(
       totalCost: calculateTotalCost(agentId, mode1Stats),
       confidenceLevel: calculateConfidenceLevel(agentMetrics),
       availability: determineAvailability(agent.status, agentMetrics),
+      recentFeedback,
     };
 
     return NextResponse.json({
@@ -191,6 +203,32 @@ function getDefaultStats(): AgentStats {
     totalCost: 0,
     confidenceLevel: 0,
     availability: 'offline',
+    recentFeedback: [],
   };
 }
 
+async function fetchAgentFeedback(agentId: string): Promise<AgentFeedback[]> {
+  try {
+    const { data, error } = await supabase
+      .from('agent_feedback')
+      .select('id, rating, comment, user_id, created_at')
+      .eq('agent_id', agentId)
+      .order('created_at', { ascending: false })
+      .limit(5);
+
+    if (error || !Array.isArray(data)) {
+      return [];
+    }
+
+    return data.map((row) => ({
+      id: row.id,
+      rating: row.rating ?? 0,
+      comment: row.comment ?? null,
+      userId: row.user_id ?? null,
+      createdAt: row.created_at,
+    }));
+  } catch (error) {
+    console.warn('[Agent Stats] Failed to load feedback:', error);
+    return [];
+  }
+}

@@ -136,24 +136,175 @@ export class LangChainRAGService {
           }
         }
 
-        // Prepare document for RAG service
-        const document = {
-          title: file.name,
-          content: content,
-          domain: options.domain,
-          tags: options.isGlobal ? ['global'] : [`agent:${options.agentId}`],
-          metadata: {
-            source: 'upload',
-            filename: file.name,
-            filesize: file.size,
-            filetype: file.type,
-            uploadedAt: new Date().toISOString(),
-            isGlobal: options.isGlobal,
-            agentId: options.agentId,
-            embeddingModel: options.embeddingModel,
-            chatModel: options.chatModel
-          }
-        };
+        // Use Python services for metadata extraction, copyright checking, and sanitization
+        const { pythonServicesClient } = await import('@/lib/services/python-services/python-services-client');
+        
+        let processedContent = content;
+        let extractedMetadata: any = {};
+        let copyrightCheck: any = {};
+        let sanitizationResult: any = {};
+        let title = file.name;
+        let sourceName: string | undefined;
+        let documentType: string | undefined;
+        let year: number | undefined;
+        let author: string | undefined;
+        let organization: string | undefined;
+
+        try {
+          // Process file with all Python services (metadata, sanitization, copyright)
+          const processingResult = await pythonServicesClient.processFileMetadata(
+            file.name,
+            content,
+            {
+              extract_from_content: true,
+              sanitize: true,
+              check_copyright: true,
+              rename_file: false, // Don't rename file, but extract metadata
+              remove_pii: true,
+              remove_phi: true,
+              remove_credit_cards: true,
+              remove_ssn: true,
+              remove_email: true,
+              remove_phone: true,
+              remove_address: true,
+              remove_names: false, // Keep names for citations
+              redaction_mode: 'mask',
+              strict_mode: true,
+              require_attribution: true,
+              check_watermarks: true,
+              log_removals: true,
+            }
+          );
+
+          // Extract results
+          extractedMetadata = processingResult.metadata || {};
+          copyrightCheck = processingResult.copyright_check || {};
+          sanitizationResult = processingResult.sanitization || {};
+          processedContent = sanitizationResult.sanitized_content || content;
+
+          // Use extracted metadata or fallback to defaults
+          title = extractedMetadata.title || extractedMetadata.clean_title || file.name;
+          sourceName = extractedMetadata.source_name;
+          documentType = extractedMetadata.document_type;
+          year = extractedMetadata.year;
+          author = extractedMetadata.author;
+          organization = extractedMetadata.organization;
+
+        } catch (error) {
+          // Fallback to TypeScript services if Python services are unavailable
+          console.warn('⚠️ Python services unavailable, falling back to TypeScript services:', error);
+          
+          const { metadataExtractionService } = await import('@/lib/services/metadata/metadata-extraction-service');
+          const extractionResult = await metadataExtractionService.processFile(
+            file,
+            content,
+            {
+              extractFromContent: true,
+              renameFile: false,
+              domain: options.domain,
+            }
+          );
+
+          extractedMetadata = extractionResult.metadata;
+          title = extractedMetadata.title || extractedMetadata.clean_title || file.name;
+          sourceName = extractedMetadata.source_name;
+          documentType = extractedMetadata.document_type;
+          year = extractedMetadata.year;
+          author = extractedMetadata.author;
+          organization = extractedMetadata.organization;
+
+          // Fallback copyright check
+          const { copyrightChecker } = await import('@/lib/services/compliance/copyright-checker');
+          copyrightCheck = await copyrightChecker.checkCopyright(
+            content,
+            file.name,
+            {
+              source_name: sourceName,
+              source_url: extractedMetadata.source_url,
+              author: author,
+              publication_date: extractedMetadata.publication_date || (year ? `${year}-01-01` : undefined),
+            },
+            {
+              strictMode: true,
+              requireAttribution: true,
+              checkDuplicates: false,
+              checkWatermarks: true,
+            }
+          );
+
+          // Fallback sanitization
+          const { dataSanitizer } = await import('@/lib/services/compliance/data-sanitizer');
+          sanitizationResult = await dataSanitizer.sanitizeContent(content, {
+            removePII: true,
+            removePHI: true,
+            removeCreditCards: true,
+            removeSSN: true,
+            removeEmail: true,
+            removePhone: true,
+            removeAddress: true,
+            removeNames: false,
+            redactionMode: 'mask',
+            logRemovals: true,
+          });
+
+          processedContent = sanitizationResult.sanitized ? sanitizationResult.sanitizedContent : content;
+        }
+
+          // Prepare document for RAG service with extracted metadata
+          const document = {
+            title: title,
+            content: processedContent, // Use sanitized content
+            domain: options.domain, // Legacy field
+            domain_id: (options as any).domain_id || options.domain, // New field
+            tags: options.isGlobal ? ['global'] : [`agent:${options.agentId}`],
+            metadata: {
+              source: 'upload',
+              filename: file.name,
+              original_filename: file.name, // Keep original filename
+              new_filename: extractionResult.newFileName, // New taxonomy-based filename
+              filesize: file.size,
+              filetype: file.type,
+              uploadedAt: new Date().toISOString(),
+              isGlobal: options.isGlobal,
+              agentId: options.agentId,
+              embeddingModel: options.embeddingModel,
+              chatModel: options.chatModel,
+              // Extracted metadata
+              source_name: sourceName,
+              document_type: documentType,
+              year: year,
+              author: author,
+              organization: organization,
+              regulatory_body: extractedMetadata.regulatory_body,
+              therapeutic_area: extractedMetadata.therapeutic_area,
+              geographic_scope: extractedMetadata.geographic_scope,
+              keywords: extractedMetadata.keywords,
+              summary: extractedMetadata.summary || extractedMetadata.abstract,
+              language: extractedMetadata.language,
+              word_count: extractedMetadata.word_count,
+              page_count: extractedMetadata.page_count,
+              extraction_confidence: processingResult?.processing_summary?.extraction_confidence || extractionResult?.confidence || 0.5,
+              // Copyright check results
+              copyright_status: copyrightCheck.has_copyright_risk ? 'risk' : 'cleared',
+              copyright_risk_level: copyrightCheck.risk_level,
+              copyright_notice: copyrightCheck.copyright_notice,
+              copyright_requires_approval: copyrightCheck.requires_approval,
+              copyright_issues: copyrightCheck.detected_issues || copyrightCheck.detectedIssues,
+              attribution_required: copyrightCheck.attribution_required || copyrightCheck.attributionRequired,
+              copyright_checked_at: new Date().toISOString(),
+              // Sanitization results
+              sanitization_status: sanitizationResult.sanitized ? 'sanitized' : 'none',
+              sanitization_risk_level: sanitizationResult.risk_level || sanitizationResult.riskLevel,
+              sanitization_needs_review: sanitizationResult.needs_review || sanitizationResult.needsReview,
+              pii_detected: sanitizationResult.pii_detected || sanitizationResult.piiDetected,
+              removed_content_summary: sanitizationResult.removed_content || sanitizationResult.removedContent,
+              sanitization_checked_at: new Date().toISOString(),
+            },
+            // New architecture fields (use extracted if not provided)
+            access_policy: (options as any).access_policy,
+            rag_priority_weight: (options as any).rag_priority_weight,
+            domain_scope: (options as any).domain_scope,
+          };
 
         // Add document to unified RAG service
         const documentId = await unifiedRAGService.addDocument(document);

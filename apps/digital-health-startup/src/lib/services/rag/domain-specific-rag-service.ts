@@ -68,7 +68,7 @@ export class DomainSpecificRAGService {
       filter: {
         domain: { '$eq': domain }
       },
-      namespace: '' // Single namespace for all knowledge
+      namespace: 'domains-knowledge' // Named namespace for all knowledge chunks
     });
 
     return results.map(result => ({
@@ -101,7 +101,7 @@ export class DomainSpecificRAGService {
       topK: query.topK || 20, // Higher for multi-domain
       minScore: query.minScore || 0.7,
       filter: domainFilter,
-      namespace: '' // Single namespace for all knowledge
+      namespace: 'domains-knowledge' // Named namespace for all knowledge chunks
     });
 
     // Group and rank by domain

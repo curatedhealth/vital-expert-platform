@@ -25,11 +25,26 @@ export const GET = requireSuperAdmin(async (request: NextRequest, user) => {
     // Use user session-based client (respects RLS even for superadmin)
     const supabase = await createClient();
     
-    const { data: domains, error } = await supabase
-      .from('knowledge_domains')
+    // Try new architecture first, fallback to old table
+    let { data: domains, error } = await supabase
+      .from('knowledge_domains_new')
       .select('*')
       .order('tier', { ascending: true })
       .order('priority', { ascending: true });
+
+    // If new table doesn't exist or has no data, fallback to old table
+    if (error || !domains || domains.length === 0) {
+      const { data: oldDomains, error: oldError } = await supabase
+        .from('knowledge_domains')
+        .select('*')
+        .order('tier', { ascending: true })
+        .order('priority', { ascending: true });
+      
+      if (!oldError && oldDomains) {
+        domains = oldDomains;
+        error = null;
+      }
+    }
 
     if (error) {
       console.error('Error fetching domains:', error);
@@ -128,24 +143,36 @@ export const POST = requireSuperAdmin(async (request: NextRequest, user) => {
       // Auto-generate slug if not provided
       const finalSlug = slug || name.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
       
-      // Create domain
-      const { data: domain, error } = await supabase
-        .from('knowledge_domains')
-        .insert({
-          code: code.toUpperCase().replace(/\s+/g, '_'),
-          name,
-          slug: finalSlug,
-          description,
-          tier: parseInt(tier.toString()),
-          priority: finalPriority,
+      // Try to create in new architecture first
+      const newArchitectureDomain = {
+        domain_id: finalSlug,
+        domain_name: name,
+        domain_description_llm: description,
+        function_id: body.function_id || 'general',
+        function_name: body.function_name || 'General',
+        tier: parseInt(tier.toString()),
+        priority: finalPriority,
+        maturity_level: (body.maturity_level || 'Established') as any,
+        regulatory_exposure: (body.regulatory_exposure || 'Low') as any,
+        pii_sensitivity: (body.pii_sensitivity || 'Low') as any,
+        embedding_model: body.embedding_model || 'text-embedding-3-large',
+        rag_priority_weight: body.rag_priority_weight || 0.85,
+        access_policy: (body.access_policy || 'public') as any,
+        domain_scope: (body.domain_scope || 'global') as any,
+        is_active: is_active,
+        // Legacy fields for backward compatibility
+        code: code.toUpperCase().replace(/\s+/g, '_'),
+        slug: finalSlug,
+        name: name,
+        description: description,
         keywords: Array.isArray(keywords) ? keywords : keywords.split(',').map((k: string) => k.trim()).filter(Boolean),
         sub_domains: Array.isArray(sub_domains) ? sub_domains : sub_domains.split(',').map((s: string) => s.trim()).filter(Boolean),
-        color,
-        icon,
+        color: color,
+        icon: icon,
         agent_count_estimate: parseInt(agent_count_estimate.toString()) || 0,
         recommended_models: recommended_models || {
           embedding: {
-            primary: 'mxbai-embed-large-v1',
+            primary: 'text-embedding-3-large',
             alternatives: [],
             specialized: null,
           },
@@ -155,11 +182,57 @@ export const POST = requireSuperAdmin(async (request: NextRequest, user) => {
             specialized: null,
           },
         },
-        metadata,
-        is_active,
-      })
-      .select()
-      .single();
+        metadata: metadata,
+      };
+
+      let { data: domain, error } = await supabase
+        .from('knowledge_domains_new')
+        .insert(newArchitectureDomain)
+        .select()
+        .single();
+
+      // If new architecture fails or doesn't exist, fallback to old table
+      if (error) {
+        console.warn('Failed to create in knowledge_domains_new, trying knowledge_domains:', error);
+        const { data: oldDomain, error: oldError } = await supabase
+          .from('knowledge_domains')
+          .insert({
+            code: code.toUpperCase().replace(/\s+/g, '_'),
+          name,
+          slug: finalSlug,
+          description,
+          tier: parseInt(tier.toString()),
+          priority: finalPriority,
+          keywords: Array.isArray(keywords) ? keywords : keywords.split(',').map((k: string) => k.trim()).filter(Boolean),
+          sub_domains: Array.isArray(sub_domains) ? sub_domains : sub_domains.split(',').map((s: string) => s.trim()).filter(Boolean),
+          color,
+          icon,
+          agent_count_estimate: parseInt(agent_count_estimate.toString()) || 0,
+          recommended_models: recommended_models || {
+            embedding: {
+              primary: 'text-embedding-3-large',
+              alternatives: [],
+              specialized: null,
+            },
+            chat: {
+              primary: 'gpt-4-turbo-preview',
+              alternatives: [],
+              specialized: null,
+            },
+          },
+          metadata,
+          is_active,
+        })
+        .select()
+        .single();
+        
+        if (!oldError && oldDomain) {
+          domain = oldDomain;
+          error = null;
+        } else {
+          error = oldError;
+        }
+      }
 
     if (error) {
       console.error('Error creating domain:', error);

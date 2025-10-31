@@ -805,6 +805,118 @@ async def execute_mode4_autonomous_manual(
         raise HTTPException(status_code=500, detail=f"Mode 4 execution failed: {str(exc)}")
 
 
+# Panel Orchestration Endpoint
+class PanelOrchestrationRequest(BaseModel):
+    """Payload for panel orchestration requests"""
+    message: str = Field(..., min_length=1, description="Panel consultation question")
+    panel: Dict[str, Any] = Field(..., description="Panel configuration with members")
+    mode: Optional[str] = Field("parallel", description="Orchestration mode: parallel, sequential, consensus")
+    context: Optional[Dict[str, Any]] = Field(None, description="Additional context")
+    user_id: Optional[str] = Field(None, description="User executing the request")
+    tenant_id: Optional[str] = Field(None, description="Tenant/organization identifier")
+    session_id: Optional[str] = Field(None, description="Session identifier")
+
+
+class PanelOrchestrationResponse(BaseModel):
+    """Response payload for panel orchestration requests"""
+    response: str = Field(..., description="Panel consensus/recommendation")
+    metadata: Dict[str, Any] = Field(..., description="Panel orchestration metadata")
+    processing_time_ms: float = Field(..., description="Processing time in milliseconds")
+
+
+@app.post("/api/panel/orchestrate", response_model=PanelOrchestrationResponse)
+async def orchestrate_panel(
+    request: PanelOrchestrationRequest,
+    orchestrator: AgentOrchestrator = Depends(get_agent_orchestrator)
+):
+    """Execute panel orchestration workflow via Python orchestration"""
+    REQUEST_COUNT.labels(method="POST", endpoint="/api/panel/orchestrate").inc()
+
+    if not supabase_client:
+        raise HTTPException(status_code=503, detail="Supabase client not initialized")
+
+    start_time = asyncio.get_event_loop().time()
+
+    try:
+        logger.info("🎭 Panel orchestration request",
+                   message_preview=request.message[:100],
+                   panel_size=len(request.panel.get("members", [])))
+
+        # Extract panel members (agents)
+        panel_members = request.panel.get("members", [])
+        if not panel_members:
+            raise HTTPException(status_code=400, detail="Panel must have at least one member")
+
+        # For now, process with the first agent (can be enhanced with multi-agent consensus later)
+        # TODO: Implement full multi-agent panel orchestration with consensus building
+        first_agent = panel_members[0].get("agent") if panel_members else {}
+        agent_id = first_agent.get("id") if isinstance(first_agent, dict) else None
+        
+        if not agent_id:
+            raise HTTPException(status_code=400, detail="Panel members must have agent IDs")
+
+        # Get agent record
+        agent_record = await supabase_client.get_agent_by_id(agent_id)
+        agent_type = (
+            (agent_record.get("type") if agent_record else None)
+            or (agent_record.get("agent_type") if agent_record else None)
+            or "regulatory_expert"
+        )
+
+        # Execute query with agent
+        query_request = AgentQueryRequest(
+            agent_id=agent_id,
+            agent_type=agent_type,
+            query=request.message,
+            user_id=request.user_id,
+            organization_id=request.tenant_id,
+            max_context_docs=15,
+            similarity_threshold=0.7,
+            include_citations=True,
+            include_confidence_scores=True,
+            include_medical_context=True,
+            response_format="detailed",
+            pharma_protocol_required=False,
+            verify_protocol_required=True,
+            hipaa_compliant=True,
+        )
+
+        response: AgentQueryResponse = await orchestrator.process_query(query_request)
+
+        processing_time_ms = (asyncio.get_event_loop().time() - start_time) * 1000
+
+        # Panel metadata (simplified - can be enhanced with multi-agent consensus)
+        metadata = {
+            "mode": request.mode,
+            "panel_size": len(panel_members),
+            "session_id": request.session_id,
+            "consensus": [response.response],  # TODO: Build actual consensus from multiple agents
+            "dissent": [],
+            "expert_responses": [{
+                "expert_id": agent_id,
+                "expert_name": agent_record.get("name") if agent_record else "Unknown",
+                "content": response.response,
+                "confidence": response.confidence,
+                "citations": response.citations or [],
+            }],
+            "processing_metadata": response.processing_metadata,
+            "compliance_protocols": response.compliance_protocols,
+            "timestamp": datetime.now().isoformat(),
+        }
+
+        return PanelOrchestrationResponse(
+            response=response.response,
+            metadata=metadata,
+            processing_time_ms=processing_time_ms,
+        )
+
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.error("❌ Panel orchestration failed", error=str(exc))
+        raise HTTPException(status_code=500, detail=f"Panel orchestration failed: {str(exc)}")
+
+
 # Agent Query Endpoint
 @app.post("/api/agents/query", response_model=AgentQueryResponse)
 async def query_agent(

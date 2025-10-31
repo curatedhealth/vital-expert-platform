@@ -998,6 +998,59 @@ app.post('/api/agents/select', async (req, res) => {
 });
 
 /**
+ * POST /api/panel/orchestrate
+ * Proxy to Python AI Engine for panel orchestration
+ */
+app.post('/api/panel/orchestrate', async (req, res) => {
+  const tenantId = req.headers['x-tenant-id'] || req.body.tenant_id;
+  const sessionId = `panel_${Date.now()}`;
+
+  try {
+    const {
+      message,
+      panel,
+      mode = 'parallel',
+      context,
+      user_id,
+      tenant_id,
+    } = req.body;
+
+    const response = await axios.post(
+      `${AI_ENGINE_URL}/api/panel/orchestrate`,
+      {
+        message,
+        panel,
+        mode,
+        context,
+        user_id: user_id || req.user?.id,
+        tenant_id: tenant_id || tenantId,
+        session_id: sessionId,
+      },
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          'x-tenant-id': tenantId,
+        },
+        timeout: 120000, // 120 seconds for panel orchestration
+      }
+    );
+
+    res.json(response.data);
+  } catch (error) {
+    console.error('[Gateway] Panel Orchestration error:', error.message);
+
+    if (error.response) {
+      res.status(error.response.status).json(error.response.data);
+    } else {
+      res.status(500).json({
+        error: 'Gateway error',
+        message: error.message,
+      });
+    }
+  }
+});
+
+/**
  * GET /api/agents/:id/stats
  * Get agent statistics from Python AI-engine
  */

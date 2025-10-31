@@ -1,0 +1,40 @@
+# Railway Deployment Configuration for VITAL AI Engine
+
+[build]
+builder = "DOCKERFILE"
+dockerfilePath = "Dockerfile"
+
+[deploy]
+startCommand = "python3 start.py"
+healthcheckPath = "/health"
+healthcheckTimeout = 300
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 10
+
+# Resource limits
+[[services]]
+name = "vital-ai-engine"
+cpu = 2000  # 2 CPUs (in millicores)
+memory = 4096  # 4GB RAM
+
+# Environment variables (set in Railway dashboard)
+# Required:
+# - SUPABASE_URL
+# - SUPABASE_ANON_KEY
+# - SUPABASE_SERVICE_ROLE_KEY
+# - OPENAI_API_KEY
+# - PINECONE_API_KEY
+# - PINECONE_INDEX_NAME
+# Optional:
+# - PORT (defaults to 8000)
+# - LOG_LEVEL (defaults to info)
+# - EMBEDDING_PROVIDER (defaults to openai)
+# - REDIS_URL (optional)
+
+# Health check configuration
+[healthcheck]
+enabled = true
+path = "/health"
+interval = 30
+timeout = 10
+retries = 3

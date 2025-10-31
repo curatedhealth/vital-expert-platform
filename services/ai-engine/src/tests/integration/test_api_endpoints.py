@@ -7,9 +7,15 @@ Requires test database or mocked Supabase client.
 
 import pytest
 import os
+import sys
 from fastapi.testclient import TestClient
 from unittest.mock import AsyncMock, Mock, patch, MagicMock
 import json
+
+# Add src to path for imports
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
+
+from main import app
 
 # Skip integration tests if flag is set
 skip_integration = os.getenv('SKIP_INTEGRATION_TESTS', 'false').lower() == 'true'

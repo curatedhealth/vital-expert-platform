@@ -54,7 +54,21 @@ else
     # Check if virtual environment exists
     if [ ! -d "venv" ]; then
         echo -e "${YELLOW}Creating Python virtual environment...${NC}"
-        python3 -m venv venv
+        # Try Python 3.12 first (best compatibility), fallback to 3.11, then 3.10, then system python3
+        if command -v python3.12 &> /dev/null; then
+            PYTHON_CMD="python3.12"
+            echo -e "${GREEN}Using Python 3.12${NC}"
+        elif command -v python3.11 &> /dev/null; then
+            PYTHON_CMD="python3.11"
+            echo -e "${GREEN}Using Python 3.11${NC}"
+        elif command -v python3.10 &> /dev/null; then
+            PYTHON_CMD="python3.10"
+            echo -e "${GREEN}Using Python 3.10${NC}"
+        else
+            PYTHON_CMD="python3"
+            echo -e "${YELLOW}Using system Python (may have compatibility issues)${NC}"
+        fi
+        $PYTHON_CMD -m venv venv
     fi
     
     # Activate virtual environment

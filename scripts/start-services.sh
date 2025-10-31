@@ -63,6 +63,9 @@ else
     # Install dependencies if needed
     if [ ! -f "venv/.installed" ]; then
         echo -e "${YELLOW}Installing Python dependencies...${NC}"
+        # First, install setuptools and wheel (required for building packages)
+        pip install --quiet --upgrade pip setuptools wheel
+        # Then install requirements
         pip install --quiet -r requirements.txt
         touch venv/.installed
     fi

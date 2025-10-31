@@ -14,10 +14,13 @@ from prometheus_client import Counter, Histogram, generate_latest
 from typing import List, Dict, Any, Optional
 import asyncio
 import json
+from pydantic import BaseModel, Field
 
 from services.agent_orchestrator import AgentOrchestrator
 from services.medical_rag import MedicalRAGPipeline
+from services.unified_rag_service import UnifiedRAGService
 from services.supabase_client import SupabaseClient
+from services.metadata_processing_service import MetadataProcessingService, create_metadata_processing_service
 from models.requests import (
     AgentQueryRequest,
     RAGSearchRequest,
@@ -46,13 +49,75 @@ settings = get_settings()
 # Global instances
 agent_orchestrator: Optional[AgentOrchestrator] = None
 rag_pipeline: Optional[MedicalRAGPipeline] = None
+unified_rag_service: Optional[UnifiedRAGService] = None
+metadata_processing_service: Optional[MetadataProcessingService] = None
 supabase_client: Optional[SupabaseClient] = None
 websocket_manager: Optional[WebSocketManager] = None
+
+
+class ConversationTurn(BaseModel):
+    """Conversation history turn"""
+    role: str = Field(..., description="Turn role (user or assistant)")
+    content: str = Field(..., description="Turn content")
+
+
+class Mode1ManualRequest(BaseModel):
+    """Payload for Mode 1 manual interactive requests"""
+    agent_id: str = Field(..., description="Agent ID to execute")
+    message: str = Field(..., min_length=1, description="User message")
+    enable_rag: bool = Field(True, description="Enable RAG retrieval")
+    enable_tools: bool = Field(False, description="Enable tool execution")
+    selected_rag_domains: Optional[List[str]] = Field(
+        default=None,
+        description="Optional RAG domain filters"
+    )
+    requested_tools: Optional[List[str]] = Field(
+        default=None,
+        description="Requested tools to enable"
+    )
+    temperature: Optional[float] = Field(
+        default=None,
+        ge=0.0,
+        le=2.0,
+        description="LLM temperature override"
+    )
+    max_tokens: Optional[int] = Field(
+        default=None,
+        ge=100,
+        le=8000,
+        description="LLM max tokens override"
+    )
+    user_id: Optional[str] = Field(
+        default=None,
+        description="User executing the request"
+    )
+    tenant_id: Optional[str] = Field(
+        default=None,
+        description="Tenant/organization identifier"
+    )
+    session_id: Optional[str] = Field(
+        default=None,
+        description="Session identifier for analytics"
+    )
+    conversation_history: Optional[List[ConversationTurn]] = Field(
+        default=None,
+        description="Previous turns for context"
+    )
+
+
+class Mode1ManualResponse(BaseModel):
+    """Response payload for Mode 1 manual interactive requests"""
+    agent_id: str = Field(..., description="Agent that produced the response")
+    content: str = Field(..., description="Generated response content")
+    confidence: float = Field(..., ge=0.0, le=1.0, description="Confidence score")
+    citations: List[Dict[str, Any]] = Field(default_factory=list, description="Supporting citations")
+    metadata: Dict[str, Any] = Field(default_factory=dict, description="Additional metadata")
+    processing_time_ms: float = Field(..., description="Processing latency in milliseconds")
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Application lifespan management"""
-    global agent_orchestrator, rag_pipeline, supabase_client, websocket_manager
+    global agent_orchestrator, rag_pipeline, unified_rag_service, metadata_processing_service, supabase_client, websocket_manager
 
     logger.info("🚀 Starting VITAL Path AI Services")
 
@@ -62,6 +127,14 @@ async def lifespan(app: FastAPI):
 
     rag_pipeline = MedicalRAGPipeline(supabase_client)
     await rag_pipeline.initialize()
+
+    unified_rag_service = UnifiedRAGService(supabase_client)
+    await unified_rag_service.initialize()
+
+    metadata_processing_service = create_metadata_processing_service(
+        use_ai=False,  # Can be enabled if needed
+        openai_api_key=settings.openai_api_key
+    )
 
     agent_orchestrator = AgentOrchestrator(supabase_client, rag_pipeline)
     await agent_orchestrator.initialize()
@@ -81,6 +154,8 @@ async def lifespan(app: FastAPI):
         await agent_orchestrator.cleanup()
     if rag_pipeline:
         await rag_pipeline.cleanup()
+    if unified_rag_service:
+        await unified_rag_service.cleanup()
     if supabase_client:
         await supabase_client.cleanup()
 
@@ -112,6 +187,16 @@ async def get_rag_pipeline() -> MedicalRAGPipeline:
         raise HTTPException(status_code=503, detail="RAG pipeline not initialized")
     return rag_pipeline
 
+async def get_unified_rag_service() -> UnifiedRAGService:
+    if not unified_rag_service:
+        raise HTTPException(status_code=503, detail="Unified RAG service not initialized")
+    return unified_rag_service
+
+async def get_metadata_processing_service() -> MetadataProcessingService:
+    if not metadata_processing_service:
+        raise HTTPException(status_code=503, detail="Metadata processing service not initialized")
+    return metadata_processing_service
+
 async def get_websocket_manager() -> WebSocketManager:
     if not websocket_manager:
         raise HTTPException(status_code=503, detail="WebSocket manager not initialized")
@@ -133,6 +218,89 @@ async def health_check():
 async def metrics():
     """Prometheus metrics endpoint"""
     return generate_latest()
+
+
+@app.post("/api/mode1/manual", response_model=Mode1ManualResponse)
+async def execute_mode1_manual(
+    request: Mode1ManualRequest,
+    orchestrator: AgentOrchestrator = Depends(get_agent_orchestrator)
+):
+    """Execute Mode 1 manual interactive workflow via Python orchestration"""
+    REQUEST_COUNT.labels(method="POST", endpoint="/api/mode1/manual").inc()
+
+    if not supabase_client:
+        raise HTTPException(status_code=503, detail="Supabase client not initialized")
+
+    start_time = asyncio.get_event_loop().time()
+
+    try:
+        agent_record = await supabase_client.get_agent_by_id(request.agent_id)
+        agent_type = (
+            (agent_record.get("type") if agent_record else None)
+            or (agent_record.get("agent_type") if agent_record else None)
+            or "regulatory_expert"
+        )
+
+        query_request = AgentQueryRequest(
+            agent_id=request.agent_id,
+            agent_type=agent_type,
+            query=request.message,
+            user_id=request.user_id,
+            organization_id=request.tenant_id,
+            max_context_docs=(
+                0 if not request.enable_rag else min(10, agent_record.get("max_context_docs", 5) if agent_record else 5)
+            ),
+            similarity_threshold=0.7,
+            include_citations=True,
+            include_confidence_scores=True,
+            include_medical_context=True,
+            response_format="detailed",
+            pharma_protocol_required=False,
+            verify_protocol_required=True,
+            hipaa_compliant=True,
+        )
+
+        response: AgentQueryResponse = await orchestrator.process_query(query_request)
+
+        processing_time_ms = (asyncio.get_event_loop().time() - start_time) * 1000
+        metadata: Dict[str, Any] = {
+            "processing_metadata": response.processing_metadata,
+            "compliance_protocols": response.compliance_protocols,
+            "medical_context": response.medical_context,
+            "request": {
+                "enable_rag": request.enable_rag,
+                "enable_tools": request.enable_tools,
+                "selected_rag_domains": request.selected_rag_domains or [],
+                "requested_tools": request.requested_tools or [],
+                "temperature": request.temperature,
+                "max_tokens": request.max_tokens,
+                "session_id": request.session_id,
+            },
+        }
+
+        if agent_record:
+            metadata["agent"] = {
+                "id": agent_record.get("id"),
+                "name": agent_record.get("name"),
+                "display_name": agent_record.get("display_name"),
+                "type": agent_record.get("type"),
+            }
+
+        return Mode1ManualResponse(
+            agent_id=response.agent_id,
+            content=response.response,
+            confidence=response.confidence,
+            citations=response.citations or [],
+            metadata=metadata,
+            processing_time_ms=processing_time_ms,
+        )
+
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.error("❌ Mode 1 manual execution failed", error=str(exc))
+        raise HTTPException(status_code=500, detail=f"Mode 1 execution failed: {str(exc)}")
+
 
 # Agent Query Endpoint
 @app.post("/api/agents/query", response_model=AgentQueryResponse)
@@ -160,13 +328,62 @@ async def query_agent(
         logger.error("❌ Agent query failed", error=str(e))
         raise HTTPException(status_code=500, detail=f"Agent query failed: {str(e)}")
 
-# RAG Search Endpoint
+# RAG Search Endpoint (Unified Service)
+@app.post("/api/rag/query")
+async def query_rag(
+    request: dict,
+    rag_service: UnifiedRAGService = Depends(get_unified_rag_service)
+):
+    """Unified RAG query endpoint supporting multiple strategies"""
+    REQUEST_COUNT.labels(method="POST", endpoint="/api/rag/query").inc()
+
+    try:
+        query_text = request.get("query") or request.get("text")
+        if not query_text:
+            raise HTTPException(status_code=400, detail="query or text is required")
+
+        strategy = request.get("strategy", "hybrid")
+        domain_ids = request.get("domain_ids") or request.get("selectedRagDomains")
+        filters = request.get("filters", {})
+        max_results = request.get("max_results") or request.get("maxResults", 10)
+        similarity_threshold = request.get("similarity_threshold") or request.get("similarityThreshold", 0.7)
+        agent_id = request.get("agent_id") or request.get("agentId")
+        user_id = request.get("user_id") or request.get("userId")
+        session_id = request.get("session_id") or request.get("sessionId")
+
+        logger.info("🔍 Processing RAG query", query=query_text[:100], strategy=strategy)
+
+        response = await rag_service.query(
+            query_text=query_text,
+            strategy=strategy,
+            domain_ids=domain_ids,
+            filters=filters,
+            max_results=max_results,
+            similarity_threshold=similarity_threshold,
+            agent_id=agent_id,
+            user_id=user_id,
+            session_id=session_id,
+        )
+
+        logger.info("✅ RAG query completed", 
+                   results_count=len(response.get("sources", [])),
+                   strategy=strategy)
+
+        return response
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("❌ RAG query failed", error=str(e))
+        raise HTTPException(status_code=500, detail=f"RAG query failed: {str(e)}")
+
+# Legacy RAG Search Endpoint (for backward compatibility)
 @app.post("/api/rag/search", response_model=RAGSearchResponse)
 async def search_rag(
     request: RAGSearchRequest,
     rag: MedicalRAGPipeline = Depends(get_rag_pipeline)
 ):
-    """Search medical knowledge base using RAG"""
+    """Search medical knowledge base using RAG (legacy endpoint)"""
     REQUEST_COUNT.labels(method="POST", endpoint="/api/rag/search").inc()
 
     try:
@@ -303,6 +520,8 @@ async def get_system_status() -> Dict[str, Any]:
         "services": {
             "agent_orchestrator": "healthy" if agent_orchestrator else "unhealthy",
             "rag_pipeline": "healthy" if rag_pipeline else "unhealthy",
+            "unified_rag_service": "healthy" if unified_rag_service else "unhealthy",
+            "metadata_processing_service": "healthy" if metadata_processing_service else "unhealthy",
             "supabase_client": "healthy" if supabase_client else "unhealthy"
         },
         "metrics": {

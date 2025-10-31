@@ -154,6 +154,9 @@ class AgentOrchestrator:
     async def _get_rag_context(self, request: AgentQueryRequest) -> Dict[str, Any]:
         """Get relevant context from RAG pipeline"""
         try:
+            if request.max_context_docs == 0:
+                return {"documents": [], "context_summary": {}, "total_docs": 0}
+
             # Prepare RAG filters based on request
             filters = {}
             if request.medical_specialty:

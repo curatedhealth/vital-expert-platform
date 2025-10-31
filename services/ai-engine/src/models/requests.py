@@ -21,7 +21,7 @@ class AgentQueryRequest(BaseModel):
     phase: Optional[str] = Field(None, description="Regulatory phase (vision, integrate, test, activate, learn)")
 
     # Query configuration
-    max_context_docs: Optional[int] = Field(5, ge=1, le=20, description="Maximum context documents to retrieve")
+    max_context_docs: Optional[int] = Field(5, ge=0, le=20, description="Maximum context documents to retrieve")
     similarity_threshold: Optional[float] = Field(0.7, ge=0.1, le=1.0, description="Similarity threshold for RAG")
     include_citations: bool = Field(True, description="Include citations in response")
 

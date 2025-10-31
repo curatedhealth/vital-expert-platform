@@ -1,113 +1,92 @@
 /**
- * Mode 1 Integration Tests
- * 
- * Tests the complete Mode 1 flow with mocked dependencies
+ * Mode 1 Integration Tests (Python orchestration bridge)
  */
 
-import { describe, it, expect, beforeEach, vi } from '@jest/globals';
+import { afterEach, beforeEach, describe, expect, it, vi } from '@jest/globals';
 import { executeMode1 } from '../../../../features/chat/services/mode1-manual-interactive';
 
-// Mock dependencies
-vi.mock('@supabase/supabase-js', () => ({
-  createClient: vi.fn(() => ({
-    from: vi.fn(() => ({
-      select: vi.fn(() => ({
-        eq: vi.fn(() => ({
-          single: vi.fn(() => ({
-            data: {
-              id: 'test-agent',
-              name: 'Test Agent',
-              system_prompt: 'You are a helpful assistant',
-              model: 'gpt-4',
-              knowledge_domains: ['clinical', 'regulatory'],
-              metadata: { tools: ['calculator', 'web_search'] },
-            },
-            error: null,
-          })),
-        })),
-      })),
-    })),
-  })),
-}));
+describe('Mode 1 Integration (Python AI engine)', () => {
+  const originalFetch = global.fetch;
 
-vi.mock('@langchain/openai', () => ({
-  ChatOpenAI: vi.fn(() => ({
-    stream: vi.fn(async function* () {
-      yield { content: 'Test response chunk 1' };
-      yield { content: 'Test response chunk 2' };
-    }),
-    bindTools: vi.fn(function (tools) {
-      return {
-        invoke: vi.fn(() => ({
-          content: 'Response with tools',
-          tool_calls: [],
-        })),
-      };
-    }),
-  })),
-}));
-
-describe('Mode 1 Integration Tests', () => {
   beforeEach(() => {
-    // Set up environment variables
-    process.env.NEXT_PUBLIC_SUPABASE_URL = 'https://test.supabase.co';
-    process.env.SUPABASE_SERVICE_ROLE_KEY = 'test-key';
-    process.env.OPENAI_API_KEY = 'test-openai-key';
+    vi.restoreAllMocks();
+    process.env.AI_ENGINE_URL = 'https://ai-engine.test';
   });
 
-  describe('Direct Execution Path', () => {
-    it('should execute direct path without RAG or tools', async () => {
-      const config = {
-        agentId: 'test-agent',
-        message: 'Hello, can you help me?',
-        enableRAG: false,
-        enableTools: false,
-      };
+  afterEach(() => {
+    global.fetch = originalFetch;
+  });
 
-      const stream = await executeMode1(config);
-      const chunks: string[] = [];
+  it('streams metadata chunks followed by assistant content', async () => {
+    const mockJson = vi.fn().mockResolvedValue({
+      agent_id: 'agent-123',
+      content: 'This is a synthesized advisory response.',
+      confidence: 0.78,
+      citations: [
+        { id: 'cit-1', title: 'Clinical Guidance 2024', url: 'https://example.org/guidance', confidence_score: 0.92 },
+        { id: 'cit-2', title: 'FDA Safety Notice', url: 'https://fda.gov/safety', confidence_score: 0.88 },
+      ],
+      metadata: {
+        processing_metadata: { rag: { sources: 2 } },
+        request: { enable_rag: true, enable_tools: false },
+      },
+      processing_time_ms: 1450,
+    });
 
-      for await (const chunk of stream) {
-        chunks.push(chunk);
+    const mockResponse = {
+      ok: true,
+      json: mockJson,
+    } as unknown as Response;
+
+    const fetchSpy = vi.spyOn(global, 'fetch' as any).mockResolvedValue(mockResponse);
+
+    const generator = executeMode1({
+      agentId: 'agent-123',
+      message: 'Summarize the latest regulatory guidance for wearable heart monitors.',
+      enableRAG: true,
+      enableTools: false,
+      selectedRagDomains: ['regulatory-affairs'],
+    });
+
+    const chunks: string[] = [];
+    for await (const chunk of generator) {
+      chunks.push(chunk);
+    }
+
+    expect(fetchSpy).toHaveBeenCalledWith(
+      'https://ai-engine.test/api/mode1/manual',
+      expect.objectContaining({
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      })
+    );
+
+    expect(chunks).toHaveLength(3);
+    expect(chunks[0]).toMatch(/^__mode1_meta__/);
+    expect(chunks[1]).toMatch(/^__mode1_meta__/);
+    expect(chunks[2]).toBe('This is a synthesized advisory response.');
+  });
+
+  it('raises Mode1Error when AI engine responds with failure', async () => {
+    const mockErrorResponse = {
+      ok: false,
+      status: 404,
+      json: vi.fn().mockResolvedValue({ detail: 'Agent not found' }),
+    } as unknown as Response;
+
+    vi.spyOn(global, 'fetch' as any).mockResolvedValue(mockErrorResponse);
+
+    await expect(async () => {
+      const generator = executeMode1({
+        agentId: 'missing-agent',
+        message: 'Hello?',
+      });
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      for await (const _chunk of generator) {
+        // consume generator
       }
-
-      expect(chunks.length).toBeGreaterThan(0);
-      expect(chunks.join('')).toContain('Test response');
-    });
-  });
-
-  describe('Configuration Handling', () => {
-    it('should use default RAG setting (enabled)', async () => {
-      const config = {
-        agentId: 'test-agent',
-        message: 'Test message',
-        // enableRAG not specified - should default to true
-      };
-
-      // This test verifies the configuration is handled correctly
-      expect(config.agentId).toBe('test-agent');
-      // The actual execution would be tested in E2E tests
-    });
-
-    it('should respect explicit RAG disable', async () => {
-      const config = {
-        agentId: 'test-agent',
-        message: 'Test message',
-        enableRAG: false,
-      };
-
-      expect(config.enableRAG).toBe(false);
-    });
-
-    it('should respect enableTools setting', async () => {
-      const config = {
-        agentId: 'test-agent',
-        message: 'Test message',
-        enableTools: true,
-      };
-
-      expect(config.enableTools).toBe(true);
+    }).rejects.toMatchObject({
+      code: expect.any(String),
     });
   });
 });
-

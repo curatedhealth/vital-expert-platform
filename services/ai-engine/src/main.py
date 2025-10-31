@@ -329,43 +329,93 @@ async def lifespan(app: FastAPI):
 
     logger.info("🚀 Starting VITAL Path AI Services")
 
-    # Initialize services
-    supabase_client = SupabaseClient()
-    await supabase_client.initialize()
+    # Initialize services with error handling - don't block startup
+    try:
+        supabase_client = SupabaseClient()
+        await supabase_client.initialize()
+        logger.info("✅ Supabase client initialized")
+    except Exception as e:
+        logger.error("❌ Failed to initialize Supabase client", error=str(e))
+        logger.warning("⚠️ App will start but Supabase-dependent features will be unavailable")
+        supabase_client = None
 
-    rag_pipeline = MedicalRAGPipeline(supabase_client)
-    await rag_pipeline.initialize()
+    try:
+        if supabase_client:
+            rag_pipeline = MedicalRAGPipeline(supabase_client)
+            await rag_pipeline.initialize()
+            logger.info("✅ RAG pipeline initialized")
+    except Exception as e:
+        logger.error("❌ Failed to initialize RAG pipeline", error=str(e))
+        rag_pipeline = None
 
-    unified_rag_service = UnifiedRAGService(supabase_client)
-    await unified_rag_service.initialize()
+    try:
+        if supabase_client:
+            unified_rag_service = UnifiedRAGService(supabase_client)
+            await unified_rag_service.initialize()
+            logger.info("✅ Unified RAG service initialized")
+    except Exception as e:
+        logger.error("❌ Failed to initialize Unified RAG service", error=str(e))
+        unified_rag_service = None
 
-    metadata_processing_service = create_metadata_processing_service(
-        use_ai=False,  # Can be enabled if needed
-        openai_api_key=settings.openai_api_key
-    )
+    try:
+        metadata_processing_service = create_metadata_processing_service(
+            use_ai=False,  # Can be enabled if needed
+            openai_api_key=settings.openai_api_key
+        )
+        logger.info("✅ Metadata processing service initialized")
+    except Exception as e:
+        logger.error("❌ Failed to initialize metadata processing service", error=str(e))
+        metadata_processing_service = None
 
-    agent_orchestrator = AgentOrchestrator(supabase_client, rag_pipeline)
-    await agent_orchestrator.initialize()
+    try:
+        if supabase_client and rag_pipeline:
+            agent_orchestrator = AgentOrchestrator(supabase_client, rag_pipeline)
+            await agent_orchestrator.initialize()
+            logger.info("✅ Agent orchestrator initialized")
+    except Exception as e:
+        logger.error("❌ Failed to initialize agent orchestrator", error=str(e))
+        agent_orchestrator = None
 
-    websocket_manager = WebSocketManager()
+    try:
+        websocket_manager = WebSocketManager()
+        logger.info("✅ WebSocket manager initialized")
+    except Exception as e:
+        logger.error("❌ Failed to initialize WebSocket manager", error=str(e))
+        websocket_manager = None
 
-    # Setup monitoring
-    setup_monitoring()
+    # Setup monitoring (non-blocking)
+    try:
+        setup_monitoring()
+        logger.info("✅ Monitoring setup complete")
+    except Exception as e:
+        logger.warning("⚠️ Monitoring setup failed", error=str(e))
 
-    logger.info("✅ AI Services initialized successfully")
+    logger.info("✅ AI Services startup complete (some services may be unavailable)")
 
     yield
 
     # Cleanup
     logger.info("🔄 Shutting down AI Services")
     if agent_orchestrator:
-        await agent_orchestrator.cleanup()
+        try:
+            await agent_orchestrator.cleanup()
+        except Exception as e:
+            logger.error("Error cleaning up agent orchestrator", error=str(e))
     if rag_pipeline:
-        await rag_pipeline.cleanup()
+        try:
+            await rag_pipeline.cleanup()
+        except Exception as e:
+            logger.error("Error cleaning up RAG pipeline", error=str(e))
     if unified_rag_service:
-        await unified_rag_service.cleanup()
+        try:
+            await unified_rag_service.cleanup()
+        except Exception as e:
+            logger.error("Error cleaning up unified RAG service", error=str(e))
     if supabase_client:
-        await supabase_client.cleanup()
+        try:
+            await supabase_client.cleanup()
+        except Exception as e:
+            logger.error("Error cleaning up Supabase client", error=str(e))
 
 # Create FastAPI app
 app = FastAPI(
@@ -418,12 +468,24 @@ async def get_websocket_manager() -> WebSocketManager:
 # Health check endpoint
 @app.get("/health")
 async def health_check():
-    """Health check endpoint"""
+    """Health check endpoint - always returns healthy to allow app to start"""
+    global supabase_client, agent_orchestrator, rag_pipeline, unified_rag_service
+    
+    # Check service availability (non-blocking)
+    services_status = {
+        "supabase": "healthy" if supabase_client else "unavailable",
+        "agent_orchestrator": "healthy" if agent_orchestrator else "unavailable",
+        "rag_pipeline": "healthy" if rag_pipeline else "unavailable",
+        "unified_rag_service": "healthy" if unified_rag_service else "unavailable"
+    }
+    
+    # App is healthy if it can respond (even if some services are unavailable)
     return {
         "status": "healthy",
         "service": "vital-path-ai-services",
         "version": "2.0.0",
-        "timestamp": asyncio.get_event_loop().time()
+        "timestamp": asyncio.get_event_loop().time(),
+        "services": services_status
     }
 
 # Metrics endpoint

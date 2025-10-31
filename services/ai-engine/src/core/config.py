@@ -15,13 +15,13 @@ class Settings(BaseSettings):
     api_version: str = "2.0.0"
     debug: bool = Field(default=False, env="DEBUG")
 
-    # Supabase Configuration
-    supabase_url: str = Field(..., env="SUPABASE_URL")
-    supabase_anon_key: str = Field(..., env="SUPABASE_ANON_KEY")
-    supabase_service_role_key: str = Field(..., env="SUPABASE_SERVICE_ROLE_KEY")
+    # Supabase Configuration (optional to allow graceful startup)
+    supabase_url: Optional[str] = Field(default=None, env="SUPABASE_URL")
+    supabase_anon_key: Optional[str] = Field(default=None, env="SUPABASE_ANON_KEY")
+    supabase_service_role_key: Optional[str] = Field(default=None, env="SUPABASE_SERVICE_ROLE_KEY")
 
-    # Database Configuration
-    database_url: str = Field(..., env="DATABASE_URL")
+    # Database Configuration (optional to allow graceful startup)
+    database_url: Optional[str] = Field(default=None, env="DATABASE_URL")
 
     # OpenAI Configuration
     openai_api_key: Optional[str] = Field(default=None, env="OPENAI_API_KEY")

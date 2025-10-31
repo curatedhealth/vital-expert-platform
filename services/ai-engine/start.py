@@ -33,9 +33,13 @@ if __name__ == "__main__":
     log_level = os.getenv("LOG_LEVEL", "info").lower()
 
     print(f"🚀 Starting VITAL AI Engine on port {port} (log level: {log_level})")
-    print(f"📂 Working directory: {os.getcwd()}")
+    print(f"📂 Initial working directory: {os.getcwd()}")
+    
+    # Change to src directory FIRST so all imports work correctly
+    os.chdir(src_dir)
+    print(f"📂 Changed working directory to: {os.getcwd()}")
     print(f"🐍 Python path: {sys.path[:3]}")  # Show first 3 paths
-
+    
     # Import uvicorn and run
     try:
         import uvicorn
@@ -44,7 +48,7 @@ if __name__ == "__main__":
         print(f"❌ Failed to import uvicorn: {e}", file=sys.stderr)
         sys.exit(1)
     
-    # Test import of main module before starting server
+    # Test import of main module before starting server (now in src directory)
     try:
         from main import app
         print("✅ Main module imported successfully")
@@ -62,13 +66,9 @@ if __name__ == "__main__":
     print(f"🌐 Starting server on 0.0.0.0:{port_int}")
     
     try:
-        # Change to src directory so relative imports in main.py work correctly
-        os.chdir(src_dir)
-        print(f"📂 Changed working directory to: {os.getcwd()}")
-        
-        # Use string path for uvicorn - it will look for main.py in current directory
+        # Use string path for uvicorn - main.py is in current directory (src/)
         uvicorn.run(
-            "main:app",  # main.py is now in the current working directory (src/)
+            "main:app",  # main.py is in the current working directory (src/)
             host="0.0.0.0",
             port=port_int,
             log_level=log_level,

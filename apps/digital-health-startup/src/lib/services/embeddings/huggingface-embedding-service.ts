@@ -1,7 +1,7 @@
 /**
  * HuggingFace Embedding Service
  * 
- * Free, fast, and efficient embedding models via HuggingFace Inference API
+ * Free, fast, and efficient embedding models via Python AI Engine through API Gateway
  * 
  * Cost Comparison:
  * - OpenAI text-embedding-3-large: $0.13 per 1M tokens
@@ -9,9 +9,14 @@
  * - HuggingFace (pro): ~$0.001 per 1M tokens
  * 
  * That's 130x-1000x cheaper!
+ * 
+ * This service now calls Python AI Engine via API Gateway to comply with the Golden Rule:
+ * All AI/ML services must be in Python and accessed via API Gateway.
  */
 
-import { HfInference } from '@huggingface/inference';
+import { withRetry } from '../resilience/retry';
+import { CircuitBreaker } from '../resilience/circuit-breaker';
+import { createLogger } from '../observability/structured-logger';
 import type { EmbeddingResult, BatchEmbeddingResult } from './openai-embedding-service';
 
 export interface HuggingFaceEmbeddingConfig {
@@ -209,19 +214,22 @@ export const HF_EMBEDDING_MODELS = {
 export type HFEmbeddingModel = keyof typeof HF_EMBEDDING_MODELS;
 
 export class HuggingFaceEmbeddingService {
-  private hf: HfInference;
+  private apiGatewayUrl: string;
   private modelId: string;
   private model: HFEmbeddingModel;
   private dimensions: number;
   private cache: Map<string, EmbeddingResult>;
+  private circuitBreaker: CircuitBreaker;
+  private logger: ReturnType<typeof createLogger>;
 
   constructor(config: HuggingFaceEmbeddingConfig = {}) {
-    const apiKey = config.apiKey || process.env.HUGGINGFACE_API_KEY || '';
-    this.hf = new HfInference(apiKey);
+    // Get API Gateway URL from environment
+    this.apiGatewayUrl = 
+      process.env.API_GATEWAY_URL || 
+      process.env.NEXT_PUBLIC_API_GATEWAY_URL || 
+      'http://localhost:3001';
 
     // Default to top 2025 MTEB performer (mxbai-embed-large-v1)
-    // Falls back to e5-large-v2 for RAG (best instruction-tuned)
-    // Or bge-small for lightweight/cost-efficient
     const defaultModel: HFEmbeddingModel = config.model?.startsWith('mxbai-') ||
                                           config.model?.startsWith('bge-') || 
                                           config.model?.startsWith('all-') ||
@@ -241,7 +249,16 @@ export class HuggingFaceEmbeddingService {
     this.dimensions = modelConfig.dimensions;
     this.cache = new Map();
 
-    console.log(`✅ HuggingFace Embedding Service initialized`);
+    // Initialize circuit breaker for API Gateway calls
+    this.circuitBreaker = new CircuitBreaker('hf-embedding-service', {
+      timeout: config.timeout || 30000,
+      errorThresholdPercentage: 50,
+      resetTimeout: 60000,
+    });
+
+    this.logger = createLogger();
+
+    console.log(`✅ HuggingFace Embedding Service initialized (via API Gateway: ${this.apiGatewayUrl})`);
     console.log(`   Model: ${this.modelId} (${this.dimensions} dimensions)`);
     if (modelConfig.mtebScore) {
       console.log(`   MTEB Score: ${modelConfig.mtebScore} (${modelConfig.quality} quality)`);
@@ -249,7 +266,7 @@ export class HuggingFaceEmbeddingService {
     if (modelConfig.useCases) {
       console.log(`   Use Cases: ${modelConfig.useCases.join(', ')}`);
     }
-    console.log(`   Cost: FREE via HF Inference API`);
+    console.log(`   Cost: FREE via Python AI Engine`);
   }
 
   /**
@@ -279,62 +296,77 @@ export class HuggingFaceEmbeddingService {
       const cleanedText = this.cleanText(text);
       const truncatedText = this.truncateText(cleanedText, 512); // HF models typically use 512 max
 
-      // Use feature extraction API for embeddings
-      // Note: HF Inference API returns embeddings directly
-      const response = await this.hf.featureExtraction({
-        model: this.modelId,
-        inputs: truncatedText,
-      });
+      // Generate request ID for tracing
+      const requestId = `hf_embedding_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
 
-      // Handle different response formats
-      let embedding: number[];
-      
-      if (Array.isArray(response)) {
-        if (response.length > 0 && typeof response[0] === 'number') {
-          // Direct array of numbers
-          embedding = response as number[];
-        } else if (Array.isArray(response[0])) {
-          // Nested array: [[numbers]]
-          embedding = response[0] as number[];
-        } else {
-          // Try to extract numbers
-          embedding = response.map(v => typeof v === 'number' ? v : parseFloat(String(v)));
+      // Call Python AI Engine via API Gateway with retry and circuit breaker
+      const embeddingResponse = await withRetry(
+        () => this.circuitBreaker.execute(async () => {
+          const response = await fetch(`${this.apiGatewayUrl}/api/embeddings/generate`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'x-request-id': requestId,
+            },
+            body: JSON.stringify({
+              text: truncatedText,
+              model: this.modelId,
+              provider: 'huggingface',
+              normalize: true,
+            }),
+            signal: AbortSignal.timeout(30000), // 30 second timeout
+          });
+
+          if (!response.ok) {
+            const errorData = await response.json().catch(() => ({ message: response.statusText }));
+            throw new Error(`API Gateway error: ${errorData.message || response.statusText} (status: ${response.status})`);
+          }
+
+          return await response.json();
+        }),
+        {
+          maxRetries: 3,
+          initialDelayMs: 1000,
+          maxDelayMs: 10000,
+          retryable: (error) => {
+            const message = error.message.toLowerCase();
+            return (
+              message.includes('timeout') ||
+              message.includes('econnrefused') ||
+              message.includes('503') ||
+              message.includes('502') ||
+              message.includes('500') ||
+              message.includes('429')
+            );
+          },
+          onRetry: (attempt, error) => {
+            this.logger.warn('hf_embedding_retry', {
+              attempt,
+              error: error.message,
+              requestId,
+            });
+          },
         }
-      } else if (typeof response === 'object' && response !== null) {
-        // Try to find embedding in object
-        const obj = response as any;
-        embedding = obj.embedding || obj.vectors || Object.values(obj) as number[];
-      } else {
-        // Fallback: try to parse
-        embedding = [parseFloat(String(response))];
-      }
-
-      // Validate embedding
-      if (!embedding || embedding.length === 0) {
-        throw new Error('Invalid embedding response format from HuggingFace');
-      }
-
-      // Ensure all values are numbers
-      const embeddingVector = embedding.map(v => {
-        const num = typeof v === 'number' ? v : parseFloat(String(v));
-        if (isNaN(num)) {
-          throw new Error(`Invalid embedding value: ${v}`);
-        }
-        return num;
-      });
+      );
 
       const result: EmbeddingResult = {
-        embedding: embeddingVector,
-        model: this.modelId,
+        embedding: embeddingResponse.embedding,
+        model: embeddingResponse.model,
         usage: {
-          prompt_tokens: Math.ceil(truncatedText.length / 4), // Approximate
-          total_tokens: Math.ceil(truncatedText.length / 4),
+          prompt_tokens: embeddingResponse.usage?.prompt_tokens || Math.ceil(truncatedText.length / 4),
+          total_tokens: embeddingResponse.usage?.total_tokens || Math.ceil(truncatedText.length / 4),
         },
       };
 
       if (useCache) {
         this.cache.set(cacheKey, result);
       }
+
+      this.logger.info('hf_embedding_generated', {
+        requestId,
+        dimensions: result.embedding.length,
+        model: result.model,
+      });
 
       return result;
 
@@ -375,43 +407,54 @@ export class HuggingFaceEmbeddingService {
       const cleanedBatch = batch.map(text => this.truncateText(this.cleanText(text), 512));
 
       try {
-        // HF can process multiple inputs at once - returns array of embeddings
-        const response = await this.hf.featureExtraction({
-          model: this.modelId,
-          inputs: cleanedBatch, // Pass array of texts
-        });
+        // Generate request ID for tracing
+        const requestId = `hf_batch_embedding_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
 
-        // Handle response format (HF returns array of embedding arrays)
-        let batchEmbeddings: number[][];
-        
-        if (Array.isArray(response)) {
-          // Check if nested array (batch response)
-          if (response.length > 0 && Array.isArray(response[0]) && typeof response[0][0] === 'number') {
-            // Format: [[embedding1], [embedding2], ...]
-            batchEmbeddings = response as number[][];
-          } else if (response.length > 0 && typeof response[0] === 'number') {
-            // Single embedding returned as flat array - wrap it
-            batchEmbeddings = [response as number[]];
-          } else {
-            // Complex format - try to extract
-            batchEmbeddings = response.map((item: any) => {
-              if (Array.isArray(item)) {
-                return item.map(v => typeof v === 'number' ? v : parseFloat(String(v)));
-              }
-              // Try to extract from object
-              const embedding = item?.embedding || item?.vector || Object.values(item || {});
-              return Array.isArray(embedding) 
-                ? embedding.map(v => typeof v === 'number' ? v : parseFloat(String(v)))
-                : [];
+        // Call Python AI Engine via API Gateway
+        const batchResponse = await withRetry(
+          () => this.circuitBreaker.execute(async () => {
+            const response = await fetch(`${this.apiGatewayUrl}/api/embeddings/generate/batch`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'x-request-id': requestId,
+              },
+              body: JSON.stringify({
+                texts: cleanedBatch,
+                model: this.modelId,
+                provider: 'huggingface',
+                normalize: true,
+              }),
+              signal: AbortSignal.timeout(60000), // 60 second timeout for batch
             });
+
+            if (!response.ok) {
+              const errorData = await response.json().catch(() => ({ message: response.statusText }));
+              throw new Error(`API Gateway error: ${errorData.message || response.statusText} (status: ${response.status})`);
+            }
+
+            return await response.json();
+          }),
+          {
+            maxRetries: 3,
+            initialDelayMs: 1000,
+            maxDelayMs: 10000,
+            retryable: (error) => {
+              const message = error.message.toLowerCase();
+              return (
+                message.includes('timeout') ||
+                message.includes('econnrefused') ||
+                message.includes('503') ||
+                message.includes('502') ||
+                message.includes('500') ||
+                message.includes('429')
+              );
+            },
           }
-        } else {
-          // Single embedding response - wrap it
-          const embedding = Array.isArray(response) 
-            ? response.map(v => typeof v === 'number' ? v : parseFloat(String(v)))
-            : [parseFloat(String(response))];
-          batchEmbeddings = [embedding];
-        }
+        );
+
+        // Extract embeddings
+        const batchEmbeddings = batchResponse.embeddings || [];
 
         // Ensure we have the right number of embeddings
         if (batchEmbeddings.length !== cleanedBatch.length) {
@@ -420,14 +463,11 @@ export class HuggingFaceEmbeddingService {
           while (batchEmbeddings.length < cleanedBatch.length) {
             batchEmbeddings.push(Array(this.dimensions).fill(0));
           }
-          batchEmbeddings = batchEmbeddings.slice(0, cleanedBatch.length);
+          batchEmbeddings.splice(cleanedBatch.length);
         }
 
         allEmbeddings.push(...batchEmbeddings);
-        
-        // Estimate tokens
-        const batchTokens = cleanedBatch.reduce((sum, text) => sum + Math.ceil(text.length / 4), 0);
-        totalTokens += batchTokens;
+        totalTokens += batchResponse.usage?.total_tokens || cleanedBatch.reduce((sum, text) => sum + Math.ceil(text.length / 4), 0);
         completed += batch.length;
 
         // Cache if enabled
@@ -555,15 +595,15 @@ export class HuggingFaceEmbeddingService {
   }
 
   /**
-   * Test connection
+   * Test connection to API Gateway and Python AI Engine
    */
   async testConnection(): Promise<boolean> {
     try {
       await this.generateEmbedding('test', { useCache: false });
-      console.log('✅ HuggingFace API connection successful');
+      console.log('✅ HuggingFace Embedding service connection successful (via API Gateway)');
       return true;
     } catch (error) {
-      console.error('❌ HuggingFace API connection failed:', error);
+      console.error('❌ HuggingFace Embedding service connection failed:', error);
       return false;
     }
   }

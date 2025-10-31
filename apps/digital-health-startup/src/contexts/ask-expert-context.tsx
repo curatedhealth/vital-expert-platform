@@ -308,8 +308,10 @@ export function AskExpertProvider({ children }: { children: React.ReactNode }) {
           
           const allAgents = Array.from(agentMap.values());
 
-          const agentsWithStats = await Promise.all(
-            allAgents.map(async (agent) => {
+          const agentsForPrefetch = allAgents.slice(0, 24);
+
+          const agentsWithStatsPrefetched = await Promise.all(
+            agentsForPrefetch.map(async (agent) => {
               try {
                 const stats = await loadAgentStatsFromStore(agent.id);
                 if (stats) {
@@ -333,6 +335,12 @@ export function AskExpertProvider({ children }: { children: React.ReactNode }) {
               return agent;
             })
           );
+
+          const agentsById = new Map<string, Agent>();
+          allAgents.forEach((agent) => agentsById.set(agent.id, agent));
+          agentsWithStatsPrefetched.forEach((agent) => agentsById.set(agent.id, agent));
+
+          const agentsWithStats = Array.from(agentsById.values());
 
           setAgents(agentsWithStats);
           mergeExternalAgents(

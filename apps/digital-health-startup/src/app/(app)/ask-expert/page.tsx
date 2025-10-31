@@ -39,6 +39,7 @@ import {
   Zap,
   Settings2,
   Wrench,
+  MessageSquare,
 } from 'lucide-react';
 import { PromptInput } from '@/components/prompt-input';
 import { type Agent as SidebarAgent } from '@/components/ask-expert-sidebar';
@@ -55,7 +56,8 @@ import {
   __ConversationContent as ConversationContent,
 } from '@/components/ui/shadcn-io/ai/conversation';
 import { EnhancedMessageDisplay } from '@/features/ask-expert/components/EnhancedMessageDisplay';
-import { AgentAvatar } from '@vital/ui';
+import { InlineArtifactGenerator } from '@/features/ask-expert/components/InlineArtifactGenerator';
+import { AgentAvatar, Button } from '@vital/ui';
 import { Suggestions, Suggestion } from '@/components/ai/suggestion';
 import { useAgentWithStats } from '@/features/ask-expert/hooks/useAgentWithStats';
 
@@ -207,6 +209,7 @@ function AskExpertPageContent() {
   const [hasManualToolsToggle, setHasManualToolsToggle] = useState(false);
   const [attachments, setAttachments] = useState<File[]>([]);
   const [tokenCount, setTokenCount] = useState(0);
+  const [showArtifactGenerator, setShowArtifactGenerator] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [selectedTools, setSelectedTools] = useState<string[]>([]);
   const [selectedRagDomains, setSelectedRagDomains] = useState<string[]>([]);
@@ -421,6 +424,35 @@ function AskExpertPageContent() {
     );
   }, [latestAssistantMessage, streamingMessage, currentMode]);
 
+  const artifactConversationContext = useMemo(() => {
+    if (messages.length === 0) {
+      return '';
+    }
+    return messages
+      .slice(-6)
+      .map((message) => {
+        const speaker = message.role === 'user' ? 'User' : 'Expert';
+        const text = message.content?.trim() ?? '';
+        return text.length > 0 ? `${speaker}: ${text}` : '';
+      })
+      .filter((line) => line.length > 0)
+      .join('\n');
+  }, [messages]);
+
+  const handleArtifactGenerate = useCallback(
+    async (templateId: string, artifactInputs: Record<string, string>) => {
+      try {
+        console.debug('[AskExpert] Artifact generation requested', {
+          templateId,
+          artifactInputs,
+        });
+      } catch (error) {
+        console.error('[AskExpert] Artifact generation hook failed', error);
+      }
+    },
+    []
+  );
+
   const hasAssistantResponse = useMemo(
     () => messages.some((message) => message.role === 'assistant' && message.content?.trim()),
     [messages]
@@ -466,6 +498,12 @@ function AskExpertPageContent() {
       return [...availableRagDomains];
     });
   }, [availableRagDomains, enableRAG]);
+
+  useEffect(() => {
+    if (messages.length === 0 && showArtifactGenerator) {
+      setShowArtifactGenerator(false);
+    }
+  }, [messages.length, showArtifactGenerator]);
 
   const handleEnableToolsChange = useCallback((value: boolean) => {
     if (enableTools === value) {
@@ -1974,6 +2012,28 @@ function AskExpertPageContent() {
                 )}
                       
               </>
+            )}
+            {messages.length > 0 && (
+              <div className="mt-8 space-y-3">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowArtifactGenerator((prev) => !prev)}
+                  className="inline-flex items-center gap-2"
+                >
+                  <Sparkles className="h-4 w-4 text-blue-600" />
+                  {showArtifactGenerator ? 'Hide Document Generator' : 'Generate Document'}
+                </Button>
+
+                {showArtifactGenerator && (
+                  <InlineArtifactGenerator
+                    conversationContext={artifactConversationContext}
+                    onGenerate={handleArtifactGenerate}
+                    onClose={() => setShowArtifactGenerator(false)}
+                    className="mt-2"
+                  />
+                )}
+              </div>
             )}
             <div ref={messagesEndRef} />
           </ConversationContent>

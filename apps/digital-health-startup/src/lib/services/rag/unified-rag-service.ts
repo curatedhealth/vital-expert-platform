@@ -774,6 +774,14 @@ export class UnifiedRAGService {
     const domainId = doc.domain_id || doc.domain;
     
     // Build insert payload with new architecture fields
+    const baseMetadata = doc.metadata || {};
+    
+    // Note: domain_scope is not a column in knowledge_documents table
+    // Store it in metadata instead if needed
+    if (doc.domain_scope) {
+      baseMetadata.domain_scope = doc.domain_scope;
+    }
+    
     const insertPayload: any = {
       title: doc.title,
       content: doc.content,
@@ -781,7 +789,7 @@ export class UnifiedRAGService {
       domain_id: domainId, // New field
       tags: doc.tags || [],
       status: 'processing',
-      metadata: doc.metadata || {},
+      metadata: baseMetadata,
     };
     
     // Add new architecture fields if provided
@@ -790,9 +798,6 @@ export class UnifiedRAGService {
     }
     if (doc.rag_priority_weight !== undefined) {
       insertPayload.rag_priority_weight = doc.rag_priority_weight;
-    }
-    if (doc.domain_scope) {
-      insertPayload.domain_scope = doc.domain_scope;
     }
     
     // If domain_id is provided, try to fetch domain metadata to inherit missing fields
@@ -812,8 +817,9 @@ export class UnifiedRAGService {
           if (doc.rag_priority_weight === undefined && domainInfo.rag_priority_weight !== undefined) {
             insertPayload.rag_priority_weight = domainInfo.rag_priority_weight;
           }
+          // Store domain_scope in metadata instead of as a column
           if (!doc.domain_scope && domainInfo.domain_scope) {
-            insertPayload.domain_scope = domainInfo.domain_scope;
+            insertPayload.metadata.domain_scope = domainInfo.domain_scope;
           }
         }
       } catch (error) {

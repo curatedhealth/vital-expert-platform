@@ -4,9 +4,16 @@ Renames files based on consistent taxonomy and extracted metadata
 """
 
 import re
+from pathlib import Path
 from typing import Dict, Any, Optional
 from datetime import datetime
 import structlog
+from unidecode import unidecode
+
+# Constants
+WINDOWS_MAX_PATH_LENGTH = 260  # Windows MAX_PATH is 260 characters
+SAFE_FILENAME_LENGTH = 200  # Safe length leaving room for path
+INVALID_FILENAME_CHARS = r'[<>:"/\\|?*\x00-\x1f]'  # Invalid chars for Windows/Linux
 
 logger = structlog.get_logger()
 
@@ -43,14 +50,13 @@ class FileRenamer:
             doc_type = self._format_type(metadata.get('document_type')) if metadata.get('document_type') else None
             year = str(metadata.get('year')) if metadata.get('year') else None
             
-            # Get title
+            # Get title using pathlib for safer filename handling
             title = (metadata.get('clean_title') or 
                     metadata.get('title') or 
-                    (original_filename.rsplit('.', 1)[0] if original_filename and '.' in original_filename else original_filename) or 
+                    (Path(original_filename).stem if original_filename else None) or 
                     'Document')
 
-            # Remove extension from title if present
-            title = title.rsplit('.', 1)[0] if '.' in title else title
+            # Remove extension from title if present (pathlib already handles this in .stem)
 
             # Build filename according to template
             if source or self.config['include_missing']:
@@ -68,17 +74,19 @@ class FileRenamer:
             # Join with separator
             filename = self.config['separator'].join(parts)
 
-            # Add extension
+            # Add extension using pathlib
             extension = (metadata.get('extension') or 
-                        (original_filename.rsplit('.', 1)[1].lower() if original_filename and '.' in original_filename else ''))
+                        (Path(original_filename).suffix.lstrip('.').lower() if original_filename else ''))
             if extension:
                 filename += f'.{extension}'
 
-            # Ensure it's not too long (Windows has 255 char limit)
-            max_length = 200  # Leave room for path
-            if len(filename) > max_length:
-                title_length = max(0, max_length - (len(filename) - len(title)))
-                truncated_title = title[:title_length - 3] + '...' if title_length > 3 else title
+            # Ensure it's not too long (Windows has 260 char MAX_PATH limit)
+            if len(filename) > SAFE_FILENAME_LENGTH:
+                # Calculate available space for title after other parts
+                other_parts_length = sum(len(p) for p in parts[:-1] if p != title) + len(self.config['separator']) * (len(parts) - 2)
+                extension_length = len(f'.{extension}') if extension else 0
+                title_length = max(0, SAFE_FILENAME_LENGTH - other_parts_length - extension_length - 3)  # -3 for '...'
+                truncated_title = title[:title_length] + '...' if title_length > 3 else title[:title_length]
                 parts_without_title = parts[:-1] if parts else []
                 filename = self.config['separator'].join(parts_without_title + [truncated_title])
                 if extension:
@@ -121,25 +129,49 @@ class FileRenamer:
         return formatted
 
     def _format_title(self, title: str) -> str:
-        """Format title"""
-        # Clean up: remove special chars, normalize spaces
-        clean = re.sub(r'[^\w\s-]', ' ', title)  # Remove special chars
-        clean = re.sub(r'\s+', ' ', clean)  # Normalize spaces
-        clean = clean.strip()
+        """Format title with Unicode normalization"""
+        if not title:
+            return ''
         
-        # Truncate if too long
+        # Normalize Unicode (e.g., convert accented characters to ASCII)
+        clean = unidecode(title)
+        
+        # Remove special chars but keep alphanumeric, spaces, and hyphens
+        clean = re.sub(r'[^\w\s-]', ' ', clean)
+        
+        # Normalize spaces
+        clean = re.sub(r'\s+', ' ', clean).strip()
+        
+        # Truncate if too long (preserve word boundaries when possible)
         max_len = self.config['max_length']['title']
         if len(clean) > max_len:
-            clean = clean[:max_len - 3] + '...'
+            # Try to truncate at word boundary
+            truncated = clean[:max_len - 3].rsplit(' ', 1)[0]
+            if len(truncated) < max_len - 10:  # If truncation is too short, just cut
+                clean = clean[:max_len - 3] + '...'
+            else:
+                clean = truncated + '...'
         
         return clean
 
     def _sanitize(self, value: str) -> str:
-        """Sanitize string for filename"""
-        # Remove invalid filename chars
-        sanitized = re.sub(r'[<>:"/\\|?*]', '', value)
-        # Normalize spaces
+        """Sanitize string for filename using best practices"""
+        if not value:
+            return ''
+        
+        # Convert Unicode to ASCII equivalents (handles accented characters, etc.)
+        # Example: "Café" -> "Cafe", "naïve" -> "naive"
+        sanitized = unidecode(value)
+        
+        # Remove invalid filename characters (Windows/Linux compatible)
+        sanitized = re.sub(INVALID_FILENAME_CHARS, '', sanitized)
+        
+        # Normalize whitespace
         sanitized = re.sub(r'\s+', ' ', sanitized).strip()
+        
+        # Remove leading/trailing dots and spaces (Windows doesn't allow these)
+        sanitized = sanitized.strip('. ')
+        
         return sanitized
 
     def generate_with_template(

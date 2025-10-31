@@ -833,6 +833,230 @@ app.get('/v1/agents/:id', async (req, res) => {
   }
 });
 
+/**
+ * POST /api/embeddings/generate
+ * Embedding generation endpoint - routes to Python ai-engine
+ */
+app.post('/api/embeddings/generate', async (req, res) => {
+  try {
+    const { text, model, provider, dimensions, normalize } = req.body;
+    const tenantId = req.headers['x-tenant-id'] || '00000000-0000-0000-0000-000000000001';
+
+    if (!text) {
+      return res.status(400).json({
+        error: 'Invalid request',
+        message: 'text is required',
+      });
+    }
+
+    console.log(`[Gateway] Embedding generation - Tenant: ${tenantId}, Model: ${model || 'default'}`);
+
+    // Forward to Python AI Engine
+    const response = await axios.post(
+      `${AI_ENGINE_URL}/api/embeddings/generate`,
+      {
+        text,
+        model,
+        provider,
+        dimensions,
+        normalize: normalize !== undefined ? normalize : true,
+      },
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          'x-tenant-id': tenantId,
+        },
+        timeout: 30000, // 30 seconds for embedding generation
+      }
+    );
+
+    res.json(response.data);
+  } catch (error) {
+    console.error('[Gateway] Embedding generation error:', error.message);
+
+    if (error.response) {
+      res.status(error.response.status).json(error.response.data);
+    } else if (error.code === 'ECONNREFUSED') {
+      res.status(503).json({
+        error: 'Service unavailable',
+        message: 'AI Engine is not responding. Please try again later.',
+      });
+    } else {
+      res.status(500).json({
+        error: 'Gateway error',
+        message: error.message,
+      });
+    }
+  }
+});
+
+/**
+ * POST /api/embeddings/generate/batch
+ * Batch embedding generation endpoint - routes to Python ai-engine
+ */
+app.post('/api/embeddings/generate/batch', async (req, res) => {
+  try {
+    const { texts, model, provider, normalize } = req.body;
+    const tenantId = req.headers['x-tenant-id'] || '00000000-0000-0000-0000-000000000001';
+
+    if (!texts || !Array.isArray(texts) || texts.length === 0) {
+      return res.status(400).json({
+        error: 'Invalid request',
+        message: 'texts array is required and must not be empty',
+      });
+    }
+
+    console.log(`[Gateway] Batch embedding generation - Tenant: ${tenantId}, Count: ${texts.length}`);
+
+    // Forward to Python AI Engine
+    const response = await axios.post(
+      `${AI_ENGINE_URL}/api/embeddings/generate/batch`,
+      {
+        texts,
+        model,
+        provider,
+        normalize: normalize !== undefined ? normalize : true,
+      },
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          'x-tenant-id': tenantId,
+        },
+        timeout: 60000, // 60 seconds for batch generation
+      }
+    );
+
+    res.json(response.data);
+  } catch (error) {
+    console.error('[Gateway] Batch embedding generation error:', error.message);
+
+    if (error.response) {
+      res.status(error.response.status).json(error.response.data);
+    } else if (error.code === 'ECONNREFUSED') {
+      res.status(503).json({
+        error: 'Service unavailable',
+        message: 'AI Engine is not responding. Please try again later.',
+      });
+    } else {
+      res.status(500).json({
+        error: 'Gateway error',
+        message: error.message,
+      });
+    }
+  }
+});
+
+/**
+ * POST /api/agents/select
+ * Agent selection query analysis - routes to Python ai-engine
+ */
+app.post('/api/agents/select', async (req, res) => {
+  try {
+    const { query, user_id, tenant_id, correlation_id } = req.body;
+    const tenantId = req.headers['x-tenant-id'] || tenant_id || '00000000-0000-0000-0000-000000000001';
+
+    if (!query) {
+      return res.status(400).json({
+        error: 'Invalid request',
+        message: 'query is required',
+      });
+    }
+
+    console.log(`[Gateway] Agent Selection - Tenant: ${tenantId}, Query: ${query.substring(0, 100)}`);
+
+    // Forward to Python AI Engine
+    const response = await axios.post(
+      `${AI_ENGINE_URL}/api/agents/select`,
+      {
+        query,
+        user_id,
+        tenant_id: tenantId,
+        correlation_id,
+      },
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          'x-tenant-id': tenantId,
+        },
+        timeout: 30000, // 30 seconds for query analysis
+      }
+    );
+
+    res.json(response.data);
+  } catch (error) {
+    console.error('[Gateway] Agent Selection error:', error.message);
+
+    if (error.response) {
+      res.status(error.response.status).json(error.response.data);
+    } else {
+      res.status(500).json({
+        error: 'Gateway error',
+        message: error.message,
+      });
+    }
+  }
+});
+
+/**
+ * GET /api/agents/:id/stats
+ * Get agent statistics from Python AI-engine
+ */
+app.get('/api/agents/:id/stats', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { days = 7 } = req.query;
+    const tenantId = req.headers['x-tenant-id'] || '00000000-0000-0000-0000-000000000001';
+
+    if (!id) {
+      return res.status(400).json({
+        error: 'Invalid request',
+        message: 'Agent ID is required',
+      });
+    }
+
+    console.log(`[Gateway] Agent stats - Tenant: ${tenantId}, Agent: ${id}, Days: ${days}`);
+
+    // Forward to Python AI Engine
+    const response = await axios.get(
+      `${AI_ENGINE_URL}/api/agents/${id}/stats`,
+      {
+        params: { days: parseInt(days, 10) },
+        headers: {
+          'Content-Type': 'application/json',
+          'x-tenant-id': tenantId,
+        },
+        timeout: 15000, // 15 seconds for stats queries
+      }
+    );
+
+    res.json(response.data);
+  } catch (error) {
+    console.error('[Gateway] Agent stats error:', error.message);
+
+    if (error.response) {
+      res.status(error.response.status).json(error.response.data);
+    } else {
+      res.status(500).json({
+        error: 'Gateway error',
+        message: error.message,
+        // Return empty stats instead of synthetic data
+        data: {
+          totalConsultations: 0,
+          satisfactionScore: 0.0,
+          successRate: 0.0,
+          averageResponseTime: 0.0,
+          certifications: [],
+          totalTokensUsed: 0,
+          totalCost: 0.0,
+          confidenceLevel: 0,
+          availability: 'offline',
+          recentFeedback: [],
+        },
+      });
+    }
+  }
+});
+
 // ============================================================================
 // ERROR HANDLING
 // ============================================================================

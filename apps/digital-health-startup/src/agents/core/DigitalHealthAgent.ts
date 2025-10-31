@@ -224,26 +224,24 @@ export class DigitalHealthAgent {
   }
 
   /**
-   * Call the configured AI model (to be implemented with actual LLM integrations)
+   * Call the configured AI model
+   * NOTE: This class should use Python AI-engine via API Gateway instead of direct LLM calls.
+   * Mock responses have been removed to ensure Golden Rule compliance.
    */
   private async callAIModel(prompt: string): Promise<{ content: string; data?: Record<string, unknown> }> {
-    // For now, this is a mock implementation
-    // In production, this would integrate with OpenAI, Anthropic, etc.
-
-    // Simulate AI processing time
-    await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 2000));
-
-    // Mock response based on agent type
-    const mockResponses = this.generateMockResponse(prompt);
-
-    return {
-      content: mockResponses.content,
-      data: mockResponses.data
-    };
+    // All AI/ML operations should go through Python AI-engine via API Gateway
+    // This is a legacy implementation - should not be used in production
+    throw new Error(
+      `DigitalHealthAgent.callAIModel() is deprecated. ` +
+      `Please use Python AI-engine via API Gateway (${process.env.API_GATEWAY_URL || 'http://localhost:3001'}/api/mode1/manual) instead. ` +
+      `This ensures compliance with the Golden Rule: all AI/ML services must be in Python.`
+    );
   }
 
   /**
-   * Generate mock responses for testing (to be replaced with real AI calls)
+   * REMOVED: generateMockResponse
+   * Mock data generation has been removed to comply with the requirement for no mock data or hardcoded logic.
+   * All AI operations should use Python AI-engine via API Gateway.
    */
   private generateMockResponse(_prompt: string): { content: string; data: Record<string, unknown> } {
     const agentType = this.config.name;

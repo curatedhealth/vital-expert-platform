@@ -21,6 +21,7 @@ import { Progress } from '@vital/ui';
 import { ScrollArea } from '@vital/ui';
 import { Separator } from '@vital/ui';
 import type { KnowledgeDomain } from '@/lib/services/model-selector';
+import { AVAILABLE_EMBEDDING_MODELS } from '@/lib/services/model-selector';
 import { useAgentsStore } from '@/lib/stores/agents-store';
 import { createClient } from '@vital/sdk/client';
 import { cn } from '@vital/ui/lib/utils';
@@ -35,7 +36,7 @@ interface UploadFile {
   isGlobal: boolean;
   selectedAgents: string[];
   embeddingModel: string;
-  chatModel: string;
+  // chatModel: string; // Not needed - selected per query/conversation
   duplicate?: boolean;
 }
 
@@ -59,7 +60,7 @@ export function KnowledgeUploader({ onUploadComplete }: KnowledgeUploaderProps) 
     isGlobal: true,
     selectedAgents: [] as string[],
     embeddingModel: 'text-embedding-3-large', // Default embedding model
-    chatModel: 'gpt-4-turbo-preview', // Default chat model
+    // chatModel: 'gpt-4-turbo-preview', // Not needed - selected per query/conversation
   });
   const [domainInitialized, setDomainInitialized] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -258,7 +259,7 @@ export function KnowledgeUploader({ onUploadComplete }: KnowledgeUploaderProps) 
       setUploadSettings(prev => ({
         ...prev,
         embeddingModel: models.embedding?.primary || 'text-embedding-3-large',
-        chatModel: models.chat?.primary || 'gpt-4-turbo-preview',
+        // chatModel: models.chat?.primary || 'gpt-4-turbo-preview', // Not needed
       }));
     }
   }, [uploadSettings.domain, currentDomain]);
@@ -296,7 +297,7 @@ export function KnowledgeUploader({ onUploadComplete }: KnowledgeUploaderProps) 
           isGlobal: uploadSettings.isGlobal,
           selectedAgents: [...uploadSettings.selectedAgents],
           embeddingModel: uploadSettings.embeddingModel,
-          chatModel: uploadSettings.chatModel,
+          // chatModel: uploadSettings.chatModel, // Not needed
         });
       }
     });
@@ -350,7 +351,8 @@ export function KnowledgeUploader({ onUploadComplete }: KnowledgeUploaderProps) 
       formData.append('domain_id', file.domain); // New field: use domain_id
       formData.append('isGlobal', file.isGlobal.toString());
       formData.append('embeddingModel', file.embeddingModel);
-      formData.append('chatModel', file.chatModel);
+      // Chat model is not needed during upload - it's selected per conversation/query
+      // formData.append('chatModel', file.chatModel);
       
       // Get domain metadata to include new architecture fields
       const domainInfo = domains.find((d: any) => (d.domain_id || d.slug) === file.domain);
@@ -384,7 +386,7 @@ export function KnowledgeUploader({ onUploadComplete }: KnowledgeUploaderProps) 
           type: file.file.type,
           domain: file.domain,
           embeddingModel: file.embeddingModel,
-          chatModel: file.chatModel,
+          // chatModel: file.chatModel, // Not needed
         });
 
         response = await fetch('/api/knowledge/upload', {
@@ -657,7 +659,7 @@ export function KnowledgeUploader({ onUploadComplete }: KnowledgeUploaderProps) 
           </div>
 
           {/* Model Selection Section */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+          <div className="grid grid-cols-1 gap-4 mt-4">
             <div>
               <Label htmlFor="embedding-model" className="flex items-center gap-2">
                 Embedding Model
@@ -671,27 +673,52 @@ export function KnowledgeUploader({ onUploadComplete }: KnowledgeUploaderProps) 
                 onChange={(e) => setUploadSettings(prev => ({ ...prev, embeddingModel: e.target.value }))}
                 className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md"
               >
-                <optgroup label="Primary (Recommended)">
-                  <option value={recommendedModels.embedding.primary}>
-                    ⭐ {recommendedModels.embedding.primary}
-                  </option>
-                </optgroup>
+                {/* Recommended Models Section */}
+                {recommendedModels.embedding.primary && (
+                  <optgroup label={`⭐ Recommended for ${currentDomain?.name || 'this domain'}`}>
+                    <option value={recommendedModels.embedding.primary}>
+                      {recommendedModels.embedding.primary} - {AVAILABLE_EMBEDDING_MODELS[recommendedModels.embedding.primary as keyof typeof AVAILABLE_EMBEDDING_MODELS]?.provider || 'OpenAI'}
+                    </option>
+                  </optgroup>
+                )}
                 {recommendedModels.embedding.specialized && (
-                  <optgroup label="Specialized">
+                  <optgroup label="🎯 Specialized (Domain-Specific)">
                     <option value={recommendedModels.embedding.specialized}>
-                      🎯 {recommendedModels.embedding.specialized}
+                      {recommendedModels.embedding.specialized} - {AVAILABLE_EMBEDDING_MODELS[recommendedModels.embedding.specialized as keyof typeof AVAILABLE_EMBEDDING_MODELS]?.provider || 'Unknown'}
                     </option>
                   </optgroup>
                 )}
                 {recommendedModels.embedding.alternatives && recommendedModels.embedding.alternatives.length > 0 && (
-                  <optgroup label="Alternatives">
+                  <optgroup label="Alternatives (Recommended)">
                     {recommendedModels.embedding.alternatives.map((model: string) => (
                       <option key={model} value={model}>
-                        {model}
+                        {model} - {AVAILABLE_EMBEDDING_MODELS[model as keyof typeof AVAILABLE_EMBEDDING_MODELS]?.provider || 'Unknown'}
                       </option>
                     ))}
                   </optgroup>
                 )}
+                
+                {/* OpenAI Models */}
+                <optgroup label="OpenAI Models">
+                  {Object.entries(AVAILABLE_EMBEDDING_MODELS)
+                    .filter(([_, model]) => model.provider === 'OpenAI')
+                    .map(([key, model]) => (
+                      <option key={key} value={key} disabled={recommendedModels.embedding.primary === key || recommendedModels.embedding.alternatives?.includes(key)}>
+                        {model.name} ({key}){recommendedModels.embedding.primary === key ? ' ⭐ Recommended' : ''}
+                      </option>
+                    ))}
+                </optgroup>
+                
+                {/* HuggingFace Models */}
+                <optgroup label="HuggingFace Models (Free)">
+                  {Object.entries(AVAILABLE_EMBEDDING_MODELS)
+                    .filter(([_, model]) => model.provider === 'HuggingFace')
+                    .map(([key, model]) => (
+                      <option key={key} value={key} disabled={recommendedModels.embedding.primary === key || recommendedModels.embedding.specialized === key || recommendedModels.embedding.alternatives?.includes(key)}>
+                        {model.name} ({key}){recommendedModels.embedding.specialized === key ? ' 🎯 Recommended' : ''}
+                      </option>
+                    ))}
+                </optgroup>
               </select>
               {recommendedModels.embedding.rationale && (
                 <p className="text-xs text-muted-foreground mt-1">
@@ -700,47 +727,6 @@ export function KnowledgeUploader({ onUploadComplete }: KnowledgeUploaderProps) 
               )}
             </div>
 
-            <div>
-              <Label htmlFor="chat-model" className="flex items-center gap-2">
-                Chat Model
-                <span className="text-xs text-muted-foreground font-normal">
-                  (Recommended for {currentDomain?.name || 'this domain'})
-                </span>
-              </Label>
-              <select
-                id="chat-model"
-                value={uploadSettings.chatModel}
-                onChange={(e) => setUploadSettings(prev => ({ ...prev, chatModel: e.target.value }))}
-                className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md"
-              >
-                <optgroup label="Primary (Recommended)">
-                  <option value={recommendedModels.chat.primary}>
-                    ⭐ {recommendedModels.chat.primary}
-                  </option>
-                </optgroup>
-                {recommendedModels.chat.specialized && (
-                  <optgroup label="Specialized">
-                    <option value={recommendedModels.chat.specialized}>
-                      🎯 {recommendedModels.chat.specialized}
-                    </option>
-                  </optgroup>
-                )}
-                {recommendedModels.chat.alternatives && recommendedModels.chat.alternatives.length > 0 && (
-                  <optgroup label="Alternatives">
-                    {recommendedModels.chat.alternatives.map((model: string) => (
-                      <option key={model} value={model}>
-                        {model}
-                      </option>
-                    ))}
-                  </optgroup>
-                )}
-              </select>
-              {recommendedModels.chat.rationale && (
-                <p className="text-xs text-muted-foreground mt-1">
-                  💡 {recommendedModels.chat.rationale}
-                </p>
-              )}
-            </div>
           </div>
 
           <div className="mt-4">

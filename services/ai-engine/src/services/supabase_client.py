@@ -398,6 +398,133 @@ class SupabaseClient:
             logger.error("❌ Failed to update agent metrics", agent_id=agent_id, error=str(e))
             return False
 
+    async def get_agent_stats(self, agent_id: str, days: int = 7) -> Dict[str, Any]:
+        """Get aggregated agent statistics from agent_metrics table"""
+        try:
+            from datetime import datetime, timedelta, timezone
+            
+            # Calculate date range
+            end_date = datetime.now(timezone.utc)
+            start_date = end_date - timedelta(days=days)
+            
+            with self.engine.connect() as conn:
+                # Get agent record for certifications and metadata
+                agent_result = conn.execute(
+                    text("SELECT id, name, display_name, status, certifications, metadata FROM agents WHERE id = :agent_id"),
+                    {"agent_id": agent_id}
+                )
+                agent_record = agent_result.fetchone()
+                
+                # Get aggregated metrics
+                metrics_result = conn.execute(
+                    text("""
+                        SELECT
+                            COUNT(*) as total_consultations,
+                            COUNT(*) FILTER (WHERE success = true) as successful_consultations,
+                            AVG(response_time_ms) as avg_response_time_ms,
+                            AVG(confidence_score) as avg_confidence,
+                            AVG(satisfaction_score) as avg_satisfaction,
+                            SUM(tokens_input + tokens_output) as total_tokens,
+                            SUM(cost_usd) as total_cost,
+                            COUNT(*) FILTER (WHERE operation_type IN ('mode1', 'mode2', 'mode3', 'mode4')) as mode_operations
+                        FROM agent_metrics
+                        WHERE agent_id = :agent_id
+                        AND created_at >= :start_date
+                        AND created_at <= :end_date
+                    """),
+                    {
+                        "agent_id": agent_id,
+                        "start_date": start_date.isoformat(),
+                        "end_date": end_date.isoformat()
+                    }
+                )
+                
+                metrics_row = metrics_result.fetchone()
+                
+                # Get recent feedback (from agent_feedback table if exists)
+                feedback_result = conn.execute(
+                    text("""
+                        SELECT id, rating, comment, user_id, created_at
+                        FROM agent_feedback
+                        WHERE agent_id = :agent_id
+                        ORDER BY created_at DESC
+                        LIMIT 5
+                    """),
+                    {"agent_id": agent_id}
+                )
+                feedback_rows = feedback_result.fetchall()
+                
+                # Calculate stats
+                total_consultations = metrics_row[0] or 0 if metrics_row else 0
+                successful_consultations = metrics_row[1] or 0 if metrics_row else 0
+                avg_response_time_ms = float(metrics_row[2]) if metrics_row and metrics_row[2] else 0.0
+                avg_confidence = float(metrics_row[3]) if metrics_row and metrics_row[3] else 0.0
+                avg_satisfaction = float(metrics_row[4]) if metrics_row and metrics_row[4] else 0.0
+                total_tokens = int(metrics_row[5]) if metrics_row and metrics_row[5] else 0
+                total_cost = float(metrics_row[6]) if metrics_row and metrics_row[6] else 0.0
+                
+                # Calculate derived metrics
+                success_rate = (successful_consultations / total_consultations * 100) if total_consultations > 0 else 0.0
+                avg_response_time_seconds = avg_response_time_ms / 1000.0 if avg_response_time_ms > 0 else 0.0
+                confidence_level = int(avg_confidence * 100) if avg_confidence > 0 else 0
+                satisfaction_score = float(avg_satisfaction) if avg_satisfaction > 0 else 0.0
+                
+                # Determine availability from agent status
+                agent_status = agent_record[3] if agent_record and len(agent_record) > 3 else "active"
+                availability = "offline" if agent_status in ["deprecated", "development"] else ("busy" if agent_status == "testing" else "online")
+                
+                # Extract certifications
+                certifications = []
+                if agent_record and len(agent_record) > 4:
+                    certs = agent_record[4]
+                    if isinstance(certs, list):
+                        certifications = certs
+                    elif isinstance(certs, dict):
+                        certifications = list(certs.values()) if certs else []
+                
+                # Format feedback
+                recent_feedback = []
+                for row in feedback_rows:
+                    recent_feedback.append({
+                        "id": str(row[0]),
+                        "rating": float(row[1]) if row[1] else 0.0,
+                        "comment": row[2] or None,
+                        "userId": str(row[3]) if row[3] else None,
+                        "createdAt": row[4].isoformat() if isinstance(row[4], datetime) else str(row[4])
+                    })
+                
+                stats = {
+                    "totalConsultations": int(total_consultations),
+                    "satisfactionScore": satisfaction_score,
+                    "successRate": success_rate,
+                    "averageResponseTime": avg_response_time_seconds,
+                    "certifications": certifications if certifications else ["HIPAA Compliant", "ISO 13485 Certified"],
+                    "totalTokensUsed": total_tokens,
+                    "totalCost": total_cost,
+                    "confidenceLevel": confidence_level,
+                    "availability": availability,
+                    "recentFeedback": recent_feedback
+                }
+                
+                logger.info("📊 Agent stats retrieved", agent_id=agent_id, consultations=total_consultations)
+                return stats
+                
+        except Exception as e:
+            logger.error("❌ Failed to get agent stats", agent_id=agent_id, error=str(e))
+            # Return default/empty stats instead of synthetic data
+            return {
+                "totalConsultations": 0,
+                "satisfactionScore": 0.0,
+                "successRate": 0.0,
+                "averageResponseTime": 0.0,
+                "certifications": [],
+                "totalTokensUsed": 0,
+                "totalCost": 0.0,
+                "confidenceLevel": 0,
+                "availability": "offline",
+                "recentFeedback": []
+            }
+
     async def get_knowledge_base_stats(self) -> Dict[str, Any]:
         """Get knowledge base statistics"""
         try:

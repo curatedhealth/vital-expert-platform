@@ -13,13 +13,9 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
-import { mode1MetricsService } from '@/features/ask-expert/mode-1/services/mode1-metrics';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+// All statistics are fetched from Python AI-engine which queries the agent_metrics table.
+// No synthetic/mock data is used - returns empty stats if no data is available.
 
 export interface AgentStats {
   totalConsultations: number;
@@ -42,8 +38,35 @@ interface AgentFeedback {
   createdAt: string;
 }
 
+const FALLBACK_STATS: AgentStats = {
+  totalConsultations: 0,
+  satisfactionScore: 0.0,
+  successRate: 0.0,
+  averageResponseTime: 0.0,
+  certifications: [],
+  totalTokensUsed: 0,
+  totalCost: 0.0,
+  confidenceLevel: 0,
+  availability: 'offline',
+  recentFeedback: [],
+};
+
+const API_TIMEOUT_MS = 4_000;
+const CACHE_TTL_MS = 60_000;
+const FAILURE_COOLDOWN_MS = 30_000;
+
+const statsCache = new Map<
+  string,
+  { timestamp: number; data: AgentStats }
+>();
+
+let lastFailureTimestamp = 0;
+
 /**
  * GET /api/agents/[id]/stats
+ * 
+ * Fetches comprehensive statistics for an agent from Python AI-engine.
+ * Replaces synthetic/mock data with real data from agent_metrics table.
  */
 export async function GET(
   request: NextRequest,
@@ -59,46 +82,73 @@ export async function GET(
       );
     }
 
-    // Calculate stats from Mode 1 metrics
-    const mode1Stats = mode1MetricsService.getStats(60 * 24 * 7); // Last 7 days
-    const agentMetrics = mode1Stats.byAgent.get(agentId);
+    // Get days parameter from query string (default: 7 days)
+   const { searchParams } = new URL(request.url);
+   const days = parseInt(searchParams.get('days') || '7', 10);
 
-    // Get agent from database for certifications and metadata
-    const { data: agent, error: agentError } = await supabase
-      .from('agents')
-      .select('id, name, display_name, certifications, status')
-      .eq('id', agentId)
-      .single();
-
-    if (agentError || !agent) {
-      console.warn(`[Agent Stats] Agent ${agentId} not found`);
-      // Return default stats if agent not found
+    const cacheKey = `${agentId}:${days}`;
+    const now = Date.now();
+    const cached = statsCache.get(cacheKey);
+    if (cached && now - cached.timestamp < CACHE_TTL_MS) {
       return NextResponse.json({
         success: true,
-        data: getDefaultStats(),
+        data: cached.data,
+        meta: { cacheHit: true },
       });
     }
 
-    const recentFeedback = await fetchAgentFeedback(agentId);
+    // Call Python AI-engine via API Gateway
+    const apiGatewayUrl = process.env.API_GATEWAY_URL || process.env.NEXT_PUBLIC_API_GATEWAY_URL || 'http://localhost:3001';
+    
+    try {
+      if (now - lastFailureTimestamp < FAILURE_COOLDOWN_MS) {
+        throw new Error('Python AI-engine recently unavailable; using fallback');
+      }
 
-    // Calculate statistics
-    const stats: AgentStats = {
-      totalConsultations: agentMetrics?.requestCount || 0,
-      satisfactionScore: calculateSatisfactionScore(agentMetrics),
-      successRate: agentMetrics ? agentMetrics.successRate * 100 : 0,
-      averageResponseTime: agentMetrics ? agentMetrics.averageLatency / 1000 : 0, // Convert ms to seconds
-      certifications: (agent.certifications as string[]) || [],
-      totalTokensUsed: calculateTotalTokens(agentId, mode1Stats),
-      totalCost: calculateTotalCost(agentId, mode1Stats),
-      confidenceLevel: calculateConfidenceLevel(agentMetrics),
-      availability: determineAvailability(agent.status, agentMetrics),
-      recentFeedback,
-    };
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT_MS);
 
-    return NextResponse.json({
-      success: true,
-      data: stats,
-    });
+      const response = await fetch(`${apiGatewayUrl}/api/agents/${agentId}/stats?days=${days}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        signal: controller.signal,
+      });
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        throw new Error(`Python AI-engine returned ${response.status}: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      const stats: AgentStats = data.data || FALLBACK_STATS;
+      statsCache.set(cacheKey, { timestamp: now, data: stats });
+      lastFailureTimestamp = 0;
+
+      // Return the response from Python AI-engine (which returns empty stats if no data, not synthetic)
+      return NextResponse.json({
+        success: true,
+        data: stats,
+      });
+    } catch (fetchError) {
+      console.error('[Agent Stats] Python AI-engine call failed:', fetchError);
+      lastFailureTimestamp = Date.now();
+      if (cached) {
+        return NextResponse.json({
+          success: true,
+          data: cached.data,
+          meta: { cacheHit: true, stale: true },
+        });
+      }
+      
+      // If Python service is unavailable, return empty stats instead of synthetic data
+      return NextResponse.json({
+        success: true,
+        data: FALLBACK_STATS,
+        meta: { fallback: true },
+      });
+    }
   } catch (error) {
     console.error('[Agent Stats] Error:', error);
     return NextResponse.json(
@@ -111,124 +161,5 @@ export async function GET(
   }
 }
 
-/**
- * Calculate satisfaction score (0-5) based on metrics
- */
-function calculateSatisfactionScore(
-  agentMetrics?: { successRate: number; requestCount: number }
-): number {
-  if (!agentMetrics || agentMetrics.requestCount === 0) {
-    return 0;
-  }
-
-  // Simple calculation: base score on success rate
-  // In production, this would come from user feedback/satisfaction surveys
-  const baseScore = agentMetrics.successRate * 5; // Convert 0-1 to 0-5
-  
-  // Adjust based on volume (more consultations = more reliable)
-  const volumeAdjustment = Math.min(agentMetrics.requestCount / 100, 0.2); // Up to 0.2 bonus
-  
-  return Math.min(baseScore + volumeAdjustment, 5);
-}
-
-/**
- * Calculate total tokens used for agent (estimate from metrics)
- */
-function calculateTotalTokens(agentId: string, stats: any): number {
-  // This would typically come from a dedicated usage table
-  // For now, estimate from metrics or return 0 if not tracked
-  // TODO: Implement proper token tracking in Mode1Metrics
-  return 0; // Placeholder - would need to track this in metrics
-}
-
-/**
- * Calculate total cost for agent (estimate)
- */
-function calculateTotalCost(agentId: string, stats: any): number {
-  // This would typically come from cost tracking
-  // For now, return 0 if not tracked
-  // TODO: Implement proper cost tracking in Mode1Metrics
-  return 0; // Placeholder - would need to track this in metrics
-}
-
-/**
- * Calculate confidence level (0-100) based on metrics
- */
-function calculateConfidenceLevel(
-  agentMetrics?: { successRate: number; requestCount: number }
-): number {
-  if (!agentMetrics || agentMetrics.requestCount === 0) {
-    return 0;
-  }
-
-  // Confidence based on:
-  // - Success rate (0-70 points)
-  // - Volume of consultations (0-30 points)
-  const successScore = agentMetrics.successRate * 70;
-  const volumeScore = Math.min(agentMetrics.requestCount / 10, 30);
-  
-  return Math.min(Math.round(successScore + volumeScore), 100);
-}
-
-/**
- * Determine availability status
- */
-function determineAvailability(
-  status: string,
-  agentMetrics?: { requestCount: number }
-): 'online' | 'busy' | 'offline' {
-  if (status === 'deprecated' || status === 'development') {
-    return 'offline';
-  }
-
-  // If agent has many recent requests, consider "busy"
-  if (agentMetrics && agentMetrics.requestCount > 50) {
-    return 'busy';
-  }
-
-  return 'online';
-}
-
-/**
- * Get default stats when agent not found or no metrics
- */
-function getDefaultStats(): AgentStats {
-  return {
-    totalConsultations: 0,
-    satisfactionScore: 0,
-    successRate: 0,
-    averageResponseTime: 0,
-    certifications: [],
-    totalTokensUsed: 0,
-    totalCost: 0,
-    confidenceLevel: 0,
-    availability: 'offline',
-    recentFeedback: [],
-  };
-}
-
-async function fetchAgentFeedback(agentId: string): Promise<AgentFeedback[]> {
-  try {
-    const { data, error } = await supabase
-      .from('agent_feedback')
-      .select('id, rating, comment, user_id, created_at')
-      .eq('agent_id', agentId)
-      .order('created_at', { ascending: false })
-      .limit(5);
-
-    if (error || !Array.isArray(data)) {
-      return [];
-    }
-
-    return data.map((row) => ({
-      id: row.id,
-      rating: row.rating ?? 0,
-      comment: row.comment ?? null,
-      userId: row.user_id ?? null,
-      createdAt: row.created_at,
-    }));
-  } catch (error) {
-    console.warn('[Agent Stats] Failed to load feedback:', error);
-    return [];
-  }
-}
+// All statistics calculation is now handled by Python AI-engine.
+// This endpoint simply proxies requests to the Python service via API Gateway.

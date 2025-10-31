@@ -88,7 +88,6 @@ export interface AgentSelectionResult {
 export class AgentSelectorService {
   private supabase;
   private pinecone: Pinecone;
-  private openaiApiKey: string;
   private logger;
   private supabaseCircuitBreaker;
   private embeddingCache;
@@ -107,7 +106,8 @@ export class AgentSelectorService {
       apiKey: process.env.PINECONE_API_KEY!,
     });
 
-    this.openaiApiKey = process.env.OPENAI_API_KEY!;
+    // OpenAI API key no longer needed - using Python AI Engine via API Gateway
+    // this.openaiApiKey = process.env.OPENAI_API_KEY!;
 
     // Initialize structured logger
     this.logger = createLogger({
@@ -125,7 +125,7 @@ export class AgentSelectorService {
 
   /**
    * Analyze query to extract intent, domains, and complexity
-   * Uses OpenAI to classify medical query characteristics
+   * Uses Python AI Engine via API Gateway to classify medical query characteristics
    */
   async analyzeQuery(query: string): Promise<QueryAnalysis> {
     const operationId = `analysis_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
@@ -139,38 +139,30 @@ export class AgentSelectorService {
     });
 
     try {
-      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      const apiGatewayUrl = process.env.NEXT_PUBLIC_API_GATEWAY_URL || process.env.API_GATEWAY_URL || 'http://localhost:3001';
+      const correlationId = operationId;
+
+      const response = await fetch(`${apiGatewayUrl}/api/agents/select`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${this.openaiApiKey}`
+          'x-tenant-id': this.tenantId || '00000000-0000-0000-0000-000000000001',
         },
         body: JSON.stringify({
-          model: 'gpt-4-turbo-preview',
-          messages: [{
-            role: 'system',
-            content: `Analyze this medical/healthcare query and extract structured information. 
-            
-            Return a JSON object with:
-            - intent: Primary intent (diagnosis, treatment, research, consultation, education, etc.)
-            - domains: Array of medical domains (cardiology, oncology, neurology, etc.)
-            - complexity: Complexity level (low, medium, high)
-            - keywords: Key medical terms and concepts
-            - medicalTerms: Specific medical terminology
-            - confidence: Confidence score (0-1) in your analysis
-            
-            Focus on medical/healthcare context. If not medical, still analyze for general intent.`
-          }, {
-            role: 'user',
-            content: query
-          }],
-          response_format: { type: 'json_object' },
-          temperature: 0.3
-        })
+          query,
+          user_id: undefined, // Can be passed if available
+          tenant_id: this.tenantId,
+          correlation_id: correlationId,
+        }),
+        signal: AbortSignal.timeout(30000), // 30 second timeout
       });
 
-      const data = await response.json();
-      const analysis = JSON.parse(data.choices[0].message.content);
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
+        throw new Error(`API Gateway error: ${response.status} - ${errorData.message || response.statusText}`);
+      }
+
+      const analysis = await response.json();
 
       const duration = Date.now() - startTime;
       this.logger.infoWithMetrics('query_analysis_completed', duration, {
@@ -187,7 +179,7 @@ export class AgentSelectorService {
         domains: analysis.domains || [],
         complexity: analysis.complexity || 'medium',
         keywords: analysis.keywords || [],
-        medicalTerms: analysis.medicalTerms || [],
+        medicalTerms: analysis.medical_terms || analysis.medicalTerms || [],
         confidence: analysis.confidence || 0.7
       };
 
@@ -783,24 +775,33 @@ export class AgentSelectorService {
   }
 
   /**
-   * Generate embedding for text using OpenAI
+   * Generate embedding for text using Python AI Engine via API Gateway
    */
   private async generateEmbedding(text: string): Promise<number[]> {
     try {
-      const response = await fetch('https://api.openai.com/v1/embeddings', {
+      const apiGatewayUrl = process.env.NEXT_PUBLIC_API_GATEWAY_URL || process.env.API_GATEWAY_URL || 'http://localhost:3001';
+
+      const response = await fetch(`${apiGatewayUrl}/api/embeddings/generate`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${this.openaiApiKey}`
+          'x-tenant-id': this.tenantId || '00000000-0000-0000-0000-000000000001',
         },
         body: JSON.stringify({
-          input: text,
-          model: 'text-embedding-3-small'
-        })
+          text,
+          model: 'text-embedding-3-small',
+          provider: 'openai',
+        }),
+        signal: AbortSignal.timeout(10000), // 10 second timeout for embeddings
       });
 
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
+        throw new Error(`Embedding generation failed: ${response.status} - ${errorData.message || response.statusText}`);
+      }
+
       const data = await response.json();
-      return data.data[0].embedding;
+      return data.embedding;
 
     } catch (error) {
       this.logger.error(

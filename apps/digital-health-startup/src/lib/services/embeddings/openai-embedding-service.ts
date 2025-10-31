@@ -1,9 +1,14 @@
 /**
  * OpenAI Embedding Service
- * Production-ready service for generating embeddings using OpenAI API
+ * Production-ready service for generating embeddings via Python AI Engine through API Gateway
+ * 
+ * This service now calls Python AI Engine via API Gateway to comply with the Golden Rule:
+ * All AI/ML services must be in Python and accessed via API Gateway.
  */
 
-import { OpenAI } from 'openai';
+import { withRetry } from '../resilience/retry';
+import { CircuitBreaker } from '../resilience/circuit-breaker';
+import { createLogger } from '../observability/structured-logger';
 
 export interface EmbeddingResult {
   embedding: number[];
@@ -29,31 +34,35 @@ export interface EmbeddingServiceConfig {
 }
 
 export class OpenAIEmbeddingService {
-  private client: OpenAI;
+  private apiGatewayUrl: string;
   private model: string;
-  private maxRetries: number;
   private batchSize: number;
   private cache: Map<string, EmbeddingResult>;
+  private circuitBreaker: CircuitBreaker;
+  private logger: ReturnType<typeof createLogger>;
 
   constructor(config: EmbeddingServiceConfig = {}) {
-    const apiKey = config.apiKey || process.env.OPENAI_API_KEY;
-
-    if (!apiKey || apiKey === 'demo-key') {
-      throw new Error('OpenAI API key is required. Please set OPENAI_API_KEY environment variable.');
-    }
-
-    this.client = new OpenAI({
-      apiKey,
-      timeout: config.timeout || 30000,
-      maxRetries: config.maxRetries || 3,
-    });
+    // Get API Gateway URL from environment
+    this.apiGatewayUrl = 
+      process.env.API_GATEWAY_URL || 
+      process.env.NEXT_PUBLIC_API_GATEWAY_URL || 
+      'http://localhost:3001';
 
     this.model = config.model || 'text-embedding-3-large';
-    this.maxRetries = config.maxRetries || 3;
     this.batchSize = config.batchSize || 100;
     this.cache = new Map();
 
-    console.log(`✅ OpenAI Embedding Service initialized with model: ${this.model}`);
+    // Initialize circuit breaker for API Gateway calls
+    this.circuitBreaker = new CircuitBreaker('embedding-service', {
+      timeout: config.timeout || 30000,
+      errorThresholdPercentage: 50,
+      resetTimeout: 60000,
+    });
+
+    this.logger = createLogger();
+
+    console.log(`✅ OpenAI Embedding Service initialized (via API Gateway: ${this.apiGatewayUrl})`);
+    console.log(`   Model: ${this.model}`);
   }
 
   /**
@@ -86,20 +95,72 @@ export class OpenAIEmbeddingService {
     const truncatedText = this.truncateText(cleanedText, 8000); // OpenAI max tokens ~8191
 
     try {
-      console.log(`🔄 Generating embedding for text (${truncatedText.length} chars)...`);
+      console.log(`🔄 Generating embedding via API Gateway (${truncatedText.length} chars)...`);
 
-      const response = await this.client.embeddings.create({
-        model: this.model,
-        input: truncatedText,
-        ...(dimensions && { dimensions }), // Only for text-embedding-3-* models
-      });
+      // Generate request ID for tracing
+      const requestId = `embedding_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+
+      // Call Python AI Engine via API Gateway with retry and circuit breaker
+      const embeddingResponse = await withRetry(
+        () => this.circuitBreaker.execute(async () => {
+          const response = await fetch(`${this.apiGatewayUrl}/api/embeddings/generate`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'x-request-id': requestId,
+            },
+            body: JSON.stringify({
+              text: truncatedText,
+              model: this.model,
+              provider: 'openai',
+              dimensions: dimensions,
+              normalize: true,
+            }),
+            signal: AbortSignal.timeout(30000), // 30 second timeout
+          });
+
+          if (!response.ok) {
+            const errorData = await response.json().catch(() => ({ message: response.statusText }));
+            throw new Error(`API Gateway error: ${errorData.message || response.statusText} (status: ${response.status})`);
+          }
+
+          return await response.json();
+        }),
+        {
+          maxRetries: 3,
+          initialDelayMs: 1000,
+          maxDelayMs: 10000,
+          retryable: (error) => {
+            // Retry on network errors, timeouts, and 5xx errors
+            const message = error.message.toLowerCase();
+            return (
+              message.includes('timeout') ||
+              message.includes('econnrefused') ||
+              message.includes('econnreset') ||
+              message.includes('network') ||
+              message.includes('503') ||
+              message.includes('502') ||
+              message.includes('500') ||
+              message.includes('rate limit') ||
+              message.includes('429')
+            );
+          },
+          onRetry: (attempt, error) => {
+            this.logger.warn('embedding_retry', {
+              attempt,
+              error: error.message,
+              requestId,
+            });
+          },
+        }
+      );
 
       const result: EmbeddingResult = {
-        embedding: response.data[0].embedding,
-        model: response.model,
+        embedding: embeddingResponse.embedding,
+        model: embeddingResponse.model,
         usage: {
-          prompt_tokens: response.usage.prompt_tokens,
-          total_tokens: response.usage.total_tokens,
+          prompt_tokens: embeddingResponse.usage?.prompt_tokens || Math.ceil(truncatedText.length / 4),
+          total_tokens: embeddingResponse.usage?.total_tokens || Math.ceil(truncatedText.length / 4),
         },
       };
 
@@ -107,6 +168,13 @@ export class OpenAIEmbeddingService {
       if (useCache) {
         this.cache.set(cacheKey, result);
       }
+
+      this.logger.info('embedding_generated', {
+        requestId,
+        dimensions: result.embedding.length,
+        model: result.model,
+        tokens: result.usage.total_tokens,
+      });
 
       console.log(`✅ Embedding generated (${result.embedding.length} dimensions, ${result.usage.total_tokens} tokens)`);
 
@@ -116,12 +184,10 @@ export class OpenAIEmbeddingService {
       console.error('❌ Failed to generate embedding:', error);
 
       if (error instanceof Error) {
-        if (error.message.includes('rate limit')) {
-          throw new Error('OpenAI rate limit exceeded. Please try again later.');
-        } else if (error.message.includes('insufficient_quota')) {
-          throw new Error('OpenAI API quota exceeded. Please check your billing.');
-        } else if (error.message.includes('invalid_api_key')) {
-          throw new Error('Invalid OpenAI API key. Please check your configuration.');
+        if (error.message.includes('rate limit') || error.message.includes('429')) {
+          throw new Error('Rate limit exceeded. Please try again later.');
+        } else if (error.message.includes('circuit breaker')) {
+          throw new Error('Embedding service temporarily unavailable. Please try again later.');
         }
       }
 
@@ -158,19 +224,57 @@ export class OpenAIEmbeddingService {
       const cleanedBatch = batch.map(text => this.truncateText(this.cleanText(text), 8000));
 
       try {
-        const response = await this.client.embeddings.create({
-          model: this.model,
-          input: cleanedBatch,
-          ...(dimensions && { dimensions }),
-        });
+        // Generate request ID for tracing
+        const requestId = `batch_embedding_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
 
-        // Extract embeddings in order
-        const batchEmbeddings = response.data
-          .sort((a, b) => a.index - b.index)
-          .map((item: any) => item.embedding);
+        // Call Python AI Engine via API Gateway
+        const batchResponse = await withRetry(
+          () => this.circuitBreaker.execute(async () => {
+            const response = await fetch(`${this.apiGatewayUrl}/api/embeddings/generate/batch`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'x-request-id': requestId,
+              },
+              body: JSON.stringify({
+                texts: cleanedBatch,
+                model: this.model,
+                provider: 'openai',
+                normalize: true,
+              }),
+              signal: AbortSignal.timeout(60000), // 60 second timeout for batch
+            });
+
+            if (!response.ok) {
+              const errorData = await response.json().catch(() => ({ message: response.statusText }));
+              throw new Error(`API Gateway error: ${errorData.message || response.statusText} (status: ${response.status})`);
+            }
+
+            return await response.json();
+          }),
+          {
+            maxRetries: 3,
+            initialDelayMs: 1000,
+            maxDelayMs: 10000,
+            retryable: (error) => {
+              const message = error.message.toLowerCase();
+              return (
+                message.includes('timeout') ||
+                message.includes('econnrefused') ||
+                message.includes('503') ||
+                message.includes('502') ||
+                message.includes('500') ||
+                message.includes('429')
+              );
+            },
+          }
+        );
+
+        // Extract embeddings
+        const batchEmbeddings = batchResponse.embeddings || [];
 
         allEmbeddings.push(...batchEmbeddings);
-        totalTokens += response.usage.total_tokens;
+        totalTokens += batchResponse.usage?.total_tokens || cleanedBatch.reduce((sum, text) => sum + Math.ceil(text.length / 4), 0);
         completed += batch.length;
 
         // Cache individual results if enabled
@@ -179,10 +283,10 @@ export class OpenAIEmbeddingService {
             const cacheKey = this.getCacheKey(text, dimensions);
             this.cache.set(cacheKey, {
               embedding: batchEmbeddings[idx],
-              model: response.model,
+              model: batchResponse.model,
               usage: {
-                prompt_tokens: Math.floor(response.usage.prompt_tokens / batch.length),
-                total_tokens: Math.floor(response.usage.total_tokens / batch.length),
+                prompt_tokens: Math.floor((batchResponse.usage?.prompt_tokens || cleanedBatch[idx].length / 4) / batch.length),
+                total_tokens: Math.floor((batchResponse.usage?.total_tokens || cleanedBatch[idx].length / 4) / batch.length),
               },
             });
           });
@@ -276,15 +380,15 @@ export class OpenAIEmbeddingService {
   }
 
   /**
-   * Test connection to OpenAI API
+   * Test connection to API Gateway and Python AI Engine
    */
   async testConnection(): Promise<boolean> {
     try {
       await this.generateEmbedding('test', { useCache: false });
-      console.log('✅ OpenAI API connection successful');
+      console.log('✅ Embedding service connection successful (via API Gateway)');
       return true;
     } catch (error) {
-      console.error('❌ OpenAI API connection failed:', error);
+      console.error('❌ Embedding service connection failed:', error);
       return false;
     }
   }

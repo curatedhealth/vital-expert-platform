@@ -332,12 +332,10 @@ export class Mode4AutonomousManualHandler {
       sources: [source],
     }));
   }
-}
-
   /**
    * Build LangGraph workflow for Mode 4
    */
-  private buildMode4Workflow(): CompiledStateGraph<Mode4State, Partial<Mode4State>> {
+  buildMode4Workflow(): CompiledStateGraph<Mode4State, Partial<Mode4State>> {
     const workflow = new StateGraph<Mode4State>({
       channels: {
         query: { value: (x: string, y: string) => y ?? x },
@@ -1024,4 +1022,6 @@ export async function* executeMode4(config: Mode4Config): AsyncGenerator<Autonom
     };
     throw error;
   }
+}
+
 }

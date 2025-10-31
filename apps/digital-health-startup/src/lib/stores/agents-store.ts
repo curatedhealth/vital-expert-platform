@@ -184,6 +184,7 @@ class AgentEventEmitter {
 }
 
 const agentEventEmitter = new AgentEventEmitter();
+const agentStatsCache = new Map<string, AgentStats>();
 
 // Convert database agent to store format
 // Note: The API already normalizes display_name and resolves avatar URLs, so we preserve those values
@@ -604,6 +605,10 @@ export const useAgentsStore = create<AgentsStore>()(
 
       // Agent Statistics
       loadAgentStats: async (agentId: string): Promise<AgentStats | null> => {
+        if (agentStatsCache.has(agentId)) {
+          return agentStatsCache.get(agentId)!;
+        }
+
         try {
           const response = await fetch(`/api/agents/${agentId}/stats`);
           if (!response.ok) {
@@ -637,6 +642,7 @@ export const useAgentsStore = create<AgentsStore>()(
               }),
             }));
 
+            agentStatsCache.set(agentId, stats);
             return stats;
           }
 
@@ -656,7 +662,7 @@ export const useAgentsStore = create<AgentsStore>()(
         }
 
         const stats = await loadAgentStats(agentId);
-        
+
         return {
           agent,
           stats,

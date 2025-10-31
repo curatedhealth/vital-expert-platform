@@ -17,7 +17,8 @@ export async function POST(request: NextRequest) {
     const domain_id = formData.get('domain_id') as string;
     const domain = (domain_id || formData.get('domain') as string) || 'digital-health';
     const embeddingModel = formData.get('embeddingModel') as string || 'text-embedding-3-large';
-    const chatModel = formData.get('chatModel') as string || 'gpt-4-turbo-preview';
+    // Chat model is selected per query/conversation, not per document
+    // const chatModel = formData.get('chatModel') as string || 'gpt-4-turbo-preview';
     
     // New architecture fields
     const access_policy = formData.get('access_policy') as string;
@@ -38,7 +39,7 @@ export async function POST(request: NextRequest) {
       domain: domain_id || domain, // Use domain_id if available, fallback to domain
       domain_id: domain_id || domain, // Explicitly pass domain_id
       embeddingModel,
-      chatModel,
+      // chatModel, // Not needed - selected per query/conversation
       access_policy,
       rag_priority_weight,
       domain_scope,

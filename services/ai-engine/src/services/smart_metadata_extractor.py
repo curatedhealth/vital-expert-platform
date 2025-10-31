@@ -4,14 +4,26 @@ Extracts comprehensive metadata from filenames and content using AI and pattern 
 """
 
 import re
-import os
+from pathlib import Path
 from typing import Dict, Any, Optional, List
 from datetime import datetime
+from dateutil import parser as date_parser
 import structlog
 from openai import OpenAI
-import hashlib
+from langdetect import detect, LangDetectException
+from unidecode import unidecode
 
 from core.config import get_settings
+
+# Constants
+TITLE_MIN_LENGTH = 10
+TITLE_MAX_LENGTH = 200
+TITLE_REASONABLE_MIN = 20
+TITLE_REASONABLE_MAX = 150
+YEAR_MIN = 1900
+CONTENT_PREVIEW_LENGTH = 5000
+KEYWORD_EXTRACTION_LENGTH = 2000
+LANGUAGE_DETECTION_LENGTH = 1000
 
 logger = structlog.get_logger()
 
@@ -118,10 +130,10 @@ class SmartMetadataExtractor:
         }
 
         try:
-            # Extract extension
-            _, ext = os.path.splitext(filename)
-            extension = ext.lower().lstrip('.')
-            name_without_ext = filename.rsplit('.', 1)[0] if '.' in filename else filename
+            # Extract extension using pathlib for safer handling
+            file_path = Path(filename)
+            extension = file_path.suffix.lstrip('.').lower()
+            name_without_ext = file_path.stem
 
             # Extract source name
             source_match = self._extract_source(name_without_ext)
@@ -129,12 +141,12 @@ class SmartMetadataExtractor:
                 metadata['source_name'] = source_match['name']
                 metadata['confidence']['source'] = source_match['confidence']
 
-            # Extract year (4-digit years 1900-2099)
+            # Extract year (4-digit years 1900-2099) with better validation
             year_match = re.search(r'\b(19|20)\d{2}\b', name_without_ext)
             if year_match:
                 year = int(year_match.group())
                 current_year = datetime.now().year
-                if 1900 <= year <= current_year + 1:
+                if YEAR_MIN <= year <= current_year + 1:
                     metadata['year'] = year
                     metadata['confidence']['year'] = 0.9
 
@@ -179,8 +191,8 @@ class SmartMetadataExtractor:
         }
 
         try:
-            # Extract from first 5000 characters (usually header/metadata section)
-            preview = content[:5000]
+            # Extract from first N characters (usually header/metadata section)
+            preview = content[:CONTENT_PREVIEW_LENGTH]
 
             # Extract source from content
             source_match = self._extract_source(preview)
@@ -188,14 +200,27 @@ class SmartMetadataExtractor:
                 metadata['source_name'] = source_match['name']
                 metadata['confidence']['source'] = source_match['confidence']
 
-            # Extract year from content
+            # Extract year from content with better validation
             year_match = re.search(r'\b(19|20)\d{2}\b', preview)
             if year_match:
                 year = int(year_match.group())
                 current_year = datetime.now().year
-                if 1900 <= year <= current_year + 1:
+                if YEAR_MIN <= year <= current_year + 1:
                     metadata['year'] = year
                     metadata['confidence']['year'] = 0.8
+            
+            # Try to extract publication date using dateutil (more robust)
+            try:
+                date_pattern = re.search(r'\b(\d{1,2}[-/]\d{1,2}[-/]\d{2,4}|\d{4}[-/]\d{1,2}[-/]\d{1,2})\b', preview[:500])
+                if date_pattern:
+                    parsed_date = date_parser.parse(date_pattern.group(), fuzzy=True, default=datetime.now())
+                    if parsed_date:
+                        metadata['publication_date'] = parsed_date.isoformat()
+                        if not metadata.get('year'):
+                            metadata['year'] = parsed_date.year
+                            metadata['confidence']['year'] = 0.85
+            except (ValueError, TypeError):
+                pass  # Date parsing failed, continue without it
 
             # Extract document type
             type_match = self._extract_document_type(preview)
@@ -215,22 +240,31 @@ class SmartMetadataExtractor:
                 metadata['therapeutic_area'] = therapeutic_area_match['area']
                 metadata['confidence']['therapeutic_area'] = therapeutic_area_match['confidence']
 
-            # Extract keywords (first 50 words)
-            keywords = self._extract_keywords(content[:2000])
+            # Extract title from content (first few lines, headers, or AI)
+            title = self._extract_title_from_content(content)
+            if title:
+                metadata['title'] = title
+                metadata['confidence']['title'] = 0.8
+
+            # Extract keywords (first N characters)
+            keywords = self._extract_keywords(content[:KEYWORD_EXTRACTION_LENGTH])
             if keywords:
                 metadata['keywords'] = keywords
 
-            # Word count
+            # Word count (more accurate with proper tokenization)
             metadata['word_count'] = len(content.split())
 
-            # Language detection (simple - can be enhanced)
-            metadata['language'] = self._detect_language(content[:1000])
+            # Language detection using langdetect library (more accurate)
+            metadata['language'] = self._detect_language(content[:LANGUAGE_DETECTION_LENGTH])
 
-            # Use AI for advanced extraction if enabled
+            # Use AI for advanced extraction if enabled (includes title extraction)
             if self.use_ai and self.openai_client:
                 ai_metadata = await self._extract_with_ai(content[:5000])
                 if ai_metadata:
+                    # AI extraction may provide a better title, so update if present
                     metadata.update(ai_metadata)
+                    if ai_metadata.get('title'):
+                        metadata['confidence']['title'] = 0.95  # Higher confidence for AI-extracted title
 
             logger.info("✅ Metadata extracted from content",
                        word_count=metadata.get('word_count'),
@@ -253,10 +287,26 @@ class SmartMetadataExtractor:
         # Enhance with content if available
         if content:
             content_metadata = await self.extract_from_content(content, filename)
-            # Merge, preferring filename metadata for conflicts
+            # Merge, preferring content metadata when confidence is higher
             for key, value in content_metadata.items():
-                if key not in metadata or metadata.get('confidence', {}).get(key, 0) < content_metadata.get('confidence', {}).get(key, 0):
+                if key not in metadata:
                     metadata[key] = value
+                elif key == 'confidence':
+                    # Merge confidence scores
+                    metadata['confidence'].update(value)
+                elif metadata.get('confidence', {}).get(key, 0) < content_metadata.get('confidence', {}).get(key, 0):
+                    # Use content value if confidence is higher
+                    metadata[key] = value
+            
+            # Ensure we have a title - prefer content title over filename title
+            if content_metadata.get('title') and not metadata.get('title'):
+                metadata['title'] = content_metadata['title']
+                if 'clean_title' not in metadata:
+                    # Generate clean_title from content title if we don't have one from filename
+                    metadata['clean_title'] = content_metadata['title']
+            elif not metadata.get('clean_title') and metadata.get('title'):
+                # Use title as clean_title if clean_title is missing
+                metadata['clean_title'] = metadata['title']
 
         # Calculate overall confidence
         confidences = metadata.get('confidence', {})
@@ -332,6 +382,75 @@ class SmartMetadataExtractor:
 
         return clean
 
+    def _extract_title_from_content(self, content: str) -> Optional[str]:
+        """Extract title from document content"""
+        if not content:
+            return None
+        
+        # Try to extract title from first few lines (common title locations)
+        lines = content.split('\n')[:20]  # Check first 20 lines
+        
+        # Look for title patterns:
+        # 1. First non-empty line that's not too short and not too long
+        # 2. Lines that look like headings (all caps, title case, etc.)
+        # 3. Lines before common separators or metadata markers
+        
+        for i, line in enumerate(lines):
+            line = line.strip()
+            
+            # Skip empty lines
+            if not line:
+                continue
+            
+            # Skip lines that are too short (likely not a title)
+            if len(line) < TITLE_MIN_LENGTH:
+                continue
+            
+            # Skip lines that are too long (likely body text)
+            if len(line) > TITLE_MAX_LENGTH:
+                continue
+            
+            # Skip lines that look like metadata (dates, author info, etc.)
+            if re.match(r'^\d{1,2}[-/]\d{1,2}[-/]\d{2,4}', line):  # Date patterns
+                continue
+            if re.match(r'^(Author|By|Prepared by|Date|Submitted):', line, re.IGNORECASE):
+                continue
+            
+            # Skip lines that are all numbers or mostly punctuation
+            if re.match(r'^[\d\s\-_/]+$', line):
+                continue
+            
+            # Potential title found - check if it's a heading pattern
+            # Check if line is all caps (common for headings)
+            if line.isupper() and len(line) < 100:
+                # Normalize Unicode before returning
+                return unidecode(line)
+            
+            # Check if line is in title case (first letter of each word capitalized)
+            if line == line.title() and len(line) < 100:
+                # Normalize Unicode before returning
+                return unidecode(line)
+            
+            # If it's the first substantial line and looks reasonable, use it
+            if i < 5 and TITLE_REASONABLE_MIN <= len(line) <= TITLE_REASONABLE_MAX:
+                # Clean up: remove common prefixes/suffixes
+                title = re.sub(r'^(Title|Document|Report|Paper):\s*', '', line, flags=re.IGNORECASE)
+                title = title.strip()
+                if title:
+                    # Normalize Unicode before returning
+                    return unidecode(title)
+        
+        # If no title found in first lines, try to extract from PDF-like patterns
+        # (common in extracted PDF text)
+        title_match = re.search(r'^([A-Z][^.!?]{10,150})(?:\n|$)', content, re.MULTILINE)
+        if title_match:
+            title = title_match.group(1).strip()
+            if TITLE_REASONABLE_MIN <= len(title) <= TITLE_REASONABLE_MAX:
+                # Normalize Unicode before returning
+                return unidecode(title)
+        
+        return None
+
     def _extract_keywords(self, text: str, max_keywords: int = 20) -> List[str]:
         """Extract keywords from text (simple implementation)"""
         # Simple keyword extraction based on frequency
@@ -347,13 +466,22 @@ class SmartMetadataExtractor:
         return [word for word, _ in sorted_words[:max_keywords]]
 
     def _detect_language(self, text: str) -> str:
-        """Simple language detection (can be enhanced with langdetect library)"""
-        # Check for common English words
-        english_words = ['the', 'and', 'is', 'are', 'for', 'with', 'from', 'this', 'that']
-        english_count = sum(1 for word in text.lower().split() if word in english_words)
+        """Language detection using langdetect library"""
+        if not text or len(text.strip()) < 10:
+            return 'en'  # Default to English for short text
         
-        if english_count > len(text.split()) * 0.1:
-            return 'en'
+        try:
+            # Use langdetect for accurate language detection
+            detected_lang = detect(text)
+            return detected_lang
+        except LangDetectException:
+            # Fallback: check for common English words if detection fails
+            english_words = ['the', 'and', 'is', 'are', 'for', 'with', 'from', 'this', 'that']
+            words = text.lower().split()
+            if words:
+                english_count = sum(1 for word in words if word in english_words)
+                if english_count > len(words) * 0.1:
+                    return 'en'
         
         # Default to English
         return 'en'
@@ -372,8 +500,8 @@ class SmartMetadataExtractor:
 - summary: Brief summary (max 200 chars)
 - keywords: List of 5-10 keywords
 
-Content (first 5000 chars):
-{content[:5000]}
+Content (first {CONTENT_PREVIEW_LENGTH} chars):
+{content[:CONTENT_PREVIEW_LENGTH]}
 """
 
             response = self.openai_client.chat.completions.create(
@@ -389,6 +517,11 @@ Content (first 5000 chars):
             # Parse JSON response
             import json
             ai_metadata = json.loads(response.choices[0].message.content)
+            
+            # Normalize Unicode in extracted strings
+            if 'title' in ai_metadata and ai_metadata['title']:
+                ai_metadata['title'] = unidecode(ai_metadata['title'])
+            
             return ai_metadata
 
         except Exception as e:

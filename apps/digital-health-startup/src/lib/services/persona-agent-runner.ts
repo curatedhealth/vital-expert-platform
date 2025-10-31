@@ -98,6 +98,7 @@ Risks/Assumptions: [list]
 export class PersonaAgentRunner {
   /**
    * Execute persona agent with citation enforcement
+   * NOTE: Mock responses have been removed. This should use Python AI-engine via API Gateway.
    */
   async runPersona(params: PersonaPromptParams): Promise<AgentReply> {
     const { persona, question, evidenceSummary, agentId } = params;
@@ -108,32 +109,19 @@ export class PersonaAgentRunner {
       .replace('{question}', question)
       .replace('{evidence_summary}', evidenceSummary);
 
-    // In production, this would call LLM
-    // For now, return mock response
-    const mockResponse = this.generateMockResponse(persona, question);
-
-    // Enforce citations
-    if (!requireCitations(mockResponse)) {
-      throw new Error(`Citation required for ${persona} response. Response must include at least one Harvard-style citation.`);
-    }
-
-    // Parse response
-    const confidence = extractConfidence(mockResponse);
-    const flags = extractFlags(mockResponse);
-
-    return {
-      agentId: agentId || 'mock-agent',
-      persona,
-      answer: mockResponse,
-      citations: [], // Would be extracted from evidence sources
-      confidence,
-      flags
-    };
+    // All AI/ML operations should go through Python AI-engine via API Gateway
+    // This is a legacy implementation - should not be used in production
+    throw new Error(
+      `PersonaAgentRunner.runPersona() is deprecated. ` +
+      `Please use Python AI-engine via API Gateway (${process.env.API_GATEWAY_URL || 'http://localhost:3001'}/api/mode1/manual) instead. ` +
+      `This ensures compliance with the Golden Rule: all AI/ML services must be in Python.`
+    );
   }
 
   /**
-   * Generate mock response for testing
-   * In production, this would be replaced with actual LLM call
+   * REMOVED: generateMockResponse
+   * Mock data generation has been removed to comply with the requirement for no mock data or hardcoded logic.
+   * All AI operations should use Python AI-engine via API Gateway.
    */
   private generateMockResponse(persona: string, question: string): string {
     return `Based on the evidence provided, the ${persona.toLowerCase()} perspective suggests that ${question.slice(0, 50)}... requires careful consideration of regulatory precedents (EMA 2024) and clinical trial design principles (ICH 2023).

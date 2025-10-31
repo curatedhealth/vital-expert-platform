@@ -32,6 +32,24 @@ import {
   serializeError,
 } from '@/lib/errors/agent-errors';
 
+type EvidenceLevel = 'A' | 'B' | 'C' | 'D' | 'Unknown';
+
+function mapSimilarityToEvidenceLevel(similarity?: number): EvidenceLevel {
+  if (typeof similarity !== 'number') {
+    return 'Unknown';
+  }
+  if (similarity >= 0.85) {
+    return 'A';
+  }
+  if (similarity >= 0.7) {
+    return 'B';
+  }
+  if (similarity >= 0.55) {
+    return 'C';
+  }
+  return 'D';
+}
+
 // ============================================================================
 // MODE 3 SERVICE CLASS
 // ============================================================================
@@ -654,20 +672,6 @@ export class Mode3AutonomousAutomaticHandler {
         timestamp: new Date().toISOString()
       };
     }
-  private mapSimilarityToEvidenceLevel(similarity?: number) {
-    if (typeof similarity !== 'number') {
-      return 'Unknown';
-    }
-    if (similarity >= 0.85) {
-      return 'A';
-    }
-    if (similarity >= 0.7) {
-      return 'B';
-    }
-    if (similarity >= 0.55) {
-      return 'C';
-    }
-    return 'D';
   }
 
   private toBranchSource(
@@ -682,7 +686,7 @@ export class Mode3AutonomousAutomaticHandler {
       similarity: source.similarity,
       domain: source.domain,
       organization: source.organization,
-      evidenceLevel: this.mapSimilarityToEvidenceLevel(source.similarity),
+      evidenceLevel: mapSimilarityToEvidenceLevel(source.similarity),
       lastUpdated: source.lastUpdated,
     };
   }

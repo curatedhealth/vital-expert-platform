@@ -45,16 +45,26 @@ export function useAgentWithStats(agentId: string | null, userId?: string | null
 
   const agent = agentId ? getAgentById(agentId) : null;
 
-  // Load stats when agent changes
+  // Load stats whenever agent changes
   useEffect(() => {
-    if (agentId && userId) {
-      loadAll();
-    } else {
+    if (!agentId) {
       setStats(null);
       setError(null);
+      return;
+    }
+
+    loadStats();
+  }, [agentId]);
+
+  // Load memory only when both agent and user are available
+  useEffect(() => {
+    if (!agentId || !userId) {
       setMemory(null);
       setMemoryError(null);
+      return;
     }
+
+    loadMemory();
   }, [agentId, userId]);
 
   const loadStats = async () => {
@@ -108,12 +118,11 @@ export function useAgentWithStats(agentId: string | null, userId?: string | null
     }
   };
 
-  const loadAll = async () => {
-    await Promise.allSettled([loadStats(), loadMemory()]);
-  };
-
   const refresh = async () => {
-    await loadAll();
+    await Promise.allSettled([
+      loadStats(),
+      userId ? loadMemory() : Promise.resolve(),
+    ]);
   };
 
   return {

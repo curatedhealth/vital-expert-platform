@@ -14,6 +14,7 @@ from prometheus_client import Counter, Histogram, generate_latest
 from typing import List, Dict, Any, Optional
 import asyncio
 import json
+from datetime import datetime
 from pydantic import BaseModel, Field
 
 from services.agent_orchestrator import AgentOrchestrator
@@ -21,6 +22,12 @@ from services.medical_rag import MedicalRAGPipeline
 from services.unified_rag_service import UnifiedRAGService
 from services.supabase_client import SupabaseClient
 from services.metadata_processing_service import MetadataProcessingService, create_metadata_processing_service
+from services.agent_selector_service import (
+    AgentSelectorService,
+    get_agent_selector_service,
+    QueryAnalysisRequest,
+    QueryAnalysisResponse
+)
 from models.requests import (
     AgentQueryRequest,
     RAGSearchRequest,
@@ -824,6 +831,79 @@ async def query_agent(
         logger.error("❌ Agent query failed", error=str(e))
         raise HTTPException(status_code=500, detail=f"Agent query failed: {str(e)}")
 
+# Agent Selection Endpoint
+@app.post("/api/agents/select", response_model=QueryAnalysisResponse)
+async def analyze_query_for_agent_selection(
+    request: QueryAnalysisRequest,
+    selector_service: AgentSelectorService = Depends(get_agent_selector_service_dep)
+):
+    """
+    Analyze query for agent selection
+    
+    Provides query analysis with intent, domains, complexity, and keywords
+    for intelligent agent selection.
+    
+    Following enterprise-grade standards:
+    - Structured logging with correlation IDs
+    - Comprehensive error handling with fallbacks
+    - Type safety with Pydantic models
+    - Performance metrics tracking
+    """
+    REQUEST_COUNT.labels(method="POST", endpoint="/api/agents/select").inc()
+    
+    start_time = asyncio.get_event_loop().time()
+    
+    try:
+        logger.info(
+            "🔍 Starting query analysis for agent selection",
+            query_preview=request.query[:100],
+            correlation_id=request.correlation_id,
+            user_id=request.user_id,
+            tenant_id=request.tenant_id
+        )
+        
+        # Analyze query using Python service
+        analysis = await selector_service.analyze_query(
+            query=request.query,
+            correlation_id=request.correlation_id or f"req_{datetime.now().timestamp()}"
+        )
+        
+        processing_time_ms = (asyncio.get_event_loop().time() - start_time) * 1000
+        
+        logger.info(
+            "✅ Query analysis completed",
+            intent=analysis.intent,
+            domains=analysis.domains,
+            complexity=analysis.complexity,
+            confidence=analysis.confidence,
+            processing_time_ms=processing_time_ms,
+            correlation_id=analysis.correlation_id
+        )
+        
+        return analysis
+        
+    except ValueError as e:
+        logger.error(
+            "❌ Invalid query analysis request",
+            error=str(e),
+            correlation_id=request.correlation_id
+        )
+        raise HTTPException(status_code=400, detail=f"Invalid request: {str(e)}")
+        
+    except Exception as e:
+        processing_time_ms = (asyncio.get_event_loop().time() - start_time) * 1000
+        logger.error(
+            "❌ Query analysis failed",
+            error=str(e),
+            error_type=type(e).__name__,
+            processing_time_ms=processing_time_ms,
+            correlation_id=request.correlation_id
+        )
+        raise HTTPException(
+            status_code=500,
+            detail=f"Query analysis failed: {str(e)}"
+        )
+
 # RAG Search Endpoint (Unified Service)
 @app.post("/api/rag/query")
 async def query_rag(
@@ -945,6 +1025,194 @@ async def generate_prompt(
     except Exception as e:
         logger.error("❌ Prompt generation failed", error=str(e))
         raise HTTPException(status_code=500, detail=f"Prompt generation failed: {str(e)}")
+
+async def get_agent_selector_service_dep() -> AgentSelectorService:
+    """Dependency to get agent selector service"""
+    from services.agent_selector_service import get_agent_selector_service
+    return get_agent_selector_service(supabase_client)
+
+async def get_supabase_client() -> SupabaseClient:
+    """Dependency to get Supabase client"""
+    if not supabase_client:
+        raise HTTPException(status_code=503, detail="Supabase client not initialized")
+    return supabase_client
+
+# Embedding Generation Endpoint
+class EmbeddingGenerationRequest(BaseModel):
+    """Request for embedding generation"""
+    text: str = Field(..., description="Text to generate embedding for")
+    model: Optional[str] = Field(None, description="Embedding model name (optional, uses default if not specified)")
+    provider: Optional[str] = Field(None, description="Provider: 'openai' or 'huggingface' (auto-detects if not specified)")
+    dimensions: Optional[int] = Field(None, description="Embedding dimensions (for OpenAI text-embedding-3 models)")
+    normalize: Optional[bool] = Field(True, description="Whether to normalize the embedding vector")
+
+class EmbeddingGenerationResponse(BaseModel):
+    """Response for embedding generation"""
+    embedding: List[float] = Field(..., description="Embedding vector")
+    model: str = Field(..., description="Model used for generation")
+    dimensions: int = Field(..., description="Embedding dimensions")
+    provider: str = Field(..., description="Provider used")
+    usage: Dict[str, Any] = Field(default_factory=dict, description="Usage information")
+
+@app.post("/api/embeddings/generate", response_model=EmbeddingGenerationResponse)
+async def generate_embedding(
+    request: EmbeddingGenerationRequest,
+):
+    """Generate embedding for text using configured provider"""
+    REQUEST_COUNT.labels(method="POST", endpoint="/api/embeddings/generate").inc()
+    
+    try:
+        from services.embedding_service_factory import EmbeddingServiceFactory
+        import math
+        
+        logger.info("🔢 Generating embedding", 
+                   text_length=len(request.text),
+                   model=request.model,
+                   provider=request.provider)
+        
+        # Create embedding service
+        embedding_service = EmbeddingServiceFactory.create(
+            provider=request.provider,
+            model_name=request.model
+        )
+        
+        # Generate embedding
+        embedding = await embedding_service.generate_embedding(
+            request.text,
+            normalize=request.normalize if request.normalize is not None else True
+        )
+        
+        # Get model info
+        model_name = embedding_service.get_model_name() if hasattr(embedding_service, 'get_model_name') else (request.model or 'default')
+        dimensions = embedding_service.get_dimensions()
+        provider = request.provider or settings.embedding_provider.lower()
+        
+        # Estimate usage (tokens approximated as 4 chars per token)
+        estimated_tokens = math.ceil(len(request.text) / 4)
+        
+        logger.info("✅ Embedding generated", 
+                   dimensions=dimensions,
+                   model=model_name,
+                   provider=provider)
+        
+        return EmbeddingGenerationResponse(
+            embedding=embedding,
+            model=model_name,
+            dimensions=dimensions,
+            provider=provider,
+            usage={
+                "prompt_tokens": estimated_tokens,
+                "total_tokens": estimated_tokens
+            }
+        )
+    
+    except Exception as e:
+        logger.error("❌ Embedding generation failed", error=str(e))
+        raise HTTPException(status_code=500, detail=f"Embedding generation failed: {str(e)}")
+
+@app.post("/api/embeddings/generate/batch")
+async def generate_embeddings_batch(
+    request: Dict[str, Any],
+):
+    """Generate embeddings for multiple texts"""
+    REQUEST_COUNT.labels(method="POST", endpoint="/api/embeddings/generate/batch").inc()
+    
+    try:
+        from services.embedding_service_factory import EmbeddingServiceFactory
+        import math
+        
+        texts = request.get("texts", [])
+        model = request.get("model")
+        provider = request.get("provider")
+        normalize = request.get("normalize", True)
+        
+        if not texts or not isinstance(texts, list):
+            raise HTTPException(status_code=400, detail="texts array is required")
+        
+        logger.info("🔢 Generating batch embeddings", 
+                   count=len(texts),
+                   model=model,
+                   provider=provider)
+        
+        # Create embedding service
+        embedding_service = EmbeddingServiceFactory.create(
+            provider=provider,
+            model_name=model
+        )
+        
+        # Generate embeddings
+        embeddings = await embedding_service.generate_embeddings_batch(
+            texts,
+            normalize=normalize
+        )
+        
+        # Get model info
+        model_name = embedding_service.get_model_name() if hasattr(embedding_service, 'get_model_name') else (model or 'default')
+        dimensions = embedding_service.get_dimensions()
+        provider_used = provider or settings.embedding_provider.lower()
+        
+        # Estimate usage
+        total_chars = sum(len(text) for text in texts)
+        estimated_tokens = math.ceil(total_chars / 4)
+        
+        logger.info("✅ Batch embeddings generated", 
+                   count=len(embeddings),
+                   dimensions=dimensions,
+                   model=model_name)
+        
+        return {
+            "embeddings": embeddings,
+            "model": model_name,
+            "dimensions": dimensions,
+            "provider": provider_used,
+            "usage": {
+                "prompt_tokens": estimated_tokens,
+                "total_tokens": estimated_tokens
+            }
+        }
+    
+    except Exception as e:
+        logger.error("❌ Batch embedding generation failed", error=str(e))
+        raise HTTPException(status_code=500, detail=f"Batch embedding generation failed: {str(e)}")
+
+# Agent Statistics Endpoint
+@app.get("/api/agents/{agent_id}/stats")
+async def get_agent_stats(
+    agent_id: str,
+    days: int = 7,
+    supabase: SupabaseClient = Depends(get_supabase_client)
+):
+    """Get comprehensive agent statistics from agent_metrics table"""
+    REQUEST_COUNT.labels(method="GET", endpoint="/api/agents/{agent_id}/stats").inc()
+    
+    try:
+        logger.info("📊 Fetching agent stats", agent_id=agent_id, days=days)
+        
+        stats = await supabase.get_agent_stats(agent_id, days=days)
+        
+        return {
+            "success": True,
+            "data": stats
+        }
+    
+    except Exception as e:
+        logger.error("❌ Failed to get agent stats", agent_id=agent_id, error=str(e))
+        # Return empty stats instead of synthetic data
+        return {
+            "success": True,
+            "data": {
+                "totalConsultations": 0,
+                "satisfactionScore": 0.0,
+                "successRate": 0.0,
+                "averageResponseTime": 0.0,
+                "certifications": [],
+                "totalTokensUsed": 0,
+                "totalCost": 0.0,
+                "confidenceLevel": 0,
+                "availability": "offline",
+                "recentFeedback": []
+            }
+        }
 
 # WebSocket endpoint for real-time agent communication
 @app.websocket("/ws/agents/{agent_id}")

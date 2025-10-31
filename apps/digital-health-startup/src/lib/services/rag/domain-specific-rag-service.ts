@@ -134,7 +134,11 @@ export class DomainSpecificRAGService {
       .eq('knowledge_documents.domain', domain);
 
     if (docError || chunkError) {
-      throw new Error(`Failed to get stats for domain ${domain}`);
+      console.warn(`[DomainSpecificRAGService] Stats unavailable for domain ${domain}`, {
+        documentError: docError?.message,
+        chunkError: chunkError?.message,
+      });
+      return this.buildEmptyDomainStats(domain);
     }
 
     // Get last updated timestamp
@@ -170,7 +174,8 @@ export class DomainSpecificRAGService {
       .eq('is_active', true);
 
     if (error || !domains) {
-      throw new Error('Failed to fetch domains');
+      console.warn('[DomainSpecificRAGService] Failed to fetch domains list', error);
+      return [];
     }
 
     // Get stats for each domain
@@ -179,6 +184,19 @@ export class DomainSpecificRAGService {
 
     // Sort by total documents (most rich first)
     return stats.sort((a, b) => b.totalDocuments - a.totalDocuments);
+  }
+
+  private buildEmptyDomainStats(domain: string): DomainRAGStats {
+    return {
+      domain,
+      totalDocuments: 0,
+      totalChunks: 0,
+      lastUpdated: undefined,
+      coverage: {
+        documents: 0,
+        chunks: 0,
+      },
+    };
   }
 
   /**
@@ -331,4 +349,3 @@ export class DomainSpecificRAGService {
 
 // Export singleton instance
 export const domainSpecificRAGService = new DomainSpecificRAGService();
-

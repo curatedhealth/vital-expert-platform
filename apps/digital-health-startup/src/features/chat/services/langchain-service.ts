@@ -17,7 +17,7 @@ export interface ProcessDocumentsOptions {
   isGlobal: boolean;
   domain: string;
   embeddingModel: string;
-  chatModel: string;
+  // chatModel: string; // Not needed - selected per query/conversation
 }
 
 export interface ProcessResult {
@@ -149,17 +149,19 @@ export class LangChainRAGService {
         let year: number | undefined;
         let author: string | undefined;
         let organization: string | undefined;
+        let extractionResult: { newFileName?: string; confidence?: number; metadata?: any } | undefined;
+        let processingResult: any;
 
         try {
           // Process file with all Python services (metadata, sanitization, copyright)
-          const processingResult = await pythonServicesClient.processFileMetadata(
+          processingResult = await pythonServicesClient.processFileMetadata(
             file.name,
             content,
             {
               extract_from_content: true,
               sanitize: true,
               check_copyright: true,
-              rename_file: false, // Don't rename file, but extract metadata
+              rename_file: true, // Enable file renaming using unified VITAL taxonomy
               remove_pii: true,
               remove_phi: true,
               remove_credit_cards: true,
@@ -190,17 +192,23 @@ export class LangChainRAGService {
           author = extractedMetadata.author;
           organization = extractedMetadata.organization;
 
+          // Create extractionResult-like object from processingResult for consistency
+          extractionResult = {
+            newFileName: processingResult.metadata?.new_filename || processingResult.new_filename,
+            confidence: processingResult.processing_summary?.extraction_confidence || processingResult.metadata?.confidence,
+          };
+
         } catch (error) {
           // Fallback to TypeScript services if Python services are unavailable
           console.warn('⚠️ Python services unavailable, falling back to TypeScript services:', error);
           
           const { metadataExtractionService } = await import('@/lib/services/metadata/metadata-extraction-service');
-          const extractionResult = await metadataExtractionService.processFile(
+          extractionResult = await metadataExtractionService.processFile(
             file,
             content,
             {
               extractFromContent: true,
-              renameFile: false,
+              renameFile: true, // Enable file renaming using unified VITAL taxonomy
               domain: options.domain,
             }
           );
@@ -261,14 +269,15 @@ export class LangChainRAGService {
               source: 'upload',
               filename: file.name,
               original_filename: file.name, // Keep original filename
-              new_filename: extractionResult.newFileName, // New taxonomy-based filename
+              new_filename: extractionResult?.newFileName || file.name, // New taxonomy-based filename
               filesize: file.size,
               filetype: file.type,
               uploadedAt: new Date().toISOString(),
               isGlobal: options.isGlobal,
               agentId: options.agentId,
               embeddingModel: options.embeddingModel,
-              chatModel: options.chatModel,
+              // chatModel is not needed during document processing - it's selected per query/conversation
+              // chatModel: options.chatModel,
               // Extracted metadata
               source_name: sourceName,
               document_type: documentType,

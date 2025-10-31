@@ -431,13 +431,18 @@ async def metrics():
 @app.post("/api/mode1/manual", response_model=Mode1ManualResponse)
 async def execute_mode1_manual(
     request: Mode1ManualRequest,
-    orchestrator: AgentOrchestrator = Depends(get_agent_orchestrator)
+    fastapi_request: Request,
+    orchestrator: AgentOrchestrator = Depends(get_agent_orchestrator),
+    tenant_id: str = Depends(get_tenant_id)
 ):
     """Execute Mode 1 manual interactive workflow via Python orchestration"""
     REQUEST_COUNT.labels(method="POST", endpoint="/api/mode1/manual").inc()
 
     if not supabase_client:
         raise HTTPException(status_code=503, detail="Supabase client not initialized")
+    
+    # Set tenant context in database for RLS
+    await set_tenant_context_in_db(tenant_id, supabase_client)
 
     start_time = asyncio.get_event_loop().time()
 

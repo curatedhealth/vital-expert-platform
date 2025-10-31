@@ -84,7 +84,7 @@ const limiter = rateLimit({
 app.use('/v1/', limiter);
 
 // ============================================================================
-// HEALTH CHECK
+// HEALTH CHECK & METRICS
 // ============================================================================
 
 app.get('/health', async (req, res) => {
@@ -109,6 +109,42 @@ app.get('/health', async (req, res) => {
     health.connections.aiEngine = 'disconnected';
     health.status = 'degraded';
     res.status(503).json(health);
+  }
+});
+
+/**
+ * Metrics endpoint for Prometheus
+ */
+app.get('/metrics', async (req, res) => {
+  try {
+    // Basic metrics endpoint - can be enhanced with prom-client later
+    const metrics = {
+      service: 'api-gateway',
+      uptime: process.uptime(),
+      memory: {
+        used: Math.round(process.memoryUsage().heapUsed / 1024 / 1024),
+        total: Math.round(process.memoryUsage().heapTotal / 1024 / 1024),
+      },
+      timestamp: new Date().toISOString(),
+    };
+
+    // Format as Prometheus text format (basic)
+    const prometheusFormat = `# HELP api_gateway_uptime_seconds API Gateway uptime in seconds
+# TYPE api_gateway_uptime_seconds gauge
+api_gateway_uptime_seconds ${metrics.uptime}
+# HELP api_gateway_memory_used_mb API Gateway memory used in MB
+# TYPE api_gateway_memory_used_mb gauge
+api_gateway_memory_used_mb ${metrics.memory.used}
+# HELP api_gateway_memory_total_mb API Gateway total memory in MB
+# TYPE api_gateway_memory_total_mb gauge
+api_gateway_memory_total_mb ${metrics.memory.total}
+`;
+
+    res.set('Content-Type', 'text/plain; version=0.0.4');
+    res.send(prometheusFormat);
+  } catch (error) {
+    console.error('[Gateway] Metrics error:', error);
+    res.status(500).send(`# ERROR: ${error.message}\n`);
   }
 });
 

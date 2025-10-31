@@ -15,18 +15,50 @@ alerting:
   alertmanagers:
     - static_configs:
         - targets:
-          # - 'alertmanager:9093'  # Uncomment when Alertmanager is deployed
+          - 'alertmanager:9093'  # Alertmanager service in Docker network
 
 # Load rules once and periodically evaluate them
 rule_files:
   - 'alerts/rag-alerts.yml'
   - 'alerts/platform-alerts.yml'
   - 'alerts/agent-operations-alerts.yml'
+  - 'alerts/python-ai-engine-alerts.yml'
 
 # Scrape configurations
 scrape_configs:
-  # VITAL Path Application - RAG Metrics
-  - job_name: 'vital-path-rag'
+  # Python AI Engine - FastAPI Backend
+  - job_name: 'vital-python-ai-engine'
+    scrape_interval: 15s
+    scrape_timeout: 10s
+    metrics_path: '/metrics'
+    static_configs:
+      - targets:
+          - 'host.docker.internal:8000'  # Local development (Mac/Windows Docker)
+          # - 'localhost:8000'            # Alternative for Linux
+          # - 'ai-engine.railway.app'     # Production Railway
+          # - 'ai-engine.modal.run'      # Production Modal
+        labels:
+          service: 'vital-python-ai-engine'
+          component: 'ai-engine'
+          tier: 'backend'
+
+  # API Gateway - Node.js Express
+  - job_name: 'vital-api-gateway'
+    scrape_interval: 15s
+    scrape_timeout: 10s
+    metrics_path: '/metrics'
+    static_configs:
+      - targets:
+          - 'host.docker.internal:3001'  # Local development
+          # - 'localhost:3001'          # Alternative for Linux
+          # - 'api-gateway.railway.app'  # Production Railway
+        labels:
+          service: 'vital-api-gateway'
+          component: 'api-gateway'
+          tier: 'gateway'
+
+  # VITAL Path Frontend - Next.js Metrics
+  - job_name: 'vital-path-frontend'
     scrape_interval: 15s
     scrape_timeout: 10s
     metrics_path: '/api/metrics'
@@ -34,15 +66,13 @@ scrape_configs:
       format: ['prometheus']
     static_configs:
       - targets:
-          - 'host.docker.internal:3001'  # Local development (Mac/Windows Docker)
-          # - 'localhost:3001'            # Alternative for Linux
-          # - 'vital-path.vercel.app'     # Production (uncomment and adjust)
+          - 'host.docker.internal:3000'  # Local development
+          # - 'localhost:3000'            # Alternative for Linux
+          # - 'www.vital.expert'          # Production Vercel
         labels:
-          service: 'vital-path'
-          component: 'rag-service'
-          tier: 'application'
-
-  # Additional scrape configs (examples)
+          service: 'vital-path-frontend'
+          component: 'nextjs'
+          tier: 'frontend'
 
   # Prometheus self-monitoring
   - job_name: 'prometheus'
@@ -54,15 +84,16 @@ scrape_configs:
           service: 'prometheus'
           tier: 'monitoring'
 
-  # Node Exporter (system metrics) - Optional
-  # - job_name: 'node-exporter'
-  #   scrape_interval: 30s
-  #   static_configs:
-  #     - targets:
-  #         - 'localhost:9100'
-  #       labels:
-  #         service: 'node-exporter'
-  #         tier: 'infrastructure'
+  # Node Exporter (system metrics)
+  - job_name: 'node-exporter'
+    scrape_interval: 30s
+    static_configs:
+      - targets:
+          - 'host.docker.internal:9100'  # Docker network
+          # - 'localhost:9100'           # Alternative for Linux
+        labels:
+          service: 'node-exporter'
+          tier: 'infrastructure'
 
 # Storage configuration is set via command-line flags in docker-compose.yml
 # See: --storage.tsdb.path and --storage.tsdb.retention.time

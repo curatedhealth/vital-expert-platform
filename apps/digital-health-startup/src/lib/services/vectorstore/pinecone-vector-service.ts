@@ -6,7 +6,7 @@
 
 import { Pinecone } from '@pinecone-database/pinecone';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
-import { embeddingService } from '../embeddings/openai-embedding-service';
+import { getEmbeddingService } from '../embeddings/embedding-service-factory';
 
 export interface PineconeVectorRecord {
   id: string;
@@ -157,11 +157,15 @@ export class PineconeVectorService {
     const index = this.pinecone.Index(this.indexName);
 
     try {
-      // Generate embedding if text provided
+      // Generate embedding if text provided via API Gateway
       let queryVector: number[];
       if (query.embedding) {
         queryVector = query.embedding;
       } else if (query.text) {
+        const embeddingService = getEmbeddingService({
+          provider: 'openai',
+          model: 'text-embedding-3-large',
+        });
         const result = await embeddingService.generateEmbedding(query.text, {
           useCache: true,
         });

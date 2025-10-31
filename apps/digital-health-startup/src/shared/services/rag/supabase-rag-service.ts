@@ -1,5 +1,6 @@
 import { supabase } from '@vital/sdk/client';
 import { agentService } from '@/shared/services/agents/agent-service';
+import { getEmbeddingService } from '@/lib/services/embeddings/embedding-service-factory';
 
 // Types for RAG system - using fallback types for missing tables
 export interface KnowledgeSource {
@@ -485,26 +486,47 @@ export class SupabaseRAGService {
   // ===== HELPER METHODS =====
 
   /**
-   * Get embedding for query text using OpenAI
+   * Get embedding for query text via API Gateway → Python AI Engine
    */
   private async getQueryEmbedding(text: string, model: string): Promise<Partial<EmbeddingModels>> {
     try {
-      // Import embedding service
-      const { embeddingService } = await import('@/lib/services/embeddings/openai-embedding-service');
+      // Use embedding service factory which routes to API Gateway
+      const embeddingService = getEmbeddingService({
+        provider: model === 'openai' ? 'openai' : 'huggingface',
+        model: model === 'openai' ? 'text-embedding-3-large' : undefined,
+      });
 
-      // Generate OpenAI embedding
-      const result = await embeddingService.generateEmbedding(text);
+      // Generate primary embedding
+      const primaryEmbedding = await embeddingService.generateQueryEmbedding(text);
 
-      return {
-        openai: result.embedding,
-        // Note: For clinical, legal, scientific embeddings,
-        // you would need to integrate specialized models
-        // For now, we use OpenAI as the primary embedding
+      const embedding: Partial<EmbeddingModels> = {
+        openai: primaryEmbedding,
       };
-    } catch (error) {
-      console.error('Failed to generate embedding:', error);
 
-      // Fallback: Return null to trigger text search
+      // If model is not OpenAI, also generate that embedding
+      if (model !== 'openai') {
+        try {
+          const hfService = getEmbeddingService({
+            provider: 'huggingface',
+          });
+          const hfEmbedding = await hfService.generateQueryEmbedding(text);
+          
+          if (model === 'clinical') {
+            embedding.clinical = hfEmbedding;
+          } else if (model === 'legal') {
+            embedding.legal = hfEmbedding;
+          } else if (model === 'scientific') {
+            embedding.scientific = hfEmbedding;
+          }
+        } catch (e) {
+          console.warn(`Failed to generate ${model} embedding:`, e);
+        }
+      }
+
+      return embedding;
+    } catch (error) {
+      console.error('Failed to generate embedding via API Gateway:', error);
+      // Fallback: Return zero embedding (no direct OpenAI calls per Golden Rule)
       throw new Error('Embedding generation failed');
     }
   }

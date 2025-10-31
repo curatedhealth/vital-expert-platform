@@ -1,5 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
-import { OpenAI } from 'openai';
+
+// API Gateway URL for Python AI Engine
+const API_GATEWAY_URL = process.env.NEXT_PUBLIC_API_GATEWAY_URL || process.env.API_GATEWAY_URL || 'http://localhost:3001';
 
 export interface RAGSearchResult {
   content: string;
@@ -25,19 +27,12 @@ export interface RAGResponse {
 
 export class SupabaseRAGService {
   private supabase: unknown;
-  private openai: OpenAI | null = null;
 
   constructor() {
     this.supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     );
-
-    if (process.env.OPENAI_API_KEY && process.env.OPENAI_API_KEY !== 'demo-key') {
-      this.openai = new OpenAI({
-        apiKey: process.env.OPENAI_API_KEY,
-      });
-    }
   }
 
   /**
@@ -108,25 +103,38 @@ export class SupabaseRAGService {
   }
 
   /**
-   * Enhance the user query for better retrieval
+   * Enhance the user query for better retrieval via API Gateway → Python AI Engine
    */
   private async enhanceQuery(query: string, agentType: string): Promise<string | null> {
-    if (!this.openai) return null;
-
     try {
       const enhancementPrompt = this.getQueryEnhancementPrompt(agentType);
 
-      const response = await this.openai.chat.completions.create({
-        model: 'gpt-3.5-turbo',
-        messages: [
-          { role: 'system', content: enhancementPrompt },
-          { role: 'user', content: query },
-        ],
-        temperature: 0.3,
-        max_tokens: 150,
+      // Call Python AI Engine via API Gateway for query enhancement
+      const response = await fetch(`${API_GATEWAY_URL}/v1/chat/completions`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-tenant-id': '00000000-0000-0000-0000-000000000001',
+        },
+        body: JSON.stringify({
+          messages: [
+            { role: 'system', content: enhancementPrompt },
+            { role: 'user', content: query },
+          ],
+          model: 'gpt-3.5-turbo',
+          temperature: 0.3,
+          max_tokens: 150,
+          stream: false,
+        }),
       });
 
-      return response.choices[0]?.message?.content?.trim() || null;
+      if (!response.ok) {
+        console.warn('Query enhancement failed, using original query');
+        return null;
+      }
+
+      const completion = await response.json();
+      return completion.choices?.[0]?.message?.content?.trim() || null;
     } catch (error) {
       console.error('Query enhancement error:', error);
       return null;
@@ -335,12 +343,15 @@ export class SupabaseRAGService {
   }
 
   /**
-   * Generate embedding using OpenAI Embedding Service
+   * Generate embedding via API Gateway → Python AI Engine
    */
   private async generateEmbedding(text: string): Promise<number[] | null> {
     try {
-      // Use the centralized embedding service
-      const { embeddingService } = await import('@/lib/services/embeddings/openai-embedding-service');
+      // Use embedding service factory which routes to API Gateway
+      const embeddingService = getEmbeddingService({
+        provider: 'openai',
+        model: 'text-embedding-3-large',
+      });
 
       const result = await embeddingService.generateEmbedding(text, {
         useCache: true, // Enable caching for better performance
@@ -348,21 +359,8 @@ export class SupabaseRAGService {
 
       return result.embedding;
     } catch (error) {
-      console.error('Embedding generation error:', error);
-
-      // Fallback to direct OpenAI call if service fails
-      if (this.openai) {
-        try {
-          const response = await this.openai.embeddings.create({
-            model: 'text-embedding-3-large',
-            input: text,
-          });
-          return response.data[0].embedding;
-        } catch (fallbackError) {
-          console.error('Fallback embedding generation also failed:', fallbackError);
-        }
-      }
-
+      console.error('Embedding generation error via API Gateway:', error);
+      // No fallback - API Gateway is the only path (Golden Rule compliance)
       return null;
     }
   }

@@ -613,7 +613,7 @@ export class Mode4AutonomousManualHandler {
   // STREAMING RESULTS
   // ============================================================================
 
-  private async *streamMode4Results(
+  async *streamMode4Results(
     result: Mode4State, 
     startTime: number,
     executionId?: string
@@ -972,7 +972,7 @@ export async function* executeMode4(config: Mode4Config): AsyncGenerator<Autonom
     };
     throw error;
   }
-  }
+}
 
 }
 

@@ -1,10 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import OpenAI from 'openai';
 
-// Initialize OpenAI client
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY || '',
-});
+// API Gateway URL for Python AI Engine
+const API_GATEWAY_URL = process.env.NEXT_PUBLIC_API_GATEWAY_URL || process.env.API_GATEWAY_URL || 'http://localhost:3001';
 
 /**
  * POST /api/generate-persona
@@ -115,27 +112,55 @@ Return ONLY a JSON object (no markdown, no explanations) with this structure:
   "reasoning": "Brief explanation of why these suggestions fit the role"
 }`;
 
-    // Call OpenAI API
-    const completion = await openai.chat.completions.create({
-      model: 'gpt-4o',
-      messages: [
-        { role: 'system', content: systemInstruction },
-        { role: 'user', content: userPrompt }
-      ],
-      temperature: 0.8, // Slightly higher for creativity
-      max_tokens: 2000,
-      response_format: { type: 'json_object' } // Force JSON response
+    // Call Python AI Engine via API Gateway
+    const chatResponse = await fetch(`${API_GATEWAY_URL}/v1/chat/completions`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-tenant-id': '00000000-0000-0000-0000-000000000001', // Default tenant for persona generation
+      },
+      body: JSON.stringify({
+        messages: [
+          { role: 'system', content: systemInstruction },
+          { role: 'user', content: userPrompt }
+        ],
+        model: 'gpt-4o',
+        temperature: 0.8, // Slightly higher for creativity
+        max_tokens: 2000,
+        stream: false,
+        // Note: response_format is not yet supported in our Python endpoint, but JSON response is default
+      }),
     });
 
-    const responseContent = completion.choices[0].message.content || '{}';
-    const persona = JSON.parse(responseContent);
+    if (!chatResponse.ok) {
+      const errorData = await chatResponse.json().catch(() => ({}));
+      throw new Error(errorData.error?.message || `Chat completion failed: ${chatResponse.statusText}`);
+    }
+
+    const completion = await chatResponse.json();
+    const responseContent = completion.choices?.[0]?.message?.content || '{}';
+    
+    // Parse JSON response (may need to handle markdown code blocks)
+    let persona;
+    try {
+      // Try direct JSON parse first
+      persona = JSON.parse(responseContent);
+    } catch (e) {
+      // If that fails, try extracting JSON from markdown code blocks
+      const jsonMatch = responseContent.match(/```(?:json)?\s*(\{[\s\S]*\})\s*```/) || responseContent.match(/(\{[\s\S]*\})/);
+      if (jsonMatch) {
+        persona = JSON.parse(jsonMatch[1]);
+      } else {
+        throw new Error('Failed to parse AI response as JSON');
+      }
+    }
 
     // Add metadata
     const response = {
       ...persona,
       _meta: {
         tokensUsed: completion.usage?.total_tokens || 0,
-        model: completion.model,
+        model: completion.model || 'gpt-4o',
         generatedAt: new Date().toISOString()
       }
     };

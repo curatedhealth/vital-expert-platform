@@ -1,10 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import OpenAI from 'openai';
 
-// Initialize OpenAI client
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY || '',
-});
+// API Gateway URL for Python AI Engine
+const API_GATEWAY_URL = process.env.NEXT_PUBLIC_API_GATEWAY_URL || process.env.API_GATEWAY_URL || 'http://localhost:3001';
 
 /**
  * POST /api/generate-system-prompt
@@ -57,20 +54,34 @@ Mode: ${mode === 'optimize' ? 'Optimize for clarity and LLM comprehension' : 'Ge
 
 Please create a comprehensive system prompt that incorporates all the provided information.`;
 
-    // Call OpenAI API
-    const completion = await openai.chat.completions.create({
-      model: 'gpt-4o', // or 'gpt-4-turbo-preview', 'gpt-3.5-turbo'
-      messages: [
-        { role: 'system', content: systemInstruction },
-        { role: 'user', content: userPrompt }
-      ],
-      temperature: 0.7,
-      max_tokens: 3000,
+    // Call Python AI Engine via API Gateway
+    const chatResponse = await fetch(`${API_GATEWAY_URL}/v1/chat/completions`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-tenant-id': '00000000-0000-0000-0000-000000000001', // Default tenant for prompt generation
+      },
+      body: JSON.stringify({
+        messages: [
+          { role: 'system', content: systemInstruction },
+          { role: 'user', content: userPrompt }
+        ],
+        model: 'gpt-4o',
+        temperature: 0.7,
+        max_tokens: 3000,
+        stream: false,
+      }),
     });
 
-    const systemPrompt = completion.choices[0].message.content || '';
+    if (!chatResponse.ok) {
+      const errorData = await chatResponse.json().catch(() => ({}));
+      throw new Error(errorData.error?.message || `Chat completion failed: ${chatResponse.statusText}`);
+    }
+
+    const completion = await chatResponse.json();
+    const systemPrompt = completion.choices?.[0]?.message?.content || '';
     const tokensUsed = completion.usage?.total_tokens || 0;
-    const model = completion.model;
+    const model = completion.model || 'gpt-4o';
 
     return NextResponse.json({
       systemPrompt,

@@ -1,0 +1,41 @@
+# VITAL Python AI Engine - Docker Compose
+# Python AI Engine (FastAPI) service only
+
+version: '3.8'
+
+services:
+  # Python AI Engine - FastAPI Backend
+  python-ai-engine:
+    build:
+      context: ./services/ai-engine
+      dockerfile: Dockerfile
+    container_name: vital-python-ai-engine
+    ports:
+      - "8000:8000"
+    environment:
+      - PYTHONUNBUFFERED=1
+      - PORT=8000
+      - LOG_LEVEL=info
+      - SUPABASE_URL=${SUPABASE_URL:-}
+      - SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY:-}
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY:-}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - DATABASE_URL=${DATABASE_URL:-}
+      - REDIS_URL=${REDIS_URL:-}
+    networks:
+      - vital-python-network
+    restart: unless-stopped
+    volumes:
+      - ./logs/python:/app/logs
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      start_period: 40s
+      retries: 3
+
+# Network
+networks:
+  vital-python-network:
+    driver: bridge
+

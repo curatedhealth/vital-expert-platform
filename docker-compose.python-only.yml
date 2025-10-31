@@ -12,6 +12,15 @@ services:
     container_name: vital-python-ai-engine
     ports:
       - "8000:8000"
+    # Resource limits for production
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 4G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
     environment:
       - PYTHONUNBUFFERED=1
       - PORT=8000

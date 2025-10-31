@@ -6,8 +6,12 @@ Reads PORT from environment variable and starts FastAPI server
 import os
 import sys
 
+# Change to the directory containing this script to ensure relative paths work
+script_dir = os.path.dirname(os.path.abspath(__file__))
+os.chdir(script_dir)
+
 # Add src to Python path to ensure imports work
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
+sys.path.insert(0, os.path.join(script_dir, 'src'))
 
 if __name__ == "__main__":
     # Get port from environment or default to 8000
@@ -56,14 +60,16 @@ if __name__ == "__main__":
     print(f"🌐 Starting server on 0.0.0.0:{port_int}")
     
     try:
+        # Use string path for uvicorn to allow proper module resolution
         uvicorn.run(
-            app,  # Pass app directly instead of string
+            "main:app",  # Use string so uvicorn can resolve relative imports
             host="0.0.0.0",
             port=port_int,
             log_level=log_level,
             reload=reload,
             workers=workers if not reload else 1,
-            access_log=True
+            access_log=True,
+            root_path=script_dir  # Set root path
         )
     except Exception as e:
         print(f"❌ Failed to start server: {e}", file=sys.stderr)

@@ -30,9 +30,20 @@ class Settings(BaseSettings):
     
     # HuggingFace Configuration
     huggingface_api_key: Optional[str] = Field(default=None, env="HUGGINGFACE_API_KEY")
+    hf_token: Optional[str] = Field(default=None, env="HF_TOKEN")  # Alternative HuggingFace token
     embedding_provider: str = Field(default="openai", env="EMBEDDING_PROVIDER")  # 'openai' or 'huggingface'
     huggingface_embedding_model: str = Field(default="bge-base-en-v1.5", env="HUGGINGFACE_EMBEDDING_MODEL")
     use_huggingface_api: bool = Field(default=False, env="USE_HUGGINGFACE_API")  # Use API vs local model
+
+    # Google/Gemini Configuration
+    google_api_key: Optional[str] = Field(default=None, env="GOOGLE_API_KEY")
+    gemini_api_key: Optional[str] = Field(default=None, env="GEMINI_API_KEY")
+
+    # Anthropic Configuration
+    anthropic_api_key: Optional[str] = Field(default=None, env="ANTHROPIC_API_KEY")
+
+    # Tavily Configuration (Web Search)
+    tavily_api_key: Optional[str] = Field(default=None, env="TAVILY_API_KEY")
 
     # Vector Database Configuration
     vector_dimension: int = Field(default=1536, env="VECTOR_DIMENSION")

@@ -16,27 +16,9 @@ app = modal.App("vital-ai-engine")
 # Define the image with all dependencies
 image = (
     modal.Image.debian_slim(python_version="3.12")
-    .apt_install("curl")
-    .pip_install_from_pyproject("pyproject.toml")  # If using pyproject.toml
-    .pip_install(
-        "fastapi==0.104.1",
-        "uvicorn[standard]==0.24.0",
-        "pydantic==2.5.0",
-        "langchain>=0.1.0,<0.2.0",
-        "langchain-openai>=0.0.5",
-        "langchain-community>=0.0.10",
-        "langsmith>=0.1.0,<0.2.0",  # Compatible with langchain-core>=0.1.25
-        "supabase==2.3.0",
-        "pinecone-client==2.2.4",
-        "httpx>=0.24.0,<0.25.0",  # Compatible with supabase==2.3.0
-        "python-dotenv==1.0.0",
-        "numpy>=1.26.0",
-        "unidecode==1.3.7",
-        "langdetect==1.0.9",
-        "python-dateutil==2.8.2",
-        "structlog==23.2.0",
-        "prometheus-client==0.19.0",
-    )
+    .apt_install("curl", "gcc", "build-essential")  # For building Python packages
+    .copy_local_file("requirements.txt", "/app/requirements.txt")
+    .pip_install("-r", "/app/requirements.txt")  # Install from requirements.txt
     .copy_local_dir("src", "/app/src")
     .copy_local_file("start.py", "/app/start.py")
 )

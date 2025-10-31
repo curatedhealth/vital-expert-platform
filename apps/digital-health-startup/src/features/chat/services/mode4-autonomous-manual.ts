@@ -974,8 +974,6 @@ export async function* executeMode4(config: Mode4Config): AsyncGenerator<Autonom
   }
 }
 
-}
-
 function createMode4Workflow(
   handler: Mode4AutonomousManualHandler
 ): CompiledStateGraph<Mode4State, Partial<Mode4State>> {

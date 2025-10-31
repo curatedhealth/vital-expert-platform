@@ -255,13 +255,26 @@ async function generateEmbeddings(supabase: any, chunks: Array<{
 
   for (const chunk of chunks) {
     try {
-      // Generate OpenAI embedding
-      const embeddingResponse = await openai.embeddings.create({
-        model: 'text-embedding-ada-002',
-        input: chunk.content,
+      // Generate embedding via API Gateway → Python AI Engine
+      const embeddingResponse = await fetch(`${API_GATEWAY_URL}/api/embeddings/generate`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-tenant-id': '00000000-0000-0000-0000-000000000001', // Default tenant for knowledge processing
+        },
+        body: JSON.stringify({
+          text: chunk.content,
+          model: 'text-embedding-ada-002',
+          provider: 'openai',
+        }),
       });
 
-      const embedding = embeddingResponse.data[0].embedding;
+      if (!embeddingResponse.ok) {
+        throw new Error(`Embedding generation failed: ${embeddingResponse.statusText}`);
+      }
+
+      const embeddingData = await embeddingResponse.json();
+      const embedding = embeddingData.embedding;
 
       // Extract keywords (simple approach - in production use NLP libraries)
       const keywords = extractKeywords(chunk.content);

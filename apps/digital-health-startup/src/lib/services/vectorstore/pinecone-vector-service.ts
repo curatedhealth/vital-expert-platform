@@ -613,7 +613,10 @@ export class PineconeVectorService {
       if (query.embedding) {
         queryVector = query.embedding;
       } else if (query.text) {
-        const { embeddingService } = await import('@/lib/services/embeddings/openai-embedding-service');
+        const embeddingService = getEmbeddingService({
+          provider: 'openai',
+          model: 'text-embedding-3-large',
+        });
         const result = await embeddingService.generateEmbedding(query.text, {
           useCache: true,
         });

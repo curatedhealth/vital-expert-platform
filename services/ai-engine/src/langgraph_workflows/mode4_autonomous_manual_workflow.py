@@ -419,12 +419,31 @@ class Mode4AutonomousManualWorkflow(BaseWorkflow, ToolChainMixin, MemoryIntegrat
     
     @trace_node("mode4_initialize_react")
     async def initialize_react_state_node(self, state: UnifiedWorkflowState) -> UnifiedWorkflowState:
-        """Node: Initialize ReAct state."""
+        """Node: Initialize ReAct state + Autonomous Controller."""
+        # Create autonomous controller for this execution
+        from pydantic import UUID4
+        goal = state.get('understood_goal', state['query'])
+        session_id = state.get('session_id', f"mode4_{state['tenant_id']}_{datetime.now().timestamp()}")
+        
+        self.autonomous_controller = AutonomousController(
+            session_id=session_id,
+            tenant_id=UUID4(state['tenant_id']),
+            goal=goal,
+            supabase_client=self.supabase,
+            cost_limit_usd=state.get('cost_limit_usd', 10.0),
+            runtime_limit_minutes=state.get('runtime_limit_minutes', 30)
+        )
+        
+        logger.info("✅ Autonomous controller initialized (Mode 4)", session_id=session_id, goal_preview=goal[:50])
+        
         return {
             **state,
             'current_iteration': 0,
             'iteration_history': [],
-            'goal_achieved': False
+            'goal_achieved': False,
+            'total_cost_usd': 0.0,
+            'session_id': session_id,
+            'current_node': 'initialize_react'
         }
     
     @trace_node("mode4_generate_thought")
@@ -728,13 +747,81 @@ class Mode4AutonomousManualWorkflow(BaseWorkflow, ToolChainMixin, MemoryIntegrat
         """Route based on validation."""
         return "valid" if state.get('agent_validation_valid') else "invalid"
     
-    def should_continue_react(self, state: UnifiedWorkflowState) -> str:
-        """Determine if ReAct loop should continue."""
+    async def should_continue_react(self, state: UnifiedWorkflowState) -> str:
+        """
+        Determine if ReAct loop should continue.
+        
+        Phase 3: Uses AutonomousController for intelligent goal-based decisions
+        instead of hard max_iterations limit.
+        """
+        # Quick check: goal already achieved
         if state.get('goal_achieved'):
+            logger.info("✅ Goal achieved, stopping ReAct loop (Mode 4)")
             return "achieved"
         
-        if state.get('current_iteration', 0) >= state.get('max_iterations', 5):
-            return "max_iterations"
+        if not self.autonomous_controller:
+            logger.warning("No autonomous controller (Mode 4), falling back to iteration limit")
+            # Fallback to old logic if controller not initialized
+            current_iter = state.get('current_iteration', 0)
+            max_iter = state.get('max_iterations', 5)
+            if current_iter >= max_iter:
+                return "max_iterations"
+            return "iterate"
         
-        return "iterate"
+        # Get current state
+        current_iter = state.get('current_iteration', 0)
+        current_cost = state.get('total_cost_usd', 0.0)
+        goal_progress = self._calculate_goal_progress(state)
+        
+        # Ask controller for decision
+        decision = await self.autonomous_controller.should_continue(
+            current_cost_usd=current_cost,
+            goal_progress=goal_progress,
+            iteration_count=current_iter,
+            error_occurred=len(state.get('errors', [])) > 0
+        )
+        
+        logger.info(
+            f"Autonomous decision (Mode 4): {'CONTINUE' if decision.should_continue else 'STOP'}",
+            reason=decision.reason,
+            progress=f"{decision.goal_progress:.0%}",
+            cost=f"${current_cost:.2f}",
+            remaining_budget=f"${decision.remaining_budget_usd:.2f}",
+            remaining_time=f"{decision.remaining_minutes:.1f}min"
+        )
+        
+        # Map decision to routing
+        if decision.should_continue:
+            return "iterate"
+        elif decision.reason == "GOAL_ACHIEVED":
+            return "achieved"
+        else:
+            # Any stop reason other than goal achievement
+            return "max_iterations"  # Reuse this path for synthesis
+    
+    def _calculate_goal_progress(self, state: UnifiedWorkflowState) -> float:
+        """
+        Calculate goal progress based on ReAct history and observations.
+        
+        Heuristic based on:
+        - Goal reassessment scores
+        - Quality of observations
+        - Completeness of task plan
+        """
+        # Check if we have explicit progress from reassessment
+        goal_assessment = state.get('goal_assessment', {})
+        if goal_assessment:
+            return goal_assessment.get('progress', 0.0)
+        
+        # Heuristic: estimate from iteration history
+        iteration_history = state.get('iteration_history', [])
+        if not iteration_history:
+            return 0.0
+        
+        # Simple heuristic: progress based on successful iterations
+        total_iterations = len(iteration_history)
+        successful_iterations = sum(1 for it in iteration_history if it.get('action_success', False))
+        
+        # Progress is % of successful iterations
+        return min(1.0, successful_iterations / max(total_iterations, 1))
 

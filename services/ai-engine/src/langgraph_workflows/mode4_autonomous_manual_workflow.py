@@ -50,6 +50,7 @@ from langgraph.graph import StateGraph, END
 # Internal imports
 from langgraph_workflows.base_workflow import BaseWorkflow
 from langgraph_workflows.tool_chain_mixin import ToolChainMixin  # NEW: Tool chaining capability
+from langgraph_workflows.memory_integration_mixin import MemoryIntegrationMixin  # Phase 2: Long-term memory
 from langgraph_workflows.state_schemas import (
     UnifiedWorkflowState,
     WorkflowMode,
@@ -71,9 +72,9 @@ from services.autonomous_controller import AutonomousController  # Phase 3: Goal
 logger = structlog.get_logger()
 
 
-class Mode4AutonomousManualWorkflow(BaseWorkflow, ToolChainMixin):
+class Mode4AutonomousManualWorkflow(BaseWorkflow, ToolChainMixin, MemoryIntegrationMixin):
     """
-    Mode 4: Autonomous-Manual Workflow (Gold Standard)
+    Mode 4: Autonomous-Manual Workflow (Gold Standard) + Long-Term Memory
     
     User-selected agent with autonomous ReAct reasoning + Tool Chaining.
     
@@ -136,6 +137,9 @@ class Mode4AutonomousManualWorkflow(BaseWorkflow, ToolChainMixin):
         
         # NEW: Tool chaining (Phase 1.1) - Initialize from mixin
         self.init_tool_chaining(self.rag_service)
+        
+        # NEW: Long-term memory (Phase 2) - Initialize from mixin
+        self.init_memory_integration(supabase_client)
         
         # Node groups
         self.feedback_nodes = FeedbackNodes(

@@ -49,6 +49,7 @@ from langgraph.graph import StateGraph, END
 # Internal imports
 from langgraph_workflows.base_workflow import BaseWorkflow
 from langgraph_workflows.tool_chain_mixin import ToolChainMixin  # NEW: Tool chaining via mixin
+from langgraph_workflows.memory_integration_mixin import MemoryIntegrationMixin  # Phase 2: Long-term memory
 from langgraph_workflows.state_schemas import (
     UnifiedWorkflowState,
     WorkflowMode,
@@ -75,9 +76,9 @@ from tools.web_tools import WebSearchTool, WebScrapeTool
 logger = structlog.get_logger()
 
 
-class Mode3AutonomousAutoWorkflow(BaseWorkflow, ToolChainMixin):
+class Mode3AutonomousAutoWorkflow(BaseWorkflow, ToolChainMixin, MemoryIntegrationMixin):
     """
-    Mode 3: Autonomous-Automatic Workflow (Gold Standard)
+    Mode 3: Autonomous-Automatic Workflow (Gold Standard) + Long-Term Memory
     
     One-shot autonomous reasoning with ReAct + CoT + Tool Chaining.
     
@@ -146,6 +147,9 @@ class Mode3AutonomousAutoWorkflow(BaseWorkflow, ToolChainMixin):
         
         # Tool chaining (Phase 1.1 refactor) - Use mixin for consistency
         self.init_tool_chaining(self.rag_service)
+        
+        # NEW: Long-term memory (Phase 2) - Initialize from mixin
+        self.init_memory_integration(supabase_client)
         
         # Autonomous controller (Phase 3: Goal-based continuation)
         self.autonomous_controller = None  # Created per execution with specific goals

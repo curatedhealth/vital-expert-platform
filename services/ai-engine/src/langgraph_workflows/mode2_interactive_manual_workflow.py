@@ -48,6 +48,7 @@ from langgraph.graph import StateGraph, END
 # Internal imports
 from langgraph_workflows.base_workflow import BaseWorkflow
 from langgraph_workflows.tool_chain_mixin import ToolChainMixin  # NEW: Tool chaining capability
+from langgraph_workflows.memory_integration_mixin import MemoryIntegrationMixin  # NEW: Long-term memory
 from langgraph_workflows.state_schemas import (
     UnifiedWorkflowState,
     WorkflowMode,
@@ -70,9 +71,9 @@ from services.cache_manager import CacheManager
 logger = structlog.get_logger()
 
 
-class Mode2InteractiveManualWorkflow(BaseWorkflow, ToolChainMixin):
+class Mode2InteractiveManualWorkflow(BaseWorkflow, ToolChainMixin, MemoryIntegrationMixin):
     """
-    Mode 2: Interactive-Manual Workflow (Gold Standard) + Tool Chaining
+    Mode 2: Interactive-Manual Workflow (Gold Standard) + Tool Chaining + Long-Term Memory
     
     User manually selects expert(s), system facilitates conversation.
     
@@ -153,7 +154,10 @@ class Mode2InteractiveManualWorkflow(BaseWorkflow, ToolChainMixin):
         # NEW: Tool chaining (Phase 1.1) - Initialize from mixin
         self.init_tool_chaining(self.rag_service)
         
-        logger.info("✅ Mode2InteractiveManualWorkflow initialized with tool chaining")
+        # NEW: Long-term memory (Phase 2) - Initialize from mixin
+        self.init_memory_integration(supabase_client)
+        
+        logger.info("✅ Mode2InteractiveManualWorkflow initialized with tool chaining + long-term memory")
     
     def build_graph(self) -> StateGraph:
         """

@@ -43,7 +43,8 @@ from langgraph.graph import StateGraph, END
 
 # Internal imports
 from langgraph_workflows.base_workflow import BaseWorkflow
-from langgraph_workflows.tool_chain_mixin import ToolChainMixin  # NEW: Tool chaining capability
+from langgraph_workflows.tool_chain_mixin import ToolChainMixin
+from langgraph_workflows.memory_integration_mixin import MemoryIntegrationMixin  # NEW: Tool chaining capability
 from langgraph_workflows.state_schemas import (
     UnifiedWorkflowState,
     WorkflowMode,
@@ -59,15 +60,22 @@ from services.agent_orchestrator import AgentOrchestrator
 logger = structlog.get_logger()
 
 
-class Mode1InteractiveAutoWorkflow(BaseWorkflow, ToolChainMixin):
+class Mode1InteractiveAutoWorkflow(BaseWorkflow, ToolChainMixin, MemoryIntegrationMixin):
     """
-    Mode 1: Interactive-Automatic Workflow + Tool Chaining
+    Mode 1: Interactive-Automatic Workflow + Tool Chaining + Long-Term Memory
     
     Golden Rules Compliance:
     - ✅ Uses LangGraph StateGraph (Golden Rule #1)
     - ✅ Caching integrated at all nodes (Golden Rule #2)
     - ✅ Tenant validation enforced (Golden Rule #3)
     - ✅ Tool chaining for comprehensive queries (Golden Rule #4)
+    - ✅ Feedback-driven learning with long-term memory (Golden Rule #5)
+    
+    NEW in Phase 2:
+    - ✅ Long-term memory across sessions
+    - ✅ Semantic memory recall
+    - ✅ Personalized responses based on past interactions
+    - ✅ User preference learning
     
     NEW in Phase 1.1:
     - ✅ Tool chaining capability via ToolChainMixin
@@ -118,7 +126,10 @@ class Mode1InteractiveAutoWorkflow(BaseWorkflow, ToolChainMixin):
         # NEW: Tool chaining (Phase 1.1) - Initialize from mixin
         self.init_tool_chaining(self.rag_service)
         
-        logger.info("✅ Mode1InteractiveAutoWorkflow initialized with tool chaining")
+        # NEW: Long-term memory (Phase 2) - Initialize from mixin
+        self.init_memory_integration(supabase_client)
+        
+        logger.info("✅ Mode1InteractiveAutoWorkflow initialized with tool chaining + long-term memory")
     
     def build_graph(self) -> StateGraph:
         """

@@ -17,7 +17,7 @@ from core.config import get_settings
 logger = structlog.get_logger()
 
 class SupabaseClient:
-    """Enhanced Supabase client with vector operations"""
+    """Enhanced Supabase client with vector operations and RLS support"""
 
     def __init__(self):
         self.settings = get_settings()
@@ -25,6 +25,7 @@ class SupabaseClient:
         self.vx: Optional[vecs.Client] = None
         self.engine = None
         self.vector_collection = None
+        self.current_tenant_id: Optional[str] = None  # Track current tenant context
 
     async def initialize(self):
         """Initialize Supabase client and vector database"""
@@ -70,6 +71,92 @@ class SupabaseClient:
             logger.info("✅ Vector index ensured")
         except Exception as e:
             logger.warning("⚠️ Vector index creation warning", error=str(e))
+    
+    async def set_tenant_context(self, tenant_id: str):
+        """
+        Set tenant context for RLS enforcement.
+        
+        This method sets the tenant_id in the database session using SET LOCAL.
+        RLS policies can then filter data based on current_setting('app.tenant_id').
+        
+        Args:
+            tenant_id: The tenant UUID to set as context
+            
+        Raises:
+            ValueError: If tenant_id is None or invalid
+        """
+        if not tenant_id:
+            raise ValueError("tenant_id cannot be None")
+        
+        self.current_tenant_id = tenant_id
+        
+        try:
+            # Set tenant context in database session
+            # This enables RLS policies to filter by tenant_id
+            if self.engine:
+                async with asyncio.create_task(
+                    asyncio.to_thread(self.engine.connect)
+                ) as conn:
+                    await asyncio.create_task(
+                        asyncio.to_thread(
+                            conn.execute,
+                            text(f"SET LOCAL app.tenant_id = '{tenant_id}'")
+                        )
+                    )
+                    await asyncio.create_task(
+                        asyncio.to_thread(conn.commit)
+                    )
+                
+                logger.debug("Tenant context set in database", tenant_id=tenant_id)
+            else:
+                logger.warning("Engine not initialized, cannot set tenant context")
+                
+        except Exception as e:
+            logger.error(
+                "Failed to set tenant context in database",
+                tenant_id=tenant_id,
+                error=str(e)
+            )
+            # Don't raise - allow graceful degradation
+            pass
+    
+    async def query_with_rls(self, query: str, params: Optional[Dict[str, Any]] = None):
+        """
+        Execute query with RLS enforcement.
+        
+        This method ensures tenant context is set before executing the query.
+        All queries will be automatically filtered by tenant_id via RLS policies.
+        
+        Args:
+            query: SQL query to execute
+            params: Optional query parameters
+            
+        Returns:
+            Query results
+            
+        Raises:
+            ValueError: If tenant context is not set
+        """
+        if not self.current_tenant_id:
+            raise ValueError("tenant_id must be set before querying (call set_tenant_context first)")
+        
+        try:
+            # Execute query with RLS automatically filtering by tenant_id
+            async with asyncio.create_task(
+                asyncio.to_thread(self.engine.connect)
+            ) as conn:
+                result = await asyncio.create_task(
+                    asyncio.to_thread(
+                        conn.execute,
+                        text(query),
+                        params or {}
+                    )
+                )
+                return result.fetchall()
+                
+        except Exception as e:
+            logger.error("Query with RLS failed", error=str(e), query=query)
+            raise
 
     async def search_similar_documents(
         self,

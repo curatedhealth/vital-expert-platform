@@ -8,8 +8,8 @@ import json
 import os
 from typing import Dict, List, Any, Optional
 from datetime import datetime
-from langchain.chat_models import ChatOpenAI
-from langchain.schema import HumanMessage, SystemMessage, AIMessage
+from langchain_openai import ChatOpenAI
+from langchain_core.messages import HumanMessage, SystemMessage, AIMessage
 import structlog
 from services.confidence_calculator import get_confidence_calculator
 

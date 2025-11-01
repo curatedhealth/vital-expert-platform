@@ -7,8 +7,8 @@ import asyncio
 import json
 from typing import List, Dict, Any, Optional, Union
 from datetime import datetime, timezone
-from langchain.chat_models import ChatOpenAI
-from langchain.schema import HumanMessage, SystemMessage, AIMessage
+from langchain_openai import ChatOpenAI
+from langchain_core.messages import HumanMessage, SystemMessage, AIMessage
 from langchain.agents import create_openai_tools_agent, AgentExecutor
 from langchain.tools import Tool
 from langchain.prompts import ChatPromptTemplate, MessagesPlaceholder

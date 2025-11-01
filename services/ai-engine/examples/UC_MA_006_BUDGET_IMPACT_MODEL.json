@@ -1,0 +1,81 @@
+{
+  "domain": "Market Access",
+  "use_case": {
+    "code": "UC_MA_006",
+    "title": "Budget Impact Model (BIM)",
+    "summary": "Develop payer-ready 3–5 year financial model for digital therapeutics adoption.",
+    "complexity": "Expert",
+    "workflows": [
+      {
+        "name": "BIM Development Workflow",
+        "description": "End-to-end budget impact analysis including PMPM and sensitivity testing.",
+        "tasks": [
+          {
+            "code": "T1",
+            "title": "Define Population & Eligibility",
+            "objective": "Estimate target population size and eligibility criteria.",
+            "agents": ["P21_HEOR", "P22_MADIRECT"],
+            "tools": ["Excel", "Epidemiology DB"],
+            "dependencies": [],
+            "inputs": ["Epidemiological Data"],
+            "outputs": ["Eligible Population Table"],
+            "prompts": [
+              {
+                "name": "Population_Size_Prompt",
+                "pattern": "Few-Shot",
+                "system_prompt": "You are a health economist estimating eligible populations.",
+                "user_template": "Given prevalence {p} and coverage {c}, calculate eligible members for {condition}."
+              }
+            ],
+            "kpis": {
+              "Data Completeness (%)": 95
+            }
+          },
+          {
+            "code": "T5",
+            "title": "Compute PMPM & Scenarios",
+            "objective": "Calculate per-member-per-month impact across base, best, and worst scenarios.",
+            "agents": ["P21_HEOR"],
+            "tools": ["Excel", "TreeAge"],
+            "dependencies": ["T1"],
+            "inputs": ["Treatment Mix Data", "Cost Inputs"],
+            "outputs": ["PMPM Results Table", "Scenario Summary"],
+            "prompts": [
+              {
+                "name": "Scenario_Model_Prompt",
+                "pattern": "CoT",
+                "system_prompt": "You are a HEOR analyst modeling payer budget scenarios.",
+                "user_template": "Compute PMPM under base, best, and worst uptake using {cost_inputs}."
+              }
+            ],
+            "kpis": {
+              "PMPM Accuracy (%)": 95
+            }
+          },
+          {
+            "code": "T6",
+            "title": "Sensitivity Analysis",
+            "objective": "Run one-way and multi-way sensitivity analyses.",
+            "agents": ["P21_HEOR", "P24_FINANCE"],
+            "tools": ["Python", "Excel"],
+            "dependencies": ["T5"],
+            "inputs": ["PMPM Results"],
+            "outputs": ["Tornado Chart", "Sensitivity Report"],
+            "prompts": [
+              {
+                "name": "Sensitivity_Prompt",
+                "pattern": "CoT",
+                "system_prompt": "You are a data scientist performing sensitivity analysis.",
+                "user_template": "Run sensitivity on {variables} and produce tornado chart visualizations."
+              }
+            ],
+            "kpis": {
+              "Variance Explained (%)": 90
+            }
+          }
+        ]
+      }
+    ]
+  }
+}
+

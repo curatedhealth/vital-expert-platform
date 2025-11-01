@@ -11,7 +11,7 @@ import os
 from pinecone import Pinecone, ServerlessSpec
 from langchain_openai import OpenAIEmbeddings
 from services.embedding_service_factory import EmbeddingServiceFactory
-from langchain.schema import Document
+from langchain_core.documents import Document
 import numpy as np
 
 from services.supabase_client import SupabaseClient

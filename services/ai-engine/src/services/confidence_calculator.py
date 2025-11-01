@@ -14,7 +14,7 @@ import numpy as np
 from typing import Dict, List, Any, Optional
 from datetime import datetime
 import structlog
-from langchain.embeddings import OpenAIEmbeddings
+from langchain_openai import OpenAIEmbeddings
 
 logger = structlog.get_logger()
 

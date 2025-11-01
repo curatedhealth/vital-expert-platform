@@ -6,9 +6,9 @@ Enhanced document retrieval with medical knowledge base
 import asyncio
 import numpy as np
 from typing import List, Dict, Any, Optional, Tuple
-from langchain.embeddings import OpenAIEmbeddings
+from langchain_openai import OpenAIEmbeddings
 from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain.schema import Document
+from langchain_core.documents import Document
 import structlog
 from datetime import datetime, timezone
 import hashlib

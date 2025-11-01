@@ -1,0 +1,217 @@
+{
+  "tenant_id": "digital-health-startup",
+  "org_id": "clinical-dev",
+  "project_id": "mindfulmoods-pivotal",
+  "product_id": "mindfulmoods-v1",
+  "environment": "prod",
+  "domain": "Clinical Development",
+  "use_case": {
+    "code": "UC_CD_001",
+    "title": "DTx Clinical Endpoint Selection & Validation",
+    "summary": "Structured workflow guiding cross-functional teams to select, validate, and document primary and secondary clinical endpoints for digital therapeutic trials aligned with FDA precedent, patient priorities, and commercial value.",
+    "complexity": "Advanced",
+    "version": "v3.0",
+    "status": "approved",
+    "tags": ["endpoint", "clinical", "FDA", "PROMPTS", "FORGE"],
+    "therapeutic_area": "Behavioral Health",
+    "indication": "Major Depressive Disorder (MDD)",
+    "phase": "Pivotal",
+    "regulatory_references": [
+      "FDA PRO Guidance (2009)",
+      "FDA Digital Health Center of Excellence Resources",
+      "21 CFR Part 11"
+    ],
+    "compliance_flags": {"hipaa": true, "gdpr": true, "part11": true, "gxp": "device"},
+    "data_classification": {"phi": false, "pii": true, "sensitivity": "medium"},
+    "owners": ["role:CMO"],
+    "reviewers": ["role:VPCLIN", "role:REGDIR"],
+    "approvers": ["role:Head_Medical_Affairs"],
+    "change_log": [
+      {"at": "2025-10-10T00:00:00Z", "by": "system", "note": "Version 3.0 approved"}
+    ],
+    "workflows": [
+      {
+        "name": "Endpoint Selection & Validation Workflow",
+        "description": "Five-phase workflow: foundation, research, identification, validation, and decision—producing a regulatory-ready endpoint strategy for digital therapeutics.",
+        "sla": {"target_duration_hours": 4, "quality_gate_pass_rate": 0.9},
+        "templates": {
+          "documents": [
+            {"name": "Endpoint Decision Matrix", "template_id": "matrix_v1", "link": "drive://templates/endpoint_matrix.docx"},
+            {"name": "Regulatory Risk Assessment", "template_id": "regrisk_v1", "link": "drive://templates/reg_risk.docx"}
+          ],
+          "prompts": [{"name": "Clinical_Context_Definition", "template_id": "prompt_uc01_1_1_1"}],
+          "reports": [{"name": "Endpoint Selection Report", "template_id": "endpoint_report_v1"}]
+        },
+        "rag_sources": [
+          {"id": "FDA_PRO_2009", "title": "FDA PRO Guidance", "link": "https://www.fda.gov/media/77832/download", "kind": "guidance"},
+          {"id": "Somryst_DEN190033", "title": "Somryst De Novo Summary", "link": "https://www.accessdata.fda.gov/cdrh_docs/reviews/DEN190033.pdf", "kind": "precedent"}
+        ],
+        "tasks": [
+          {
+            "code": "T1.1",
+            "title": "Define Clinical Context",
+            "objective": "Establish clinical problem, target population, and therapeutic mechanism.",
+            "duration_estimate_minutes": 30,
+            "state": "done",
+            "assignees": ["role:CMO", "role:PATADV"],
+            "agents": ["P01_CMO", "P10_PATADV"],
+            "tools": ["Clinical Context Template"],
+            "inputs": [
+              {
+                "name": "DTx Product Brief",
+                "description": "Summary of indication, mechanism, target population.",
+                "content_type": "application/pdf",
+                "schema_uri": "https://schema.dhx.io/product_brief.schema.json",
+                "required": true
+              }
+            ],
+            "outputs": [
+              {
+                "name": "Clinical Context Document",
+                "artifact_kind": "doc",
+                "content_type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                "schema_uri": "https://schema.dhx.io/clinical_context.schema.json",
+                "version": "v1.0"
+              }
+            ],
+            "prompts": [
+              {
+                "name": "Clinical_Context_Definition",
+                "pattern": "CoT",
+                "prompt_id": "uc01_1_1_1",
+                "version": "v1.0",
+                "system_prompt": "You are a Chief Medical Officer defining digital therapeutic clinical context.",
+                "user_template": "Define disease burden, population, and mechanism for {product_name} treating {indication}.",
+                "model_config": {"model": "gpt-5", "temperature": 0.2}
+              }
+            ],
+            "kpis": {"Context_Completeness(%)": 100}
+          },
+          {
+            "code": "T2.1",
+            "title": "Research DTx Regulatory Precedent",
+            "objective": "Identify FDA-accepted endpoints in comparable DTx to inform selection.",
+            "agents": ["P02_VPCLIN", "P05_REGDIR"],
+            "tools": ["FDA De Novo Database", "Literature Databases"],
+            "dependencies": ["T1.1"],
+            "inputs": [{"name": "Clinical Context Document", "content_type": "application/docx"}],
+            "outputs": [
+              {
+                "name": "Regulatory Precedent Analysis",
+                "artifact_kind": "doc",
+                "content_type": "application/pdf",
+                "schema_uri": "https://schema.dhx.io/precedent_analysis.schema.json"
+              }
+            ],
+            "prompts": [
+              {
+                "name": "DTx_Precedent_Analysis",
+                "pattern": "RAG",
+                "prompt_id": "uc01_2_1_1",
+                "system_prompt": "You are a VP Clinical Development extracting FDA precedents for endpoints.",
+                "user_template": "List FDA-cleared DTx similar to {indication} and summarize their primary endpoints and measurement tools."
+              }
+            ],
+            "kpis": {"Precedents_Identified": 3}
+          },
+          {
+            "code": "T3.1",
+            "title": "Identify Primary Endpoint Candidates",
+            "objective": "Generate and evaluate 2-3 strong primary endpoint options based on precedent, psychometrics, and feasibility.",
+            "agents": ["P01_CMO", "P04_BIOSTAT"],
+            "tools": ["Endpoint Evaluation Matrix"],
+            "dependencies": ["T2.1"],
+            "inputs": [
+              {"name": "Regulatory Precedent Analysis", "content_type": "application/pdf"},
+              {"name": "Patient Outcome Priorities", "content_type": "application/docx"}
+            ],
+            "outputs": [
+              {"name": "Primary Endpoint Candidate Analysis", "artifact_kind": "doc", "content_type": "application/pdf"}
+            ],
+            "prompts": [
+              {
+                "name": "Primary_Endpoint_Identification",
+                "pattern": "CoT",
+                "prompt_id": "uc01_3_1_1",
+                "system_prompt": "You are a CMO choosing primary endpoints for a DTx trial.",
+                "user_template": "Compare candidate endpoints (validated PROs, clinical outcomes, digital biomarkers) for {indication}. Rate by regulatory precedent, meaningfulness, psychometrics, feasibility."
+              }
+            ],
+            "kpis": {"Candidates_Ranked": 3}
+          },
+          {
+            "code": "T4.1",
+            "title": "Evaluate Psychometric Properties",
+            "objective": "Assess reliability, validity, responsiveness, and MCID for each candidate endpoint.",
+            "agents": ["P04_BIOSTAT"],
+            "tools": ["Psychometric Evaluation Template"],
+            "dependencies": ["T3.1"],
+            "inputs": [{"name": "Endpoint Candidate List", "content_type": "application/json"}],
+            "outputs": [
+              {"name": "Psychometric Properties Assessment", "artifact_kind": "dataset", "content_type": "application/json"}
+            ],
+            "prompts": [
+              {
+                "name": "Psychometric_Evaluation",
+                "pattern": "CoT",
+                "prompt_id": "uc01_4_1_1",
+                "system_prompt": "You are a Biostatistician summarizing psychometric evidence for endpoints.",
+                "user_template": "For {endpoint_list}, extract reliability (α, ICC), validity, responsiveness, and MCID values from literature."
+              }
+            ],
+            "kpis": {"Endpoints_With_MCIDs(%)": 100}
+          },
+          {
+            "code": "T5.2",
+            "title": "Final Recommendation & Stakeholder Alignment",
+            "objective": "Synthesize evidence into final endpoint recommendation and prepare stakeholder materials.",
+            "agents": ["P01_CMO"],
+            "tools": ["Decision Matrix Template", "Presentation Deck Template"],
+            "dependencies": ["T4.1"],
+            "inputs": [
+              {"name": "Psychometric Assessment", "content_type": "application/json"},
+              {"name": "Digital Feasibility Analysis", "content_type": "application/pdf"}
+            ],
+            "outputs": [
+              {"name": "Final Endpoint Selection Report", "artifact_kind": "doc", "content_type": "application/pdf", "version": "v1.0"},
+              {"name": "Stakeholder Presentation Deck", "artifact_kind": "deck", "content_type": "application/vnd.ms-powerpoint"}
+            ],
+            "prompts": [
+              {
+                "name": "Final_Recommendation",
+                "pattern": "CoT",
+                "prompt_id": "uc01_5_2_2",
+                "system_prompt": "You are a CMO preparing the final endpoint recommendation summary.",
+                "user_template": "Summarize chosen primary and secondary endpoints with rationale, risk mitigation, and measurement schedule for {trial_name}."
+              }
+            ],
+            "kpis": {"Stakeholder_Approval(%)": 100}
+          }
+        ],
+        "links": [
+          {"type": "use_case_dependency", "use_case_code": "UC_CD_002", "note": "Feeds into DTx Reimbursement Strategy via endpoint value evidence."}
+        ]
+      }
+    ],
+    "risk_register": [
+      {"id": "R1", "title": "FDA may question PHQ-9 as primary endpoint", "probability": "MEDIUM", "impact": "HIGH", "mitigation": "Pre-Sub meeting; include HAM-D secondary.", "owner": "P05_REGDIR"},
+      {"id": "R2", "title": "High patient attrition reduces data completeness", "probability": "MEDIUM", "impact": "MEDIUM", "mitigation": "Engagement reminders, incentives, flexible windows.", "owner": "P02_VPCLIN"}
+    ],
+    "milestones": [
+      {"name": "Clinical Context Complete", "due_date": "2025-10-15", "owner": "P01_CMO", "status": "done"},
+      {"name": "Pre-Sub Meeting Scheduled", "due_date": "2026-02-01", "owner": "P05_REGDIR", "status": "planned"}
+    ],
+    "integrations": [
+      {"system": "FDA_Database", "vendor": "FDA.gov", "endpoint": "https://www.accessdata.fda.gov", "auth": "public"},
+      {"system": "ClinicalTrials.gov", "vendor": "NIH", "endpoint": "https://clinicaltrials.gov/api/v2", "auth": "public"}
+    ],
+    "audit": {
+      "created_by": "user:clinical-writer@dhx.io",
+      "created_at": "2025-10-10T10:00:00Z",
+      "updated_by": "user:reg-affairs@dhx.io",
+      "updated_at": "2025-10-10T15:00:00Z",
+      "approved_by": "user:chief-medical-officer@dhx.io",
+      "approved_at": "2025-10-10T16:00:00Z"
+    }
+  }
+}

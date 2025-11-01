@@ -141,6 +141,9 @@ class Mode4AutonomousManualWorkflow(BaseWorkflow, ToolChainMixin, MemoryIntegrat
         # NEW: Long-term memory (Phase 2) - Initialize from mixin
         self.init_memory_integration(supabase_client)
         
+        # Autonomous controller (Phase 3: Goal-based continuation)
+        self.autonomous_controller = None  # Created per execution with specific goals
+        
         # Node groups
         self.feedback_nodes = FeedbackNodes(
             supabase_client,

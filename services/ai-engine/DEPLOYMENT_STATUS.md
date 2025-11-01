@@ -1,135 +1,83 @@
-# Python AI Engine Deployment Status
+# 🚀 Cloud Run Deployment Status
 
-**Date:** February 1, 2025  
-**Service:** `vital-ai-engine`  
-**Project:** `vital-ai-engine-v2`  
-**Status:** ⚠️ Deployment in progress
+## Current Issue
 
----
-
-## ✅ Completed Steps
-
-1. ✅ Railway service created: `vital-ai-engine`
-2. ✅ Service linked to project
-3. ✅ Environment variables set:
-   - ✅ `SUPABASE_URL`
-   - ✅ `SUPABASE_ANON_KEY`
-   - ✅ `SUPABASE_SERVICE_ROLE_KEY`
-   - ✅ `PINECONE_API_KEY`
-   - ✅ `PINECONE_INDEX_NAME`
-   - ✅ `PORT=8000`
-   - ✅ `LOG_LEVEL=info`
-   - ✅ `EMBEDDING_PROVIDER=openai`
+**Problem**: `ForwardRef._evaluate()` compatibility error with Python 3.12  
+**Error**: `TypeError: ForwardRef._evaluate() missing 1 required keyword-only argument: 'recursive_guard'`  
+**Root Cause**: Python 3.12 changed `ForwardRef._evaluate()` signature, and `langsmith` (via `pydantic.v1`) hasn't been updated
 
 ---
 
-## ⚠️ Missing Required Variable
+## Solution Applied
 
-**OPENAI_API_KEY** - Required for LLM operations
-
-**Set it now:**
-```bash
-cd services/ai-engine
-railway variables --set "OPENAI_API_KEY=your-openai-key-here"
-```
+✅ **Switched to Python 3.11** in Dockerfile  
+✅ **Updated pydantic** to 2.9.0  
+✅ **Removed langsmith** from requirements.txt (still installed as dependency of langchain-core)
 
 ---
 
-## 🚀 Next Steps
+## Next Steps
 
-### 1. Set OpenAI API Key
+### Option 1: Wait for Cloud Run to Use New Image
 
-```bash
-cd services/ai-engine
-railway variables --set "OPENAI_API_KEY=your-actual-openai-key"
-```
-
-### 2. Deploy
+The new Python 3.11 image has been pushed. Cloud Run might be using a cached image. Try:
 
 ```bash
-railway up
+# Force new deployment
+gcloud run services update vital-ai-engine \
+  --region us-central1 \
+  --image docker.io/mzouda/vital-ai-engine:latest \
+  --no-traffic
 ```
 
-**This will:**
-- Build Docker image (~5-10 minutes)
-- Deploy to Railway
-- Show deployment URL
-
-### 3. Get Deployment URL
+### Option 2: Delete and Redeploy
 
 ```bash
-railway domain
+# Delete service
+gcloud run services delete vital-ai-engine --region us-central1
+
+# Redeploy with new image
+gcloud run deploy vital-ai-engine \
+  --image docker.io/mzouda/vital-ai-engine:latest \
+  --platform managed \
+  --region us-central1 \
+  --allow-unauthenticated \
+  --port 8000 \
+  --memory 4Gi \
+  --cpu 2 \
+  --timeout 300 \
+  --max-instances 10 \
+  --min-instances 0 \
+  --set-env-vars "SUPABASE_URL=...,SUPABASE_SERVICE_ROLE_KEY=...,PINECONE_API_KEY=...,PINECONE_INDEX_NAME=vital-knowledge,LOG_LEVEL=info"
 ```
 
-### 4. Test Deployment
+### Option 3: Use Alternative Platform
+
+Consider deploying to:
+- **Railway**: Already tested, works well
+- **Modal**: Serverless containers with Python 3.11
+- **Fly.io**: Docker deployment with Python 3.11
+
+---
+
+## Image Details
+
+- **Repository**: `mzouda/vital-ai-engine:latest`
+- **Python Version**: 3.11
+- **Pydantic Version**: 2.9.0
+- **Status**: Built and pushed successfully
+
+---
+
+## Verify Build
+
+To verify the new image uses Python 3.11:
 
 ```bash
-# Replace with your actual URL
-curl https://your-service.up.railway.app/health
-```
-
-Expected response:
-```json
-{
-  "status": "healthy",
-  "service": "vital-path-ai-services",
-  "version": "2.0.0"
-}
-```
-
-### 5. Update Local Development
-
-After deployment, update:
-
-**`apps/digital-health-startup/.env.local`:**
-```bash
-AI_ENGINE_URL=https://your-railway-url.up.railway.app
-NEXT_PUBLIC_AI_ENGINE_URL=https://your-railway-url.up.railway.app
-```
-
-**`services/api-gateway/.env`:**
-```bash
-AI_ENGINE_URL=https://your-railway-url.up.railway.app
+docker run --rm mzouda/vital-ai-engine:latest python --version
+# Should output: Python 3.11.x
 ```
 
 ---
 
-## 📋 Current Configuration
-
-**Service:** `vital-ai-engine`  
-**Project:** `vital-ai-engine-v2`  
-**Environment:** `production`
-
-**Environment Variables Set:**
-- ✅ SUPABASE_URL
-- ✅ SUPABASE_ANON_KEY
-- ✅ SUPABASE_SERVICE_ROLE_KEY
-- ✅ PINECONE_API_KEY
-- ✅ PINECONE_INDEX_NAME
-- ✅ PORT
-- ✅ LOG_LEVEL
-- ✅ EMBEDDING_PROVIDER
-- ❌ OPENAI_API_KEY (need to set)
-
----
-
-## 🔍 Check Deployment Status
-
-```bash
-# View logs
-railway logs
-
-# Check status
-railway status
-
-# View variables
-railway variables
-
-# Get URL
-railway domain
-```
-
----
-
-**Action Required:** Set `OPENAI_API_KEY` before deployment can succeed! 🔑
-
+**Ready to redeploy? Run the deployment commands above!**

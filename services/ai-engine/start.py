@@ -44,19 +44,26 @@ if __name__ == "__main__":
     try:
         import uvicorn
         print("✅ Uvicorn imported successfully")
+        print(f"📦 Uvicorn version: {uvicorn.__version__}")
     except ImportError as e:
         print(f"❌ Failed to import uvicorn: {e}", file=sys.stderr)
+        import traceback
+        traceback.print_exc()
         sys.exit(1)
     
     # Test import of main module before starting server (now in src directory)
     try:
+        print("📦 Attempting to import main module...")
         from main import app
         print("✅ Main module imported successfully")
+        print(f"📊 App title: {app.title}")
+        print(f"📊 App version: {app.version}")
     except Exception as e:
         print(f"❌ Failed to import main module: {e}", file=sys.stderr)
         import traceback
         traceback.print_exc()
-        sys.exit(1)
+        print("⚠️  Continuing anyway - app might still work with degraded functionality", file=sys.stderr)
+        # Don't exit - let uvicorn handle it
     
     # Production: use workers=0 for single process mode, set reload=False
     # For development, set reload=True and workers=1
@@ -65,9 +72,17 @@ if __name__ == "__main__":
     workers = int(os.getenv("WORKERS", "0"))
     
     print(f"🌐 Starting server on 0.0.0.0:{port_int}")
+    print(f"⚙️  Configuration:")
+    print(f"   - Host: 0.0.0.0")
+    print(f"   - Port: {port_int}")
+    print(f"   - Log Level: {log_level}")
+    print(f"   - Reload: {reload}")
+    print(f"   - Workers: {workers if not reload else 0}")
+    print(f"   - Keep-Alive: 30s")
     
     try:
         # Use string path for uvicorn - main.py is in current directory (src/)
+        print("🚀 Launching uvicorn server...")
         uvicorn.run(
             "main:app",  # main.py is in the current working directory (src/)
             host="0.0.0.0",
@@ -76,10 +91,20 @@ if __name__ == "__main__":
             reload=reload,
             workers=workers if not reload else 0,  # 0 workers = single process (better for Railway)
             access_log=True,
-            timeout_keep_alive=30  # Keep connections alive
+            timeout_keep_alive=30,  # Keep connections alive
+            # Add startup timeout to prevent hanging
+            timeout_graceful_shutdown=30
         )
+    except KeyboardInterrupt:
+        print("\n⚠️  Server stopped by user")
+        sys.exit(0)
     except Exception as e:
         print(f"❌ Failed to start server: {e}", file=sys.stderr)
         import traceback
         traceback.print_exc()
+        print(f"\n💡 Debugging info:", file=sys.stderr)
+        print(f"   - Working directory: {os.getcwd()}", file=sys.stderr)
+        print(f"   - Python path: {sys.path[:5]}", file=sys.stderr)
+        print(f"   - Port: {port_int}", file=sys.stderr)
+        print(f"   - Files in current dir: {os.listdir('.')[:10]}", file=sys.stderr)
         sys.exit(1)

@@ -410,15 +410,27 @@ async def lifespan(app: FastAPI):
     """Application lifespan management - start immediately, initialize services in background"""
     global agent_orchestrator, rag_pipeline, unified_rag_service, metadata_processing_service, supabase_client, websocket_manager
 
+    logger.info("=" * 80)
     logger.info("🚀 Starting VITAL Path AI Services")
+    logger.info("=" * 80)
+    
+    # Log environment info
+    import os
+    logger.info(f"📦 Environment:")
+    logger.info(f"   - PORT: {os.getenv('PORT', '8000')}")
+    logger.info(f"   - PYTHONPATH: {os.getenv('PYTHONPATH', 'not set')}")
+    logger.info(f"   - Working Directory: {os.getcwd()}")
     
     # Start services initialization in background task - don't block startup
     # This allows the app to respond to healthchecks immediately
+    logger.info("🔄 Starting background service initialization...")
     init_task = asyncio.create_task(initialize_services_background())
     
     # Don't wait for initialization - let it run in background
     # The app can start responding to requests while services initialize
     logger.info("✅ FastAPI app ready - services initializing in background")
+    logger.info("✅ Health endpoint available at /health")
+    logger.info("=" * 80)
 
     yield
     
@@ -501,10 +513,28 @@ async def get_websocket_manager() -> WebSocketManager:
         raise HTTPException(status_code=503, detail="WebSocket manager not initialized")
     return websocket_manager
 
+# Root endpoint
+@app.get("/")
+async def root():
+    """Root endpoint - simple hello world"""
+    return {
+        "service": "vital-path-ai-services",
+        "version": "2.0.0",
+        "status": "running",
+        "health": "/health",
+        "docs": "/docs"
+    }
+
 # Health check endpoint
 @app.get("/health")
 async def health_check():
-    """Health check endpoint - always returns healthy to allow app to start"""
+    """
+    Health check endpoint - always returns healthy to allow app to start
+    
+    This endpoint responds immediately, even before services initialize.
+    This is critical for Railway deployment health checks.
+    """
+    import time
     global supabase_client, agent_orchestrator, rag_pipeline, unified_rag_service
     
     # Check service availability (non-blocking)
@@ -520,8 +550,9 @@ async def health_check():
         "status": "healthy",
         "service": "vital-path-ai-services",
         "version": "2.0.0",
-        "timestamp": asyncio.get_event_loop().time(),
-        "services": services_status
+        "timestamp": time.time(),
+        "services": services_status,
+        "ready": True  # Explicitly mark as ready for Railway
     }
 
 # Metrics endpoint

@@ -6,9 +6,21 @@ Reads PORT from environment variable and starts FastAPI server
 import os
 import sys
 
+# Critical: Ensure output is unbuffered so logs appear immediately
+os.environ['PYTHONUNBUFFERED'] = '1'
+sys.stdout.reconfigure(line_buffering=True)
+sys.stderr.reconfigure(line_buffering=True)
+
+print("=" * 80, flush=True)
+print("🚀 VITAL AI Engine Startup Script", flush=True)
+print("=" * 80, flush=True)
+
 # Change to the directory containing this script to ensure relative paths work
 script_dir = os.path.dirname(os.path.abspath(__file__))
+print(f"📂 Script directory: {script_dir}", flush=True)
+print(f"📂 Initial working directory: {os.getcwd()}", flush=True)
 os.chdir(script_dir)
+print(f"📂 Changed to: {os.getcwd()}", flush=True)
 
 # Add both src and the parent directory to Python path to ensure imports work
 src_dir = os.path.join(script_dir, 'src')
@@ -32,37 +44,53 @@ if __name__ == "__main__":
     # Get log level from environment
     log_level = os.getenv("LOG_LEVEL", "info").lower()
 
-    print(f"🚀 Starting VITAL AI Engine on port {port} (log level: {log_level})")
-    print(f"📂 Initial working directory: {os.getcwd()}")
+    print(f"🚀 Starting VITAL AI Engine on port {port} (log level: {log_level})", flush=True)
+    print(f"📂 Initial working directory: {os.getcwd()}", flush=True)
+    
+    # Verify src directory exists
+    if not os.path.exists(src_dir):
+        print(f"❌ ERROR: src directory does not exist at {src_dir}", flush=True, file=sys.stderr)
+        print(f"📂 Current directory contents: {os.listdir('.')}", flush=True, file=sys.stderr)
+        sys.exit(1)
     
     # Change to src directory FIRST so all imports work correctly
     os.chdir(src_dir)
-    print(f"📂 Changed working directory to: {os.getcwd()}")
-    print(f"🐍 Python path: {sys.path[:3]}")  # Show first 3 paths
+    print(f"📂 Changed working directory to: {os.getcwd()}", flush=True)
+    print(f"🐍 Python path: {sys.path[:3]}", flush=True)  # Show first 3 paths
     
     # Import uvicorn and run
     try:
+        print("📦 Importing uvicorn...", flush=True)
         import uvicorn
-        print("✅ Uvicorn imported successfully")
-        print(f"📦 Uvicorn version: {uvicorn.__version__}")
+        print("✅ Uvicorn imported successfully", flush=True)
+        print(f"📦 Uvicorn version: {uvicorn.__version__}", flush=True)
     except ImportError as e:
-        print(f"❌ Failed to import uvicorn: {e}", file=sys.stderr)
+        print(f"❌ Failed to import uvicorn: {e}", flush=True, file=sys.stderr)
         import traceback
-        traceback.print_exc()
+        traceback.print_exc(file=sys.stderr)
+        sys.stderr.flush()
         sys.exit(1)
     
     # Test import of main module before starting server (now in src directory)
     try:
-        print("📦 Attempting to import main module...")
+        print("📦 Attempting to import main module...", flush=True)
+        print(f"📂 Checking if main.py exists: {os.path.exists('main.py')}", flush=True)
+        if not os.path.exists('main.py'):
+            print(f"❌ ERROR: main.py not found in {os.getcwd()}", flush=True, file=sys.stderr)
+            print(f"📂 Files in current directory: {os.listdir('.')}", flush=True, file=sys.stderr)
+            sys.stderr.flush()
+            sys.exit(1)
         from main import app
-        print("✅ Main module imported successfully")
-        print(f"📊 App title: {app.title}")
-        print(f"📊 App version: {app.version}")
+        print("✅ Main module imported successfully", flush=True)
+        print(f"📊 App title: {app.title}", flush=True)
+        print(f"📊 App version: {app.version}", flush=True)
     except Exception as e:
-        print(f"❌ Failed to import main module: {e}", file=sys.stderr)
+        print(f"❌ Failed to import main module: {e}", flush=True, file=sys.stderr)
         import traceback
-        traceback.print_exc()
-        print("⚠️  Continuing anyway - app might still work with degraded functionality", file=sys.stderr)
+        traceback.print_exc(file=sys.stderr)
+        sys.stderr.flush()
+        print("⚠️  Continuing anyway - app might still work with degraded functionality", flush=True, file=sys.stderr)
+        sys.stderr.flush()
         # Don't exit - let uvicorn handle it
     
     # Production: use workers=0 for single process mode, set reload=False
@@ -71,18 +99,20 @@ if __name__ == "__main__":
     # Use 0 workers for single-process mode (recommended for Railway)
     workers = int(os.getenv("WORKERS", "0"))
     
-    print(f"🌐 Starting server on 0.0.0.0:{port_int}")
-    print(f"⚙️  Configuration:")
-    print(f"   - Host: 0.0.0.0")
-    print(f"   - Port: {port_int}")
-    print(f"   - Log Level: {log_level}")
-    print(f"   - Reload: {reload}")
-    print(f"   - Workers: {workers if not reload else 0}")
-    print(f"   - Keep-Alive: 30s")
+    print(f"🌐 Starting server on 0.0.0.0:{port_int}", flush=True)
+    print(f"⚙️  Configuration:", flush=True)
+    print(f"   - Host: 0.0.0.0", flush=True)
+    print(f"   - Port: {port_int}", flush=True)
+    print(f"   - Log Level: {log_level}", flush=True)
+    print(f"   - Reload: {reload}", flush=True)
+    print(f"   - Workers: {workers if not reload else 0}", flush=True)
+    print(f"   - Keep-Alive: 30s", flush=True)
     
     try:
         # Use string path for uvicorn - main.py is in current directory (src/)
-        print("🚀 Launching uvicorn server...")
+        print("🚀 Launching uvicorn server...", flush=True)
+        print(f"📂 Final working directory: {os.getcwd()}", flush=True)
+        print(f"📂 main.py exists: {os.path.exists('main.py')}", flush=True)
         uvicorn.run(
             "main:app",  # main.py is in the current working directory (src/)
             host="0.0.0.0",

@@ -1,6 +1,7 @@
 # VITAL AI Engine - Production Dockerfile (Multi-Stage Build)
 # Stage 1: Build stage - Install dependencies
 # Using Python 3.11 for langsmith compatibility (Python 3.12 has ForwardRef._evaluate() signature change)
+# Force rebuild: 2025-11-01 v2.0
 FROM python:3.11-slim as builder
 
 # Set environment variables for build

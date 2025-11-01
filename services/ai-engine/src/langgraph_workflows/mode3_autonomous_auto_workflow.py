@@ -68,6 +68,7 @@ from services.feedback_manager import FeedbackManager
 from services.agent_enrichment_service import AgentEnrichmentService
 from services.cache_manager import CacheManager
 from services.tool_registry import get_tool_registry
+from services.autonomous_controller import AutonomousController  # Phase 3: Goal-based continuation
 from tools.rag_tool import RAGTool
 from tools.web_tools import WebSearchTool, WebScrapeTool
 
@@ -145,6 +146,9 @@ class Mode3AutonomousAutoWorkflow(BaseWorkflow, ToolChainMixin):
         
         # Tool chaining (Phase 1.1 refactor) - Use mixin for consistency
         self.init_tool_chaining(self.rag_service)
+        
+        # Autonomous controller (Phase 3: Goal-based continuation)
+        self.autonomous_controller = None  # Created per execution with specific goals
         
         # Node groups
         self.feedback_nodes = FeedbackNodes(
@@ -340,12 +344,30 @@ class Mode3AutonomousAutoWorkflow(BaseWorkflow, ToolChainMixin):
     
     @trace_node("mode3_initialize_react")
     async def initialize_react_state_node(self, state: UnifiedWorkflowState) -> UnifiedWorkflowState:
-        """Node: Initialize ReAct loop state."""
+        """Node: Initialize ReAct loop state + Autonomous Controller."""
+        # Create autonomous controller for this execution
+        from pydantic import UUID4
+        goal = state.get('understood_goal', state['query'])
+        session_id = state.get('session_id', f"mode3_{state['tenant_id']}_{datetime.now().timestamp()}")
+        
+        self.autonomous_controller = AutonomousController(
+            session_id=session_id,
+            tenant_id=UUID4(state['tenant_id']),
+            goal=goal,
+            supabase_client=self.supabase,
+            cost_limit_usd=state.get('cost_limit_usd', 10.0),
+            runtime_limit_minutes=state.get('runtime_limit_minutes', 30)
+        )
+        
+        logger.info("✅ Autonomous controller initialized", session_id=session_id, goal_preview=goal[:50])
+        
         return {
             **state,
             'current_iteration': 0,
             'iteration_history': [],
             'goal_achieved': False,
+            'total_cost_usd': 0.0,
+            'session_id': session_id,
             'current_node': 'initialize_react'
         }
     
@@ -779,17 +801,84 @@ Synthesize a comprehensive, well-structured final answer that addresses the goal
     # CONDITIONAL EDGE FUNCTIONS
     # =========================================================================
     
-    def should_continue_react(self, state: UnifiedWorkflowState) -> str:
-        """Determine if ReAct loop should continue."""
+    async def should_continue_react(self, state: UnifiedWorkflowState) -> str:
+        """
+        Determine if ReAct loop should continue.
+        
+        Phase 3: Uses AutonomousController for intelligent goal-based decisions
+        instead of hard max_iterations limit.
+        """
+        # Quick check: goal already achieved
         if state.get('goal_achieved'):
+            logger.info("✅ Goal achieved, stopping ReAct loop")
             return "achieved"
         
+        if not self.autonomous_controller:
+            logger.warning("No autonomous controller, falling back to iteration limit")
+            # Fallback to old logic if controller not initialized
+            current_iter = state.get('current_iteration', 0)
+            max_iter = state.get('max_iterations', 5)
+            if current_iter >= max_iter:
+                return "max_iterations"
+            return "iterate"
+        
+        # Get current state
         current_iter = state.get('current_iteration', 0)
-        max_iter = state.get('max_iterations', 5)
+        current_cost = state.get('total_cost_usd', 0.0)
+        goal_progress = self._calculate_goal_progress(state)
         
-        if current_iter >= max_iter:
-            logger.info("Max iterations reached", current=current_iter, max=max_iter)
-            return "max_iterations"
+        # Ask controller for decision
+        decision = await self.autonomous_controller.should_continue(
+            current_cost_usd=current_cost,
+            goal_progress=goal_progress,
+            iteration_count=current_iter,
+            error_occurred=len(state.get('errors', [])) > 0
+        )
         
-        return "iterate"
+        logger.info(
+            f"Autonomous decision: {'CONTINUE' if decision.should_continue else 'STOP'}",
+            reason=decision.reason,
+            progress=f"{decision.goal_progress:.0%}",
+            cost=f"${current_cost:.2f}",
+            remaining_budget=f"${decision.remaining_budget_usd:.2f}",
+            remaining_time=f"{decision.remaining_minutes:.1f}min"
+        )
+        
+        # Map decision to routing
+        if decision.should_continue:
+            return "iterate"
+        elif decision.reason == "GOAL_ACHIEVED":
+            return "achieved"
+        else:
+            # Any stop reason other than goal achievement
+            return "max_iterations"  # Reuse this path for synthesis
+    
+    def _calculate_goal_progress(self, state: UnifiedWorkflowState) -> float:
+        """
+        Calculate goal progress based on ReAct history and observations.
+        
+        Heuristic based on:
+        - Goal reassessment scores
+        - Quality of observations
+        - Completeness of task plan
+        """
+        # Check if we have explicit progress from reassessment
+        goal_assessment = state.get('goal_assessment', {})
+        if goal_assessment:
+            return goal_assessment.get('progress', 0.0)
+        
+        # Heuristic: estimate from iteration history
+        iteration_history = state.get('iteration_history', [])
+        if not iteration_history:
+            return 0.0
+        
+        # Simple heuristic: progress based on successful iterations
+        total_iterations = len(iteration_history)
+        task_plan = state.get('task_plan', [])
+        expected_iterations = len(task_plan) if task_plan else 5
+        
+        # Cap progress at 0.9 unless explicitly achieved
+        progress = min(0.9, total_iterations / expected_iterations)
+        
+        return progress
 

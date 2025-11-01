@@ -66,6 +66,7 @@ from services.unified_rag_service import UnifiedRAGService
 from services.feedback_manager import FeedbackManager
 from services.agent_enrichment_service import AgentEnrichmentService
 from services.cache_manager import CacheManager
+from services.autonomous_controller import AutonomousController  # Phase 3: Goal-based continuation
 
 logger = structlog.get_logger()
 

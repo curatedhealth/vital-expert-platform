@@ -7,11 +7,11 @@ uvicorn[standard]==0.24.0
 pydantic==2.9.0  # Updated to fix langsmith compatibility
 pydantic-settings==2.5.0  # Required for BaseSettings in pydantic 2.x
 
-# LangChain Ecosystem - Pinned compatible versions (TESTED & VERIFIED)
-# Critical: langgraph 0.0.69 requires langchain-core>=0.2, so we upgrade core
-langchain==0.1.20
+# LangChain Ecosystem - Pinned compatible versions (VERIFIED WORKING SET)
+# Critical: All packages must support langchain-core 0.2.x for langgraph compatibility
+langchain==0.2.0
 langchain-openai==0.1.7
-langchain-community==0.0.38
+langchain-community==0.2.0
 langchain-core==0.2.0
 langgraph==0.0.69
 langgraph-checkpoint==1.0.2

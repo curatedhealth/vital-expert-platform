@@ -12,6 +12,13 @@ import uvicorn
 import structlog
 from prometheus_client import Counter, Histogram, generate_latest
 from middleware.tenant_context import get_tenant_id, set_tenant_context_in_db
+from middleware.tenant_isolation import TenantIsolationMiddleware
+from middleware.rate_limiting import (
+    EnhancedRateLimitMiddleware,
+    limiter,
+    RateLimitExceeded,
+    _rate_limit_exceeded_handler
+)
 from typing import List, Dict, Any, Optional
 import asyncio
 import json
@@ -28,6 +35,13 @@ from services.agent_selector_service import (
     get_agent_selector_service,
     QueryAnalysisRequest,
     QueryAnalysisResponse
+)
+from services.cache_manager import CacheManager, initialize_cache_manager, get_cache_manager
+from langgraph_workflows import (
+    initialize_checkpoint_manager,
+    initialize_observability,
+    get_checkpoint_manager,
+    get_observability
 )
 from models.requests import (
     AgentQueryRequest,
@@ -61,6 +75,9 @@ unified_rag_service: Optional[UnifiedRAGService] = None
 metadata_processing_service: Optional[MetadataProcessingService] = None
 supabase_client: Optional[SupabaseClient] = None
 websocket_manager: Optional[WebSocketManager] = None
+cache_manager: Optional[CacheManager] = None
+checkpoint_manager = None  # LangGraph checkpoint manager
+observability = None  # LangGraph observability
 
 
 class ConversationTurn(BaseModel):
@@ -324,9 +341,41 @@ class Mode4AutonomousManualResponse(BaseModel):
 
 async def initialize_services_background():
     """Initialize services in background - non-blocking"""
-    global agent_orchestrator, rag_pipeline, unified_rag_service, metadata_processing_service, supabase_client, websocket_manager
+    global agent_orchestrator, rag_pipeline, unified_rag_service, metadata_processing_service, supabase_client, websocket_manager, cache_manager, checkpoint_manager, observability
 
     logger.info("🚀 Starting VITAL Path AI Services background initialization")
+
+    # Initialize cache manager first (optional, can fail gracefully)
+    try:
+        redis_url = settings.redis_url if hasattr(settings, 'redis_url') else None
+        if redis_url:
+            cache_manager = await initialize_cache_manager(redis_url)
+            logger.info("✅ Cache manager initialized")
+        else:
+            logger.info("ℹ️ Redis URL not configured - caching disabled")
+            cache_manager = None
+    except Exception as e:
+        logger.warning("⚠️ Cache manager initialization failed - continuing without caching", error=str(e))
+        cache_manager = None
+    
+    # Initialize LangGraph checkpoint manager
+    try:
+        checkpoint_manager = await initialize_checkpoint_manager(
+            backend="sqlite",
+            db_path=os.getenv("CHECKPOINT_DB_PATH")
+        )
+        logger.info("✅ LangGraph checkpoint manager initialized")
+    except Exception as e:
+        logger.warning("⚠️ Checkpoint manager initialization failed", error=str(e))
+        checkpoint_manager = None
+    
+    # Initialize LangGraph observability
+    try:
+        observability = await initialize_observability()
+        logger.info("✅ LangGraph observability initialized")
+    except Exception as e:
+        logger.warning("⚠️ Observability initialization failed", error=str(e))
+        observability = None
 
     # Initialize services with error handling and timeouts - don't block startup
     try:
@@ -472,6 +521,24 @@ app = FastAPI(
     version="2.0.0",
     lifespan=lifespan
 )
+
+# Store supabase client in app state for middleware access
+@app.on_event("startup")
+async def set_app_state():
+    """Set app state with initialized clients"""
+    app.state.supabase_client = supabase_client
+    app.state.limiter = limiter
+
+# Add exception handler for rate limit errors
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+# Add Tenant Isolation Middleware FIRST (before CORS and rate limiting)
+# This ensures all requests have tenant context before processing
+app.add_middleware(TenantIsolationMiddleware)
+
+# Add Rate Limiting Middleware SECOND (after tenant isolation)
+# This enforces rate limits per tenant
+app.add_middleware(EnhancedRateLimitMiddleware)
 
 # CORS middleware - Configure based on environment
 cors_origins = (
@@ -945,7 +1012,134 @@ async def execute_mode4_autonomous_manual(
         raise HTTPException(status_code=500, detail=f"Mode 4 execution failed: {str(exc)}")
 
 
+# ============================================================================
+# Phase 3.3: User Stop API for Autonomous Execution
+# ============================================================================
+
+class StopAutonomousRequest(BaseModel):
+    """Request to stop an autonomous execution."""
+    session_id: str = Field(..., description="Session ID of the autonomous execution to stop")
+    tenant_id: Optional[str] = Field(None, description="Tenant ID for validation")
+
+
+class StopAutonomousResponse(BaseModel):
+    """Response after requesting stop."""
+    session_id: str
+    stop_requested: bool
+    message: str
+    timestamp: str
+
+
+@app.post("/api/autonomous/stop", response_model=StopAutonomousResponse)
+async def stop_autonomous_execution(request: StopAutonomousRequest):
+    """
+    Request an autonomous execution to stop gracefully.
+    
+    This sets a flag in the database that the AutonomousController
+    checks during each iteration. The execution will stop after
+    completing the current iteration.
+    
+    Phase 3.3: User intervention capability for autonomous modes.
+    """
+    REQUEST_COUNT.labels(method="POST", endpoint="/api/autonomous/stop").inc()
+    
+    if not supabase_client:
+        raise HTTPException(status_code=503, detail="Supabase client not initialized")
+    
+    try:
+        logger.info("🛑 Stop request received", session_id=request.session_id)
+        
+        # Update autonomous_control_state table to set stop_requested=true
+        result = supabase_client.client.table('autonomous_control_state')\
+            .update({'stop_requested': True})\
+            .eq('session_id', request.session_id)\
+            .execute()
+        
+        if not result.data:
+            # Session not found - might already be completed
+            logger.warning("Session not found in autonomous_control_state", 
+                          session_id=request.session_id)
+            raise HTTPException(
+                status_code=404, 
+                detail=f"Autonomous session '{request.session_id}' not found or already completed"
+            )
+        
+        logger.info("✅ Stop flag set", session_id=request.session_id)
+        
+        return StopAutonomousResponse(
+            session_id=request.session_id,
+            stop_requested=True,
+            message="Stop request sent. Execution will halt after current iteration.",
+            timestamp=datetime.utcnow().isoformat()
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.error("❌ Stop request failed", error=str(exc), session_id=request.session_id)
+        raise HTTPException(
+            status_code=500, 
+            detail=f"Failed to request stop: {str(exc)}"
+        )
+
+
+@app.get("/api/autonomous/status/{session_id}")
+async def get_autonomous_status(session_id: str):
+    """
+    Get the current status of an autonomous execution.
+    
+    Returns information about cost, runtime, progress, and whether
+    a stop has been requested.
+    """
+    REQUEST_COUNT.labels(method="GET", endpoint="/api/autonomous/status").inc()
+    
+    if not supabase_client:
+        raise HTTPException(status_code=503, detail="Supabase client not initialized")
+    
+    try:
+        result = supabase_client.client.table('autonomous_control_state')\
+            .select('*')\
+            .eq('session_id', session_id)\
+            .execute()
+        
+        if not result.data:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Session '{session_id}' not found"
+            )
+        
+        state = result.data[0]
+        
+        # Calculate elapsed time
+        started_at = datetime.fromisoformat(state['started_at'].replace('Z', '+00:00'))
+        elapsed_minutes = (datetime.now(started_at.tzinfo) - started_at).total_seconds() / 60.0
+        
+        return {
+            "session_id": session_id,
+            "stop_requested": state.get('stop_requested', False),
+            "current_cost_usd": state.get('current_cost_usd', 0.0),
+            "cost_limit_usd": state.get('cost_limit_usd', 10.0),
+            "cost_remaining_usd": state.get('cost_limit_usd', 10.0) - state.get('current_cost_usd', 0.0),
+            "runtime_limit_minutes": state.get('runtime_limit_minutes', 30),
+            "elapsed_minutes": elapsed_minutes,
+            "started_at": state['started_at'],
+            "expires_at": state.get('expires_at')
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.error("❌ Status check failed", error=str(exc), session_id=session_id)
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to get status: {str(exc)}"
+        )
+
+
+# ============================================================================
 # Panel Orchestration Endpoint
+# ============================================================================
+
 class PanelOrchestrationRequest(BaseModel):
     """Payload for panel orchestration requests"""
     message: str = Field(..., min_length=1, description="Panel consultation question")

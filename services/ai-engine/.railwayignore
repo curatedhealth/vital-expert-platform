@@ -1,0 +1,9 @@
+# Railway ignore file - keeps deployment clean
+venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.env
+.env.local
+*.log
+

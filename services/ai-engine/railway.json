@@ -2,7 +2,13 @@
   "$schema": "https://railway.app/railway.schema.json",
   "build": {
     "builder": "DOCKERFILE",
-    "dockerfilePath": "Dockerfile"
+    "dockerfilePath": "Dockerfile",
+    "watchPaths": [
+      "src/**",
+      "requirements.txt",
+      "Dockerfile",
+      "start.py"
+    ]
   },
   "deploy": {
     "numReplicas": 1,

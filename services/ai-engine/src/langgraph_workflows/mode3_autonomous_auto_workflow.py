@@ -58,6 +58,7 @@ from langgraph_workflows.feedback_nodes import FeedbackNodes
 from langgraph_workflows.memory_nodes import MemoryNodes
 from langgraph_workflows.enrichment_nodes import EnrichmentNodes
 from langgraph_workflows.react_engine import ReActEngine
+from langgraph_workflows.tool_chain_executor import ToolChainExecutor
 
 # Services
 from services.enhanced_agent_selector import EnhancedAgentSelector
@@ -65,6 +66,9 @@ from services.unified_rag_service import UnifiedRAGService
 from services.feedback_manager import FeedbackManager
 from services.agent_enrichment_service import AgentEnrichmentService
 from services.cache_manager import CacheManager
+from services.tool_registry import get_tool_registry
+from tools.rag_tool import RAGTool
+from tools.web_tools import WebSearchTool, WebScrapeTool
 
 logger = structlog.get_logger()
 
@@ -133,6 +137,16 @@ class Mode3AutonomousAutoWorkflow(BaseWorkflow):
             cache_manager=self.cache_manager
         )
         
+        # Tool chaining (NEW - AutoGPT capability)
+        self.tool_registry = get_tool_registry()
+        self._register_tools()
+        self.tool_chain_executor = ToolChainExecutor(
+            tool_registry=self.tool_registry,
+            max_chain_length=5,
+            planning_model="gpt-4",
+            synthesis_model="gpt-4"
+        )
+        
         # Node groups
         self.feedback_nodes = FeedbackNodes(
             supabase_client,
@@ -149,7 +163,34 @@ class Mode3AutonomousAutoWorkflow(BaseWorkflow):
             self.enrichment_service
         )
         
-        logger.info("✅ Mode3AutonomousAutoWorkflow initialized")
+        logger.info("✅ Mode3AutonomousAutoWorkflow initialized with tool chaining")
+    
+    def _register_tools(self):
+        """
+        Register available tools for this workflow.
+        
+        Golden Rule #1: All AI/ML in Python (✅ Compliant)
+        - Tools are Python classes
+        - No TypeScript/JavaScript in AI logic
+        - Pure Python implementation
+        """
+        # Register RAG tool (internal knowledge)
+        self.tool_registry.register_tool(
+            RAGTool(self.rag_service),
+            is_global=True
+        )
+        
+        # Register web tools (external research)
+        self.tool_registry.register_tool(
+            WebSearchTool(),
+            is_global=True
+        )
+        self.tool_registry.register_tool(
+            WebScrapeTool(),
+            is_global=True
+        )
+        
+        logger.info("✅ Tools registered", tool_count=len(self.tool_registry))
     
     def build_graph(self) -> StateGraph:
         """
@@ -426,7 +467,21 @@ class Mode3AutonomousAutoWorkflow(BaseWorkflow):
     
     @trace_node("mode3_execute_action")
     async def execute_action_node(self, state: UnifiedWorkflowState) -> UnifiedWorkflowState:
-        """Node: Execute action based on thought."""
+        """
+        Node: Execute action based on thought.
+        
+        NEW: With Tool Chaining Support (AutoGPT capability)
+        
+        Golden Rule Compliance:
+        ✅ #1: LangGraph node (Python only)
+        ✅ #2: Caching integrated
+        ✅ #3: Tenant-aware
+        ✅ #4: RAG/Tools enforced (uses tool chain)
+        
+        Decides whether to use:
+        - Tool chain (multi-step execution in ONE iteration)
+        - Single action (RAG, Tool, or Answer)
+        """
         from langgraph_workflows.react_engine import ThoughtOutput
         
         current_thought_dict = state.get('current_thought', {})
@@ -443,6 +498,63 @@ class Mode3AutonomousAutoWorkflow(BaseWorkflow):
         logger.info(f"Executing action: {thought.next_action_type}")
         
         try:
+            # Check if tool chain should be used (AutoGPT capability)
+            if self._should_use_tool_chain(thought, state):
+                logger.info("🔗 Using tool chain for multi-step execution")
+                
+                # Execute tool chain
+                chain_result = await self.tool_chain_executor.execute_tool_chain(
+                    task=thought.thought,  # Use thought as task
+                    tenant_id=str(tenant_id),
+                    available_tools=['rag_search', 'web_search', 'web_scrape'],
+                    context={
+                        'agent_id': agent_id,
+                        'rag_domains': state.get('selected_rag_domains', []),
+                        'query': query
+                    },
+                    max_steps=3  # Limit steps per ReAct iteration
+                )
+                
+                # Update cost tracking
+                total_cost = state.get('total_cost_usd', 0.0) + chain_result.total_cost_usd
+                
+                logger.info(
+                    "✅ Tool chain executed",
+                    steps=chain_result.steps_executed,
+                    cost=chain_result.total_cost_usd,
+                    success=chain_result.success
+                )
+                
+                # Return as action result
+                from langgraph_workflows.react_engine import ActionResult
+                action_result = ActionResult(
+                    action_type='tool_chain',
+                    action_description=f"Executed {chain_result.steps_executed}-step tool chain",
+                    result=chain_result.synthesis,  # Use synthesized result
+                    success=chain_result.success,
+                    metadata={
+                        'tool_chain': True,
+                        'steps_executed': chain_result.steps_executed,
+                        'step_results': [
+                            {
+                                'tool': sr.tool_name,
+                                'success': sr.success
+                            }
+                            for sr in chain_result.step_results
+                        ]
+                    },
+                    sources=[]  # Tool chain handles sources internally
+                )
+                
+                return {
+                    **state,
+                    'current_action': action_result.model_dump(),
+                    'total_cost_usd': total_cost,
+                    'tool_chain_used': True,
+                    'current_node': 'execute_action'
+                }
+            
+            # Otherwise, use single action (existing ReAct logic)
             action_result = await self.react_engine.execute_action(
                 thought=thought,
                 query=query,
@@ -484,6 +596,71 @@ class Mode3AutonomousAutoWorkflow(BaseWorkflow):
                 'errors': state.get('errors', []) + [f'Action execution failed: {str(e)}'],
                 'current_node': 'execute_action'
             }
+    
+    def _should_use_tool_chain(self, thought, state: Dict) -> bool:
+        """
+        Determine if multi-step tool chain should be used.
+        
+        Golden Rule #1: Pure Python logic (✅ Compliant)
+        
+        Indicators for using tool chain:
+        - Thought mentions multiple steps ("first...then", "after", "following")
+        - Task plan suggests multiple sources needed
+        - Query complexity is high
+        - Thought reasoning indicates comprehensive research
+        
+        Args:
+            thought: ThoughtOutput from ReAct engine
+            state: Current workflow state
+            
+        Returns:
+            True if tool chain should be used
+        """
+        thought_text = thought.thought.lower()
+        reasoning = thought.reasoning.lower()
+        
+        # Keywords suggesting multi-step approach
+        multi_step_keywords = [
+            'then', 'after', 'next', 'following', 'multiple', 
+            'comprehensive', 'thorough', 'various', 'several',
+            'both', 'combine', 'integrate', 'compare', 'and then'
+        ]
+        
+        has_multi_step_language = any(
+            kw in thought_text or kw in reasoning 
+            for kw in multi_step_keywords
+        )
+        
+        # Check task plan
+        task_plan = state.get('task_plan', [])
+        has_multiple_tasks = len(task_plan) > 2
+        
+        # Check query complexity
+        goal_understanding = state.get('goal_understanding', {})
+        complexity = goal_understanding.get('estimated_complexity', 'medium')
+        is_complex = complexity in ['high', 'very_high']
+        
+        # Check if early iteration (use chaining for complex tasks early on)
+        current_iteration = state.get('current_iteration', 0)
+        is_early_iteration = current_iteration <= 2
+        
+        # Decision logic
+        should_use_chain = (
+            (has_multi_step_language and is_complex) or
+            (has_multiple_tasks and is_early_iteration) or
+            (is_complex and has_multi_step_language)
+        )
+        
+        if should_use_chain:
+            logger.info(
+                "Tool chain decision: YES",
+                multi_step_language=has_multi_step_language,
+                task_count=len(task_plan),
+                complexity=complexity,
+                iteration=current_iteration
+            )
+        
+        return should_use_chain
     
     @trace_node("mode3_generate_observation")
     async def generate_observation_node(self, state: UnifiedWorkflowState) -> UnifiedWorkflowState:

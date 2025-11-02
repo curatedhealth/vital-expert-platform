@@ -42,57 +42,41 @@ FROM tenants
 WHERE slug = 'digital-health-startup';
 
 -- =====================================================================================
--- SECTION 1A: AI AGENTS FOR UC_CD_005
+-- SECTION 1: ROLES (AI AGENTS + HUMAN PERSONAS) FOR UC_CD_005
 -- =====================================================================================
--- AI Agents execute tasks autonomously using LangGraph/LLM
 
-INSERT INTO dh_agent (
-  tenant_id,
-  code,
-  name,
-  unique_id,
-  agent_type,
-  description,
-  capabilities,
-  autonomy_level,
-  model_config,
-  metadata
-)
+INSERT INTO dh_role (tenant_id, code, name, agent_type, unique_id, description, metadata)
 SELECT 
   sc.tenant_id,
-  a_data.code,
-  a_data.name,
-  a_data.unique_id,
-  a_data.agent_type,
-  a_data.description,
-  a_data.capabilities,
-  a_data.autonomy_level,
-  a_data.model_config,
-  a_data.metadata
+  r_data.code,
+  r_data.name,
+  r_data.agent_type,
+  r_data.unique_id,
+  r_data.description,
+  r_data.metadata
 FROM session_config sc
 CROSS JOIN (
   VALUES
+    -- =================================================================================
+    -- AI AGENTS (AGT-*) - These actually execute tasks
+    -- =================================================================================
+    
     -- AGT-CLINICAL-CONSTRUCT: Clinical Construct Definition Agent
     (
       'AGT-CLINICAL-CONSTRUCT',
       'Clinical Construct Definition Agent',
-      'AGT-CLINICAL-CONSTRUCT',
-      'SPECIALIST',
+      'AI',
+      'AGENT-CLINICAL-CONSTRUCT',
       'AI agent specialized in defining clinical constructs for PRO selection, translating DTx mechanisms into measurable outcomes',
-      json_build_array(
-        'Clinical construct identification',
-        'Domain decomposition',
-        'Clinical meaningfulness assessment',
-        'Mechanism-to-outcome mapping'
-      )::jsonb,
-      'SUPERVISED',
-      jsonb_build_object(
-        'model', 'gpt-4',
-        'temperature', 0.3,
-        'max_tokens', 2000
-      ),
       jsonb_build_object(
         'agent_category', 'CLINICAL_ANALYSIS',
+        'capabilities', json_build_array(
+          'Clinical construct identification',
+          'Domain decomposition',
+          'Clinical meaningfulness assessment',
+          'Mechanism-to-outcome mapping'
+        ),
+        'primary_models', json_build_array('gpt-4', 'claude-3-opus'),
         'specialized_training', json_build_array(
           'FDA PRO Guidance',
           'Clinical endpoint methodology',
@@ -107,23 +91,18 @@ CROSS JOIN (
     (
       'AGT-LITERATURE-SEARCH',
       'PRO Literature Search Agent',
-      'AGT-LITERATURE-SEARCH',
-      'RETRIEVER',
+      'AI',
+      'AGENT-LITERATURE-SEARCH',
       'AI agent specialized in systematic literature search for validated PRO instruments',
-      json_build_array(
-        'Literature database querying',
-        'PRO instrument identification',
-        'Validation study extraction',
-        'Comparative analysis'
-      )::jsonb,
-      'SUPERVISED',
-      jsonb_build_object(
-        'model', 'gpt-4',
-        'temperature', 0.2,
-        'max_tokens', 3000
-      ),
       jsonb_build_object(
         'agent_category', 'RESEARCH',
+        'capabilities', json_build_array(
+          'Literature database querying',
+          'PRO instrument identification',
+          'Validation study extraction',
+          'Comparative analysis'
+        ),
+        'primary_models', json_build_array('gpt-4', 'claude-3-opus'),
         'data_sources', json_build_array('PubMed', 'PROQOLID', 'ePROVIDE', 'Cochrane'),
         'knowledge_domains', json_build_array('literature-search', 'pro-instruments', 'psychometrics'),
         'search_strategies', json_build_array('Boolean search', 'MeSH terms', 'Systematic review methodology')
@@ -134,23 +113,18 @@ CROSS JOIN (
     (
       'AGT-PSYCHOMETRIC',
       'Psychometric Evaluation Agent',
-      'AGT-PSYCHOMETRIC',
-      'SPECIALIST',
+      'AI',
+      'AGENT-PSYCHOMETRIC',
       'AI agent specialized in evaluating psychometric properties of PRO instruments (reliability, validity, responsiveness)',
-      json_build_array(
-        'Reliability assessment (Cronbach alpha, ICC)',
-        'Validity evaluation (content, construct, criterion)',
-        'Responsiveness analysis (MCID, effect sizes)',
-        'Floor/ceiling effects detection'
-      )::jsonb,
-      'SUPERVISED',
-      jsonb_build_object(
-        'model', 'gpt-4',
-        'temperature', 0.2,
-        'max_tokens', 2500
-      ),
       jsonb_build_object(
         'agent_category', 'STATISTICAL_ANALYSIS',
+        'capabilities', json_build_array(
+          'Reliability assessment (Cronbach alpha, ICC)',
+          'Validity evaluation (content, construct, criterion)',
+          'Responsiveness analysis (MCID, effect sizes)',
+          'Floor/ceiling effects detection'
+        ),
+        'primary_models', json_build_array('gpt-4', 'claude-3-opus'),
         'statistical_methods', json_build_array(
           'Internal consistency',
           'Factor analysis',
@@ -159,107 +133,96 @@ CROSS JOIN (
         ),
         'knowledge_domains', json_build_array('psychometrics', 'biostatistics', 'measurement-theory'),
         'quality_thresholds', jsonb_build_object(
-          'cronbach_alpha_min', 0.70,
-          'icc_min', 0.70,
-          'responsiveness_effect_size_min', 0.3
+          'cronbach_alpha', 0.80,
+          'test_retest_icc', 0.70,
+          'floor_ceiling_max', 0.15
         )
       )
     ),
     
-    -- AGT-REGULATORY: Regulatory Compliance Agent
+    -- AGT-REGULATORY: FDA Regulatory Compliance Agent
     (
       'AGT-REGULATORY',
-      'Regulatory Compliance Agent',
-      'AGT-REGULATORY',
-      'VALIDATOR',
+      'FDA Regulatory Compliance Agent',
+      'AI',
+      'AGENT-REGULATORY',
       'AI agent specialized in assessing FDA regulatory compliance for PRO instruments',
-      json_build_array(
-        'FDA PRO Guidance compliance review',
-        'COA Qualification assessment',
-        'Regulatory precedent analysis',
-        'Regulatory risk evaluation'
-      )::jsonb,
-      'HUMAN_APPROVAL_REQUIRED',
       jsonb_build_object(
-        'model', 'gpt-4',
-        'temperature', 0.1,
-        'max_tokens', 2000
-      ),
-      jsonb_build_object(
-        'agent_category', 'REGULATORY_REVIEW',
-        'primary_guidance', json_build_array(
+        'agent_category', 'COMPLIANCE',
+        'capabilities', json_build_array(
+          'FDA guidance interpretation',
+          'Regulatory precedent analysis',
+          'ePRO validation assessment',
+          'Qualification program review'
+        ),
+        'primary_models', json_build_array('gpt-4', 'claude-3-opus'),
+        'regulatory_frameworks', json_build_array(
           'FDA PRO Guidance 2009',
-          'FDA COA Qualification Program',
-          'EMA Reflection Paper on PROs'
+          'FDA Digital Health',
+          'FDA DDT Qualification',
+          '21 CFR Part 11'
         ),
-        'knowledge_domains', json_build_array('regulatory-affairs', 'fda-guidance', 'pro-qualification'),
-        'citation_required', true
+        'knowledge_domains', json_build_array('regulatory-affairs', 'fda-guidance', 'pro-validation'),
+        'precedent_databases', json_build_array('FDA.gov', 'Drugs@FDA', 'Device Approvals')
       )
     ),
     
-    -- AGT-DIGITAL-FEASIBILITY: Digital Implementation Feasibility Agent
+    -- AGT-DIGITAL-FEASIBILITY: Digital Feasibility Agent
     (
       'AGT-DIGITAL-FEASIBILITY',
-      'Digital Implementation Feasibility Agent',
-      'AGT-DIGITAL-FEASIBILITY',
-      'SPECIALIST',
+      'Digital Feasibility Agent',
+      'AI',
+      'AGENT-DIGITAL-FEASIBILITY',
       'AI agent specialized in assessing digital implementation feasibility for ePRO instruments',
-      json_build_array(
-        'ePRO platform compatibility assessment',
-        'Digital migration evaluation',
-        'UX/UI complexity analysis',
-        'Implementation timeline estimation'
-      )::jsonb,
-      'SUPERVISED',
       jsonb_build_object(
-        'model', 'claude-3-opus',
-        'temperature', 0.3,
-        'max_tokens', 2000
-      ),
-      jsonb_build_object(
-        'agent_category', 'TECHNICAL_FEASIBILITY',
-        'platforms', json_build_array('Medidata', 'Oracle', 'Veeva', 'signant', 'CRF Health'),
-        'knowledge_domains', json_build_array('epro-platforms', 'digital-migration', 'ux-design'),
-        'considerations', json_build_array(
-          'Item complexity (text vs Likert vs visual)',
-          'Recall period compatibility',
-          'Language/translation requirements',
-          'Accessibility compliance'
-        )
+        'agent_category', 'TECHNICAL_ASSESSMENT',
+        'capabilities', json_build_array(
+          'UI/UX feasibility assessment',
+          'Platform compatibility analysis',
+          'ePRO validation requirements',
+          'Data capture design'
+        ),
+        'primary_models', json_build_array('gpt-4', 'claude-3-sonnet'),
+        'technical_domains', json_build_array(
+          'Mobile app development',
+          'ePRO implementation',
+          'Accessibility standards',
+          'Data security'
+        ),
+        'knowledge_domains', json_build_array('product-development', 'ux-design', 'digital-health'),
+        'standards', json_build_array('WCAG 2.1 AA', '21 CFR Part 11', 'HIPAA')
       )
     ),
     
-    -- AGT-PATIENT-BURDEN: Patient Burden Evaluation Agent
+    -- AGT-PATIENT-BURDEN: Patient Burden Assessment Agent
     (
       'AGT-PATIENT-BURDEN',
-      'Patient Burden Evaluation Agent',
-      'AGT-PATIENT-BURDEN',
-      'SPECIALIST',
+      'Patient Burden Assessment Agent',
+      'AI',
+      'AGENT-PATIENT-BURDEN',
       'AI agent specialized in evaluating patient burden and acceptability of PRO instruments',
-      json_build_array(
-        'Instrument length assessment',
-        'Completion time analysis',
-        'Cognitive complexity evaluation',
-        'Patient acceptability synthesis'
-      )::jsonb,
-      'SUPERVISED',
       jsonb_build_object(
-        'model', 'claude-3-opus',
-        'temperature', 0.3,
-        'max_tokens', 2000
-      ),
-      jsonb_build_object(
-        'agent_category', 'PATIENT_CENTRICITY',
-        'evaluation_criteria', json_build_array(
-          'Number of items',
-          'Completion time',
-          'Reading level',
-          'Frequency of administration',
-          'Patient-reported acceptability data'
+        'agent_category', 'PATIENT_EXPERIENCE',
+        'capabilities', json_build_array(
+          'Time burden calculation',
+          'Cognitive burden assessment',
+          'Accessibility evaluation',
+          'Patient preference analysis'
         ),
-        'knowledge_domains', json_build_array('patient-centricity', 'health-literacy', 'pro-burden'),
-        'target_completion_time_minutes', 10,
-        'target_reading_level', '6th-8th grade'
+        'primary_models', json_build_array('gpt-4', 'claude-3-opus'),
+        'assessment_dimensions', json_build_array(
+          'Time burden',
+          'Cognitive complexity',
+          'Emotional burden',
+          'Technology burden',
+          'Cultural appropriateness'
+        ),
+        'knowledge_domains', json_build_array('patient-engagement', 'patient-experience', 'accessibility'),
+        'burden_thresholds', jsonb_build_object(
+          'max_time_minutes', 10,
+          'max_reading_level', 8,
+          'dropout_risk_threshold', 0.25
+        )
       )
     ),
     
@@ -267,32 +230,27 @@ CROSS JOIN (
     (
       'AGT-PRO-SYNTHESIS',
       'PRO Selection Synthesis Agent',
-      'AGT-PRO-SYNTHESIS',
-      'SYNTHESIZER',
+      'AI',
+      'AGENT-PRO-SYNTHESIS',
       'AI agent specialized in synthesizing all analyses to recommend final PRO selection',
-      json_build_array(
-        'Multi-criteria synthesis',
-        'Trade-off analysis',
-        'Recommendation generation',
-        'Justification documentation'
-      )::jsonb,
-      'SUPERVISED',
       jsonb_build_object(
-        'model', 'gpt-4',
-        'temperature', 0.3,
-        'max_tokens', 3000
-      ),
-      jsonb_build_object(
-        'agent_category', 'SYNTHESIS',
-        'synthesis_dimensions', json_build_array(
-          'Psychometric strength',
-          'Regulatory acceptability',
-          'Digital feasibility',
-          'Patient burden',
-          'Licensing considerations'
+        'agent_category', 'DECISION_SUPPORT',
+        'capabilities', json_build_array(
+          'Multi-criteria decision analysis',
+          'Trade-off evaluation',
+          'Risk assessment',
+          'Justification document generation'
         ),
-        'knowledge_domains', json_build_array('clinical-development', 'regulatory-strategy', 'pro-selection'),
-        'output_format', 'Structured recommendation with tiered evidence'
+        'primary_models', json_build_array('gpt-4', 'claude-3-opus'),
+        'decision_criteria', json_build_array(
+          'Psychometric quality (25%)',
+          'FDA acceptability (25%)',
+          'Digital feasibility (20%)',
+          'Patient burden (20%)',
+          'Cost (10%)'
+        ),
+        'knowledge_domains', json_build_array('clinical-development', 'decision-analysis', 'pro-selection'),
+        'output_formats', json_build_array('Decision matrix', 'Executive summary', 'Risk analysis')
       )
     ),
     
@@ -300,350 +258,167 @@ CROSS JOIN (
     (
       'AGT-LICENSING',
       'PRO Licensing Strategy Agent',
-      'AGT-LICENSING',
-      'SPECIALIST',
+      'AI',
+      'AGENT-LICENSING',
       'AI agent specialized in PRO licensing strategy and intellectual property considerations',
-      json_build_array(
-        'Copyright holder identification',
-        'Licensing model analysis',
-        'Cost estimation',
-        'Terms negotiation strategy'
-      )::jsonb,
-      'SUPERVISED',
       jsonb_build_object(
-        'model', 'gpt-4',
-        'temperature', 0.3,
-        'max_tokens', 2000
-      ),
-      jsonb_build_object(
-        'agent_category', 'COMMERCIAL_STRATEGY',
-        'licensing_models', json_build_array(
-          'Per-patient perpetual',
-          'Annual subscription',
-          'One-time study fee',
-          'Public domain (no fee)'
+        'agent_category', 'LEGAL_COMPLIANCE',
+        'capabilities', json_build_array(
+          'License requirement identification',
+          'Usage rights assessment',
+          'Cost estimation',
+          'Contract negotiation support'
         ),
-        'knowledge_domains', json_build_array('pro-licensing', 'intellectual-property', 'commercial-strategy'),
-        'considerations', json_build_array(
-          'Copyright restrictions',
-          'Modification allowances',
-          'Language translation rights',
-          'ePRO migration fees'
-        )
+        'primary_models', json_build_array('gpt-4', 'claude-3-opus'),
+        'licensing_aspects', json_build_array(
+          'Ownership identification',
+          'Usage rights',
+          'Translation permissions',
+          'ePRO adaptation rights',
+          'Publication rights'
+        ),
+        'knowledge_domains', json_build_array('intellectual-property', 'licensing', 'regulatory-affairs'),
+        'cost_models', json_build_array('Per-use fees', 'Flat fees', 'Perpetual license')
       )
-    )
-) AS a_data(
-  code, name, unique_id, agent_type, description, 
-  capabilities, autonomy_level, model_config, metadata
-)
-ON CONFLICT (tenant_id, code)
-DO UPDATE SET
-  name = EXCLUDED.name,
-  unique_id = EXCLUDED.unique_id,
-  agent_type = EXCLUDED.agent_type,
-  description = EXCLUDED.description,
-  capabilities = EXCLUDED.capabilities,
-  autonomy_level = EXCLUDED.autonomy_level,
-  model_config = EXCLUDED.model_config,
-  metadata = EXCLUDED.metadata,
-  updated_at = CURRENT_TIMESTAMP;
-
--- =====================================================================================
--- SECTION 1B: HUMAN PERSONAS FOR UC_CD_005
--- =====================================================================================
--- Human personas provide oversight, review, and approval for AI agent outputs
-
-INSERT INTO dh_persona (
-  tenant_id,
-  code,
-  name,
-  unique_id,
-  expertise_level,
-  years_experience,
-  education,
-  typical_titles,
-  decision_authority,
-  capabilities,
-  key_responsibilities,
-  department,
-  description,
-  metadata
-)
-SELECT 
-  sc.tenant_id,
-  p_data.code,
-  p_data.name,
-  p_data.unique_id,
-  p_data.expertise_level,
-  p_data.years_experience,
-  p_data.education,
-  p_data.typical_titles,
-  p_data.decision_authority,
-  p_data.capabilities,
-  p_data.key_responsibilities,
-  p_data.department,
-  p_data.description,
-  p_data.metadata
-FROM session_config sc
-CROSS JOIN (
-  VALUES
+    ),
+    
+    -- =================================================================================
+    -- HUMAN PERSONAS (P*) - These supervise and make final decisions
+    -- =================================================================================
+    
     -- P01_CMO: Chief Medical Officer
     (
       'P01_CMO',
       'Chief Medical Officer',
+      'Human',
       'PERSONA-P01-CMO',
-      'EXPERT',
-      '15+',
-      json_build_array('MD', 'PhD')::jsonb,
-      json_build_array('CMO', 'VP Medical Affairs', 'Chief Clinical Officer')::jsonb,
-      'VERY_HIGH',
-      json_build_array(
-        'Clinical Trial Strategy',
-        'FDA Interactions',
-        'Risk-benefit Assessment',
-        'Scientific Leadership'
-      )::jsonb,
-      json_build_array(
-        'Final approval of clinical endpoint strategy',
-        'FDA submission oversight',
-        'Scientific risk management',
-        'Clinical development leadership'
-      )::jsonb,
-      'Clinical Development',
-      'Senior executive providing strategic oversight and final approval for clinical endpoint and PRO selection',
+      'Chief Medical Officer responsible for clinical construct definition and final PRO selection decision',
       jsonb_build_object(
-        'review_stage', 'FINAL_APPROVAL',
-        'decision_scope', 'STRATEGIC',
-        'typical_availability_hours', 10,
-        'response_time_sla_hours', 72
+        'persona_type', 'LEADERSHIP',
+        'expertise', json_build_array('Clinical Strategy', 'Endpoint Selection', 'Regulatory', 'Medical Affairs'),
+        'experience_years', '15+',
+        'decision_authority', 'HIGH',
+        'typical_tasks', json_build_array('Clinical Construct Definition', 'Final Selection Decision', 'Strategic Clinical Decisions'),
+        'knowledge_domains', json_build_array('clinical-development', 'regulatory-affairs', 'medical-affairs')
       )
     ),
-    
     -- P02_VPCLIN: VP Clinical Development
     (
       'P02_VPCLIN',
       'VP Clinical Development',
+      'Human',
       'PERSONA-P02-VPCLIN',
-      'EXPERT',
-      '12-15',
-      json_build_array('MD', 'MPH')::jsonb,
-      json_build_array('VP Clinical Development', 'Head of Clinical Operations', 'Senior Clinical Director')::jsonb,
-      'HIGH',
-      json_build_array(
-        'Clinical Trial Design',
-        'Protocol Development',
-        'Endpoint Selection',
-        'Operational Feasibility'
-      )::jsonb,
-      json_build_array(
-        'Clinical trial strategy approval',
-        'Protocol oversight',
-        'Endpoint validation',
-        'Cross-functional coordination'
-      )::jsonb,
-      'Clinical Development',
-      'Senior clinical leader responsible for operational execution of clinical development strategy',
+      'VP Clinical Development responsible for literature search and PRO identification',
       jsonb_build_object(
-        'review_stage', 'STRATEGIC_REVIEW',
-        'decision_scope', 'OPERATIONAL',
-        'typical_availability_hours', 20,
-        'response_time_sla_hours', 48
+        'persona_type', 'LEADERSHIP',
+        'expertise', json_build_array('Clinical Research', 'Literature Review', 'PRO Methodology', 'Trial Design'),
+        'experience_years', '12-15',
+        'decision_authority', 'MEDIUM-HIGH',
+        'typical_tasks', json_build_array('Literature Search', 'PRO Analysis', 'Clinical Evidence Synthesis'),
+        'knowledge_domains', json_build_array('clinical-development', 'clinical-research')
       )
     ),
-    
-    -- P03_CLINSCI: Senior Clinical Scientist
-    (
-      'P03_CLINSCI',
-      'Senior Clinical Scientist',
-      'PERSONA-P03-CLINSCI',
-      'EXPERT',
-      '10-15',
-      json_build_array('PhD', 'PharmD', 'MD')::jsonb,
-      json_build_array('Senior Clinical Scientist', 'Clinical Science Director', 'Principal Clinical Scientist')::jsonb,
-      'HIGH',
-      json_build_array(
-        'Clinical Construct Definition',
-        'Endpoint Validation',
-        'Literature Review',
-        'Scientific Writing'
-      )::jsonb,
-      json_build_array(
-        'Endpoint strategy development',
-        'Clinical meaningfulness assessment',
-        'Scientific literature synthesis',
-        'Regulatory document authoring'
-      )::jsonb,
-      'Clinical Development',
-      'Expert responsible for developing and validating clinical constructs and endpoints',
-      jsonb_build_object(
-        'review_stage', 'TECHNICAL_REVIEW',
-        'decision_scope', 'TECHNICAL',
-        'typical_availability_hours', 30,
-        'response_time_sla_hours', 24
-      )
-    ),
-    
-    -- P04_BIOSTAT: Principal Biostatistician
+    -- P04_BIOSTAT: Biostatistician
     (
       'P04_BIOSTAT',
-      'Principal Biostatistician',
+      'Biostatistician',
+      'Human',
       'PERSONA-P04-BIOSTAT',
-      'EXPERT',
-      '10-15',
-      json_build_array('PhD', 'MS Statistics')::jsonb,
-      json_build_array('Principal Biostatistician', 'Director Biostatistics', 'Lead Statistician')::jsonb,
-      'HIGH',
-      json_build_array(
-        'Psychometric Evaluation',
-        'Statistical Analysis Planning',
-        'Sample Size Calculation',
-        'Measurement Properties Assessment'
-      )::jsonb,
-      json_build_array(
-        'Psychometric property evaluation',
-        'Statistical analysis plan development',
-        'Measurement reliability assessment',
-        'Responsiveness and MCID determination'
-      )::jsonb,
-      'Biostatistics',
-      'Expert statistician responsible for evaluating psychometric properties and statistical validity of PRO instruments',
+      'Biostatistician responsible for psychometric evaluation and statistical analysis',
       jsonb_build_object(
-        'review_stage', 'TECHNICAL_REVIEW',
-        'decision_scope', 'TECHNICAL',
-        'typical_availability_hours', 25,
-        'response_time_sla_hours', 48
+        'persona_type', 'TECHNICAL_EXPERT',
+        'expertise', json_build_array('Psychometrics', 'Statistical Analysis', 'Reliability', 'Validity', 'MCID'),
+        'experience_years', '8-12',
+        'decision_authority', 'MEDIUM',
+        'typical_tasks', json_build_array('Psychometric Evaluation', 'Statistical Analysis', 'MCID Assessment'),
+        'knowledge_domains', json_build_array('biostatistics', 'psychometrics', 'clinical-development')
       )
     ),
-    
-    -- P05_REGAFF: Regulatory Affairs Director
+    -- P05_REGDIR: Regulatory Director
     (
-      'P05_REGAFF',
+      'P05_REGDIR',
       'Regulatory Affairs Director',
-      'PERSONA-P05-REGAFF',
-      'EXPERT',
-      '10-15',
-      json_build_array('PharmD', 'RAC', 'MS', 'PhD')::jsonb,
-      json_build_array('Regulatory Affairs Director', 'Head of Regulatory Strategy', 'VP Regulatory Affairs')::jsonb,
-      'VERY_HIGH',
-      json_build_array(
-        'FDA Guidance Interpretation',
-        'Regulatory Strategy Development',
-        'COA Qualification Pathway',
-        'FDA Submission Preparation'
-      )::jsonb,
-      json_build_array(
-        'FDA compliance assessment',
-        'Regulatory risk evaluation',
-        'PRO qualification strategy',
-        'Agency interaction preparation'
-      )::jsonb,
-      'Regulatory Affairs',
-      'Regulatory expert ensuring PRO selection aligns with FDA expectations and submission requirements',
+      'Human',
+      'PERSONA-P05-REGDIR',
+      'Regulatory Director responsible for FDA compliance assessment and licensing strategy',
       jsonb_build_object(
-        'review_stage', 'REGULATORY_REVIEW',
-        'decision_scope', 'COMPLIANCE',
-        'typical_availability_hours', 25,
-        'response_time_sla_hours', 48
+        'persona_type', 'COMPLIANCE_EXPERT',
+        'expertise', json_build_array('FDA Regulations', 'PRO Guidance', 'ePRO Validation', 'Licensing', 'IP'),
+        'experience_years', '10-15',
+        'decision_authority', 'HIGH',
+        'typical_tasks', json_build_array('FDA Compliance Assessment', 'Licensing Strategy', 'Regulatory Submissions'),
+        'knowledge_domains', json_build_array('regulatory-affairs', 'fda-guidance', 'compliance')
       )
     ),
-    
-    -- P06_CLINOPS: Clinical Operations Director
+    -- P06_VPPRODUCT: VP Product
     (
-      'P06_CLINOPS',
-      'Clinical Operations Director',
-      'PERSONA-P06-CLINOPS',
-      'ADVANCED',
-      '8-12',
-      json_build_array('RN', 'MBA', 'MS')::jsonb,
-      json_build_array('Clinical Operations Director', 'Head of Site Management', 'VP Clinical Operations')::jsonb,
-      'MEDIUM',
-      json_build_array(
-        'ePRO Implementation',
-        'Site Feasibility',
-        'Operational Risk Assessment',
-        'Vendor Management'
-      )::jsonb,
-      json_build_array(
-        'ePRO platform selection and implementation',
-        'Site training and support',
-        'Operational feasibility assessment',
-        'Patient burden optimization'
-      )::jsonb,
-      'Clinical Operations',
-      'Operations leader ensuring practical implementation feasibility of PRO instruments in clinical trials',
+      'P06_VPPRODUCT',
+      'VP Product',
+      'Human',
+      'PERSONA-P06-VPPRODUCT',
+      'VP Product responsible for digital feasibility assessment',
       jsonb_build_object(
-        'review_stage', 'OPERATIONAL_REVIEW',
-        'decision_scope', 'OPERATIONAL',
-        'typical_availability_hours', 30,
-        'response_time_sla_hours', 48
+        'persona_type', 'LEADERSHIP',
+        'expertise', json_build_array('Product Management', 'UX Design', 'ePRO Implementation', 'Digital Platforms'),
+        'experience_years', '10-12',
+        'decision_authority', 'MEDIUM-HIGH',
+        'typical_tasks', json_build_array('Digital Feasibility Assessment', 'UX Design', 'Product Requirements'),
+        'knowledge_domains', json_build_array('product-development', 'ux-design', 'digital-health')
       )
     ),
-    
-    -- P07_MEDWRITER: Medical Writer
+    -- P07_CTO: Chief Technology Officer
     (
-      'P07_MEDWRITER',
-      'Medical Writer',
-      'PERSONA-P07-MEDWRITER',
-      'ADVANCED',
-      '5-10',
-      json_build_array('PhD', 'PharmD', 'MS', 'CMPP')::jsonb,
-      json_build_array('Medical Writer', 'Senior Medical Writer', 'Scientific Writer')::jsonb,
-      'LOW',
-      json_build_array(
-        'Regulatory Document Writing',
-        'Scientific Communication',
-        'Literature Synthesis',
-        'Endpoint Justification'
-      )::jsonb,
-      json_build_array(
-        'Endpoint justification documentation',
-        'PRO selection rationale writing',
-        'Regulatory submission document drafting',
-        'Scientific literature synthesis'
-      )::jsonb,
-      'Clinical Development',
-      'Professional writer responsible for documenting and communicating PRO selection rationale and justification',
+      'P07_CTO',
+      'Chief Technology Officer',
+      'Human',
+      'PERSONA-P07-CTO',
+      'CTO responsible for technical implementation assessment',
       jsonb_build_object(
-        'review_stage', 'DOCUMENTATION',
-        'decision_scope', 'ADVISORY',
-        'typical_availability_hours', 40,
-        'response_time_sla_hours', 72
+        'persona_type', 'LEADERSHIP',
+        'expertise', json_build_array('Software Architecture', 'API Integration', 'Data Security', 'HIPAA'),
+        'experience_years', '15+',
+        'decision_authority', 'HIGH',
+        'typical_tasks', json_build_array('Technical Implementation Assessment', 'Architecture Design', 'Security'),
+        'knowledge_domains', json_build_array('technical-architecture', 'data-security', 'digital-health')
+      )
+    ),
+    -- P10_PATADV: Patient Advocate
+    (
+      'P10_PATADV',
+      'Patient Advocate',
+      'Human',
+      'PERSONA-P10-PATADV',
+      'Patient Advocate responsible for patient burden assessment and preference integration',
+      jsonb_build_object(
+        'persona_type', 'STAKEHOLDER',
+        'expertise', json_build_array('Patient Experience', 'Patient Preferences', 'Accessibility', 'Advocacy'),
+        'experience_years', '5-10',
+        'decision_authority', 'MEDIUM',
+        'typical_tasks', json_build_array('Patient Burden Assessment', 'Patient Preference Integration', 'Accessibility Review'),
+        'knowledge_domains', json_build_array('patient-engagement', 'patient-advocacy', 'accessibility')
       )
     )
-) AS p_data(
-  code, name, unique_id, expertise_level, years_experience,
-  education, typical_titles, decision_authority, capabilities,
-  key_responsibilities, department, description, metadata
-)
+) AS r_data(code, name, agent_type, unique_id, description, metadata)
 ON CONFLICT (tenant_id, code)
 DO UPDATE SET
   name = EXCLUDED.name,
+  agent_type = EXCLUDED.agent_type,
   unique_id = EXCLUDED.unique_id,
-  expertise_level = EXCLUDED.expertise_level,
-  years_experience = EXCLUDED.years_experience,
-  education = EXCLUDED.education,
-  typical_titles = EXCLUDED.typical_titles,
-  decision_authority = EXCLUDED.decision_authority,
-  capabilities = EXCLUDED.capabilities,
-  key_responsibilities = EXCLUDED.key_responsibilities,
-  department = EXCLUDED.department,
   description = EXCLUDED.description,
   metadata = EXCLUDED.metadata,
   updated_at = CURRENT_TIMESTAMP;
-
 
 -- =====================================================================================
 -- SECTION 2: TOOLS FOR UC_CD_005
 -- =====================================================================================
 
-INSERT INTO dh_tool (tenant_id, code, name, category, vendor, unique_id, notes, metadata)
+INSERT INTO dh_tool (tenant_id, code, name, category, vendor, notes, metadata)
 SELECT 
   sc.tenant_id,
   t_data.code,
   t_data.name,
   t_data.category,
   t_data.vendor,
-  t_data.unique_id,
   t_data.notes,
   t_data.metadata
 FROM session_config sc
@@ -655,7 +430,6 @@ CROSS JOIN (
       'PubMed/MEDLINE',
       'RESEARCH_DATABASE',
       'NIH/NLM',
-      'TLR-PUBMED',
       'Medical literature database for PRO instrument research',
       jsonb_build_object(
         'url', 'https://pubmed.ncbi.nlm.nih.gov',
@@ -669,7 +443,6 @@ CROSS JOIN (
       'PROQOLID',
       'PRO_DATABASE',
       'Mapi Research Trust',
-      'TLR-PROQOLID',
       'Patient-Reported Outcomes and Quality of Life Instruments Database',
       jsonb_build_object(
         'url', 'https://eprovide.mapi-trust.org/instruments',
@@ -683,7 +456,6 @@ CROSS JOIN (
       'ePROVIDE',
       'PRO_DATABASE',
       'Mapi Research Trust',
-      'TLR-EPROVIDE',
       'Electronic PRO library with licensing information',
       jsonb_build_object(
         'url', 'https://eprovide.mapi-trust.org',
@@ -697,7 +469,6 @@ CROSS JOIN (
       'Cochrane Library',
       'RESEARCH_DATABASE',
       'Cochrane',
-      'TLR-COCHRANE',
       'Systematic reviews and clinical trial database',
       jsonb_build_object(
         'url', 'https://www.cochranelibrary.com',
@@ -712,7 +483,6 @@ CROSS JOIN (
       'SAS',
       'STATISTICAL_SOFTWARE',
       'SAS Institute',
-      'TLR-SAS',
       'Statistical analysis software for psychometric evaluation',
       jsonb_build_object(
         'capabilities', json_build_array('Cronbach Alpha', 'Factor Analysis', 'ICC', 'Validity Tests'),
@@ -724,7 +494,6 @@ CROSS JOIN (
       'R Statistical Software',
       'STATISTICAL_SOFTWARE',
       'R Foundation',
-      'TLR-R',
       'Open-source statistical software with psychometric packages',
       jsonb_build_object(
         'packages', json_build_array('psych', 'ltm', 'CTT', 'irtoys'),
@@ -738,7 +507,6 @@ CROSS JOIN (
       'FDA.gov',
       'REGULATORY_DATABASE',
       'FDA',
-      'TLR-FDA-GOV',
       'FDA website for regulatory precedent research',
       jsonb_build_object(
         'url', 'https://www.fda.gov',
@@ -751,7 +519,6 @@ CROSS JOIN (
       'Drugs@FDA',
       'REGULATORY_DATABASE',
       'FDA',
-      'TLR-DRUGS-FDA',
       'FDA drug approvals database',
       jsonb_build_object(
         'url', 'https://www.accessdata.fda.gov/scripts/cder/daf/',
@@ -765,7 +532,6 @@ CROSS JOIN (
       'Figma',
       'DESIGN_TOOL',
       'Figma Inc.',
-      'TLR-FIGMA',
       'UI/UX design tool for ePRO prototyping',
       jsonb_build_object(
         'url', 'https://www.figma.com',
@@ -778,7 +544,6 @@ CROSS JOIN (
       'REDCap',
       'EDC_SYSTEM',
       'Vanderbilt University',
-      'TLR-REDCAP',
       'Electronic data capture system with ePRO capabilities',
       jsonb_build_object(
         'capabilities', json_build_array('ePRO', 'Mobile App', 'Validation', 'Compliance'),
@@ -791,7 +556,6 @@ CROSS JOIN (
       'Google Docs',
       'COLLABORATION',
       'Google',
-      'TLR-GOOGLE-DOCS',
       'Collaborative document editing for PRO selection documentation',
       jsonb_build_object(
         'capabilities', json_build_array('Real-time Collaboration', 'Version Control', 'Comments'),
@@ -803,20 +567,18 @@ CROSS JOIN (
       'Microsoft Excel',
       'ANALYSIS_TOOL',
       'Microsoft',
-      'TLR-EXCEL',
       'Spreadsheet tool for PRO comparison tables',
       jsonb_build_object(
         'capabilities', json_build_array('Tables', 'Charts', 'Analysis'),
         'typical_use', 'PRO psychometric comparison tables'
       )
     )
-) AS t_data(code, name, category, vendor, unique_id, notes, metadata)
+) AS t_data(code, name, category, vendor, notes, metadata)
 ON CONFLICT (tenant_id, code)
 DO UPDATE SET
   name = EXCLUDED.name,
   category = EXCLUDED.category,
   vendor = EXCLUDED.vendor,
-  unique_id = EXCLUDED.unique_id,
   notes = EXCLUDED.notes,
   metadata = EXCLUDED.metadata,
   updated_at = CURRENT_TIMESTAMP;
@@ -825,13 +587,13 @@ DO UPDATE SET
 -- SECTION 3: RAG SOURCES FOR UC_CD_005
 -- =====================================================================================
 
-INSERT INTO dh_rag_source (tenant_id, code, name, source_type, uri, description, unique_id, metadata)
+INSERT INTO dh_rag_source (tenant_id, code, name, source_type, url, description, unique_id, metadata)
 SELECT 
   sc.tenant_id,
   rag_data.code,
   rag_data.name,
   rag_data.source_type,
-  rag_data.uri,
+  rag_data.url,
   rag_data.description,
   rag_data.unique_id,
   rag_data.metadata
@@ -842,7 +604,7 @@ CROSS JOIN (
     (
       'RAG_FDA_PRO_2009',
       'FDA PRO Guidance (2009)',
-      'guidance',
+      'REGULATORY_GUIDANCE',
       'https://www.fda.gov/regulatory-information/search-fda-guidance-documents/patient-reported-outcome-measures-use-medical-product-development-support-labeling-claims',
       'FDA guidance on PRO measures for medical product development',
       'RAG-FDA-PRO-2009',
@@ -858,7 +620,7 @@ CROSS JOIN (
     (
       'RAG_FDA_DIGITAL_HEALTH',
       'FDA Digital Health Guidance',
-      'guidance',
+      'REGULATORY_GUIDANCE',
       'https://www.fda.gov/medical-devices/digital-health-center-excellence',
       'FDA digital health guidance including ePRO considerations',
       'RAG-FDA-DH-2020',
@@ -872,7 +634,7 @@ CROSS JOIN (
     (
       'RAG_COSMIN',
       'COSMIN Checklist',
-      'document',
+      'METHODOLOGY',
       'https://www.cosmin.nl',
       'COnsensus-based Standards for the selection of health Measurement INstruments',
       'RAG-COSMIN',
@@ -886,7 +648,7 @@ CROSS JOIN (
     (
       'RAG_CLINICALTRIALS_GOV',
       'ClinicalTrials.gov',
-      'database',
+      'RESEARCH_DATABASE',
       'https://clinicaltrials.gov',
       'Clinical trial registry for PRO endpoint precedent research',
       'RAG-CT-GOV',
@@ -899,7 +661,7 @@ CROSS JOIN (
     (
       'RAG_PROMIS',
       'PROMIS (Patient-Reported Outcomes Measurement Information System)',
-      'database',
+      'PRO_FRAMEWORK',
       'https://www.healthmeasures.net/explore-measurement-systems/promis',
       'NIH-funded PRO measurement system with item banks',
       'RAG-PROMIS',
@@ -914,7 +676,7 @@ CROSS JOIN (
     (
       'RAG_PRO_LITERATURE',
       'PRO Validation Literature',
-      'dataset',
+      'ACADEMIC_LITERATURE',
       NULL,
       'Curated collection of PRO validation studies and psychometric papers',
       'RAG-PRO-LIT',
@@ -924,13 +686,12 @@ CROSS JOIN (
         'search_strategy', 'Systematic literature review methodology'
       )
     )
-) AS rag_data(code, name, source_type, uri, description, unique_id, metadata)
-ON CONFLICT (tenant_id, code)
+) AS rag_data(code, name, source_type, url, description, unique_id, metadata)
+ON CONFLICT (tenant_id, unique_id)
 DO UPDATE SET
   name = EXCLUDED.name,
   source_type = EXCLUDED.source_type,
-  uri = EXCLUDED.uri,
-  unique_id = EXCLUDED.unique_id,
+  url = EXCLUDED.url,
   description = EXCLUDED.description,
   metadata = EXCLUDED.metadata,
   updated_at = CURRENT_TIMESTAMP;
@@ -983,8 +744,11 @@ INSERT INTO dh_task (
   title,
   objective,
   position,
+  complexity,
+  estimated_duration_minutes,
   unique_id,
-  extra
+  extra,
+  metadata
 )
 SELECT 
   sc.tenant_id,
@@ -993,8 +757,11 @@ SELECT
   task_data.title,
   task_data.objective,
   task_data.position,
+  task_data.complexity,
+  task_data.estimated_duration_minutes,
   task_data.unique_id,
-  task_data.extra
+  task_data.extra,
+  task_data.metadata
 FROM session_config sc
 CROSS JOIN dh_workflow w
 CROSS JOIN dh_use_case uc
@@ -1007,11 +774,13 @@ CROSS JOIN (
       'Define Primary Clinical Construct',
       'Clearly define the primary clinical construct that needs to be measured by the PRO instrument, including what specific symptom, function, or outcome is being targeted and why it is clinically meaningful.',
       1,
+      'Basic'::dh_complexity_level,
+      15,
       'TSK-CD-005-001-01',
       jsonb_build_object(
-        'complexity', 'Basic',
-        'estimated_duration_minutes', 15,
-        'rag_domains', json_build_array('clinical-development', 'pro-methodology'),
+        'rag_domains', json_build_array('clinical-development', 'pro-methodology')
+      ),
+      jsonb_build_object(
         'input_requirements', json_build_array(
           'DTx product description',
           'Target indication',
@@ -1039,11 +808,13 @@ CROSS JOIN (
       'Identify Construct Domains',
       'Break down the primary construct into 3-5 key domains or sub-facets that comprehensively cover the clinical construct.',
       2,
+      'Intermediate'::dh_complexity_level,
+      20,
       'TSK-CD-005-001-02',
       jsonb_build_object(
-        'complexity', 'Intermediate',
-        'estimated_duration_minutes', 20,
-        'rag_domains', json_build_array('clinical-development', 'clinical-science'),
+        'rag_domains', json_build_array('clinical-development', 'clinical-science')
+      ),
+      jsonb_build_object(
         'input_requirements', json_build_array(
           'Clinical construct definition from Task 1',
           'Disease pathophysiology understanding',
@@ -1054,7 +825,7 @@ CROSS JOIN (
           'Description of each domain',
           'Importance rating of each domain'
         ),
-        'examples', jsonb_build_object(
+        'examples', json_build_object(
           'depression', json_build_array('Mood', 'Anhedonia', 'Sleep', 'Energy', 'Concentration'),
           'pain', json_build_array('Intensity', 'Interference', 'Quality', 'Duration')
         )
@@ -1066,11 +837,13 @@ CROSS JOIN (
       'Determine PRO vs Other COA Types',
       'Decide whether this construct should be measured via Patient-Reported Outcome (PRO), Clinician-Reported Outcome (ClinRO), Observer-Reported Outcome (ObsRO), or Performance Outcome (PerfO), with clear rationale.',
       3,
+      'Intermediate'::dh_complexity_level,
+      15,
       'TSK-CD-005-001-03',
       jsonb_build_object(
-        'complexity', 'Intermediate',
-        'estimated_duration_minutes', 15,
-        'rag_domains', json_build_array('regulatory-affairs', 'fda-guidance', 'pro-methodology'),
+        'rag_domains', json_build_array('regulatory-affairs', 'fda-guidance', 'pro-methodology')
+      ),
+      jsonb_build_object(
         'input_requirements', json_build_array(
           'Construct domains from Task 2',
           'FDA COA guidance',
@@ -1080,7 +853,7 @@ CROSS JOIN (
           'COA type selection (PRO/ClinRO/ObsRO/PerfO)',
           'Justification for selection'
         ),
-        'decision_criteria', jsonb_build_object(
+        'decision_criteria', json_build_object(
           'PRO', 'Subjective symptoms known only to patient',
           'ClinRO', 'Observable signs requiring clinical judgment',
           'ObsRO', 'Behaviors observable by caregivers',
@@ -1095,11 +868,13 @@ CROSS JOIN (
       'Define Temporal Characteristics',
       'Specify the appropriate recall period (right now, past 7 days, past 30 days) and assessment frequency (daily, weekly, monthly) for the PRO, with rationale.',
       4,
+      'Intermediate'::dh_complexity_level,
+      10,
       'TSK-CD-005-001-04',
       jsonb_build_object(
-        'complexity', 'Intermediate',
-        'estimated_duration_minutes', 10,
-        'rag_domains', json_build_array('clinical-development', 'trial-design'),
+        'rag_domains', json_build_array('clinical-development', 'trial-design')
+      ),
+      jsonb_build_object(
         'input_requirements', json_build_array(
           'Construct definition',
           'Treatment duration',
@@ -1123,11 +898,13 @@ CROSS JOIN (
       'Specify Contextual Factors',
       'Define relevant contextual factors such as disease severity level, age range, and comorbidity considerations that may affect PRO selection.',
       5,
+      'Basic'::dh_complexity_level,
+      10,
       'TSK-CD-005-001-05',
       jsonb_build_object(
-        'complexity', 'Basic',
-        'estimated_duration_minutes', 10,
-        'rag_domains', json_build_array('clinical-development'),
+        'rag_domains', json_build_array('clinical-development')
+      ),
+      jsonb_build_object(
         'input_requirements', json_build_array(
           'Target patient population',
           'Inclusion/exclusion criteria',
@@ -1151,11 +928,13 @@ CROSS JOIN (
       'Document Measurement Requirements',
       'Compile all elements into a comprehensive measurement requirements statement that will guide PRO instrument selection.',
       6,
+      'Intermediate'::dh_complexity_level,
+      20,
       'TSK-CD-005-001-06',
       jsonb_build_object(
-        'complexity', 'Intermediate',
-        'estimated_duration_minutes', 20,
-        'rag_domains', json_build_array('clinical-development', 'documentation'),
+        'rag_domains', json_build_array('clinical-development', 'documentation')
+      ),
+      jsonb_build_object(
         'input_requirements', json_build_array(
           'All outputs from Tasks 1-5',
           'DTx product profile'
@@ -1182,7 +961,7 @@ CROSS JOIN (
         )
       )
     )
-) AS task_data(code, title, objective, position, unique_id, extra)
+) AS task_data(code, title, objective, position, complexity, estimated_duration_minutes, unique_id, extra, metadata)
 WHERE d.tenant_id = sc.tenant_id
   AND d.code = 'CD'
   AND uc.domain_id = d.id
@@ -1193,8 +972,10 @@ ON CONFLICT (tenant_id, unique_id)
 DO UPDATE SET
   title = EXCLUDED.title,
   objective = EXCLUDED.objective,
-  position = EXCLUDED.position,
+  complexity = EXCLUDED.complexity,
+  estimated_duration_minutes = EXCLUDED.estimated_duration_minutes,
   extra = EXCLUDED.extra,
+  metadata = EXCLUDED.metadata,
   updated_at = CURRENT_TIMESTAMP;
 
 -- =====================================================================================
@@ -1202,50 +983,49 @@ DO UPDATE SET
 -- =====================================================================================
 
 -- Create dependencies between tasks in Workflow 1
-INSERT INTO dh_task_dependency (tenant_id, task_id, depends_on_task_id, note)
+INSERT INTO dh_task_dependency (tenant_id, task_id, depends_on_task_id, dependency_type)
 SELECT 
   sc.tenant_id,
   t_child.id as task_id,
   t_parent.id as depends_on_task_id,
-  dep_data.note
+  dep_data.dependency_type
 FROM session_config sc
 CROSS JOIN (
   VALUES
     -- Task 2 depends on Task 1
-    ('TSK-CD-005-001-02', 'TSK-CD-005-001-01', 'Sequential dependency: Domain identification requires construct definition'),
+    ('TSK-CD-005-001-02', 'TSK-CD-005-001-01', 'SEQUENTIAL'::dh_dependency_type),
     -- Task 3 depends on Task 2
-    ('TSK-CD-005-001-03', 'TSK-CD-005-001-02', 'Sequential dependency: COA type selection requires domain breakdown'),
+    ('TSK-CD-005-001-03', 'TSK-CD-005-001-02', 'SEQUENTIAL'::dh_dependency_type),
     -- Task 4 depends on Task 1 (can work in parallel with Task 2-3)
-    ('TSK-CD-005-001-04', 'TSK-CD-005-001-01', 'Sequential dependency: Temporal characteristics based on construct'),
+    ('TSK-CD-005-001-04', 'TSK-CD-005-001-01', 'SEQUENTIAL'::dh_dependency_type),
     -- Task 5 depends on Task 1
-    ('TSK-CD-005-001-05', 'TSK-CD-005-001-01', 'Sequential dependency: Contextual factors related to construct'),
+    ('TSK-CD-005-001-05', 'TSK-CD-005-001-01', 'SEQUENTIAL'::dh_dependency_type),
     -- Task 6 depends on all previous tasks
-    ('TSK-CD-005-001-06', 'TSK-CD-005-001-01', 'Sequential dependency: Documentation requires construct definition'),
-    ('TSK-CD-005-001-06', 'TSK-CD-005-001-02', 'Sequential dependency: Documentation requires domain identification'),
-    ('TSK-CD-005-001-06', 'TSK-CD-005-001-03', 'Sequential dependency: Documentation requires COA type selection'),
-    ('TSK-CD-005-001-06', 'TSK-CD-005-001-04', 'Sequential dependency: Documentation requires temporal characteristics'),
-    ('TSK-CD-005-001-06', 'TSK-CD-005-001-05', 'Sequential dependency: Documentation requires contextual factors')
-) AS dep_data(child_unique_id, parent_unique_id, note)
+    ('TSK-CD-005-001-06', 'TSK-CD-005-001-01', 'SEQUENTIAL'::dh_dependency_type),
+    ('TSK-CD-005-001-06', 'TSK-CD-005-001-02', 'SEQUENTIAL'::dh_dependency_type),
+    ('TSK-CD-005-001-06', 'TSK-CD-005-001-03', 'SEQUENTIAL'::dh_dependency_type),
+    ('TSK-CD-005-001-06', 'TSK-CD-005-001-04', 'SEQUENTIAL'::dh_dependency_type),
+    ('TSK-CD-005-001-06', 'TSK-CD-005-001-05', 'SEQUENTIAL'::dh_dependency_type)
+) AS dep_data(child_unique_id, parent_unique_id, dependency_type)
 JOIN dh_task t_child ON t_child.tenant_id = sc.tenant_id AND t_child.unique_id = dep_data.child_unique_id
 JOIN dh_task t_parent ON t_parent.tenant_id = sc.tenant_id AND t_parent.unique_id = dep_data.parent_unique_id
-ON CONFLICT (task_id, depends_on_task_id)
-DO UPDATE SET
-  note = EXCLUDED.note;
+ON CONFLICT (tenant_id, task_id, depends_on_task_id)
+DO NOTHING;
 
 -- =====================================================================================
 -- SECTION 6: TASK-AGENT ASSIGNMENTS (AI Agents Executing Tasks)
 -- =====================================================================================
 
-INSERT INTO dh_task_agent (
+INSERT INTO dh_task_agent_assignment (
   tenant_id,
   task_id,
   agent_id,
   assignment_type,
-  execution_order,
-  requires_human_approval,
-  approval_persona_code,
-  config_overrides,
-  notes,
+  priority,
+  required_capabilities,
+  required_knowledge,
+  expected_output_format,
+  quality_thresholds,
   metadata
 )
 SELECT 
@@ -1253,11 +1033,11 @@ SELECT
   t.id as task_id,
   agent.id as agent_id,
   ta_data.assignment_type,
-  ta_data.execution_order,
-  ta_data.requires_human_approval,
-  ta_data.approval_persona_code,
-  ta_data.config_overrides,
-  ta_data.notes,
+  ta_data.priority,
+  ta_data.required_capabilities,
+  ta_data.required_knowledge,
+  ta_data.expected_output_format,
+  ta_data.quality_thresholds,
   ta_data.metadata
 FROM session_config sc
 CROSS JOIN (
@@ -1266,33 +1046,29 @@ CROSS JOIN (
     (
       'TSK-CD-005-001-01',
       'AGT-CLINICAL-CONSTRUCT',
-      'PRIMARY_EXECUTOR',
+      'PRIMARY',
       1,
-      true,
-      'P01_CMO',
+      json_build_array(
+        'Clinical construct identification',
+        'Domain decomposition',
+        'Clinical meaningfulness assessment'
+      ),
+      json_build_array('clinical-development', 'pro-methodology', 'endpoint-selection'),
+      'Structured document with sections',
+      jsonb_build_object(
+        'completeness_score', 0.9,
+        'clinical_relevance_score', 0.85,
+        'regulatory_alignment_score', 0.8
+      ),
       jsonb_build_object(
         'model_preference', 'gpt-4',
         'temperature', 0.3,
         'max_tokens', 2000,
         'requires_rag', true,
-        'rag_sources', json_build_array('RAG-FDA-PRO-2009')
-      ),
-      'Primary agent for defining clinical construct',
-      jsonb_build_object(
-        'required_capabilities', json_build_array(
-          'Clinical construct identification',
-          'Domain decomposition',
-          'Clinical meaningfulness assessment'
-        ),
-        'required_knowledge', json_build_array('clinical-development', 'pro-methodology', 'endpoint-selection'),
-        'expected_output_format', 'Structured document with sections',
-        'quality_thresholds', jsonb_build_object(
-          'completeness_score', 0.9,
-          'clinical_relevance_score', 0.85,
-          'regulatory_alignment_score', 0.8
-        ),
+        'rag_sources', json_build_array('RAG-FDA-PRO-2009'),
         'validation_required', true,
-        'human_review_required', true
+        'human_review_required', true,
+        'reviewer_role', 'P01_CMO'
       )
     ),
     
@@ -1425,64 +1201,66 @@ CROSS JOIN (
       )
     )
 ) AS ta_data(
-  task_unique_id, agent_code, assignment_type, execution_order,
-  requires_human_approval, approval_persona_code, config_overrides,
-  notes, metadata
+  task_unique_id, agent_code, assignment_type, priority,
+  required_capabilities, required_knowledge, expected_output_format,
+  quality_thresholds, metadata
 )
 JOIN dh_task t ON t.tenant_id = sc.tenant_id AND t.unique_id = ta_data.task_unique_id
-JOIN dh_agent agent ON agent.tenant_id = sc.tenant_id AND agent.code = ta_data.agent_code
-ON CONFLICT (tenant_id, task_id, agent_id, assignment_type)
+JOIN dh_role agent ON agent.tenant_id = sc.tenant_id AND agent.code = ta_data.agent_code
+ON CONFLICT (tenant_id, task_id, agent_id)
 DO UPDATE SET
-  execution_order = EXCLUDED.execution_order,
-  requires_human_approval = EXCLUDED.requires_human_approval,
-  approval_persona_code = EXCLUDED.approval_persona_code,
-  config_overrides = EXCLUDED.config_overrides,
-  notes = EXCLUDED.notes,
+  assignment_type = EXCLUDED.assignment_type,
+  priority = EXCLUDED.priority,
+  required_capabilities = EXCLUDED.required_capabilities,
+  required_knowledge = EXCLUDED.required_knowledge,
+  expected_output_format = EXCLUDED.expected_output_format,
+  quality_thresholds = EXCLUDED.quality_thresholds,
   metadata = EXCLUDED.metadata,
   updated_at = CURRENT_TIMESTAMP;
 
 -- =====================================================================================
--- SECTION 7: TASK-PERSONA ASSIGNMENTS (Human Supervisors/Reviewers)
+-- SECTION 7: TASK-ROLE ASSIGNMENTS (Human Supervisors/Reviewers)
 -- =====================================================================================
 
-INSERT INTO dh_task_persona (tenant_id, task_id, persona_id, responsibility, review_timing)
+INSERT INTO dh_task_role (tenant_id, task_id, role_id, responsibility, is_primary)
 SELECT 
   sc.tenant_id,
   t.id as task_id,
-  p.id as persona_id,
-  tp_data.responsibility,
-  tp_data.review_timing
+  r.id as role_id,
+  tr_data.responsibility,
+  tr_data.is_primary
 FROM session_config sc
 CROSS JOIN (
   VALUES
-    -- Task 1: Define Primary Clinical Construct
-    ('TSK-CD-005-001-01', 'P01_CMO', 'APPROVE', 'AFTER_AGENT_RUNS'),
-    ('TSK-CD-005-001-01', 'P02_VPCLIN', 'REVIEW', 'AFTER_AGENT_RUNS'),
+    -- Task 1: Define Primary Clinical Construct (P01_CMO as Lead)
+    ('TSK-CD-005-001-01', 'P01_CMO', 'Lead', true),
+    ('TSK-CD-005-001-01', 'P02_VPCLIN', 'Contributor', false),
     
-    -- Task 2: Identify Construct Domains
-    ('TSK-CD-005-001-02', 'P01_CMO', 'APPROVE', 'AFTER_AGENT_RUNS'),
-    ('TSK-CD-005-001-02', 'P02_VPCLIN', 'REVIEW', 'AFTER_AGENT_RUNS'),
+    -- Task 2: Identify Construct Domains (P01_CMO as Lead)
+    ('TSK-CD-005-001-02', 'P01_CMO', 'Lead', true),
+    ('TSK-CD-005-001-02', 'P02_VPCLIN', 'Contributor', false),
     
-    -- Task 3: Determine PRO vs Other COA Types
-    ('TSK-CD-005-001-03', 'P05_REGAFF', 'APPROVE', 'AFTER_AGENT_RUNS'),
-    ('TSK-CD-005-001-03', 'P01_CMO', 'REVIEW', 'AFTER_AGENT_RUNS'),
+    -- Task 3: Determine PRO vs Other COA Types (P05_REGDIR as Lead)
+    ('TSK-CD-005-001-03', 'P05_REGDIR', 'Lead', true),
+    ('TSK-CD-005-001-03', 'P01_CMO', 'Reviewer', false),
     
-    -- Task 4: Define Temporal Characteristics
-    ('TSK-CD-005-001-04', 'P02_VPCLIN', 'APPROVE', 'AFTER_AGENT_RUNS'),
-    ('TSK-CD-005-001-04', 'P04_BIOSTAT', 'REVIEW', 'AFTER_AGENT_RUNS'),
+    -- Task 4: Define Temporal Characteristics (P02_VPCLIN as Lead)
+    ('TSK-CD-005-001-04', 'P02_VPCLIN', 'Lead', true),
+    ('TSK-CD-005-001-04', 'P04_BIOSTAT', 'Contributor', false),
     
-    -- Task 5: Specify Contextual Factors
-    ('TSK-CD-005-001-05', 'P01_CMO', 'APPROVE', 'AFTER_AGENT_RUNS'),
+    -- Task 5: Specify Contextual Factors (P01_CMO as Lead)
+    ('TSK-CD-005-001-05', 'P01_CMO', 'Lead', true),
     
-    -- Task 6: Document Measurement Requirements
-    ('TSK-CD-005-001-06', 'P02_VPCLIN', 'APPROVE', 'AFTER_AGENT_RUNS'),
-    ('TSK-CD-005-001-06', 'P01_CMO', 'REVIEW', 'AFTER_AGENT_RUNS')
-) AS tp_data(task_unique_id, persona_code, responsibility, review_timing)
-JOIN dh_task t ON t.tenant_id = sc.tenant_id AND t.unique_id = tp_data.task_unique_id
-JOIN dh_persona p ON p.tenant_id = sc.tenant_id AND p.code = tp_data.persona_code
-ON CONFLICT (tenant_id, task_id, persona_id, responsibility)
+    -- Task 6: Document Measurement Requirements (P02_VPCLIN as Lead)
+    ('TSK-CD-005-001-06', 'P02_VPCLIN', 'Lead', true),
+    ('TSK-CD-005-001-06', 'P01_CMO', 'Reviewer', false)
+) AS tr_data(task_unique_id, role_code, responsibility, is_primary)
+JOIN dh_task t ON t.tenant_id = sc.tenant_id AND t.unique_id = tr_data.task_unique_id
+JOIN dh_role r ON r.tenant_id = sc.tenant_id AND r.code = tr_data.role_code
+ON CONFLICT (tenant_id, task_id, role_id)
 DO UPDATE SET
-  review_timing = EXCLUDED.review_timing,
+  responsibility = EXCLUDED.responsibility,
+  is_primary = EXCLUDED.is_primary,
   updated_at = CURRENT_TIMESTAMP;
 
 -- =====================================================================================
@@ -1703,26 +1481,29 @@ DO UPDATE SET
 SELECT 
   'AI Agents Created' as status,
   COUNT(*) as total_agents
-FROM dh_agent
+FROM dh_role
 WHERE tenant_id = (SELECT tenant_id FROM session_config)
+  AND agent_type = 'AI'
   AND code LIKE 'AGT-%';
 
 -- Verify human personas created
 SELECT 
   'Human Personas Created' as status,
   COUNT(*) as total_personas
-FROM dh_persona
+FROM dh_role
 WHERE tenant_id = (SELECT tenant_id FROM session_config)
+  AND agent_type = 'Human'
   AND code LIKE 'P%';
 
--- List AI agents by type
+-- List AI agents by category
 SELECT 
-  'AI Agents by Type' as status,
-  agent_type as type,
+  'AI Agents by Category' as status,
+  metadata->>'agent_category' as category,
   COUNT(*) as count
-FROM dh_agent
+FROM dh_role
 WHERE tenant_id = (SELECT tenant_id FROM session_config)
-GROUP BY agent_type
+  AND agent_type = 'AI'
+GROUP BY metadata->>'agent_category'
 ORDER BY count DESC;
 
 -- Verify tools created
@@ -1760,14 +1541,13 @@ JOIN dh_task t ON td.task_id = t.id
 WHERE t.tenant_id = (SELECT tenant_id FROM session_config)
   AND t.unique_id LIKE 'TSK-CD-005-%';
 
--- Verify task-persona assignments
+-- Verify task-role assignments
 SELECT 
-  'Task-Persona Assignments' as status,
+  'Task-Role Assignments' as status,
   COUNT(*) as total_assignments,
-  COUNT(DISTINCT task_id) as tasks_with_personas,
-  COUNT(DISTINCT persona_id) as personas_assigned
-FROM dh_task_persona tp
-JOIN dh_task t ON tp.task_id = t.id
+  COUNT(*) FILTER (WHERE is_primary = true) as primary_assignments
+FROM dh_task_role tr
+JOIN dh_task t ON tr.task_id = t.id
 WHERE t.tenant_id = (SELECT tenant_id FROM session_config)
   AND t.unique_id LIKE 'TSK-CD-005-%';
 
@@ -1802,29 +1582,30 @@ WHERE t.tenant_id = (SELECT tenant_id FROM session_config)
 -- Show agent assignments by agent
 SELECT 
   'Agent Assignment Distribution' as status,
-  a.code as agent_code,
-  a.name as agent_name,
+  r.code as agent_code,
+  r.name as agent_name,
   COUNT(DISTINCT taa.task_id) as tasks_assigned
 FROM dh_task_agent_assignment taa
 JOIN dh_task t ON taa.task_id = t.id
-JOIN dh_agent a ON taa.agent_id = a.id
+JOIN dh_role r ON taa.agent_id = r.id
 WHERE t.tenant_id = (SELECT tenant_id FROM session_config)
   AND t.unique_id LIKE 'TSK-CD-005-%'
-GROUP BY a.code, a.name, a.id
+  AND r.agent_type = 'AI'
+GROUP BY r.code, r.name, r.id
 ORDER BY tasks_assigned DESC;
 
 -- Summary report
 SELECT 
   'UC_CD_005 Seeding Complete' as status,
   jsonb_build_object(
-    'ai_agents', (SELECT COUNT(*) FROM dh_agent WHERE tenant_id = (SELECT tenant_id FROM session_config) AND code LIKE 'AGT-%'),
-    'human_personas', (SELECT COUNT(*) FROM dh_persona WHERE tenant_id = (SELECT tenant_id FROM session_config) AND code LIKE 'P%'),
+    'ai_agents', (SELECT COUNT(*) FROM dh_role WHERE tenant_id = (SELECT tenant_id FROM session_config) AND agent_type = 'AI' AND code LIKE 'AGT-%'),
+    'human_personas', (SELECT COUNT(*) FROM dh_role WHERE tenant_id = (SELECT tenant_id FROM session_config) AND agent_type = 'Human' AND code LIKE 'P%'),
     'tools', (SELECT COUNT(*) FROM dh_tool WHERE tenant_id = (SELECT tenant_id FROM session_config)),
     'rag_sources', (SELECT COUNT(*) FROM dh_rag_source WHERE tenant_id = (SELECT tenant_id FROM session_config)),
     'tasks', (SELECT COUNT(*) FROM dh_task t JOIN dh_workflow w ON t.workflow_id = w.id JOIN dh_use_case uc ON w.use_case_id = uc.id WHERE uc.code = 'UC_CD_005'),
     'dependencies', (SELECT COUNT(*) FROM dh_task_dependency td JOIN dh_task t ON td.task_id = t.id WHERE t.unique_id LIKE 'TSK-CD-005-%'),
     'agent_assignments', (SELECT COUNT(*) FROM dh_task_agent_assignment taa JOIN dh_task t ON taa.task_id = t.id WHERE t.unique_id LIKE 'TSK-CD-005-%'),
-    'persona_assignments', (SELECT COUNT(*) FROM dh_task_persona tp JOIN dh_task t ON tp.task_id = t.id WHERE t.unique_id LIKE 'TSK-CD-005-%'),
+    'role_assignments', (SELECT COUNT(*) FROM dh_task_role tr JOIN dh_task t ON tr.task_id = t.id WHERE t.unique_id LIKE 'TSK-CD-005-%'),
     'tool_mappings', (SELECT COUNT(*) FROM dh_task_tool tt JOIN dh_task t ON tt.task_id = t.id WHERE t.unique_id LIKE 'TSK-CD-005-%'),
     'prompts', (SELECT COUNT(*) FROM dh_prompt WHERE prompt_identifier LIKE 'PROMPT_CD_005_%')
   ) as summary;

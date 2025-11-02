@@ -34,7 +34,7 @@ Usage:
 """
 
 import asyncio
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 from datetime import datetime
 import structlog
 
@@ -53,7 +53,7 @@ from langgraph_workflows.state_schemas import (
 )
 from langgraph_workflows.observability import trace_node
 from services.conversation_manager import ConversationManager
-from services.agent_selector import get_agent_selector_service
+from services.agent_selector_service import get_agent_selector_service
 from services.unified_rag_service import UnifiedRAGService
 from services.agent_orchestrator import AgentOrchestrator
 

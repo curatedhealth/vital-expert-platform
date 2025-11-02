@@ -589,6 +589,11 @@ async def get_metadata_processing_service() -> MetadataProcessingService:
         raise HTTPException(status_code=503, detail="Metadata processing service not initialized")
     return metadata_processing_service
 
+async def get_agent_selector_service_dep() -> AgentSelectorService:
+    """Dependency to get agent selector service"""
+    from services.agent_selector_service import get_agent_selector_service
+    return get_agent_selector_service(supabase_client)
+
 async def get_websocket_manager() -> WebSocketManager:
     if not websocket_manager:
         raise HTTPException(status_code=503, detail="WebSocket manager not initialized")
@@ -1524,11 +1529,6 @@ async def generate_prompt(
     except Exception as e:
         logger.error("❌ Prompt generation failed", error=str(e))
         raise HTTPException(status_code=500, detail=f"Prompt generation failed: {str(e)}")
-
-async def get_agent_selector_service_dep() -> AgentSelectorService:
-    """Dependency to get agent selector service"""
-    from services.agent_selector_service import get_agent_selector_service
-    return get_agent_selector_service(supabase_client)
 
 async def get_supabase_client() -> SupabaseClient:
     """Dependency to get Supabase client"""

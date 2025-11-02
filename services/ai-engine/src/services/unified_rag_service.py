@@ -153,21 +153,21 @@ class UnifiedRAGService:
                 )
 
                 # Format results
-        sources = []
-        for match in search_response.matches or []:
-            if match.score >= similarity_threshold:
-                sources.append(Document(
-                    page_content=match.metadata.get("content", "") if isinstance(match.metadata, dict) else getattr(match.metadata, "content", ""),
-                    metadata={
-                        "id": match.metadata.get("chunk_id") if isinstance(match.metadata, dict) else getattr(match.metadata, "chunk_id", None),
-                        "document_id": match.metadata.get("document_id") if isinstance(match.metadata, dict) else getattr(match.metadata, "document_id", None),
-                        "title": match.metadata.get("source_title") if isinstance(match.metadata, dict) else getattr(match.metadata, "source_title", None),
-                        "domain": match.metadata.get("domain") if isinstance(match.metadata, dict) else getattr(match.metadata, "domain", None),
-                        "domain_id": match.metadata.get("domain_id") if isinstance(match.metadata, dict) else getattr(match.metadata, "domain_id", None),
-                        "similarity": match.score,
-                        **(match.metadata if isinstance(match.metadata, dict) else {}),
-                    },
-                ))
+                sources = []
+                for match in search_response.matches or []:
+                    if match.score >= similarity_threshold:
+                        sources.append(Document(
+                            page_content=match.metadata.get("content", "") if isinstance(match.metadata, dict) else getattr(match.metadata, "content", ""),
+                            metadata={
+                                "id": match.metadata.get("chunk_id") if isinstance(match.metadata, dict) else getattr(match.metadata, "chunk_id", None),
+                                "document_id": match.metadata.get("document_id") if isinstance(match.metadata, dict) else getattr(match.metadata, "document_id", None),
+                                "title": match.metadata.get("source_title") if isinstance(match.metadata, dict) else getattr(match.metadata, "source_title", None),
+                                "domain": match.metadata.get("domain") if isinstance(match.metadata, dict) else getattr(match.metadata, "domain", None),
+                                "domain_id": match.metadata.get("domain_id") if isinstance(match.metadata, dict) else getattr(match.metadata, "domain_id", None),
+                                "similarity": match.score,
+                                **(match.metadata if isinstance(match.metadata, dict) else {}),
+                            },
+                        ))
             else:
                 # Fallback to Supabase vector search
                 sources = await self._supabase_vector_search(

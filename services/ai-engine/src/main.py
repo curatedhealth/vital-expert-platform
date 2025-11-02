@@ -405,9 +405,9 @@ async def initialize_services_background():
 
     try:
         if supabase_client:
-            unified_rag_service = UnifiedRAGService(supabase_client)
+            unified_rag_service = UnifiedRAGService(supabase_client, cache_manager=cache_manager)
             await asyncio.wait_for(unified_rag_service.initialize(), timeout=5.0)
-            logger.info("✅ Unified RAG service initialized")
+            logger.info("✅ Unified RAG service initialized", caching_enabled=cache_manager is not None and cache_manager.enabled)
     except asyncio.TimeoutError:
         logger.error("❌ Unified RAG service initialization timed out")
         unified_rag_service = None
@@ -627,6 +627,45 @@ async def health_check():
 async def metrics():
     """Prometheus metrics endpoint"""
     return generate_latest()
+
+
+# Cache statistics endpoint
+@app.get("/cache/stats")
+async def get_cache_stats():
+    """
+    Get cache statistics for monitoring.
+    
+    Returns cache hit/miss rates for:
+    - Global cache manager
+    - RAG service cache
+    """
+    global cache_manager, unified_rag_service
+    
+    stats = {
+        "timestamp": datetime.now().isoformat(),
+        "global_cache": None,
+        "rag_cache": None,
+    }
+    
+    # Global cache manager stats
+    if cache_manager and cache_manager.enabled:
+        try:
+            stats["global_cache"] = await cache_manager.get_cache_stats()
+        except Exception as e:
+            stats["global_cache"] = {"error": str(e)}
+    else:
+        stats["global_cache"] = {"enabled": False, "message": "Cache manager not initialized"}
+    
+    # RAG service cache stats
+    if unified_rag_service:
+        try:
+            stats["rag_cache"] = await unified_rag_service.get_cache_stats()
+        except Exception as e:
+            stats["rag_cache"] = {"error": str(e)}
+    else:
+        stats["rag_cache"] = {"enabled": False, "message": "RAG service not initialized"}
+    
+    return stats
 
 
 @app.post("/api/mode1/manual", response_model=Mode1ManualResponse)

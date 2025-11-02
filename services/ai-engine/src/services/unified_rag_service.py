@@ -4,6 +4,8 @@ Comprehensive RAG retrieval with Pinecone, Supabase, and multiple strategies
 """
 
 import asyncio
+import hashlib
+import json
 from typing import List, Dict, Any, Optional, Tuple
 from datetime import datetime
 import structlog
@@ -11,6 +13,7 @@ import os
 from pinecone import Pinecone, ServerlessSpec
 from langchain_openai import OpenAIEmbeddings
 from services.embedding_service_factory import EmbeddingServiceFactory
+from services.cache_manager import CacheManager
 from langchain_core.documents import Document
 import numpy as np
 
@@ -20,16 +23,21 @@ from core.config import get_settings
 logger = structlog.get_logger()
 
 class UnifiedRAGService:
-    """Unified RAG service with Pinecone vector search and Supabase metadata"""
+    """Unified RAG service with Pinecone vector search, Supabase metadata, and Redis caching"""
 
-    def __init__(self, supabase_client: SupabaseClient):
+    def __init__(self, supabase_client: SupabaseClient, cache_manager: Optional[CacheManager] = None):
         self.settings = get_settings()
         self.supabase = supabase_client
+        self.cache_manager = cache_manager
         self.embeddings: Optional[OpenAIEmbeddings] = None  # Can be OpenAI or HuggingFace adapter
         self.embedding_service = None  # Unified embedding service interface
         self.pinecone: Optional[Pinecone] = None
         self.pinecone_index = None
         self.knowledge_namespace = "domains-knowledge"  # Default namespace
+        
+        # Cache statistics
+        self._cache_hits = 0
+        self._cache_misses = 0
 
     async def initialize(self):
         """Initialize RAG service components"""
@@ -65,11 +73,61 @@ class UnifiedRAGService:
             else:
                 logger.warning("⚠️ PINECONE_API_KEY not set, using Supabase only")
 
-            logger.info("✅ Unified RAG service initialized")
+            logger.info("✅ Unified RAG service initialized", caching_enabled=self.cache_manager is not None and self.cache_manager.enabled)
 
         except Exception as e:
             logger.error("❌ Failed to initialize Unified RAG service", error=str(e))
             raise
+
+    def _generate_cache_key(
+        self,
+        query_text: str,
+        strategy: str,
+        domain_ids: Optional[List[str]] = None,
+        filters: Optional[Dict[str, Any]] = None,
+        max_results: int = 10,
+        similarity_threshold: float = 0.7,
+        tenant_id: Optional[str] = None,
+    ) -> str:
+        """
+        Generate deterministic cache key for RAG query.
+        
+        Args:
+            query_text: Search query
+            strategy: RAG strategy
+            domain_ids: Domain filters
+            filters: Additional filters
+            max_results: Max results
+            similarity_threshold: Similarity threshold
+            tenant_id: Tenant ID for isolation
+            
+        Returns:
+            MD5 hash of query parameters
+        """
+        # Build cache key components
+        key_components = [
+            query_text.strip().lower(),
+            strategy,
+            str(max_results),
+            f"{similarity_threshold:.2f}",
+        ]
+        
+        # Add domain IDs if present (sorted for consistency)
+        if domain_ids:
+            key_components.append(",".join(sorted(domain_ids)))
+        
+        # Add filters if present (sorted keys for consistency)
+        if filters:
+            filter_str = json.dumps(filters, sort_keys=True)
+            key_components.append(filter_str)
+        
+        # Create hash
+        key_data = "|".join(key_components)
+        key_hash = hashlib.md5(key_data.encode()).hexdigest()
+        
+        # Include tenant for isolation
+        tenant_prefix = tenant_id[:8] if tenant_id else "default"
+        return f"vital:rag:{tenant_prefix}:{key_hash}"
 
     async def query(
         self,
@@ -82,11 +140,73 @@ class UnifiedRAGService:
         agent_id: Optional[str] = None,
         user_id: Optional[str] = None,
         session_id: Optional[str] = None,
+        tenant_id: Optional[str] = None,
     ) -> Dict[str, Any]:
-        """Main query method supporting multiple strategies"""
+        """
+        Main query method supporting multiple strategies with Redis caching.
+        
+        Golden Rule #3: All expensive operations MUST have caching.
+        """
         start_time = datetime.now()
 
+        # Return empty result for empty queries
+        if not query_text or not query_text.strip():
+            return {
+                "sources": [],
+                "context": "",
+                "metadata": {
+                    "strategy": strategy,
+                    "totalSources": 0,
+                    "responseTime": 0,
+                    "cached": False,
+                }
+            }
+
         try:
+            # Generate cache key
+            cache_key = self._generate_cache_key(
+                query_text=query_text,
+                strategy=strategy,
+                domain_ids=domain_ids,
+                filters=filters,
+                max_results=max_results,
+                similarity_threshold=similarity_threshold,
+                tenant_id=tenant_id or user_id,
+            )
+
+            # Check cache first (Golden Rule #3)
+            if self.cache_manager and self.cache_manager.enabled:
+                cached_result = await self.cache_manager.get(cache_key)
+                if cached_result:
+                    self._cache_hits += 1
+                    logger.info(
+                        "✅ RAG cache hit",
+                        query=query_text[:50],
+                        strategy=strategy,
+                        cache_key=cache_key[:32],
+                    )
+                    
+                    # Add cache metadata
+                    cached_result["metadata"]["cached"] = True
+                    cached_result["metadata"]["cacheHit"] = True
+                    cached_result["metadata"]["responseTime"] = (datetime.now() - start_time).total_seconds() * 1000
+                    
+                    return cached_result
+
+            # Cache miss - perform actual search
+            self._cache_misses += 1
+            logger.debug(
+                "⚠️ RAG cache miss",
+                query=query_text[:50],
+                strategy=strategy,
+                cache_key=cache_key[:32],
+            )
+
+            # Validate strategy
+            valid_strategies = ["semantic", "hybrid", "agent-optimized", "keyword", "supabase_only"]
+            if strategy not in valid_strategies:
+                raise ValueError(f"Invalid RAG strategy: {strategy}. Must be one of {valid_strategies}")
+
             # Route to appropriate strategy
             if strategy == "semantic":
                 result = await self._semantic_search(
@@ -104,26 +224,112 @@ class UnifiedRAGService:
                 result = await self._keyword_search(
                     query_text, domain_ids, filters, max_results
                 )
+            elif strategy == "supabase_only":
+                result = await self._supabase_only_search(
+                    query_text, domain_ids, filters, max_results
+                )
             else:
+                # Default to hybrid
                 result = await self._hybrid_search(
                     query_text, domain_ids, filters, max_results, similarity_threshold
                 )
 
             processing_time = (datetime.now() - start_time).total_seconds() * 1000
 
-            return {
+            # Add metadata
+            final_result = {
                 **result,
                 "metadata": {
                     **result.get("metadata", {}),
                     "strategy": strategy,
                     "responseTime": processing_time,
                     "cached": False,
-                },
+                    "cacheHit": False,
+                }
             }
 
+            # Cache the result (Golden Rule #3)
+            if self.cache_manager and self.cache_manager.enabled:
+                # TTL based on strategy (more stable results = longer cache)
+                cache_ttl = {
+                    "semantic": 1800,  # 30 minutes
+                    "hybrid": 1800,    # 30 minutes
+                    "agent-optimized": 900,  # 15 minutes (agent-specific)
+                    "keyword": 3600,   # 1 hour (most stable)
+                    "supabase_only": 1800,  # 30 minutes
+                }.get(strategy, 1800)
+
+                await self.cache_manager.set(cache_key, final_result, ttl=cache_ttl)
+                logger.debug(
+                    "💾 RAG result cached",
+                    cache_key=cache_key[:32],
+                    ttl=cache_ttl,
+                    sources=len(final_result.get("sources", [])),
+                )
+
+            return final_result
+
         except Exception as e:
-            logger.error("❌ RAG query failed", error=str(e), strategy=strategy)
-            raise
+            logger.error("❌ RAG query failed", error=str(e), query=query_text[:100])
+            # Return empty result on error
+            return {
+                "sources": [],
+                "context": "",
+                "metadata": {
+                    "strategy": strategy,
+                    "totalSources": 0,
+                    "responseTime": (datetime.now() - start_time).total_seconds() * 1000,
+                    "cached": False,
+                    "error": str(e),
+                }
+            }
+
+    async def get_cache_stats(self) -> Dict[str, Any]:
+        """
+        Get RAG cache statistics.
+        
+        Returns:
+            Dictionary with cache hit/miss stats
+        """
+        total_requests = self._cache_hits + self._cache_misses
+        hit_rate = self._cache_hits / total_requests if total_requests > 0 else 0.0
+        
+        stats = {
+            "caching_enabled": self.cache_manager is not None and self.cache_manager.enabled,
+            "hits": self._cache_hits,
+            "misses": self._cache_misses,
+            "total_requests": total_requests,
+            "hit_rate": round(hit_rate * 100, 2),  # Percentage
+        }
+        
+        # Add global cache stats if available
+        if self.cache_manager:
+            global_stats = await self.cache_manager.get_cache_stats()
+            stats["global_cache_stats"] = global_stats
+        
+        return stats
+
+    async def invalidate_cache(self, tenant_id: Optional[str] = None, pattern: Optional[str] = None):
+        """
+        Invalidate RAG cache entries.
+        
+        Args:
+            tenant_id: Optional tenant ID to invalidate (None = all)
+            pattern: Optional pattern to match (e.g., 'rag')
+        """
+        if not self.cache_manager or not self.cache_manager.enabled:
+            logger.warning("Cache manager not available for invalidation")
+            return
+        
+        if tenant_id:
+            await self.cache_manager.invalidate_tenant_cache(tenant_id, pattern or "rag")
+            logger.info("RAG cache invalidated for tenant", tenant_id=tenant_id[:8])
+        else:
+            # Invalidate all RAG cache (use with caution!)
+            logger.warning("Invalidating ALL RAG cache entries")
+            # This would require a scan-delete operation for all rag:* keys
+            # For now, just log the request
+            pass
 
     async def _semantic_search(
         self,

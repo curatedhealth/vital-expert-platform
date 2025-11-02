@@ -5,6 +5,10 @@ Reads PORT from environment variable and starts FastAPI server
 """
 import os
 import sys
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 # Critical: Ensure output is unbuffered so logs appear immediately
 os.environ['PYTHONUNBUFFERED'] = '1'

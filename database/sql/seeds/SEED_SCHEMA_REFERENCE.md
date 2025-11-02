@@ -445,6 +445,47 @@ DO UPDATE SET
 ---
 
 **Last Updated:** 2025-11-02  
-**Version:** 1.0  
+**Version:** 2.0 - Added Assignment Tables
 **Critical for:** All future use case seed files
+
+---
+
+## 📊 ASSIGNMENT TABLE SCHEMAS
+
+### `dh_task_dependency`
+- **Columns**: `tenant_id`, `task_id`, `depends_on_task_id`, `note`
+- ❌ **NO** `updated_at` column!
+- **ON CONFLICT**: `(task_id, depends_on_task_id)` ← NO tenant_id!
+- **DO UPDATE**: Only `note` (no updated_at!)
+
+### `dh_task_agent`
+- **Columns**: `tenant_id`, `task_id`, `agent_id`, `assignment_type`, `execution_order`, `requires_human_approval`, `approval_persona_code`, `metadata`
+- ✅ Use `requires_human_approval` (NOT ~~require~~)
+- ✅ Use `approval_persona_code` TEXT (NOT ~~approval_persona_id~~ UUID)
+- ✅ Use `metadata` (NOT ~~extra~~)
+- ✅ **HAS** `updated_at` column
+- **assignment_type** MUST be one of: `'PRIMARY_EXECUTOR'`, `'VALIDATOR'`, `'FALLBACK'`, `'REVIEWER'`, `'CO_EXECUTOR'`
+- **ON CONFLICT**: `(tenant_id, task_id, agent_id, assignment_type)`
+
+### `dh_task_persona`
+- **Columns**: `tenant_id`, `task_id`, `persona_id`, `responsibility`, `review_timing`, `metadata`
+- ✅ Use `metadata` (NOT ~~extra~~)
+- ✅ **HAS** `updated_at` column
+- **responsibility** MUST be one of: `'APPROVE'`, `'REVIEW'`, `'PROVIDE_INPUT'`, `'INFORM'`, `'VALIDATE'`, `'CONSULT'`
+- **review_timing** MUST be one of: `'BEFORE_AGENT_RUNS'`, `'AFTER_AGENT_RUNS'`, `'PARALLEL'`, `'ON_AGENT_ERROR'` (or NULL)
+- **ON CONFLICT**: `(tenant_id, task_id, persona_id, responsibility)` ← includes responsibility!
+
+### `dh_task_tool`
+- **Columns**: `tenant_id`, `task_id`, `tool_id`, `purpose`, `is_required`, `connection_config`
+- ✅ Use `connection_config` (NOT ~~extra~~)
+- ❌ **NO** `updated_at` column!
+- **ON CONFLICT**: `(task_id, tool_id)` ← NO tenant_id!
+
+### `dh_task_rag`
+- **Columns**: `tenant_id`, `task_id`, `rag_source_id`, `query_context`, `is_required`, `search_config`
+- ✅ Use `query_context` TEXT (for the query/question)
+- ✅ Use `search_config` JSONB (for search parameters; can include 'purpose' here)
+- ❌ **NO** `purpose` column as a direct field!
+- ❌ **NO** `updated_at` column!
+- **ON CONFLICT**: `(task_id, rag_source_id)` ← NO tenant_id!
 

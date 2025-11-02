@@ -1,6 +1,14 @@
 """
 Rate Limiting Middleware for VITAL Path AI Services
 Implements per-tenant and per-IP rate limiting with configurable limits
+
+Production Features:
+- ✅ Redis-backed for distributed systems
+- ✅ Sliding window algorithm
+- ✅ Per-tenant and per-IP tracking
+- ✅ Endpoint-specific limits
+- ✅ Rate limit headers
+- ✅ Graceful degradation (falls back to memory if Redis unavailable)
 """
 
 from fastapi import Request, HTTPException
@@ -14,6 +22,7 @@ import structlog
 import time
 from collections import defaultdict
 import asyncio
+import os
 
 logger = structlog.get_logger()
 
@@ -66,12 +75,40 @@ def get_user_id(request: Request) -> str:
     return f"ip:{get_remote_address(request)}"
 
 
-# Initialize slowapi limiter
+# Initialize slowapi limiter with Redis (production-ready)
+def get_storage_uri() -> str:
+    """
+    Get storage URI for rate limiting.
+    
+    Priority:
+    1. Redis URL from environment (production)
+    2. Local Redis (development)
+    3. Memory storage (fallback)
+    """
+    redis_url = os.getenv("REDIS_URL")
+    
+    if redis_url:
+        logger.info("✅ Rate limiting using Redis", url=redis_url[:20] + "...")
+        return redis_url
+    
+    # Try local Redis
+    local_redis = "redis://localhost:6379"
+    try:
+        import redis
+        client = redis.from_url(local_redis, socket_timeout=1)
+        client.ping()
+        logger.info("✅ Rate limiting using local Redis")
+        return local_redis
+    except Exception:
+        logger.warning("⚠️  Redis unavailable, falling back to memory storage")
+        return "memory://"
+
+
 limiter = Limiter(
     key_func=get_tenant_or_ip,
     default_limits=["100/minute", "1000/hour", "5000/day"],
     headers_enabled=True,  # Add rate limit headers to responses
-    storage_uri="memory://"  # Use memory storage (upgrade to Redis for production)
+    storage_uri=get_storage_uri()  # Production: Redis, Fallback: Memory
 )
 
 

@@ -399,10 +399,10 @@ class MedicalResearchTools:
         max_results: int = 10
     ) -> Dict[str, Any]:
         """
-        Search WHO guidelines and publications.
+        Search WHO guidelines and publications using Tavily with WHO domain focus.
         
-        Note: WHO doesn't have a public API, so this is a simplified mock.
-        In production, this would scrape WHO IRIS or use a custom index.
+        Since WHO doesn't have a public API, we use Tavily to search
+        WHO websites with domain filtering.
         
         Args:
             query: Search query
@@ -413,28 +413,57 @@ class MedicalResearchTools:
         """
         start_time = datetime.now()
         
-        logger.warning("⚠️ WHO guidelines search is currently a mock implementation")
-        
-        # Mock response (in production, implement WHO IRIS scraping or custom index)
-        guidelines = [
-            {
-                "title": f"WHO Guideline on {query}",
-                "description": "This is a mock WHO guideline result. Implement WHO IRIS integration for real data.",
-                "publication_date": "2024",
-                "url": "https://www.who.int/publications",
-                "source": "WHO (Mock)"
+        try:
+            # Use Tavily to search WHO domains
+            from tools.web_tools import WebSearchTool
+            
+            search_tool = WebSearchTool()
+            search_results = await search_tool.search(
+                query=f"{query} site:who.int",
+                max_results=max_results,
+                search_depth="advanced",
+                include_domains=["who.int", "iris.who.int", "apps.who.int"]
+            )
+            
+            # Transform results to guideline format
+            guidelines = []
+            for result in search_results.get("results", []):
+                guidelines.append({
+                    "title": result.get("title", ""),
+                    "description": result.get("content", "")[:300],  # First 300 chars
+                    "url": result.get("url", ""),
+                    "score": result.get("score", 0.0),
+                    "publication_date": result.get("published_date"),
+                    "source": "WHO"
+                })
+            
+            processing_time = (datetime.now() - start_time).total_seconds() * 1000
+            
+            logger.info(
+                "✅ WHO guidelines search completed",
+                query=query[:50],
+                results_count=len(guidelines),
+                processing_time_ms=processing_time
+            )
+            
+            return {
+                "guidelines": guidelines,
+                "total_results": len(guidelines),
+                "query": query,
+                "processing_time_ms": processing_time
             }
-        ]
-        
-        processing_time = (datetime.now() - start_time).total_seconds() * 1000
-        
-        return {
-            "guidelines": guidelines,
-            "total_results": 1,
-            "query": query,
-            "mock": True,
-            "processing_time_ms": processing_time
-        }
+            
+        except Exception as e:
+            logger.error("WHO guidelines search failed", query=query, error=str(e))
+            processing_time = (datetime.now() - start_time).total_seconds() * 1000
+            
+            return {
+                "guidelines": [],
+                "total_results": 0,
+                "query": query,
+                "error": str(e),
+                "processing_time_ms": processing_time
+            }
 
 
 # Standalone async functions for LangGraph integration

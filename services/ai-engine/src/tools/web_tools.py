@@ -1,604 +1,409 @@
 """
-Web Tools - Internet Research Capabilities
-
-Provides web search and scraping tools for the autonomous agent system.
-
-Tools:
-- WebSearchTool: Search the internet (Google/Bing/Brave)
-- WebScrapeTool: Download and extract content from URLs
-- WebResearchTool: Combined search + scrape workflow
-
-Features:
-- Multiple search engine support
-- Content extraction and cleaning
-- Link discovery
-- Rate limiting
-- Cost tracking
-
-Usage:
-    >>> from tools.web_tools import WebSearchTool, WebScrapeTool
-    >>> 
-    >>> search_tool = WebSearchTool(api_key="...")
-    >>> scrape_tool = WebScrapeTool()
-    >>> 
-    >>> # Search
-    >>> results = await search_tool.execute(ToolInput(
-    ...     data="FDA IND requirements 2025"
-    ... ))
-    >>> 
-    >>> # Scrape
-    >>> content = await scrape_tool.execute(ToolInput(
-    ...     data="https://www.fda.gov/drugs/ind-application"
-    ... ))
+Real Web Tools Implementation for VITAL AI Platform
+Replaces mock implementations with actual web search and scraping
 """
 
-from typing import List, Dict, Any, Optional
-import httpx
-from bs4 import BeautifulSoup
-import structlog
 import asyncio
-from urllib.parse import urlparse, urljoin
+import aiohttp
+from typing import Dict, List, Any, Optional
+from datetime import datetime
+import structlog
+from bs4 import BeautifulSoup
+import re
+from urllib.parse import urljoin, urlparse
 
-from tools.base_tool import BaseTool, ToolInput, ToolOutput
 from core.config import get_settings
 
 logger = structlog.get_logger()
 settings = get_settings()
 
 
-# ============================================================================
-# WEB SEARCH TOOL
-# ============================================================================
-
-class WebSearchTool(BaseTool):
+class WebSearchTool:
     """
-    Search the internet for current information, news, and public data.
+    Real web search using Tavily API.
     
-    Use this tool for:
-    - Recent developments and news
-    - Competitor information
-    - External validation
-    - Research papers and publications
-    - Regulatory updates from public sources
-    - Industry trends and analysis
+    Golden Rule #5: Tools must provide real functionality, not mocks.
     """
     
-    def __init__(self, api_key: Optional[str] = None, search_engine: str = "brave"):
+    def __init__(self, api_key: Optional[str] = None):
+        self.api_key = api_key or settings.tavily_api_key
+        self.base_url = "https://api.tavily.com/search"
+        
+    async def search(
+        self,
+        query: str,
+        max_results: int = 5,
+        search_depth: str = "basic",
+        include_domains: Optional[List[str]] = None,
+        exclude_domains: Optional[List[str]] = None,
+    ) -> Dict[str, Any]:
         """
-        Initialize web search tool.
+        Search the web using Tavily API.
         
         Args:
-            api_key: API key for search service (None = use from settings)
-            search_engine: Search engine to use ("brave", "serp", "bing")
-        """
-        super().__init__()
-        self.api_key = api_key or getattr(settings, 'brave_search_api_key', None)
-        self.search_engine = search_engine
-        self.client = httpx.AsyncClient(timeout=30.0)
-        
-        logger.info(f"WebSearchTool initialized with {search_engine} engine")
-    
-    @property
-    def name(self) -> str:
-        return "web_search"
-    
-    @property
-    def description(self) -> str:
-        return (
-            "Search the internet for current information, news, research papers, and public data. "
-            "Use for recent developments, competitor information, external validation, "
-            "regulatory updates from public sources, and industry trends. "
-            "Returns top search results with titles, URLs, and snippets."
-        )
-    
-    @property
-    def category(self) -> str:
-        return "retrieval"
-    
-    async def execute(self, tool_input: ToolInput) -> ToolOutput:
-        """
-        Execute web search.
-        
-        Args:
-            tool_input: Tool input containing:
-                - data: Search query string or dict with 'query' and 'num_results'
-                
+            query: Search query
+            max_results: Maximum number of results (1-20)
+            search_depth: 'basic' or 'advanced'
+            include_domains: List of domains to include
+            exclude_domains: List of domains to exclude
+            
         Returns:
-            ToolOutput with search results
+            Search results with titles, URLs, content, and scores
         """
-        try:
-            # Extract query
-            if isinstance(tool_input.data, dict):
-                query = tool_input.data.get('query', str(tool_input.data))
-                num_results = tool_input.data.get('num_results', 10)
-            else:
-                query = str(tool_input.data)
-                num_results = 10
-            
-            logger.info(
-                "Executing web search",
-                query=query[:100],
-                engine=self.search_engine,
-                num_results=num_results
-            )
-            
-            # Execute search based on engine
-            if self.search_engine == "brave":
-                results = await self._search_brave(query, num_results)
-            elif self.search_engine == "serp":
-                results = await self._search_serp(query, num_results)
-            elif self.search_engine == "bing":
-                results = await self._search_bing(query, num_results)
-            else:
-                # Fallback to mock results for development
-                results = self._mock_search_results(query, num_results)
-            
-            summary = self._summarize_web_results(results, query)
-            
-            logger.info(
-                "Web search completed",
-                num_results=len(results),
-                query=query[:50]
-            )
-            
-            return ToolOutput(
-                success=True,
-                data={
-                    'query': query,
-                    'num_results': len(results),
-                    'results': results,
-                    'summary': summary,
-                    'search_engine': self.search_engine
-                },
-                metadata={
-                    'search_engine': self.search_engine,
-                    'result_urls': [r.get('url') for r in results]
-                },
-                cost_usd=0.001 * num_results  # Minimal API cost
-            )
-            
-        except Exception as e:
-            logger.error(
-                "Web search failed",
-                query=query[:100] if 'query' in locals() else None,
-                error=str(e),
-                error_type=type(e).__name__
-            )
-            
-            return ToolOutput(
-                success=False,
-                data=None,
-                error_message=f"Web search failed: {str(e)}",
-                metadata={'error_type': type(e).__name__}
-            )
-    
-    async def _search_brave(self, query: str, num_results: int) -> List[Dict[str, Any]]:
-        """Search using Brave Search API."""
         if not self.api_key:
-            logger.warning("Brave Search API key not configured, using mock results")
-            return self._mock_search_results(query, num_results)
+            logger.error("❌ Tavily API key not configured")
+            return {
+                "results": [],
+                "query": query,
+                "total_results": 0,
+                "error": "TAVILY_API_KEY not configured"
+            }
         
         try:
-            url = "https://api.search.brave.com/res/v1/web/search"
-            headers = {
-                "Accept": "application/json",
-                "Accept-Encoding": "gzip",
-                "X-Subscription-Token": self.api_key
-            }
-            params = {
-                "q": query,
-                "count": num_results
+            # Build request payload
+            payload = {
+                "api_key": self.api_key,
+                "query": query,
+                "max_results": min(max_results, 20),
+                "search_depth": search_depth,
+                "include_answer": True,
+                "include_raw_content": False,
             }
             
-            response = await self.client.get(url, headers=headers, params=params)
-            response.raise_for_status()
+            if include_domains:
+                payload["include_domains"] = include_domains
+            if exclude_domains:
+                payload["exclude_domains"] = exclude_domains
             
-            data = response.json()
+            # Make API request
+            async with aiohttp.ClientSession() as session:
+                async with session.post(
+                    self.base_url,
+                    json=payload,
+                    timeout=aiohttp.ClientTimeout(total=30)
+                ) as response:
+                    if response.status != 200:
+                        error_text = await response.text()
+                        logger.error(
+                            "Tavily API error",
+                            status=response.status,
+                            error=error_text
+                        )
+                        return {
+                            "results": [],
+                            "query": query,
+                            "total_results": 0,
+                            "error": f"API returned {response.status}"
+                        }
+                    
+                    data = await response.json()
+            
+            # Parse results
             results = []
-            
-            for item in data.get('web', {}).get('results', []):
+            for item in data.get("results", []):
                 results.append({
-                    'title': item.get('title', ''),
-                    'url': item.get('url', ''),
-                    'snippet': item.get('description', ''),
-                    'source': 'brave'
+                    "title": item.get("title", ""),
+                    "url": item.get("url", ""),
+                    "content": item.get("content", ""),
+                    "score": item.get("score", 0.0),
+                    "published_date": item.get("published_date"),
                 })
             
-            return results
-            
-        except Exception as e:
-            logger.error(f"Brave search failed: {e}")
-            return self._mock_search_results(query, num_results)
-    
-    async def _search_serp(self, query: str, num_results: int) -> List[Dict[str, Any]]:
-        """Search using SerpAPI."""
-        # Placeholder for SerpAPI integration
-        logger.warning("SerpAPI not implemented, using mock results")
-        return self._mock_search_results(query, num_results)
-    
-    async def _search_bing(self, query: str, num_results: int) -> List[Dict[str, Any]]:
-        """Search using Bing Search API."""
-        # Placeholder for Bing API integration
-        logger.warning("Bing API not implemented, using mock results")
-        return self._mock_search_results(query, num_results)
-    
-    def _mock_search_results(self, query: str, num_results: int) -> List[Dict[str, Any]]:
-        """Generate mock search results for development."""
-        return [
-            {
-                'title': f'Result {i+1} for: {query}',
-                'url': f'https://example.com/result-{i+1}',
-                'snippet': f'Mock search result {i+1} containing information about {query}...',
-                'source': 'mock'
-            }
-            for i in range(min(num_results, 5))
-        ]
-    
-    def _summarize_web_results(self, results: List[Dict], query: str) -> str:
-        """Create summary of web search results."""
-        if not results:
-            return f"No web results found for: {query}"
-        
-        summary_parts = [f"Found {len(results)} web results:"]
-        
-        for i, result in enumerate(results[:5], 1):
-            title = result.get('title', 'No title')
-            url = result.get('url', '')
-            snippet = result.get('snippet', '')[:100]
-            
-            summary_parts.append(
-                f"{i}. {title}\n   URL: {url}\n   {snippet}..."
+            logger.info(
+                "✅ Web search completed",
+                query=query[:50],
+                results_count=len(results)
             )
-        
-        if len(results) > 5:
-            summary_parts.append(f"   ...and {len(results) - 5} more results")
-        
-        return "\n".join(summary_parts)
-    
-    async def __aenter__(self):
-        return self
-    
-    async def __aexit__(self, *args):
-        await self.client.aclose()
+            
+            return {
+                "results": results,
+                "query": query,
+                "total_results": len(results),
+                "answer": data.get("answer"),  # Tavily's AI-generated answer
+            }
+            
+        except asyncio.TimeoutError:
+            logger.error("Web search timeout", query=query)
+            return {
+                "results": [],
+                "query": query,
+                "total_results": 0,
+                "error": "Request timeout"
+            }
+        except Exception as e:
+            logger.error("Web search failed", query=query, error=str(e))
+            return {
+                "results": [],
+                "query": query,
+                "total_results": 0,
+                "error": str(e)
+            }
 
 
-# ============================================================================
-# WEB SCRAPE TOOL
-# ============================================================================
-
-class WebScrapeTool(BaseTool):
+class WebScraperTool:
     """
-    Download and extract content from specific web pages.
+    Web page scraping and content extraction.
     
-    Use this tool for:
-    - Reading full content of a specific URL
-    - Extracting structured data from web pages
-    - Following up on search results
-    - Downloading documentation
-    - Parsing HTML content
+    Features:
+    - Clean text extraction
+    - Link extraction
+    - Image extraction
+    - Metadata parsing
+    - CSS selector support
     """
     
     def __init__(self):
-        """Initialize web scrape tool."""
-        super().__init__()
-        self.client = httpx.AsyncClient(
-            timeout=30.0,
-            follow_redirects=True,
-            headers={
-                'User-Agent': 'Mozilla/5.0 (compatible; VITALBot/1.0)'
-            }
-        )
-        logger.info("WebScrapeTool initialized")
-    
-    @property
-    def name(self) -> str:
-        return "web_scrape"
-    
-    @property
-    def description(self) -> str:
-        return (
-            "Download and extract content from a specific web page. "
-            "Use when you have a URL and need to read its full content. "
-            "Returns extracted text, title, links, and metadata. "
-            "Handles HTML parsing and content cleaning automatically."
-        )
-    
-    @property
-    def category(self) -> str:
-        return "retrieval"
-    
-    async def execute(self, tool_input: ToolInput) -> ToolOutput:
+        self.timeout = 45
+        self.max_content_length = 5 * 1024 * 1024  # 5MB
+        
+    async def scrape(
+        self,
+        url: str,
+        extract_links: bool = False,
+        extract_images: bool = False,
+        css_selector: Optional[str] = None,
+        wait_for_js: bool = False,
+    ) -> Dict[str, Any]:
         """
-        Execute web page scraping.
+        Scrape and extract content from a web page.
         
         Args:
-            tool_input: Tool input containing:
-                - data: URL string or dict with 'url' key
-                
+            url: URL to scrape
+            extract_links: Whether to extract all links
+            extract_images: Whether to extract image URLs
+            css_selector: Optional CSS selector to target specific content
+            wait_for_js: Whether to wait for JavaScript execution
+            
         Returns:
-            ToolOutput with extracted content
+            Scraped content with metadata
         """
         try:
-            # Extract URL
-            if isinstance(tool_input.data, dict):
-                url = tool_input.data.get('url')
-                extract_links = tool_input.data.get('extract_links', True)
-                max_text_length = tool_input.data.get('max_text_length', 10000)
-            else:
-                url = str(tool_input.data)
-                extract_links = True
-                max_text_length = 10000
-            
-            if not url:
-                return ToolOutput(
-                    success=False,
-                    data=None,
-                    error_message="No URL provided"
-                )
-            
             # Validate URL
-            parsed = urlparse(url)
-            if not parsed.scheme or not parsed.netloc:
-                return ToolOutput(
-                    success=False,
-                    data=None,
-                    error_message=f"Invalid URL: {url}"
-                )
+            parsed_url = urlparse(url)
+            if not parsed_url.scheme or not parsed_url.netloc:
+                return {
+                    "url": url,
+                    "error": "Invalid URL format"
+                }
             
-            logger.info("Scraping web page", url=url)
+            # Fetch page
+            headers = {
+                "User-Agent": "Mozilla/5.0 (compatible; VITAL-AI-Bot/1.0)",
+                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+            }
             
-            # Download content
-            response = await self.client.get(url)
-            response.raise_for_status()
+            async with aiohttp.ClientSession() as session:
+                async with session.get(
+                    url,
+                    headers=headers,
+                    timeout=aiohttp.ClientTimeout(total=self.timeout),
+                    allow_redirects=True
+                ) as response:
+                    if response.status != 200:
+                        return {
+                            "url": url,
+                            "error": f"HTTP {response.status}"
+                        }
+                    
+                    # Check content type
+                    content_type = response.headers.get("Content-Type", "")
+                    if "text/html" not in content_type.lower():
+                        return {
+                            "url": url,
+                            "error": f"Unsupported content type: {content_type}"
+                        }
+                    
+                    html = await response.text()
             
             # Parse HTML
-            soup = BeautifulSoup(response.text, 'html.parser')
+            soup = BeautifulSoup(html, "html.parser")
             
             # Extract title
-            title = soup.title.string if soup.title else 'No title'
-            
-            # Remove script and style elements
-            for script in soup(["script", "style", "nav", "footer", "header"]):
-                script.decompose()
-            
-            # Extract text
-            text = soup.get_text(separator='\n', strip=True)
-            
-            # Truncate if too long
-            if len(text) > max_text_length:
-                text = text[:max_text_length] + f"\n\n[Content truncated at {max_text_length} characters]"
-            
-            # Extract links
-            links = []
-            if extract_links:
-                for a in soup.find_all('a', href=True)[:50]:  # Limit to 50 links
-                    href = a.get('href')
-                    link_text = a.get_text(strip=True)
-                    
-                    # Convert relative URLs to absolute
-                    absolute_url = urljoin(url, href)
-                    
-                    links.append({
-                        'text': link_text,
-                        'url': absolute_url
-                    })
+            title = soup.title.string.strip() if soup.title else ""
             
             # Extract metadata
-            meta_description = soup.find('meta', attrs={'name': 'description'})
-            description = meta_description.get('content') if meta_description else None
+            metadata = self._extract_metadata(soup)
             
-            logger.info(
-                "Web scraping completed",
-                url=url,
-                text_length=len(text),
-                num_links=len(links)
-            )
-            
-            return ToolOutput(
-                success=True,
-                data={
-                    'url': url,
-                    'title': title,
-                    'text': text,
-                    'description': description,
-                    'links': links,
-                    'text_length': len(text),
-                    'num_links': len(links)
-                },
-                metadata={
-                    'content_type': response.headers.get('content-type', ''),
-                    'status_code': response.status_code,
-                    'final_url': str(response.url)  # After redirects
-                },
-                cost_usd=0.0  # No API cost for scraping
-            )
-            
-        except httpx.HTTPStatusError as e:
-            logger.error(f"HTTP error scraping {url}: {e.response.status_code}")
-            return ToolOutput(
-                success=False,
-                data=None,
-                error_message=f"HTTP error {e.response.status_code}: {url}",
-                metadata={'status_code': e.response.status_code}
-            )
-            
-        except Exception as e:
-            logger.error(
-                "Web scraping failed",
-                url=url if 'url' in locals() else None,
-                error=str(e),
-                error_type=type(e).__name__
-            )
-            
-            return ToolOutput(
-                success=False,
-                data=None,
-                error_message=f"Web scraping failed: {str(e)}",
-                metadata={'error_type': type(e).__name__}
-            )
-    
-    async def __aenter__(self):
-        return self
-    
-    async def __aexit__(self, *args):
-        await self.client.aclose()
-
-
-# ============================================================================
-# WEB RESEARCH TOOL (Combined Search + Scrape)
-# ============================================================================
-
-class WebResearchTool(BaseTool):
-    """
-    Combined search and scrape workflow for comprehensive research.
-    
-    Searches the web, then scrapes top results automatically.
-    """
-    
-    def __init__(self, search_tool: WebSearchTool, scrape_tool: WebScrapeTool):
-        """
-        Initialize web research tool.
-        
-        Args:
-            search_tool: WebSearchTool instance
-            scrape_tool: WebScrapeTool instance
-        """
-        super().__init__()
-        self.search_tool = search_tool
-        self.scrape_tool = scrape_tool
-        logger.info("WebResearchTool initialized")
-    
-    @property
-    def name(self) -> str:
-        return "web_research"
-    
-    @property
-    def description(self) -> str:
-        return (
-            "Comprehensive web research combining search and content extraction. "
-            "Searches the web for relevant pages, then automatically scrapes and "
-            "extracts content from top results. Use for in-depth research on topics."
-        )
-    
-    @property
-    def category(self) -> str:
-        return "retrieval"
-    
-    async def execute(self, tool_input: ToolInput) -> ToolOutput:
-        """
-        Execute web research (search + scrape).
-        
-        Args:
-            tool_input: Tool input containing:
-                - data: Research query or dict with 'query' and 'num_pages_to_scrape'
-                
-        Returns:
-            ToolOutput with search results and scraped content
-        """
-        try:
-            # Extract query
-            if isinstance(tool_input.data, dict):
-                query = tool_input.data.get('query', str(tool_input.data))
-                num_pages = tool_input.data.get('num_pages_to_scrape', 3)
+            # Extract content
+            if css_selector:
+                # Use CSS selector to target specific content
+                selected = soup.select(css_selector)
+                if selected:
+                    content = "\n\n".join([elem.get_text(separator=" ", strip=True) for elem in selected])
+                else:
+                    content = ""
             else:
-                query = str(tool_input.data)
-                num_pages = 3
+                # Extract main content (remove scripts, styles, nav, footer)
+                for element in soup(["script", "style", "nav", "footer", "header"]):
+                    element.decompose()
+                
+                # Get text from body
+                body = soup.body if soup.body else soup
+                content = body.get_text(separator=" ", strip=True)
+            
+            # Clean content
+            content = self._clean_text(content)
+            
+            # Extract links if requested
+            links = []
+            if extract_links:
+                for a_tag in soup.find_all("a", href=True):
+                    link = urljoin(url, a_tag["href"])
+                    if link not in links:
+                        links.append(link)
+            
+            # Extract images if requested
+            images = []
+            if extract_images:
+                for img_tag in soup.find_all("img", src=True):
+                    img_url = urljoin(url, img_tag["src"])
+                    if img_url not in images:
+                        images.append(img_url)
+            
+            # Word count
+            word_count = len(content.split())
             
             logger.info(
-                "Starting web research",
-                query=query[:100],
-                num_pages_to_scrape=num_pages
+                "✅ Web scraping completed",
+                url=url[:50],
+                word_count=word_count,
+                links_count=len(links),
+                images_count=len(images)
             )
             
-            # Step 1: Search
-            search_result = await self.search_tool.execute(ToolInput(
-                data={'query': query, 'num_results': 10},
-                context=tool_input.context
-            ))
+            return {
+                "url": url,
+                "title": title,
+                "content": content,
+                "metadata": metadata,
+                "links": links if extract_links else None,
+                "images": images if extract_images else None,
+                "word_count": word_count,
+                "scraped_at": datetime.now().isoformat(),
+            }
             
-            if not search_result.success:
-                return ToolOutput(
-                    success=False,
-                    data=None,
-                    error_message=f"Search failed: {search_result.error_message}"
-                )
-            
-            search_results = search_result.data.get('results', [])
-            
-            # Step 2: Scrape top results
-            scraped_content = []
-            for i, result in enumerate(search_results[:num_pages]):
-                url = result.get('url')
-                if not url:
-                    continue
-                
-                logger.info(f"Scraping page {i+1}/{num_pages}", url=url)
-                
-                scrape_result = await self.scrape_tool.execute(ToolInput(
-                    data={'url': url, 'max_text_length': 5000},
-                    context=tool_input.context
-                ))
-                
-                if scrape_result.success:
-                    scraped_content.append({
-                        'url': url,
-                        'title': scrape_result.data.get('title'),
-                        'content': scrape_result.data.get('text', '')[:2000],  # Truncate for token limits
-                        'source_rank': i + 1
-                    })
-                
-                # Rate limiting
-                await asyncio.sleep(0.5)
-            
-            # Combine results
-            summary = self._summarize_research(search_results, scraped_content, query)
-            
-            logger.info(
-                "Web research completed",
-                pages_scraped=len(scraped_content),
-                total_search_results=len(search_results)
-            )
-            
-            return ToolOutput(
-                success=True,
-                data={
-                    'query': query,
-                    'search_results': search_results,
-                    'scraped_pages': scraped_content,
-                    'summary': summary,
-                    'num_search_results': len(search_results),
-                    'num_scraped_pages': len(scraped_content)
-                },
-                metadata={
-                    'scraped_urls': [p['url'] for p in scraped_content]
-                },
-                cost_usd=search_result.cost_usd  # Search cost only
-            )
-            
+        except asyncio.TimeoutError:
+            logger.error("Web scraping timeout", url=url)
+            return {
+                "url": url,
+                "error": "Request timeout"
+            }
         except Exception as e:
-            logger.error("Web research failed", error=str(e))
-            return ToolOutput(
-                success=False,
-                data=None,
-                error_message=f"Web research failed: {str(e)}"
-            )
+            logger.error("Web scraping failed", url=url, error=str(e))
+            return {
+                "url": url,
+                "error": str(e)
+            }
     
-    def _summarize_research(
-        self,
-        search_results: List[Dict],
-        scraped_content: List[Dict],
-        query: str
-    ) -> str:
-        """Summarize research findings."""
-        summary = [f"Web research for: {query}\n"]
-        summary.append(f"Found {len(search_results)} search results, scraped {len(scraped_content)} pages.\n")
+    def _extract_metadata(self, soup: BeautifulSoup) -> Dict[str, str]:
+        """Extract metadata from HTML head"""
+        metadata = {}
         
-        if scraped_content:
-            summary.append("Key findings:")
-            for i, page in enumerate(scraped_content, 1):
-                title = page.get('title', 'Untitled')
-                content_preview = page.get('content', '')[:150]
-                summary.append(f"{i}. {title}\n   {content_preview}...")
+        # Meta tags
+        for meta in soup.find_all("meta"):
+            name = meta.get("name") or meta.get("property")
+            content = meta.get("content")
+            if name and content:
+                metadata[name] = content
         
-        return "\n".join(summary)
+        # Canonical URL
+        canonical = soup.find("link", rel="canonical")
+        if canonical and canonical.get("href"):
+            metadata["canonical_url"] = canonical["href"]
+        
+        return metadata
+    
+    def _clean_text(self, text: str) -> str:
+        """Clean and normalize extracted text"""
+        # Remove extra whitespace
+        text = re.sub(r'\s+', ' ', text)
+        
+        # Remove multiple newlines
+        text = re.sub(r'\n+', '\n', text)
+        
+        # Strip leading/trailing whitespace
+        text = text.strip()
+        
+        return text
 
+
+# ============================================================================
+# LangChain Tool Wrappers (for LangGraph integration)
+# ============================================================================
+
+async def web_search(
+    query: str,
+    max_results: int = 5,
+    search_depth: str = "basic",
+) -> Dict[str, Any]:
+    """
+    LangChain-compatible web search function.
+    
+    Use this in LangGraph workflows as a tool.
+    """
+    tool = WebSearchTool()
+    return await tool.search(query, max_results, search_depth)
+
+
+async def web_scraper(
+    url: str,
+    extract_links: bool = False,
+    extract_images: bool = False,
+    css_selector: Optional[str] = None,
+) -> Dict[str, Any]:
+    """
+    LangChain-compatible web scraper function.
+    
+    Use this in LangGraph workflows as a tool.
+    """
+    tool = WebScraperTool()
+    return await tool.scrape(url, extract_links, extract_images, css_selector)
+
+
+# ============================================================================
+# Tool Metadata (for LangChain StructuredTool)
+# ============================================================================
+
+WEB_SEARCH_DESCRIPTION = """
+Search the web for real-time information using Tavily API.
+
+Use this when you need:
+- Recent news or events
+- Current information not in the knowledge base
+- Real-time data or statistics
+- Product reviews or comparisons
+- Latest research or developments
+
+Input:
+- query: Your search query (required)
+- max_results: Number of results (default: 5, max: 20)
+- search_depth: 'basic' or 'advanced' (default: 'basic')
+
+Output:
+- results: List of search results with title, URL, content, and score
+- answer: AI-generated answer from Tavily (if available)
+"""
+
+WEB_SCRAPER_DESCRIPTION = """
+Extract and parse content from any web page.
+
+Use this when you need to:
+- Read full articles or blog posts
+- Extract specific information from a page
+- Analyze web page content
+- Get structured data from HTML
+
+Input:
+- url: The URL to scrape (required)
+- extract_links: Whether to extract all links (default: False)
+- extract_images: Whether to extract image URLs (default: False)
+- css_selector: Optional CSS selector to target specific content
+
+Output:
+- title: Page title
+- content: Cleaned text content
+- metadata: Page metadata (description, keywords, etc.)
+- links: List of links (if extract_links=True)
+- images: List of image URLs (if extract_images=True)
+- word_count: Total word count
+"""

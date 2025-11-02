@@ -77,18 +77,8 @@ upsert_sources AS (
         unique_id = EXCLUDED.unique_id,
         updated_at = now()
   RETURNING code, id, unique_id
-),
-all_sources AS (
-  SELECT rs.code, rs.id, rs.unique_id
-  FROM upsert_sources rs
-  UNION
-  SELECT s.code, r.id, r.unique_id
-  FROM source_defs s
-  JOIN tenant ON true
-  JOIN dh_rag_source r
-    ON r.tenant_id = tenant.id
-   AND r.code = s.code
 )
+-- Map tasks to the seeded RAG sources (idempotent inserts)
 INSERT INTO dh_task_rag (
   tenant_id,
   task_id,
@@ -102,41 +92,348 @@ INSERT INTO dh_task_rag (
   is_required
 )
 SELECT
-  tenant.id,
+  ten.id,
   t.id,
-  src.id,
-  tm.task_unique_id,
-  src.unique_id,
-  tm.sections,
-  tm.query_context,
-  jsonb_build_object('max_chunks', tm.max_chunks),
-  tm.citation_required,
+  rs.id,
+  'TSK-CD-001-T1-1',
+  rs.unique_id,
+  ARRAY['3.1','4.2']::text[],
+  'Regulatory context for PRO-driven objectives.',
+  jsonb_build_object('max_chunks', 5),
+  TRUE,
   TRUE
-FROM tenant
-JOIN (
-  VALUES
-    ('TSK-CD-001-T1-1', 'FDA_PRO_2009', ARRAY['3.1','4.2']::text[], 'Regulatory context for PRO-driven objectives.', 5, TRUE),
-    ('TSK-CD-001-T2-1', 'FDA_PRO_2009', ARRAY['5.1']::text[], 'Regulatory precedent for comparator selection.', 5, TRUE),
-    ('TSK-CD-001-T3-1', 'DIME_V3_FRAMEWORK', ARRAY['V2','V3']::text[], 'Digital biomarker validation requirements.', 6, TRUE),
-    ('TSK-CD-001-T4-1', 'ICH_E9_STAT_GUIDE', ARRAY['5.1','5.2']::text[], 'Psychometric properties and statistical justification.', 4, TRUE),
-    ('TSK-CD-001-T5-2', 'FDA_PRO_2009', ARRAY['4.2','6.1']::text[], 'Final endpoint recommendation regulatory framing.', 4, TRUE),
-    ('TSK-CD-002-T1', 'DIME_V3_FRAMEWORK', ARRAY['V1']::text[], 'Define intended use using DiMe verification guidance.', 6, TRUE),
-    ('TSK-CD-002-T2', 'DIME_V3_FRAMEWORK', ARRAY['V1']::text[], 'Design verification study aligned to DiMe V1 expectations.', 6, TRUE),
-    ('TSK-CD-002-T3', 'DIME_V3_FRAMEWORK', ARRAY['V1']::text[], 'Execute verification analyses referencing DiMe guidance.', 6, TRUE),
-    ('TSK-CD-002-T4', 'DIME_V3_FRAMEWORK', ARRAY['V2']::text[], 'Plan analytical validation study (DiMe V2).', 6, TRUE),
-    ('TSK-CD-002-T5', 'DIME_V3_FRAMEWORK', ARRAY['V2']::text[], 'Execute analytical validation (DiMe V2).', 6, TRUE),
-    ('TSK-CD-002-T6', 'DIME_V3_FRAMEWORK', ARRAY['V3']::text[], 'Design clinical validation study (DiMe V3).', 6, TRUE),
-    ('TSK-CD-002-T7', 'DIME_V3_FRAMEWORK', ARRAY['V3']::text[], 'Execute clinical validation and MCID determination.', 6, TRUE),
-    ('TSK-CD-002-T8', 'HTA_PLAYBOOK_ENTX', ARRAY['Negotiation','Objections']::text[], 'Incorporate enterprise HTA playbook when preparing FDA pre-submission.', 3, TRUE),
-    ('TSK-CD-002-T9', 'HTA_PLAYBOOK_ENTX', ARRAY['Negotiation']::text[], 'Use enterprise HTA insights when compiling final report and manuscript.', 3, TRUE)
-) AS tm(task_unique_id, source_code, sections, query_context, max_chunks, citation_required)
-JOIN all_sources src ON src.code = tm.source_code
-JOIN dh_task t ON t.unique_id = tm.task_unique_id
-              AND t.tenant_id = tenant.id
+FROM (SELECT id FROM tenants WHERE slug = 'digital-health-startup' LIMIT 1) AS ten
+JOIN dh_task t ON t.unique_id = 'TSK-CD-001-T1-1' AND t.tenant_id = ten.id
+JOIN dh_rag_source rs ON rs.code = 'FDA_PRO_2009' AND rs.tenant_id = ten.id
 WHERE NOT EXISTS (
-  SELECT 1
-  FROM dh_task_rag existing
-  WHERE existing.tenant_id = tenant.id
+  SELECT 1 FROM dh_task_rag existing
+  WHERE existing.tenant_id = ten.id
     AND existing.task_id = t.id
-    AND existing.rag_source_id = src.id
+    AND existing.rag_source_id = rs.id
+);
+
+INSERT INTO dh_task_rag (
+  tenant_id, task_id, rag_source_id, task_unique_id, rag_unique_id,
+  sections, query_context, search_config, citation_required, is_required
+)
+SELECT
+  ten.id,
+  t.id,
+  rs.id,
+  'TSK-CD-001-T2-1',
+  rs.unique_id,
+  ARRAY['5.1']::text[],
+  'Regulatory precedent for comparator selection.',
+  jsonb_build_object('max_chunks', 5),
+  TRUE,
+  TRUE
+FROM (SELECT id FROM tenants WHERE slug = 'digital-health-startup' LIMIT 1) AS ten
+JOIN dh_task t ON t.unique_id = 'TSK-CD-001-T2-1' AND t.tenant_id = ten.id
+JOIN dh_rag_source rs ON rs.code = 'FDA_PRO_2009' AND rs.tenant_id = ten.id
+WHERE NOT EXISTS (
+  SELECT 1 FROM dh_task_rag existing
+  WHERE existing.tenant_id = ten.id
+    AND existing.task_id = t.id
+    AND existing.rag_source_id = rs.id
+);
+
+INSERT INTO dh_task_rag (
+  tenant_id, task_id, rag_source_id, task_unique_id, rag_unique_id,
+  sections, query_context, search_config, citation_required, is_required
+)
+SELECT
+  ten.id,
+  t.id,
+  rs.id,
+  'TSK-CD-001-T3-1',
+  rs.unique_id,
+  ARRAY['V2','V3']::text[],
+  'Digital biomarker validation requirements.',
+  jsonb_build_object('max_chunks', 6),
+  TRUE,
+  TRUE
+FROM (SELECT id FROM tenants WHERE slug = 'digital-health-startup' LIMIT 1) AS ten
+JOIN dh_task t ON t.unique_id = 'TSK-CD-001-T3-1' AND t.tenant_id = ten.id
+JOIN dh_rag_source rs ON rs.code = 'DIME_V3_FRAMEWORK' AND rs.tenant_id = ten.id
+WHERE NOT EXISTS (
+  SELECT 1 FROM dh_task_rag existing
+  WHERE existing.tenant_id = ten.id
+    AND existing.task_id = t.id
+    AND existing.rag_source_id = rs.id
+);
+
+INSERT INTO dh_task_rag (
+  tenant_id, task_id, rag_source_id, task_unique_id, rag_unique_id,
+  sections, query_context, search_config, citation_required, is_required
+)
+SELECT
+  ten.id,
+  t.id,
+  rs.id,
+  'TSK-CD-001-T4-1',
+  rs.unique_id,
+  ARRAY['5.1','5.2']::text[],
+  'Psychometric properties and statistical justification.',
+  jsonb_build_object('max_chunks', 4),
+  TRUE,
+  TRUE
+FROM (SELECT id FROM tenants WHERE slug = 'digital-health-startup' LIMIT 1) AS ten
+JOIN dh_task t ON t.unique_id = 'TSK-CD-001-T4-1' AND t.tenant_id = ten.id
+JOIN dh_rag_source rs ON rs.code = 'ICH_E9_STAT_GUIDE' AND rs.tenant_id = ten.id
+WHERE NOT EXISTS (
+  SELECT 1 FROM dh_task_rag existing
+  WHERE existing.tenant_id = ten.id
+    AND existing.task_id = t.id
+    AND existing.rag_source_id = rs.id
+);
+
+INSERT INTO dh_task_rag (
+  tenant_id, task_id, rag_source_id, task_unique_id, rag_unique_id,
+  sections, query_context, search_config, citation_required, is_required
+)
+SELECT
+  ten.id,
+  t.id,
+  rs.id,
+  'TSK-CD-001-T5-2',
+  rs.unique_id,
+  ARRAY['4.2','6.1']::text[],
+  'Final endpoint recommendation regulatory framing.',
+  jsonb_build_object('max_chunks', 4),
+  TRUE,
+  TRUE
+FROM (SELECT id FROM tenants WHERE slug = 'digital-health-startup' LIMIT 1) AS ten
+JOIN dh_task t ON t.unique_id = 'TSK-CD-001-T5-2' AND t.tenant_id = ten.id
+JOIN dh_rag_source rs ON rs.code = 'FDA_PRO_2009' AND rs.tenant_id = ten.id
+WHERE NOT EXISTS (
+  SELECT 1 FROM dh_task_rag existing
+  WHERE existing.tenant_id = ten.id
+    AND existing.task_id = t.id
+    AND existing.rag_source_id = rs.id
+);
+
+-- Digital biomarker validation tasks (UC_CD_002)
+INSERT INTO dh_task_rag (
+  tenant_id, task_id, rag_source_id, task_unique_id, rag_unique_id,
+  sections, query_context, search_config, citation_required, is_required
+)
+SELECT
+  ten.id,
+  t.id,
+  rs.id,
+  'TSK-CD-002-T1',
+  rs.unique_id,
+  ARRAY['V1']::text[],
+  'Define intended use using DiMe verification guidance.',
+  jsonb_build_object('max_chunks', 6),
+  TRUE,
+  TRUE
+FROM (SELECT id FROM tenants WHERE slug = 'digital-health-startup' LIMIT 1) AS ten
+JOIN dh_task t ON t.unique_id = 'TSK-CD-002-T1' AND t.tenant_id = ten.id
+JOIN dh_rag_source rs ON rs.code = 'DIME_V3_FRAMEWORK' AND rs.tenant_id = ten.id
+WHERE NOT EXISTS (
+  SELECT 1 FROM dh_task_rag existing
+  WHERE existing.tenant_id = ten.id
+    AND existing.task_id = t.id
+    AND existing.rag_source_id = rs.id
+);
+
+INSERT INTO dh_task_rag (
+  tenant_id, task_id, rag_source_id, task_unique_id, rag_unique_id,
+  sections, query_context, search_config, citation_required, is_required
+)
+SELECT
+  ten.id,
+  t.id,
+  rs.id,
+  'TSK-CD-002-T2',
+  rs.unique_id,
+  ARRAY['V1']::text[],
+  'Design verification study aligned to DiMe V1 expectations.',
+  jsonb_build_object('max_chunks', 6),
+  TRUE,
+  TRUE
+FROM (SELECT id FROM tenants WHERE slug = 'digital-health-startup' LIMIT 1) AS ten
+JOIN dh_task t ON t.unique_id = 'TSK-CD-002-T2' AND t.tenant_id = ten.id
+JOIN dh_rag_source rs ON rs.code = 'DIME_V3_FRAMEWORK' AND rs.tenant_id = ten.id
+WHERE NOT EXISTS (
+  SELECT 1 FROM dh_task_rag existing
+  WHERE existing.tenant_id = ten.id
+    AND existing.task_id = t.id
+    AND existing.rag_source_id = rs.id
+);
+
+INSERT INTO dh_task_rag (
+  tenant_id, task_id, rag_source_id, task_unique_id, rag_unique_id,
+  sections, query_context, search_config, citation_required, is_required
+)
+SELECT
+  ten.id,
+  t.id,
+  rs.id,
+  'TSK-CD-002-T3',
+  rs.unique_id,
+  ARRAY['V1']::text[],
+  'Execute verification analyses referencing DiMe guidance.',
+  jsonb_build_object('max_chunks', 6),
+  TRUE,
+  TRUE
+FROM (SELECT id FROM tenants WHERE slug = 'digital-health-startup' LIMIT 1) AS ten
+JOIN dh_task t ON t.unique_id = 'TSK-CD-002-T3' AND t.tenant_id = ten.id
+JOIN dh_rag_source rs ON rs.code = 'DIME_V3_FRAMEWORK' AND rs.tenant_id = ten.id
+WHERE NOT EXISTS (
+  SELECT 1 FROM dh_task_rag existing
+  WHERE existing.tenant_id = ten.id
+    AND existing.task_id = t.id
+    AND existing.rag_source_id = rs.id
+);
+
+INSERT INTO dh_task_rag (
+  tenant_id, task_id, rag_source_id, task_unique_id, rag_unique_id,
+  sections, query_context, search_config, citation_required, is_required
+)
+SELECT
+  ten.id,
+  t.id,
+  rs.id,
+  'TSK-CD-002-T4',
+  rs.unique_id,
+  ARRAY['V2']::text[],
+  'Plan analytical validation study (DiMe V2).',
+  jsonb_build_object('max_chunks', 6),
+  TRUE,
+  TRUE
+FROM (SELECT id FROM tenants WHERE slug = 'digital-health-startup' LIMIT 1) AS ten
+JOIN dh_task t ON t.unique_id = 'TSK-CD-002-T4' AND t.tenant_id = ten.id
+JOIN dh_rag_source rs ON rs.code = 'DIME_V3_FRAMEWORK' AND rs.tenant_id = ten.id
+WHERE NOT EXISTS (
+  SELECT 1 FROM dh_task_rag existing
+  WHERE existing.tenant_id = ten.id
+    AND existing.task_id = t.id
+    AND existing.rag_source_id = rs.id
+);
+
+INSERT INTO dh_task_rag (
+  tenant_id, task_id, rag_source_id, task_unique_id, rag_unique_id,
+  sections, query_context, search_config, citation_required, is_required
+)
+SELECT
+  ten.id,
+  t.id,
+  rs.id,
+  'TSK-CD-002-T5',
+  rs.unique_id,
+  ARRAY['V2']::text[],
+  'Execute analytical validation (DiMe V2).',
+  jsonb_build_object('max_chunks', 6),
+  TRUE,
+  TRUE
+FROM (SELECT id FROM tenants WHERE slug = 'digital-health-startup' LIMIT 1) AS ten
+JOIN dh_task t ON t.unique_id = 'TSK-CD-002-T5' AND t.tenant_id = ten.id
+JOIN dh_rag_source rs ON rs.code = 'DIME_V3_FRAMEWORK' AND rs.tenant_id = ten.id
+WHERE NOT EXISTS (
+  SELECT 1 FROM dh_task_rag existing
+  WHERE existing.tenant_id = ten.id
+    AND existing.task_id = t.id
+    AND existing.rag_source_id = rs.id
+);
+
+INSERT INTO dh_task_rag (
+  tenant_id, task_id, rag_source_id, task_unique_id, rag_unique_id,
+  sections, query_context, search_config, citation_required, is_required
+)
+SELECT
+  ten.id,
+  t.id,
+  rs.id,
+  'TSK-CD-002-T6',
+  rs.unique_id,
+  ARRAY['V3']::text[],
+  'Design clinical validation study (DiMe V3).',
+  jsonb_build_object('max_chunks', 6),
+  TRUE,
+  TRUE
+FROM (SELECT id FROM tenants WHERE slug = 'digital-health-startup' LIMIT 1) AS ten
+JOIN dh_task t ON t.unique_id = 'TSK-CD-002-T6' AND t.tenant_id = ten.id
+JOIN dh_rag_source rs ON rs.code = 'DIME_V3_FRAMEWORK' AND rs.tenant_id = ten.id
+WHERE NOT EXISTS (
+  SELECT 1 FROM dh_task_rag existing
+  WHERE existing.tenant_id = ten.id
+    AND existing.task_id = t.id
+    AND existing.rag_source_id = rs.id
+);
+
+INSERT INTO dh_task_rag (
+  tenant_id, task_id, rag_source_id, task_unique_id, rag_unique_id,
+  sections, query_context, search_config, citation_required, is_required
+)
+SELECT
+  ten.id,
+  t.id,
+  rs.id,
+  'TSK-CD-002-T7',
+  rs.unique_id,
+  ARRAY['V3']::text[],
+  'Execute clinical validation and MCID determination.',
+  jsonb_build_object('max_chunks', 6),
+  TRUE,
+  TRUE
+FROM (SELECT id FROM tenants WHERE slug = 'digital-health-startup' LIMIT 1) AS ten
+JOIN dh_task t ON t.unique_id = 'TSK-CD-002-T7' AND t.tenant_id = ten.id
+JOIN dh_rag_source rs ON rs.code = 'DIME_V3_FRAMEWORK' AND rs.tenant_id = ten.id
+WHERE NOT EXISTS (
+  SELECT 1 FROM dh_task_rag existing
+  WHERE existing.tenant_id = ten.id
+    AND existing.task_id = t.id
+    AND existing.rag_source_id = rs.id
+);
+
+INSERT INTO dh_task_rag (
+  tenant_id, task_id, rag_source_id, task_unique_id, rag_unique_id,
+  sections, query_context, search_config, citation_required, is_required
+)
+SELECT
+  ten.id,
+  t.id,
+  rs.id,
+  'TSK-CD-002-T8',
+  rs.unique_id,
+  ARRAY['Negotiation','Objections']::text[],
+  'Incorporate enterprise HTA playbook when preparing FDA pre-submission.',
+  jsonb_build_object('max_chunks', 3),
+  TRUE,
+  TRUE
+FROM (SELECT id FROM tenants WHERE slug = 'digital-health-startup' LIMIT 1) AS ten
+JOIN dh_task t ON t.unique_id = 'TSK-CD-002-T8' AND t.tenant_id = ten.id
+JOIN dh_rag_source rs ON rs.code = 'HTA_PLAYBOOK_ENTX' AND rs.tenant_id = ten.id
+WHERE NOT EXISTS (
+  SELECT 1 FROM dh_task_rag existing
+  WHERE existing.tenant_id = ten.id
+    AND existing.task_id = t.id
+    AND existing.rag_source_id = rs.id
+);
+
+INSERT INTO dh_task_rag (
+  tenant_id, task_id, rag_source_id, task_unique_id, rag_unique_id,
+  sections, query_context, search_config, citation_required, is_required
+)
+SELECT
+  ten.id,
+  t.id,
+  rs.id,
+  'TSK-CD-002-T9',
+  rs.unique_id,
+  ARRAY['Negotiation']::text[],
+  'Use enterprise HTA insights when compiling final report and manuscript.',
+  jsonb_build_object('max_chunks', 3),
+  TRUE,
+  TRUE
+FROM (SELECT id FROM tenants WHERE slug = 'digital-health-startup' LIMIT 1) AS ten
+JOIN dh_task t ON t.unique_id = 'TSK-CD-002-T9' AND t.tenant_id = ten.id
+JOIN dh_rag_source rs ON rs.code = 'HTA_PLAYBOOK_ENTX' AND rs.tenant_id = ten.id
+WHERE NOT EXISTS (
+  SELECT 1 FROM dh_task_rag existing
+  WHERE existing.tenant_id = ten.id
+    AND existing.task_id = t.id
+    AND existing.rag_source_id = rs.id
 );

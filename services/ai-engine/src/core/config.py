@@ -96,6 +96,7 @@ class Settings(BaseSettings):
     class Config:
         env_file = ".env"
         case_sensitive = False
+        extra = "ignore"  # Allow extra fields in .env without validation errors
 
 @lru_cache()
 def get_settings() -> Settings:

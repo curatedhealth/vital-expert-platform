@@ -12,10 +12,9 @@ import { Button } from '@vital/ui';
 import { Avatar, AvatarFallback, AvatarImage } from '@vital/ui';
 import { Progress } from '@vital/ui';
 import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
 } from '@vital/ui';
 import {
   Tooltip,
@@ -482,11 +481,15 @@ export function ExpertAgentCard({
                   <Brain className="h-3 w-3" />
                   <span>Memory Insights</span>
                 </div>
-                <Accordion type="single" collapsible className="w-full">
-                  <AccordionItem value="memory-insights">
-                    <AccordionTrigger className="text-xs">View stored facts</AccordionTrigger>
-                    <AccordionContent>
-                      <div className="space-y-2">
+                <Collapsible className="w-full">
+                  <CollapsibleTrigger asChild>
+                    <Button variant="ghost" size="sm" className="w-full justify-between text-xs p-2 h-8">
+                      View stored facts
+                      <Activity className="h-3 w-3" />
+                    </Button>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                      <div className="space-y-2 mt-2">
                         {memoryFacts.slice(0, 3).map((fact) => (
                           <div key={fact.id} className="rounded-lg border border-muted-foreground/10 bg-muted/20 p-2 text-xs">
                             <p className="font-medium text-foreground">{fact.fact}</p>
@@ -505,9 +508,8 @@ export function ExpertAgentCard({
                           </p>
                         )}
                       </div>
-                    </AccordionContent>
-                  </AccordionItem>
-                </Accordion>
+                    </CollapsibleContent>
+                </Collapsible>
               </div>
             );
           })()}

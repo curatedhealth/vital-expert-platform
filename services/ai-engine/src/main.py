@@ -37,6 +37,7 @@ from services.agent_selector_service import (
     QueryAnalysisResponse
 )
 from services.cache_manager import CacheManager, initialize_cache_manager, get_cache_manager
+from services.tool_registry_service import ToolRegistryService, initialize_tool_registry, get_tool_registry
 from langgraph_workflows import (
     initialize_checkpoint_manager,
     initialize_observability,
@@ -78,6 +79,7 @@ websocket_manager: Optional[WebSocketManager] = None
 cache_manager: Optional[CacheManager] = None
 checkpoint_manager = None  # LangGraph checkpoint manager
 observability = None  # LangGraph observability
+tool_registry = None  # Tool registry service
 
 
 class ConversationTurn(BaseModel):
@@ -341,7 +343,7 @@ class Mode4AutonomousManualResponse(BaseModel):
 
 async def initialize_services_background():
     """Initialize services in background - non-blocking"""
-    global agent_orchestrator, rag_pipeline, unified_rag_service, metadata_processing_service, supabase_client, websocket_manager, cache_manager, checkpoint_manager, observability
+    global agent_orchestrator, rag_pipeline, unified_rag_service, metadata_processing_service, supabase_client, websocket_manager, cache_manager, checkpoint_manager, observability, tool_registry
 
     logger.info("🚀 Starting VITAL Path AI Services background initialization")
 
@@ -390,6 +392,18 @@ async def initialize_services_background():
         logger.error("❌ Failed to initialize Supabase client", error=str(e))
         logger.warning("⚠️ App will start but Supabase-dependent features will be unavailable")
         supabase_client = None
+
+    # Initialize tool registry service
+    try:
+        if supabase_client:
+            tool_registry = await initialize_tool_registry(supabase_client)
+            logger.info("✅ Tool registry service initialized")
+        else:
+            logger.warning("⚠️ Skipping tool registry initialization (Supabase unavailable)")
+            tool_registry = None
+    except Exception as e:
+        logger.error("❌ Failed to initialize tool registry service", error=str(e))
+        tool_registry = None
 
     try:
         if supabase_client:

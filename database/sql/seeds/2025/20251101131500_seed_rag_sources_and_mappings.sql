@@ -18,6 +18,7 @@ DECLARE
   rec_agent RECORD;
   rec_prompt RECORD;
   rec_task_domain RECORD;
+  v_has_required_knowledge BOOLEAN := false;
 BEGIN
   SELECT id
   INTO v_tenant_id
@@ -29,6 +30,15 @@ BEGIN
     RAISE NOTICE 'Tenant % not found; skipping RAG workflow seed.', 'digital-health-startup';
     RETURN;
   END IF;
+
+  -- Check whether dh_task_agent_assignment.required_knowledge exists (older deployments may not have migration)
+  SELECT EXISTS (
+    SELECT 1
+    FROM information_schema.columns
+    WHERE table_name = 'dh_task_agent_assignment'
+      AND column_name = 'required_knowledge'
+  )
+  INTO v_has_required_knowledge;
 
   -- -------------------------------------------------------------------------
   -- RAG source catalog (idempotent upsert)
@@ -366,26 +376,26 @@ BEGIN
     SELECT *
     FROM (
       VALUES
-        ('TSK-CD-001-T1-1', ARRAY['clinical_development_trial_design','regulatory_affairs']::TEXT[]),
-        ('TSK-CD-001-T2-1', ARRAY['regulatory_affairs','samd_dtx_regulation']::TEXT[]),
-        ('TSK-CD-001-T3-1', ARRAY['clinical_development_trial_design','rwe_real_world_evidence']::TEXT[]),
-        ('TSK-CD-001-T4-1', ARRAY['clinical_development_trial_design']::TEXT[]),
-        ('TSK-CD-001-T5-2', ARRAY['regulatory_affairs','samd_dtx_regulation']::TEXT[]),
-        ('TSK-CD-002-T1',   ARRAY['clinical_development_trial_design']::TEXT[]),
-        ('TSK-CD-002-T2',   ARRAY['clinical_development_trial_design']::TEXT[]),
-        ('TSK-CD-002-T3',   ARRAY['clinical_development_trial_design']::TEXT[]),
-        ('TSK-CD-002-T4',   ARRAY['clinical_development_trial_design','rwe_real_world_evidence']::TEXT[]),
-        ('TSK-CD-002-T5',   ARRAY['clinical_development_trial_design','rwe_real_world_evidence']::TEXT[]),
-        ('TSK-CD-002-T6',   ARRAY['clinical_development_trial_design','rwe_real_world_evidence']::TEXT[]),
-        ('TSK-CD-002-T7',   ARRAY['clinical_development_trial_design','rwe_real_world_evidence']::TEXT[]),
-        ('TSK-CD-002-T8',   ARRAY['hta_reimbursement_assessment','regulatory_affairs']::TEXT[]),
-        ('TSK-CD-002-T9',   ARRAY['hta_reimbursement_assessment','heor_health_economics']::TEXT[]),
-        ('TSK-CD-003-T1',   ARRAY['clinical_development_trial_design']::TEXT[]),
-        ('TSK-CD-003-T2',   ARRAY['regulatory_affairs','samd_dtx_regulation']::TEXT[]),
-        ('TSK-CD-003-T5',   ARRAY['clinical_development_trial_design']::TEXT[]),
-        ('TSK-MA-006-T1',   ARRAY['heor_health_economics','hta_reimbursement_assessment']::TEXT[]),
-        ('TSK-MA-006-T5',   ARRAY['heor_health_economics','hta_reimbursement_assessment']::TEXT[]),
-        ('TSK-MA-006-T6',   ARRAY['heor_health_economics','hta_reimbursement_assessment']::TEXT[])
+        ('TSK-CD-001-T1-1', ARRAY['clinical-development','regulatory-affairs']::TEXT[]),
+        ('TSK-CD-001-T2-1', ARRAY['regulatory-affairs','medical_devices']::TEXT[]),
+        ('TSK-CD-001-T3-1', ARRAY['clinical-development','evidence_generation']::TEXT[]),
+        ('TSK-CD-001-T4-1', ARRAY['clinical-development','biostatistics']::TEXT[]),
+        ('TSK-CD-001-T5-2', ARRAY['regulatory-affairs','medical_devices']::TEXT[]),
+        ('TSK-CD-002-T1',   ARRAY['clinical-development','medical_devices']::TEXT[]),
+        ('TSK-CD-002-T2',   ARRAY['clinical-development','medical_devices']::TEXT[]),
+        ('TSK-CD-002-T3',   ARRAY['clinical-development','medical_devices']::TEXT[]),
+        ('TSK-CD-002-T4',   ARRAY['clinical-development','evidence_generation']::TEXT[]),
+        ('TSK-CD-002-T5',   ARRAY['clinical-development','evidence_generation']::TEXT[]),
+        ('TSK-CD-002-T6',   ARRAY['clinical-development','medical-affairs']::TEXT[]),
+        ('TSK-CD-002-T7',   ARRAY['clinical-development','medical-affairs']::TEXT[]),
+        ('TSK-CD-002-T8',   ARRAY['health_economics','commercial_strategy']::TEXT[]),
+        ('TSK-CD-002-T9',   ARRAY['health_economics','business_strategy']::TEXT[]),
+        ('TSK-CD-003-T1',   ARRAY['clinical-development','regulatory-affairs']::TEXT[]),
+        ('TSK-CD-003-T2',   ARRAY['regulatory-affairs','medical_devices']::TEXT[]),
+        ('TSK-CD-003-T5',   ARRAY['clinical-development','biostatistics']::TEXT[]),
+        ('TSK-MA-006-T1',   ARRAY['health_economics','medical-affairs']::TEXT[]),
+        ('TSK-MA-006-T5',   ARRAY['health_economics','business_strategy']::TEXT[]),
+        ('TSK-MA-006-T6',   ARRAY['health_economics','business_strategy']::TEXT[])
     ) AS v(task_unique_id, domain_ids)
   LOOP
     SELECT dh_resolve_task_unique_id(v_tenant_id, rec_task_domain.task_unique_id) INTO v_task_id;
@@ -416,10 +426,12 @@ BEGIN
       AND task_id = v_task_id;
 
     -- Record required knowledge domains for assigned agents
-    UPDATE dh_task_agent_assignment
-    SET required_knowledge = rec_task_domain.domain_ids
-    WHERE tenant_id = v_tenant_id
-      AND task_id = v_task_id;
+    IF v_has_required_knowledge THEN
+      UPDATE dh_task_agent_assignment
+      SET required_knowledge = rec_task_domain.domain_ids
+      WHERE tenant_id = v_tenant_id
+        AND task_id = v_task_id;
+    END IF;
   END LOOP;
 
   RAISE NOTICE 'RAG workflow seed completed for tenant %.', v_tenant_id;

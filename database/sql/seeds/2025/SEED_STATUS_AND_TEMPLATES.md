@@ -16,6 +16,7 @@
 | `02_foundation_tools.sql` | ✅ **SEEDED** | 17 tools | Statistical software, EDC systems, research databases, regulatory tools, AI tools |
 | `03_foundation_rag_sources.sql` | ✅ **SEEDED** | 24 sources | FDA guidance, ICH/EMA guidance, clinical standards, data standards, research databases |
 | `04_foundation_kpis.sql` | ✅ **SEEDED** | ~50 KPIs | Performance metrics across all domains |
+| `05_foundation_prompts.sql` | ✅ **SEEDED** | 9 prompts | UC_CD_002 prompts (V1/V2/V3 validation workflow prompts) |
 
 **Foundation Status:** ✅ **100% COMPLETE** - No need to recreate these for new use cases!
 
@@ -90,8 +91,9 @@ Use **UC_CD_002** as the gold standard template:
 ✅ 17 Tools
 ✅ 24 RAG Sources
 ✅ ~50 KPIs
+✅ 9 Prompts (UC_CD_002)
 ━━━━━━━━━━━━━━━━━━━━━
-   141+ Foundation Entities
+   150+ Foundation Entities
 ```
 
 ### **Use Case Layer**
@@ -114,12 +116,12 @@ Use **UC_CD_002** as the gold standard template:
 ### **Grand Total**
 ```
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-✅ 141+ Foundation Entities (reusable)
+✅ 150+ Foundation Entities (reusable)
 ✅ 6 Workflows
 ✅ 22 Tasks
 ✅ 98 Assignments
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-   267+ Database Records Seeded!
+   276+ Database Records Seeded!
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
 

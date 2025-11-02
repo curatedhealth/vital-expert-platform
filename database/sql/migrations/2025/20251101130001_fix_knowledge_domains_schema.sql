@@ -21,7 +21,10 @@ BEGIN
 END $$;
 
 -- Add domain_id column if it doesn't exist (rename id to domain_id if needed)
+-- Handle both UUID and TEXT types
 DO $$ 
+DECLARE
+  id_type TEXT;
 BEGIN
   -- Check if we have 'id' but not 'domain_id'
   IF EXISTS (
@@ -33,31 +36,55 @@ BEGIN
     WHERE table_name = 'knowledge_domains' 
     AND column_name = 'domain_id'
   ) THEN
+    -- Get the data type of the id column
+    SELECT data_type INTO id_type
+    FROM information_schema.columns
+    WHERE table_name = 'knowledge_domains'
+    AND column_name = 'id';
+    
     -- Rename id to domain_id
     ALTER TABLE knowledge_domains RENAME COLUMN id TO domain_id;
     
     -- Update the primary key constraint if needed
     ALTER TABLE knowledge_domains DROP CONSTRAINT IF EXISTS knowledge_domains_pkey;
     ALTER TABLE knowledge_domains ADD PRIMARY KEY (domain_id);
+  ELSE
+    -- Get the data type of domain_id if it exists
+    SELECT data_type INTO id_type
+    FROM information_schema.columns
+    WHERE table_name = 'knowledge_domains'
+    AND column_name = 'domain_id';
   END IF;
   
-  -- If neither exists, add domain_id
+  -- If neither exists, add domain_id as UUID (most common case)
   IF NOT EXISTS (
     SELECT 1 FROM information_schema.columns 
     WHERE table_name = 'knowledge_domains' 
     AND column_name IN ('id', 'domain_id')
   ) THEN
-    ALTER TABLE knowledge_domains ADD COLUMN domain_id TEXT PRIMARY KEY;
+    ALTER TABLE knowledge_domains ADD COLUMN domain_id UUID PRIMARY KEY DEFAULT gen_random_uuid();
   END IF;
 END $$;
 
 -- Add other missing columns that might not exist
 
 DO $$ 
+DECLARE
+  id_type TEXT;
 BEGIN
-  -- parent_domain_id
+  -- Get the data type of domain_id to use for parent_domain_id
+  SELECT data_type INTO id_type
+  FROM information_schema.columns
+  WHERE table_name = 'knowledge_domains'
+  AND column_name = 'domain_id';
+  
+  -- parent_domain_id (use same type as domain_id)
   IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'knowledge_domains' AND column_name = 'parent_domain_id') THEN
-    ALTER TABLE knowledge_domains ADD COLUMN parent_domain_id TEXT REFERENCES knowledge_domains(domain_id) ON DELETE SET NULL;
+    IF id_type = 'uuid' THEN
+      ALTER TABLE knowledge_domains ADD COLUMN parent_domain_id UUID REFERENCES knowledge_domains(domain_id) ON DELETE SET NULL;
+    ELSE
+      ALTER TABLE knowledge_domains ADD COLUMN parent_domain_id TEXT REFERENCES knowledge_domains(domain_id) ON DELETE SET NULL;
+    END IF;
   END IF;
 
   -- function_id

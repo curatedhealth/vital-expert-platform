@@ -18,13 +18,30 @@ import { usePanelStream, type PanelStreamEvent } from '@/hooks/use-sse';
 import { useTenant } from '@/hooks/use-tenant';
 import type { PanelResponse, PanelConsensus } from '@/types/database.types';
 import { cn } from '@/lib/utils';
+import { renderTextWithCitations, type CitationSource } from './inline-citation';
+import { ReasoningDisplay } from './reasoning-display';
+import { SourcesPanel } from './sources-panel';
+import { StreamingWindow } from './streaming-window';
 
 interface PanelStreamProps {
   panelId: string;
 }
 
-interface ExpertMessage extends Omit<PanelResponse, 'tenant_id' | 'panel_id' | 'metadata'> {
+interface ExpertMessage {
+  id: string;
+  agent_id: string;
+  agent_name: string;
   agent_avatar?: string;
+  round_number: number;
+  response_type: string;
+  content: string;
+  confidence_score: number | null;
+  created_at: string;
+  metadata?: {
+    sources?: CitationSource[];
+    reasoning?: Array<{ step: string; content: string }> | string[];
+    confidence?: number;
+  };
 }
 
 interface ConsensusData {
@@ -42,6 +59,8 @@ export function PanelStream({ panelId }: PanelStreamProps) {
   const [currentRound, setCurrentRound] = useState(1);
   const [activeExpert, setActiveExpert] = useState<string | null>(null);
   const [isPaused, setIsPaused] = useState(false);
+  const [workflowSteps, setWorkflowSteps] = useState<Array<{step: string; status: 'pending' | 'active' | 'complete' | 'error'}>>([]);
+  const [currentReasoningSteps, setCurrentReasoningSteps] = useState<string[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   // Load initial panel data
@@ -85,6 +104,11 @@ export function PanelStream({ panelId }: PanelStreamProps) {
     switch (event.type) {
       case 'started':
         setPanelStatus('running');
+        setWorkflowSteps([
+          { step: 'Panel Initialized', status: 'complete' },
+          { step: 'Experts Selected', status: 'active' },
+          { step: 'Discussion Started', status: 'pending' },
+        ]);
         break;
 
       case 'expert_speaking':
@@ -94,16 +118,32 @@ export function PanelStream({ panelId }: PanelStreamProps) {
           ...response,
           agent_avatar: `/avatars/${response.agent_id}.png`,
         }]);
+        setWorkflowSteps([
+          { step: 'Panel Initialized', status: 'complete' },
+          { step: 'Experts Selected', status: 'complete' },
+          { step: `${response.agent_name} Responding`, status: 'active' },
+        ]);
         // Clear active expert after 2 seconds
         setTimeout(() => setActiveExpert(null), 2000);
         break;
 
       case 'round_started':
-        setCurrentRound((event.data as any).round_number);
+        const roundNum = (event.data as any).round_number;
+        setCurrentRound(roundNum);
+        setWorkflowSteps([
+          { step: 'Panel Initialized', status: 'complete' },
+          { step: 'Experts Selected', status: 'complete' },
+          { step: `Round ${roundNum} Started`, status: 'active' },
+        ]);
         break;
 
       case 'round_complete':
         setCurrentRound(prev => prev + 1);
+        setWorkflowSteps([
+          { step: 'Panel Initialized', status: 'complete' },
+          { step: 'Experts Selected', status: 'complete' },
+          { step: `Round ${currentRound} Complete`, status: 'complete' },
+        ]);
         break;
 
       case 'consensus':
@@ -113,6 +153,12 @@ export function PanelStream({ panelId }: PanelStreamProps) {
 
       case 'complete':
         setPanelStatus('completed');
+        setWorkflowSteps([
+          { step: 'Panel Initialized', status: 'complete' },
+          { step: 'Experts Selected', status: 'complete' },
+          { step: 'Discussion Complete', status: 'complete' },
+          { step: 'Consensus Reached', status: 'complete' },
+        ]);
         break;
 
       case 'error':
@@ -196,6 +242,20 @@ export function PanelStream({ panelId }: PanelStreamProps) {
           </CardHeader>
 
           <CardContent>
+            {/* Streaming Window */}
+            {panelStatus === 'running' && (
+              <div className="mb-4">
+                <StreamingWindow
+                  workflowSteps={workflowSteps}
+                  reasoningSteps={currentReasoningSteps}
+                  isStreaming={panelStatus === 'running'}
+                  canPause={true}
+                  onPause={() => setIsPaused(true)}
+                  onResume={() => setIsPaused(false)}
+                />
+              </div>
+            )}
+
             <div className="h-[600px] overflow-y-auto scrollbar-hide">
               <div className="space-y-4 pb-4">
                 {messages.map((message) => (
@@ -242,9 +302,29 @@ export function PanelStream({ panelId }: PanelStreamProps) {
                         </span>
                       </div>
 
-                      <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">
-                        {message.content}
-                      </p>
+                      {/* Enhanced Message Content with Citations */}
+                      <div className="text-sm leading-relaxed">
+                        {message.metadata?.sources && message.metadata.sources.length > 0 ? (
+                          renderTextWithCitations(message.content, message.metadata.sources)
+                        ) : (
+                          <p className="whitespace-pre-wrap break-words">{message.content}</p>
+                        )}
+                      </div>
+
+                      {/* Reasoning Display */}
+                      {message.metadata?.reasoning && message.metadata.reasoning.length > 0 && (
+                        <ReasoningDisplay reasoning={message.metadata.reasoning} />
+                      )}
+
+                      {/* Sources Panel */}
+                      {message.metadata?.sources && message.metadata.sources.length > 0 && (
+                        <SourcesPanel 
+                          sources={message.metadata.sources.map((source, idx) => ({
+                            ...source,
+                            similarity: source.score
+                          }))} 
+                        />
+                      )}
 
                       {activeExpert === message.agent_id && (
                         <div className="flex items-center gap-1 text-xs text-primary">

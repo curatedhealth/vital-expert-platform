@@ -292,11 +292,7 @@ class DataSanitizer:
         return hash_obj.hexdigest()[:8]
 
 
-# Export singleton instances
-def create_copyright_checker() -> CopyrightChecker:
-    """Create copyright checker instance"""
-    return CopyrightChecker()
-
+# Export singleton instance
 def create_data_sanitizer() -> DataSanitizer:
     """Create data sanitizer instance"""
     return DataSanitizer()

@@ -283,3 +283,9 @@ class CopyrightChecker:
 
         return f"© {year_str} {source_name}. All rights reserved."
 
+
+# Factory function for creating CopyrightChecker instance
+def create_copyright_checker() -> CopyrightChecker:
+    """Create and return a CopyrightChecker instance"""
+    return CopyrightChecker()
+

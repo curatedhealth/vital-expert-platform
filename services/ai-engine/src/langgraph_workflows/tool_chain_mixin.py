@@ -21,7 +21,7 @@ import structlog
 
 from services.tool_registry import get_tool_registry
 from tools.rag_tool import RAGTool
-from tools.web_tools import WebSearchTool, WebScrapeTool
+from tools.web_tools import WebSearchTool, WebScraperTool
 from langgraph_workflows.tool_chain_executor import ToolChainExecutor
 
 logger = structlog.get_logger()
@@ -73,7 +73,7 @@ class ToolChainMixin:
             is_global=True
         )
         self.tool_registry.register_tool(
-            WebScrapeTool(),
+            WebScraperTool(),
             is_global=True
         )
         

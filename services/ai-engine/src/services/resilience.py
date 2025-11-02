@@ -443,3 +443,26 @@ def get_circuit_breaker_stats() -> dict:
         }
     }
 
+
+# Alias for backward compatibility
+async def timeout_handler(coro, timeout: float = 300.0, timeout_message: str = "Operation timed out") -> Any:
+    """
+    Alias for with_timeout function - for backward compatibility.
+    
+    Args:
+        coro: Coroutine or awaitable to execute
+        timeout: Timeout in seconds (default: 300s / 5 minutes)
+        timeout_message: Error message if timeout occurs
+        
+    Returns:
+        Result of the coroutine
+        
+    Raises:
+        asyncio.TimeoutError: If operation exceeds timeout
+    """
+    import asyncio
+    try:
+        return await asyncio.wait_for(coro, timeout=timeout)
+    except asyncio.TimeoutError:
+        raise asyncio.TimeoutError(timeout_message)
+

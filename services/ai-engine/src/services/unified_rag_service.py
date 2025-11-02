@@ -10,7 +10,7 @@ from typing import List, Dict, Any, Optional, Tuple
 from datetime import datetime
 import structlog
 import os
-from pinecone import Pinecone, ServerlessSpec
+from pinecone import Pinecone
 from langchain_openai import OpenAIEmbeddings
 from services.embedding_service_factory import EmbeddingServiceFactory
 from services.cache_manager import CacheManager

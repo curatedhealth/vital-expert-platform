@@ -76,36 +76,21 @@ class ListPanelsResponse(BaseModel):
     page_size: int
 
 
-# Dependency Injection
-def get_panel_repo(
-    # In production, inject db_client via dependency
-    # For now, simplified
-) -> PanelRepository:
-    """Get panel repository"""
-    # TODO: Inject tenant-aware supabase client
-    raise NotImplementedError("Dependency injection to be implemented")
-
-
-def get_workflow(
-    panel_repo: PanelRepository = Depends(get_panel_repo)
-) -> SimplePanelWorkflow:
-    """Get panel workflow"""
-    # TODO: Inject all dependencies
-    raise NotImplementedError("Dependency injection to be implemented")
-
-
-def get_user_id() -> UUID:
-    """Get current user ID from auth context"""
-    # TODO: Extract from JWT or session
-    raise NotImplementedError("Auth to be implemented")
+# Import dependencies
+from api.dependencies import (
+    get_panel_repository,
+    get_panel_workflow,
+    get_current_user_id,
+    get_tenant_id_from_context
+)
 
 
 # Endpoints
 @router.post("/", response_model=PanelResponse, status_code=status.HTTP_201_CREATED)
 async def create_panel(
     request: CreatePanelRequest,
-    panel_repo: PanelRepository = Depends(get_panel_repo),
-    user_id: UUID = Depends(get_user_id)
+    panel_repo: PanelRepository = Depends(get_panel_repository),
+    user_id: UUID = Depends(get_current_user_id)
 ):
     """
     Create a new panel.
@@ -165,7 +150,7 @@ async def create_panel(
 @router.post("/execute", response_model=ExecutePanelResponse)
 async def execute_panel(
     request: ExecutePanelRequest,
-    workflow: SimplePanelWorkflow = Depends(get_workflow)
+    workflow: SimplePanelWorkflow = Depends(get_panel_workflow)
 ):
     """
     Execute a panel asynchronously.
@@ -209,7 +194,7 @@ async def execute_panel(
 @router.get("/{panel_id}", response_model=PanelResponse)
 async def get_panel(
     panel_id: UUID,
-    panel_repo: PanelRepository = Depends(get_panel_repo)
+    panel_repo: PanelRepository = Depends(get_panel_repository)
 ):
     """
     Get a panel by ID.
@@ -258,7 +243,7 @@ async def list_panels(
     page: int = 1,
     page_size: int = 20,
     status: Optional[PanelStatus] = None,
-    panel_repo: PanelRepository = Depends(get_panel_repo)
+    panel_repo: PanelRepository = Depends(get_panel_repository)
 ):
     """
     List panels for current tenant.
@@ -327,7 +312,7 @@ async def list_panels(
 @router.get("/{panel_id}/responses")
 async def get_panel_responses(
     panel_id: UUID,
-    panel_repo: PanelRepository = Depends(get_panel_repo)
+    panel_repo: PanelRepository = Depends(get_panel_repository)
 ):
     """
     Get all responses for a panel.
@@ -364,7 +349,7 @@ async def get_panel_responses(
 @router.get("/{panel_id}/consensus")
 async def get_panel_consensus(
     panel_id: UUID,
-    panel_repo: PanelRepository = Depends(get_panel_repo)
+    panel_repo: PanelRepository = Depends(get_panel_repository)
 ):
     """
     Get consensus for a panel.

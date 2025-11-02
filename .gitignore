@@ -219,3 +219,4 @@ coverage/
 # Bundle analyzer reports
 /analyze/
 .next/analyze/
+services/ai-engine/.env.backup

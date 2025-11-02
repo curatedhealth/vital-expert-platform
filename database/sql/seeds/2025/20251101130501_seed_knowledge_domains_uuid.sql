@@ -52,6 +52,7 @@ WITH payload AS (
 )
 INSERT INTO knowledge_domains (
   domain_id,
+  code,
   parent_domain_id,
   function_id,
   function_name,
@@ -77,6 +78,7 @@ INSERT INTO knowledge_domains (
 )
 SELECT
   text_to_uuid(j->>'domain_id'),  -- Convert TEXT to UUID
+  j->>'domain_id',  -- Use the text domain_id as code
   CASE 
     WHEN j->>'parent_domain_id' IS NOT NULL THEN text_to_uuid(j->>'parent_domain_id')
     ELSE NULL 
@@ -105,6 +107,7 @@ SELECT
 FROM payload,
      jsonb_array_elements(payload.payload->'domains') AS j
 ON CONFLICT (domain_id) DO UPDATE SET
+  code = EXCLUDED.code,
   parent_domain_id = EXCLUDED.parent_domain_id,
   function_id = EXCLUDED.function_id,
   function_name = EXCLUDED.function_name,

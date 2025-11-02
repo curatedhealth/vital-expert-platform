@@ -214,6 +214,33 @@ BEGIN
   IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'knowledge_domains' AND column_name = 'updated_at') THEN
     ALTER TABLE knowledge_domains ADD COLUMN updated_at TIMESTAMPTZ NOT NULL DEFAULT now();
   END IF;
+
+  -- code (might be required by existing schema)
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'knowledge_domains' AND column_name = 'code') THEN
+    -- Add code column as TEXT, using domain_id as default if it exists
+    ALTER TABLE knowledge_domains ADD COLUMN code TEXT;
+  END IF;
+END $$;
+
+-- If code column exists but domain_id-based values aren't set, populate them
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'knowledge_domains' AND column_name = 'code') THEN
+    -- Update NULL codes with a generated value from domain_id or domain_name
+    UPDATE knowledge_domains
+    SET code = COALESCE(
+      code,
+      -- Try to use domain_id if it's text-like
+      CASE 
+        WHEN domain_id::text ~ '^[a-zA-Z_-]+$' THEN domain_id::text
+        ELSE lower(regexp_replace(domain_name, '[^a-zA-Z0-9]+', '_', 'g'))
+      END
+    )
+    WHERE code IS NULL;
+    
+    -- Make code NOT NULL after populating
+    ALTER TABLE knowledge_domains ALTER COLUMN code SET NOT NULL;
+  END IF;
 END $$;
 
 -- Create indexes if they don't exist

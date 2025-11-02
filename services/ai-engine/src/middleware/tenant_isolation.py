@@ -1,6 +1,8 @@
 """
 Tenant Isolation Middleware for VITAL Path AI Services
 Enforces Row-Level Security (RLS) and tenant context isolation
+
+Enhanced with shared-kernel multi-tenant components for type safety.
 """
 
 from fastapi import Request, HTTPException
@@ -8,7 +10,13 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import Response
 from typing import Callable, Optional
 import structlog
-import uuid
+
+# Import from shared-kernel
+from vital_shared_kernel.multi_tenant import (
+    TenantId,
+    TenantContext,
+    InvalidTenantIdError
+)
 
 logger = structlog.get_logger()
 
@@ -53,9 +61,9 @@ class TenantIsolationMiddleware(BaseHTTPMiddleware):
             return await call_next(request)
         
         # Extract tenant ID from headers
-        tenant_id = request.headers.get("x-tenant-id")
+        tenant_id_str = request.headers.get("x-tenant-id")
         
-        if not tenant_id:
+        if not tenant_id_str:
             logger.warning(
                 "Missing tenant_id in request",
                 path=request.url.path,
@@ -70,60 +78,54 @@ class TenantIsolationMiddleware(BaseHTTPMiddleware):
                 }
             )
         
-        # Validate tenant ID format (UUID)
-        if not self._is_valid_uuid(tenant_id):
+        # Create type-safe TenantId with validation
+        try:
+            tenant_id = TenantId.from_string(tenant_id_str)
+        except (InvalidTenantIdError, ValueError) as e:
             logger.warning(
                 "Invalid tenant_id format",
-                tenant_id=tenant_id,
-                path=request.url.path
+                tenant_id=tenant_id_str,
+                path=request.url.path,
+                error=str(e)
             )
             raise HTTPException(
                 status_code=400,
                 detail={
                     "error": "Invalid tenant ID format",
                     "message": "tenant_id must be a valid UUID",
-                    "received": tenant_id
+                    "received": tenant_id_str
                 }
             )
         
-        # Set tenant context in request state (available to all route handlers)
-        request.state.tenant_id = tenant_id
+        # Set type-safe tenant context (thread-safe, async-safe)
+        TenantContext.set(tenant_id)
+        
+        # Also set in request state for backward compatibility
+        request.state.tenant_id = str(tenant_id)
         
         # Set tenant context in database for RLS
         # This will be used by Supabase client to filter queries
-        await self._set_tenant_context_in_db(request, tenant_id)
+        await self._set_tenant_context_in_db(request, str(tenant_id))
         
         logger.info(
             "Tenant context established",
-            tenant_id=tenant_id,
+            tenant_id=str(tenant_id),
             path=request.url.path,
-            method=request.method
+            method=request.method,
+            type_safe=True
         )
         
-        # Process request with tenant context
-        response = await call_next(request)
-        
-        # Add tenant ID to response headers for tracing
-        response.headers["x-tenant-id"] = tenant_id
-        
-        return response
-    
-    def _is_valid_uuid(self, tenant_id: str) -> bool:
-        """
-        Validate tenant ID is a valid UUID.
-        
-        Args:
-            tenant_id: The tenant ID string to validate
-            
-        Returns:
-            True if valid UUID, False otherwise
-        """
         try:
-            uuid_obj = uuid.UUID(tenant_id)
-            # Ensure the UUID string matches the parsed UUID (handles case sensitivity)
-            return str(uuid_obj) == tenant_id.lower()
-        except (ValueError, AttributeError, TypeError):
-            return False
+            # Process request with tenant context
+            response = await call_next(request)
+            
+            # Add tenant ID to response headers for tracing
+            response.headers["x-tenant-id"] = str(tenant_id)
+            
+            return response
+        finally:
+            # Clear tenant context after request (important for connection pooling)
+            TenantContext.clear()
     
     async def _set_tenant_context_in_db(self, request: Request, tenant_id: str) -> None:
         """

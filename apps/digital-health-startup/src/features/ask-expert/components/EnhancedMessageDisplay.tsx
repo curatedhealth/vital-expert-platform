@@ -346,6 +346,22 @@ export function EnhancedMessageDisplay({
   className,
   allowRegenerate = true,
 }: EnhancedMessageDisplayProps) {
+  // Debug logging for Mode 3
+  useEffect(() => {
+    if (role === 'assistant') {
+      console.group(`🎨 [EnhancedMessageDisplay] Rendering message ${id}`);
+      console.log('Role:', role);
+      console.log('Content length:', content?.length);
+      console.log('Content preview:', content?.substring(0, 100));
+      console.log('Agent name:', agentName);
+      console.log('Has metadata:', !!metadata);
+      console.log('Has sources:', metadata?.sources?.length || 0);
+      console.log('Has reasoning:', metadata?.reasoning?.length || 0);
+      console.log('Is streaming:', isStreaming);
+      console.log('Has branches:', branches?.length || 0);
+      console.groupEnd();
+    }
+  }, [id, role, content, agentName, metadata, isStreaming, branches]);
   const [copied, setCopied] = useState(false);
   const [showReasoning, setShowReasoning] = useState(false);
   const [feedback, setFeedback] = useState<'positive' | 'negative' | null>(null);

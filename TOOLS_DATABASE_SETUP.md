@@ -76,6 +76,31 @@ psql "$SUPABASE_DB_URL" -f database/sql/seeds/2025/20251102_link_tools_to_agents
 
 ---
 
+### Step 5: Link AI Tools to Tasks
+```bash
+psql "$SUPABASE_DB_URL" -f database/sql/seeds/2025/20251102_link_ai_tools_to_tasks.sql
+```
+
+**What it creates:**
+
+1. **`dh_task_ai_tool` table** - Links AI agent tools to `dh_task` (separate from `dh_task_tool` which is for domain tools like R, TreeAge, EDC)
+
+2. **`task_category_ai_tools` table** - Templates for auto-assigning AI tools based on task category/type
+
+3. **Task Category Templates:**
+   - **Research**: literature_review, market_intelligence, regulatory_research, clinical_trial_search
+   - **Analysis**: data_analysis, risk_assessment, cost_benefit
+   - **Documentation**: report_generation, summary_creation, guideline_development
+   - **Monitoring**: safety_monitoring, competitor_tracking, regulatory_updates
+   - **Design**: endpoint_selection, biomarker_validation, study_design
+
+4. **Helper Functions:**
+   - `get_ai_tools_for_task(task_id)` - Get tools assigned to a task
+   - `get_recommended_ai_tools(category, task_type)` - Get tool recommendations
+   - `auto_assign_ai_tools_to_task(task_id, tenant_id, category, task_type)` - Auto-assign tools
+
+---
+
 ## ✅ Verification
 
 After running all migrations, verify setup:
@@ -86,6 +111,9 @@ psql "$SUPABASE_DB_URL" -c "SELECT COUNT(*) as tool_count FROM tools;"
 
 # Count agent-tool links  
 psql "$SUPABASE_DB_URL" -c "SELECT COUNT(*) as link_count FROM agent_tools;"
+
+# Count task-ai-tool templates
+psql "$SUPABASE_DB_URL" -c "SELECT COUNT(*) as template_count FROM task_category_ai_tools;"
 
 # View agent-tool matrix
 psql "$SUPABASE_DB_URL" -c "
@@ -101,12 +129,21 @@ WHERE at.is_enabled = TRUE
 ORDER BY at.agent_id, at.priority DESC
 LIMIT 20;
 "
+
+# Test helper function - get tools for research/literature_review
+psql "$SUPABASE_DB_URL" -c "
+SELECT tool_code, tool_name, is_required, priority
+FROM get_recommended_ai_tools('research', 'literature_review')
+LIMIT 10;
+"
 ```
 
 **Expected Output:**
 - ✅ 10 tools in registry
 - ✅ 33 agent-tool links
+- ✅ 40+ task category AI tool templates
 - ✅ Tools properly prioritized per agent
+- ✅ Helper functions working
 
 ---
 
@@ -176,11 +213,45 @@ psql "$SUPABASE_DB_URL" -f database/sql/seeds/2025/20251102_seed_all_tools.sql
 psql "$SUPABASE_DB_URL" -f drop_old_tools.sql && \
 psql "$SUPABASE_DB_URL" -f database/sql/migrations/2025/20251102_create_tools_registry.sql && \
 psql "$SUPABASE_DB_URL" -f database/sql/seeds/2025/20251102_seed_all_tools.sql && \
-psql "$SUPABASE_DB_URL" -f database/sql/seeds/2025/20251102_link_tools_to_agents.sql
+psql "$SUPABASE_DB_URL" -f database/sql/seeds/2025/20251102_link_tools_to_agents.sql && \
+psql "$SUPABASE_DB_URL" -f database/sql/seeds/2025/20251102_link_ai_tools_to_tasks.sql
 
 # Verify
 psql "$SUPABASE_DB_URL" -c "SELECT tool_code, tool_name, category, status FROM tools ORDER BY category, tool_code;"
+
+# Test task-tool linking
+psql "$SUPABASE_DB_URL" -c "SELECT * FROM get_recommended_ai_tools('research', 'literature_review');"
 ```
+
+---
+
+## 🏗️ Architecture Overview
+
+### Two Tool Systems
+
+1. **AI Agent Tools** (`tools` table)
+   - LangGraph-compatible tools
+   - Web search, RAG, medical APIs, computation
+   - Used by autonomous agents during workflow execution
+
+2. **Domain Tools** (`dh_tool` table)
+   - Digital health domain-specific tools
+   - R, TreeAge, EDC, clinical systems
+   - Used for task requirements and planning
+
+### Task-Tool Linking
+
+1. **Agent-Tool Links** (`agent_tools`)
+   - Which tools each agent can use
+   - Priority and configuration per agent
+
+2. **Task-AI-Tool Links** (`dh_task_ai_tool`)
+   - Which AI tools are needed for specific tasks
+   - Required vs recommended tools
+
+3. **Task-Domain-Tool Links** (`dh_task_tool`)
+   - Which domain tools are needed for specific tasks
+   - Existing system for workflow planning
 
 ---
 

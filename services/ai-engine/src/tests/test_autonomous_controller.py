@@ -109,7 +109,7 @@ def test_controller_with_custom_limits(session_id, tenant_id):
 async def test_should_continue_within_budget(controller):
     """Test continuation when within budget limits."""
     decision = await controller.should_continue(
-        current_cost=1.0,
+        current_cost_usd=1.0,
         goal_progress=0.3,
         iteration_count=2
     )
@@ -123,7 +123,7 @@ async def test_should_continue_within_budget(controller):
 async def test_should_stop_when_budget_exceeded(controller):
     """Test stops when budget is exceeded."""
     decision = await controller.should_continue(
-        current_cost=6.0,  # Exceeds 5.0 limit
+        current_cost_usd=6.0,  # Exceeds 5.0 limit
         goal_progress=0.5,
         iteration_count=3
     )
@@ -138,7 +138,7 @@ async def test_should_stop_when_budget_exceeded(controller):
 async def test_should_warn_when_budget_low(controller):
     """Test warning when budget is low but not exceeded."""
     decision = await controller.should_continue(
-        current_cost=4.8,  # Close to 5.0 limit
+        current_cost_usd=4.8,  # Close to 5.0 limit
         goal_progress=0.6,
         iteration_count=4
     )
@@ -159,7 +159,7 @@ async def test_should_continue_within_runtime(controller):
     controller.state.started_at = datetime.now(timezone.utc) - timedelta(minutes=5)
     
     decision = await controller.should_continue(
-        current_cost=1.0,
+        current_cost_usd=1.0,
         goal_progress=0.4,
         iteration_count=3
     )
@@ -175,7 +175,7 @@ async def test_should_stop_when_runtime_exceeded(controller):
     controller.state.started_at = datetime.now(timezone.utc) - timedelta(minutes=20)
     
     decision = await controller.should_continue(
-        current_cost=1.0,
+        current_cost_usd=1.0,
         goal_progress=0.5,
         iteration_count=5
     )
@@ -193,7 +193,7 @@ async def test_should_stop_when_runtime_exceeded(controller):
 async def test_should_stop_when_goal_achieved(controller):
     """Test stops when goal is 100% achieved."""
     decision = await controller.should_continue(
-        current_cost=1.0,
+        current_cost_usd=1.0,
         goal_progress=1.0,  # 100% complete
         iteration_count=3
     )
@@ -208,21 +208,21 @@ async def test_should_stop_when_no_progress(controller):
     """Test stops when making no progress over multiple iterations."""
     # First call with progress
     await controller.should_continue(
-        current_cost=0.5,
+        current_cost_usd=0.5,
         goal_progress=0.3,
         iteration_count=1
     )
     
     # Second call with same progress
     await controller.should_continue(
-        current_cost=1.0,
+        current_cost_usd=1.0,
         goal_progress=0.3,
         iteration_count=2
     )
     
     # Third call with same progress (should detect no progress)
     decision = await controller.should_continue(
-        current_cost=1.5,
+        current_cost_usd=1.5,
         goal_progress=0.3,  # Still 0.3
         iteration_count=3
     )
@@ -235,9 +235,9 @@ async def test_should_stop_when_no_progress(controller):
 async def test_progress_tracking_history(controller):
     """Test that progress history is tracked correctly."""
     # Make several calls with different progress
-    await controller.should_continue(current_cost=0.5, goal_progress=0.2, iteration_count=1)
-    await controller.should_continue(current_cost=1.0, goal_progress=0.4, iteration_count=2)
-    await controller.should_continue(current_cost=1.5, goal_progress=0.6, iteration_count=3)
+    await controller.should_continue(current_cost_usd=0.5, goal_progress=0.2, iteration_count=1)
+    await controller.should_continue(current_cost_usd=1.0, goal_progress=0.4, iteration_count=2)
+    await controller.should_continue(current_cost_usd=1.5, goal_progress=0.6, iteration_count=3)
     
     assert len(controller.state.progress_history) == 3
     assert controller.state.progress_history == [0.2, 0.4, 0.6]
@@ -256,7 +256,7 @@ async def test_should_stop_after_consecutive_errors(controller):
         controller.record_error(f"Error {i+1}")
     
     decision = await controller.should_continue(
-        current_cost=1.0,
+        current_cost_usd=1.0,
         goal_progress=0.3,
         iteration_count=3
     )
@@ -307,7 +307,7 @@ async def test_user_stop_request(controller):
     controller.request_stop()
     
     decision = await controller.should_continue(
-        current_cost=1.0,
+        current_cost_usd=1.0,
         goal_progress=0.3,
         iteration_count=2
     )
@@ -325,7 +325,7 @@ async def test_pause_and_resume(controller):
     assert controller.state.paused is True
     
     decision = await controller.should_continue(
-        current_cost=1.0,
+        current_cost_usd=1.0,
         goal_progress=0.3,
         iteration_count=2
     )
@@ -336,7 +336,7 @@ async def test_pause_and_resume(controller):
     assert controller.state.paused is False
     
     decision = await controller.should_continue(
-        current_cost=1.0,
+        current_cost_usd=1.0,
         goal_progress=0.3,
         iteration_count=2
     )
@@ -409,7 +409,7 @@ async def test_zero_budget_limit(session_id, tenant_id):
     )
     
     decision = await controller.should_continue(
-        current_cost=0.0,
+        current_cost_usd=0.0,
         goal_progress=0.0,
         iteration_count=0
     )
@@ -423,7 +423,7 @@ async def test_negative_progress(controller):
     """Test handling of negative progress values."""
     with pytest.raises((ValueError, AssertionError)):
         await controller.should_continue(
-            current_cost=1.0,
+            current_cost_usd=1.0,
             goal_progress=-0.1,  # Invalid negative progress
             iteration_count=1
         )
@@ -433,7 +433,7 @@ async def test_negative_progress(controller):
 async def test_progress_over_100_percent(controller):
     """Test handling of progress over 100%."""
     decision = await controller.should_continue(
-        current_cost=1.0,
+        current_cost_usd=1.0,
         goal_progress=1.5,  # Over 100%
         iteration_count=1
     )
@@ -474,7 +474,7 @@ async def test_high_confidence_when_clear_decision(controller):
     """Test high confidence when decision is clear."""
     # Clear case: way over budget
     decision = await controller.should_continue(
-        current_cost=10.0,  # Way over 5.0 limit
+        current_cost_usd=10.0,  # Way over 5.0 limit
         goal_progress=0.5,
         iteration_count=2
     )
@@ -488,7 +488,7 @@ async def test_low_confidence_when_uncertain(controller):
     """Test lower confidence when decision is uncertain."""
     # Uncertain case: close to limits but making progress
     decision = await controller.should_continue(
-        current_cost=4.5,  # Close to 5.0 limit
+        current_cost_usd=4.5,  # Close to 5.0 limit
         goal_progress=0.85,  # Close to completion
         iteration_count=10
     )
@@ -505,7 +505,7 @@ async def test_low_confidence_when_uncertain(controller):
 async def test_recommendations_when_budget_low(controller):
     """Test recommendations provided when budget is low."""
     decision = await controller.should_continue(
-        current_cost=4.8,  # Very close to 5.0 limit
+        current_cost_usd=4.8,  # Very close to 5.0 limit
         goal_progress=0.7,
         iteration_count=5
     )
@@ -529,7 +529,7 @@ async def test_decision_performance(controller):
     
     for i in range(100):
         await controller.should_continue(
-            current_cost=0.1 * i,
+            current_cost_usd=0.1 * i,
             goal_progress=0.01 * i,
             iteration_count=i
         )

@@ -33,29 +33,42 @@ class SupabaseClient:
             # Check required settings
             if not self.settings.supabase_url or not self.settings.supabase_service_role_key:
                 raise ValueError("SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required")
-            if not self.settings.database_url:
-                raise ValueError("DATABASE_URL is required")
             
-            # Initialize Supabase client
+            # Initialize Supabase client (REST API)
             self.client = create_client(
                 self.settings.supabase_url,
                 self.settings.supabase_service_role_key
             )
+            logger.info("✅ Supabase REST client initialized")
 
-            # Initialize SQLAlchemy engine for direct SQL operations
-            self.engine = create_engine(self.settings.database_url)
+            # Optional: Initialize direct database connection for vector operations
+            # Only if DATABASE_URL is provided and valid
+            if self.settings.database_url and "postgresql" in self.settings.database_url.lower():
+                try:
+                    # Initialize SQLAlchemy engine for direct SQL operations
+                    self.engine = create_engine(self.settings.database_url)
 
-            # Initialize vector client
-            self.vx = vecs.create_client(self.settings.database_url)
+                    # Initialize vector client
+                    self.vx = vecs.create_client(self.settings.database_url)
 
-            # Get or create vector collection for medical documents
-            self.vector_collection = self.vx.get_or_create_collection(
-                name="medical_documents",
-                dimension=self.settings.vector_dimension
-            )
+                    # Get or create vector collection for medical documents
+                    self.vector_collection = self.vx.get_or_create_collection(
+                        name="medical_documents",
+                        dimension=self.settings.vector_dimension
+                    )
 
-            # Ensure vector index exists
-            await self._ensure_vector_index()
+                    # Ensure vector index exists
+                    await self._ensure_vector_index()
+                    
+                    logger.info("✅ Vector database initialized")
+                except Exception as e:
+                    logger.warning("⚠️ Vector database unavailable (using Supabase REST only)", error=str(e))
+                    # Continue without vector operations - can still use Supabase REST API
+                    self.engine = None
+                    self.vx = None
+                    self.vector_collection = None
+            else:
+                logger.info("ℹ️ DATABASE_URL not provided, using Supabase REST API only")
 
             logger.info("✅ Supabase client initialized successfully")
 

@@ -54,7 +54,7 @@ class AgentCreationResponse(BaseModel):
 
     # Configuration
     capabilities: List[Dict[str, Any]] = Field(..., description="Agent capabilities")
-    llm_config: Optional[Dict[str, Any]] = Field(None, description="Model configuration")
+    model_config_data: Optional[Dict[str, Any]] = Field(None, description="Model configuration")
 
     # Metadata
     created_at: str = Field(..., description="Creation timestamp")

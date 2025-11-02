@@ -57,6 +57,7 @@ import {
 } from '@/components/ui/shadcn-io/ai/conversation';
 import { EnhancedMessageDisplay } from '@/features/ask-expert/components/EnhancedMessageDisplay';
 import { InlineArtifactGenerator } from '@/features/ask-expert/components/InlineArtifactGenerator';
+import { AdvancedStreamingWindow } from '@/features/ask-expert/components/AdvancedStreamingWindow';
 import { AgentAvatar, Button } from '@vital/ui';
 import { Suggestions, Suggestion } from '@/components/ai/suggestion';
 import { useAgentWithStats } from '@/features/ask-expert/hooks/useAgentWithStats';
@@ -168,6 +169,43 @@ interface Conversation {
 }
 
 // ============================================================================
+// GOLD STANDARD: Additional Interfaces from page-complete.tsx
+// ============================================================================
+
+interface WorkflowStep {
+  id: string;
+  name: string;
+  description?: string;
+  status: 'pending' | 'running' | 'completed' | 'error';
+  progress?: number;
+  startTime?: Date;
+  endTime?: Date;
+}
+
+interface ReasoningStep {
+  id: string;
+  type: 'thought' | 'action' | 'observation';
+  content: string;
+  confidence?: number;
+  timestamp: Date;
+}
+
+interface StreamingMetrics {
+  tokensGenerated: number;
+  tokensPerSecond: number;
+  elapsedTime: number;
+  estimatedTimeRemaining?: number;
+}
+
+interface SessionStats {
+  totalConversations: number;
+  totalMessages: number;
+  avgSessionDuration: string;
+  mostUsedMode: string;
+  mostUsedAgent: string;
+}
+
+// ============================================================================
 // MAIN COMPONENT
 // ============================================================================
 
@@ -220,6 +258,25 @@ function AskExpertPageContent() {
     reasoning: string[];
   } | null>(null);
 
+  // ============================================================================
+  // GOLD STANDARD: Advanced Streaming State
+  // ============================================================================
+  const [workflowSteps, setWorkflowSteps] = useState<WorkflowStep[]>([]);
+  const [reasoningSteps, setReasoningSteps] = useState<ReasoningStep[]>([]);
+  const [streamingMetrics, setStreamingMetrics] = useState<StreamingMetrics>({
+    tokensGenerated: 0,
+    tokensPerSecond: 0,
+    elapsedTime: 0,
+  });
+  const [isPaused, setIsPaused] = useState(false);
+  const [sessionStats, setSessionStats] = useState<SessionStats>({
+    totalConversations: 0,
+    totalMessages: 0,
+    avgSessionDuration: '0m',
+    mostUsedMode: 'Mode 1',
+    mostUsedAgent: '',
+  });
+
 
   const formatReasoningTimestamp = useCallback((value: number | null) => {
     if (!value) {
@@ -230,6 +287,19 @@ function AskExpertPageContent() {
     } catch {
       return '';
     }
+  }, []);
+
+  // ============================================================================
+  // GOLD STANDARD: Pause/Resume Handlers
+  // ============================================================================
+  const handlePauseStreaming = useCallback(() => {
+    setIsPaused(true);
+    // Note: Full pause support requires backend implementation
+    // For now, updates UI state only
+  }, []);
+
+  const handleResumeStreaming = useCallback(() => {
+    setIsPaused(false);
   }, []);
 
   const handleBranchChange = useCallback((messageId: string, branchIndex: number) => {
@@ -690,6 +760,18 @@ function AskExpertPageContent() {
     const pendingPrompt = promptText ?? inputValue;
     if (!pendingPrompt.trim() || isLoading) return;
 
+    // ============================================================================
+    // GOLD STANDARD: Reset streaming state for new message
+    // ============================================================================
+    setWorkflowSteps([]);
+    setReasoningSteps([]);
+    setStreamingMetrics({
+      tokensGenerated: 0,
+      tokensPerSecond: 0,
+      elapsedTime: 0,
+    });
+    setIsPaused(false);
+
     const messageContent = pendingPrompt.trim();
     const effectiveAttachments = attachmentsOverride ?? attachments;
     const conversationContext = conversationOverride ?? messages;
@@ -836,6 +918,12 @@ function AskExpertPageContent() {
       let finalMeta: any = null;
       let branches: Message['branches'];
       let currentBranch = 0;
+
+      // ============================================================================
+      // GOLD STANDARD: Streaming metrics tracking
+      // ============================================================================
+      const streamStartTime = Date.now();
+      let totalTokens = 0;
 
       const updateStreamingMeta = () => {
         setStreamingMeta({
@@ -1050,6 +1138,36 @@ function AskExpertPageContent() {
                 } else {
                   fullResponse += data.content;
                   setStreamingMessage(fullResponse);
+
+                  // GOLD STANDARD: Update streaming metrics
+                  totalTokens += (data.content?.length || 0);
+                  const elapsedSeconds = (Date.now() - streamStartTime) / 1000;
+                  setStreamingMetrics({
+                    tokensGenerated: totalTokens,
+                    tokensPerSecond: elapsedSeconds > 0 ? totalTokens / elapsedSeconds : 0,
+                    elapsedTime: elapsedSeconds,
+                  });
+
+                  // GOLD STANDARD: Add/update response generation workflow step
+                  if (fullResponse.length > 0) {
+                    setWorkflowSteps(prev => {
+                      const hasResponseStep = prev.some(s => s.id === 'response-generation');
+                      if (!hasResponseStep) {
+                        return [
+                          ...prev.map(s => s.id === 'rag-retrieval' && s.status === 'running' ? {...s, status: 'completed', endTime: new Date()} : s),
+                          {
+                            id: 'response-generation',
+                            name: 'Response Generation',
+                            description: `${totalTokens} tokens generated`,
+                            status: 'running',
+                            startTime: new Date()
+                          }
+                        ];
+                      }
+                      return prev.map(s => s.id === 'response-generation' ? {...s, description: `${totalTokens} tokens generated`} : s);
+                    });
+                  }
+
                   if (!streamingReasoning || streamingReasoning === 'Thinking...' || streamingReasoning.startsWith('❌')) {
                     setStreamingReasoning('Processing your request...');
                     setIsStreamingReasoning(true);
@@ -1063,6 +1181,20 @@ function AskExpertPageContent() {
                   display_name: data.agent.display_name || data.agent.name
                 };
                 confidence = data.confidence;
+
+                // GOLD STANDARD: Add workflow step for agent selection
+                setWorkflowSteps(prev => [
+                  ...prev.filter(s => s.id !== 'agent-selection'),
+                  {
+                    id: 'agent-selection',
+                    name: 'Agent Selection',
+                    description: `Selected: ${selectedAgent.display_name}`,
+                    status: 'completed',
+                    startTime: new Date(),
+                    endTime: new Date()
+                  }
+                ]);
+
                 // Add agent selection to reasoning
                 setStreamingReasoning(prev => {
                   const agentInfo = `🤖 Selected Agent: ${data.agent.display_name || data.agent.name}`;
@@ -1107,6 +1239,19 @@ function AskExpertPageContent() {
               } else if (data.type === 'thought') {
                 // Mode 3 & Mode 4: ReAct thought
                 autonomousMetadata.currentThought = data.content;
+
+                // GOLD STANDARD: Add reasoning step
+                setReasoningSteps(prev => [
+                  ...prev,
+                  {
+                    id: `thought-${Date.now()}`,
+                    type: 'thought',
+                    content: data.content,
+                    confidence: data.metadata?.confidence,
+                    timestamp: new Date()
+                  }
+                ]);
+
                 // Accumulate reasoning for display
                 setStreamingReasoning(prev => prev + (prev ? '\n\n' : '') + `🧠 Thought: ${data.content}`);
                 setIsStreamingReasoning(true);
@@ -1130,6 +1275,18 @@ function AskExpertPageContent() {
               } else if (data.type === 'action') {
                 // Mode 3 & Mode 4: ReAct action (fallback for old format)
                 autonomousMetadata.currentAction = data.content;
+
+                // GOLD STANDARD: Add reasoning step
+                setReasoningSteps(prev => [
+                  ...prev,
+                  {
+                    id: `action-${Date.now()}`,
+                    type: 'action',
+                    content: data.content,
+                    timestamp: new Date()
+                  }
+                ]);
+
                 // Accumulate reasoning for display
                 setStreamingReasoning(prev => prev + (prev ? '\n\n' : '') + `⚡ Action: ${data.content}`);
                 setIsStreamingReasoning(true);
@@ -1141,6 +1298,18 @@ function AskExpertPageContent() {
               } else if (data.type === 'observation') {
                 // Mode 3 & Mode 4: ReAct observation
                 autonomousMetadata.currentObservation = data.content;
+
+                // GOLD STANDARD: Add reasoning step
+                setReasoningSteps(prev => [
+                  ...prev,
+                  {
+                    id: `observation-${Date.now()}`,
+                    type: 'observation',
+                    content: data.content,
+                    timestamp: new Date()
+                  }
+                ]);
+
                 // Accumulate reasoning for display
                 setStreamingReasoning(prev => prev + (prev ? '\n\n' : '') + `👁️ Observation: ${data.content}`);
                 setIsStreamingReasoning(true);
@@ -1350,7 +1519,27 @@ function AskExpertPageContent() {
         });
       }
 
-      setMessages(prev => [...prev, assistantMessage]);
+      // Debug: Log message creation for Mode 3
+      console.group('📝 [Mode 3 Debug] Creating Assistant Message');
+      console.log('Mode:', mode);
+      console.log('Content length:', fullResponse.length);
+      console.log('Content preview:', fullResponse.substring(0, 100));
+      console.log('Selected agent:', selectedAgent);
+      console.log('Sources count:', sources.length);
+      console.log('Reasoning steps:', reasoning.length);
+      console.log('Autonomous metadata keys:', Object.keys(autonomousMetadata));
+      console.log('Confidence:', confidence);
+      console.log('Message ID:', assistantMessage.id);
+      console.log('Full message object:', assistantMessage);
+      console.groupEnd();
+
+      setMessages(prev => {
+        const updated = [...prev, assistantMessage];
+        console.log('📊 [Mode 3 Debug] Messages array updated. Total messages:', updated.length);
+        console.log('📊 [Mode 3 Debug] Last message role:', updated[updated.length - 1].role);
+        console.log('📊 [Mode 3 Debug] Last message agent:', updated[updated.length - 1].selectedAgent);
+        return updated;
+      });
       const branchReasoning = activeBranch?.reasoning;
       const normalizedRecentReasoning = branchReasoning
         ? Array.isArray(branchReasoning)
@@ -1821,6 +2010,21 @@ function AskExpertPageContent() {
         {/* Messages Area */}
         <Conversation className="flex-1">
           <ConversationContent className="max-w-3xl mx-auto px-4 py-6">
+            {/* GOLD STANDARD: Advanced Streaming Window */}
+            {isLoading && (workflowSteps.length > 0 || reasoningSteps.length > 0) && (
+              <div className="mb-6">
+                <AdvancedStreamingWindow
+                  workflowSteps={workflowSteps}
+                  reasoningSteps={reasoningSteps}
+                  metrics={streamingMetrics}
+                  isStreaming={isLoading}
+                  canPause={true}
+                  onPause={handlePauseStreaming}
+                  onResume={handleResumeStreaming}
+                />
+              </div>
+            )}
+
             {/* Selected Agents Display (for multiple selections) */}
             {selectedAgents.length > 1 && (
               <div className="mb-6">

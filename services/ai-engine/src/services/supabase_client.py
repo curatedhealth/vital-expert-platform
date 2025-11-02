@@ -410,15 +410,16 @@ class SupabaseClient:
             return {}
 
     async def get_all_agents(self) -> List[Dict[str, Any]]:
-        """Get all active agents from database"""
+        """Get all agents from database (active and inactive)"""
         try:
-            result = self.client.table("agents").select("*").eq("status", "active").execute()
+            # Get all agents - don't filter by is_active since many user copies are inactive
+            result = self.client.table("agents").select("*").execute()
 
             if result.data:
-                logger.info("📚 Retrieved all active agents", count=len(result.data))
+                logger.info("📚 Retrieved all agents", count=len(result.data))
                 return result.data
             else:
-                logger.warning("⚠️ No active agents found")
+                logger.warning("⚠️ No agents found")
                 return []
 
         except Exception as e:

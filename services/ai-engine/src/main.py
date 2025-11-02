@@ -802,11 +802,17 @@ async def execute_mode2_automatic(
         selected_agent = agents_result[0] if isinstance(agents_result, list) else list(agents_result.values())[0]
         agent_id = selected_agent.get("id") if isinstance(selected_agent, dict) else selected_agent
         
-        agent_type = (
-            selected_agent.get("type") if isinstance(selected_agent, dict) else None
-            or selected_agent.get("agent_type") if isinstance(selected_agent, dict) else None
-            or "regulatory_expert"
-        )
+        # Get agent_type from category, metadata, or default
+        agent_type = None
+        if isinstance(selected_agent, dict):
+            agent_type = (
+                selected_agent.get("category") or
+                selected_agent.get("type") or
+                selected_agent.get("metadata", {}).get("department") or
+                "regulatory_expert"
+            )
+        else:
+            agent_type = "regulatory_expert"
 
         # Step 2: Execute query with selected agent (reuse Mode 1 logic)
         query_request = AgentQueryRequest(
@@ -902,11 +908,17 @@ async def execute_mode3_autonomous_automatic(
         selected_agent = agents_result[0] if isinstance(agents_result, list) else list(agents_result.values())[0]
         agent_id = selected_agent.get("id") if isinstance(selected_agent, dict) else selected_agent
         
-        agent_type = (
-            selected_agent.get("type") if isinstance(selected_agent, dict) else None
-            or selected_agent.get("agent_type") if isinstance(selected_agent, dict) else None
-            or "regulatory_expert"
-        )
+        # Get agent_type from category, metadata, or default
+        agent_type = None
+        if isinstance(selected_agent, dict):
+            agent_type = (
+                selected_agent.get("category") or
+                selected_agent.get("type") or
+                selected_agent.get("metadata", {}).get("department") or
+                "regulatory_expert"
+            )
+        else:
+            agent_type = "regulatory_expert"
 
         # Step 2: Execute query with autonomous reasoning capabilities
         # For now, use enhanced query processing (full ReAct/CoT can be added later)

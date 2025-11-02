@@ -88,7 +88,7 @@ export default function HomePage() {
             </div>
 
             {/* Quick Actions */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <Card 
                 className="cursor-pointer hover:shadow-md transition-shadow"
                 onClick={() => router.push('/panels/new')}
@@ -102,6 +102,23 @@ export default function HomePage() {
                 <CardContent>
                   <p className="text-sm text-muted-foreground">
                     Start a new multi-expert AI discussion
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card 
+                className="cursor-pointer hover:shadow-md transition-shadow"
+                onClick={() => router.push('/workflows')}
+              >
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <CheckCircle2 className="w-5 h-5 text-green-600" />
+                    Workflows
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-muted-foreground">
+                    Execute digital health workflows
                   </p>
                 </CardContent>
               </Card>
@@ -126,7 +143,7 @@ export default function HomePage() {
               <Card className="cursor-pointer hover:shadow-md transition-shadow">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <Clock className="w-5 h-5 text-green-600" />
+                    <Clock className="w-5 h-5 text-orange-600" />
                     Recent Activity
                   </CardTitle>
                 </CardHeader>

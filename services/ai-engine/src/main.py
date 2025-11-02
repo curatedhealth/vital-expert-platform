@@ -44,6 +44,9 @@ from langgraph_workflows import (
     get_checkpoint_manager,
     get_observability
 )
+# Ask Panel imports
+from api.dependencies import set_supabase_client
+from api.routes import panels as panel_routes
 from models.requests import (
     AgentQueryRequest,
     RAGSearchRequest,
@@ -385,6 +388,10 @@ async def initialize_services_background():
         # Add timeout to prevent hanging
         await asyncio.wait_for(supabase_client.initialize(), timeout=10.0)
         logger.info("✅ Supabase client initialized")
+        
+        # Set Supabase client for Ask Panel dependencies
+        set_supabase_client(supabase_client)
+        logger.info("✅ Ask Panel dependencies initialized")
     except asyncio.TimeoutError:
         logger.error("❌ Supabase initialization timed out")
         supabase_client = None
@@ -563,8 +570,12 @@ app.add_middleware(
     allow_origins=cors_origins,
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allow_headers=["Content-Type", "Authorization", "x-tenant-id"],
+    allow_headers=["Content-Type", "Authorization", "x-tenant-id", "x-user-id"],
 )
+
+# Include Ask Panel routes
+app.include_router(panel_routes.router, prefix="", tags=["ask-panel"])
+logger.info("✅ Ask Panel routes registered")
 
 # Dependency to get services
 async def get_agent_orchestrator() -> AgentOrchestrator:

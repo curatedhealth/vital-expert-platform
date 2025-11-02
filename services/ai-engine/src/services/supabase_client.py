@@ -255,16 +255,34 @@ class SupabaseClient:
             return False
 
     async def get_agent_by_id(self, agent_id: str) -> Optional[Dict[str, Any]]:
-        """Get agent configuration by ID"""
+        """
+        Get agent configuration by ID or name.
+        
+        Args:
+            agent_id: Either a UUID (id field) or agent name (name field)
+            
+        Returns:
+            Agent configuration dictionary or None if not found
+        """
         try:
-            result = self.client.table("agents").select("*").eq("id", agent_id).execute()
+            # First, try to determine if this looks like a UUID
+            import re
+            uuid_pattern = re.compile(r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$', re.IGNORECASE)
+            is_uuid = bool(uuid_pattern.match(agent_id))
+            
+            if is_uuid:
+                # Query by id field (UUID)
+                result = self.client.table("agents").select("*").eq("id", agent_id).execute()
+            else:
+                # Query by name field (string)
+                result = self.client.table("agents").select("*").eq("name", agent_id).execute()
 
             if result.data:
                 agent = result.data[0]
-                logger.info("🤖 Agent retrieved", agent_id=agent_id, agent_name=agent.get("name"))
+                logger.info("🤖 Agent retrieved", agent_id=agent_id, agent_name=agent.get("name"), lookup_method="id" if is_uuid else "name")
                 return agent
             else:
-                logger.warning("⚠️ Agent not found", agent_id=agent_id)
+                logger.warning("⚠️ Agent not found", agent_id=agent_id, lookup_method="id" if is_uuid else "name")
                 return None
 
         except Exception as e:

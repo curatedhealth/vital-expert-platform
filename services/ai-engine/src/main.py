@@ -494,6 +494,11 @@ async def lifespan(app: FastAPI):
     logger.info("✅ FastAPI app ready - services initializing in background")
     logger.info("✅ Health endpoint available at /health")
     logger.info("=" * 80)
+    
+    # Set app state for middleware access (must be done before yield)
+    app.state.supabase_client = supabase_client
+    app.state.limiter = limiter
+    logger.info("✅ App state initialized")
 
     yield
     
@@ -535,13 +540,6 @@ app = FastAPI(
     version="2.0.0",
     lifespan=lifespan
 )
-
-# Store supabase client in app state for middleware access
-@app.on_event("startup")
-async def set_app_state():
-    """Set app state with initialized clients"""
-    app.state.supabase_client = supabase_client
-    app.state.limiter = limiter
 
 # Add exception handler for rate limit errors
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)

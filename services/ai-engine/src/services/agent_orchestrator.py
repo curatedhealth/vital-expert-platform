@@ -299,16 +299,27 @@ Your responses must maintain the highest standards of medical accuracy and profe
 
         return base_prompt
 
-    def _should_apply_pharma_protocol(self, agent: Dict[str, Any], request: AgentQueryRequest) -> bool:
+    def _should_apply_pharma_protocol(self, agent: Dict[str, Any], request: Optional[AgentQueryRequest]) -> bool:
         """Determine if PHARMA protocol should be applied"""
+        if request is None:
+            # When no request context, check agent type only
+            return agent.get("type") in ["regulatory", "safety"]
+        
         return (
             request.pharma_protocol_required or
             agent.get("type") in ["regulatory", "safety"] or
             request.medical_specialty in ["regulatory_affairs", "pharmacovigilance"]
         )
 
-    def _should_apply_verify_protocol(self, agent: Dict[str, Any], request: AgentQueryRequest) -> bool:
+    def _should_apply_verify_protocol(self, agent: Dict[str, Any], request: Optional[AgentQueryRequest]) -> bool:
         """Determine if VERIFY protocol should be applied"""
+        if request is None:
+            # When no request context, check agent type or global setting
+            return (
+                agent.get("type") in ["regulatory", "clinical", "literature"] or
+                self.settings.verify_protocol_enabled
+            )
+        
         return (
             request.verify_protocol_required or
             agent.get("type") in ["regulatory", "clinical", "literature"] or

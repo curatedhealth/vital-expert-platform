@@ -133,9 +133,10 @@ JOIN (
 JOIN all_sources src ON src.code = tm.source_code
 JOIN dh_task t ON t.unique_id = tm.task_unique_id
               AND t.tenant_id = tenant.id
-ON CONFLICT (task_id, rag_source_id) DO UPDATE
-  SET sections = EXCLUDED.sections,
-      query_context = EXCLUDED.query_context,
-      search_config = EXCLUDED.search_config,
-      citation_required = EXCLUDED.citation_required,
-      updated_at = now();
+WHERE NOT EXISTS (
+  SELECT 1
+  FROM dh_task_rag existing
+  WHERE existing.tenant_id = tenant.id
+    AND existing.task_id = t.id
+    AND existing.rag_source_id = src.id
+);

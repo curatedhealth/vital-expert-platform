@@ -1,445 +1,236 @@
-# Railway Deployment Checklist - VITAL Platform
+# ✅ RAILWAY DEPLOYMENT - QUICK START CHECKLIST
 
-**Quick Start Guide for Manual Deployment**
-
----
-
-## Prerequisites ✅
-
-- [x] Railway CLI installed (v4.10.0)
-- [x] Dockerfiles created (ai-engine, api-gateway)
-- [x] Source code ready in `services/` directory
-- [ ] Railway account logged in
-- [ ] Environment variables prepared
+**Use this checklist to set up DEV + STAGING environments in Railway**
 
 ---
 
-## Part 1: Deploy AI Engine (Python FastAPI)
+## 🎯 **PHASE 1: DEV ENVIRONMENT** (10 minutes)
 
-### Step 1: Login to Railway
+### **1.1 Rename Service**
+- [ ] Go to Railway Dashboard
+- [ ] Click on existing service
+- [ ] Settings → Service Name → Rename to `ai-engine-dev`
+- [ ] Save
+
+### **1.2 Configure Branch**
+- [ ] Settings → Source
+- [ ] Branch: `restructure/world-class-architecture`
+- [ ] Root Directory: `services/ai-engine`
+- [ ] Auto-Deploy: ✅ ON
+- [ ] Save
+
+### **1.3 Set Environment Variables**
+Copy these into Railway → Variables:
 
 ```bash
-cd "/Users/hichamnaim/Downloads/Cursor/VITAL path/services/ai-engine"
-railway login
-```
-
-This will open your browser. Click "Authorize" to log in.
-
----
-
-### Step 2: Initialize New Project
-
-```bash
-railway init
-```
-
-**When prompted:**
-- Project name: `vital-ai-engine`
-- Select: "Create new project"
-
----
-
-### Step 3: Deploy to Railway
-
-```bash
-railway up
-```
-
-This will:
-1. Build the Docker image (using Dockerfile)
-2. Push to Railway
-3. Deploy to production
-
-**Expected output:**
-```
-✓ Building...
-✓ Pushing...
-✓ Deploying...
-✓ Deployment successful
-```
-
----
-
-### Step 4: Set Environment Variables
-
-**Option A: Via Dashboard (Recommended)**
-
-1. Go to https://railway.app/dashboard
-2. Select `vital-ai-engine` project
-3. Click on the service
-4. Go to "Variables" tab
-5. Add the following variables:
-
-```env
-# OpenAI
+ENVIRONMENT=development
+LOG_LEVEL=debug
+ENABLE_CORS=true
+CORS_ORIGINS=*
+SUPABASE_URL=<your-dev-supabase-url>
+SUPABASE_KEY=<your-dev-service-role-key>
 OPENAI_API_KEY=<your-openai-key>
+LANGCHAIN_API_KEY=<your-langsmith-key>
+LANGCHAIN_PROJECT=vital-dev
+LANGCHAIN_TRACING_V2=true
+```
 
-# Supabase
-SUPABASE_URL=https://xazinxsiglqokwfmogyk.supabase.co
-SUPABASE_SERVICE_ROLE_KEY=<your-supabase-service-role-key>
+### **1.4 Deploy & Test**
+- [ ] Wait for auto-deploy (~5 min)
+- [ ] Copy Railway URL from dashboard
+- [ ] Test: `curl https://YOUR-DEV-URL.railway.app/health`
+- [ ] Verify: `{"status": "healthy", "environment": "development"}`
 
-# App Config
-ENVIRONMENT=production
+✅ **DEV COMPLETE** when health check passes
+
+---
+
+## 🎯 **PHASE 2: STAGING ENVIRONMENT** (10 minutes)
+
+### **2.1 Create New Service**
+- [ ] Railway Dashboard → Click project name
+- [ ] Click "+ New" button
+- [ ] Select "GitHub Repo"
+- [ ] Choose: `curatedhealth/vital-expert-platform`
+- [ ] Name: `ai-engine-staging`
+- [ ] Click "Add Service"
+
+### **2.2 Configure Branch**
+- [ ] Settings → Source
+- [ ] Branch: `main`
+- [ ] Root Directory: `services/ai-engine`
+- [ ] Auto-Deploy: ✅ ON
+- [ ] Save
+
+### **2.3 Set Environment Variables**
+Copy these into Railway → Variables:
+
+```bash
+ENVIRONMENT=staging
 LOG_LEVEL=info
-MAX_TOKENS=4096
-TEMPERATURE=0.7
+ENABLE_CORS=true
+CORS_ORIGINS=https://staging.vitalexpert.ai,https://dev.vitalexpert.ai
+SUPABASE_URL=<your-staging-supabase-url>
+SUPABASE_KEY=<your-staging-service-role-key>
+OPENAI_API_KEY=<your-openai-key>
+LANGCHAIN_API_KEY=<your-langsmith-key>
+LANGCHAIN_PROJECT=vital-staging
+LANGCHAIN_TRACING_V2=true
+RATE_LIMIT_ENABLED=true
 ```
 
-**Option B: Via CLI**
+### **2.4 Deploy & Test**
+- [ ] Merge dev branch to main (or wait until stable)
+- [ ] Wait for auto-deploy (~5 min)
+- [ ] Copy Railway URL from dashboard
+- [ ] Test: `curl https://YOUR-STAGING-URL.railway.app/health`
+- [ ] Verify: `{"status": "healthy", "environment": "staging"}`
+
+✅ **STAGING COMPLETE** when health check passes
+
+---
+
+## 🎯 **PHASE 3: GIT WORKFLOW** (5 minutes)
+
+### **3.1 Update Branch Strategy**
+
+**Daily Development:**
+```bash
+# Work on dev branch
+git checkout restructure/world-class-architecture
+git pull origin restructure/world-class-architecture
+
+# Make changes
+git add .
+git commit -m "feat: your feature"
+
+# Push → triggers DEV deploy
+git push origin restructure/world-class-architecture
+
+# Test in DEV, if stable → merge to main
+```
+
+**When Stable:**
+```bash
+# Merge to staging
+git checkout main
+git pull origin main
+git merge restructure/world-class-architecture
+git push origin main  # Triggers STAGING deploy
+
+# Test in STAGING
+```
+
+- [ ] Document workflow for team
+- [ ] Test one push to dev branch
+- [ ] Verify DEV auto-deploys
+- [ ] Test one merge to main
+- [ ] Verify STAGING auto-deploys
+
+✅ **WORKFLOW COMPLETE** when auto-deploys work
+
+---
+
+## 🧪 **VERIFICATION TESTS**
+
+### **Run After Setup:**
 
 ```bash
-railway variables set OPENAI_API_KEY=<your-key>
-railway variables set SUPABASE_URL=https://xazinxsiglqokwfmogyk.supabase.co
-railway variables set SUPABASE_SERVICE_ROLE_KEY=<your-key>
-railway variables set ENVIRONMENT=production
-railway variables set LOG_LEVEL=info
-railway variables set MAX_TOKENS=4096
-railway variables set TEMPERATURE=0.7
+# Set your URLs (from Railway dashboard)
+DEV_URL="https://your-dev.railway.app"
+STAGING_URL="https://your-staging.railway.app"
+
+# Test DEV
+echo "Testing DEV..."
+curl $DEV_URL/health
+
+# Test STAGING
+echo "Testing STAGING..."
+curl $STAGING_URL/health
+
+# Both should return:
+# {"status": "healthy", "environment": "development/staging"}
 ```
+
+- [ ] DEV health check passes
+- [ ] STAGING health check passes
+- [ ] DEV shows `"environment": "development"`
+- [ ] STAGING shows `"environment": "staging"`
+
+✅ **ALL TESTS PASS** = Ready to use!
 
 ---
 
-### Step 5: Generate Public Domain
+## 📊 **FINAL CHECKLIST**
 
-```bash
-railway domain
-```
-
-**Expected output:**
-```
-https://ai-engine-production-xxxxx.up.railway.app
-```
-
-**Save this URL - you'll need it for api-gateway!**
-
----
-
-### Step 6: Test AI Engine
-
-```bash
-# Test health endpoint
-curl https://your-ai-engine-url.up.railway.app/health
-
-# Expected response:
-{
-  "status": "healthy",
-  "service": "ai-engine",
-  "version": "1.0.0"
-}
-```
+- [ ] DEV service configured and deployed
+- [ ] STAGING service configured and deployed
+- [ ] Both health checks passing
+- [ ] Git workflow documented
+- [ ] Team knows which env to use:
+  - **DEV**: Active development, crashes OK
+  - **STAGING**: Pre-production testing, should be stable
+- [ ] URLs saved somewhere accessible
+- [ ] Environment variables secured (not in git)
 
 ---
 
-## Part 2: Deploy API Gateway (Node.js)
+## 🎯 **WHAT'S NEXT?**
 
-### Step 1: Navigate to API Gateway
+**Today:**
+- [ ] Complete checklist above
+- [ ] Test one simple API call in DEV
+- [ ] Verify logs in Railway dashboard
 
-```bash
-cd "/Users/hichamnaim/Downloads/Cursor/VITAL path/services/api-gateway"
-```
+**This Week:**
+- [ ] Test all 4 modes in DEV
+- [ ] Fix bugs found in testing
+- [ ] Merge stable code to STAGING
+- [ ] Test thoroughly in STAGING
 
----
-
-### Step 2: Initialize New Project
-
-```bash
-railway init
-```
-
-**When prompted:**
-- Project name: `vital-api-gateway`
-- Select: "Create new project"
-
----
-
-### Step 3: Deploy
-
-```bash
-railway up
-```
+**When Ready for Users:**
+- [ ] Create PROD environment
+- [ ] Set up custom domain
+- [ ] Configure monitoring
+- [ ] Announce launch
 
 ---
 
-### Step 4: Set Environment Variables
+## 🚨 **IF SOMETHING GOES WRONG**
 
-**Using Railway Dashboard:**
+**Build fails:**
+1. Check Root Directory = `services/ai-engine`
+2. Check Dockerfile exists
+3. Review build logs
+4. See `RAILWAY_CRASH_DEBUG.md`
 
-1. Go to https://railway.app/dashboard
-2. Select `vital-api-gateway` project
-3. Go to "Variables" tab
-4. Add:
+**Health check fails:**
+1. Check if app started ("Uvicorn running" in logs)
+2. Verify environment variables are set
+3. Check for Python errors in logs
+4. See `RAILWAY_DEPLOYMENT_VERIFICATION.md`
 
-```env
-# AI Engine URL (from Part 1, Step 5)
-AI_ENGINE_URL=https://your-ai-engine-url.up.railway.app
-
-# Supabase
-SUPABASE_URL=https://xazinxsiglqokwfmogyk.supabase.co
-SUPABASE_ANON_KEY=<your-anon-key>
-SUPABASE_SERVICE_ROLE_KEY=<your-service-role-key>
-
-# Node Config
-NODE_ENV=production
-PORT=3001
-```
+**Can't access service:**
+1. Check deployment status (should be green "Deployed")
+2. Copy URL from Railway dashboard (not guessed)
+3. Wait 30 seconds after deploy completes
+4. Check Railway logs for errors
 
 ---
 
-### Step 5: Generate Public Domain
+## 📚 **FULL DOCUMENTATION**
 
-```bash
-railway domain
-```
-
-**Save this URL - you'll need it for frontend!**
-
-Example: `https://api-gateway-production-xxxxx.up.railway.app`
-
----
-
-### Step 6: Test API Gateway
-
-```bash
-# Test health endpoint
-curl https://your-api-gateway-url.up.railway.app/health
-
-# Expected response:
-{
-  "status": "healthy",
-  "service": "api-gateway",
-  "connections": {
-    "aiEngine": "connected",
-    "redis": "not-configured"
-  }
-}
-```
+See `RAILWAY_DEV_STAGING_SETUP.md` for:
+- Detailed explanations
+- Troubleshooting guide
+- Security best practices
+- Cost estimates
+- Testing strategies
 
 ---
 
-## Part 3: Add Redis Cache (Optional but Recommended)
-
-### Step 1: Add Redis via Dashboard
-
-1. Go to Railway Dashboard
-2. Click "New Service"
-3. Select "Database"
-4. Choose "Redis"
-5. Name: `vital-redis`
-
----
-
-### Step 2: Get Redis URL
-
-1. Click on the Redis service
-2. Go to "Variables" tab
-3. Copy `REDIS_URL` value
-
-Example: `redis://default:password@redis.railway.internal:6379`
-
----
-
-### Step 3: Add Redis URL to Services
-
-**For AI Engine:**
-```bash
-cd services/ai-engine
-railway variables set REDIS_URL="<redis-url-from-step-2>"
-```
-
-**For API Gateway:**
-```bash
-cd services/api-gateway
-railway variables set REDIS_URL="<redis-url-from-step-2>"
-```
-
----
-
-## Part 4: Verification
-
-### Test Complete Flow
-
-```bash
-# 1. Test AI Engine directly
-curl https://your-ai-engine-url.up.railway.app/health
-
-# 2. Test API Gateway health
-curl https://your-api-gateway-url.up.railway.app/health
-
-# 3. Test chat completion through gateway
-curl -X POST https://your-api-gateway-url.up.railway.app/v1/chat/completions \
-  -H "Content-Type: application/json" \
-  -H "x-tenant-id: 00000000-0000-0000-0000-000000000001" \
-  -d '{
-    "messages": [
-      {"role": "user", "content": "Hello, this is a test message"}
-    ],
-    "model": "gpt-4-turbo-preview"
-  }'
-```
-
-**Expected:**
-```json
-{
-  "choices": [{
-    "message": {
-      "role": "assistant",
-      "content": "Hello! ..."
-    }
-  }]
-}
-```
-
----
-
-## Part 5: Monitor Logs
-
-### View Logs
-
-```bash
-# AI Engine logs
-cd services/ai-engine
-railway logs
-
-# API Gateway logs
-cd services/api-gateway
-railway logs
-```
-
-### Check Metrics
-
-Go to Railway Dashboard:
-- CPU usage
-- Memory usage
-- Network I/O
-- Request count
-
----
-
-## Troubleshooting
-
-### Issue: Deployment Failed
-
-**Check logs:**
-```bash
-railway logs
-```
-
-**Common fixes:**
-- Missing environment variables
-- Docker build error (check Dockerfile syntax)
-- Port already in use (ensure using PORT from env)
-
----
-
-### Issue: Service Not Responding
-
-**Check health endpoint:**
-```bash
-curl https://your-service-url/health
-```
-
-**If 503 error:**
-- Service might be starting (wait 1-2 minutes)
-- Check Railway dashboard for deployment status
-- View logs for errors
-
----
-
-### Issue: Can't Connect to AI Engine
-
-**Check API Gateway logs:**
-```bash
-cd services/api-gateway
-railway logs
-```
-
-**Look for:**
-- ECONNREFUSED errors
-- Wrong AI_ENGINE_URL variable
-- Network timeout
-
-**Fix:**
-```bash
-# Update AI_ENGINE_URL
-railway variables set AI_ENGINE_URL=<correct-url>
-```
-
----
-
-## Quick Commands Reference
-
-```bash
-# Login
-railway login
-
-# Initialize project
-railway init
-
-# Deploy
-railway up
-
-# View logs
-railway logs
-
-# Set variable
-railway variables set KEY=value
-
-# List variables
-railway variables
-
-# Get service URL
-railway domain
-
-# Rollback
-railway rollback
-```
-
----
-
-## URLs to Save
-
-After deployment, save these URLs:
-
-```
-AI Engine: https://______________________.up.railway.app
-API Gateway: https://______________________.up.railway.app
-Redis: redis://______________________
-```
-
-**Next Step:** Use API Gateway URL in Vercel frontend deployment
-
----
-
-## Estimated Time
-
-- AI Engine deployment: 10-15 minutes
-- API Gateway deployment: 10-15 minutes
-- Redis setup: 5 minutes
-- Testing: 10 minutes
-- **Total: 35-45 minutes**
-
----
-
-## Cost Breakdown
-
-| Service | Plan | Cost/Month |
-|---------|------|------------|
-| AI Engine | 8GB RAM | $20 |
-| API Gateway | 2GB RAM | $5 |
-| Redis | 256MB | $5 |
-| **Total** | | **$30** |
-
----
-
-## Support
-
-If you encounter issues:
-1. Check Railway docs: https://docs.railway.app
-2. View [DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md) for detailed instructions
-3. Check Railway Discord community
-
----
-
-**Created:** October 26, 2025
-**Status:** Ready to Execute
-**Next:** Follow steps above, then deploy frontend to Vercel
+**Estimated Total Time:** 20-30 minutes  
+**Current Status:** Ready to begin  
+**Next Action:** Start Phase 1 (DEV Environment)
+
+🚀 **Let's go!**

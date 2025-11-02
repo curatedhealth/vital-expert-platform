@@ -215,12 +215,18 @@ BEGIN
     ALTER TABLE knowledge_domains ADD COLUMN updated_at TIMESTAMPTZ NOT NULL DEFAULT now();
   END IF;
 
-  -- code (might be required by existing schema)
-  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'knowledge_domains' AND column_name = 'code') THEN
-    -- Add code column as TEXT, using domain_id as default if it exists
-    ALTER TABLE knowledge_domains ADD COLUMN code TEXT;
-  END IF;
-END $$;
+      -- code (might be required by existing schema)
+      IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'knowledge_domains' AND column_name = 'code') THEN
+        -- Add code column as TEXT, using domain_id as default if it exists
+        ALTER TABLE knowledge_domains ADD COLUMN code TEXT;
+      END IF;
+
+      -- slug (might be required by existing schema)
+      IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'knowledge_domains' AND column_name = 'slug') THEN
+        -- Add slug column as TEXT
+        ALTER TABLE knowledge_domains ADD COLUMN slug TEXT;
+      END IF;
+    END $$;
 
 -- If code column exists but domain_id-based values aren't set, populate them
 DO $$
@@ -231,15 +237,33 @@ BEGIN
     SET code = COALESCE(
       code,
       -- Try to use domain_id if it's text-like
-      CASE 
+      CASE
         WHEN domain_id::text ~ '^[a-zA-Z_-]+$' THEN domain_id::text
         ELSE lower(regexp_replace(domain_name, '[^a-zA-Z0-9]+', '_', 'g'))
       END
     )
     WHERE code IS NULL;
-    
+
     -- Make code NOT NULL after populating
     ALTER TABLE knowledge_domains ALTER COLUMN code SET NOT NULL;
+  END IF;
+END $$;
+
+-- If slug column exists but values aren't set, populate them
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'knowledge_domains' AND column_name = 'slug') THEN
+    -- Update NULL slugs with a generated value from code or domain_name
+    UPDATE knowledge_domains
+    SET slug = COALESCE(
+      slug,
+      code,
+      lower(regexp_replace(domain_name, '[^a-zA-Z0-9]+', '-', 'g'))
+    )
+    WHERE slug IS NULL;
+
+    -- Make slug NOT NULL after populating
+    ALTER TABLE knowledge_domains ALTER COLUMN slug SET NOT NULL;
   END IF;
 END $$;
 

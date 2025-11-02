@@ -53,6 +53,7 @@ WITH payload AS (
 INSERT INTO knowledge_domains (
   domain_id,
   code,
+  slug,
   parent_domain_id,
   function_id,
   function_name,
@@ -79,9 +80,10 @@ INSERT INTO knowledge_domains (
 SELECT
   text_to_uuid(j->>'domain_id'),  -- Convert TEXT to UUID
   j->>'domain_id',  -- Use the text domain_id as code
+  lower(regexp_replace(j->>'domain_id', '_', '-', 'g')),  -- Generate slug from domain_id
   CASE 
     WHEN j->>'parent_domain_id' IS NOT NULL THEN text_to_uuid(j->>'parent_domain_id')
-    ELSE NULL 
+    ELSE NULL
   END,
   j->>'function_id',
   j->>'function_name',
@@ -108,6 +110,7 @@ FROM payload,
      jsonb_array_elements(payload.payload->'domains') AS j
 ON CONFLICT (domain_id) DO UPDATE SET
   code = EXCLUDED.code,
+  slug = EXCLUDED.slug,
   parent_domain_id = EXCLUDED.parent_domain_id,
   function_id = EXCLUDED.function_id,
   function_name = EXCLUDED.function_name,

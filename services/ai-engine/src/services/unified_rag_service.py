@@ -134,6 +134,7 @@ class UnifiedRAGService:
         similarity_threshold: float,
     ) -> Dict[str, Any]:
         """Semantic search using Pinecone vector similarity"""
+        # Fixed: Corrected indentation for try-except block - 2025-11-02
         try:
             # Generate query embedding
             query_embedding = await self._generate_embedding(query_text)

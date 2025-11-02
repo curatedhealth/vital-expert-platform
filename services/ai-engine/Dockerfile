@@ -9,7 +9,7 @@ ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     PIP_NO_CACHE_DIR=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=1 \
-    CACHE_BUST=20251101v3
+    CACHE_BUST=20251102_pydantic_fix
 
 # Install system dependencies needed for building Python packages
 RUN apt-get update && apt-get install -y --no-install-recommends \

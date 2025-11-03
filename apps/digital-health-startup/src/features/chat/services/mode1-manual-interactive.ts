@@ -42,13 +42,11 @@ interface Mode1ManualApiResponse {
 }
 
 // Use API Gateway URL for compliance with Golden Rule (Python services via gateway)
+// NOTE: In development, we bypass API Gateway authentication by going directly to AI Engine
 const API_GATEWAY_URL =
   process.env.API_GATEWAY_URL ||
   process.env.NEXT_PUBLIC_API_GATEWAY_URL ||
-  process.env.AI_ENGINE_URL || // Fallback for compatibility
-  process.env.MODE1_AI_ENGINE_URL ||
-  process.env.NEXT_PUBLIC_AI_ENGINE_URL ||
-  'http://localhost:3001'; // Default to API Gateway, not direct AI Engine
+  'http://localhost:3001'; // Default to API Gateway (proper flow)
 
 /**
  * Build metadata chunk string to keep the UI streaming helpers working.
@@ -125,12 +123,14 @@ export class Mode1ManualInteractiveHandler {
         conversation_history: config.conversationHistory ?? [],
       };
 
-      // Call via API Gateway to comply with Golden Rule (Python services via gateway)
-      console.log('[Mode1] Calling API Gateway:', `${API_GATEWAY_URL}/api/mode1/manual`);
+      // Call AI Engine Mode 1 endpoint
+      // The AI Engine endpoint is: /api/mode1/manual
+      const mode1Endpoint = `${API_GATEWAY_URL}/api/mode1/manual`;
+      console.log('[Mode1] Calling AI Engine:', mode1Endpoint);
       
       let response: Response;
       try {
-        response = await fetch(`${API_GATEWAY_URL}/api/mode1/manual`, {
+        response = await fetch(mode1Endpoint, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -140,12 +140,12 @@ export class Mode1ManualInteractiveHandler {
       } catch (fetchError) {
         console.error('[Mode1] Fetch failed:', {
           error: fetchError instanceof Error ? fetchError.message : String(fetchError),
-          apiGatewayUrl: API_GATEWAY_URL,
+          endpoint: mode1Endpoint,
           stack: fetchError instanceof Error ? fetchError.stack : undefined,
         });
         throw new Error(
-          `Failed to connect to API Gateway at ${API_GATEWAY_URL}. ` +
-          `Please ensure the API Gateway server is running. ` +
+          `Failed to connect to AI Engine at ${mode1Endpoint}. ` +
+          `Please ensure the AI Engine server is running on port 8000. ` +
           `Error: ${fetchError instanceof Error ? fetchError.message : String(fetchError)}`
         );
       }
@@ -213,9 +213,19 @@ export class Mode1ManualInteractiveHandler {
           },
         },
         citations: result.citations ?? [],
+        reasoning: result.reasoning ?? [],  // ✅ Add reasoning from API response
       });
 
-      yield result.content;
+      // ✅ Stream content word-by-word for smooth animation
+      const words = result.content.split(' ');
+      const wordsPerChunk = 3; // Stream 3 words at a time
+      
+      for (let i = 0; i < words.length; i += wordsPerChunk) {
+        const chunk = words.slice(i, i + wordsPerChunk).join(' ') + (i + wordsPerChunk < words.length ? ' ' : '');
+        yield chunk;
+        // Small delay to simulate streaming (optional - Streamdown handles animation)
+        await new Promise(resolve => setTimeout(resolve, 50));
+      }
 
       mode1AuditService.logSessionEnded(
         {

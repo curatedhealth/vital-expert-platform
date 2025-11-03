@@ -822,8 +822,7 @@ export class Mode3AutonomousAutomaticHandler {
 const API_GATEWAY_URL =
   process.env.API_GATEWAY_URL ||
   process.env.NEXT_PUBLIC_API_GATEWAY_URL ||
-  process.env.AI_ENGINE_URL || // Fallback for compatibility
-  'http://localhost:3001'; // Default to API Gateway
+  'http://localhost:3001'; // Default to API Gateway (proper flow)
 
 interface Mode3AutonomousAutomaticApiResponse {
   agent_id: string;
@@ -961,19 +960,28 @@ export async function* executeMode3(config: Mode3Config): AsyncGenerator<Autonom
       autonomous_reasoning: result.autonomous_reasoning,
       agent_selection: result.agent_selection,
       citations: result.citations ?? [],
+      reasoning: result.reasoning ?? [],  // ✅ Add reasoning from API response
     });
 
-    // Emit response content
-    yield {
-      type: 'content',
-      content: result.content,
-      metadata: {
-        confidence: result.confidence,
-        iterations: result.autonomous_reasoning?.iterations ?? 0,
-        toolsUsed: result.autonomous_reasoning?.tools_used ?? [],
-      },
-      timestamp: new Date().toISOString(),
-    };
+    // Emit response content - stream word-by-word
+    const words = result.content.split(' ');
+    const wordsPerChunk = 3; // Stream 3 words at a time
+    
+    for (let i = 0; i < words.length; i += wordsPerChunk) {
+      const chunkContent = words.slice(i, i + wordsPerChunk).join(' ') + (i + wordsPerChunk < words.length ? ' ' : '');
+      yield {
+        type: 'content',
+        content: chunkContent,
+        metadata: {
+          confidence: result.confidence,
+          iterations: result.autonomous_reasoning?.iterations ?? 0,
+          toolsUsed: result.autonomous_reasoning?.tools_used ?? [],
+        },
+        timestamp: new Date().toISOString(),
+      };
+      // Small delay for smoother streaming
+      await new Promise(resolve => setTimeout(resolve, 50));
+    }
 
     // Emit completion
     yield {

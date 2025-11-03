@@ -44,9 +44,25 @@ export default function PromptLibrary() {
       const response = await fetch('/api/prompts');
       if (!response.ok) throw new Error('Failed to fetch prompts');
       const data = await response.json();
-      setPrompts(data);
+      
+      // Ensure data is an array
+      if (Array.isArray(data)) {
+        setPrompts(data);
+      } else if (data && Array.isArray(data.prompts)) {
+        // Handle case where API returns { prompts: [...] }
+        setPrompts(data.prompts);
+      } else {
+        console.error('Invalid prompts data format:', data);
+        setPrompts([]);
+        toast({
+          title: "Warning",
+          description: "No prompts available",
+          variant: "destructive",
+        });
+      }
     } catch (error) {
       console.error('Error fetching prompts:', error);
+      setPrompts([]); // Set empty array on error
       toast({
         title: "Error",
         description: "Failed to load prompts",
@@ -79,6 +95,11 @@ export default function PromptLibrary() {
   };
 
   const getPromptsForSuite = (suiteName: string) => {
+    // Ensure prompts is an array before filtering
+    if (!Array.isArray(prompts)) {
+      console.error('prompts is not an array:', prompts);
+      return [];
+    }
     return prompts.filter(prompt => prompt.suite === suiteName);
   };
 

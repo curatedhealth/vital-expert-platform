@@ -13,21 +13,33 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Button } from '@/components/ui/button'
-import { UserCircle, LogOut, Settings as SettingsIcon } from 'lucide-react'
+import { 
+  UserCircle, 
+  LogOut, 
+  Settings as SettingsIcon,
+  LayoutDashboard,
+  MessageSquare,
+  Users,
+  GitBranch,
+  Box,
+  UsersRound,
+  BookOpen,
+  Sparkles,
+} from 'lucide-react'
 import { useAuth } from '@/lib/auth/supabase-auth-context'
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
 
-// Top navigation routes
+// Top navigation routes with icons
 const topNavRoutes = [
-  { label: 'Dashboard', href: '/dashboard' },
-  { label: 'Ask Expert', href: '/ask-expert' },
-  { label: 'Ask Panel', href: '/ask-panel' },
-  { label: 'Workflows', href: '/workflows' },
-  { label: 'Solution Builder', href: '/solution-builder' },
-  { label: 'Agents', href: '/agents' },
-  { label: 'Knowledge', href: '/knowledge' },
-  { label: 'Prompt Prism', href: '/prism' },
+  { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, color: 'text-blue-600' },
+  { label: 'Ask Expert', href: '/ask-expert', icon: MessageSquare, color: 'text-blue-600' },
+  { label: 'Ask Panel', href: '/ask-panel', icon: Users, color: 'text-purple-600' },
+  { label: 'Workflows', href: '/workflows', icon: GitBranch, color: 'text-green-600' },
+  { label: 'Solution Builder', href: '/solution-builder', icon: Box, color: 'text-orange-600' },
+  { label: 'Agents', href: '/agents', icon: UsersRound, color: 'text-indigo-600' },
+  { label: 'Knowledge', href: '/knowledge', icon: BookOpen, color: 'text-teal-600' },
+  { label: 'Prompt Prism', href: '/prism', icon: Sparkles, color: 'text-pink-600' },
 ];
 
 function DashboardHeader() {
@@ -49,19 +61,26 @@ function DashboardHeader() {
         <SidebarTrigger className="-ml-1" />
         <Separator orientation="vertical" className="mr-2 h-4" />
 
-        <nav className="flex items-center gap-3 min-w-max">
+        {/* Enhanced Navigation with Icons */}
+        <nav className="flex items-center gap-1 min-w-max">
           {topNavRoutes.map((route) => {
             const isActive = pathname === route.href || pathname?.startsWith(`${route.href}/`);
+            const Icon = route.icon;
             return (
-              <Link
-                key={route.href}
-                href={route.href}
-                className={cn(
-                  'text-sm font-medium transition-colors whitespace-nowrap',
-                  isActive ? 'text-foreground' : 'text-muted-foreground hover:text-foreground'
-                )}
-              >
-                {route.label}
+              <Link key={route.href} href={route.href}>
+                <Button
+                  variant={isActive ? "default" : "ghost"}
+                  size="sm"
+                  className={cn(
+                    'gap-2 transition-all',
+                    isActive 
+                      ? 'bg-primary text-primary-foreground shadow-sm' 
+                      : 'text-muted-foreground hover:text-foreground hover:bg-accent'
+                  )}
+                >
+                  <Icon className={cn("w-4 h-4", !isActive && route.color)} />
+                  <span className="whitespace-nowrap">{route.label}</span>
+                </Button>
               </Link>
             );
           })}

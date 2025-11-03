@@ -1,135 +1,116 @@
 /**
- * Digital Health Workflows API
- * GET /api/workflows - List available workflows
- * POST /api/workflows/execute - Execute a multi-agent workflow
+ * Workflows API - List and Create
+ * GET /api/workflows - List workflows
+ * POST /api/workflows - Create workflow
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+import { createClient } from '@/lib/db/supabase/server';
+import type { WorkflowDefinition } from '@/features/workflow-designer/types/workflow';
 
-import { ComplianceAwareOrchestrator } from '@/agents/core/ComplianceAwareOrchestrator';
-import {
-  ExecuteWorkflowRequest,
-  ExecutionContext,
-  ComplianceLevel
-} from '@/types/digital-health-agent.types';
-
-// Initialize orchestrator (in production, use singleton pattern or dependency injection)
-let orchestrator: ComplianceAwareOrchestrator | null = null;
-
-async function getOrchestrator(): Promise<ComplianceAwareOrchestrator> {
-  if (!orchestrator) {
-    orchestrator = new ComplianceAwareOrchestrator();
-    await orchestrator.initializeWithCompliance();
-  }
-  return orchestrator;
-}
-
-/**
- * GET /api/workflows
- * Returns list of available workflows
- */
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    const orch = await getOrchestrator();
-    const workflows = orch.getAvailableWorkflows();
-
-    return NextResponse.json({
-      success: true,
-      data: {
-        workflows: workflows,
-        total_count: workflows.length,
-        categories: {
-          regulatory: workflows.filter((w: any) => w.name.toLowerCase().includes('regulatory')).length,
-          clinical: workflows.filter((w: any) => w.name.toLowerCase().includes('clinical')).length,
-          market_access: workflows.filter((w: any) => w.name.toLowerCase().includes('market')).length
-        }
-      },
-      timestamp: new Date().toISOString()
-    });
-
-  } catch (error) {
-    console.error('Error fetching workflows:', error);
-    return NextResponse.json(
-      {
-        success: false,
-        error: 'Failed to fetch workflows',
-        details: error instanceof Error ? error.message : 'Unknown error'
-      },
-      { status: 500 }
-    );
-  }
-}
-
-/**
- * POST /api/workflows/execute
- * Execute a multi-agent workflow with HIPAA compliance
- */
-export async function POST(request: NextRequest) {
-  try {
-    const body: ExecuteWorkflowRequest = await request.json();
-
-    // Validate required fields
-    if (!body.workflow_name || !body.user_id) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'Missing required fields',
-          details: 'workflow_name and user_id are required'
-        },
-        { status: 400 }
-      );
+    const supabase = createClient();
+    
+    // Get current user
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Create execution context
-    const context: ExecutionContext = {
-      user_id: body.user_id,
-      session_id: body.context?.session_id || `session_${Date.now()}`,
-      timestamp: new Date().toISOString(),
-      compliance_level: body.context?.compliance_level || ComplianceLevel.HIGH,
-      audit_required: true
-    };
+    // Get query parameters
+    const { searchParams } = new URL(request.url);
+    const framework = searchParams.get('framework');
+    const tags = searchParams.get('tags')?.split(',');
+    const search = searchParams.get('search');
 
-    const orch = await getOrchestrator();
+    // Build query
+    let query = supabase
+      .from('workflows')
+      .select('*')
+      .or(`user_id.eq.${user.id},is_public.eq.true`)
+      .order('updated_at', { ascending: false });
 
-    // Execute workflow with compliance protection
-    const execution = await orch.executeWorkflowWithCompliance(
-      body.workflow_name,
-      body.initial_inputs || { /* TODO: implement */ },
-      context
-    );
+    if (framework) {
+      query = query.eq('framework', framework);
+    }
 
-    return NextResponse.json({
-      success: true,
-      data: {
-        execution_id: execution.execution_id,
-        workflow_id: execution.workflow_id,
-        status: execution.status,
-        steps_completed: execution.steps_completed,
-        total_steps: execution.total_steps,
-        compliance_summary: execution.compliance_summary,
-        started_at: execution.started_at,
-        completed_at: execution.completed_at,
-        interactions: execution.interactions.map(interaction => ({
-          interaction_id: interaction.interaction_id,
-          agent_name: interaction.agent_name,
-          action: interaction.action,
-          success: interaction.success,
-          execution_time: interaction.execution_time,
-          compliance_status: (interaction.outputs as any)?.compliance_status
-        }))
-      },
-      timestamp: new Date().toISOString()
+    if (tags && tags.length > 0) {
+      query = query.contains('tags', tags);
+    }
+
+    if (search) {
+      query = query.or(`name.ilike.%${search}%,description.ilike.%${search}%`);
+    }
+
+    const { data: workflows, error } = await query;
+
+    if (error) {
+      console.error('Error fetching workflows:', error);
+      return NextResponse.json({ error: 'Failed to fetch workflows' }, { status: 500 });
+    }
+
+    return NextResponse.json(workflows);
+  } catch (error) {
+    console.error('Error in GET /api/workflows:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    const supabase = createClient();
+    
+    // Get current user
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const body = await request.json();
+    const { workflow } = body as { workflow: WorkflowDefinition };
+
+    if (!workflow) {
+      return NextResponse.json({ error: 'Workflow definition is required' }, { status: 400 });
+    }
+
+    // Validate workflow
+    if (!workflow.name || !workflow.framework) {
+      return NextResponse.json({ error: 'Workflow name and framework are required' }, { status: 400 });
+    }
+
+    // Insert workflow
+    const { data, error } = await supabase
+      .from('workflows')
+      .insert({
+        user_id: user.id,
+        name: workflow.name,
+        description: workflow.description,
+        framework: workflow.framework,
+        workflow_definition: workflow,
+        tags: workflow.metadata?.tags || [],
+        is_template: workflow.metadata?.isTemplate || false,
+        is_public: workflow.metadata?.isPublic || false,
+      })
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error creating workflow:', error);
+      return NextResponse.json({ error: 'Failed to create workflow' }, { status: 500 });
+    }
+
+    // Audit log
+    await supabase.from('workflow_audit_log').insert({
+      workflow_id: data.id,
+      user_id: user.id,
+      action: 'create',
+      changes: { workflow: data },
     });
 
+    return NextResponse.json(data, { status: 201 });
   } catch (error) {
-    console.error('Error executing workflow:', error);
-    return NextResponse.json(
-      {
-        success: false,
-        error: 'Workflow execution failed',
-        details: error instanceof Error ? error.message : 'Unknown error'
-      },
-      { status: 500 }
-    );
+    console.error('Error in POST /api/workflows:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

@@ -71,7 +71,8 @@ from services.cache_manager import CacheManager
 from services.tool_registry import get_tool_registry
 from services.autonomous_controller import AutonomousController  # Phase 3: Goal-based continuation
 from tools.rag_tool import RAGTool
-from tools.web_tools import WebSearchTool, WebScrapeTool
+from tools.web_tools import WebSearchTool
+# WebScrapeTool not available - using WebSearchTool only
 
 logger = structlog.get_logger()
 

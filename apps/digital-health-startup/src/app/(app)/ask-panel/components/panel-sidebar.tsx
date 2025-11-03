@@ -7,7 +7,12 @@ import {
   ChevronLeft,
   ChevronRight,
   Clock,
-  Star
+  Star,
+  TrendingUp,
+  DollarSign,
+  Activity,
+  MessageSquare,
+  CheckCircle2
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -17,9 +22,12 @@ import { Button } from '@/shared/components/ui/button';
 import { Card } from '@/shared/components/ui/card';
 import { Input } from '@/shared/components/ui/input';
 import { ScrollArea } from '@/shared/components/ui/scroll-area';
+import { Skeleton } from '@/shared/components/ui/skeleton';
 import { cn } from '@/shared/utils';
 
 import { __usePanelStore as usePanelStore } from '../services/panel-store';
+import { useRecentPanels, useUsageAnalytics } from '@/hooks/usePanelAPI';
+import { formatPanelStatus, getPanelStatusColor, getTimeSince } from '@/lib/api/panel-client';
 
 interface PanelSidebarProps {
   className?: string;
@@ -35,11 +43,18 @@ export function PanelSidebar({
   const [searchQuery, setSearchQuery] = useState('');
 
   const { panels, currentPanel, selectPanel, templates } = usePanelStore();
+  
+  // Fetch real panels from backend
+  const { data: recentPanelsData, isLoading: panelsLoading } = useRecentPanels();
+  const { data: analyticsData, isLoading: analyticsLoading } = useUsageAnalytics();
+
+  // Merge local panels with backend panels (backend takes precedence)
+  const allPanels = recentPanelsData?.panels || panels;
 
   // Filter panels based on search
-  const filteredPanels = panels.filter((panel) =>
-    panel.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    panel.description.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredPanels = allPanels.filter((panel: any) =>
+    panel.query?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    panel.metadata?.domain?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   if (isCollapsed) {
@@ -153,7 +168,19 @@ export function PanelSidebar({
               Recent Panels
             </h3>
 
-            {filteredPanels.length === 0 ? (
+            {panelsLoading ? (
+              <div className="space-y-2">
+                {[1, 2, 3].map((i) => (
+                  <Card key={i} className="p-3">
+                    <div className="space-y-2">
+                      <Skeleton className="h-4 w-full" />
+                      <Skeleton className="h-3 w-3/4" />
+                      <Skeleton className="h-3 w-1/2" />
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            ) : filteredPanels.length === 0 ? (
               <div className="text-center py-8">
                 <Users className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
                 <p className="text-sm text-muted-foreground">No panels yet</p>
@@ -161,8 +188,9 @@ export function PanelSidebar({
               </div>
             ) : (
               <div className="space-y-2">
-                {filteredPanels.map((panel) => {
+                {filteredPanels.map((panel: any) => {
                   const isActive = currentPanel?.id === panel.id;
+                  const agentsCount = panel.agents?.length || 0;
 
                   return (
                     <Card
@@ -176,50 +204,42 @@ export function PanelSidebar({
                       <div className="space-y-2">
                         <div className="flex items-start justify-between">
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium truncate">{panel.name}</p>
-                            <p className="text-xs text-muted-foreground line-clamp-2">
-                              {panel.description}
+                            <p className="text-sm font-medium truncate">
+                              {panel.query || panel.name || 'Untitled Panel'}
                             </p>
+                            {panel.configuration?.domain && (
+                              <p className="text-xs text-muted-foreground capitalize">
+                                {panel.configuration.domain.replace(/-/g, ' ')}
+                              </p>
+                            )}
                           </div>
                           <span className="text-xs text-muted-foreground whitespace-nowrap ml-2">
-                            {new Date(panel.updated_at).toLocaleDateString()}
+                            {getTimeSince(panel.updated_at || panel.created_at)}
                           </span>
                         </div>
 
-                        {/* Panel Members */}
+                        {/* Panel Agents */}
                         <div className="flex items-center gap-2">
-                          <div className="flex -space-x-1">
-                            {panel.members.slice(0, 3).map((member, index) => (
-                              <Avatar key={index} className="h-6 w-6 border-2 border-background">
-                                <AvatarImage src={member.agent.avatar?.startsWith('http') ? member.agent.avatar : undefined} />
-                                <AvatarFallback className="text-xs">
-                                  {member.agent.name.split(' ').map((n: any) => n[0]).join('')}
-                                </AvatarFallback>
-                              </Avatar>
-                            ))}
-                            {panel.members.length > 3 && (
-                              <div className="h-6 w-6 rounded-full bg-muted border-2 border-background flex items-center justify-center">
-                                <span className="text-xs text-muted-foreground">
-                                  +{panel.members.length - 3}
-                                </span>
-                              </div>
-                            )}
-                          </div>
+                          <Users className="h-3 w-3 text-muted-foreground" />
                           <span className="text-xs text-muted-foreground">
-                            {panel.members.length} experts
+                            {agentsCount} {agentsCount === 1 ? 'expert' : 'experts'}
                           </span>
+                          {panel.panel_type && (
+                            <Badge variant="outline" className="text-xs capitalize">
+                              {panel.panel_type}
+                            </Badge>
+                          )}
                         </div>
 
                         {/* Panel Status */}
                         <div className="flex items-center justify-between">
                           <span className="text-xs text-muted-foreground">
-                            {panel.messages.length} messages
+                            {panel.query ? panel.query.slice(0, 40) + '...' : 'No query yet'}
                           </span>
                           <Badge
-                            variant={panel.status === 'active' ? 'default' : 'secondary'}
-                            className="text-xs"
+                            className={cn("text-xs", getPanelStatusColor(panel.status))}
                           >
-                            {panel.status}
+                            {formatPanelStatus(panel.status)}
                           </Badge>
                         </div>
                       </div>
@@ -229,6 +249,58 @@ export function PanelSidebar({
               </div>
             )}
           </div>
+
+          {/* Usage Analytics */}
+          {analyticsData && (
+            <div className="mt-4">
+              <h3 className="text-sm font-medium text-muted-foreground mb-3 flex items-center gap-2">
+                <TrendingUp className="h-4 w-4" />
+                Usage This Month
+              </h3>
+              
+              <Card className="p-3">
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Activity className="h-4 w-4 text-blue-600" />
+                      <span className="text-xs text-muted-foreground">Panels</span>
+                    </div>
+                    <span className="text-sm font-semibold">{analyticsData.total_panels}</span>
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <MessageSquare className="h-4 w-4 text-green-600" />
+                      <span className="text-xs text-muted-foreground">Consultations</span>
+                    </div>
+                    <span className="text-sm font-semibold">{analyticsData.total_consultations}</span>
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <DollarSign className="h-4 w-4 text-amber-600" />
+                      <span className="text-xs text-muted-foreground">Cost</span>
+                    </div>
+                    <span className="text-sm font-semibold">
+                      ${analyticsData.total_cost_usd.toFixed(2)}
+                    </span>
+                  </div>
+                  
+                  {analyticsData.avg_consensus > 0 && (
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <CheckCircle2 className="h-4 w-4 text-purple-600" />
+                        <span className="text-xs text-muted-foreground">Avg Consensus</span>
+                      </div>
+                      <span className="text-sm font-semibold">
+                        {(analyticsData.avg_consensus * 100).toFixed(0)}%
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </Card>
+            </div>
+          )}
         </div>
       </ScrollArea>
     </div>

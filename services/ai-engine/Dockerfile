@@ -1,8 +1,8 @@
 # VITAL AI Engine - Production Dockerfile (Multi-Stage Build)
 # Stage 1: Build stage - Install dependencies
-# Using Python 3.11 for langsmith compatibility (Python 3.12 has ForwardRef._evaluate() signature change)
-# Force rebuild: 2025-11-02 09:30 - Fresh build to clear syntax error cache
-FROM python:3.11-slim as builder
+# Using Python 3.13 to match local development environment
+# Updated: 2025-11-03 - Standardized on Python 3.13
+FROM python:3.13-slim as builder
 
 # Set environment variables for build
 ENV PYTHONUNBUFFERED=1 \
@@ -31,7 +31,7 @@ RUN python -m venv /opt/venv && \
     /opt/venv/bin/pip install --no-cache-dir -r requirements.txt
 
 # Stage 2: Runtime stage - Minimal production image
-FROM python:3.11-slim
+FROM python:3.13-slim
 
 # Set environment variables
 ENV PYTHONUNBUFFERED=1 \

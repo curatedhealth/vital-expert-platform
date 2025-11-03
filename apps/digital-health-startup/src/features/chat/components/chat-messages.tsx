@@ -381,25 +381,31 @@ export function ChatMessages({ messages, liveReasoning, isReasoningActive }: Cha
                     ) : (
                       <div className={cn(isUser ? 'text-white' : 'text-deep-charcoal')}>
                         <div className="relative">
-                          <Response>
-                            {message.role === 'assistant' && message.metadata?.sources ? (
-                              // Render message with inline citations
-                              <>{renderTextWithCitations(
-                                message.content,
-                                (message.metadata.sources || []).map((src: any, idx: number) => ({
-                                  id: src.id || `source-${idx}`,
-                                  title: src.title || src.name || 'Unknown Source',
-                                  category: src.category || src.domain,
-                                  excerpt: src.excerpt || src.content?.substring(0, 200),
-                                  score: src.score || src.similarity,
-                                  url: src.url
-                                }))
-                              )}</>
-                            ) : (
-                              // Regular message content
-                              message.content
-                            )}
-                          </Response>
+                          {message.role === 'assistant' ? (
+                            <Response>
+                              {message.metadata?.sources ? (
+                                // Render message with inline citations
+                                <>{renderTextWithCitations(
+                                  message.content,
+                                  (message.metadata.sources || []).map((src: any, idx: number) => ({
+                                    id: src.id || `source-${idx}`,
+                                    title: src.title || src.name || 'Unknown Source',
+                                    category: src.category || src.domain,
+                                    excerpt: src.excerpt || src.content?.substring(0, 200),
+                                    score: src.score || src.similarity,
+                                    url: src.url
+                                  }))
+                                )}</>
+                              ) : (
+                                // Regular message content
+                                message.content
+                              )}
+                            </Response>
+                          ) : (
+                            <Response>
+                              {message.content}
+                            </Response>
+                          )}
                           {message.isLoading && message.content && (
                             <span className="inline-block w-2 h-4 bg-current animate-pulse ml-1"></span>
                           )}

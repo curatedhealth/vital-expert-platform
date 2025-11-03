@@ -213,6 +213,7 @@ function AskExpertPageContent() {
   const [showSettings, setShowSettings] = useState(false);
   const [selectedTools, setSelectedTools] = useState<string[]>([]);
   const [selectedRagDomains, setSelectedRagDomains] = useState<string[]>([]);
+  const [useLangGraph, setUseLangGraph] = useState(false); // LangGraph disabled by default
   const [streamingMeta, setStreamingMeta] = useState<{
     ragSummary?: NonNullable<Message['metadata']>['ragSummary'];
     toolSummary?: NonNullable<Message['metadata']>['toolSummary'];
@@ -387,10 +388,23 @@ function AskExpertPageContent() {
       return null;
     }
 
-    const displayName =
+    let displayName =
       (agent as any).displayName ||
       (agent as any).display_name ||
       agent.name;
+
+    // Clean up display name - remove malformed prefixes and suffixes
+    displayName = String(displayName)
+      .replace(/\s*\(My Copy\)\s*/gi, '')
+      .replace(/\s*\(Copy\)\s*/gi, '')
+      .replace(/\[bea\]d-_agent_avatar_/gi, '')  // Remove malformed prefixes
+      .replace(/^[^a-zA-Z]+/, '')                 // Remove leading non-letters
+      .trim();
+    
+    // Capitalize first letter if needed
+    if (displayName && displayName.length > 0) {
+      displayName = displayName.charAt(0).toUpperCase() + displayName.slice(1);
+    }
 
   return {
     id: agent.id,
@@ -789,6 +803,8 @@ function AskExpertPageContent() {
           // Autonomous mode settings
           maxIterations: (mode === 'autonomous' || mode === 'multi-expert') ? 10 : undefined,
           confidenceThreshold: (mode === 'autonomous' || mode === 'multi-expert') ? 0.95 : undefined,
+          // LangGraph integration (NEW)
+          useLangGraph: useLangGraph, // Enable LangGraph workflow orchestration
         }),
       });
 
@@ -865,9 +881,21 @@ function AskExpertPageContent() {
 
               // Handle different chunk types based on mode
               if (data.type === 'chunk' && data.content) {
-                if (typeof data.content === 'string' && data.content.startsWith('__mode1_meta__')) {
+                if (typeof data.content === 'string' && (data.content.startsWith('__mode1_meta__') || data.content.startsWith('__mode2_meta__') || data.content.startsWith('__mode3_meta__') || data.content.startsWith('__mode4_meta__'))) {
                   try {
-                    const meta = JSON.parse(data.content.slice('__mode1_meta__'.length));
+                    // Determine which mode prefix to use
+                    let metaPrefix = '';
+                    if (data.content.startsWith('__mode1_meta__')) {
+                      metaPrefix = '__mode1_meta__';
+                    } else if (data.content.startsWith('__mode2_meta__')) {
+                      metaPrefix = '__mode2_meta__';
+                    } else if (data.content.startsWith('__mode3_meta__')) {
+                      metaPrefix = '__mode3_meta__';
+                    } else if (data.content.startsWith('__mode4_meta__')) {
+                      metaPrefix = '__mode4_meta__';
+                    }
+                    
+                    const meta = JSON.parse(data.content.slice(metaPrefix.length));
                     switch (meta?.event) {
                       case 'rag_sources': {
                         const incomingSources = Array.isArray(meta.sources) ? meta.sources : [];
@@ -997,6 +1025,14 @@ function AskExpertPageContent() {
                               totalTimeMs: meta.tools.totals?.totalTimeMs ?? toolSummary.totals.totalTimeMs,
                             },
                           };
+                        }
+                        // ✅ Handle reasoning from API response
+                        if (Array.isArray(meta.reasoning) && meta.reasoning.length > 0) {
+                          reasoning = meta.reasoning.map((step: string) => ({
+                            type: 'reasoning',
+                            content: step,
+                          }));
+                          console.log(`✅ [Mode1 Final] Extracted ${reasoning.length} reasoning steps from meta`);
                         }
                         if (Array.isArray(meta.branches) && meta.branches.length > 0) {
                           branches = meta.branches.map((branch: any, idx: number) => ({
@@ -1351,7 +1387,7 @@ function AskExpertPageContent() {
       }
 
       // Debug: Log message creation for Mode 3
-      console.group('📝 [Mode 3 Debug] Creating Assistant Message');
+      console.group('📝 [AskExpert] Creating Assistant Message');
       console.log('Mode:', mode);
       console.log('Content length:', fullResponse.length);
       console.log('Content preview:', fullResponse.substring(0, 100));
@@ -1361,7 +1397,31 @@ function AskExpertPageContent() {
       console.log('Autonomous metadata keys:', Object.keys(autonomousMetadata));
       console.log('Confidence:', confidence);
       console.log('Message ID:', assistantMessage.id);
-      console.log('Full message object:', assistantMessage);
+      
+      // Enhanced debugging for missing features
+      console.log('📦 Metadata structure:', {
+        hasRagSummary: !!assistantMessage.metadata?.ragSummary,
+        hasToolSummary: !!assistantMessage.metadata?.toolSummary,
+        hasSources: !!assistantMessage.metadata?.sources,
+        hasReasoning: !!assistantMessage.metadata?.reasoning,
+        hasConfidence: !!assistantMessage.metadata?.confidence,
+        sourcesLength: assistantMessage.metadata?.sources?.length || 0,
+        reasoningLength: assistantMessage.metadata?.reasoning?.length || 0
+      });
+      
+      if (assistantMessage.metadata?.reasoning) {
+        console.log('🧠 Reasoning array:', assistantMessage.metadata.reasoning);
+      } else {
+        console.warn('⚠️ No reasoning in metadata!');
+      }
+      
+      if (assistantMessage.metadata?.sources) {
+        console.log('📚 Sources array:', assistantMessage.metadata.sources);
+      } else {
+        console.warn('⚠️ No sources in metadata!');
+      }
+      
+      console.log('Full message object:', JSON.stringify(assistantMessage, null, 2));
       console.groupEnd();
 
       setMessages(prev => {
@@ -2010,14 +2070,23 @@ function AskExpertPageContent() {
                 )}
 
                 {messages.map((msg, index) => {
+                  // Get agent info for assistant messages
                   const agentInfo =
                     msg.role === 'assistant' && msg.selectedAgent
                       ? agents.find((a) => a.id === msg.selectedAgent?.id)
+                      : msg.role === 'assistant' && primarySelectedAgent
+                      ? agents.find((a) => a.id === primarySelectedAgent.id)
                       : null;
+                      
                   const avatarValue =
                     msg.role === 'assistant'
                       ? agentInfo?.avatar
                       : undefined;
+                      
+                  // Get agent name, prioritize cleaned displayName
+                  const agentDisplayName = agentInfo
+                    ? (agentInfo.displayName || agentInfo.name)
+                    : undefined;
 
                   const previousUserMessage =
                     index > 0 && messages[index - 1].role === 'user'
@@ -2035,8 +2104,10 @@ function AskExpertPageContent() {
                       content={msg.content}
                       timestamp={new Date(msg.timestamp)}
                       metadata={msg.metadata}
-                      agentName={agentInfo?.displayName || (agentInfo as any)?.display_name || agentInfo?.name}
+                      agentName={agentDisplayName}
                       agentAvatar={avatarValue}
+                      userName={user?.user_metadata?.full_name || user?.user_metadata?.name}
+                      userEmail={user?.email}
                       branches={msg.branches}
                       currentBranch={msg.currentBranch ?? 0}
                       onBranchChange={
@@ -2075,16 +2146,18 @@ function AskExpertPageContent() {
                         ? agents.find((a) => selectedAgents.includes(a.id))
                         : null;
                       if (!agent) {
-                        return 'Expert';
+                        return undefined; // Let it default to "AI Assistant"
                       }
-                      return (agent as any).displayName || (agent as any).display_name || agent.name || 'Expert';
+                      return agent.displayName || agent.name;
                     })()}
                     agentAvatar={(() => {
                       const agent = selectedAgents.length > 0
                         ? agents.find((a) => selectedAgents.includes(a.id))
                         : null;
-                      return agent?.avatar || 'avatar_0001';
+                      return agent?.avatar;
                     })()}
+                    userName={user?.user_metadata?.full_name || user?.user_metadata?.name}
+                    userEmail={user?.email}
                   />
                 )}
                       
@@ -2158,6 +2231,8 @@ function AskExpertPageContent() {
             availableRagDomains={availableRagDomains}
             selectedRagDomains={selectedRagDomains}
             onSelectedRagDomainsChange={setSelectedRagDomains}
+            useLangGraph={useLangGraph}
+            onUseLangGraphChange={setUseLangGraph}
           />
         </div>
     </div>

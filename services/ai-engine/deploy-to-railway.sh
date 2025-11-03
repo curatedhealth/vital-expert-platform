@@ -56,7 +56,8 @@ fi
 echo -e "${GREEN}✅ Railway authenticated${NC}"
 
 # Navigate to ai-engine directory
-cd "$(dirname "$0")/.."  # Go to services/ai-engine
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+cd "$SCRIPT_DIR"
 echo -e "${GREEN}✅ In ai-engine directory${NC}"
 echo ""
 
@@ -67,12 +68,16 @@ echo ""
 echo "📦 Step 2: Loading environment variables..."
 echo ""
 
-# Load from .env.vercel (2 levels up)
-if [ -f "../../.env.vercel" ]; then
-    source "../../.env.vercel"
+# Load from .env.vercel (2 levels up from services/ai-engine)
+ENV_FILE="$SCRIPT_DIR/../../.env.vercel"
+if [ -f "$ENV_FILE" ]; then
+    source "$ENV_FILE"
     echo -e "${GREEN}✅ Loaded credentials from .env.vercel${NC}"
+    echo "   Location: $ENV_FILE"
 else
-    echo -e "${RED}❌ .env.vercel not found${NC}"
+    echo -e "${RED}❌ .env.vercel not found at: $ENV_FILE${NC}"
+    echo ""
+    echo "Please ensure .env.vercel exists in the project root."
     exit 1
 fi
 
@@ -126,15 +131,16 @@ echo ""
 echo "🔐 Step 4: Setting environment variables on Railway..."
 echo ""
 
-# Set all required variables
-railway variables set OPENAI_API_KEY="$OPENAI_API_KEY"
-railway variables set SUPABASE_URL="$NEXT_PUBLIC_SUPABASE_URL"
-railway variables set SUPABASE_SERVICE_ROLE_KEY="$SUPABASE_SERVICE_ROLE_KEY"
-railway variables set DATABASE_URL="$DATABASE_URL"
-railway variables set ENV="production"
-railway variables set PLATFORM_TENANT_ID="550e8400-e29b-41d4-a716-446655440000"
-railway variables set LOG_LEVEL="info"
-railway variables set PYTHONUNBUFFERED="1"
+# Set all required variables (using new Railway CLI syntax)
+echo "Setting required variables..."
+railway variables --set "OPENAI_API_KEY=$OPENAI_API_KEY" \
+                  --set "SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL" \
+                  --set "SUPABASE_SERVICE_ROLE_KEY=$SUPABASE_SERVICE_ROLE_KEY" \
+                  --set "DATABASE_URL=$DATABASE_URL" \
+                  --set "ENV=production" \
+                  --set "PLATFORM_TENANT_ID=550e8400-e29b-41d4-a716-446655440000" \
+                  --set "LOG_LEVEL=info" \
+                  --set "PYTHONUNBUFFERED=1"
 
 # Optional: Set CORS_ORIGINS (update this with your frontend URL)
 echo ""
@@ -145,7 +151,7 @@ echo ""
 read -p "Frontend URL(s): " cors_origins
 
 if [ -n "$cors_origins" ]; then
-    railway variables set CORS_ORIGINS="$cors_origins"
+    railway variables --set "CORS_ORIGINS=$cors_origins"
     echo -e "${GREEN}✅ CORS_ORIGINS set${NC}"
 else
     echo -e "${YELLOW}⚠️  Skipping CORS_ORIGINS (will use default: *)${NC}"

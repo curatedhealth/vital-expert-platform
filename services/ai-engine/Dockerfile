@@ -8,8 +8,7 @@ FROM python:3.13-slim as builder
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     PIP_NO_CACHE_DIR=1 \
-    PIP_DISABLE_PIP_VERSION_CHECK=1 \
-    CACHE_BUST=20251102_093000_FORCE_FRESH_BUILD
+    PIP_DISABLE_PIP_VERSION_CHECK=1
 
 # Install system dependencies needed for building Python packages
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -62,6 +61,11 @@ RUN chmod +x start.py start_minimal.py
 # Create logs directory with proper permissions
 RUN mkdir -p /app/logs && \
     chmod 755 /app/logs
+
+# Create checkpoint directory for LangGraph
+RUN mkdir -p /app/data/checkpoints && \
+    chmod 755 /app/data && \
+    chown -R appuser:appuser /app/data
 
 # Create non-root user for security
 RUN groupadd -r appuser && \

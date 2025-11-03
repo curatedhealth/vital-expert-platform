@@ -1,6 +1,6 @@
 'use client';
 
-import { Users, Star, ArrowRight, Send, Loader2, MessageSquare, Settings2 } from 'lucide-react';
+import { Users, Star, ArrowRight, Send, Loader2, MessageSquare, Settings2, CheckCircle2, AlertCircle } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 import Image from 'next/image';
@@ -18,8 +18,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@vital/ui';
+import { useToast } from '@/hooks/use-toast';
 import { ExpertPanelSelector } from '@/features/chat/components/expert-panel-selector';
 import { useAgentsStore, Agent } from '@/lib/stores/agents-store';
+import { 
+  useCreatePanel, 
+  useExecutePanel,
+  type PanelType as APIPanelType,
+  type OrchestrationMode as APIOrchestrationMode,
+  type Panel as APIPanel,
+  type ExecutePanelResponse
+} from '@/hooks/usePanelAPI';
 
 
 // Three-Level Hierarchy: Domain → Subdomain → Use Cases
@@ -220,17 +229,26 @@ const PANEL_DOMAINS = [
 ];
 
 interface PanelResponse {
+  panelId: string;
   question: string;
   recommendation: string;
-  consensus: any;
+  consensus: {
+    consensus_level: number;
+    agreement_points: string[];
+    disagreement_points: string[];
+    key_themes: string[];
+    dissenting_opinions: any[];
+  };
   expertResponses: Array<{
-    expertId: string;
-    expertName: string;
+    id: string;
+    agent_id: string;
+    agent_name: string;
     content: string;
-    confidence: number;
-    reasoning: string;
+    confidence_score: number;
+    metadata?: any;
   }>;
   timestamp: Date;
+  execution_time_ms?: number;
 }
 
 type OrchestrationMode = 'parallel' | 'sequential' | 'scripted' | 'debate' | 'funnel' | 'scenario' | 'dynamic';
@@ -266,20 +284,89 @@ const FUSION_MODELS: { value: FusionModel; label: string; description: string; i
 ];
 
 export default function AskPanelPage() {
+  // UI State
   const [showExpertPanelSelector, setShowExpertPanelSelector] = useState(false);
   const [selectedDomain, setSelectedDomain] = useState<typeof PANEL_DOMAINS[0] | null>(null);
   const [selectedSubdomain, setSelectedSubdomain] = useState<typeof PANEL_DOMAINS[0]['subdomains'][0] | null>(null);
   const [selectedUseCase, setSelectedUseCase] = useState<any>(null);
-  const [panelAgents, setPanelAgents] = useState<Agent[]>([]);
-  const [query, setQuery] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [panelResponse, setPanelResponse] = useState<PanelResponse | null>(null);
   const [showExpertDetails, setShowExpertDetails] = useState(false);
+  
+  // Panel State
+  const [panelAgents, setPanelAgents] = useState<Agent[]>([]);
+  const [currentPanelId, setCurrentPanelId] = useState<string | null>(null);
+  const [query, setQuery] = useState('');
+  const [panelResponse, setPanelResponse] = useState<PanelResponse | null>(null);
+  
+  // Configuration State
   const [orchestrationMode, setOrchestrationMode] = useState<OrchestrationMode>('parallel');
   const [selectedArchetype, setSelectedArchetype] = useState<BoardArchetype | null>(null);
   const [selectedFusionModel, setSelectedFusionModel] = useState<FusionModel>('symbiotic');
 
+  // Hooks
   const { loadAgents } = useAgentsStore();
+  const { toast } = useToast();
+  
+  // API Hooks
+  const createPanelMutation = useCreatePanel({
+    onSuccess: (data) => {
+      setCurrentPanelId(data.id);
+      toast({
+        title: 'Panel Created',
+        description: `Expert panel with ${panelAgents.length} experts is ready`,
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: 'Failed to Create Panel',
+        description: error.message,
+        variant: 'destructive',
+      });
+    },
+  });
+
+  const executePanelMutation = useExecutePanel(currentPanelId || '', {
+    onSuccess: (data) => {
+      // Convert API response to local format
+      setPanelResponse({
+        panelId: data.panel_id,
+        question: data.query,
+        recommendation: data.recommendation,
+        consensus: {
+          consensus_level: data.consensus.consensus_level,
+          agreement_points: data.consensus.agreement_points,
+          disagreement_points: data.consensus.disagreement_points,
+          key_themes: data.consensus.key_themes,
+          dissenting_opinions: data.consensus.dissenting_opinions,
+        },
+        expertResponses: data.expert_responses.map(response => ({
+          id: response.id,
+          agent_id: response.agent_id,
+          agent_name: response.agent_name,
+          content: response.content,
+          confidence_score: response.confidence_score,
+          metadata: response.metadata,
+        })),
+        timestamp: new Date(),
+        execution_time_ms: data.execution_time_ms,
+      });
+      
+      setQuery(''); // Clear input
+      
+      toast({
+        title: 'Consultation Complete',
+        description: `Panel reached ${(data.consensus.consensus_level * 100).toFixed(0)}% consensus`,
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: 'Consultation Failed',
+        description: error.message,
+        variant: 'destructive',
+      });
+    },
+  });
+
+  const isLoading = createPanelMutation.isPending || executePanelMutation.isPending;
 
   // Helper function to render icon (PNG or emoji)
   const renderIcon = (icon: string, size: number = 32) => {
@@ -349,74 +436,68 @@ export default function AskPanelPage() {
     setSelectedUseCase(null);
   };
 
-  const handleCreateExpertPanel = (experts: Agent[], knowledgeConfig?: any) => {
+  const handleCreateExpertPanel = async (experts: Agent[], knowledgeConfig?: any) => {
     setPanelAgents(experts);
     setShowExpertPanelSelector(false);
     setPanelResponse(null); // Reset previous response
-    console.log('✅ Expert panel created with', experts.length, 'experts');
+    
+    // Create panel in backend
+    try {
+      await createPanelMutation.mutateAsync({
+        query: '', // Empty initially, user will add query later
+        panel_type: 'structured' as APIPanelType,
+        configuration: {
+          orchestration_mode: orchestrationMode as APIOrchestrationMode,
+          consensus_threshold: 0.7,
+          archetype: selectedArchetype || undefined,
+          fusion_model: selectedFusionModel,
+          domain: selectedDomain?.id,
+          subdomain: selectedSubdomain?.id,
+          use_case: selectedUseCase?.id,
+          custom_selection: !selectedUseCase,
+        },
+        agents: experts.map(agent => ({
+          id: agent.id,
+          name: agent.display_name,
+          role: 'expert' as const,
+          weight: 1,
+        })),
+      });
+      
+      console.log('✅ Expert panel created with', experts.length, 'experts');
+    } catch (error) {
+      console.error('❌ Failed to create panel:', error);
+      // Toast already shown by mutation hook
+    }
   };
 
   const handleAskPanel = async () => {
-    if (!query.trim() || panelAgents.length === 0) return;
-
-    setIsLoading(true);
-    setPanelResponse(null);
-
-    try {
-      // Convert agents to PanelMembers
-      const panelMembers: PanelMember[] = panelAgents.map((agent: any) => ({
-        agent: agent as any,
-        role: 'expert' as const,
-        weight: 1,
-      }));
-
-      console.log('🎭 Sending panel consultation request...');
-      console.log(`📊 Mode: ${orchestrationMode}`);
-      console.log(`🏛️ Archetype: ${selectedArchetype}`);
-      console.log(`🤝 Fusion Model: ${selectedFusionModel}`);
-      const response = await fetch('/api/panel/orchestrate', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          message: query,
-          panel: {
-            id: `panel_${Date.now()}`,
-            members: panelMembers,
-            archetype: selectedArchetype,
-            fusionModel: selectedFusionModel,
-          },
-          mode: orchestrationMode,
-          context: {
-            timestamp: new Date().toISOString(),
-            archetype: selectedArchetype,
-            fusionModel: selectedFusionModel,
-          },
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Panel consultation failed');
+    if (!query.trim() || panelAgents.length === 0 || !currentPanelId) {
+      if (!currentPanelId) {
+        toast({
+          title: 'No Active Panel',
+          description: 'Please create a panel first',
+          variant: 'destructive',
+        });
       }
+      return;
+    }
 
-      const data = await response.json();
-      console.log('✅ Panel consultation completed:', data);
-
-      setPanelResponse({
-        question: query,
-        recommendation: data.response,
-        consensus: data.metadata.consensus,
-        expertResponses: data.metadata.expertResponses || [],
-        timestamp: new Date(),
+    console.log('🎭 Sending panel consultation request...');
+    console.log(`📊 Mode: ${orchestrationMode}`);
+    console.log(`🏛️ Archetype: ${selectedArchetype}`);
+    console.log(`🤝 Fusion Model: ${selectedFusionModel}`);
+    
+    try {
+      await executePanelMutation.mutateAsync({
+        query: query,
+        stream: false, // TODO: Implement streaming in future
       });
-
-      setQuery(''); // Clear input
+      
+      console.log('✅ Panel consultation completed');
     } catch (error) {
       console.error('❌ Panel consultation error:', error);
-      alert('Failed to consult panel. Please try again.');
-    } finally {
-      setIsLoading(false);
+      // Toast already shown by mutation hook
     }
   };
 
@@ -431,22 +512,25 @@ export default function AskPanelPage() {
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
-      {/* Page Header */}
-      <div className="border-b bg-background px-6 py-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Users className="h-8 w-8 text-primary" />
+      {/* Enhanced Page Header */}
+      <div className="border-b border-gray-200 bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-50 px-8 py-8">
+        <div className="max-w-7xl mx-auto flex items-center justify-between">
+          <div className="flex items-center gap-5">
+            <div className="relative w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-600 via-purple-500 to-blue-600 flex items-center justify-center shadow-xl shadow-purple-500/30">
+              <Users className="h-9 w-9 text-white" />
+              <div className="absolute -inset-1 bg-gradient-to-br from-purple-600 to-blue-600 rounded-2xl blur-sm opacity-30 -z-10" />
+            </div>
             <div>
-              <h1 className="text-2xl font-bold">Ask Panel</h1>
-              <p className="text-sm text-muted-foreground">Create virtual advisory boards with expert panels</p>
+              <h1 className="text-4xl font-bold text-gray-900 tracking-tight mb-1">Ask Panel</h1>
+              <p className="text-base text-gray-600">Create virtual advisory boards with expert panels</p>
             </div>
           </div>
           <Button
             onClick={() => setShowExpertPanelSelector(true)}
-            size="default"
-            className="flex items-center gap-2"
+            size="lg"
+            className="bg-gradient-to-r from-purple-600 via-purple-500 to-blue-600 hover:from-purple-700 hover:via-purple-600 hover:to-blue-700 text-white shadow-lg shadow-purple-500/30 gap-2.5 px-6 py-6 rounded-xl font-semibold transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-purple-500/40"
           >
-            <Users className="h-4 w-4" />
+            <Users className="h-5 w-5" />
             Create Custom Panel
           </Button>
         </div>
@@ -459,41 +543,60 @@ export default function AskPanelPage() {
           {panelAgents.length > 0 && (
             <div className="mb-8 space-y-6">
               <div>
-                <h2 className="text-xl font-semibold mb-4">Active Panel ({panelAgents.length} Experts)</h2>
+                <div className="flex items-center gap-4 mb-5">
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-green-500 via-emerald-500 to-green-600 flex items-center justify-center shadow-lg shadow-green-500/30">
+                    <Users className="w-7 h-7 text-white" />
+                  </div>
+                  <div>
+                    <h2 className="text-3xl font-bold text-gray-900 tracking-tight">Active Panel</h2>
+                    <p className="text-sm text-gray-600 mt-0.5">
+                      {panelAgents.length} experts ready to consult
+                    </p>
+                  </div>
+                </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {panelAgents.map((agent: Agent) => (
-                    <Card key={agent.id} className="p-4">
-                      <div className="flex items-center gap-3">
-                        <AgentAvatar avatar={agent.avatar} name={agent.display_name} size="md" />
-                        <div className="flex-1 min-w-0">
-                          <h3 className="font-semibold truncate">{agent.display_name}</h3>
-                          <p className="text-sm text-muted-foreground line-clamp-2">{agent.description}</p>
+                    <Card key={agent.id} className="group border-2 border-gray-200 bg-white shadow-sm hover:shadow-lg hover:border-green-300 hover:-translate-y-0.5 transition-all duration-300">
+                      <CardContent className="p-5">
+                        <div className="flex items-center gap-3">
+                          <div className="relative">
+                            <AgentAvatar avatar={agent.avatar} name={agent.display_name} size="md" />
+                            <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-green-500 rounded-full border-2 border-white shadow-sm" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <h3 className="font-semibold text-gray-900 truncate text-base">{agent.display_name}</h3>
+                            <p className="text-sm text-gray-600 line-clamp-2 leading-relaxed">{agent.description}</p>
+                          </div>
                         </div>
-                      </div>
+                      </CardContent>
                     </Card>
                   ))}
                 </div>
               </div>
 
               {/* Panel Consultation Interface */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <MessageSquare className="h-5 w-5" />
+              <Card className="border-2 border-gray-200 shadow-lg hover:shadow-xl transition-shadow duration-300">
+                <CardHeader className="bg-gradient-to-br from-blue-50 via-purple-50 to-indigo-50 border-b-2 border-gray-200 py-5">
+                  <CardTitle className="flex items-center gap-3 text-xl font-bold text-gray-900">
+                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center">
+                      <MessageSquare className="h-5 w-5 text-white" />
+                    </div>
                     Consult Panel
                   </CardTitle>
-                  <CardDescription>
+                  <CardDescription className="text-base text-gray-600 mt-2">
                     Ask your expert panel a question and receive a consensus recommendation
                   </CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-4">
+                <CardContent className="space-y-5 p-6">
                   {/* Orchestration Mode Selector */}
-                  <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
-                    <Settings2 className="h-4 w-4 text-muted-foreground" />
+                  <div className="flex items-center gap-3 p-4 bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl border-2 border-gray-200">
+                    <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-gray-700 to-gray-800 flex items-center justify-center">
+                      <Settings2 className="h-5 w-5 text-white" />
+                    </div>
                     <div className="flex-1">
-                      <label className="text-sm font-medium mb-1 block">Orchestration Mode</label>
+                      <label className="text-sm font-semibold mb-1.5 block text-gray-900">Orchestration Mode</label>
                       <Select value={orchestrationMode} onValueChange={(value) => setOrchestrationMode(value as OrchestrationMode)}>
-                        <SelectTrigger className="w-full bg-background">
+                        <SelectTrigger className="w-full bg-white border-2 border-gray-200 hover:border-gray-300 transition-colors">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -511,28 +614,28 @@ export default function AskPanelPage() {
                   </div>
 
                   {/* Query Input */}
-                  <div className="flex gap-2">
+                  <div className="flex gap-3">
                     <Input
                       placeholder="Enter your question for the panel..."
                       value={query}
                       onChange={(e) => setQuery(e.target.value)}
                       onKeyPress={(e) => e.key === 'Enter' && !isLoading && handleAskPanel()}
                       disabled={isLoading}
-                      className="flex-1"
+                      className="flex-1 border-2 border-gray-200 focus:border-purple-400 rounded-xl px-4 py-3 text-base placeholder:text-gray-400 transition-colors"
                     />
                     <Button
                       onClick={handleAskPanel}
                       disabled={isLoading || !query.trim()}
-                      className="flex items-center gap-2"
+                      className="bg-gradient-to-r from-purple-600 via-purple-500 to-blue-600 hover:from-purple-700 hover:via-purple-600 hover:to-blue-700 text-white shadow-lg shadow-purple-500/30 gap-2.5 px-6 rounded-xl font-semibold transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-purple-500/40"
                     >
                       {isLoading ? (
                         <>
-                          <Loader2 className="h-4 w-4 animate-spin" />
+                          <Loader2 className="h-5 w-5 animate-spin" />
                           Consulting...
                         </>
                       ) : (
                         <>
-                          <Send className="h-4 w-4" />
+                          <Send className="h-5 w-5" />
                           Ask Panel
                         </>
                       )}
@@ -551,14 +654,67 @@ export default function AskPanelPage() {
                         <div className="flex items-center justify-between mb-3">
                           <h3 className="font-semibold">Panel Recommendation</h3>
                           {panelResponse.consensus && (
-                            <Badge variant="outline" className="bg-white">
-                              {(panelResponse.consensus.agreementLevel * 100).toFixed(0)}% agreement
-                            </Badge>
+                            <div className="flex items-center gap-2">
+                              <Badge variant="outline" className="bg-white">
+                                {(panelResponse.consensus.consensus_level * 100).toFixed(0)}% consensus
+                              </Badge>
+                              {panelResponse.execution_time_ms && (
+                                <Badge variant="secondary" className="text-xs">
+                                  {(panelResponse.execution_time_ms / 1000).toFixed(1)}s
+                                </Badge>
+                              )}
+                            </div>
                           )}
                         </div>
-                        <div className="prose prose-sm max-w-none">
+                        <div className="prose prose-sm max-w-none dark:prose-invert">
                           <ReactMarkdown>{panelResponse.recommendation}</ReactMarkdown>
                         </div>
+                        
+                        {/* Consensus Details */}
+                        {panelResponse.consensus && (
+                          <div className="mt-4 space-y-3">
+                            {panelResponse.consensus.agreement_points.length > 0 && (
+                              <div>
+                                <div className="flex items-center gap-2 mb-2">
+                                  <CheckCircle2 className="h-4 w-4 text-green-600" />
+                                  <h4 className="text-sm font-medium">Points of Agreement</h4>
+                                </div>
+                                <ul className="text-sm space-y-1 ml-6">
+                                  {panelResponse.consensus.agreement_points.map((point, idx) => (
+                                    <li key={idx} className="text-muted-foreground">{point}</li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
+                            
+                            {panelResponse.consensus.disagreement_points.length > 0 && (
+                              <div>
+                                <div className="flex items-center gap-2 mb-2">
+                                  <AlertCircle className="h-4 w-4 text-amber-600" />
+                                  <h4 className="text-sm font-medium">Points of Disagreement</h4>
+                                </div>
+                                <ul className="text-sm space-y-1 ml-6">
+                                  {panelResponse.consensus.disagreement_points.map((point, idx) => (
+                                    <li key={idx} className="text-muted-foreground">{point}</li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
+                            
+                            {panelResponse.consensus.key_themes.length > 0 && (
+                              <div>
+                                <h4 className="text-sm font-medium mb-2">Key Themes</h4>
+                                <div className="flex flex-wrap gap-2">
+                                  {panelResponse.consensus.key_themes.map((theme, idx) => (
+                                    <Badge key={idx} variant="secondary" className="text-xs">
+                                      {theme}
+                                    </Badge>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        )}
                       </div>
 
                       {/* Expert Responses */}
@@ -577,21 +733,16 @@ export default function AskPanelPage() {
 
                           {showExpertDetails && (
                             <div className="space-y-3">
-                              {panelResponse.expertResponses.map((expert, idx) => (
-                                <Card key={idx} className="p-4">
+                              {panelResponse.expertResponses.map((expert) => (
+                                <Card key={expert.id} className="p-4">
                                   <div className="space-y-2">
                                     <div className="flex items-center justify-between">
-                                      <h4 className="font-semibold text-sm">{expert.expertName}</h4>
+                                      <h4 className="font-semibold text-sm">{expert.agent_name}</h4>
                                       <Badge variant="outline" className="text-xs">
-                                        {(expert.confidence * 100).toFixed(0)}% confident
+                                        {(expert.confidence_score * 100).toFixed(0)}% confident
                                       </Badge>
                                     </div>
                                     <p className="text-sm">{expert.content}</p>
-                                    {expert.reasoning && (
-                                      <p className="text-xs text-muted-foreground italic">
-                                        Reasoning: {expert.reasoning}
-                                      </p>
-                                    )}
                                   </div>
                                 </Card>
                               ))}
@@ -606,10 +757,30 @@ export default function AskPanelPage() {
             </div>
           )}
 
+          {/* Panel Creation Status */}
+          {panelAgents.length > 0 && !currentPanelId && createPanelMutation.isPending && (
+            <Card className="mb-6">
+              <CardContent className="py-4">
+                <div className="flex items-center gap-3">
+                  <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                  <div>
+                    <p className="font-medium">Creating Panel...</p>
+                    <p className="text-sm text-muted-foreground">
+                      Setting up your expert panel in the backend
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           {/* Breadcrumb Navigation */}
           {(selectedDomain || selectedSubdomain) && panelAgents.length === 0 && (
-            <div className="mb-6 flex items-center gap-2 text-sm">
-              <button onClick={handleBackToDomains} className="text-vital-primary-500 hover:text-vital-primary-600 hover:underline">
+            <div className="mb-6 flex items-center gap-2 text-sm bg-white rounded-xl border-2 border-gray-200 px-4 py-3 shadow-sm">
+              <button 
+                onClick={handleBackToDomains} 
+                className="text-blue-600 hover:text-blue-700 hover:underline font-medium transition-colors"
+              >
                 All Domains
               </button>
               {selectedDomain && (
@@ -617,7 +788,7 @@ export default function AskPanelPage() {
                   <span className="text-gray-400">/</span>
                   <button
                     onClick={handleBackToSubdomains}
-                    className="text-vital-primary-500 hover:text-vital-primary-600 hover:underline flex items-center gap-2"
+                    className="text-blue-600 hover:text-blue-700 hover:underline flex items-center gap-2 font-medium transition-colors"
                   >
                     <div className="w-6 h-6">{renderIcon(selectedDomain.icon, 24)}</div>
                     {selectedDomain.name}
@@ -627,7 +798,7 @@ export default function AskPanelPage() {
               {selectedSubdomain && (
                 <>
                   <span className="text-gray-400">/</span>
-                  <span className="font-medium">{selectedSubdomain.name}</span>
+                  <span className="font-semibold text-gray-900">{selectedSubdomain.name}</span>
                 </>
               )}
             </div>
@@ -635,34 +806,53 @@ export default function AskPanelPage() {
 
           {/* Board Archetype Selection */}
           {!selectedDomain && panelAgents.length === 0 && (
-            <div className="mb-8">
-              <div className="flex items-center gap-2 mb-4">
-                <Star className="h-5 w-5 text-vital-primary-500" />
-                <h2 className="text-xl font-semibold">Select Board Archetype</h2>
+            <div className="mb-12">
+              <div className="flex items-center gap-4 mb-3">
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-400 via-orange-500 to-amber-600 flex items-center justify-center shadow-lg shadow-amber-500/30">
+                  <Star className="h-7 w-7 text-white" />
+                </div>
+                <div>
+                  <h2 className="text-3xl font-bold text-gray-900 tracking-tight">Select Board Archetype</h2>
+                  <p className="text-gray-500 text-sm mt-0.5">
+                    Choose the type of advisory board that best fits your decision-making needs
+                  </p>
+                </div>
               </div>
-              <p className="text-muted-foreground mb-6">
-                Choose the type of advisory board that best fits your decision-making needs
-              </p>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mt-8">
                 {BOARD_ARCHETYPES.map((archetype) => (
                   <Card
                     key={archetype.value}
-                    className={`cursor-pointer hover:shadow-lg transition-all duration-200 ${
+                    className={`group cursor-pointer transition-all duration-300 border-2 ${
                       selectedArchetype === archetype.value
-                        ? 'border-vital-primary-500 border-2 bg-vital-primary-100/50 dark:bg-vital-primary-500/20 ring-2 ring-vital-primary-200'
-                        : 'hover:border-vital-primary-300'
+                        ? 'border-purple-500 bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-50 shadow-xl shadow-purple-500/20 scale-[1.02]'
+                        : 'border-gray-200 bg-white hover:border-purple-300 hover:shadow-lg hover:shadow-purple-100/50 hover:-translate-y-1'
                     }`}
                     onClick={() => setSelectedArchetype(archetype.value)}
                   >
-                    <CardHeader className="pb-3">
-                      <div className="flex justify-center mb-2 h-12 w-12 mx-auto">
-                        {renderIcon(archetype.icon, 48)}
+                    <CardHeader className="pb-4 pt-6">
+                      <div className="flex justify-center mb-4">
+                        <div className={`relative w-20 h-20 rounded-2xl flex items-center justify-center transition-all duration-300 ${
+                          selectedArchetype === archetype.value
+                            ? 'bg-gradient-to-br from-purple-600 via-purple-500 to-blue-600 shadow-lg shadow-purple-500/40 scale-110'
+                            : 'bg-gradient-to-br from-gray-100 via-gray-50 to-gray-100 group-hover:from-purple-100 group-hover:to-blue-100 group-hover:shadow-md'
+                        }`}>
+                          {renderIcon(archetype.icon, 44)}
+                          {selectedArchetype === archetype.value && (
+                            <div className="absolute -top-1 -right-1 w-6 h-6 bg-green-500 rounded-full flex items-center justify-center shadow-lg">
+                              <CheckCircle2 className="w-4 h-4 text-white" />
+                            </div>
+                          )}
+                        </div>
                       </div>
-                      <CardTitle className="text-sm">{archetype.label}</CardTitle>
+                      <CardTitle className="text-base font-semibold text-center text-gray-900 leading-tight px-2">
+                        {archetype.label}
+                      </CardTitle>
                     </CardHeader>
-                    <CardContent>
-                      <p className="text-xs text-muted-foreground">{archetype.description}</p>
+                    <CardContent className="pb-6">
+                      <p className="text-sm text-gray-600 text-center leading-relaxed px-2">
+                        {archetype.description}
+                      </p>
                     </CardContent>
                   </Card>
                 ))}
@@ -672,34 +862,53 @@ export default function AskPanelPage() {
 
           {/* Fusion Model Selection */}
           {selectedArchetype && !selectedDomain && panelAgents.length === 0 && (
-            <div className="mb-8">
-              <div className="flex items-center gap-2 mb-4">
-                <Settings2 className="h-5 w-5 text-purple-500" />
-                <h2 className="text-xl font-semibold">Select Fusion Model</h2>
+            <div className="mb-12">
+              <div className="flex items-center gap-4 mb-3">
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 via-purple-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/30">
+                  <Settings2 className="h-7 w-7 text-white" />
+                </div>
+                <div>
+                  <h2 className="text-3xl font-bold text-gray-900 tracking-tight">Select Fusion Model</h2>
+                  <p className="text-gray-500 text-sm mt-0.5">
+                    Choose how humans and AI collaborate in your advisory board
+                  </p>
+                </div>
               </div>
-              <p className="text-muted-foreground mb-6">
-                Choose how humans and AI collaborate in your advisory board
-              </p>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 mt-8">
                 {FUSION_MODELS.map((model) => (
                   <Card
                     key={model.value}
-                    className={`cursor-pointer hover:shadow-lg transition-all duration-200 ${
+                    className={`group cursor-pointer transition-all duration-300 border-2 ${
                       selectedFusionModel === model.value
-                        ? 'border-vital-primary-500 border-2 bg-vital-primary-100/50 dark:bg-vital-primary-500/20'
-                        : 'hover:border-vital-primary-300'
+                        ? 'border-indigo-500 bg-gradient-to-br from-indigo-50 via-purple-50 to-blue-50 shadow-xl shadow-indigo-500/20 scale-[1.02]'
+                        : 'border-gray-200 bg-white hover:border-indigo-300 hover:shadow-lg hover:shadow-indigo-100/50 hover:-translate-y-1'
                     }`}
                     onClick={() => setSelectedFusionModel(model.value)}
                   >
-                    <CardHeader className="pb-3 text-center">
-                      <div className="flex justify-center mb-2 h-12 w-12 mx-auto">
-                        {renderIcon(model.icon, 48)}
+                    <CardHeader className="pb-3 pt-5 text-center">
+                      <div className="flex justify-center mb-3">
+                        <div className={`relative w-16 h-16 rounded-xl flex items-center justify-center transition-all duration-300 ${
+                          selectedFusionModel === model.value
+                            ? 'bg-gradient-to-br from-indigo-600 via-purple-500 to-indigo-600 shadow-lg shadow-indigo-500/40 scale-110'
+                            : 'bg-gradient-to-br from-gray-100 via-gray-50 to-gray-100 group-hover:from-indigo-100 group-hover:to-purple-100 group-hover:shadow-md'
+                        }`}>
+                          {renderIcon(model.icon, 36)}
+                          {selectedFusionModel === model.value && (
+                            <div className="absolute -top-0.5 -right-0.5 w-5 h-5 bg-green-500 rounded-full flex items-center justify-center shadow-lg">
+                              <CheckCircle2 className="w-3.5 h-3.5 text-white" />
+                            </div>
+                          )}
+                        </div>
                       </div>
-                      <CardTitle className="text-xs">{model.label}</CardTitle>
+                      <CardTitle className="text-sm font-semibold text-gray-900 leading-tight px-1">
+                        {model.label}
+                      </CardTitle>
                     </CardHeader>
-                    <CardContent>
-                      <p className="text-xs text-muted-foreground text-center">{model.description}</p>
+                    <CardContent className="pb-5">
+                      <p className="text-xs text-gray-600 text-center leading-relaxed px-1">
+                        {model.description}
+                      </p>
                     </CardContent>
                   </Card>
                 ))}
@@ -709,33 +918,45 @@ export default function AskPanelPage() {
 
           {/* Level 1: Domain Selection */}
           {selectedArchetype && !selectedDomain && panelAgents.length === 0 && (
-            <div className="mb-8">
-              <div className="flex items-center gap-2 mb-4">
-                <Star className="h-5 w-5 text-yellow-500" />
-                <h2 className="text-xl font-semibold">Select Panel Domain</h2>
+            <div className="mb-12">
+              <div className="flex items-center gap-4 mb-3">
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 via-cyan-500 to-blue-600 flex items-center justify-center shadow-lg shadow-blue-500/30">
+                  <Star className="h-7 w-7 text-white" />
+                </div>
+                <div>
+                  <h2 className="text-3xl font-bold text-gray-900 tracking-tight">Select Panel Domain</h2>
+                  <p className="text-gray-500 text-sm mt-0.5">
+                    Choose your area of focus to see relevant subdomains and use cases
+                  </p>
+                </div>
               </div>
-              <p className="text-muted-foreground mb-6">
-                Choose your area of focus to see relevant subdomains and use cases
-              </p>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 mt-8">
                 {PANEL_DOMAINS.map((domain) => (
                   <Card
                     key={domain.id}
-                    className="cursor-pointer hover:shadow-lg transition-all duration-200 hover:border-vital-primary-300 group"
+                    className="group cursor-pointer transition-all duration-300 border-2 border-gray-200 bg-white hover:border-blue-400 hover:shadow-xl hover:shadow-blue-100/50 hover:-translate-y-1"
                     onClick={() => handleDomainClick(domain)}
                   >
-                    <CardHeader className="pb-4">
-                      <div className="flex items-center gap-3 mb-3">
-                        <div className="w-12 h-12 flex-shrink-0">{renderIcon(domain.icon, 48)}</div>
-                        <CardTitle className="text-lg">{domain.name}</CardTitle>
+                    <CardHeader className="pb-4 pt-6">
+                      <div className="flex items-start gap-4 mb-3">
+                        <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-gray-100 via-gray-50 to-gray-100 flex items-center justify-center flex-shrink-0 group-hover:from-blue-100 group-hover:to-cyan-100 group-hover:scale-110 transition-all duration-300 shadow-sm group-hover:shadow-md">
+                          {renderIcon(domain.icon, 40)}
+                        </div>
+                        <div className="flex-1">
+                          <CardTitle className="text-xl font-bold text-gray-900 mb-2 group-hover:text-blue-700 transition-colors">
+                            {domain.name}
+                          </CardTitle>
+                          <CardDescription className="text-sm text-gray-600 leading-relaxed">
+                            {domain.description}
+                          </CardDescription>
+                        </div>
                       </div>
-                      <CardDescription>{domain.description}</CardDescription>
                     </CardHeader>
                     <CardContent>
-                      <div className="flex items-center justify-between text-sm text-vital-primary-500 dark:text-vital-primary-300">
+                      <div className="flex items-center justify-between text-sm text-blue-600 font-medium px-1">
                         <span>{domain.subdomains.length} subdomains</span>
-                        <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                        <ArrowRight className="h-4 w-4 group-hover:translate-x-2 transition-transform duration-300" />
                       </div>
                     </CardContent>
                   </Card>
@@ -746,34 +967,43 @@ export default function AskPanelPage() {
 
           {/* Level 2: Subdomain Selection */}
           {selectedDomain && !selectedSubdomain && panelAgents.length === 0 && (
-            <div className="mb-8">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-12 h-12">{renderIcon(selectedDomain.icon, 48)}</div>
-                <h2 className="text-2xl font-semibold">{selectedDomain.name}</h2>
+            <div className="mb-12">
+              <div className="flex items-center gap-4 mb-4">
+                <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-gray-100 via-gray-50 to-gray-100 flex items-center justify-center shadow-md">
+                  {renderIcon(selectedDomain.icon, 36)}
+                </div>
+                <div>
+                  <h2 className="text-3xl font-bold text-gray-900 tracking-tight">{selectedDomain.name}</h2>
+                  <p className="text-gray-500 text-sm mt-0.5">
+                    Select a subdomain to see specific use cases
+                  </p>
+                </div>
               </div>
-              <p className="text-muted-foreground mb-6">
-                Select a subdomain to see specific use cases
-              </p>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mt-8">
                 {selectedDomain.subdomains.map((subdomain) => (
                   <Card
                     key={subdomain.id}
-                    className="cursor-pointer hover:shadow-lg transition-all duration-200 hover:border-primary/50 group"
+                    className="group cursor-pointer transition-all duration-300 border-2 border-gray-200 bg-white hover:border-purple-400 hover:shadow-xl hover:shadow-purple-100/50 hover:-translate-y-1"
                     onClick={() => handleSubdomainClick(subdomain)}
                   >
-                    <CardHeader className="pb-3">
-                      <div className="flex items-start justify-between">
+                    <CardHeader className="pb-4 pt-6">
+                      <div className="flex items-start justify-between gap-4">
                         <div className="flex-1">
-                          <CardTitle className="text-lg mb-2">{subdomain.name}</CardTitle>
-                          <CardDescription className="text-sm">{subdomain.description}</CardDescription>
+                          <CardTitle className="text-xl font-bold mb-3 text-gray-900 group-hover:text-purple-700 transition-colors">
+                            {subdomain.name}
+                          </CardTitle>
+                          <CardDescription className="text-sm text-gray-600 leading-relaxed">
+                            {subdomain.description}
+                          </CardDescription>
                         </div>
-                        <ArrowRight className="h-5 w-5 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all flex-shrink-0 mt-1" />
+                        <ArrowRight className="h-6 w-6 text-gray-400 group-hover:text-purple-600 group-hover:translate-x-2 transition-all flex-shrink-0 mt-1" />
                       </div>
                     </CardHeader>
                     <CardContent>
-                      <div className="text-xs text-muted-foreground">
-                        {subdomain.useCases.length} use cases available
+                      <div className="flex items-center gap-2 text-sm text-purple-600 font-medium px-1">
+                        <Users className="h-4 w-4" />
+                        <span>{subdomain.useCases.length} use cases available</span>
                       </div>
                     </CardContent>
                   </Card>
@@ -784,23 +1014,32 @@ export default function AskPanelPage() {
 
           {/* Level 3: Use Case Selection */}
           {selectedSubdomain && panelAgents.length === 0 && (
-            <div className="mb-8">
-              <div className="mb-4">
-                <h2 className="text-xl font-semibold mb-2">{selectedSubdomain.name}</h2>
-                <p className="text-muted-foreground">{selectedSubdomain.description}</p>
+            <div className="mb-12">
+              <div className="mb-5">
+                <h2 className="text-3xl font-bold text-gray-900 mb-2 tracking-tight">{selectedSubdomain.name}</h2>
+                <p className="text-base text-gray-600 leading-relaxed">{selectedSubdomain.description}</p>
               </div>
 
-              <div className="grid grid-cols-1 gap-3">
+              <div className="grid grid-cols-1 gap-4 mt-8">
                 {selectedSubdomain.useCases.map((useCase) => (
                   <Card
                     key={useCase.id}
-                    className="cursor-pointer hover:shadow-md transition-all duration-200 hover:border-primary/50 group"
+                    className="group cursor-pointer transition-all duration-300 border-2 border-gray-200 bg-white hover:border-green-400 hover:shadow-xl hover:shadow-green-100/50 hover:-translate-y-0.5"
                     onClick={() => handleUseCaseClick(useCase)}
                   >
-                    <CardHeader className="pb-3">
-                      <div className="flex items-center justify-between">
-                        <CardTitle className="text-base">{useCase.name}</CardTitle>
-                        <Button variant="ghost" size="sm" className="group-hover:bg-primary group-hover:text-primary-foreground">
+                    <CardHeader className="pb-4 pt-5">
+                      <div className="flex items-center justify-between gap-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-3 h-3 rounded-full bg-green-500 shadow-sm shadow-green-500/50" />
+                          <CardTitle className="text-lg font-semibold text-gray-900 group-hover:text-green-700 transition-colors">
+                            {useCase.name}
+                          </CardTitle>
+                        </div>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white shadow-md shadow-green-500/30 group-hover:shadow-lg group-hover:shadow-green-500/40 transition-all duration-300 rounded-lg px-4 py-2"
+                        >
                           <Users className="h-4 w-4 mr-2" />
                           Create Panel
                         </Button>

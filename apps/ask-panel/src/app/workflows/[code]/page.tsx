@@ -65,7 +65,7 @@ export default function UseCaseDetailPage() {
             <div className="flex items-center justify-between">
               <Button variant="ghost" onClick={() => router.push('/workflows')}>
                 <ArrowLeft className="w-4 h-4 mr-2" />
-                Back to Workflows
+                Back to Use Cases
               </Button>
               <Button onClick={() => router.push(`/workflows/${code}/execute`)}>
                 <Play className="w-4 h-4 mr-2" />
@@ -341,8 +341,8 @@ function WorkflowDetails({ workflow }: WorkflowDetailsProps) {
 
                       {/* Icons for AI/Human involvement */}
                       <div className="flex items-center gap-1">
-                        <Bot className="w-4 h-4 text-blue-600" title="AI Agent" />
-                        <Users className="w-4 h-4 text-green-600" title="Human Review" />
+                        <Bot className="w-4 h-4 text-blue-600" />
+                        <Users className="w-4 h-4 text-green-600" />
                       </div>
                     </div>
                   </div>

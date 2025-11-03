@@ -20,7 +20,7 @@ langsmith==0.1.129
 
 # Database & Vector Store
 supabase==2.3.0
-pinecone-client==2.2.4
+pinecone==7.3.0  # Fixed: was pinecone-client==2.2.4 (old package)
 
 # HTTP & Utilities
 httpx>=0.24.0,<0.25.0  # Compatible with supabase==2.3.0
@@ -59,7 +59,6 @@ python-jose[cryptography]==3.3.0
 passlib[bcrypt]==1.7.4
 
 # Shared Kernel (Multi-Tenant Core)
--e ../shared-kernel[dev]
 
 # Development
 pytest==7.4.3

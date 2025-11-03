@@ -57,6 +57,10 @@ interface PromptInputProps {
   availableRagDomains?: string[];
   selectedRagDomains?: string[];
   onSelectedRagDomainsChange?: (domains: string[]) => void;
+  
+  // LangGraph (NEW)
+  useLangGraph?: boolean;
+  onUseLangGraphChange?: (value: boolean) => void;
 }
 
 export function PromptInput({
@@ -92,6 +96,8 @@ export function PromptInput({
   availableRagDomains = [],
   selectedRagDomains = [],
   onSelectedRagDomainsChange,
+  useLangGraph = false,
+  onUseLangGraphChange,
 }: PromptInputProps) {
   const fallbackTextareaRef = useRef<HTMLTextAreaElement>(null);
   const internalTextareaRef = textareaRef ?? fallbackTextareaRef;
@@ -358,6 +364,22 @@ export function PromptInput({
             <Bot className="w-3 h-3" />
             Autonomous
           </button>
+
+          {/* LangGraph Toggle (NEW) */}
+          {onUseLangGraphChange && (
+            <button
+              onClick={() => onUseLangGraphChange(!useLangGraph)}
+              className={`flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-md transition-all border ${
+                useLangGraph
+                  ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white border-emerald-600 hover:from-emerald-600 hover:to-teal-600 shadow-sm'
+                  : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:bg-gray-300 dark:hover:bg-gray-600'
+              }`}
+              title={useLangGraph ? 'LangGraph: ON - Workflow orchestration with state management' : 'LangGraph: OFF - Standard mode'}
+            >
+              <Sparkles className="w-3 h-3" />
+              LangGraph
+            </button>
+          )}
 
           {/* RAG Dropdown */}
           {onEnableRAGChange && (

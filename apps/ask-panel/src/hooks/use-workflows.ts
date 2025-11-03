@@ -4,6 +4,7 @@
 
 import { useQuery, UseQueryResult } from '@tanstack/react-query';
 import { useTenant } from './use-tenant';
+import { getSupabaseClient } from '@/lib/supabase/client';
 import type {
   UseCase,
   UseCaseWithWorkflows,
@@ -25,14 +26,14 @@ import type {
  * Fetch all use cases with optional filters
  */
 export function useUseCases(filters?: UseCaseFilters): UseQueryResult<UseCase[]> {
-  const { db, tenantId } = useTenant();
+  const { tenantId } = useTenant();
 
   return useQuery({
     queryKey: ['useCases', tenantId, filters],
     queryFn: async () => {
-      if (!db) throw new Error('Database not initialized');
+      const supabase = getSupabaseClient();
 
-      let query = db.supabase
+      let query = supabase
         .from('dh_use_case')
         .select('*')
         .eq('tenant_id', tenantId);
@@ -56,7 +57,7 @@ export function useUseCases(filters?: UseCaseFilters): UseQueryResult<UseCase[]>
       if (error) throw error;
       return data as UseCase[];
     },
-    enabled: !!db && !!tenantId,
+    enabled: !!tenantId,
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 }
@@ -65,14 +66,14 @@ export function useUseCases(filters?: UseCaseFilters): UseQueryResult<UseCase[]>
  * Fetch a single use case by code
  */
 export function useUseCase(code: string): UseQueryResult<UseCase> {
-  const { db, tenantId } = useTenant();
+  const { tenantId } = useTenant();
 
   return useQuery({
     queryKey: ['useCase', tenantId, code],
     queryFn: async () => {
-      if (!db) throw new Error('Database not initialized');
+      const supabase = getSupabaseClient();
 
-      const { data, error } = await db.supabase
+      const { data, error } = await supabase
         .from('dh_use_case')
         .select('*')
         .eq('tenant_id', tenantId)
@@ -82,7 +83,7 @@ export function useUseCase(code: string): UseQueryResult<UseCase> {
       if (error) throw error;
       return data as UseCase;
     },
-    enabled: !!db && !!tenantId && !!code,
+    enabled: !!tenantId && !!code,
   });
 }
 
@@ -90,15 +91,15 @@ export function useUseCase(code: string): UseQueryResult<UseCase> {
  * Fetch use case with all workflows
  */
 export function useUseCaseWithWorkflows(code: string): UseQueryResult<UseCaseWithWorkflows> {
-  const { db, tenantId } = useTenant();
+  const { tenantId } = useTenant();
 
   return useQuery({
     queryKey: ['useCaseWithWorkflows', tenantId, code],
     queryFn: async () => {
-      if (!db) throw new Error('Database not initialized');
+      const supabase = getSupabaseClient();
 
       // Fetch use case
-      const { data: useCase, error: useCaseError } = await db.supabase
+      const { data: useCase, error: useCaseError } = await supabase
         .from('dh_use_case')
         .select('*')
         .eq('tenant_id', tenantId)
@@ -108,7 +109,7 @@ export function useUseCaseWithWorkflows(code: string): UseQueryResult<UseCaseWit
       if (useCaseError) throw useCaseError;
 
       // Fetch workflows
-      const { data: workflows, error: workflowsError } = await db.supabase
+      const { data: workflows, error: workflowsError } = await supabase
         .from('dh_workflow')
         .select('*')
         .eq('tenant_id', tenantId)
@@ -118,7 +119,7 @@ export function useUseCaseWithWorkflows(code: string): UseQueryResult<UseCaseWit
       if (workflowsError) throw workflowsError;
 
       // Fetch task counts and durations
-      const { data: taskStats, error: taskStatsError } = await db.supabase
+      const { data: taskStats, error: taskStatsError } = await supabase
         .from('dh_task')
         .select('workflow_id, extra')
         .eq('tenant_id', tenantId)
@@ -139,7 +140,7 @@ export function useUseCaseWithWorkflows(code: string): UseQueryResult<UseCaseWit
         total_duration_minutes: totalDuration,
       } as UseCaseWithWorkflows;
     },
-    enabled: !!db && !!tenantId && !!code,
+    enabled: !!tenantId && !!code,
   });
 }
 
@@ -151,15 +152,15 @@ export function useUseCaseWithWorkflows(code: string): UseQueryResult<UseCaseWit
  * Fetch workflow with all tasks
  */
 export function useWorkflowWithTasks(workflowId: string): UseQueryResult<WorkflowWithTasks> {
-  const { db, tenantId } = useTenant();
+  const { tenantId } = useTenant();
 
   return useQuery({
     queryKey: ['workflowWithTasks', tenantId, workflowId],
     queryFn: async () => {
-      if (!db) throw new Error('Database not initialized');
+      const supabase = getSupabaseClient();
 
       // Fetch workflow
-      const { data: workflow, error: workflowError } = await db.supabase
+      const { data: workflow, error: workflowError } = await supabase
         .from('dh_workflow')
         .select('*')
         .eq('tenant_id', tenantId)
@@ -169,7 +170,7 @@ export function useWorkflowWithTasks(workflowId: string): UseQueryResult<Workflo
       if (workflowError) throw workflowError;
 
       // Fetch use case
-      const { data: useCase, error: useCaseError } = await db.supabase
+      const { data: useCase, error: useCaseError } = await supabase
         .from('dh_use_case')
         .select('*')
         .eq('tenant_id', tenantId)
@@ -179,7 +180,7 @@ export function useWorkflowWithTasks(workflowId: string): UseQueryResult<Workflo
       if (useCaseError) throw useCaseError;
 
       // Fetch tasks
-      const { data: tasks, error: tasksError } = await db.supabase
+      const { data: tasks, error: tasksError } = await supabase
         .from('dh_task')
         .select('*')
         .eq('tenant_id', tenantId)
@@ -194,7 +195,7 @@ export function useWorkflowWithTasks(workflowId: string): UseQueryResult<Workflo
         tasks: tasks as Task[],
       } as WorkflowWithTasks;
     },
-    enabled: !!db && !!tenantId && !!workflowId,
+    enabled: !!tenantId && !!workflowId,
   });
 }
 
@@ -206,15 +207,15 @@ export function useWorkflowWithTasks(workflowId: string): UseQueryResult<Workflo
  * Fetch task with all details (dependencies, agents, personas, etc.)
  */
 export function useTaskWithDetails(taskId: string): UseQueryResult<TaskWithDetails> {
-  const { db, tenantId } = useTenant();
+  const { tenantId } = useTenant();
 
   return useQuery({
     queryKey: ['taskWithDetails', tenantId, taskId],
     queryFn: async () => {
-      if (!db) throw new Error('Database not initialized');
+      const supabase = getSupabaseClient();
 
       // Fetch task
-      const { data: task, error: taskError } = await db.supabase
+      const { data: task, error: taskError } = await supabase
         .from('dh_task')
         .select('*')
         .eq('tenant_id', tenantId)
@@ -224,7 +225,7 @@ export function useTaskWithDetails(taskId: string): UseQueryResult<TaskWithDetai
       if (taskError) throw taskError;
 
       // Fetch workflow
-      const { data: workflow, error: workflowError } = await db.supabase
+      const { data: workflow, error: workflowError } = await supabase
         .from('dh_workflow')
         .select('*')
         .eq('tenant_id', tenantId)
@@ -241,11 +242,11 @@ export function useTaskWithDetails(taskId: string): UseQueryResult<TaskWithDetai
         { data: tools },
         { data: ragSources },
       ] = await Promise.all([
-        db.supabase.from('dh_task_dependency').select('*').eq('task_id', taskId),
-        db.supabase.from('dh_task_agent').select('*').eq('task_id', taskId).order('execution_order'),
-        db.supabase.from('dh_task_persona').select('*').eq('task_id', taskId),
-        db.supabase.from('dh_task_tool').select('*').eq('task_id', taskId),
-        db.supabase.from('dh_task_rag').select('*').eq('task_id', taskId),
+        supabase.from('dh_task_dependency').select('*').eq('task_id', taskId),
+        supabase.from('dh_task_agent').select('*').eq('task_id', taskId).order('execution_order'),
+        supabase.from('dh_task_persona').select('*').eq('task_id', taskId),
+        supabase.from('dh_task_tool').select('*').eq('task_id', taskId),
+        supabase.from('dh_task_rag').select('*').eq('task_id', taskId),
       ]);
 
       return {
@@ -258,7 +259,7 @@ export function useTaskWithDetails(taskId: string): UseQueryResult<TaskWithDetai
         rag_sources: ragSources || [],
       } as TaskWithDetails;
     },
-    enabled: !!db && !!tenantId && !!taskId,
+    enabled: !!tenantId && !!taskId,
   });
 }
 
@@ -270,15 +271,15 @@ export function useTaskWithDetails(taskId: string): UseQueryResult<TaskWithDetai
  * Fetch domain statistics
  */
 export function useDomainStatistics(): UseQueryResult<DomainStatistics[]> {
-  const { db, tenantId } = useTenant();
+  const { tenantId } = useTenant();
 
   return useQuery({
     queryKey: ['domainStatistics', tenantId],
     queryFn: async () => {
-      if (!db) throw new Error('Database not initialized');
+      const supabase = getSupabaseClient();
 
       // Fetch all use cases
-      const { data: useCases, error: useCasesError } = await db.supabase
+      const { data: useCases, error: useCasesError } = await supabase
         .from('dh_use_case')
         .select('*')
         .eq('tenant_id', tenantId);
@@ -318,7 +319,7 @@ export function useDomainStatistics(): UseQueryResult<DomainStatistics[]> {
           .map(uc => uc.id);
 
         // Count workflows
-        const { count: workflowCount } = await db.supabase
+        const { count: workflowCount } = await supabase
           .from('dh_workflow')
           .select('*', { count: 'exact', head: true })
           .eq('tenant_id', tenantId)
@@ -327,14 +328,14 @@ export function useDomainStatistics(): UseQueryResult<DomainStatistics[]> {
         stats.workflow_count = workflowCount || 0;
 
         // Count tasks
-        const { data: workflows } = await db.supabase
+        const { data: workflows } = await supabase
           .from('dh_workflow')
           .select('id')
           .eq('tenant_id', tenantId)
           .in('use_case_id', domainUseCaseIds);
 
         if (workflows && workflows.length > 0) {
-          const { count: taskCount } = await db.supabase
+          const { count: taskCount } = await supabase
             .from('dh_task')
             .select('*', { count: 'exact', head: true })
             .eq('tenant_id', tenantId)
@@ -346,7 +347,7 @@ export function useDomainStatistics(): UseQueryResult<DomainStatistics[]> {
 
       return Array.from(domainMap.values()) as DomainStatistics[];
     },
-    enabled: !!db && !!tenantId,
+    enabled: !!tenantId,
     staleTime: 10 * 60 * 1000, // 10 minutes
   });
 }
@@ -355,12 +356,12 @@ export function useDomainStatistics(): UseQueryResult<DomainStatistics[]> {
  * Fetch foundation entity statistics
  */
 export function useFoundationStatistics(): UseQueryResult<FoundationStatistics> {
-  const { db, tenantId } = useTenant();
+  const { tenantId } = useTenant();
 
   return useQuery({
     queryKey: ['foundationStatistics', tenantId],
     queryFn: async () => {
-      if (!db) throw new Error('Database not initialized');
+      const supabase = getSupabaseClient();
 
       const [
         { count: agentCount },
@@ -369,11 +370,11 @@ export function useFoundationStatistics(): UseQueryResult<FoundationStatistics> 
         { count: ragCount },
         { count: promptCount },
       ] = await Promise.all([
-        db.supabase.from('dh_agent').select('*', { count: 'exact', head: true }).eq('tenant_id', tenantId),
-        db.supabase.from('dh_persona').select('*', { count: 'exact', head: true }).eq('tenant_id', tenantId),
-        db.supabase.from('dh_tool').select('*', { count: 'exact', head: true }).eq('tenant_id', tenantId),
-        db.supabase.from('dh_rag_source').select('*', { count: 'exact', head: true }).eq('tenant_id', tenantId),
-        db.supabase.from('prompts').select('*', { count: 'exact', head: true }).eq('tenant_id', tenantId),
+        supabase.from('dh_agent').select('*', { count: 'exact', head: true }).eq('tenant_id', tenantId),
+        supabase.from('dh_persona').select('*', { count: 'exact', head: true }).eq('tenant_id', tenantId),
+        supabase.from('dh_tool').select('*', { count: 'exact', head: true }).eq('tenant_id', tenantId),
+        supabase.from('dh_rag_source').select('*', { count: 'exact', head: true }).eq('tenant_id', tenantId),
+        supabase.from('prompts').select('*', { count: 'exact', head: true }).eq('tenant_id', tenantId),
       ]);
 
       return {
@@ -384,7 +385,7 @@ export function useFoundationStatistics(): UseQueryResult<FoundationStatistics> 
         total_prompts: promptCount || 0,
       } as FoundationStatistics;
     },
-    enabled: !!db && !!tenantId,
+    enabled: !!tenantId,
     staleTime: 10 * 60 * 1000, // 10 minutes
   });
 }

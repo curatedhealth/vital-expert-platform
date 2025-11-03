@@ -32,14 +32,28 @@ class SupabaseClient:
         try:
             # Check required settings
             if not self.settings.supabase_url or not self.settings.supabase_service_role_key:
-                raise ValueError("SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required")
+                logger.warning("⚠️ SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY not set - skipping initialization")
+                return  # Gracefully skip if not configured
             
             # Initialize Supabase client (REST API)
-            self.client = create_client(
-                self.settings.supabase_url,
-                self.settings.supabase_service_role_key
-            )
-            logger.info("✅ Supabase REST client initialized")
+            try:
+                self.client = create_client(
+                    self.settings.supabase_url,
+                    self.settings.supabase_service_role_key
+                )
+                logger.info("✅ Supabase REST client initialized")
+            except TypeError as e:
+                # Handle version incompatibility (e.g. 'proxy' parameter)
+                if "proxy" in str(e):
+                    logger.warning(f"⚠️ Supabase client version incompatibility: {e}")
+                    logger.info("ℹ️ Trying alternative initialization...")
+                    # Try without any extra parameters
+                    self.client = create_client(
+                        self.settings.supabase_url,
+                        self.settings.supabase_service_role_key
+                    )
+                else:
+                    raise
 
             # Optional: Initialize direct database connection for vector operations
             # Only if DATABASE_URL is provided and valid

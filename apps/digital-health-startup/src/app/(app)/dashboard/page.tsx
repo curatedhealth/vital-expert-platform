@@ -1,277 +1,576 @@
+/**
+ * Dashboard Page
+ * Central hub for all 4 services with strategic and operational views
+ */
+
 'use client';
 
-import {
-  BarChart3,
-  Users,
-  FileText,
-  MessageSquare,
-  TrendingUp,
-  Clock,
-  CheckCircle,
-  AlertTriangle,
-  Brain,
-  Target,
-  TestTube,
-  Play,
-  BookOpen,
-} from 'lucide-react';
-import Link from 'next/link';
-
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@vital/ui';
 import { Button } from '@vital/ui';
-import { Card, CardContent, CardHeader, CardTitle } from '@vital/ui';
-import { Progress } from '@vital/ui';
-
-const vitalPhases = [
-  {
-    name: 'Vision',
-    icon: Brain,
-    progress: 85,
-    color: 'text-trust-blue',
-    bgColor: 'bg-trust-blue/10',
-    description: 'Strategic planning and market analysis',
-  },
-  {
-    name: 'Intelligence',
-    icon: Target,
-    progress: 65,
-    color: 'text-progress-teal',
-    bgColor: 'bg-progress-teal/10',
-    description: 'AI integration and smart development',
-  },
-  {
-    name: 'Trials',
-    icon: TestTube,
-    progress: 40,
-    color: 'text-clinical-green',
-    bgColor: 'bg-clinical-green/10',
-    description: 'Clinical trials and validation',
-  },
-  {
-    name: 'Activation',
-    icon: Play,
-    progress: 20,
-    color: 'text-regulatory-gold',
-    bgColor: 'bg-regulatory-gold/10',
-    description: 'Market deployment and launch',
-  },
-  {
-    name: 'Learning',
-    icon: BookOpen,
-    progress: 10,
-    color: 'text-market-purple',
-    bgColor: 'bg-market-purple/10',
-    description: 'Continuous learning and optimization',
-  },
-];
-
-const recentActivities = [
-  {
-    id: 1,
-    type: 'project',
-    title: 'Digital Therapeutics Platform updated',
-    description: 'Clinical trial design completed',
-    time: '2 hours ago',
-    icon: CheckCircle,
-    color: 'text-clinical-green',
-  },
-  {
-    id: 2,
-    type: 'chat',
-    title: 'AI Consultation with Regulatory Expert',
-    description: 'FDA pathway discussion',
-    time: '4 hours ago',
-    icon: MessageSquare,
-    color: 'text-trust-blue',
-  },
-  {
-    id: 3,
-    type: 'document',
-    title: 'New regulatory document uploaded',
-    description: '510(k) submission guidelines',
-    time: '1 day ago',
-    icon: FileText,
-    color: 'text-medical-gray',
-  },
-  {
-    id: 4,
-    type: 'alert',
-    title: 'Milestone deadline approaching',
-    description: 'Clinical validation due in 5 days',
-    time: '2 days ago',
-    icon: AlertTriangle,
-    color: 'text-regulatory-gold',
-  },
-];
+import { Badge } from '@vital/ui';
+import {
+  MessageSquare,
+  Users,
+  GitBranch,
+  Box,
+  Play,
+  Clock,
+  CheckCircle2,
+  AlertCircle,
+  TrendingUp,
+  Activity,
+  FileText,
+  Zap,
+  BarChart3,
+  ArrowRight,
+} from 'lucide-react';
 
 export default function DashboardPage() {
+  const router = useRouter();
+  const [activeTab, setActiveTab] = useState('overview');
+
   return (
-    <div className="space-y-8">
-      {/* Welcome Section */}
-      <div className="bg-gradient-to-r from-trust-blue to-progress-teal rounded-lg p-6 text-white">
-        <h1 className="text-3xl font-bold mb-2">Welcome to VITALpath</h1>
-        <p className="text-trust-blue-light text-lg">
-          Your comprehensive healthcare technology development platform
-        </p>
-      </div>
-
-      {/* Key Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-medical-gray">Active Projects</p>
-                <p className="text-2xl font-bold text-deep-charcoal">3</p>
-              </div>
-              <div className="h-8 w-8 bg-trust-blue/10 rounded-lg flex items-center justify-center">
-                <BarChart3 className="h-4 w-4 text-trust-blue" />
-              </div>
-            </div>
-            <div className="mt-4 flex items-center text-sm">
-              <TrendingUp className="h-4 w-4 text-clinical-green mr-1" />
-              <span className="text-clinical-green">+2 from last month</span>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-medical-gray">Team Members</p>
-                <p className="text-2xl font-bold text-deep-charcoal">12</p>
-              </div>
-              <div className="h-8 w-8 bg-progress-teal/10 rounded-lg flex items-center justify-center">
-                <Users className="h-4 w-4 text-progress-teal" />
-              </div>
-            </div>
-            <div className="mt-4 flex items-center text-sm">
-              <Clock className="h-4 w-4 text-medical-gray mr-1" />
-              <span className="text-medical-gray">8 active this week</span>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-medical-gray">Documents</p>
-                <p className="text-2xl font-bold text-deep-charcoal">28</p>
-              </div>
-              <div className="h-8 w-8 bg-clinical-green/10 rounded-lg flex items-center justify-center">
-                <FileText className="h-4 w-4 text-clinical-green" />
-              </div>
-            </div>
-            <div className="mt-4 flex items-center text-sm">
-              <CheckCircle className="h-4 w-4 text-clinical-green mr-1" />
-              <span className="text-clinical-green">5 approved this week</span>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-medical-gray">AI Consultations</p>
-                <p className="text-2xl font-bold text-deep-charcoal">47</p>
-              </div>
-              <div className="h-8 w-8 bg-market-purple/10 rounded-lg flex items-center justify-center">
-                <MessageSquare className="h-4 w-4 text-market-purple" />
-              </div>
-            </div>
-            <div className="mt-4 flex items-center text-sm">
-              <TrendingUp className="h-4 w-4 text-clinical-green mr-1" />
-              <span className="text-clinical-green">+12 this week</span>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* VITAL Framework Progress */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Brain className="h-5 w-5 text-trust-blue" />
-            VITAL Framework Progress
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-            {vitalPhases.map((phase) => (
-              <div key={phase.name} className="space-y-3">
+    <div className="min-h-screen bg-background">
+      {/* Main Content */}
+      <main className="max-w-7xl mx-auto px-6 py-8 space-y-8">
+        
+        {/* Service Overview - 4 Main Services */}
+        <section>
+          <h2 className="text-2xl font-semibold mb-4">Your Services</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            
+            {/* Ask Expert Service */}
+            <Card className="cursor-pointer hover:shadow-lg transition-all border-2 hover:border-blue-500"
+                  onClick={() => router.push('/ask-expert')}>
+              <CardHeader>
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div className={`p-2 rounded-lg ${phase.bgColor}`}>
-                      <phase.icon className={`h-4 w-4 ${phase.color}`} />
-                    </div>
-                    <span className="font-medium text-sm">{phase.name}</span>
-                  </div>
-                  <span className="text-sm font-medium">{phase.progress}%</span>
+                  <MessageSquare className="w-10 h-10 text-blue-600" />
+                  <Badge variant="secondary">Active</Badge>
                 </div>
-                <Progress value={phase.progress} className="h-2" />
-                <p className="text-xs text-medical-gray">{phase.description}</p>
-              </div>
-            ))}
+                <CardTitle className="mt-4">Ask Expert</CardTitle>
+                <CardDescription>1:1 Expert Consultation</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Total Chats</span>
+                    <span className="font-semibold">47</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Active Now</span>
+                    <span className="font-semibold text-green-600">3</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">This Week</span>
+                    <span className="font-semibold">+12</span>
+                  </div>
+                  <div className="border-t pt-3 mt-3">
+                    <Button className="w-full" size="sm" onClick={(e) => {
+                      e.stopPropagation();
+                      router.push('/ask-expert');
+                    }}>
+                      <MessageSquare className="w-4 h-4 mr-2" />
+                      Start Chat
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Ask Panel Service */}
+            <Card className="cursor-pointer hover:shadow-lg transition-all border-2 hover:border-purple-500"
+                  onClick={() => router.push('/ask-panel')}>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <Users className="w-10 h-10 text-purple-600" />
+                  <Badge variant="secondary" className="bg-amber-100 text-amber-700">
+                    2 Running
+                  </Badge>
+                </div>
+                <CardTitle className="mt-4">Ask Panel</CardTitle>
+                <CardDescription>Multi-Expert Advisory Board</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Total Panels</span>
+                    <span className="font-semibold">12</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Running</span>
+                    <span className="font-semibold text-amber-600">2</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Avg Consensus</span>
+                    <span className="font-semibold">87%</span>
+                  </div>
+                  <div className="border-t pt-3 mt-3">
+                    <Button className="w-full" size="sm" onClick={(e) => {
+                      e.stopPropagation();
+                      router.push('/ask-panel');
+                    }}>
+                      <Users className="w-4 h-4 mr-2" />
+                      New Panel
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Workflows Service */}
+            <Card className="cursor-pointer hover:shadow-lg transition-all border-2 hover:border-green-500"
+                  onClick={() => router.push('/workflows')}>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <GitBranch className="w-10 h-10 text-green-600" />
+                  <Badge variant="secondary" className="bg-blue-100 text-blue-700">
+                    3 In Progress
+                  </Badge>
+                </div>
+                <CardTitle className="mt-4">Workflows</CardTitle>
+                <CardDescription>Guided Multi-Step Processes</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Total Workflows</span>
+                    <span className="font-semibold">8</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">In Progress</span>
+                    <span className="font-semibold text-blue-600">3</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Avg Complete</span>
+                    <span className="font-semibold">85%</span>
+                  </div>
+                  <div className="border-t pt-3 mt-3">
+                    <Button className="w-full" size="sm" onClick={(e) => {
+                      e.stopPropagation();
+                      router.push('/workflows');
+                    }}>
+                      <Play className="w-4 h-4 mr-2" />
+                      Start Workflow
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Solution Builder Service */}
+            <Card className="cursor-pointer hover:shadow-lg transition-all border-2 hover:border-orange-500"
+                  onClick={() => router.push('/solution-builder')}>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <Box className="w-10 h-10 text-orange-600" />
+                  <Badge variant="secondary" className="bg-purple-100 text-purple-700">
+                    1 Draft
+                  </Badge>
+                </div>
+                <CardTitle className="mt-4">Solution Builder</CardTitle>
+                <CardDescription>Build Custom Solutions</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Total Solutions</span>
+                    <span className="font-semibold">3</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">In Draft</span>
+                    <span className="font-semibold text-purple-600">1</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Published</span>
+                    <span className="font-semibold">2</span>
+                  </div>
+                  <div className="border-t pt-3 mt-3">
+                    <Button className="w-full" size="sm" onClick={(e) => {
+                      e.stopPropagation();
+                      router.push('/solution-builder');
+                    }}>
+                      <Box className="w-4 h-4 mr-2" />
+                      Build Solution
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </div>
-        </CardContent>
-      </Card>
+        </section>
 
-      {/* Recent Activity and Quick Actions */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            <CardTitle>Recent Activity</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {recentActivities.map((activity) => (
-                <div key={activity.id} className="flex items-start gap-3">
-                  <div className={`p-2 rounded-lg bg-gray-50`}>
-                    <activity.icon className={`h-4 w-4 ${activity.color}`} />
-                  </div>
-                  <div className="flex-1 space-y-1">
-                    <p className="text-sm font-medium text-deep-charcoal">
-                      {activity.title}
-                    </p>
-                    <p className="text-sm text-medical-gray">
-                      {activity.description}
-                    </p>
-                    <p className="text-xs text-medical-gray">{activity.time}</p>
+        {/* Tabs for different views */}
+        <section>
+          <div className="border-b">
+            <nav className="flex gap-4">
+              <button
+                onClick={() => setActiveTab('overview')}
+                className={`pb-3 px-1 border-b-2 font-medium transition-colors ${
+                  activeTab === 'overview'
+                    ? 'border-primary text-primary'
+                    : 'border-transparent text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                Overview
+              </button>
+              <button
+                onClick={() => setActiveTab('activity')}
+                className={`pb-3 px-1 border-b-2 font-medium transition-colors ${
+                  activeTab === 'activity'
+                    ? 'border-primary text-primary'
+                    : 'border-transparent text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                Recent Activity
+              </button>
+              <button
+                onClick={() => setActiveTab('insights')}
+                className={`pb-3 px-1 border-b-2 font-medium transition-colors ${
+                  activeTab === 'insights'
+                    ? 'border-primary text-primary'
+                    : 'border-transparent text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                Insights
+              </button>
+            </nav>
+          </div>
+
+          {/* Tab Content */}
+          <div className="mt-6">
+            {activeTab === 'overview' && (
+              <div className="space-y-6">
+                {/* Attention Required */}
+                <div>
+                  <h3 className="text-xl font-semibold mb-4">Needs Your Attention</h3>
+                  <div className="space-y-3">
+                    <Card className="border-l-4 border-l-amber-500">
+                      <CardContent className="p-4">
+                        <div className="flex items-start gap-4">
+                          <AlertCircle className="w-5 h-5 text-amber-600 mt-0.5" />
+                          <div className="flex-1">
+                            <div className="flex items-start justify-between">
+                              <div>
+                                <h4 className="font-semibold">Panel: Biomarker Selection</h4>
+                                <p className="text-sm text-muted-foreground mt-1">
+                                  4 of 5 experts responded • Consensus: 78%
+                                </p>
+                              </div>
+                              <Badge variant="outline">High Priority</Badge>
+                            </div>
+                            <Button variant="outline" size="sm" className="mt-3"
+                                    onClick={() => router.push('/ask-panel')}>
+                              View Discussion
+                              <ArrowRight className="w-4 h-4 ml-2" />
+                            </Button>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    <Card className="border-l-4 border-l-blue-500">
+                      <CardContent className="p-4">
+                        <div className="flex items-start gap-4">
+                          <Clock className="w-5 h-5 text-blue-600 mt-0.5" />
+                          <div className="flex-1">
+                            <div className="flex items-start justify-between">
+                              <div>
+                                <h4 className="font-semibold">Workflow: Target Product Profile</h4>
+                                <p className="text-sm text-muted-foreground mt-1">
+                                  Step 5 of 7 paused • Awaiting your input
+                                </p>
+                              </div>
+                              <Badge variant="outline">Action Required</Badge>
+                            </div>
+                            <Button variant="outline" size="sm" className="mt-3"
+                                    onClick={() => router.push('/workflows')}>
+                              Continue Workflow
+                              <ArrowRight className="w-4 h-4 ml-2" />
+                            </Button>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    <Card className="border-l-4 border-l-green-500">
+                      <CardContent className="p-4">
+                        <div className="flex items-start gap-4">
+                          <MessageSquare className="w-5 h-5 text-green-600 mt-0.5" />
+                          <div className="flex-1">
+                            <div className="flex items-start justify-between">
+                              <div>
+                                <h4 className="font-semibold">Expert Chat: Regulatory Strategy</h4>
+                                <p className="text-sm text-muted-foreground mt-1">
+                                  Waiting for expert response • 15 minutes ago
+                                </p>
+                              </div>
+                              <Badge variant="outline">Medium Priority</Badge>
+                            </div>
+                            <Button variant="outline" size="sm" className="mt-3"
+                                    onClick={() => router.push('/ask-expert')}>
+                              View Chat
+                              <ArrowRight className="w-4 h-4 ml-2" />
+                            </Button>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
                   </div>
                 </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Quick Actions</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <Button className="w-full justify-start bg-trust-blue hover:bg-trust-blue/90">
-              <MessageSquare className="mr-2 h-4 w-4" />
-              Start AI Consultation
+                {/* Quick Start */}
+                <div>
+                  <h3 className="text-xl font-semibold mb-4">Popular Workflows</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <Card className="hover:shadow-md transition-shadow">
+                      <CardHeader>
+                        <CardTitle className="text-lg flex items-center gap-2">
+                          <FileText className="w-5 h-5 text-blue-600" />
+                          Target Product Profile
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <p className="text-sm text-muted-foreground mb-4">
+                          7 steps • 2 hours average • Used 24 times
+                        </p>
+                        <Button variant="outline" size="sm" className="w-full">
+                          <Play className="w-4 h-4 mr-2" />
+                          Start Workflow
+                        </Button>
+                      </CardContent>
+                    </Card>
+
+                    <Card className="hover:shadow-md transition-shadow">
+                      <CardHeader>
+                        <CardTitle className="text-lg flex items-center gap-2">
+                          <Zap className="w-5 h-5 text-green-600" />
+                          Endpoint Selection
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <p className="text-sm text-muted-foreground mb-4">
+                          5 steps • 1.5 hours average • Used 18 times
+                        </p>
+                        <Button variant="outline" size="sm" className="w-full">
+                          <Play className="w-4 h-4 mr-2" />
+                          Start Workflow
+                        </Button>
+                      </CardContent>
+                    </Card>
+
+                    <Card className="hover:shadow-md transition-shadow">
+                      <CardHeader>
+                        <CardTitle className="text-lg flex items-center gap-2">
+                          <BarChart3 className="w-5 h-5 text-purple-600" />
+                          Protocol Design
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <p className="text-sm text-muted-foreground mb-4">
+                          9 steps • 3 hours average • Used 15 times
+                        </p>
+                        <Button variant="outline" size="sm" className="w-full">
+                          <Play className="w-4 h-4 mr-2" />
+                          Start Workflow
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'activity' && (
+              <Card>
+                <CardContent className="p-6">
+                  <div className="space-y-6">
+                    <div className="flex items-start gap-4">
+                      <div className="w-2 h-2 rounded-full bg-green-500 mt-2" />
+                      <div className="flex-1">
+                        <div className="flex items-center justify-between">
+                          <h4 className="font-semibold">Expert Chat: FDA 510k pathway</h4>
+                          <span className="text-sm text-muted-foreground">2 min ago</span>
+                        </div>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          Regulatory Expert responded
+                        </p>
+                        <Button variant="link" size="sm" className="p-0 h-auto mt-2">
+                          View Chat
+                        </Button>
+                      </div>
+                    </div>
+
+                    <div className="border-t pt-6">
+                      <div className="flex items-start gap-4">
+                        <div className="w-2 h-2 rounded-full bg-blue-500 mt-2" />
+                        <div className="flex-1">
+                          <div className="flex items-center justify-between">
+                            <h4 className="font-semibold">Panel Discussion: Primary endpoint</h4>
+                            <span className="text-sm text-muted-foreground">15 min ago</span>
+                          </div>
+                          <p className="text-sm text-muted-foreground mt-1">
+                            Dr. Sarah Chen added response
+                          </p>
+                          <Button variant="link" size="sm" className="p-0 h-auto mt-2">
+                            Join Discussion
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="border-t pt-6">
+                      <div className="flex items-start gap-4">
+                        <div className="w-2 h-2 rounded-full bg-purple-500 mt-2" />
+                        <div className="flex-1">
+                          <div className="flex items-center justify-between">
+                            <h4 className="font-semibold">Workflow Completed: Competitive Analysis</h4>
+                            <span className="text-sm text-muted-foreground">1 hour ago</span>
+                          </div>
+                          <p className="text-sm text-muted-foreground mt-1">
+                            Report generated • 12 pages
+                          </p>
+                          <Button variant="link" size="sm" className="p-0 h-auto mt-2">
+                            Download Report
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="border-t pt-6">
+                      <div className="flex items-start gap-4">
+                        <div className="w-2 h-2 rounded-full bg-orange-500 mt-2" />
+                        <div className="flex-1">
+                          <div className="flex items-center justify-between">
+                            <h4 className="font-semibold">Solution Published: Phase 2 Trial Design</h4>
+                            <span className="text-sm text-muted-foreground">2 hours ago</span>
+                          </div>
+                          <p className="text-sm text-muted-foreground mt-1">
+                            Ready to use
+                          </p>
+                          <Button variant="link" size="sm" className="p-0 h-auto mt-2">
+                            View Solution
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {activeTab === 'insights' && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <TrendingUp className="w-5 h-5 text-green-600" />
+                      This Week
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-muted-foreground">Expert Consultations</span>
+                        <span className="font-semibold">+12</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-muted-foreground">Panels Created</span>
+                        <span className="font-semibold">+5</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-muted-foreground">Workflows Completed</span>
+                        <span className="font-semibold">+3</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-muted-foreground">Time Saved</span>
+                        <span className="font-semibold text-green-600">24 hours</span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Activity className="w-5 h-5 text-blue-600" />
+                      Service Usage
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      <div>
+                        <div className="flex justify-between items-center mb-2">
+                          <span className="text-sm text-muted-foreground">Ask Expert</span>
+                          <span className="text-sm font-semibold">47 chats</span>
+                        </div>
+                        <div className="h-2 bg-blue-100 rounded-full">
+                          <div className="h-2 bg-blue-600 rounded-full" style={{ width: '85%' }} />
+                        </div>
+                      </div>
+                      <div>
+                        <div className="flex justify-between items-center mb-2">
+                          <span className="text-sm text-muted-foreground">Ask Panel</span>
+                          <span className="text-sm font-semibold">12 panels</span>
+                        </div>
+                        <div className="h-2 bg-purple-100 rounded-full">
+                          <div className="h-2 bg-purple-600 rounded-full" style={{ width: '45%' }} />
+                        </div>
+                      </div>
+                      <div>
+                        <div className="flex justify-between items-center mb-2">
+                          <span className="text-sm text-muted-foreground">Workflows</span>
+                          <span className="text-sm font-semibold">8 workflows</span>
+                        </div>
+                        <div className="h-2 bg-green-100 rounded-full">
+                          <div className="h-2 bg-green-600 rounded-full" style={{ width: '60%' }} />
+                        </div>
+                      </div>
+                      <div>
+                        <div className="flex justify-between items-center mb-2">
+                          <span className="text-sm text-muted-foreground">Solutions</span>
+                          <span className="text-sm font-semibold">3 solutions</span>
+                        </div>
+                        <div className="h-2 bg-orange-100 rounded-full">
+                          <div className="h-2 bg-orange-600 rounded-full" style={{ width: '20%' }} />
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
+          </div>
+        </section>
+
+        {/* Quick Actions */}
+        <section>
+          <h3 className="text-xl font-semibold mb-4">Quick Actions</h3>
+          <div className="flex flex-wrap gap-3">
+            <Button variant="outline" onClick={() => router.push('/ask-expert')}>
+              <MessageSquare className="w-4 h-4 mr-2" />
+              Ask Question
             </Button>
-            <Link href="/dashboard/knowledge">
-              <Button variant="outline" className="w-full justify-start">
-                <FileText className="mr-2 h-4 w-4" />
-                Upload Document
-              </Button>
-            </Link>
-            <Button variant="outline" className="w-full justify-start">
-              <Users className="mr-2 h-4 w-4" />
-              Invite Team Member
+            <Button variant="outline" onClick={() => router.push('/ask-panel')}>
+              <Users className="w-4 h-4 mr-2" />
+              Start Panel
             </Button>
-            <Button variant="outline" className="w-full justify-start">
-              <BarChart3 className="mr-2 h-4 w-4" />
-              View Analytics
+            <Button variant="outline" onClick={() => router.push('/workflows')}>
+              <Play className="w-4 h-4 mr-2" />
+              Run Workflow
             </Button>
-          </CardContent>
-        </Card>
-      </div>
+            <Button variant="outline" onClick={() => router.push('/solution-builder')}>
+              <Box className="w-4 h-4 mr-2" />
+              Build Solution
+            </Button>
+            <Button variant="outline" onClick={() => router.push('/knowledge')}>
+              <FileText className="w-4 h-4 mr-2" />
+              Upload Document
+            </Button>
+          </div>
+        </section>
+      </main>
     </div>
   );
 }

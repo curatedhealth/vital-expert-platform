@@ -161,6 +161,7 @@ export function AskExpertProvider({ children }: { children: React.ReactNode }) {
     console.log('🔄 [AskExpertContext] Refreshing agents list for user:', user.id);
     setAgentsLoading(true);
     try {
+      // First, fetch user's added agents
       const response = await fetch(`/api/user-agents?userId=${encodeURIComponent(user.id)}`);
 
       if (!response.ok) {
@@ -170,6 +171,9 @@ export function AskExpertProvider({ children }: { children: React.ReactNode }) {
       const data = await response.json();
       const userAgentRelationships = data.agents || [];
 
+      // Track user-added agent IDs
+      const userAddedIds = new Set<string>();
+      
       // Process user-added agents (if the relationship includes agent data)
       // Supabase foreign key relationships return data in the relationship object
       const mappedAgents: Agent[] = userAgentRelationships
@@ -182,27 +186,92 @@ export function AskExpertProvider({ children }: { children: React.ReactNode }) {
             return null;
           }
           
+          // Track this as a user-added agent
+          userAddedIds.add(agentId);
+          
           // If we have full agent data from the join, use it
           if (agent && agent.id) {
             const metadata = agent.metadata || {};
             
-            // Clean up display name - remove "(My Copy)" or "(Copy)" suffixes
-            let displayName = metadata.display_name || agent.name;
-            displayName = displayName.replace(/\s*\(My Copy\)\s*/gi, '').replace(/\s*\(Copy\)\s*/gi, '').trim();
+            // Extract display name from multiple possible sources
+            let displayName = 
+              agent.display_name ||        // Root level (from API)
+              metadata.display_name ||     // Metadata level
+              agent.name ||                // Fallback to name
+              'Unknown Agent';
             
-            // Add to userAddedAgentIds set
-            setUserAddedAgentIds(prev => new Set([...prev, agentId]));
+            // Clean up display name - remove "(My Copy)" or "(Copy)" suffixes and weird formatting
+            displayName = String(displayName)
+              .replace(/\s*\(My Copy\)\s*/gi, '')
+              .replace(/\s*\(Copy\)\s*/gi, '')
+              .replace(/\[bea\]d-_agent_avatar_/gi, '')  // Remove malformed prefixes
+              .replace(/^[^a-zA-Z]+/, '')                 // Remove leading non-letters
+              .trim();
+            
+            // Capitalize first letter if needed
+            if (displayName && displayName.length > 0) {
+              displayName = displayName.charAt(0).toUpperCase() + displayName.slice(1);
+            }
+            
+            // Fix avatar - use the exact avatar from the agent
+            // Priority: metadata.avatar > agent.avatar > default
+            let avatarCode = metadata.avatar || agent.avatar;
+            
+            // If no avatar provided or it's a descriptive string that doesn't match a file,
+            // use a smart default based on the avatar description
+            if (!avatarCode || (typeof avatarCode === 'string' && 
+                !avatarCode.match(/^avatar_\d{3,4}$/) && 
+                !avatarCode.startsWith('http') && 
+                !avatarCode.startsWith('/'))) {
+              
+              const originalAvatar = avatarCode;
+              
+              // Try to extract number from prefix
+              // e.g., "05boy_people_avatar..." -> "avatar_0005"
+              // e.g., "11boy_people_avatar..." -> "avatar_0011"
+              // e.g., "01arab_male_people..." -> "avatar_0001"
+              const match = originalAvatar?.match(/^(\d+)/);
+              if (match) {
+                const num = match[1].padStart(4, '0');
+                avatarCode = `avatar_${num}`;
+              } else if (typeof originalAvatar === 'string') {
+                // Fallback mapping for descriptive terms without number prefix
+                if (originalAvatar.includes('beard') || originalAvatar.includes('arab')) {
+                  avatarCode = 'avatar_0015';
+                } else if (originalAvatar.includes('medical') || originalAvatar.includes('doctor')) {
+                  avatarCode = 'avatar_0010';
+                } else if (originalAvatar.includes('scientist') || originalAvatar.includes('research')) {
+                  avatarCode = 'avatar_0012';
+                } else if (originalAvatar.includes('boy') || originalAvatar.includes('teenager')) {
+                  avatarCode = 'avatar_0005';
+                } else {
+                  avatarCode = 'avatar_0001'; // Generic default
+                }
+              } else {
+                avatarCode = 'avatar_0001'; // Generic default
+              }
+            }
+            
+            console.log('🔍 [AskExpertContext] Processing agent:', {
+              agentId,
+              rawName: agent.name,
+              rawDisplayName: agent.display_name,
+              metadataDisplayName: metadata.display_name,
+              finalDisplayName: displayName,
+              rawAvatar: metadata.avatar || agent.avatar,
+              finalAvatarCode: avatarCode,
+            });
             
             return {
               id: agentId,
               name: agent.name,
               displayName: displayName,
               description: agent.description || '',
-              tier: metadata.tier || 3,
-              status: metadata.status || 'active',
+              tier: metadata.tier || agent.tier || 3,
+              status: metadata.status || agent.status || 'active',
               capabilities: Array.isArray(agent.capabilities) ? agent.capabilities : [],
-              avatar: metadata.avatar || undefined,
-            isUserAdded: true, // Mark as user-added
+              avatar: avatarCode, // Use cleaned avatar code
+              isUserAdded: true, // Mark as user-added
               tools: parseAgentTools(
                 metadata.tools ??
                   metadata.allowed_tools ??
@@ -217,171 +286,55 @@ export function AskExpertProvider({ children }: { children: React.ReactNode }) {
           };
           }
           
-          // If we only have agent_id but no agent data, just track it for now
-          // The agent details will be fetched from /api/agents-crud and merged later
-          if (relationship.agent_id) {
-            setUserAddedAgentIds(prev => new Set([...prev, relationship.agent_id]));
-          }
-          
           return null;
         })
         .filter((agent): agent is Agent => agent !== null);
 
-      setAgents(mappedAgents);
-      console.log(`✅ [AskExpertContext] Loaded ${mappedAgents.length} user agents for sidebar`);
-
-      // Always fetch available agents from store to show in sidebar
-      console.log(
-        'ℹ️ [AskExpertContext] Fetching available agents from store to show in sidebar...'
-      );
+      // Update the global userAddedAgentIds set
+      setUserAddedAgentIds(userAddedIds);
       
+      console.log(`✅ [AskExpertContext] Loaded ${mappedAgents.length} user-added agents`, {
+        userAddedIds: Array.from(userAddedIds)
+      });
+
+      // **IMPORTANT**: Only show user-added or user-created agents in Ask Expert sidebar
+      // Don't fetch all available agents - user must explicitly add agents from the agents page
+      setAgents(mappedAgents);
+      console.log('ℹ️ [AskExpertContext] Agents list updated (user-added only)');
+      
+      // Optionally fetch stats for the user-added agents to enhance the display
       try {
-        const allAgentsResponse = await fetch('/api/agents-crud');
-        if (allAgentsResponse.ok) {
-          const allAgentsData = await allAgentsResponse.json();
-          const availableAgents = allAgentsData.agents || [];
-          
-          console.log('🔍 [AskExpertContext] Raw agent data from API:', {
-            totalAgents: availableAgents.length,
-            firstFewAgents: availableAgents.slice(0, 3).map(a => ({
-              id: a.id,
-              name: a.name,
-              display_name: a.display_name,
-              description: a.description?.substring(0, 50) + '...',
-              tier: a.tier
-            }))
-          });
-          
-          // Group agents by tier to get diverse selection
-          const agentsByTier = availableAgents.reduce((acc: any, agent: any) => {
-            const tier = agent.tier || 3;
-            if (!acc[tier]) acc[tier] = [];
-            acc[tier].push(agent);
-            return acc;
-          }, {});
-          
-          // Show ALL available agents from the store (not just a sample)
-          const allAvailableAgents: Agent[] = availableAgents.map((agent: any) => {
-            // Clean up display name - remove "(My Copy)" or "(Copy)" suffixes
-            let displayName = agent.display_name || agent.name;
-            displayName = displayName.replace(/\s*\(My Copy\)\s*/gi, '').replace(/\s*\(Copy\)\s*/gi, '').trim();
-            
-          return {
-            id: agent.id,
-            name: agent.name,
-            displayName: displayName,
-            description: agent.description || '',
-            tier: agent.tier || 3,
-            status: agent.status || 'active',
-            capabilities: Array.isArray(agent.capabilities) ? agent.capabilities : [],
-            avatar: agent.avatar || undefined,
-            isUserAdded: userAddedAgentIds.has(agent.id), // Check if agent is user-added
-            tools: parseAgentTools(
-              (agent.metadata && (agent.metadata.tools ?? agent.metadata.allowed_tools ?? agent.metadata.available_tools)) ??
-                agent.tools ??
-                agent.tool_access
-            ),
-            knowledge_domains: parseAgentKnowledgeDomains(
-              (agent.metadata && (agent.metadata.knowledge_domains ?? agent.metadata.knowledgeDomains)) ??
-                agent.knowledge_domains
-            ),
-          };
-          });
-          
-          // Combine user-added agents with all available agents, avoiding duplicates
-          const agentMap = new Map<string, Agent>();
-          
-          // First, add all available agents
-          allAvailableAgents.forEach(agent => {
-            agentMap.set(agent.id, agent);
-          });
-          
-          // Then, update with user-added agents (they may override with isUserAdded=true)
-          mappedAgents.forEach(agent => {
-            const existingAgent = agentMap.get(agent.id);
-            agentMap.set(agent.id, {
-              ...(existingAgent || {}), // Keep existing data if available
-              ...agent, // Override with user-added data (isUserAdded=true, etc.)
-              isUserAdded: true, // Ensure this is set
-            });
-          });
-          
-          const allAgents = Array.from(agentMap.values());
-
-          const agentsForPrefetch = allAgents.slice(0, 24);
-
-          const agentsWithStatsPrefetched = await Promise.all(
-            agentsForPrefetch.map(async (agent) => {
-              try {
-                const stats = await loadAgentStatsFromStore(agent.id);
-                if (stats) {
-                  return {
-                    ...agent,
-                    totalConsultations: stats.totalConsultations,
-                    satisfactionScore: stats.satisfactionScore,
-                    successRate: stats.successRate,
-                    averageResponseTime: stats.averageResponseTime,
-                    certifications: stats.certifications,
-                    totalTokensUsed: stats.totalTokensUsed,
-                    totalCost: stats.totalCost,
-                    confidenceLevel: stats.confidenceLevel,
-                    availability: stats.availability,
-                    recentFeedback: stats.recentFeedback,
-                  };
-                }
-              } catch (error) {
-                console.warn(`[AskExpertContext] Failed to fetch stats for agent ${agent.id}:`, error);
+        const agentsWithStats = await Promise.all(
+          mappedAgents.slice(0, 24).map(async (agent) => {
+            try {
+              const stats = await loadAgentStatsFromStore(agent.id);
+              if (stats) {
+                return {
+                  ...agent,
+                  totalConsultations: stats.totalConsultations,
+                  satisfactionScore: stats.satisfactionScore,
+                  successRate: stats.successRate,
+                  averageResponseTime: stats.averageResponseTime,
+                  certifications: stats.certifications,
+                  totalTokensUsed: stats.totalTokensUsed,
+                  totalCost: stats.totalCost,
+                  confidenceLevel: stats.confidenceLevel,
+                  availability: stats.availability,
+                  recentFeedback: stats.recentFeedback,
+                };
               }
-              return agent;
-            })
-          );
-
-          const agentsById = new Map<string, Agent>();
-          allAgents.forEach((agent) => agentsById.set(agent.id, agent));
-          agentsWithStatsPrefetched.forEach((agent) => agentsById.set(agent.id, agent));
-
-          const agentsWithStats = Array.from(agentsById.values());
-
-          setAgents(agentsWithStats);
-          mergeExternalAgents(
-            agentsWithStats.map((agent) => ({
-              id: agent.id,
-              name: agent.name,
-              display_name: agent.displayName,
-              description: agent.description,
-              capabilities: agent.capabilities,
-              knowledge_domains: agent.knowledge_domains,
-              certifications: agent.certifications,
-              totalConsultations: agent.totalConsultations,
-              satisfactionScore: agent.satisfactionScore,
-              successRate: agent.successRate,
-              averageResponseTime: agent.averageResponseTime,
-              totalTokensUsed: agent.totalTokensUsed,
-              totalCost: agent.totalCost,
-              confidenceLevel: agent.confidenceLevel,
-              availability: agent.availability,
-              recentFeedback: agent.recentFeedback,
-              avatar: agent.avatar,
-            }))
-          );
-
-          console.log(`✅ [AskExpertContext] Loaded ${agentsWithStats.length} total agents:`, {
-            userAdded: mappedAgents.length,
-            available: allAvailableAgents.length,
-            userAddedAgentIds: Array.from(userAddedAgentIds),
-            agents: agentsWithStats.map(a => ({ 
-              id: a.id, 
-              name: a.name, 
-              displayName: a.displayName, 
-              tier: a.tier, 
-              isUserAdded: a.isUserAdded 
-            }))
-          });
-        }
+            } catch (error) {
+              console.warn(`[AskExpertContext] Failed to fetch stats for agent ${agent.id}:`, error);
+            }
+            return agent;
+          })
+        );
+        
+        setAgents(agentsWithStats);
+        console.log(`✅ [AskExpertContext] Enhanced ${agentsWithStats.length} agents with stats`);
       } catch (error) {
-        console.error('❌ [AskExpertContext] Error fetching available agents:', error);
-        // If we can't fetch available agents, at least show user-added agents
-        setAgents(mappedAgents);
+        console.error('❌ [AskExpertContext] Error fetching agent stats:', error);
+        // Keep the agents without stats
       }
     } catch (error) {
       console.error('❌ [AskExpertContext] Error refreshing agents:', error);
@@ -665,6 +618,26 @@ export function AskExpertProvider({ children }: { children: React.ReactNode }) {
     }
 
     try {
+      console.log('🗑️ [AskExpertContext] Removing agent from user list:', agentId);
+      
+      // Optimistically update UI - remove agent immediately
+      setAgents(prev => {
+        const updated = prev.filter(agent => agent.id !== agentId);
+        console.log(`✨ [AskExpertContext] Optimistically removed agent. Remaining: ${updated.length}`);
+        return updated;
+      });
+      
+      // Also remove from userAddedAgentIds set
+      setUserAddedAgentIds(prev => {
+        const updated = new Set(prev);
+        updated.delete(agentId);
+        return updated;
+      });
+      
+      // If this was the selected agent, deselect it
+      setSelectedAgents(prev => prev.filter(id => id !== agentId));
+
+      // Then make the API call
       const response = await fetch('/api/user-agents', {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
@@ -675,16 +648,21 @@ export function AskExpertProvider({ children }: { children: React.ReactNode }) {
       });
 
       if (!response.ok) {
+        console.error('❌ [AskExpertContext] API call failed, reverting optimistic update');
         throw new Error(`Failed to remove agent: ${response.statusText}`);
       }
 
-      // Refresh agents after removing
-      await refreshAgents();
+      console.log('✅ [AskExpertContext] Agent removed successfully from database');
+      
+      // Optionally refresh to ensure consistency (but UI already updated)
+      // await refreshAgents();
     } catch (error) {
       console.error('[AskExpertContext] Failed to remove agent from user list:', error);
+      // Revert optimistic update on error
+      await refreshAgents();
       throw error;
     }
-  }, [user?.id, refreshAgents]);
+  }, [user?.id, setSelectedAgents, refreshAgents]);
 
   // Auto-refresh agents when user changes
   useEffect(() => {

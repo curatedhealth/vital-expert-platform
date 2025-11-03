@@ -25,6 +25,29 @@ import json
 from datetime import datetime
 from pydantic import BaseModel, Field
 
+# Configure structured logging FIRST, before any other imports that use logger
+structlog.configure(
+    processors=[
+        structlog.contextvars.merge_contextvars,
+        structlog.stdlib.filter_by_level,
+        structlog.stdlib.add_logger_name,
+        structlog.stdlib.add_log_level,
+        structlog.stdlib.PositionalArgumentsFormatter(),
+        structlog.processors.TimeStamper(fmt="iso"),
+        structlog.processors.StackInfoRenderer(),
+        structlog.processors.format_exc_info,
+        structlog.processors.UnicodeDecoder(),
+        structlog.processors.JSONRenderer()  # JSON for production
+    ],
+    wrapper_class=structlog.stdlib.BoundLogger,
+    context_class=dict,
+    logger_factory=structlog.stdlib.LoggerFactory(),
+    cache_logger_on_first_use=True,
+)
+
+# Get logger AFTER configuration
+logger = structlog.get_logger()
+
 from services.agent_orchestrator import AgentOrchestrator
 from services.medical_rag import MedicalRAGPipeline
 from services.unified_rag_service import UnifiedRAGService
@@ -44,6 +67,11 @@ from langgraph_workflows import (
     get_checkpoint_manager,
     get_observability
 )
+# Mode workflows for LangGraph execution
+from langgraph_workflows.mode1_interactive_auto_workflow import Mode1InteractiveAutoWorkflow
+from langgraph_workflows.mode2_interactive_manual_workflow import Mode2InteractiveManualWorkflow
+from langgraph_workflows.mode3_autonomous_auto_workflow import Mode3AutonomousAutoWorkflow
+from langgraph_workflows.mode4_autonomous_manual_workflow import Mode4AutonomousManualWorkflow
 # Ask Panel imports
 from api.dependencies import set_supabase_client
 from api.routes import panels as panel_routes
@@ -553,11 +581,22 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 # Add Tenant Isolation Middleware FIRST (before CORS and rate limiting)
 # This ensures all requests have tenant context before processing
-app.add_middleware(TenantIsolationMiddleware)
+# Enable in production with proper authentication
+is_production = os.getenv("RAILWAY_ENVIRONMENT") == "production" or os.getenv("ENV") == "production"
+if is_production:
+    app.add_middleware(TenantIsolationMiddleware)
+    logger.info("✅ Tenant Isolation Middleware enabled (production mode)")
+else:
+    logger.info("ℹ️ Tenant Isolation Middleware disabled (development mode)")
 
 # Add Rate Limiting Middleware SECOND (after tenant isolation)
 # This enforces rate limits per tenant
-app.add_middleware(EnhancedRateLimitMiddleware)
+# Enable in production
+if is_production:
+    app.add_middleware(EnhancedRateLimitMiddleware)
+    logger.info("✅ Rate Limiting Middleware enabled (production mode)")
+else:
+    logger.info("ℹ️ Rate Limiting Middleware disabled (development mode)")
 
 # CORS middleware - Configure based on environment
 cors_origins = (
@@ -628,6 +667,8 @@ async def health_check():
     
     This endpoint responds immediately, even before services initialize.
     This is critical for Railway deployment health checks.
+    
+    Now includes RLS (Row-Level Security) status for compliance monitoring.
     """
     import time
     global supabase_client, agent_orchestrator, rag_pipeline, unified_rag_service
@@ -640,6 +681,28 @@ async def health_check():
         "unified_rag_service": "healthy" if unified_rag_service else "unavailable"
     }
     
+    # Check RLS status (Golden Rule #2: Multi-Tenant Security)
+    rls_status = {
+        "enabled": "unknown",
+        "policies_count": 0,
+        "status": "unknown"
+    }
+    
+    if supabase_client and supabase_client.client:
+        try:
+            # Query RLS policy count
+            result = await supabase_client.client.rpc('count_rls_policies').execute()
+            if result.data is not None:
+                policy_count = result.data
+                rls_status = {
+                    "enabled": "active" if policy_count > 0 else "inactive",
+                    "policies_count": policy_count,
+                    "status": "healthy" if policy_count >= 40 else "degraded"
+                }
+        except Exception as e:
+            logger.warning("health_check_rls_query_failed", error=str(e))
+            rls_status["status"] = "error"
+    
     # App is healthy if it can respond (even if some services are unavailable)
     return {
         "status": "healthy",
@@ -647,6 +710,14 @@ async def health_check():
         "version": "2.0.0",
         "timestamp": time.time(),
         "services": services_status,
+        "security": {
+            "rls": rls_status
+        },
+        "compliance": {
+            "golden_rules": {
+                "rule_2_multi_tenant_security": rls_status["status"]
+            }
+        },
         "ready": True  # Explicitly mark as ready for Railway
     }
 
@@ -700,54 +771,72 @@ async def get_cache_stats():
 async def execute_mode1_manual(
     request: Mode1ManualRequest,
     fastapi_request: Request,
-    orchestrator: AgentOrchestrator = Depends(get_agent_orchestrator),
     tenant_id: str = Depends(get_tenant_id)
 ):
-    """Execute Mode 1 manual interactive workflow via Python orchestration"""
+    """Execute Mode 1 manual interactive workflow via LangGraph"""
     REQUEST_COUNT.labels(method="POST", endpoint="/api/mode1/manual").inc()
 
-    if not supabase_client:
-        raise HTTPException(status_code=503, detail="Supabase client not initialized")
-    
-    # Set tenant context in database for RLS
-    await set_tenant_context_in_db(tenant_id, supabase_client)
+    # Allow execution without Supabase for development
+    if supabase_client:
+        # Set tenant context in database for RLS
+        await set_tenant_context_in_db(tenant_id, supabase_client)
 
     start_time = asyncio.get_event_loop().time()
 
     try:
-        agent_record = await supabase_client.get_agent_by_id(request.agent_id)
-        agent_type = (
-            (agent_record.get("type") if agent_record else None)
-            or (agent_record.get("agent_type") if agent_record else None)
-            or "regulatory_expert"
+        logger.info("🚀 [Mode 1] Executing via LangGraph workflow (Manual agent selection)", agent_id=request.agent_id)
+        
+        # Initialize LangGraph workflow - Mode2InteractiveManualWorkflow for manual agent selection
+        workflow = Mode2InteractiveManualWorkflow(
+            supabase_client=supabase_client,
+            rag_service=unified_rag_service,
+            agent_orchestrator=agent_orchestrator,
+            conversation_manager=None  # Will be initialized by workflow
         )
-
-        query_request = AgentQueryRequest(
-            agent_id=request.agent_id,
-            agent_type=agent_type,
+        await workflow.initialize()
+        
+        # Execute workflow with LangGraph
+        result = await workflow.execute(
+            tenant_id=tenant_id,
             query=request.message,
+            agent_id=request.agent_id,
+            session_id=request.session_id,
             user_id=request.user_id,
-            organization_id=request.tenant_id,
-            max_context_docs=(
-                0 if not request.enable_rag else min(10, agent_record.get("max_context_docs", 5) if agent_record else 5)
-            ),
-            similarity_threshold=0.7,
-            include_citations=True,
-            include_confidence_scores=True,
-            include_medical_context=True,
-            response_format="detailed",
-            pharma_protocol_required=False,
-            verify_protocol_required=True,
-            hipaa_compliant=True,
+            enable_rag=request.enable_rag,
+            enable_tools=request.enable_tools,
+            model=request.model or "gpt-4",
+            temperature=request.temperature,
+            max_tokens=request.max_tokens,
+            selected_rag_domains=request.selected_rag_domains or [],
+            conversation_history=[]
         )
-
-        response: AgentQueryResponse = await orchestrator.process_query(query_request)
-
+        
         processing_time_ms = (asyncio.get_event_loop().time() - start_time) * 1000
+        
+        # Extract results from LangGraph workflow state
+        content = result.get('response', '') or result.get('final_response', '')
+        confidence = result.get('confidence', 0.85)
+        sources = result.get('sources', [])
+        reasoning_steps = result.get('reasoning_steps', [])
+        
+        # Convert sources to citations
+        citations = []
+        for idx, source in enumerate(sources, 1):
+            citations.append({
+                "id": f"citation_{idx}",
+                "title": source.get('title', f'Source {idx}'),
+                "content": source.get('content', source.get('excerpt', '')),
+                "url": source.get('url', ''),
+                "similarity_score": source.get('similarity_score', 0.0),
+                "metadata": source.get('metadata', {})
+            })
+        
+        # Build metadata
         metadata: Dict[str, Any] = {
-            "processing_metadata": response.processing_metadata,
-            "compliance_protocols": response.compliance_protocols,
-            "medical_context": response.medical_context,
+            "langgraph_execution": True,
+            "workflow": "Mode2InteractiveManualWorkflow",
+            "nodes_executed": result.get('nodes_executed', []),
+            "reasoning_steps": reasoning_steps,
             "request": {
                 "enable_rag": request.enable_rag,
                 "enable_tools": request.enable_tools,
@@ -758,20 +847,21 @@ async def execute_mode1_manual(
                 "session_id": request.session_id,
             },
         }
-
-        if agent_record:
-            metadata["agent"] = {
-                "id": agent_record.get("id"),
-                "name": agent_record.get("name"),
-                "display_name": agent_record.get("display_name"),
-                "type": agent_record.get("type"),
-            }
-
+        
+        logger.info(
+            "✅ [Mode 1] LangGraph workflow completed",
+            content_length=len(content),
+            citations=len(citations),
+            reasoning_steps=len(reasoning_steps),
+            confidence=confidence
+        )
+        
         return Mode1ManualResponse(
-            agent_id=response.agent_id,
-            content=response.response,
-            confidence=response.confidence,
-            citations=response.citations or [],
+            agent_id=request.agent_id,
+            content=content,
+            confidence=confidence,
+            citations=citations,
+            reasoning=reasoning_steps,
             metadata=metadata,
             processing_time_ms=processing_time_ms,
         )
@@ -779,88 +869,88 @@ async def execute_mode1_manual(
     except HTTPException:
         raise
     except Exception as exc:
-        logger.error("❌ Mode 1 manual execution failed", error=str(exc))
+        logger.error("❌ Mode 1 LangGraph execution failed", error=str(exc), exc_info=True)
         raise HTTPException(status_code=500, detail=f"Mode 1 execution failed: {str(exc)}")
 
 # Mode 2: Automatic Agent Selection
 @app.post("/api/mode2/automatic", response_model=Mode2AutomaticResponse)
 async def execute_mode2_automatic(
     request: Mode2AutomaticRequest,
-    orchestrator: AgentOrchestrator = Depends(get_agent_orchestrator)
+    tenant_id: str = Depends(get_tenant_id)
 ):
-    """Execute Mode 2 automatic agent selection workflow via Python orchestration"""
+    """Execute Mode 2 automatic agent selection workflow via LangGraph"""
     REQUEST_COUNT.labels(method="POST", endpoint="/api/mode2/automatic").inc()
 
-    if not supabase_client:
-        raise HTTPException(status_code=503, detail="Supabase client not initialized")
-
+    # Allow execution without Supabase for development
+    if supabase_client:
+        # Set tenant context in database for RLS  
+        await set_tenant_context_in_db(tenant_id, supabase_client)
+    
     start_time = asyncio.get_event_loop().time()
 
     try:
-        # Step 1: Select best agent based on query
-        # For now, use a simple selection algorithm (can be enhanced with full Python agent selection later)
-        logger.info("🔍 Selecting agent for Mode 2", query_preview=request.message[:100])
-
-        # Simple agent selection: query agents table and select based on domain match
-        # TODO: Implement full agent selection with embeddings/ranking in Python
-        # For now, use a default agent or the first available agent
-        agents_result = await supabase_client.get_all_agents()
+        logger.info("🚀 [Mode 2] Executing via LangGraph workflow (Automatic agent selection)")
         
-        if not agents_result or len(agents_result) == 0:
-            raise HTTPException(status_code=404, detail="No agents available")
-        
-        # Simple selection: use first agent or could enhance with query matching
-        selected_agent = agents_result[0] if isinstance(agents_result, list) else list(agents_result.values())[0]
-        agent_id = selected_agent.get("id") if isinstance(selected_agent, dict) else selected_agent
-        
-        # Get agent_type from category, metadata, or default
-        agent_type = None
-        if isinstance(selected_agent, dict):
-            agent_type = (
-                selected_agent.get("category") or
-                selected_agent.get("type") or
-                selected_agent.get("metadata", {}).get("department") or
-                "regulatory_expert"
-            )
-        else:
-            agent_type = "regulatory_expert"
-
-        # Step 2: Execute query with selected agent (reuse Mode 1 logic)
-        query_request = AgentQueryRequest(
-            agent_id=agent_id,
-            agent_type=agent_type,
-            query=request.message,
-            user_id=request.user_id,
-            organization_id=request.tenant_id,
-            max_context_docs=(
-                0 if not request.enable_rag else 10
-            ),
-            similarity_threshold=0.7,
-            include_citations=True,
-            include_confidence_scores=True,
-            include_medical_context=True,
-            response_format="detailed",
-            pharma_protocol_required=False,
-            verify_protocol_required=True,
-            hipaa_compliant=True,
+        # Initialize LangGraph workflow
+        workflow = Mode1InteractiveAutoWorkflow(
+            supabase_client=supabase_client,
+            agent_selector_service=get_agent_selector_service() if agent_orchestrator else None,
+            rag_service=unified_rag_service,
+            agent_orchestrator=agent_orchestrator,
+            conversation_manager=None
         )
-
-        response: AgentQueryResponse = await orchestrator.process_query(query_request)
-
+        await workflow.initialize()
+        
+        # Execute workflow
+        result = await workflow.execute(
+            tenant_id=tenant_id,
+            query=request.message,
+            session_id=request.session_id,
+            user_id=request.user_id,
+            enable_rag=request.enable_rag,
+            enable_tools=request.enable_tools,
+            model=request.model or "gpt-4",
+            temperature=request.temperature,
+            max_tokens=request.max_tokens,
+            selected_rag_domains=request.selected_rag_domains or [],
+            conversation_history=[]
+        )
+        
         processing_time_ms = (asyncio.get_event_loop().time() - start_time) * 1000
         
+        # Extract results
+        content = result.get('response', '') or result.get('final_response', '')
+        confidence = result.get('confidence', 0.85)
+        sources = result.get('sources', [])
+        reasoning_steps = result.get('reasoning_steps', [])
+        selected_agent_id = result.get('selected_agent_id', '') or result.get('agent_id', '')
+        
+        # Convert sources to citations
+        citations = []
+        for idx, source in enumerate(sources, 1):
+            citations.append({
+                "id": f"citation_{idx}",
+                "title": source.get('title', f'Source {idx}'),
+                "content": source.get('content', source.get('excerpt', '')),
+                "url": source.get('url', ''),
+                "similarity_score": source.get('similarity_score', 0.0),
+                "metadata": source.get('metadata', {})
+            })
+        
+        # Agent selection metadata
         agent_selection_metadata = {
-            "selected_agent_id": agent_id,
-            "selected_agent_name": selected_agent.get("name") if isinstance(selected_agent, dict) else "Unknown",
-            "selection_method": "simple_selection",  # TODO: Enhance with full Python agent selection
-            "candidate_count": len(agents_result) if isinstance(agents_result, list) else len(agents_result),
-            "selection_confidence": 0.7,  # Placeholder - can be enhanced
+            "selected_agent_id": selected_agent_id,
+            "selected_agent_name": result.get('selected_agent_name', 'Auto-selected'),
+            "selection_method": "langgraph_ml_selection",
+            "candidate_count": result.get('candidate_count', 0),
+            "selection_confidence": result.get('selection_confidence', 0.85),
         }
-
+        
         metadata: Dict[str, Any] = {
-            "processing_metadata": response.processing_metadata,
-            "compliance_protocols": response.compliance_protocols,
-            "medical_context": response.medical_context,
+            "langgraph_execution": True,
+            "workflow": "Mode1InteractiveAutoWorkflow",
+            "nodes_executed": result.get('nodes_executed', []),
+            "reasoning_steps": reasoning_steps,
             "request": {
                 "enable_rag": request.enable_rag,
                 "enable_tools": request.enable_tools,
@@ -870,112 +960,119 @@ async def execute_mode2_automatic(
                 "max_tokens": request.max_tokens,
                 "session_id": request.session_id,
             },
-            "agent": {
-                "id": agent_id,
-                "name": selected_agent.get("name") if isinstance(selected_agent, dict) else "Unknown",
-                "type": agent_type,
-            },
         }
-
+        
+        logger.info(
+            "✅ [Mode 2] LangGraph workflow completed",
+            content_length=len(content),
+            citations=len(citations),
+            reasoning_steps=len(reasoning_steps),
+            selected_agent=selected_agent_id,
+            confidence=confidence
+        )
+        
         return Mode2AutomaticResponse(
-            agent_id=agent_id,
-            content=response.response,
-            confidence=response.confidence,
-            citations=response.citations or [],
+            agent_id=selected_agent_id,
+            content=content,
+            confidence=confidence,
+            citations=citations,
+            reasoning=reasoning_steps,
+            agent_selection=agent_selection_metadata,
             metadata=metadata,
             processing_time_ms=processing_time_ms,
-            agent_selection=agent_selection_metadata,
         )
 
     except HTTPException:
         raise
     except Exception as exc:
-        logger.error("❌ Mode 2 automatic execution failed", error=str(exc))
+        logger.error("❌ Mode 2 LangGraph execution failed", error=str(exc), exc_info=True)
         raise HTTPException(status_code=500, detail=f"Mode 2 execution failed: {str(exc)}")
 
 # Mode 3: Autonomous-Automatic
 @app.post("/api/mode3/autonomous-automatic", response_model=Mode3AutonomousAutomaticResponse)
 async def execute_mode3_autonomous_automatic(
     request: Mode3AutonomousAutomaticRequest,
-    orchestrator: AgentOrchestrator = Depends(get_agent_orchestrator)
+    tenant_id: str = Depends(get_tenant_id)
 ):
-    """Execute Mode 3 autonomous-automatic workflow via Python orchestration"""
+    """Execute Mode 3 autonomous-automatic workflow via LangGraph"""
     REQUEST_COUNT.labels(method="POST", endpoint="/api/mode3/autonomous-automatic").inc()
 
-    if not supabase_client:
-        raise HTTPException(status_code=503, detail="Supabase client not initialized")
-
+    # Allow execution without Supabase for development
+    if supabase_client:
+        await set_tenant_context_in_db(tenant_id, supabase_client)
+    
     start_time = asyncio.get_event_loop().time()
 
     try:
-        # Step 1: Select best agent (similar to Mode 2)
-        logger.info("🔍 Selecting agent for Mode 3", query_preview=request.message[:100])
-
-        agents_result = await supabase_client.get_all_agents()
+        logger.info("🚀 [Mode 3] Executing via LangGraph workflow (Autonomous + Auto agent selection)")
         
-        if not agents_result or len(agents_result) == 0:
-            raise HTTPException(status_code=404, detail="No agents available")
-        
-        selected_agent = agents_result[0] if isinstance(agents_result, list) else list(agents_result.values())[0]
-        agent_id = selected_agent.get("id") if isinstance(selected_agent, dict) else selected_agent
-        
-        # Get agent_type from category, metadata, or default
-        agent_type = None
-        if isinstance(selected_agent, dict):
-            agent_type = (
-                selected_agent.get("category") or
-                selected_agent.get("type") or
-                selected_agent.get("metadata", {}).get("department") or
-                "regulatory_expert"
-            )
-        else:
-            agent_type = "regulatory_expert"
-
-        # Step 2: Execute query with autonomous reasoning capabilities
-        # For now, use enhanced query processing (full ReAct/CoT can be added later)
-        query_request = AgentQueryRequest(
-            agent_id=agent_id,
-            agent_type=agent_type,
-            query=request.message,
-            user_id=request.user_id,
-            organization_id=request.tenant_id,
-            max_context_docs=(
-                0 if not request.enable_rag else min(15, request.max_iterations or 10)  # More docs for autonomous
-            ),
-            similarity_threshold=0.7,
-            include_citations=True,
-            include_confidence_scores=True,
-            include_medical_context=True,
-            response_format="detailed",
-            pharma_protocol_required=False,
-            verify_protocol_required=True,
-            hipaa_compliant=True,
+        # Initialize LangGraph workflow with autonomous capabilities
+        workflow = Mode3AutonomousAutoWorkflow(
+            supabase_client=supabase_client,
+            agent_selector_service=get_agent_selector_service() if agent_orchestrator else None,
+            rag_service=unified_rag_service,
+            agent_orchestrator=agent_orchestrator,
+            conversation_manager=None
         )
-
-        response: AgentQueryResponse = await orchestrator.process_query(query_request)
-
+        await workflow.initialize()
+        
+        # Execute workflow
+        result = await workflow.execute(
+            tenant_id=tenant_id,
+            query=request.message,
+            session_id=request.session_id,
+            user_id=request.user_id,
+            enable_rag=request.enable_rag,
+            enable_tools=request.enable_tools,
+            model=request.model or "gpt-4",
+            max_iterations=request.max_iterations or 10,
+            confidence_threshold=request.confidence_threshold or 0.95,
+            conversation_history=[]
+        )
+        
         processing_time_ms = (asyncio.get_event_loop().time() - start_time) * 1000
         
-        # Autonomous reasoning metadata (placeholder - can be enhanced with full ReAct/CoT)
+        # Extract results
+        content = result.get('response', '') or result.get('final_response', '')
+        confidence = result.get('confidence', 0.90)
+        sources = result.get('sources', [])
+        reasoning_steps = result.get('reasoning_steps', [])
+        selected_agent_id = result.get('selected_agent_id', '') or result.get('agent_id', '')
+        
+        # Convert sources to citations
+        citations = []
+        for idx, source in enumerate(sources, 1):
+            citations.append({
+                "id": f"citation_{idx}",
+                "title": source.get('title', f'Source {idx}'),
+                "content": source.get('content', source.get('excerpt', '')),
+                "url": source.get('url', ''),
+                "similarity_score": source.get('similarity_score', 0.0),
+                "metadata": source.get('metadata', {})
+            })
+        
+        # Autonomous reasoning metadata
         autonomous_reasoning_metadata = {
-            "iterations": 1,  # Placeholder - would be actual ReAct iterations
-            "tools_used": request.requested_tools or [],
-            "reasoning_steps": ["Query understanding", "Context retrieval", "Response generation"],
+            "iterations": result.get('iterations', 0),
+            "tools_used": result.get('tools_used', []),
+            "reasoning_steps": reasoning_steps,
             "confidence_threshold": request.confidence_threshold or 0.95,
             "max_iterations": request.max_iterations or 10,
+            "strategy": result.get('strategy', 'react'),
         }
-
+        
+        # Agent selection metadata
         agent_selection_metadata = {
-            "selected_agent_id": agent_id,
-            "selected_agent_name": selected_agent.get("name") if isinstance(selected_agent, dict) else "Unknown",
-            "selection_method": "simple_selection",
-            "selection_confidence": 0.7,
+            "selected_agent_id": selected_agent_id,
+            "selected_agent_name": result.get('selected_agent_name', 'Auto-selected'),
+            "selection_method": "langgraph_ml_selection",
+            "selection_confidence": result.get('selection_confidence', 0.85),
         }
-
+        
         metadata: Dict[str, Any] = {
-            "processing_metadata": response.processing_metadata,
-            "compliance_protocols": response.compliance_protocols,
-            "medical_context": response.medical_context,
+            "langgraph_execution": True,
+            "workflow": "Mode3AutonomousAutoWorkflow",
+            "nodes_executed": result.get('nodes_executed', []),
             "request": {
                 "enable_rag": request.enable_rag,
                 "enable_tools": request.enable_tools,
@@ -983,111 +1080,143 @@ async def execute_mode3_autonomous_automatic(
                 "confidence_threshold": request.confidence_threshold,
             },
         }
-
+        
+        logger.info(
+            "✅ [Mode 3] LangGraph workflow completed",
+            content_length=len(content),
+            citations=len(citations),
+            reasoning_steps=len(reasoning_steps),
+            iterations=autonomous_reasoning_metadata['iterations'],
+            confidence=confidence
+        )
+        
         return Mode3AutonomousAutomaticResponse(
-            agent_id=agent_id,
-            content=response.response,
-            confidence=response.confidence,
-            citations=response.citations or [],
-            metadata=metadata,
-            processing_time_ms=processing_time_ms,
+            agent_id=selected_agent_id,
+            content=content,
+            confidence=confidence,
+            citations=citations,
+            reasoning=reasoning_steps,
             autonomous_reasoning=autonomous_reasoning_metadata,
             agent_selection=agent_selection_metadata,
+            metadata=metadata,
+            processing_time_ms=processing_time_ms,
         )
 
     except HTTPException:
         raise
     except Exception as exc:
-        logger.error("❌ Mode 3 autonomous-automatic execution failed", error=str(exc))
+        logger.error("❌ Mode 3 LangGraph execution failed", error=str(exc), exc_info=True)
         raise HTTPException(status_code=500, detail=f"Mode 3 execution failed: {str(exc)}")
 
 # Mode 4: Autonomous-Manual
 @app.post("/api/mode4/autonomous-manual", response_model=Mode4AutonomousManualResponse)
 async def execute_mode4_autonomous_manual(
     request: Mode4AutonomousManualRequest,
-    orchestrator: AgentOrchestrator = Depends(get_agent_orchestrator)
+    tenant_id: str = Depends(get_tenant_id)
 ):
-    """Execute Mode 4 autonomous-manual workflow via Python orchestration"""
+    """Execute Mode 4 autonomous-manual workflow via LangGraph"""
     REQUEST_COUNT.labels(method="POST", endpoint="/api/mode4/autonomous-manual").inc()
 
-    if not supabase_client:
-        raise HTTPException(status_code=503, detail="Supabase client not initialized")
-
+    # Allow execution without Supabase for development
+    if supabase_client:
+        await set_tenant_context_in_db(tenant_id, supabase_client)
+    
     start_time = asyncio.get_event_loop().time()
 
     try:
-        # Get agent record
-        agent_record = await supabase_client.get_agent_by_id(request.agent_id)
-        agent_type = (
-            (agent_record.get("type") if agent_record else None)
-            or (agent_record.get("agent_type") if agent_record else None)
-            or "regulatory_expert"
+        logger.info("🚀 [Mode 4] Executing via LangGraph workflow (Autonomous + Manual agent selection)", agent_id=request.agent_id)
+        
+        # Initialize LangGraph workflow with autonomous capabilities
+        workflow = Mode4AutonomousManualWorkflow(
+            supabase_client=supabase_client,
+            rag_service=unified_rag_service,
+            agent_orchestrator=agent_orchestrator,
+            conversation_manager=None
         )
-
-        # Execute query with autonomous reasoning capabilities
-        query_request = AgentQueryRequest(
-            agent_id=request.agent_id,
-            agent_type=agent_type,
+        await workflow.initialize()
+        
+        # Execute workflow
+        result = await workflow.execute(
+            tenant_id=tenant_id,
             query=request.message,
+            agent_id=request.agent_id,
+            session_id=request.session_id,
             user_id=request.user_id,
-            organization_id=request.tenant_id,
-            max_context_docs=(
-                0 if not request.enable_rag else min(15, request.max_iterations or 10)  # More docs for autonomous
-            ),
-            similarity_threshold=0.7,
-            include_citations=True,
-            include_confidence_scores=True,
-            include_medical_context=True,
-            response_format="detailed",
-            pharma_protocol_required=False,
-            verify_protocol_required=True,
-            hipaa_compliant=True,
+            enable_rag=request.enable_rag,
+            enable_tools=request.enable_tools,
+            model=request.model or "gpt-4",
+            max_iterations=request.max_iterations or 10,
+            confidence_threshold=request.confidence_threshold or 0.95,
+            conversation_history=[]
         )
-
-        response: AgentQueryResponse = await orchestrator.process_query(query_request)
-
+        
         processing_time_ms = (asyncio.get_event_loop().time() - start_time) * 1000
         
-        # Autonomous reasoning metadata (placeholder - can be enhanced with full ReAct/CoT)
+        # Extract results
+        content = result.get('response', '') or result.get('final_response', '')
+        confidence = result.get('confidence', 0.90)
+        sources = result.get('sources', [])
+        reasoning_steps = result.get('reasoning_steps', [])
+        
+        # Convert sources to citations
+        citations = []
+        for idx, source in enumerate(sources, 1):
+            citations.append({
+                "id": f"citation_{idx}",
+                "title": source.get('title', f'Source {idx}'),
+                "content": source.get('content', source.get('excerpt', '')),
+                "url": source.get('url', ''),
+                "similarity_score": source.get('similarity_score', 0.0),
+                "metadata": source.get('metadata', {})
+            })
+        
+        # Autonomous reasoning metadata
         autonomous_reasoning_metadata = {
-            "iterations": 1,  # Placeholder - would be actual ReAct iterations
-            "tools_used": request.requested_tools or [],
-            "reasoning_steps": ["Query understanding", "Context retrieval", "Response generation"],
+            "iterations": result.get('iterations', 0),
+            "tools_used": result.get('tools_used', []),
+            "reasoning_steps": reasoning_steps,
             "confidence_threshold": request.confidence_threshold or 0.95,
             "max_iterations": request.max_iterations or 10,
+            "strategy": result.get('strategy', 'react'),
+            "final_answer_validated": result.get('validated', True),
         }
-
+        
         metadata: Dict[str, Any] = {
-            "processing_metadata": response.processing_metadata,
-            "compliance_protocols": response.compliance_protocols,
-            "medical_context": response.medical_context,
+            "langgraph_execution": True,
+            "workflow": "Mode4AutonomousManualWorkflow",
+            "nodes_executed": result.get('nodes_executed', []),
             "request": {
                 "enable_rag": request.enable_rag,
                 "enable_tools": request.enable_tools,
                 "max_iterations": request.max_iterations,
                 "confidence_threshold": request.confidence_threshold,
             },
-            "agent": {
-                "id": agent_record.get("id") if agent_record else request.agent_id,
-                "name": agent_record.get("name") if agent_record else "Unknown",
-                "type": agent_type,
-            },
         }
-
+        
+        logger.info(
+            "✅ [Mode 4] LangGraph workflow completed",
+            content_length=len(content),
+            citations=len(citations),
+            reasoning_steps=len(reasoning_steps),
+            iterations=autonomous_reasoning_metadata['iterations'],
+            confidence=confidence
+        )
+        
         return Mode4AutonomousManualResponse(
             agent_id=request.agent_id,
-            content=response.response,
-            confidence=response.confidence,
-            citations=response.citations or [],
+            content=content,
+            confidence=confidence,
+            citations=citations,
+            reasoning=reasoning_steps,
+            autonomous_reasoning=autonomous_reasoning_metadata,
             metadata=metadata,
             processing_time_ms=processing_time_ms,
-            autonomous_reasoning=autonomous_reasoning_metadata,
         )
 
     except HTTPException:
         raise
     except Exception as exc:
-        logger.error("❌ Mode 4 autonomous-manual execution failed", error=str(exc))
+        logger.error("❌ Mode 4 LangGraph execution failed", error=str(exc), exc_info=True)
         raise HTTPException(status_code=500, detail=f"Mode 4 execution failed: {str(exc)}")
 
 

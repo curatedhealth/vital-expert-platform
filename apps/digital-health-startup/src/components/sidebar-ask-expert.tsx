@@ -33,6 +33,20 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar"
 
+// Helper function to clean agent display names
+function cleanDisplayName(displayName: string): string {
+  return String(displayName)
+    .replace(/\s*\(My Copy\)\s*/gi, '')
+    .replace(/\s*\(Copy\)\s*/gi, '')
+    .replace(/\[bea\]d-_agent_avatar_/gi, '')  // Remove malformed prefixes
+    .replace(/^[^a-zA-Z]+/, '')                 // Remove leading non-letters
+    .replace(/_/g, ' ')                          // Replace underscores with spaces
+    .trim()
+    .split(' ')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(' ');
+}
+
 export function SidebarAskExpert() {
   const {
     agents,
@@ -107,35 +121,39 @@ export function SidebarAskExpert() {
     try {
       setIsCreatingChat(true)
       
-      console.log('🔄 [New Chat] Creating new chat session...')
+      console.log('🔄 [New Consultation] Creating new consultation session...')
       
       // Create a new session without requiring a specific agent
       // The user can select an agent after creating the chat
       const sessionId = await createNewSession({
-        title: "New Conversation",
+        title: "New Consultation",
       })
       
-      console.log('✅ [New Chat] Created session:', sessionId)
+      console.log('✅ [New Consultation] Created session:', sessionId)
       
-      // Clear selected agents for the new chat
+      // Clear selected agents for the new consultation
       setSelectedAgents([])
       setActiveSessionId(sessionId)
+      
+      // Refresh sessions to ensure the new one appears in the sidebar
+      await refreshSessions()
+      console.log('🔄 [New Consultation] Refreshed sessions list')
       
       // Dispatch event to notify the main chat component
       window.dispatchEvent(
         new CustomEvent('ask-expert:new-chat', {
-          detail: { sessionId, title: 'New Conversation' },
+          detail: { sessionId, title: 'New Consultation' },
         })
       )
       
-      console.log('📢 [New Chat] Dispatched new-chat event')
+      console.log('📢 [New Consultation] Dispatched new-chat event')
       
     } catch (error) {
-      console.error('❌ [New Chat] Error creating new chat:', error)
+      console.error('❌ [New Consultation] Error creating new consultation:', error)
     } finally {
       setIsCreatingChat(false)
     }
-  }, [createNewSession, setSelectedAgents, setActiveSessionId, isCreatingChat])
+  }, [createNewSession, setSelectedAgents, setActiveSessionId, refreshSessions, isCreatingChat])
 
   const handleRefresh = useCallback(async () => {
     if (isRefreshing) return
@@ -176,7 +194,7 @@ export function SidebarAskExpert() {
                   ) : (
                     <PlusIcon className="h-4 w-4" />
                   )}
-                  <span>New Chat</span>
+                  <span>New Consultation</span>
                 </div>
                 {selectedAgents.length > 0 && (
                   <Badge variant="outline" className="text-xs">
@@ -214,14 +232,14 @@ export function SidebarAskExpert() {
       </SidebarGroup>
 
       <SidebarGroup className="group-data-[collapsible=icon]:hidden">
-        <SidebarGroupLabel>Recent Chats</SidebarGroupLabel>
+        <SidebarGroupLabel>Recent Consultations</SidebarGroupLabel>
         <SidebarGroupContent>
           <SidebarMenu>
             {sessionsLoading && (
               <SidebarMenuItem>
                 <SidebarMenuButton disabled>
                   <Loader2Icon className="h-4 w-4 animate-spin" />
-                  <span>Loading conversations…</span>
+                  <span>Loading consultations…</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
             )}
@@ -230,7 +248,7 @@ export function SidebarAskExpert() {
               <SidebarMenuItem>
                 <SidebarMenuButton disabled>
                   <ArrowLeftRightIcon className="h-4 w-4 opacity-60" />
-                  <span>No conversations yet</span>
+                  <span>No consultations yet</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
             )}
@@ -245,7 +263,7 @@ export function SidebarAskExpert() {
                     <UserCircle2Icon className="h-4 w-4 shrink-0" />
                     <div className="flex flex-1 flex-col items-start gap-0.5">
                       <span className="text-sm font-medium">
-                        {session.agent?.name || "Conversation"}
+                        {session.agent?.name || "Consultation"}
                       </span>
                       <span className="text-xs text-muted-foreground">
                         {formatTimestamp(session.lastMessage)}
@@ -277,30 +295,6 @@ export function SidebarAskExpert() {
                 className="pl-9"
               />
             </div>
-            
-            {/* Debug Info */}
-            <div className="text-xs text-gray-500 p-2 bg-gray-50 rounded">
-              <div>Total Agents: {agents.length}</div>
-              <div>Filtered: {filteredAgents.length}</div>
-              <div>User: {user?.email || 'Not authenticated'}</div>
-            </div>
-            <div className="flex items-center gap-2">
-              {[null, 1, 2, 3].map((tier) => {
-                const label = tier === null ? "All" : `T${tier}`
-                const isActive = filterTier === tier || (tier === null && filterTier === null)
-                return (
-                  <Button
-                    key={label}
-                    variant={isActive ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setFilterTier(tier)}
-                    className="flex-1 px-0 text-xs"
-                  >
-                    {label}
-                  </Button>
-                )
-              })}
-            </div>
           </div>
 
           <ScrollArea className="max-h-[320px] pr-2">
@@ -314,11 +308,31 @@ export function SidebarAskExpert() {
                 </SidebarMenuItem>
               )}
 
-              {!agentsLoading && filteredAgents.length === 0 && (
+              {!agentsLoading && filteredAgents.length === 0 && agents.length === 0 && (
+                <div className="p-4 space-y-3">
+                  <div className="flex flex-col items-center text-center space-y-2">
+                    <SparklesIcon className="h-8 w-8 text-muted-foreground" />
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium">No agents yet</p>
+                      <p className="text-xs text-muted-foreground">
+                        Add agents from the Agent Store to get started
+                      </p>
+                    </div>
+                    <Link href="/agents">
+                      <Button size="sm" className="mt-2">
+                        <SparklesIcon className="h-3 w-3 mr-1" />
+                        Browse Agent Store
+                      </Button>
+                    </Link>
+                  </div>
+                </div>
+              )}
+
+              {!agentsLoading && filteredAgents.length === 0 && agents.length > 0 && (
                 <SidebarMenuItem>
                   <SidebarMenuButton disabled>
-                    <SparklesIcon className="h-4 w-4" />
-                    <span>No agents found</span>
+                    <SearchIcon className="h-4 w-4" />
+                    <span>No agents match your search</span>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               )}
@@ -375,7 +389,7 @@ export function SidebarAskExpert() {
                                   'text-xs font-medium leading-tight break-words',
                                   isSelected && 'text-vital-primary-900 font-semibold'
                                 )}>
-                                  {agent.displayName}
+                                  {cleanDisplayName(agent.displayName)}
                                 </span>
                               </div>
 

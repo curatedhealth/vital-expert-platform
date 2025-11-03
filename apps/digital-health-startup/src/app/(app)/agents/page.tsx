@@ -127,18 +127,40 @@ function AgentsPageContent() {
         name: agent.display_name
       });
 
-      // Check if user is authenticated (temporary bypass for anonymous user testing)
+      // Check if user is authenticated
       if (!user?.id) {
         console.error('❌ User not authenticated. Please log in first.');
-        // TEMPORARY: Allow anonymous user to add agents for testing
-        console.log('⚠️ [TESTING] Allowing anonymous user to add agents temporarily');
-        // Show user-friendly error message
-        alert('Please log in to add agents to your chat list.\n\nFor testing purposes, this will work with anonymous user.');
-        // Continue execution for testing
-      } else {
-        // Normal authenticated user flow
-        console.log('✅ [Add to Chat] Authenticated user adding agent');
+        alert('Please log in to add agents to your chat list.');
+        return;
       }
+
+      console.log('✅ [Add to Chat] Authenticated user adding agent');
+
+      // Validate agent ID format (must be UUID)
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      if (!agent.id || !uuidRegex.test(agent.id)) {
+        console.error('❌ Invalid agent ID format:', agent.id);
+        alert('This agent has an invalid ID format and cannot be added. Please contact support.');
+        return;
+      }
+
+      // Prepare request payload
+      const requestPayload: any = {
+        userId: user.id,
+        agentId: agent.id,
+        isUserCopy: agent.is_user_copy || false,
+      };
+
+      // Only include originalAgentId if it's a valid UUID
+      if (agent.original_agent_id && uuidRegex.test(agent.original_agent_id)) {
+        requestPayload.originalAgentId = agent.original_agent_id;
+      }
+
+      console.log('📤 [Add to Chat] Sending request:', {
+        url: '/api/user-agents',
+        method: 'POST',
+        payload: requestPayload,
+      });
 
       // Add agent to user's list via API
       const response = await fetch('/api/user-agents', {
@@ -146,34 +168,76 @@ function AgentsPageContent() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          userId: user?.id || '373ee344-28c7-4dc5-90ec-a8770697e876', // Use anonymous user ID for testing
-          agentId: agent.id,
-          originalAgentId: agent.original_agent_id || null,
-          isUserCopy: agent.is_user_copy || false,
-        }),
+        body: JSON.stringify(requestPayload),
       });
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
+        // Try to get error details from response
+        let errorData: any = {};
+        let errorText = '';
+        
+        try {
+          errorText = await response.text();
+          console.log('📄 [Add to Chat] Raw response:', errorText);
+          
+          // Try to parse as JSON
+          if (errorText) {
+            try {
+              errorData = JSON.parse(errorText);
+            } catch (parseError) {
+              console.warn('⚠️ [Add to Chat] Response is not JSON:', errorText);
+              errorData = { error: errorText };
+            }
+          }
+        } catch (readError) {
+          console.error('❌ [Add to Chat] Failed to read response:', readError);
+        }
+
+        console.error('❌ Failed to add agent to chat:', {
+          status: response.status,
+          statusText: response.statusText,
+          errorData,
+          errorText,
+        });
+
         if (response.status === 409) {
           console.log(`ℹ️ Agent "${agent.display_name}" is already in your chat list`);
+          alert(`"${agent.display_name}" is already in your chat list.`);
         } else {
-          console.error('❌ Failed to add agent to chat:', errorData.error || 'Unknown error');
+          // Construct user-friendly error message
+          let errorMessage = 'Unknown error';
+          
+          if (errorData.errors) {
+            // Validation errors object
+            errorMessage = Object.entries(errorData.errors)
+              .map(([field, messages]) => `${field}: ${Array.isArray(messages) ? messages.join(', ') : messages}`)
+              .join('\n');
+          } else if (errorData.error) {
+            errorMessage = errorData.error;
+          } else if (errorData.message) {
+            errorMessage = errorData.message;
+          } else if (errorText) {
+            errorMessage = errorText.substring(0, 200); // Limit length
+          }
+          
+          alert(`Failed to add agent:\n\n${errorMessage}\n\nStatus: ${response.status} ${response.statusText}`);
         }
-        // Navigate to ask-expert page anyway
-        router.push('/ask-expert');
+        
+        // Don't navigate if there's an error - let user see the error and retry
         return;
       }
 
       const result = await response.json();
       console.log(`✅ Agent "${agent.display_name}" added to user's chat list:`, result);
       
+      alert(`✅ "${agent.display_name}" has been added to your chat list!`);
+      
       // Navigate to ask-expert page to see the added agent
       router.push('/ask-expert');
       
     } catch (error) {
       console.error('❌ Failed to add agent to chat:', error);
+      alert('An unexpected error occurred. Please try again.');
     }
   };
 

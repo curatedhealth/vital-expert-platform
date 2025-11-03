@@ -129,6 +129,8 @@ interface EnhancedMessageDisplayProps {
   metadata?: MessageMetadata;
   agentName?: string;
   agentAvatar?: string;
+  userName?: string; // User's actual name
+  userEmail?: string; // User's email for fallback
   isStreaming?: boolean;
   branches?: MessageBranch[];
   currentBranch?: number;
@@ -335,6 +337,8 @@ export function EnhancedMessageDisplay({
   metadata,
   agentName,
   agentAvatar,
+  userName,
+  userEmail,
   isStreaming = false,
   branches,
   currentBranch = 0,
@@ -359,6 +363,33 @@ export function EnhancedMessageDisplay({
       console.log('Has reasoning:', metadata?.reasoning?.length || 0);
       console.log('Is streaming:', isStreaming);
       console.log('Has branches:', branches?.length || 0);
+      
+      // Enhanced debugging for missing features
+      if (metadata) {
+        console.log('📦 Full metadata:', JSON.stringify(metadata, null, 2));
+        
+        if (metadata.reasoning) {
+          console.log('🧠 Reasoning data:', metadata.reasoning);
+          console.log('🧠 Reasoning type:', Array.isArray(metadata.reasoning) ? 'Array' : typeof metadata.reasoning);
+        } else {
+          console.warn('⚠️ No reasoning data in metadata!');
+        }
+        
+        if (metadata.sources) {
+          console.log('📚 Sources data:', metadata.sources);
+          console.log('📚 Sources type:', Array.isArray(metadata.sources) ? 'Array' : typeof metadata.sources);
+          console.log('📚 First source:', metadata.sources[0]);
+        } else {
+          console.warn('⚠️ No sources data in metadata!');
+        }
+        
+        if (metadata.confidence) {
+          console.log('🎯 Confidence:', metadata.confidence);
+        }
+      } else {
+        console.warn('⚠️ No metadata at all!');
+      }
+      
       console.groupEnd();
     }
   }, [id, role, content, agentName, metadata, isStreaming, branches]);
@@ -376,6 +407,17 @@ export function EnhancedMessageDisplay({
 
   const resolvedAgentName = useMemo(() => {
     if (isUser) {
+      // Use actual user name if provided, otherwise extract from email or fallback to "You"
+      if (userName) {
+        return userName;
+      }
+      if (userEmail) {
+        // Extract name from email (e.g., "john.doe@example.com" → "John Doe")
+        const emailName = userEmail.split('@')[0];
+        return emailName.split('.').map(part => 
+          part.charAt(0).toUpperCase() + part.slice(1).toLowerCase()
+        ).join(' ');
+      }
       return 'You';
     }
     if (!agentName) {
@@ -386,7 +428,7 @@ export function EnhancedMessageDisplay({
     }
     const cleaned = agentName.replace(/[_-]+/g, ' ').trim();
     return cleaned.replace(/\b\w/g, (char) => char.toUpperCase());
-  }, [agentName, isUser]);
+  }, [agentName, isUser, userName, userEmail]);
 
   // Get active branch content or fallback to main content
   const displayContent = branches && branches[activeBranch] 
@@ -670,11 +712,22 @@ export function EnhancedMessageDisplay({
         <div className="flex items-start gap-3 mb-2">
           <div className="mt-0.5">
             {isUser ? (
-              <Avatar className="h-8 w-8 bg-gray-200 text-gray-700">
-                <AvatarFallback>
-                  {resolvedAgentName?.[0]?.toUpperCase() || 'U'}
-                </AvatarFallback>
-              </Avatar>
+              <div className="h-8 w-8 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+                <svg
+                  className="h-5 w-5 text-blue-600 dark:text-blue-400"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                  />
+                </svg>
+              </div>
             ) : (
               <AgentAvatar
                 avatar={agentAvatar}

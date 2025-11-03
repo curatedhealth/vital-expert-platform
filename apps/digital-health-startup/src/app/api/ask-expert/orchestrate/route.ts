@@ -14,6 +14,10 @@ import { executeMode2 } from '@/features/chat/services/mode2-automatic-agent-sel
 import { executeMode3 } from '@/features/chat/services/mode3-autonomous-automatic';
 import { executeMode4 } from '@/features/chat/services/mode4-autonomous-manual';
 import {
+  streamLangGraphMode,
+  executeLangGraphMode,
+} from '@/features/chat/services/langgraph-mode-orchestrator';
+import {
   withTimeout,
   MODE1_TIMEOUTS,
   TimeoutError,
@@ -41,6 +45,9 @@ interface OrchestrateRequest {
   // Autonomous mode settings
   maxIterations?: number;
   confidenceThreshold?: number;
+  
+  // LangGraph integration (NEW)
+  useLangGraph?: boolean; // Enable LangGraph workflow orchestration
 }
 
 export async function POST(request: NextRequest) {
@@ -77,6 +84,72 @@ export async function POST(request: NextRequest) {
     const stream = new ReadableStream({
       async start(controller) {
         try {
+          // Check if LangGraph integration is enabled
+          if (body.useLangGraph) {
+            console.log('🎯 [Orchestrate] Using LangGraph workflow orchestration');
+            
+            try {
+              // Use LangGraph for workflow management
+              const langGraphStream = streamLangGraphMode({
+                mode: body.mode,
+                agentId: body.agentId,
+                message: body.message,
+                conversationHistory: body.conversationHistory,
+                enableRAG: body.enableRAG ?? true,
+                enableTools: body.enableTools ?? false,
+                requestedTools: body.requestedTools,
+                selectedRagDomains: body.selectedRagDomains,
+                model: body.model,
+                temperature: body.temperature,
+                maxTokens: body.maxTokens,
+                userId: body.userId || user?.id,
+                tenantId,
+                sessionId,
+              });
+              
+              // Stream LangGraph workflow updates
+              for await (const event of langGraphStream) {
+                if (controller.desiredSize === null) {
+                  console.log('⚠️ [Orchestrate] Controller closed, stopping LangGraph stream');
+                  break;
+                }
+                
+                // Stream workflow state updates
+                controller.enqueue(encoder.encode(`data: ${JSON.stringify(event)}\n\n`));
+                
+                // Also stream any accumulated chunks from the state
+                if (event.state?.streamedChunks && event.state.streamedChunks.length > 0) {
+                  for (const chunk of event.state.streamedChunks) {
+                    if (!chunk.startsWith('__mode')) { // Skip metadata chunks
+                      const chunkEvent = {
+                        type: 'chunk',
+                        content: chunk,
+                        timestamp: new Date().toISOString()
+                      };
+                      controller.enqueue(encoder.encode(`data: ${JSON.stringify(chunkEvent)}\n\n`));
+                    }
+                  }
+                }
+              }
+              
+              controller.enqueue(encoder.encode('data: {"type":"done"}\n\n'));
+              controller.close();
+              return;
+              
+            } catch (langGraphError) {
+              console.error('❌ [Orchestrate] LangGraph error:', langGraphError);
+              const errorEvent = {
+                type: 'error',
+                message: langGraphError instanceof Error ? langGraphError.message : 'LangGraph execution failed',
+                timestamp: new Date().toISOString()
+              };
+              controller.enqueue(encoder.encode(`data: ${JSON.stringify(errorEvent)}\n\n`));
+              controller.close();
+              return;
+            }
+          }
+          
+          // Standard mode handler routing (existing logic)
           // Route to appropriate mode handler
           switch (body.mode) {
             case 'manual': {

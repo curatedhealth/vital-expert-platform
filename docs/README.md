@@ -1,240 +1,198 @@
-# VITAL Platform Documentation
+# 📚 VITAL Documentation
 
-**Last Updated:** February 1, 2025  
-**Version:** 2.0.0  
-**Status:** Production Ready ✅
+Welcome to the VITAL Platform documentation. This directory contains all technical documentation, guides, reports, and historical records organized for easy navigation.
 
 ---
 
-## 📚 Documentation Index
+## 🗂️ Directory Structure
 
-This directory contains all production documentation for the VITAL Platform.
+### 📐 [`architecture/`](./architecture/)
+System architecture, design decisions, and technical specifications
+- **`current/`** - Current architecture documents
+- **`decisions/`** - Architecture Decision Records (ADRs)
+- **`archive/`** - Historical architecture docs
+
+### 📡 [`api/`](./api/)
+API documentation, endpoints, and specifications
+- API reference documentation
+- Request/response schemas
+- Authentication & authorization
+
+### 📖 [`guides/`](./guides/)
+Step-by-step guides for common tasks
+- **`deployment/`** - Production deployment guides
+- **`development/`** - Local development setup
+- **`testing/`** - Testing strategies and guides
+- **`operations/`** - Day-to-day operations
+
+### 📊 [`reports/`](./reports/)
+Audit reports, performance analysis, and assessments
+- **`audits/`** - Comprehensive audit reports
+- **`performance/`** - Performance benchmarks
+- **`security/`** - Security assessments
+
+### 🔧 [`implementation/`](./implementation/)
+Feature implementations and technical details
+- **`features/`** - Feature implementation docs
+- **`integrations/`** - Third-party integrations
+- **`workflows/`** - Workflow designs
+
+### 📈 [`status/`](./status/)
+Project status, milestones, and progress tracking
+- **`phases/`** - Phase completion reports
+- **`milestones/`** - Milestone achievements
+- **`current/`** - Current project status
+
+### 🗄️ [`archive/`](./archive/)
+Historical documentation and completed work
+- **`2025-11/`** - November 2025 work (405 documents organized!)
+  - `phases/` - Phase completions
+  - `fixes/` - Bug fixes and issues
+  - `debug/` - Debug sessions
+  - `status/` - Historical status updates
+  - `misc/` - Other historical docs
+- **`2025-10/`** - October 2025 work
+- **`deprecated/`** - Obsolete documentation
 
 ---
 
-## 🚀 Quick Start Guides
+## 🚀 Quick Links
+
+### For New Developers
+1. Start with [../README.md](../README.md) - Project overview
+2. Review [architecture/current/](./architecture/current/) - System design
+3. Follow [guides/development/](./guides/development/) - Setup your environment
+4. Read [guides/testing/](./guides/testing/) - Testing strategy
+
+### For Operations
+1. [guides/deployment/](./guides/deployment/) - Deployment procedures
+2. [guides/operations/](./guides/operations/) - Day-to-day operations
+3. [status/current/](./status/current/) - Current system status
+4. [reports/audits/](./reports/audits/) - Latest audits
+
+### For Stakeholders
+1. [status/phases/](./status/phases/) - Phase completions
+2. [reports/audits/](./reports/audits/) - Quality & compliance reports
+3. [architecture/current/](./architecture/current/) - Technical overview
+4. [../services/ai-engine/PHASE_0_COMPLETE.md](../services/ai-engine/PHASE_0_COMPLETE.md) - MVP status
+
+---
+
+## 📑 Key Documents
+
+### MVP Status
+- [Phase 0 Complete](../services/ai-engine/PHASE_0_COMPLETE.md) - MVP completion report (96/100 quality)
+- [Critical Priority Crosscheck](../services/ai-engine/CRITICAL_PRIORITY_CROSSCHECK.md) - Gap analysis
+- [Architecture Comparison](../services/ai-engine/ARCHITECTURE_V3_STRUCTURE_COMPARISON.md) - Structure analysis
 
 ### Deployment
-- **[Vercel Deployment Guide](VERCEL_DEPLOYMENT_PRODUCTION.md)** - Frontend & API Gateway deployment
-- **[Docker Deployment Guide](../services/ai-engine/DEPLOYMENT.md)** - Python AI Engine deployment
-- **[Monitoring Setup Guide](MONITORING_PRODUCTION_GUIDE.md)** - Prometheus + Grafana setup
+- [Deployment Guide](./guides/deployment/) - Production deployment
+- [RLS Deployment Scripts](../scripts/database/) - Security deployment
+- [Multi-Environment Setup](../services/ai-engine/RAILWAY_MULTI_ENV_GUIDE.md) - Railway deployment
+
+### Security
+- [RLS Migration](../database/sql/migrations/001_enable_rls_comprehensive_v2.sql) - Row-Level Security
+- [Security Test Suite](../services/ai-engine/tests/security/) - 15 comprehensive tests
+- [Tenant Isolation](./implementation/features/) - Multi-tenancy docs
 
 ### Testing
-- **[Integration Testing Guide](INTEGRATION_TESTING_GUIDE.md)** - How to run integration tests
-- **[Testing Implementation Summary](../TESTING_IMPLEMENTATION_SUMMARY.md)** - Overall testing strategy
+- [Test Coverage Report](../services/ai-engine/) - 153 tests, 65% coverage
+- [Integration Tests](../services/ai-engine/tests/integration/) - Mode 1-4 tests
+- [Security Tests](../services/ai-engine/tests/security/) - RLS tests
 
 ---
 
-## 📖 Production Guides
+## 🔍 Finding Documentation
 
-### Phase 8: Production Deployment
+### By Topic
+- **Architecture**: `architecture/current/`
+- **API**: `api/`
+- **Deployment**: `guides/deployment/`
+- **Development**: `guides/development/`
+- **Testing**: `guides/testing/`
+- **Security**: `reports/security/` + `implementation/features/`
+- **Performance**: `reports/performance/`
+- **Status**: `status/current/`
 
-#### 8.1: Docker Deployment
-- **[Docker Deployment Guide](../services/ai-engine/DEPLOYMENT.md)**
-  - Multi-stage Docker builds
-  - Resource limits configuration
-  - Modal and Railway deployment
-  - Health checks and monitoring
+### By Date
+All historical documentation is organized by date in `archive/YYYY-MM/`
 
-#### 8.2: Vercel Deployment
-- **[Vercel Deployment Guide](VERCEL_DEPLOYMENT_PRODUCTION.md)**
-  - Function timeout configuration
-  - Security headers setup
-  - Subdomain routing for multi-tenant
-  - Environment variables configuration
-
-#### 8.3: Monitoring & Observability
-- **[Monitoring Production Guide](MONITORING_PRODUCTION_GUIDE.md)**
-  - Prometheus configuration
-  - Grafana dashboards setup
-  - Alert rules configuration
-  - Metrics endpoints documentation
-
-#### 8.4: Security Hardening
-- **[Security Hardening Guide](SECURITY_HARDENING_GUIDE.md)**
-  - Secrets management
-  - CORS configuration
-  - Rate limiting
-  - HTTPS/TLS configuration
-  - Security headers
-  - Compliance (HIPAA/GDPR)
+### By Type
+- **How-to**: `guides/`
+- **What/Why**: `architecture/`
+- **Status**: `status/` and `reports/`
+- **Reference**: `api/` and `implementation/`
+- **Historical**: `archive/`
 
 ---
 
-## 🧪 Testing Documentation
+## 🎯 Recent Updates
 
-### Integration Testing
-- **[Integration Testing Guide](INTEGRATION_TESTING_GUIDE.md)**
-  - Test structure and organization
-  - Running integration tests
-  - Test categories and scenarios
-  - Mocking strategy
-  - CI/CD integration
+### November 2025
+- ✅ **Documentation Cleanup**: Organized 405 root files into structured directories
+- ✅ **Phase 0 Complete**: MVP ready for production (98/100)
+- ✅ **Security Infrastructure**: 41 RLS policies deployed
+- ✅ **Test Coverage**: 153 tests (65% coverage)
+- ✅ **Architecture Analysis**: Current vs. v3.0 Gold Standard comparison
 
-### Unit Testing
-- **API Gateway Tests:** `services/api-gateway/src/__tests__/`
-- **Python AI Engine Tests:** `services/ai-engine/src/tests/`
+See `archive/2025-11/` for full November work history.
 
 ---
 
-## 📊 Architecture Documentation
+## 📝 Contributing to Documentation
 
-### System Architecture
-- **Golden Rule Architecture:** All AI/ML services in Python, accessed via API Gateway
-- **Multi-Tenant Architecture:** Tenant isolation via RLS and middleware
-- **Microservices Architecture:**
-  - Frontend (Next.js) → Vercel
-  - API Gateway (Express.js) → Railway/Vercel
-  - Python AI Engine (FastAPI) → Railway/Modal/Docker
+When adding new documentation:
 
-### Deployment Architecture
-```
-Frontend (Vercel)
-    ↓
-API Gateway (Railway/Vercel)
-    ↓
-Python AI Engine (Railway/Modal/Docker)
-    ↓
-Supabase (Database) + Pinecone (Vector Store)
-```
+1. **Choose the right directory**:
+   - Guides for how-to: `guides/{category}/`
+   - Architecture decisions: `architecture/decisions/`
+   - Implementation details: `implementation/{category}/`
+   - Reports & audits: `reports/{category}/`
+   - Status updates: `status/{category}/`
 
----
+2. **Use clear naming**:
+   - `FEATURE_implementation.md` for implementations
+   - `COMPONENT_architecture.md` for architecture
+   - `TOPIC_guide.md` for guides
+   - `PHASE_X_status.md` for status updates
 
-## 🔧 Configuration Guides
+3. **Link from index**:
+   - Update this README if adding major documentation
+   - Update `../DOCUMENTATION_INDEX.md` if critical for deployment
 
-### Environment Variables
-- **[Environment Variables Reference](../docs/ENVIRONMENT_VARIABLES_COMPLETE.md)**
-  - Required variables
-  - Optional variables
-  - Per-service configuration
-
-### Deployment Configuration
-- **Vercel:** `apps/digital-health-startup/vercel.json`
-- **Docker:** `services/ai-engine/Dockerfile`, `docker-compose.python-only.yml`
-- **Railway:** `services/ai-engine/railway.toml`
-- **Modal:** `services/ai-engine/modal_deploy.py`
+4. **Archive old docs**:
+   - Move completed work to `archive/YYYY-MM/`
+   - Keep only current docs in active directories
 
 ---
 
-## 🔒 Security Documentation
+## ⚠️ Note on Historical Documentation
 
-### Security Guides
-- **[Security Hardening Guide](SECURITY_HARDENING_GUIDE.md)**
-  - Pre-production checklist
-  - Post-deployment checklist
-  - Security best practices
-  - Compliance requirements
+**405 documents** were recently organized from the project root into this structure (November 2025). All historical work is preserved in `archive/2025-11/` with the following categories:
 
-### Security Features
-- ✅ Secrets in environment variables
-- ✅ CORS properly configured
-- ✅ Rate limiting implemented
-- ✅ Security headers configured
-- ✅ Row-Level Security (RLS) enabled
-- ✅ Multi-tenant isolation
+- `phases/` - Phase completion reports (~100 docs)
+- `fixes/` - Bug fixes and solutions (~100 docs)
+- `debug/` - Debug sessions and analysis (~50 docs)
+- `status/` - Historical status updates (~50 docs)
+- `misc/` - Other historical documentation (~105 docs)
+
+If you can't find a document, check the appropriate archive directory.
 
 ---
 
-## 📈 Monitoring & Observability
+## 🆘 Need Help?
 
-### Monitoring Guides
-- **[Monitoring Production Guide](MONITORING_PRODUCTION_GUIDE.md)**
-  - Prometheus setup
-  - Grafana dashboards
-  - Alert configuration
-  - Metrics endpoints
-
-### Dashboards
-- **Python AI Engine:** `monitoring/grafana/dashboards/python-ai-engine.json`
-- **Agent Operations:** `monitoring/grafana/dashboards/agent-operations.json`
-- **RAG Operations:** `monitoring/grafana/dashboards/rag-operations.json`
+- **Can't find a document**: Check `archive/2025-11/` or use the search
+- **Unclear structure**: Use this README for navigation
+- **Broken links**: Report to the team (post-cleanup verification pending)
+- **New documentation**: Follow the contributing guidelines above
 
 ---
 
-## 🐛 Troubleshooting
-
-### Common Issues
-
-**Deployment Issues:**
-- See [Vercel Deployment Guide](VERCEL_DEPLOYMENT_PRODUCTION.md#troubleshooting)
-- See [Docker Deployment Guide](../services/ai-engine/DEPLOYMENT.md#troubleshooting)
-
-**Monitoring Issues:**
-- See [Monitoring Production Guide](MONITORING_PRODUCTION_GUIDE.md#troubleshooting)
-
-**Security Issues:**
-- See [Security Hardening Guide](SECURITY_HARDENING_GUIDE.md#troubleshooting)
+**Last Updated**: November 3, 2025  
+**Total Documents**: 496 (405 recently organized from root)  
+**Structure**: Clean, navigable, professional ✅
 
 ---
 
-## 📝 API Documentation
-
-### API Gateway Endpoints
-- **Health:** `GET /health`
-- **Metrics:** `GET /metrics`
-- **Chat Completions:** `POST /v1/chat/completions`
-- **RAG Queries:** `POST /api/rag/query`
-- **Agent Selection:** `POST /api/agents/select`
-- **Mode 1 Manual:** `POST /api/mode1/manual`
-- **Mode 2 Automatic:** `POST /api/mode2/automatic`
-- **Mode 3 Autonomous:** `POST /api/mode3/autonomous-automatic`
-- **Mode 4 Autonomous Manual:** `POST /api/mode4/autonomous-manual`
-
-### Python AI Engine Endpoints
-- **Health:** `GET /health`
-- **Metrics:** `GET /metrics`
-- **Mode 1 Manual:** `POST /api/mode1/manual`
-- **Mode 2 Automatic:** `POST /api/mode2/automatic`
-- **RAG Query:** `POST /api/rag/query`
-- **Agent Selection:** `POST /api/agents/select`
-- **Metadata Extraction:** `POST /api/metadata/extract`
-
----
-
-## 🎯 Production Readiness Checklist
-
-See **[Production Readiness Guide](PRODUCTION_READINESS_CHECKLIST.md)** for complete checklist.
-
-### Quick Checklist
-- [x] Docker deployment configured
-- [x] Vercel deployment configured
-- [x] Monitoring stack set up
-- [x] Security hardening complete
-- [x] Integration tests created
-- [x] Documentation complete
-- [ ] Production deployment (manual step)
-- [ ] Environment variables configured
-- [ ] Domain and SSL configured
-- [ ] Monitoring alerts configured
-
----
-
-## 📞 Support
-
-### Getting Help
-1. Check this documentation index
-2. Review relevant guide in `docs/`
-3. Check troubleshooting sections
-4. Review code comments
-
-### Contributing to Documentation
-- Keep documentation up to date
-- Add examples where helpful
-- Include troubleshooting tips
-- Link related documentation
-
----
-
-## 📅 Version History
-
-### v2.0.0 (February 1, 2025)
-- ✅ Phase 8: Production Deployment Complete
-- ✅ Phase 9: Testing & Documentation Complete
-- ✅ All deployment guides created
-- ✅ Security hardening complete
-- ✅ Monitoring infrastructure ready
-
----
-
-**Last Updated:** February 1, 2025  
-**Maintainer:** VITAL Platform Team
+**🎉 Documentation now organized and production-ready!**

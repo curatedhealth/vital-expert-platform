@@ -4,7 +4,7 @@ dockerfilePath = "services/ai-engine/Dockerfile"
 watchPatterns = ["services/ai-engine/**"]
 
 [deploy]
-startCommand = "cd services/ai-engine && python start_minimal.py"
+startCommand = "python start_minimal.py"
 healthcheckPath = "/health"
 healthcheckTimeout = 60
 restartPolicyType = "ON_FAILURE"
@@ -13,4 +13,3 @@ restartPolicyMaxRetries = 10
 # Railway configuration for monorepo deployment
 # Service: ai-engine (services/ai-engine/)
 # This file must be at repo root for Railway to find it
-

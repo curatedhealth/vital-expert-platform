@@ -54,9 +54,10 @@ COPY --from=builder /opt/venv /opt/venv
 # Copy application code
 COPY src/ ./src/
 COPY start.py .
+COPY start_minimal.py .
 
-# Make startup script executable
-RUN chmod +x start.py
+# Make startup scripts executable
+RUN chmod +x start.py start_minimal.py
 
 # Create logs directory with proper permissions
 RUN mkdir -p /app/logs && \
@@ -77,5 +78,5 @@ EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
     CMD curl -f http://localhost:8000/health || exit 1
 
-# Use startup script that reads PORT from environment
-CMD ["python3", "start.py"]
+# Use minimal diagnostic startup script temporarily for debugging
+CMD ["python3", "start_minimal.py"]

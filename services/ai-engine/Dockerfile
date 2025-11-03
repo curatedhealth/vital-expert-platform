@@ -62,10 +62,9 @@ RUN chmod +x start.py start_minimal.py
 RUN mkdir -p /app/logs && \
     chmod 755 /app/logs
 
-# Create checkpoint directory for LangGraph
+# Create checkpoint directory for LangGraph (before user creation)
 RUN mkdir -p /app/data/checkpoints && \
-    chmod 755 /app/data && \
-    chown -R appuser:appuser /app/data
+    chmod 755 /app/data
 
 # Create non-root user for security
 RUN groupadd -r appuser && \

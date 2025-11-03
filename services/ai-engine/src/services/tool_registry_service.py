@@ -34,10 +34,10 @@ class ToolRegistryService:
         
     async def get_tool_by_code(self, tool_code: str) -> Optional[Dict[str, Any]]:
         """
-        Get tool configuration by tool_code.
+        Get tool configuration by code from unified dh_tool table.
         
         Args:
-            tool_code: Tool identifier (e.g., 'web_search', 'rag_search')
+            tool_code: Tool identifier (e.g., 'TOOL-AI-WEB_SEARCH')
             
         Returns:
             Tool configuration or None if not found
@@ -47,12 +47,37 @@ class ToolRegistryService:
             return self._tool_cache[tool_code]
         
         try:
-            response = await self.supabase.table("tools").select("*").eq("tool_code", tool_code).eq("status", "active").execute()
+            response = await self.supabase.table("dh_tool").select("*").eq("code", tool_code).eq("is_active", True).execute()
             
             if response.data and len(response.data) > 0:
                 tool = response.data[0]
-                self._tool_cache[tool_code] = tool
-                return tool
+                # Map dh_tool columns to expected format
+                mapped_tool = {
+                    "tool_id": tool["id"],
+                    "tool_code": tool["code"],
+                    "unique_id": tool["unique_id"],
+                    "tool_name": tool["name"],
+                    "tool_description": tool.get("tool_description", ""),
+                    "category": tool.get("category"),
+                    "tool_type": tool.get("tool_type", "software_reference"),
+                    "implementation_type": tool.get("implementation_type"),
+                    "implementation_path": tool.get("implementation_path"),
+                    "function_name": tool.get("function_name"),
+                    "input_schema": tool.get("input_schema"),
+                    "output_schema": tool.get("output_schema"),
+                    "langgraph_compatible": tool.get("langgraph_compatible", False),
+                    "langgraph_node_name": tool.get("langgraph_node_name"),
+                    "is_async": tool.get("is_async", False),
+                    "max_execution_time_seconds": tool.get("max_execution_time_seconds", 30),
+                    "retry_config": tool.get("retry_config"),
+                    "rate_limit_per_minute": tool.get("rate_limit_per_minute"),
+                    "cost_per_execution": tool.get("cost_per_execution", 0),
+                    "required_env_vars": tool.get("required_env_vars", []),
+                    "is_active": tool.get("is_active", True),
+                    "status": "active" if tool.get("is_active") else "inactive",
+                }
+                self._tool_cache[tool_code] = mapped_tool
+                return mapped_tool
             
             logger.warning("Tool not found", tool_code=tool_code)
             return None

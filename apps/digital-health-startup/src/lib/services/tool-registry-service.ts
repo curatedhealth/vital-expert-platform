@@ -18,34 +18,55 @@ export interface ToolCategory {
 
 export interface Tool {
   id: string;
-  tool_key: string;
+  unique_id: string; // Was: tool_key
+  code: string;
   name: string;
-  description: string;
-  category_id: string | null;
-  category?: ToolCategory;
-  tool_type: 'api' | 'function' | 'hybrid';
+  description?: string;
+  tool_description?: string;
+  category: string | null; // Now text, not FK
+  category_id?: string | null; // Legacy support
+  category_obj?: ToolCategory; // Renamed from 'category'
+  tool_type: 'ai_function' | 'software_reference' | 'database' | 'saas' | 'api' | 'ai_framework';
+  implementation_type?: 'custom' | 'langchain_tool' | 'api' | 'function';
+  lifecycle_stage?: 'development' | 'testing' | 'staging' | 'production' | 'deprecated';
+  implementation_type?: string | null;
   implementation_path: string | null;
-  api_endpoint: string | null;
-  requires_api_key: boolean;
-  api_key_env_var: string | null;
-  input_schema: any;
-  output_format: string;
-  max_iterations: number;
-  timeout_seconds: number;
+  function_name?: string | null;
+  api_endpoint?: string | null;
+  input_schema?: any;
+  output_schema?: any;
+  output_format?: string;
+  max_iterations?: number;
+  timeout_seconds?: number;
+  is_async?: boolean;
+  max_execution_time_seconds?: number | null;
+  retry_config?: any;
   rate_limit_per_minute: number | null;
-  estimated_cost_per_call: number | null;
-  avg_response_time_ms: number | null;
+  cost_per_execution?: number | null;
+  estimated_cost_per_call?: number | null; // Legacy
+  avg_response_time_ms?: number | null;
+  langgraph_compatible: boolean;
+  langgraph_node_name?: string | null;
   is_active: boolean;
-  is_premium: boolean;
-  requires_approval: boolean;
-  usage_examples: any;
-  best_practices: string[] | null;
-  limitations: string[] | null;
+  is_premium?: boolean;
+  requires_approval?: boolean;
+  access_level?: string | null;
+  required_env_vars?: string[] | null;
+  allowed_tenants?: string[] | null;
+  allowed_roles?: string[] | null;
+  usage_examples?: any;
+  example_usage?: any;
+  best_practices?: string[] | null;
+  limitations?: string[] | null;
   documentation_url: string | null;
-  total_calls: number;
-  success_rate: number | null;
-  avg_confidence_score: number | null;
+  total_calls?: number;
+  success_rate?: number | null;
+  avg_confidence_score?: number | null;
+  metadata?: any;
   tags?: ToolTag[];
+  tenant_id?: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface ToolTag {
@@ -109,16 +130,12 @@ class ToolRegistryService {
   // ============================================================================
 
   /**
-   * Get all available tools
+   * Get all available tools from unified dh_tool table
    */
   async getAllTools(includeInactive = false): Promise<Tool[]> {
     let query = this.getSupabaseClient()
-      .from('tools')
-      .select(`
-        *,
-        category:tool_categories(*),
-        tags:tool_tag_assignments(tag:tool_tags(*))
-      `)
+      .from('dh_tool')
+      .select('*')
       .order('name');
 
     if (!includeInactive) {
@@ -129,35 +146,164 @@ class ToolRegistryService {
 
     if (error) throw error;
 
-    // Transform tags
+    // Map dh_tool columns to Tool interface
     return (data || []).map((tool: any) => ({
-      ...tool,
-      tags: tool.tags?.map((t: any) => t.tag) || []
+      id: tool.id,
+      unique_id: tool.unique_id,
+      code: tool.code,
+      name: tool.name,
+      description: tool.tool_description || tool.notes || '',
+      tool_description: tool.tool_description,
+      category: tool.category,
+      category_id: null, // dh_tool uses text category, not FK
+      tool_type: tool.tool_type || 'software_reference',
+      implementation_type: tool.implementation_type || 'custom',
+      lifecycle_stage: tool.lifecycle_stage || 'development',
+      implementation_path: tool.implementation_path,
+      function_name: tool.function_name,
+      api_endpoint: null, // Not in dh_tool
+      input_schema: tool.input_schema,
+      output_schema: tool.output_schema,
+      output_format: 'json',
+      max_iterations: 3,
+      timeout_seconds: tool.max_execution_time_seconds || 30,
+      is_async: tool.is_async,
+      max_execution_time_seconds: tool.max_execution_time_seconds,
+      retry_config: tool.retry_config,
+      rate_limit_per_minute: tool.rate_limit_per_minute,
+      cost_per_execution: tool.cost_per_execution,
+      estimated_cost_per_call: tool.cost_per_execution,
+      avg_response_time_ms: null,
+      langgraph_compatible: tool.langgraph_compatible || false,
+      langgraph_node_name: tool.langgraph_node_name,
+      is_active: tool.is_active,
+      is_premium: false,
+      requires_approval: false,
+      access_level: tool.access_level,
+      required_env_vars: tool.required_env_vars,
+      allowed_tenants: tool.allowed_tenants,
+      allowed_roles: tool.allowed_roles,
+      usage_examples: tool.example_usage,
+      example_usage: tool.example_usage,
+      best_practices: null,
+      limitations: null,
+      documentation_url: tool.documentation_url,
+      total_calls: 0,
+      success_rate: null,
+      avg_confidence_score: null,
+      metadata: tool.metadata,
+      tags: tool.tags || [],
+      tenant_id: tool.tenant_id,
+      created_at: tool.created_at,
+      updated_at: tool.updated_at,
     }));
   }
 
   /**
-   * Get tool by key
+   * Get tools by lifecycle stage (e.g., only production tools)
+   */
+  async getToolsByLifecycleStage(
+    stage: 'development' | 'testing' | 'staging' | 'production' | 'deprecated',
+    includeInactive = false
+  ): Promise<Tool[]> {
+    let query = this.getSupabaseClient()
+      .from('dh_tool')
+      .select('*')
+      .eq('lifecycle_stage', stage)
+      .order('name');
+
+    if (!includeInactive) {
+      query = query.eq('is_active', true);
+    }
+
+    const { data, error } = await query;
+    if (error) throw error;
+
+    const allTools = await this.getAllTools(includeInactive);
+    return allTools.filter(t => t.lifecycle_stage === stage);
+  }
+
+  /**
+   * Get only production-ready tools
+   */
+  async getProductionTools(): Promise<Tool[]> {
+    return this.getToolsByLifecycleStage('production', false);
+  }
+
+  /**
+   * Get tools ready for testing
+   */
+  async getTestingTools(): Promise<Tool[]> {
+    return this.getToolsByLifecycleStage('testing', false);
+  }
+
+  /**
+   * Get tool by unique_id (was tool_key)
    */
   async getToolByKey(toolKey: string): Promise<Tool | null> {
     const { data, error } = await this.getSupabaseClient()
-      .from('tools')
-      .select(`
-        *,
-        category:tool_categories(*),
-        tags:tool_tag_assignments(tag:tool_tags(*))
-      `)
-      .eq('tool_key', toolKey)
-      .single();
+      .from('dh_tool')
+      .select('*')
+      .eq('unique_id', toolKey)
+      .eq('is_active', true)
+      .maybeSingle();
 
     if (error) {
       console.error('Error fetching tool:', error);
       return null;
     }
 
+    if (!data) return null;
+
+    // Map to Tool interface
     return {
-      ...data,
-      tags: data.tags?.map((t: any) => t.tag) || []
+      id: data.id,
+      unique_id: data.unique_id,
+      code: data.code,
+      name: data.name,
+      description: data.tool_description || data.notes || '',
+      tool_description: data.tool_description,
+      category: data.category,
+      category_id: null,
+      tool_type: data.tool_type || 'software_reference',
+      implementation_type: data.implementation_type,
+      implementation_path: data.implementation_path,
+      function_name: data.function_name,
+      api_endpoint: null,
+      input_schema: data.input_schema,
+      output_schema: data.output_schema,
+      output_format: 'json',
+      max_iterations: 3,
+      timeout_seconds: data.max_execution_time_seconds || 30,
+      is_async: data.is_async,
+      max_execution_time_seconds: data.max_execution_time_seconds,
+      retry_config: data.retry_config,
+      rate_limit_per_minute: data.rate_limit_per_minute,
+      cost_per_execution: data.cost_per_execution,
+      estimated_cost_per_call: data.cost_per_execution,
+      avg_response_time_ms: null,
+      langgraph_compatible: data.langgraph_compatible || false,
+      langgraph_node_name: data.langgraph_node_name,
+      is_active: data.is_active,
+      is_premium: false,
+      requires_approval: false,
+      access_level: data.access_level,
+      required_env_vars: data.required_env_vars,
+      allowed_tenants: data.allowed_tenants,
+      allowed_roles: data.allowed_roles,
+      usage_examples: data.example_usage,
+      example_usage: data.example_usage,
+      best_practices: null,
+      limitations: null,
+      documentation_url: data.documentation_url,
+      total_calls: 0,
+      success_rate: null,
+      avg_confidence_score: null,
+      metadata: data.metadata,
+      tags: data.tags || [],
+      tenant_id: data.tenant_id,
+      created_at: data.created_at,
+      updated_at: data.updated_at,
     };
   }
 
@@ -165,54 +311,20 @@ class ToolRegistryService {
    * Get tools by category
    */
   async getToolsByCategory(categoryName: string): Promise<Tool[]> {
-    const { data, error } = await this.getSupabaseClient()
-      .from('tools')
-      .select(`
-        *,
-        category:tool_categories!inner(*),
-        tags:tool_tag_assignments(tag:tool_tags(*))
-      `)
-      .eq('category.name', categoryName)
-      .eq('is_active', true);
-
-    if (error) throw error;
-
-    return (data || []).map((tool: any) => ({
-      ...tool,
-      tags: tool.tags?.map((t: any) => t.tag) || []
-    }));
+    const allTools = await this.getAllTools(false);
+    return allTools.filter(t => 
+      t.category?.toLowerCase() === categoryName.toLowerCase()
+    );
   }
 
   /**
    * Get tools by tags
    */
   async getToolsByTags(tagNames: string[]): Promise<Tool[]> {
-    const { data, error } = await this.getSupabaseClient()
-      .from('tool_tag_assignments')
-      .select(`
-        tool:tools(
-          *,
-          category:tool_categories(*),
-          tags:tool_tag_assignments(tag:tool_tags(*))
-        ),
-        tag:tool_tags!inner(name)
-      `)
-      .in('tag.name', tagNames);
-
-    if (error) throw error;
-
-    // Deduplicate tools
-    const toolsMap = new Map();
-    (data || []).forEach((item: any) => {
-      if (item.tool && item.tool.is_active) {
-        toolsMap.set(item.tool.id, {
-          ...item.tool,
-          tags: item.tool.tags?.map((t: any) => t.tag) || []
-        });
-      }
-    });
-
-    return Array.from(toolsMap.values());
+    const allTools = await this.getAllTools(false);
+    return allTools.filter(t => 
+      t.tags?.some(tag => tagNames.includes(tag.name))
+    );
   }
 
   /**

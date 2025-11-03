@@ -17,6 +17,7 @@ import {
   Search,
   Star,
   Check,
+  Hammer,
 } from 'lucide-react';
 import {
   Sidebar,
@@ -68,6 +69,11 @@ const navigationItems = [
     title: 'Agents',
     href: '/agents',
     icon: UsersIcon,
+  },
+  {
+    title: 'Tools',
+    href: '/tools',
+    icon: Hammer,
   },
   {
     title: 'Knowledge',

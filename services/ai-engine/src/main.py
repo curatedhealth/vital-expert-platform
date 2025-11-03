@@ -616,6 +616,17 @@ app.add_middleware(
 app.include_router(panel_routes.router, prefix="", tags=["ask-panel"])
 logger.info("✅ Ask Panel routes registered")
 
+# Include Shared Framework routes (LangGraph, AutoGen, CrewAI)
+try:
+    import sys
+    sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'app'))
+    from api.frameworks import router as frameworks_router
+    app.include_router(frameworks_router, prefix="", tags=["frameworks"])
+    logger.info("✅ Shared Framework routes registered (LangGraph, AutoGen, CrewAI)")
+except ImportError as e:
+    logger.warning(f"⚠️  Could not import frameworks router: {e}")
+    logger.warning("   Continuing without shared framework endpoints")
+
 # Dependency to get services
 async def get_agent_orchestrator() -> AgentOrchestrator:
     if not agent_orchestrator:

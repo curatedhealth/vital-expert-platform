@@ -25,6 +25,7 @@ import {
   UsersRound,
   BookOpen,
   Sparkles,
+  Hammer,
 } from 'lucide-react'
 import { useAuth } from '@/lib/auth/supabase-auth-context'
 import { usePathname } from 'next/navigation'
@@ -38,6 +39,7 @@ const topNavRoutes = [
   { label: 'Workflows', href: '/workflows', icon: GitBranch, color: 'text-green-600' },
   { label: 'Solution Builder', href: '/solution-builder', icon: Box, color: 'text-orange-600' },
   { label: 'Agents', href: '/agents', icon: UsersRound, color: 'text-indigo-600' },
+  { label: 'Tools', href: '/tools', icon: Hammer, color: 'text-gray-600' },
   { label: 'Knowledge', href: '/knowledge', icon: BookOpen, color: 'text-teal-600' },
   { label: 'Prompt Prism', href: '/prism', icon: Sparkles, color: 'text-pink-600' },
 ];

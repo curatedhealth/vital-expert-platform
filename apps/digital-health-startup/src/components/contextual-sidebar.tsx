@@ -35,6 +35,7 @@ import {
   GitBranch,
   Code,
   Layers,
+  Hammer,
 } from 'lucide-react';
 import {
   Sidebar,
@@ -830,6 +831,7 @@ function DefaultNavigationContent() {
     { title: 'Jobs-to-be-Done', href: '/jobs-to-be-done', icon: Briefcase },
     { title: 'Build Solution', href: '/solution-builder', icon: Wrench },
     { title: 'Agents', href: '/agents', icon: UsersIcon },
+    { title: 'Tools', href: '/tools', icon: Hammer },
     { title: 'Knowledge', href: '/knowledge', icon: BookOpen },
     { title: 'PROMPTS', href: '/prism', icon: Lightbulb },
     { title: 'Capabilities', href: '/capabilities', icon: Shield },

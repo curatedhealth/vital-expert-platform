@@ -84,8 +84,26 @@ declare global {
       /** OpenAI organization ID (optional) */
       readonly OPENAI_ORG_ID?: string;
 
+      /** Public OpenAI API key (for client-side, if needed) */
+      readonly NEXT_PUBLIC_OPENAI_API_KEY?: string;
+
       /** Anthropic API key */
       readonly ANTHROPIC_API_KEY?: string;
+
+      /** Google AI (Gemini) API key */
+      readonly GOOGLE_API_KEY?: string;
+
+      /** Google Gemini model name */
+      readonly GOOGLE_GEMINI_MODEL?: string;
+
+      /** Groq API key */
+      readonly GROQ_API_KEY?: string;
+
+      /** Together AI API key */
+      readonly TOGETHER_API_KEY?: string;
+
+      /** Replicate API token */
+      readonly REPLICATE_API_TOKEN?: string;
 
       /** HuggingFace API key */
       readonly HUGGINGFACE_API_KEY?: string;
@@ -98,6 +116,12 @@ declare global {
 
       /** HuggingFace research model ID */
       readonly HUGGINGFACE_RESEARCH_MODEL?: string;
+
+      /** Cohere API key */
+      readonly COHERE_API_KEY?: string;
+
+      /** Mistral API key */
+      readonly MISTRAL_API_KEY?: string;
 
       /* =================================================================
        * VECTOR STORES

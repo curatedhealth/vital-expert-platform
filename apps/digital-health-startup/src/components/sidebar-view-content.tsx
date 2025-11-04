@@ -669,6 +669,15 @@ export function SidebarAdminContent() {
                 <span>Agents</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton 
+                onClick={() => handleNavigation('prompts')}
+                isActive={isActive('prompts')}
+              >
+                <FileText className="h-4 w-4" />
+                <span>Prompts</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
           </SidebarMenu>
         </SidebarGroupContent>
       </SidebarGroup>

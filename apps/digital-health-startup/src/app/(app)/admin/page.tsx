@@ -25,6 +25,11 @@ const AgentManagement = dynamic(
   { ssr: false }
 );
 
+const PromptManagement = dynamic(
+  () => import('@/components/admin/PromptManagement').then(mod => ({ default: mod.PromptManagement })),
+  { ssr: false }
+);
+
 const AgentAnalyticsDashboard = dynamic(
   () => import('@/components/admin/AgentAnalyticsDashboard').then(mod => ({ default: mod.AgentAnalyticsDashboard })),
   { ssr: false }
@@ -129,6 +134,13 @@ export default function AdminPage() {
         return (
           <div className="container mx-auto py-8">
             <AgentManagement />
+          </div>
+        );
+      
+      case 'prompts':
+        return (
+          <div className="container mx-auto py-8">
+            <PromptManagement />
           </div>
         );
       

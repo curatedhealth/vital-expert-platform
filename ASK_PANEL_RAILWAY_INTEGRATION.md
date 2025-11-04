@@ -1,13 +1,113 @@
+# 🚀 Ask Panel Railway Integration - Complete Guide
+
+## Overview
+
+This guide connects your **Ask Panel frontend** to your **Railway-deployed AI Engine** for full end-to-end functionality.
+
+---
+
+## 🎯 Current Status
+
+### ✅ Frontend Complete (100%)
+- Landing page with 3 entry points
+- 4-step Panel Creation Wizard
+- Panel Consultation View
+- Multi-Framework Orchestrator
+- Framework proxy APIs
+
+### ⏳ Backend Integration (Railway)
+- Railway AI Engine deployed
+- Need to connect frontend to Railway URL
+- Need to implement framework endpoints in Python
+
+---
+
+## 📋 Step-by-Step Integration
+
+### Step 1: Get Your Railway AI Engine URL
+
+```bash
+cd services/ai-engine
+railway domain
+```
+
+**Example output**: `https://vital-ai-engine-production.up.railway.app`
+
+**Save this URL!** You'll need it in Step 2.
+
+---
+
+### Step 2: Configure Frontend Environment
+
+Create or update `apps/digital-health-startup/.env.local`:
+
+```bash
+# Railway AI Engine URL (replace with your actual URL)
+AI_ENGINE_URL=https://vital-ai-engine-production.up.railway.app
+NEXT_PUBLIC_AI_ENGINE_URL=https://vital-ai-engine-production.up.railway.app
+
+# Supabase (for agent data)
+SUPABASE_URL=https://xazinxsiglqokwfmogyk.supabase.co
+SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhhemlueHNpZ2xxb2t3Zm1vZ3lrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzQ2ODkzNzgsImV4cCI6MjA1MDI2NTM3OH0.5qrfkThPewEuFize6meh47xngCvg_9FRKcepFZ7IxsY
+
+# OpenAI (for AI recommendations)
+OPENAI_API_KEY=your-openai-key-here
+```
+
+---
+
+### Step 3: Verify Railway AI Engine Deployment
+
+#### A. Check Health Endpoint
+
+```bash
+curl https://your-railway-url.up.railway.app/health
+```
+
+**Expected response:**
+```json
+{
+  "status": "healthy",
+  "version": "2.0.0",
+  "timestamp": "2025-01-04T..."
+}
+```
+
+#### B. Check Framework Endpoints
+
+```bash
+# LangGraph endpoint
+curl https://your-railway-url.up.railway.app/frameworks/langgraph/execute
+
+# AutoGen endpoint
+curl https://your-railway-url.up.railway.app/frameworks/autogen/execute
+
+# CrewAI endpoint
+curl https://your-railway-url.up.railway.app/frameworks/crewai/execute
+```
+
+**Expected response for GET requests:**
+```json
+{
+  "detail": "Method Not Allowed"
+}
+```
+*(This is normal - they only accept POST)*
+
+---
+
+### Step 4: Update Python AI Engine with Framework Endpoints
+
+The Python AI Engine needs the actual framework execution logic. Here's the complete implementation:
+
+**File**: `services/ai-engine/app/api/frameworks.py`
+
+```python
 """
 Shared Framework Execution - Python AI Engine
 
 Unified endpoints for LangGraph, AutoGen (CuratedHealth fork), and CrewAI.
 Used by: Ask Expert, Ask Panel, Workflow Designer, Solution Builder
-
-ARCHITECTURE:
-- All services use the same endpoints
-- Frameworks are shared infrastructure, not service-specific
-- No tight coupling between frameworks and services
 """
 
 from fastapi import APIRouter, HTTPException
@@ -18,14 +118,14 @@ import os
 import time
 import openai
 
-# Initialize router
+# Router
 router = APIRouter(prefix="/frameworks", tags=["frameworks"])
 
-# Initialize OpenAI client
+# OpenAI client
 client = openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 # ============================================================================
-# SHARED TYPES
+# TYPES
 # ============================================================================
 
 class Framework(str, Enum):
@@ -438,3 +538,225 @@ async def get_frameworks_info():
             "crewai": "/frameworks/crewai/execute"
         }
     }
+```
+
+---
+
+### Step 5: Deploy Updated Python AI Engine
+
+```bash
+cd services/ai-engine
+
+# Make sure app/api/frameworks.py is updated (see Step 4)
+
+# Deploy to Railway
+railway up
+
+# Watch logs
+railway logs --follow
+```
+
+---
+
+### Step 6: Test End-to-End
+
+#### A. Start Frontend Development Server
+
+```bash
+cd apps/digital-health-startup
+pnpm dev
+```
+
+#### B. Test Ask Panel Flow
+
+1. Navigate to `http://localhost:3000/ask-panel`
+2. Enter a question: *"I need help designing a clinical trial for a digital therapeutic"*
+3. Click **"Get AI Panel"**
+4. Select **AI Suggest** in wizard
+5. Select 3-4 agents
+6. Configure settings (Collaborative mode)
+7. Click **"Create Panel"**
+8. Watch agents respond in real-time! ✨
+
+---
+
+### Step 7: Monitor Railway Logs
+
+```bash
+cd services/ai-engine
+railway logs --follow
+```
+
+**Expected logs:**
+```
+🟣 [AutoGen] Executing workflow with 4 agents
+  Round 1: Initial responses
+  → Agent: Clinical Trial Designer
+  → Agent: FDA Regulatory Strategist
+  → Agent: Biostatistician
+  → Agent: Health Economist
+  Round 2: Discussion
+  Generating consensus
+✅ [AutoGen] Execution complete in 15234ms
+```
+
+---
+
+## 🧪 Testing Checklist
+
+### Frontend Tests
+
+- [ ] Landing page loads
+- [ ] Quick question input works
+- [ ] Wizard opens on click
+- [ ] AI recommendations load
+- [ ] Agent selection works
+- [ ] Settings configure
+- [ ] Review shows config
+- [ ] Create panel navigates to consultation
+
+### Backend Tests
+
+- [ ] Railway health endpoint responds
+- [ ] LangGraph endpoint accepts POST
+- [ ] AutoGen endpoint accepts POST
+- [ ] CrewAI endpoint accepts POST
+- [ ] OpenAI API key works
+- [ ] Agents respond with content
+- [ ] Consensus generates correctly
+
+### End-to-End Tests
+
+- [ ] Panel creation → consultation works
+- [ ] Agent responses display
+- [ ] Confidence scores show
+- [ ] Consensus appears (if enabled)
+- [ ] Follow-up questions work
+- [ ] Back navigation works
+- [ ] Error handling works (offline test)
+
+---
+
+## 🐛 Troubleshooting
+
+### Issue: "Failed to fetch"
+
+**Cause**: Frontend can't reach Railway AI Engine
+
+**Fix**:
+1. Check `AI_ENGINE_URL` in `.env.local`
+2. Verify Railway is deployed: `railway status`
+3. Test health endpoint: `curl https://your-url.up.railway.app/health`
+
+### Issue: "OpenAI API Error"
+
+**Cause**: Railway missing OPENAI_API_KEY
+
+**Fix**:
+```bash
+railway variables --set "OPENAI_API_KEY=sk-your-key"
+railway up
+```
+
+### Issue: "Agent responses empty"
+
+**Cause**: Framework endpoints not implemented
+
+**Fix**: Ensure `app/api/frameworks.py` is updated (see Step 4)
+
+### Issue: "CORS Error"
+
+**Cause**: Railway blocking frontend origin
+
+**Fix**: Add CORS origins in Railway
+```bash
+railway variables --set "CORS_ORIGINS=http://localhost:3000,https://your-frontend.vercel.app"
+```
+
+---
+
+## 📊 Performance Expectations
+
+| Metric | Expected | Notes |
+|--------|----------|-------|
+| **Panel Creation Time** | 2-5 seconds | Depends on agent count |
+| **Agent Response Time** | 3-8 seconds/agent | OpenAI API latency |
+| **Consensus Generation** | 5-10 seconds | Additional synthesis step |
+| **Total Consultation** | 15-60 seconds | 3-5 agents typical |
+
+---
+
+## 🚀 Production Optimization
+
+### 1. Enable Streaming (Future)
+
+Update framework endpoints to support Server-Sent Events (SSE) for real-time token streaming.
+
+### 2. Add Caching
+
+```python
+from functools import lru_cache
+
+@lru_cache(maxsize=100)
+def get_agent_response(agent_id, prompt_hash):
+    # Cache responses for identical prompts
+    pass
+```
+
+### 3. Parallel Execution
+
+For LangGraph sequential mode, run agents in parallel when dependencies allow.
+
+### 4. Rate Limiting
+
+```python
+from slowapi import Limiter
+
+limiter = Limiter(key_func=get_remote_address)
+
+@router.post("/langgraph/execute")
+@limiter.limit("10/minute")
+async def execute_langgraph(...):
+    ...
+```
+
+---
+
+## ✅ Success Criteria
+
+- [ ] Frontend connects to Railway AI Engine
+- [ ] Framework endpoints return responses
+- [ ] Agents provide meaningful answers
+- [ ] Consensus builds correctly
+- [ ] UI displays responses smoothly
+- [ ] Error handling works gracefully
+- [ ] Performance < 60 seconds for 5 agents
+
+---
+
+## 📚 Additional Resources
+
+- [Railway Documentation](https://docs.railway.app/)
+- [OpenAI API Reference](https://platform.openai.com/docs/api-reference)
+- [LangGraph Docs](https://langchain-ai.github.io/langgraph/)
+- [AutoGen Docs](https://microsoft.github.io/autogen/)
+- [CrewAI Docs](https://docs.crewai.com/)
+
+---
+
+## 🎉 You're Done!
+
+Your Ask Panel is now fully integrated with Railway AI Engine!
+
+**Next Steps:**
+1. Test with real questions
+2. Monitor performance
+3. Gather user feedback
+4. Optimize based on usage patterns
+
+**Questions?** Check the troubleshooting section or Railway logs.
+
+---
+
+**Built with ❤️ for Digital Health Innovation**
+

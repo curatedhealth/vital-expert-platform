@@ -404,40 +404,55 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
     fetchAvailableModels();
   }, []);
 
-  // Load available tools from tool registry (not database)
+  // Load available tools from database
   useEffect(() => {
-    try {
-      setLoadingTools(true);
+    const fetchAvailableTools = async () => {
+      try {
+        setLoadingTools(true);
 
-      // Import tool registry and get available tools
-      import('@/features/chat/tools/tool-registry').then(({ listAvailableTools, TOOL_STATUS }) => {
-        const toolNames = listAvailableTools();
-        const tools = toolNames.map((name, index) => ({
-          id: `tool_${index}`,
-          name: name,
-          description: `LangChain tool: ${name}`,
-          type: 'langchain',
-          category: 'tool',
-          api_endpoint: null,
-          configuration: {},
-          authentication_required: false,
-          rate_limit: null,
-          cost_model: null,
-          documentation_url: null,
-          is_active: TOOL_STATUS[name] === 'available',
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
+        // Fetch tools from Supabase dh_tool table
+        const { data: tools, error } = await supabase
+          .from('dh_tool')
+          .select('*')
+          .eq('is_active', true)
+          .order('category_parent', { ascending: true })
+          .order('name', { ascending: true });
+
+        if (error) {
+          console.error('❌ Error fetching tools from database:', error);
+          setAvailableToolsFromDB([]);
+          return;
+        }
+
+        // Map tools to the expected format
+        const mappedTools: Tool[] = (tools || []).map((tool) => ({
+          id: tool.id,
+          name: tool.name,
+          description: tool.tool_description || tool.llm_description || null,
+          type: tool.tool_type || null,
+          category: tool.category || null,
+          api_endpoint: tool.implementation_path || null,
+          configuration: tool.metadata || {},
+          authentication_required: (tool.required_env_vars && tool.required_env_vars.length > 0) || false,
+          rate_limit: tool.rate_limit_per_minute ? `${tool.rate_limit_per_minute}/min` : null,
+          cost_model: tool.cost_per_execution ? `$${tool.cost_per_execution}/exec` : null,
+          documentation_url: tool.documentation_url || null,
+          is_active: tool.is_active || false,
+          created_at: tool.created_at || new Date().toISOString(),
+          updated_at: tool.updated_at || new Date().toISOString(),
         }));
 
-        setAvailableToolsFromDB(tools);
-        console.log(`✅ Loaded ${tools.length} tools from registry`);
+        setAvailableToolsFromDB(mappedTools);
+        console.log(`✅ Loaded ${mappedTools.length} tools from database (including ${tools.filter((t: any) => t.category_parent === 'Strategic Intelligence').length} Strategic Intelligence tools)`);
+      } catch (error) {
+        console.error('❌ Exception loading tools:', error);
+        setAvailableToolsFromDB([]);
+      } finally {
         setLoadingTools(false);
-      });
-    } catch (error) {
-      console.error('❌ Exception loading tools:', error);
-      setAvailableToolsFromDB([]);
-      setLoadingTools(false);
-    }
+      }
+    };
+
+    fetchAvailableTools();
   }, []);
 
   // Load editing agent data
@@ -593,20 +608,58 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
     }
   }, [editingAgent, availableIcons, businessFunctions]);
 
-  // Load agent's tools when editing (tools are stored in agents.tools JSON column)
+  // Load agent's tools when editing (fetch from agent_tools table)
   useEffect(() => {
-    if (!editingAgent) {
-      return;
-    }
+    const loadAgentTools = async () => {
+      if (!editingAgent) {
+        return;
+      }
 
-    // Tools are already in the agent object as a JSON array
-    const agentTools = (editingAgent as any).tools || [];
-    console.log(`🔧 Loaded ${agentTools.length} tools for ${editingAgent.display_name}:`, agentTools);
+      try {
+        // Fetch tool assignments from agent_tools table
+        const { data: agentToolsData, error: agentToolsError } = await supabase
+          .from('agent_tools')
+          .select('tool_id')
+          .eq('agent_id', editingAgent.id);
 
-    setFormData(prev => ({
-      ...prev,
-      tools: agentTools
-    }));
+        if (agentToolsError) {
+          console.error('❌ Error loading agent tools:', agentToolsError);
+          return;
+        }
+
+        // Get the tool IDs
+        const toolIds = (agentToolsData || []).map(at => at.tool_id);
+
+        if (toolIds.length === 0) {
+          console.log(`🔧 No tools assigned to agent ${editingAgent.display_name}`);
+          return;
+        }
+
+        // Fetch tool details from dh_tool table
+        const { data: toolsData, error: toolsError } = await supabase
+          .from('dh_tool')
+          .select('id, name')
+          .in('id', toolIds);
+
+        if (toolsError) {
+          console.error('❌ Error fetching tool details:', toolsError);
+          return;
+        }
+
+        // Convert to tool names array for formData
+        const toolNames = (toolsData || []).map(t => t.name);
+        console.log(`🔧 Loaded ${toolNames.length} tools for ${editingAgent.display_name}:`, toolNames);
+
+        setFormData(prev => ({
+          ...prev,
+          tools: toolNames
+        }));
+      } catch (error) {
+        console.error('❌ Exception loading agent tools:', error);
+      }
+    };
+
+    loadAgentTools();
   }, [editingAgent]);
 
   // Load agent templates, avatars, and icons from database
@@ -1533,9 +1586,22 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
 
           // Update agent tools
           console.log('🔧 Syncing tools for agent:', editingAgent.id);
-          console.log('🔧 Selected tools in formData:', formData.tools);
+          console.log('🔧 Selected tool names in formData:', formData.tools);
           try {
-            await syncAgentTools(editingAgent.id, formData.tools);
+            // Convert tool names to tool IDs from availableToolsFromDB
+            const selectedToolIds = formData.tools
+              .map(toolName => {
+                const tool = availableToolsFromDB.find(t => t.name === toolName);
+                if (!tool) {
+                  console.warn(`⚠️ Tool not found in database: ${toolName}`);
+                  return null;
+                }
+                return tool.id;
+              })
+              .filter((id): id is string => id !== null);
+            
+            console.log('🔧 Mapped to tool IDs:', selectedToolIds);
+            await syncAgentTools(editingAgent.id, selectedToolIds);
             console.log('✅ Agent tools synced successfully');
           } catch (toolError) {
             console.warn('⚠️ Failed to sync agent tools (non-critical):', toolError);

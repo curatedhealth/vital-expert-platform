@@ -244,13 +244,15 @@ function AgentsPageContent() {
   return (
     <div className="space-y-6">
       {/* Page Header */}
-      <div className="flex items-center gap-3">
-        <Users className="w-8 h-8 text-muted-foreground" />
-        <div>
-          <h1 className="text-3xl font-bold">Agents</h1>
-          <p className="text-sm text-muted-foreground">
-            Discover and manage AI expert agents
-          </p>
+      <div className="border-b bg-background px-6 py-4 -mx-6 -mt-6 mb-6">
+        <div className="flex items-center gap-3">
+          <Users className="h-8 w-8 text-muted-foreground" />
+          <div>
+            <h1 className="text-3xl font-bold">Agents</h1>
+            <p className="text-sm text-muted-foreground">
+              Discover and manage AI expert agents
+            </p>
+          </div>
         </div>
       </div>
 

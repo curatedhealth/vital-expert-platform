@@ -219,13 +219,15 @@ function KnowledgePageContent() {
   return (
     <div className="space-y-6">
       {/* Page Header */}
-      <div className="flex items-center gap-3">
-        <BookOpen className="w-8 h-8 text-muted-foreground" />
-        <div>
-          <h1 className="text-3xl font-bold">Knowledge</h1>
-          <p className="text-sm text-muted-foreground">
-            Manage documents and knowledge bases for AI agents
-          </p>
+      <div className="border-b bg-background px-6 py-4 -mx-6 -mt-6 mb-6">
+        <div className="flex items-center gap-3">
+          <BookOpen className="h-8 w-8 text-muted-foreground" />
+          <div>
+            <h1 className="text-3xl font-bold">Knowledge</h1>
+            <p className="text-sm text-muted-foreground">
+              Manage documents and knowledge bases for AI agents
+            </p>
+          </div>
         </div>
       </div>
 

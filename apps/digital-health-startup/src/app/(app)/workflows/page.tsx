@@ -169,20 +169,22 @@ export default function WorkflowsPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex justify-between items-start">
-        <div className="flex items-center gap-3">
-          <WorkflowIcon className="w-8 h-8 text-muted-foreground" />
-          <div>
-            <h1 className="text-3xl font-bold">Workflows</h1>
-            <p className="text-sm text-muted-foreground">
-              Guided multi-step processes for digital health use cases
-            </p>
+      <div className="border-b bg-background px-6 py-4 -mx-6 -mt-6 mb-6">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <WorkflowIcon className="h-8 w-8 text-muted-foreground" />
+            <div>
+              <h1 className="text-3xl font-bold">Workflows</h1>
+              <p className="text-sm text-muted-foreground">
+                Guided multi-step processes for digital health use cases
+              </p>
+            </div>
           </div>
+          <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-md">
+            <Plus className="mr-2 h-4 w-4" />
+            Create Use Case
+          </Button>
         </div>
-        <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-md">
-          <Plus className="mr-2 h-4 w-4" />
-          Create Use Case
-        </Button>
       </div>
 
       {/* Statistics Cards */}

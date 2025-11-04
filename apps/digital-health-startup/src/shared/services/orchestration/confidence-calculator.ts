@@ -50,27 +50,35 @@ export class ConfidenceCalculator {
     if (responses.length === 0) return 0;
     if (responses.length === 1) return this.calculateSingle(responses[0]);
 
-    // // Calculate individual response factors
+    // Calculate individual response factors
     // eslint-disable-next-line security/detect-object-injection
-
+    const allFactors = responses.map(response =>
       this.calculateDetailedFactors(response, responses)
     );
 
     // Combine factors using weighted approach
+    const combinedFactors = this.combineFactors(allFactors);
 
     // Calculate final confidence score
-
-    // })`);
+    const finalConfidence = this.computeFinalScore(combinedFactors, responses);
 
     return finalConfidence;
   }
 
   calculateSingle(response: AgentResponse): number {
-
+    const factors = this.calculateDetailedFactors(response, [response]);
     return this.computeFinalScore(factors, [response]);
   }
 
   private calculateDetailedFactors(response: AgentResponse, allResponses: AgentResponse[]): ConfidenceFactors {
+    const agentCompetency = this.calculateAgentCompetency(response);
+    const responseQuality = this.calculateResponseQuality(response);
+    const domainAlignment = this.calculateDomainAlignment(response);
+    const consensus = this.calculateConsensus(response, allResponses);
+    const responseLength = this.calculateResponseLength(response);
+    const specificity = this.calculateSpecificity(response);
+    const evidenceQuality = this.calculateEvidenceQuality(response);
+    const uncertainty = this.calculateUncertainty(response);
 
     return {
       agentCompetency,
@@ -87,15 +95,19 @@ export class ConfidenceCalculator {
   private calculateAgentCompetency(response: AgentResponse): number {
     // Base competency from agent type
     // eslint-disable-next-line security/detect-object-injection
+    const baseScore = this.agentCompetencyScores[response.agent] || 75;
 
     // Adjust based on agent's reported confidence
+    const confidenceAlignment = 0.7 + (response.confidence / 100) * 0.3;
 
     // Consider agent domain specialization
+    const domainBonus = response.metadata?.domain ? 5 : 0;
 
     return Math.min(100, baseScore * confidenceAlignment + domainBonus);
   }
 
   private calculateResponseQuality(response: AgentResponse): number {
+    let qualityScore = 50;
 
     // Length analysis
     if (text.length < 100) {

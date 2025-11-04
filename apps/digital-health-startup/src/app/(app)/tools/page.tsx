@@ -219,11 +219,16 @@ export default function ToolsPage() {
   return (
     <div className="container mx-auto py-8 px-4">
       {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-4xl font-bold mb-2">Tool Registry</h1>
-        <p className="text-gray-600 dark:text-gray-400">
-          Comprehensive catalog of {stats.total} AI, healthcare, and research tools
-        </p>
+      <div className="border-b bg-background px-6 py-4 -mx-4 -mt-8 mb-8">
+        <div className="flex items-center gap-3">
+          <Wrench className="h-8 w-8 text-muted-foreground" />
+          <div>
+            <h1 className="text-3xl font-bold">Tool Registry</h1>
+            <p className="text-sm text-muted-foreground">
+              Comprehensive catalog of {stats.total} AI, healthcare, and research tools
+            </p>
+          </div>
+        </div>
       </div>
 
       {/* Stats Cards */}

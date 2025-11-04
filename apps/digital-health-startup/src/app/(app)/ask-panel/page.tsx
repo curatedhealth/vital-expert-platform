@@ -28,6 +28,7 @@ import {
   Zap,
 } from 'lucide-react';
 import { PanelCreationWizard } from '@/features/ask-panel/components/PanelCreationWizard';
+import { PanelConsultationView } from '@/features/ask-panel/components/PanelConsultationView';
 import { AgentCard } from '@/features/ask-panel/components/AgentCard';
 import { PANEL_TEMPLATES } from '@/features/ask-panel/constants/panel-templates';
 import type { PanelConfiguration } from '@/features/ask-panel/types/agent';
@@ -43,11 +44,38 @@ export default function AskPanelPage() {
     setShowWizard(true);
   }
 
+  // State for consultation view
+  const [showConsultation, setShowConsultation] = useState(false);
+  const [consultationConfig, setConsultationConfig] = useState<PanelConfiguration | null>(null);
+  const [consultationQuestion, setConsultationQuestion] = useState('');
+
   // Handle panel creation
   function handlePanelCreated(config: PanelConfiguration) {
     console.log('Panel created:', config);
     setShowWizard(false);
-    // TODO: Navigate to panel consultation view
+    
+    // Navigate to consultation view
+    setConsultationConfig(config);
+    setConsultationQuestion(quickQuestion || initialQuery);
+    setShowConsultation(true);
+  }
+
+  // Handle back from consultation
+  function handleBackFromConsultation() {
+    setShowConsultation(false);
+    setConsultationConfig(null);
+    setConsultationQuestion('');
+  }
+
+  // Show consultation view if active
+  if (showConsultation && consultationConfig && consultationQuestion) {
+    return (
+      <PanelConsultationView
+        configuration={consultationConfig}
+        initialQuestion={consultationQuestion}
+        onBack={handleBackFromConsultation}
+      />
+    );
   }
 
   return (

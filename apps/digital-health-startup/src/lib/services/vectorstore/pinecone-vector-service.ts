@@ -69,7 +69,7 @@ export class PineconeVectorService {
     // Initialize Pinecone
     const apiKey = config?.pineconeApiKey || process.env.PINECONE_API_KEY;
     if (!apiKey) {
-      throw new Error('PINECONE_API_KEY is required');
+      throw new Error('PINECONE_API_KEY is required to initialize PineconeVectorService');
     }
 
     this.pinecone = new Pinecone({ apiKey });
@@ -824,11 +824,23 @@ export class PineconeVectorService {
 // Singleton instance
 let pineconeVectorServiceInstance: PineconeVectorService | null = null;
 
-export function getPineconeVectorService(): PineconeVectorService {
+export function getPineconeVectorService(): PineconeVectorService | null {
+  // Check if Pinecone is configured
+  if (!process.env.PINECONE_API_KEY) {
+    console.warn('⚠️  PINECONE_API_KEY not set - Vector search (RAG) is disabled');
+    return null;
+  }
+
   if (!pineconeVectorServiceInstance) {
-    pineconeVectorServiceInstance = new PineconeVectorService();
+    try {
+      pineconeVectorServiceInstance = new PineconeVectorService();
+    } catch (error) {
+      console.error('❌ Failed to initialize Pinecone:', error);
+      return null;
+    }
   }
   return pineconeVectorServiceInstance;
 }
 
+// Export as null initially - will be lazily loaded when needed
 export const pineconeVectorService = getPineconeVectorService();

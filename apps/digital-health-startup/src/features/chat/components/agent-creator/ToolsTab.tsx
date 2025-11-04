@@ -3,11 +3,10 @@ import { Wrench, CheckCircle } from 'lucide-react';
 import { Badge } from '@vital/ui';
 import { Card, CardContent, CardHeader, CardTitle } from '@vital/ui';
 import { Label } from '@vital/ui';
-import { cn } from '@vital/ui/lib/utils';
+import { cn } from '@/lib/utils';
 import { TOOL_STATUS } from '@/features/chat/tools/tool-registry';
 
-import type { AgentFormData } from './types';
-import type { Tool } from '@/features/chat/hooks';
+import type { AgentFormData, Tool } from './types';
 
 interface ToolsTabProps {
   formData: AgentFormData;

@@ -42,10 +42,25 @@ export async function POST(request: NextRequest) {
       .order('position', { ascending: true })
       .limit(20);
 
+    console.log('Supabase query result:', {
+      data: promptStarters?.length || 0,
+      error: startersError,
+      errorDetails: startersError ? JSON.stringify(startersError) : 'none'
+    });
+
     if (startersError) {
       console.error('Error fetching prompt starters:', startersError);
+      console.error('Error code:', startersError.code);
+      console.error('Error message:', startersError.message);
+      console.error('Error details:', startersError.details);
+      console.error('Error hint:', startersError.hint);
       return NextResponse.json(
-        { error: 'Failed to fetch prompt starters', details: startersError.message },
+        { 
+          error: 'Failed to fetch prompt starters', 
+          details: startersError.message,
+          code: startersError.code,
+          hint: startersError.hint
+        },
         { status: 500 }
       );
     }

@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { langchainRAGService } from '@/features/chat/services/langchain-service';
+import { getAnalyticsService } from '@/lib/analytics/UnifiedAnalyticsService';
+import { STARTUP_TENANT_ID } from '@/lib/constants/tenant';
 
 // Configure route for large file uploads
 export const runtime = 'nodejs';
@@ -8,6 +10,12 @@ export const maxDuration = 300; // 5 minutes
 export const dynamic = 'force-dynamic';
 
 export async function POST(request: NextRequest) {
+  const analytics = getAnalyticsService();
+  const startTime = Date.now();
+  
+  //  Get user info from headers or body
+  const userId = request.headers.get('x-user-id') || 'anonymous';
+  
   try {
     const formData = await request.formData();
     const files = formData.getAll('files') as File[];
@@ -32,6 +40,26 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Track document upload event
+    await analytics.trackEvent({
+      tenant_id: STARTUP_TENANT_ID,
+      user_id: userId,
+      event_type: 'documents_uploaded',
+      event_category: 'user_behavior',
+      event_data: {
+        file_count: files.length,
+        file_sizes: files.map(f => f.size),
+        total_size: files.reduce((sum, f) => sum + f.size, 0),
+        file_names: files.map(f => f.name),
+        file_types: files.map(f => f.type),
+        domain,
+        embedding_model: embeddingModel,
+        is_global: isGlobal,
+        agent_id: agentId,
+      },
+      source: 'knowledge_upload',
+    });
+
     // Use LangChain service to process all documents
     const result = await langchainRAGService.processDocuments(files, {
       agentId,
@@ -45,12 +73,75 @@ export async function POST(request: NextRequest) {
       domain_scope,
     });
 
+    const processingTime = Date.now() - startTime;
+    const successCount = result.results.filter((r: any) => r.status === 'success').length;
+    const failureCount = result.results.filter((r: any) => r.status === 'error').length;
+
+    // Track embedding costs (estimate based on text length)
+    // text-embedding-3-large: $0.00013 per 1K tokens
+    // Rough estimate: 1 page ≈ 500 tokens
+    for (const fileResult of result.results) {
+      if (fileResult.status === 'success' && fileResult.chunks) {
+        const estimatedTokens = fileResult.chunks * 500; // chunks * avg tokens per chunk
+        const embeddingCost = (estimatedTokens / 1000) * 0.00013;
+        
+        await analytics.trackCost({
+          tenant_id: STARTUP_TENANT_ID,
+          user_id: userId,
+          cost_type: 'embedding',
+          cost_usd: embeddingCost,
+          quantity: estimatedTokens,
+          unit_price: 0.00013 / 1000,
+          service: 'openai',
+          service_tier: embeddingModel,
+          metadata: {
+            file_name: fileResult.name,
+            chunks: fileResult.chunks,
+          },
+        });
+      }
+    }
+
+    // Track storage costs (estimate: $0.02 per GB)
+    const totalSizeGB = files.reduce((sum, f) => sum + f.size, 0) / 1_000_000_000;
+    if (totalSizeGB > 0) {
+      await analytics.trackCost({
+        tenant_id: STARTUP_TENANT_ID,
+        user_id: userId,
+        cost_type: 'storage',
+        cost_usd: totalSizeGB * 0.02,
+        quantity: files.reduce((sum, f) => sum + f.size, 0),
+        service: 'supabase',
+        service_tier: 'storage',
+        metadata: {
+          file_count: files.length,
+        },
+      });
+    }
+
+    // Track document processing completion
+    await analytics.trackEvent({
+      tenant_id: STARTUP_TENANT_ID,
+      user_id: userId,
+      event_type: 'documents_processed',
+      event_category: 'system_health',
+      event_data: {
+        success_count: successCount,
+        failure_count: failureCount,
+        processing_time_ms: processingTime,
+        total_files: files.length,
+        domain,
+        embedding_model: embeddingModel,
+      },
+      source: 'knowledge_upload',
+    });
+
     return NextResponse.json({
       success: result.success,
       results: result.results,
-      totalProcessed: result.results.filter((r: any) => r.status === 'success').length,
-      totalFailed: result.results.filter((r: any) => r.status === 'error').length,
-      message: `Processed ${result.results.filter((r: any) => r.status === 'success').length} files successfully using LangChain`
+      totalProcessed: successCount,
+      totalFailed: failureCount,
+      message: `Processed ${successCount} files successfully using LangChain`
     });
 
   } catch (error) {
@@ -59,6 +150,22 @@ export async function POST(request: NextRequest) {
     console.error('Error type:', typeof error);
     console.error('Error message:', error instanceof Error ? error.message : 'Unknown error');
     console.error('Error stack:', error instanceof Error ? error.stack : 'No stack');
+    
+    const processingTime = Date.now() - startTime;
+    
+    // Track upload failure
+    await analytics.trackEvent({
+      tenant_id: STARTUP_TENANT_ID,
+      user_id: userId,
+      event_type: 'document_upload_failed',
+      event_category: 'system_health',
+      event_data: {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        processing_time_ms: processingTime,
+      },
+      source: 'knowledge_upload',
+    });
+    
     return NextResponse.json(
       {
         error: 'Failed to process uploaded files with LangChain',

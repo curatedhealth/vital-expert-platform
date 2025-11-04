@@ -323,14 +323,11 @@ export async function GET(request: NextRequest) {
     }
 
     // Get user's Ask Expert sessions
-    const { data: sessions, error } = await supabase
+    // ⚡ RESILIENCE: Use separate queries to handle NULL agent_id
+    // The agents!inner() join fails when messages don't have agent_id (which is common)
+    const { data: messages, error } = await supabase
       .from('chat_messages')
-      .select(`
-        session_id,
-        agent_id,
-        agents!inner(name, description, avatar_url),
-        created_at
-      `)
+      .select('session_id, agent_id, agent_name, created_at')
       .eq('user_id', userId)
       .eq('role', 'user')
       .order('created_at', { ascending: false })
@@ -341,13 +338,42 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ success: true, sessions: [] });
     }
 
+    if (!messages || messages.length === 0) {
+      return NextResponse.json({ success: true, sessions: [] });
+    }
+
+    // Get unique agent IDs (filter out nulls)
+    const agentIds = [...new Set(messages.map((m: any) => m.agent_id).filter(Boolean))];
+
+    // Fetch agent details if we have agent IDs
+    let agentMap = new Map();
+    if (agentIds.length > 0) {
+      const { data: agents, error: agentError } = await supabase
+        .from('agents')
+        .select('id, name, description, avatar_url')
+        .in('id', agentIds);
+
+      if (!agentError && agents) {
+        agents.forEach((agent: any) => {
+          agentMap.set(agent.id, agent);
+        });
+      }
+    }
+
     // Group by session
     const sessionMap = new Map();
-    sessions.forEach((msg: any) => {
+    messages.forEach((msg: any) => {
       if (!sessionMap.has(msg.session_id)) {
+        // Get agent details from map or use agent_name from message
+        const agent = msg.agent_id ? agentMap.get(msg.agent_id) : null;
+        
         sessionMap.set(msg.session_id, {
           sessionId: msg.session_id,
-          agent: msg.agents,
+          agent: agent || {
+            name: msg.agent_name || 'Ask Expert',
+            description: null,
+            avatar_url: null,
+          },
           lastMessage: msg.created_at,
           messageCount: 0,
         });

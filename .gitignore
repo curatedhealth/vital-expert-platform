@@ -210,6 +210,7 @@ data_dump.sql
 exports/
 backups/
 archive/
+!services/ai-engine/archive/
 coverage/
 
 # Generated files

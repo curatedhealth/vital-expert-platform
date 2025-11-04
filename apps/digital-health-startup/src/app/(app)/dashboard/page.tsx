@@ -36,13 +36,15 @@ export default function DashboardPage() {
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-6 py-8 space-y-8">
         {/* Page Header */}
-        <div className="flex items-center gap-3 mb-6">
-          <BarChart3 className="w-8 h-8 text-muted-foreground" />
-          <div>
-            <h1 className="text-3xl font-bold">Dashboard</h1>
-            <p className="text-sm text-muted-foreground">
-              Overview of your services and recent activity
-            </p>
+        <div className="border-b bg-background px-6 py-4 -mx-6 -mt-8 mb-8">
+          <div className="flex items-center gap-3">
+            <BarChart3 className="h-8 w-8 text-muted-foreground" />
+            <div>
+              <h1 className="text-3xl font-bold">Dashboard</h1>
+              <p className="text-sm text-muted-foreground">
+                Overview of your services and recent activity
+              </p>
+            </div>
           </div>
         </div>
         

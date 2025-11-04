@@ -317,13 +317,15 @@ export default function AskPanelPage() {
   return (
     <div className="container mx-auto py-8 space-y-6">
       {/* Page Header */}
-      <div className="flex items-center gap-3">
-        <Users className="w-8 h-8 text-muted-foreground" />
-        <div>
-          <h1 className="text-3xl font-bold">Ask Panel</h1>
-          <p className="text-sm text-muted-foreground">
-            Multi-expert advisory board consultations
-          </p>
+      <div className="border-b bg-background px-6 py-4 -mx-6 -mt-8 mb-6">
+        <div className="flex items-center gap-3">
+          <Users className="h-8 w-8 text-muted-foreground" />
+          <div>
+            <h1 className="text-3xl font-bold">Ask Panel</h1>
+            <p className="text-sm text-muted-foreground">
+              Multi-expert advisory board consultations
+            </p>
+          </div>
         </div>
       </div>
 

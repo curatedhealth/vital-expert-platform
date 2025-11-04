@@ -165,11 +165,19 @@ export function PanelCreationWizard({
   }
 
   // Filter agents based on search
-  const filteredAgents = availableAgents.filter(agent =>
-    agent.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    agent.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    agent.expertise.some(exp => exp.toLowerCase().includes(searchQuery.toLowerCase()))
-  );
+  const filteredAgents = availableAgents.filter(agent => {
+    // Safely handle missing or null properties
+    const title = agent.title?.toLowerCase() || '';
+    const description = agent.description?.toLowerCase() || '';
+    const expertise = agent.expertise || [];
+    const query = searchQuery.toLowerCase();
+    
+    return (
+      title.includes(query) ||
+      description.includes(query) ||
+      expertise.some(exp => exp?.toLowerCase().includes(query))
+    );
+  });
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">

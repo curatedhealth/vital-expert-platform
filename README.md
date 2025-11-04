@@ -208,12 +208,38 @@ LANGFUSE_HOST=https://cloud.langfuse.com
 
 ## 🌐 Deployment
 
+### Railway (AI Engine - Backend)
+
+**Status**: ✅ **Deployed to Production**
+
+```bash
+# Quick deployment to Railway
+cd services/ai-engine
+railway link
+railway up
+
+# Or use automated script
+./deploy-railway.sh
+```
+
+**📚 Complete Railway Documentation**: [`docs/deployment/railway/`](./docs/deployment/railway/)
+
+**Quick Links**:
+- [Environment Variables Guide](./docs/deployment/railway/guides/RAILWAY_ENVIRONMENT_VARIABLES_GUIDE.md) - All 40+ env vars
+- [Setup Checklist](./docs/deployment/railway/guides/RAILWAY_ENV_SETUP_COMPLETE.md) - Quick start
+- [Troubleshooting](./docs/deployment/railway/troubleshooting/) - Common issues
+
+**Production URL**: https://vital-expert-platform-production.up.railway.app
+
+---
+
 ### 3-Tier Deployment Strategy
 
 1. **Production** (`main` branch)
    - Domain: `vital-platform.com`
    - Database: Production Supabase
    - Vercel: Production project
+   - Railway: Production AI Engine
 
 2. **Pre-Production** (`develop` branch)
    - Domain: `dev.vital-platform.com`

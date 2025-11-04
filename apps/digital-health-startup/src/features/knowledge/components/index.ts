@@ -1,4 +1,10 @@
-// Knowledge Components Module
-export * from './knowledge-analytics-dashboard';
-export * from './knowledge-uploader';
-export * from './knowledge-viewer';
+/**
+ * Knowledge Domain Components
+ * Modular components for domain management
+ */
+
+export { DomainBasicInfo } from './DomainBasicInfo';
+export { DomainModelConfig } from './DomainModelConfig';
+export { DomainMetadata } from './DomainMetadata';
+export { DomainEditForm } from './DomainEditForm';
+export { DomainDetailsDialog } from './DomainDetailsDialog';

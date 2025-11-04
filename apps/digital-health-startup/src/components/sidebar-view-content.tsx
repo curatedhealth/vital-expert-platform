@@ -640,6 +640,23 @@ export function SidebarAdminContent() {
       </SidebarGroup>
 
       <SidebarGroup>
+        <SidebarGroupLabel>User & Access</SidebarGroupLabel>
+        <SidebarGroupContent>
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton 
+                onClick={() => handleNavigation('users')}
+                isActive={isActive('users')}
+              >
+                <Users className="h-4 w-4" />
+                <span>Users</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarGroupContent>
+      </SidebarGroup>
+
+      <SidebarGroup>
         <SidebarGroupLabel>Analytics & Monitoring</SidebarGroupLabel>
         <SidebarGroupContent>
           <SidebarMenu>
@@ -672,11 +689,11 @@ export function SidebarAdminContent() {
             </SidebarMenuItem>
             <SidebarMenuItem>
               <SidebarMenuButton 
-                onClick={() => handleNavigation('llm-cost-tracking')}
-                isActive={isActive('llm-cost-tracking')}
+                onClick={() => handleNavigation('services-analytics')}
+                isActive={isActive('services-analytics')}
               >
-                <DollarSign className="h-4 w-4" />
-                <span>LLM Cost Tracking</span>
+                <Cloud className="h-4 w-4" />
+                <span>Services Analytics</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
             <SidebarMenuItem>
@@ -702,7 +719,16 @@ export function SidebarAdminContent() {
                 isActive={isActive('llm-providers')}
               >
                 <Server className="h-4 w-4" />
-                <span>LLM Providers</span>
+                <span>Providers</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton 
+                onClick={() => handleNavigation('llm-cost-tracking')}
+                isActive={isActive('llm-cost-tracking')}
+              >
+                <DollarSign className="h-4 w-4" />
+                <span>Cost Tracking</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
           </SidebarMenu>
@@ -710,7 +736,59 @@ export function SidebarAdminContent() {
       </SidebarGroup>
 
       <SidebarGroup>
-        <SidebarGroupLabel>Organization Management</SidebarGroupLabel>
+        <SidebarGroupLabel>Capabilities & Skills</SidebarGroupLabel>
+        <SidebarGroupContent>
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton 
+                onClick={() => handleNavigation('capabilities')}
+                isActive={isActive('capabilities')}
+              >
+                <Zap className="h-4 w-4" />
+                <span>Capabilities</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton 
+                onClick={() => handleNavigation('skills')}
+                isActive={isActive('skills')}
+              >
+                <Star className="h-4 w-4" />
+                <span>Skills</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarGroupContent>
+      </SidebarGroup>
+
+      <SidebarGroup>
+        <SidebarGroupLabel>Panel Management</SidebarGroupLabel>
+        <SidebarGroupContent>
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton 
+                onClick={() => handleNavigation('ask-panel')}
+                isActive={isActive('ask-panel')}
+              >
+                <Users className="h-4 w-4" />
+                <span>Ask Panel</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton 
+                onClick={() => handleNavigation('expert-panel')}
+                isActive={isActive('expert-panel')}
+              >
+                <User className="h-4 w-4" />
+                <span>Expert Panel</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarGroupContent>
+      </SidebarGroup>
+
+      <SidebarGroup>
+        <SidebarGroupLabel>Organization</SidebarGroupLabel>
         <SidebarGroupContent>
           <SidebarMenu>
             <SidebarMenuItem>

@@ -89,6 +89,12 @@ export default function UseCaseDetailPage() {
   const [tasks, setTasks] = useState<Record<string, Task[]>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [mounted, setMounted] = useState(false);
+
+  // Ensure component is mounted before rendering
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     async function fetchData() {
@@ -134,7 +140,7 @@ export default function UseCaseDetailPage() {
     }
   }, [code]);
 
-  if (loading) {
+  if (!mounted || loading) {
     return <UseCaseDetailSkeleton />;
   }
 

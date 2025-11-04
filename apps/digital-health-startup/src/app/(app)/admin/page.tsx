@@ -15,6 +15,11 @@ const OverviewDashboard = dynamic(
   { ssr: false }
 );
 
+const UserManagement = dynamic(
+  () => import('@/components/admin/UserManagement').then(mod => ({ default: mod.UserManagement })),
+  { ssr: false }
+);
+
 const AgentAnalyticsDashboard = dynamic(
   () => import('@/components/admin/AgentAnalyticsDashboard').then(mod => ({ default: mod.AgentAnalyticsDashboard })),
   { ssr: false }
@@ -105,6 +110,13 @@ export default function AdminPage() {
         return (
           <div className="container mx-auto py-8">
             <OverviewDashboard />
+          </div>
+        );
+      
+      case 'users':
+        return (
+          <div className="container mx-auto py-8">
+            <UserManagement />
           </div>
         );
       

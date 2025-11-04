@@ -40,6 +40,7 @@ import {
   Hammer
 } from 'lucide-react';
 import { ToolRegistryService } from '@/lib/services/tool-registry-service';
+import { ToolDetailModal } from '@/components/tools/ToolDetailModal';
 
 // Tool categories with icons and colors
 const TOOL_CATEGORIES = {
@@ -122,6 +123,8 @@ export default function ToolsPage() {
     deidentification: 0,
   });
   const [loading, setLoading] = useState(true);
+  const [selectedTool, setSelectedTool] = useState<any | null>(null);
+  const [showToolModal, setShowToolModal] = useState(false);
 
   useEffect(() => {
     loadTools();
@@ -196,6 +199,21 @@ export default function ToolsPage() {
   const getUniqueCategories = () => {
     const categories = new Set(tools.map(t => t.category).filter(Boolean));
     return Array.from(categories).sort();
+  };
+
+  const handleToolClick = (tool: any) => {
+    setSelectedTool(tool);
+    setShowToolModal(true);
+  };
+
+  const handleToolModalClose = () => {
+    setShowToolModal(false);
+    setSelectedTool(null);
+  };
+
+  const handleToolSave = (updatedTool: any) => {
+    // Reload tools to get updated data
+    loadTools();
   };
 
   return (
@@ -434,7 +452,7 @@ export default function ToolsPage() {
         <TabsContent value="grid">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredTools.map((tool) => (
-              <ToolCard key={tool.id} tool={tool} />
+              <ToolCard key={tool.id} tool={tool} onClick={handleToolClick} />
             ))}
           </div>
         </TabsContent>
@@ -442,7 +460,7 @@ export default function ToolsPage() {
         <TabsContent value="list">
           <div className="space-y-4">
             {filteredTools.map((tool) => (
-              <ToolListItem key={tool.id} tool={tool} />
+              <ToolListItem key={tool.id} tool={tool} onClick={handleToolClick} />
             ))}
           </div>
         </TabsContent>
@@ -468,7 +486,7 @@ export default function ToolsPage() {
                   )}
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {categoryTools.map((tool) => (
-                      <ToolCard key={tool.id} tool={tool} compact />
+                      <ToolCard key={tool.id} tool={tool} compact onClick={handleToolClick} />
                     ))}
                   </div>
                 </div>
@@ -485,11 +503,20 @@ export default function ToolsPage() {
           </CardContent>
         </Card>
       )}
+
+      {/* Tool Detail Modal */}
+      <ToolDetailModal
+        tool={selectedTool}
+        isOpen={showToolModal}
+        onClose={handleToolModalClose}
+        onSave={handleToolSave}
+        mode="view"
+      />
     </div>
   );
 }
 
-function ToolCard({ tool, compact = false }: { tool: any; compact?: boolean }) {
+function ToolCard({ tool, compact = false, onClick }: { tool: any; compact?: boolean; onClick?: (tool: any) => void }) {
   const categoryConfig = TOOL_CATEGORIES[tool.category as keyof typeof TOOL_CATEGORIES];
   const Icon = categoryConfig?.icon || Database;
   const lifecycleBadge = LIFECYCLE_BADGES[tool.lifecycle_stage as keyof typeof LIFECYCLE_BADGES];
@@ -500,7 +527,7 @@ function ToolCard({ tool, compact = false }: { tool: any; compact?: boolean }) {
     : null;
 
   return (
-    <Card className="hover:shadow-lg transition-shadow">
+    <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => onClick?.(tool)}>
       <CardHeader className={compact ? 'pb-3' : ''}>
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-2">
@@ -579,14 +606,14 @@ function ToolCard({ tool, compact = false }: { tool: any; compact?: boolean }) {
   );
 }
 
-function ToolListItem({ tool }: { tool: any }) {
+function ToolListItem({ tool, onClick }: { tool: any; onClick?: (tool: any) => void }) {
   const categoryConfig = TOOL_CATEGORIES[tool.category as keyof typeof TOOL_CATEGORIES];
   const Icon = categoryConfig?.icon || Database;
   const lifecycleBadge = LIFECYCLE_BADGES[tool.lifecycle_stage as keyof typeof LIFECYCLE_BADGES];
   const LifecycleIcon = lifecycleBadge?.icon || AlertCircle;
 
   return (
-    <Card>
+    <Card className="cursor-pointer hover:bg-gray-50" onClick={() => onClick?.(tool)}>
       <CardContent className="py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4 flex-1">

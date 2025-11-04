@@ -4,6 +4,7 @@ Medical AI Agent Orchestration with LangChain
 """
 
 import os
+import sys
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException, Depends, WebSocket, WebSocketDisconnect, Request
 from fastapi.middleware.cors import CORSMiddleware

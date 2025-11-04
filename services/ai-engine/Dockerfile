@@ -75,11 +75,11 @@ RUN groupadd -r appuser && \
 USER appuser
 
 # Expose port
-EXPOSE 8000
+EXPOSE 8080
 
 # Health check with proper configuration
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-    CMD curl -f http://localhost:8000/health || exit 1
+    CMD curl -f http://localhost:8080/health || exit 1
 
-# Use minimal diagnostic startup script temporarily for debugging
-CMD ["python3", "start_minimal.py"]
+# Start the full AI Engine
+CMD ["python3", "start.py"]

@@ -281,6 +281,10 @@ class RichMediaService {
    * Optimize image for web
    */
   private async optimizeImage(file: File): Promise<File> {
+    if (typeof document === 'undefined') {
+      // Skip optimization when DOM APIs are not available (e.g., during SSR)
+      return file;
+    }
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.readAsDataURL(file);
@@ -340,6 +344,10 @@ class RichMediaService {
    * Generate thumbnail for image
    */
   private async generateThumbnail(imageUrl: string): Promise<string> {
+    if (typeof document === 'undefined') {
+      // Thumbnails rely on DOM APIs; skip in non-browser environments
+      return imageUrl;
+    }
     return new Promise((resolve, reject) => {
       const img = new Image();
       img.crossOrigin = 'anonymous';

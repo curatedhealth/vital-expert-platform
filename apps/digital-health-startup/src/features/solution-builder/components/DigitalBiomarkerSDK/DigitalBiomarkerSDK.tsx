@@ -586,6 +586,7 @@ extract_features <- function(data) {
     return templates[framework];
   };
 
+    const sdkPackage = {
       name: biomarker.name.replace(/\s+/g, '-').toLowerCase(),
       version: '1.0.0',
       description: biomarker.clinicalContext.intendedUse,
@@ -602,11 +603,21 @@ extract_features <- function(data) {
       }
     };
 
-    a.href = url;
-    a.download = `${biomarker.name.replace(/\s+/g, '_').toLowerCase()}_sdk.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
+    if (typeof document === 'undefined') {
+      console.warn('Documentation export is only available in the browser environment.');
+      return;
+    }
+
+    const blob = new Blob([JSON.stringify(sdkPackage, null, 2)], {
+      type: 'application/json',
+    });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = `${biomarker.name.replace(/\s+/g, '_').toLowerCase()}_sdk.json`;
+    document.body.appendChild(anchor);
+    anchor.click();
+    document.body.removeChild(anchor);
     URL.revokeObjectURL(url);
   };
 

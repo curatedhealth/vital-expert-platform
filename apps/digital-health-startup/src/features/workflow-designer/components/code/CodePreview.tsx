@@ -53,6 +53,10 @@ export function CodePreview({ workflow, onClose }: CodePreviewProps) {
   const handleDownload = (content: string, filename: string) => {
     const blob = new Blob([content], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
+    if (typeof document === 'undefined') {
+      console.warn('Download is only available in the browser environment.');
+      return;
+    }
     const a = document.createElement('a');
     a.href = url;
     a.download = filename;
@@ -364,4 +368,3 @@ if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
 `;
 }
-

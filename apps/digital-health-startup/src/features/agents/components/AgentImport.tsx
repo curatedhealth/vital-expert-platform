@@ -96,6 +96,10 @@ export const AgentImport: React.FC = () => {
   };
 
   const downloadTemplate = () => {
+    if (typeof document === 'undefined') {
+      console.warn('Template download is only available in the browser environment.');
+      return;
+    }
     const template: AgentBulkImport = {
       agents: [
         {
@@ -224,6 +228,11 @@ export const AgentImport: React.FC = () => {
 
     const blob = new Blob([JSON.stringify(template, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
+    if (typeof document === 'undefined') {
+      console.warn('Template download is only available in the browser environment.');
+      URL.revokeObjectURL(url);
+      return;
+    }
     const a = document.createElement('a');
     a.href = url;
     a.download = 'agent-bulk-import-template.json';
@@ -232,6 +241,10 @@ export const AgentImport: React.FC = () => {
   };
 
   const downloadExampleData = (domain: DomainExpertise) => {
+    if (typeof document === 'undefined') {
+      console.warn('Example data download is only available in the browser environment.');
+      return;
+    }
     // Create domain-specific examples
     const examples: Record<DomainExpertise, unknown> = {
       [DomainExpertise.MEDICAL]: {
@@ -325,6 +338,11 @@ export const AgentImport: React.FC = () => {
 
       const blob = new Blob([JSON.stringify(template, null, 2)], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
+      if (typeof document === 'undefined') {
+        console.warn('Example data download is only available in the browser environment.');
+        URL.revokeObjectURL(url);
+        return;
+      }
       const a = document.createElement('a');
       a.href = url;
       a.download = `${domain}-agent-example.json`;

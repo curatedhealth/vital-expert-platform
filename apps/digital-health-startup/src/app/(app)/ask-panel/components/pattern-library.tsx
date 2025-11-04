@@ -188,6 +188,10 @@ export default function PatternLibrary() {
     const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
     const exportFileDefaultName = `${pattern.id}_pattern.json`;
 
+    if (typeof document === 'undefined') {
+      console.warn('Pattern export is only available in the browser environment.');
+      return;
+    }
     const linkElement = document.createElement('a');
     linkElement.setAttribute('href', dataUri);
     linkElement.setAttribute('download', exportFileDefaultName);

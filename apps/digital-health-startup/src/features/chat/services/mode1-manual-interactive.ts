@@ -48,6 +48,11 @@ const API_GATEWAY_URL =
   process.env.NEXT_PUBLIC_API_GATEWAY_URL ||
   'http://localhost:3001'; // Default to API Gateway (proper flow)
 
+const DEFAULT_TENANT_ID =
+  process.env.API_GATEWAY_TENANT_ID ||
+  process.env.NEXT_PUBLIC_DEFAULT_TENANT_ID ||
+  '00000000-0000-0000-0000-000000000001';
+
 /**
  * Build metadata chunk string to keep the UI streaming helpers working.
  */
@@ -134,6 +139,7 @@ export class Mode1ManualInteractiveHandler {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            'x-tenant-id': config.tenantId || DEFAULT_TENANT_ID,
           },
           body: JSON.stringify(payload),
         });

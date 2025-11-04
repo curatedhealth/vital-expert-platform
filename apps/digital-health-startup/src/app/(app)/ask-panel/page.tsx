@@ -15,7 +15,6 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Users, Brain, TrendingUp, Shield, Stethoscope, Code, AlertCircle, Scale } from 'lucide-react';
-import { toast } from 'sonner';
 import { PanelMode, ExpertType, type PanelResponse } from '@/features/ask-panel/services/ask-panel-orchestrator';
 
 const EXPERT_ICONS: Record<ExpertType, React.ElementType> = {
@@ -49,6 +48,16 @@ export default function AskPanelPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState<PanelResponse | null>(null);
 
+  const showToast = async (type: 'success' | 'error', message: string) => {
+    if (typeof window === 'undefined') {
+      if (type === 'error') console.error(message);
+      else console.log(message);
+      return;
+    }
+    const sonner = await import('sonner');
+    sonner.toast[type](message);
+  };
+
   const toggleExpert = (expert: ExpertType) => {
     setSelectedExperts(prev =>
       prev.includes(expert)
@@ -59,12 +68,12 @@ export default function AskPanelPage() {
 
   const handleConsult = async () => {
     if (!question.trim()) {
-      toast.error('Please enter a question');
+      await showToast('error', 'Please enter a question');
       return;
     }
 
     if (selectedExperts.length === 0) {
-      toast.error('Please select at least one expert');
+      await showToast('error', 'Please select at least one expert');
       return;
     }
 
@@ -93,11 +102,10 @@ export default function AskPanelPage() {
 
       const data = await response.json();
       setResult(data);
-      
-      toast.success(`Panel consultation complete using ${data.framework.toUpperCase()}`);
+      await showToast('success', `Panel consultation complete using ${data.framework.toUpperCase()}`);
     } catch (error) {
       console.error('Panel consultation error:', error);
-      toast.error(error instanceof Error ? error.message : 'An error occurred');
+      await showToast('error', error instanceof Error ? error.message : 'An error occurred');
     } finally {
       setIsLoading(false);
     }

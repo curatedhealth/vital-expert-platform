@@ -4,7 +4,7 @@
  * Manages tools and their assignments to agents via Supabase database
  */
 
-import { createClient } from '@/shared/utils/supabase/client';
+import { createClient } from '@/shared/services/supabase/client';
 
 import { getAllExpertTools } from './expert-tools';
 
@@ -23,13 +23,14 @@ export interface Tool {
   name: string;
   description?: string;
   tool_description?: string;
+  llm_description?: string; // Short description for LLM agent selection
+  usage_guide?: string; // Step-by-step usage instructions
   category: string | null; // Now text, not FK
   category_id?: string | null; // Legacy support
   category_obj?: ToolCategory; // Renamed from 'category'
   tool_type: 'ai_function' | 'software_reference' | 'database' | 'saas' | 'api' | 'ai_framework';
   implementation_type?: 'custom' | 'langchain_tool' | 'api' | 'function';
   lifecycle_stage?: 'development' | 'testing' | 'staging' | 'production' | 'deprecated';
-  implementation_type?: string | null;
   implementation_path: string | null;
   function_name?: string | null;
   api_endpoint?: string | null;
@@ -115,7 +116,7 @@ export interface ToolUsageLog {
   user_feedback: number | null;
 }
 
-class ToolRegistryService {
+export class ToolRegistryService {
   private supabase: ReturnType<typeof createClient> | null = null;
 
   private getSupabaseClient() {

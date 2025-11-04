@@ -34,6 +34,12 @@ import { getEmbeddingCache } from '@/lib/services/cache/embedding-cache';
 import { getTracingService } from '@/lib/services/observability/tracing';
 import { getAgentMetricsService } from '@/lib/services/observability/agent-metrics-service';
 
+const API_GATEWAY_URL = process.env.NEXT_PUBLIC_API_GATEWAY_URL || process.env.API_GATEWAY_URL || 'http://localhost:3001';
+const DEFAULT_TENANT_ID =
+  process.env.API_GATEWAY_TENANT_ID ||
+  process.env.NEXT_PUBLIC_DEFAULT_TENANT_ID ||
+  '00000000-0000-0000-0000-000000000001';
+
 // ============================================================================
 // TYPES
 // ============================================================================
@@ -139,14 +145,13 @@ export class AgentSelectorService {
     });
 
     try {
-      const apiGatewayUrl = process.env.NEXT_PUBLIC_API_GATEWAY_URL || process.env.API_GATEWAY_URL || 'http://localhost:3001';
       const correlationId = operationId;
 
-      const response = await fetch(`${apiGatewayUrl}/api/agents/select`, {
+      const response = await fetch(`${API_GATEWAY_URL}/api/agents/select`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-tenant-id': this.tenantId || '00000000-0000-0000-0000-000000000001',
+          'x-tenant-id': this.tenantId || DEFAULT_TENANT_ID,
         },
         body: JSON.stringify({
           query,
@@ -779,13 +784,11 @@ export class AgentSelectorService {
    */
   private async generateEmbedding(text: string): Promise<number[]> {
     try {
-      const apiGatewayUrl = process.env.NEXT_PUBLIC_API_GATEWAY_URL || process.env.API_GATEWAY_URL || 'http://localhost:3001';
-
-      const response = await fetch(`${apiGatewayUrl}/api/embeddings/generate`, {
+      const response = await fetch(`${API_GATEWAY_URL}/api/embeddings/generate`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-tenant-id': this.tenantId || '00000000-0000-0000-0000-000000000001',
+          'x-tenant-id': this.tenantId || DEFAULT_TENANT_ID,
         },
         body: JSON.stringify({
           text,

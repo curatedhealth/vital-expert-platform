@@ -213,6 +213,10 @@ export default function FeedbackDashboard() {
 
     const blob = new Blob([csv], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
+    if (typeof document === 'undefined') {
+      console.warn('CSV export is only available in the browser environment.');
+      return;
+    }
     const a = document.createElement('a');
     a.href = url;
     a.download = `feedback-problems-${new Date().toISOString().split('T')[0]}.csv`;

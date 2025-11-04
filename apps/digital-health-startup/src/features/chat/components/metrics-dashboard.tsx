@@ -93,6 +93,11 @@ export function MetricsDashboard({ className }: MetricsDashboardProps) {
 
     a.href = url;
     a.download = `vital-metrics-${new Date().toISOString().split('T')[0]}.json`;
+    if (typeof document === 'undefined') {
+      console.warn('Metrics export is only available in the browser environment.');
+      URL.revokeObjectURL(url);
+      return;
+    }
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);

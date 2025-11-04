@@ -824,6 +824,11 @@ const API_GATEWAY_URL =
   process.env.NEXT_PUBLIC_API_GATEWAY_URL ||
   'http://localhost:3001'; // Default to API Gateway (proper flow)
 
+const DEFAULT_TENANT_ID =
+  process.env.API_GATEWAY_TENANT_ID ||
+  process.env.NEXT_PUBLIC_DEFAULT_TENANT_ID ||
+  '00000000-0000-0000-0000-000000000001';
+
 interface Mode3AutonomousAutomaticApiResponse {
   agent_id: string;
   content: string;
@@ -897,6 +902,7 @@ export async function* executeMode3(config: Mode3Config): AsyncGenerator<Autonom
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'x-tenant-id': config.tenantId || DEFAULT_TENANT_ID,
       },
       body: JSON.stringify(payload),
     });

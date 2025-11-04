@@ -88,6 +88,10 @@ export function StateInspector({
     const dataStr = JSON.stringify(executionState, null, 2);
     const blob = new Blob([dataStr], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
+    if (typeof document === 'undefined') {
+      console.warn('State export is only available in the browser environment.');
+      return;
+    }
     const a = document.createElement('a');
     a.href = url;
     a.download = `execution-state-${Date.now()}.json`;
@@ -368,4 +372,3 @@ export function StateInspector({
     </Card>
   );
 }
-

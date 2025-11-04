@@ -127,6 +127,10 @@ export function useDocumentGeneration() {
     // Create blob and download
     const blob = new Blob([document.content], { type: document.mimeType });
     const url = URL.createObjectURL(blob);
+    if (typeof window === 'undefined' || typeof window.document === 'undefined') {
+      console.warn('Document download is only available in the browser environment.');
+      return;
+    }
     const a = window.document.createElement('a');
     a.href = url;
     a.download = document.filename;

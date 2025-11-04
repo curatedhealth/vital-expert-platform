@@ -51,6 +51,11 @@ import type {
   SystemPromptGenerationResponse
 } from '@/types/healthcare-compliance';
 
+// Import Sprint 2 components from separate files
+import { CapabilitiesTab } from './agent-creator/CapabilitiesTab';
+import { KnowledgeTab } from './agent-creator/KnowledgeTab';
+import { ToolsTab } from './agent-creator/ToolsTab';
+
 interface AgentCreatorProps {
   isOpen: boolean;
   onClose: () => void;
@@ -3434,74 +3439,15 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
 
               {/* Capabilities */}
               {activeTab === 'capabilities' && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">Capabilities</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div>
-                    <Label>Add Capability</Label>
-                    <div className="flex gap-2">
-                      <Input
-                        value={newCapability}
-                        onChange={(e) => setNewCapability(e.target.value)}
-                        placeholder="Enter a capability"
-                        onKeyPress={(e) => e.key === 'Enter' && handleCapabilityAdd(newCapability)}
-                      />
-                      <Button
-                        type="button"
-                        onClick={() => handleCapabilityAdd(newCapability)}
-                        disabled={!newCapability}
-                      >
-                        <Plus className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-
-                  <div>
-                    <Label>Predefined Capabilities</Label>
-                    <div className="flex flex-wrap gap-2 mt-2">
-                      {predefinedCapabilities.map((capability) => (
-                        <Button
-                          key={capability}
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          className="h-auto py-1 px-2 text-xs"
-                          onClick={() => handleCapabilityAdd(capability)}
-                          disabled={formData.capabilities.includes(capability)}
-                        >
-                          {capability}
-                        </Button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div>
-                    <Label>Selected Capabilities</Label>
-                    <div className="flex flex-wrap gap-2 mt-2">
-                      {formData.capabilities.map((capability) => (
-                        <Badge
-                          key={capability}
-                          variant="secondary"
-                          className="text-xs"
-                        >
-                          {capability}
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            className="h-auto p-0 ml-1 hover:bg-transparent"
-                            onClick={() => handleCapabilityRemove(capability)}
-                          >
-                            <X className="h-3 w-3" />
-                          </Button>
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+                <CapabilitiesTab
+                  formData={formData}
+                  newCapability={newCapability}
+                  predefinedCapabilities={predefinedCapabilities}
+                  setNewCapability={setNewCapability}
+                  setFormData={setFormData}
+                  handleCapabilityAdd={handleCapabilityAdd}
+                  handleCapabilityRemove={handleCapabilityRemove}
+                />
               )}
 
               {/* Prompt Starters */}
@@ -3636,345 +3582,32 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
 
               {/* Knowledge Base / RAG */}
               {activeTab === 'knowledge' && (
-              <>
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg flex items-center gap-2">
-                    <Brain className="h-4 w-4 flex-shrink-0" />
-                    <span>Knowledge Base (RAG)</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex items-center gap-3 mb-4">
-                    <input
-                      type="checkbox"
-                      id="ragEnabled"
-                      checked={formData.ragEnabled}
-                      onChange={(e) => setFormData(prev => ({ ...prev, ragEnabled: e.target.checked }))}
-                      className="w-4 h-4 text-market-purple bg-gray-100 border-gray-300 rounded focus:ring-market-purple"
-                    />
-                    <Label htmlFor="ragEnabled" className="flex items-center gap-2">
-                      <Zap className="h-4 w-4 flex-shrink-0" />
-                      <span>Enable Knowledge Base Integration</span>
-                    </Label>
-                  </div>
-
-                  {formData.ragEnabled && (
-                    <>
-
-                      <div>
-                        <Label>Add Knowledge Source URL</Label>
-                        <div className="flex gap-2">
-                          <Input
-                            value={newKnowledgeUrl}
-                            onChange={(e) => setNewKnowledgeUrl(e.target.value)}
-                            placeholder="https://example.com/documentation"
-                            onKeyPress={(e) => e.key === 'Enter' && handleKnowledgeUrlAdd(newKnowledgeUrl)}
-                          />
-                          <Button
-                            type="button"
-                            onClick={() => handleKnowledgeUrlAdd(newKnowledgeUrl)}
-                            disabled={!newKnowledgeUrl}
-                          >
-                            <Plus className="h-4 w-4" />
-                          </Button>
-                        </div>
-                        <p className="text-xs text-medical-gray mt-1">
-                          Add URLs to documentation, research papers, PDFs, or knowledge sources for RAG processing
-                        </p>
-                      </div>
-
-                      <div>
-                        <Label>Upload Files</Label>
-                        <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
-                          <input
-                            type="file"
-                            id="fileUpload"
-                            multiple
-                            accept=".pdf,.txt,.doc,.docx,.md"
-                            onChange={handleFileUpload}
-                            className="hidden"
-                          />
-                          <label htmlFor="fileUpload" className="cursor-pointer">
-                            <div className="flex flex-col items-center gap-2">
-                              <Plus className="h-8 w-8 text-gray-400" />
-                              <span className="text-sm text-gray-600">
-                                Click to upload files or drag and drop
-                              </span>
-                              <span className="text-xs text-gray-500">
-                                PDF, TXT, DOC, DOCX, MD files supported
-                              </span>
-                            </div>
-                          </label>
-                        </div>
-
-                        {formData.knowledgeFiles.length > 0 && (
-                          <div className="mt-2 space-y-2">
-                            {formData.knowledgeFiles.map((file, index) => (
-                              <div key={index} className="flex items-center gap-2 p-2 bg-background-gray rounded">
-                                <span className="text-sm flex-1 truncate">{file.name}</span>
-                                <span className="text-xs text-gray-500">
-                                  {(file.size / 1024 / 1024).toFixed(2)} MB
-                                </span>
-                                <Button
-                                  type="button"
-                                  variant="ghost"
-                                  size="sm"
-                                  className="h-auto p-1"
-                                  onClick={() => handleFileRemove(file)}
-                                >
-                                  <X className="h-3 w-3" />
-                                </Button>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-
-                      <div>
-                        <Label>Knowledge Sources</Label>
-                        <div className="space-y-2 mt-2">
-                          {formData.knowledgeUrls.map((url, index) => (
-                            <div key={index} className="flex items-center gap-2 p-2 bg-background-gray rounded">
-                              <span className="text-sm flex-1 truncate">{url}</span>
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="sm"
-                                className="h-auto p-1"
-                                onClick={() => handleKnowledgeUrlRemove(url)}
-                              >
-                                <X className="h-3 w-3" />
-                              </Button>
-                            </div>
-                          ))}
-                          {formData.knowledgeUrls.length === 0 && (
-                            <p className="text-xs text-medical-gray italic">No knowledge sources added yet</p>
-                          )}
-                        </div>
-
-                        {/* Process Knowledge Sources */}
-                        {(formData.knowledgeUrls.length > 0 || formData.knowledgeFiles.length > 0) && (
-                          <div className="mt-4">
-                            <Button
-                              type="button"
-                              onClick={processKnowledgeSources}
-                              disabled={isProcessingKnowledge}
-                              variant="outline"
-                              size="sm"
-                              className="w-full"
-                            >
-                              {isProcessingKnowledge ? (
-                                <>
-                                  <div className="w-4 h-4 border-2 border-progress-teal border-t-transparent rounded-full animate-spin mr-2" />
-                                  Processing...
-                                </>
-                              ) : (
-                                <>
-                                  <Brain className="h-4 w-4 mr-2" />
-                                  Process Knowledge Sources into RAG
-                                </>
-                              )}
-                            </Button>
-
-                            {knowledgeProcessingStatus && (
-                              <div className={`mt-2 p-2 rounded text-xs ${
-                                knowledgeProcessingStatus.includes('Successfully')
-                                  ? 'bg-green-50 text-green-700 border border-green-200'
-                                  : knowledgeProcessingStatus.includes('Error') || knowledgeProcessingStatus.includes('Failed')
-                                  ? 'bg-red-50 text-red-700 border border-red-200'
-                                  : 'bg-blue-50 text-blue-700 border border-blue-200'
-                              }`}>
-                                {knowledgeProcessingStatus}
-                              </div>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    </>
-                  )}
-                </CardContent>
-              </Card>
-
-              {/* Knowledge Domains */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg flex items-center gap-2">
-                    <Brain className="h-4 w-4 flex-shrink-0" />
-                    <span>Knowledge Domains Access</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div>
-                    <Label>Knowledge Domain Access {loadingDomains && <span className="ml-2 text-xs text-medical-gray">(Loading...)</span>}</Label>
-                    <p className="text-xs text-medical-gray mb-3">
-                      Select which knowledge domains this agent can access. Agents will only see knowledge from their assigned domains.
-                    </p>
-                    <div className="grid grid-cols-2 gap-2">
-                      {knowledgeDomains.map((domain) => {
-                        const getTierBadgeColor = (tier: number) => {
-                          switch (tier) {
-                            case 1: return 'bg-blue-500/10 text-blue-700 border-blue-300';
-                            case 2: return 'bg-purple-500/10 text-purple-700 border-purple-300';
-                            case 3: return 'bg-green-500/10 text-green-700 border-green-300';
-                            default: return 'bg-gray-500/10 text-gray-700 border-gray-300';
-                          }
-                        };
-
-                        return (
-                          <Button
-                            key={domain.value}
-                            type="button"
-                            variant={formData.knowledgeDomains.includes(domain.value) ? "default" : "outline"}
-                            size="sm"
-                            className="h-auto py-2 px-3 text-xs justify-start"
-                            onClick={() => handleKnowledgeDomainToggle(domain.value)}
-                          >
-                            <div className="flex items-center gap-2 w-full">
-                              {formData.knowledgeDomains.includes(domain.value) && (
-                                <CheckCircle className="h-3 w-3 flex-shrink-0" />
-                              )}
-                              <span className="flex-1 text-left">{domain.label}</span>
-                              {domain.tier && (
-                                <Badge
-                                  variant="outline"
-                                  className={cn("text-[10px] px-1 py-0 h-4 ml-auto", getTierBadgeColor(domain.tier))}
-                                >
-                                  T{domain.tier}
-                                </Badge>
-                              )}
-                            </div>
-                          </Button>
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  <div>
-                    <Label>Selected Knowledge Domains</Label>
-                    <div className="flex flex-wrap gap-2 mt-2">
-                      {formData.knowledgeDomains.map((domain) => {
-                        const domainInfo = knowledgeDomains.find((d: any) => d.value === domain);
-                        return (
-                          <Badge
-                            key={domain}
-                            variant="secondary"
-                            className="text-xs bg-trust-blue/10 text-trust-blue"
-                          >
-                            {domainInfo?.label || domain}
-                          </Badge>
-                        );
-                      })}
-                      {formData.knowledgeDomains.length === 0 && (
-                        <p className="text-xs text-medical-gray italic">No knowledge domains selected - agent will have access to all knowledge</p>
-                      )}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-              </>
+                <KnowledgeTab
+                  formData={formData}
+                  newKnowledgeUrl={newKnowledgeUrl}
+                  isProcessingKnowledge={isProcessingKnowledge}
+                  knowledgeProcessingStatus={knowledgeProcessingStatus}
+                  knowledgeDomains={knowledgeDomains}
+                  loadingDomains={loadingDomains}
+                  setNewKnowledgeUrl={setNewKnowledgeUrl}
+                  setFormData={setFormData}
+                  handleKnowledgeUrlAdd={handleKnowledgeUrlAdd}
+                  handleKnowledgeUrlRemove={handleKnowledgeUrlRemove}
+                  handleFileUpload={handleFileUpload}
+                  handleFileRemove={handleFileRemove}
+                  processKnowledgeSources={processKnowledgeSources}
+                  handleKnowledgeDomainToggle={handleKnowledgeDomainToggle}
+                />
               )}
 
               {/* Tools & Integrations */}
               {activeTab === 'tools' && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg flex items-center gap-2">
-                    <Wrench className="h-4 w-4 flex-shrink-0" />
-                    <span>Tools & Integrations</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div>
-                    <Label>Available Tools</Label>
-                    <p className="text-xs text-medical-gray mb-3">
-                      Select tools and integrations this agent can use
-                    </p>
-                    {loadingTools ? (
-                      <div className="text-sm text-medical-gray py-4">Loading tools...</div>
-                    ) : availableToolsFromDB.length === 0 ? (
-                      <div className="text-sm text-medical-gray py-4">No tools available. Add tools to the database first.</div>
-                    ) : (
-                      <div className="grid grid-cols-1 gap-2 max-h-96 overflow-y-auto">
-                        {availableToolsFromDB.map((tool) => {
-                          const isSelected = formData.tools.includes(tool.name);
-                          return (
-                            <button
-                              key={tool.id}
-                              type="button"
-                              onClick={() => handleToolToggle(tool.name)}
-                              className={cn(
-                                "flex items-start gap-3 p-3 rounded-lg border-2 text-left transition-all",
-                                isSelected
-                                  ? "border-progress-teal bg-progress-teal/5"
-                                  : "border-gray-200 hover:border-gray-300 bg-white"
-                              )}
-                            >
-                              <div className="flex-shrink-0 mt-0.5">
-                                {isSelected ? (
-                                  <CheckCircle className="h-5 w-5 text-progress-teal" />
-                                ) : (
-                                  <div className="h-5 w-5 rounded-full border-2 border-gray-300" />
-                                )}
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-center gap-2 flex-wrap">
-                                  <h4 className="font-medium text-sm text-deep-charcoal">{tool.name}</h4>
-                                  {tool.category && (
-                                    <Badge variant="outline" className="text-xs">
-                                      {tool.category}
-                                    </Badge>
-                                  )}
-                                  {TOOL_STATUS[tool.name] === 'available' ? (
-                                    <Badge className="text-xs bg-green-100 text-green-700 hover:bg-green-100">
-                                      ✓ Available
-                                    </Badge>
-                                  ) : TOOL_STATUS[tool.name] === 'coming_soon' ? (
-                                    <Badge variant="outline" className="text-xs border-amber-300 text-amber-700 bg-amber-50">
-                                      🚧 Coming Soon
-                                    </Badge>
-                                  ) : null}
-                                </div>
-                                {tool.description && (
-                                  <p className="text-xs text-medical-gray mt-1">{tool.description}</p>
-                                )}
-                                {tool.authentication_required && (
-                                  <div className="flex items-center gap-1 mt-1">
-                                    <span className="text-xs text-amber-600">🔒 Authentication required</span>
-                                  </div>
-                                )}
-                              </div>
-                            </button>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
-
-                  <div>
-                    <Label>Selected Tools ({formData.tools.length})</Label>
-                    <div className="flex flex-wrap gap-2 mt-2">
-                      {formData.tools.length > 0 ? (
-                        formData.tools.map((toolName) => {
-                          // Tools are stored by name, not ID
-                          const tool = availableToolsFromDB.find((t: any) => t.name === toolName);
-                          return (
-                            <Badge
-                              key={toolName}
-                              variant="secondary"
-                              className="text-xs bg-progress-teal/10 text-progress-teal"
-                            >
-                              {toolName}
-                            </Badge>
-                          );
-                        })
-                      ) : (
-                        <p className="text-xs text-medical-gray italic">No tools selected</p>
-                      )}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+                <ToolsTab
+                  formData={formData}
+                  availableToolsFromDB={availableToolsFromDB}
+                  loadingTools={loadingTools}
+                  handleToolToggle={handleToolToggle}
+                />
               )}
 
               {/* Advanced Settings */}

@@ -41,6 +41,7 @@ import {
 
 import { SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar"
 import { createClient } from "@vital/sdk/client"
+import { useSavedPanels } from "@/contexts/ask-panel-context"
 
 export function SidebarDashboardContent() {
   return (
@@ -133,8 +134,37 @@ export function SidebarDashboardContent() {
 }
 
 export function SidebarAskPanelContent() {
+  const { savedPanels } = useSavedPanels()
+
   return (
     <>
+      {/* My Panels */}
+      {savedPanels.length > 0 && (
+        <SidebarGroup>
+          <SidebarGroupLabel className="flex items-center justify-between">
+            <span>My Panels ({savedPanels.length})</span>
+          </SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {savedPanels.slice(0, 5).map((panel) => {
+                const IconComponent = panel.IconComponent || Users;
+                return (
+                  <SidebarMenuItem key={panel.id}>
+                    <SidebarMenuButton className="w-full">
+                      <div className="w-6 h-6 rounded bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center flex-shrink-0 mr-2">
+                        <IconComponent className="h-3 w-3 text-white" />
+                      </div>
+                      <span className="flex-1 text-sm truncate">{panel.name}</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              })}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+      )}
+
+      {/* Panel Workflows */}
       <SidebarGroup>
         <SidebarGroupLabel>Panel Workflows</SidebarGroupLabel>
         <SidebarGroupContent>
@@ -161,6 +191,7 @@ export function SidebarAskPanelContent() {
         </SidebarGroupContent>
       </SidebarGroup>
 
+      {/* Resources */}
       <SidebarGroup>
         <SidebarGroupLabel>Resources</SidebarGroupLabel>
         <SidebarGroupContent>
@@ -628,11 +659,20 @@ export function SidebarAdminContent() {
           <SidebarMenu>
             <SidebarMenuItem>
               <SidebarMenuButton 
+                onClick={() => handleNavigation('executive')}
+                isActive={isActive('executive')}
+              >
+                <TrendingUp className="h-4 w-4" />
+                <span>Executive Dashboard</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton 
                 onClick={() => handleNavigation('overview')}
                 isActive={isActive('overview')}
               >
                 <Home className="h-4 w-4" />
-                <span>Dashboard</span>
+                <span>Admin Dashboard</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
           </SidebarMenu>

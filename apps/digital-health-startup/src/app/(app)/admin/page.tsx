@@ -85,6 +85,11 @@ const MetricsDashboard = dynamic(
   { ssr: false }
 );
 
+const ExecutiveDashboard = dynamic(
+  () => import('@/components/admin/ExecutiveDashboard'),
+  { ssr: false }
+);
+
 function LoadingView() {
   return (
     <div className="flex items-center justify-center min-h-screen">
@@ -121,6 +126,9 @@ export default function AdminPage() {
   // Render appropriate view based on query param
   const renderView = () => {
     switch (view) {
+      case 'executive':
+        return <ExecutiveDashboard />;
+      
       case 'overview':
         return (
           <div className="container mx-auto py-8">

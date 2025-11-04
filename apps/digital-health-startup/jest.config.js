@@ -16,7 +16,7 @@ module.exports = {
     // Unit tests
     {
       displayName: 'unit',
-      testEnvironment: 'node',
+      testEnvironment: 'jsdom', // Changed from 'node' to 'jsdom' for React component testing
       testMatch: [
         '<rootDir>/src/**/__tests__/**/*.test.ts',
         '<rootDir>/src/**/__tests__/**/*.test.tsx',

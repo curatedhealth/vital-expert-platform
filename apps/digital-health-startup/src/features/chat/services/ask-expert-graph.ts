@@ -10,12 +10,14 @@
  * - Streaming support for real-time updates
  * - Memory persistence across conversation sessions
  * - Error handling and recovery
+ * - Analytics tracking for performance monitoring (Phase B)
  * 
  * Architecture:
  * - Uses LangGraph StateGraph for workflow orchestration
  * - Integrates with Supabase for budget checking and data persistence
  * - Leverages enhanced LangChain service for AI interactions
  * - Supports both streaming and non-streaming execution modes
+ * - Tracks all workflow steps for analytics and debugging
  */
 
 import { BaseMessage, HumanMessage, AIMessage } from '@langchain/core/messages';
@@ -23,6 +25,8 @@ import { StateGraph, END, START , MemorySaver } from '@langchain/langgraph';
 import { createClient } from '@supabase/supabase-js';
 
 import { unifiedRAGService } from '../../../lib/services/rag/unified-rag-service';
+import { getAnalyticsService } from '@/lib/analytics/UnifiedAnalyticsService';
+import { STARTUP_TENANT_ID } from '@/lib/constants/tenant';
 
 // ============================================================================
 // SUPABASE CLIENT INITIALIZATION

@@ -116,9 +116,28 @@ from core.websocket_manager import WebSocketManager
 # Setup logging
 logger = structlog.get_logger()
 
-# Metrics
-REQUEST_COUNT = Counter('http_requests_total', 'Total HTTP requests', ['method', 'endpoint'])
-REQUEST_DURATION = Histogram('http_request_duration_seconds', 'HTTP request duration')
+# Metrics - Use try/except to avoid duplicate registration
+from prometheus_client import REGISTRY, CollectorRegistry
+
+# Create a new registry if needed to avoid duplicates
+try:
+    REQUEST_COUNT = Counter('http_requests_total', 'Total HTTP requests', ['method', 'endpoint'])
+    REQUEST_DURATION = Histogram('http_request_duration_seconds', 'HTTP request duration')
+except ValueError as e:
+    # Metrics already registered, retrieve them from registry
+    logger.warning(f"Metrics already registered, skipping: {e}")
+    # Find existing collectors
+    for collector in list(REGISTRY._collector_to_names.keys()):
+        if hasattr(collector, '_name'):
+            if collector._name == 'http_requests_total':
+                REQUEST_COUNT = collector
+            elif collector._name == 'http_request_duration_seconds':
+                REQUEST_DURATION = collector
+    # If still not found, create without raising error
+    if 'REQUEST_COUNT' not in locals():
+        REQUEST_COUNT = Counter('http_requests_total_v2', 'Total HTTP requests', ['method', 'endpoint'])
+    if 'REQUEST_DURATION' not in locals():
+        REQUEST_DURATION = Histogram('http_request_duration_seconds_v2', 'HTTP request duration')
 
 settings = get_settings()
 

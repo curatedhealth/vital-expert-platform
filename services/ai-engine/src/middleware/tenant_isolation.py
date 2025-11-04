@@ -38,7 +38,8 @@ class TenantIsolationMiddleware(BaseHTTPMiddleware):
         "/docs",
         "/openapi.json",
         "/redoc",
-        "/"
+        "/",
+        "/frameworks/info"  # Framework availability info (no tenant needed)
     ]
     
     async def dispatch(self, request: Request, call_next: Callable) -> Response:

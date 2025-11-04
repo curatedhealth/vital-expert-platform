@@ -211,6 +211,7 @@ exports/
 backups/
 archive/
 !services/ai-engine/archive/
+!archive/
 coverage/
 
 # Generated files

@@ -618,8 +618,6 @@ logger.info("✅ Ask Panel routes registered")
 
 # Include Shared Framework routes (LangGraph, AutoGen, CrewAI)
 try:
-    import sys
-    sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'app'))
     from api.frameworks import router as frameworks_router
     app.include_router(frameworks_router, prefix="", tags=["frameworks"])
     logger.info("✅ Shared Framework routes registered (LangGraph, AutoGen, CrewAI)")

@@ -1,30 +1,39 @@
 /**
  * Jest Setup for Agent Creator Tests
- * Simplified mocks for UI components and icons
+ * Mocks for external dependencies
  */
 
-import React from 'react';
+// Mock @vital/ui/lib/utils
+jest.mock('@vital/ui/lib/utils', () => ({
+  cn: (...classes: any[]) => classes.filter(Boolean).join(' '),
+}));
+
+// Mock @/lib/utils
+jest.mock('@/lib/utils', () => ({
+  cn: (...classes: any[]) => classes.filter(Boolean).join(' '),
+}));
 
 // Mock @vital/ui components
 jest.mock('@vital/ui', () => ({
-  Badge: ({ children, ...props }: any) => React.createElement('div', { 'data-testid': 'badge', ...props }, children),
-  Button: ({ children, ...props }: any) => React.createElement('button', props, children),
-  Card: ({ children, ...props }: any) => React.createElement('div', { 'data-testid': 'card', ...props }, children),
-  CardContent: ({ children, ...props }: any) => React.createElement('div', { 'data-testid': 'card-content', ...props }, children),
-  CardHeader: ({ children, ...props }: any) => React.createElement('div', { 'data-testid': 'card-header', ...props }, children),
-  CardTitle: ({ children, ...props }: any) => React.createElement('h3', { 'data-testid': 'card-title', ...props }, children),
-  Input: (props: any) => React.createElement('input', props),
-  Label: ({ children, ...props }: any) => React.createElement('label', props, children),
+  Badge: ({ children, ...props }: any) => <div data-testid="badge" {...props}>{children}</div>,
+  Button: ({ children, ...props }: any) => <button {...props}>{children}</button>,
+  Card: ({ children, ...props }: any) => <div data-testid="card" {...props}>{children}</div>,
+  CardContent: ({ children, ...props }: any) => <div data-testid="card-content" {...props}>{children}</div>,
+  CardHeader: ({ children, ...props }: any) => <div data-testid="card-header" {...props}>{children}</div>,
+  CardTitle: ({ children, ...props }: any) => <h3 data-testid="card-title" {...props}>{children}</h3>,
+  Input: (props: any) => <input {...props} />,
+  Label: ({ children, ...props }: any) => <label {...props}>{children}</label>,
 }));
 
-// Mock lucide-react icons (simpler)
+// Mock lucide-react icons
 jest.mock('lucide-react', () => ({
-  Plus: () => React.createElement('span', { 'data-testid': 'plus-icon' }, '+'),
-  X: () => React.createElement('span', { 'data-testid': 'x-icon' }, 'x'),
-  Brain: () => React.createElement('span', { 'data-testid': 'brain-icon' }, 'brain'),
-  Zap: () => React.createElement('span', { 'data-testid': 'zap-icon' }, 'zap'),
-  CheckCircle: () => React.createElement('span', { 'data-testid': 'check-icon' }, 'check'),
-  Wrench: () => React.createElement('span', { 'data-testid': 'wrench-icon' }, 'wrench'),
+  Plus: () => <span data-testid="plus-icon">+</span>,
+  X: () => <span data-testid="x-icon">×</span>,
+  Brain: () => <span data-testid="brain-icon">🧠</span>,
+  Zap: () => <span data-testid="zap-icon">⚡</span>,
+  CheckCircle: () => <span data-testid="check-icon">✓</span>,
+  Wrench: () => <span data-testid="wrench-icon">🔧</span>,
 }));
 
 export {};
+

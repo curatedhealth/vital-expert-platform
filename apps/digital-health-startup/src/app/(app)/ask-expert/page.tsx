@@ -1706,10 +1706,15 @@ function AskExpertPageContent() {
       {/* Top Bar - Clean like Claude */}
       <header className="h-14 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between px-4 bg-white dark:bg-gray-900">
         <div className="flex items-center gap-3 flex-wrap">
-          <Brain className="w-5 h-5 text-blue-500" />
-          <h1 className="text-base font-semibold text-gray-900 dark:text-white">
-            Ask the Experts
-          </h1>
+          <MessageSquare className="w-5 h-5 text-blue-500" />
+          <div>
+            <h1 className="text-base font-semibold text-gray-900 dark:text-white">
+              Ask Expert
+            </h1>
+            <p className="text-[10px] text-gray-500 dark:text-gray-400 leading-none">
+              1:1 expert consultation with AI agents
+            </p>
+          </div>
           {/* Current Mode Badge */}
           <div className={`px-3 py-1 rounded-full text-xs font-medium ${
             currentMode.color === 'purple' ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300' :

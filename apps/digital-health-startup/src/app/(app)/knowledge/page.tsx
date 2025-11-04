@@ -218,6 +218,16 @@ function KnowledgePageContent() {
 
   return (
     <div className="space-y-6">
+      {/* Page Header */}
+      <div className="flex items-center gap-3">
+        <BookOpen className="w-8 h-8 text-muted-foreground" />
+        <div>
+          <h1 className="text-3xl font-bold">Knowledge</h1>
+          <p className="text-sm text-muted-foreground">
+            Manage documents and knowledge bases for AI agents
+          </p>
+        </div>
+      </div>
 
       {/* Main Content */}
       {activeTab === 'upload' ? (

@@ -35,6 +35,16 @@ export default function DashboardPage() {
     <div className="min-h-screen bg-background">
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-6 py-8 space-y-8">
+        {/* Page Header */}
+        <div className="flex items-center gap-3 mb-6">
+          <BarChart3 className="w-8 h-8 text-muted-foreground" />
+          <div>
+            <h1 className="text-3xl font-bold">Dashboard</h1>
+            <p className="text-sm text-muted-foreground">
+              Overview of your services and recent activity
+            </p>
+          </div>
+        </div>
         
         {/* Service Overview - 4 Main Services */}
         <section>

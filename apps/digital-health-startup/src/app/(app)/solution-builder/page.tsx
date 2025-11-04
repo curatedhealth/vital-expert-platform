@@ -169,10 +169,12 @@ export default function SolutionBuilderPage() {
       <div className="border-b bg-background px-6 py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Rocket className="h-8 w-8 text-primary" />
+            <Rocket className="h-8 w-8 text-muted-foreground" />
             <div>
-              <h1 className="text-2xl font-bold">Solution Builder</h1>
-              <p className="text-sm text-muted-foreground">Build digital health solutions with pre-validated templates</p>
+              <h1 className="text-3xl font-bold">Solution Builder</h1>
+              <p className="text-sm text-muted-foreground">
+                Build digital health solutions with pre-validated templates
+              </p>
             </div>
           </div>
           <Button

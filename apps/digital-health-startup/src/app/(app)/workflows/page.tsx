@@ -170,17 +170,13 @@ export default function WorkflowsPage() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex justify-between items-start">
-        <div>
-          <div className="flex items-center gap-3 mb-3">
-            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center">
-              <WorkflowIcon className="w-6 h-6 text-white" />
-            </div>
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">Workflows</h1>
-              <p className="text-sm text-gray-600">
-                Browse and execute digital health use cases
-              </p>
-            </div>
+        <div className="flex items-center gap-3">
+          <WorkflowIcon className="w-8 h-8 text-muted-foreground" />
+          <div>
+            <h1 className="text-3xl font-bold">Workflows</h1>
+            <p className="text-sm text-muted-foreground">
+              Guided multi-step processes for digital health use cases
+            </p>
           </div>
         </div>
         <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-md">

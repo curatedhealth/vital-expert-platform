@@ -14,7 +14,7 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState('');
-  const [redirectTo, setRedirectTo] = useState('/ask-expert');  // ✅ FIXED: Changed from '/dashboard' to '/ask-expert'
+  const [redirectTo, setRedirectTo] = useState('/dashboard');  // Default to dashboard
 
   // Get redirect parameter from URL on mount
   useEffect(() => {

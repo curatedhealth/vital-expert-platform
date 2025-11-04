@@ -2,47 +2,203 @@
  * Ask Panel Page
  * 
  * User-friendly journey for consulting with expert panels:
- * - Quick start with AI suggestions
- * - Browse templates for common scenarios
- * - Custom panel builder
- * - History of past consultations
+ * - Browse panel templates
+ * - View panel details
+ * - Add panels to sidebar
  * 
- * Aligned with Ask Expert design patterns
+ * Aligned with Tools view design pattern
  */
 
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { useState } from 'react';
 import {
   Users,
   Sparkles,
   LayoutGrid,
-  History,
   Plus,
-  ArrowRight,
   Bot,
-  TrendingUp,
-  Clock,
-  MessageSquare,
   Zap,
+  Search,
+  Filter,
+  ArrowRight,
+  Stethoscope,
+  FlaskConical,
+  UserCog,
+  HeartPulse,
+  Shield,
+  FileText,
+  ChevronRight,
+  X,
+  Target,
 } from 'lucide-react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { PanelCreationWizard } from '@/features/ask-panel/components/PanelCreationWizard';
 import { PanelConsultationView } from '@/features/ask-panel/components/PanelConsultationView';
-import { AgentCard } from '@/features/ask-panel/components/AgentCard';
 import { PANEL_TEMPLATES } from '@/features/ask-panel/constants/panel-templates';
 import type { PanelConfiguration } from '@/features/ask-panel/types/agent';
+import { useSavedPanels, type SavedPanel } from '@/contexts/ask-panel-context';
+
+// Map emoji categories to lucide-react icons
+const CATEGORY_ICONS: Record<string, any> = {
+  'clinical-trials': Stethoscope,
+  'research': FlaskConical,
+  'regulatory': Shield,
+  'patient-care': HeartPulse,
+  'operations': UserCog,
+  'default': Users,
+};
+
+// Get icon component for category
+function getCategoryIcon(category: string) {
+  const key = category.toLowerCase().replace(/\s+/g, '-');
+  return CATEGORY_ICONS[key] || CATEGORY_ICONS['default'];
+}
+
+// Panel Details Dialog Component
+interface PanelDetailsDialogProps {
+  panel: SavedPanel | null;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onUsePanel: (panel: SavedPanel) => void;
+}
+
+function PanelDetailsDialog({
+  panel,
+  open,
+  onOpenChange,
+  onUsePanel,
+}: PanelDetailsDialogProps) {
+  if (!panel) return null;
+
+  const IconComponent = getCategoryIcon(panel.category);
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+        <DialogHeader>
+          <div className="flex items-start gap-4">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center flex-shrink-0">
+              <IconComponent className="w-6 h-6 text-white" />
+            </div>
+            <div className="flex-1">
+              <DialogTitle className="text-2xl mb-2">{panel.name}</DialogTitle>
+              <DialogDescription className="text-base">
+                {panel.description}
+              </DialogDescription>
+            </div>
+          </div>
+        </DialogHeader>
+
+        <div className="space-y-6 py-4">
+          {/* Badges */}
+          <div className="flex flex-wrap gap-2">
+            <Badge variant="secondary" className="capitalize">
+              {panel.category}
+            </Badge>
+            <Badge variant="outline">
+              <Zap className="w-3 h-3 mr-1" />
+              {panel.mode}
+            </Badge>
+            <Badge variant="outline">
+              <Bot className="w-3 h-3 mr-1" />
+              {panel.suggestedAgents.length} experts
+            </Badge>
+          </div>
+
+          {/* Purpose */}
+          {panel.purpose && (
+            <div>
+              <h3 className="font-semibold mb-2 flex items-center gap-2">
+                <Target className="w-4 h-4" />
+                Purpose
+              </h3>
+              <p className="text-sm text-muted-foreground">{panel.purpose}</p>
+            </div>
+          )}
+
+          {/* Selected Agents */}
+          <div>
+            <h3 className="font-semibold mb-3 flex items-center gap-2">
+              <Users className="w-4 h-4" />
+              Selected Agents ({panel.suggestedAgents.length})
+            </h3>
+            <div className="grid grid-cols-2 gap-2">
+              {panel.suggestedAgents.map((agent, index) => (
+                <Card key={index} className="p-3">
+                  <div className="flex items-center gap-2">
+                    <Bot className="w-4 h-4 text-purple-500" />
+                    <span className="text-sm font-medium">{agent}</span>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          </div>
+
+          {/* Panel Configuration */}
+          <div>
+            <h3 className="font-semibold mb-2 flex items-center gap-2">
+              <FileText className="w-4 h-4" />
+              Configuration
+            </h3>
+            <div className="space-y-2 text-sm">
+              <div className="flex justify-between py-2 border-b">
+                <span className="text-muted-foreground">Mode:</span>
+                <span className="font-medium capitalize">{panel.mode}</span>
+              </div>
+              <div className="flex justify-between py-2 border-b">
+                <span className="text-muted-foreground">Category:</span>
+                <span className="font-medium">{panel.category}</span>
+              </div>
+              <div className="flex justify-between py-2 border-b">
+                <span className="text-muted-foreground">Experts:</span>
+                <span className="font-medium">{panel.suggestedAgents.length}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            Close
+          </Button>
+          <Button
+            onClick={() => {
+              onUsePanel(panel);
+              onOpenChange(false);
+            }}
+            className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
+          >
+            <Sparkles className="w-4 h-4 mr-2" />
+            Use This Panel
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
 
 export default function AskPanelPage() {
   const [showWizard, setShowWizard] = useState(false);
   const [initialQuery, setInitialQuery] = useState('');
-  const [quickQuestion, setQuickQuestion] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [selectedPanel, setSelectedPanel] = useState<SavedPanel | null>(null);
+  const [showPanelDetails, setShowPanelDetails] = useState(false);
 
-  // Quick start with AI
-  function handleQuickStart() {
-    setInitialQuery(quickQuestion);
-    setShowWizard(true);
-  }
+  const { addPanel } = useSavedPanels();
 
   // State for consultation view
   const [showConsultation, setShowConsultation] = useState(false);
@@ -56,7 +212,7 @@ export default function AskPanelPage() {
     
     // Navigate to consultation view
     setConsultationConfig(config);
-    setConsultationQuestion(quickQuestion || initialQuery);
+    setConsultationQuestion(initialQuery);
     setShowConsultation(true);
   }
 
@@ -66,6 +222,44 @@ export default function AskPanelPage() {
     setConsultationConfig(null);
     setConsultationQuestion('');
   }
+
+  // Handle panel card click - show details
+  const handleViewPanel = (template: typeof PANEL_TEMPLATES[0]) => {
+    const IconComponent = getCategoryIcon(template.category);
+    const panel: SavedPanel = {
+      ...template,
+      purpose: template.description,
+      IconComponent,
+    };
+    setSelectedPanel(panel);
+    setShowPanelDetails(true);
+  };
+
+  // Handle use panel - add to sidebar and start wizard
+  const handleUsePanel = (panel: SavedPanel) => {
+    // Add panel to sidebar
+    addPanel(panel);
+    
+    // Start wizard with panel's description
+    setInitialQuery(panel.description);
+    setShowWizard(true);
+  };
+
+  // Filter templates
+  const filteredTemplates = PANEL_TEMPLATES.filter((template) => {
+    const matchesSearch =
+      searchQuery === '' ||
+      template.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      template.description.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    const matchesCategory =
+      selectedCategory === 'all' || template.category === selectedCategory;
+    
+    return matchesSearch && matchesCategory;
+  });
+
+  // Get unique categories
+  const categories = ['all', ...Array.from(new Set(PANEL_TEMPLATES.map((t) => t.category)))];
 
   // Show consultation view if active
   if (showConsultation && consultationConfig && consultationQuestion) {
@@ -79,299 +273,301 @@ export default function AskPanelPage() {
   }
 
   return (
-    <div className="h-full flex flex-col bg-gray-50 dark:bg-gray-900">
-      {/* Header */}
-      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4">
-        <div className="max-w-7xl mx-auto">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
-              <Users className="w-6 h-6 text-white" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-                Ask Panel
-              </h1>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                Consult with multiple AI experts to get comprehensive insights
-              </p>
-            </div>
-          </div>
+    <div className="container mx-auto py-8 space-y-6">
+      {/* Header with count */}
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-sm text-muted-foreground">
+            Showing {filteredTemplates.length} of {PANEL_TEMPLATES.length} panels
+          </p>
         </div>
       </div>
 
-      {/* Content */}
-      <div className="flex-1 overflow-y-auto">
-        <div className="max-w-7xl mx-auto px-6 py-8">
-          {/* Quick Start Section */}
-          <section className="mb-12">
-            <div className="text-center mb-8">
-              <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-3">
-                How can our expert panel help you today?
-              </h2>
-              <p className="text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
-                Get comprehensive insights from multiple specialized AI experts working together
-              </p>
-            </div>
+      {/* Tabs Navigation */}
+      <Tabs defaultValue="grid" className="w-full">
+        <TabsList>
+          <TabsTrigger value="grid">Grid View</TabsTrigger>
+          <TabsTrigger value="list">List View</TabsTrigger>
+          <TabsTrigger value="category">By Category</TabsTrigger>
+        </TabsList>
 
-            {/* Quick Question Input */}
-            <div className="max-w-3xl mx-auto mb-8">
-              <div className="relative">
-                <textarea
-                  value={quickQuestion}
-                  onChange={(e) => setQuickQuestion(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
-                      handleQuickStart();
-                    }
-                  }}
-                  placeholder="E.g., I need help designing a clinical trial for a digital therapeutic targeting depression..."
-                  className="w-full px-6 py-4 pr-32 rounded-2xl border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none text-base"
-                  rows={3}
-                />
-                
-                <button
-                  onClick={handleQuickStart}
-                  disabled={!quickQuestion.trim()}
-                  className="absolute right-3 bottom-3 flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <Sparkles className="w-4 h-4" />
-                  Get AI Panel
-                </button>
+        {/* Grid View */}
+        <TabsContent value="grid" className="space-y-6 mt-6">
+          {/* Search and Filter Bar */}
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex flex-col md:flex-row gap-4">
+                <div className="flex-1 relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Search panels..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+                <div className="flex gap-2">
+                  <select
+                    value={selectedCategory}
+                    onChange={(e) => setSelectedCategory(e.target.value)}
+                    className="px-4 py-2 border rounded-md bg-background"
+                  >
+                    {categories.map((cat) => (
+                      <option key={cat} value={cat}>
+                        {cat === 'all' ? 'All Categories' : cat}
+                      </option>
+                    ))}
+                  </select>
+                  <Button
+                    onClick={() => setShowWizard(true)}
+                    className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Create Custom Panel
+                  </Button>
+                </div>
               </div>
+              <div className="mt-4 text-sm text-muted-foreground">
+                Showing {filteredTemplates.length} of {PANEL_TEMPLATES.length} panels
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Panels Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredTemplates.map((template) => {
+              const IconComponent = getCategoryIcon(template.category);
               
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-2 text-center">
-                Press ⌘+Enter to submit
-              </p>
-            </div>
-
-            {/* Three Entry Points */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
-              {/* AI Suggestion */}
-              <motion.button
-                whileHover={{ scale: 1.02, y: -4 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={() => {
-                  setInitialQuery('');
-                  setShowWizard(true);
-                }}
-                className="p-6 rounded-2xl border-2 border-blue-200 dark:border-blue-700 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 hover:border-blue-400 dark:hover:border-blue-500 transition-all text-left group"
-              >
-                <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                  <Sparkles className="w-7 h-7 text-white" />
-                </div>
-                
-                <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">
-                  AI Suggestion
-                </h3>
-                <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                  Let AI analyze your question and recommend the perfect expert panel
-                </p>
-                
-                <div className="flex items-center gap-2 text-blue-600 dark:text-blue-400 font-semibold text-sm">
-                  Get Started
-                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                </div>
-              </motion.button>
-
-              {/* Use Template */}
-              <motion.button
-                whileHover={{ scale: 1.02, y: -4 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={() => {
-                  setInitialQuery('');
-                  setShowWizard(true);
-                }}
-                className="p-6 rounded-2xl border-2 border-purple-200 dark:border-purple-700 bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 hover:border-purple-400 dark:hover:border-purple-500 transition-all text-left group"
-              >
-                <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                  <LayoutGrid className="w-7 h-7 text-white" />
-                </div>
-                
-                <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">
-                  Browse Templates
-                </h3>
-                <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                  Choose from pre-configured panels for common healthcare scenarios
-                </p>
-                
-                <div className="flex items-center gap-2 text-purple-600 dark:text-purple-400 font-semibold text-sm">
-                  View Templates
-                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                </div>
-              </motion.button>
-
-              {/* Custom Panel */}
-              <motion.button
-                whileHover={{ scale: 1.02, y: -4 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={() => {
-                  setInitialQuery('');
-                  setShowWizard(true);
-                }}
-                className="p-6 rounded-2xl border-2 border-emerald-200 dark:border-emerald-700 bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-900/20 dark:to-emerald-800/20 hover:border-emerald-400 dark:hover:border-emerald-500 transition-all text-left group"
-              >
-                <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                  <Plus className="w-7 h-7 text-white" />
-                </div>
-                
-                <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">
-                  Build Custom Panel
-                </h3>
-                <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                  Manually select agents and configure every detail to your needs
-                </p>
-                
-                <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400 font-semibold text-sm">
-                  Start Building
-                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                </div>
-              </motion.button>
-            </div>
-          </section>
-
-          {/* Popular Templates */}
-          <section className="mb-12">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                <TrendingUp className="w-6 h-6 text-purple-500" />
-                Popular Templates
-              </h2>
-              
-              <button
-                onClick={() => setShowWizard(true)}
-                className="text-sm font-medium text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 flex items-center gap-1"
-              >
-                View All
-                <ArrowRight className="w-4 h-4" />
-              </button>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {PANEL_TEMPLATES.slice(0, 6).map((template) => (
-                <motion.button
+              return (
+                <Card
                   key={template.id}
-                  whileHover={{ scale: 1.02, y: -4 }}
-                  onClick={() => {
-                    // TODO: Pre-select this template in wizard
-                    setShowWizard(true);
-                  }}
-                  className="p-6 rounded-xl border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-purple-300 dark:hover:border-purple-600 hover:shadow-lg transition-all text-left group"
+                  className="hover:shadow-lg transition-shadow cursor-pointer group"
+                  onClick={() => handleViewPanel(template)}
                 >
-                  <div className="flex items-start gap-4 mb-4">
-                    <div className="text-3xl">{template.icon}</div>
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-bold text-gray-900 dark:text-white mb-1 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
-                        {template.name}
-                      </h3>
-                      <span className="inline-block text-xs px-2 py-0.5 rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 capitalize">
-                        {template.category}
-                      </span>
-                    </div>
-                  </div>
-                  
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-4 line-clamp-2">
-                    {template.description}
-                  </p>
-                  
-                  <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
-                    <div className="flex items-center gap-1">
-                      <Bot className="w-3.5 h-3.5" />
-                      <span>{template.suggestedAgents.length} experts</span>
+                  <CardHeader className="space-y-3">
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center flex-shrink-0">
+                          <IconComponent className="w-5 h-5 text-white" />
+                        </div>
+                        <div className="flex-1">
+                          <CardTitle className="text-lg group-hover:text-purple-600 transition-colors">
+                            {template.name}
+                          </CardTitle>
+                        </div>
+                      </div>
                     </div>
                     
-                    <div className="flex items-center gap-1">
-                      <Zap className="w-3.5 h-3.5" />
-                      <span className="capitalize">{template.mode}</span>
-                    </div>
-                  </div>
-                </motion.button>
-              ))}
-            </div>
-          </section>
+                    <CardDescription className="line-clamp-2 min-h-[40px]">
+                      {template.description}
+                    </CardDescription>
 
-          {/* Why Use Panel? */}
-          <section className="mb-12">
-            <div className="bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 rounded-2xl border-2 border-purple-200 dark:border-purple-700 p-8">
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6 text-center">
-                Why Consult with a Panel?
-              </h2>
-              
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="text-center">
-                  <div className="w-14 h-14 rounded-full bg-purple-100 dark:bg-purple-900/40 flex items-center justify-center mx-auto mb-4">
-                    <Users className="w-7 h-7 text-purple-600 dark:text-purple-400" />
+                    {/* Badges */}
+                    <div className="flex flex-wrap gap-2">
+                      <Badge variant="secondary" className="capitalize text-xs">
+                        {template.category}
+                      </Badge>
+                      <Badge variant="outline" className="text-xs">
+                        <Zap className="w-3 h-3 mr-1" />
+                        {template.mode}
+                      </Badge>
+                      <Badge variant="outline" className="text-xs">
+                        <Bot className="w-3 h-3 mr-1" />
+                        {template.suggestedAgents.length} experts
+                      </Badge>
+                    </div>
+                  </CardHeader>
+
+                  <CardContent className="pt-0">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground text-xs">
+                        Click to view details
+                      </span>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 text-purple-600 hover:text-purple-700"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          const IconComponent = getCategoryIcon(template.category);
+                          handleUsePanel({
+                            ...template,
+                            purpose: template.description,
+                            IconComponent,
+                          });
+                        }}
+                      >
+                        Use Panel
+                        <ArrowRight className="w-3 h-3 ml-1" />
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+
+          {filteredTemplates.length === 0 && (
+            <Card>
+              <CardContent className="py-12 text-center">
+                <Filter className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                <p className="text-muted-foreground">No panels found matching your filters.</p>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+
+        {/* List View */}
+        <TabsContent value="list" className="space-y-4 mt-6">
+          {filteredTemplates.map((template) => {
+            const IconComponent = getCategoryIcon(template.category);
+            
+            return (
+              <Card
+                key={template.id}
+                className="hover:shadow-md transition-shadow cursor-pointer"
+                onClick={() => handleViewPanel(template)}
+              >
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4 flex-1">
+                      <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center flex-shrink-0">
+                        <IconComponent className="w-6 h-6 text-white" />
+                      </div>
+                      <div className="flex-1">
+                        <CardTitle className="text-lg">{template.name}</CardTitle>
+                        <CardDescription className="mt-1">
+                          {template.description}
+                        </CardDescription>
+                        <div className="flex flex-wrap gap-2 mt-3">
+                          <Badge variant="secondary" className="capitalize text-xs">
+                            {template.category}
+                          </Badge>
+                          <Badge variant="outline" className="text-xs">
+                            <Zap className="w-3 h-3 mr-1" />
+                            {template.mode}
+                          </Badge>
+                          <Badge variant="outline" className="text-xs">
+                            <Bot className="w-3 h-3 mr-1" />
+                            {template.suggestedAgents.length} experts
+                          </Badge>
+                        </div>
+                      </div>
+                    </div>
+                    <Button
+                      variant="outline"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleUsePanel({
+                          ...template,
+                          purpose: template.description,
+                          IconComponent,
+                        });
+                      }}
+                    >
+                      <Sparkles className="w-4 h-4 mr-2" />
+                      Use Panel
+                    </Button>
                   </div>
-                  <h3 className="font-semibold text-gray-900 dark:text-white mb-2">
-                    Diverse Perspectives
-                  </h3>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    Get insights from multiple specialized experts with different backgrounds
-                  </p>
+                </CardHeader>
+              </Card>
+            );
+          })}
+        </TabsContent>
+
+        {/* By Category View */}
+        <TabsContent value="category" className="space-y-8 mt-6">
+          {categories.filter(cat => cat !== 'all').map(category => {
+            const categoryTemplates = filteredTemplates.filter(t => t.category === category);
+            if (categoryTemplates.length === 0) return null;
+
+            const CategoryIcon = getCategoryIcon(category);
+
+            return (
+              <div key={category}>
+                <div className="flex items-center gap-3 mb-4">
+                  <CategoryIcon className="h-6 w-6" />
+                  <h2 className="text-2xl font-bold">{category}</h2>
+                  <Badge variant="secondary">{categoryTemplates.length}</Badge>
                 </div>
-                
-                <div className="text-center">
-                  <div className="w-14 h-14 rounded-full bg-blue-100 dark:bg-blue-900/40 flex items-center justify-center mx-auto mb-4">
-                    <MessageSquare className="w-7 h-7 text-blue-600 dark:text-blue-400" />
-                  </div>
-                  <h3 className="font-semibold text-gray-900 dark:text-white mb-2">
-                    Collaborative Discussion
-                  </h3>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    Experts debate and refine ideas together to reach better conclusions
-                  </p>
-                </div>
-                
-                <div className="text-center">
-                  <div className="w-14 h-14 rounded-full bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center mx-auto mb-4">
-                    <Sparkles className="w-7 h-7 text-emerald-600 dark:text-emerald-400" />
-                  </div>
-                  <h3 className="font-semibold text-gray-900 dark:text-white mb-2">
-                    Consensus Building
-                  </h3>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    Receive a unified recommendation backed by multiple expert opinions
-                  </p>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {categoryTemplates.map((template) => {
+                    const IconComponent = getCategoryIcon(template.category);
+                    
+                    return (
+                      <Card
+                        key={template.id}
+                        className="hover:shadow-lg transition-shadow cursor-pointer"
+                        onClick={() => handleViewPanel(template)}
+                      >
+                        <CardHeader className="pb-3">
+                          <div className="flex items-start justify-between mb-2">
+                            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
+                              <IconComponent className="w-5 h-5 text-white" />
+                            </div>
+                          </div>
+                          <CardTitle className="text-base line-clamp-1">
+                            {template.name}
+                          </CardTitle>
+                          <CardDescription className="line-clamp-2 text-xs">
+                            {template.description}
+                          </CardDescription>
+                        </CardHeader>
+                        <CardContent className="pt-0">
+                          <div className="flex items-center justify-between">
+                            <div className="flex gap-1">
+                              <Badge variant="outline" className="text-xs">
+                                <Bot className="w-3 h-3 mr-1" />
+                                {template.suggestedAgents.length}
+                              </Badge>
+                              <Badge variant="outline" className="text-xs capitalize">
+                                {template.mode}
+                              </Badge>
+                            </div>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-7 text-xs"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleUsePanel({
+                                  ...template,
+                                  purpose: template.description,
+                                  IconComponent,
+                                });
+                              }}
+                            >
+                              Use
+                              <ArrowRight className="w-3 h-3 ml-1" />
+                            </Button>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
                 </div>
               </div>
-            </div>
-          </section>
+            );
+          })}
+        </TabsContent>
+      </Tabs>
 
-          {/* Recent Consultations (placeholder) */}
-          <section>
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                <History className="w-6 h-6 text-gray-500" />
-                Recent Consultations
-              </h2>
-            </div>
-
-            <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-xl border-2 border-dashed border-gray-300 dark:border-gray-600">
-              <Clock className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-              <p className="text-gray-600 dark:text-gray-400 mb-4">
-                Your consultation history will appear here
-              </p>
-              <button
-                onClick={() => setShowWizard(true)}
-                className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white rounded-lg font-semibold shadow-lg hover:shadow-xl transition-all"
-              >
-                <Plus className="w-4 h-4" />
-                Start Your First Consultation
-              </button>
-            </div>
-          </section>
-        </div>
-      </div>
+      {/* Panel Details Dialog */}
+      <PanelDetailsDialog
+        panel={selectedPanel}
+        open={showPanelDetails}
+        onOpenChange={setShowPanelDetails}
+        onUsePanel={handleUsePanel}
+      />
 
       {/* Panel Creation Wizard */}
-      <AnimatePresence>
-        {showWizard && (
-          <PanelCreationWizard
-            initialQuery={initialQuery}
-            onComplete={handlePanelCreated}
-            onCancel={() => setShowWizard(false)}
-          />
-        )}
-      </AnimatePresence>
+      {showWizard && (
+        <PanelCreationWizard
+          initialQuery={initialQuery}
+          onComplete={handlePanelCreated}
+          onCancel={() => setShowWizard(false)}
+        />
+      )}
     </div>
   );
 }

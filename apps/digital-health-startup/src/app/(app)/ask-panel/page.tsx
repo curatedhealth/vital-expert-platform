@@ -31,6 +31,7 @@ import {
   ChevronRight,
   X,
   Target,
+  Play,
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -47,6 +48,7 @@ import {
 } from '@/components/ui/dialog';
 import { PanelCreationWizard } from '@/features/ask-panel/components/PanelCreationWizard';
 import { PanelConsultationView } from '@/features/ask-panel/components/PanelConsultationView';
+import { PanelExecutionView } from '@/features/ask-panel/components/PanelExecutionView';
 import { PANEL_TEMPLATES } from '@/features/ask-panel/constants/panel-templates';
 import type { PanelConfiguration } from '@/features/ask-panel/types/agent';
 import { useSavedPanels, type SavedPanel } from '@/contexts/ask-panel-context';
@@ -72,14 +74,16 @@ interface PanelDetailsDialogProps {
   panel: SavedPanel | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onUsePanel: (panel: SavedPanel) => void;
+  onCustomize: (panel: SavedPanel) => void;
+  onRun: (panel: SavedPanel) => void;
 }
 
 function PanelDetailsDialog({
   panel,
   open,
   onOpenChange,
-  onUsePanel,
+  onCustomize,
+  onRun,
 }: PanelDetailsDialogProps) {
   if (!panel) return null;
 
@@ -170,20 +174,33 @@ function PanelDetailsDialog({
           </div>
         </div>
 
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+        <DialogFooter className="flex-col sm:flex-row gap-2">
+          <Button variant="outline" onClick={() => onOpenChange(false)} className="w-full sm:w-auto">
             Close
           </Button>
-          <Button
-            onClick={() => {
-              onUsePanel(panel);
-              onOpenChange(false);
-            }}
-            className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
-          >
-            <Sparkles className="w-4 h-4 mr-2" />
-            Use This Panel
-          </Button>
+          <div className="flex gap-2 w-full sm:w-auto">
+            <Button
+              variant="outline"
+              onClick={() => {
+                onCustomize(panel);
+                onOpenChange(false);
+              }}
+              className="flex-1 sm:flex-none"
+            >
+              <Sparkles className="w-4 h-4 mr-2" />
+              Customize
+            </Button>
+            <Button
+              onClick={() => {
+                onRun(panel);
+                onOpenChange(false);
+              }}
+              className="flex-1 sm:flex-none bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
+            >
+              <ChevronRight className="w-4 h-4 mr-2" />
+              Run Panel
+            </Button>
+          </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -197,6 +214,7 @@ export default function AskPanelPage() {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [selectedPanel, setSelectedPanel] = useState<SavedPanel | null>(null);
   const [showPanelDetails, setShowPanelDetails] = useState(false);
+  const [executingPanel, setExecutingPanel] = useState<SavedPanel | null>(null);
 
   const { addPanel } = useSavedPanels();
 
@@ -223,6 +241,11 @@ export default function AskPanelPage() {
     setConsultationQuestion('');
   }
 
+  // Handle back from execution
+  function handleBackFromExecution() {
+    setExecutingPanel(null);
+  }
+
   // Handle panel card click - show details
   const handleViewPanel = (template: typeof PANEL_TEMPLATES[0]) => {
     const IconComponent = getCategoryIcon(template.category);
@@ -235,14 +258,23 @@ export default function AskPanelPage() {
     setShowPanelDetails(true);
   };
 
-  // Handle use panel - add to sidebar and start wizard
-  const handleUsePanel = (panel: SavedPanel) => {
+  // Handle customize panel - add to sidebar and start wizard
+  const handleCustomizePanel = (panel: SavedPanel) => {
     // Add panel to sidebar
     addPanel(panel);
     
     // Start wizard with panel's description
     setInitialQuery(panel.description);
     setShowWizard(true);
+  };
+
+  // Handle run panel - add to sidebar and open execution view
+  const handleRunPanel = (panel: SavedPanel) => {
+    // Add panel to sidebar
+    addPanel(panel);
+    
+    // Open execution view
+    setExecutingPanel(panel);
   };
 
   // Filter templates
@@ -260,6 +292,16 @@ export default function AskPanelPage() {
 
   // Get unique categories
   const categories = ['all', ...Array.from(new Set(PANEL_TEMPLATES.map((t) => t.category)))];
+
+  // Show execution view if active
+  if (executingPanel) {
+    return (
+      <PanelExecutionView
+        panel={executingPanel}
+        onBack={handleBackFromExecution}
+      />
+    );
+  }
 
   // Show consultation view if active
   if (showConsultation && consultationConfig && consultationQuestion) {
@@ -341,24 +383,19 @@ export default function AskPanelPage() {
               return (
                 <Card
                   key={template.id}
-                  className="hover:shadow-lg transition-shadow cursor-pointer group"
+                  className="hover:shadow-lg transition-shadow cursor-pointer"
                   onClick={() => handleViewPanel(template)}
                 >
-                  <CardHeader className="space-y-3">
-                    <div className="flex items-start justify-between">
+                  <CardHeader>
+                    <div className="flex items-start justify-between mb-3">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center flex-shrink-0">
-                          <IconComponent className="w-5 h-5 text-white" />
-                        </div>
-                        <div className="flex-1">
-                          <CardTitle className="text-lg group-hover:text-purple-600 transition-colors">
-                            {template.name}
-                          </CardTitle>
-                        </div>
+                        <IconComponent className="w-5 h-5 text-muted-foreground" />
+                        <CardTitle className="text-lg">
+                          {template.name}
+                        </CardTitle>
                       </div>
                     </div>
-                    
-                    <CardDescription className="line-clamp-2 min-h-[40px]">
+                    <CardDescription className="text-sm mb-4">
                       {template.description}
                     </CardDescription>
 
@@ -368,7 +405,6 @@ export default function AskPanelPage() {
                         {template.category}
                       </Badge>
                       <Badge variant="outline" className="text-xs">
-                        <Zap className="w-3 h-3 mr-1" />
                         {template.mode}
                       </Badge>
                       <Badge variant="outline" className="text-xs">
@@ -378,7 +414,7 @@ export default function AskPanelPage() {
                     </div>
                   </CardHeader>
 
-                  <CardContent className="pt-0">
+                  <CardContent>
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-muted-foreground text-xs">
                         Click to view details
@@ -386,18 +422,18 @@ export default function AskPanelPage() {
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="h-8 text-purple-600 hover:text-purple-700"
+                        className="h-8 text-purple-600 hover:text-purple-700 hover:bg-purple-50"
                         onClick={(e) => {
                           e.stopPropagation();
                           const IconComponent = getCategoryIcon(template.category);
-                          handleUsePanel({
+                          handleRunPanel({
                             ...template,
                             purpose: template.description,
                             IconComponent,
                           });
                         }}
                       >
-                        Use Panel
+                        Run Panel
                         <ArrowRight className="w-3 h-3 ml-1" />
                       </Button>
                     </div>
@@ -458,15 +494,15 @@ export default function AskPanelPage() {
                       variant="outline"
                       onClick={(e) => {
                         e.stopPropagation();
-                        handleUsePanel({
+                        handleRunPanel({
                           ...template,
                           purpose: template.description,
                           IconComponent,
                         });
                       }}
                     >
-                      <Sparkles className="w-4 h-4 mr-2" />
-                      Use Panel
+                      <Play className="w-4 h-4 mr-2" />
+                      Run Panel
                     </Button>
                   </div>
                 </CardHeader>
@@ -530,14 +566,14 @@ export default function AskPanelPage() {
                               className="h-7 text-xs"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                handleUsePanel({
+                                handleRunPanel({
                                   ...template,
                                   purpose: template.description,
                                   IconComponent,
                                 });
                               }}
                             >
-                              Use
+                              Run
                               <ArrowRight className="w-3 h-3 ml-1" />
                             </Button>
                           </div>
@@ -557,7 +593,8 @@ export default function AskPanelPage() {
         panel={selectedPanel}
         open={showPanelDetails}
         onOpenChange={setShowPanelDetails}
-        onUsePanel={handleUsePanel}
+        onCustomize={handleCustomizePanel}
+        onRun={handleRunPanel}
       />
 
       {/* Panel Creation Wizard */}

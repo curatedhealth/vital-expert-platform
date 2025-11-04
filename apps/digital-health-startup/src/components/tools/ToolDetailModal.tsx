@@ -24,6 +24,7 @@ import {
 } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { AgentAvatar } from '@/components/ui/agent-avatar';
 import {
   Save,
   X,
@@ -37,6 +38,8 @@ import {
   Workflow,
   Target,
   Plus,
+  Bot,
+  User,
 } from 'lucide-react';
 import { ToolRegistryService, Tool } from '@/lib/services/tool-registry-service';
 import { createClient } from '@/lib/supabase/client';
@@ -52,8 +55,18 @@ interface ToolDetailModalProps {
 interface Agent {
   id: string;
   name: string;
+  title?: string;
   description?: string;
   is_active: boolean;
+  avatar?: string;
+  display_name?: string;
+  expertise?: string[];
+  specialties?: string[];
+  metadata?: {
+    avatar?: string;
+    display_name?: string;
+    [key: string]: any;
+  };
 }
 
 interface TaskAssignment {
@@ -117,15 +130,27 @@ export function ToolDetailModal({
     try {
       const { data, error } = await supabase
         .from('agents')
-        .select('id, name, description, is_active')
+        .select('id, name, title, description, is_active, slug, expertise, specialties, metadata')
         .eq('is_active', true)
-        .order('name');
+        .order('metadata->>display_name');
 
       if (error) throw error;
-      setAgents(data || []);
+      
+      // Transform data to match AgentAvatar expectations
+      const transformedAgents = (data || []).map(agent => ({
+        ...agent,
+        avatar: agent.metadata?.avatar || 'avatar_0001',
+        display_name: agent.metadata?.display_name || agent.title || agent.name
+      }));
+      
+      setAgents(transformedAgents);
     } catch (error) {
       console.error('Error loading agents:', error);
     }
+  };
+
+  const getDisplayName = (agent: Agent) => {
+    return agent.display_name || agent.metadata?.display_name || agent.title || agent.name;
   };
 
   const loadToolAssignments = async () => {
@@ -339,6 +364,30 @@ export function ToolDetailModal({
         ? prev.filter(id => id !== agentId)
         : [...prev, agentId]
     );
+  };
+
+  const getAgentInitials = (name: string) => {
+    return name
+      .split(' ')
+      .map(word => word[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 2);
+  };
+
+  const getAgentAvatarColor = (name: string) => {
+    const colors = [
+      'bg-blue-500',
+      'bg-green-500',
+      'bg-purple-500',
+      'bg-pink-500',
+      'bg-yellow-500',
+      'bg-indigo-500',
+      'bg-red-500',
+      'bg-teal-500',
+    ];
+    const index = name.charCodeAt(0) % colors.length;
+    return colors[index];
   };
 
   if (!tool) return null;
@@ -763,7 +812,7 @@ export function ToolDetailModal({
               <CardHeader>
                 <CardTitle className="text-lg">Assign to Agents</CardTitle>
                 <p className="text-sm text-muted-foreground">
-                  Select which agents can use this tool
+                  Select which agents can use this tool ({selectedAgents.length} of {agents.length} selected)
                 </p>
               </CardHeader>
               <CardContent>
@@ -773,27 +822,84 @@ export function ToolDetailModal({
                     <p>No active agents found</p>
                   </div>
                 ) : (
-                  <div className="space-y-2">
-                    {agents.map(agent => (
-                      <div
-                        key={agent.id}
-                        className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50"
-                      >
-                        <div className="flex-1">
-                          <p className="font-medium">{agent.name}</p>
-                          {agent.description && (
-                            <p className="text-sm text-muted-foreground">
-                              {agent.description}
-                            </p>
-                          )}
-                        </div>
-                        <Switch
-                          checked={selectedAgents.includes(agent.id)}
-                          onCheckedChange={() => handleAgentToggle(agent.id)}
-                          disabled={mode === 'view'}
-                        />
-                      </div>
-                    ))}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {agents.map(agent => {
+                      const isSelected = selectedAgents.includes(agent.id);
+                      const displayName = getDisplayName(agent);
+                      
+                      return (
+                        <Card
+                          key={agent.id}
+                          className={`cursor-pointer transition-all ${
+                            isSelected
+                              ? 'ring-2 ring-blue-500 bg-blue-50 dark:bg-blue-950 border-blue-500'
+                              : 'hover:shadow-md hover:border-gray-300'
+                          }`}
+                          onClick={() => handleAgentToggle(agent.id)}
+                        >
+                          <CardContent className="p-4">
+                            <div className="flex items-start gap-3">
+                              {/* Avatar using shared component */}
+                              <div className="flex-shrink-0">
+                                <AgentAvatar
+                                  avatar={agent.avatar}
+                                  name={displayName}
+                                  size="lg"
+                                  className="rounded-lg"
+                                />
+                              </div>
+
+                              {/* Agent Info */}
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-start justify-between gap-2 mb-1">
+                                  <h4 className="font-semibold text-sm text-gray-900 dark:text-gray-100 line-clamp-1">
+                                    {displayName}
+                                  </h4>
+                                  <div onClick={(e) => e.stopPropagation()}>
+                                    <Switch
+                                      checked={isSelected}
+                                      onCheckedChange={() => handleAgentToggle(agent.id)}
+                                    />
+                                  </div>
+                                </div>
+                                
+                                {agent.title && agent.title !== displayName && (
+                                  <p className="text-xs text-gray-600 dark:text-gray-400 mb-1 line-clamp-1">
+                                    {agent.title}
+                                  </p>
+                                )}
+                                
+                                {agent.description && (
+                                  <p className="text-xs text-muted-foreground line-clamp-2 mb-2">
+                                    {agent.description}
+                                  </p>
+                                )}
+
+                                {/* Expertise Tags */}
+                                {agent.expertise && agent.expertise.length > 0 && (
+                                  <div className="flex flex-wrap gap-1 mt-2">
+                                    {agent.expertise.slice(0, 3).map((skill, index) => (
+                                      <Badge
+                                        key={index}
+                                        variant="secondary"
+                                        className="text-xs px-2 py-0"
+                                      >
+                                        {skill}
+                                      </Badge>
+                                    ))}
+                                    {agent.expertise.length > 3 && (
+                                      <Badge variant="secondary" className="text-xs px-2 py-0">
+                                        +{agent.expertise.length - 3}
+                                      </Badge>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      );
+                    })}
                   </div>
                 )}
               </CardContent>

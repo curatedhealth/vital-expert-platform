@@ -17,6 +17,7 @@ import {
   FileText,
   FolderOpen,
   History,
+  Home,
   Layers,
   LineChart,
   MessageSquare,
@@ -611,7 +612,7 @@ export function SidebarPromptPrismContent() {
 export function SidebarAdminContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const currentView = searchParams.get('view') || 'agent-analytics'
+  const currentView = searchParams.get('view') || 'overview'
 
   const handleNavigation = (view: string) => {
     router.push(`/admin?view=${view}`)
@@ -621,6 +622,23 @@ export function SidebarAdminContent() {
 
   return (
     <>
+      <SidebarGroup>
+        <SidebarGroupLabel>Overview</SidebarGroupLabel>
+        <SidebarGroupContent>
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton 
+                onClick={() => handleNavigation('overview')}
+                isActive={isActive('overview')}
+              >
+                <Home className="h-4 w-4" />
+                <span>Dashboard</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarGroupContent>
+      </SidebarGroup>
+
       <SidebarGroup>
         <SidebarGroupLabel>Analytics & Monitoring</SidebarGroupLabel>
         <SidebarGroupContent>

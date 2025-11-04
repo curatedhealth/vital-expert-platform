@@ -10,6 +10,11 @@ import { useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
 
 // Dynamically import all dashboard components to prevent hydration issues
+const OverviewDashboard = dynamic(
+  () => import('@/components/admin/OverviewDashboard').then(mod => ({ default: mod.OverviewDashboard })),
+  { ssr: false }
+);
+
 const AgentAnalyticsDashboard = dynamic(
   () => import('@/components/admin/AgentAnalyticsDashboard').then(mod => ({ default: mod.AgentAnalyticsDashboard })),
   { ssr: false }
@@ -81,10 +86,10 @@ export default function AdminPage() {
     setMounted(true);
   }, []);
 
-  // If no view specified, redirect to agent analytics (new default)
+  // If no view specified, redirect to overview (new default)
   useEffect(() => {
     if (mounted && !view) {
-      router.replace('/admin?view=agent-analytics');
+      router.replace('/admin?view=overview');
     }
   }, [view, router, mounted]);
 
@@ -96,6 +101,13 @@ export default function AdminPage() {
   // Render appropriate view based on query param
   const renderView = () => {
     switch (view) {
+      case 'overview':
+        return (
+          <div className="container mx-auto py-8">
+            <OverviewDashboard />
+          </div>
+        );
+      
       case 'agent-analytics':
         return (
           <div className="container mx-auto py-8">
@@ -163,10 +175,10 @@ export default function AdminPage() {
         );
       
       default:
-        // Unknown view - show agent analytics
+        // Unknown view - show overview
         return (
           <div className="container mx-auto py-8">
-            <AgentAnalyticsDashboard />
+            <OverviewDashboard />
           </div>
         );
     }

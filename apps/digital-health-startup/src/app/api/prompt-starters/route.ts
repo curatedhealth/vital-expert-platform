@@ -1,59 +1,25 @@
 /**
- * API Route: Generate Prompt Starters for Selected Agents
- * Dynamically generates prompts based on agent expertise and category
+ * API Route: Fetch Prompt Starters for Selected Agents
+ * Retrieves prompt starters from dh_agent_prompt_starter table
+ * When clicked, the full detailed prompt is fetched from the prompts table
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@vital/sdk/client';
+import { createClient } from '@supabase/supabase-js';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-// Prompt templates by domain
-const promptTemplates = {
-  clinical_research: [
-    { complexity: 'basic', text: 'What are the key considerations for designing a clinical trial?' },
-    { complexity: 'intermediate', text: 'How can I optimize patient recruitment strategies for a Phase III trial?' },
-    { complexity: 'advanced', text: 'Analyze the statistical power requirements for a multi-center randomized controlled trial' },
-    { complexity: 'expert', text: 'Design an adaptive clinical trial protocol with Bayesian interim analysis' }
-  ],
-  regulatory_affairs: [
-    { complexity: 'basic', text: 'What are the main FDA submission requirements for a new drug application?' },
-    { complexity: 'intermediate', text: 'How should I structure a regulatory dossier for EU market authorization?' },
-    { complexity: 'advanced', text: 'Develop a comprehensive regulatory strategy for orphan drug designation' },
-    { complexity: 'expert', text: 'Design a global regulatory pathway for first-in-class therapy with companion diagnostic' }
-  ],
-  medical_affairs: [
-    { complexity: 'basic', text: 'What is the role of medical affairs in pharmaceutical commercialization?' },
-    { complexity: 'intermediate', text: 'How can I develop an effective medical science liaison (MSL) engagement strategy?' },
-    { complexity: 'advanced', text: 'Create a comprehensive publication strategy for Phase III trial results' },
-    { complexity: 'expert', text: 'Design an integrated evidence generation plan spanning real-world evidence' }
-  ],
-  general: [
-    { complexity: 'basic', text: 'Help me understand the current trends in this field' },
-    { complexity: 'intermediate', text: 'What are the best practices for strategic planning?' },
-    { complexity: 'advanced', text: 'Analyze the strategic implications of recent regulatory changes' },
-    { complexity: 'expert', text: 'Design a comprehensive strategy integrating clinical, regulatory, and commercial considerations' }
-  ]
-};
+// Create a server-side Supabase client with anon key for RLS
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://xazinxsiglqokwfmogyk.supabase.co';
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhhemlueHNpZ2xxb2t3Zm1vZ3lrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzQ2ODkzNzgsImV4cCI6MjA1MDI2NTM3OH0.5qrfkThPewEuFize6meh47xngCvg_9FRKcepFZ7IxsY';
 
-function getDomain(agent: any): string {
-  const category = String(agent.category || '').toLowerCase();
-  const expertise = String(agent.expertise || '').toLowerCase();
-  const title = String(agent.title || '').toLowerCase();
-
-  if (category.includes('clinical') || expertise.includes('clinical') || title.includes('clinical')) {
-    return 'clinical_research';
-  }
-  if (category.includes('regulatory') || expertise.includes('regulatory') || title.includes('regulatory')) {
-    return 'regulatory_affairs';
-  }
-  if (category.includes('medical') || expertise.includes('medical affairs') || title.includes('medical')) {
-    return 'medical_affairs';
-  }
-
-  return 'general';
-}
+const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    persistSession: false,
+    autoRefreshToken: false,
+  },
+});
 
 export async function POST(request: NextRequest) {
   try {
@@ -66,54 +32,101 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Fetch agents
-    const { data: agents, error: agentsError } = await supabase
-      .from('agents')
-      .select('id, name, title, expertise, category')
-      .in('id', agentIds);
+    console.log('Fetching prompt starters for agents:', agentIds);
 
-    if (agentsError) {
-      console.error('Error fetching agents:', agentsError);
+    // Fetch prompt starters from database
+    const { data: promptStarters, error: startersError } = await supabase
+      .from('dh_agent_prompt_starter')
+      .select('id, title, description, tags, position, metadata, prompt_id, agent_id')
+      .in('agent_id', agentIds)
+      .order('position', { ascending: true })
+      .limit(20);
+
+    if (startersError) {
+      console.error('Error fetching prompt starters:', startersError);
       return NextResponse.json(
-        { error: 'Failed to fetch agents' },
+        { error: 'Failed to fetch prompt starters', details: startersError.message },
         { status: 500 }
       );
     }
 
-    if (!agents || agents.length === 0) {
-      return NextResponse.json({ prompts: [] });
+    console.log('Found prompt starters:', promptStarters?.length || 0);
+
+    if (!promptStarters || promptStarters.length === 0) {
+      return NextResponse.json({ 
+        prompts: [],
+        message: 'No prompt starters found for the selected agents'
+      });
     }
 
-    // Generate prompts based on agents
-    const prompts: any[] = [];
-    const domains = new Set<string>();
+    // Get unique agent and prompt IDs
+    const uniqueAgentIds = [...new Set(promptStarters.map((s: any) => s.agent_id))];
+    const uniquePromptIds = [...new Set(promptStarters.map((s: any) => s.prompt_id))];
 
-    agents.forEach((agent: any) => {
-      const domain = getDomain(agent);
-      domains.add(domain);
-      const templates = promptTemplates[domain as keyof typeof promptTemplates] || promptTemplates.general;
+    // Fetch agents data
+    const { data: agents, error: agentsError } = await supabase
+      .from('agents')
+      .select('id, name, title, category, expertise')
+      .in('id', uniqueAgentIds);
 
-      templates.forEach((template, index) => {
-        const agentTitle = agent.title || agent.name;
-        prompts.push({
-          id: `${agent.id}_${index}`,
-          prompt_starter: template.text,
-          name: `${agent.name}_prompt_${index + 1}`,
-          display_name: `${template.complexity.charAt(0).toUpperCase()}${template.complexity.slice(1)}: ${agentTitle}`,
-          description: `A ${template.complexity}-level prompt`,
-          domain: domain,
-          complexity_level: template.complexity
-        });
-      });
+    if (agentsError) {
+      console.error('Error fetching agents:', agentsError);
+    }
+
+    // Fetch prompts data
+    const { data: promptsData, error: promptsError } = await supabase
+      .from('prompts')
+      .select('id, name, display_name, description, domain, complexity_level, category')
+      .in('id', uniquePromptIds);
+
+    if (promptsError) {
+      console.error('Error fetching prompts:', promptsError);
+    }
+
+    // Create lookup maps
+    const agentsMap = new Map((agents || []).map((a: any) => [a.id, a]));
+    const promptsMap = new Map((promptsData || []).map((p: any) => [p.id, p]));
+
+    // Transform the data to match the expected format
+    const prompts = promptStarters.map((starter: any) => {
+      const agent = agentsMap.get(starter.agent_id);
+      const prompt = promptsMap.get(starter.prompt_id);
+
+      return {
+        id: starter.id,
+        prompt_id: starter.prompt_id,
+        prompt_starter: starter.title,
+        name: prompt?.name || `prompt_${starter.id}`,
+        display_name: starter.title,
+        description: starter.description,
+        domain: prompt?.domain || starter.metadata?.domain || 'general',
+        complexity_level: prompt?.complexity_level || starter.metadata?.complexity_level || 'intermediate',
+        category: prompt?.category,
+        tags: starter.tags || [],
+        position: starter.position,
+        agent: {
+          id: agent?.id,
+          name: agent?.name,
+          title: agent?.title
+        }
+      };
     });
 
-    // Return up to 12 prompts
-    const selectedPrompts = prompts.slice(0, 12);
+    // Get unique agents and domains
+    const uniqueAgents = Array.from(
+      new Set(prompts.map((p: any) => p.agent?.title || p.agent?.name).filter(Boolean))
+    );
+    const uniqueDomains = Array.from(
+      new Set(prompts.map((p: any) => p.domain).filter(Boolean))
+    );
+
+    console.log('Returning prompts:', prompts.length);
 
     return NextResponse.json({
-      prompts: selectedPrompts,
-      agents: agents.map((a: any) => a.title || a.name),
-      domains: Array.from(domains),
+      prompts: prompts.slice(0, 12), // Return up to 12 prompts
+      agents: uniqueAgents,
+      domains: uniqueDomains,
+      total: promptStarters.length
     });
 
   } catch (error) {

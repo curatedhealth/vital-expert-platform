@@ -1,15 +1,15 @@
 # Grafana Dashboard Provisioning
-# Auto-load dashboards from directory
+# Automatically loads dashboards from the dashboards directory
 
 apiVersion: 1
 
 providers:
-  - name: 'RAG Dashboards'
+  - name: 'VITAL Dashboards'
     orgId: 1
-    folder: 'RAG Monitoring'
+    folder: 'VITAL Platform'
     type: file
     disableDeletion: false
-    updateIntervalSeconds: 10
+    updateIntervalSeconds: 30
     allowUiUpdates: true
     options:
       path: /var/lib/grafana/dashboards

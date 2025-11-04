@@ -1,434 +1,322 @@
-# VITAL Path RAG Monitoring Stack
+# 🔥 VITAL Real-Time Monitoring Stack
 
-Complete monitoring setup for RAG operations with Prometheus, Grafana, and Alertmanager.
+## Overview
+
+Complete observability and monitoring solution for the VITAL Platform, providing:
+- **Real-time metrics collection** (Prometheus)
+- **Beautiful dashboards** (Grafana)
+- **Intelligent alerting** (Alertmanager)
+- **LLM observability** (LangFuse)
+
+---
+
+## 🏗️ Architecture
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                   VITAL Platform                             │
+│  (Next.js + Analytics Service)                               │
+└────────────┬────────────────────────────┬───────────────────┘
+             │                            │
+             ▼                            ▼
+┌─────────────────────┐      ┌──────────────────────┐
+│   Node Exporter     │      │  Postgres Exporter   │
+│  (System Metrics)   │      │  (DB Metrics)        │
+└──────────┬──────────┘      └──────────┬───────────┘
+           │                             │
+           └─────────────┬───────────────┘
+                         ▼
+                 ┌───────────────┐
+                 │  Prometheus   │
+                 │  (Metrics DB) │
+                 └───────┬───────┘
+                         │
+            ┌────────────┴────────────┐
+            ▼                         ▼
+    ┌──────────────┐        ┌─────────────────┐
+    │   Grafana    │        │  Alertmanager   │
+    │  (Dashboards)│        │  (Alerts)       │
+    └──────────────┘        └────────┬────────┘
+                                     │
+                         ┌───────────┴───────────┐
+                         ▼                       ▼
+                    ┌─────────┐           ┌──────────┐
+                    │  Slack  │           │PagerDuty │
+                    └─────────┘           └──────────┘
+```
+
+---
 
 ## 🚀 Quick Start
 
 ### Prerequisites
+- Docker & Docker Compose installed
+- Supabase database with analytics schema (Phase A)
+- Analytics service running (Phase B)
 
-- Docker and Docker Compose installed
-- VITAL Path application running on `localhost:3000`
-- At least 2GB RAM and 50GB disk space for metrics storage
-
-### Start Monitoring Stack
+### 1. Configure Environment
 
 ```bash
 cd monitoring
-docker-compose up -d
+cp env.example .env
 ```
 
-### Access Dashboards
+Edit `.env` and set:
+```bash
+# Required
+SUPABASE_HOST=your-project.supabase.co
+SUPABASE_PASSWORD=your-password
 
-- **Grafana**: http://localhost:3001
-  - Username: `admin`
-  - Password: `vital-path-2025` (⚠️ CHANGE IN PRODUCTION)
+# Generate these with: openssl rand -hex 32
+LANGFUSE_DB_PASSWORD=<random-32-char-hex>
+LANGFUSE_NEXTAUTH_SECRET=<random-32-char-hex>
+LANGFUSE_SALT=<random-32-char-hex>
 
-- **Prometheus**: http://localhost:9090
+# Optional (for alerts)
+SLACK_WEBHOOK_URL=https://hooks.slack.com/services/YOUR/WEBHOOK
+PAGERDUTY_SERVICE_KEY=your-key
+```
 
-- **Alertmanager**: http://localhost:9093
-
-### Verify Metrics Collection
+### 2. Deploy Stack
 
 ```bash
-# Check Prometheus targets
-curl http://localhost:9090/api/v1/targets | jq '.data.activeTargets[] | {job, health}'
-
-# View RAG metrics
-curl http://localhost:9090/api/v1/query?query=rag_queries_total
+./deploy.sh
 ```
+
+### 3. Access Services
+
+- **Grafana:** http://localhost:3001
+  - Username: `admin`
+  - Password: `vital_admin_2025`
+  
+- **Prometheus:** http://localhost:9090
+- **Alertmanager:** http://localhost:9093
+- **LangFuse:** http://localhost:3002
 
 ---
 
-## 📊 Architecture
+## 📊 Monitoring Components
 
+### 1. Prometheus
+**Purpose:** Metrics collection and storage
+
+**Metrics Collected:**
+- System metrics (CPU, memory, disk)
+- Database metrics (connections, queries, performance)
+- Application metrics (requests, errors, latency)
+- Analytics metrics (costs, usage, agent performance)
+
+**Access:** http://localhost:9090
+
+**Query Examples:**
+```promql
+# Request rate
+rate(http_requests_total[5m])
+
+# Error rate
+rate(http_requests_total{status=~"5.."}[5m])
+
+# Daily LLM cost
+sum(increase(llm_cost_usd_total[24h]))
+
+# Agent success rate
+rate(agent_executions_success_total[15m]) / rate(agent_executions_total[15m])
 ```
-┌──────────────────┐
-│  VITAL Path App  │
-│  (localhost:3000)│
-└────────┬─────────┘
-         │ /api/metrics
-         ▼
-┌─────────────────────┐
-│    Prometheus       │
-│  (localhost:9090)   │
-│  - Scrapes every 15s│
-│  - 90 day retention │
-│  - 50GB max storage │
-└────────┬────────────┘
-         │
-    ┌────┴────┬──────────────┐
-    ▼         ▼              ▼
-┌────────┐ ┌────────┐ ┌──────────────┐
-│Grafana │ │Alerts  │ │ Long-term    │
-│:3001   │ │Manager │ │ Storage      │
-└────────┘ └────────┘ └──────────────┘
-```
+
+### 2. Grafana
+**Purpose:** Visualization and dashboards
+
+**Pre-configured Dashboards:**
+- **System Overview** - CPU, memory, disk, network
+- **Database Performance** - Queries, connections, slow queries
+- **Application Performance** - Requests, errors, latency
+- **Cost Analytics** - LLM costs, trends, projections
+- **Agent Performance** - Success rates, latency, failures
+- **User Analytics** - Sessions, queries, engagement
+
+**Access:** http://localhost:3001
+
+**Default Credentials:**
+- Username: `admin`
+- Password: `vital_admin_2025`
+
+### 3. Alertmanager
+**Purpose:** Alert routing and deduplication
+
+**Alert Categories:**
+- **Critical** → PagerDuty (immediate response)
+- **Warning** → Slack (team notification)
+- **Cost** → Slack finance channel
+- **Security** → Slack security channel
+- **Info** → Slack info channel (low priority)
+
+**Access:** http://localhost:9093
+
+### 4. LangFuse
+**Purpose:** LLM observability and tracing
+
+**Features:**
+- LLM request tracing
+- Token usage tracking
+- Latency monitoring
+- Error tracking
+- Cost attribution
+
+**Access:** http://localhost:3002
+
+**Integration:** See `docs/LANGFUSE_INTEGRATION.md`
 
 ---
 
-## 📁 Directory Structure
+## 🚨 Alerting
 
-```
-monitoring/
-├── docker-compose.yml          # Container orchestration
-├── prometheus/
-│   ├── prometheus.yml          # Scrape configuration
-│   └── alerts/
-│       └── rag-alerts.yml      # 11 alert rules
-├── grafana/
-│   ├── dashboards/
-│   │   └── rag-operations.json # Pre-built dashboard
-│   └── provisioning/
-│       ├── datasources/        # Auto-config Prometheus
-│       └── dashboards/         # Auto-load dashboards
-├── alertmanager/
-│   └── alertmanager.yml        # Notification routing
-└── README.md                   # This file
-```
+### Alert Rules Configured
 
----
+#### System Health
+- High CPU usage (>80% for 5min)
+- High memory usage (>85% for 5min)
+- Low disk space (<15%)
 
-## 🎯 Metrics Collected
+#### Database
+- PostgreSQL down
+- High connection count (>80)
+- Slow queries (>30s)
 
-### Latency (7 metrics)
-- `rag_latency_p50_milliseconds` - Median latency
-- `rag_latency_p95_milliseconds` - P95 (SLO: <2000ms)
-- `rag_latency_p99_milliseconds` - P99 (SLO: <5000ms)
-- `rag_latency_mean_milliseconds` - Average latency
-- `rag_queries_total` - Total queries
-- `rag_cache_hit_rate` - Cache effectiveness (0-1)
-- `rag_component_latency_milliseconds{component}` - By component
+#### Application
+- High error rate (>5%)
+- Slow API responses (>2s p95)
+- High request rate (>1000 req/sec)
 
-### Cost (8 metrics)
-- `rag_cost_total_usd` - Total cost
-- `rag_cost_per_query_usd` - Average per query
-- `rag_queries_count` - Query count
-- `rag_cost_by_provider_usd{provider}` - OpenAI, Pinecone, Cohere, etc.
-- `rag_budget_daily_usage_percent` - Daily budget %
-- `rag_budget_monthly_usage_percent` - Monthly budget %
+#### Cost Monitoring
+- Daily cost >$200
+- Cost spike (2x normal)
+- Monthly budget >$5000
 
-### Circuit Breakers (30 metrics - 5 per service)
-- `rag_circuit_breaker_state{service}` - 0=CLOSED, 1=HALF_OPEN, 2=OPEN
-- `rag_circuit_breaker_failures_total{service}`
-- `rag_circuit_breaker_successes_total{service}`
-- `rag_circuit_breaker_requests_total{service}`
-- `rag_circuit_breaker_rejected_total{service}`
+#### Agent Performance
+- Success rate <90%
+- High latency (>10s p95)
+- Failure spikes (>10/sec)
 
-Services monitored: `openai`, `pinecone`, `cohere`, `supabase`, `redis`, `google`
+#### Security
+- Suspicious IP activity (>100 req/sec)
+- High auth failure rate (>10/sec)
+- Quota violations (>5/sec)
 
----
+### Alert Channels
 
-## 🚨 Alert Rules (11 Total)
+#### Slack Integration
+1. Create Slack incoming webhook:
+   - Go to https://api.slack.com/apps
+   - Create new app → Incoming Webhooks
+   - Copy webhook URL
 
-### Latency Alerts
-1. **RAGLatencyHigh** - P95 > 2000ms for 5m
-2. **RAGLatencyCritical** - P99 > 5000ms for 2m
-3. **RAGCacheHitRateLow** - Cache < 20% for 10m
+2. Add to `.env`:
+   ```bash
+   SLACK_WEBHOOK_URL=https://hooks.slack.com/services/YOUR/WEBHOOK/URL
+   ```
 
-### Cost Alerts
-4. **RAGDailyBudgetWarning** - Daily > 80% for 5m
-5. **RAGDailyBudgetExceeded** - Daily >= 100% for 1m
-6. **RAGMonthlyBudgetWarning** - Monthly > 80% for 30m
-7. **RAGCostPerQueryHigh** - Per-query > $0.05 for 15m
+3. Create channels:
+   - `#vital-alerts` (default)
+   - `#vital-warnings` (warnings)
+   - `#vital-finance` (cost alerts)
+   - `#vital-security` (security)
+   - `#vital-engineering` (technical)
 
-### Health Alerts
-8. **RAGCircuitBreakerOpen** - Circuit state = OPEN for 1m
-9. **RAGCircuitBreakerHalfOpen** - Circuit testing recovery for 2m
-10. **RAGHighFailureRate** - Failure rate > 10% for 5m
-11. **RAGRequestsRejected** - Service rejecting requests for 2m
-
-### Availability Alerts
-12. **RAGNoQueriesDetected** - No queries for 1h
-13. **CohereRerankingDegraded** - Cohere success < 90% for 10m
+#### PagerDuty Integration
+1. Get service key from PagerDuty
+2. Add to `.env`:
+   ```bash
+   PAGERDUTY_SERVICE_KEY=your-integration-key
+   ```
 
 ---
 
-## 📈 Grafana Dashboard
+## 📈 Dashboards
 
-### Included Panels
+### Executive Dashboard
+**Metrics:**
+- Platform health (uptime, error rate)
+- Active users & sessions
+- Daily/monthly costs
+- Agent performance summary
+- Top alerts & incidents
 
-1. **RAG Latency - P95** (with SLO line at 2000ms)
-2. **Queries Per Minute** (throughput tracking)
-3. **Cache Hit Rate** (stat with thresholds)
-4. **Daily Budget Usage** (stat with 80%/100% thresholds)
-5. **Cost Per Query** (stat with $0.05 threshold)
-6. **Total Cost (Last Hour)** (running cost)
-7. **Circuit Breaker States** (bar gauge for 6 services)
-8. **Component Latency Breakdown** (stacked graph)
-9. **Cost by Provider** (pie chart)
-10. **Service Health** (success vs failure rates)
+### Cost Analytics Dashboard
+**Metrics:**
+- Real-time burn rate
+- Cost by service (OpenAI, embeddings)
+- Cost by agent
+- Budget vs. actual
+- Cost trends & predictions
 
-### Dashboard Features
-- 10-second auto-refresh
-- Last 1 hour time range (adjustable)
-- Color-coded thresholds (green/yellow/red)
-- Built-in alert on P95 latency panel
+### Agent Performance Dashboard
+**Metrics:**
+- Success rate by agent
+- Average latency
+- Error rates & types
+- Token usage
+- Quality scores (RAGAS)
+
+### User Analytics Dashboard
+**Metrics:**
+- Active users (hourly/daily)
+- Session duration
+- Query volume
+- User engagement score
+- Feature usage
 
 ---
 
 ## 🔧 Configuration
 
-### Update Prometheus Target (Production)
+### Adding Custom Metrics
 
-Edit `prometheus/prometheus.yml`:
+1. **Export metrics from your service:**
+```typescript
+// In your Next.js API route
+import client from 'prom-client';
 
+const httpRequestDuration = new client.Histogram({
+  name: 'http_request_duration_seconds',
+  help: 'Duration of HTTP requests in seconds',
+  labelNames: ['method', 'route', 'status'],
+});
+
+// In your handler
+const end = httpRequestDuration.startTimer();
+// ... handle request ...
+end({ method: 'POST', route: '/api/query', status: 200 });
+```
+
+2. **Add scrape config to `prometheus.yml`:**
 ```yaml
 scrape_configs:
-  - job_name: 'vital-path-rag'
+  - job_name: 'my-service'
     static_configs:
-      - targets:
-          # - 'localhost:3000'              # Remove for production
-          - 'your-app.vercel.app'          # Add your production domain
+      - targets: ['host.docker.internal:9091']
 ```
 
-### Configure Notifications
+### Creating Custom Dashboards
 
-Edit `alertmanager/alertmanager.yml`:
+1. Log into Grafana (http://localhost:3001)
+2. Click "+" → "Dashboard"
+3. Add panels with PromQL queries
+4. Save dashboard
+5. Export JSON and save to `grafana/dashboards/`
 
-```yaml
-receivers:
-  - name: 'slack'
-    slack_configs:
-      - api_url: 'https://hooks.slack.com/services/YOUR/WEBHOOK/URL'
-        channel: '#vital-path-alerts'
+### Modifying Alert Rules
 
-  - name: 'email'
-    email_configs:
-      - to: 'ops@your-domain.com'
-        from: 'alertmanager@your-domain.com'
-        smarthost: 'smtp.gmail.com:587'
-        auth_username: 'your-email@gmail.com'
-        auth_password: 'your-app-password'
-```
-
-### Change Grafana Admin Password
-
-```bash
-# Stop Grafana
-docker-compose stop grafana
-
-# Reset password
-docker-compose exec grafana grafana-cli admin reset-admin-password YOUR_NEW_PASSWORD
-
-# Restart
-docker-compose start grafana
-```
+1. Edit `prometheus/alerts.yml`
+2. Reload Prometheus:
+   ```bash
+   docker-compose restart prometheus
+   ```
 
 ---
 
-## 🧪 Testing
+## 🛠️ Maintenance
 
-### Generate Test Metrics
-
-```bash
-# Make RAG queries to generate metrics
-curl -X POST http://localhost:3000/api/rag-query \
-  -H "Content-Type: application/json" \
-  -d '{"query": "What are FDA 510(k) requirements?", "strategy": "hybrid_rerank"}'
-```
-
-### Verify Prometheus Scraping
-
-```bash
-# Check if target is up
-curl -s http://localhost:9090/api/v1/targets | \
-  jq '.data.activeTargets[] | select(.labels.job=="vital-path-rag")'
-
-# Query specific metric
-curl -s 'http://localhost:9090/api/v1/query?query=rag_latency_p95_milliseconds' | \
-  jq '.data.result[0].value'
-```
-
-### Test Alerts
-
-```bash
-# Trigger latency alert (simulate high latency)
-# This is automatic when P95 > 2000ms for 5 minutes
-
-# View active alerts
-curl http://localhost:9090/api/v1/alerts | jq '.data.alerts'
-
-# View Alertmanager alerts
-curl http://localhost:9093/api/v2/alerts | jq '.'
-```
-
----
-
-## 📊 Common Queries
-
-### Grafana/Prometheus Queries
-
-```promql
-# Latency over time
-rag_latency_p95_milliseconds
-
-# Queries per second
-rate(rag_queries_total[1m])
-
-# Total cost last 24h
-increase(rag_cost_total_usd[24h])
-
-# Cost per query trend
-rate(rag_cost_total_usd[5m]) / rate(rag_queries_count[5m])
-
-# Cache effectiveness
-avg_over_time(rag_cache_hit_rate[1h]) * 100
-
-# Circuit breaker health
-rag_circuit_breaker_state{service="cohere"}
-
-# Failure rate by service
-rate(rag_circuit_breaker_failures_total[5m]) /
-rate(rag_circuit_breaker_requests_total[5m])
-
-# Budget status
-rag_budget_daily_usage_percent
-```
-
----
-
-## 🐛 Troubleshooting
-
-### Prometheus Not Scraping
-
-**Symptom**: No metrics in Grafana
-
-**Check**:
-```bash
-# Verify app is running
-curl http://localhost:3000/api/metrics?format=prometheus
-
-# Check Prometheus targets
-docker-compose logs prometheus | grep "vital-path-rag"
-
-# Verify network connectivity
-docker-compose exec prometheus wget -O- http://host.docker.internal:3000/api/metrics
-```
-
-**Fix**: Update `prometheus.yml` target to `host.docker.internal:3000` on Mac/Windows
-
-### Grafana Dashboard Not Loading
-
-**Check**:
-```bash
-# Verify datasource
-curl http://localhost:3001/api/datasources | jq '.[] | {name, type, url}'
-
-# Check dashboard provisioning
-docker-compose logs grafana | grep "dashboard"
-```
-
-**Fix**: Restart Grafana
-```bash
-docker-compose restart grafana
-```
-
-### No Alerts Firing
-
-**Check**:
-```bash
-# Verify alert rules loaded
-curl http://localhost:9090/api/v1/rules | jq '.data.groups[].name'
-
-# Check alert evaluation
-docker-compose logs prometheus | grep "Evaluating rule"
-```
-
-**Fix**: Ensure metrics have data and thresholds are met
-
-### High Memory Usage
-
-**Symptom**: Prometheus using > 2GB RAM
-
-**Fix**: Reduce retention time in `prometheus.yml`:
-```yaml
-command:
-  - '--storage.tsdb.retention.time=30d'  # Reduce from 90d
-  - '--storage.tsdb.retention.size=20GB' # Reduce from 50GB
-```
-
----
-
-## 🔐 Security
-
-### Production Checklist
-
-- [ ] Change Grafana admin password
-- [ ] Enable Grafana HTTPS
-- [ ] Configure Prometheus authentication
-- [ ] Restrict Alertmanager access
-- [ ] Use secrets for notification credentials
-- [ ] Enable audit logging
-- [ ] Set up backup for volumes
-
-### Secure Alertmanager Credentials
-
-Create `.env` file:
-```bash
-SLACK_WEBHOOK_URL=https://hooks.slack.com/services/YOUR/WEBHOOK/URL
-SMTP_PASSWORD=your-smtp-password
-PAGERDUTY_KEY=your-pagerduty-key
-```
-
-Update `docker-compose.yml`:
-```yaml
-alertmanager:
-  env_file:
-    - .env
-```
-
----
-
-## 📦 Backup & Restore
-
-### Backup Prometheus Data
-
-```bash
-# Stop Prometheus
-docker-compose stop prometheus
-
-# Backup volume
-docker run --rm -v monitoring_prometheus-data:/data -v $(pwd):/backup \
-  alpine tar czf /backup/prometheus-backup-$(date +%Y%m%d).tar.gz -C /data .
-
-# Restart
-docker-compose start prometheus
-```
-
-### Restore Prometheus Data
-
-```bash
-# Stop Prometheus
-docker-compose stop prometheus
-
-# Restore volume
-docker run --rm -v monitoring_prometheus-data:/data -v $(pwd):/backup \
-  alpine sh -c "cd /data && tar xzf /backup/prometheus-backup-YYYYMMDD.tar.gz"
-
-# Restart
-docker-compose start prometheus
-```
-
----
-
-## 📚 Resources
-
-### Documentation
-- [Prometheus Docs](https://prometheus.io/docs/)
-- [Grafana Docs](https://grafana.com/docs/)
-- [Alertmanager Guide](https://prometheus.io/docs/alerting/latest/alertmanager/)
-
-### Related Files
-- [Phase 1 Monitoring](../PHASE1_RAG_MONITORING_IMPLEMENTATION_COMPLETE.md)
-- [Prometheus Integration](../PROMETHEUS_PHASE1_RAG_METRICS_COMPLETE.md)
-- [Quick Reference](../QUICK_MONITORING_REFERENCE.md)
-
----
-
-## 🆘 Support
-
-### Logs
-
+### View Logs
 ```bash
 # All services
 docker-compose logs -f
@@ -440,28 +328,118 @@ docker-compose logs -f alertmanager
 ```
 
 ### Restart Services
-
 ```bash
-# Restart all
+# All
 docker-compose restart
 
-# Restart specific service
-docker-compose restart prometheus
+# Specific
+docker-compose restart grafana
 ```
 
-### Stop Monitoring
-
+### Update Services
 ```bash
-# Stop but keep data
-docker-compose stop
+docker-compose pull
+docker-compose up -d
+```
 
-# Stop and remove containers (keeps volumes)
-docker-compose down
+### Backup Data
+```bash
+# Backup Grafana dashboards
+docker-compose exec grafana grafana-cli admin export-dashboard
 
-# Remove everything including data
-docker-compose down -v
+# Backup Prometheus data
+docker cp vital-prometheus:/prometheus ./prometheus-backup
 ```
 
 ---
 
-**Setup Complete!** Your monitoring stack is ready for production use. 🚀
+## 📊 Performance Metrics
+
+### Resource Requirements
+- **Prometheus:** 512MB RAM, 10GB disk
+- **Grafana:** 256MB RAM, 1GB disk
+- **Alertmanager:** 128MB RAM, 500MB disk
+- **LangFuse:** 512MB RAM, 5GB disk (database)
+
+**Total:** ~1.5GB RAM, ~17GB disk
+
+### Data Retention
+- **Prometheus:** 30 days (configurable)
+- **Grafana:** Unlimited (dashboards)
+- **LangFuse:** 90 days (traces)
+
+---
+
+## 🐛 Troubleshooting
+
+### Prometheus Not Scraping Targets
+```bash
+# Check targets
+curl http://localhost:9090/api/v1/targets
+
+# Verify connectivity
+docker-compose exec prometheus wget -O- http://host.docker.internal:9091/metrics
+```
+
+### Grafana Can't Connect to Prometheus
+```bash
+# Check network
+docker-compose exec grafana ping prometheus
+
+# Verify datasource
+curl http://localhost:3001/api/datasources
+```
+
+### Alerts Not Firing
+```bash
+# Check alert rules
+curl http://localhost:9090/api/v1/rules
+
+# Check Alertmanager status
+curl http://localhost:9093/api/v1/status
+```
+
+### LangFuse Not Starting
+```bash
+# Check logs
+docker-compose logs langfuse-server
+
+# Verify database connection
+docker-compose exec langfuse-db psql -U postgres -d langfuse -c "\dt"
+```
+
+---
+
+## 📚 Additional Resources
+
+- **Prometheus Documentation:** https://prometheus.io/docs/
+- **Grafana Documentation:** https://grafana.com/docs/
+- **LangFuse Documentation:** https://langfuse.com/docs/
+- **PromQL Tutorial:** https://prometheus.io/docs/prometheus/latest/querying/basics/
+
+---
+
+## 🎯 Next Steps
+
+1. **Deploy the stack:** `./deploy.sh`
+2. **Explore Grafana dashboards**
+3. **Configure Slack alerts**
+4. **Set up PagerDuty** (optional)
+5. **Integrate LangFuse** into your LLM calls
+6. **Create custom dashboards** for your use cases
+
+---
+
+## 🤝 Support
+
+For issues or questions:
+1. Check logs: `docker-compose logs [service]`
+2. Review troubleshooting section above
+3. Check service health endpoints
+4. Verify environment variables in `.env`
+
+---
+
+**Status:** ✅ Ready for Production
+**Phase:** C - Real-Time Monitoring Stack
+**Version:** 1.0.0

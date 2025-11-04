@@ -11,7 +11,7 @@ const { tenantMiddleware } = require('./middleware/tenant');
 require('dotenv').config();
 
 const app = express();
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 4000;
 
 // ============================================================================
 // CONFIGURATION

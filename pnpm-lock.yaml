@@ -905,6 +905,12 @@ importers:
       langchain:
         specifier: ^0.3.35
         version: 0.3.36(@langchain/anthropic@0.3.33)(@langchain/core@0.3.78)(@opentelemetry/api@1.9.0)(@opentelemetry/sdk-trace-base@2.1.0)(axios@1.12.2)(openai@4.104.0)(ws@8.18.3)
+      langfuse:
+        specifier: ^3.38.6
+        version: 3.38.6
+      langfuse-langchain:
+        specifier: ^3.38.6
+        version: 3.38.6(langchain@0.3.36)
       lucide-react:
         specifier: ^0.294.0
         version: 0.294.0(react@19.2.0)
@@ -14320,7 +14326,7 @@ packages:
     resolution: {integrity: sha512-qZAvkv1K3QbmHHFYSNRYPkRjOWRLBYrL4B9c+wG0GSVGBw0NtJwPcgx/DSddeDJvRGMHCEQ4VMEVfuJ/0gZ3XQ==}
     requiresBuild: true
     dependencies:
-      '@types/pg': 8.6.1
+      '@types/pg': 8.15.5
     dev: false
     optional: true
 
@@ -21609,6 +21615,31 @@ packages:
       - '@opentelemetry/sdk-trace-base'
       - openai
       - ws
+    dev: false
+
+  /langfuse-core@3.38.6:
+    resolution: {integrity: sha512-EcZXa+DK9FJdi1I30+u19eKjuBJ04du6j2Nybk19KKCuraLczg/ppkTQcGvc4QOk//OAi3qUHrajUuV74RXsBQ==}
+    engines: {node: '>=18'}
+    dependencies:
+      mustache: 4.2.0
+    dev: false
+
+  /langfuse-langchain@3.38.6(langchain@0.3.36):
+    resolution: {integrity: sha512-XY7M1R/G7bzihm1cCT1CXKlTLfjHfTiWCPOVm/Ko039Cr3Nz945+HOynqUngjhQUdqH0gAwDsFUZookosARJSw==}
+    engines: {node: '>=18'}
+    peerDependencies:
+      langchain: '>=0.0.157 <0.4.0'
+    dependencies:
+      langchain: 0.3.36(@langchain/anthropic@0.3.33)(@langchain/core@0.3.78)(@opentelemetry/api@1.9.0)(@opentelemetry/sdk-trace-base@2.1.0)(axios@1.12.2)(openai@4.104.0)(ws@8.18.3)
+      langfuse: 3.38.6
+      langfuse-core: 3.38.6
+    dev: false
+
+  /langfuse@3.38.6:
+    resolution: {integrity: sha512-mtwfsNGIYvObRh+NYNGlJQJDiBN+Wr3Hnr++wN25mxuOpSTdXX+JQqVCyAqGL5GD2TAXRZ7COsN42Vmp9krYmg==}
+    engines: {node: '>=18'}
+    dependencies:
+      langfuse-core: 3.38.6
     dev: false
 
   /langium@3.3.1:

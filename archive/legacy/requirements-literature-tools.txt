@@ -1,0 +1,13 @@
+# LangChain dependencies for literature search tools
+langchain==0.3.7
+langchain-community==0.3.5
+langchain-openai==0.2.5
+requests==2.32.3
+aiohttp==3.11.7
+urllib3==2.2.3
+python-dotenv==1.0.1
+
+# Optional: For specific tools
+beautifulsoup4==4.12.3  # For HTML parsing (TRIP Database)
+lxml==5.3.0  # XML/HTML parser
+

@@ -1262,48 +1262,48 @@ function DomainDetailsDialog({
           )}
         </div>
 
-          {/* Keywords - Editable */}
-          {isEditing && (
-            <div>
-              <Label htmlFor="keywords">Keywords (comma-separated)</Label>
+        {/* Keywords - Editable */}
+        {isEditing && (
+          <div>
+            <Label htmlFor="keywords">Keywords (comma-separated)</Label>
+            <Input
+              id="keywords"
+              value={formData.keywords}
+              onChange={(e) => setFormData({ ...formData, keywords: e.target.value })}
+              placeholder="e.g., fda, ema, regulatory"
+            />
+          </div>
+        )}
+
+        {/* Color - Editable */}
+        <div>
+          <Label htmlFor="color">Color</Label>
+          {isEditing ? (
+            <div className="flex items-center gap-2">
               <Input
-                id="keywords"
-                value={formData.keywords}
-                onChange={(e) => setFormData({ ...formData, keywords: e.target.value })}
-                placeholder="e.g., fda, ema, regulatory"
+                id="color"
+                type="color"
+                value={formData.color}
+                onChange={(e) => setFormData({ ...formData, color: e.target.value })}
+                className="w-20 h-10"
+              />
+              <Input
+                value={formData.color}
+                onChange={(e) => setFormData({ ...formData, color: e.target.value })}
+                className="flex-1"
               />
             </div>
+          ) : (
+            <div className="flex items-center gap-2">
+              <span
+                className="w-8 h-8 rounded"
+                style={{ backgroundColor: domain.color }}
+              />
+              <span className="text-sm">{domain.color}</span>
+            </div>
           )}
-
-          {/* Color - Editable */}
-          <div>
-            <Label htmlFor="color">Color</Label>
-            {isEditing ? (
-              <div className="flex items-center gap-2">
-                <Input
-                  id="color"
-                  type="color"
-                  value={formData.color}
-                  onChange={(e) => setFormData({ ...formData, color: e.target.value })}
-                  className="w-20 h-10"
-                />
-                <Input
-                  value={formData.color}
-                  onChange={(e) => setFormData({ ...formData, color: e.target.value })}
-                  className="flex-1"
-                />
-              </div>
-            ) : (
-              <div className="flex items-center gap-2">
-                <span
-                  className="w-8 h-8 rounded"
-                  style={{ backgroundColor: domain.color }}
-                />
-                <span className="text-sm">{domain.color}</span>
-              </div>
-            )}
-          </div>
-        </form>
+        </div>
+      </form>
 
         <DialogFooter>
           {isEditing ? (

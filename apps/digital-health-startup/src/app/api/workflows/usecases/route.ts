@@ -26,9 +26,16 @@ export async function GET() {
     console.log(`✅ Fetched ${useCases?.length || 0} use cases`);
 
     // Add domain field extracted from code (UC_CD_001 -> CD, UC_MA_001 -> MA)
+    // Map summary to description for frontend compatibility
+    // Extract metadata fields to top level for easier frontend access
     const useCasesWithDomain = useCases?.map(uc => ({
       ...uc,
-      domain: uc.code?.split('_')[1] || 'UNKNOWN' // Extract CD, MA, RA, etc. from UC_CD_001
+      domain: uc.code?.split('_')[1] || 'UNKNOWN', // Extract CD, MA, RA, etc. from UC_CD_001
+      description: uc.summary || uc.title || '', // Map summary to description
+      estimated_duration_minutes: uc.metadata?.estimated_duration_minutes || uc.metadata?.estimated_duration || 60,
+      deliverables: uc.metadata?.deliverables || [],
+      prerequisites: uc.metadata?.prerequisites || [],
+      success_metrics: uc.metadata?.success_metrics || {},
     })) || [];
 
     console.log('✅ Added domain field to use cases:', useCasesWithDomain.slice(0, 2));

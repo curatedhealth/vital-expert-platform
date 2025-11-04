@@ -35,10 +35,15 @@ export async function GET(
 
     console.log(`✅ Fetched use case: ${useCase.code}`);
 
-    // Add domain field extracted from code
+    // Add domain field extracted from code and map summary to description
     const useCaseWithDomain = {
       ...useCase,
-      domain: useCase.code?.split('_')[1] || 'UNKNOWN'
+      domain: useCase.code?.split('_')[1] || 'UNKNOWN',
+      description: useCase.summary || useCase.title || '',
+      estimated_duration_minutes: useCase.metadata?.estimated_duration_minutes || useCase.metadata?.estimated_duration || 60,
+      deliverables: useCase.metadata?.deliverables || [],
+      prerequisites: useCase.metadata?.prerequisites || [],
+      success_metrics: useCase.metadata?.success_metrics || {},
     };
 
     // Fetch workflows for this use case

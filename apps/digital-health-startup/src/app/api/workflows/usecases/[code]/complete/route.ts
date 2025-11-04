@@ -31,6 +31,17 @@ export async function GET(
       );
     }
 
+    // Map summary to description and extract metadata for frontend
+    const useCaseFormatted = {
+      ...useCase,
+      domain: useCase.code?.split('_')[1] || 'UNKNOWN',
+      description: useCase.summary || useCase.title || '',
+      estimated_duration_minutes: useCase.metadata?.estimated_duration_minutes || useCase.metadata?.estimated_duration || 60,
+      deliverables: useCase.metadata?.deliverables || [],
+      prerequisites: useCase.metadata?.prerequisites || [],
+      success_metrics: useCase.metadata?.success_metrics || {},
+    };
+
     // Step 2: Fetch all workflows for this use case
     const { data: workflows, error: workflowsError } = await supabase
       .from('dh_workflow')
@@ -45,7 +56,7 @@ export async function GET(
     if (workflowIds.length === 0) {
       return NextResponse.json({
         success: true,
-        data: { useCase, workflows: [], tasksByWorkflow: {} },
+        data: { useCase: useCaseFormatted, workflows: [], tasksByWorkflow: {} },
         timestamp: new Date().toISOString(),
       });
     }
@@ -156,7 +167,7 @@ export async function GET(
     return NextResponse.json({
       success: true,
       data: {
-        useCase,
+        useCase: useCaseFormatted,
         workflows: workflows || [],
         tasksByWorkflow,
       },

@@ -28,6 +28,9 @@ yarn-error.log*
 .env*.local
 .env
 !.env.example
+.env-configs/
+!.env-configs/README.md
+!.env-configs/restore-env-files.sh
 
 # vercel
 .vercel

@@ -4,7 +4,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/db/supabase/server';
+import { createClient } from '@/lib/supabase/server';
 import { langGraphCodeGenerator } from '@/features/workflow-designer/generators/langgraph/LangGraphCodeGenerator';
 
 // Python AI Engine URL (from environment or default)

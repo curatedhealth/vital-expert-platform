@@ -1,0 +1,88 @@
+# ===================================================================
+# VITAL Path Clinical Prompt Library - Phase 2 Enhanced
+# Multi-stage Dockerfile for production deployment
+# ===================================================================
+
+# Build stage
+FROM python:3.11-slim as builder
+
+LABEL maintainer="VITAL Path Team"
+LABEL version="2.0"
+LABEL description="Clinical Prompt Library - Phase 2 Enhanced"
+
+# Set environment variables
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PIP_NO_CACHE_DIR=1
+ENV PIP_DISABLE_PIP_VERSION_CHECK=1
+
+# Install system dependencies including NLP requirements
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    curl \
+    git \
+    libpq-dev \
+    pkg-config \
+    gcc \
+    g++ \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create application directory
+WORKDIR /app
+
+# Copy requirements
+COPY requirements-prompt-library.txt requirements.txt
+
+# Install Python dependencies
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Download NLTK data
+RUN python -c "import nltk; nltk.download('punkt'); nltk.download('stopwords'); nltk.download('wordnet')"
+
+# Production stage
+FROM python:3.11-slim as production
+
+# Set environment variables
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV ENVIRONMENT=production
+
+# Install runtime dependencies
+RUN apt-get update && apt-get install -y \
+    curl \
+    libpq-dev \
+    && rm -rf /var/lib/apt/lists/* \
+    && groupadd -r appuser && useradd -r -g appuser appuser
+
+# Create application directory
+WORKDIR /app
+
+# Copy Python dependencies from builder
+COPY --from=builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
+COPY --from=builder /usr/local/bin /usr/local/bin
+COPY --from=builder /root/nltk_data /home/appuser/nltk_data
+
+# Copy application code
+COPY src/prompts/clinical_prompt_library.py ./
+COPY src/prompts/__init__.py ./
+COPY src/shared/ ./shared/
+COPY config/ ./config/
+
+# Create necessary directories
+RUN mkdir -p /app/logs /app/data /app/models /app/templates
+
+# Set ownership
+RUN chown -R appuser:appuser /app /home/appuser/nltk_data
+
+# Switch to non-root user
+USER appuser
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD curl -f http://localhost:8002/health || exit 1
+
+# Expose port
+EXPOSE 8002
+
+# Start command
+CMD ["python", "-m", "uvicorn", "clinical_prompt_library:app", "--host", "0.0.0.0", "--port", "8002", "--workers", "2"]

@@ -26,6 +26,7 @@ import {
   BookOpen,
   Sparkles,
   Hammer,
+  ShieldCheck,
 } from 'lucide-react'
 import { useAuth } from '@/lib/auth/supabase-auth-context'
 import { usePathname } from 'next/navigation'
@@ -42,6 +43,7 @@ const topNavRoutes = [
   { label: 'Tools', href: '/tools', icon: Hammer, color: 'text-gray-600' },
   { label: 'Knowledge', href: '/knowledge', icon: BookOpen, color: 'text-teal-600' },
   { label: 'Prompt Prism', href: '/prism', icon: Sparkles, color: 'text-pink-600' },
+  { label: 'Admin', href: '/admin', icon: ShieldCheck, color: 'text-red-600' },
 ];
 
 function DashboardHeader() {

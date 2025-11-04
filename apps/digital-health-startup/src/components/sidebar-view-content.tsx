@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link"
+import { useRouter, useSearchParams } from "next/navigation"
 import { useEffect, useState } from "react"
 import {
   Activity,
@@ -8,26 +9,33 @@ import {
   BarChart,
   BookOpen,
   Bot,
+  Building2,
   CheckCircle2,
   Clock,
   Cloud,
+  DollarSign,
   FileText,
   FolderOpen,
   History,
   Layers,
   LineChart,
+  MessageSquare,
   Pen,
   Puzzle,
   SearchIcon,
+  Server,
   Settings,
+  Shield,
   ShieldCheck,
   Star,
   Target,
   TrendingUp,
   Upload,
+  User,
   Users,
   Wand2,
   Workflow,
+  Zap,
 } from "lucide-react"
 
 import { SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar"
@@ -591,6 +599,136 @@ export function SidebarPromptPrismContent() {
               <SidebarMenuButton>
                 <Settings className="h-4 w-4" />
                 <span>Prompt Settings</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarGroupContent>
+      </SidebarGroup>
+    </>
+  )
+}
+
+export function SidebarAdminContent() {
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const currentView = searchParams.get('view') || 'agent-analytics'
+
+  const handleNavigation = (view: string) => {
+    router.push(`/admin?view=${view}`)
+  }
+
+  const isActive = (view: string) => currentView === view
+
+  return (
+    <>
+      <SidebarGroup>
+        <SidebarGroupLabel>Analytics & Monitoring</SidebarGroupLabel>
+        <SidebarGroupContent>
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton 
+                onClick={() => handleNavigation('agent-analytics')}
+                isActive={isActive('agent-analytics')}
+              >
+                <Activity className="h-4 w-4" />
+                <span>Agent Analytics</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton 
+                onClick={() => handleNavigation('feedback-analytics')}
+                isActive={isActive('feedback-analytics')}
+              >
+                <MessageSquare className="h-4 w-4" />
+                <span>Feedback Analytics</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton 
+                onClick={() => handleNavigation('usage-analytics')}
+                isActive={isActive('usage-analytics')}
+              >
+                <TrendingUp className="h-4 w-4" />
+                <span>Usage Analytics</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton 
+                onClick={() => handleNavigation('llm-cost-tracking')}
+                isActive={isActive('llm-cost-tracking')}
+              >
+                <DollarSign className="h-4 w-4" />
+                <span>LLM Cost Tracking</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton 
+                onClick={() => handleNavigation('system-monitoring')}
+                isActive={isActive('system-monitoring')}
+              >
+                <Zap className="h-4 w-4" />
+                <span>System Monitoring</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarGroupContent>
+      </SidebarGroup>
+
+      <SidebarGroup>
+        <SidebarGroupLabel>LLM Management</SidebarGroupLabel>
+        <SidebarGroupContent>
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton 
+                onClick={() => handleNavigation('llm-providers')}
+                isActive={isActive('llm-providers')}
+              >
+                <Server className="h-4 w-4" />
+                <span>LLM Providers</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarGroupContent>
+      </SidebarGroup>
+
+      <SidebarGroup>
+        <SidebarGroupLabel>Organization Management</SidebarGroupLabel>
+        <SidebarGroupContent>
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton 
+                onClick={() => handleNavigation('organizations')}
+                isActive={isActive('organizations')}
+              >
+                <Building2 className="h-4 w-4" />
+                <span>Organizations</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton 
+                onClick={() => handleNavigation('functions')}
+                isActive={isActive('functions')}
+              >
+                <Layers className="h-4 w-4" />
+                <span>Functions</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton 
+                onClick={() => handleNavigation('roles')}
+                isActive={isActive('roles')}
+              >
+                <Shield className="h-4 w-4" />
+                <span>Roles</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton 
+                onClick={() => handleNavigation('personas')}
+                isActive={isActive('personas')}
+              >
+                <User className="h-4 w-4" />
+                <span>Personas</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
           </SidebarMenu>

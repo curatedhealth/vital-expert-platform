@@ -1,0 +1,545 @@
+# ============================================================================
+# Production Monitoring Configuration
+#
+# Monitoring setup for:
+# - Performance metrics (Prometheus)
+# - Alerting (PagerDuty, Slack)
+# - Logging (DataDog, CloudWatch)
+# - APM (Application Performance Monitoring)
+#
+# Created: 2025-10-24
+# Phase: 3 Week 5 - Testing & Optimization
+# ============================================================================
+
+# ----------------------------------------------------------------------------
+# PROMETHEUS METRICS
+# ----------------------------------------------------------------------------
+prometheus:
+  enabled: true
+  port: 9090
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+  # Metric exporters
+  exporters:
+    # Node exporter for system metrics
+    - name: node_exporter
+      enabled: true
+      port: 9100
+      metrics:
+        - cpu_usage
+        - memory_usage
+        - disk_io
+        - network_io
+
+    # PostgreSQL exporter
+    - name: postgres_exporter
+      enabled: true
+      port: 9187
+      database_url: ${DATABASE_URL}
+      metrics:
+        - pg_stat_database
+        - pg_stat_user_tables
+        - pg_stat_user_indexes
+        - pg_statio_user_tables
+
+    # Redis exporter
+    - name: redis_exporter
+      enabled: true
+      port: 9121
+      redis_url: ${REDIS_URL}
+      metrics:
+        - redis_connected_clients
+        - redis_used_memory
+        - redis_keyspace_hits
+        - redis_keyspace_misses
+
+  # Custom application metrics
+  custom_metrics:
+    # Search performance
+    - name: hybrid_search_latency_seconds
+      type: histogram
+      description: "Hybrid search request latency in seconds"
+      buckets: [0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.5, 1.0, 2.0]
+      labels:
+        - cache_hit
+        - tier
+        - has_filters
+
+    - name: hybrid_search_requests_total
+      type: counter
+      description: "Total number of search requests"
+      labels:
+        - status  # success, error
+        - cache_hit
+        - experiment_variant
+
+    - name: hybrid_search_results_count
+      type: histogram
+      description: "Number of results returned"
+      buckets: [0, 1, 3, 5, 10, 15, 20, 50]
+
+    # Cache metrics
+    - name: cache_hit_rate
+      type: gauge
+      description: "Cache hit rate percentage"
+      labels:
+        - cache_type  # query, embedding
+
+    - name: cache_operations_total
+      type: counter
+      description: "Total cache operations"
+      labels:
+        - operation  # get, set, delete, clear
+        - result  # hit, miss, error
+
+    # Database metrics
+    - name: database_query_duration_seconds
+      type: histogram
+      description: "Database query duration in seconds"
+      buckets: [0.01, 0.05, 0.1, 0.25, 0.5, 1.0, 2.5, 5.0]
+      labels:
+        - query_type  # search, similar, health
+
+    - name: database_connections_active
+      type: gauge
+      description: "Number of active database connections"
+
+    # OpenAI API metrics
+    - name: openai_api_latency_seconds
+      type: histogram
+      description: "OpenAI API request latency in seconds"
+      buckets: [0.1, 0.2, 0.5, 1.0, 2.0, 5.0]
+      labels:
+        - model  # text-embedding-3-large
+
+    - name: openai_api_requests_total
+      type: counter
+      description: "Total OpenAI API requests"
+      labels:
+        - status  # success, error, rate_limited
+
+    # A/B testing metrics
+    - name: ab_test_assignments_total
+      type: counter
+      description: "Total A/B test variant assignments"
+      labels:
+        - experiment_id
+        - variant_name
+
+    - name: ab_test_conversions_total
+      type: counter
+      description: "Total A/B test conversions"
+      labels:
+        - experiment_id
+        - variant_name
+        - event_type
+
+# ----------------------------------------------------------------------------
+# ALERTING RULES
+# ----------------------------------------------------------------------------
+alerting:
+  enabled: true
+
+  # Alert routing
+  routes:
+    - name: critical
+      receiver: pagerduty
+      group_wait: 10s
+      group_interval: 5m
+      repeat_interval: 4h
+      matchers:
+        - severity = "critical"
+
+    - name: warning
+      receiver: slack
+      group_wait: 30s
+      group_interval: 15m
+      repeat_interval: 12h
+      matchers:
+        - severity = "warning"
+
+  # Alert receivers
+  receivers:
+    - name: pagerduty
+      type: pagerduty
+      config:
+        service_key: ${PAGERDUTY_SERVICE_KEY}
+        description: "{{ .GroupLabels.alertname }}"
+
+    - name: slack
+      type: slack
+      config:
+        webhook_url: ${SLACK_WEBHOOK_URL}
+        channel: "#vital-alerts"
+        username: "VITAL Monitoring"
+        icon_emoji: ":warning:"
+        title: "Alert: {{ .GroupLabels.alertname }}"
+
+  # Alert rules
+  rules:
+    # Performance alerts
+    - name: HighSearchLatencyP90
+      severity: warning
+      condition: hybrid_search_latency_seconds{quantile="0.9"} > 0.3
+      for: 5m
+      description: "P90 search latency above 300ms"
+      summary: "Search performance degraded"
+      runbook_url: "https://docs.vital.com/runbooks/high-latency"
+
+    - name: HighSearchLatencyP99
+      severity: critical
+      condition: hybrid_search_latency_seconds{quantile="0.99"} > 0.5
+      for: 5m
+      description: "P99 search latency above 500ms"
+      summary: "Search performance critical"
+      runbook_url: "https://docs.vital.com/runbooks/high-latency"
+
+    # Error rate alerts
+    - name: HighErrorRate
+      severity: critical
+      condition: rate(hybrid_search_requests_total{status="error"}[5m]) > 0.05
+      for: 2m
+      description: "Error rate above 5%"
+      summary: "High error rate detected"
+      runbook_url: "https://docs.vital.com/runbooks/high-errors"
+
+    # Cache alerts
+    - name: LowCacheHitRate
+      severity: warning
+      condition: cache_hit_rate < 0.4
+      for: 10m
+      description: "Cache hit rate below 40%"
+      summary: "Cache performance degraded"
+      runbook_url: "https://docs.vital.com/runbooks/low-cache-hit"
+
+    # Database alerts
+    - name: HighDatabaseLatency
+      severity: warning
+      condition: database_query_duration_seconds{quantile="0.9"} > 0.1
+      for: 5m
+      description: "Database P90 latency above 100ms"
+      summary: "Database performance degraded"
+
+    - name: DatabaseConnectionPoolExhausted
+      severity: critical
+      condition: database_connections_active > 18
+      for: 2m
+      description: "Database connection pool near limit (20)"
+      summary: "Database connection pool exhausted"
+
+    # OpenAI API alerts
+    - name: OpenAIRateLimited
+      severity: warning
+      condition: rate(openai_api_requests_total{status="rate_limited"}[5m]) > 0.1
+      for: 5m
+      description: "OpenAI API rate limiting detected"
+      summary: "Consider increasing rate limits or implementing backoff"
+
+    - name: HighOpenAILatency
+      severity: warning
+      condition: openai_api_latency_seconds{quantile="0.9"} > 2.0
+      for: 5m
+      description: "OpenAI API P90 latency above 2s"
+      summary: "OpenAI API performance degraded"
+
+    # System health alerts
+    - name: ServiceDown
+      severity: critical
+      condition: up == 0
+      for: 1m
+      description: "Service is down"
+      summary: "{{ $labels.job }} is unreachable"
+
+    - name: HighCPUUsage
+      severity: warning
+      condition: 100 - (avg by(instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
+      for: 10m
+      description: "CPU usage above 80%"
+      summary: "High CPU usage on {{ $labels.instance }}"
+
+    - name: HighMemoryUsage
+      severity: warning
+      condition: (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100 > 85
+      for: 10m
+      description: "Memory usage above 85%"
+      summary: "High memory usage on {{ $labels.instance }}"
+
+# ----------------------------------------------------------------------------
+# LOGGING CONFIGURATION
+# ----------------------------------------------------------------------------
+logging:
+  # Log level
+  level: INFO  # DEBUG, INFO, WARNING, ERROR, CRITICAL
+
+  # Log format
+  format: json  # json or text
+
+  # Log outputs
+  outputs:
+    - type: stdout
+      enabled: true
+
+    - type: file
+      enabled: true
+      path: /var/log/vital/api.log
+      max_size_mb: 100
+      max_age_days: 30
+      compress: true
+
+    - type: datadog
+      enabled: ${DATADOG_ENABLED:-false}
+      api_key: ${DATADOG_API_KEY}
+      site: ${DATADOG_SITE:-datadoghq.com}
+      service: vital-python-api
+      env: ${ENVIRONMENT:-development}
+      version: ${APP_VERSION:-1.0.0}
+
+    - type: cloudwatch
+      enabled: ${CLOUDWATCH_ENABLED:-false}
+      region: ${AWS_REGION:-us-east-1}
+      log_group: /vital/python-api
+      log_stream: ${HOSTNAME}
+
+  # Structured logging fields
+  default_fields:
+    service: vital-python-api
+    environment: ${ENVIRONMENT:-development}
+    version: ${APP_VERSION:-1.0.0}
+    host: ${HOSTNAME}
+
+  # Log sampling (reduce volume in production)
+  sampling:
+    enabled: true
+    rate: 0.1  # Log 10% of debug messages
+    except:
+      - ERROR
+      - CRITICAL
+
+# ----------------------------------------------------------------------------
+# APM (APPLICATION PERFORMANCE MONITORING)
+# ----------------------------------------------------------------------------
+apm:
+  # DataDog APM
+  datadog:
+    enabled: ${DATADOG_ENABLED:-false}
+    env: ${ENVIRONMENT:-development}
+    service: vital-python-api
+    version: ${APP_VERSION:-1.0.0}
+
+    # Trace sampling
+    sampling_rate: 1.0  # 100% in staging, lower in production
+
+    # Instrumentation
+    auto_instrument:
+      - fastapi
+      - asyncpg
+      - redis
+      - openai
+      - httpx
+
+    # Custom traces
+    custom_spans:
+      - hybrid_search
+      - cache_operations
+      - database_queries
+      - openai_embeddings
+
+  # OpenTelemetry (alternative to DataDog)
+  opentelemetry:
+    enabled: false
+    endpoint: ${OTEL_EXPORTER_OTLP_ENDPOINT}
+    service_name: vital-python-api
+
+# ----------------------------------------------------------------------------
+# DASHBOARDS
+# ----------------------------------------------------------------------------
+dashboards:
+  # Grafana dashboards
+  grafana:
+    enabled: true
+    url: ${GRAFANA_URL}
+    api_key: ${GRAFANA_API_KEY}
+
+    # Dashboard templates
+    templates:
+      - name: Hybrid Search Performance
+        file: ./dashboards/hybrid_search_performance.json
+        folder: VITAL Platform
+
+      - name: System Health
+        file: ./dashboards/system_health.json
+        folder: VITAL Platform
+
+      - name: A/B Testing Analytics
+        file: ./dashboards/ab_testing_analytics.json
+        folder: VITAL Platform
+
+  # DataDog dashboards
+  datadog_dashboards:
+    enabled: ${DATADOG_ENABLED:-false}
+
+    templates:
+      - name: API Performance
+        template_id: dashboard-api-performance
+
+      - name: Database Performance
+        template_id: dashboard-db-performance
+
+# ----------------------------------------------------------------------------
+# HEALTH CHECKS
+# ----------------------------------------------------------------------------
+health_checks:
+  # Liveness probe (is the service running?)
+  liveness:
+    enabled: true
+    endpoint: /api/health
+    interval_seconds: 30
+    timeout_seconds: 5
+    failure_threshold: 3
+
+  # Readiness probe (is the service ready to accept traffic?)
+  readiness:
+    enabled: true
+    endpoint: /api/health
+    interval_seconds: 10
+    timeout_seconds: 3
+    failure_threshold: 1
+
+    # Dependencies to check
+    checks:
+      - name: database
+        type: postgresql
+        connection: ${DATABASE_URL}
+        timeout_seconds: 2
+
+      - name: redis
+        type: redis
+        connection: ${REDIS_URL}
+        timeout_seconds: 2
+
+      - name: openai
+        type: http
+        url: https://api.openai.com/v1/models
+        headers:
+          Authorization: "Bearer ${OPENAI_API_KEY}"
+        timeout_seconds: 5
+
+  # Startup probe (has the service started successfully?)
+  startup:
+    enabled: true
+    endpoint: /api/health
+    interval_seconds: 10
+    timeout_seconds: 3
+    failure_threshold: 30  # Give 5 minutes for startup
+
+# ----------------------------------------------------------------------------
+# SYNTHETIC MONITORING
+# ----------------------------------------------------------------------------
+synthetic_monitoring:
+  enabled: ${SYNTHETIC_MONITORING_ENABLED:-false}
+
+  # Synthetic tests
+  tests:
+    - name: Search API Availability
+      type: api
+      method: POST
+      url: ${API_BASE_URL}/api/v1/search/agents
+      body:
+        query: "regulatory affairs"
+        max_results: 5
+      assertions:
+        - status_code == 200
+        - response_time < 500
+        - json.total_results >= 0
+      frequency_minutes: 5
+      locations:
+        - us-east-1
+        - us-west-2
+        - eu-west-1
+
+    - name: WebSocket Connectivity
+      type: websocket
+      url: ${WS_BASE_URL}/api/v1/search/ws/synthetic-test
+      actions:
+        - send:
+            action: ping
+        - expect:
+            status: pong
+            timeout_seconds: 5
+      frequency_minutes: 10
+
+# ----------------------------------------------------------------------------
+# PERFORMANCE BENCHMARKS
+# ----------------------------------------------------------------------------
+benchmarks:
+  # Performance targets
+  targets:
+    search_p50_ms: 150
+    search_p90_ms: 300
+    search_p99_ms: 500
+    cache_hit_rate_min: 0.60
+    error_rate_max: 0.01
+    availability_min: 0.999  # 99.9%
+
+  # Continuous benchmarking
+  continuous:
+    enabled: true
+    interval_hours: 6
+
+    # Benchmark scenarios
+    scenarios:
+      - name: basic_search
+        requests_per_second: 10
+        duration_seconds: 60
+        query: "regulatory affairs"
+
+      - name: filtered_search
+        requests_per_second: 10
+        duration_seconds: 60
+        query: "clinical trials"
+        filters:
+          tier: 1
+          domains: ["clinical-research"]
+
+      - name: concurrent_load
+        concurrent_users: 50
+        requests_per_user: 20
+        ramp_up_seconds: 10
+
+# ----------------------------------------------------------------------------
+# COST MONITORING
+# ----------------------------------------------------------------------------
+cost_monitoring:
+  enabled: true
+
+  # Track costs
+  metrics:
+    - name: openai_api_costs
+      formula: openai_api_requests_total * 0.0001  # $0.0001 per request
+      unit: USD
+
+    - name: database_costs
+      formula: database_size_bytes / 1073741824 * 0.10  # $0.10 per GB/month
+      unit: USD
+
+    - name: redis_costs
+      formula: redis_memory_bytes / 1073741824 * 0.15  # $0.15 per GB/month
+      unit: USD
+
+  # Cost alerts
+  alerts:
+    - name: HighOpenAICosts
+      condition: openai_api_costs > 1000  # $1000/day
+      severity: warning
+      notification: slack
+
+# ----------------------------------------------------------------------------
+# USAGE NOTES
+# ----------------------------------------------------------------------------
+# 1. Set environment variables for secrets (API keys, webhooks)
+# 2. Deploy Prometheus, Grafana, and exporters
+# 3. Import dashboard templates
+# 4. Configure alert routing and receivers
+# 5. Test alerts with sample data
+# 6. Monitor dashboards and adjust thresholds as needed

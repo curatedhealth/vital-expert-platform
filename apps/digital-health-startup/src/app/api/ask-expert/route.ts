@@ -3,6 +3,8 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { streamAskExpertWorkflow } from '@/features/chat/services/ask-expert-graph';
 import { enhancedLangChainService } from '@/features/chat/services/enhanced-langchain-service';
+import { getAnalyticsService } from '@/lib/analytics/UnifiedAnalyticsService';
+import { STARTUP_TENANT_ID } from '@/lib/constants/tenant';
 
 /**
  * Ask Expert API - Dedicated endpoint for Ask Expert functionality
@@ -15,6 +17,7 @@ import { enhancedLangChainService } from '@/features/chat/services/enhanced-lang
  * - ✅ Token Tracking
  * - ✅ RAG Integration
  * - ✅ Memory Management
+ * - ✅ Analytics Tracking (Phase B)
  */
 export async function POST(request: NextRequest) {
   try {
@@ -99,6 +102,26 @@ async function handleStreamingResponse(
   ragEnabled: boolean,
   supabase: any
 ) {
+  const analytics = getAnalyticsService();
+  const startTime = Date.now();
+  
+  // Track query submission
+  await analytics.trackEvent({
+    tenant_id: STARTUP_TENANT_ID,
+    user_id: userId,
+    session_id: sessionId,
+    event_type: 'query_submitted',
+    event_category: 'user_behavior',
+    event_data: {
+      query: message,
+      query_length: message.length,
+      agent_id: agent.id,
+      agent_name: agent.name,
+      rag_enabled: ragEnabled,
+    },
+    source: 'ask_expert',
+  });
+
   const encoder = new TextEncoder();
   const stream = new ReadableStream({
     async start(controller) {
@@ -146,6 +169,40 @@ async function handleStreamingResponse(
           }
         }
 
+        const executionTime = Date.now() - startTime;
+
+        // Track LLM usage if available
+        if (tokenUsage.totalTokens || tokenUsage.promptTokens) {
+          await analytics.trackLLMUsage({
+            tenant_id: STARTUP_TENANT_ID,
+            user_id: userId,
+            session_id: sessionId,
+            model: tokenUsage.model || 'gpt-4',
+            prompt_tokens: tokenUsage.promptTokens || 0,
+            completion_tokens: tokenUsage.completionTokens || 0,
+            agent_id: agent.id,
+          });
+        }
+
+        // Track agent execution
+        await analytics.trackAgentExecution({
+          tenant_id: STARTUP_TENANT_ID,
+          user_id: userId,
+          session_id: sessionId,
+          agent_id: agent.id,
+          agent_type: 'ask_expert',
+          execution_time_ms: executionTime,
+          success: !!fullAnswer,
+          total_tokens: tokenUsage.totalTokens || 0,
+          query_length: message.length,
+          response_length: fullAnswer.length,
+          metadata: {
+            sources_count: sources.length,
+            citations_count: citations.length,
+            rag_enabled: ragEnabled,
+          },
+        });
+
         // Send final answer
         if (fullAnswer) {
           controller.enqueue(
@@ -176,6 +233,23 @@ async function handleStreamingResponse(
 
       } catch (error: any) {
         console.error('Streaming error:', error);
+        
+        const executionTime = Date.now() - startTime;
+        
+        // Track failed execution
+        await analytics.trackAgentExecution({
+          tenant_id: STARTUP_TENANT_ID,
+          user_id: userId,
+          session_id: sessionId,
+          agent_id: agent.id,
+          agent_type: 'ask_expert',
+          execution_time_ms: executionTime,
+          success: false,
+          error_type: error.name || 'UnknownError',
+          error_message: error.message,
+          query_length: message.length,
+        });
+        
         controller.enqueue(
           encoder.encode(`data: ${JSON.stringify({
             type: 'error',
@@ -208,6 +282,26 @@ async function handleNonStreamingResponse(
   ragEnabled: boolean,
   supabase: any
 ) {
+  const analytics = getAnalyticsService();
+  const startTime = Date.now();
+  
+  // Track query submission
+  await analytics.trackEvent({
+    tenant_id: STARTUP_TENANT_ID,
+    user_id: userId,
+    session_id: sessionId,
+    event_type: 'query_submitted',
+    event_category: 'user_behavior',
+    event_data: {
+      query: message,
+      query_length: message.length,
+      agent_id: agent.id,
+      agent_name: agent.name,
+      rag_enabled: ragEnabled,
+    },
+    source: 'ask_expert',
+  });
+
   try {
     // Execute Ask Expert workflow
     const result = await streamAskExpertWorkflow({
@@ -227,6 +321,40 @@ async function handleNonStreamingResponse(
         finalResult = eventData;
       }
     }
+
+    const executionTime = Date.now() - startTime;
+
+    // Track LLM usage if available
+    if (finalResult.tokenUsage?.totalTokens || finalResult.tokenUsage?.promptTokens) {
+      await analytics.trackLLMUsage({
+        tenant_id: STARTUP_TENANT_ID,
+        user_id: userId,
+        session_id: sessionId,
+        model: finalResult.tokenUsage.model || 'gpt-4',
+        prompt_tokens: finalResult.tokenUsage.promptTokens || 0,
+        completion_tokens: finalResult.tokenUsage.completionTokens || 0,
+        agent_id: agent.id,
+      });
+    }
+
+    // Track agent execution
+    await analytics.trackAgentExecution({
+      tenant_id: STARTUP_TENANT_ID,
+      user_id: userId,
+      session_id: sessionId,
+      agent_id: agent.id,
+      agent_type: 'ask_expert',
+      execution_time_ms: executionTime,
+      success: !!finalResult.answer,
+      total_tokens: finalResult.tokenUsage?.totalTokens || 0,
+      query_length: message.length,
+      response_length: finalResult.answer?.length || 0,
+      metadata: {
+        sources_count: finalResult.sources?.length || 0,
+        citations_count: finalResult.citations?.length || 0,
+        rag_enabled: ragEnabled,
+      },
+    });
 
     // Save conversation to database
     await saveConversation(supabase, sessionId, userId, agent.id, message, finalResult.answer);
@@ -249,6 +377,23 @@ async function handleNonStreamingResponse(
     });
   } catch (error: any) {
     console.error('Non-streaming error:', error);
+    
+    const executionTime = Date.now() - startTime;
+    
+    // Track failed execution
+    await analytics.trackAgentExecution({
+      tenant_id: STARTUP_TENANT_ID,
+      user_id: userId,
+      session_id: sessionId,
+      agent_id: agent.id,
+      agent_type: 'ask_expert',
+      execution_time_ms: executionTime,
+      success: false,
+      error_type: error.name || 'UnknownError',
+      error_message: error.message,
+      query_length: message.length,
+    });
+    
     return NextResponse.json(
       {
         error: 'Ask Expert execution failed',

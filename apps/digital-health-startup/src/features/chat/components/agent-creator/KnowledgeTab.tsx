@@ -5,7 +5,7 @@ import { Button } from '@vital/ui';
 import { Card, CardContent, CardHeader, CardTitle } from '@vital/ui';
 import { Input } from '@vital/ui';
 import { Label } from '@vital/ui';
-import { cn } from '@vital/ui/lib/utils';
+import { cn } from '@/lib/utils';
 
 import type { AgentFormData } from './types';
 

@@ -618,12 +618,24 @@ logger.info("✅ Ask Panel routes registered")
 
 # Include Shared Framework routes (LangGraph, AutoGen, CrewAI)
 try:
+    # Debug: Check if the file exists
+    import os as _os_check
+    frameworks_path = _os_check.path.join(_os_check.path.dirname(__file__), 'api', 'frameworks.py')
+    logger.info(f"🔍 Checking for frameworks.py at: {frameworks_path}")
+    logger.info(f"🔍 File exists: {_os_check.path.exists(frameworks_path)}")
+    logger.info(f"🔍 Current working directory: {_os_check.getcwd()}")
+    logger.info(f"🔍 Python path (first 3): {sys.path[:3]}")
+    
     from api.frameworks import router as frameworks_router
     app.include_router(frameworks_router, prefix="", tags=["frameworks"])
     logger.info("✅ Shared Framework routes registered (LangGraph, AutoGen, CrewAI)")
 except ImportError as e:
     logger.warning(f"⚠️  Could not import frameworks router: {e}")
     logger.warning("   Continuing without shared framework endpoints")
+except Exception as e:
+    logger.error(f"❌ Unexpected error loading frameworks router: {e}")
+    import traceback
+    logger.error(traceback.format_exc())
 
 # Dependency to get services
 async def get_agent_orchestrator() -> AgentOrchestrator:

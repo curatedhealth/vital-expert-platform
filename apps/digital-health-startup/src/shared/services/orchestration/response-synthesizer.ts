@@ -32,9 +32,11 @@ export class ResponseSynthesizer {
       return this.formatSingleResponse(responses[0], originalQuery);
     }
 
-    // // Analyze response types and content
+    // Analyze response types and content
+    const analysis = this.analyzeResponses(responses, originalQuery);
 
     // Generate synthesized response based on analysis
+    let synthesized = '';
 
     // Add introduction
     synthesized += this.generateIntroduction(responses, analysis, originalQuery);
@@ -52,6 +54,12 @@ export class ResponseSynthesizer {
   }
 
   private analyzeResponses(responses: AgentResponse[], query: string): ResponseAnalysis {
+    const domains = new Set<string>();
+    const themes = new Map<string, number>();
+    const recommendations = new Set<string>();
+    let avgConfidence = 0;
+    let hasConflicts = false;
+    let hasComplementary = false;
 
     // Extract domains and calculate confidence
     responses.forEach(response => {
@@ -96,6 +104,9 @@ export class ResponseSynthesizer {
     analysis: ResponseAnalysis,
     query: string
   ): string {
+    const agentNames = responses.map(r => r.agent);
+    const domains = analysis.domains;
+    let intro = `Based on insights from ${responses.length} specialist${responses.length > 1 ? 's' : ''} `;
 
     if (agentNames.length === 2) {
       intro += `(${agentNames.join(' and ')})`;
@@ -207,9 +218,10 @@ export class ResponseSynthesizer {
   // Helper methods
   private extractThemes(responseText: string): string[] {
     const themes: string[] = [];
+    const text = responseText.toLowerCase();
 
     // Common healthcare themes
-
+    const themePatterns: Record<string, string[]> = {
       'regulatory': ['regulatory', 'fda', 'compliance', 'approval', 'submission'],
       'clinical': ['clinical', 'trial', 'study', 'patient', 'safety'],
       'technical': ['technical', 'implementation', 'system', 'technology'],

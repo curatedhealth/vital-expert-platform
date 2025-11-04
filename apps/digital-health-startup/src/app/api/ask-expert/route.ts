@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { streamAskExpertWorkflow } from '@/features/chat/services/ask-expert-graph';
 import { enhancedLangChainService } from '@/features/chat/services/enhanced-langchain-service';
 import { getAnalyticsService } from '@/lib/analytics/UnifiedAnalyticsService';
+import { getObservabilityService } from '@/lib/observability/UnifiedObservabilityService';
 import { STARTUP_TENANT_ID } from '@/lib/constants/tenant';
 
 /**
@@ -103,9 +104,20 @@ async function handleStreamingResponse(
   supabase: any
 ) {
   const analytics = getAnalyticsService();
+  const observability = getObservabilityService();
   const startTime = Date.now();
   
-  // Track query submission
+  // Set user context for observability
+  observability.setUser(userId);
+  
+  // Create distributed trace
+  const traceId = await observability.trackUserQuery(message, userId, sessionId, {
+    agent_id: agent.id,
+    agent_name: agent.name,
+    rag_enabled: ragEnabled,
+  });
+  
+  // Track query submission (existing analytics)
   await analytics.trackEvent({
     tenant_id: STARTUP_TENANT_ID,
     user_id: userId,
@@ -171,8 +183,23 @@ async function handleStreamingResponse(
 
         const executionTime = Date.now() - startTime;
 
-        // Track LLM usage if available
+        // Track LLM usage with unified observability (Sentry + LangFuse + Prometheus + Analytics)
         if (tokenUsage.totalTokens || tokenUsage.promptTokens) {
+          await observability.trackLLMCall({
+            model: tokenUsage.model || 'gpt-4',
+            provider: 'openai',
+            promptTokens: tokenUsage.promptTokens || 0,
+            completionTokens: tokenUsage.completionTokens || 0,
+            totalTokens: tokenUsage.totalTokens || 0,
+            costUsd: tokenUsage.cost || 0,
+            duration: executionTime / 1000,
+            agentId: agent.id,
+            userId,
+            sessionId,
+            traceId,
+          });
+          
+          // Also track in analytics (existing)
           await analytics.trackLLMUsage({
             tenant_id: STARTUP_TENANT_ID,
             user_id: userId,
@@ -184,7 +211,24 @@ async function handleStreamingResponse(
           });
         }
 
-        // Track agent execution
+        // Track agent execution with unified observability
+        await observability.trackAgentExecution({
+          agentId: agent.id,
+          agentType: 'ask_expert',
+          success: !!fullAnswer,
+          duration: executionTime / 1000,
+          userId,
+          sessionId,
+          traceId,
+          qualityScore: sources.length > 0 ? 85 : 70, // Basic quality heuristic
+          metadata: {
+            sources_count: sources.length,
+            citations_count: citations.length,
+            rag_enabled: ragEnabled,
+          },
+        });
+        
+        // Also track in analytics (existing)
         await analytics.trackAgentExecution({
           tenant_id: STARTUP_TENANT_ID,
           user_id: userId,
@@ -236,7 +280,37 @@ async function handleStreamingResponse(
         
         const executionTime = Date.now() - startTime;
         
-        // Track failed execution
+        // Track error with unified observability (Sentry + analytics)
+        observability.trackError(error, {
+          userId,
+          sessionId,
+          agentId: agent.id,
+          requestId: traceId,
+          metadata: {
+            message,
+            messageLength: message.length,
+            ragEnabled,
+            executionTime,
+          },
+        });
+        
+        // Track failed agent execution
+        await observability.trackAgentExecution({
+          agentId: agent.id,
+          agentType: 'ask_expert',
+          success: false,
+          duration: executionTime / 1000,
+          userId,
+          sessionId,
+          traceId,
+          errorType: error.name || 'UnknownError',
+          errorMessage: error.message,
+          metadata: {
+            query_length: message.length,
+          },
+        });
+        
+        // Also track in analytics (existing)
         await analytics.trackAgentExecution({
           tenant_id: STARTUP_TENANT_ID,
           user_id: userId,

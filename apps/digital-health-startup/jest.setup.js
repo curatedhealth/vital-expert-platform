@@ -12,6 +12,11 @@ process.env.SUPABASE_SERVICE_ROLE_KEY = 'test-service-role-key';
 process.env.REDIS_URL = 'redis://localhost:6379';
 process.env.DATABASE_URL = 'postgresql://test:test@localhost:5432/test';
 
+// Mock utility functions
+jest.mock('@/lib/utils', () => ({
+  cn: (...classes) => classes.filter(Boolean).join(' '),
+}));
+
 // Mock Next.js router
 jest.mock('next/navigation', () => ({
   useRouter() {

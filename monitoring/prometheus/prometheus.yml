@@ -1,13 +1,11 @@
-# Prometheus Configuration for VITAL Path RAG Monitoring
-# This configuration scrapes RAG metrics from the Next.js application
+# Prometheus Configuration for VITAL Platform
+# Scrapes metrics from various exporters and services
 
 global:
-  scrape_interval: 15s      # Scrape targets every 15 seconds
-  evaluation_interval: 15s  # Evaluate rules every 15 seconds
-
-  # External labels for all time series
+  scrape_interval: 15s # Scrape targets every 15 seconds
+  evaluation_interval: 15s # Evaluate rules every 15 seconds
   external_labels:
-    cluster: 'vital-path-production'
+    cluster: 'vital-production'
     environment: 'production'
 
 # Alertmanager configuration
@@ -15,85 +13,51 @@ alerting:
   alertmanagers:
     - static_configs:
         - targets:
-          - 'alertmanager:9093'  # Alertmanager service in Docker network
+            - alertmanager:9093
 
 # Load rules once and periodically evaluate them
 rule_files:
-  - 'alerts/rag-alerts.yml'
-  - 'alerts/platform-alerts.yml'
-  - 'alerts/agent-operations-alerts.yml'
-  - 'alerts/python-ai-engine-alerts.yml'
+  - "alerts.yml"
 
 # Scrape configurations
 scrape_configs:
-  # Python AI Engine - FastAPI Backend
-  - job_name: 'vital-python-ai-engine'
-    scrape_interval: 15s
-    scrape_timeout: 10s
-    metrics_path: '/metrics'
-    static_configs:
-      - targets:
-          - 'host.docker.internal:8000'  # Local development (Mac/Windows Docker)
-          # - 'localhost:8000'            # Alternative for Linux
-          # - 'ai-engine.railway.app'     # Production Railway
-          # - 'ai-engine.modal.run'      # Production Modal
-        labels:
-          service: 'vital-python-ai-engine'
-          component: 'ai-engine'
-          tier: 'backend'
-
-  # API Gateway - Node.js Express
-  - job_name: 'vital-api-gateway'
-    scrape_interval: 15s
-    scrape_timeout: 10s
-    metrics_path: '/metrics'
-    static_configs:
-      - targets:
-          - 'host.docker.internal:3001'  # Local development
-          # - 'localhost:3001'          # Alternative for Linux
-          # - 'api-gateway.railway.app'  # Production Railway
-        labels:
-          service: 'vital-api-gateway'
-          component: 'api-gateway'
-          tier: 'gateway'
-
-  # VITAL Path Frontend - Next.js Metrics
-  - job_name: 'vital-path-frontend'
-    scrape_interval: 15s
-    scrape_timeout: 10s
-    metrics_path: '/api/metrics'
-    params:
-      format: ['prometheus']
-    static_configs:
-      - targets:
-          - 'host.docker.internal:3000'  # Local development
-          # - 'localhost:3000'            # Alternative for Linux
-          # - 'www.vital.expert'          # Production Vercel
-        labels:
-          service: 'vital-path-frontend'
-          component: 'nextjs'
-          tier: 'frontend'
-
-  # Prometheus self-monitoring
+  # Prometheus itself
   - job_name: 'prometheus'
-    scrape_interval: 30s
     static_configs:
-      - targets:
-          - 'localhost:9090'
-        labels:
-          service: 'prometheus'
-          tier: 'monitoring'
+      - targets: ['localhost:9090']
 
-  # Node Exporter (system metrics)
+  # Node Exporter - System metrics
   - job_name: 'node-exporter'
-    scrape_interval: 30s
     static_configs:
-      - targets:
-          - 'host.docker.internal:9100'  # Docker network
-          # - 'localhost:9100'           # Alternative for Linux
-        labels:
-          service: 'node-exporter'
-          tier: 'infrastructure'
+      - targets: ['node-exporter:9100']
 
-# Storage configuration is set via command-line flags in docker-compose.yml
-# See: --storage.tsdb.path and --storage.tsdb.retention.time
+  # PostgreSQL Exporter - Database metrics
+  - job_name: 'postgres'
+    static_configs:
+      - targets: ['postgres-exporter:9187']
+
+  # Next.js Application Metrics (if you add prometheus exporter)
+  - job_name: 'nextjs-app'
+    static_configs:
+      - targets: ['host.docker.internal:9091']
+    metrics_path: '/api/metrics'
+    scrape_interval: 30s
+
+  # Custom Analytics Metrics (from your analytics service)
+  - job_name: 'analytics-service'
+    static_configs:
+      - targets: ['host.docker.internal:9092']
+    metrics_path: '/metrics'
+    scrape_interval: 30s
+
+  # LangFuse Metrics
+  - job_name: 'langfuse'
+    static_configs:
+      - targets: ['langfuse-server:3000']
+    metrics_path: '/api/public/metrics'
+    scrape_interval: 60s
+
+  # Alertmanager
+  - job_name: 'alertmanager'
+    static_configs:
+      - targets: ['alertmanager:9093']

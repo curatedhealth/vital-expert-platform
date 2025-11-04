@@ -1,704 +1,335 @@
-// ===================================================================
-// Metrics API - Phase 2 Enhanced Monitoring
-// Prometheus-compatible metrics endpoint for system monitoring
-// Now integrates with LangExtract metrics and cost tracking
-// ===================================================================
+/**
+ * Prometheus Metrics Service
+ * Exports application metrics in Prometheus format
+ * 
+ * Metrics Categories:
+ * - HTTP requests (method, route, status)
+ * - LLM usage (model, tokens, cost)
+ * - Agent performance (success, latency)
+ * - Database queries
+ * - User sessions
+ */
 
-import { createClient } from '@supabase/supabase-js'
-import { NextRequest, NextResponse } from 'next/server'
-import { getMetricsCollector } from '@/lib/services/monitoring/langextract-metrics-collector'
-import { getCostTracker } from '@/lib/services/monitoring/cost-tracker'
-import { ragLatencyTracker } from '@/lib/services/monitoring/rag-latency-tracker'
-import { ragCostTracker } from '@/lib/services/monitoring/rag-cost-tracker'
-import { circuitBreakerManager } from '@/lib/services/monitoring/circuit-breaker'
+import { NextRequest, NextResponse } from 'next/server';
+import client from 'prom-client';
 
-interface MetricValue {
-  name: string
-  help: string
-  type: 'counter' | 'gauge' | 'histogram' | 'summary'
-  value: number
-  labels?: Record<string, string>
-  timestamp?: number
-}
+// Initialize the Prometheus client
+const register = new client.Registry();
 
-// GET /api/metrics - Prometheus-compatible metrics endpoint
+// Add default metrics (memory, CPU, etc.)
+client.collectDefaultMetrics({ register });
+
+// ============================================================================
+// HTTP Metrics
+// ============================================================================
+
+export const httpRequestDuration = new client.Histogram({
+  name: 'http_request_duration_seconds',
+  help: 'Duration of HTTP requests in seconds',
+  labelNames: ['method', 'route', 'status'],
+  buckets: [0.1, 0.5, 1, 2, 5, 10],
+  registers: [register],
+});
+
+export const httpRequestsTotal = new client.Counter({
+  name: 'http_requests_total',
+  help: 'Total number of HTTP requests',
+  labelNames: ['method', 'route', 'status'],
+  registers: [register],
+});
+
+// ============================================================================
+// LLM Metrics
+// ============================================================================
+
+export const llmRequestsTotal = new client.Counter({
+  name: 'llm_requests_total',
+  help: 'Total number of LLM requests',
+  labelNames: ['model', 'provider', 'agent_id'],
+  registers: [register],
+});
+
+export const llmTokensUsed = new client.Counter({
+  name: 'llm_tokens_used_total',
+  help: 'Total number of LLM tokens used',
+  labelNames: ['model', 'provider', 'token_type'], // token_type: prompt, completion
+  registers: [register],
+});
+
+export const llmCostUsd = new client.Counter({
+  name: 'llm_cost_usd_total',
+  help: 'Total cost of LLM usage in USD',
+  labelNames: ['model', 'provider', 'agent_id'],
+  registers: [register],
+});
+
+export const llmRequestDuration = new client.Histogram({
+  name: 'llm_request_duration_seconds',
+  help: 'Duration of LLM requests in seconds',
+  labelNames: ['model', 'provider'],
+  buckets: [0.5, 1, 2, 5, 10, 20, 30],
+  registers: [register],
+});
+
+// ============================================================================
+// Agent Metrics
+// ============================================================================
+
+export const agentExecutionsTotal = new client.Counter({
+  name: 'agent_executions_total',
+  help: 'Total number of agent executions',
+  labelNames: ['agent_id', 'agent_type'],
+  registers: [register],
+});
+
+export const agentExecutionsSuccess = new client.Counter({
+  name: 'agent_executions_success_total',
+  help: 'Total number of successful agent executions',
+  labelNames: ['agent_id', 'agent_type'],
+  registers: [register],
+});
+
+export const agentExecutionsFailed = new client.Counter({
+  name: 'agent_executions_failed_total',
+  help: 'Total number of failed agent executions',
+  labelNames: ['agent_id', 'agent_type', 'error_type'],
+  registers: [register],
+});
+
+export const agentExecutionDuration = new client.Histogram({
+  name: 'agent_execution_duration_seconds',
+  help: 'Duration of agent executions in seconds',
+  labelNames: ['agent_id', 'agent_type'],
+  buckets: [1, 2, 5, 10, 20, 30, 60],
+  registers: [register],
+});
+
+export const agentQualityScore = new client.Gauge({
+  name: 'agent_quality_score',
+  help: 'Agent response quality score (0-100)',
+  labelNames: ['agent_id', 'agent_type'],
+  registers: [register],
+});
+
+// ============================================================================
+// User Metrics
+// ============================================================================
+
+export const userSessionsActive = new client.Gauge({
+  name: 'user_sessions_active',
+  help: 'Number of active user sessions',
+  registers: [register],
+});
+
+export const userSessionsTotal = new client.Counter({
+  name: 'user_sessions_total',
+  help: 'Total number of user sessions started',
+  registers: [register],
+});
+
+export const userQueriesTotal = new client.Counter({
+  name: 'user_queries_total',
+  help: 'Total number of user queries',
+  labelNames: ['user_id', 'query_type'],
+  registers: [register],
+});
+
+export const userErrorsTotal = new client.Counter({
+  name: 'user_errors_total',
+  help: 'Total number of user-facing errors',
+  labelNames: ['error_type'],
+  registers: [register],
+});
+
+// ============================================================================
+// Rate Limiting Metrics
+// ============================================================================
+
+export const rateLimitHits = new client.Counter({
+  name: 'rate_limit_hits_total',
+  help: 'Total number of rate limit hits',
+  labelNames: ['entity_type', 'quota_type'],
+  registers: [register],
+});
+
+export const quotaViolations = new client.Counter({
+  name: 'quota_violations_total',
+  help: 'Total number of quota violations',
+  labelNames: ['entity_type', 'quota_type'],
+  registers: [register],
+});
+
+// ============================================================================
+// Authentication Metrics
+// ============================================================================
+
+export const authAttempts = new client.Counter({
+  name: 'auth_attempts_total',
+  help: 'Total number of authentication attempts',
+  labelNames: ['method', 'result'], // result: success, failure
+  registers: [register],
+});
+
+export const authFailures = new client.Counter({
+  name: 'auth_failures_total',
+  help: 'Total number of authentication failures',
+  labelNames: ['method', 'reason'],
+  registers: [register],
+});
+
+// ============================================================================
+// Database Metrics
+// ============================================================================
+
+export const dbQueriesTotal = new client.Counter({
+  name: 'db_queries_total',
+  help: 'Total number of database queries',
+  labelNames: ['operation', 'table'],
+  registers: [register],
+});
+
+export const dbQueryDuration = new client.Histogram({
+  name: 'db_query_duration_seconds',
+  help: 'Duration of database queries in seconds',
+  labelNames: ['operation', 'table'],
+  buckets: [0.01, 0.05, 0.1, 0.5, 1, 2, 5],
+  registers: [register],
+});
+
+// ============================================================================
+// API Route Handler
+// ============================================================================
+
 export async function GET(request: NextRequest) {
   try {
-    const searchParams = request.nextUrl.searchParams;
-    const format = searchParams.get('format') || 'prometheus';
-    const startTime = Date.now();
-
-    // Create Supabase client inside the function to avoid build-time validation
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-    if (!supabaseUrl || !supabaseServiceKey) {
-      return NextResponse.json(
-        { error: 'Supabase configuration missing' },
-        { status: 500 }
-      );
-    }
-
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
-
-    // Get LangExtract metrics
-    const metricsCollector = getMetricsCollector();
-    let langExtractMetrics = '';
-
-    if (format === 'prometheus') {
-      langExtractMetrics = await metricsCollector.exportPrometheusMetrics();
-    }
-
-    // Collect all metrics
-    const metrics = await collectMetrics(supabase);
-
-    if (format === 'json') {
-      // Include LangExtract metrics in JSON format
-      const langExtractJson = await metricsCollector.getCurrentMetrics();
-      const costTracker = getCostTracker();
-      const costBreakdown = await costTracker.getDailyCost();
-
-      return NextResponse.json({
-        platform_metrics: metrics,
-        langextract_metrics: langExtractJson,
-        cost_metrics: costBreakdown,
-        collection_time_ms: Date.now() - startTime,
-        timestamp: new Date().toISOString()
-      })
-    }
-
-    // Get Prometheus metrics from structured logger exporter
-    let agentOperationMetrics = '';
-    try {
-      const { getPrometheusExporter } = await import('@/lib/services/observability/prometheus-exporter');
-      const exporter = getPrometheusExporter();
-      agentOperationMetrics = await exporter.exportMetrics();
-    } catch (error) {
-      // Don't fail if Prometheus export fails
-      console.error('Failed to export agent operation metrics:', error);
-    }
-
-    // Default: Prometheus format
-    const platformMetrics = formatPrometheusMetrics(metrics);
-    const prometheusOutput = [
-      langExtractMetrics,
-      agentOperationMetrics,
-      platformMetrics,
-    ].filter(Boolean).join('\n\n');
-
-    return new NextResponse(prometheusOutput, {
+    // Set content type for Prometheus
+    const metrics = await register.metrics();
+    
+    return new NextResponse(metrics, {
       status: 200,
       headers: {
-        'Content-Type': 'text/plain; version=0.0.4; charset=utf-8',
-        'Cache-Control': 'no-cache, no-store, must-revalidate'
-      }
-    })
-
-  } catch (error) {
-    console.error('Metrics collection error:', error)
-    return NextResponse.json({
-      error: 'Failed to collect metrics'
-    }, { status: 500 })
-  }
-}
-
-// POST /api/metrics - Record metrics (internal use)
-export async function POST(request: NextRequest) {
-  try {
-    const body = await request.json();
-    const { type, data } = body;
-
-    const metricsCollector = getMetricsCollector();
-    const costTracker = getCostTracker();
-
-    switch (type) {
-      case 'extraction':
-        await metricsCollector.recordExtraction(data);
-        return NextResponse.json({ success: true }, { status: 200 });
-
-      case 'cost':
-        await costTracker.recordCost(data);
-        return NextResponse.json({ success: true }, { status: 200 });
-
-      case 'error':
-        await metricsCollector.recordError(data.error_type);
-        return NextResponse.json({ success: true }, { status: 200 });
-
-      default:
-        return NextResponse.json(
-          { error: 'Invalid metric type' },
-          { status: 400 }
-        );
-    }
-  } catch (error: any) {
-    console.error('Error recording metrics:', error);
-    return NextResponse.json(
-      { error: 'Failed to record metrics', details: error.message },
-      { status: 500 }
-    );
-  }
-}
-
-async function collectMetrics(supabase: any): Promise<MetricValue[]> {
-  const metrics: MetricValue[] = []
-
-  // System metrics
-  metrics.push({
-    name: 'vital_path_uptime_seconds',
-    help: 'VITAL Path application uptime in seconds',
-    type: 'counter',
-    value: process.uptime()
-  })
-
-  metrics.push({
-    name: 'vital_path_memory_usage_bytes',
-    help: 'VITAL Path memory usage in bytes',
-    type: 'gauge',
-    value: process.memoryUsage().heapUsed
-  })
-
-  // Database metrics
-  const dbMetrics = await collectDatabaseMetrics(supabase);
-  metrics.push(...dbMetrics)
-
-  // API usage metrics
-  const apiMetrics = await collectAPIUsageMetrics(supabase);
-  metrics.push(...apiMetrics)
-
-  // Service health metrics
-  const healthMetrics = await collectHealthMetrics();
-  metrics.push(...healthMetrics)
-
-  // Business metrics
-  const businessMetrics = await collectBusinessMetrics(supabase);
-  metrics.push(...businessMetrics)
-
-  // Phase 1 RAG monitoring metrics
-  const ragMetrics = await collectRAGMetrics();
-  metrics.push(...ragMetrics)
-
-  // Agent operation metrics from structured logger
-  const agentOperationMetrics = await collectAgentOperationMetrics();
-  metrics.push(...agentOperationMetrics)
-
-  return metrics
-}
-
-async function collectDatabaseMetrics(supabase: ReturnType<typeof createClient>): Promise<MetricValue[]> {
-  const metrics: MetricValue[] = []
-
-  try {
-    // Query database for various counts
-    const [
-      { count: totalAgents },
-      { count: activeUsers },
-      { count: totalOrganizations }
-    ] = await Promise.all([
-      supabase.from('agents').select('*', { count: 'exact', head: true }).then(r => r),
-      supabase.from('users').select('*', { count: 'exact', head: true }).then(r => r),
-      supabase.from('organizations').select('*', { count: 'exact', head: true }).then(r => r)
-    ])
-
-    metrics.push(
-      {
-        name: 'vital_path_agents_total',
-        help: 'Total number of agents in the system',
-        type: 'gauge',
-        value: totalAgents || 0
+        'Content-Type': register.contentType,
       },
-      {
-        name: 'vital_path_users_total',
-        help: 'Total number of users in the system',
-        type: 'gauge',
-        value: activeUsers || 0
-      },
-      {
-        name: 'vital_path_organizations_total',
-        help: 'Total number of organizations in the system',
-        type: 'gauge',
-        value: totalOrganizations || 0
-      }
-    )
-
+    });
   } catch (error) {
-    // console.error('Database metrics collection failed')
-    metrics.push({
-      name: 'vital_path_database_errors_total',
-      help: 'Total number of database errors',
-      type: 'counter',
-      value: 1
-    })
+    console.error('Error generating metrics:', error);
+    return new NextResponse('Error generating metrics', { status: 500 });
   }
-
-  return metrics
 }
 
-async function collectAPIUsageMetrics(supabase: ReturnType<typeof createClient>): Promise<MetricValue[]> {
-  const metrics: MetricValue[] = []
+// ============================================================================
+// Helper Functions for Recording Metrics
+// ============================================================================
 
-  try {
-    // Get usage analytics from the last hour
-    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
-
-    const { data: usageData } = await supabase
-      .from('usage_analytics')
-      .select('event_type, resource_type')
-      .gte('timestamp', oneHourAgo)
-
-    if (usageData) {
-      // Group by event type
-      const eventsByType = usageData.reduce((acc: Record<string, number>, event: any) => {
-        acc[event.event_type] = (acc[event.event_type] || 0) + 1;
-        return acc;
-      }, {});
-
-      // Group by resource type
-      const eventsByResource = usageData.reduce((acc: Record<string, number>, event: any) => {
-        acc[event.resource_type] = (acc[event.resource_type] || 0) + 1;
-        return acc;
-      }, {});
-
-      // Add metrics for each event type
-      Object.entries(eventsByType).forEach(([eventType, count]) => {
-        metrics.push({
-          name: 'vital_path_api_requests_total',
-          help: 'Total number of API requests',
-          type: 'counter',
-          value: count,
-          labels: { event_type: eventType }
-        })
-      })
-
-      // Add metrics for each resource type
-      Object.entries(eventsByResource).forEach(([resourceType, count]) => {
-        metrics.push({
-          name: 'vital_path_resource_usage_total',
-          help: 'Total resource usage by type',
-          type: 'counter',
-          value: count,
-          labels: { resource_type: resourceType }
-        })
-      })
-
-      metrics.push({
-        name: 'vital_path_api_requests_hourly',
-        help: 'Total API requests in the last hour',
-        type: 'gauge',
-        value: usageData.length
-      })
-    }
-
-  } catch (error) {
-    // console.error('API usage metrics collection failed')
-  }
-
-  return metrics
+/**
+ * Record HTTP request metrics
+ */
+export function recordHttpRequest(
+  method: string,
+  route: string,
+  status: number,
+  durationSeconds: number
+) {
+  httpRequestsTotal.inc({ method, route, status: status.toString() });
+  httpRequestDuration.observe({ method, route, status: status.toString() }, durationSeconds);
 }
 
-async function collectHealthMetrics(): Promise<MetricValue[]> {
-  const metrics: MetricValue[] = [];
-  const services = [
-    'orchestrator', 'prompt_management', 'agent_registry',
-    'advisory_board', 'clinical_safety', 'monitoring_service'
-  ];
-
-  for (const service of services) {
-    try {
-      const serviceUrl = process.env[`${service.toUpperCase()}_SERVICE_URL`];
-      if (!serviceUrl) continue;
-
-      const startTime = Date.now();
-      const response = await fetch(`${serviceUrl}/health`, {
-        signal: AbortSignal.timeout(5000)
-      })
-      const responseTime = Date.now() - startTime;
-
-      metrics.push(
-        {
-          name: 'vital_path_service_up',
-          help: 'Service availability (1 = up, 0 = down)',
-          type: 'gauge',
-          value: response.ok ? 1 : 0,
-          labels: { service }
-        },
-        {
-          name: 'vital_path_service_response_time_seconds',
-          help: 'Service response time in seconds',
-          type: 'gauge',
-          value: responseTime / 1000,
-          labels: { service }
-        }
-      )
-
-    } catch (error) {
-      metrics.push({
-        name: 'vital_path_service_up',
-        help: 'Service availability (1 = up, 0 = down)',
-        type: 'gauge',
-        value: 0,
-        labels: { service }
-      })
-    }
-  }
-
-  return metrics
+/**
+ * Record LLM request metrics
+ */
+export function recordLLMRequest(params: {
+  model: string;
+  provider: string;
+  agentId?: string;
+  promptTokens: number;
+  completionTokens: number;
+  costUsd: number;
+  durationSeconds: number;
+}) {
+  const { model, provider, agentId, promptTokens, completionTokens, costUsd, durationSeconds } = params;
+  
+  llmRequestsTotal.inc({ model, provider, agent_id: agentId || 'unknown' });
+  llmTokensUsed.inc({ model, provider, token_type: 'prompt' }, promptTokens);
+  llmTokensUsed.inc({ model, provider, token_type: 'completion' }, completionTokens);
+  llmCostUsd.inc({ model, provider, agent_id: agentId || 'unknown' }, costUsd);
+  llmRequestDuration.observe({ model, provider }, durationSeconds);
 }
 
-async function collectBusinessMetrics(supabase: ReturnType<typeof createClient>): Promise<MetricValue[]> {
-  const metrics: MetricValue[] = []
-
-  try {
-    const last24Hours = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-
-    // Orchestration requests
-    const { data: orchestrationData } = await supabase
-      .from('usage_analytics')
-      .select('*')
-      .eq('event_type', 'orchestration_request')
-      .gte('timestamp', last24Hours)
-
-    if (orchestrationData) {
-      metrics.push({
-        name: 'vital_path_orchestration_requests_24h',
-        help: 'Orchestration requests in the last 24 hours',
-        type: 'gauge',
-        value: orchestrationData.length
-      })
-
-      // Group by triage level
-      const triageCounts = orchestrationData.reduce((acc: Record<string, number>, item: any) => {
-        const triageLevel = item.metadata?.triage_level || 'unknown';
-        // eslint-disable-next-line security/detect-object-injection
-        acc[triageLevel] = (acc[triageLevel] || 0) + 1
-        return acc
-      }, { /* TODO: implement */ } as Record<string, number>)
-
-      Object.entries(triageCounts).forEach(([triageLevel, count]) => {
-        metrics.push({
-          name: 'vital_path_orchestration_by_triage_total',
-          help: 'Orchestration requests by triage level',
-          type: 'counter',
-          value: Number(count),
-          labels: { triage_level: triageLevel }
-        })
-      })
-    }
-
-    // Clinical validations
-    const { data: validationData } = await supabase
-      .from('usage_analytics')
-      .select('*')
-      .like('event_type', '%clinical_validation%')
-      .gte('timestamp', last24Hours)
-
-    if (validationData) {
-      metrics.push({
-        name: 'vital_path_clinical_validations_24h',
-        help: 'Clinical validations in the last 24 hours',
-        type: 'gauge',
-        value: validationData.length
-      })
-    }
-
-    // Agent registrations
-    const { data: agentData } = await supabase
-      .from('usage_analytics')
-      .select('*')
-      .eq('event_type', 'agent_registration')
-      .gte('timestamp', last24Hours)
-
-    if (agentData) {
-      metrics.push({
-        name: 'vital_path_agent_registrations_24h',
-        help: 'Agent registrations in the last 24 hours',
-        type: 'gauge',
-        value: agentData.length
-      })
-    }
-
-    // Advisory sessions
-    const { data: advisoryData } = await supabase
-      .from('usage_analytics')
-      .select('*')
-      .like('event_type', '%advisory%')
-      .gte('timestamp', last24Hours)
-
-    if (advisoryData) {
-      metrics.push({
-        name: 'vital_path_advisory_sessions_24h',
-        help: 'Advisory sessions in the last 24 hours',
-        type: 'gauge',
-        value: advisoryData.length
-      })
-    }
-
-  } catch (error) {
-    // console.error('Business metrics collection failed')
-  }
-
-  return metrics
-}
-
-async function collectRAGMetrics(): Promise<MetricValue[]> {
-  const metrics: MetricValue[] = [];
-
-  try {
-    // === LATENCY METRICS ===
-    const latencyBreakdown = ragLatencyTracker.getLatencyBreakdown(60) as any; // Last 60 minutes
-
-    // Overall latency percentiles (only if data exists)
-    if (latencyBreakdown.overall?.total) {
-      metrics.push(
-        {
-          name: 'rag_latency_p50_milliseconds',
-          help: 'RAG query latency P50 (median) in milliseconds',
-          type: 'gauge',
-          value: latencyBreakdown.overall.total.p50 || 0
-        },
-        {
-          name: 'rag_latency_p95_milliseconds',
-          help: 'RAG query latency P95 in milliseconds',
-          type: 'gauge',
-          value: latencyBreakdown.overall.total.p95 || 0
-        },
-        {
-          name: 'rag_latency_p99_milliseconds',
-          help: 'RAG query latency P99 in milliseconds',
-          type: 'gauge',
-          value: latencyBreakdown.overall.total.p99 || 0
-        },
-        {
-          name: 'rag_latency_mean_milliseconds',
-          help: 'RAG query latency mean in milliseconds',
-          type: 'gauge',
-          value: latencyBreakdown.overall.total.mean || 0
-        }
-      );
-
-      // Cache performance
-      metrics.push({
-        name: 'rag_cache_hit_rate',
-        help: 'RAG cache hit rate (0-1)',
-        type: 'gauge',
-        value: latencyBreakdown.overall.cacheHitRate || 0
-      });
-
-      // Query count
-      metrics.push({
-        name: 'rag_queries_total',
-        help: 'Total number of RAG queries',
-        type: 'counter',
-        value: latencyBreakdown.overall.total.count || 0
-      });
-    }
-
-    // Latency by component (only if data exists)
-    if (latencyBreakdown.byComponent?.queryEmbedding?.p95) {
-      metrics.push({
-        name: 'rag_component_latency_milliseconds',
-        help: 'RAG component latency P95 in milliseconds',
-        type: 'gauge',
-        value: latencyBreakdown.byComponent.queryEmbedding.p95,
-        labels: { component: 'query_embedding' }
-      });
-    }
-
-    if (latencyBreakdown.byComponent?.vectorSearch?.p95) {
-      metrics.push({
-        name: 'rag_component_latency_milliseconds',
-        help: 'RAG component latency P95 in milliseconds',
-        type: 'gauge',
-        value: latencyBreakdown.byComponent.vectorSearch.p95,
-        labels: { component: 'vector_search' }
-      });
-    }
-
-    if (latencyBreakdown.byComponent?.reranking?.p95) {
-      metrics.push({
-        name: 'rag_component_latency_milliseconds',
-        help: 'RAG component latency P95 in milliseconds',
-        type: 'gauge',
-        value: latencyBreakdown.byComponent.reranking.p95,
-        labels: { component: 'reranking' }
-      });
-    }
-
-    // === COST METRICS ===
-    const costStats = ragCostTracker.getCostStats(60); // Last 60 minutes
-
-    metrics.push(
-      {
-        name: 'rag_cost_total_usd',
-        help: 'Total RAG cost in USD',
-        type: 'counter',
-        value: costStats.totalCostUsd
-      },
-      {
-        name: 'rag_cost_per_query_usd',
-        help: 'Average RAG cost per query in USD',
-        type: 'gauge',
-        value: costStats.avgCostPerQuery
-      },
-      {
-        name: 'rag_queries_count',
-        help: 'Total number of queries processed',
-        type: 'counter',
-        value: costStats.queryCount
-      }
-    );
-
-    // Cost breakdown by provider
-    if (costStats.breakdown && typeof costStats.breakdown === 'object') {
-      Object.entries(costStats.breakdown).forEach(([provider, cost]) => {
-        metrics.push({
-          name: 'rag_cost_by_provider_usd',
-          help: 'RAG cost breakdown by provider in USD',
-          type: 'counter',
-          value: cost,
-          labels: { provider }
-        });
-      });
-    }
-
-    // Budget status
-    const budgetStatus = ragCostTracker.checkBudget();
-
-    if (budgetStatus?.dailyStatus && budgetStatus?.monthlyStatus) {
-      metrics.push(
-        {
-          name: 'rag_budget_daily_usage_percent',
-          help: 'RAG daily budget usage percentage',
-          type: 'gauge',
-          value: budgetStatus.dailyStatus.percent || 0
-        },
-        {
-          name: 'rag_budget_monthly_usage_percent',
-          help: 'RAG monthly budget usage percentage',
-          type: 'gauge',
-          value: budgetStatus.monthlyStatus.percent || 0
-        }
-      );
-    }
-
-    // === CIRCUIT BREAKER METRICS ===
-    const allCircuitBreakers = circuitBreakerManager.getAllStats();
-
-    if (allCircuitBreakers && typeof allCircuitBreakers === 'object') {
-      Object.entries(allCircuitBreakers).forEach(([service, stats]) => {
-      // Circuit breaker state (CLOSED=0, HALF_OPEN=1, OPEN=2)
-      const stateValue = stats.state === 'CLOSED' ? 0 : stats.state === 'HALF_OPEN' ? 1 : 2;
-
-      metrics.push(
-        {
-          name: 'rag_circuit_breaker_state',
-          help: 'Circuit breaker state (0=CLOSED, 1=HALF_OPEN, 2=OPEN)',
-          type: 'gauge',
-          value: stateValue,
-          labels: { service }
-        },
-        {
-          name: 'rag_circuit_breaker_failures_total',
-          help: 'Total circuit breaker failures',
-          type: 'counter',
-          value: stats.failures,
-          labels: { service }
-        },
-        {
-          name: 'rag_circuit_breaker_successes_total',
-          help: 'Total circuit breaker successes',
-          type: 'counter',
-          value: stats.successes,
-          labels: { service }
-        },
-        {
-          name: 'rag_circuit_breaker_requests_total',
-          help: 'Total circuit breaker requests',
-          type: 'counter',
-          value: stats.totalRequests,
-          labels: { service }
-        },
-        {
-          name: 'rag_circuit_breaker_rejected_total',
-          help: 'Total rejected requests (circuit open)',
-          type: 'counter',
-          value: stats.rejectedRequests,
-          labels: { service }
-        }
-      );
-      });
-    }
-
-  } catch (error) {
-    console.error('RAG metrics collection failed:', error);
-    metrics.push({
-      name: 'rag_metrics_collection_errors_total',
-      help: 'Total RAG metrics collection errors',
-      type: 'counter',
-      value: 1
+/**
+ * Record agent execution metrics
+ */
+export function recordAgentExecution(params: {
+  agentId: string;
+  agentType: string;
+  success: boolean;
+  durationSeconds: number;
+  errorType?: string;
+  qualityScore?: number;
+}) {
+  const { agentId, agentType, success, durationSeconds, errorType, qualityScore } = params;
+  
+  agentExecutionsTotal.inc({ agent_id: agentId, agent_type: agentType });
+  
+  if (success) {
+    agentExecutionsSuccess.inc({ agent_id: agentId, agent_type: agentType });
+  } else {
+    agentExecutionsFailed.inc({
+      agent_id: agentId,
+      agent_type: agentType,
+      error_type: errorType || 'unknown',
     });
   }
-
-  return metrics;
-}
-
-function getServiceURL(serviceName: string): string | null {
-  const urlMap: Record<string, string> = {
-    orchestrator: process.env.ORCHESTRATOR_SERVICE_URL || 'http://localhost:8001',
-    prompt_management: process.env.PROMPT_MANAGEMENT_SERVICE_URL || 'http://localhost:8002',
-    agent_registry: process.env.AGENT_REGISTRY_SERVICE_URL || 'http://localhost:8003',
-    advisory_board: process.env.ADVISORY_BOARD_SERVICE_URL || 'http://localhost:8004',
-    clinical_safety: process.env.CLINICAL_SAFETY_SERVICE_URL || 'http://localhost:8005',
-    monitoring_service: process.env.MONITORING_SERVICE_URL || 'http://localhost:8006'
+  
+  agentExecutionDuration.observe({ agent_id: agentId, agent_type: agentType }, durationSeconds);
+  
+  if (qualityScore !== undefined) {
+    agentQualityScore.set({ agent_id: agentId, agent_type: agentType }, qualityScore);
   }
-
-  // eslint-disable-next-line security/detect-object-injection
-  return urlMap[serviceName] || null
 }
 
-function formatPrometheusMetrics(metrics: MetricValue[]): string {
-  const output: string[] = []
+/**
+ * Record database query metrics
+ */
+export function recordDbQuery(operation: string, table: string, durationSeconds: number) {
+  dbQueriesTotal.inc({ operation, table });
+  dbQueryDuration.observe({ operation, table }, durationSeconds);
+}
 
-  // Group metrics by name for proper formatting
-  const metricGroups = metrics.reduce((acc: Record<string, MetricValue[]>, metric: MetricValue) => {
-    if (!acc[metric.name]) {
-      acc[metric.name] = []
-    }
-    acc[metric.name].push(metric)
-    return acc
-  }, { /* TODO: implement */ } as Record<string, MetricValue[]>)
+/**
+ * Update active user sessions count
+ */
+export function updateActiveUserSessions(count: number) {
+  userSessionsActive.set(count);
+}
 
-  Object.entries(metricGroups).forEach(([metricName, metricList]) => {
-    // Add HELP comment (use first metric's help text)
-    output.push(`# HELP ${metricName} ${metricList[0].help}`)
+/**
+ * Record user query
+ */
+export function recordUserQuery(userId: string, queryType: string) {
+  userQueriesTotal.inc({ user_id: userId, query_type: queryType });
+}
 
-    // Add TYPE comment (use first metric's type)
-    output.push(`# TYPE ${metricName} ${metricList[0].type}`)
+/**
+ * Record rate limit hit
+ */
+export function recordRateLimitHit(entityType: string, quotaType: string) {
+  rateLimitHits.inc({ entity_type: entityType, quota_type: quotaType });
+}
 
-    // Add metric values
-    metricList.forEach(metric => {
+/**
+ * Record quota violation
+ */
+export function recordQuotaViolation(entityType: string, quotaType: string) {
+  quotaViolations.inc({ entity_type: entityType, quota_type: quotaType });
+}
 
-      let metricLine = metricName;
-
-      // Add labels if present
-      if (metric.labels && Object.keys(metric.labels).length > 0) {
-        const labelPairs = Object.entries(metric.labels)
-          .map(([key, value]) => `${key}="${value}"`)
-          .join(',')
-        metricLine += `{${labelPairs}}`
-      }
-
-      // Add value and optional timestamp
-      metricLine += ` ${metric.value}`
-      if (metric.timestamp) {
-        metricLine += ` ${metric.timestamp}`
-      }
-
-      output.push(metricLine)
-    })
-
-    // Add blank line between metric groups
-    output.push('')
-  })
-
-  return output.join('\n')
+/**
+ * Record authentication attempt
+ */
+export function recordAuthAttempt(method: string, success: boolean, failureReason?: string) {
+  authAttempts.inc({ method, result: success ? 'success' : 'failure' });
+  
+  if (!success && failureReason) {
+    authFailures.inc({ method, reason: failureReason });
+  }
 }

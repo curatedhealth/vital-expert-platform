@@ -51,6 +51,17 @@ import type {
   SystemPromptGenerationResponse
 } from '@/types/healthcare-compliance';
 
+// Import new hooks and components
+import {
+  useKnowledgeDomains,
+  useModelOptions,
+  useAvailableTools,
+  useMedicalData,
+  useDepartmentFilter,
+  useRoleFilter,
+} from '@/features/chat/hooks';
+import { BasicTab, OrganizationTab, type AgentFormData as AgentFormDataType } from './agent-creator/index';
+
 interface AgentCreatorProps {
   isOpen: boolean;
   onClose: () => void;
@@ -227,29 +238,10 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
   const [showPromptIconModal, setShowPromptIconModal] = useState(false);
   const [editingPromptId, setEditingPromptId] = useState<string | null>(null);
 
-  // Dynamic model options state
-  const [modelOptions, setModelOptions] = useState<ModelOption[]>(defaultModelOptions);
-  const [loadingModels, setLoadingModels] = useState(true);
-  const [modelFitnessScore, setModelFitnessScore] = useState<FitnessScore | null>(null);
-
-  // Tools state
-  const [availableToolsFromDB, setAvailableToolsFromDB] = useState<Tool[]>([]);
-  const [loadingTools, setLoadingTools] = useState(true);
-
-  // Knowledge Domains state (loaded from database)
-  const [knowledgeDomains, setKnowledgeDomains] = useState<Array<{
-    value: string;
-    label: string;
-    tier: number;
-    recommended_embedding?: string;
-    recommended_chat?: string;
-    color?: string;
-  }>>(fallbackKnowledgeDomains);
-  const [loadingDomains, setLoadingDomains] = useState(true);
-  const [recommendedModels, setRecommendedModels] = useState<{
-    embedding: string | null;
-    chat: string | null;
-  }>({ embedding: null, chat: null });
+  // Use custom hooks for data fetching
+  const { knowledgeDomains, loadingDomains, recommendedModels, setRecommendedModels } = useKnowledgeDomains();
+  const { modelOptions, loadingModels, modelFitnessScore, setModelFitnessScore } = useModelOptions();
+  const { availableToolsFromDB, loadingTools } = useAvailableTools();
 
   const [formData, setFormData] = useState({
     name: '',
@@ -316,18 +308,30 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
   const [isGeneratingPersona, setIsGeneratingPersona] = useState(false);
   const [personaSuggestions, setPersonaSuggestions] = useState<any>(null);
 
-  // Medical Capability State
-  const [medicalCapabilities, setMedicalCapabilities] = useState<MedicalCapability[]>([]);
-  const [competencies, setCompetencies] = useState<Record<string, MedicalCompetency[]>>({ /* TODO: implement */ });
-  const [businessFunctions, setBusinessFunctions] = useState<HealthcareBusinessFunction[]>([]);
-  const [healthcareRoles, setHealthcareRoles] = useState<HealthcareRole[]>([]);
-  const [departments, setDepartments] = useState<any[]>([]);
-  const [departmentsByFunction, setDepartmentsByFunction] = useState<Record<string, any[]>>({});
-  const [loadingMedicalData, setLoadingMedicalData] = useState(true);
+  // Medical Capability State (using custom hook)
+  const {
+    medicalCapabilities,
+    competencies,
+    businessFunctions,
+    healthcareRoles,
+    departments,
+    departmentsByFunction,
+    loadingMedicalData,
+  } = useMedicalData(isOpen);
 
-  // Filtered options for conditional dropdowns
-  const [availableDepartments, setAvailableDepartments] = useState<any[]>([]);
-  const [availableRoles, setAvailableRoles] = useState<any[]>([]);
+  // Filtered options for conditional dropdowns (using custom hooks)
+  const { availableDepartments } = useDepartmentFilter({
+    formData,
+    businessFunctions,
+    departments,
+    departmentsByFunction,
+  });
+  
+  const { availableRoles } = useRoleFilter({
+    formData,
+    healthcareRoles,
+    availableDepartments,
+  });
 
   // Dynamic Prompt Generation State
   const [generatedPrompt, setGeneratedPrompt] = useState<SystemPromptGenerationResponse | null>(null);
@@ -337,123 +341,11 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
   // Tab state for multi-step form
   const [activeTab, setActiveTab] = useState<'basic' | 'organization' | 'capabilities' | 'prompts' | 'knowledge' | 'tools' | 'models' | 'reasoning' | 'safety' | 'generate'>('basic');
 
-  // Fetch knowledge domains from database
-  useEffect(() => {
-    const fetchKnowledgeDomains = async () => {
-      try {
-        setLoadingDomains(true);
-        const { data, error } = await supabase
-          .from('knowledge_domains')
-          .select('slug, name, tier, recommended_models, color')
-          .eq('is_active', true)
-          .order('priority');
+  // Fetch knowledge domains from database - NOW HANDLED BY useKnowledgeDomains HOOK
 
-        if (error) throw error;
+  // Fetch available LLM models dynamically - NOW HANDLED BY useModelOptions HOOK
 
-        if (data && data.length > 0) {
-          const domains = data.map((d) => ({
-            value: d.slug,
-            label: d.name,
-            tier: d.tier,
-            recommended_embedding: d.recommended_models?.embedding?.primary,
-            recommended_chat: d.recommended_models?.chat?.primary,
-            color: d.color,
-          }));
-          setKnowledgeDomains(domains);
-          console.log(`✅ Loaded ${domains.length} knowledge domains from database`);
-        } else {
-          setKnowledgeDomains(fallbackKnowledgeDomains);
-          console.log('ℹ️ Using fallback knowledge domains');
-        }
-      } catch (error) {
-        console.error('Failed to load knowledge domains:', error);
-        setKnowledgeDomains(fallbackKnowledgeDomains);
-      } finally {
-        setLoadingDomains(false);
-      }
-    };
-
-    fetchKnowledgeDomains();
-  }, []);
-
-  // Fetch available LLM models dynamically
-  useEffect(() => {
-    const fetchAvailableModels = async () => {
-      try {
-        setLoadingModels(true);
-        const response = await fetch('/api/llm/available-models');
-        const data = await response.json();
-
-        if (data.models && data.models.length > 0) {
-          setModelOptions(data.models);
-          console.log(`✅ Loaded ${data.models.length} LLM models from ${data.source}`);
-        } else {
-          // Fallback to default models
-          setModelOptions(defaultModelOptions);
-          console.log('ℹ️ Using default model options');
-        }
-      } catch (error) {
-        console.error('❌ Error fetching available models:', error);
-        // Fallback to default models on error
-        setModelOptions(defaultModelOptions);
-      } finally {
-        setLoadingModels(false);
-      }
-    };
-
-    fetchAvailableModels();
-  }, []);
-
-  // Load available tools from database
-  useEffect(() => {
-    const fetchAvailableTools = async () => {
-      try {
-        setLoadingTools(true);
-
-        // Fetch tools from Supabase dh_tool table
-        const { data: tools, error } = await supabase
-          .from('dh_tool')
-          .select('*')
-          .eq('is_active', true)
-          .order('category_parent', { ascending: true })
-          .order('name', { ascending: true });
-
-        if (error) {
-          console.error('❌ Error fetching tools from database:', error);
-          setAvailableToolsFromDB([]);
-          return;
-        }
-
-        // Map tools to the expected format
-        const mappedTools: Tool[] = (tools || []).map((tool) => ({
-          id: tool.id,
-          name: tool.name,
-          description: tool.tool_description || tool.llm_description || null,
-          type: tool.tool_type || null,
-          category: tool.category || null,
-          api_endpoint: tool.implementation_path || null,
-          configuration: tool.metadata || {},
-          authentication_required: (tool.required_env_vars && tool.required_env_vars.length > 0) || false,
-          rate_limit: tool.rate_limit_per_minute ? `${tool.rate_limit_per_minute}/min` : null,
-          cost_model: tool.cost_per_execution ? `$${tool.cost_per_execution}/exec` : null,
-          documentation_url: tool.documentation_url || null,
-          is_active: tool.is_active || false,
-          created_at: tool.created_at || new Date().toISOString(),
-          updated_at: tool.updated_at || new Date().toISOString(),
-        }));
-
-        setAvailableToolsFromDB(mappedTools);
-        console.log(`✅ Loaded ${mappedTools.length} tools from database (including ${tools.filter((t: any) => t.category_parent === 'Strategic Intelligence').length} Strategic Intelligence tools)`);
-      } catch (error) {
-        console.error('❌ Exception loading tools:', error);
-        setAvailableToolsFromDB([]);
-      } finally {
-        setLoadingTools(false);
-      }
-    };
-
-    fetchAvailableTools();
-  }, []);
+  // Load available tools from database - NOW HANDLED BY useAvailableTools HOOK
 
   // Load editing agent data
   useEffect(() => {

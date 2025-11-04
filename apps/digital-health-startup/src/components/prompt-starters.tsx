@@ -9,6 +9,7 @@ import { Sparkles, Zap, Brain, FileText } from 'lucide-react';
 
 export interface PromptStarter {
   id: string;
+  prompt_id?: string; // ID of the full prompt in the prompts table
   prompt_starter: string;
   name: string;
   display_name: string;
@@ -19,7 +20,7 @@ export interface PromptStarter {
 
 interface PromptStartersProps {
   prompts: PromptStarter[];
-  onSelectPrompt: (promptText: string) => void;
+  onSelectPrompt: (promptText: string, promptId?: string) => void;
   isLoading?: boolean;
   darkMode?: boolean;
 }
@@ -102,7 +103,7 @@ export function PromptStarters({
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.05 }}
-            onClick={() => onSelectPrompt(prompt.prompt_starter)}
+            onClick={() => onSelectPrompt(prompt.prompt_starter, prompt.prompt_id)}
             className={`group relative text-left p-4 rounded-xl border-2 transition-all duration-200 ${getComplexityColor(
               prompt.complexity_level
             )}`}

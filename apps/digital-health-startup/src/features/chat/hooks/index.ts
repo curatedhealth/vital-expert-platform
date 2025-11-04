@@ -1,8 +1,8 @@
-/**
- * Custom hooks for chat functionality
- * Extracted from monolithic chat page for better maintainability
- */
+export { useKnowledgeDomains } from './useKnowledgeDomains';
+export { useModelOptions } from './useModelOptions';
+export { useAvailableTools } from './useAvailableTools';
+export { useMedicalData } from './useMedicalData';
+export { useDepartmentFilter, useRoleFilter } from './useOrganizationFilters';
 
-export { useAgentRecommendations } from './useAgentRecommendations';
-export { usePromptStarters } from './usePromptStarters';
-export { useChatActions } from './useChatActions';
+export type { ModelOption, FitnessScore } from './useModelOptions';
+export type { Tool } from './useAvailableTools';

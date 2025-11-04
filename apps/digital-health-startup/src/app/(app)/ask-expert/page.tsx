@@ -2037,7 +2037,31 @@ function AskExpertPageContent() {
                     </h3>
                     <PromptStarters
                       prompts={promptStarters}
-                      onSelectPrompt={(promptText) => setInputValue(promptText)}
+                      onSelectPrompt={async (promptText, promptId) => {
+                        setInputValue(promptText);
+                        
+                        // If promptId is provided, fetch the detailed prompt
+                        if (promptId) {
+                          try {
+                            const response = await fetch('/api/prompt-detail', {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({ promptId }),
+                            });
+                            
+                            if (response.ok) {
+                              const data = await response.json();
+                              // Replace with the full user prompt template if available
+                              if (data.prompt?.user_prompt) {
+                                setInputValue(data.prompt.user_prompt);
+                              }
+                            }
+                          } catch (error) {
+                            console.error('Error fetching prompt detail:', error);
+                            // Fallback to the starter text
+                          }
+                        }
+                      }}
                       isLoading={loadingPromptStarters}
                       darkMode={darkMode}
                     />

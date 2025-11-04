@@ -687,6 +687,15 @@ export function SidebarAdminContent() {
                 <span>Tools</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton 
+                onClick={() => handleNavigation('workflows')}
+                isActive={isActive('workflows')}
+              >
+                <Workflow className="h-4 w-4" />
+                <span>Workflows</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
           </SidebarMenu>
         </SidebarGroupContent>
       </SidebarGroup>
@@ -860,6 +869,23 @@ export function SidebarAdminContent() {
               >
                 <User className="h-4 w-4" />
                 <span>Personas</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarGroupContent>
+      </SidebarGroup>
+
+      <SidebarGroup>
+        <SidebarGroupLabel>Security & Compliance</SidebarGroupLabel>
+        <SidebarGroupContent>
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton 
+                onClick={() => handleNavigation('audit-logs')}
+                isActive={isActive('audit-logs')}
+              >
+                <Shield className="h-4 w-4" />
+                <span>Audit Logs</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
           </SidebarMenu>

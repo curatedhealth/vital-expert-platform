@@ -35,6 +35,16 @@ const ToolManagement = dynamic(
   { ssr: false }
 );
 
+const WorkflowManagement = dynamic(
+  () => import('@/components/admin/WorkflowManagement').then(mod => ({ default: mod.WorkflowManagement })),
+  { ssr: false }
+);
+
+const AuditLogs = dynamic(
+  () => import('@/components/admin/AuditLogs').then(mod => ({ default: mod.AuditLogs })),
+  { ssr: false }
+);
+
 const AgentAnalyticsDashboard = dynamic(
   () => import('@/components/admin/AgentAnalyticsDashboard').then(mod => ({ default: mod.AgentAnalyticsDashboard })),
   { ssr: false }
@@ -153,6 +163,20 @@ export default function AdminPage() {
         return (
           <div className="container mx-auto py-8">
             <ToolManagement />
+          </div>
+        );
+      
+      case 'workflows':
+        return (
+          <div className="container mx-auto py-8">
+            <WorkflowManagement />
+          </div>
+        );
+      
+      case 'audit-logs':
+        return (
+          <div className="container mx-auto py-8">
+            <AuditLogs />
           </div>
         );
       

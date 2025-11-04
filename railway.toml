@@ -4,7 +4,7 @@ dockerfilePath = "services/ai-engine/Dockerfile"
 watchPatterns = ["services/ai-engine/**"]
 
 [deploy]
-startCommand = "PORT=8000 python start.py"
+startCommand = "cd services/ai-engine && python start.py"
 healthcheckPath = "/health"
 healthcheckTimeout = 60
 restartPolicyType = "ON_FAILURE"

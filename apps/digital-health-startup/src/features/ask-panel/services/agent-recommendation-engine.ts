@@ -22,10 +22,22 @@ const OPENAI_EMBEDDING_MODEL = 'text-embedding-3-small';
 const RECOMMENDATION_THRESHOLD = 0.7; // Minimum similarity score (0-1)
 const MAX_RECOMMENDATIONS = 10;
 
-// Initialize OpenAI client
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY || process.env.NEXT_PUBLIC_OPENAI_API_KEY,
-});
+// Lazy OpenAI client initialization
+let openaiClient: OpenAI | null = null;
+
+function getOpenAIClient(): OpenAI {
+  if (!openaiClient) {
+    const apiKey = process.env.OPENAI_API_KEY || process.env.NEXT_PUBLIC_OPENAI_API_KEY;
+    if (!apiKey) {
+      throw new Error(
+        'OPENAI_API_KEY is not configured. Please add it to your .env.local file:\n' +
+        'OPENAI_API_KEY=sk-your-key-here'
+      );
+    }
+    openaiClient = new OpenAI({ apiKey });
+  }
+  return openaiClient;
+}
 
 // ============================================================================
 // EMBEDDING CACHE
@@ -70,7 +82,7 @@ async function getCachedEmbedding(text: string): Promise<number[]> {
  */
 async function generateEmbedding(text: string): Promise<number[]> {
   try {
-    const response = await openai.embeddings.create({
+    const response = await getOpenAIClient().embeddings.create({
       model: OPENAI_EMBEDDING_MODEL,
       input: text,
     });

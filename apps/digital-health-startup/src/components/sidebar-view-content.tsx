@@ -657,6 +657,23 @@ export function SidebarAdminContent() {
       </SidebarGroup>
 
       <SidebarGroup>
+        <SidebarGroupLabel>AI Resources</SidebarGroupLabel>
+        <SidebarGroupContent>
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton 
+                onClick={() => handleNavigation('agents')}
+                isActive={isActive('agents')}
+              >
+                <Bot className="h-4 w-4" />
+                <span>Agents</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarGroupContent>
+      </SidebarGroup>
+
+      <SidebarGroup>
         <SidebarGroupLabel>Analytics & Monitoring</SidebarGroupLabel>
         <SidebarGroupContent>
           <SidebarMenu>

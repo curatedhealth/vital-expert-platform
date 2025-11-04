@@ -25,35 +25,69 @@ Frontend (Next.js) → API Gateway (Node.js) → Python AI Engine (FastAPI)
 
 ```
 services/ai-engine/
-├── src/
-│   ├── main.py              # FastAPI application entry point
-│   ├── start.py             # Startup script (reads PORT from env)
-│   ├── core/                # Core configuration and utilities
-│   │   ├── config.py        # Settings and configuration
-│   │   ├── monitoring.py    # Metrics and monitoring
-│   │   └── rag_config.py    # RAG configuration
-│   ├── services/            # Business logic services
-│   │   ├── agent_orchestrator.py      # Agent orchestration
-│   │   ├── agent_selector_service.py  # Agent selection
-│   │   ├── embedding_service_factory.py # Embedding services
-│   │   ├── medical_rag.py              # Medical RAG pipeline
-│   │   ├── unified_rag_service.py     # Unified RAG service
-│   │   ├── supabase_client.py          # Supabase integration
-│   │   ├── metadata_processing_service.py # Metadata extraction
-│   │   └── ...                         # Other services
-│   ├── agents/              # Agent implementations
+├── src/                           # Source code
+│   ├── main.py                    # FastAPI application entry point
+│   ├── core/                      # Core configuration and utilities
+│   │   ├── config.py              # Settings and configuration
+│   │   ├── monitoring.py          # Metrics and monitoring
+│   │   ├── rag_config.py          # RAG configuration
+│   │   └── websocket_manager.py   # WebSocket management
+│   ├── services/                  # Business logic services (30+ services)
+│   │   ├── agent_orchestrator.py
+│   │   ├── agent_selector_service.py
+│   │   ├── embedding_service_factory.py
+│   │   ├── medical_rag.py
+│   │   ├── unified_rag_service.py
+│   │   ├── supabase_client.py
+│   │   ├── metadata_processing_service.py
+│   │   └── ...
+│   ├── langgraph_workflows/       # LangGraph workflow implementations
+│   │   ├── mode1_enhanced_workflow.py
+│   │   ├── mode2_interactive_manual_workflow.py
+│   │   ├── mode3_autonomous_auto_workflow.py
+│   │   ├── mode4_autonomous_manual_workflow.py
+│   │   └── state_schemas.py
+│   ├── agents/                    # Agent implementations
 │   │   ├── regulatory_expert.py
 │   │   ├── medical_specialist.py
 │   │   └── clinical_researcher.py
-│   ├── models/              # Pydantic models
-│   │   ├── requests.py      # Request models
-│   │   └── responses.py      # Response models
-│   └── tests/               # Test suite
-├── requirements.txt         # Python dependencies
-├── Dockerfile              # Production Docker image
-├── .dockerignore           # Docker ignore patterns
-├── start.py                # Startup script
-└── README.md               # This file
+│   ├── tools/                     # LangChain tools
+│   │   ├── rag_tool.py
+│   │   ├── web_tools.py
+│   │   └── medical_research_tools.py
+│   ├── models/                    # Pydantic models
+│   │   ├── requests.py
+│   │   └── responses.py
+│   ├── middleware/                # FastAPI middleware
+│   │   ├── tenant_isolation.py
+│   │   ├── rate_limiting.py
+│   │   └── admin_auth.py
+│   └── tests/                     # Test suite (153 tests)
+├── tests/                         # Organized test suite
+│   ├── integration/               # Integration tests
+│   ├── unit/                      # Unit tests
+│   ├── security/                  # Security tests (RLS, tenant isolation)
+│   ├── workflows/                 # Workflow tests
+│   └── api/                       # API endpoint tests
+├── archive/                       # Historical documentation and scripts
+│   ├── docs/                      # 170+ archived docs
+│   │   ├── deployment/            # Deployment guides
+│   │   ├── audits/                # Quality audits
+│   │   ├── implementation/        # Feature implementation docs
+│   │   ├── planning/              # Project plans
+│   │   └── status/                # Status reports
+│   ├── scripts/                   # Legacy scripts
+│   └── tests/                     # Root-level test files
+├── data/                          # Data files
+│   └── checkpoints/               # LangGraph checkpoints
+├── requirements.txt               # Python dependencies
+├── Dockerfile                     # Production Docker image
+├── railway.toml                   # Railway deployment config
+├── start.py                       # Production startup script
+├── start_minimal.py               # Diagnostic server (debugging)
+├── pytest.ini                     # Pytest configuration
+├── README.md                      # This file
+└── FRONTEND_BACKEND_CONNECTION.md # Current setup documentation
 ```
 
 ## API Endpoints
@@ -220,6 +254,34 @@ Kubernetes deployment manifests will be added in the future for production scali
 - Reduce `max_tokens` in requests
 - Enable response streaming
 - Monitor container memory limits
+
+## Documentation
+
+### Active Documentation
+- **README.md** - This file (main documentation)
+- **FRONTEND_BACKEND_CONNECTION.md** - Current frontend-backend setup
+
+### Archived Documentation
+All historical documentation is organized in `archive/`:
+- **archive/docs/deployment/** - 50+ deployment guides (Railway, Docker, Modal, etc.)
+- **archive/docs/audits/** - 30+ quality and compliance audits
+- **archive/docs/implementation/** - 40+ feature implementation docs
+- **archive/docs/planning/** - 20+ project plans and execution guides
+- **archive/docs/status/** - 20+ status reports and checklists
+- **archive/scripts/** - 15+ deployment and utility scripts
+- **archive/tests/** - Root-level test files
+
+See `archive/README.md` for complete documentation index.
+
+## Database Migrations
+
+Database migrations are organized in `database/migrations/`:
+- **rls/** - Row-Level Security migrations
+- **seeds/use-cases/** - 30 use cases (RA, CD, MA)
+- **seeds/tools/** - 35+ tool registry seeds
+- **seeds/workflows/** - Workflow and prompt seeds
+
+See `database/migrations/README.md` for migration guide.
 
 ## License
 

@@ -8,7 +8,7 @@ import type { Metadata } from 'next'
 import './globals.css'
 import { SupabaseAuthProvider } from '@/lib/auth/supabase-auth-context'
 import { TenantProvider } from '@/contexts/TenantContext'
-import { Toaster } from 'sonner'
+import { Toaster } from '@/components/toaster-wrapper'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -30,7 +30,7 @@ export default function RootLayout({
             {children}
           </TenantProvider>
         </SupabaseAuthProvider>
-        <Toaster position="top-right" richColors closeButton />
+        <Toaster />
       </body>
     </html>
   )

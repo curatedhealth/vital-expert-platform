@@ -21,47 +21,25 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Fetch prompt starters from database with related agent and prompt data
+    console.log('Fetching prompt starters for agents:', agentIds);
+
+    // Fetch prompt starters from database
     const { data: promptStarters, error: startersError } = await supabase
       .from('dh_agent_prompt_starter')
-      .select(`
-        id,
-        title,
-        description,
-        tags,
-        position,
-        metadata,
-        prompt_id,
-        agent_id,
-        agents:agent_id (
-          id,
-          name,
-          title,
-          category,
-          expertise
-        ),
-        prompts:prompt_id (
-          id,
-          name,
-          display_name,
-          description,
-          domain,
-          complexity_level,
-          category
-        )
-      `)
+      .select('id, title, description, tags, position, metadata, prompt_id, agent_id')
       .in('agent_id', agentIds)
-      .order('agent_id', { ascending: true })
       .order('position', { ascending: true })
       .limit(20);
 
     if (startersError) {
       console.error('Error fetching prompt starters:', startersError);
       return NextResponse.json(
-        { error: 'Failed to fetch prompt starters' },
+        { error: 'Failed to fetch prompt starters', details: startersError.message },
         { status: 500 }
       );
     }
+
+    console.log('Found prompt starters:', promptStarters?.length || 0);
 
     if (!promptStarters || promptStarters.length === 0) {
       return NextResponse.json({ 
@@ -70,33 +48,68 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    // Get unique agent and prompt IDs
+    const uniqueAgentIds = [...new Set(promptStarters.map((s: any) => s.agent_id))];
+    const uniquePromptIds = [...new Set(promptStarters.map((s: any) => s.prompt_id))];
+
+    // Fetch agents data
+    const { data: agents, error: agentsError } = await supabase
+      .from('agents')
+      .select('id, name, title, category, expertise')
+      .in('id', uniqueAgentIds);
+
+    if (agentsError) {
+      console.error('Error fetching agents:', agentsError);
+    }
+
+    // Fetch prompts data
+    const { data: promptsData, error: promptsError } = await supabase
+      .from('prompts')
+      .select('id, name, display_name, description, domain, complexity_level, category')
+      .in('id', uniquePromptIds);
+
+    if (promptsError) {
+      console.error('Error fetching prompts:', promptsError);
+    }
+
+    // Create lookup maps
+    const agentsMap = new Map((agents || []).map((a: any) => [a.id, a]));
+    const promptsMap = new Map((promptsData || []).map((p: any) => [p.id, p]));
+
     // Transform the data to match the expected format
-    const prompts = promptStarters.map((starter: any) => ({
-      id: starter.id,
-      prompt_id: starter.prompt_id, // Include the actual prompt ID to fetch full prompt later
-      prompt_starter: starter.title,
-      name: starter.prompts?.name || `prompt_${starter.id}`,
-      display_name: starter.title,
-      description: starter.description,
-      domain: starter.prompts?.domain || starter.metadata?.domain || 'general',
-      complexity_level: starter.prompts?.complexity_level || starter.metadata?.complexity_level || 'intermediate',
-      category: starter.prompts?.category,
-      tags: starter.tags || [],
-      position: starter.position,
-      agent: {
-        id: starter.agents?.id,
-        name: starter.agents?.name,
-        title: starter.agents?.title
-      }
-    }));
+    const prompts = promptStarters.map((starter: any) => {
+      const agent = agentsMap.get(starter.agent_id);
+      const prompt = promptsMap.get(starter.prompt_id);
+
+      return {
+        id: starter.id,
+        prompt_id: starter.prompt_id,
+        prompt_starter: starter.title,
+        name: prompt?.name || `prompt_${starter.id}`,
+        display_name: starter.title,
+        description: starter.description,
+        domain: prompt?.domain || starter.metadata?.domain || 'general',
+        complexity_level: prompt?.complexity_level || starter.metadata?.complexity_level || 'intermediate',
+        category: prompt?.category,
+        tags: starter.tags || [],
+        position: starter.position,
+        agent: {
+          id: agent?.id,
+          name: agent?.name,
+          title: agent?.title
+        }
+      };
+    });
 
     // Get unique agents and domains
     const uniqueAgents = Array.from(
-      new Set(promptStarters.map((s: any) => s.agents?.title || s.agents?.name))
+      new Set(prompts.map((p: any) => p.agent?.title || p.agent?.name).filter(Boolean))
     );
     const uniqueDomains = Array.from(
-      new Set(prompts.map((p: any) => p.domain))
+      new Set(prompts.map((p: any) => p.domain).filter(Boolean))
     );
+
+    console.log('Returning prompts:', prompts.length);
 
     return NextResponse.json({
       prompts: prompts.slice(0, 12), // Return up to 12 prompts

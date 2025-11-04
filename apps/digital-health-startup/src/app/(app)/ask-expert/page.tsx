@@ -653,17 +653,26 @@ function AskExpertPageContent() {
     const fetchPromptStarters = async () => {
       setLoadingPromptStarters(true);
       try {
+        console.log('Fetching prompt starters for agents:', selectedAgents);
         const response = await fetch('/api/prompt-starters', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ agentIds: selectedAgents }),
         });
 
+        const data = await response.json();
+        console.log('Prompt starters API response:', data);
+
         if (response.ok) {
-          const data = await response.json();
-          setPromptStarters(data.prompts || []);
+          if (data.prompts && Array.isArray(data.prompts)) {
+            console.log('Setting prompt starters:', data.prompts.length);
+            setPromptStarters(data.prompts);
+          } else {
+            console.warn('No prompts in response:', data);
+            setPromptStarters([]);
+          }
         } else {
-          console.error('Failed to fetch prompt starters');
+          console.error('Failed to fetch prompt starters:', response.status, data);
           setPromptStarters([]);
         }
       } catch (error) {

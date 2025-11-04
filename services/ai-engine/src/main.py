@@ -11,6 +11,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, StreamingResponse
 import uvicorn
 import structlog
+import sentry_sdk
+from sentry_sdk.integrations.fastapi import FastApiIntegration
+from sentry_sdk.integrations.starlette import StarletteIntegration
 from prometheus_client import Counter, Histogram, generate_latest
 from middleware.tenant_context import get_tenant_id, set_tenant_context_in_db
 from middleware.tenant_isolation import TenantIsolationMiddleware
@@ -25,6 +28,24 @@ import asyncio
 import json
 from datetime import datetime
 from pydantic import BaseModel, Field
+
+# Initialize Sentry FIRST for error tracking
+sentry_dsn = os.getenv("SENTRY_DSN")
+if sentry_dsn:
+    sentry_sdk.init(
+        dsn=sentry_dsn,
+        integrations=[
+            FastApiIntegration(),
+            StarletteIntegration(),
+        ],
+        traces_sample_rate=0.1,  # 10% of transactions for performance monitoring
+        profiles_sample_rate=0.1,  # 10% for profiling
+        environment=os.getenv("RAILWAY_ENVIRONMENT", os.getenv("ENV", "development")),
+        before_send=lambda event, hint: None if os.getenv("ENV") == "development" else event,
+    )
+    print("✅ Sentry initialized for error tracking")
+else:
+    print("ℹ️ Sentry DSN not configured - error tracking disabled")
 
 # Configure structured logging FIRST, before any other imports that use logger
 structlog.configure(
@@ -2173,6 +2194,20 @@ async def get_system_status() -> Dict[str, Any]:
     }
 
     return status
+
+# Sentry Debug Endpoint (for testing error tracking)
+@app.get("/sentry-debug")
+async def trigger_error():
+    """
+    Test endpoint to verify Sentry error tracking is working.
+    
+    This will intentionally cause a division by zero error that should
+    be captured by Sentry. Check your Sentry dashboard after calling this.
+    
+    ⚠️ Remove or protect this endpoint in production!
+    """
+    division_by_zero = 1 / 0
+    return {"status": "This should never be reached"}
 
 if __name__ == "__main__":
     uvicorn.run(

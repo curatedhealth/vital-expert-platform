@@ -21,10 +21,24 @@ import type { NextRequest } from 'next/server';
 // CONFIGURATION
 // ============================================================================
 
-const redis = new Redis({
-  url: process.env.UPSTASH_REDIS_REST_URL!,
-  token: process.env.UPSTASH_REDIS_REST_TOKEN!,
-});
+// Initialize Redis only if credentials are available
+let redis: Redis | null = null;
+
+try {
+  if (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) {
+    redis = new Redis({
+      url: process.env.UPSTASH_REDIS_REST_URL,
+      token: process.env.UPSTASH_REDIS_REST_TOKEN,
+    });
+    console.log('✅ Upstash Redis initialized for rate limiting');
+  } else {
+    console.warn('⚠️  Upstash Redis not configured - Rate limiting is disabled');
+    console.warn('   Set UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN to enable');
+  }
+} catch (error) {
+  console.error('❌ Failed to initialize Upstash Redis:', error);
+  redis = null;
+}
 
 /**
  * Rate limit configurations
@@ -87,6 +101,18 @@ export async function checkRateLimit(
   identifier: string,
   tier: RateLimitTier = 'anonymous'
 ): Promise<RateLimitResult> {
+  // If Redis is not configured, allow all requests (fail open)
+  if (!redis) {
+    const config = RATE_LIMITS[tier];
+    const now = Date.now();
+    return {
+      success: true,
+      limit: config.requests,
+      remaining: config.requests,
+      reset: now + config.window * 1000,
+    };
+  }
+
   const config = RATE_LIMITS[tier];
   const now = Date.now();
   const windowStart = now - config.window * 1000;

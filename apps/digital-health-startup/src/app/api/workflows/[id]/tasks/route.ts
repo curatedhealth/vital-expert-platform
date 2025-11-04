@@ -3,10 +3,10 @@ import { getServiceSupabaseClient } from '@/lib/supabase/service-client';
 
 export async function GET(
   request: Request,
-  { params }: { params: Promise<{ workflowId: string }> }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { workflowId } = await params;
+    const { id: workflowId } = await params;
     const supabase = getServiceSupabaseClient();
 
     console.log('Fetching tasks for workflow:', workflowId);

@@ -233,11 +233,15 @@ class LLMOrchestrator {
       messages.push({ role: 'user', content: question });
     }
 
+    const response = await this.openai.chat.completions.create({
       model: config.model,
       messages,
       temperature: options.temperature ?? config.temperature,
       max_tokens: options.maxTokens ?? config.maxTokens,
     });
+
+    const content = response.choices[0]?.message?.content || '';
+    const tokensUsed = response.usage?.total_tokens || 0;
 
     return { content, tokensUsed };
   }
@@ -256,6 +260,7 @@ class LLMOrchestrator {
       content = question;
     }
 
+    const response = await this.anthropic.messages.create({
       model: config.model,
       max_tokens: options.maxTokens ?? config.maxTokens,
       temperature: options.temperature ?? config.temperature,
@@ -268,10 +273,12 @@ class LLMOrchestrator {
       ],
     });
 
-      ? message.content[0].text
+    const responseContent = Array.isArray(response.content)
+      ? response.content[0]?.text || ''
       : '';
 
     // Anthropic doesn't provide token usage in the same format
+    const tokensUsed = 0;
 
     return { content: responseContent, tokensUsed };
   }

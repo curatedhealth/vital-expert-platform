@@ -137,11 +137,44 @@ export function ToolDetailModal({
       if (error) throw error;
       
       // Transform data to match AgentAvatar expectations
-      const transformedAgents = (data || []).map(agent => ({
-        ...agent,
-        avatar: agent.metadata?.avatar || 'avatar_0001',
-        display_name: agent.metadata?.display_name || agent.title || agent.name
-      }));
+      const transformedAgents = (data || []).map(agent => {
+        let avatarCode = agent.metadata?.avatar || 'avatar_0001';
+        
+        // Convert descriptive avatar strings to avatar codes
+        // e.g., "01arab_male_people_beard..." -> "avatar_0001"
+        // e.g., "08boy_people_avatar..." -> "avatar_0008"
+        if (avatarCode && typeof avatarCode === 'string' &&
+            !avatarCode.match(/^avatar_\d{3,4}$/) && 
+            !avatarCode.startsWith('http') && 
+            !avatarCode.startsWith('/')) {
+          
+          // Extract number from prefix
+          const match = avatarCode.match(/^(\d+)/);
+          if (match) {
+            const num = match[1].padStart(4, '0');
+            avatarCode = `avatar_${num}`;
+          } else {
+            // Fallback mapping for descriptive terms without number prefix
+            if (avatarCode.includes('beard') || avatarCode.includes('arab')) {
+              avatarCode = 'avatar_0015';
+            } else if (avatarCode.includes('medical') || avatarCode.includes('doctor')) {
+              avatarCode = 'avatar_0010';
+            } else if (avatarCode.includes('scientist') || avatarCode.includes('research')) {
+              avatarCode = 'avatar_0012';
+            } else if (avatarCode.includes('boy') || avatarCode.includes('teenager')) {
+              avatarCode = 'avatar_0005';
+            } else {
+              avatarCode = 'avatar_0001';
+            }
+          }
+        }
+        
+        return {
+          ...agent,
+          avatar: avatarCode,
+          display_name: agent.metadata?.display_name || agent.title || agent.name
+        };
+      });
       
       setAgents(transformedAgents);
     } catch (error) {

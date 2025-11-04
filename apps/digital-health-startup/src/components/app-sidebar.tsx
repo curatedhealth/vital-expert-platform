@@ -22,6 +22,7 @@ import {
   SidebarPromptPrismContent,
   SidebarSolutionBuilderContent,
   SidebarWorkflowsContent,
+  SidebarAdminContent,
 } from "@/components/sidebar-view-content"
 
 export function AppSidebar({
@@ -40,7 +41,7 @@ export function AppSidebar({
     })
   }, [])
 
-  const sidebarUser = {
+  const sidebarUser = useMemo(() => ({
     name: sanitizeDisplayName(
       userProfile?.full_name ||
         user?.user_metadata?.full_name ||
@@ -48,14 +49,17 @@ export function AppSidebar({
       user?.email || userProfile?.email
     ),
     email: user?.email || "",
-    avatar: userProfile?.avatar_url || user?.user_metadata?.avatar_url || "",
-  }
+    avatar: ((userProfile as any)?.avatar_url || user?.user_metadata?.avatar_url || "") as string,
+  }), [user, userProfile])
 
   // Render content based on pathname - only compute after mount
   const renderContent = () => {
     if (!mounted) return <SidebarDashboardContent />
     
     if (!pathname) return <SidebarDashboardContent />
+    if (pathname.startsWith("/admin")) {
+      return <SidebarAdminContent />
+    }
     if (pathname.startsWith("/ask-expert")) {
       return <SidebarAskExpert />
     }
@@ -111,7 +115,7 @@ export function AppSidebar({
         {renderContent()}
       </SidebarContent>
       <SidebarFooter className="px-3 pb-4">
-        {mounted ? <NavUser user={sidebarUser} /> : <div className="h-16" />}
+        {mounted && user ? <NavUser user={sidebarUser} /> : <div className="h-16" />}
       </SidebarFooter>
     </Sidebar>
   )

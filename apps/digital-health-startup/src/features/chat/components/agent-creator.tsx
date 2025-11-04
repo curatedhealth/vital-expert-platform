@@ -51,8 +51,10 @@ import type {
   SystemPromptGenerationResponse
 } from '@/types/healthcare-compliance';
 
-// Import Sprint 2 components
-import { CapabilitiesTab, KnowledgeTab, ToolsTab } from './agent-creator';
+// Import Sprint 2 components from separate files
+import { CapabilitiesTab } from './agent-creator/CapabilitiesTab';
+import { KnowledgeTab } from './agent-creator/KnowledgeTab';
+import { ToolsTab } from './agent-creator/ToolsTab';
 
 interface AgentCreatorProps {
   isOpen: boolean;

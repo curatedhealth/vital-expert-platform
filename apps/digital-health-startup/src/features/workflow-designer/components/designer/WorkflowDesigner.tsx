@@ -314,6 +314,10 @@ export function WorkflowDesigner({
       type: 'application/json',
     });
     const url = URL.createObjectURL(blob);
+    if (typeof document === 'undefined') {
+      console.warn('Workflow export is only available in the browser environment.');
+      return;
+    }
     const a = document.createElement('a');
     a.href = url;
     a.download = `${workflow.name}-${Date.now()}.json`;
@@ -444,4 +448,3 @@ export function WorkflowDesigner({
     </div>
   );
 }
-

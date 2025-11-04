@@ -180,16 +180,21 @@ export default function BatchUploadPanel() {
   }, [uploadData, activeTab, options]);
 
   const downloadSample = useCallback((type: UploadType) => {
+    if (typeof document === 'undefined') {
+      console.warn('Sample download is only available in the browser environment.');
+      return;
+    }
     // eslint-disable-next-line security/detect-object-injection
     const data = sampleData[type];
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${type}_sample.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
+
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = `${type}_sample.json`;
+    document.body.appendChild(anchor);
+    anchor.click();
+    document.body.removeChild(anchor);
     URL.revokeObjectURL(url);
   }, []);
 

@@ -248,6 +248,7 @@ const RemoteMonitoringBuilder: React.FC = () => {
         authorization: 'RBAC',
         audit_logging: true
       },
+    const deployment = {
       compliance: {
         hipaa: {
           encryption_at_rest: true,
@@ -270,11 +271,21 @@ const RemoteMonitoringBuilder: React.FC = () => {
       }
     };
 
-    a.href = url;
-    a.download = 'remote_monitoring_deployment.json';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
+    if (typeof document === 'undefined') {
+      console.warn('Protocol export is only available in the browser environment.');
+      return;
+    }
+
+    const blob = new Blob([JSON.stringify(deployment, null, 2)], {
+      type: 'application/json',
+    });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = 'remote_monitoring_deployment.json';
+    document.body.appendChild(anchor);
+    anchor.click();
+    document.body.removeChild(anchor);
     URL.revokeObjectURL(url);
   };
 

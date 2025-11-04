@@ -278,6 +278,10 @@ export function LangGraphWorkflowVisualizer({
       type: 'application/json',
     });
     const url = URL.createObjectURL(blob);
+    if (typeof document === 'undefined') {
+      console.warn('Workflow export is only available in the browser environment.');
+      return;
+    }
     const a = document.createElement('a');
     a.href = url;
     a.download = `langgraph-workflow-${Date.now()}.json`;
@@ -443,4 +447,3 @@ export function LangGraphWorkflowVisualizer({
     </div>
   );
 }
-

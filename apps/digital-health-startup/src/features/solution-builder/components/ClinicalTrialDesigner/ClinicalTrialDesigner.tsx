@@ -277,11 +277,21 @@ const ClinicalTrialDesigner: React.FC = () => {
       success_probability: simulationResults?.success_probability || 0
     };
 
-    a.href = url;
-    a.download = `${trialDesign.title.replace(/\s+/g, '_')}_protocol.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
+    if (typeof document === 'undefined') {
+      console.warn('Protocol export is only available in the browser environment.');
+      return;
+    }
+
+    const blob = new Blob([JSON.stringify(protocol, null, 2)], {
+      type: 'application/json',
+    });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = `${trialDesign.title.replace(/\s+/g, '_')}_protocol.json`;
+    document.body.appendChild(anchor);
+    anchor.click();
+    document.body.removeChild(anchor);
     URL.revokeObjectURL(url);
   };
 

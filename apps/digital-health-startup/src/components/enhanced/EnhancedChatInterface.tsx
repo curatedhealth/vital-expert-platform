@@ -337,6 +337,10 @@ export const EnhancedChatInterface: React.FC<EnhancedChatInterfaceProps> = ({
 
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
+    if (typeof document === 'undefined') {
+      console.warn('Conversation export is only available in the browser environment.');
+      return;
+    }
     const a = document.createElement('a');
     a.href = url;
     a.download = `vital-conversation-${conversationId}.json`;

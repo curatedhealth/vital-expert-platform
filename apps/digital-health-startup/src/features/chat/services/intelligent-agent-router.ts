@@ -13,6 +13,10 @@ import { createClient } from '@supabase/supabase-js';
 
 // API Gateway URL for Python AI Engine
 const API_GATEWAY_URL = process.env.NEXT_PUBLIC_API_GATEWAY_URL || process.env.API_GATEWAY_URL || 'http://localhost:3001';
+const DEFAULT_TENANT_ID =
+  process.env.API_GATEWAY_TENANT_ID ||
+  process.env.NEXT_PUBLIC_DEFAULT_TENANT_ID ||
+  '00000000-0000-0000-0000-000000000001';
 
 export interface Agent {
   id: string;
@@ -109,7 +113,7 @@ JSON format:
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-tenant-id': '00000000-0000-0000-0000-000000000001',
+        'x-tenant-id': DEFAULT_TENANT_ID,
       },
       body: JSON.stringify({
         query: userQuery,

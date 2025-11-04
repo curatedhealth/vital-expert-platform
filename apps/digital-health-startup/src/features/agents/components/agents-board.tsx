@@ -491,6 +491,10 @@ export function AgentsBoard({
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     onClick={() => {
+                      if (typeof document === 'undefined') {
+                        console.warn('File upload is only available in the browser environment.');
+                        return;
+                      }
                       const input = document.createElement('input');
                       input.type = 'file';
                       input.accept = '.json,.md,.markdown';

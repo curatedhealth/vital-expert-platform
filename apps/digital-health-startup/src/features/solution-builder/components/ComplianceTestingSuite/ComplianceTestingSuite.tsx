@@ -337,7 +337,7 @@ const ComplianceTestingSuite: React.FC = () => {
         status: 'open' as const
       }));
 
-    return {
+    const report = {
       id: `report-${standardId}-${Date.now()}`,
       standard: standard?.name || standardId,
       generatedDate: new Date(),
@@ -357,13 +357,22 @@ const ComplianceTestingSuite: React.FC = () => {
         'Maintain comprehensive documentation for audit purposes'
       ]
     };
-  };
 
-    a.href = url;
-    a.download = `compliance_report_${standardId}_${new Date().toISOString().split('T')[0]}.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
+    if (typeof document === 'undefined') {
+      console.warn('Report export is only available in the browser environment.');
+      return;
+    }
+
+    const blob = new Blob([JSON.stringify(report, null, 2)], {
+      type: 'application/json',
+    });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = `compliance_report_${standardId}_${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(anchor);
+    anchor.click();
+    document.body.removeChild(anchor);
     URL.revokeObjectURL(url);
   };
 

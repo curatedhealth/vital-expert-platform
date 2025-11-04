@@ -1,292 +1,349 @@
 /**
  * Ask Panel Page
  * 
- * Multi-expert consultation interface with adaptive framework selection
+ * User-friendly journey for consulting with expert panels:
+ * - Quick start with AI suggestions
+ * - Browse templates for common scenarios
+ * - Custom panel builder
+ * - History of past consultations
+ * 
+ * Aligned with Ask Expert design patterns
  */
 
 'use client';
 
-import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { Badge } from '@/components/ui/badge';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Label } from '@/components/ui/label';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Users, Brain, TrendingUp, Shield, Stethoscope, Code, AlertCircle, Scale } from 'lucide-react';
-import { PanelMode, ExpertType, type PanelResponse } from '@/features/ask-panel/services/ask-panel-orchestrator';
-
-const EXPERT_ICONS: Record<ExpertType, React.ElementType> = {
-  [ExpertType.CEO]: TrendingUp,
-  [ExpertType.CFO]: AlertCircle,
-  [ExpertType.CMO]: Stethoscope,
-  [ExpertType.CTO]: Code,
-  [ExpertType.COO]: Users,
-  [ExpertType.ChiefNurse]: Shield,
-  [ExpertType.Compliance]: Scale,
-  [ExpertType.Legal]: Scale,
-};
-
-const EXPERT_COLORS: Record<ExpertType, string> = {
-  [ExpertType.CEO]: 'text-purple-600 bg-purple-50',
-  [ExpertType.CFO]: 'text-blue-600 bg-blue-50',
-  [ExpertType.CMO]: 'text-green-600 bg-green-50',
-  [ExpertType.CTO]: 'text-indigo-600 bg-indigo-50',
-  [ExpertType.COO]: 'text-orange-600 bg-orange-50',
-  [ExpertType.ChiefNurse]: 'text-pink-600 bg-pink-50',
-  [ExpertType.Compliance]: 'text-red-600 bg-red-50',
-  [ExpertType.Legal]: 'text-gray-600 bg-gray-50',
-};
+import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import {
+  Users,
+  Sparkles,
+  LayoutGrid,
+  History,
+  Plus,
+  ArrowRight,
+  Bot,
+  TrendingUp,
+  Clock,
+  MessageSquare,
+  Zap,
+} from 'lucide-react';
+import { PanelCreationWizard } from '@/features/ask-panel/components/PanelCreationWizard';
+import { AgentCard } from '@/features/ask-panel/components/AgentCard';
+import { PANEL_TEMPLATES } from '@/features/ask-panel/constants/panel-templates';
+import type { PanelConfiguration } from '@/features/ask-panel/types/agent';
 
 export default function AskPanelPage() {
-  const [question, setQuestion] = useState('');
-  const [selectedExperts, setSelectedExperts] = useState<ExpertType[]>([ExpertType.CEO, ExpertType.CFO, ExpertType.CMO]);
-  const [mode, setMode] = useState<PanelMode>(PanelMode.Hybrid);
-  const [allowDebate, setAllowDebate] = useState(true);
-  const [requireConsensus, setRequireConsensus] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [result, setResult] = useState<PanelResponse | null>(null);
+  const [showWizard, setShowWizard] = useState(false);
+  const [initialQuery, setInitialQuery] = useState('');
+  const [quickQuestion, setQuickQuestion] = useState('');
 
-  const showToast = async (type: 'success' | 'error', message: string) => {
-    if (typeof window === 'undefined') {
-      if (type === 'error') console.error(message);
-      else console.log(message);
-      return;
-    }
-    const sonner = await import('sonner');
-    sonner.toast[type](message);
-  };
+  // Quick start with AI
+  function handleQuickStart() {
+    setInitialQuery(quickQuestion);
+    setShowWizard(true);
+  }
 
-  const toggleExpert = (expert: ExpertType) => {
-    setSelectedExperts(prev =>
-      prev.includes(expert)
-        ? prev.filter(e => e !== expert)
-        : [...prev, expert]
-    );
-  };
-
-  const handleConsult = async () => {
-    if (!question.trim()) {
-      await showToast('error', 'Please enter a question');
-      return;
-    }
-
-    if (selectedExperts.length === 0) {
-      await showToast('error', 'Please select at least one expert');
-      return;
-    }
-
-    setIsLoading(true);
-    setResult(null);
-
-    try {
-      const response = await fetch('/api/ask-panel', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          question,
-          mode,
-          experts: selectedExperts,
-          allowDebate,
-          requireConsensus,
-          maxRounds: 10,
-          userGuidance: mode === PanelMode.Sequential ? 'high' : 'low',
-        }),
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Panel consultation failed');
-      }
-
-      const data = await response.json();
-      setResult(data);
-      await showToast('success', `Panel consultation complete using ${data.framework.toUpperCase()}`);
-    } catch (error) {
-      console.error('Panel consultation error:', error);
-      await showToast('error', error instanceof Error ? error.message : 'An error occurred');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  // Handle panel creation
+  function handlePanelCreated(config: PanelConfiguration) {
+    console.log('Panel created:', config);
+    setShowWizard(false);
+    // TODO: Navigate to panel consultation view
+  }
 
   return (
-    <div className="container mx-auto p-6 max-w-7xl">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">Ask the Panel</h1>
-        <p className="text-gray-600">
-          Consult with multiple healthcare executives simultaneously. The system intelligently
-          chooses between LangGraph (sequential) and AutoGen (collaborative) based on your needs.
-        </p>
+    <div className="h-full flex flex-col bg-gray-50 dark:bg-gray-900">
+      {/* Header */}
+      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
+              <Users className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+                Ask Panel
+              </h1>
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                Consult with multiple AI experts to get comprehensive insights
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left: Configuration */}
-        <div className="lg:col-span-1 space-y-6">
-          {/* Panel Mode */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Panel Mode</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <RadioGroup value={mode} onValueChange={(v) => setMode(v as PanelMode)}>
-                <div className="flex items-center space-x-2 mb-3">
-                  <RadioGroupItem value={PanelMode.Sequential} id="sequential" />
-                  <Label htmlFor="sequential" className="flex flex-col cursor-pointer">
-                    <span className="font-medium">Sequential</span>
-                    <span className="text-xs text-gray-500">One expert at a time (LangGraph)</span>
-                  </Label>
-                </div>
-                <div className="flex items-center space-x-2 mb-3">
-                  <RadioGroupItem value={PanelMode.Collaborative} id="collaborative" />
-                  <Label htmlFor="collaborative" className="flex flex-col cursor-pointer">
-                    <span className="font-medium">Collaborative</span>
-                    <span className="text-xs text-gray-500">Experts discuss together (AutoGen)</span>
-                  </Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value={PanelMode.Hybrid} id="hybrid" />
-                  <Label htmlFor="hybrid" className="flex flex-col cursor-pointer">
-                    <span className="font-medium">Hybrid (Auto)</span>
-                    <span className="text-xs text-gray-500">System chooses best approach</span>
-                  </Label>
-                </div>
-              </RadioGroup>
-            </CardContent>
-          </Card>
+      {/* Content */}
+      <div className="flex-1 overflow-y-auto">
+        <div className="max-w-7xl mx-auto px-6 py-8">
+          {/* Quick Start Section */}
+          <section className="mb-12">
+            <div className="text-center mb-8">
+              <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-3">
+                How can our expert panel help you today?
+              </h2>
+              <p className="text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
+                Get comprehensive insights from multiple specialized AI experts working together
+              </p>
+            </div>
 
-          {/* Options */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Options</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="flex items-center space-x-2">
-                <Checkbox id="debate" checked={allowDebate} onCheckedChange={(checked) => setAllowDebate(!!checked)} />
-                <Label htmlFor="debate" className="cursor-pointer text-sm">
-                  Allow debate between experts
-                </Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <Checkbox id="consensus" checked={requireConsensus} onCheckedChange={(checked) => setRequireConsensus(!!checked)} />
-                <Label htmlFor="consensus" className="cursor-pointer text-sm">
-                  Require consensus recommendation
-                </Label>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Expert Selection */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Select Experts ({selectedExperts.length})</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              {Object.values(ExpertType).map((expert) => {
-                const Icon = EXPERT_ICONS[expert];
-                const isSelected = selectedExperts.includes(expert);
+            {/* Quick Question Input */}
+            <div className="max-w-3xl mx-auto mb-8">
+              <div className="relative">
+                <textarea
+                  value={quickQuestion}
+                  onChange={(e) => setQuickQuestion(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+                      handleQuickStart();
+                    }
+                  }}
+                  placeholder="E.g., I need help designing a clinical trial for a digital therapeutic targeting depression..."
+                  className="w-full px-6 py-4 pr-32 rounded-2xl border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none text-base"
+                  rows={3}
+                />
                 
-                return (
-                  <div
-                    key={expert}
-                    onClick={() => toggleExpert(expert)}
-                    className={`flex items-center gap-3 p-3 rounded-lg border-2 cursor-pointer transition-all ${
-                      isSelected
-                        ? 'border-purple-500 bg-purple-50'
-                        : 'border-gray-200 hover:border-gray-300'
-                    }`}
-                  >
-                    <div className={`p-2 rounded ${EXPERT_COLORS[expert]}`}>
-                      <Icon className="w-4 h-4" />
-                    </div>
-                    <span className="text-sm font-medium capitalize">{expert.replace('_', ' ')}</span>
-                  </div>
-                );
-              })}
-            </CardContent>
-          </Card>
-        </div>
+                <button
+                  onClick={handleQuickStart}
+                  disabled={!quickQuestion.trim()}
+                  className="absolute right-3 bottom-3 flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <Sparkles className="w-4 h-4" />
+                  Get AI Panel
+                </button>
+              </div>
+              
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-2 text-center">
+                Press ⌘+Enter to submit
+              </p>
+            </div>
 
-        {/* Right: Question & Results */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* Question Input */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Your Question</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Textarea
-                placeholder="Ask the panel a strategic question... e.g., 'Should we invest $10M in a new telehealth platform?'"
-                value={question}
-                onChange={(e) => setQuestion(e.target.value)}
-                rows={4}
-                className="mb-4"
-              />
-              <Button
-                onClick={handleConsult}
-                disabled={isLoading || !question.trim() || selectedExperts.length === 0}
-                className="w-full"
-                size="lg"
+            {/* Three Entry Points */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+              {/* AI Suggestion */}
+              <motion.button
+                whileHover={{ scale: 1.02, y: -4 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => {
+                  setInitialQuery('');
+                  setShowWizard(true);
+                }}
+                className="p-6 rounded-2xl border-2 border-blue-200 dark:border-blue-700 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 hover:border-blue-400 dark:hover:border-blue-500 transition-all text-left group"
               >
-                {isLoading ? 'Consulting Panel...' : `Consult ${selectedExperts.length} Expert${selectedExperts.length > 1 ? 's' : ''}`}
-              </Button>
-            </CardContent>
-          </Card>
-
-          {/* Results */}
-          {result && (
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-base">Panel Responses</CardTitle>
-                  <Badge variant="secondary">
-                    {result.framework === 'langgraph' ? 'LangGraph (Sequential)' : 'AutoGen (Collaborative)'}
-                  </Badge>
+                <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                  <Sparkles className="w-7 h-7 text-white" />
                 </div>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {result.experts.map((expert, idx) => {
-                  const Icon = EXPERT_ICONS[expert.type];
-                  
-                  return (
-                    <div key={idx} className="border rounded-lg p-4">
-                      <div className="flex items-center gap-3 mb-3">
-                        <div className={`p-2 rounded ${EXPERT_COLORS[expert.type]}`}>
-                          <Icon className="w-5 h-5" />
-                        </div>
-                        <div>
-                          <p className="font-semibold capitalize">{expert.type.replace('_', ' ')}</p>
-                          <p className="text-xs text-gray-500">Confidence: {(expert.confidence * 100).toFixed(0)}%</p>
-                        </div>
-                      </div>
-                      <p className="text-sm text-gray-700 whitespace-pre-wrap">{expert.response}</p>
-                    </div>
-                  );
-                })}
+                
+                <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">
+                  AI Suggestion
+                </h3>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                  Let AI analyze your question and recommend the perfect expert panel
+                </p>
+                
+                <div className="flex items-center gap-2 text-blue-600 dark:text-blue-400 font-semibold text-sm">
+                  Get Started
+                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                </div>
+              </motion.button>
 
-                {result.consensus && (
-                  <div className="border-t pt-4 mt-4">
-                    <h3 className="font-semibold mb-2 flex items-center gap-2">
-                      <Users className="w-5 h-5" />
-                      Consensus
-                    </h3>
-                    {result.consensus.reached ? (
-                      <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                        <p className="text-sm text-green-900">{result.consensus.finalRecommendation}</p>
-                      </div>
-                    ) : (
-                      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                        <p className="text-sm text-yellow-900">No consensus reached. Dissenting views present.</p>
-                      </div>
-                    )}
+              {/* Use Template */}
+              <motion.button
+                whileHover={{ scale: 1.02, y: -4 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => {
+                  setInitialQuery('');
+                  setShowWizard(true);
+                }}
+                className="p-6 rounded-2xl border-2 border-purple-200 dark:border-purple-700 bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 hover:border-purple-400 dark:hover:border-purple-500 transition-all text-left group"
+              >
+                <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                  <LayoutGrid className="w-7 h-7 text-white" />
+                </div>
+                
+                <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">
+                  Browse Templates
+                </h3>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                  Choose from pre-configured panels for common healthcare scenarios
+                </p>
+                
+                <div className="flex items-center gap-2 text-purple-600 dark:text-purple-400 font-semibold text-sm">
+                  View Templates
+                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                </div>
+              </motion.button>
+
+              {/* Custom Panel */}
+              <motion.button
+                whileHover={{ scale: 1.02, y: -4 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => {
+                  setInitialQuery('');
+                  setShowWizard(true);
+                }}
+                className="p-6 rounded-2xl border-2 border-emerald-200 dark:border-emerald-700 bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-900/20 dark:to-emerald-800/20 hover:border-emerald-400 dark:hover:border-emerald-500 transition-all text-left group"
+              >
+                <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                  <Plus className="w-7 h-7 text-white" />
+                </div>
+                
+                <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">
+                  Build Custom Panel
+                </h3>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                  Manually select agents and configure every detail to your needs
+                </p>
+                
+                <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400 font-semibold text-sm">
+                  Start Building
+                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                </div>
+              </motion.button>
+            </div>
+          </section>
+
+          {/* Popular Templates */}
+          <section className="mb-12">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                <TrendingUp className="w-6 h-6 text-purple-500" />
+                Popular Templates
+              </h2>
+              
+              <button
+                onClick={() => setShowWizard(true)}
+                className="text-sm font-medium text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 flex items-center gap-1"
+              >
+                View All
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {PANEL_TEMPLATES.slice(0, 6).map((template) => (
+                <motion.button
+                  key={template.id}
+                  whileHover={{ scale: 1.02, y: -4 }}
+                  onClick={() => {
+                    // TODO: Pre-select this template in wizard
+                    setShowWizard(true);
+                  }}
+                  className="p-6 rounded-xl border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-purple-300 dark:hover:border-purple-600 hover:shadow-lg transition-all text-left group"
+                >
+                  <div className="flex items-start gap-4 mb-4">
+                    <div className="text-3xl">{template.icon}</div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-bold text-gray-900 dark:text-white mb-1 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
+                        {template.name}
+                      </h3>
+                      <span className="inline-block text-xs px-2 py-0.5 rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 capitalize">
+                        {template.category}
+                      </span>
+                    </div>
                   </div>
-                )}
-              </CardContent>
-            </Card>
-          )}
+                  
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-4 line-clamp-2">
+                    {template.description}
+                  </p>
+                  
+                  <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
+                    <div className="flex items-center gap-1">
+                      <Bot className="w-3.5 h-3.5" />
+                      <span>{template.suggestedAgents.length} experts</span>
+                    </div>
+                    
+                    <div className="flex items-center gap-1">
+                      <Zap className="w-3.5 h-3.5" />
+                      <span className="capitalize">{template.mode}</span>
+                    </div>
+                  </div>
+                </motion.button>
+              ))}
+            </div>
+          </section>
+
+          {/* Why Use Panel? */}
+          <section className="mb-12">
+            <div className="bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 rounded-2xl border-2 border-purple-200 dark:border-purple-700 p-8">
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6 text-center">
+                Why Consult with a Panel?
+              </h2>
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="text-center">
+                  <div className="w-14 h-14 rounded-full bg-purple-100 dark:bg-purple-900/40 flex items-center justify-center mx-auto mb-4">
+                    <Users className="w-7 h-7 text-purple-600 dark:text-purple-400" />
+                  </div>
+                  <h3 className="font-semibold text-gray-900 dark:text-white mb-2">
+                    Diverse Perspectives
+                  </h3>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Get insights from multiple specialized experts with different backgrounds
+                  </p>
+                </div>
+                
+                <div className="text-center">
+                  <div className="w-14 h-14 rounded-full bg-blue-100 dark:bg-blue-900/40 flex items-center justify-center mx-auto mb-4">
+                    <MessageSquare className="w-7 h-7 text-blue-600 dark:text-blue-400" />
+                  </div>
+                  <h3 className="font-semibold text-gray-900 dark:text-white mb-2">
+                    Collaborative Discussion
+                  </h3>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Experts debate and refine ideas together to reach better conclusions
+                  </p>
+                </div>
+                
+                <div className="text-center">
+                  <div className="w-14 h-14 rounded-full bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center mx-auto mb-4">
+                    <Sparkles className="w-7 h-7 text-emerald-600 dark:text-emerald-400" />
+                  </div>
+                  <h3 className="font-semibold text-gray-900 dark:text-white mb-2">
+                    Consensus Building
+                  </h3>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Receive a unified recommendation backed by multiple expert opinions
+                  </p>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* Recent Consultations (placeholder) */}
+          <section>
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                <History className="w-6 h-6 text-gray-500" />
+                Recent Consultations
+              </h2>
+            </div>
+
+            <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-xl border-2 border-dashed border-gray-300 dark:border-gray-600">
+              <Clock className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+              <p className="text-gray-600 dark:text-gray-400 mb-4">
+                Your consultation history will appear here
+              </p>
+              <button
+                onClick={() => setShowWizard(true)}
+                className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white rounded-lg font-semibold shadow-lg hover:shadow-xl transition-all"
+              >
+                <Plus className="w-4 h-4" />
+                Start Your First Consultation
+              </button>
+            </div>
+          </section>
         </div>
       </div>
+
+      {/* Panel Creation Wizard */}
+      <AnimatePresence>
+        {showWizard && (
+          <PanelCreationWizard
+            initialQuery={initialQuery}
+            onComplete={handlePanelCreated}
+            onCancel={() => setShowWizard(false)}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }

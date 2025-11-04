@@ -220,3 +220,7 @@ coverage/
 /analyze/
 .next/analyze/
 services/ai-engine/.env.backup
+
+# Railway environment variables (contain secrets)
+railway-environment-variables.json
+railway-env-*.txt

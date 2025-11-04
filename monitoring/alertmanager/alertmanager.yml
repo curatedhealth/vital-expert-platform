@@ -1,105 +1,170 @@
 # Alertmanager Configuration
-# Routes alerts to appropriate notification channels
+# Routes alerts to appropriate channels (Slack, PagerDuty, Email)
 
 global:
   resolve_timeout: 5m
-  # Slack webhook (configure in production)
-  # slack_api_url: 'https://hooks.slack.com/services/YOUR/WEBHOOK/URL'
+  # Slack webhook URL (set via environment variable)
+  slack_api_url: '${SLACK_WEBHOOK_URL}'
 
 # Templates for alert notifications
 templates:
-  - '/etc/alertmanager/templates/*.tmpl'
+  - '/etc/alertmanager/*.tmpl'
 
-# Root route - all alerts start here
+# Route configuration
 route:
-  group_by: ['alertname', 'component', 'severity']
-  group_wait: 10s
-  group_interval: 10s
-  repeat_interval: 12h
+  # Default receiver for all alerts
   receiver: 'default'
+  
+  # Group alerts by these labels
+  group_by: ['alertname', 'cluster', 'service']
+  
+  # Wait time before sending a notification
+  group_wait: 10s
+  
+  # Wait time before sending updates for the same group
+  group_interval: 10s
+  
+  # Wait time before re-sending an alert
+  repeat_interval: 12h
 
-  # Child routes for specific alert types
+  # Route tree for different alert types
   routes:
-    # Critical RAG alerts go to PagerDuty
+    # Critical alerts go to PagerDuty immediately
     - match:
         severity: critical
-        component: rag
       receiver: 'pagerduty'
-      continue: true
+      continue: true # Also send to Slack
 
-    # Warning RAG alerts go to Slack
+    # Warning alerts go to Slack
     - match:
         severity: warning
-        component: rag
-      receiver: 'slack'
+      receiver: 'slack-warnings'
 
-    # Cost alerts go to email
+    # Cost alerts go to finance channel
     - match:
-        component: rag
-      match_re:
-        alertname: '^RAG.*Budget.*'
-      receiver: 'email'
+        category: cost
+      receiver: 'slack-finance'
 
-# Notification receivers
-receivers:
-  # Default receiver (logs only)
-  - name: 'default'
-    # webhook_configs:
-    #   - url: 'http://localhost:5001/'
+    # Security alerts go to security channel
+    - match:
+        category: security
+      receiver: 'slack-security'
 
-  # Slack notifications
-  - name: 'slack'
-    slack_configs:
-      - send_resolved: true
-        # api_url: '{{ global.slack_api_url }}'
-        channel: '#vital-path-alerts'
-        title: '{{ .GroupLabels.alertname }}'
-        text: |-
-          {{ range .Alerts }}
-          *Alert:* {{ .Labels.alertname }}
-          *Severity:* {{ .Labels.severity }}
-          *Description:* {{ .Annotations.description }}
-          *Runbook:* {{ .Annotations.runbook_url }}
-          {{ end }}
-        # Uncomment in production:
-        # username: 'VITAL Path Monitoring'
-        # icon_emoji: ':chart_with_upwards_trend:'
+    # Agent performance alerts
+    - match:
+        category: agent
+      receiver: 'slack-engineering'
 
-  # Email notifications
-  - name: 'email'
-    email_configs:
-      - send_resolved: true
-        # to: 'ops@vital-path.com'
-        # from: 'alertmanager@vital-path.com'
-        # smarthost: 'smtp.gmail.com:587'
-        # auth_username: 'alertmanager@vital-path.com'
-        # auth_password: 'PASSWORD'
-        headers:
-          Subject: 'RAG Cost Alert: {{ .GroupLabels.alertname }}'
+    # Database alerts
+    - match:
+        category: database
+      receiver: 'slack-engineering'
+      continue: true
 
-  # PagerDuty for critical alerts
-  - name: 'pagerduty'
-    pagerduty_configs:
-      - send_resolved: true
-        # routing_key: 'YOUR_PAGERDUTY_INTEGRATION_KEY'
-        description: '{{ .GroupLabels.alertname }}: {{ .Annotations.summary }}'
-        details:
-          severity: '{{ .Labels.severity }}'
-          component: '{{ .Labels.component }}'
-          runbook: '{{ .Annotations.runbook_url }}'
+    # Info alerts (low priority)
+    - match:
+        severity: info
+      receiver: 'slack-info'
+      repeat_interval: 24h
 
-# Inhibition rules - suppress alerts based on other active alerts
+# Inhibition rules (suppress certain alerts when others fire)
 inhibit_rules:
-  # Suppress warnings if critical alert is firing
+  # Suppress warning if critical alert is firing
   - source_match:
       severity: 'critical'
     target_match:
       severity: 'warning'
-    equal: ['alertname', 'component']
+    equal: ['alertname', 'instance']
 
-  # Suppress HALF_OPEN alerts if OPEN alert is firing
+  # Suppress agent latency if agent is down
   - source_match:
-      alertname: 'RAGCircuitBreakerOpen'
+      alertname: 'AgentDown'
     target_match:
-      alertname: 'RAGCircuitBreakerHalfOpen'
-    equal: ['service']
+      alertname: 'HighAgentLatency'
+    equal: ['instance']
+
+# Receivers configuration
+receivers:
+  # Default receiver (catch-all)
+  - name: 'default'
+    slack_configs:
+      - channel: '#vital-alerts'
+        title: '🚨 VITAL Alert'
+        text: '{{ range .Alerts }}*{{ .Labels.alertname }}*: {{ .Annotations.description }}{{ end }}'
+        send_resolved: true
+
+  # PagerDuty for critical alerts
+  - name: 'pagerduty'
+    pagerduty_configs:
+      - service_key: '${PAGERDUTY_SERVICE_KEY}'
+        description: '{{ .GroupLabels.alertname }}: {{ .CommonAnnotations.summary }}'
+        severity: '{{ .CommonLabels.severity }}'
+        client: 'VITAL Platform'
+        client_url: 'https://vital.example.com/admin'
+
+  # Slack - Warnings
+  - name: 'slack-warnings'
+    slack_configs:
+      - channel: '#vital-warnings'
+        title: '⚠️  Warning Alert'
+        text: |
+          *Alert:* {{ .CommonLabels.alertname }}
+          *Severity:* {{ .CommonLabels.severity }}
+          *Summary:* {{ .CommonAnnotations.summary }}
+          *Description:* {{ .CommonAnnotations.description }}
+          {{ range .Alerts }}
+          *Instance:* {{ .Labels.instance }}
+          {{ end }}
+        color: 'warning'
+        send_resolved: true
+
+  # Slack - Finance/Cost Alerts
+  - name: 'slack-finance'
+    slack_configs:
+      - channel: '#vital-finance'
+        title: '💰 Cost Alert'
+        text: |
+          *Alert:* {{ .CommonLabels.alertname }}
+          *Summary:* {{ .CommonAnnotations.summary }}
+          *Description:* {{ .CommonAnnotations.description }}
+          *Current Value:* ${{ .CommonAnnotations.value }}
+        color: '#ff9900'
+        send_resolved: true
+
+  # Slack - Security Alerts
+  - name: 'slack-security'
+    slack_configs:
+      - channel: '#vital-security'
+        title: '🔒 Security Alert'
+        text: |
+          *Alert:* {{ .CommonLabels.alertname }}
+          *Severity:* {{ .CommonLabels.severity }}
+          *Summary:* {{ .CommonAnnotations.summary }}
+          *Description:* {{ .CommonAnnotations.description }}
+        color: 'danger'
+        send_resolved: true
+
+  # Slack - Engineering/Technical
+  - name: 'slack-engineering'
+    slack_configs:
+      - channel: '#vital-engineering'
+        title: '🔧 Technical Alert'
+        text: |
+          *Alert:* {{ .CommonLabels.alertname }}
+          *Category:* {{ .CommonLabels.category }}
+          *Summary:* {{ .CommonAnnotations.summary }}
+          *Description:* {{ .CommonAnnotations.description }}
+        color: '#36a64f'
+        send_resolved: true
+
+  # Slack - Info (low priority)
+  - name: 'slack-info'
+    slack_configs:
+      - channel: '#vital-info'
+        title: 'ℹ️  Information'
+        text: '{{ .CommonAnnotations.summary }}'
+        send_resolved: false
+
+# Example environment variables needed:
+# export SLACK_WEBHOOK_URL="https://hooks.slack.com/services/YOUR/WEBHOOK/URL"
+# export PAGERDUTY_SERVICE_KEY="your-pagerduty-key"

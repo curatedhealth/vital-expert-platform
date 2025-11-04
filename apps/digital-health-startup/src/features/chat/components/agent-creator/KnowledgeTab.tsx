@@ -1,3 +1,4 @@
+import React from 'react';
 import { Plus, X, Zap, Brain, CheckCircle } from 'lucide-react';
 
 import { Badge } from '@vital/ui';

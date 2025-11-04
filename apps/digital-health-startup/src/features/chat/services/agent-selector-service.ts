@@ -93,7 +93,7 @@ export interface AgentSelectionResult {
 
 export class AgentSelectorService {
   private supabase;
-  private pinecone: Pinecone;
+  private pinecone: Pinecone | null;
   private logger;
   private supabaseCircuitBreaker;
   private embeddingCache;
@@ -107,10 +107,15 @@ export class AgentSelectorService {
     const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
     this.supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Initialize Pinecone client
-    this.pinecone = new Pinecone({
-      apiKey: process.env.PINECONE_API_KEY!,
-    });
+    // Initialize Pinecone client (optional - for vector search)
+    if (process.env.PINECONE_API_KEY) {
+      this.pinecone = new Pinecone({
+        apiKey: process.env.PINECONE_API_KEY,
+      });
+    } else {
+      console.warn('⚠️  PINECONE_API_KEY not set - Vector search disabled in AgentSelectorService');
+      this.pinecone = null;
+    }
 
     // OpenAI API key no longer needed - using Python AI Engine via API Gateway
     // this.openaiApiKey = process.env.OPENAI_API_KEY!;

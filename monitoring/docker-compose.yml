@@ -1,10 +1,7 @@
-# Docker Compose for VITAL Path Monitoring Stack
-# Prometheus + Grafana + Alertmanager
-
 version: '3.8'
 
 services:
-  # Prometheus - Metrics collection and storage
+  # Prometheus - Metrics Collection
   prometheus:
     image: prom/prometheus:latest
     container_name: vital-prometheus
@@ -12,49 +9,42 @@ services:
     ports:
       - "9090:9090"
     volumes:
-      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
-      - ./prometheus/alerts:/etc/prometheus/alerts:ro
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./prometheus/alerts.yml:/etc/prometheus/alerts.yml
       - prometheus-data:/prometheus
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
       - '--storage.tsdb.path=/prometheus'
-      - '--storage.tsdb.retention.time=90d'
-      - '--storage.tsdb.retention.size=50GB'
+      - '--storage.tsdb.retention.time=30d'
       - '--web.console.libraries=/usr/share/prometheus/console_libraries'
       - '--web.console.templates=/usr/share/prometheus/consoles'
       - '--web.enable-lifecycle'
     networks:
       - monitoring
-    labels:
-      - "com.vital-path.service=prometheus"
-      - "com.vital-path.description=Metrics collection and storage"
 
-  # Grafana - Metrics visualization
+  # Grafana - Visualization & Dashboards
   grafana:
     image: grafana/grafana:latest
     container_name: vital-grafana
     restart: unless-stopped
     ports:
-      - "3002:3000"  # Using 3002 to avoid conflict with Next.js on 3001
-    volumes:
-      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
-      - ./grafana/provisioning:/etc/grafana/provisioning:ro
-      - grafana-data:/var/lib/grafana
+      - "3001:3000"
     environment:
       - GF_SECURITY_ADMIN_USER=admin
-      - GF_SECURITY_ADMIN_PASSWORD=vital-path-2025  # CHANGE IN PRODUCTION
-      - GF_USERS_ALLOW_SIGN_UP=false
-      - GF_SERVER_ROOT_URL=http://localhost:3002
-      - GF_INSTALL_PLUGINS=grafana-piechart-panel
-    networks:
-      - monitoring
+      - GF_SECURITY_ADMIN_PASSWORD=vital_admin_2025
+      - GF_INSTALL_PLUGINS=grafana-clock-panel,grafana-simple-json-datasource,grafana-piechart-panel
+      - GF_SERVER_ROOT_URL=http://localhost:3001
+      - GF_AUTH_ANONYMOUS_ENABLED=false
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning
+      - ./grafana/dashboards:/var/lib/grafana/dashboards
     depends_on:
       - prometheus
-    labels:
-      - "com.vital-path.service=grafana"
-      - "com.vital-path.description=Metrics visualization and dashboards"
+    networks:
+      - monitoring
 
-  # Alertmanager - Alert routing and notification (optional)
+  # Alertmanager - Alert Routing
   alertmanager:
     image: prom/alertmanager:latest
     container_name: vital-alertmanager
@@ -62,18 +52,15 @@ services:
     ports:
       - "9093:9093"
     volumes:
-      - ./alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+      - ./alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml
       - alertmanager-data:/alertmanager
     command:
       - '--config.file=/etc/alertmanager/alertmanager.yml'
       - '--storage.path=/alertmanager'
     networks:
       - monitoring
-    labels:
-      - "com.vital-path.service=alertmanager"
-      - "com.vital-path.description=Alert routing and notifications"
 
-  # Node Exporter - System metrics (optional)
+  # Node Exporter - System Metrics
   node-exporter:
     image: prom/node-exporter:latest
     container_name: vital-node-exporter
@@ -90,30 +77,57 @@ services:
       - /:/rootfs:ro
     networks:
       - monitoring
-    labels:
-      - "com.vital-path.service=node-exporter"
-      - "com.vital-path.description=System metrics collection"
+
+  # PostgreSQL Exporter - Database Metrics
+  postgres-exporter:
+    image: prometheuscommunity/postgres-exporter:latest
+    container_name: vital-postgres-exporter
+    restart: unless-stopped
+    ports:
+      - "9187:9187"
+    environment:
+      - DATA_SOURCE_NAME=postgresql://postgres:${SUPABASE_PASSWORD}@${SUPABASE_HOST}:5432/postgres?sslmode=require
+    networks:
+      - monitoring
+
+  # LangFuse - LLM Observability (Optional but Recommended)
+  langfuse-server:
+    image: langfuse/langfuse:latest
+    container_name: vital-langfuse
+    restart: unless-stopped
+    ports:
+      - "3002:3000"
+    environment:
+      - DATABASE_URL=postgresql://postgres:${LANGFUSE_DB_PASSWORD}@langfuse-db:5432/langfuse
+      - NEXTAUTH_URL=http://localhost:3002
+      - NEXTAUTH_SECRET=${LANGFUSE_NEXTAUTH_SECRET}
+      - SALT=${LANGFUSE_SALT}
+      - TELEMETRY_ENABLED=false
+    depends_on:
+      - langfuse-db
+    networks:
+      - monitoring
+
+  # LangFuse Database
+  langfuse-db:
+    image: postgres:15-alpine
+    container_name: vital-langfuse-db
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=${LANGFUSE_DB_PASSWORD}
+      - POSTGRES_DB=langfuse
+    volumes:
+      - langfuse-db-data:/var/lib/postgresql/data
+    networks:
+      - monitoring
+
+volumes:
+  prometheus-data:
+  grafana-data:
+  alertmanager-data:
+  langfuse-db-data:
 
 networks:
   monitoring:
     driver: bridge
-    external: false
-    labels:
-      - "com.vital-path.network=monitoring"
-  
-  # Note: To access Python AI Engine, use host.docker.internal:8000 (Mac/Windows)
-  # For Linux, configure network_mode: "host" or use Docker service discovery
-
-volumes:
-  prometheus-data:
-    driver: local
-    labels:
-      - "com.vital-path.volume=prometheus-data"
-  grafana-data:
-    driver: local
-    labels:
-      - "com.vital-path.volume=grafana-data"
-  alertmanager-data:
-    driver: local
-    labels:
-      - "com.vital-path.volume=alertmanager-data"

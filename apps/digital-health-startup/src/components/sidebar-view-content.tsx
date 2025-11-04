@@ -628,11 +628,20 @@ export function SidebarAdminContent() {
           <SidebarMenu>
             <SidebarMenuItem>
               <SidebarMenuButton 
+                onClick={() => handleNavigation('executive')}
+                isActive={isActive('executive')}
+              >
+                <TrendingUp className="h-4 w-4" />
+                <span>Executive Dashboard</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton 
                 onClick={() => handleNavigation('overview')}
                 isActive={isActive('overview')}
               >
                 <Home className="h-4 w-4" />
-                <span>Dashboard</span>
+                <span>Admin Dashboard</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
           </SidebarMenu>

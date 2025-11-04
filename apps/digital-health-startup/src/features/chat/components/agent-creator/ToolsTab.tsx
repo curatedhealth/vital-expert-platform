@@ -1,3 +1,4 @@
+import React from 'react';
 import { Wrench, CheckCircle } from 'lucide-react';
 
 import { Badge } from '@vital/ui';

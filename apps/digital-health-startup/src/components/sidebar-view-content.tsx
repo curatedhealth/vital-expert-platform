@@ -678,6 +678,15 @@ export function SidebarAdminContent() {
                 <span>Prompts</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton 
+                onClick={() => handleNavigation('tools')}
+                isActive={isActive('tools')}
+              >
+                <Settings className="h-4 w-4" />
+                <span>Tools</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
           </SidebarMenu>
         </SidebarGroupContent>
       </SidebarGroup>

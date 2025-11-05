@@ -11,9 +11,9 @@ export const dynamic = 'force-dynamic';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }>
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const supabase = createClient();
+  const supabase = await createClient();
   
   // Authenticate user
   const { data: { user }, error: authError } = await supabase.auth.getUser();
@@ -21,7 +21,7 @@ export async function GET(
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const { id: executionId } = params;
+  const { id: executionId } = await params;
 
   // Verify execution exists and user has access
   const { data: execution, error: fetchError } = await supabase

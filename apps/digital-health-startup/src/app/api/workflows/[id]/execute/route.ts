@@ -12,10 +12,10 @@ const PYTHON_AI_ENGINE_URL = process.env.PYTHON_AI_ENGINE_URL || 'http://localho
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }>
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
     
     // Get current user
     const { data: { user }, error: authError } = await supabase.auth.getUser();
@@ -220,10 +220,10 @@ export async function POST(
 // Get execution history
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }>
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
     
     // Get current user
     const { data: { user }, error: authError } = await supabase.auth.getUser();

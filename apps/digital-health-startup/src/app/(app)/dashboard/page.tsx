@@ -10,6 +10,7 @@ import { useRouter } from 'next/navigation';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@vital/ui';
 import { Button } from '@vital/ui';
 import { Badge } from '@vital/ui';
+import { PageHeader } from '@/components/page-header';
 import {
   MessageSquare,
   Users,
@@ -32,181 +33,196 @@ export default function DashboardPage() {
   const [activeTab, setActiveTab] = useState('overview');
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-6 py-8 space-y-8">
-        {/* Page Header */}
-        <div className="border-b bg-background px-6 py-4 -mx-6 -mt-8 mb-8">
-          <div className="flex items-center gap-3">
-            <BarChart3 className="h-8 w-8 text-muted-foreground" />
-            <div>
-              <h1 className="text-3xl font-bold">Dashboard</h1>
-              <p className="text-sm text-muted-foreground">
-                Overview of your services and recent activity
-              </p>
-            </div>
-          </div>
-        </div>
+    <div className="flex-1 flex flex-col overflow-hidden">
+      {/* Page Header */}
+      <PageHeader
+        icon={BarChart3}
+        title="Dashboard"
+        description="Overview of your services and recent activity"
+      />
+
+      {/* Main Content Area */}
+      <div className="flex-1 overflow-y-auto">
+        <div className="max-w-7xl mx-auto p-6 space-y-8">
         
         {/* Service Overview - 4 Main Services */}
         <section>
-          <h2 className="text-2xl font-semibold mb-4">Your Services</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             
             {/* Ask Expert Service */}
-            <Card className="cursor-pointer hover:shadow-lg transition-all border-2 hover:border-blue-500"
+            <Card className="cursor-pointer hover:shadow-lg transition-shadow"
                   onClick={() => router.push('/ask-expert')}>
               <CardHeader>
-                <div className="flex items-center justify-between">
-                  <MessageSquare className="w-10 h-10 text-blue-600" />
-                  <Badge variant="secondary">Active</Badge>
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex items-center gap-3">
+                    <MessageSquare className="w-5 h-5 text-muted-foreground" />
+                    <CardTitle className="text-lg">Ask Expert</CardTitle>
+                  </div>
                 </div>
-                <CardTitle className="mt-4">Ask Expert</CardTitle>
-                <CardDescription>1:1 Expert Consultation</CardDescription>
+                <CardDescription className="text-sm mb-4">
+                  1:1 Expert Consultation
+                </CardDescription>
+
+                {/* Badges */}
+                <div className="flex flex-wrap gap-2">
+                  <Badge variant="secondary" className="text-xs">Active</Badge>
+                  <Badge variant="outline" className="text-xs">47 chats</Badge>
+                  <Badge variant="outline" className="text-xs text-green-600">3 active</Badge>
+                </div>
               </CardHeader>
+
               <CardContent>
-                <div className="space-y-3">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Total Chats</span>
-                    <span className="font-semibold">47</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Active Now</span>
-                    <span className="font-semibold text-green-600">3</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">This Week</span>
-                    <span className="font-semibold">+12</span>
-                  </div>
-                  <div className="border-t pt-3 mt-3">
-                    <Button className="w-full" size="sm" onClick={(e) => {
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground text-xs">
+                    +12 this week
+                  </span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                    onClick={(e) => {
                       e.stopPropagation();
                       router.push('/ask-expert');
-                    }}>
-                      <MessageSquare className="w-4 h-4 mr-2" />
-                      Start Chat
-                    </Button>
-                  </div>
+                    }}
+                  >
+                    Start Chat
+                    <ArrowRight className="w-3 h-3 ml-1" />
+                  </Button>
                 </div>
               </CardContent>
             </Card>
 
             {/* Ask Panel Service */}
-            <Card className="cursor-pointer hover:shadow-lg transition-all border-2 hover:border-purple-500"
+            <Card className="cursor-pointer hover:shadow-lg transition-shadow"
                   onClick={() => router.push('/ask-panel')}>
               <CardHeader>
-                <div className="flex items-center justify-between">
-                  <Users className="w-10 h-10 text-purple-600" />
-                  <Badge variant="secondary" className="bg-amber-100 text-amber-700">
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex items-center gap-3">
+                    <Users className="w-5 h-5 text-muted-foreground" />
+                    <CardTitle className="text-lg">Ask Panel</CardTitle>
+                  </div>
+                </div>
+                <CardDescription className="text-sm mb-4">
+                  Multi-Expert Advisory Board
+                </CardDescription>
+
+                {/* Badges */}
+                <div className="flex flex-wrap gap-2">
+                  <Badge variant="secondary" className="bg-amber-100 text-amber-700 text-xs">
                     2 Running
                   </Badge>
+                  <Badge variant="outline" className="text-xs">12 panels</Badge>
+                  <Badge variant="outline" className="text-xs">87% consensus</Badge>
                 </div>
-                <CardTitle className="mt-4">Ask Panel</CardTitle>
-                <CardDescription>Multi-Expert Advisory Board</CardDescription>
               </CardHeader>
+
               <CardContent>
-                <div className="space-y-3">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Total Panels</span>
-                    <span className="font-semibold">12</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Running</span>
-                    <span className="font-semibold text-amber-600">2</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Avg Consensus</span>
-                    <span className="font-semibold">87%</span>
-                  </div>
-                  <div className="border-t pt-3 mt-3">
-                    <Button className="w-full" size="sm" onClick={(e) => {
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground text-xs">
+                    Click to view all
+                  </span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 text-purple-600 hover:text-purple-700 hover:bg-purple-50"
+                    onClick={(e) => {
                       e.stopPropagation();
                       router.push('/ask-panel');
-                    }}>
-                      <Users className="w-4 h-4 mr-2" />
-                      New Panel
-                    </Button>
-                  </div>
+                    }}
+                  >
+                    New Panel
+                    <ArrowRight className="w-3 h-3 ml-1" />
+                  </Button>
                 </div>
               </CardContent>
             </Card>
 
             {/* Workflows Service */}
-            <Card className="cursor-pointer hover:shadow-lg transition-all border-2 hover:border-green-500"
+            <Card className="cursor-pointer hover:shadow-lg transition-shadow"
                   onClick={() => router.push('/workflows')}>
               <CardHeader>
-                <div className="flex items-center justify-between">
-                  <GitBranch className="w-10 h-10 text-green-600" />
-                  <Badge variant="secondary" className="bg-blue-100 text-blue-700">
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex items-center gap-3">
+                    <GitBranch className="w-5 h-5 text-muted-foreground" />
+                    <CardTitle className="text-lg">Workflows</CardTitle>
+                  </div>
+                </div>
+                <CardDescription className="text-sm mb-4">
+                  Guided Multi-Step Processes
+                </CardDescription>
+
+                {/* Badges */}
+                <div className="flex flex-wrap gap-2">
+                  <Badge variant="secondary" className="bg-blue-100 text-blue-700 text-xs">
                     3 In Progress
                   </Badge>
+                  <Badge variant="outline" className="text-xs">8 workflows</Badge>
+                  <Badge variant="outline" className="text-xs">85% complete</Badge>
                 </div>
-                <CardTitle className="mt-4">Workflows</CardTitle>
-                <CardDescription>Guided Multi-Step Processes</CardDescription>
               </CardHeader>
+
               <CardContent>
-                <div className="space-y-3">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Total Workflows</span>
-                    <span className="font-semibold">8</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">In Progress</span>
-                    <span className="font-semibold text-blue-600">3</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Avg Complete</span>
-                    <span className="font-semibold">85%</span>
-                  </div>
-                  <div className="border-t pt-3 mt-3">
-                    <Button className="w-full" size="sm" onClick={(e) => {
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground text-xs">
+                    Click to view all
+                  </span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 text-green-600 hover:text-green-700 hover:bg-green-50"
+                    onClick={(e) => {
                       e.stopPropagation();
                       router.push('/workflows');
-                    }}>
-                      <Play className="w-4 h-4 mr-2" />
-                      Start Workflow
-                    </Button>
-                  </div>
+                    }}
+                  >
+                    Start
+                    <ArrowRight className="w-3 h-3 ml-1" />
+                  </Button>
                 </div>
               </CardContent>
             </Card>
 
             {/* Solution Builder Service */}
-            <Card className="cursor-pointer hover:shadow-lg transition-all border-2 hover:border-orange-500"
+            <Card className="cursor-pointer hover:shadow-lg transition-shadow"
                   onClick={() => router.push('/solution-builder')}>
               <CardHeader>
-                <div className="flex items-center justify-between">
-                  <Box className="w-10 h-10 text-orange-600" />
-                  <Badge variant="secondary" className="bg-purple-100 text-purple-700">
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex items-center gap-3">
+                    <Box className="w-5 h-5 text-muted-foreground" />
+                    <CardTitle className="text-lg">Solution Builder</CardTitle>
+                  </div>
+                </div>
+                <CardDescription className="text-sm mb-4">
+                  Build Custom Solutions
+                </CardDescription>
+
+                {/* Badges */}
+                <div className="flex flex-wrap gap-2">
+                  <Badge variant="secondary" className="bg-purple-100 text-purple-700 text-xs">
                     1 Draft
                   </Badge>
+                  <Badge variant="outline" className="text-xs">3 solutions</Badge>
+                  <Badge variant="outline" className="text-xs">2 published</Badge>
                 </div>
-                <CardTitle className="mt-4">Solution Builder</CardTitle>
-                <CardDescription>Build Custom Solutions</CardDescription>
               </CardHeader>
+
               <CardContent>
-                <div className="space-y-3">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Total Solutions</span>
-                    <span className="font-semibold">3</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">In Draft</span>
-                    <span className="font-semibold text-purple-600">1</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Published</span>
-                    <span className="font-semibold">2</span>
-                  </div>
-                  <div className="border-t pt-3 mt-3">
-                    <Button className="w-full" size="sm" onClick={(e) => {
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground text-xs">
+                    Click to view all
+                  </span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 text-orange-600 hover:text-orange-700 hover:bg-orange-50"
+                    onClick={(e) => {
                       e.stopPropagation();
                       router.push('/solution-builder');
-                    }}>
-                      <Box className="w-4 h-4 mr-2" />
-                      Build Solution
-                    </Button>
-                  </div>
+                    }}
+                  >
+                    Build
+                    <ArrowRight className="w-3 h-3 ml-1" />
+                  </Button>
                 </div>
               </CardContent>
             </Card>
@@ -215,48 +231,49 @@ export default function DashboardPage() {
 
         {/* Tabs for different views */}
         <section>
-          <div className="border-b">
-            <nav className="flex gap-4">
-              <button
-                onClick={() => setActiveTab('overview')}
-                className={`pb-3 px-1 border-b-2 font-medium transition-colors ${
-                  activeTab === 'overview'
-                    ? 'border-primary text-primary'
-                    : 'border-transparent text-muted-foreground hover:text-foreground'
-                }`}
-              >
-                Overview
-              </button>
-              <button
-                onClick={() => setActiveTab('activity')}
-                className={`pb-3 px-1 border-b-2 font-medium transition-colors ${
-                  activeTab === 'activity'
-                    ? 'border-primary text-primary'
-                    : 'border-transparent text-muted-foreground hover:text-foreground'
-                }`}
-              >
-                Recent Activity
-              </button>
-              <button
-                onClick={() => setActiveTab('insights')}
-                className={`pb-3 px-1 border-b-2 font-medium transition-colors ${
-                  activeTab === 'insights'
-                    ? 'border-primary text-primary'
-                    : 'border-transparent text-muted-foreground hover:text-foreground'
-                }`}
-              >
-                Insights
-              </button>
-            </nav>
-          </div>
+          <Card>
+            <CardHeader className="pb-0">
+              <nav className="flex gap-4 border-b -mb-px">
+                <button
+                  onClick={() => setActiveTab('overview')}
+                  className={`pb-3 px-1 border-b-2 font-medium transition-colors ${
+                    activeTab === 'overview'
+                      ? 'border-primary text-primary'
+                      : 'border-transparent text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  Overview
+                </button>
+                <button
+                  onClick={() => setActiveTab('activity')}
+                  className={`pb-3 px-1 border-b-2 font-medium transition-colors ${
+                    activeTab === 'activity'
+                      ? 'border-primary text-primary'
+                      : 'border-transparent text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  Recent Activity
+                </button>
+                <button
+                  onClick={() => setActiveTab('insights')}
+                  className={`pb-3 px-1 border-b-2 font-medium transition-colors ${
+                    activeTab === 'insights'
+                      ? 'border-primary text-primary'
+                      : 'border-transparent text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  Insights
+                </button>
+              </nav>
+            </CardHeader>
 
           {/* Tab Content */}
-          <div className="mt-6">
+          <CardContent className="pt-6">
             {activeTab === 'overview' && (
               <div className="space-y-6">
                 {/* Attention Required */}
                 <div>
-                  <h3 className="text-xl font-semibold mb-4">Needs Your Attention</h3>
+                  <h3 className="text-lg font-semibold mb-4">Needs Your Attention</h3>
                   <div className="space-y-3">
                     <Card className="border-l-4 border-l-amber-500">
                       <CardContent className="p-4">
@@ -334,7 +351,7 @@ export default function DashboardPage() {
 
                 {/* Quick Start */}
                 <div>
-                  <h3 className="text-xl font-semibold mb-4">Popular Workflows</h3>
+                  <h3 className="text-lg font-semibold mb-4">Popular Workflows</h3>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <Card className="hover:shadow-md transition-shadow">
                       <CardHeader>
@@ -395,81 +412,75 @@ export default function DashboardPage() {
             )}
 
             {activeTab === 'activity' && (
-              <Card>
-                <CardContent className="p-6">
-                  <div className="space-y-6">
-                    <div className="flex items-start gap-4">
-                      <div className="w-2 h-2 rounded-full bg-green-500 mt-2" />
-                      <div className="flex-1">
-                        <div className="flex items-center justify-between">
-                          <h4 className="font-semibold">Expert Chat: FDA 510k pathway</h4>
-                          <span className="text-sm text-muted-foreground">2 min ago</span>
-                        </div>
-                        <p className="text-sm text-muted-foreground mt-1">
-                          Regulatory Expert responded
-                        </p>
-                        <Button variant="link" size="sm" className="p-0 h-auto mt-2">
-                          View Chat
-                        </Button>
+              <div className="space-y-4">
+                <p className="text-muted-foreground text-sm mb-4">Your recent activity across all services</p>
+                
+                <div className="space-y-3">
+                  <div className="flex items-start gap-4 py-3 border-b last:border-0">
+                    <div className="w-2 h-2 rounded-full bg-green-500 mt-2" />
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between">
+                        <h4 className="font-semibold text-sm">Expert Chat: FDA 510k pathway</h4>
+                        <span className="text-xs text-muted-foreground">2 min ago</span>
                       </div>
-                    </div>
-
-                    <div className="border-t pt-6">
-                      <div className="flex items-start gap-4">
-                        <div className="w-2 h-2 rounded-full bg-blue-500 mt-2" />
-                        <div className="flex-1">
-                          <div className="flex items-center justify-between">
-                            <h4 className="font-semibold">Panel Discussion: Primary endpoint</h4>
-                            <span className="text-sm text-muted-foreground">15 min ago</span>
-                          </div>
-                          <p className="text-sm text-muted-foreground mt-1">
-                            Dr. Sarah Chen added response
-                          </p>
-                          <Button variant="link" size="sm" className="p-0 h-auto mt-2">
-                            Join Discussion
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="border-t pt-6">
-                      <div className="flex items-start gap-4">
-                        <div className="w-2 h-2 rounded-full bg-purple-500 mt-2" />
-                        <div className="flex-1">
-                          <div className="flex items-center justify-between">
-                            <h4 className="font-semibold">Workflow Completed: Competitive Analysis</h4>
-                            <span className="text-sm text-muted-foreground">1 hour ago</span>
-                          </div>
-                          <p className="text-sm text-muted-foreground mt-1">
-                            Report generated • 12 pages
-                          </p>
-                          <Button variant="link" size="sm" className="p-0 h-auto mt-2">
-                            Download Report
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="border-t pt-6">
-                      <div className="flex items-start gap-4">
-                        <div className="w-2 h-2 rounded-full bg-orange-500 mt-2" />
-                        <div className="flex-1">
-                          <div className="flex items-center justify-between">
-                            <h4 className="font-semibold">Solution Published: Phase 2 Trial Design</h4>
-                            <span className="text-sm text-muted-foreground">2 hours ago</span>
-                          </div>
-                          <p className="text-sm text-muted-foreground mt-1">
-                            Ready to use
-                          </p>
-                          <Button variant="link" size="sm" className="p-0 h-auto mt-2">
-                            View Solution
-                          </Button>
-                        </div>
-                      </div>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        Regulatory Expert responded
+                      </p>
+                      <Button variant="link" size="sm" className="p-0 h-auto mt-2 text-xs">
+                        View Chat
+                      </Button>
                     </div>
                   </div>
-                </CardContent>
-              </Card>
+
+                  <div className="flex items-start gap-4 py-3 border-b last:border-0">
+                    <div className="w-2 h-2 rounded-full bg-blue-500 mt-2" />
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between">
+                        <h4 className="font-semibold text-sm">Panel Discussion: Primary endpoint</h4>
+                        <span className="text-xs text-muted-foreground">15 min ago</span>
+                      </div>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        Dr. Sarah Chen added response
+                      </p>
+                      <Button variant="link" size="sm" className="p-0 h-auto mt-2 text-xs">
+                        Join Discussion
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-4 py-3 border-b last:border-0">
+                    <div className="w-2 h-2 rounded-full bg-purple-500 mt-2" />
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between">
+                        <h4 className="font-semibold text-sm">Workflow Completed: Competitive Analysis</h4>
+                        <span className="text-xs text-muted-foreground">1 hour ago</span>
+                      </div>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        Report generated • 12 pages
+                      </p>
+                      <Button variant="link" size="sm" className="p-0 h-auto mt-2 text-xs">
+                        Download Report
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-4 py-3 border-b last:border-0">
+                    <div className="w-2 h-2 rounded-full bg-orange-500 mt-2" />
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between">
+                        <h4 className="font-semibold text-sm">Solution Published: Phase 2 Trial Design</h4>
+                        <span className="text-xs text-muted-foreground">2 hours ago</span>
+                      </div>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        Ready to use
+                      </p>
+                      <Button variant="link" size="sm" className="p-0 h-auto mt-2 text-xs">
+                        View Solution
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </div>
             )}
 
             {activeTab === 'insights' && (
@@ -553,36 +564,11 @@ export default function DashboardPage() {
                 </Card>
               </div>
             )}
-          </div>
+          </CardContent>
+          </Card>
         </section>
-
-        {/* Quick Actions */}
-        <section>
-          <h3 className="text-xl font-semibold mb-4">Quick Actions</h3>
-          <div className="flex flex-wrap gap-3">
-            <Button variant="outline" onClick={() => router.push('/ask-expert')}>
-              <MessageSquare className="w-4 h-4 mr-2" />
-              Ask Question
-            </Button>
-            <Button variant="outline" onClick={() => router.push('/ask-panel')}>
-              <Users className="w-4 h-4 mr-2" />
-              Start Panel
-            </Button>
-            <Button variant="outline" onClick={() => router.push('/workflows')}>
-              <Play className="w-4 h-4 mr-2" />
-              Run Workflow
-            </Button>
-            <Button variant="outline" onClick={() => router.push('/solution-builder')}>
-              <Box className="w-4 h-4 mr-2" />
-              Build Solution
-            </Button>
-            <Button variant="outline" onClick={() => router.push('/knowledge')}>
-              <FileText className="w-4 h-4 mr-2" />
-              Upload Document
-            </Button>
-          </div>
-        </section>
-      </main>
+        </div>
+      </div>
     </div>
   );
 }

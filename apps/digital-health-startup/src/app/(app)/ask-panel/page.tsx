@@ -46,6 +46,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { PageHeader } from '@/components/page-header';
 import { PanelCreationWizard } from '@/features/ask-panel/components/PanelCreationWizard';
 import { PanelConsultationView } from '@/features/ask-panel/components/PanelConsultationView';
 import { PanelExecutionView } from '@/features/ask-panel/components/PanelExecutionView';
@@ -315,28 +316,25 @@ export default function AskPanelPage() {
   }
 
   return (
-    <div className="container mx-auto py-8 space-y-6">
+    <div className="flex-1 flex flex-col overflow-hidden">
       {/* Page Header */}
-      <div className="border-b bg-background px-6 py-4 -mx-6 -mt-8 mb-6">
-        <div className="flex items-center gap-3">
-          <Users className="h-8 w-8 text-muted-foreground" />
-          <div>
-            <h1 className="text-3xl font-bold">Ask Panel</h1>
-            <p className="text-sm text-muted-foreground">
-              Multi-expert advisory board consultations
-            </p>
-          </div>
-        </div>
-      </div>
+      <PageHeader
+        icon={Users}
+        title="Ask Panel"
+        description="Multi-expert advisory board consultations"
+      />
 
-      {/* Header with count */}
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-sm text-muted-foreground">
-            Showing {filteredTemplates.length} of {PANEL_TEMPLATES.length} panels
-          </p>
-        </div>
-      </div>
+      {/* Main Content Area */}
+      <div className="flex-1 overflow-y-auto">
+        <div className="max-w-7xl mx-auto p-6 space-y-6">
+          {/* Header with count */}
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-muted-foreground">
+                Showing {filteredTemplates.length} of {PANEL_TEMPLATES.length} panels
+              </p>
+            </div>
+          </div>
 
       {/* Tabs Navigation */}
       <Tabs defaultValue="grid" className="w-full">
@@ -618,6 +616,8 @@ export default function AskPanelPage() {
           onCancel={() => setShowWizard(false)}
         />
       )}
+        </div>
+      </div>
     </div>
   );
 }

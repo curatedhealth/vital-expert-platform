@@ -11,7 +11,8 @@ import {
   List,
   Eye,
   Edit,
-  Copy
+  Copy,
+  BookOpen
 } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
 import { useState, useCallback, useEffect, Suspense } from 'react';
@@ -19,6 +20,7 @@ import { useState, useCallback, useEffect, Suspense } from 'react';
 import { Badge } from '@vital/ui';
 import { Button } from '@vital/ui';
 import { Card, CardContent, CardHeader, CardTitle } from '@vital/ui';
+import { PageHeader } from '@/components/page-header';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -217,22 +219,19 @@ function KnowledgePageContent() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="flex-1 flex flex-col overflow-hidden">
       {/* Page Header */}
-      <div className="border-b bg-background px-6 py-4 -mx-6 -mt-6 mb-6">
-        <div className="flex items-center gap-3">
-          <BookOpen className="h-8 w-8 text-muted-foreground" />
-          <div>
-            <h1 className="text-3xl font-bold">Knowledge</h1>
-            <p className="text-sm text-muted-foreground">
-              Manage documents and knowledge bases for AI agents
-            </p>
-          </div>
-        </div>
-      </div>
+      <PageHeader
+        icon={BookOpen}
+        title="Knowledge"
+        description="Manage documents and knowledge bases for AI agents"
+      />
 
-      {/* Main Content */}
-      {activeTab === 'upload' ? (
+      {/* Main Content Area */}
+      <div className="flex-1 overflow-y-auto">
+        <div className="max-w-7xl mx-auto p-6 space-y-6">
+          {/* Main Content */}
+          {activeTab === 'upload' ? (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -588,6 +587,8 @@ function KnowledgePageContent() {
           agentFilter={agentFilter || undefined}
         />
       )}
+        </div>
+      </div>
     </div>
   );
 }

@@ -7,6 +7,8 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { PageHeader } from '@/components/page-header';
+import { ToolDetailModal } from '@/components/tools/ToolDetailModal';
 import { 
   Search, 
   Filter, 
@@ -40,7 +42,6 @@ import {
   Hammer
 } from 'lucide-react';
 import { ToolRegistryService } from '@/lib/services/tool-registry-service';
-import { ToolDetailModal } from '@/components/tools/ToolDetailModal';
 
 // Tool categories with icons and colors
 const TOOL_CATEGORIES = {
@@ -217,19 +218,17 @@ export default function ToolsPage() {
   };
 
   return (
-    <div className="container mx-auto py-8 px-4">
-      {/* Header */}
-      <div className="border-b bg-background px-6 py-4 -mx-4 -mt-8 mb-8">
-        <div className="flex items-center gap-3">
-          <Wrench className="h-8 w-8 text-muted-foreground" />
-          <div>
-            <h1 className="text-3xl font-bold">Tool Registry</h1>
-            <p className="text-sm text-muted-foreground">
-              Comprehensive catalog of {stats.total} AI, healthcare, and research tools
-            </p>
-          </div>
-        </div>
-      </div>
+    <div className="flex-1 flex flex-col overflow-hidden">
+      {/* Page Header */}
+      <PageHeader
+        icon={Wrench}
+        title="Tool Registry"
+        description={`Comprehensive catalog of ${stats.total} AI, healthcare, and research tools`}
+      />
+
+      {/* Main Content Area */}
+      <div className="flex-1 overflow-y-auto">
+        <div className="max-w-7xl mx-auto p-6 space-y-6">
 
       {/* Stats Cards */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
@@ -517,6 +516,8 @@ export default function ToolsPage() {
         onSave={handleToolSave}
         mode="view"
       />
+        </div>
+      </div>
     </div>
   );
 }

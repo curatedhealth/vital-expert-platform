@@ -18,6 +18,7 @@ interface PopoverContentProps {
   align?: "start" | "center" | "end"
 }
 
+const PopoverContext = React.createContext<{
   isOpen: boolean
   setIsOpen: (open: boolean) => void
 } | null>(null)
@@ -35,9 +36,11 @@ export const __Popover = ({ children }: PopoverProps) => {
 }
 
 export const __PopoverTrigger = ({ children, asChild = false, onClick }: PopoverTriggerProps) => {
+  const context = React.useContext(PopoverContext)
 
   if (!context) throw new Error("PopoverTrigger must be used within Popover")
 
+  const handleClick = () => {
     context.setIsOpen(!context.isOpen)
     onClick?.()
   }
@@ -60,13 +63,14 @@ export const __PopoverContent = ({
   className = "",
   align = "center"
 }: PopoverContentProps) => {
+  const context = React.useContext(PopoverContext)
 
   if (!context) throw new Error("PopoverContent must be used within Popover")
 
   if (!context.isOpen) return null
 
   // eslint-disable-next-line security/detect-object-injection
-
+  const alignmentClass = {
     start: "left-0",
     center: "left-1/2 transform -translate-x-1/2",
     end: "right-0"

@@ -21,13 +21,16 @@ export class PromptGenerationService {
   async generateSystemPrompt(request: SystemPromptGenerationRequest): Promise<SystemPromptGenerationResponse> {
     try {
       // 1. Fetch selected capabilities with their competencies
+      const capabilities = await this.fetchCapabilitiesWithCompetencies(request.capabilityIds || []);
 
       // 2. Fetch selected competencies
+      const selectedCompetencies = await this.fetchSelectedCompetencies(request.competencySelection || {});
 
       // 3. Fetch associated tools
+      const tools = await this.fetchCapabilityTools(request.capabilityIds || []);
 
       // 4. Generate prompt content
-
+      const promptContent = this.buildSystemPrompt({
         capabilities,
         competencies: selectedCompetencies,
         tools,
@@ -35,6 +38,7 @@ export class PromptGenerationService {
       });
 
       // 5. Generate metadata
+      const metadata = this.generateMetadata(capabilities, selectedCompetencies, tools);
 
       // 6. Create audit entry if required
       if (request.agentId) {
@@ -78,6 +82,7 @@ export class PromptGenerationService {
    * Fetch selected competencies from database
    */
   private async fetchSelectedCompetencies(competencySelection: Record<string, string[]>): Promise<MedicalCompetency[]> {
+    const allCompetencyIds = Object.values(competencySelection).flat();
 
     if (allCompetencyIds.length === 0) return [];
 

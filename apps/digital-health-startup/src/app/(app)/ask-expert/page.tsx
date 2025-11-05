@@ -51,6 +51,7 @@ import { useConversations } from '@/lib/hooks/use-conversations';
 import { ChatHistorySidebar } from '@/components/chat-history-sidebar';
 import { SelectedAgentsList } from '@/components/selected-agent-card';
 import { Reasoning, ReasoningTrigger, ReasoningContent } from '@/components/ui/shadcn-io/ai/reasoning';
+import { PageHeaderCompact } from '@/components/page-header';
 import {
   __Conversation as Conversation,
   __ConversationContent as ConversationContent,
@@ -1703,37 +1704,28 @@ function AskExpertPageContent() {
 
   return (
     <div className={`flex flex-col h-full w-full ${darkMode ? 'dark bg-gray-950' : 'bg-white'}`}>
-      {/* Top Bar - Clean like Claude */}
-      <header className="h-14 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between px-4 bg-white dark:bg-gray-900">
-        <div className="flex items-center gap-3 flex-wrap">
-          <Brain className="w-5 h-5 text-blue-500" />
-          <h1 className="text-base font-semibold text-gray-900 dark:text-white">
-            Ask the Experts
-          </h1>
-          {/* Current Mode Badge */}
-          <div className={`px-3 py-1 rounded-full text-xs font-medium ${
-            currentMode.color === 'purple' ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300' :
-            currentMode.color === 'green' ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300' :
-            currentMode.color === 'blue' ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300' :
-            'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300'
-          }`}>
-            Mode {currentMode.id}: {currentMode.name}
-          </div>
-          {primarySelectedAgent && (
-            <div className="inline-flex items-center gap-2 rounded-full bg-purple-50 px-3 py-1 text-xs font-semibold text-purple-700 shadow-sm dark:bg-purple-900/30 dark:text-purple-200">
-              <AgentAvatar
-                avatar={primarySelectedAgent.avatar}
-                name={primarySelectedAgent.displayName}
-                size="list"
-                className="rounded-full"
-              />
-              <span>{primarySelectedAgent.displayName}</span>
-            </div>
-          )}
-        </div>
-
+      {/* Top Bar - Standardized Compact Header */}
+      <PageHeaderCompact
+        icon={MessageSquare}
+        title="Ask Expert"
+        description="1:1 expert consultation with AI agents"
+        badge={{
+          label: `Mode ${currentMode.id}: ${currentMode.name}`,
+          variant: 'secondary'
+        }}
+        actions={
           <div className="flex items-center gap-2">
-            {/* Settings Button */}
+            {primarySelectedAgent && (
+              <div className="inline-flex items-center gap-2 rounded-full bg-purple-50 px-3 py-1 text-xs font-semibold text-purple-700 shadow-sm dark:bg-purple-900/30 dark:text-purple-200">
+                <AgentAvatar
+                  avatar={primarySelectedAgent.avatar}
+                  name={primarySelectedAgent.displayName}
+                  size="list"
+                  className="rounded-full"
+                />
+                <span>{primarySelectedAgent.displayName}</span>
+              </div>
+            )}
             <button
               onClick={() => setShowSettings(!showSettings)}
               className={`p-2 rounded-lg transition-colors ${
@@ -1756,7 +1748,8 @@ function AskExpertPageContent() {
               )}
             </button>
           </div>
-        </header>
+        }
+      />
 
         {/* Settings Panel (slides down when opened) */}
         <AnimatePresence>

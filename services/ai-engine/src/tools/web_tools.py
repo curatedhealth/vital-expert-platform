@@ -13,12 +13,13 @@ import re
 from urllib.parse import urljoin, urlparse
 
 from core.config import get_settings
+from tools.base_tool import BaseTool, ToolInput, ToolOutput
 
 logger = structlog.get_logger()
 settings = get_settings()
 
 
-class WebSearchTool:
+class WebSearchTool(BaseTool):
     """
     Real web search using Tavily API.
     
@@ -26,8 +27,55 @@ class WebSearchTool:
     """
     
     def __init__(self, api_key: Optional[str] = None):
+        super().__init__()
         self.api_key = api_key or settings.tavily_api_key
         self.base_url = "https://api.tavily.com/search"
+    
+    @property
+    def name(self) -> str:
+        return "web_search"
+    
+    @property
+    def description(self) -> str:
+        return (
+            "Search the web for current information, news, research, and general knowledge. "
+            "Use this tool when the answer requires recent information, external sources, "
+            "or data not available in internal knowledge bases. Returns web search results "
+            "with titles, URLs, and content snippets."
+        )
+    
+    @property
+    def category(self) -> str:
+        return "retrieval"
+    
+    async def execute(self, tool_input: ToolInput) -> ToolOutput:
+        """Execute web search via BaseTool interface."""
+        try:
+            query = tool_input.data if isinstance(tool_input.data, str) else str(tool_input.data)
+            max_results = tool_input.context.get('max_results', 5)
+            
+            result = await self.search(
+                query=query,
+                max_results=max_results
+            )
+            
+            return ToolOutput(
+                success=True,
+                data=result,
+                metadata={
+                    "query": query,
+                    "results_count": len(result.get('results', [])),
+                    "tool": self.name
+                }
+            )
+        except Exception as e:
+            logger.error(f"Web search execution failed", error=str(e))
+            return ToolOutput(
+                success=False,
+                data={},
+                error_message=str(e),
+                metadata={"tool": self.name}
+            )
         
     async def search(
         self,
@@ -140,7 +188,7 @@ class WebSearchTool:
             }
 
 
-class WebScraperTool:
+class WebScraperTool(BaseTool):
     """
     Web page scraping and content extraction.
     
@@ -153,8 +201,60 @@ class WebScraperTool:
     """
     
     def __init__(self):
+        super().__init__()
         self.timeout = 45
         self.max_content_length = 5 * 1024 * 1024  # 5MB
+    
+    @property
+    def name(self) -> str:
+        return "web_scraper"
+    
+    @property
+    def description(self) -> str:
+        return (
+            "Scrape and extract content from web pages. Use this tool to extract "
+            "detailed content, links, images, or specific elements from a URL. "
+            "Supports CSS selectors for targeted extraction. Returns cleaned text "
+            "content, metadata, and optionally links and images."
+        )
+    
+    @property
+    def category(self) -> str:
+        return "retrieval"
+    
+    async def execute(self, tool_input: ToolInput) -> ToolOutput:
+        """Execute web scraping via BaseTool interface."""
+        try:
+            url = tool_input.data if isinstance(tool_input.data, str) else tool_input.data.get('url')
+            extract_links = tool_input.context.get('extract_links', False)
+            extract_images = tool_input.context.get('extract_images', False)
+            css_selector = tool_input.context.get('css_selector')
+            
+            result = await self.scrape(
+                url=url,
+                extract_links=extract_links,
+                extract_images=extract_images,
+                css_selector=css_selector
+            )
+            
+            return ToolOutput(
+                success=result.get('error') is None,
+                data=result,
+                error_message=result.get('error'),
+                metadata={
+                    "url": url,
+                    "content_length": len(result.get('content', '')),
+                    "tool": self.name
+                }
+            )
+        except Exception as e:
+            logger.error(f"Web scraping execution failed", error=str(e))
+            return ToolOutput(
+                success=False,
+                data={},
+                error_message=str(e),
+                metadata={"tool": self.name}
+            )
         
     async def scrape(
         self,

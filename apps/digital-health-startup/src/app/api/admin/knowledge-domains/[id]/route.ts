@@ -19,14 +19,14 @@ import { createClient } from '@/lib/supabase/server';
  */
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   return requireSuperAdmin(async (req: NextRequest, user) => {
     try {
       // Use user session-based client (respects RLS even for superadmin)
       const supabase = await createClient();
       
-      const domainId = params.id;
+      const { id: domainId } = await params;
       const body = await request.json();
 
       const {
@@ -154,14 +154,14 @@ export async function PUT(
  */
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   return requireSuperAdmin(async (req: NextRequest, user) => {
     try {
       // Use user session-based client (respects RLS even for superadmin)
       const supabase = await createClient();
       
-      const domainId = params.id;
+      const { id: domainId } = await params;
 
       // Check if domain exists (try new architecture first)
       let { data: existingDomain, error: fetchError } = await supabase

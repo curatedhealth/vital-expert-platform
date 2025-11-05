@@ -14,9 +14,10 @@ interface SliderProps {
 
 export const __Slider = React.forwardRef<HTMLInputElement, SliderProps>(
   ({ className = "", min = 0, max = 100, step = 1, value = [50], onValueChange, disabled = false, ...props }, ref) => {
-
-      onValueChange?.([newValue])
-    }
+    const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+      const newValue = parseInt(event.target.value, 10);
+      onValueChange?.([newValue]);
+    };
 
     return (
       <div className={`relative flex w-full items-center ${className}`}>

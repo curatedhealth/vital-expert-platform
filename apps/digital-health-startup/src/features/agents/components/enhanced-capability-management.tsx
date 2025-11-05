@@ -21,7 +21,7 @@ import { Input } from '@/shared/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/components/ui/select';
 
 // VITAL Framework components mapping
-
+const VITAL_COMPONENTS = {
   'V_value_discovery': {
     icon: Target,
     label: 'Value Discovery',
@@ -55,7 +55,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 };
 
 // Lifecycle stages
-
+const LIFECYCLE_STAGES = {
   'unmet_needs_investigation': {
     label: 'Unmet Needs Investigation',
     phase: 1,

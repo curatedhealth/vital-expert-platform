@@ -67,6 +67,7 @@ from services.agent_orchestrator import AgentOrchestrator
 from services.feedback_manager import FeedbackManager
 from services.agent_enrichment_service import AgentEnrichmentService
 from services.cache_manager import CacheManager
+from services.tool_registry_service import ToolRegistryService
 
 logger = structlog.get_logger()
 
@@ -133,6 +134,7 @@ class Mode2InteractiveManualWorkflow(BaseWorkflow, ToolChainMixin, MemoryIntegra
             supabase_client,
             self.cache_manager
         )
+        self.tool_registry_service = ToolRegistryService(supabase_client)
         
         # Node groups
         self.feedback_nodes = FeedbackNodes(
@@ -158,6 +160,64 @@ class Mode2InteractiveManualWorkflow(BaseWorkflow, ToolChainMixin, MemoryIntegra
         self.init_memory_integration(supabase_client)
         
         logger.info("✅ Mode2InteractiveManualWorkflow initialized with tool chaining + long-term memory")
+    
+    async def _get_agent_tool_names(self, agent_id: str) -> List[str]:
+        """
+        Get tool names from database registry for an agent.
+        
+        Maps tool codes (e.g., 'TOOL-AI-WEB_SEARCH') to tool registry names (e.g., 'web_search').
+        
+        Args:
+            agent_id: Agent identifier
+            
+        Returns:
+            List of tool names for use in tool chain executor
+        """
+        try:
+            # Get agent tools from database
+            agent_tools = await self.tool_registry_service.get_agent_tools(
+                agent_id=agent_id,
+                enabled_only=True
+            )
+            
+            # Map tool codes to tool registry names
+            tool_code_to_name = {
+                'TOOL-AI-WEB_SEARCH': 'web_search',
+                'TOOL-AI-PUBMED_SEARCH': 'pubmed_search',
+                'TOOL-AI-CLINICALTRIALS_SEARCH': 'clinicaltrials_search',
+                'TOOL-AI-ARXIV_SEARCH': 'arxiv_search',
+                'TOOL-SEARCH-SCHOLAR': 'scholar_search',
+                'TOOL-PUBMED': 'pubmed',
+            }
+            
+            # Convert tool codes to tool registry names
+            tool_names = []
+            for tool in agent_tools:
+                tool_code = tool.get('code') or tool.get('tool_code')
+                if tool_code and tool_code in tool_code_to_name:
+                    tool_names.append(tool_code_to_name[tool_code])
+                elif tool_code:
+                    # Fallback: convert code to snake_case
+                    tool_name = tool_code.lower().replace('-', '_').replace('tool_ai_', '').replace('tool_', '')
+                    tool_names.append(tool_name)
+            
+            # Always include RAG search as it's core functionality
+            if 'rag_search' not in tool_names:
+                tool_names.append('rag_search')
+            
+            logger.info(
+                "✅ Retrieved agent tools from database",
+                agent_id=agent_id[:8],
+                tool_count=len(tool_names),
+                tools=tool_names
+            )
+            
+            return tool_names if tool_names else ['rag_search', 'web_search']  # Fallback to default
+            
+        except Exception as e:
+            logger.error("Failed to get agent tools from database", agent_id=agent_id, error=str(e))
+            # Fallback to default tools
+            return ['rag_search', 'web_search', 'web_scrape']
     
     def build_graph(self) -> StateGraph:
         """
@@ -545,6 +605,9 @@ class Mode2InteractiveManualWorkflow(BaseWorkflow, ToolChainMixin, MemoryIntegra
         query_complexity = state.get('query_complexity', 'medium')
         
         try:
+            # Get agent tools from database registry
+            agent_tools = await self._get_agent_tool_names(selected_agent)
+            
             # Check if tool chain should be used for comprehensive research (AutoGPT capability)
             if self.should_use_tool_chain_simple(query, complexity=query_complexity):
                 logger.info("🔗 Using tool chain for comprehensive research (Mode 2 - Manual)")
@@ -553,7 +616,7 @@ class Mode2InteractiveManualWorkflow(BaseWorkflow, ToolChainMixin, MemoryIntegra
                 chain_result = await self.tool_chain_executor.execute_tool_chain(
                     task=query,
                     tenant_id=str(tenant_id),
-                    available_tools=['rag_search', 'web_search', 'web_scrape'],
+                    available_tools=agent_tools,
                     context={
                         'agent_id': selected_agent,
                         'conversation_history': conversation_history,

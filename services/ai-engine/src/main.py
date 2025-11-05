@@ -5,6 +5,11 @@ Medical AI Agent Orchestration with LangChain
 
 import os
 import sys
+from dotenv import load_dotenv
+
+# Load environment variables FIRST before any other imports
+load_dotenv()
+
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException, Depends, WebSocket, WebSocketDisconnect, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -173,6 +178,10 @@ class Mode1ManualRequest(BaseModel):
     requested_tools: Optional[List[str]] = Field(
         default=None,
         description="Requested tools to enable"
+    )
+    model: Optional[str] = Field(
+        default="gpt-4",
+        description="LLM model to use (e.g., gpt-4, gpt-4-turbo, gpt-3.5-turbo)"
     )
     temperature: Optional[float] = Field(
         default=None,

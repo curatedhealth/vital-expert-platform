@@ -37,6 +37,7 @@ const nextConfig = {
       config.resolve.fallback = {
         ...config.resolve.fallback,
         cluster: false,
+        dns: false,
         fs: false,
         net: false,
         tls: false,
@@ -47,6 +48,13 @@ const nextConfig = {
       config.plugins.push(
         new webpack.IgnorePlugin({
           resourceRegExp: /^prom-client$/,
+        }),
+        // Ignore server-only services in client bundle
+        new webpack.IgnorePlugin({
+          resourceRegExp: /redis-cache-service/,
+        }),
+        new webpack.IgnorePlugin({
+          resourceRegExp: /agent-selector-service/,
         })
       );
     }
@@ -60,8 +68,17 @@ const nextConfig = {
   },
 
   // External packages for server components (moved from experimental)
-  // These packages are excluded from client bundle
-  serverExternalPackages: ['@supabase/supabase-js', '@supabase/realtime-js', 'prom-client'],
+  // These packages are excluded from client bundle and marked as server-only
+  serverExternalPackages: [
+    '@supabase/supabase-js',
+    '@supabase/realtime-js', 
+    'prom-client',
+    'ioredis',
+    '@pinecone-database/pinecone',
+    'better-sqlite3',
+    'import-in-the-middle',
+    'require-in-the-middle',
+  ],
 
   // Experimental features
   experimental: {

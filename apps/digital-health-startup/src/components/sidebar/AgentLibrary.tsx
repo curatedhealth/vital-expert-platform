@@ -97,6 +97,7 @@ const healthcareAgents: Agent[] = [
   }
 ];
 
+const categoryColors: Record<string, string> = {
   clinical: 'bg-blue-100 text-blue-800',
   regulatory: 'bg-green-100 text-green-800',
   research: 'bg-purple-100 text-purple-800',
@@ -108,6 +109,9 @@ export function AgentLibrary() {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
 
+  const filteredAgents = healthcareAgents.filter((agent) => {
+    const matchesCategory = selectedCategory === 'all' || agent.category === selectedCategory;
+    const matchesSearch =
       agent.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       agent.specialty.toLowerCase().includes(searchQuery.toLowerCase()) ||
       agent.description.toLowerCase().includes(searchQuery.toLowerCase());

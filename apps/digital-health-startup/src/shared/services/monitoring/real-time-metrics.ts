@@ -79,8 +79,7 @@ export class RealTimeMetrics {
 
     // Check for alerts
     this.checkForAlerts(metricEvent);
-
-    // }
+  }
 
   // Query tracking
   trackQuery(sessionId: string, query: string, userId?: string, digitalHealth = false): void {

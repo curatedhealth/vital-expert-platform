@@ -14,6 +14,8 @@ import { AgentCreator } from '@/features/chat/components/agent-creator';
 import { useAuth } from '@/lib/auth/supabase-auth-context';
 import { type Agent as AgentsStoreAgent, useAgentsStore } from '@/lib/stores/agents-store';
 import { type Agent } from '@/lib/stores/chat-store';
+import { PageHeader } from '@/components/page-header';
+import { Users } from 'lucide-react';
 
 function AgentsPageContent() {
   const router = useRouter();
@@ -242,8 +244,18 @@ function AgentsPageContent() {
   };
 
   return (
-    <div className="space-y-6">
-      <Tabs value={activeTab} onValueChange={handleTabChange}>
+    <div className="flex-1 flex flex-col overflow-hidden">
+      {/* Page Header */}
+      <PageHeader
+        icon={Users}
+        title="Agents"
+        description="Discover and manage AI expert agents"
+      />
+
+      {/* Main Content Area */}
+      <div className="flex-1 overflow-y-auto">
+        <div className="max-w-7xl mx-auto p-6 space-y-6">
+          <Tabs value={activeTab} onValueChange={handleTabChange}>
         <TabsList className="grid w-full max-w-md grid-cols-4 relative z-10 pointer-events-auto">
           <TabsTrigger value="overview" className="flex items-center gap-2 cursor-pointer">
             <BarChart3 className="h-4 w-4" />
@@ -358,6 +370,8 @@ function AgentsPageContent() {
           editingAgent={editingAgent as any}
         />
       )}
+        </div>
+      </div>
     </div>
   );
 }

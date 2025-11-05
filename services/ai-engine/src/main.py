@@ -179,6 +179,10 @@ class Mode1ManualRequest(BaseModel):
         default=None,
         description="Requested tools to enable"
     )
+    model: Optional[str] = Field(
+        default="gpt-4",
+        description="LLM model to use (e.g., gpt-4, gpt-4-turbo, gpt-3.5-turbo)"
+    )
     temperature: Optional[float] = Field(
         default=None,
         ge=0.0,

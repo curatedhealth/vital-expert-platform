@@ -16,7 +16,7 @@
  * @module lib/services/agents/agent-graph-service
  */
 
-import { createClient } from '@/lib/supabase/server';
+import { supabase } from '@vital/sdk/client';
 import { createLogger } from '@/lib/services/observability/structured-logger';
 import { getTracingService } from '@/lib/services/observability/tracing';
 
@@ -118,7 +118,7 @@ export class AgentGraphService {
     });
 
     try {
-      const supabase = await createClient();
+      // Use imported supabase client
 
       // Validate weights
       if (weight < 0 || weight > 1) {
@@ -185,7 +185,7 @@ export class AgentGraphService {
     });
 
     try {
-      const supabase = await createClient();
+      // Use imported supabase client
 
       const { data, error } = await supabase
         .from('agent_relationships')
@@ -221,7 +221,7 @@ export class AgentGraphService {
     });
 
     try {
-      const supabase = await createClient();
+      // Use imported supabase client
 
       const { data, error } = await supabase
         .from('agent_relationships')
@@ -257,7 +257,7 @@ export class AgentGraphService {
     });
 
     try {
-      const supabase = await createClient();
+      // Use imported supabase client
 
       const { data, error } = await supabase
         .from('agent_relationships')
@@ -302,7 +302,7 @@ export class AgentGraphService {
     const startTime = Date.now();
 
     try {
-      const supabase = await createClient();
+      // Use imported supabase client
 
       // Get all relationships for the lead agent
       const { data: relationships, error } = await supabase
@@ -396,7 +396,7 @@ export class AgentGraphService {
     });
 
     try {
-      const supabase = await createClient();
+      // Use imported supabase client
 
       // Validate confidence
       if (confidence < 0 || confidence > 1) {
@@ -441,7 +441,7 @@ export class AgentGraphService {
     });
 
     try {
-      const supabase = await createClient();
+      // Use imported supabase client
 
       const { data, error } = await supabase
         .from('agent_knowledge_graph')
@@ -484,7 +484,7 @@ export class AgentGraphService {
     });
 
     try {
-      const supabase = await createClient();
+      // Use imported supabase client
 
       let query = supabase
         .from('agent_knowledge_graph')
@@ -525,7 +525,7 @@ export class AgentGraphService {
     });
 
     try {
-      const supabase = await createClient();
+      // Use imported supabase client
 
       const { data, error } = await supabase
         .from('agent_relationships')
@@ -557,7 +557,7 @@ export class AgentGraphService {
     });
 
     try {
-      const supabase = await createClient();
+      // Use imported supabase client
 
       const { error } = await supabase
         .from('agent_relationships')
@@ -586,7 +586,7 @@ export class AgentGraphService {
     });
 
     try {
-      const supabase = await createClient();
+      // Use imported supabase client
 
       const { error } = await supabase
         .from('agent_knowledge_graph')

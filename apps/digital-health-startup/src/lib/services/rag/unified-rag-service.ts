@@ -990,16 +990,15 @@ export class UnifiedRAGService {
     pineconeStats?: any;
     redisStats?: any;
   }> {
-    const [docsCount, chunksCount, pineconeStats, redisStats] = await Promise.all([
+    const [docsCount, chunksCount, pineconeStats] = await Promise.all([
       this.supabase.from('knowledge_documents').select('*', { count: 'exact', head: true }),
       this.supabase.from('document_chunks').select('*', { count: 'exact', head: true }),
       this.pinecone.getIndexStats().catch(() => null),
-      redisCacheService.getCacheStats().catch(() => null),
+      // Redis stats removed (ioredis is server-only)
     ]);
 
     const isPineconeHealthy = pineconeStats !== null;
     const isSupabaseHealthy = docsCount.count !== null && chunksCount.count !== null;
-    const isRedisHealthy = redisStats !== null && redisStats.totalKeys >= 0;
 
     return {
       status: isPineconeHealthy && isSupabaseHealthy ? 'healthy' : 'degraded',
@@ -1008,17 +1007,16 @@ export class UnifiedRAGService {
       cacheSize: this.cache.size,
       vectorStoreStatus: isPineconeHealthy ? 'connected (Pinecone)' : 'disconnected',
       pineconeStats,
-      redisStats: isRedisHealthy ? redisStats : { status: 'disconnected' },
+      cacheType: 'in-memory', // Changed from Redis
     };
   }
 
   /**
-   * Clear cache (both Redis and in-memory)
+   * Clear cache (in-memory only - Redis removed for browser compatibility)
    */
   async clearCache(pattern?: string): Promise<void> {
     this.cache.clear();
-    await redisCacheService.clearCache(pattern);
-    console.log('🗑️ RAG cache cleared (Redis + in-memory)');
+    console.log('🗑️ RAG cache cleared (in-memory)');
   }
 
   // Private helper methods

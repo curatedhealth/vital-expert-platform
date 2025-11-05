@@ -12,7 +12,7 @@ const PYTHON_AI_ENGINE_URL = process.env.PYTHON_AI_ENGINE_URL || 'http://localho
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }>
 ) {
   try {
     const supabase = createClient();
@@ -23,7 +23,7 @@ export async function POST(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { id } = params;
+    const { id } = await params;
     const body = await request.json();
     const { inputs = {}, streaming = false, debug = false, breakpoints = [] } = body;
 
@@ -220,7 +220,7 @@ export async function POST(
 // Get execution history
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }>
 ) {
   try {
     const supabase = createClient();
@@ -231,7 +231,7 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { id } = params;
+    const { id } = await params;
 
     // Get executions for this workflow
     const { data: executions, error } = await supabase

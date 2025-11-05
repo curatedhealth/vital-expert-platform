@@ -11,7 +11,8 @@ import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { getEmbeddingService, EmbeddingServiceFactory } from '../embeddings/embedding-service-factory';
 import { getEmbeddingModelForDomain } from '../embeddings/domain-embedding-selector';
 import { pineconeVectorService, PineconeVectorService } from '../vectorstore/pinecone-vector-service';
-import { redisCacheService } from '../../../features/rag/caching/redis-cache-service';
+// REMOVED: redisCacheService (uses ioredis which is server-only)
+// Replaced with in-memory Map for browser compatibility
 import { ragLatencyTracker } from '../monitoring/rag-latency-tracker';
 import { ragCostTracker } from '../monitoring/rag-cost-tracker';
 import { RAG_CIRCUIT_BREAKERS } from '../monitoring/circuit-breaker';
@@ -189,71 +190,11 @@ export class UnifiedRAGService {
     let cacheHit = false;
 
     try {
-      // Check Redis cache first (exact match)
+      // Check in-memory cache (Redis removed for browser compatibility)
       if (this.config.enableCaching) {
-        const exactCached = await redisCacheService.getCachedRAGResult(query.text, strategy);
         cacheCheckMs = Date.now() - cacheCheckStartTime;
-
-        if (exactCached) {
-          cacheHit = true;
-          console.log('📦 Returning Redis cached result (exact match)');
-
-          // Track latency metrics
-          const totalRetrievalMs = Date.now() - startTime;
-          ragLatencyTracker.trackOperation({
-            queryId,
-            timestamp: new Date().toISOString(),
-            strategy,
-            cacheHit: true,
-            cacheCheckMs,
-            queryEmbeddingMs: 0,
-            vectorSearchMs: 0,
-            rerankingMs: 0,
-            totalRetrievalMs,
-          });
-
-          return {
-            ...exactCached,
-            metadata: {
-              ...exactCached.metadata,
-              cached: true,
-              responseTime: totalRetrievalMs,
-            },
-          };
-        }
-
-        // Check semantic cache (similar queries with 85% similarity)
-        const semanticCached = await redisCacheService.findSimilarQuery(query.text, strategy);
-        if (semanticCached) {
-          cacheHit = true;
-          console.log(`🔍 Returning Redis semantic cache hit (${(semanticCached.similarity * 100).toFixed(1)}% similar)`);
-
-          // Track latency metrics
-          const totalRetrievalMs = Date.now() - startTime;
-          ragLatencyTracker.trackOperation({
-            queryId,
-            timestamp: new Date().toISOString(),
-            strategy,
-            cacheHit: true,
-            cacheCheckMs,
-            queryEmbeddingMs: 0,
-            vectorSearchMs: 0,
-            rerankingMs: 0,
-            totalRetrievalMs,
-          });
-
-          return {
-            ...semanticCached.result,
-            metadata: {
-              ...semanticCached.result.metadata,
-              cached: true,
-              similarity: semanticCached.similarity,
-              responseTime: totalRetrievalMs,
-            },
-          };
-        }
-
-        // Fallback to in-memory cache
+        
+        // Check in-memory cache
         const memCached = this.getFromCache(query.text);
         if (memCached) {
           cacheHit = true;
@@ -335,8 +276,8 @@ export class UnifiedRAGService {
 
       // Cache the result in Redis with semantic similarity
       if (this.config.enableCaching) {
-        await redisCacheService.cacheWithSemanticSimilarity(query.text, result, strategy);
-        this.addToCache(query.text, result); // Also cache in-memory
+        // Cache result in memory (Redis removed for browser compatibility)
+        this.addToCache(query.text, result);
       }
 
       console.log(`✅ Query completed in ${result.metadata.responseTime}ms using ${strategy} strategy`);

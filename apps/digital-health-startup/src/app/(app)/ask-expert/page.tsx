@@ -17,6 +17,7 @@
  */
 
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { flushSync } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Sparkles,
@@ -40,6 +41,10 @@ import {
   Settings2,
   Wrench,
   MessageSquare,
+  HelpCircle,
+  Target,
+  UserCheck,
+  MessageCircle,
 } from 'lucide-react';
 import { PromptInput } from '@/components/prompt-input';
 import { type Agent as SidebarAgent } from '@/components/ask-expert-sidebar';
@@ -61,6 +66,18 @@ import { InlineArtifactGenerator } from '@/features/ask-expert/components/Inline
 import { AgentAvatar, Button } from '@vital/ui';
 import { Suggestions, Suggestion } from '@/components/ai/suggestion';
 import { useAgentWithStats } from '@/features/ask-expert/hooks/useAgentWithStats';
+import { AskExpertOnboarding } from '@/components/onboarding/ask-expert-onboarding';
+import { Mode1Helper } from '@/components/onboarding/mode1-helper';
+import { Mode2Helper } from '@/components/onboarding/mode2-helper';
+import { Mode3Helper } from '@/components/onboarding/mode3-helper';
+import { Mode4Helper } from '@/components/onboarding/mode4-helper';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from '@/components/ui/dropdown-menu';
 
 // ============================================================================
 // TYPES
@@ -169,12 +186,103 @@ interface Conversation {
 }
 
 // ============================================================================
+// HELPER FUNCTIONS (moved before components to avoid Next.js export issues)
+// ============================================================================
+
+function extractTopic(sentence: string): string | null {
+  const trimmed = sentence.trim();
+  if (!trimmed) {
+    return null;
+  }
+
+  const separators = [trimmed.indexOf(':'), trimmed.indexOf('—'), trimmed.indexOf('- ')].filter(
+    (index) => index > 0
+  );
+  const cutoff = separators.length ? Math.min(...separators) : Math.min(trimmed.length, 80);
+  let candidate = trimmed.slice(0, cutoff).replace(/^[^A-Za-z0-9]+/, '').trim();
+  if (!candidate) {
+    return null;
+  }
+
+  if (candidate.length > 60) {
+    candidate = `${candidate.slice(0, 57)}...`;
+  }
+
+  return candidate;
+}
+
+function generateFollowUpSuggestions(
+  message: Message | undefined,
+  streamingMessage: string | undefined,
+  modeName: string
+): string[] {
+  const suggestions = new Set<string>();
+
+  if (streamingMessage && streamingMessage.trim().length > 0) {
+    suggestions.add('What other details should we explore about this?');
+  }
+
+  if (!message || !message.content) {
+    suggestions.add(`What should I do next in ${modeName.toLowerCase()} mode?`);
+    suggestions.add('Suggest actionable next steps.');
+    suggestions.add('Flag potential risks I should know about.');
+    return Array.from(suggestions).slice(0, 4);
+  }
+
+  const content = message.content.replace(/\s+/g, ' ').trim();
+  const sentences = content
+    .split(/(?<=[.!?])\s+/)
+    .filter((sentence) => sentence.length > 40)
+    .slice(0, 3);
+
+  sentences.forEach((sentence) => {
+    const topic = extractTopic(sentence);
+    if (topic) {
+      suggestions.add(`Can you expand on ${topic}?`);
+    }
+  });
+
+  const bulletTopics = message.content
+    .split('\n')
+    .map((line) => line.trim())
+    .filter((line) => /^[-*•]/.test(line))
+    .slice(0, 2);
+
+  bulletTopics.forEach((line) => {
+    const cleaned = line.replace(/^[-*•]\s*/, '');
+    const topic = extractTopic(cleaned);
+    if (topic) {
+      suggestions.add(`What are the implications of ${topic}?`);
+    }
+  });
+
+  if (message.metadata?.ragSummary?.warning) {
+    suggestions.add('How can we resolve the evidence gaps you mentioned?');
+  }
+
+  const domains = message.metadata?.ragSummary?.domains;
+  if (domains && domains.length > 0) {
+    suggestions.add(`Share more insights on ${domains[0]}.`);
+  }
+
+  const usedTools = message.metadata?.toolSummary?.used;
+  if (usedTools && usedTools.length > 0) {
+    suggestions.add(`What did the ${usedTools[0]} tool uncover?`);
+  }
+
+  suggestions.add('What concrete steps should we prioritize next?');
+  suggestions.add('Are there risks or blockers we should anticipate?');
+
+  return Array.from(suggestions).slice(0, 4);
+}
+
+// ============================================================================
 // MAIN COMPONENT
 // ============================================================================
 
 function AskExpertPageContent() {
   // Get agents and selection from context (loaded by layout sidebar)
-  const { selectedAgents, agents, setSelectedAgents } = useAskExpert();
+  const { selectedAgents, agents, setSelectedAgents, addAgentToUserList, refreshAgents, getAllAgents } = useAskExpert();
   const { user } = useAuth();
   
   // Chat history context
@@ -212,15 +320,26 @@ function AskExpertPageContent() {
   const [tokenCount, setTokenCount] = useState(0);
   const [showArtifactGenerator, setShowArtifactGenerator] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [showMode1Helper, setShowMode1Helper] = useState(false);
+  const [showMode2Helper, setShowMode2Helper] = useState(false);
+  const [showMode3Helper, setShowMode3Helper] = useState(false);
+  const [showMode4Helper, setShowMode4Helper] = useState(false);
   const [selectedTools, setSelectedTools] = useState<string[]>([]);
   const [selectedRagDomains, setSelectedRagDomains] = useState<string[]>([]);
-  const [useLangGraph, setUseLangGraph] = useState(false); // LangGraph disabled by default
+  const [useLangGraph, setUseLangGraph] = useState(true); // ✅ LangGraph enabled by default for quality AI responses, reasoning visibility, memory, and better tools
   const [streamingMeta, setStreamingMeta] = useState<{
     ragSummary?: NonNullable<Message['metadata']>['ragSummary'];
     toolSummary?: NonNullable<Message['metadata']>['toolSummary'];
     sources?: Source[];
     reasoning: string[];
   } | null>(null);
+
+  // ✅ NEW: LangGraph Streaming State
+  const [workflowSteps, setWorkflowSteps] = useState<any[]>([]);
+  const [reasoningSteps, setReasoningSteps] = useState<any[]>([]);
+  const [streamingMetrics, setStreamingMetrics] = useState<any>(null);
+  const [isStreaming, setIsStreaming] = useState(false);
 
 
   const formatReasoningTimestamp = useCallback((value: number | null) => {
@@ -322,25 +441,119 @@ function AskExpertPageContent() {
     []
   );
 
-  const availableTools = useMemo(() => {
-    if (!selectedAgents.length) {
-      return [] as string[];
-    }
+  // ⚠️ FIXED: Fetch tools from database (agent_tools table) instead of agents.tools JSON column
+  const [availableTools, setAvailableTools] = useState<string[]>([]);
+  const [loadingTools, setLoadingTools] = useState(false);
 
-    const toolSet = new Set<string>();
-    selectedAgents.forEach((agentId) => {
-      const agent = agents.find((a) => a.id === agentId);
-      if (agent?.tools && Array.isArray(agent.tools)) {
-        agent.tools.forEach((tool) => {
-          if (typeof tool === 'string' && tool.trim().length > 0) {
-            toolSet.add(tool.trim());
+  useEffect(() => {
+    const fetchAgentTools = async () => {
+      if (!selectedAgents.length) {
+        setAvailableTools([]);
+        return;
+      }
+
+      setLoadingTools(true);
+      try {
+        const { createClient } = await import('@vital/sdk/client');
+        const supabase = createClient();
+
+        const toolSet = new Set<string>();
+
+        // Fetch tools from agent_tools table for each selected agent
+        for (const agentId of selectedAgents) {
+          try {
+            // Fetch tool assignments from agent_tools table
+            const { data: agentToolsData, error: agentToolsError } = await supabase
+              .from('agent_tools')
+              .select('tool_id')
+              .eq('agent_id', agentId);
+
+            if (agentToolsError) {
+              console.warn(`⚠️ [Tool Selector] Error loading tools for agent ${agentId}:`, agentToolsError);
+              // Fallback to agents.tools JSON column for backward compatibility
+              const agent = agents.find((a) => a.id === agentId);
+              if (agent?.tools && Array.isArray(agent.tools)) {
+                agent.tools.forEach((tool) => {
+                  if (typeof tool === 'string' && tool.trim().length > 0) {
+                    toolSet.add(tool.trim());
+                  }
+                });
+              }
+              continue;
+            }
+
+            const toolIds = (agentToolsData || []).map(at => at.tool_id);
+
+            if (toolIds.length === 0) {
+              // Fallback to agents.tools JSON column
+              const agent = agents.find((a) => a.id === agentId);
+              if (agent?.tools && Array.isArray(agent.tools)) {
+                agent.tools.forEach((tool) => {
+                  if (typeof tool === 'string' && tool.trim().length > 0) {
+                    toolSet.add(tool.trim());
+                  }
+                });
+              }
+              continue;
+            }
+
+            // Fetch tool details from dh_tool table
+            const { data: toolsData, error: toolsError } = await supabase
+              .from('dh_tool')
+              .select('id, name')
+              .in('id', toolIds)
+              .eq('is_active', true); // Only active tools
+
+            if (toolsError) {
+              console.warn(`⚠️ [Tool Selector] Error fetching tool details:`, toolsError);
+              continue;
+            }
+
+            // Add tool names to set
+            (toolsData || []).forEach((tool) => {
+              if (tool.name && typeof tool.name === 'string' && tool.name.trim().length > 0) {
+                toolSet.add(tool.name.trim());
+              }
+            });
+          } catch (error) {
+            console.error(`❌ [Tool Selector] Error processing agent ${agentId}:`, error);
+            // Fallback to agents.tools JSON column
+            const agent = agents.find((a) => a.id === agentId);
+            if (agent?.tools && Array.isArray(agent.tools)) {
+              agent.tools.forEach((tool) => {
+                if (typeof tool === 'string' && tool.trim().length > 0) {
+                  toolSet.add(tool.trim());
+                }
+              });
+            }
+          }
+        }
+
+        const sortedTools = Array.from(toolSet).sort((a, b) => a.localeCompare(b));
+        console.log(`✅ [Tool Selector] Loaded ${sortedTools.length} tools from database for ${selectedAgents.length} agent(s):`, sortedTools);
+        setAvailableTools(sortedTools);
+      } catch (error) {
+        console.error('❌ [Tool Selector] Error fetching tools:', error);
+        // Fallback to agents.tools JSON column
+        const toolSet = new Set<string>();
+        selectedAgents.forEach((agentId) => {
+          const agent = agents.find((a) => a.id === agentId);
+          if (agent?.tools && Array.isArray(agent.tools)) {
+            agent.tools.forEach((tool) => {
+              if (typeof tool === 'string' && tool.trim().length > 0) {
+                toolSet.add(tool.trim());
+              }
+            });
           }
         });
+        setAvailableTools(Array.from(toolSet).sort((a, b) => a.localeCompare(b)));
+      } finally {
+        setLoadingTools(false);
       }
-    });
+    };
 
-    return Array.from(toolSet).sort((a, b) => a.localeCompare(b));
-  }, [agents, selectedAgents]);
+    fetchAgentTools();
+  }, [selectedAgents, agents]);
 
   useEffect(() => {
     if (availableTools.length === 0) {
@@ -799,10 +1012,19 @@ function AskExpertPageContent() {
     setRecentReasoning([]);
     setRecentReasoningTimestamp(null);
     
+    // ✅ NEW: Initialize streaming state
+    setIsStreaming(true);
+    setWorkflowSteps([]);
+    setReasoningSteps([]);
+    setStreamingMetrics(null);
+    
     // Reset streaming message
     setStreamingMessage('');
 
     try {
+      // Get the agentId for manual mode BEFORE using it
+      const agentId = selectedAgents && selectedAgents.length > 0 ? selectedAgents[0] : undefined;
+
       console.log('[AskExpert] Sending request to /api/ask-expert/orchestrate', {
         mode,
         agentId,
@@ -810,33 +1032,68 @@ function AskExpertPageContent() {
         enableRAG,
         enableTools,
       });
-      
-      const response = await fetch('/api/ask-expert/orchestrate', {
+
+      // ✅ DEBUG LOGGING - Remove after fixing
+      console.group('🔍 [Mode 1 Debug] Request Details');
+      console.log('Mode:', mode);
+      console.log('Agent ID:', agentId);
+      console.log('Selected Agents Array:', selectedAgents);
+      console.log('Agents List:', agents.map(a => ({ id: a.id, name: a.name })));
+      console.log('Enable RAG:', enableRAG);
+      console.log('Enable Tools:', enableTools);
+      console.log('User ID:', user?.id);
+      console.groupEnd();
+
+      // 🔥 NEW: Call Python AI Engine directly for Mode 1 streaming
+      const apiEndpoint = mode === 'manual' 
+        ? `${process.env.NEXT_PUBLIC_PYTHON_AI_ENGINE_URL || 'http://localhost:8080'}/api/mode1/manual`
+        : '/api/ask-expert/orchestrate';
+
+      console.log('[AskExpert] Calling endpoint:', apiEndpoint);
+
+      const response = await fetch(apiEndpoint, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          mode: mode,
-          agentId: (mode === 'manual' || mode === 'multi-expert') ? agentId : undefined, // For manual and multi-expert modes
-          message: messageContent,
-          conversationHistory: conversationContext.map(m => ({
-            role: m.role,
-            content: m.content
-          })),
-          // Optional settings
-          enableRAG: enableRAG,
-          enableTools: enableTools,
-          requestedTools: enableTools ? selectedTools : undefined,
-          selectedRagDomains: enableRAG ? selectedRagDomains : undefined,
-          model: selectedModel,
-          temperature: 0.7,
-          maxTokens: 2000,
-          userId: user?.id, // For Mode 2 and Mode 3 agent selection
-          // Autonomous mode settings
-          maxIterations: (mode === 'autonomous' || mode === 'multi-expert') ? 10 : undefined,
-          confidenceThreshold: (mode === 'autonomous' || mode === 'multi-expert') ? 0.95 : undefined,
-          // LangGraph integration (NEW)
-          useLangGraph: useLangGraph, // Enable LangGraph workflow orchestration
-        }),
+        headers: { 
+          'Content-Type': 'application/json',
+          // ✅ FIX: Use proper UUID format for tenant ID (AI Engine expects UUID)
+          'x-tenant-id': user?.user_metadata?.tenant_id || '00000000-0000-0000-0000-000000000001',
+        },
+        body: JSON.stringify(
+          mode === 'manual' 
+            ? {
+                // 🔥 Mode 1 (Python AI Engine) format - MUST match Mode1ManualRequest
+                agent_id: agentId || '',  // ✅ Singular (backend expects agent_id)
+                message: messageContent,  // ✅ Renamed from user_query
+                enable_rag: enableRAG,
+                enable_tools: enableTools,
+                selected_rag_domains: enableRAG ? selectedRagDomains : [],
+                requested_tools: enableTools ? selectedTools : [],  // ✅ Renamed from selected_tools
+                model: selectedModel || 'gpt-4-turbo',
+                temperature: 0.7,
+                conversation_id: activeConversationId || undefined,
+              }
+            : {
+                // Legacy Node.js API Gateway format
+                mode: mode,
+                agentId: (mode === 'manual' || mode === 'multi-expert') ? agentId : undefined,
+                message: messageContent,
+                conversationHistory: conversationContext.map(m => ({
+                  role: m.role,
+                  content: m.content
+                })),
+                enableRAG: enableRAG,
+                enableTools: enableTools,
+                requestedTools: enableTools ? selectedTools : undefined,
+                selectedRagDomains: enableRAG ? selectedRagDomains : undefined,
+                model: selectedModel,
+                temperature: 0.7,
+                maxTokens: 2000,
+                userId: user?.id,
+                maxIterations: (mode === 'autonomous' || mode === 'multi-expert') ? 10 : undefined,
+                confidenceThreshold: (mode === 'autonomous' || mode === 'multi-expert') ? 0.95 : undefined,
+                useLangGraph: useLangGraph,
+              }
+        ),
       });
 
       if (!response.ok) {
@@ -910,7 +1167,242 @@ function AskExpertPageContent() {
             try {
               const data = JSON.parse(line.slice(6));
 
-              // Handle different chunk types based on mode
+              // ✅ NEW: Handle LangGraph streaming modes first
+              if (data.stream_mode) {
+                // This is a proper LangGraph streaming event
+                const { stream_mode, data: chunk } = data;
+                
+                // 🔍 DEBUG: Log ALL incoming events
+                console.log(`🔍 [SSE Debug] Received ${stream_mode} event:`, {
+                  mode: stream_mode,
+                  chunkType: typeof chunk,
+                  isArray: Array.isArray(chunk),
+                  keys: typeof chunk === 'object' ? Object.keys(chunk) : 'N/A',
+                  preview: JSON.stringify(chunk).substring(0, 200)
+                });
+                
+                switch (stream_mode) {
+                  case 'custom': {
+                    // Custom events from get_stream_writer()
+                    if (chunk.type === 'workflow_step') {
+                      const step = chunk.step || {};
+                      setWorkflowSteps(prev => {
+                        const existing = prev.find(s => s.id === step.id);
+                        if (existing) {
+                          return prev.map(s => s.id === step.id ? { ...s, ...step } : s);
+                        }
+                        return [...prev, step];
+                      });
+                    } else if (chunk.type === 'langgraph_reasoning') {
+                      const reasoningStep = chunk.step || {};
+                      if (reasoningStep.content) {
+                        setReasoningSteps(prev => [...prev, reasoningStep]);
+                        setStreamingReasoning(prev => {
+                          return prev ? `${prev}\n\n${reasoningStep.content}` : reasoningStep.content;
+                        });
+                        setIsStreamingReasoning(true);
+                      }
+                    } else if (chunk.type === 'rag_sources') {
+                      const incomingSources = Array.isArray(chunk.sources) ? chunk.sources : [];
+                      sources = incomingSources.map((source: any, idx: number) => ({
+                        id: source.id || `source-${idx + 1}`,
+                        url: source.url || '#',
+                        title: source.title || `Source ${idx + 1}`,
+                        excerpt: source.excerpt || source.description,
+                        similarity: typeof source.similarity === 'number' ? source.similarity : undefined,
+                        domain: source.domain,
+                        evidenceLevel: source.evidenceLevel || 'Unknown',
+                        organization: source.organization,
+                        reliabilityScore: typeof source.reliabilityScore === 'number' ? source.reliabilityScore : undefined,
+                        lastUpdated: source.lastUpdated,
+                      }));
+                      ragSummary = {
+                        totalSources: typeof chunk.total === 'number' ? chunk.total : sources.length,
+                        strategy: typeof chunk.strategy === 'string' ? chunk.strategy : ragSummary.strategy,
+                        domains: Array.isArray(chunk.domains) ? chunk.domains : ragSummary.domains,
+                        cacheHit: typeof chunk.cacheHit === 'boolean' ? chunk.cacheHit : ragSummary.cacheHit,
+                        warning: ragSummary.warning,
+                        retrievalTimeMs: typeof chunk.retrievalTimeMs === 'number' ? chunk.retrievalTimeMs : ragSummary.retrievalTimeMs,
+                      };
+                      updateStreamingMeta();
+                    } else if (chunk.type === 'final') {
+                      const meta = chunk;
+                      finalMeta = meta;
+                      if (meta.rag) {
+                        ragSummary = {
+                          totalSources: meta.rag.totalSources ?? ragSummary.totalSources,
+                          strategy: meta.rag.strategy ?? ragSummary.strategy,
+                          domains: Array.isArray(meta.rag.domains) ? meta.rag.domains : ragSummary.domains,
+                          cacheHit: typeof meta.rag.cacheHit === 'boolean' ? meta.rag.cacheHit : ragSummary.cacheHit,
+                          warning: meta.rag.warning ?? ragSummary.warning,
+                          retrievalTimeMs: typeof meta.rag.retrievalTimeMs === 'number' ? meta.rag.retrievalTimeMs : ragSummary.retrievalTimeMs,
+                        };
+                      }
+                      if (meta.sources && Array.isArray(meta.sources)) {
+                        sources = meta.sources.map((source: any, idx: number) => ({
+                          id: source.id || `source-${idx + 1}`,
+                          url: source.url || '#',
+                          title: source.title || `Source ${idx + 1}`,
+                          excerpt: source.excerpt || source.description,
+                          similarity: typeof source.similarity === 'number' ? source.similarity : undefined,
+                          domain: source.domain,
+                          evidenceLevel: source.evidenceLevel || 'Unknown',
+                          organization: source.organization,
+                          reliabilityScore: typeof source.reliabilityScore === 'number' ? source.reliabilityScore : undefined,
+                          lastUpdated: source.lastUpdated,
+                        }));
+                      }
+                      if (meta.tools) {
+                        toolSummary = {
+                          allowed: Array.isArray(meta.tools.allowed) ? meta.tools.allowed : toolSummary.allowed,
+                          used: Array.isArray(meta.tools.used) ? meta.tools.used : toolSummary.used,
+                          totals: {
+                            calls: meta.tools.totals?.calls ?? toolSummary.totals.calls,
+                            success: meta.tools.totals?.success ?? toolSummary.totals.success,
+                            failure: meta.tools.totals?.failure ?? toolSummary.totals.failure,
+                            totalTimeMs: meta.tools.totals?.totalTimeMs ?? toolSummary.totals.totalTimeMs,
+                          },
+                        };
+                      }
+                      if (Array.isArray(meta.reasoning) && meta.reasoning.length > 0) {
+                        reasoning = meta.reasoning.map((step: string) => ({
+                          type: 'reasoning',
+                          content: step,
+                        }));
+                        console.log(`✅ [Mode1 Final] Extracted ${reasoning.length} reasoning steps from meta`);
+                      }
+                      if (Array.isArray(meta.branches) && meta.branches.length > 0) {
+                        branches = meta.branches.map((branch: any, idx: number) => ({
+                          id: branch.id || `branch-${idx + 1}`,
+                          content: typeof branch.content === 'string' ? branch.content : '',
+                          confidence: typeof branch.confidence === 'number' ? branch.confidence : 0,
+                          citations: Array.isArray(branch.citations) ? branch.citations : [],
+                          sources: Array.isArray(branch.sources)
+                            ? branch.sources.map((src: any, sourceIdx: number) => ({
+                                id: src.id || `branch-${idx + 1}-source-${sourceIdx + 1}`,
+                                url: src.url || src.link || '#',
+                                title: src.title || src.name || `Source ${sourceIdx + 1}`,
+                                excerpt: src.excerpt || src.summary || src.description,
+                                similarity: typeof src.similarity === 'number' ? src.similarity : undefined,
+                                domain: src.domain,
+                                evidenceLevel: src.evidenceLevel || src.level || 'Unknown',
+                                organization: src.organization,
+                                reliabilityScore: typeof src.reliabilityScore === 'number' ? src.reliabilityScore : undefined,
+                                lastUpdated: src.lastUpdated,
+                              }))
+                            : [],
+                          createdAt: branch.createdAt ? new Date(branch.createdAt) : new Date(),
+                          reasoning: Array.isArray(branch.reasoning)
+                            ? branch.reasoning.join('\n')
+                            : branch.reasoning || undefined,
+                        }));
+                        currentBranch = typeof meta.currentBranch === 'number' ? meta.currentBranch : 0;
+                      }
+                      if (typeof meta.confidence === 'number') {
+                        confidence = meta.confidence;
+                      }
+                      updateStreamingMeta();
+                    }
+                    break;
+                  }
+                  case 'messages': {
+                    // ✅ LangGraph messages mode: chunk is an array of LangChain messages
+                    // Format: [HumanMessage(...), AIMessage(content="response")]
+                    if (Array.isArray(chunk)) {
+                      for (const message of chunk) {
+                        // Extract AIMessage content
+                        if (message.type === 'ai' || message.constructor?.name === 'AIMessage') {
+                          const content = message.content || '';
+                          if (typeof content === 'string' && content.trim()) {
+                            console.log('✅ [Messages Mode] Received AIMessage:', content.substring(0, 100));
+                            setStreamingMessage(prev => prev + content);
+                          }
+                        }
+                      }
+                    } else if (chunk.content) {
+                      // Fallback: direct content field
+                      const content = typeof chunk.content === 'string' ? chunk.content : '';
+                      if (content.trim()) {
+                        console.log('✅ [Messages Mode] Received content:', content.substring(0, 100));
+                        setStreamingMessage(prev => prev + content);
+                      }
+                    }
+                    break;
+                  }
+                  case 'updates': {
+                    // ✅ Node completion updates - extract final state with sources
+                    console.log('🔄 [LangGraph Update] Node completed:', chunk);
+                    
+                    // ✅ DEBUG: Log all keys in the chunk to see what's available
+                    if (chunk && typeof chunk === 'object') {
+                      console.log('🔍 [Updates Debug] Chunk keys:', Object.keys(chunk));
+                      console.log('🔍 [Updates Debug] Chunk preview:', JSON.stringify(chunk).substring(0, 300));
+                    }
+                    
+                    // ✅ CRITICAL FIX: Updates mode wraps state in node name
+                    // Format: { "format_output": { state } } or { "execute_agent": { state } }
+                    // We need to extract the state from the wrapper
+                    let actualState = chunk;
+                    const nodeNames = Object.keys(chunk);
+                    if (nodeNames.length === 1 && typeof chunk[nodeNames[0]] === 'object') {
+                      actualState = chunk[nodeNames[0]];
+                      console.log('🔍 [Updates Unwrap] Extracted state from node:', nodeNames[0]);
+                      console.log('🔍 [Updates Unwrap] State keys:', Object.keys(actualState));
+                    }
+                    
+                    // Extract sources from final format_output state
+                    if (actualState.sources && Array.isArray(actualState.sources)) {
+                      console.log(`✅ [Updates Mode] Found ${actualState.sources.length} sources`);
+                      setStreamingMeta(prev => ({
+                        ...prev,
+                        sources: actualState.sources
+                      }));
+                      // Note: sources are stored in streamingMeta, which is used in finalSources
+                    }
+                    
+                    // Extract citations
+                    if (actualState.citations && Array.isArray(actualState.citations)) {
+                      console.log(`✅ [Updates Mode] Found ${actualState.citations.length} citations`);
+                      setStreamingMeta(prev => ({
+                        ...prev,
+                        citations: actualState.citations
+                      }));
+                    }
+                    
+                    // Extract confidence
+                    if (typeof actualState.confidence === 'number') {
+                      console.log(`✅ [Updates Mode] Confidence: ${actualState.confidence}`);
+                      confidence = actualState.confidence;
+                    }
+                    
+                    // ✅ Extract final response content if present
+                    if (actualState.response && typeof actualState.response === 'string') {
+                      console.log(`✅ [Updates Mode] Found final response (${actualState.response.length} chars): ${actualState.response.substring(0, 100)}...`);
+                      // Store in streamingMeta for final message creation
+                      setStreamingMeta(prev => ({
+                        ...prev,
+                        finalResponse: actualState.response
+                      }));
+                    }
+                    
+                    // Also check for agent_response (alternative field name)
+                    if (actualState.agent_response && typeof actualState.agent_response === 'string') {
+                      console.log(`✅ [Updates Mode] Found agent_response (${actualState.agent_response.length} chars)`);
+                      setStreamingMeta(prev => ({
+                        ...prev,
+                        finalResponse: actualState.agent_response
+                      }));
+                    }
+                    
+                    break;
+                  }
+                }
+                
+                // Don't process legacy format after handling new format
+                continue;
+              }
+
+              // Handle different chunk types based on mode (LEGACY FORMAT)
               if (data.type === 'chunk' && data.content) {
                 if (typeof data.content === 'string' && (data.content.startsWith('__mode1_meta__') || data.content.startsWith('__mode2_meta__') || data.content.startsWith('__mode3_meta__') || data.content.startsWith('__mode4_meta__'))) {
                   try {
@@ -1031,6 +1523,41 @@ function AskExpertPageContent() {
                         setIsStreamingReasoning(true);
                         reasoning.push(base);
                         updateStreamingMeta();
+                        break;
+                      }
+                      // ✅ NEW: Handle LangGraph workflow step events
+                      case 'workflow_step': {
+                        const step = meta.step || {};
+                        setWorkflowSteps(prev => {
+                          const existing = prev.find(s => s.id === step.id);
+                          if (existing) {
+                            return prev.map(s => s.id === step.id ? { ...s, ...step } : s);
+                          }
+                          return [...prev, step];
+                        });
+                        break;
+                      }
+                      // ✅ NEW: Handle LangGraph reasoning events
+                      case 'langgraph_reasoning': {
+                        const reasoningStep = meta.step || {};
+                        if (reasoningStep.content) {
+                          setReasoningSteps(prev => [...prev, reasoningStep]);
+                          // Also update the existing reasoning display
+                          setStreamingReasoning(prev => {
+                            return prev ? `${prev}\n\n${reasoningStep.content}` : reasoningStep.content;
+                          });
+                          setIsStreamingReasoning(true);
+                        }
+                        break;
+                      }
+                      // ✅ NEW: Handle metrics events
+                      case 'metrics': {
+                        setStreamingMetrics({
+                          tokensGenerated: meta.tokensGenerated,
+                          tokensPerSecond: meta.tokensPerSecond,
+                          elapsedTime: meta.elapsedTime,
+                          estimatedTimeRemaining: meta.estimatedTimeRemaining
+                        });
                         break;
                       }
                       case 'final': {
@@ -1353,6 +1880,27 @@ function AskExpertPageContent() {
         }
       }
 
+      // ✅ FIX: Use accumulated streaming state instead of empty variables
+      // Priority: streamingMessage (from messages mode) > streamingMeta.finalResponse (from updates mode) > fullResponse (legacy)
+      const finalContent = streamingMessage || streamingMeta?.finalResponse || fullResponse || '';
+      const finalSources = streamingMeta?.sources || sources || [];
+      const finalReasoning = streamingMeta?.reasoning || reasoning || [];
+      const finalRagSummary = {
+        ...ragSummary,
+        totalSources: finalSources.length,  // ✅ Correct count from final sources
+      };
+      const finalToolSummary = streamingMeta?.toolSummary || toolSummary;
+
+      console.log('✅ [Final Message] Using accumulated streaming state:', {
+        contentLength: finalContent.length,
+        sourcesCount: finalSources.length,
+        reasoningCount: finalReasoning.length,
+        streamingMessageLength: streamingMessage.length,
+        streamingMetaFinalResponse: streamingMeta?.finalResponse?.length || 0,
+        streamingMetaSources: streamingMeta?.sources?.length || 0,
+        source: streamingMessage ? 'streamingMessage' : streamingMeta?.finalResponse ? 'streamingMeta.finalResponse' : fullResponse ? 'fullResponse' : 'empty'
+      });
+
       const assistantMessageId = (Date.now() + 1).toString();
       const messageBranches =
         branches && branches.length > 0
@@ -1360,12 +1908,12 @@ function AskExpertPageContent() {
           : [
               {
                 id: `${assistantMessageId}-branch-0`,
-                content: fullResponse,
+                content: finalContent,  // ✅ Use accumulated content
                 confidence: typeof confidence === 'number' ? confidence : 0,
                 citations: Array.isArray(finalMeta?.citations) ? finalMeta.citations : [],
-                sources: sources.map((src, idx) => ({ ...src, id: src.id || `fallback-source-${idx + 1}` })),
+                sources: finalSources.map((src, idx) => ({ ...src, id: src.id || `fallback-source-${idx + 1}` })),  // ✅ Use finalSources
                 createdAt: new Date(),
-                reasoning: reasoning.length > 0 ? reasoning.join('\n') : undefined,
+                reasoning: finalReasoning.length > 0 ? finalReasoning.join('\n') : undefined,  // ✅ Use finalReasoning
               },
             ];
       const activeBranchIndex = Math.min(currentBranch, messageBranches.length - 1);
@@ -1374,10 +1922,10 @@ function AskExpertPageContent() {
       const assistantMessage: Message = {
         id: assistantMessageId,
         role: 'assistant',
-        content: activeBranch?.content ?? fullResponse,
+        content: activeBranch?.content ?? finalContent,  // ✅ Use finalContent
         timestamp: Date.now(),
-        reasoning,
-        sources: activeBranch?.sources && activeBranch.sources.length > 0 ? activeBranch.sources : sources,
+        reasoning: finalReasoning,  // ✅ Use finalReasoning
+        sources: activeBranch?.sources && activeBranch.sources.length > 0 ? activeBranch.sources : finalSources,  // ✅ Use finalSources
         selectedAgent,
         selectionReason,
         confidence,
@@ -1386,10 +1934,10 @@ function AskExpertPageContent() {
         // Add autonomous metadata for Mode 3 & Mode 4
         ...(Object.keys(autonomousMetadata).length > 0 && { autonomousMetadata }),
         metadata: {
-          ragSummary,
-          toolSummary,
-          sources: activeBranch?.sources && activeBranch.sources.length > 0 ? activeBranch.sources : sources,
-          reasoning,
+          ragSummary: finalRagSummary,  // ✅ Use finalRagSummary
+          toolSummary: finalToolSummary,  // ✅ Use finalToolSummary
+          sources: activeBranch?.sources && activeBranch.sources.length > 0 ? activeBranch.sources : finalSources,  // ✅ Use finalSources
+          reasoning: finalReasoning,  // ✅ Use finalReasoning
           confidence,
           citations: Array.isArray(finalMeta?.citations) ? finalMeta.citations : undefined,
         },
@@ -1420,11 +1968,11 @@ function AskExpertPageContent() {
       // Debug: Log message creation for Mode 3
       console.group('📝 [AskExpert] Creating Assistant Message');
       console.log('Mode:', mode);
-      console.log('Content length:', fullResponse.length);
-      console.log('Content preview:', fullResponse.substring(0, 100));
+      console.log('Content length:', finalContent.length);  // ✅ Use finalContent
+      console.log('Content preview:', finalContent.substring(0, 100));
       console.log('Selected agent:', selectedAgent);
-      console.log('Sources count:', sources.length);
-      console.log('Reasoning steps:', reasoning.length);
+      console.log('Sources count:', finalSources.length);  // ✅ Use finalSources
+      console.log('Reasoning steps:', finalReasoning.length);  // ✅ Use finalReasoning
       console.log('Autonomous metadata keys:', Object.keys(autonomousMetadata));
       console.log('Confidence:', confidence);
       console.log('Message ID:', assistantMessage.id);
@@ -1535,6 +2083,8 @@ function AskExpertPageContent() {
     } finally {
       setIsLoading(false);
       setStreamingMeta(null);
+      // ✅ NEW: Cleanup streaming state
+      setIsStreaming(false);
     }
   };
 
@@ -1726,6 +2276,41 @@ function AskExpertPageContent() {
                 <span>{primarySelectedAgent.displayName}</span>
               </div>
             )}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  className="p-2 rounded-lg transition-colors hover:bg-gray-100 dark:hover:bg-gray-800"
+                  title="Help & Tutorials"
+                >
+                  <HelpCircle className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuItem onClick={() => setShowOnboarding(true)}>
+                  <BookOpen className="h-4 w-4 mr-2" />
+                  <span>Ask Expert Tutorial</span>
+                </DropdownMenuItem>
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => setShowMode1Helper(true)}>
+                    <Target className="h-4 w-4 mr-2" />
+                    <span>Mode 1 Helper</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setShowMode2Helper(true)}>
+                    <Zap className="h-4 w-4 mr-2" />
+                    <span>Mode 2 Helper</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setShowMode3Helper(true)}>
+                    <UserCheck className="h-4 w-4 mr-2" />
+                    <span>Mode 3 Helper</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setShowMode4Helper(true)}>
+                    <MessageCircle className="h-4 w-4 mr-2" />
+                    <span>Mode 4 Helper</span>
+                  </DropdownMenuItem>
+                </>
+              </DropdownMenuContent>
+            </DropdownMenu>
             <button
               onClick={() => setShowSettings(!showSettings)}
               className={`p-2 rounded-lg transition-colors ${
@@ -1923,7 +2508,7 @@ function AskExpertPageContent() {
 
         {/* Messages Area */}
         <Conversation className="flex-1">
-          <ConversationContent className="max-w-3xl mx-auto px-4 py-6">
+          <ConversationContent className="max-w-5xl mx-auto px-4 py-6">
             {/* Selected Agents Display (for multiple selections) */}
             {selectedAgents.length > 1 && (
               <div className="mb-6">
@@ -2163,7 +2748,14 @@ function AskExpertPageContent() {
                     content={streamingMessage || ''}
                     timestamp={new Date()}
                     isStreaming
-                    metadata={streamingMeta || (streamingReasoning ? { reasoning: [streamingReasoning] } : undefined)}
+                    metadata={{
+                      ...streamingMeta,
+                      reasoning: streamingReasoning ? [streamingReasoning] : (streamingMeta?.reasoning || []),
+                      // ✅ NEW: Add LangGraph workflow and reasoning data
+                      workflowSteps: workflowSteps.length > 0 ? workflowSteps : undefined,
+                      reasoningSteps: reasoningSteps.length > 0 ? reasoningSteps : undefined,
+                      streamingMetrics: streamingMetrics || undefined,
+                    }}
                     agentName={(() => {
                       const agent = selectedAgents.length > 0
                         ? agents.find((a) => selectedAgents.includes(a.id))
@@ -2254,10 +2846,259 @@ function AskExpertPageContent() {
             availableRagDomains={availableRagDomains}
             selectedRagDomains={selectedRagDomains}
             onSelectedRagDomainsChange={setSelectedRagDomains}
-            useLangGraph={useLangGraph}
-            onUseLangGraphChange={setUseLangGraph}
+            useLangGraph={useLangGraph} // Always true - LangGraph enabled by default
+            onUseLangGraphChange={undefined} // Button removed - LangGraph always enabled
           />
         </div>
+
+        {/* Onboarding Popup */}
+        <AskExpertOnboarding 
+          open={showOnboarding}
+          onOpenChange={setShowOnboarding}
+          onComplete={() => {
+            setShowOnboarding(false);
+          }}
+        />
+
+        {/* Mode 1 Helper */}
+        <Mode1Helper
+          open={showMode1Helper}
+          onOpenChange={setShowMode1Helper}
+          variant="modal"
+          showOnFirstVisit={false}
+          autoDismiss={false}
+          onExampleClick={async (example) => {
+            // Step 1: Fill the prompt immediately
+            setInputValue(example.question);
+            
+            // Step 2: Find the agent (from all available agents, not just user's list)
+            let selectedAgent = null;
+            
+            // Get all available agents (not just user's list)
+            const allAgents = await getAllAgents();
+            
+            // Method 1: If agentId is provided, use it directly
+            if (example.agentId) {
+              selectedAgent = allAgents.find((agent) => agent.id === example.agentId);
+            }
+            
+            // Method 2: If no agentId, use search terms from example
+            if (!selectedAgent && example.agentSearchTerms && Array.isArray(example.agentSearchTerms) && example.agentSearchTerms.length > 0) {
+              const agentsWithScores = allAgents.map((agent) => {
+                const name = String(agent.name || '').toLowerCase();
+                const displayName = String(
+                  (agent as any).displayName || 
+                  (agent as any).display_name || 
+                  ''
+                ).toLowerCase();
+                const description = String(agent.description || '').toLowerCase();
+                const specialty = String((agent as any).specialty || '').toLowerCase();
+                const searchText = `${name} ${displayName} ${description} ${specialty}`;
+                
+                const matchCount = (example.agentSearchTerms || []).filter((term) =>
+                  searchText.includes(term.toLowerCase())
+                ).length;
+                
+                return { agent, score: matchCount };
+              });
+              
+              const bestMatch = agentsWithScores
+                .filter((item) => item.score > 0)
+                .sort((a, b) => b.score - a.score)[0];
+              
+              if (bestMatch) {
+                selectedAgent = bestMatch.agent;
+              }
+            }
+            
+            // Method 3: Fallback to expert name matching
+            if (!selectedAgent) {
+              const normalizedExpert = example.expert.toLowerCase().replace(/\s*expert\s*$/i, '').trim();
+              
+              selectedAgent = allAgents.find((agent) => {
+                const name = String(agent.name || '').toLowerCase();
+                const displayName = String(
+                  (agent as any).displayName || 
+                  (agent as any).display_name || 
+                  ''
+                ).toLowerCase();
+                const description = String(agent.description || '').toLowerCase();
+                
+                return (
+                  name.includes(normalizedExpert) ||
+                  displayName.includes(normalizedExpert) ||
+                  description.includes(normalizedExpert)
+                );
+              });
+            }
+            
+            // Step 3: If agent found, ensure it's in user's list and select it
+            if (selectedAgent) {
+              const isAgentInUserList = agents.some((a) => a.id === selectedAgent.id);
+              
+              // If agent not in user's list, add it first
+              if (!isAgentInUserList) {
+                try {
+                  console.log(`🔄 [Mode 1 Helper] Adding agent "${selectedAgent.name}" to user's list...`);
+                  await addAgentToUserList(selectedAgent.id);
+                  
+                  // Refresh agents list to get the newly added agent
+                  // This will update the agents state in context, which will trigger sidebar re-render
+                  console.log(`🔄 [Mode 1 Helper] Refreshing agents list...`);
+                  await refreshAgents();
+                  
+                  // Wait for React to propagate state updates through context to sidebar
+                  // This ensures the sidebar component receives the updated agents list
+                  await new Promise(resolve => setTimeout(resolve, 300));
+                  
+                  console.log(`✅ [Mode 1 Helper] Agent "${selectedAgent.name}" added and should be visible in sidebar`);
+                } catch (error) {
+                  console.error(`❌ [Mode 1 Helper] Failed to add agent to user list:`, error);
+                  // Still try to select the agent even if adding failed
+                }
+              }
+              
+              // Step 4: Select the agent (this makes it appear in chat and available for LangGraph)
+              // Use flushSync to ensure immediate UI update
+              flushSync(() => {
+                setSelectedAgents([selectedAgent.id]);
+              });
+              
+              // Verify the agent is selected and ready for LangGraph
+              console.log(`✅ [Mode 1 Helper] Agent "${selectedAgent.name}" is now:`);
+              console.log(`   - Added to user's list: ${isAgentInUserList || 'yes (just added)'}`);
+              console.log(`   - Selected in context: ${selectedAgents.includes(selectedAgent.id) ? 'yes' : 'checking...'}`);
+              console.log(`   - Agent ID: ${selectedAgent.id}`);
+              console.log(`   - Ready for LangGraph: ✅`);
+              console.log(`   - Prompt filled: ✅`);
+              console.log(`   - Just press Enter to send!`);
+            } else {
+              console.warn(`⚠️ [Mode 1 Helper] Could not find agent for example: ${example.expert}`);
+            }
+            
+            // Close the helper modal after a brief delay to ensure UI updates are visible
+            setTimeout(() => {
+              setShowMode1Helper(false);
+            }, 200);
+          }}
+        />
+
+        {/* Mode 2 Helper */}
+        <Mode2Helper
+          open={showMode2Helper}
+          onOpenChange={setShowMode2Helper}
+          variant="modal"
+          showOnFirstVisit={false}
+          autoDismiss={false}
+          onExampleClick={(example) => {
+            // Fill the prompt
+            setInputValue(example.question);
+            // Close the helper modal
+            setTimeout(() => {
+              setShowMode2Helper(false);
+            }, 200);
+          }}
+        />
+
+        {/* Mode 3 Helper */}
+        <Mode3Helper
+          open={showMode3Helper}
+          onOpenChange={setShowMode3Helper}
+          variant="modal"
+          showOnFirstVisit={false}
+          autoDismiss={false}
+          onExampleClick={async (example) => {
+            // Fill the prompt
+            setInputValue(example.question);
+            
+            // Find and select the matching agent (similar to Mode 1)
+            let selectedAgent = null;
+            
+            if (example.agentId) {
+              selectedAgent = agents.find((agent) => agent.id === example.agentId);
+            }
+            
+            if (!selectedAgent && example.agentSearchTerms && Array.isArray(example.agentSearchTerms) && example.agentSearchTerms.length > 0) {
+              const allAgents = await getAllAgents();
+              const agentsWithScores = allAgents.map((agent) => {
+                const name = String(agent.name || '').toLowerCase();
+                const displayName = String((agent as any).displayName || (agent as any).display_name || '').toLowerCase();
+                const description = String(agent.description || '').toLowerCase();
+                const specialty = String((agent as any).specialty || '').toLowerCase();
+                const searchText = `${name} ${displayName} ${description} ${specialty}`;
+                
+                const matchCount = (example.agentSearchTerms || []).filter((term) =>
+                  searchText.includes(term.toLowerCase())
+                ).length;
+                
+                return { agent, score: matchCount };
+              });
+              
+              const bestMatch = agentsWithScores
+                .filter((item) => item.score > 0)
+                .sort((a, b) => b.score - a.score)[0];
+              
+              if (bestMatch) {
+                selectedAgent = bestMatch.agent;
+              }
+            }
+            
+            if (!selectedAgent) {
+              const normalizedExpert = example.expert.toLowerCase().replace(/\s*expert\s*$/i, '').trim();
+              const allAgents = await getAllAgents();
+              selectedAgent = allAgents.find((agent) => {
+                const name = String(agent.name || '').toLowerCase();
+                const displayName = String((agent as any).displayName || (agent as any).display_name || '').toLowerCase();
+                const description = String(agent.description || '').toLowerCase();
+                
+                return (
+                  name.includes(normalizedExpert) ||
+                  displayName.includes(normalizedExpert) ||
+                  description.includes(normalizedExpert)
+                );
+              });
+            }
+            
+            if (selectedAgent) {
+              const isAgentInUserList = agents.some((a) => a.id === selectedAgent.id);
+              
+              if (!isAgentInUserList) {
+                try {
+                  await addAgentToUserList(selectedAgent.id);
+                  await refreshAgents();
+                  await new Promise(resolve => setTimeout(resolve, 300));
+                } catch (error) {
+                  console.error(`❌ [Mode 3 Helper] Failed to add agent to user list:`, error);
+                }
+              }
+              
+              flushSync(() => {
+                setSelectedAgents([selectedAgent.id]);
+              });
+            }
+            
+            setTimeout(() => {
+              setShowMode3Helper(false);
+            }, 200);
+          }}
+        />
+
+        {/* Mode 4 Helper */}
+        <Mode4Helper
+          open={showMode4Helper}
+          onOpenChange={setShowMode4Helper}
+          variant="modal"
+          showOnFirstVisit={false}
+          autoDismiss={false}
+          onExampleClick={(example) => {
+            // Fill the prompt
+            setInputValue(example.question);
+            // Close the helper modal
+            setTimeout(() => {
+              setShowMode4Helper(false);
+            }, 200);
+          }}
+        />
     </div>
   );
 }
@@ -2269,91 +3110,4 @@ export default function AskExpertPage() {
       <AskExpertPageContent />
     </ChatHistoryProvider>
   );
-}
-
-function generateFollowUpSuggestions(
-  message: Message | undefined,
-  streamingMessage: string | undefined,
-  modeName: string
-): string[] {
-  const suggestions = new Set<string>();
-
-  if (streamingMessage && streamingMessage.trim().length > 0) {
-    suggestions.add('What other details should we explore about this?');
-  }
-
-  if (!message || !message.content) {
-    suggestions.add(`What should I do next in ${modeName.toLowerCase()} mode?`);
-    suggestions.add('Suggest actionable next steps.');
-    suggestions.add('Flag potential risks I should know about.');
-    return Array.from(suggestions).slice(0, 4);
-  }
-
-  const content = message.content.replace(/\s+/g, ' ').trim();
-  const sentences = content
-    .split(/(?<=[.!?])\s+/)
-    .filter((sentence) => sentence.length > 40)
-    .slice(0, 3);
-
-  sentences.forEach((sentence) => {
-    const topic = extractTopic(sentence);
-    if (topic) {
-      suggestions.add(`Can you expand on ${topic}?`);
-    }
-  });
-
-  const bulletTopics = message.content
-    .split('\n')
-    .map((line) => line.trim())
-    .filter((line) => /^[-*•]/.test(line))
-    .slice(0, 2);
-
-  bulletTopics.forEach((line) => {
-    const cleaned = line.replace(/^[-*•]\s*/, '');
-    const topic = extractTopic(cleaned);
-    if (topic) {
-      suggestions.add(`What are the implications of ${topic}?`);
-    }
-  });
-
-  if (message.metadata?.ragSummary?.warning) {
-    suggestions.add('How can we resolve the evidence gaps you mentioned?');
-  }
-
-  const domains = message.metadata?.ragSummary?.domains;
-  if (domains && domains.length > 0) {
-    suggestions.add(`Share more insights on ${domains[0]}.`);
-  }
-
-  const usedTools = message.metadata?.toolSummary?.used;
-  if (usedTools && usedTools.length > 0) {
-    suggestions.add(`What did the ${usedTools[0]} tool uncover?`);
-  }
-
-  suggestions.add('What concrete steps should we prioritize next?');
-  suggestions.add('Are there risks or blockers we should anticipate?');
-
-  return Array.from(suggestions).slice(0, 4);
-}
-
-function extractTopic(sentence: string): string | null {
-  const trimmed = sentence.trim();
-  if (!trimmed) {
-    return null;
-  }
-
-  const separators = [trimmed.indexOf(':'), trimmed.indexOf('—'), trimmed.indexOf('- ')].filter(
-    (index) => index > 0
-  );
-  const cutoff = separators.length ? Math.min(...separators) : Math.min(trimmed.length, 80);
-  let candidate = trimmed.slice(0, cutoff).replace(/^[^A-Za-z0-9]+/, '').trim();
-  if (!candidate) {
-    return null;
-  }
-
-  if (candidate.length > 60) {
-    candidate = `${candidate.slice(0, 57)}...`;
-  }
-
-  return candidate;
 }

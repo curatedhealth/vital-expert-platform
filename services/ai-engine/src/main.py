@@ -32,6 +32,7 @@ from typing import List, Dict, Any, Optional
 import asyncio
 import json
 from datetime import datetime
+from enum import Enum
 from pydantic import BaseModel, Field
 
 # Initialize Sentry FIRST for error tracking
@@ -75,6 +76,39 @@ structlog.configure(
 # Get logger AFTER configuration
 logger = structlog.get_logger()
 
+
+def _make_json_serializable(value: Any) -> Any:
+    """
+    Recursively convert LangGraph state chunks into JSON-serializable primitives.
+    
+    Handles enums, datetimes, pydantic models, sets, and other common types found
+    in workflow state. Falls back to string conversion for unknown objects.
+    """
+    if isinstance(value, dict):
+        return {str(k): _make_json_serializable(v) for k, v in value.items()}
+    if isinstance(value, list):
+        return [_make_json_serializable(item) for item in value]
+    if isinstance(value, tuple):
+        return [_make_json_serializable(item) for item in value]
+    if isinstance(value, set):
+        return [_make_json_serializable(item) for item in value]
+    if isinstance(value, datetime):
+        return value.isoformat()
+    if isinstance(value, Enum):
+        return value.value if hasattr(value, "value") else value.name
+    if isinstance(value, BaseModel):
+        return _make_json_serializable(value.model_dump())
+    # Handle Pydantic v1 models or other objects with dict/model_dump
+    if hasattr(value, "model_dump"):
+        return _make_json_serializable(value.model_dump())
+    if hasattr(value, "dict"):
+        return _make_json_serializable(value.dict())
+    # Primitive types pass through unchanged
+    if isinstance(value, (str, int, float, bool)) or value is None:
+        return value
+    # Last resort: convert to string to avoid serialization errors
+    return str(value)
+
 from services.agent_orchestrator import AgentOrchestrator
 from services.medical_rag import MedicalRAGPipeline
 from services.unified_rag_service import UnifiedRAGService
@@ -86,6 +120,13 @@ from services.agent_selector_service import (
     QueryAnalysisRequest,
     QueryAnalysisResponse
 )
+from services.prompt_enhancement_service import (
+    PromptEnhancementService,
+    IntentClarificationRequest,
+    IntentClarificationResponse,
+    TemplateEnhancementRequest,
+    TemplateEnhancementResponse
+)
 from services.cache_manager import CacheManager, initialize_cache_manager, get_cache_manager
 from services.tool_registry_service import ToolRegistryService, initialize_tool_registry, get_tool_registry
 from langgraph_workflows import (
@@ -95,8 +136,9 @@ from langgraph_workflows import (
     get_observability
 )
 # Mode workflows for LangGraph execution
-from langgraph_workflows.mode1_interactive_auto_workflow import Mode1InteractiveAutoWorkflow
-from langgraph_workflows.mode2_interactive_manual_workflow import Mode2InteractiveManualWorkflow
+# ⚠️ FIXED: Renamed to match actual Mode numbers
+from langgraph_workflows.mode1_manual_workflow import Mode1ManualWorkflow
+from langgraph_workflows.mode2_automatic_workflow import Mode2AutomaticWorkflow
 from langgraph_workflows.mode3_autonomous_auto_workflow import Mode3AutonomousAutoWorkflow
 from langgraph_workflows.mode4_autonomous_manual_workflow import Mode4AutonomousManualWorkflow
 # Ask Panel imports
@@ -424,7 +466,7 @@ class Mode4AutonomousManualResponse(BaseModel):
 
 async def initialize_services_background():
     """Initialize services in background - non-blocking"""
-    global agent_orchestrator, rag_pipeline, unified_rag_service, metadata_processing_service, supabase_client, websocket_manager, cache_manager, checkpoint_manager, observability, tool_registry
+    global agent_orchestrator, rag_pipeline, unified_rag_service, metadata_processing_service, supabase_client, websocket_manager, cache_manager, checkpoint_manager, observability, tool_registry, prompt_enhancement_service
 
     logger.info("🚀 Starting VITAL Path AI Services background initialization")
 
@@ -543,6 +585,15 @@ async def initialize_services_background():
         logger.error("❌ Failed to initialize WebSocket manager", error=str(e))
         websocket_manager = None
 
+    # Initialize prompt enhancement service
+    try:
+        if supabase_client:
+            prompt_enhancement_service = PromptEnhancementService(supabase_client)
+            logger.info("✅ Prompt enhancement service initialized")
+    except Exception as e:
+        logger.error("❌ Failed to initialize prompt enhancement service", error=str(e))
+        prompt_enhancement_service = None
+
     # Setup monitoring (non-blocking)
     try:
         setup_monitoring()
@@ -553,13 +604,25 @@ async def initialize_services_background():
     logger.info("✅ AI Services background initialization complete (some services may be unavailable)")
 
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    """Application lifespan management - start immediately, initialize services in background"""
-    global agent_orchestrator, rag_pipeline, unified_rag_service, metadata_processing_service, supabase_client, websocket_manager
 
+# Lifespan function removed - now using @app.on_event("startup") for better compatibility
+
+# Create FastAPI app
+app = FastAPI(
+    title="VITAL Path AI Services",
+    description="Medical AI Agent Orchestration with LangChain and Supabase",
+    version="2.0.0"
+    # lifespan removed - using @app.on_event("startup") instead for better uvicorn reload compatibility
+)
+
+# Add startup event handler (more reliable with uvicorn reload than lifespan)
+@app.on_event("startup")
+async def startup_event():
+    """Initialize services on startup"""
+    global supabase_client, unified_rag_service, agent_orchestrator, rag_pipeline, websocket_manager, prompt_enhancement_service
+    
     logger.info("=" * 80)
-    logger.info("🚀 Starting VITAL Path AI Services")
+    logger.info("🚀 VITAL Path AI Services - Startup Event Triggered")
     logger.info("=" * 80)
     
     # Log environment info
@@ -569,62 +632,50 @@ async def lifespan(app: FastAPI):
     logger.info(f"   - PYTHONPATH: {os.getenv('PYTHONPATH', 'not set')}")
     logger.info(f"   - Working Directory: {os.getcwd()}")
     
-    # Start services initialization in background task - don't block startup
-    # This allows the app to respond to healthchecks immediately
+    # Call background initialization
     logger.info("🔄 Starting background service initialization...")
-    init_task = asyncio.create_task(initialize_services_background())
+    await initialize_services_background()
     
-    # Don't wait for initialization - let it run in background
-    # The app can start responding to requests while services initialize
-    logger.info("✅ FastAPI app ready - services initializing in background")
-    logger.info("✅ Health endpoint available at /health")
-    logger.info("=" * 80)
-    
-    # Set app state for middleware access (must be done before yield)
+    # Set app state for middleware access
     app.state.supabase_client = supabase_client
     app.state.limiter = limiter
     logger.info("✅ App state initialized")
-
-    yield
     
-    # Cancel background initialization if still running
-    if not init_task.done():
-        init_task.cancel()
-        try:
-            await init_task
-        except asyncio.CancelledError:
-            pass
+    logger.info("=" * 80)
+    logger.info("✅ Startup complete - API ready to accept requests")
+    logger.info("=" * 80)
 
-    # Cleanup
+# Add shutdown event handler
+@app.on_event("shutdown")
+async def shutdown_event():
+    """Cleanup on shutdown"""
     logger.info("🔄 Shutting down AI Services")
+    
     if agent_orchestrator:
         try:
             await agent_orchestrator.cleanup()
         except Exception as e:
             logger.error("Error cleaning up agent orchestrator", error=str(e))
+    
     if rag_pipeline:
         try:
             await rag_pipeline.cleanup()
         except Exception as e:
             logger.error("Error cleaning up RAG pipeline", error=str(e))
+    
     if unified_rag_service:
         try:
             await unified_rag_service.cleanup()
         except Exception as e:
-            logger.error("Error cleaning up unified RAG service", error=str(e))
+            logger.error("Error cleaning up Unified RAG service", error=str(e))
+    
     if supabase_client:
         try:
             await supabase_client.cleanup()
         except Exception as e:
             logger.error("Error cleaning up Supabase client", error=str(e))
-
-# Create FastAPI app
-app = FastAPI(
-    title="VITAL Path AI Services",
-    description="Medical AI Agent Orchestration with LangChain and Supabase",
-    version="2.0.0",
-    lifespan=lifespan
-)
+    
+    logger.info("✅ Shutdown complete")
 
 # Add exception handler for rate limit errors
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
@@ -838,110 +889,155 @@ async def get_cache_stats():
     return stats
 
 
-@app.post("/api/mode1/manual", response_model=Mode1ManualResponse)
-async def execute_mode1_manual(
+@app.post("/api/mode1/manual")
+async def execute_mode1_manual_streaming(
     request: Mode1ManualRequest,
     fastapi_request: Request,
     tenant_id: str = Depends(get_tenant_id)
 ):
-    """Execute Mode 1 manual interactive workflow via LangGraph"""
+    """
+    Execute Mode 1 manual interactive workflow with proper LangGraph streaming.
+    
+    Uses LangGraph's built-in `astream()` with multiple streaming modes:
+    - updates: Node-level progress (after each LangGraph node completes)
+    - messages: Token-level streaming (word-by-word LLM output) 
+    - custom: Custom events via get_stream_writer() (workflow steps, reasoning)
+    
+    Returns SSE (Server-Sent Events) stream for real-time updates.
+    """
     REQUEST_COUNT.labels(method="POST", endpoint="/api/mode1/manual").inc()
 
-    # Allow execution without Supabase for development
-    if supabase_client:
-        # Set tenant context in database for RLS
-        await set_tenant_context_in_db(tenant_id, supabase_client)
-
-    start_time = asyncio.get_event_loop().time()
-
-    try:
-        logger.info("🚀 [Mode 1] Executing via LangGraph workflow (Manual agent selection)", agent_id=request.agent_id)
-        
-        # Initialize LangGraph workflow - Mode2InteractiveManualWorkflow for manual agent selection
-        workflow = Mode2InteractiveManualWorkflow(
-            supabase_client=supabase_client,
-            rag_service=unified_rag_service,
-            agent_orchestrator=agent_orchestrator,
-            conversation_manager=None  # Will be initialized by workflow
-        )
-        await workflow.initialize()
-        
-        # Execute workflow with LangGraph
-        result = await workflow.execute(
-            tenant_id=tenant_id,
-            query=request.message,
-            agent_id=request.agent_id,
-            session_id=request.session_id,
-            user_id=request.user_id,
-            enable_rag=request.enable_rag,
-            enable_tools=request.enable_tools,
-            model=request.model or "gpt-4",
-            temperature=request.temperature,
-            max_tokens=request.max_tokens,
-            selected_rag_domains=request.selected_rag_domains or [],
-            conversation_history=[]
-        )
-        
-        processing_time_ms = (asyncio.get_event_loop().time() - start_time) * 1000
-        
-        # Extract results from LangGraph workflow state
-        content = result.get('response', '') or result.get('final_response', '')
-        confidence = result.get('confidence', 0.85)
-        sources = result.get('sources', [])
-        reasoning_steps = result.get('reasoning_steps', [])
-        
-        # Convert sources to citations
-        citations = []
-        for idx, source in enumerate(sources, 1):
-            citations.append({
-                "id": f"citation_{idx}",
-                "title": source.get('title', f'Source {idx}'),
-                "content": source.get('content', source.get('excerpt', '')),
-                "url": source.get('url', ''),
-                "similarity_score": source.get('similarity_score', 0.0),
-                "metadata": source.get('metadata', {})
-            })
-        
-        # Build metadata
-        metadata: Dict[str, Any] = {
-            "langgraph_execution": True,
-            "workflow": "Mode2InteractiveManualWorkflow",
-            "nodes_executed": result.get('nodes_executed', []),
-            "reasoning_steps": reasoning_steps,
-            "request": {
+    async def event_generator():
+        """Generate SSE events from LangGraph stream"""
+        try:
+            # Allow execution without Supabase for development
+            if supabase_client:
+                # Set tenant context in database for RLS
+                await set_tenant_context_in_db(tenant_id, supabase_client)
+            
+            logger.info("🚀 [Mode 1] Starting LangGraph streaming workflow", agent_id=request.agent_id)
+            
+            # Initialize LangGraph workflow
+            workflow = Mode1ManualWorkflow(
+                supabase_client=supabase_client,
+                rag_service=unified_rag_service,
+                agent_orchestrator=agent_orchestrator,
+                conversation_manager=None
+            )
+            await workflow.initialize()
+            
+            # Build initial state dictionary
+            state_dict = {
+                "query": request.message,
+                "selected_agents": [request.agent_id],
+                "tenant_id": tenant_id,
+                "user_id": request.user_id,
+                "session_id": request.session_id,
                 "enable_rag": request.enable_rag,
                 "enable_tools": request.enable_tools,
                 "selected_rag_domains": request.selected_rag_domains or [],
                 "requested_tools": request.requested_tools or [],
+                "selected_tools": request.requested_tools or [],
+                "model": request.model or "gpt-4",
                 "temperature": request.temperature,
                 "max_tokens": request.max_tokens,
-                "session_id": request.session_id,
-            },
+                "conversation_history": request.conversation_history or [],
+            }
+            
+            # ✅ LangGraph 1.0: Compile the graph first, then stream
+            # This will emit events in real-time as the workflow executes
+            compiled_graph = workflow.graph.compile()
+            async for stream_mode, chunk in compiled_graph.astream(
+                state_dict,
+                stream_mode=["updates", "messages", "custom"],  # All 3 streaming modes!
+                config={
+                    "configurable": {
+                        "thread_id": request.session_id or "default",
+                        "checkpoint_ns": f"mode1-{request.agent_id}"
+                    }
+                }
+            ):
+                # ✅ Convert LangChain objects to JSON-serializable format
+                serializable_chunk = chunk
+                
+                # Handle tuples from LangGraph (messages mode emits tuples)
+                if isinstance(chunk, tuple):
+                    # LangGraph messages mode: (message_object, metadata)
+                    message_obj = chunk[0] if len(chunk) > 0 else None
+                    if message_obj:
+                        # Extract content from AIMessageChunk or AIMessage
+                        if hasattr(message_obj, 'content'):
+                            serializable_chunk = {
+                                'type': getattr(message_obj, 'type', 'ai'),
+                                'content': message_obj.content,
+                                'id': getattr(message_obj, 'id', None)
+                            }
+                        elif hasattr(message_obj, 'dict'):
+                            serializable_chunk = message_obj.dict()
+                        elif hasattr(message_obj, 'model_dump'):
+                            serializable_chunk = message_obj.model_dump()
+                        else:
+                            serializable_chunk = {'content': str(message_obj)}
+                    else:
+                        serializable_chunk = {'content': ''}
+                # Handle message objects directly
+                elif hasattr(chunk, 'content'):
+                    serializable_chunk = {
+                        'type': getattr(chunk, 'type', 'ai'),
+                        'content': chunk.content,
+                        'id': getattr(chunk, 'id', None)
+                    }
+                elif hasattr(chunk, 'dict'):
+                    # LangChain message objects have .dict() method
+                    serializable_chunk = chunk.dict()
+                elif hasattr(chunk, 'model_dump'):
+                    # Pydantic v2 uses model_dump()
+                    serializable_chunk = chunk.model_dump()
+                elif not isinstance(chunk, (dict, list, str, int, float, bool, type(None))):
+                    # Last resort: convert to string if not already serializable
+                    logger.warning(f"⚠️ Falling back to str() for chunk type: {type(chunk)}")
+                    serializable_chunk = str(chunk)
+                
+                serializable_chunk = _make_json_serializable(serializable_chunk)
+                
+                # Format event for SSE
+                event_data = {
+                    "stream_mode": stream_mode,
+                    "data": serializable_chunk
+                }
+                event_data = _make_json_serializable(event_data)
+                
+                # Log for debugging
+                logger.debug(f"📡 [Mode 1 Stream] {stream_mode}: {type(chunk)}")
+                
+                # Emit SSE event
+                yield f"data: {json.dumps(event_data)}\n\n"
+            
+            # ✅ NEW: Emit final completion event
+            yield f"data: {json.dumps({'type': 'complete', 'message': 'Workflow completed'})}\n\n"
+            
+            logger.info("✅ [Mode 1] LangGraph streaming completed", agent_id=request.agent_id)
+            
+        except Exception as e:
+            logger.error(f"❌ [Mode 1] Streaming error: {e}", exc_info=True)
+            # Emit error event
+            error_event = {
+                "type": "error",
+                "message": str(e),
+                "error_type": type(e).__name__
+            }
+            yield f"data: {json.dumps(error_event)}\n\n"
+    
+    # Return SSE response
+    return StreamingResponse(
+        event_generator(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",  # Disable nginx buffering
         }
-        
-        logger.info(
-            "✅ [Mode 1] LangGraph workflow completed",
-            content_length=len(content),
-            citations=len(citations),
-            reasoning_steps=len(reasoning_steps),
-            confidence=confidence
-        )
-        
-        return Mode1ManualResponse(
-            agent_id=request.agent_id,
-            content=content,
-            confidence=confidence,
-            citations=citations,
-            reasoning=reasoning_steps,
-            metadata=metadata,
-            processing_time_ms=processing_time_ms,
-        )
-
-    except HTTPException:
-        raise
-    except Exception as exc:
-        logger.error("❌ Mode 1 LangGraph execution failed", error=str(exc), exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Mode 1 execution failed: {str(exc)}")
+    )
 
 # Mode 2: Automatic Agent Selection
 @app.post("/api/mode2/automatic", response_model=Mode2AutomaticResponse)
@@ -963,7 +1059,8 @@ async def execute_mode2_automatic(
         logger.info("🚀 [Mode 2] Executing via LangGraph workflow (Automatic agent selection)")
         
         # Initialize LangGraph workflow
-        workflow = Mode1InteractiveAutoWorkflow(
+        # ⚠️ FIXED: Renamed from Mode1InteractiveAutoWorkflow to Mode2AutomaticWorkflow
+        workflow = Mode2AutomaticWorkflow(
             supabase_client=supabase_client,
             agent_selector_service=get_agent_selector_service() if agent_orchestrator else None,
             rag_service=unified_rag_service,
@@ -1019,7 +1116,7 @@ async def execute_mode2_automatic(
         
         metadata: Dict[str, Any] = {
             "langgraph_execution": True,
-            "workflow": "Mode1InteractiveAutoWorkflow",
+            "workflow": "Mode2AutomaticWorkflow",  # ⚠️ FIXED: Renamed to match Mode 2
             "nodes_executed": result.get('nodes_executed', []),
             "reasoning_steps": reasoning_steps,
             "request": {
@@ -2237,11 +2334,436 @@ async def trigger_error():
     division_by_zero = 1 / 0
     return {"status": "This should never be reached"}
 
+# Admin endpoint: Create Pinecone namespace for domain
+@app.post("/api/admin/create-namespace")
+async def create_namespace(request: Request):
+    """
+    Create a namespace in Pinecone for a knowledge domain.
+    
+    This endpoint is called automatically when a domain is created,
+    but can also be called manually to sync existing domains.
+    """
+    try:
+        body = await request.json()
+        domain_id = body.get('domain_id')
+        domain_name = body.get('domain_name')
+        namespace = body.get('namespace')
+        
+        if not domain_id or not namespace:
+            raise HTTPException(
+                status_code=400,
+                detail="Missing required fields: domain_id, namespace"
+            )
+        
+        # Initialize Pinecone
+        pinecone_api_key = os.getenv("PINECONE_API_KEY")
+        pinecone_rag_index_name = os.getenv("PINECONE_RAG_INDEX_NAME", "vital-rag-production")
+        
+        if not pinecone_api_key:
+            raise HTTPException(
+                status_code=500,
+                detail="PINECONE_API_KEY not configured"
+            )
+        
+        from pinecone import Pinecone
+        pc = Pinecone(api_key=pinecone_api_key)
+        pinecone_rag_index = pc.Index(pinecone_rag_index_name)
+        
+        # Get index dimension
+        try:
+            stats = pinecone_rag_index.describe_index_stats()
+            index_dimension = stats.get('dimension', 3072)
+        except Exception:
+            index_dimension = 3072
+        
+        # Check if namespace already exists
+        try:
+            ns_stats = pinecone_rag_index.describe_index_stats(namespace=namespace)
+            record_count = ns_stats.get('total_vector_count', 0)
+            logger.info(f"✅ Namespace '{namespace}' already exists with {record_count} records")
+            return {
+                "success": True,
+                "namespace": namespace,
+                "exists": True,
+                "record_count": record_count,
+                "message": f"Namespace '{namespace}' already exists"
+            }
+        except Exception:
+            # Namespace doesn't exist - create it
+            pass
+        
+        # Create namespace by upserting a dummy vector
+        # Use a zero vector of the correct dimension
+        dummy_vector = [0.0] * index_dimension
+        dummy_id = f"__namespace_init__{domain_id}"
+        
+        try:
+            # Try v3 API first (namespace as parameter)
+            try:
+                pinecone_rag_index.upsert(
+                    vectors=[{
+                        'id': dummy_id,
+                        'values': dummy_vector,
+                        'metadata': {
+                            'domain_id': domain_id,
+                            'domain_name': domain_name or '',
+                            'namespace_init': True,
+                            'created_at': datetime.now().isoformat(),
+                        }
+                    }],
+                    namespace=namespace
+                )
+                logger.info(f"✅ Created namespace '{namespace}' for domain '{domain_name}'")
+                
+                # Delete the dummy vector immediately (namespaces persist even after all vectors are deleted)
+                try:
+                    pinecone_rag_index.delete(ids=[dummy_id], namespace=namespace)
+                    logger.debug(f"🗑️  Deleted dummy vector from namespace '{namespace}'")
+                except Exception as e:
+                    logger.warning(f"⚠️  Could not delete dummy vector (namespace still created): {e}")
+                
+                return {
+                    "success": True,
+                    "namespace": namespace,
+                    "exists": False,
+                    "created": True,
+                    "message": f"Namespace '{namespace}' created successfully"
+                }
+            except TypeError:
+                # Fallback to v2 API (namespace as method)
+                namespace_obj = pinecone_rag_index.namespace(namespace)
+                namespace_obj.upsert(vectors=[{
+                    'id': dummy_id,
+                    'values': dummy_vector,
+                    'metadata': {
+                        'domain_id': domain_id,
+                        'domain_name': domain_name or '',
+                        'namespace_init': True,
+                        'created_at': datetime.now().isoformat(),
+                    }
+                }])
+                logger.info(f"✅ Created namespace '{namespace}' for domain '{domain_name}' (v2 API)")
+                
+                # Delete dummy vector
+                try:
+                    namespace_obj.delete(ids=[dummy_id])
+                    logger.debug(f"🗑️  Deleted dummy vector from namespace '{namespace}'")
+                except Exception as e:
+                    logger.warning(f"⚠️  Could not delete dummy vector: {e}")
+                
+                return {
+                    "success": True,
+                    "namespace": namespace,
+                    "exists": False,
+                    "created": True,
+                    "message": f"Namespace '{namespace}' created successfully"
+                }
+        except Exception as e:
+            logger.error(f"❌ Failed to create namespace '{namespace}': {e}")
+            raise HTTPException(
+                status_code=500,
+                detail=f"Failed to create namespace: {str(e)}"
+            )
+            
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ Error creating namespace: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Internal server error: {str(e)}"
+        )
+
+# Admin endpoint: Check namespace content
+@app.get("/api/admin/check-namespace-content")
+async def check_namespace_content(namespace: str):
+    """
+    Check if a Pinecone namespace has any vectors.
+    
+    Returns whether the namespace exists and has content.
+    """
+    try:
+        if not namespace:
+            raise HTTPException(
+                status_code=400,
+                detail="Missing required parameter: namespace"
+            )
+        
+        # Initialize Pinecone
+        pinecone_api_key = os.getenv("PINECONE_API_KEY")
+        pinecone_rag_index_name = os.getenv("PINECONE_RAG_INDEX_NAME", "vital-rag-production")
+        
+        if not pinecone_api_key:
+            raise HTTPException(
+                status_code=500,
+                detail="PINECONE_API_KEY not configured"
+            )
+        
+        from pinecone import Pinecone
+        pc = Pinecone(api_key=pinecone_api_key)
+        pinecone_rag_index = pc.Index(pinecone_rag_index_name)
+        
+        # Check if namespace has content
+        try:
+            ns_stats = pinecone_rag_index.describe_index_stats(namespace=namespace)
+            record_count = ns_stats.get('total_vector_count', 0)
+            has_content = record_count > 0
+            
+            return {
+                "namespace": namespace,
+                "has_content": has_content,
+                "record_count": record_count,
+                "exists": True,
+            }
+        except Exception as e:
+            # Namespace doesn't exist or error
+            logger.warning(f"⚠️ Namespace '{namespace}' not found or error: {e}")
+            return {
+                "namespace": namespace,
+                "has_content": False,
+                "record_count": 0,
+                "exists": False,
+            }
+            
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ Error checking namespace content: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Internal server error: {str(e)}"
+        )
+
+# ============================================================================
+# PROMPT ENHANCEMENT ENDPOINTS
+# ============================================================================
+
+# Global prompt enhancement service
+prompt_enhancement_service: Optional[PromptEnhancementService] = None
+
+def get_prompt_enhancement_service() -> PromptEnhancementService:
+    """Dependency for prompt enhancement service"""
+    if not prompt_enhancement_service:
+        raise HTTPException(
+            status_code=503,
+            detail="Prompt enhancement service not initialized"
+        )
+    return prompt_enhancement_service
+
+@app.post("/api/prompts/clarify-intent", response_model=IntentClarificationResponse)
+async def clarify_intent_endpoint(
+    request: IntentClarificationRequest,
+    service: PromptEnhancementService = Depends(get_prompt_enhancement_service)
+):
+    """
+    Analyze user prompt and generate 4 intent clarification options
+    
+    This endpoint helps understand what the user wants to achieve by:
+    1. Analyzing their original prompt
+    2. Generating 4 distinct intent options
+    3. Each option represents a different approach/interpretation
+    
+    Returns 4 options for user to select from.
+    """
+    REQUEST_COUNT.labels(method="POST", endpoint="/api/prompts/clarify-intent").inc()
+    
+    try:
+        logger.info("🎯 Clarifying intent", prompt=request.prompt[:50])
+        response = await service.clarify_intent(request)
+        return response
+    except Exception as e:
+        logger.error("❌ Failed to clarify intent", error=str(e))
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/prompts/enhance-with-template", response_model=TemplateEnhancementResponse)
+async def enhance_with_template_endpoint(
+    request: TemplateEnhancementRequest,
+    service: PromptEnhancementService = Depends(get_prompt_enhancement_service)
+):
+    """
+    Find best template from PRISM library and customize for user
+    
+    This endpoint:
+    1. Searches PRISM template library for best match
+    2. Uses AI to customize the template
+    3. Returns professionally enhanced prompt
+    
+    The enhanced prompt includes:
+    - Structured format (numbered sections)
+    - Professional healthcare terminology  
+    - Specific requirements and deliverables
+    - Context and success criteria
+    """
+    REQUEST_COUNT.labels(method="POST", endpoint="/api/prompts/enhance-with-template").inc()
+    
+    try:
+        logger.info("✨ Enhancing with template", intent=request.selected_intent.title)
+        response = await service.enhance_with_template(request)
+        return response
+    except Exception as e:
+        logger.error("❌ Failed to enhance with template", error=str(e))
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/prompts/config")
+async def get_prompt_enhancement_config(
+    supabase: SupabaseClient = Depends(get_supabase_client)
+):
+    """Get current prompt enhancement configuration"""
+    try:
+        result = supabase.client.table("prompt_enhancement_config")\
+            .select("*")\
+            .eq("is_active", True)\
+            .order("updated_at", desc=True)\
+            .limit(1)\
+            .execute()
+        
+        if result.data and len(result.data) > 0:
+            return {"success": True, "config": result.data[0]}
+        else:
+            return {"success": True, "config": None}
+    except Exception as e:
+        logger.error("Failed to get config", error=str(e))
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/prompts/config")
+async def update_prompt_enhancement_config(
+    request: Request,
+    supabase: SupabaseClient = Depends(get_supabase_client)
+):
+    """Update prompt enhancement configuration"""
+    try:
+        body = await request.json()
+        
+        # Validate required fields
+        required = ["llm_provider", "llm_model"]
+        for field in required:
+            if field not in body:
+                raise HTTPException(status_code=400, detail=f"Missing {field}")
+        
+        # Insert new config
+        result = supabase.client.table("prompt_enhancement_config")\
+            .insert({
+                "llm_provider": body["llm_provider"],
+                "llm_model": body["llm_model"],
+                "temperature": body.get("temperature", 0.7),
+                "max_tokens": body.get("max_tokens", 2048),
+                "is_active": True,
+                "updated_at": datetime.now().isoformat()
+            })\
+            .execute()
+        
+        return {"success": True, "config": result.data[0] if result.data else None}
+    except Exception as e:
+        logger.error("Failed to update config", error=str(e))
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/prompts/recommended-suites")
+async def get_recommended_suites(
+    agent_id: Optional[str] = None,
+    domain: Optional[str] = None,
+    query: Optional[str] = None,
+    supabase: SupabaseClient = Depends(get_supabase_client)
+):
+    """
+    Get recommended PRISM suites/subsuites based on agent or domain
+    
+    Returns suites ranked by:
+    - Usage with this agent
+    - Success rate
+    - Trending status
+    """
+    REQUEST_COUNT.labels(method="GET", endpoint="/api/prompts/recommended-suites").inc()
+    
+    try:
+        recommended = []
+        
+        # Strategy 1: Get popular suites for this agent
+        if agent_id:
+            result = supabase.client.rpc(
+                'get_popular_suites_for_agent',
+                {'p_agent_id': agent_id}
+            ).execute()
+            
+            for row in (result.data or []):
+                recommended.append({
+                    "suite": row.get("suite"),
+                    "subsuite": row.get("subsuite"),
+                    "templateCount": row.get("use_count", 0),
+                    "successRate": row.get("success_rate", 0),
+                    "popularWithAgent": True,
+                    "trending": False
+                })
+        
+        # Strategy 2: Get domain-specific suites
+        if domain and not recommended:
+            result = supabase.client.table("prompts")\
+                .select("suite, subsuite")\
+                .eq("domain", domain)\
+                .execute()
+            
+            # Group by suite/subsuite
+            suite_counts = {}
+            for row in (result.data or []):
+                key = f"{row['suite']}|{row['subsuite']}"
+                suite_counts[key] = suite_counts.get(key, 0) + 1
+            
+            for key, count in sorted(suite_counts.items(), key=lambda x: x[1], reverse=True)[:10]:
+                suite, subsuite = key.split("|")
+                recommended.append({
+                    "suite": suite,
+                    "subsuite": subsuite,
+                    "templateCount": count,
+                    "successRate": 0,
+                    "popularWithAgent": False,
+                    "trending": False
+                })
+        
+        # Strategy 3: Get trending templates
+        if not recommended:
+            result = supabase.client.table("trending_templates")\
+                .select("suite, subsuite, recent_uses")\
+                .limit(10)\
+                .execute()
+            
+            for row in (result.data or []):
+                recommended.append({
+                    "suite": row.get("suite"),
+                    "subsuite": row.get("subsuite"),
+                    "templateCount": row.get("recent_uses", 0),
+                    "successRate": 0,
+                    "popularWithAgent": False,
+                    "trending": True
+                })
+        
+        return {
+            "success": True,
+            "suites": recommended[:10],  # Top 10
+            "metadata": {
+                "agent_id": agent_id,
+                "domain": domain,
+                "strategy": "agent" if agent_id else ("domain" if domain else "trending")
+            }
+        }
+        
+    except Exception as e:
+        logger.error("Failed to get recommended suites", error=str(e))
+        return {
+            "success": False,
+            "suites": [],
+            "error": str(e)
+        }
+
 if __name__ == "__main__":
+    port = int(os.getenv("PORT", "8000"))
+    host = os.getenv("HOST", "0.0.0.0")
+    log_level = os.getenv("LOG_LEVEL", "info")
+    reload_env = os.getenv("UVICORN_RELOAD", "true").lower()
+    reload_enabled = reload_env not in {"0", "false", "no"}
+
     uvicorn.run(
         "main:app",
-        host="0.0.0.0",
-        port=8000,
-        reload=True,
-        log_level="info"
+        host=host,
+        port=port,
+        reload=reload_enabled,
+        log_level=log_level,
     )

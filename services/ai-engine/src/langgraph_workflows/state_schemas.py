@@ -315,10 +315,12 @@ class UnifiedWorkflowState(TypedDict):
     medical_specialty: NotRequired[Optional[str]]
     phase: NotRequired[Optional[str]]
     domains: NotRequired[List[str]]
+    selected_rag_domains: NotRequired[List[str]]  # ✅ FIXED: Added for Mode 1 RAG domain filtering
     
     # Configuration
     enable_rag: NotRequired[bool]
     enable_tools: NotRequired[bool]
+    selected_tools: NotRequired[List[str]]  # ✅ NEW: List of tool names to use (web_search, rag_search, etc.)
     max_results: NotRequired[int]
     temperature: NotRequired[float]
     max_tokens: NotRequired[int]
@@ -354,7 +356,7 @@ class UnifiedWorkflowState(TypedDict):
     total_documents: NotRequired[int]
     rag_cache_hit: NotRequired[bool]  # Cache hit indicator
     rag_cache_key: NotRequired[str]
-    context_summary: NotRequired[Dict[str, Any]]
+    context_summary: NotRequired[str]  # ✅ FIXED: String, not Dict (was wrong type)
     
     # =========================================================================
     # AGENT EXECUTION STATE (WITH CACHING - GOLDEN RULE #2)
@@ -363,6 +365,7 @@ class UnifiedWorkflowState(TypedDict):
     # Current agent
     current_agent_id: NotRequired[str]
     current_agent_type: NotRequired[str]
+    agent_data: NotRequired[Optional[Dict[str, Any]]]  # ✅ ADDED: Agent data from database
     
     # Agent prompts
     system_prompt: NotRequired[str]
@@ -401,8 +404,10 @@ class UnifiedWorkflowState(TypedDict):
     confidence: NotRequired[float]
     agents_used: NotRequired[List[str]]
     
-    # Citations
+    # Citations (structured for inline citations)
     citations: NotRequired[List[Dict[str, Any]]]
+    structured_citations: NotRequired[List[Dict[str, Any]]]  # ✅ NEW: For Perplexity-style citations
+    sources: NotRequired[List[Dict[str, Any]]]  # ✅ NEW: Alias for citations (backward compat)
     evidence_level: NotRequired[str]
     
     # Metadata
@@ -415,7 +420,11 @@ class UnifiedWorkflowState(TypedDict):
     
     # Errors
     errors: Annotated[List[str], operator.add]
+    error: NotRequired[str]  # ✅ NEW: Single error message for failed workflows
     retry_count: NotRequired[int]
+    
+    # Validation
+    validation_passed: NotRequired[bool]  # ✅ NEW: For input validation
     
     # Tracing
     trace_id: NotRequired[str]
@@ -465,6 +474,15 @@ def create_initial_state(
     """
     now = datetime.utcnow()
     
+    # 🔍 DEBUG: Log kwargs to see what's being passed
+    import structlog
+    logger = structlog.get_logger()
+    logger.info(
+        "🔍 [DEBUG] create_initial_state kwargs",
+        selected_rag_domains_in_kwargs=kwargs.get('selected_rag_domains'),
+        all_kwargs_keys=list(kwargs.keys())
+    )
+    
     return UnifiedWorkflowState(
         # Required fields
         tenant_id=tenant_id,
@@ -479,8 +497,9 @@ def create_initial_state(
         user_id=user_id,
         session_id=session_id,
         
-        # Lists (empty defaults)
-        selected_agents=[],
+        # Lists (empty defaults, but allow override from kwargs)
+        selected_agents=kwargs.get('selected_agents', []),  # ✅ FIXED: Read from kwargs for Mode 1
+        selected_rag_domains=kwargs.get('selected_rag_domains', []),  # ✅ FIXED: Read from kwargs for RAG domains
         retrieved_documents=[],
         agent_responses=[],
         errors=[],

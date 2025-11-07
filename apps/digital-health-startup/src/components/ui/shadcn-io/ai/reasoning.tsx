@@ -157,11 +157,12 @@ export const ReasoningTrigger = memo(
 export type ReasoningContentProps = ComponentProps<
   typeof CollapsibleContent
 > & {
-  children: string;
+  children?: React.ReactNode;
+  asMarkdown?: boolean;
 };
 
 export const ReasoningContent = memo(
-  ({ className, children, ...props }: ReasoningContentProps) => (
+  ({ className, children, asMarkdown = false, ...props }: ReasoningContentProps) => (
     <CollapsibleContent
       className={cn(
         'mt-4 text-sm',
@@ -170,7 +171,11 @@ export const ReasoningContent = memo(
       )}
       {...props}
     >
-      <Response className="grid gap-2">{children}</Response>
+      {asMarkdown && typeof children === 'string' ? (
+        <Response className="grid gap-2">{children}</Response>
+      ) : (
+        <div className="grid gap-2">{children}</div>
+      )}
     </CollapsibleContent>
   )
 );

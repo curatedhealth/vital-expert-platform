@@ -351,65 +351,81 @@ function getSourceTypePresentation(
 }
 
 /**
- * ✅ NEW: Format source as Chicago-style citation
+ * ✅ Render Chicago-style citation as JSX components (not plain string)
  * Chicago Manual of Style (17th edition) - Notes and Bibliography style
  */
-function formatChicagoCitation(source: Source, index: number): string {
-  const parts: string[] = [];
-  
-  // 1. Author/Organization (if available)
-  if (source.organization) {
-    parts.push(source.organization);
-  } else if (source.author) {
-    parts.push(source.author);
-  }
-  
-  // 2. Title (in quotes for articles, italicized for books/documents)
-  if (source.title) {
-    // For web sources and articles, use quotes
-    if (source.sourceType === 'research_paper' || source.url) {
-      parts.push(`"${source.title}"`);
-    } else {
-      // For documents and books, use italics (represented by asterisks in markdown)
-      parts.push(`*${source.title}*`);
-    }
-  }
-  
-  // 3. Publication info (domain, date, URL)
-  if (source.domain) {
-    parts.push(source.domain);
-  }
-  
-  if (source.publicationDate) {
-    const date = new Date(source.publicationDate);
-    const year = date.getFullYear();
-    if (!isNaN(year)) {
-      parts.push(`(${year})`);
-    }
-  }
-  
-  // 4. URL (accessed date)
+function ChicagoCitationJSX({ source, index }: { source: Source; index: number }) {
+  // Extract hostname from URL
+  let hostname = '';
   if (source.url) {
     try {
-      const url = new URL(source.url);
-      const hostname = url.hostname.replace(/^www\./, '');
-      parts.push(`accessed via ${hostname}`);
+      const urlObj = new URL(source.url);
+      hostname = urlObj.hostname.replace(/^www\./, '');
     } catch {
-      // If URL parsing fails, just append the URL
-      parts.push(`URL: ${source.url}`);
+      hostname = source.domain || '';
     }
   }
-  
-  // Join parts with appropriate punctuation
-  let citation = parts.join(', ');
-  
-  // Add period at the end if not present
-  if (!citation.endsWith('.')) {
-    citation += '.';
-  }
-  
-  // Prepend citation number
-  return `[${index + 1}] ${citation}`;
+
+  return (
+    <span className="text-gray-700 dark:text-gray-300 text-xs leading-relaxed">
+      {/* Author/Organization */}
+      {(source.organization || source.author) && (
+        <span className="font-medium">
+          {source.organization || source.author}
+          {', '}
+        </span>
+      )}
+      
+      {/* Title (as clickable link if URL available) */}
+      {source.title && (
+        <>
+          {source.url ? (
+            <a
+              href={source.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary hover:underline"
+            >
+              &ldquo;{source.title}&rdquo;
+            </a>
+          ) : (
+            <span>&ldquo;{source.title}&rdquo;</span>
+          )}
+          {source.domain || source.publicationDate || source.url ? ', ' : '.'}
+        </>
+      )}
+      
+      {/* Domain */}
+      {source.domain && (
+        <span className="italic">
+          {source.domain}
+          {source.publicationDate || source.url ? ', ' : '.'}
+        </span>
+      )}
+      
+      {/* Publication Date */}
+      {source.publicationDate && (() => {
+        const date = new Date(source.publicationDate);
+        const year = date.getFullYear();
+        if (!isNaN(year)) {
+          return (
+            <span>
+              ({year})
+              {source.url ? ', ' : '.'}
+            </span>
+          );
+        }
+        return null;
+      })()}
+      
+      {/* URL (accessed via) */}
+      {source.url && hostname && (
+        <span className="text-gray-600 dark:text-gray-400">
+          accessed via {hostname}.
+        </span>
+      )}
+    </span>
+  );
 }
 
 export function EnhancedMessageDisplay({
@@ -1171,54 +1187,56 @@ export function EnhancedMessageDisplay({
 
             {!isUser && ragSummary && metadata?.sources && metadata.sources.length > 0 && (
               <>
-                {/* ✅ NEW: Chicago-style citations list with badges */}
+                {/* ✅ Chicago-style citations list with badges */}
                 <div className="mt-4 space-y-2">
                   <div className="flex items-center gap-2 text-xs font-medium text-gray-700 dark:text-gray-300">
                     <BookOpen className="h-3.5 w-3.5" />
                     <span>References ({metadata.sources.length})</span>
                   </div>
-                  <div className="space-y-1.5">
+                  <div className="space-y-2">
                     {metadata.sources.map((source, idx) => {
-                      const tag = deriveSourceTag(source);
+                      const sourceTypePresentation = getSourceTypePresentation(source.sourceType);
                       return (
                         <div
-                          key={source.id || `source-${idx}`}
+                          key={`ref-${idx}`}
                           ref={(el) => {
                             if (el) {
-                              sourceRefs.current[source.id || `source-${idx}`] = el;
+                              sourceRefs.current[`ref-${idx}`] = el;
                             } else {
-                              delete sourceRefs.current[source.id || `source-${idx}`];
+                              delete sourceRefs.current[`ref-${idx}`];
                             }
                           }}
-                          className="flex items-start gap-2 text-xs group"
+                          className="flex items-start gap-2 pb-2 border-b border-gray-100 last:border-0 dark:border-gray-800"
                         >
                           <Badge 
                             variant="outline" 
-                            className="shrink-0 h-5 text-[10px] font-medium"
+                            className="shrink-0 h-5 text-[10px] font-medium mt-0.5"
                           >
                             [{idx + 1}]
                           </Badge>
-                          <div className="flex-1 min-w-0">
-                            <span className="text-gray-700 dark:text-gray-300">
-                              {formatChicagoCitation(source, idx)}
-                            </span>
-                            {tag && (
-                              <Badge 
-                                variant="secondary" 
-                                className="ml-2 text-[10px] h-5 bg-blue-50 text-blue-700 dark:bg-blue-900/40 dark:text-blue-200"
-                              >
-                                {tag}
-                              </Badge>
-                            )}
-                            {source.url && (
-                              <a
-                                href={source.url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="ml-2 inline-flex items-center gap-1 text-blue-600 dark:text-blue-400 hover:underline opacity-0 group-hover:opacity-100 transition-opacity"
-                              >
-                                <ExternalLink className="h-3 w-3" />
-                              </a>
+                          <div className="flex-1 min-w-0 space-y-1">
+                            {/* Chicago Citation as JSX */}
+                            <ChicagoCitationJSX source={source} index={idx} />
+                            
+                            {/* Badges */}
+                            <div className="flex flex-wrap items-center gap-1.5">
+                              {sourceTypePresentation && (
+                                <Badge variant="secondary" className="text-[10px] bg-blue-50 text-blue-700 dark:bg-blue-900/40 dark:text-blue-200">
+                                  {sourceTypePresentation.label}
+                                </Badge>
+                              )}
+                              {typeof source.similarity === 'number' && source.similarity > 0 && (
+                                <Badge variant="secondary" className="text-[10px]">
+                                  {Math.round(source.similarity * 100)}% match
+                                </Badge>
+                              )}
+                            </div>
+                            
+                            {/* Excerpt (optional) */}
+                            {source.excerpt && (
+                              <p className="text-[11px] text-gray-600 dark:text-gray-400 line-clamp-2 mt-1">
+                                {source.excerpt}
+                              </p>
                             )}
                           </div>
                         </div>
@@ -1226,163 +1244,6 @@ export function EnhancedMessageDisplay({
                     })}
                   </div>
                 </div>
-
-                {/* ✅ KEEP: Collapsible detailed sources panel below */}
-                <Sources
-                  className="mt-3 rounded-xl border border-gray-100 bg-gray-50/80 text-xs dark:border-gray-700 dark:bg-gray-900/40"
-                  sources={metadata.sources.map((source, index) => ({
-                    id: source.id || `source-${index}`,
-                    title: source.title || `Source ${index + 1}`,
-                    url: source.url,
-                    excerpt: source.excerpt,
-                    similarity: source.similarity,
-                  }))}
-                >
-                  <SourcesTrigger className="px-4 py-3 text-blue-700 dark:text-blue-200">
-                    <div className="flex items-center gap-2">
-                      <BookOpen className="h-3 w-3" />
-                      <span>
-                        Evidence summary: {ragSummary.totalSources ?? metadata.sources.length} source
-                        {(ragSummary.totalSources ?? metadata.sources.length) === 1 ? '' : 's'}
-                        {ragSummary.strategy ? ` • ${ragSummary.strategy}` : ''}
-                      </span>
-                      {typeof ragSummary.retrievalTimeMs === 'number' && (
-                        <span className="text-[11px] text-gray-500 dark:text-gray-400">
-                          {Math.round(ragSummary.retrievalTimeMs)} ms
-                        </span>
-                      )}
-                      {ragSummary.cacheHit && (
-                        <span className="rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-medium text-green-700 dark:bg-green-900/40 dark:text-green-300">
-                          Cache hit
-                        </span>
-                      )}
-                    </div>
-                  </SourcesTrigger>
-                  <SourcesContent className="bg-white/95">
-                    {Array.isArray(ragSummary.domains) && ragSummary.domains.length > 0 && (
-                      <div className="mb-3 flex flex-wrap gap-1 text-[11px] text-gray-500 dark:text-gray-400">
-                        {Array.from(new Set(ragSummary.domains.filter(Boolean))).map((domain) => (
-                          <span
-                            key={domain as string}
-                            className="rounded-full border border-gray-200 bg-white px-2 py-0.5 dark:border-gray-600 dark:bg-gray-900/70"
-                          >
-                            {domain as string}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                    {(ragSummary.warning || (!ragSummary.totalSources || ragSummary.totalSources === 0)) && (
-                      <div className="mb-3 flex items-start gap-2 text-amber-600 dark:text-amber-400">
-                        <AlertCircle className="mt-0.5 h-3 w-3 flex-shrink-0" />
-                        <span>{ragSummary.warning || 'Evidence required: add supporting documents, broaden the query, or explicitly allow model-only answers.'}</span>
-                      </div>
-                    )}
-                    <div className="space-y-2 text-xs text-gray-700 dark:text-gray-300">
-                      {metadata.sources.map((source, idx) => {
-                        const evidenceLevelConfig = {
-                          A: { badge: 'bg-green-100 text-green-700 border-green-200', label: 'High quality' },
-                          B: { badge: 'bg-blue-100 text-blue-700 border-blue-200', label: 'Good' },
-                          C: { badge: 'bg-yellow-100 text-yellow-700 border-yellow-200', label: 'Moderate' },
-                          D: { badge: 'bg-orange-100 text-orange-700 border-orange-200', label: 'Low' },
-                        } as const;
-
-                        const evidenceConfig = source.evidenceLevel
-                          ? evidenceLevelConfig[source.evidenceLevel as keyof typeof evidenceLevelConfig] ?? {
-                              badge: 'bg-gray-100 text-gray-600 border-gray-200',
-                              label: 'Unrated',
-                            }
-                          : { badge: 'bg-gray-100 text-gray-600 border-gray-200', label: 'Unrated' };
-                        const sourceTypePresentation = getSourceTypePresentation(source.sourceType);
-
-                        return (
-                          <Card
-                            key={source.id || `source-${idx}`}
-                            ref={(el) => {
-                              if (el) {
-                                sourceRefs.current[source.id || `source-${idx}`] = el;
-                              } else {
-                                delete sourceRefs.current[source.id || `source-${idx}`];
-                              }
-                            }}
-                            className="border border-gray-100 bg-white/90 shadow-sm transition-all hover:shadow-md dark:border-gray-800 dark:bg-gray-900/50"
-                          >
-                            <CardContent className="flex flex-col gap-2 p-3">
-                              <div className="flex items-start justify-between gap-2">
-                                <div className="flex-1 min-w-0">
-                                  <div className="flex items-center gap-2">
-                                    <Badge variant="outline" className="text-[11px]">
-                                      [{idx + 1}]
-                                    </Badge>
-                                    <p className="truncate text-sm font-medium text-gray-900 dark:text-gray-100">
-                                      {source.title || `Source ${idx + 1}`}
-                                    </p>
-                                    {(() => {
-                                      const tag = deriveSourceTag(source);
-                                      if (!tag) {
-                                        return null;
-                                      }
-                                      return (
-                                        <Badge variant="secondary" className="text-[11px] bg-blue-50 text-blue-700 dark:bg-blue-900/40 dark:text-blue-200">
-                                          {tag}
-                                        </Badge>
-                                      );
-                                    })()}
-                                  </div>
-                                  {source.excerpt && (
-                                    <p className="mt-1 line-clamp-2 text-xs text-gray-600 dark:text-gray-300">
-                                      {source.excerpt}
-                                    </p>
-                                  )}
-                                </div>
-                                {source.url && (
-                                  <Button variant="ghost" size="sm" asChild>
-                                    <a href={source.url} target="_blank" rel="noopener noreferrer">
-                                      <ExternalLink className="h-3.5 w-3.5" />
-                                    </a>
-                                  </Button>
-                                )}
-                              </div>
-                              <div className="flex flex-wrap items-center gap-2 text-[11px] text-gray-500 dark:text-gray-400">
-                                {sourceTypePresentation && (
-                                  <Badge
-                                    variant="outline"
-                                    className="flex items-center gap-1 text-[11px]"
-                                    aria-label={sourceTypePresentation.label}
-                                  >
-                                    <span aria-hidden="true">{sourceTypePresentation.icon}</span>
-                                    <span>{sourceTypePresentation.label}</span>
-                                  </Badge>
-                                )}
-                                {source.organization && (
-                                  <Badge variant="secondary" className="text-[11px]">
-                                    {source.organization}
-                                  </Badge>
-                                )}
-                                {source.domain && (
-                                  <Badge variant="secondary" className="text-[11px]">
-                                    {source.domain}
-                                  </Badge>
-                                )}
-                                <Badge variant="outline" className={cn('text-[11px]', evidenceConfig.badge)}>
-                                  {evidenceConfig.label}
-                                </Badge>
-                                {typeof source.similarity === 'number' && (
-                                  <span>{Math.round(source.similarity * 100)}% match</span>
-                                )}
-                                {typeof source.reliabilityScore === 'number' && (
-                                  <span>Reliability {Math.round(source.reliabilityScore * 100)}%</span>
-                                )}
-                                {source.lastUpdated && (
-                                  <span>Updated {new Date(source.lastUpdated).toLocaleDateString()}</span>
-                                )}
-                              </div>
-                            </CardContent>
-                          </Card>
-                        );
-                      })}
-                    </div>
-                  </SourcesContent>
-                </Sources>
               </>
             )}
 

@@ -225,9 +225,6 @@ class Mode1ManualWorkflow(BaseWorkflow):
     @trace_node("mode1_rag")
     async def rag_retrieval_node(self, state: UnifiedWorkflowState) -> UnifiedWorkflowState:
         """Retrieve RAG context with streaming updates."""
-        # ✅ NEW: Get streaming writer
-        writer = get_stream_writer()
-        
         enable_rag = state.get('enable_rag', True)
         
         if not enable_rag:
@@ -245,16 +242,8 @@ class Mode1ManualWorkflow(BaseWorkflow):
         tenant_id = state.get('tenant_id')
         
         # ✅ Emit real-time AI reasoning about RAG retrieval
+        # Note: Using state-based streaming instead of writer()
         domain_text = f"{len(selected_rag_domains)} specific" if selected_rag_domains else "all available"
-        writer({
-            "type": "langgraph_reasoning",
-            "step": {
-                "type": "thought",
-                "content": f"**Retrieving Knowledge:** Searching {domain_text} domains for evidence-based information relevant to the query",
-                "node": "rag_retrieval",
-                "timestamp": datetime.now(timezone.utc).isoformat()
-            }
-        })
         
         logger.info(
             "🔍 [Mode 1] Retrieving RAG context",
@@ -289,16 +278,12 @@ class Mode1ManualWorkflow(BaseWorkflow):
                 first_source_keys=list(sources[0].keys()) if sources else 'no_sources'
             )
             
-            # ✅ Emit AI reasoning about retrieval results
-            writer({
-                "type": "langgraph_reasoning",
-                "step": {
-                    "type": "observation",
-                    "content": f"**Knowledge Retrieved:** Found {len(sources)} high-quality sources from medical literature and regulatory guidelines",
-                    "node": "rag_retrieval",
-                    "timestamp": datetime.now(timezone.utc).isoformat()
-                }
-            })
+            # ✅ Emit AI reasoning about retrieval results (via state update)
+            logger.info(
+                "✅ RAG retrieval completed",
+                sources_count=len(sources),
+                context_length=len(context)
+            )
             
             # Build context summary
             context = self._build_context_summary(sources)
@@ -320,15 +305,8 @@ class Mode1ManualWorkflow(BaseWorkflow):
         except Exception as e:
             logger.error("❌ RAG retrieval failed", error=str(e), exc_info=True)
             
-            # ✅ NEW: Emit error
-            writer({
-                "type": "workflow_step",
-                "step": {
-                    "id": "rag-retrieval",
-                    "status": "error",
-                    "progress": 0
-                }
-            })
+            # Log error instead of emitting
+            logger.error("❌ RAG retrieval failed", error=str(e), exc_info=True)
             
             # CRITICAL: Preserve agent_data from previous state!
             return {
@@ -351,9 +329,6 @@ class Mode1ManualWorkflow(BaseWorkflow):
         - Guarantees Perplexity-style citation format
         - ✅ NEW: Streams workflow progress and reasoning
         """
-        # Get streaming writer for AI reasoning events
-        writer = get_stream_writer()
-        
         agent_data = state.get('agent_data')
         query = state.get('query', '')
         context_summary = state.get('context_summary', '')
@@ -496,16 +471,8 @@ Do NOT add citation numbers since no sources were provided."""
             
             # Execute with structured output for citations
             if retrieved_documents:
-                # ✅ Emit AI reasoning before generating response
-                writer({
-                    "type": "langgraph_reasoning",
-                    "step": {
-                        "type": "action",
-                        "content": f"**Synthesizing Response:** Analyzing {len(retrieved_documents)} sources to formulate evidence-based answer with inline citations",
-                        "node": "execute_agent",
-                        "timestamp": datetime.now(timezone.utc).isoformat()
-                    }
-                })
+                # Log reasoning (streaming happens via LangGraph native mechanisms)
+                logger.info(f"🧠 Synthesizing response from {len(retrieved_documents)} sources")
                 
                 # Use structured output to guarantee citation format
                 try:
@@ -579,22 +546,12 @@ Do NOT add citation numbers since no sources were provided."""
                         'citations': []  # Will be empty, prompt enforcement only
                     })()
                     
-                    # ✅ Emit final AI reasoning about response quality
+                    # Log completion (streaming handled by LangGraph)
                     citation_count = len(response.citations)  # type: ignore
-                    writer({
-                        "type": "langgraph_reasoning",
-                        "step": {
-                            "type": "result",
-                            "content": f"**Response Complete:** Generated comprehensive answer with {citation_count} inline citations from knowledge base",
-                            "node": "execute_agent",
-                            "timestamp": datetime.now(timezone.utc).isoformat()
-                        }
-                    })
-                    
                     logger.info(
                         "✅ Agent executed with structured citations",
                         response_length=len(response.content),  # type: ignore
-                        citations_count=len(response.citations)  # type: ignore
+                        citations_count=citation_count
                     )
                     
                     # Map structured citations back to original sources
@@ -689,7 +646,6 @@ Do NOT add citation numbers since no sources were provided."""
         - citations: Structured citations for frontend parsing
         - sources: Same as citations (for backward compatibility)
         """
-        writer = get_stream_writer()
         agent_response = state.get('agent_response', '')
         confidence = state.get('response_confidence', 0.0)
         retrieved_documents = state.get('retrieved_documents', [])
@@ -813,55 +769,16 @@ Do NOT add citation numbers since no sources were provided."""
                 citations_count=len(final_citations),
                 first_citation=final_citations[0] if final_citations else None
             )
-            
-            try:
-                writer({
-                    "type": "rag_sources",
-                    "sources": final_citations,
-                    "total": len(final_citations),
-                    "domains": state.get('selected_rag_domains', []),
-                    "strategy": state.get('retrieval_strategy', 'hybrid'),
-                    "cacheHit": state.get('rag_cache_hit', False),
-                    "retrievalTimeMs": state.get('retrieval_time_ms')
-                })
-                logger.info("✅ [DEBUG] rag_sources event emitted successfully")
-            except Exception as stream_error:
-                logger.warning("⚠️ Failed to emit rag_sources event", error=str(stream_error))
+            # Note: Sources will be included in state update
+            logger.info("✅ [DEBUG] rag_sources data prepared successfully")
 
-        try:
-            writer({
-                "type": "final",
-                "response": agent_response,
-                "citations": final_citations,
-                "sources": final_citations,
-                "confidence": confidence,
-                "rag": {
-                    "totalSources": len(final_citations),
-                    "domains": state.get('selected_rag_domains', []),
-                    "cacheHit": state.get('rag_cache_hit', False),
-                    "strategy": state.get('retrieval_strategy', 'hybrid'),
-                    "retrievalTimeMs": state.get('retrieval_time_ms')
-                },
-                "reasoning": state.get('reasoning_steps', []),
-                "tools": {
-                    "allowed": state.get('selected_tools', []),
-                    "used": state.get('tools_used', []),
-                    "totals": state.get('tool_totals', {})
-                },
-                "branches": [
-                    {
-                        "id": "primary",
-                        "content": agent_response,
-                        "confidence": confidence,
-                        "citations": final_citations,
-                        "sources": final_citations,
-                        "createdAt": datetime.now(timezone.utc).isoformat()
-                    }
-                ],
-                "currentBranch": 0
-            })
-        except Exception as stream_error:
-            logger.warning("⚠️ Failed to emit final state event", error=str(stream_error))
+        # Log final output details (streaming handled by LangGraph native mechanisms)
+        logger.info(
+            "📊 Final output prepared",
+            response_length=len(agent_response),
+            citations_count=len(final_citations),
+            confidence=confidence
+        )
         
         # ✅ LangGraph Native: Add AIMessage to messages array so it gets streamed
         from langchain_core.messages import AIMessage

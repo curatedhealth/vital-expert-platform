@@ -4,8 +4,8 @@ import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
-} from '@repo/shadcn-ui/components/ui/collapsible';
-import { cn } from '@repo/shadcn-ui/lib/utils';
+} from '@vital/ui/collapsible';
+import { cn } from '@vital/ui/lib/utils';
 import { BookIcon, ChevronDownIcon } from 'lucide-react';
 import type { ComponentProps } from 'react';
 

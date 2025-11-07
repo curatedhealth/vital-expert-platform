@@ -1,4 +1,4 @@
-import { cn } from '@repo/shadcn-ui/lib/utils';
+import { cn } from '@vital/ui/lib/utils';
 import type { Experimental_GeneratedImage } from 'ai';
 
 export type ImageProps = Experimental_GeneratedImage & {

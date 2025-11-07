@@ -2,8 +2,8 @@ import {
   Avatar,
   AvatarFallback,
   AvatarImage,
-} from '@repo/shadcn-ui/components/ui/avatar';
-import { cn } from '@repo/shadcn-ui/lib/utils';
+} from '@vital/ui/avatar';
+import { cn } from '@vital/ui/lib/utils';
 import type { UIMessage } from 'ai';
 import type { ComponentProps, HTMLAttributes } from 'react';
 

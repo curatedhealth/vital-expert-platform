@@ -1,18 +1,18 @@
 'use client';
 
-import { Badge } from '@repo/shadcn-ui/components/ui/badge';
+import { Badge } from '@vital/ui';
 import {
   Carousel,
   CarouselContent,
   CarouselItem,
   type CarouselApi,
-} from '@repo/shadcn-ui/components/ui/carousel';
+} from '@vital/ui';
 import {
   HoverCard,
   HoverCardContent,
   HoverCardTrigger,
-} from '@repo/shadcn-ui/components/ui/hover-card';
-import { cn } from '@repo/shadcn-ui/lib/utils';
+} from '@vital/ui';
+import { cn } from '@vital/ui/lib/utils';
 import { ArrowLeftIcon, ArrowRightIcon } from 'lucide-react';
 import { type ComponentProps, useCallback, useEffect, useState, useRef, createContext, useContext } from 'react';
 

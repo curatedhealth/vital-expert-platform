@@ -1,7 +1,7 @@
 'use client';
 
-import { Button } from '@repo/shadcn-ui/components/ui/button';
-import { cn } from '@repo/shadcn-ui/lib/utils';
+import { Button } from '@vital/ui/button';
+import { cn } from '@vital/ui/lib/utils';
 import type { UIMessage } from 'ai';
 import { ChevronLeftIcon, ChevronRightIcon } from 'lucide-react';
 import type { ComponentProps, HTMLAttributes, ReactElement } from 'react';

@@ -1,12 +1,12 @@
 'use client';
 
-import { Badge } from '@repo/shadcn-ui/components/ui/badge';
+import { Badge } from '@vital/ui/badge';
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
-} from '@repo/shadcn-ui/components/ui/collapsible';
-import { cn } from '@repo/shadcn-ui/lib/utils';
+} from '@vital/ui/collapsible';
+import { cn } from '@vital/ui/lib/utils';
 import type { ToolUIPart } from 'ai';
 import {
   CheckCircleIcon,

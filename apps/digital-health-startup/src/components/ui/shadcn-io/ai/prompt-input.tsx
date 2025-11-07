@@ -1,15 +1,15 @@
 'use client';
 
-import { Button } from '@repo/shadcn-ui/components/ui/button';
+import { Button } from '@vital/ui/button';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@repo/shadcn-ui/components/ui/select';
-import { Textarea } from '@repo/shadcn-ui/components/ui/textarea';
-import { cn } from '@repo/shadcn-ui/lib/utils';
+} from '@vital/ui/select';
+import { Textarea } from '@vital/ui/textarea';
+import { cn } from '@vital/ui/lib/utils';
 import type { ChatStatus } from 'ai';
 import { Loader2Icon, SendIcon, SquareIcon, XIcon } from 'lucide-react';
 import type {

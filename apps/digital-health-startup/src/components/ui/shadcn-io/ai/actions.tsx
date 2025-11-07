@@ -1,13 +1,13 @@
 'use client';
 
-import { Button } from '@repo/shadcn-ui/components/ui/button';
+import { Button } from '@vital/ui/button';
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from '@repo/shadcn-ui/components/ui/tooltip';
-import { cn } from '@repo/shadcn-ui/lib/utils';
+} from '@vital/ui/tooltip';
+import { cn } from '@vital/ui/lib/utils';
 import type { ComponentProps } from 'react';
 
 export type ActionsProps = ComponentProps<'div'>;

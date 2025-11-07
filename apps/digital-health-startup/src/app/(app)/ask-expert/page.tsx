@@ -2833,8 +2833,7 @@ function AskExpertPageContent() {
                     metadata={{
                       ...streamingMeta,
                       reasoning: streamingReasoning ? [streamingReasoning] : (streamingMeta?.reasoning || []),
-                      // ✅ NEW: Add LangGraph workflow and reasoning data
-                      workflowSteps: workflowSteps.length > 0 ? workflowSteps : undefined,
+                      // ✅ Add LangGraph AI reasoning data
                       reasoningSteps: reasoningSteps.length > 0 ? reasoningSteps : undefined,
                       streamingMetrics: streamingMetrics || undefined,
                     }}

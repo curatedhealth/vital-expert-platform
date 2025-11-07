@@ -2768,7 +2768,13 @@ async def get_recommended_suites(
         }
 
 if __name__ == "__main__":
-    port = int(os.getenv("PORT", "8000"))
+    # ⚠️ CRITICAL: AI Engine MUST run on port 8080 (NOT 8000!)
+    # Frontend (ask-expert/page.tsx) is configured to call port 8080
+    # If changing this, also update:
+    # - apps/digital-health-startup/src/app/(app)/ask-expert/page.tsx (apiEndpoint)
+    # - apps/digital-health-startup/.env.local (NEXT_PUBLIC_PYTHON_AI_ENGINE_URL)
+    # - services/ai-engine/.env (PORT=8080)
+    port = int(os.getenv("PORT", "8080"))
     host = os.getenv("HOST", "0.0.0.0")
     log_level = os.getenv("LOG_LEVEL", "info")
     reload_env = os.getenv("UVICORN_RELOAD", "true").lower()

@@ -12,6 +12,7 @@ interface SearchRequest {
   query: string;
   sources: string[];
   maxResults?: number;
+  sortBy?: 'relevance' | 'date' | 'citations';
 }
 
 export async function POST(request: NextRequest) {

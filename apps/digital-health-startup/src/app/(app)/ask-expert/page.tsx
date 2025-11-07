@@ -1058,8 +1058,12 @@ function AskExpertPageContent() {
       console.groupEnd();
 
       // 🔥 NEW: Call Python AI Engine directly for Mode 1 streaming
+      // ⚠️ CRITICAL: Python AI Engine runs on port 8080 (NOT 8000!)
+      // If changing this, also update:
+      // - services/ai-engine/src/main.py (uvicorn port - should be 8080)
+      // - .env.local (NEXT_PUBLIC_PYTHON_AI_ENGINE_URL=http://localhost:8080)
       const apiEndpoint = mode === 'manual' 
-        ? `${process.env.NEXT_PUBLIC_PYTHON_AI_ENGINE_URL || 'http://localhost:8000'}/api/mode1/manual`
+        ? `${process.env.NEXT_PUBLIC_PYTHON_AI_ENGINE_URL || 'http://localhost:8080'}/api/mode1/manual`
         : '/api/ask-expert/orchestrate';
 
       console.log('[AskExpert] Calling endpoint:', apiEndpoint);

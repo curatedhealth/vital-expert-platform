@@ -366,7 +366,15 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
           .eq('is_active', true)
           .order('priority');
 
-        if (error) throw error;
+        if (error) {
+          console.error('Failed to load knowledge domains - Supabase error:', {
+            message: error.message,
+            details: error.details,
+            hint: error.hint,
+            code: error.code
+          });
+          throw error;
+        }
 
         if (data && data.length > 0) {
           const domains = data.map((d: any) => ({
@@ -385,8 +393,13 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
           setKnowledgeDomains(fallbackKnowledgeDomains);
           console.log('ℹ️ Using fallback knowledge domains');
         }
-      } catch (error) {
-        console.error('Failed to load knowledge domains:', error);
+      } catch (error: any) {
+        console.error('Failed to load knowledge domains:', {
+          message: error?.message || 'Unknown error',
+          details: error?.details || 'No details',
+          code: error?.code || 'No code',
+          hint: error?.hint || 'No hint'
+        });
         setKnowledgeDomains(fallbackKnowledgeDomains);
       } finally {
         setLoadingDomains(false);
@@ -736,7 +749,12 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
           .eq('status', 'active');
 
         if (capError) {
-          console.error('[Agent Creator] Supabase error:', capError);
+          console.error('[Agent Creator] Supabase error:', {
+            message: capError.message,
+            details: capError.details,
+            hint: capError.hint,
+            code: capError.code
+          });
           // Don't throw - continue loading organizational data even if capabilities fail
           console.warn('[Agent Creator] Continuing without capabilities...');
         }

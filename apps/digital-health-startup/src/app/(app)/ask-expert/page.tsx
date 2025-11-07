@@ -19,6 +19,7 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { flushSync } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { nanoid } from 'nanoid';
 import {
   Sparkles,
   Send,
@@ -985,7 +986,7 @@ function AskExpertPageContent() {
     if ((mode === 'manual' || mode === 'multi-expert') && !agentId) {
       console.log('❌ [Mode Check] No agent selected for mode:', mode, 'selectedAgents:', selectedAgents);
       const errorMessage: Message = {
-        id: Date.now().toString(),
+        id: nanoid(),
         role: 'assistant',
         content: 'Please select an agent from the sidebar before sending a message. Click on an agent to add it to your chat.',
         timestamp: Date.now(),
@@ -997,12 +998,12 @@ function AskExpertPageContent() {
     console.log('✅ [Mode Check] Mode:', mode, 'Agent ID:', agentId, 'Selected Agents:', selectedAgents);
 
     const userMessage: Message = existingUserMessage ?? {
-      id: Date.now().toString(),
+      id: nanoid(),
       role: 'user',
       content: messageContent,
       timestamp: Date.now(),
       attachments: (effectiveAttachments ?? []).map((file, i) => ({
-        id: `${Date.now()}-${i}`,
+        id: `${nanoid()}-${i}`,
         name: file.name,
         size: file.size,
         type: file.type,
@@ -1957,7 +1958,7 @@ function AskExpertPageContent() {
         source: streamingMessage ? 'streamingMessage' : streamingMeta?.finalResponse ? 'streamingMeta.finalResponse' : fullResponse ? 'fullResponse' : 'empty'
       });
 
-      const assistantMessageId = (Date.now() + 1).toString();
+      const assistantMessageId = nanoid();
       const messageBranches =
         branches && branches.length > 0
           ? branches
@@ -2087,10 +2088,14 @@ function AskExpertPageContent() {
         : reasoning;
       setRecentReasoning(normalizedRecentReasoning);
       setRecentReasoningTimestamp(Date.now());
+      
+      // ✅ Clear all streaming state after adding final message
       setStreamingMessage('');
       setStreamingReasoning('');
       setIsStreamingReasoning(false);
       setStreamingMeta(null);
+      setReasoningSteps([]); // ✅ Clear reasoning steps to prevent streaming component from persisting
+      setStreamingMetrics(null); // ✅ Clear streaming metrics
 
       if (activeConversationId) {
         setConversations(prev =>
@@ -2115,7 +2120,7 @@ function AskExpertPageContent() {
       if (error instanceof TypeError && error.message.includes('fetch')) {
         console.error('[AskExpert] Fetch failed - network or server error:', error.message);
         const networkErrorMessage: Message = {
-          id: (Date.now() + 1).toString(),
+          id: nanoid(),
           role: 'assistant',
           content: 'Network error: Unable to connect to the server. Please check your internet connection and try again.',
           timestamp: Date.now(),
@@ -2128,7 +2133,7 @@ function AskExpertPageContent() {
           name: error.name,
         });
         const errorMessage: Message = {
-          id: (Date.now() + 1).toString(),
+          id: nanoid(),
           role: 'assistant',
           content: `Sorry, I encountered an error: ${error.message}. Please try again.`,
           timestamp: Date.now(),
@@ -2137,7 +2142,7 @@ function AskExpertPageContent() {
       } else {
         console.error('[AskExpert] Unknown error:', error);
         const errorMessage: Message = {
-          id: (Date.now() + 1).toString(),
+          id: nanoid(),
           role: 'assistant',
           content: 'Sorry, I encountered an unknown error. Please try again.',
           timestamp: Date.now(),

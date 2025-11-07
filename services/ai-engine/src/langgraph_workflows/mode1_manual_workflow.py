@@ -604,7 +604,7 @@ Do NOT add citation numbers since no sources were provided."""
                     return {
                         **state,
                         'agent_response': response.content,  # type: ignore  # ✅ Has [1], [2] markers!
-            'structured_citations': final_citations,  # ✅ For frontend
+                        'structured_citations': structured_citations,  # ✅ For frontend
                         'response_confidence': 0.8,
                         'model_used': model,
                         'current_node': 'execute_agent'

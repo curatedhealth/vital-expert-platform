@@ -80,6 +80,8 @@ interface Source {
   organization?: string;
   reliabilityScore?: number; // 0-1
   lastUpdated?: Date | string;
+  author?: string; // ✅ NEW: For Chicago citations
+  publicationDate?: Date | string; // ✅ NEW: For Chicago citations
 }
 
 interface Citation {
@@ -911,7 +913,9 @@ export function EnhancedMessageDisplay({
             {!isUser && (metadata?.reasoning || metadata?.workflowSteps || metadata?.reasoningSteps) && (
               <Reasoning 
                 isStreaming={isStreaming} 
-                defaultOpen={showReasoning}
+                defaultOpen={true}
+                open={showReasoning}
+                onOpenChange={setShowReasoning}
                 className="mt-3"
               >
                 <ReasoningTrigger 
@@ -989,14 +993,16 @@ export function EnhancedMessageDisplay({
 
                         return (
                           <div
-                            key={step.id || idx}
-                            className="flex items-start gap-2 rounded-lg bg-white/90 p-2 text-xs text-gray-700 dark:bg-gray-800/70 dark:text-gray-200"
+                            key={step.id || `step-${idx}`}
+                            className="flex items-start gap-2 rounded-lg bg-white/90 p-2 dark:bg-gray-800/70"
                           >
                             {getReasoningIcon(step.type)}
-                            <div className="flex-1">
-                              <span>{step.content}</span>
+                            <div className="flex-1 min-w-0">
+                              <Response className="text-xs text-gray-700 dark:text-gray-200 [&>p]:my-0">
+                                {step.content}
+                              </Response>
                               {step.confidence !== undefined && (
-                                <span className="ml-2 text-gray-500 dark:text-gray-400">
+                                <span className="ml-2 text-[11px] text-gray-500 dark:text-gray-400">
                                   ({Math.round(step.confidence * 100)}%)
                                 </span>
                               )}
@@ -1164,74 +1170,18 @@ export function EnhancedMessageDisplay({
             )}
 
             {!isUser && ragSummary && metadata?.sources && metadata.sources.length > 0 && (
-              <Sources
-                className="mt-3 rounded-xl border border-gray-100 bg-gray-50/80 text-xs dark:border-gray-700 dark:bg-gray-900/40"
-                sources={metadata.sources.map((source, index) => ({
-                  id: source.id || `source-${index}`,
-                  title: source.title || `Source ${index + 1}`,
-                  url: source.url,
-                  excerpt: source.excerpt,
-                  similarity: source.similarity,
-                }))}
-              >
-                <SourcesTrigger className="px-4 py-3 text-blue-700 dark:text-blue-200">
-                  <div className="flex items-center gap-2">
-                    <BookOpen className="h-3 w-3" />
-                    <span>
-                      Evidence summary: {ragSummary.totalSources ?? metadata.sources.length} source
-                      {(ragSummary.totalSources ?? metadata.sources.length) === 1 ? '' : 's'}
-                      {ragSummary.strategy ? ` • ${ragSummary.strategy}` : ''}
-                    </span>
-                    {typeof ragSummary.retrievalTimeMs === 'number' && (
-                      <span className="text-[11px] text-gray-500 dark:text-gray-400">
-                        {Math.round(ragSummary.retrievalTimeMs)} ms
-                      </span>
-                    )}
-                    {ragSummary.cacheHit && (
-                      <span className="rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-medium text-green-700 dark:bg-green-900/40 dark:text-green-300">
-                        Cache hit
-                      </span>
-                    )}
+              <>
+                {/* ✅ NEW: Chicago-style citations list with badges */}
+                <div className="mt-4 space-y-2">
+                  <div className="flex items-center gap-2 text-xs font-medium text-gray-700 dark:text-gray-300">
+                    <BookOpen className="h-3.5 w-3.5" />
+                    <span>References ({metadata.sources.length})</span>
                   </div>
-                </SourcesTrigger>
-                <SourcesContent className="bg-white/95">
-                  {Array.isArray(ragSummary.domains) && ragSummary.domains.length > 0 && (
-                    <div className="mb-3 flex flex-wrap gap-1 text-[11px] text-gray-500 dark:text-gray-400">
-                      {Array.from(new Set(ragSummary.domains.filter(Boolean))).map((domain) => (
-                        <span
-                          key={domain as string}
-                          className="rounded-full border border-gray-200 bg-white px-2 py-0.5 dark:border-gray-600 dark:bg-gray-900/70"
-                        >
-                          {domain as string}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                  {(ragSummary.warning || (!ragSummary.totalSources || ragSummary.totalSources === 0)) && (
-                    <div className="mb-3 flex items-start gap-2 text-amber-600 dark:text-amber-400">
-                      <AlertCircle className="mt-0.5 h-3 w-3 flex-shrink-0" />
-                      <span>{ragSummary.warning || 'Evidence required: add supporting documents, broaden the query, or explicitly allow model-only answers.'}</span>
-                    </div>
-                  )}
-                  <div className="space-y-2 text-xs text-gray-700 dark:text-gray-300">
+                  <div className="space-y-1.5">
                     {metadata.sources.map((source, idx) => {
-                      const evidenceLevelConfig = {
-                        A: { badge: 'bg-green-100 text-green-700 border-green-200', label: 'High quality' },
-                        B: { badge: 'bg-blue-100 text-blue-700 border-blue-200', label: 'Good' },
-                        C: { badge: 'bg-yellow-100 text-yellow-700 border-yellow-200', label: 'Moderate' },
-                        D: { badge: 'bg-orange-100 text-orange-700 border-orange-200', label: 'Low' },
-                      } as const;
-
-                      const evidenceConfig = source.evidenceLevel
-                        ? evidenceLevelConfig[source.evidenceLevel as keyof typeof evidenceLevelConfig] ?? {
-                            badge: 'bg-gray-100 text-gray-600 border-gray-200',
-                            label: 'Unrated',
-                          }
-                        : { badge: 'bg-gray-100 text-gray-600 border-gray-200', label: 'Unrated' };
-                      const sourceTypePresentation = getSourceTypePresentation(source.sourceType);
-
+                      const tag = deriveSourceTag(source);
                       return (
-                        <Card
+                        <div
                           key={source.id || `source-${idx}`}
                           ref={(el) => {
                             if (el) {
@@ -1240,85 +1190,200 @@ export function EnhancedMessageDisplay({
                               delete sourceRefs.current[source.id || `source-${idx}`];
                             }
                           }}
-                          className="border border-gray-100 bg-white/90 shadow-sm transition-all hover:shadow-md dark:border-gray-800 dark:bg-gray-900/50"
+                          className="flex items-start gap-2 text-xs group"
                         >
-                          <CardContent className="flex flex-col gap-2 p-3">
-                            <div className="flex items-start justify-between gap-2">
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-center gap-2">
-                                  <Badge variant="outline" className="text-[11px]">
-                                    [{idx + 1}]
-                                  </Badge>
-                                  <p className="truncate text-sm font-medium text-gray-900 dark:text-gray-100">
-                                    {source.title || `Source ${idx + 1}`}
-                                  </p>
-                                  {(() => {
-                                    const tag = deriveSourceTag(source);
-                                    if (!tag) {
-                                      return null;
-                                    }
-                                    return (
-                                      <Badge variant="secondary" className="text-[11px] bg-blue-50 text-blue-700 dark:bg-blue-900/40 dark:text-blue-200">
-                                        {tag}
-                                      </Badge>
-                                    );
-                                  })()}
-                                </div>
-                                {source.excerpt && (
-                                  <p className="mt-1 line-clamp-2 text-xs text-gray-600 dark:text-gray-300">
-                                    {source.excerpt}
-                                  </p>
-                                )}
-                              </div>
-                              {source.url && (
-                                <Button variant="ghost" size="sm" asChild>
-                                  <a href={source.url} target="_blank" rel="noopener noreferrer">
-                                    <ExternalLink className="h-3.5 w-3.5" />
-                                  </a>
-                                </Button>
-                              )}
-                            </div>
-                            <div className="flex flex-wrap items-center gap-2 text-[11px] text-gray-500 dark:text-gray-400">
-                              {sourceTypePresentation && (
-                                <Badge
-                                  variant="outline"
-                                  className="flex items-center gap-1 text-[11px]"
-                                  aria-label={sourceTypePresentation.label}
-                                >
-                                  <span aria-hidden="true">{sourceTypePresentation.icon}</span>
-                                  <span>{sourceTypePresentation.label}</span>
-                                </Badge>
-                              )}
-                              {source.organization && (
-                                <Badge variant="secondary" className="text-[11px]">
-                                  {source.organization}
-                                </Badge>
-                              )}
-                              {source.domain && (
-                                <Badge variant="secondary" className="text-[11px]">
-                                  {source.domain}
-                                </Badge>
-                              )}
-                              <Badge variant="outline" className={cn('text-[11px]', evidenceConfig.badge)}>
-                                {evidenceConfig.label}
+                          <Badge 
+                            variant="outline" 
+                            className="shrink-0 h-5 text-[10px] font-medium"
+                          >
+                            [{idx + 1}]
+                          </Badge>
+                          <div className="flex-1 min-w-0">
+                            <span className="text-gray-700 dark:text-gray-300">
+                              {formatChicagoCitation(source, idx)}
+                            </span>
+                            {tag && (
+                              <Badge 
+                                variant="secondary" 
+                                className="ml-2 text-[10px] h-5 bg-blue-50 text-blue-700 dark:bg-blue-900/40 dark:text-blue-200"
+                              >
+                                {tag}
                               </Badge>
-                              {typeof source.similarity === 'number' && (
-                                <span>{Math.round(source.similarity * 100)}% match</span>
-                              )}
-                              {typeof source.reliabilityScore === 'number' && (
-                                <span>Reliability {Math.round(source.reliabilityScore * 100)}%</span>
-                              )}
-                              {source.lastUpdated && (
-                                <span>Updated {new Date(source.lastUpdated).toLocaleDateString()}</span>
-                              )}
-                            </div>
-                          </CardContent>
-                        </Card>
+                            )}
+                            {source.url && (
+                              <a
+                                href={source.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="ml-2 inline-flex items-center gap-1 text-blue-600 dark:text-blue-400 hover:underline opacity-0 group-hover:opacity-100 transition-opacity"
+                              >
+                                <ExternalLink className="h-3 w-3" />
+                              </a>
+                            )}
+                          </div>
+                        </div>
                       );
                     })}
                   </div>
-                </SourcesContent>
-              </Sources>
+                </div>
+
+                {/* ✅ KEEP: Collapsible detailed sources panel below */}
+                <Sources
+                  className="mt-3 rounded-xl border border-gray-100 bg-gray-50/80 text-xs dark:border-gray-700 dark:bg-gray-900/40"
+                  sources={metadata.sources.map((source, index) => ({
+                    id: source.id || `source-${index}`,
+                    title: source.title || `Source ${index + 1}`,
+                    url: source.url,
+                    excerpt: source.excerpt,
+                    similarity: source.similarity,
+                  }))}
+                >
+                  <SourcesTrigger className="px-4 py-3 text-blue-700 dark:text-blue-200">
+                    <div className="flex items-center gap-2">
+                      <BookOpen className="h-3 w-3" />
+                      <span>
+                        Evidence summary: {ragSummary.totalSources ?? metadata.sources.length} source
+                        {(ragSummary.totalSources ?? metadata.sources.length) === 1 ? '' : 's'}
+                        {ragSummary.strategy ? ` • ${ragSummary.strategy}` : ''}
+                      </span>
+                      {typeof ragSummary.retrievalTimeMs === 'number' && (
+                        <span className="text-[11px] text-gray-500 dark:text-gray-400">
+                          {Math.round(ragSummary.retrievalTimeMs)} ms
+                        </span>
+                      )}
+                      {ragSummary.cacheHit && (
+                        <span className="rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-medium text-green-700 dark:bg-green-900/40 dark:text-green-300">
+                          Cache hit
+                        </span>
+                      )}
+                    </div>
+                  </SourcesTrigger>
+                  <SourcesContent className="bg-white/95">
+                    {Array.isArray(ragSummary.domains) && ragSummary.domains.length > 0 && (
+                      <div className="mb-3 flex flex-wrap gap-1 text-[11px] text-gray-500 dark:text-gray-400">
+                        {Array.from(new Set(ragSummary.domains.filter(Boolean))).map((domain) => (
+                          <span
+                            key={domain as string}
+                            className="rounded-full border border-gray-200 bg-white px-2 py-0.5 dark:border-gray-600 dark:bg-gray-900/70"
+                          >
+                            {domain as string}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                    {(ragSummary.warning || (!ragSummary.totalSources || ragSummary.totalSources === 0)) && (
+                      <div className="mb-3 flex items-start gap-2 text-amber-600 dark:text-amber-400">
+                        <AlertCircle className="mt-0.5 h-3 w-3 flex-shrink-0" />
+                        <span>{ragSummary.warning || 'Evidence required: add supporting documents, broaden the query, or explicitly allow model-only answers.'}</span>
+                      </div>
+                    )}
+                    <div className="space-y-2 text-xs text-gray-700 dark:text-gray-300">
+                      {metadata.sources.map((source, idx) => {
+                        const evidenceLevelConfig = {
+                          A: { badge: 'bg-green-100 text-green-700 border-green-200', label: 'High quality' },
+                          B: { badge: 'bg-blue-100 text-blue-700 border-blue-200', label: 'Good' },
+                          C: { badge: 'bg-yellow-100 text-yellow-700 border-yellow-200', label: 'Moderate' },
+                          D: { badge: 'bg-orange-100 text-orange-700 border-orange-200', label: 'Low' },
+                        } as const;
+
+                        const evidenceConfig = source.evidenceLevel
+                          ? evidenceLevelConfig[source.evidenceLevel as keyof typeof evidenceLevelConfig] ?? {
+                              badge: 'bg-gray-100 text-gray-600 border-gray-200',
+                              label: 'Unrated',
+                            }
+                          : { badge: 'bg-gray-100 text-gray-600 border-gray-200', label: 'Unrated' };
+                        const sourceTypePresentation = getSourceTypePresentation(source.sourceType);
+
+                        return (
+                          <Card
+                            key={source.id || `source-${idx}`}
+                            ref={(el) => {
+                              if (el) {
+                                sourceRefs.current[source.id || `source-${idx}`] = el;
+                              } else {
+                                delete sourceRefs.current[source.id || `source-${idx}`];
+                              }
+                            }}
+                            className="border border-gray-100 bg-white/90 shadow-sm transition-all hover:shadow-md dark:border-gray-800 dark:bg-gray-900/50"
+                          >
+                            <CardContent className="flex flex-col gap-2 p-3">
+                              <div className="flex items-start justify-between gap-2">
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center gap-2">
+                                    <Badge variant="outline" className="text-[11px]">
+                                      [{idx + 1}]
+                                    </Badge>
+                                    <p className="truncate text-sm font-medium text-gray-900 dark:text-gray-100">
+                                      {source.title || `Source ${idx + 1}`}
+                                    </p>
+                                    {(() => {
+                                      const tag = deriveSourceTag(source);
+                                      if (!tag) {
+                                        return null;
+                                      }
+                                      return (
+                                        <Badge variant="secondary" className="text-[11px] bg-blue-50 text-blue-700 dark:bg-blue-900/40 dark:text-blue-200">
+                                          {tag}
+                                        </Badge>
+                                      );
+                                    })()}
+                                  </div>
+                                  {source.excerpt && (
+                                    <p className="mt-1 line-clamp-2 text-xs text-gray-600 dark:text-gray-300">
+                                      {source.excerpt}
+                                    </p>
+                                  )}
+                                </div>
+                                {source.url && (
+                                  <Button variant="ghost" size="sm" asChild>
+                                    <a href={source.url} target="_blank" rel="noopener noreferrer">
+                                      <ExternalLink className="h-3.5 w-3.5" />
+                                    </a>
+                                  </Button>
+                                )}
+                              </div>
+                              <div className="flex flex-wrap items-center gap-2 text-[11px] text-gray-500 dark:text-gray-400">
+                                {sourceTypePresentation && (
+                                  <Badge
+                                    variant="outline"
+                                    className="flex items-center gap-1 text-[11px]"
+                                    aria-label={sourceTypePresentation.label}
+                                  >
+                                    <span aria-hidden="true">{sourceTypePresentation.icon}</span>
+                                    <span>{sourceTypePresentation.label}</span>
+                                  </Badge>
+                                )}
+                                {source.organization && (
+                                  <Badge variant="secondary" className="text-[11px]">
+                                    {source.organization}
+                                  </Badge>
+                                )}
+                                {source.domain && (
+                                  <Badge variant="secondary" className="text-[11px]">
+                                    {source.domain}
+                                  </Badge>
+                                )}
+                                <Badge variant="outline" className={cn('text-[11px]', evidenceConfig.badge)}>
+                                  {evidenceConfig.label}
+                                </Badge>
+                                {typeof source.similarity === 'number' && (
+                                  <span>{Math.round(source.similarity * 100)}% match</span>
+                                )}
+                                {typeof source.reliabilityScore === 'number' && (
+                                  <span>Reliability {Math.round(source.reliabilityScore * 100)}%</span>
+                                )}
+                                {source.lastUpdated && (
+                                  <span>Updated {new Date(source.lastUpdated).toLocaleDateString()}</span>
+                                )}
+                              </div>
+                            </CardContent>
+                          </Card>
+                        );
+                      })}
+                    </div>
+                  </SourcesContent>
+                </Sources>
+              </>
             )}
 
             {!isUser && hasToolUsage && toolSummary && (
@@ -1350,8 +1415,8 @@ export function EnhancedMessageDisplay({
               </div>
             )}
 
-            {/* Key Insights Callout */}
-            {!isUser && (keyInsights.length > 0 || (metadata?.confidence ?? 0) > 0.85) && (
+            {/* Key Insights Callout - ✅ Show ONLY after completion */}
+            {!isUser && !isStreaming && (keyInsights.length > 0 || (metadata?.confidence ?? 0) > 0.85) && (
               <motion.div
                 initial={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, y: 10 }}
                 animate={prefersReducedMotion ? { opacity: 1 } : { opacity: 1, y: 0 }}

@@ -4,8 +4,8 @@ import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import {
   Copy, Check, ThumbsUp, ThumbsDown, RefreshCw, Edit,
   ExternalLink, ChevronDown, ChevronUp,
-  Sparkles, BookOpen, AlertCircle, Info, Bookmark, Share2, Wrench, GitBranch,
-  Loader2, CheckCircle, Circle, Zap, Brain, Search, Eye, Lightbulb
+  Sparkles, BookOpen, AlertCircle, Bookmark, Share2, Wrench, GitBranch,
+  Loader2, CheckCircle, Circle, Zap
 } from 'lucide-react';
 import {
   useState,
@@ -53,14 +53,12 @@ import {
   InlineCitationCarouselHeader,
   InlineCitationCarouselIndex,
   InlineCitationCarouselItem,
+  InlineCitationText,
   InlineCitationQuote,
   InlineCitationSource,
-} from '@/components/ui/shadcn-io/ai/inline-citation';
-import {
-  Reasoning,
-  ReasoningTrigger,
-  ReasoningContent,
-} from '@/components/ui/shadcn-io/ai/reasoning';
+} from '@/components/ai/inline-citation';
+import { AIReasoning } from '@vital/ai-components';
+import type { ReasoningStep as SharedReasoningStep, ModelReasoningPart } from '@vital/ai-components';
 import type { Components } from 'react-markdown';
 import type { PluggableList } from 'unified';
 
@@ -138,8 +136,9 @@ interface MessageMetadata {
   artifacts?: any[];
   // ✅ NEW: LangGraph streaming data
   workflowSteps?: any[];
-  reasoningSteps?: any[];
+  reasoningSteps?: Array<SharedReasoningStep | string | Record<string, any>>;
   streamingMetrics?: any;
+  modelReasoningParts?: ModelReasoningPart[];
 }
 
 interface EnhancedMessageDisplayProps {
@@ -479,24 +478,6 @@ export function EnhancedMessageDisplay({
   const [copied, setCopied] = useState(false);
   const [showReasoning, setShowReasoning] = useState(false);
   const [feedback, setFeedback] = useState<'positive' | 'negative' | null>(null);
-  
-  // ✅ FIX: Auto-expand AI Reasoning when available (but not during streaming)
-  useEffect(() => {
-    const hasReasoning = 
-      (metadata?.reasoningSteps && metadata.reasoningSteps.length > 0) ||
-      (metadata?.workflowSteps && metadata.workflowSteps.length > 0) ||
-      (metadata?.reasoning && metadata.reasoning.length > 0);
-    
-    // Auto-expand after streaming completes AND reasoning is available
-    if (hasReasoning && !isStreaming) {
-      console.log('🔓 [EnhancedMessageDisplay] Auto-expanding AI Reasoning:', {
-        reasoningStepsCount: metadata?.reasoningSteps?.length || 0,
-        workflowStepsCount: metadata?.workflowSteps?.length || 0,
-        reasoningTextLength: metadata?.reasoning?.length || 0,
-      });
-      setShowReasoning(true);
-    }
-  }, [metadata?.reasoningSteps, metadata?.workflowSteps, metadata?.reasoning, isStreaming]);
   const [activeBranch, setActiveBranch] = useState(currentBranch);
   const [isFavorite, setIsFavorite] = useState(false);
   const [shareStatus, setShareStatus] = useState<'idle' | 'success' | 'error'>('idle');
@@ -667,6 +648,176 @@ export function EnhancedMessageDisplay({
     return segments.map((line) => line.trim()).filter((line) => line.length > 0);
   }, [rawBranchReasoning]);
   const branchDescriptionTargetId = branchReasoningList.length > 0 ? branchDescriptorId : undefined;
+
+  const normalizedReasoningSteps = useMemo<SharedReasoningStep[]>(() => {
+    const steps: SharedReasoningStep[] = [];
+
+    if (Array.isArray(metadata?.reasoningSteps)) {
+      metadata.reasoningSteps.forEach((step, idx) => {
+        if (!step) {
+          return;
+        }
+        if (typeof step === 'string') {
+          if (step.trim().length > 0) {
+            steps.push({
+              id: `reasoning-step-${idx}`,
+              type: 'thought',
+              content: step,
+            });
+          }
+          return;
+        }
+
+        const content = typeof (step as any)?.content === 'string'
+          ? (step as any).content
+          : typeof (step as any)?.text === 'string'
+            ? (step as any).text
+            : '';
+        if (!content) {
+          return;
+        }
+
+        steps.push({
+          id: (step as any).id || `reasoning-step-${idx}`,
+          type: (step as any).type || 'thought',
+          content,
+          confidence: (step as any).confidence,
+          timestamp: (step as any).timestamp,
+          metadata: (step as any).metadata,
+          node: (step as any).node,
+        });
+      });
+    }
+
+    if (Array.isArray(metadata?.reasoning)) {
+      metadata.reasoning.forEach((text, idx) => {
+        if (text && text.trim().length > 0) {
+          steps.push({
+            id: `legacy-reasoning-${idx}`,
+            type: 'thought',
+            content: text,
+          });
+        }
+      });
+    }
+
+    branchReasoningList.forEach((reason, idx) => {
+      if (reason && reason.trim().length > 0) {
+        steps.push({
+          id: `branch-reasoning-${idx}`,
+          type: 'observation',
+          content: reason,
+        });
+      }
+    });
+
+    return steps;
+  }, [metadata?.reasoningSteps, metadata?.reasoning, branchReasoningList]);
+
+  const workflowStepsContent = useMemo(() => {
+    if (!metadata?.workflowSteps || metadata.workflowSteps.length === 0) {
+      return null;
+    }
+
+    const getStepIcon = (status: string) => {
+      switch (status) {
+        case 'completed':
+          return <CheckCircle className="h-3 w-3 text-green-600" />;
+        case 'running':
+          return <Loader2 className="h-3 w-3 text-blue-600 animate-spin" />;
+        case 'error':
+          return <AlertCircle className="h-3 w-3 text-red-600" />;
+        default:
+          return <Circle className="h-3 w-3 text-gray-400" />;
+      }
+    };
+
+    return (
+      <div className="space-y-2">
+        <div className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">
+          Workflow Progress
+        </div>
+        {metadata.workflowSteps.map((step: any, idx: number) => (
+          <div
+            key={step.id || idx}
+            className="flex items-start gap-2 rounded-lg bg-white/90 p-2 text-xs dark:bg-gray-800/70"
+          >
+            {getStepIcon(step.status)}
+            <div className="flex-1 space-y-1">
+              <div className="flex items-center justify-between gap-2">
+                <span className="font-medium text-gray-900 dark:text-gray-100">{step.title || `Step ${idx + 1}`}</span>
+                <span className="text-gray-500 dark:text-gray-400">
+                  {step.durationMs ? `${(step.durationMs / 1000).toFixed(1)}s` : step.status}
+                </span>
+              </div>
+              {step.description && (
+                <p className="text-gray-600 dark:text-gray-300">{step.description}</p>
+              )}
+              {step.metadata?.tool && (
+                <p className="text-gray-500 dark:text-gray-400">
+                  Tool: {step.metadata.tool} {step.metadata.toolElapsedMs ? `(${(step.metadata.toolElapsedMs / 1000).toFixed(1)}s)` : ''}
+                </p>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  }, [metadata?.workflowSteps]);
+
+  const streamingMetricsContent = useMemo(() => {
+    if (!metadata?.streamingMetrics) {
+      return null;
+    }
+    return (
+      <div className="rounded-lg bg-white/90 p-2 dark:bg-gray-800/70">
+        <div className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+          Performance
+        </div>
+        <div className="flex items-center gap-4 text-xs text-gray-600 dark:text-gray-400">
+          <div className="flex items-center gap-1">
+            <Zap className="h-3 w-3" />
+            <span>{metadata.streamingMetrics.tokensPerSecond} tokens/sec</span>
+          </div>
+          {metadata.streamingMetrics.elapsedTime && (
+            <span>
+              {(metadata.streamingMetrics.elapsedTime / 1000).toFixed(1)}s elapsed
+            </span>
+          )}
+        </div>
+      </div>
+    );
+  }, [metadata?.streamingMetrics]);
+
+  const supplementalReasoningContent = useMemo(() => {
+    if (!workflowStepsContent && !streamingMetricsContent) {
+      return null;
+    }
+    return (
+      <div className="space-y-3">
+        {workflowStepsContent}
+        {streamingMetricsContent}
+      </div>
+    );
+  }, [workflowStepsContent, streamingMetricsContent]);
+
+  const hasReasoningData =
+    normalizedReasoningSteps.length > 0 ||
+    (metadata?.workflowSteps?.length ?? 0) > 0 ||
+    Boolean(metadata?.streamingMetrics) ||
+    (metadata?.modelReasoningParts?.length ?? 0) > 0;
+
+  useEffect(() => {
+    if (hasReasoningData && !isStreaming) {
+      console.log('🔓 [EnhancedMessageDisplay] Auto-expanding AI Reasoning:', {
+        normalizedSteps: normalizedReasoningSteps.length,
+        workflowStepsCount: metadata?.workflowSteps?.length || 0,
+        streamingMetrics: !!metadata?.streamingMetrics,
+        modelReasoningParts: metadata?.modelReasoningParts?.length || 0,
+      });
+      setShowReasoning(true);
+    }
+  }, [hasReasoningData, isStreaming, metadata?.workflowSteps, metadata?.streamingMetrics, metadata?.modelReasoningParts, normalizedReasoningSteps.length]);
   const showBranchSelector = !isUser && Array.isArray(branches) && branches.length > 1;
   const ragSummary = metadata?.ragSummary;
   const toolSummary = metadata?.toolSummary;
@@ -802,6 +953,7 @@ export function EnhancedMessageDisplay({
 
       return (
         <InlineCitation>
+          <InlineCitationText>{props.children}</InlineCitationText>
           <InlineCitationCard>
             <InlineCitationCardTrigger
               sources={resolvedSources.map((source) => source.url || '')}
@@ -936,180 +1088,18 @@ export function EnhancedMessageDisplay({
               </span>
             </div>
 
-            {/* Reasoning Section - Shadcn AI Component */}
-            {/* ✅ FIX: Added keepOpen={true} to prevent auto-close after streaming */}
-            {!isUser && (metadata?.reasoning || metadata?.workflowSteps || metadata?.reasoningSteps) && (
-              <Reasoning 
-                isStreaming={isStreaming} 
-                defaultOpen={true}
-                keepOpen={true}
+            {!isUser && hasReasoningData && (
+              <AIReasoning
+                reasoningSteps={normalizedReasoningSteps}
+                modelReasoningParts={metadata?.modelReasoningParts}
+                isStreaming={isStreaming}
+                defaultOpen
+                keepOpen
                 open={showReasoning}
                 onOpenChange={setShowReasoning}
                 className="mt-3"
-              >
-                <ReasoningTrigger 
-                  title="AI Reasoning"
-                  onClick={() => setShowReasoning(!showReasoning)}
-                />
-                <ReasoningContent>
-                  {/* ✅ NEW: Workflow Steps */}
-                  {metadata.workflowSteps && metadata.workflowSteps.length > 0 && (
-                    <div className="space-y-2">
-                      <div className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Workflow Progress
-                      </div>
-                      {metadata.workflowSteps.map((step: any, idx: number) => {
-                        const getStepIcon = (status: string) => {
-                          switch (status) {
-                            case 'completed':
-                              return <CheckCircle className="h-3 w-3 text-green-600" />;
-                            case 'running':
-                              return <Loader2 className="h-3 w-3 text-blue-600 animate-spin" />;
-                            case 'error':
-                              return <AlertCircle className="h-3 w-3 text-red-600" />;
-                            default:
-                              return <Circle className="h-3 w-3 text-gray-400" />;
-                          }
-                        };
-
-                        return (
-                          <div
-                            key={step.id || idx}
-                            className="flex items-start gap-2 rounded-lg bg-white/90 p-2 text-xs dark:bg-gray-800/70"
-                          >
-                            {getStepIcon(step.status)}
-                            <div className="flex-1">
-                              <div className="font-medium text-gray-900 dark:text-gray-100">
-                                {step.name}
-                              </div>
-                              {step.description && (
-                                <div className="text-gray-600 dark:text-gray-400 mt-0.5">
-                                  {step.description}
-                                </div>
-                              )}
-                              {step.progress !== undefined && step.status === 'running' && (
-                                <div className="mt-1 w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1">
-                                  <div
-                                    className="bg-blue-600 h-1 rounded-full transition-all"
-                                    style={{ width: `${step.progress}%` }}
-                                  />
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-
-                  {/* ✅ NEW: LangGraph Reasoning Steps with Progressive Disclosure */}
-                  {metadata.reasoningSteps && metadata.reasoningSteps.length > 0 && (
-                    <div className="space-y-2">
-                      <AnimatePresence mode="popLayout">
-                        {metadata.reasoningSteps.map((step: any, idx: number) => {
-                          const getReasoningIcon = (type: string) => {
-                            switch (type) {
-                              case 'thought':
-                                return <Brain className="h-4 w-4 text-purple-600" />;
-                              case 'action':
-                                return <Zap className="h-4 w-4 text-blue-600" />;
-                              case 'observation':
-                                return <Eye className="h-4 w-4 text-green-600" />;
-                              case 'search':
-                                return <Search className="h-4 w-4 text-orange-600" />;
-                              case 'reflection':
-                                return <Lightbulb className="h-4 w-4 text-yellow-600" />;
-                              default:
-                                return <Circle className="h-4 w-4 text-gray-400" />;
-                            }
-                          };
-
-                          return (
-                            <motion.div
-                              key={step.id || `step-${idx}`}
-                              initial={{ opacity: 0, y: -10, scale: 0.95 }}
-                              animate={{ opacity: 1, y: 0, scale: 1 }}
-                              exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                              transition={{ 
-                                duration: 0.3,
-                                delay: idx * 0.05  // Stagger by 50ms per step
-                              }}
-                              className={cn(
-                                "flex items-start gap-3 rounded-lg p-3 border",
-                                step.type === 'thought' && "bg-purple-50/50 border-purple-200 dark:bg-purple-900/20 dark:border-purple-800",
-                                step.type === 'action' && "bg-blue-50/50 border-blue-200 dark:bg-blue-900/20 dark:border-blue-800",
-                                step.type === 'observation' && "bg-green-50/50 border-green-200 dark:bg-green-900/20 dark:border-green-800",
-                                step.type === 'search' && "bg-orange-50/50 border-orange-200 dark:bg-orange-900/20 dark:border-orange-800",
-                                step.type === 'reflection' && "bg-yellow-50/50 border-yellow-200 dark:bg-yellow-900/20 dark:border-yellow-800",
-                                !step.type && "bg-gray-50/50 border-gray-200 dark:bg-gray-800/50 dark:border-gray-700"
-                              )}
-                            >
-                              <div className="mt-0.5">
-                                {getReasoningIcon(step.type)}
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                {step.type && (
-                                  <div className="text-xs font-semibold text-gray-900 dark:text-gray-100 mb-1.5 uppercase tracking-wide">
-                                    {step.type}
-                                  </div>
-                                )}
-                                <AIResponse className="text-sm text-gray-700 dark:text-gray-200 [&>p]:my-0 [&>p]:leading-relaxed">
-                                  {step.content}
-                                </AIResponse>
-                                {step.confidence !== undefined && (
-                                  <Badge variant="secondary" className="mt-2 text-[10px] px-2 py-0.5">
-                                    {Math.round(step.confidence * 100)}% confident
-                                  </Badge>
-                                )}
-                              </div>
-                            </motion.div>
-                          );
-                        })}
-                      </AnimatePresence>
-                    </div>
-                  )}
-
-                  {/* ✅ NEW: Streaming Metrics */}
-                  {metadata.streamingMetrics && (
-                    <div className="rounded-lg bg-white/90 p-2 dark:bg-gray-800/70">
-                      <div className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-                        Performance
-                      </div>
-                      <div className="flex items-center gap-4 text-xs text-gray-600 dark:text-gray-400">
-                        <div className="flex items-center gap-1">
-                          <Zap className="h-3 w-3" />
-                          <span>{metadata.streamingMetrics.tokensPerSecond} tokens/sec</span>
-                        </div>
-                        {metadata.streamingMetrics.elapsedTime && (
-                          <span>
-                            {(metadata.streamingMetrics.elapsedTime / 1000).toFixed(1)}s elapsed
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Existing Reasoning (backward compatibility) */}
-                  {metadata.reasoning && metadata.reasoning.length > 0 && (
-                    <div className="space-y-2">
-                      {!metadata.workflowSteps && !metadata.reasoningSteps && (
-                        <div className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">
-                          AI Reasoning
-                        </div>
-                      )}
-                      {metadata.reasoning.map((step, idx) => (
-                        <div
-                          key={idx}
-                          className="flex items-start gap-2 rounded-lg bg-white/90 p-2 text-xs text-gray-700 dark:bg-gray-800/70 dark:text-gray-200"
-                        >
-                          <Info className="h-3 w-3 mt-0.5 text-blue-500 flex-shrink-0" />
-                          <span>{step}</span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </ReasoningContent>
-              </Reasoning>
+                supplementalContent={supplementalReasoningContent}
+              />
             )}
 
             {/* Message Content */}

@@ -41,6 +41,7 @@ export { AIReasoning } from './components/AIReasoning';
 export type {
   Source,
   ReasoningStep,
+  ModelReasoningPart,
   MessageMetadata,
   ComponentBaseProps,
   KeyInsightsProps,
@@ -51,7 +52,5 @@ export type {
 // Re-export AIReasoning types
 export type { AIReasoningProps } from './components/AIReasoning';
 
-// Note: InlineCitation components are from Shadcn AI
-// They should be imported directly from the Shadcn AI library:
-// - import { InlineCitation, InlineCitationCard, ... } from '@/components/ui/shadcn-io/ai/inline-citation'
-
+// Note: InlineCitation components live in the app layer:
+// - import { InlineCitation, InlineCitationCard, ... } from '@/components/ai/inline-citation'

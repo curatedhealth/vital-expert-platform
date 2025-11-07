@@ -115,6 +115,115 @@ interface CitationMeta {
   [key: string]: any;
 }
 
+const normalizeSourceRecord = (source: any, idx: number): Source => {
+  const metadata = source?.metadata ?? {};
+  const parsedNumber =
+    typeof source?.number === 'string'
+      ? parseInt(source.number, 10)
+      : source?.number;
+
+  return {
+    number: Number.isFinite(parsedNumber) ? parsedNumber : idx + 1,
+    id: source?.id || metadata.id || `source-${idx + 1}`,
+    url: source?.url || source?.link || metadata.url || '#',
+    title: source?.title || metadata.title || `Source ${idx + 1}`,
+    description: source?.description || source?.summary || metadata.description,
+    excerpt: source?.excerpt || metadata.excerpt || source?.quote,
+    similarity:
+      typeof source?.similarity === 'number'
+        ? source.similarity
+        : metadata.similarity,
+    domain: source?.domain || metadata.domain,
+    evidenceLevel: source?.evidenceLevel || metadata.evidenceLevel,
+    organization: source?.organization || metadata.organization,
+    reliabilityScore:
+      typeof source?.reliabilityScore === 'number'
+        ? source.reliabilityScore
+        : metadata.reliabilityScore,
+    lastUpdated: source?.lastUpdated || metadata.lastUpdated,
+    quote: source?.quote,
+    sourceType: source?.sourceType || metadata.sourceType,
+    metadata,
+  };
+};
+
+const normalizeSourcesFromCitations = (
+  citations: any[] | undefined | null
+): Source[] => {
+  if (!Array.isArray(citations) || citations.length === 0) {
+    return [];
+  }
+
+  return citations.map((citation, idx) =>
+    normalizeSourceRecord(
+      {
+        ...citation,
+        description: citation?.description || citation?.summary,
+        excerpt: citation?.excerpt || citation?.quote,
+      },
+      idx
+    )
+  );
+};
+
+const unwrapLangGraphUpdateState = (
+  payload: unknown
+): { node?: string; state: Record<string, any> } => {
+  if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
+    return { state: {} };
+  }
+
+  const visited = new Set<unknown>();
+
+  const unwrap = (
+    value: unknown,
+    depth: number
+  ): { node?: string; state: Record<string, any> } => {
+    if (
+      !value ||
+      typeof value !== 'object' ||
+      Array.isArray(value) ||
+      visited.has(value) ||
+      depth > 5
+    ) {
+      return { state: {} };
+    }
+
+    visited.add(value);
+    const recordValue = value as Record<string, any>;
+
+    if (recordValue.state && typeof recordValue.state === 'object') {
+      const nodeName = typeof recordValue.node === 'string' ? recordValue.node : undefined;
+      const innerState = recordValue.state as Record<string, any>;
+      if (innerState.values && typeof innerState.values === 'object') {
+        return { node: nodeName, state: innerState.values as Record<string, any> };
+      }
+      return { node: nodeName, state: innerState };
+    }
+
+    if (recordValue.values && typeof recordValue.values === 'object') {
+      return { state: recordValue.values as Record<string, any> };
+    }
+
+    const keys = Object.keys(recordValue);
+    if (keys.length === 1) {
+      const [onlyKey] = keys;
+      const child = recordValue[onlyKey];
+      if (child && typeof child === 'object' && !Array.isArray(child)) {
+        const nested = unwrap(child, depth + 1);
+        if (!nested.node && typeof onlyKey === 'string') {
+          nested.node = onlyKey;
+        }
+        return nested;
+      }
+    }
+
+    return { state: recordValue };
+  };
+
+  return unwrap(payload, 0);
+};
+
 interface Message {
   id: string;
   role: 'user' | 'assistant';
@@ -173,6 +282,15 @@ interface Message {
     };
     sources?: Source[];
     reasoning?: string[];
+    workflowSteps?: any[];
+    reasoningSteps?: any[];
+    streamingMetrics?: any;
+    modelReasoningParts?: Array<{
+      id?: string;
+      text: string;
+      type?: string;
+      confidence?: number;
+    }>;
     confidence?: number;
     citations?: CitationMeta[];
   };
@@ -1275,23 +1393,9 @@ function AskExpertPageContent() {
                       });
                       
                       const incomingSources = Array.isArray(chunk.sources) ? chunk.sources : [];
-                      sources = incomingSources.map((source: any, idx: number) => ({
-                        number: typeof source.number === 'string' ? parseInt(source.number, 10) : source.number ?? idx + 1,
-                        id: source.id || `source-${idx + 1}`,
-                        url: source.url || '#',
-                        title: source.title || `Source ${idx + 1}`,
-                        description: source.description || source.summary,
-                        excerpt: source.excerpt || source.description,
-                        quote: source.quote,
-                        similarity: typeof source.similarity === 'number' ? source.similarity : undefined,
-                        domain: source.domain,
-                        evidenceLevel: source.evidenceLevel || 'Unknown',
-                        organization: source.organization,
-                        reliabilityScore: typeof source.reliabilityScore === 'number' ? source.reliabilityScore : undefined,
-                        lastUpdated: source.lastUpdated,
-                        sourceType: source.sourceType,
-                        metadata: source.metadata,
-                      }));
+                      sources = incomingSources.map((source: any, idx: number) =>
+                        normalizeSourceRecord(source, idx)
+                      );
                       
                       console.log('📊 [DEBUG] After mapping sources:', {
                         sourcesLength: sources.length,
@@ -1431,31 +1535,43 @@ function AskExpertPageContent() {
                       console.log('🔍 [Updates Debug] Chunk preview:', JSON.stringify(chunk).substring(0, 300));
                     }
                     
-                    // ✅ CRITICAL FIX: Updates mode wraps state in node name
-                    // Format: { "format_output": { state } } or { "execute_agent": { state } }
-                    // We need to extract the state from the wrapper
-                    let actualState = chunk;
-                    const nodeNames = Object.keys(chunk);
-                    if (nodeNames.length === 1 && typeof chunk[nodeNames[0]] === 'object') {
-                      actualState = chunk[nodeNames[0]];
-                      console.log('🔍 [Updates Unwrap] Extracted state from node:', nodeNames[0]);
-                      console.log('🔍 [Updates Unwrap] State keys:', Object.keys(actualState));
+                    // ✅ CRITICAL FIX: Updates mode can wrap state inside multiple levels (node name, state.values, etc.)
+                    const { state: extractedState, node: derivedNode } = unwrapLangGraphUpdateState(chunk);
+                    const actualState =
+                      extractedState && typeof extractedState === 'object' && !Array.isArray(extractedState)
+                        ? extractedState
+                        : {};
+                    
+                    if (derivedNode) {
+                      console.log('🔍 [Updates Unwrap] Extracted state from node:', derivedNode);
                     }
+                    console.log('🔍 [Updates Debug] actualState keys:', Object.keys(actualState));
+                    console.log('🔍 [Updates Debug] has_reasoning_steps:', Array.isArray(actualState?.reasoning_steps) ? actualState.reasoning_steps.length : 0);
+                    console.log('🔍 [Updates Debug] has_sources:', Array.isArray(actualState?.sources) ? actualState.sources.length : 0);
+                    
+                    // Merge metadata for downstream consumers
+                    finalMeta = {
+                      ...(finalMeta ?? {}),
+                      ...actualState,
+                    };
                     
                     // Extract sources from final format_output state
                     if (actualState.sources && Array.isArray(actualState.sources)) {
                       console.log(`✅ [Updates Mode] Found ${actualState.sources.length} sources`);
-                      sources = actualState.sources;
+                      const normalizedSources = actualState.sources.map((source: any, idx: number) =>
+                        normalizeSourceRecord(source, idx)
+                      );
+                      sources = normalizedSources;
                       ragSummary = {
                         ...ragSummary,
-                        totalSources: actualState.sources.length,
+                        totalSources: normalizedSources.length,
                       };
                       setStreamingMeta(prev => ({
-                        ...prev,
-                        sources: actualState.sources,
+                        ...(prev ?? {}),
+                        sources: normalizedSources,
                         ragSummary: {
-                          ...(prev?.ragSummary ?? ragSummary),
-                          totalSources: actualState.sources.length,
+                          ...((prev ?? {}).ragSummary ?? ragSummary),
+                          totalSources: normalizedSources.length,
                         },
                       }));
                       // Note: sources are stored in streamingMeta, which is used in finalSources
@@ -1466,7 +1582,7 @@ function AskExpertPageContent() {
                       console.log(`✅ [Updates Mode] Found ${actualState.citations.length} citations`);
                       citations = actualState.citations;
                       setStreamingMeta(prev => ({
-                        ...prev,
+                        ...(prev ?? {}),
                         citations: actualState.citations
                       }));
                     }
@@ -1478,23 +1594,19 @@ function AskExpertPageContent() {
                     }
                     
                     // ✅ Extract final response content if present
-                    if (actualState.response && typeof actualState.response === 'string') {
-                      console.log(`✅ [Updates Mode] Found final response (${actualState.response.length} chars): ${actualState.response.substring(0, 100)}...`);
-                      // Store in streamingMeta for final message creation
-                      fullResponse = actualState.response;
+                    const resolvedResponse =
+                      typeof actualState.response === 'string' && actualState.response.trim().length > 0
+                        ? actualState.response
+                        : typeof actualState.agent_response === 'string' && actualState.agent_response.trim().length > 0
+                          ? actualState.agent_response
+                          : undefined;
+                    if (resolvedResponse) {
+                      console.log(`✅ [Updates Mode] Found final response (${resolvedResponse.length} chars)`);
+                      fullResponse = resolvedResponse;
+                      setStreamingMessage(prev => (prev && prev.trim().length > 0 ? prev : resolvedResponse));
                       setStreamingMeta(prev => ({
-                        ...prev,
-                        finalResponse: actualState.response
-                      }));
-                    }
-                    
-                    // Also check for agent_response (alternative field name)
-                    if (actualState.agent_response && typeof actualState.agent_response === 'string') {
-                      console.log(`✅ [Updates Mode] Found agent_response (${actualState.agent_response.length} chars)`);
-                      fullResponse = actualState.agent_response;
-                      setStreamingMeta(prev => ({
-                        ...prev,
-                        finalResponse: actualState.agent_response
+                        ...(prev ?? {}),
+                        finalResponse: resolvedResponse
                       }));
                     }
                     
@@ -1504,9 +1616,24 @@ function AskExpertPageContent() {
                       reasoningStepsBuffer = actualState.reasoning_steps;
                       setReasoningSteps(actualState.reasoning_steps);
                       setStreamingMeta(prev => ({
-                        ...prev,
+                        ...(prev ?? {}),
                         reasoningSteps: actualState.reasoning_steps
                       }));
+                      const normalizedReasoningFromSteps = normalizeReasoningArray(actualState.reasoning_steps);
+                      if (normalizedReasoningFromSteps.length > 0) {
+                        reasoning = normalizedReasoningFromSteps;
+                      }
+                    }
+                    
+                    if (Array.isArray(actualState.reasoning) && actualState.reasoning.length > 0) {
+                      const normalizedReasoning = normalizeReasoningArray(actualState.reasoning);
+                      if (normalizedReasoning.length > 0) {
+                        reasoning = normalizedReasoning;
+                        setStreamingMeta(prev => ({
+                          ...(prev ?? {}),
+                          reasoning: normalizedReasoning
+                        }));
+                      }
                     }
                     
                     break;
@@ -1984,7 +2111,20 @@ function AskExpertPageContent() {
       // ✅ FIX: Use local streaming accumulators to build the final response
       const resolvedFullResponse = fullResponse && fullResponse.trim().length > 0 ? fullResponse : '';
       const finalContent = resolvedFullResponse || streamingMeta?.finalResponse || streamingMessage || '';
-      const finalSources = sources.length > 0 ? sources : (streamingMeta?.sources || []);
+      const citationFallbackSources = (() => {
+        const primary = normalizeSourcesFromCitations(finalMeta?.citations);
+        if (primary.length > 0) {
+          return primary;
+        }
+        return normalizeSourcesFromCitations(streamingMeta?.citations);
+      })();
+
+      const finalSources =
+        sources.length > 0
+          ? sources
+          : (streamingMeta?.sources && streamingMeta.sources.length > 0
+              ? streamingMeta.sources
+              : citationFallbackSources);
       const finalReasoning = reasoning.length > 0 ? reasoning : (streamingMeta?.reasoning || []);
       const finalReasoningSteps =
         reasoningStepsBuffer.length > 0

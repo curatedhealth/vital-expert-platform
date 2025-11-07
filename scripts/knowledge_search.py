@@ -1,6 +1,15 @@
 """
 Knowledge Source Search Module
-Searches multiple academic and industry sources for relevant content
+Searches PUBLIC, FREE, DOWNLOADABLE academic sources only
+
+Supported Sources:
+- PubMed Central (PMC): Free full-text medical research with PDFs
+- arXiv: 100% free preprints in physics, CS, math, etc. with PDFs
+- bioRxiv: Free biology preprints with PDFs
+- DOAJ: Directory of Open Access Journals with PDFs
+- Semantic Scholar: Free academic search with some PDFs
+
+Note: Only returns results with publicly accessible full-text content
 """
 
 import aiohttp
@@ -10,10 +19,11 @@ from datetime import datetime
 import logging
 from urllib.parse import quote_plus
 import xml.etree.ElementTree as ET
+import json
 
 logger = logging.getLogger(__name__)
 
-SearchSource = Literal['pubmed', 'arxiv', 'google_scholar', 'bcg', 'mckinsey', 'accenture', 'deloitte', 'bain']
+SearchSource = Literal['pubmed_central', 'arxiv', 'biorxiv', 'doaj', 'semantic_scholar']
 
 class KnowledgeSearcher:
     """Search multiple knowledge sources"""
@@ -47,7 +57,7 @@ class KnowledgeSearcher:
         end_year: Optional[int] = None
     ) -> List[Dict]:
         """
-        Search a specific source
+        Search a specific source (PUBLIC ACCESS ONLY)
         
         Args:
             query: Search query
@@ -57,24 +67,20 @@ class KnowledgeSearcher:
             end_year: Filter by end year
             
         Returns:
-            List of search results with metadata
+            List of search results with metadata (only free, downloadable content)
         """
-        logger.info(f"🔍 Searching {source} for: {query}")
+        logger.info(f"🔍 Searching {source} for: {query} (public access only)")
         
-        if source == 'pubmed':
-            return await self._search_pubmed(query, max_results, start_year, end_year)
+        if source == 'pubmed_central':
+            return await self._search_pubmed_central(query, max_results, start_year, end_year)
         elif source == 'arxiv':
             return await self._search_arxiv(query, max_results)
-        elif source == 'bcg':
-            return await self._search_bcg(query, max_results)
-        elif source == 'mckinsey':
-            return await self._search_mckinsey(query, max_results)
-        elif source == 'accenture':
-            return await self._search_accenture(query, max_results)
-        elif source == 'deloitte':
-            return await self._search_deloitte(query, max_results)
-        elif source == 'bain':
-            return await self._search_bain(query, max_results)
+        elif source == 'biorxiv':
+            return await self._search_biorxiv(query, max_results)
+        elif source == 'doaj':
+            return await self._search_doaj(query, max_results)
+        elif source == 'semantic_scholar':
+            return await self._search_semantic_scholar(query, max_results)
         else:
             logger.warning(f"⚠️ Unsupported source: {source}")
             return []

@@ -294,11 +294,23 @@ class Mode1ManualWorkflow(BaseWorkflow):
                 context_length=len(context)
             )
             
+            # ✅ Add reasoning steps to state (for frontend streaming)
+            reasoning_steps = state.get('reasoning_steps', [])
+            reasoning_steps.extend([
+                {
+                    "type": "observation",
+                    "content": f"Found {len(sources)} relevant sources from {domain_text} knowledge domains",
+                    "node": "rag_retrieval",
+                    "timestamp": datetime.now(timezone.utc).isoformat()
+                }
+            ])
+            
             return {
                 **state,
                 'retrieved_documents': sources,
                 'context_summary': context,
                 'total_documents': len(sources),
+                'reasoning_steps': reasoning_steps,  # ✅ Add to state for streaming
                 'current_node': 'rag_retrieval'
             }
             
@@ -471,7 +483,15 @@ Do NOT add citation numbers since no sources were provided."""
             
             # Execute with structured output for citations
             if retrieved_documents:
-                # Log reasoning (streaming happens via LangGraph native mechanisms)
+                # ✅ Add reasoning step to state (for frontend streaming)
+                reasoning_steps = state.get('reasoning_steps', [])
+                reasoning_steps.append({
+                    "type": "action",
+                    "content": f"Synthesizing response from {len(retrieved_documents)} knowledge base sources with inline citations",
+                    "node": "execute_agent",
+                    "timestamp": datetime.now(timezone.utc).isoformat()
+                })
+                
                 logger.info(f"🧠 Synthesizing response from {len(retrieved_documents)} sources")
                 
                 # Use structured output to guarantee citation format
@@ -515,6 +535,7 @@ Do NOT add citation numbers since no sources were provided."""
                             'agent_response': tool_response.content,
                             'response_confidence': 0.8,
                             'model_used': model,
+                            'reasoning_steps': reasoning_steps,  # ✅ Include reasoning
                             'current_node': 'execute_agent'
                         }
                     
@@ -577,6 +598,7 @@ Do NOT add citation numbers since no sources were provided."""
                         'structured_citations': structured_citations,  # ✅ For frontend
                         'response_confidence': 0.8,
                         'model_used': model,
+                        'reasoning_steps': reasoning_steps,  # ✅ Include reasoning
                         'current_node': 'execute_agent'
                     }
                     
@@ -608,6 +630,7 @@ Do NOT add citation numbers since no sources were provided."""
                         'agent_response': fallback_response.content,
                         'response_confidence': 0.7,
                         'model_used': model,
+                        'reasoning_steps': reasoning_steps,  # ✅ Include reasoning
                         'current_node': 'execute_agent'
                     }
             else:
@@ -786,6 +809,9 @@ Do NOT add citation numbers since no sources were provided."""
         current_messages = state.get('messages', [])
         current_messages.append(AIMessage(content=agent_response))
         
+        # ✅ Preserve reasoning steps from previous nodes
+        reasoning_steps = state.get('reasoning_steps', [])
+        
         return {
             **state,
             'messages': current_messages,           # ✅ For LangGraph messages mode
@@ -794,6 +820,7 @@ Do NOT add citation numbers since no sources were provided."""
             'confidence': confidence,
             'sources': final_citations,             # ✅ For collapsible sources
             'citations': final_citations,           # ✅ For inline citation parsing
+            'reasoning_steps': reasoning_steps,     # ✅ Preserve reasoning for frontend
             'status': ExecutionStatus.COMPLETED,
             'current_node': 'format_output'
         }

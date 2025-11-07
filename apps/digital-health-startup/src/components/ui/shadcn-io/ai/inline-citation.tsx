@@ -234,6 +234,18 @@ export const InlineCitationCarouselNext = ({
   );
 };
 
+export type InlineCitationCarouselControlsProps = ComponentProps<'div'>;
+
+export const InlineCitationCarouselControls = ({
+  className,
+  ...props
+}: InlineCitationCarouselControlsProps) => (
+  <div className={cn('flex items-center gap-1', className)} {...props}>
+    <InlineCitationCarouselPrev />
+    <InlineCitationCarouselNext />
+  </div>
+);
+
 export type InlineCitationSourceProps = ComponentProps<'div'> & {
   title?: string;
   url?: string;

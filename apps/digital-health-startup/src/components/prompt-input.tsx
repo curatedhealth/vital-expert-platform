@@ -19,6 +19,19 @@ import {
   Brain,
   Wrench,
 } from 'lucide-react';
+import dynamic from 'next/dynamic';
+
+// Dynamically import PromptEnhancementModal to avoid SSR issues
+const PromptEnhancementModal = dynamic(
+  () => import('@/components/chat/PromptEnhancementModal').then(mod => ({ default: mod.PromptEnhancementModal })),
+  { ssr: false }
+);
+
+// Dynamically import RecommendedSuites
+const RecommendedSuites = dynamic(
+  () => import('@/components/chat/RecommendedSuites').then(mod => ({ default: mod.RecommendedSuites })),
+  { ssr: false }
+);
 
 interface PromptInputProps {
   value: string;
@@ -58,9 +71,14 @@ interface PromptInputProps {
   selectedRagDomains?: string[];
   onSelectedRagDomainsChange?: (domains: string[]) => void;
   
-  // LangGraph (NEW)
-  useLangGraph?: boolean;
-  onUseLangGraphChange?: (value: boolean) => void;
+  // LangGraph (always enabled by default - no UI toggle needed)
+  useLangGraph?: boolean; // Always true by default
+  onUseLangGraphChange?: (value: boolean) => void; // Not used - kept for backward compatibility
+
+  // Agent context for prompt enhancement
+  selectedAgentName?: string;
+  selectedAgentId?: string;
+  selectedAgentDomain?: string;
 }
 
 export function PromptInput({
@@ -98,6 +116,9 @@ export function PromptInput({
   onSelectedRagDomainsChange,
   useLangGraph = false,
   onUseLangGraphChange,
+  selectedAgentName,
+  selectedAgentId,
+  selectedAgentDomain,
 }: PromptInputProps) {
   const fallbackTextareaRef = useRef<HTMLTextAreaElement>(null);
   const internalTextareaRef = textareaRef ?? fallbackTextareaRef;
@@ -105,6 +126,7 @@ export function PromptInput({
   const [showModelDropdown, setShowModelDropdown] = useState(false);
   const [showToolsDropdown, setShowToolsDropdown] = useState(false);
   const [showRagDropdown, setShowRagDropdown] = useState(false);
+  const [showPromptEnhancement, setShowPromptEnhancement] = useState(false);
 
   useEffect(() => {
     if (!availableTools.length) {
@@ -220,6 +242,19 @@ export function PromptInput({
   const removeAttachment = (index: number) => {
     if (onAttachmentsChange) {
       onAttachmentsChange(attachments.filter((_, i) => i !== index));
+    }
+  };
+
+  // Handle enhanced prompt from modal
+  const handleApplyEnhancedPrompt = (enhancedPrompt: string) => {
+    onChange(enhancedPrompt);
+    setShowPromptEnhancement(false);
+    
+    // Auto-resize textarea for new content
+    if (internalTextareaRef.current) {
+      const textarea = internalTextareaRef.current;
+      textarea.style.height = 'auto';
+      textarea.style.height = `${Math.min(textarea.scrollHeight, 200)}px`;
     }
   };
 
@@ -365,22 +400,8 @@ export function PromptInput({
             Autonomous
           </button>
 
-          {/* LangGraph Toggle (NEW) */}
-          {onUseLangGraphChange && (
-            <button
-              onClick={() => onUseLangGraphChange(!useLangGraph)}
-              className={`flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-md transition-all border ${
-                useLangGraph
-                  ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white border-emerald-600 hover:from-emerald-600 hover:to-teal-600 shadow-sm'
-                  : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:bg-gray-300 dark:hover:bg-gray-600'
-              }`}
-              title={useLangGraph ? 'LangGraph: ON - Workflow orchestration with state management' : 'LangGraph: OFF - Standard mode'}
-            >
-              <Sparkles className="w-3 h-3" />
-              LangGraph
-            </button>
-          )}
-
+          {/* LangGraph is now always enabled by default for quality AI responses, reasoning visibility, memory, and better tools */}
+          
           {/* RAG Dropdown */}
           {onEnableRAGChange && (
             formattedRagDomains.length > 0 ? (
@@ -589,6 +610,24 @@ export function PromptInput({
 
           {/* Bottom Right Controls */}
           <div className="absolute right-3 bottom-3 flex items-center gap-1">
+            {/* Recommended Suites Button */}
+            <RecommendedSuites
+              agentId={selectedAgentId}
+              agentName={selectedAgentName}
+              domain={selectedAgentDomain}
+              currentPrompt={value}
+            />
+            
+            {/* Prompt Enhancement Button */}
+            <button
+              onClick={() => setShowPromptEnhancement(true)}
+              className="p-1.5 hover:bg-purple-100 dark:hover:bg-purple-900/30 rounded-lg transition-colors group"
+              title="Enhance prompt with PRISM library"
+              disabled={isLoading}
+            >
+              <Sparkles className="w-4 h-4 text-purple-500 dark:text-purple-400 group-hover:text-purple-600 dark:group-hover:text-purple-300" />
+            </button>
+
             {/* Attachment Button */}
             <input
               ref={fileInputRef}
@@ -602,6 +641,7 @@ export function PromptInput({
               onClick={() => fileInputRef.current?.click()}
               className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
               title="Attach file"
+              disabled={isLoading}
             >
               <Paperclip className="w-4 h-4 text-gray-500 dark:text-gray-400" />
             </button>
@@ -624,6 +664,17 @@ export function PromptInput({
         {/* Bottom border */}
         <div className="h-px bg-gradient-to-r from-transparent via-gray-300 dark:via-gray-700 to-transparent" />
       </div>
+
+      {/* Prompt Enhancement Modal */}
+      <PromptEnhancementModal
+        isOpen={showPromptEnhancement}
+        onClose={() => setShowPromptEnhancement(false)}
+        onApplyPrompt={handleApplyEnhancedPrompt}
+        currentInput={value}
+        agentName={selectedAgentName}
+        agentId={selectedAgentId}
+        domain={selectedAgentDomain}
+      />
     </div>
   );
 }

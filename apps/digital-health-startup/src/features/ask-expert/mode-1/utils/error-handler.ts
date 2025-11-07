@@ -60,7 +60,7 @@ export class Mode1ErrorHandler {
    */
   static createError(
     error: unknown,
-    context?: { agentId?: string; operation?: string }
+    context?: { agentId?: string; operation?: string; requestId?: string }
   ): Mode1Error {
     // Handle known error types
     if (error instanceof Error) {
@@ -231,13 +231,12 @@ export class Mode1ErrorHandler {
     // Import StructuredLogger dynamically to avoid circular dependencies
     import('../../../../lib/services/observability/structured-logger').then(({ StructuredLogger, LogLevel }) => {
       const logger = new StructuredLogger({ minLevel: LogLevel.ERROR });
-      logger.error('Mode 1 error occurred', {
-        operation: error.metadata?.operation || 'mode1_unknown',
+      logger.error('Mode 1 error occurred', new Error(error.message), {
         errorCode: error.code,
         statusCode: error.statusCode,
         retryable: error.retryable,
         metadata: { ...error.metadata, ...context },
-      }, new Error(error.message));
+      });
     }).catch(() => {
       // Fallback to console if StructuredLogger not available
       console.error('❌ [Mode 1 Error]', {

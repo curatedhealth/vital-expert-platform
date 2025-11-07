@@ -1,0 +1,166 @@
+{
+  "sources": [
+    {
+      "title": "Technology Report 2025: AI Agents and the Future of Tech",
+      "abstract": "Bain's sixth annual Technology Report examining AI as the defining disrupter of the decade. Report shows leaders using AI to improve EBITDA by 10-25% while exploring agentic AI implications for software strategy, enterprise deployment, robotics, and IT architecture.",
+      "firm": "Bain & Company",
+      "firm_id": "BAIN",
+      "authors": [
+        "Bain Technology Practice"
+      ],
+      "publication_date": "2025-05-10",
+      "publication_year": 2025,
+      "publication_month": "Q2",
+      "version": "1.0",
+      "edition": "6th Edition",
+      "series_name": "Bain Technology Report",
+      "file_type": "html",
+      "content_file_type": "html",
+      "page_count": null,
+      "word_count": null,
+      "language_code": "en",
+      "url": "https://www.bain.com/insights/topics/technology-report/",
+      "source_url": "https://www.bain.com/insights/topics/technology-report/",
+      "pdf_link": null,
+      "direct_download": false,
+      "access_type": "public",
+      "registration_required": false,
+      "paywall_status": "free",
+      "download_date": "2025-11-05T13:18:00Z",
+      "last_verified_date": "2025-11-05T13:18:00Z",
+      "quality_score": 9.5,
+      "credibility_score": 9.7,
+      "peer_reviewed": false,
+      "editorial_review_status": "published",
+      "last_reviewed_date": "2025-11-05",
+      "reviewed_by_user_id": null,
+      "confidence_level": "high",
+      "citation_count": 0,
+      "domain": "ai_ml_technology",
+      "category": "consulting_reports",
+      "report_type": "strategic_insight",
+      "tags": [
+        "agentic AI",
+        "AI agents",
+        "EBITDA improvement",
+        "technology strategy",
+        "humanoid robotics"
+      ],
+      "topics": [
+        "Agentic AI",
+        "AI agents",
+        "technology trends",
+        "enterprise deployment"
+      ],
+      "industry_sectors": [
+        "Technology",
+        "Cross-Industry"
+      ],
+      "geographic_scope": "global",
+      "geographic_regions": [
+        "Global"
+      ],
+      "target_audience": [
+        "C-Suite",
+        "CTO",
+        "CIO",
+        "Technology Leaders"
+      ],
+      "practice_areas": [
+        "Technology Strategy",
+        "Artificial Intelligence",
+        "Digital Transformation"
+      ],
+      "seniority_level": "c_suite",
+      "use_case_category": "strategic",
+      "temporal_coverage": "current",
+      "forecast_year": null,
+      "historical_period": null,
+      "is_time_sensitive": true,
+      "has_executive_summary": true,
+      "has_table_of_contents": true,
+      "has_appendices": true,
+      "has_data_tables": true,
+      "has_charts_graphs": true,
+      "section_count": 0,
+      "document_structure": {
+        "sections": []
+      },
+      "priority": "high",
+      "rag_priority_weight": 0.96,
+      "embedding_model_version": "sentence-transformers/all-MiniLM-L6-v2",
+      "chunk_strategy": "hybrid",
+      "context_window_tokens": 8192,
+      "summarization_available": true,
+      "query_history_count": 0,
+      "last_retrieved_at": null,
+      "doi": null,
+      "isbn": null,
+      "permanent_id": "BAIN-2025-TECH-REPORT-001",
+      "citation_format": "Bain & Company. (2025). Technology Report 2025: AI Agents and the Future of Tech.",
+      "related_document_ids": [],
+      "supersedes_document_id": null,
+      "superseded_by_document_id": null,
+      "access_policy": "public",
+      "data_classification": "public",
+      "retention_policy": "permanent",
+      "compliance_tags": [],
+      "pii_sensitivity": "Low",
+      "regulatory_exposure": "Low",
+      "contains_pii": false,
+      "requires_consent": false,
+      "view_count": 0,
+      "download_count": 0,
+      "share_count": 0,
+      "bookmark_count": 0,
+      "average_read_time_seconds": null,
+      "completion_rate": null,
+      "readability_score": 63,
+      "technical_complexity": "expert",
+      "data_richness_score": 9.3,
+      "visual_content_ratio": 0.37,
+      "freshness_score": 9.9,
+      "description": "Bain's 6th annual tech report showing AI leaders improving EBITDA by 10-25% with focus on agentic AI",
+      "metadata": {
+        "key_findings": [
+          "AI leaders improve EBITDA by 10-25%",
+          "Agentic AI is immediate top story",
+          "Leaders compounding gains",
+          "Laggards falling further behind"
+        ],
+        "methodology": "Client work analysis + market research"
+      },
+      "source_metadata": {
+        "original_url": "https://www.bain.com/insights/topics/technology-report/",
+        "scraping_timestamp": "2025-11-05T13:18:00Z",
+        "scraping_method": "web_search",
+        "last_modified": "2025-05-10"
+      }
+    }
+  ],
+  "scraping_settings": {
+    "timeout": 60,
+    "max_retries": 3,
+    "delay_between_requests": 1,
+    "wait_for_js": false,
+    "use_playwright": false
+  },
+  "processing_settings": {
+    "chunk_size": 1000,
+    "chunk_overlap": 200,
+    "min_word_count": 100,
+    "max_content_length": 1000000
+  },
+  "upload_settings": {
+    "enable_supabase": true,
+    "enable_pinecone": true,
+    "batch_size": 100,
+    "skip_duplicates": true
+  },
+  "output_settings": {
+    "create_subdirectories": true,
+    "include_metadata": true,
+    "markdown_format": true
+  },
+  "embedding_model": "sentence-transformers/all-MiniLM-L6-v2"
+}

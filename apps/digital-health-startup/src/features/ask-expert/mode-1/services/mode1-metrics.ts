@@ -62,6 +62,9 @@ export interface Mode1Metrics {
     temperature?: number;
     enableRAG?: boolean;
     enableTools?: boolean;
+    confidence?: number;
+    citations?: number;
+    [key: string]: unknown;
   };
 }
 
@@ -101,9 +104,12 @@ export interface PathStats {
 export interface AgentStats {
   agentId: string;
   requestCount: number;
+  successCount?: number;  // ✅ NEW: For intermediate calculations
   successRate: number;
   averageLatency: number;
+  totalLatency?: number;  // ✅ NEW: For intermediate calculations
   mostUsedPath: string;
+  pathCounts?: Map<string, number>;  // ✅ NEW: For intermediate calculations
   errorCount: number;
 }
 
@@ -201,7 +207,15 @@ export class Mode1MetricsService {
     };
 
     // Group by agent
-    const agentMap = new Map<string, AgentStats>();
+    const agentMap = new Map<string, {
+      agentId: string;
+      requestCount: number;
+      successCount: number;
+      totalLatency: number;
+      pathCounts: Map<string, number>;
+      errorCount: number;
+    }>();
+    
     for (const metric of recentMetrics) {
       const existing = agentMap.get(metric.agentId) || {
         agentId: metric.agentId,
@@ -228,9 +242,10 @@ export class Mode1MetricsService {
 
     const byAgent = new Map<string, AgentStats>();
     for (const [agentId, data] of agentMap.entries()) {
-      const mostUsedPath = Array.from(data.pathCounts.entries()).sort(
-        (a, b) => b[1] - a[1]
-      )[0][0];
+      const pathCountsArray = Array.from(data.pathCounts.entries());
+      const mostUsedPath = pathCountsArray.length > 0 
+        ? pathCountsArray.sort((a, b) => (b[1] as number) - (a[1] as number))[0][0]
+        : 'direct';
 
       byAgent.set(agentId, {
         agentId,

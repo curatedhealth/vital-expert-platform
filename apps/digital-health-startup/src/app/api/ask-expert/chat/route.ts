@@ -25,37 +25,39 @@ const API_GATEWAY_URL = process.env.NEXT_PUBLIC_API_GATEWAY_URL || process.env.A
 // Domain filtering removed to allow searching both RAG domains
 const MODE_CONFIG = {
   'mode-1-query-automatic': {
-    searchFunction: 'search_knowledge_by_embedding',
-    params: { domain_filter: null, max_results: 10, similarity_threshold: 0.7 },
-    agentSelection: 'automatic',
-    numExperts: 3,
-  },
-  'mode-2-query-manual': {
     searchFunction: 'search_knowledge_for_agent',
-    params: { max_results: 15, similarity_threshold: 0.75 },
-    agentSelection: 'manual',
+    params: { max_results: 15, similarity_threshold: 0.75, domain_filter: null },
+    agentSelection: 'manual', // ⚠️ FIXED: Mode 1 = Manual (user selects agent)
     numExperts: 1,
   },
+  'mode-2-query-manual': {
+    searchFunction: 'search_knowledge_by_embedding',
+    params: { domain_filter: null, max_results: 10, similarity_threshold: 0.7 },
+    agentSelection: 'automatic', // ⚠️ FIXED: Mode 2 = Automatic (system picks best expert)
+    numExperts: 3,
+  },
   'mode-3-chat-automatic': {
+    searchFunction: 'search_knowledge_for_agent',
+    params: { max_results: 20, similarity_threshold: 0.8, include_metadata: true, domain_filter: null },
+    agentSelection: 'manual', // ⚠️ SWAPPED: Mode 3 = Manual Autonomous (user selects)
+    numExperts: 1,
+  },
+  'mode-4-chat-manual': {
     searchFunction: 'hybrid_search',
     params: {
       domain_filter: null,
-      max_results: 12,
+      max_results: 20,
       keyword_weight: 0.3,
-      semantic_weight: 0.7
+      semantic_weight: 0.7,
+      include_metadata: true
     },
-    agentSelection: 'automatic',
+    agentSelection: 'automatic', // ⚠️ SWAPPED: Mode 4 = Automatic Autonomous (system selects)
     numExperts: 2,
-  },
-  'mode-4-chat-manual': {
-    searchFunction: 'search_knowledge_for_agent',
-    params: { max_results: 20, similarity_threshold: 0.8 },
-    agentSelection: 'manual',
-    numExperts: 1,
   },
   'mode-5-agent-autonomous': {
     searchFunction: 'hybrid_search',
     params: {
+      domain_filter: null,
       max_results: 25,
       keyword_weight: 0.4,
       semantic_weight: 0.6,

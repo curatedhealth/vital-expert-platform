@@ -281,7 +281,22 @@ export function withPromptAuth(
     };
 
     const action = actionMap[request.method || 'GET'];
-    const promptId = params?.params?.id;
+    
+    // Extract prompt ID from params (Next.js App Router with Promise support)
+    let promptId: string | undefined;
+    
+    // Handle both Promise-wrapped params (Next.js 15+) and regular params
+    if (params?.params) {
+      // Check if params is a Promise
+      if (params.params instanceof Promise) {
+        const resolvedParams = await params.params;
+        promptId = resolvedParams?.id;
+      } else {
+        promptId = params.params?.id;
+      }
+    } else if (params?.id) {
+      promptId = params.id;
+    }
 
     const { allowed, context, error } = await verifyPromptPermissions(
       request,

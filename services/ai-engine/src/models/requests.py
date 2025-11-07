@@ -10,7 +10,7 @@ class AgentQueryRequest(BaseModel):
     """Request model for agent queries"""
     agent_id: Optional[str] = Field(None, description="Specific agent ID to use")
     agent_type: str = Field(..., description="Type of agent (regulatory, clinical, literature, safety)")
-    query: str = Field(..., min_length=10, max_length=2000, description="User query")
+    query: str = Field(..., min_length=10, max_length=10000, description="User query with RAG context")
 
     # User context
     user_id: Optional[str] = Field(None, description="User ID for audit trail")

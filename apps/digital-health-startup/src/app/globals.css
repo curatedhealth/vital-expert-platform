@@ -4,6 +4,9 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Streamdown styles for streaming markdown rendering */
+@source "../../node_modules/streamdown/dist/index.js";
+
 @layer base {
   :root {
     --radius: 0.5rem;

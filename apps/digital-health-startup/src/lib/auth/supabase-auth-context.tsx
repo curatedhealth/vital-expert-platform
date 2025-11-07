@@ -69,7 +69,27 @@ export function SupabaseAuthProvider({ children }: AuthProviderProps) {
   const [loading, setLoading] = useState(true);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
 
-  // Create a single Supabase client instance
+  /**
+   * ⚠️ CRITICAL: SINGLE CLIENT INSTANCE
+   * 
+   * This MUST use createClient() from @/lib/supabase/client which implements
+   * a singleton pattern. Creating multiple clients here causes:
+   * - "Multiple GoTrueClient instances" warnings
+   * - User?.id being undefined
+   * - Agents being cleared in AskExpertContext
+   * - Authentication state conflicts
+   * 
+   * ⚠️ DO NOT MODIFY THIS LINE ⚠️
+   * - Always use createClient() from @/lib/supabase/client
+   * - Never create a new client directly with createBrowserClient()
+   * - Never import createClient from a different file
+   * 
+   * If you see "Multiple GoTrueClient instances" warnings:
+   * 1. Check that @/lib/supabase/client uses singleton pattern
+   * 2. Check that @/shared/services/supabase/client uses singleton pattern
+   * 3. Check that no other files create Supabase clients directly
+   * 4. Search codebase for createBrowserClient or createSupabaseClient calls
+   */
   const supabase = createClient();
 
   useEffect(() => {

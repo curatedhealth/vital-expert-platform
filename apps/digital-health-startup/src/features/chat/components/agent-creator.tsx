@@ -207,9 +207,21 @@ const roles = [
 export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCreatorProps) {
   const { createCustomAgent } = useChatStore();
   const { updateAgent, createUserCopy, deleteAgent } = useAgentsStore();
-  const { isSuperAdmin, isAdmin, loading: roleLoading } = useUserRole();
+  const { isSuperAdmin, isAdmin, loading: roleLoading, userProfile } = useUserRole();
   const [agentService] = useState(() => new AgentService());
   const [iconService] = useState(() => new IconService());
+  const [currentUser, setCurrentUser] = useState<{ id: string; email: string } | null>(null);
+  
+  // Get current user from Supabase
+  useEffect(() => {
+    const getCurrentUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        setCurrentUser({ id: user.id, email: user.email || '' });
+      }
+    };
+    getCurrentUser();
+  }, []);
   
   // Debug role state
   useEffect(() => {
@@ -218,12 +230,13 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
         isSuperAdmin: isSuperAdmin(),
         isAdmin: isAdmin(),
         roleLoading,
+        currentUser,
         isUserCopy: (editingAgent as unknown).is_user_copy,
         isCustom: editingAgent.is_custom,
         shouldShowDelete: isSuperAdmin() || isAdmin() || (editingAgent as unknown).is_user_copy || editingAgent.is_custom,
       });
     }
-  }, [editingAgent, isOpen, isSuperAdmin, isAdmin, roleLoading]);
+  }, [editingAgent, isOpen, isSuperAdmin, isAdmin, roleLoading, currentUser]);
   const [agentTemplates, setAgentTemplates] = useState<AgentWithCategories[]>([]);
   const [availableAvatars, setAvailableAvatars] = useState<string[]>([]);
   const [availableIcons, setAvailableIcons] = useState<Icon[]>([]);
@@ -356,13 +369,15 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
         if (error) throw error;
 
         if (data && data.length > 0) {
-          const domains = data.map((d) => ({
-            value: d.slug,
-            label: d.name,
+          const domains = data.map((d: any) => ({
+            value: d.domain_id || d.slug, // Use domain_id (UUID) as value for proper mapping
+            label: d.domain_name || d.name,
             tier: d.tier,
             recommended_embedding: d.recommended_models?.embedding?.primary,
             recommended_chat: d.recommended_models?.chat?.primary,
             color: d.color,
+            slug: d.slug || (d.domain_name || d.name || '').toLowerCase().replace(/\s+/g, '-'), // Keep slug for namespace mapping
+            domain_id: d.domain_id || d.slug, // Ensure domain_id is available
           }));
           setKnowledgeDomains(domains);
           console.log(`✅ Loaded ${domains.length} knowledge domains from database`);
@@ -1331,56 +1346,87 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
 
     if (!confirmDelete) return;
 
+    // Store agent details for optimistic update
+    const agentToDelete = {
+      id: editingAgent.id,
+      name: editingAgent.display_name || editingAgent.name,
+    };
+
+    // Close modal immediately for better UX
+    onClose();
+
     try {
+      console.log('🗑️ Starting agent deletion:', agentToDelete.name);
+
       // All agents are now stored in the database via UserAgentsService
       // User copies are stored in user_agents table with is_user_copy=true
-      // We need to check if this is a user copy and remove it from user_agents table
       const isUserCopy = (editingAgent as unknown).is_user_copy || editingAgent.is_custom;
 
-      if (isUserCopy && user?.id) {
+      if (isUserCopy && currentUser?.id) {
         // Remove from user_agents table via API
         try {
           const response = await fetch('/api/user-agents', {
             method: 'DELETE',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              userId: user.id,
+              userId: currentUser.id,
               agentId: editingAgent.id,
             }),
           });
 
           if (!response.ok) {
-            throw new Error(`Failed to remove agent: ${response.statusText}`);
+            console.warn('⚠️ Failed to remove from user_agents, continuing with main deletion');
           }
         } catch (removeError) {
-          console.error('❌ Failed to remove user agent:', removeError);
-          // Continue to delete from agents table as fallback
+          console.warn('⚠️ User agent removal failed, continuing with main deletion:', removeError);
         }
       }
 
-      // Delete from agents table (for custom agents created by user)
+      // Delete from agents table (this also updates the store optimistically)
       await deleteAgent(editingAgent.id);
 
-      // Close modal and refresh
-      onClose();
-      onSave(); // This triggers a refresh
+      console.log('✅ Agent deleted successfully:', agentToDelete.name);
+      
+      // Show success message
+      if (typeof window !== 'undefined' && (window as any).showToast) {
+        (window as any).showToast(`Agent "${agentToDelete.name}" deleted successfully`, 'success');
+      }
+
+      // Trigger parent refresh
+      onSave();
 
     } catch (error) {
       console.error('❌ Failed to delete agent:', error);
       
       // Show more detailed error message
       let errorMessage = 'Failed to delete agent. Please try again.';
+      let isAlreadyDeleted = false;
+
       if (error instanceof Error) {
         errorMessage = error.message || errorMessage;
+        
         // Check for specific error codes
         if (error.message.includes('23503')) {
           errorMessage = 'Cannot delete agent: It is being used in conversations or by other users. Please remove all references first.';
-        } else if (error.message.includes('not found')) {
-          errorMessage = 'Agent not found. It may have already been deleted.';
+        } else if (error.message.includes('not found') || error.message.includes('already deleted')) {
+          errorMessage = 'Agent has already been deleted.';
+          isAlreadyDeleted = true;
+        } else if (error.message.includes('403') || error.message.includes('Unauthorized')) {
+          errorMessage = 'You do not have permission to delete this agent.';
         }
       }
       
-      alert(errorMessage);
+      // Show error toast if available, otherwise use alert
+      if (typeof window !== 'undefined' && (window as any).showToast) {
+        (window as any).showToast(errorMessage, isAlreadyDeleted ? 'info' : 'error');
+      } else {
+        alert(errorMessage);
+      }
+
+      // If agent was already deleted, still trigger refresh
+      if (isAlreadyDeleted) {
+        onSave();
+      }
     }
   };
 

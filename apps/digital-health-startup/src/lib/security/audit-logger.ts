@@ -279,7 +279,27 @@ export class AuditLogger {
       .insert(dbEntries as unknown);
 
     if (error) {
-      throw new Error(`Database write failed: ${error.message}`);
+      /**
+       * ⚠️ CRITICAL: Error Message Handling
+       * 
+       * PROBLEM: error.message can be undefined, causing "Database write failed: undefined"
+       * This happens when Supabase returns an error object without a message property.
+       * 
+       * SOLUTION: Safely extract error message with fallback.
+       * 
+       * ⚠️ DO NOT REMOVE THIS SAFETY CHECK ⚠️
+       * - Always check if error.message exists
+       * - Provide fallback error message
+       * - Log full error object for debugging
+       */
+      const errorMessage = error?.message || error?.code || JSON.stringify(error) || 'Unknown database error';
+      console.error('❌ [AuditLogger] Database write failed:', {
+        error,
+        errorMessage,
+        entriesCount: dbEntries.length,
+        firstEntry: dbEntries[0]
+      });
+      throw new Error(`Database write failed: ${errorMessage}`);
     }
   }
 

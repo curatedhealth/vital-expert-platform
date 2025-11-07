@@ -12,7 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@vita
 import { Badge } from '@vital/ui';
 import { Button } from '@vital/ui';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@vital/ui';
-import { cn } from '@vital/ui/lib/utils';
+import { cn } from '@/lib/utils';
 
 interface ModeOption {
   id: string;
@@ -33,14 +33,38 @@ interface ModeOption {
 const ENHANCED_MODES: ModeOption[] = [
   {
     id: 'mode-1-query-automatic',
-    name: 'Quick Expert Consensus',
-    shortName: 'Quick Consensus',
+    name: 'Manual Expert Selection',
+    shortName: 'Manual Selection',
+    description: 'Choose your specific expert for precise answers',
+    icon: <Target className="h-6 w-6" />,
+    color: 'text-blue-600',
+    gradient: 'from-blue-500 to-cyan-500',
+    features: [
+      'Manual expert selection', // ⚠️ FIXED: Mode 1 = Manual
+      'Specialized expertise',
+      'Focused response',
+      'Deep domain knowledge'
+    ],
+    bestFor: [
+      'Specific regulatory questions',
+      'Known expert needed',
+      'Narrow domain focus',
+      'Follow-up questions'
+    ],
+    avgResponseTime: '20-30 sec',
+    expertCount: 1,
+    complexity: 'simple'
+  },
+  {
+    id: 'mode-2-query-manual',
+    name: 'Automatic Expert Selection',
+    shortName: 'Auto Selection',
     description: 'Get instant answers from multiple experts automatically',
     icon: <Zap className="h-6 w-6" />,
     color: 'text-amber-600',
     gradient: 'from-amber-500 to-orange-500',
     features: [
-      'Automatic expert selection',
+      'Automatic expert selection', // ⚠️ FIXED: Mode 2 = Automatic
       'Parallel consultation',
       'Instant synthesis',
       'One-shot response'
@@ -57,103 +81,71 @@ const ENHANCED_MODES: ModeOption[] = [
     complexity: 'simple'
   },
   {
-    id: 'mode-2-query-manual',
-    name: 'Targeted Expert Query',
-    shortName: 'Targeted Query',
-    description: 'Choose your specific expert for precise answers',
-    icon: <Target className="h-6 w-6" />,
-    color: 'text-blue-600',
-    gradient: 'from-blue-500 to-cyan-500',
-    features: [
-      'Manual expert selection',
-      'Specialized expertise',
-      'Focused response',
-      'Deep domain knowledge'
-    ],
-    bestFor: [
-      'Specific regulatory questions',
-      'Known expert needed',
-      'Narrow domain focus',
-      'Follow-up questions'
-    ],
-    avgResponseTime: '20-30 sec',
-    expertCount: 1,
-    complexity: 'simple'
-  },
-  {
     id: 'mode-3-chat-automatic',
-    name: 'Interactive Expert Discussion',
-    shortName: 'Interactive Chat',
-    description: 'Multi-turn conversation with automatic expert rotation',
-    icon: <MessageCircle className="h-6 w-6" />,
+    name: 'Manual Autonomous',
+    shortName: 'Manual + Autonomous',
+    description: 'You select agent + autonomous reasoning with checkpoints and multi-step workflows',
+    icon: <UserCheck className="h-6 w-6" />,
     color: 'text-purple-600',
     gradient: 'from-purple-500 to-pink-500',
     features: [
-      'Multi-turn dialogue',
-      'Context preservation',
+      'User selects expert',
+      'Persistent expert',
+      'Autonomous reasoning',
+      'Multi-step workflows',
+      'Checkpoint approval',
+      'Tool integration',
+      'Deep expertise',
+      'Consistent perspective'
+    ],
+    bestFor: [
+      'Deep dives with specific expert',
+      'Complex workflows',
+      'Document generation',
+      'Research synthesis',
+      'Multi-phase projects',
+      'Approval workflows',
+      'Strategic planning',
+      'Project guidance'
+    ],
+    avgResponseTime: '60-90 sec per turn (2-5 min for complex workflows)',
+    expertCount: 1,
+    badge: 'Best for Experts',
+    complexity: 'complex'
+  },
+  {
+    id: 'mode-4-chat-manual',
+    name: 'Automatic Autonomous',
+    shortName: 'Auto + Autonomous',
+    description: 'AI selects best agent + autonomous reasoning with checkpoints and multi-step workflows',
+    icon: <MessageCircle className="h-6 w-6" />,
+    color: 'text-green-600',
+    gradient: 'from-green-500 to-emerald-500',
+    features: [
+      'Automatic expert selection',
       'Dynamic expert switching',
-      'Clarification support'
+      'Autonomous reasoning',
+      'Multi-step workflows',
+      'Checkpoint approval',
+      'Tool integration',
+      'Multi-turn dialogue',
+      'Context preservation'
     ],
     bestFor: [
       'Complex problems',
       'Exploratory research',
       'Iterative refinement',
-      'Learning sessions'
-    ],
-    avgResponseTime: '45-60 sec per turn',
-    expertCount: 2,
-    badge: 'Best for Learning',
-    complexity: 'moderate'
-  },
-  {
-    id: 'mode-4-chat-manual',
-    name: 'Dedicated Expert Session',
-    shortName: 'Expert Session',
-    description: 'Extended conversation with your chosen expert',
-    icon: <UserCheck className="h-6 w-6" />,
-    color: 'text-green-600',
-    gradient: 'from-green-500 to-emerald-500',
-    features: [
-      'Single expert focus',
-      'Deep expertise',
-      'Relationship building',
-      'Consistent perspective'
-    ],
-    bestFor: [
-      'Strategic planning',
-      'In-depth analysis',
-      'Consultant relationship',
-      'Project guidance'
-    ],
-    avgResponseTime: '60-90 sec per turn',
-    expertCount: 1,
-    complexity: 'moderate'
-  },
-  {
-    id: 'mode-5-agent-autonomous',
-    name: 'Autonomous Agent Workflow',
-    shortName: 'Agent Workflow',
-    description: 'AI agent completes multi-step tasks with checkpoints',
-    icon: <Bot className="h-6 w-6" />,
-    color: 'text-indigo-600',
-    gradient: 'from-indigo-500 to-violet-500',
-    features: [
-      'Multi-step execution',
-      'Checkpoint approval',
-      'Tool integration',
-      'Autonomous reasoning'
-    ],
-    bestFor: [
-      'Complex workflows',
+      'Multiple perspectives',
       'Document generation',
       'Research synthesis',
-      'Multi-phase projects'
+      'Multi-phase projects',
+      'Approval workflows'
     ],
-    avgResponseTime: '2-5 min per workflow',
-    expertCount: 1,
+    avgResponseTime: '45-60 sec per turn (2-5 min for complex workflows)',
+    expertCount: 2,
     badge: 'Most Powerful',
     complexity: 'complex'
-  }
+  },
 ];
 
 interface EnhancedModeSelectorProps {

@@ -253,6 +253,47 @@ export const POST = requireSuperAdmin(async (request: NextRequest, user) => {
       );
     }
 
+    // Automatically create Pinecone namespace for the new domain
+    try {
+      const namespace = (finalSlug || name || '').toLowerCase()
+        .replace(/\s+/g, '-')
+        .replace(/_/g, '-')
+        .replace(/\//g, '-')
+        .substring(0, 64);
+
+      // Call Python AI Engine to create namespace
+      const pythonEngineUrl = process.env.PYTHON_AI_ENGINE_URL || 
+                            process.env.NEXT_PUBLIC_PYTHON_AI_ENGINE_URL || 
+                            'http://localhost:8080';
+
+      try {
+        const syncResponse = await fetch(`${pythonEngineUrl}/api/admin/create-namespace`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            domain_id: domain?.domain_id || domain?.id,
+            domain_name: name,
+            namespace,
+          }),
+        });
+
+        if (syncResponse.ok) {
+          const syncResult = await syncResponse.json();
+          console.log(`✅ Namespace '${namespace}' created in Pinecone:`, syncResult);
+        } else {
+          console.warn(`⚠️ Failed to create namespace in Pinecone (domain still created in Supabase):`, await syncResponse.text());
+        }
+      } catch (syncError) {
+        // Non-critical - domain is created in Supabase, namespace can be created later
+        console.warn(`⚠️ Pinecone namespace creation failed (domain still created):`, syncError);
+      }
+    } catch (namespaceError) {
+      // Non-critical error - domain is created, namespace sync can be retried
+      console.warn('⚠️ Namespace creation attempted but failed (non-critical):', namespaceError);
+    }
+
     return NextResponse.json({
       success: true,
       domain,

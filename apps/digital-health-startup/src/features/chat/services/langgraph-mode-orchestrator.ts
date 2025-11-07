@@ -452,12 +452,42 @@ export async function* streamLangGraphMode(config: {
   const workflow = buildLangGraphModeWorkflow();
   const sessionId = config.sessionId || `session-${Date.now()}`;
   
+  // LangGraph JS uses astream() for async streaming, not stream()
+  // Check if workflow has astream method (async generator)
+  if (!workflow || typeof workflow.astream !== 'function') {
+    // Fallback: Use invoke() if streaming is not supported
+    console.warn('⚠️ [LangGraph] Workflow does not support streaming. Using invoke() instead.');
+    const result = await workflow.invoke(config, {
+      configurable: {
+        thread_id: sessionId
+      }
+    });
+    
+    yield {
+      type: 'workflow_step',
+      step: 'completed',
+      state: result,
+      timestamp: new Date().toISOString()
+    };
+    
+    console.log('✅ [LangGraph] Workflow completed (non-streaming)');
+    return;
+  }
+  
   // Stream workflow execution - yields after each node
-  for await (const event of workflow.stream(config, {
+  // workflow.astream() returns an async iterable
+  const stream = workflow.astream(config, {
     configurable: {
       thread_id: sessionId
     }
-  })) {
+  });
+  
+  // Check if stream is async iterable
+  if (!stream || typeof stream[Symbol.asyncIterator] !== 'function') {
+    throw new Error('workflow.astream() did not return an async iterable. The workflow may not support streaming.');
+  }
+  
+  for await (const event of stream) {
     // Event format: { nodeName: nodeOutput }
     const [nodeName, nodeOutput] = Object.entries(event)[0];
     

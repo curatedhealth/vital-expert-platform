@@ -1,0 +1,178 @@
+{
+  "sources": [
+    {
+      "title": "The State of AI: How Organizations Are Rewiring to Capture Value",
+      "abstract": "McKinsey's 2025 global survey of nearly 1,500 organizations examining how companies are rewiring themselves to fully capture AI value. Survey shows 78% of organizations use AI in at least one business function, with workflow redesign ranking as the #1 driver of impact.",
+      "firm": "McKinsey & Company",
+      "firm_id": "MCK",
+      "authors": [
+        "Aamer Baig",
+        "Bryce Hall",
+        "Paul Jenkins",
+        "Eric Lamarre",
+        "Brian McCarthy"
+      ],
+      "publication_date": "2025-03-11",
+      "publication_year": 2025,
+      "publication_month": "Q1",
+      "version": "1.0",
+      "edition": "2025 Edition",
+      "series_name": "McKinsey State of AI Series",
+      "file_type": "pdf",
+      "content_file_type": "pdf",
+      "page_count": null,
+      "word_count": null,
+      "language_code": "en",
+      "url": "https://www.mckinsey.com/capabilities/quantumblack/our-insights/the-state-of-ai",
+      "source_url": "https://www.mckinsey.com/capabilities/quantumblack/our-insights/the-state-of-ai",
+      "pdf_link": "https://www.mckinsey.com/~/media/mckinsey/business%20functions/quantumblack/our%20insights/the%20state%20of%20ai/2025/the-state-of-ai-how-organizations-are-rewiring-to-capture-value_final.pdf",
+      "direct_download": true,
+      "access_type": "public",
+      "registration_required": false,
+      "paywall_status": "free",
+      "download_date": "2025-11-05T13:18:00Z",
+      "last_verified_date": "2025-11-05T13:18:00Z",
+      "quality_score": 9.9,
+      "credibility_score": 9.9,
+      "peer_reviewed": false,
+      "editorial_review_status": "published",
+      "last_reviewed_date": "2025-11-05",
+      "reviewed_by_user_id": null,
+      "confidence_level": "high",
+      "citation_count": 2,
+      "domain": "ai_ml_enterprise",
+      "category": "consulting_reports",
+      "report_type": "research_study",
+      "tags": [
+        "AI adoption",
+        "generative AI",
+        "workflow redesign",
+        "enterprise transformation",
+        "organizational rewiring",
+        "EBIT impact"
+      ],
+      "topics": [
+        "AI adoption",
+        "generative AI",
+        "workflow transformation",
+        "organizational change",
+        "AI value"
+      ],
+      "industry_sectors": [
+        "Cross-Industry",
+        "Technology",
+        "Financial Services",
+        "Healthcare"
+      ],
+      "geographic_scope": "global",
+      "geographic_regions": [
+        "Global"
+      ],
+      "target_audience": [
+        "C-Suite",
+        "CEO",
+        "CIO",
+        "CTO",
+        "Chief AI Officer"
+      ],
+      "practice_areas": [
+        "Artificial Intelligence",
+        "Digital Transformation",
+        "QuantumBlack",
+        "Strategy"
+      ],
+      "seniority_level": "c_suite",
+      "use_case_category": "strategic",
+      "temporal_coverage": "current",
+      "forecast_year": null,
+      "historical_period": "2023-2024",
+      "is_time_sensitive": true,
+      "has_executive_summary": true,
+      "has_table_of_contents": true,
+      "has_appendices": true,
+      "has_data_tables": true,
+      "has_charts_graphs": true,
+      "section_count": 0,
+      "document_structure": {
+        "sections": []
+      },
+      "priority": "high",
+      "rag_priority_weight": 0.99,
+      "embedding_model_version": "sentence-transformers/all-MiniLM-L6-v2",
+      "chunk_strategy": "hybrid",
+      "context_window_tokens": 16384,
+      "summarization_available": true,
+      "query_history_count": 0,
+      "last_retrieved_at": null,
+      "doi": null,
+      "isbn": null,
+      "permanent_id": "MCK-2025-STATE-AI-001",
+      "citation_format": "McKinsey & Company. (2025). The State of AI: How Organizations Are Rewiring to Capture Value. QuantumBlack AI by McKinsey.",
+      "related_document_ids": [],
+      "supersedes_document_id": null,
+      "superseded_by_document_id": null,
+      "access_policy": "public",
+      "data_classification": "public",
+      "retention_policy": "permanent",
+      "compliance_tags": [],
+      "pii_sensitivity": "Low",
+      "regulatory_exposure": "Low",
+      "contains_pii": false,
+      "requires_consent": false,
+      "view_count": 0,
+      "download_count": 0,
+      "share_count": 0,
+      "bookmark_count": 0,
+      "average_read_time_seconds": null,
+      "completion_rate": null,
+      "readability_score": 64,
+      "technical_complexity": "advanced",
+      "data_richness_score": 9.7,
+      "visual_content_ratio": 0.45,
+      "freshness_score": 9.5,
+      "description": "McKinsey's flagship annual AI report surveying ~1,500 organizations globally, emphasizing workflow redesign as the #1 driver of AI impact",
+      "metadata": {
+        "research_sample_size": 1500,
+        "key_findings": [
+          "78% of organizations use AI in at least one function",
+          "71% regularly use gen AI across functions",
+          "Only 21% have redesigned workflows",
+          "Workflow redesign ranks as #1 driver of impact",
+          "Organizations use AI in average of 3 business functions"
+        ],
+        "methodology": "Global survey + case studies"
+      },
+      "source_metadata": {
+        "original_url": "https://www.mckinsey.com/capabilities/quantumblack/our-insights/the-state-of-ai",
+        "scraping_timestamp": "2025-11-05T13:18:00Z",
+        "scraping_method": "web_search",
+        "last_modified": "2025-03-11"
+      }
+    }
+  ],
+  "scraping_settings": {
+    "timeout": 60,
+    "max_retries": 3,
+    "delay_between_requests": 1,
+    "wait_for_js": false,
+    "use_playwright": false
+  },
+  "processing_settings": {
+    "chunk_size": 1000,
+    "chunk_overlap": 200,
+    "min_word_count": 100,
+    "max_content_length": 1000000
+  },
+  "upload_settings": {
+    "enable_supabase": true,
+    "enable_pinecone": true,
+    "batch_size": 100,
+    "skip_duplicates": true
+  },
+  "output_settings": {
+    "create_subdirectories": true,
+    "include_metadata": true,
+    "markdown_format": true
+  },
+  "embedding_model": "sentence-transformers/all-MiniLM-L6-v2"
+}

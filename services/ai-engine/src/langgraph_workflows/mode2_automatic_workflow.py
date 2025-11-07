@@ -1,8 +1,11 @@
 """
-Mode 1: Interactive-Automatic Workflow
+Mode 2: Automatic Agent Selection Workflow
 
 Multi-turn conversation with automatic expert selection.
 System selects the best expert for each user message dynamically.
+
+⚠️ FIXED: This workflow is used for Mode 2 (Automatic agent selection).
+The file was renamed from mode1_interactive_auto_workflow.py to match actual usage.
 
 Features:
 - Multi-turn conversation with history
@@ -16,12 +19,13 @@ Features:
 - Streaming support
 
 Frontend Mapping:
-- isAutomatic: false
+- Mode 2: Automatic (system picks best expert)
+- isAutomatic: true
 - isAutonomous: false
 - No agent pre-selected (selectedAgents=[])
 
 Usage:
-    >>> workflow = Mode1InteractiveAutoWorkflow()
+    >>> workflow = Mode2AutomaticWorkflow()
     >>> await workflow.initialize()
     >>> result = await workflow.execute(
     ...     tenant_id="550e8400-e29b-41d4-a716-446655440000",
@@ -56,13 +60,17 @@ from services.conversation_manager import ConversationManager
 from services.agent_selector_service import get_agent_selector_service
 from services.unified_rag_service import UnifiedRAGService
 from services.agent_orchestrator import AgentOrchestrator
+from services.tool_registry_service import ToolRegistryService
 
 logger = structlog.get_logger()
 
 
-class Mode1InteractiveAutoWorkflow(BaseWorkflow, ToolChainMixin, MemoryIntegrationMixin):
+class Mode2AutomaticWorkflow(BaseWorkflow, ToolChainMixin, MemoryIntegrationMixin):
     """
-    Mode 1: Interactive-Automatic Workflow + Tool Chaining + Long-Term Memory
+    Mode 2: Automatic Agent Selection Workflow + Tool Chaining + Long-Term Memory
+    
+    ⚠️ FIXED: Renamed from Mode1InteractiveAutoWorkflow to match actual Mode 2 usage.
+    This workflow is used for /api/mode2/automatic endpoint.
     
     Golden Rules Compliance:
     - ✅ Uses LangGraph StateGraph (Golden Rule #1)
@@ -111,8 +119,8 @@ class Mode1InteractiveAutoWorkflow(BaseWorkflow, ToolChainMixin, MemoryIntegrati
             conversation_manager: Conversation history manager
         """
         super().__init__(
-            workflow_name="Mode1_Interactive_Automatic",
-            mode=WorkflowMode.MODE_1_MANUAL,  # Note: Using MODE_1 enum
+            workflow_name="Mode2_Automatic",
+            mode=WorkflowMode.MODE_2_AUTOMATIC,  # ⚠️ FIXED: Mode 2 = Automatic
             enable_checkpoints=True
         )
         
@@ -122,6 +130,7 @@ class Mode1InteractiveAutoWorkflow(BaseWorkflow, ToolChainMixin, MemoryIntegrati
         self.rag_service = rag_service or UnifiedRAGService(supabase_client)
         self.agent_orchestrator = agent_orchestrator or AgentOrchestrator()
         self.conversation_manager = conversation_manager or ConversationManager(supabase_client)
+        self.tool_registry_service = ToolRegistryService(supabase_client)  # ⚠️ FIXED: Initialize tool registry service
         
         # NEW: Tool chaining (Phase 1.1) - Initialize from mixin
         self.init_tool_chaining(self.rag_service)
@@ -129,7 +138,69 @@ class Mode1InteractiveAutoWorkflow(BaseWorkflow, ToolChainMixin, MemoryIntegrati
         # NEW: Long-term memory (Phase 2) - Initialize from mixin
         self.init_memory_integration(supabase_client)
         
-        logger.info("✅ Mode1InteractiveAutoWorkflow initialized with tool chaining + long-term memory")
+        logger.info("✅ Mode2AutomaticWorkflow initialized with tool chaining + long-term memory")
+    
+    async def _get_agent_tool_names(self, agent_id: str) -> List[str]:
+        """
+        Get tool names from database registry for an agent.
+        
+        Maps tool codes (e.g., 'TOOL-AI-WEB_SEARCH') to tool registry names (e.g., 'web_search').
+        
+        Args:
+            agent_id: Agent identifier
+            
+        Returns:
+            List of tool names for use in tool chain executor
+        """
+        try:
+            # Get agent tools from database
+            agent_tools = await self.tool_registry_service.get_agent_tools(
+                agent_id=agent_id,
+                enabled_only=True
+            )
+            
+            # Map tool codes to tool registry names
+            tool_code_to_name = {
+                'TOOL-AI-WEB_SEARCH': 'web_search',
+                'TOOL-AI-PUBMED_SEARCH': 'pubmed_search',
+                'TOOL-AI-CLINICALTRIALS_SEARCH': 'clinicaltrials_search',
+                'TOOL-AI-ARXIV_SEARCH': 'arxiv_search',
+                'TOOL-SEARCH-SCHOLAR': 'scholar_search',
+                'TOOL-PUBMED': 'pubmed',
+            }
+            
+            # Convert tool codes to tool registry names
+            tool_names = []
+            for tool in agent_tools:
+                tool_code = tool.get('code') or tool.get('tool_code')
+                if tool_code and tool_code in tool_code_to_name:
+                    tool_names.append(tool_code_to_name[tool_code])
+                elif tool_code:
+                    # Fallback: convert code to snake_case
+                    tool_name = tool_code.lower().replace('-', '_').replace('tool_ai_', '').replace('tool_', '')
+                    tool_names.append(tool_name)
+            
+            # Always include RAG search as it's core functionality
+            if 'rag_search' not in tool_names:
+                tool_names.append('rag_search')
+            
+            logger.info(
+                "✅ Retrieved agent tools from database",
+                agent_id=agent_id[:8],
+                tool_count=len(tool_names),
+                tools=tool_names
+            )
+            
+            return tool_names if tool_names else ['rag_search']  # Fallback to RAG only
+            
+        except Exception as e:
+            logger.error(
+                "❌ Error retrieving agent tools from database",
+                agent_id=agent_id[:8],
+                error=str(e)
+            )
+            # Fallback to RAG only
+            return ['rag_search']
     
     def build_graph(self) -> StateGraph:
         """
@@ -252,7 +323,7 @@ class Mode1InteractiveAutoWorkflow(BaseWorkflow, ToolChainMixin, MemoryIntegrati
     # NODE IMPLEMENTATIONS
     # =========================================================================
     
-    @trace_node("mode1_check_conversation")
+    @trace_node("mode2_check_conversation")  # ⚠️ FIXED: Mode 2
     async def check_conversation_node(self, state: UnifiedWorkflowState) -> UnifiedWorkflowState:
         """
         Node: Check if this is a fresh or continuing conversation.
@@ -274,7 +345,7 @@ class Mode1InteractiveAutoWorkflow(BaseWorkflow, ToolChainMixin, MemoryIntegrati
             'current_node': 'check_conversation'
         }
     
-    @trace_node("mode1_fresh_conversation")
+    @trace_node("mode2_fresh_conversation")  # ⚠️ FIXED: Mode 2
     async def fresh_conversation_node(self, state: UnifiedWorkflowState) -> UnifiedWorkflowState:
         """
         Node: Initialize fresh conversation.
@@ -288,7 +359,7 @@ class Mode1InteractiveAutoWorkflow(BaseWorkflow, ToolChainMixin, MemoryIntegrati
             'current_node': 'fresh_conversation'
         }
     
-    @trace_node("mode1_load_conversation")
+    @trace_node("mode2_load_conversation")  # ⚠️ FIXED: Mode 2
     async def load_conversation_node(self, state: UnifiedWorkflowState) -> UnifiedWorkflowState:
         """
         Node: Load conversation history.
@@ -339,7 +410,7 @@ class Mode1InteractiveAutoWorkflow(BaseWorkflow, ToolChainMixin, MemoryIntegrati
                 'errors': state.get('errors', []) + [f"Failed to load conversation: {str(e)}"]
             }
     
-    @trace_node("mode1_analyze_query")
+    @trace_node("mode2_analyze_query")  # ⚠️ FIXED: Mode 2
     async def analyze_query_node(self, state: UnifiedWorkflowState) -> UnifiedWorkflowState:
         """
         Node: Analyze user query.
@@ -379,7 +450,7 @@ class Mode1InteractiveAutoWorkflow(BaseWorkflow, ToolChainMixin, MemoryIntegrati
                 'errors': state.get('errors', []) + [f"Query analysis failed: {str(e)}"]
             }
     
-    @trace_node("mode1_select_expert")
+    @trace_node("mode2_select_expert")  # ⚠️ FIXED: Mode 2 = Automatic
     async def select_expert_automatic_node(self, state: UnifiedWorkflowState) -> UnifiedWorkflowState:
         """
         Node: Automatically select best expert.
@@ -455,7 +526,7 @@ class Mode1InteractiveAutoWorkflow(BaseWorkflow, ToolChainMixin, MemoryIntegrati
                 'errors': state.get('errors', []) + [f"Expert selection failed: {str(e)}"]
             }
     
-    @trace_node("mode1_rag_retrieval")
+    @trace_node("mode2_rag_retrieval")  # ⚠️ FIXED: Mode 2
     async def rag_retrieval_node(self, state: UnifiedWorkflowState) -> UnifiedWorkflowState:
         """
         Node: Retrieve RAG context.
@@ -539,7 +610,118 @@ class Mode1InteractiveAutoWorkflow(BaseWorkflow, ToolChainMixin, MemoryIntegrati
             'current_node': 'skip_rag'
         }
     
-    @trace_node("mode1_execute_agent")
+    @trace_node("mode2_rag_and_tools")
+    async def rag_and_tools_node(self, state: UnifiedWorkflowState) -> UnifiedWorkflowState:
+        """Execute RAG retrieval + Tool execution."""
+        # First, execute RAG retrieval
+        state = await self.rag_retrieval_node(state)
+        
+        # Then, execute tools (if enabled)
+        if state.get('enable_tools', False):
+            state = await self.tools_only_node(state)
+        
+        return {
+            **state,
+            'current_node': 'rag_and_tools'
+        }
+    
+    @trace_node("mode2_tools_only")
+    async def tools_only_node(self, state: UnifiedWorkflowState) -> UnifiedWorkflowState:
+        """Execute Tools only (no RAG)."""
+        tenant_id = state['tenant_id']
+        query = state['query']
+        selected_agents = state.get('selected_agents', [])
+        
+        if not selected_agents:
+            return {
+                **state,
+                'tools_executed': [],
+                'tool_results': [],
+                'current_node': 'tools_only'
+            }
+        
+        selected_agent = selected_agents[-1] if isinstance(selected_agents, list) else selected_agents
+        requested_tools = state.get('requested_tools', [])
+        
+        try:
+            # Get agent tools from database registry
+            agent_tools = await self._get_agent_tool_names(selected_agent)
+            
+            # Filter to requested tools if specified
+            if requested_tools:
+                agent_tools = [t for t in agent_tools if t in requested_tools]
+            
+            if not agent_tools:
+                logger.warning("No tools available for agent", agent_id=selected_agent)
+                return {
+                    **state,
+                    'tools_executed': [],
+                    'tool_results': [],
+                    'current_node': 'tools_only'
+                }
+            
+            # Execute tools (simplified - would integrate with actual tool execution service)
+            logger.info(
+                "🔧 Tools execution (Mode 2)",
+                agent_id=selected_agent[:8] if isinstance(selected_agent, str) else str(selected_agent)[:8],
+                tools_count=len(agent_tools),
+                tools=agent_tools
+            )
+            
+            return {
+                **state,
+                'tools_executed': agent_tools,
+                'tool_results': [],  # Would contain actual tool execution results
+                'current_node': 'tools_only'
+            }
+            
+        except Exception as e:
+            logger.error("❌ Tools execution failed", error=str(e))
+            return {
+                **state,
+                'tools_executed': [],
+                'tool_results': [],
+                'errors': state.get('errors', []) + [f"Tools execution failed: {str(e)}"],
+                'current_node': 'tools_only'
+            }
+    
+    async def direct_execution_node(self, state: UnifiedWorkflowState) -> UnifiedWorkflowState:
+        """Direct execution (no RAG, no tools)."""
+        logger.info("Direct execution (no RAG, no tools)")
+        return {
+            **state,
+            'current_node': 'direct_execution'
+        }
+    
+    async def retry_agent_node(self, state: UnifiedWorkflowState) -> UnifiedWorkflowState:
+        """Retry agent execution."""
+        retry_count = state.get('retry_count', 0) + 1
+        logger.info(f"Retrying agent execution (attempt {retry_count})")
+        return {
+            **state,
+            'retry_count': retry_count,
+            'current_node': 'retry_agent'
+        }
+    
+    async def fallback_response_node(self, state: UnifiedWorkflowState) -> UnifiedWorkflowState:
+        """Fallback response when agent execution fails."""
+        logger.warning("Using fallback response")
+        return {
+            **state,
+            'agent_response': 'I apologize, but I encountered an error processing your request. Please try again or rephrase your question.',
+            'response_confidence': 0.0,
+            'current_node': 'fallback_response'
+        }
+    
+    async def handle_save_error_node(self, state: UnifiedWorkflowState) -> UnifiedWorkflowState:
+        """Handle save error."""
+        logger.error("Failed to save conversation")
+        return {
+            **state,
+            'current_node': 'handle_save_error'
+        }
+    
+    @trace_node("mode2_execute_agent")  # ⚠️ FIXED: Mode 2
     async def execute_agent_node(self, state: UnifiedWorkflowState) -> UnifiedWorkflowState:
         """
         Node: Execute selected agent.
@@ -569,11 +751,14 @@ class Mode1InteractiveAutoWorkflow(BaseWorkflow, ToolChainMixin, MemoryIntegrati
             if self.should_use_tool_chain_simple(query, complexity=query_complexity):
                 logger.info("🔗 Using tool chain for comprehensive research (Mode 1)")
                 
+                # ⚠️ FIXED: Get agent tools from database registry instead of hardcoded tools
+                agent_tools = await self._get_agent_tool_names(selected_agent)
+                
                 # Execute tool chain
                 chain_result = await self.tool_chain_executor.execute_tool_chain(
                     task=query,
                     tenant_id=str(tenant_id),
-                    available_tools=['rag_search', 'web_search', 'web_scrape'],
+                    available_tools=agent_tools,  # ⚠️ FIXED: Use database-backed tools
                     context={
                         'agent_id': selected_agent,
                         'conversation_history': conversation_history,
@@ -654,7 +839,7 @@ class Mode1InteractiveAutoWorkflow(BaseWorkflow, ToolChainMixin, MemoryIntegrati
                 'errors': state.get('errors', []) + [f"Agent execution failed: {str(e)}"]
             }
     
-    @trace_node("mode1_save_conversation")
+    @trace_node("mode2_save_conversation")  # ⚠️ FIXED: Mode 2
     async def save_conversation_node(self, state: UnifiedWorkflowState) -> UnifiedWorkflowState:
         """Node: Save conversation turn to database"""
         tenant_id = state['tenant_id']
@@ -717,6 +902,37 @@ class Mode1InteractiveAutoWorkflow(BaseWorkflow, ToolChainMixin, MemoryIntegrati
         """
         enable_rag = state.get('enable_rag', True)
         return "use_rag" if enable_rag else "skip_rag"
+    
+    def route_conversation_type(self, state: UnifiedWorkflowState) -> str:
+        """Route based on conversation type."""
+        return "continuing" if state.get('conversation_exists') else "fresh"
+    
+    def route_execution_strategy(self, state: UnifiedWorkflowState) -> str:
+        """Route based on RAG/Tools configuration."""
+        enable_rag = state.get('enable_rag', True)
+        enable_tools = state.get('enable_tools', False)
+        
+        if enable_rag and enable_tools:
+            return "rag_and_tools"
+        elif enable_rag:
+            return "rag_only"
+        elif enable_tools:
+            return "tools_only"
+        else:
+            return "direct"
+    
+    def route_agent_result(self, state: UnifiedWorkflowState) -> str:
+        """Route based on agent execution result."""
+        if state.get('agent_response'):
+            return "success"
+        elif state.get('retry_count', 0) < 2:
+            return "retry"
+        else:
+            return "fallback"
+    
+    def route_save_result(self, state: UnifiedWorkflowState) -> str:
+        """Route based on save result."""
+        return "saved" if state.get('save_successful') else "failed"
     
     # =========================================================================
     # HELPER METHODS

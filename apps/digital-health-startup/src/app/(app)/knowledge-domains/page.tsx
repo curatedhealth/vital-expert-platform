@@ -24,6 +24,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@vital/ui';
 import { Textarea } from '@vital/ui';
 import { modelSelector } from '@/lib/services/model-selector';
+import { AVAILABLE_EMBEDDING_MODELS, AVAILABLE_CHAT_MODELS } from '@/lib/services/model-selector';
 import type { KnowledgeDomain } from '@/lib/services/model-selector';
 import { createClient } from '@vital/sdk/client';
 
@@ -828,8 +829,19 @@ function CreateDomainDialog({
     }
   };
 
-  const embeddingModels = modelSelector.getAvailableEmbeddingModels();
-  const chatModels = modelSelector.getAvailableChatModels();
+  // Get all available models (including HuggingFace)
+  const embeddingModels = Object.entries(AVAILABLE_EMBEDDING_MODELS).map(([key, model]) => ({
+    value: key,
+    label: model.name,
+    provider: model.provider,
+    dimensions: model.dimensions,
+    costPer1k: model.costPer1k,
+  }));
+  const chatModels = Object.entries(AVAILABLE_CHAT_MODELS).map(([key, model]) => ({
+    value: key,
+    label: model.name,
+    provider: model.provider,
+  }));
 
   return (
     <Dialog open={open} onOpenChange={onClose}>

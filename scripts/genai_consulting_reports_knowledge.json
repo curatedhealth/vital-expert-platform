@@ -1,0 +1,130 @@
+{
+  "sources": [
+    {
+      "url": "https://www.bcg.com/publications/2025/ai-at-work-momentum-builds-but-gaps-remain",
+      "domain": "ai_ml_healthcare",
+      "category": "consulting_reports",
+      "tags": ["AI adoption", "generative AI", "workforce", "BCG", "2025"],
+      "priority": "high",
+      "description": "AI at Work: Momentum Builds, but Gaps Remain - Boston Consulting Group 2025 report on AI adoption and workforce transformation"
+    },
+    {
+      "url": "https://www.bcg.com/publications/2025/closing-the-ai-impact-gap",
+      "domain": "ai_ml_healthcare",
+      "category": "consulting_reports",
+      "tags": ["AI impact", "enterprise adoption", "strategy", "BCG", "2025"],
+      "priority": "high",
+      "description": "From Potential to Profit: Closing the AI Impact Gap - BCG analysis on enterprise AI strategy and implementation"
+    },
+    {
+      "url": "https://media-publications.bcg.com/The-Widening-AI-Value-Gap-Sept-2025.pdf",
+      "domain": "ai_ml_healthcare",
+      "category": "consulting_reports",
+      "tags": ["value creation", "AI scale", "benchmarking", "BCG", "2025", "PDF"],
+      "priority": "high",
+      "css_selector": null,
+      "description": "The Widening AI Value Gap - BCG September 2025 PDF report on AI value creation and scaling benchmarks"
+    },
+    {
+      "url": "https://mkto.deloitte.com/rs/712-CNF-326/images/state-of-gen-ai-nordic-cut-q4.pdf",
+      "domain": "ai_ml_healthcare",
+      "category": "consulting_reports",
+      "tags": ["enterprise AI", "regional trends", "survey", "Deloitte", "2024", "PDF", "Q4"],
+      "priority": "high",
+      "description": "State of Generative AI in the Enterprise Q4 2024 - Deloitte global survey on enterprise GenAI adoption and regional trends"
+    },
+    {
+      "url": "https://www.deloitte.com/en/issues/generative-ai/state-of-generative-ai-in-enterprise.html",
+      "domain": "ai_ml_healthcare",
+      "category": "consulting_reports",
+      "tags": ["GenAI", "future trends", "C-level insights", "Deloitte", "2025"],
+      "priority": "high",
+      "css_selector": ".article-content, main",
+      "description": "Now Decides Next: Generating a New Future - Deloitte Q4 2025 report on GenAI trends and C-level strategic insights"
+    },
+    {
+      "url": "https://www.pwc.com/gx/en/issues/artificial-intelligence/job-barometer/2025/report.pdf",
+      "domain": "ai_ml_healthcare",
+      "category": "consulting_reports",
+      "tags": ["AI jobs", "productivity", "skills", "workforce", "PwC", "2025", "PDF"],
+      "priority": "high",
+      "description": "Fearless Future: PwC's 2025 Global AI Jobs Barometer - Analysis of AI impact on jobs, productivity, and required skills"
+    },
+    {
+      "url": "https://www.strategyand.pwc.com/m1/en/ideation-center/ic-research/2025/gen-ai-behavioral-research/gen-ai-behavioral-research.pdf",
+      "domain": "ai_ml_healthcare",
+      "category": "consulting_reports",
+      "tags": ["behavioral research", "policy", "applications", "Strategy&", "PwC", "2025", "PDF"],
+      "priority": "medium",
+      "description": "Generative AI to Augment Behavioral Research - Strategy& (PwC) 2025 research on GenAI applications in behavioral research and policy"
+    },
+    {
+      "url": "https://www.ey.com/content/dam/ey-unified-site/ey-com/en-gl/about-us/analyst-relations/documents/ey-hfs-horizons-generative-enterprise-services-02-2025.pdf",
+      "domain": "ai_ml_healthcare",
+      "category": "consulting_reports",
+      "tags": ["enterprise AI", "provider evaluation", "trend analysis", "EY", "HFS Research", "2025", "PDF"],
+      "priority": "medium",
+      "description": "EY-HFS Horizons: Generative Enterprise Services - February 2025 provider evaluation and enterprise AI trend analysis"
+    },
+    {
+      "url": "https://www.scribd.com/document/861848262/kearney-2025-CEO-AI-Study-FINAL",
+      "domain": "ai_ml_healthcare",
+      "category": "consulting_reports",
+      "tags": ["CEO readiness", "AI gaps", "strategy", "Kearney", "2025", "leadership"],
+      "priority": "medium",
+      "css_selector": ".document-content",
+      "description": "Kearney 2025 CEO AI Study - Research on CEO readiness for AI transformation, identifying strategic gaps and opportunities"
+    },
+    {
+      "url": "https://sitic.org/wordpress/wp-content/uploads/Data-Strategy-in-the-GenAI-Age.pdf",
+      "domain": "ai_ml_healthcare",
+      "category": "consulting_reports",
+      "tags": ["data strategy", "GenAI adoption", "Strategy&", "PwC", "2025", "PDF"],
+      "priority": "medium",
+      "description": "Data Strategy in the GenAI Age - Strategy& (PwC) 2025 framework for data strategy in the era of generative AI"
+    }
+  ],
+  "output_settings": {
+    "create_subdirectories": true,
+    "include_metadata": true,
+    "markdown_format": true
+  },
+  "scraping_settings": {
+    "timeout": 60,
+    "max_retries": 3,
+    "delay_between_requests": 2,
+    "user_agent": "Mozilla/5.0 (compatible; VITAL-Knowledge-Bot/1.0; +https://vital-ai.com)"
+  },
+  "processing_settings": {
+    "chunk_size": 1000,
+    "chunk_overlap": 200,
+    "min_word_count": 100,
+    "max_content_length": 100000
+  },
+  "upload_settings": {
+    "enable_supabase": true,
+    "enable_pinecone": true,
+    "batch_size": 10,
+    "skip_duplicates": true
+  },
+  "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
+  "metadata": {
+    "collection_name": "GenAI Consulting Reports 2024-2025",
+    "collection_description": "Comprehensive collection of generative AI and enterprise AI reports from top consulting firms (BCG, Deloitte, PwC, EY, Kearney) covering AI adoption, workforce transformation, strategy, and value creation",
+    "created_by": "VITAL AI Platform",
+    "created_at": "2025-11-05",
+    "version": "1.0",
+    "total_sources": 10,
+    "firms_covered": ["BCG", "Deloitte", "PwC", "Strategy&", "EY", "Kearney"],
+    "topics": [
+      "AI adoption",
+      "Generative AI",
+      "Enterprise transformation",
+      "Workforce impact",
+      "Data strategy",
+      "CEO readiness",
+      "Value creation"
+    ]
+  }
+}
+

@@ -9,9 +9,9 @@ from typing import List, Dict, Any, Optional, Union
 from datetime import datetime, timezone
 from langchain_openai import ChatOpenAI
 from langchain_core.messages import HumanMessage, SystemMessage, AIMessage
-from langchain.agents import create_openai_tools_agent, AgentExecutor
-from langchain.tools import Tool
-from langchain.prompts import ChatPromptTemplate, MessagesPlaceholder
+from langgraph.prebuilt import create_react_agent  # ✅ LangChain 1.0 + LangGraph
+from langchain_core.tools import tool  # ✅ LangChain 1.0 tool decorator
+from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 import structlog
 import uuid
 
@@ -245,14 +245,39 @@ class AgentOrchestrator:
         agent: Dict[str, Any],
         request: AgentQueryRequest
     ) -> str:
-        """Build comprehensive medical system prompt"""
+        """Build comprehensive medical system prompt with RAG/Tool enforcement"""
         agent_type = agent.get("type", "general")
         specialty = request.medical_specialty or "general"
 
-        # Base medical AI prompt
+        # CRITICAL: Enforce RAG and Tool Usage
         base_prompt = f"""You are a specialized medical AI assistant for {specialty.replace('_', ' ').title()}.
 
-You are an expert in medical and healthcare domains with deep knowledge of:
+## 🔴 CRITICAL INSTRUCTIONS (MUST FOLLOW):
+
+1. **USE KNOWLEDGE BASE FIRST**:
+   - ALWAYS reference the provided context documents below
+   - Cite specific sources using [Source 1], [Source 2] format
+   - Every factual claim MUST include a citation
+   - If context is insufficient, explicitly state: "Based on available knowledge base..."
+
+2. **CITATION FORMAT (REQUIRED)**:
+   - Format: "According to [Source 1], ..." or "The document states [Source 2]..."
+   - Multiple sources: "Research shows [Source 1][Source 3]..."
+   - Include source number for EVERY claim
+   - End response with a "References" section listing all cited sources
+
+3. **USE WEB SEARCH WHEN NEEDED**:
+   - For information after 2023
+   - For real-time data or recent updates
+   - When knowledge base has insufficient coverage
+   - Always cite web sources
+
+4. **USE TOOLS WHEN APPLICABLE**:
+   - calculator: For ANY numerical calculations
+   - database_query: For querying internal data
+   - web_search: For latest information not in knowledge base
+
+## Expert Knowledge Areas:
 - Clinical medicine and evidence-based practice
 - Regulatory affairs and compliance (FDA, EMA, ICH-GCP)
 - Medical research methodology and biostatistics
@@ -327,27 +352,36 @@ Your responses must maintain the highest standards of medical accuracy and profe
         )
 
     def _build_context_text(self, rag_context: Dict[str, Any]) -> str:
-        """Build context text from RAG results"""
+        """Build context text from RAG results with clear source numbers"""
         documents = rag_context.get("documents", [])
         if not documents:
             return "No specific context documents found for this query."
 
-        context_parts = []
-        for i, doc in enumerate(documents[:5], 1):  # Limit to top 5 documents
+        context_parts = [
+            "## Knowledge Base Context (MUST CITE THESE SOURCES):",
+            ""
+        ]
+        
+        for i, doc in enumerate(documents[:10], 1):  # Increased to 10 documents
             metadata = doc.get("metadata", {})
             medical_context = doc.get("medical_context", {})
 
             context_part = f"""
-Document {i}:
+[Source {i}]
 Title: {metadata.get('title', 'Unknown')}
+Year: {metadata.get('year', 'N/A')}
 Source: {metadata.get('source', 'Unknown')}
+Domain: {metadata.get('domain', 'General')}
 Evidence Level: {medical_context.get('evidence_level', 'Not specified')}
-Confidence: {doc.get('final_score', doc.get('similarity', 0)):.2f}
-Content: {doc.get('content', '')[:800]}...
+Relevance: {doc.get('final_score', doc.get('similarity', 0)):.2f}
+Content: {doc.get('content', '')[:1000]}...
+
 """
             context_parts.append(context_part.strip())
 
-        return "\n\n".join(context_parts)
+        context_parts.append("\n⚠️ REMEMBER: Cite these sources as [Source 1], [Source 2], etc. in your response!")
+        
+        return "\n".join(context_parts)
 
     def _extract_citations(self, rag_context: Dict[str, Any]) -> List[Dict[str, Any]]:
         """Extract citations from RAG context"""

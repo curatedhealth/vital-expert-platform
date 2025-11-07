@@ -46,9 +46,9 @@ from langgraph_workflows.observability import (
 )
 
 # Workflow implementations
-from langgraph_workflows.mode1_interactive_auto_workflow import (
-    Mode1InteractiveAutoWorkflow
-)
+# ⚠️ FIXED: Renamed to match actual Mode numbers
+from langgraph_workflows.mode1_manual_workflow import Mode1ManualWorkflow
+from langgraph_workflows.mode2_automatic_workflow import Mode2AutomaticWorkflow
 
 __all__ = [
     # State schemas
@@ -77,7 +77,8 @@ __all__ = [
     "trace_node",
     
     # Workflow implementations
-    "Mode1InteractiveAutoWorkflow",
+    "Mode1ManualWorkflow",  # ⚠️ FIXED: Renamed from Mode1InteractiveAutoWorkflow
+    "Mode2AutomaticWorkflow",  # ⚠️ FIXED: Renamed from Mode2InteractiveManualWorkflow
 ]
 
 __version__ = "1.0.0"

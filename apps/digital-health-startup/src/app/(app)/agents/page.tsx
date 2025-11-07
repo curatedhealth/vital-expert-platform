@@ -359,13 +359,11 @@ function AgentsPageContent() {
             setShowCreateModal(false);
             setEditingAgent(null);
           }}
-          onSave={() => {
+          onSave={async () => {
             setShowCreateModal(false);
             setEditingAgent(null);
-            // Force refresh of the agents board
-            if (typeof window !== 'undefined') {
-              window.location.reload();
-            }
+            // Refresh agents data without full page reload
+            await useAgentsStore.getState().refreshAgents();
           }}
           editingAgent={editingAgent as any}
         />

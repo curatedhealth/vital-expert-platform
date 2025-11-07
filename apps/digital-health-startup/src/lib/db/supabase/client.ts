@@ -34,19 +34,45 @@ if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
 }
 
 // ============================================================================
-// CLIENT FACTORY FUNCTIONS
+// SINGLETON INSTANCES - PRODUCTION-READY FIX FOR "Multiple GoTrueClient" ISSUE
 // ============================================================================
 
 /**
- * Create Supabase client for browser/client-side
+ * ⚠️ CRITICAL FIX: Prevent "Multiple GoTrueClient instances" warnings
+ * 
+ * PROBLEM:
+ * - The previous factory functions created NEW instances on every call
+ * - This caused "Multiple GoTrueClient instances" warnings
+ * - This caused Map maximum size exceeded errors
+ * - This caused authentication state conflicts
+ * 
+ * SOLUTION:
+ * - Use singleton pattern to return the same instance
+ * - Only create instances once per application lifecycle
+ * - Store instances in module-level variables
+ */
+
+let browserClientInstance: ReturnType<typeof createClient<Database>> | null = null;
+let serverClientInstance: ReturnType<typeof createClient<Database>> | null = null;
+let adminClientInstance: ReturnType<typeof createClient<Database>> | null = null;
+
+/**
+ * Create Supabase client for browser/client-side (SINGLETON)
  *
+ * ✅ PRODUCTION-READY: Returns the same instance on every call
  * Uses anon key with RLS enabled.
  * Suitable for client-side code.
  *
- * @returns Supabase client with RLS
+ * @returns Supabase client with RLS (singleton instance)
  */
 export function createBrowserClient() {
-  return createClient<Database>(
+  // Return existing instance if already created
+  if (browserClientInstance) {
+    return browserClientInstance;
+  }
+
+  // Create new instance only once
+  browserClientInstance = createClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
@@ -62,18 +88,27 @@ export function createBrowserClient() {
       },
     }
   );
+
+  return browserClientInstance;
 }
 
 /**
- * Create Supabase client for server-side (Edge Runtime)
+ * Create Supabase client for server-side/Edge Runtime (SINGLETON)
  *
+ * ✅ PRODUCTION-READY: Returns the same instance on every call
  * Uses anon key with RLS enabled.
  * Suitable for API routes and Edge functions.
  *
- * @returns Supabase client with RLS
+ * @returns Supabase client with RLS (singleton instance)
  */
 export function createServerClient() {
-  return createClient<Database>(
+  // Return existing instance if already created
+  if (serverClientInstance) {
+    return serverClientInstance;
+  }
+
+  // Create new instance only once
+  serverClientInstance = createClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
@@ -84,11 +119,15 @@ export function createServerClient() {
       },
     }
   );
+
+  return serverClientInstance;
 }
 
 /**
- * Create Supabase admin client (bypasses RLS)
+ * Create Supabase admin client (bypasses RLS) (SINGLETON)
  *
+ * ✅ PRODUCTION-READY: Returns the same instance on every call
+ * 
  * ⚠️ WARNING: This client bypasses Row-Level Security!
  * Only use for:
  * - Administrative operations
@@ -98,10 +137,16 @@ export function createServerClient() {
  *
  * NEVER expose service role key to client-side code.
  *
- * @returns Supabase admin client (bypasses RLS)
+ * @returns Supabase admin client (singleton instance)
  */
 export function createAdminClient() {
-  return createClient<Database>(
+  // Return existing instance if already created
+  if (adminClientInstance) {
+    return adminClientInstance;
+  }
+
+  // Create new instance only once
+  adminClientInstance = createClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!,
     {
@@ -111,10 +156,12 @@ export function createAdminClient() {
       },
     }
   );
+
+  return adminClientInstance;
 }
 
 // ============================================================================
-// SINGLETON INSTANCES
+// SINGLETON EXPORTS
 // ============================================================================
 
 /**

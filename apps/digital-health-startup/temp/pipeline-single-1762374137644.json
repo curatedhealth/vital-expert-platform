@@ -1,0 +1,158 @@
+{
+  "sources": [
+    {
+      "title": "The Front-Runner's Guide to Scaling AI",
+      "abstract": "Accenture's 2025 point of view on how companies develop and deploy AI models to create financial and non-financial value. Based on survey fielded June-July 2024 examining AI scaling strategies and best practices.",
+      "firm": "Accenture",
+      "firm_id": "ACN",
+      "authors": [
+        "Accenture AI Team"
+      ],
+      "publication_date": "2024-11-20",
+      "publication_year": 2024,
+      "publication_month": "Q4",
+      "version": "1.0",
+      "edition": "2025 POV",
+      "series_name": "Accenture AI Insights",
+      "file_type": "pdf",
+      "content_file_type": "pdf",
+      "page_count": null,
+      "word_count": null,
+      "language_code": "en",
+      "url": "https://www.accenture.com/content/dam/accenture/final/accenture-com/document-3/Accenture-Front-Runners-Guide-Scaling-AI-2025-POV.pdf",
+      "source_url": "https://www.accenture.com/us-en/insights/artificial-intelligence-summary-index",
+      "pdf_link": "https://www.accenture.com/content/dam/accenture/final/accenture-com/document-3/Accenture-Front-Runners-Guide-Scaling-AI-2025-POV.pdf",
+      "direct_download": true,
+      "access_type": "public",
+      "registration_required": false,
+      "paywall_status": "free",
+      "download_date": "2025-11-05T13:18:00Z",
+      "last_verified_date": "2025-11-05T13:18:00Z",
+      "quality_score": 9.2,
+      "credibility_score": 9.5,
+      "peer_reviewed": false,
+      "editorial_review_status": "published",
+      "last_reviewed_date": "2025-11-05",
+      "reviewed_by_user_id": null,
+      "confidence_level": "high",
+      "citation_count": 0,
+      "domain": "ai_ml_scaling",
+      "category": "consulting_reports",
+      "report_type": "point_of_view",
+      "tags": [
+        "AI scaling",
+        "front-runners",
+        "AI deployment",
+        "AI value creation"
+      ],
+      "topics": [
+        "AI scaling",
+        "AI deployment strategies",
+        "value creation"
+      ],
+      "industry_sectors": [
+        "Cross-Industry"
+      ],
+      "geographic_scope": "global",
+      "geographic_regions": [
+        "Global"
+      ],
+      "target_audience": [
+        "C-Suite",
+        "CIO",
+        "CTO",
+        "Chief AI Officer"
+      ],
+      "practice_areas": [
+        "Artificial Intelligence",
+        "Technology Strategy",
+        "Scaling"
+      ],
+      "seniority_level": "c_suite",
+      "use_case_category": "strategic",
+      "temporal_coverage": "current",
+      "forecast_year": null,
+      "historical_period": "2024",
+      "is_time_sensitive": true,
+      "has_executive_summary": true,
+      "has_table_of_contents": true,
+      "has_appendices": false,
+      "has_data_tables": true,
+      "has_charts_graphs": true,
+      "section_count": 0,
+      "document_structure": {
+        "sections": []
+      },
+      "priority": "high",
+      "rag_priority_weight": 0.88,
+      "embedding_model_version": "sentence-transformers/all-MiniLM-L6-v2",
+      "chunk_strategy": "semantic",
+      "context_window_tokens": 8192,
+      "summarization_available": true,
+      "query_history_count": 0,
+      "last_retrieved_at": null,
+      "doi": null,
+      "isbn": null,
+      "permanent_id": "ACN-2025-SCALING-AI-001",
+      "citation_format": "Accenture. (2025). The Front-Runner's Guide to Scaling AI.",
+      "related_document_ids": [],
+      "supersedes_document_id": null,
+      "superseded_by_document_id": null,
+      "access_policy": "public",
+      "data_classification": "public",
+      "retention_policy": "permanent",
+      "compliance_tags": [],
+      "pii_sensitivity": "Low",
+      "regulatory_exposure": "Low",
+      "contains_pii": false,
+      "requires_consent": false,
+      "view_count": 0,
+      "download_count": 0,
+      "share_count": 0,
+      "bookmark_count": 0,
+      "average_read_time_seconds": null,
+      "completion_rate": null,
+      "readability_score": 64,
+      "technical_complexity": "advanced",
+      "data_richness_score": 8.3,
+      "visual_content_ratio": 0.32,
+      "freshness_score": 9.2,
+      "description": "Accenture's guide on AI scaling strategies based on June-July 2024 survey examining value creation",
+      "metadata": {
+        "survey_period": "June-July 2024",
+        "methodology": "Survey + best practice analysis"
+      },
+      "source_metadata": {
+        "original_url": "https://www.accenture.com/content/dam/accenture/final/accenture-com/document-3/Accenture-Front-Runners-Guide-Scaling-AI-2025-POV.pdf",
+        "scraping_timestamp": "2025-11-05T13:18:00Z",
+        "scraping_method": "web_search",
+        "last_modified": "2024-11-20"
+      }
+    }
+  ],
+  "scraping_settings": {
+    "timeout": 60,
+    "max_retries": 3,
+    "delay_between_requests": 1,
+    "wait_for_js": false,
+    "use_playwright": false
+  },
+  "processing_settings": {
+    "chunk_size": 1000,
+    "chunk_overlap": 200,
+    "min_word_count": 100,
+    "max_content_length": 1000000
+  },
+  "upload_settings": {
+    "enable_supabase": true,
+    "enable_pinecone": true,
+    "batch_size": 100,
+    "skip_duplicates": true
+  },
+  "output_settings": {
+    "create_subdirectories": true,
+    "include_metadata": true,
+    "markdown_format": true
+  },
+  "embedding_model": "sentence-transformers/all-MiniLM-L6-v2"
+}

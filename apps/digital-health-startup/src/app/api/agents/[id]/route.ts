@@ -45,11 +45,31 @@ export const PUT = withAgentAuth(async (
     // Get current agent to merge metadata properly
     const { data: currentAgent, error: fetchError } = await supabase
       .from('agents')
-      .select('metadata, created_by, tenant_id, is_custom, is_library_agent')
+      .select('metadata, created_by, tenant_id, is_custom, is_library_agent, is_active, deleted_at')
       .eq('id', id)
-      .single();
+      .maybeSingle(); // Use maybeSingle() to avoid error if not found
 
-    if (fetchError || !currentAgent) {
+    if (fetchError) {
+      const duration = Date.now() - startTime;
+      logger.error(
+        'agent_put_fetch_error',
+        new Error(fetchError.message),
+        {
+          operation: 'PUT /api/agents/[id]',
+          operationId,
+          agentId: id,
+          duration,
+          errorCode: fetchError.code,
+        }
+      );
+
+      return NextResponse.json(
+        { error: 'Failed to fetch agent', details: fetchError.message },
+        { status: 500 }
+      );
+    }
+
+    if (!currentAgent) {
       const duration = Date.now() - startTime;
       logger.warn('agent_put_not_found', {
         operation: 'PUT /api/agents/[id]',
@@ -59,8 +79,24 @@ export const PUT = withAgentAuth(async (
       });
 
       return NextResponse.json(
-        { error: 'Agent not found' },
+        { error: 'Agent not found', message: 'Agent not found. It may have been deleted.' },
         { status: 404 }
+      );
+    }
+
+    // Check if agent is deleted
+    if (currentAgent.is_active === false || currentAgent.deleted_at) {
+      const duration = Date.now() - startTime;
+      logger.warn('agent_put_deleted', {
+        operation: 'PUT /api/agents/[id]',
+        operationId,
+        agentId: id,
+        duration,
+      });
+
+      return NextResponse.json(
+        { error: 'Cannot update deleted agent', message: 'This agent has been deleted and cannot be updated.' },
+        { status: 410 } // 410 Gone
       );
     }
 
@@ -268,13 +304,34 @@ export const DELETE = withAgentAuth(async (
     });
 
     // Check if agent exists (RLS will filter if user doesn't have access)
+    // Include deleted agents for idempotent delete
     const { data: agent, error: fetchError } = await supabase
       .from('agents')
-      .select('id, name, metadata, tenant_id')
+      .select('id, name, metadata, tenant_id, is_active, deleted_at')
       .eq('id', id)
-      .single();
+      .maybeSingle(); // Use maybeSingle() instead of single() to avoid error if not found
 
-    if (fetchError || !agent) {
+    if (fetchError) {
+      const duration = Date.now() - startTime;
+      logger.error(
+        'agent_delete_fetch_error',
+        new Error(fetchError.message),
+        {
+          operation: 'DELETE /api/agents/[id]',
+          operationId,
+          agentId: id,
+          duration,
+          errorCode: fetchError.code,
+        }
+      );
+
+      return NextResponse.json(
+        { error: 'Failed to fetch agent', details: fetchError.message },
+        { status: 500 }
+      );
+    }
+
+    if (!agent) {
       const duration = Date.now() - startTime;
       logger.warn('agent_delete_not_found', {
         operation: 'DELETE /api/agents/[id]',
@@ -283,7 +340,27 @@ export const DELETE = withAgentAuth(async (
         duration,
       });
 
-      return NextResponse.json({ error: 'Agent not found' }, { status: 404 });
+      return NextResponse.json(
+        { error: 'Agent not found', message: 'Agent not found. It may have already been deleted.' },
+        { status: 404 }
+      );
+    }
+
+    // If agent is already deleted, return success (idempotent delete)
+    if (agent.is_active === false || agent.deleted_at) {
+      const duration = Date.now() - startTime;
+      logger.info('agent_already_deleted', {
+        operation: 'DELETE /api/agents/[id]',
+        operationId,
+        agentId: id,
+        duration,
+      });
+
+      return NextResponse.json({
+        success: true,
+        message: 'Agent was already deleted',
+        agent: { id: agent.id, name: agent.name },
+      });
     }
 
     // Soft delete by default (set is_active = false)

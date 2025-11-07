@@ -1,0 +1,168 @@
+{
+  "sources": [
+    {
+      "title": "TMT Predictions 2025: Bridging the Gaps",
+      "abstract": "Deloitte's 2025 Technology, Media & Telecommunications predictions identifying 2025 as a 'gap year' for generative AI. Covers eight critical gaps including infrastructure monetization, gender disparities, energy consumption, deepfake trust, and gen AI agents.",
+      "firm": "Deloitte",
+      "firm_id": "DTT",
+      "authors": [
+        "Deloitte TMT Team"
+      ],
+      "publication_date": "2024-12-10",
+      "publication_year": 2024,
+      "publication_month": "Q4",
+      "version": "1.0",
+      "edition": "2025 Predictions",
+      "series_name": "Deloitte TMT Predictions",
+      "file_type": "pdf",
+      "content_file_type": "pdf",
+      "page_count": null,
+      "word_count": null,
+      "language_code": "en",
+      "url": "https://www2.deloitte.com/us/en/insights/industry/technology/technology-media-and-telecom-predictions.html",
+      "source_url": "https://www2.deloitte.com/us/en/insights/industry/technology/technology-media-and-telecom-predictions.html",
+      "pdf_link": "https://cdn.elperiodicodelaenergia.com/2024/12/675fc7f683dab4df0c6826c5.pdf",
+      "direct_download": true,
+      "access_type": "public",
+      "registration_required": false,
+      "paywall_status": "free",
+      "download_date": "2025-11-05T13:18:00Z",
+      "last_verified_date": "2025-11-05T13:18:00Z",
+      "quality_score": 9.1,
+      "credibility_score": 9,
+      "peer_reviewed": false,
+      "editorial_review_status": "published",
+      "last_reviewed_date": "2025-11-05",
+      "reviewed_by_user_id": null,
+      "confidence_level": "high",
+      "citation_count": 0,
+      "domain": "ai_ml_tmt",
+      "category": "consulting_reports",
+      "report_type": "predictions",
+      "tags": [
+        "generative AI",
+        "TMT",
+        "technology predictions",
+        "AI gaps",
+        "infrastructure",
+        "deepfakes"
+      ],
+      "topics": [
+        "GenAI predictions",
+        "technology trends",
+        "TMT sector",
+        "AI challenges"
+      ],
+      "industry_sectors": [
+        "Technology",
+        "Media",
+        "Telecommunications"
+      ],
+      "geographic_scope": "global",
+      "geographic_regions": [
+        "Global"
+      ],
+      "target_audience": [
+        "C-Suite",
+        "CTO",
+        "CIO",
+        "TMT Executives"
+      ],
+      "practice_areas": [
+        "Technology",
+        "Media & Entertainment",
+        "Telecommunications"
+      ],
+      "seniority_level": "c_suite",
+      "use_case_category": "strategic",
+      "temporal_coverage": "forward_looking",
+      "forecast_year": 2025,
+      "historical_period": null,
+      "is_time_sensitive": true,
+      "has_executive_summary": true,
+      "has_table_of_contents": true,
+      "has_appendices": true,
+      "has_data_tables": true,
+      "has_charts_graphs": true,
+      "section_count": 0,
+      "document_structure": {
+        "sections": []
+      },
+      "priority": "medium",
+      "rag_priority_weight": 0.85,
+      "embedding_model_version": "sentence-transformers/all-MiniLM-L6-v2",
+      "chunk_strategy": "semantic",
+      "context_window_tokens": 8192,
+      "summarization_available": true,
+      "query_history_count": 0,
+      "last_retrieved_at": null,
+      "doi": null,
+      "isbn": null,
+      "permanent_id": "DTT-2025-TMT-PRED-001",
+      "citation_format": "Deloitte. (2024). TMT Predictions 2025: Bridging the Gaps.",
+      "related_document_ids": [],
+      "supersedes_document_id": null,
+      "superseded_by_document_id": null,
+      "access_policy": "public",
+      "data_classification": "public",
+      "retention_policy": "permanent",
+      "compliance_tags": [],
+      "pii_sensitivity": "Low",
+      "regulatory_exposure": "Low",
+      "contains_pii": false,
+      "requires_consent": false,
+      "view_count": 0,
+      "download_count": 0,
+      "share_count": 0,
+      "bookmark_count": 0,
+      "average_read_time_seconds": null,
+      "completion_rate": null,
+      "readability_score": 66,
+      "technical_complexity": "intermediate",
+      "data_richness_score": 8.2,
+      "visual_content_ratio": 0.35,
+      "freshness_score": 9.3,
+      "description": "Deloitte's prediction that 2025 will be a 'gap year' for GenAI, identifying eight critical gaps to bridge",
+      "metadata": {
+        "key_findings": [
+          "2025 is a 'gap year' for gen AI",
+          "7% smartphone shipment lift expected",
+          "Less than 3% of production budgets for gen AI in studios",
+          "Gen AI adoption gender gap of 10-17 points in Europe"
+        ],
+        "methodology": "Technology analysis + market research"
+      },
+      "source_metadata": {
+        "original_url": "https://cdn.elperiodicodelaenergia.com/2024/12/675fc7f683dab4df0c6826c5.pdf",
+        "scraping_timestamp": "2025-11-05T13:18:00Z",
+        "scraping_method": "web_search",
+        "last_modified": "2024-12-10"
+      }
+    }
+  ],
+  "scraping_settings": {
+    "timeout": 60,
+    "max_retries": 3,
+    "delay_between_requests": 1,
+    "wait_for_js": false,
+    "use_playwright": false
+  },
+  "processing_settings": {
+    "chunk_size": 1000,
+    "chunk_overlap": 200,
+    "min_word_count": 100,
+    "max_content_length": 1000000
+  },
+  "upload_settings": {
+    "enable_supabase": true,
+    "enable_pinecone": true,
+    "batch_size": 100,
+    "skip_duplicates": true
+  },
+  "output_settings": {
+    "create_subdirectories": true,
+    "include_metadata": true,
+    "markdown_format": true
+  },
+  "embedding_model": "sentence-transformers/all-MiniLM-L6-v2"
+}

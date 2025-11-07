@@ -1,0 +1,169 @@
+{
+  "sources": [
+    {
+      "title": "Making Reinvention Real with Gen AI",
+      "abstract": "Accenture's report on moving from AI experimentation to impact, featuring case studies including Accenture's own Marketing + Communications function using 14 specialized AI agents. Details 30% reduction in manual tasks and 25-55% improvement in speed-to-market.",
+      "firm": "Accenture",
+      "firm_id": "ACN",
+      "authors": [
+        "Accenture Strategy Team"
+      ],
+      "publication_date": "2024-09-15",
+      "publication_year": 2024,
+      "publication_month": "Q3",
+      "version": "1.0",
+      "edition": "2024 Edition",
+      "series_name": "Accenture Reinvention Series",
+      "file_type": "pdf",
+      "content_file_type": "pdf",
+      "page_count": null,
+      "word_count": null,
+      "language_code": "en",
+      "url": "https://www.accenture.com/content/dam/accenture/final/industry/cross-industry/document/Making-Reinvention-Real-With-GenAI-TL.pdf",
+      "source_url": "https://www.accenture.com/us-en/insights/generative-ai",
+      "pdf_link": "https://www.accenture.com/content/dam/accenture/final/industry/cross-industry/document/Making-Reinvention-Real-With-GenAI-TL.pdf",
+      "direct_download": true,
+      "access_type": "public",
+      "registration_required": false,
+      "paywall_status": "free",
+      "download_date": "2025-11-05T13:18:00Z",
+      "last_verified_date": "2025-11-05T13:18:00Z",
+      "quality_score": 9.3,
+      "credibility_score": 9.5,
+      "peer_reviewed": false,
+      "editorial_review_status": "published",
+      "last_reviewed_date": "2025-11-05",
+      "reviewed_by_user_id": null,
+      "confidence_level": "high",
+      "citation_count": 0,
+      "domain": "ai_ml_implementation",
+      "category": "consulting_reports",
+      "report_type": "case_study",
+      "tags": [
+        "generative AI",
+        "AI agents",
+        "reinvention",
+        "productivity",
+        "case studies",
+        "AI Refinery"
+      ],
+      "topics": [
+        "AI reinvention",
+        "AI agents",
+        "productivity gains",
+        "implementation"
+      ],
+      "industry_sectors": [
+        "Cross-Industry",
+        "Marketing",
+        "Communications"
+      ],
+      "geographic_scope": "global",
+      "geographic_regions": [
+        "Global"
+      ],
+      "target_audience": [
+        "C-Suite",
+        "CMO",
+        "CIO",
+        "VP Marketing"
+      ],
+      "practice_areas": [
+        "Artificial Intelligence",
+        "Business Reinvention",
+        "Marketing & Communications"
+      ],
+      "seniority_level": "c_suite",
+      "use_case_category": "case_study",
+      "temporal_coverage": "current",
+      "forecast_year": null,
+      "historical_period": "2023-2024",
+      "is_time_sensitive": true,
+      "has_executive_summary": true,
+      "has_table_of_contents": true,
+      "has_appendices": true,
+      "has_data_tables": true,
+      "has_charts_graphs": true,
+      "section_count": 0,
+      "document_structure": {
+        "sections": []
+      },
+      "priority": "high",
+      "rag_priority_weight": 0.91,
+      "embedding_model_version": "sentence-transformers/all-MiniLM-L6-v2",
+      "chunk_strategy": "semantic",
+      "context_window_tokens": 8192,
+      "summarization_available": true,
+      "query_history_count": 0,
+      "last_retrieved_at": null,
+      "doi": null,
+      "isbn": null,
+      "permanent_id": "ACN-2024-REINVENTION-001",
+      "citation_format": "Accenture. (2024). Making Reinvention Real with Gen AI.",
+      "related_document_ids": [],
+      "supersedes_document_id": null,
+      "superseded_by_document_id": null,
+      "access_policy": "public",
+      "data_classification": "public",
+      "retention_policy": "permanent",
+      "compliance_tags": [],
+      "pii_sensitivity": "Low",
+      "regulatory_exposure": "Low",
+      "contains_pii": false,
+      "requires_consent": false,
+      "view_count": 0,
+      "download_count": 0,
+      "share_count": 0,
+      "bookmark_count": 0,
+      "average_read_time_seconds": null,
+      "completion_rate": null,
+      "readability_score": 67,
+      "technical_complexity": "intermediate",
+      "data_richness_score": 8.9,
+      "visual_content_ratio": 0.35,
+      "freshness_score": 8.5,
+      "description": "Accenture's case study showing 30% reduction in manual tasks and 25-55% speed-to-market improvement using 14 AI agents",
+      "metadata": {
+        "key_findings": [
+          "30% reduction in manual tasks",
+          "25-55% improvement in speed-to-market",
+          "14 specialized AI agents deployed",
+          "954 marketers enabled globally",
+          "25% improvement in external brand value"
+        ],
+        "methodology": "Internal case study + implementation analysis"
+      },
+      "source_metadata": {
+        "original_url": "https://www.accenture.com/content/dam/accenture/final/industry/cross-industry/document/Making-Reinvention-Real-With-GenAI-TL.pdf",
+        "scraping_timestamp": "2025-11-05T13:18:00Z",
+        "scraping_method": "web_search",
+        "last_modified": "2024-09-15"
+      }
+    }
+  ],
+  "scraping_settings": {
+    "timeout": 60,
+    "max_retries": 3,
+    "delay_between_requests": 1,
+    "wait_for_js": false,
+    "use_playwright": false
+  },
+  "processing_settings": {
+    "chunk_size": 1000,
+    "chunk_overlap": 200,
+    "min_word_count": 100,
+    "max_content_length": 1000000
+  },
+  "upload_settings": {
+    "enable_supabase": true,
+    "enable_pinecone": true,
+    "batch_size": 100,
+    "skip_duplicates": true
+  },
+  "output_settings": {
+    "create_subdirectories": true,
+    "include_metadata": true,
+    "markdown_format": true
+  },
+  "embedding_model": "sentence-transformers/all-MiniLM-L6-v2"
+}

@@ -152,8 +152,34 @@ export function AskExpertProvider({ children }: { children: React.ReactNode }) {
       userObject: user
     });
 
+    /**
+     * ⚠️ CRITICAL: User ID Check
+     * 
+     * PROBLEM: If user?.id is undefined, agents will be cleared and won't show in the sidebar.
+     * This happens when:
+     * 1. Multiple GoTrueClient instances exist (auth state conflicts)
+     * 2. Auth context hasn't loaded yet (loading state)
+     * 3. User is not authenticated (should redirect to login)
+     * 
+     * SOLUTION: Check for user?.id before fetching agents.
+     * 
+     * ⚠️ DO NOT REMOVE THIS CHECK ⚠️
+     * - This prevents API calls with undefined userId
+     * - This prevents agents from being cleared unnecessarily
+     * - This ensures agents only load for authenticated users
+     * 
+     * If you see "No user ID, clearing agents" in console:
+     * 1. Check if SupabaseAuthProvider is wrapping the app
+     * 2. Check if multiple Supabase clients are being created
+     * 3. Check if auth context is properly initialized
+     * 4. Check browser console for "Multiple GoTrueClient instances" warnings
+     */
     if (!user?.id) {
       console.log('🔄 [AskExpertContext] No user ID, clearing agents');
+      console.warn('⚠️ [AskExpertContext] User ID is missing. This may indicate:');
+      console.warn('   1. Auth context not loaded yet (check loading state)');
+      console.warn('   2. Multiple GoTrueClient instances (check console for warnings)');
+      console.warn('   3. User not authenticated (should redirect to login)');
       setAgents([]);
       return;
     }

@@ -1,0 +1,175 @@
+{
+  "sources": [
+    {
+      "title": "AI at Work: Momentum Builds, but Gaps Remain",
+      "abstract": "BCG's 2025 analysis of AI adoption in the workplace, examining momentum in generative AI implementation while identifying critical gaps in enterprise AI strategies, workforce readiness, and organizational change management. Survey of 10,635 employees across 11 nations.",
+      "firm": "Boston Consulting Group",
+      "firm_id": "BCG",
+      "authors": [
+        "Nick South",
+        "Multiple BCG Partners"
+      ],
+      "publication_date": "2025-07-21",
+      "publication_year": 2025,
+      "publication_month": "Q3",
+      "version": "1.0",
+      "edition": "2025 Edition",
+      "series_name": "BCG AI at Work Series",
+      "file_type": "html",
+      "content_file_type": "html",
+      "page_count": null,
+      "word_count": null,
+      "language_code": "en",
+      "url": "https://www.bcg.com/publications/2025/ai-at-work-momentum-builds-but-gaps-remain",
+      "source_url": "https://www.bcg.com/publications/2025/ai-at-work-momentum-builds-but-gaps-remain",
+      "pdf_link": null,
+      "direct_download": false,
+      "access_type": "public",
+      "registration_required": false,
+      "paywall_status": "free",
+      "download_date": "2025-11-05T13:18:00Z",
+      "last_verified_date": "2025-11-05T13:18:00Z",
+      "quality_score": 9.5,
+      "credibility_score": 9.8,
+      "peer_reviewed": false,
+      "editorial_review_status": "published",
+      "last_reviewed_date": "2025-11-05",
+      "reviewed_by_user_id": null,
+      "confidence_level": "high",
+      "citation_count": 0,
+      "domain": "ai_ml_workplace",
+      "category": "consulting_reports",
+      "report_type": "strategic_insight",
+      "tags": [
+        "AI adoption",
+        "generative AI",
+        "workforce",
+        "enterprise strategy",
+        "change management",
+        "silicon ceiling",
+        "frontline workers"
+      ],
+      "topics": [
+        "AI adoption",
+        "generative AI",
+        "workforce transformation",
+        "organizational change",
+        "agentic AI"
+      ],
+      "industry_sectors": [
+        "Cross-Industry",
+        "Technology",
+        "Professional Services"
+      ],
+      "geographic_scope": "global",
+      "geographic_regions": [
+        "Global (11 countries)"
+      ],
+      "target_audience": [
+        "C-Suite",
+        "CHRO",
+        "CIO",
+        "CTO",
+        "VP Digital Transformation"
+      ],
+      "practice_areas": [
+        "Artificial Intelligence",
+        "Digital Transformation",
+        "Workforce Strategy",
+        "Change Management"
+      ],
+      "seniority_level": "c_suite",
+      "use_case_category": "implementation",
+      "temporal_coverage": "current",
+      "forecast_year": null,
+      "historical_period": "2023-2025",
+      "is_time_sensitive": true,
+      "has_executive_summary": true,
+      "has_table_of_contents": true,
+      "has_appendices": true,
+      "has_data_tables": true,
+      "has_charts_graphs": true,
+      "section_count": 0,
+      "document_structure": {
+        "sections": []
+      },
+      "priority": "high",
+      "rag_priority_weight": 0.95,
+      "embedding_model_version": "sentence-transformers/all-MiniLM-L6-v2",
+      "chunk_strategy": "semantic",
+      "context_window_tokens": 8192,
+      "summarization_available": true,
+      "query_history_count": 0,
+      "last_retrieved_at": null,
+      "doi": null,
+      "isbn": null,
+      "permanent_id": "BCG-2025-AI-WORK-001",
+      "citation_format": "Boston Consulting Group. (2025). AI at Work: Momentum Builds, but Gaps Remain.",
+      "related_document_ids": [],
+      "supersedes_document_id": null,
+      "superseded_by_document_id": null,
+      "access_policy": "public",
+      "data_classification": "public",
+      "retention_policy": "permanent",
+      "compliance_tags": [],
+      "pii_sensitivity": "Low",
+      "regulatory_exposure": "Low",
+      "contains_pii": false,
+      "requires_consent": false,
+      "view_count": 0,
+      "download_count": 0,
+      "share_count": 0,
+      "bookmark_count": 0,
+      "average_read_time_seconds": null,
+      "completion_rate": null,
+      "readability_score": 65,
+      "technical_complexity": "advanced",
+      "data_richness_score": 9,
+      "visual_content_ratio": 0.35,
+      "freshness_score": 10,
+      "description": "BCG's comprehensive 2025 workplace AI survey covering 10,635 employees across 11 nations, identifying the 'silicon ceiling' phenomenon affecting frontline workers",
+      "metadata": {
+        "research_sample_size": 10635,
+        "countries_surveyed": 11,
+        "key_findings": [
+          "72% of workers are regular Gen AI users",
+          "Frontline workers use stalled at 51%",
+          "Silicon ceiling identified for frontline adoption",
+          "Agentic AI currently underutilized"
+        ],
+        "methodology": "Global employee survey"
+      },
+      "source_metadata": {
+        "original_url": "https://www.bcg.com/publications/2025/ai-at-work-momentum-builds-but-gaps-remain",
+        "scraping_timestamp": "2025-11-05T13:18:00Z",
+        "scraping_method": "web_search",
+        "last_modified": "2025-07-21"
+      }
+    }
+  ],
+  "scraping_settings": {
+    "timeout": 60,
+    "max_retries": 3,
+    "delay_between_requests": 1,
+    "wait_for_js": false,
+    "use_playwright": false
+  },
+  "processing_settings": {
+    "chunk_size": 1000,
+    "chunk_overlap": 200,
+    "min_word_count": 100,
+    "max_content_length": 1000000
+  },
+  "upload_settings": {
+    "enable_supabase": true,
+    "enable_pinecone": true,
+    "batch_size": 100,
+    "skip_duplicates": true
+  },
+  "output_settings": {
+    "create_subdirectories": true,
+    "include_metadata": true,
+    "markdown_format": true
+  },
+  "embedding_model": "sentence-transformers/all-MiniLM-L6-v2"
+}

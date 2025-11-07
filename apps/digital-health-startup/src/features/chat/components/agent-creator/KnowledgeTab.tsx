@@ -1,5 +1,5 @@
-import React from 'react';
-import { Plus, X, Zap, Brain, CheckCircle } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Plus, X, Zap, Brain, CheckCircle, AlertCircle, Database, Cloud } from 'lucide-react';
 
 import { Badge } from '@vital/ui';
 import { Button } from '@vital/ui';
@@ -9,6 +9,13 @@ import { Label } from '@vital/ui';
 import { cn } from '@/lib/utils';
 
 import type { AgentFormData } from './types';
+
+interface DomainContentStatus {
+  domain_id: string;
+  status: 'active' | 'inactive' | 'partial';
+  supabase: { has_content: boolean; chunk_count: number };
+  pinecone: { has_content: boolean };
+}
 
 interface KnowledgeTabProps {
   formData: AgentFormData;
@@ -50,6 +57,75 @@ export function KnowledgeTab({
   processKnowledgeSources,
   handleKnowledgeDomainToggle,
 }: KnowledgeTabProps) {
+  const [domainContentStatus, setDomainContentStatus] = useState<Record<string, DomainContentStatus>>({});
+  const [loadingStatus, setLoadingStatus] = useState<Record<string, boolean>>({});
+
+  // Fetch content status for each domain
+  useEffect(() => {
+    const fetchDomainStatuses = async () => {
+      for (const domain of knowledgeDomains) {
+        try {
+          setLoadingStatus(prev => ({ ...prev, [domain.value]: true }));
+          const response = await fetch(`/api/knowledge-domains/${domain.value}/content-status`);
+          if (response.ok) {
+            const status: DomainContentStatus = await response.json();
+            setDomainContentStatus(prev => ({ ...prev, [domain.value]: status }));
+          } else {
+            // Domain not found or error - mark as inactive
+            setDomainContentStatus(prev => ({
+              ...prev,
+              [domain.value]: {
+                domain_id: domain.value,
+                status: 'inactive',
+                supabase: { has_content: false, chunk_count: 0 },
+                pinecone: { has_content: false },
+              },
+            }));
+          }
+        } catch (error) {
+          console.error(`Failed to fetch status for domain ${domain.value}:`, error);
+          // Mark as inactive on error
+          setDomainContentStatus(prev => ({
+            ...prev,
+            [domain.value]: {
+              domain_id: domain.value,
+              status: 'inactive',
+              supabase: { has_content: false, chunk_count: 0 },
+              pinecone: { has_content: false },
+            },
+          }));
+        } finally {
+          setLoadingStatus(prev => ({ ...prev, [domain.value]: false }));
+        }
+      }
+    };
+
+    if (knowledgeDomains.length > 0) {
+      fetchDomainStatuses();
+    }
+  }, [knowledgeDomains]);
+
+  const getDomainStatus = (domainValue: string): DomainContentStatus | null => {
+    return domainContentStatus[domainValue] || null;
+  };
+
+  const isDomainActive = (domainValue: string): boolean => {
+    const status = getDomainStatus(domainValue);
+    return status?.status === 'active' || false;
+  };
+
+  const handleDomainToggleWithCheck = (domain: string) => {
+    // Only allow toggling if domain is active (has content)
+    const status = getDomainStatus(domain);
+    if (status && status.status !== 'active') {
+      // Show warning - domain has no content yet
+      const domainInfo = knowledgeDomains.find(d => d.value === domain);
+      alert(`Domain "${domainInfo?.label || domain}" has no content yet.\n\nPlease upload documents to this domain first before assigning it to an agent.`);
+      return;
+    }
+    handleKnowledgeDomainToggle(domain);
+  };
+
   return (
     <>
       <Card>
@@ -250,20 +326,63 @@ export function KnowledgeTab({
                   }
                 };
 
+                const status = getDomainStatus(domain.value);
+                const isLoading = loadingStatus[domain.value];
+                const isActive = isDomainActive(domain.value);
+                const isSelected = formData.knowledgeDomains.includes(domain.value);
+                const isDisabled = !isActive && !isLoading;
+
                 return (
                   <Button
                     key={domain.value}
                     type="button"
-                    variant={formData.knowledgeDomains.includes(domain.value) ? 'default' : 'outline'}
+                    variant={isSelected ? 'default' : 'outline'}
                     size="sm"
-                    className="h-auto py-2 px-3 text-xs justify-start"
-                    onClick={() => handleKnowledgeDomainToggle(domain.value)}
+                    className={cn(
+                      "h-auto py-2 px-3 text-xs justify-start relative",
+                      isDisabled && "opacity-50 cursor-not-allowed",
+                      isLoading && "opacity-70"
+                    )}
+                    onClick={() => !isDisabled && handleDomainToggleWithCheck(domain.value)}
+                    disabled={isDisabled || isLoading}
+                    title={
+                      isDisabled
+                        ? 'Domain has no content yet. Upload documents to this domain first.'
+                        : isLoading
+                        ? 'Checking content status...'
+                        : status?.status === 'partial'
+                        ? 'Domain has content in one source only. Full sync recommended.'
+                        : undefined
+                    }
                   >
                     <div className="flex items-center gap-2 w-full">
-                      {formData.knowledgeDomains.includes(domain.value) && (
+                      {isSelected && (
                         <CheckCircle className="h-3 w-3 flex-shrink-0" />
                       )}
+                      {!isSelected && isDisabled && (
+                        <AlertCircle className="h-3 w-3 flex-shrink-0 text-gray-400" />
+                      )}
+                      {isLoading && (
+                        <div className="w-3 h-3 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin flex-shrink-0" />
+                      )}
                       <span className="flex-1 text-left">{domain.label}</span>
+                      
+                      {/* Content Status Indicators */}
+                      {status && !isLoading && (
+                        <div className="flex items-center gap-1 ml-auto">
+                          {status.supabase.has_content ? (
+                            <Database className="h-3 w-3 text-green-600" title={`Supabase: ${status.supabase.chunk_count} chunks`} />
+                          ) : (
+                            <Database className="h-3 w-3 text-gray-300" title="No Supabase content" />
+                          )}
+                          {status.pinecone.has_content ? (
+                            <Cloud className="h-3 w-3 text-green-600" title="Pinecone: Has content" />
+                          ) : (
+                            <Cloud className="h-3 w-3 text-gray-300" title="No Pinecone content" />
+                          )}
+                        </div>
+                      )}
+                      
                       {domain.tier && (
                         <Badge
                           variant="outline"
@@ -279,6 +398,27 @@ export function KnowledgeTab({
                   </Button>
                 );
               })}
+            </div>
+            
+            {/* Status Legend */}
+            <div className="mt-2 p-2 bg-gray-50 rounded text-xs text-gray-600">
+              <div className="flex items-center gap-4 flex-wrap">
+                <div className="flex items-center gap-1">
+                  <Database className="h-3 w-3 text-green-600" />
+                  <span>Supabase content</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <Cloud className="h-3 w-3 text-green-600" />
+                  <span>Pinecone namespace</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <AlertCircle className="h-3 w-3 text-gray-400" />
+                  <span>Inactive (no content)</span>
+                </div>
+              </div>
+              <p className="mt-1 text-xs text-gray-500">
+                Only domains with content in both Supabase and Pinecone can be assigned. Upload documents first to activate domains.
+              </p>
             </div>
           </div>
 

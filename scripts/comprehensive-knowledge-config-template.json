@@ -1,0 +1,364 @@
+{
+  "metadata": {
+    "collection_name": "Strategic Consulting Reports - GenAI & Healthcare 2024-2025",
+    "collection_description": "Comprehensive collection of consulting reports from top firms focusing on Generative AI, Digital Health, and Life Sciences",
+    "curator": "Knowledge Management Team",
+    "date_created": "2025-11-05",
+    "version": "1.0.0"
+  },
+  "sources": [
+    {
+      "_comment": "===== CORE IDENTIFICATION =====",
+      "title": "AI at Work: Momentum Builds, but Gaps Remain",
+      "abstract": "BCG's 2025 analysis of AI adoption in the workplace, examining momentum in generative AI implementation while identifying critical gaps in enterprise AI strategies, workforce readiness, and organizational change management.",
+      
+      "_comment": "===== SOURCE & PUBLICATION =====",
+      "firm": "Boston Consulting Group",
+      "firm_id": null,
+      "authors": ["François Candelon", "Philipp Gerbert", "Shervin Khodabandeh"],
+      "publication_date": "2025-01-15",
+      "publication_year": 2025,
+      "publication_month": "Q1",
+      "version": "1.0",
+      "edition": "2025 Edition",
+      "series_name": "BCG AI Insights Series",
+      
+      "_comment": "===== DOCUMENT PROPERTIES =====",
+      "file_type": "html",
+      "content_file_type": "html",
+      "page_count": 45,
+      "word_count": 12500,
+      "language_code": "en",
+      
+      "_comment": "===== ACCESS & RETRIEVAL =====",
+      "url": "https://www.bcg.com/publications/2025/ai-at-work-momentum-builds-but-gaps-remain",
+      "source_url": "https://www.bcg.com/publications/2025/ai-at-work-momentum-builds-but-gaps-remain",
+      "pdf_link": null,
+      "direct_download": false,
+      "access_type": "public",
+      "registration_required": false,
+      "paywall_status": "free",
+      "download_date": "2025-11-05T10:30:00Z",
+      "last_verified_date": "2025-11-05T10:30:00Z",
+      
+      "_comment": "===== QUALITY & VETTING =====",
+      "quality_score": 9.5,
+      "credibility_score": 9.8,
+      "peer_reviewed": false,
+      "editorial_review_status": "published",
+      "last_reviewed_date": "2025-11-04T15:00:00Z",
+      "reviewed_by_user_id": null,
+      "confidence_level": "high",
+      "citation_count": 0,
+      
+      "_comment": "===== TAXONOMY & CLASSIFICATION =====",
+      "domain": "ai_ml_healthcare",
+      "category": "consulting_reports",
+      "report_type": "strategic_insight",
+      "tags": ["AI adoption", "generative AI", "workforce", "enterprise strategy", "change management"],
+      "topics": ["AI adoption", "generative AI", "workforce transformation", "organizational change"],
+      "industry_sectors": ["Healthcare", "Technology", "Professional Services", "Financial Services"],
+      "geographic_scope": "global",
+      "geographic_regions": ["North America", "Europe", "Asia Pacific"],
+      "target_audience": ["C-Suite", "CIO", "CTO", "VP Digital Transformation", "Head of AI"],
+      "practice_areas": ["Artificial Intelligence", "Digital Transformation", "Workforce Strategy", "Change Management"],
+      "seniority_level": "c_suite",
+      "use_case_category": "implementation",
+      
+      "_comment": "===== TEMPORAL & CONTEXT =====",
+      "temporal_coverage": "current",
+      "forecast_year": null,
+      "historical_period": null,
+      "is_time_sensitive": true,
+      
+      "_comment": "===== DOCUMENT STRUCTURE =====",
+      "has_executive_summary": true,
+      "has_table_of_contents": true,
+      "has_appendices": true,
+      "has_data_tables": true,
+      "has_charts_graphs": true,
+      "section_count": 8,
+      "document_structure": {
+        "sections": [
+          {"title": "Executive Summary", "page": 1},
+          {"title": "Current State of AI Adoption", "page": 5},
+          {"title": "Implementation Gaps and Challenges", "page": 15},
+          {"title": "Workforce Readiness Assessment", "page": 25},
+          {"title": "Recommendations and Next Steps", "page": 35},
+          {"title": "Conclusion", "page": 42},
+          {"title": "Appendix: Methodology", "page": 43}
+        ]
+      },
+      
+      "_comment": "===== RAG/AI METADATA =====",
+      "priority": "high",
+      "rag_priority_weight": 0.95,
+      "embedding_model_version": "sentence-transformers/all-MiniLM-L6-v2",
+      "chunk_strategy": "semantic",
+      "context_window_tokens": 8192,
+      "summarization_available": true,
+      "query_history_count": 0,
+      "last_retrieved_at": null,
+      
+      "_comment": "===== PROVENANCE & CITATION =====",
+      "doi": null,
+      "isbn": null,
+      "permanent_id": "BCG-2025-AI-WORK-001",
+      "citation_format": "Candelon, F., Gerbert, P., & Khodabandeh, S. (2025). AI at Work: Momentum Builds, but Gaps Remain. Boston Consulting Group.",
+      "related_document_ids": [],
+      "supersedes_document_id": null,
+      "superseded_by_document_id": null,
+      
+      "_comment": "===== COMPLIANCE & CLASSIFICATION =====",
+      "access_policy": "public",
+      "data_classification": "public",
+      "retention_policy": "permanent",
+      "compliance_tags": [],
+      "pii_sensitivity": "Low",
+      "regulatory_exposure": "Low",
+      "contains_pii": false,
+      "requires_consent": false,
+      
+      "_comment": "===== ENGAGEMENT TRACKING =====",
+      "view_count": 0,
+      "download_count": 0,
+      "share_count": 0,
+      "bookmark_count": 0,
+      "average_read_time_seconds": null,
+      "completion_rate": null,
+      
+      "_comment": "===== CONTENT QUALITY =====",
+      "readability_score": 65.5,
+      "technical_complexity": "advanced",
+      "data_richness_score": 8.5,
+      "visual_content_ratio": 0.35,
+      "freshness_score": 10.0,
+      
+      "_comment": "===== ADDITIONAL METADATA =====",
+      "description": "BCG's comprehensive analysis of AI adoption trends, implementation challenges, and strategic recommendations for enterprises in 2025",
+      "metadata": {
+        "research_sample_size": 2500,
+        "industries_covered": 12,
+        "countries_surveyed": 15,
+        "key_findings": [
+          "67% of executives report AI implementation challenges",
+          "AI adoption grew 45% year-over-year",
+          "Workforce readiness remains a critical gap"
+        ],
+        "methodology": "Global survey + case study analysis",
+        "data_collection_period": "2024-Q3 to 2024-Q4"
+      },
+      "source_metadata": {
+        "original_url": "https://www.bcg.com/publications/2025/ai-at-work-momentum-builds-but-gaps-remain",
+        "scraping_timestamp": "2025-11-05T10:30:00Z",
+        "scraping_method": "web_scraper_tool",
+        "content_hash": "sha256:a1b2c3d4e5f6...",
+        "last_modified": "2025-01-15T09:00:00Z"
+      }
+    },
+    {
+      "_comment": "===== EXAMPLE 2: PDF REPORT WITH DIFFERENT METADATA =====",
+      "title": "Generative AI in Pharma and Medtech: A New Era of Innovation",
+      "abstract": "McKinsey's comprehensive analysis of how generative AI is transforming pharmaceutical R&D, clinical trials, drug discovery, and medical device development, with case studies from leading biopharma companies.",
+      
+      "firm": "McKinsey & Company",
+      "firm_id": null,
+      "authors": ["Kana Enomoto", "Matej Macak", "Rodney Zemmel"],
+      "publication_date": "2024-09-20",
+      "publication_year": 2024,
+      "publication_month": "Q3",
+      "version": "2.0",
+      "edition": "Updated 2024",
+      "series_name": "McKinsey Digital Health Insights",
+      
+      "file_type": "pdf",
+      "content_file_type": "pdf",
+      "page_count": 68,
+      "word_count": 18500,
+      "language_code": "en",
+      
+      "url": "https://www.mckinsey.com/industries/life-sciences/our-insights/generative-ai-in-pharma-and-medtech-a-new-era-of-innovation",
+      "source_url": "https://www.mckinsey.com/industries/life-sciences/our-insights/generative-ai-in-pharma-and-medtech-a-new-era-of-innovation",
+      "pdf_link": "https://www.mckinsey.com/~/media/mckinsey/industries/life-sciences/generative-ai-pharma-medtech.pdf",
+      "direct_download": true,
+      "access_type": "registration_required",
+      "registration_required": true,
+      "paywall_status": "free",
+      "download_date": "2025-11-05T11:00:00Z",
+      "last_verified_date": "2025-11-05T11:00:00Z",
+      
+      "quality_score": 9.8,
+      "credibility_score": 9.9,
+      "peer_reviewed": true,
+      "editorial_review_status": "published",
+      "last_reviewed_date": "2025-11-04T16:00:00Z",
+      "reviewed_by_user_id": null,
+      "confidence_level": "high",
+      "citation_count": 12,
+      
+      "domain": "precision_medicine",
+      "category": "consulting_reports",
+      "report_type": "research_study",
+      "tags": ["generative AI", "pharma", "medtech", "drug discovery", "clinical trials", "R&D"],
+      "topics": ["generative AI", "pharmaceutical", "medical devices", "innovation", "drug discovery"],
+      "industry_sectors": ["Pharmaceuticals", "Biotechnology", "Medical Devices", "Life Sciences"],
+      "geographic_scope": "global",
+      "geographic_regions": ["North America", "Europe", "Asia Pacific"],
+      "target_audience": ["C-Suite", "R&D Directors", "Chief Medical Officer", "VP Innovation"],
+      "practice_areas": ["Artificial Intelligence", "Drug Discovery", "Clinical Development", "Digital Health"],
+      "seniority_level": "c_suite",
+      "use_case_category": "case_study",
+      
+      "temporal_coverage": "forward_looking",
+      "forecast_year": 2030,
+      "historical_period": "2020-2024",
+      "is_time_sensitive": true,
+      
+      "has_executive_summary": true,
+      "has_table_of_contents": true,
+      "has_appendices": true,
+      "has_data_tables": true,
+      "has_charts_graphs": true,
+      "section_count": 12,
+      "document_structure": {
+        "sections": [
+          {"title": "Executive Summary", "page": 1},
+          {"title": "Introduction: The AI Revolution in Life Sciences", "page": 5},
+          {"title": "GenAI in Drug Discovery", "page": 12},
+          {"title": "Clinical Trial Optimization", "page": 25},
+          {"title": "Medical Device Innovation", "page": 38},
+          {"title": "Case Studies", "page": 50},
+          {"title": "Implementation Roadmap", "page": 60},
+          {"title": "Conclusion", "page": 65},
+          {"title": "Appendix: Technical Details", "page": 66}
+        ]
+      },
+      
+      "priority": "high",
+      "rag_priority_weight": 0.98,
+      "embedding_model_version": "sentence-transformers/all-MiniLM-L6-v2",
+      "chunk_strategy": "hybrid",
+      "context_window_tokens": 16384,
+      "summarization_available": true,
+      "query_history_count": 0,
+      "last_retrieved_at": null,
+      
+      "doi": "10.1234/mckinsey.2024.genai.pharma",
+      "isbn": null,
+      "permanent_id": "MCK-2024-GENAI-PHARMA-001",
+      "citation_format": "Enomoto, K., Macak, M., & Zemmel, R. (2024). Generative AI in Pharma and Medtech: A New Era of Innovation. McKinsey & Company.",
+      "related_document_ids": [],
+      "supersedes_document_id": null,
+      "superseded_by_document_id": null,
+      
+      "access_policy": "public",
+      "data_classification": "public",
+      "retention_policy": "permanent",
+      "compliance_tags": ["HIPAA", "FDA Guidance"],
+      "pii_sensitivity": "Low",
+      "regulatory_exposure": "Medium",
+      "contains_pii": false,
+      "requires_consent": false,
+      
+      "view_count": 0,
+      "download_count": 0,
+      "share_count": 0,
+      "bookmark_count": 0,
+      "average_read_time_seconds": null,
+      "completion_rate": null,
+      
+      "readability_score": 58.3,
+      "technical_complexity": "expert",
+      "data_richness_score": 9.2,
+      "visual_content_ratio": 0.42,
+      "freshness_score": 8.5,
+      
+      "description": "McKinsey's in-depth analysis of generative AI applications in pharmaceutical R&D, clinical trials, and medical device development with real-world case studies",
+      "metadata": {
+        "research_sample_size": 150,
+        "case_studies_included": 8,
+        "companies_interviewed": 45,
+        "key_findings": [
+          "GenAI can reduce drug discovery time by 30-40%",
+          "Clinical trial design optimization saves $2-5M per trial",
+          "45% of pharma companies piloting GenAI in R&D"
+        ],
+        "methodology": "Expert interviews + quantitative analysis + case studies",
+        "data_collection_period": "2023-Q4 to 2024-Q2"
+      },
+      "source_metadata": {
+        "original_url": "https://www.mckinsey.com/industries/life-sciences/our-insights/generative-ai-in-pharma-and-medtech-a-new-era-of-innovation",
+        "scraping_timestamp": "2025-11-05T11:00:00Z",
+        "scraping_method": "web_scraper_tool",
+        "content_hash": "sha256:f7e8d9c0b1a2...",
+        "last_modified": "2024-09-20T14:30:00Z"
+      }
+    }
+  ],
+  "output_settings": {
+    "knowledge_folder": "knowledge_base_consulting_reports",
+    "report_filename": "ingestion_report.md",
+    "error_log_filename": "ingestion_errors.log"
+  },
+  "scraping_settings": {
+    "extract_links": true,
+    "extract_images": false,
+    "wait_for_js": true,
+    "timeout": 60,
+    "max_retries": 3,
+    "retry_delay_seconds": 5,
+    "user_agent": "VitalPathKnowledgeBot/1.0"
+  },
+  "processing_settings": {
+    "chunk_size": 1000,
+    "chunk_overlap": 200,
+    "min_content_length": 100,
+    "max_content_length": 100000,
+    "remove_html_tags": true,
+    "normalize_whitespace": true,
+    "extract_metadata": true
+  },
+  "upload_settings": {
+    "use_unified_rag_service": true,
+    "pinecone_namespace_prefix": "consulting-reports",
+    "supabase_table": "knowledge_documents",
+    "batch_size": 10,
+    "enable_deduplication": true,
+    "update_existing": true
+  },
+  "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
+  "embedding_settings": {
+    "model_name": "sentence-transformers/all-MiniLM-L6-v2",
+    "use_gpu": true,
+    "batch_size": 32,
+    "normalize_embeddings": true,
+    "dimension": 384
+  },
+  "quality_settings": {
+    "auto_calculate_quality_score": true,
+    "auto_calculate_credibility_score": true,
+    "auto_calculate_freshness_score": true,
+    "auto_extract_readability_score": true,
+    "quality_score_weights": {
+      "firm_reputation": 0.30,
+      "peer_review": 0.20,
+      "citation_count": 0.15,
+      "data_richness": 0.20,
+      "freshness": 0.15
+    },
+    "firm_reputation_scores": {
+      "McKinsey & Company": 9.9,
+      "Boston Consulting Group": 9.8,
+      "Bain & Company": 9.7,
+      "Deloitte": 9.0,
+      "PwC": 8.8,
+      "EY": 8.7,
+      "Accenture": 8.5,
+      "KPMG": 8.3,
+      "Gartner": 8.9,
+      "Forrester": 8.6,
+      "default": 7.0
+    }
+  }
+}
+

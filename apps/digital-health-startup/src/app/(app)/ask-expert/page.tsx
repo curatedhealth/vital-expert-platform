@@ -85,6 +85,7 @@ import {
 
 interface Source {
   id?: string;
+  number?: number;
   url: string;
   title?: string;
   description?: string;
@@ -95,6 +96,22 @@ interface Source {
   organization?: string;
   reliabilityScore?: number;
   lastUpdated?: string;
+  quote?: string;
+  sourceType?: string;
+  metadata?: Record<string, any>;
+}
+
+interface CitationMeta {
+  number: number | string;
+  id?: string;
+  title?: string;
+  url?: string;
+  description?: string;
+  quote?: string;
+  excerpt?: string;
+  sources?: Source[];
+  sourceId?: string;
+  [key: string]: any;
 }
 
 interface Message {
@@ -128,11 +145,7 @@ interface Message {
     id: string;
     content: string;
     confidence?: number;
-    citations?: {
-      number: number;
-      text: string;
-      sourceId?: string;
-    }[];
+    citations?: CitationMeta[];
     sources?: Source[];
     createdAt?: Date;
     reasoning?: string | string[];
@@ -160,11 +173,7 @@ interface Message {
     sources?: Source[];
     reasoning?: string[];
     confidence?: number;
-    citations?: {
-      number: number;
-      text: string;
-      sourceId?: string;
-    }[];
+    citations?: CitationMeta[];
   };
 }
 
@@ -332,6 +341,8 @@ function AskExpertPageContent() {
     ragSummary?: NonNullable<Message['metadata']>['ragSummary'];
     toolSummary?: NonNullable<Message['metadata']>['toolSummary'];
     sources?: Source[];
+    citations?: CitationMeta[];
+    finalResponse?: string;
     reasoning: string[];
   } | null>(null);
 
@@ -1120,6 +1131,7 @@ function AskExpertPageContent() {
       let fullResponse = '';
       let reasoning: string[] = [];
       let sources: Source[] = [];
+      let citations: any[] = [];
       let selectedAgent: Message['selectedAgent'] = undefined;
       let selectionReason: string | undefined = undefined;
       let confidence: number | undefined = undefined;
@@ -1149,6 +1161,7 @@ function AskExpertPageContent() {
             totals: { ...toolSummary.totals },
           },
           sources: [...sources],
+          citations: Array.isArray(citations) ? [...citations] : [],
           reasoning: [...reasoning],
         });
       };
@@ -1205,17 +1218,23 @@ function AskExpertPageContent() {
                     } else if (chunk.type === 'rag_sources') {
                       const incomingSources = Array.isArray(chunk.sources) ? chunk.sources : [];
                       sources = incomingSources.map((source: any, idx: number) => ({
+                        number: typeof source.number === 'string' ? parseInt(source.number, 10) : source.number ?? idx + 1,
                         id: source.id || `source-${idx + 1}`,
                         url: source.url || '#',
                         title: source.title || `Source ${idx + 1}`,
+                        description: source.description || source.summary,
                         excerpt: source.excerpt || source.description,
+                        quote: source.quote,
                         similarity: typeof source.similarity === 'number' ? source.similarity : undefined,
                         domain: source.domain,
                         evidenceLevel: source.evidenceLevel || 'Unknown',
                         organization: source.organization,
                         reliabilityScore: typeof source.reliabilityScore === 'number' ? source.reliabilityScore : undefined,
                         lastUpdated: source.lastUpdated,
+                        sourceType: source.sourceType,
+                        metadata: source.metadata,
                       }));
+                      citations = Array.isArray(chunk.sources) ? chunk.sources : citations;
                       ragSummary = {
                         totalSources: typeof chunk.total === 'number' ? chunk.total : sources.length,
                         strategy: typeof chunk.strategy === 'string' ? chunk.strategy : ragSummary.strategy,
@@ -1240,18 +1259,28 @@ function AskExpertPageContent() {
                       }
                       if (meta.sources && Array.isArray(meta.sources)) {
                         sources = meta.sources.map((source: any, idx: number) => ({
+                          number: typeof source.number === 'string' ? parseInt(source.number, 10) : source.number ?? idx + 1,
                           id: source.id || `source-${idx + 1}`,
                           url: source.url || '#',
                           title: source.title || `Source ${idx + 1}`,
+                          description: source.description || source.summary,
                           excerpt: source.excerpt || source.description,
+                          quote: source.quote,
                           similarity: typeof source.similarity === 'number' ? source.similarity : undefined,
                           domain: source.domain,
                           evidenceLevel: source.evidenceLevel || 'Unknown',
                           organization: source.organization,
                           reliabilityScore: typeof source.reliabilityScore === 'number' ? source.reliabilityScore : undefined,
                           lastUpdated: source.lastUpdated,
+                          sourceType: source.sourceType,
+                          metadata: source.metadata,
                         }));
                       }
+                      citations = Array.isArray(meta.citations) ? meta.citations : citations;
+                      ragSummary = {
+                        ...ragSummary,
+                        totalSources: sources.length,
+                      };
                       if (meta.tools) {
                         toolSummary = {
                           allowed: Array.isArray(meta.tools.allowed) ? meta.tools.allowed : toolSummary.allowed,
@@ -1353,9 +1382,18 @@ function AskExpertPageContent() {
                     // Extract sources from final format_output state
                     if (actualState.sources && Array.isArray(actualState.sources)) {
                       console.log(`✅ [Updates Mode] Found ${actualState.sources.length} sources`);
+                      sources = actualState.sources;
+                      ragSummary = {
+                        ...ragSummary,
+                        totalSources: actualState.sources.length,
+                      };
                       setStreamingMeta(prev => ({
                         ...prev,
-                        sources: actualState.sources
+                        sources: actualState.sources,
+                        ragSummary: {
+                          ...(prev?.ragSummary ?? ragSummary),
+                          totalSources: actualState.sources.length,
+                        },
                       }));
                       // Note: sources are stored in streamingMeta, which is used in finalSources
                     }
@@ -1363,6 +1401,7 @@ function AskExpertPageContent() {
                     // Extract citations
                     if (actualState.citations && Array.isArray(actualState.citations)) {
                       console.log(`✅ [Updates Mode] Found ${actualState.citations.length} citations`);
+                      citations = actualState.citations;
                       setStreamingMeta(prev => ({
                         ...prev,
                         citations: actualState.citations
@@ -1885,9 +1924,14 @@ function AskExpertPageContent() {
       const finalContent = streamingMessage || streamingMeta?.finalResponse || fullResponse || '';
       const finalSources = streamingMeta?.sources || sources || [];
       const finalReasoning = streamingMeta?.reasoning || reasoning || [];
+      // ✅ FIX: Merge backend ragSummary data with local data
       const finalRagSummary = {
-        ...ragSummary,
         totalSources: finalSources.length,  // ✅ Correct count from final sources
+        strategy: streamingMeta?.ragSummary?.strategy || ragSummary.strategy || 'hybrid',
+        domains: streamingMeta?.ragSummary?.domains || selectedRagDomains || [],
+        cacheHit: streamingMeta?.ragSummary?.cacheHit || ragSummary.cacheHit || false,
+        warning: streamingMeta?.ragSummary?.warning || ragSummary.warning,
+        retrievalTimeMs: streamingMeta?.ragSummary?.retrievalTimeMs || ragSummary.retrievalTimeMs,
       };
       const finalToolSummary = streamingMeta?.toolSummary || toolSummary;
 
@@ -1910,7 +1954,11 @@ function AskExpertPageContent() {
                 id: `${assistantMessageId}-branch-0`,
                 content: finalContent,  // ✅ Use accumulated content
                 confidence: typeof confidence === 'number' ? confidence : 0,
-                citations: Array.isArray(finalMeta?.citations) ? finalMeta.citations : [],
+                citations: Array.isArray(finalMeta?.citations)
+                  ? finalMeta.citations
+                  : Array.isArray(streamingMeta?.citations)
+                    ? streamingMeta.citations
+                    : [],
                 sources: finalSources.map((src, idx) => ({ ...src, id: src.id || `fallback-source-${idx + 1}` })),  // ✅ Use finalSources
                 createdAt: new Date(),
                 reasoning: finalReasoning.length > 0 ? finalReasoning.join('\n') : undefined,  // ✅ Use finalReasoning
@@ -1939,7 +1987,15 @@ function AskExpertPageContent() {
           sources: activeBranch?.sources && activeBranch.sources.length > 0 ? activeBranch.sources : finalSources,  // ✅ Use finalSources
           reasoning: finalReasoning,  // ✅ Use finalReasoning
           confidence,
-          citations: Array.isArray(finalMeta?.citations) ? finalMeta.citations : undefined,
+          citations: Array.isArray(finalMeta?.citations)
+            ? finalMeta.citations
+            : Array.isArray(streamingMeta?.citations)
+              ? streamingMeta.citations
+              : undefined,
+          // ✅ FIX: Include LangGraph streaming data for persistent AI reasoning display
+          workflowSteps: workflowSteps.length > 0 ? workflowSteps : undefined,
+          reasoningSteps: reasoningSteps.length > 0 ? reasoningSteps : undefined,
+          streamingMetrics: streamingMetrics || undefined,
         },
       };
 

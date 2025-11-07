@@ -1,0 +1,178 @@
+{
+  "sources": [
+    {
+      "title": "State of Generative AI in the Enterprise: Now Decides Next - Q4 2024",
+      "abstract": "Deloitte AI Institute's Q4 2024 conclusion of the quarterly survey series tracking GenAI investments, successes and challenges throughout 2024. Survey of 2,773 director- to C-suite respondents across six industries and 14 countries reveals positive pragmatism replacing initial hype.",
+      "firm": "Deloitte",
+      "firm_id": "DTT",
+      "authors": [
+        "Costi Perricos",
+        "Clare Harding",
+        "Deloitte AI Institute"
+      ],
+      "publication_date": "2025-01-15",
+      "publication_year": 2025,
+      "publication_month": "Q1",
+      "version": "Q4 2024",
+      "edition": "Wave Four",
+      "series_name": "Deloitte State of GenAI in Enterprise Series",
+      "file_type": "pdf",
+      "content_file_type": "pdf",
+      "page_count": 45,
+      "word_count": null,
+      "language_code": "en",
+      "url": "https://www.deloitte.com/az/en/issues/generative-ai/state-of-generative-ai-in-enterprise.html",
+      "source_url": "https://www.deloitte.com/az/en/issues/generative-ai/state-of-generative-ai-in-enterprise.html",
+      "pdf_link": "https://www.markt-kom.com/wp-content/uploads/2025/01/Download-Deloitte-Report-State-of-Generative-AI-Englisch.pdf",
+      "direct_download": true,
+      "access_type": "public",
+      "registration_required": false,
+      "paywall_status": "free",
+      "download_date": "2025-11-05T13:18:00Z",
+      "last_verified_date": "2025-11-05T13:18:00Z",
+      "quality_score": 9.4,
+      "credibility_score": 9,
+      "peer_reviewed": false,
+      "editorial_review_status": "published",
+      "last_reviewed_date": "2025-11-05",
+      "reviewed_by_user_id": null,
+      "confidence_level": "high",
+      "citation_count": 0,
+      "domain": "ai_ml_enterprise",
+      "category": "consulting_reports",
+      "report_type": "research_study",
+      "tags": [
+        "generative AI",
+        "enterprise adoption",
+        "ROI",
+        "agentic AI",
+        "governance",
+        "risk management"
+      ],
+      "topics": [
+        "GenAI adoption",
+        "enterprise AI",
+        "AI ROI",
+        "AI governance"
+      ],
+      "industry_sectors": [
+        "Consumer",
+        "Energy",
+        "Financial Services",
+        "Life Sciences",
+        "Technology",
+        "Government"
+      ],
+      "geographic_scope": "global",
+      "geographic_regions": [
+        "14 countries"
+      ],
+      "target_audience": [
+        "C-Suite",
+        "CIO",
+        "CTO",
+        "Chief AI Officer",
+        "Risk Leaders"
+      ],
+      "practice_areas": [
+        "Artificial Intelligence",
+        "Risk & Governance",
+        "Digital Transformation"
+      ],
+      "seniority_level": "c_suite",
+      "use_case_category": "strategic",
+      "temporal_coverage": "current",
+      "forecast_year": null,
+      "historical_period": "2024",
+      "is_time_sensitive": true,
+      "has_executive_summary": true,
+      "has_table_of_contents": true,
+      "has_appendices": true,
+      "has_data_tables": true,
+      "has_charts_graphs": true,
+      "section_count": 0,
+      "document_structure": {
+        "sections": []
+      },
+      "priority": "high",
+      "rag_priority_weight": 0.93,
+      "embedding_model_version": "sentence-transformers/all-MiniLM-L6-v2",
+      "chunk_strategy": "hybrid",
+      "context_window_tokens": 8192,
+      "summarization_available": true,
+      "query_history_count": 0,
+      "last_retrieved_at": null,
+      "doi": null,
+      "isbn": null,
+      "permanent_id": "DTT-2025-GENAI-Q4-001",
+      "citation_format": "Deloitte AI Institute. (2025). State of Generative AI in the Enterprise: Now Decides Next - Q4 2024.",
+      "related_document_ids": [],
+      "supersedes_document_id": null,
+      "superseded_by_document_id": null,
+      "access_policy": "public",
+      "data_classification": "public",
+      "retention_policy": "permanent",
+      "compliance_tags": [],
+      "pii_sensitivity": "Low",
+      "regulatory_exposure": "Low",
+      "contains_pii": false,
+      "requires_consent": false,
+      "view_count": 0,
+      "download_count": 0,
+      "share_count": 0,
+      "bookmark_count": 0,
+      "average_read_time_seconds": null,
+      "completion_rate": null,
+      "readability_score": 65,
+      "technical_complexity": "advanced",
+      "data_richness_score": 9.1,
+      "visual_content_ratio": 0.38,
+      "freshness_score": 9.7,
+      "description": "Deloitte's Q4 2024 GenAI enterprise survey covering 2,773 executives across 6 industries and 14 countries",
+      "metadata": {
+        "research_sample_size": 2773,
+        "industries_covered": 6,
+        "countries_surveyed": 14,
+        "survey_period": "July-September 2024",
+        "key_findings": [
+          "ROI with AI is encouraging",
+          "Regulation and risk loom large",
+          "Agentic AI is on the rise",
+          "Positive pragmatism replacing hype"
+        ],
+        "methodology": "Quarterly survey + executive interviews"
+      },
+      "source_metadata": {
+        "original_url": "https://www.deloitte.com/az/en/issues/generative-ai/state-of-generative-ai-in-enterprise.html",
+        "scraping_timestamp": "2025-11-05T13:18:00Z",
+        "scraping_method": "web_search",
+        "last_modified": "2025-01-15"
+      }
+    }
+  ],
+  "scraping_settings": {
+    "timeout": 60,
+    "max_retries": 3,
+    "delay_between_requests": 1,
+    "wait_for_js": false,
+    "use_playwright": false
+  },
+  "processing_settings": {
+    "chunk_size": 1000,
+    "chunk_overlap": 200,
+    "min_word_count": 100,
+    "max_content_length": 1000000
+  },
+  "upload_settings": {
+    "enable_supabase": true,
+    "enable_pinecone": true,
+    "batch_size": 100,
+    "skip_duplicates": true
+  },
+  "output_settings": {
+    "create_subdirectories": true,
+    "include_metadata": true,
+    "markdown_format": true
+  },
+  "embedding_model": "sentence-transformers/all-MiniLM-L6-v2"
+}

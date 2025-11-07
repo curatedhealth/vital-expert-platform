@@ -1,0 +1,52 @@
+{
+  "sources": [
+    {
+      "url": "https://www.python.org/about/",
+      "domain": "ai_ml_technology",
+      "firm": "Test Organization",
+      "report_type": "test_content",
+      "category": "test",
+      "tags": ["test", "scraping", "verification"],
+      "priority": "high",
+      "description": "Simple test page to verify pipeline functionality - Python About page has clean HTML that should scrape successfully"
+    },
+    {
+      "url": "https://en.wikipedia.org/wiki/Artificial_intelligence",
+      "domain": "ai_ml_healthcare",
+      "firm": "Wikipedia",
+      "report_type": "reference",
+      "category": "test",
+      "tags": ["ai", "test", "reference"],
+      "priority": "medium",
+      "description": "Wikipedia AI article - good test for content extraction and metadata"
+    }
+  ],
+  "output_settings": {
+    "knowledge_folder": "knowledge_test",
+    "report_filename": "test_scraping_report.md"
+  },
+  "scraping_settings": {
+    "extract_links": false,
+    "extract_images": false,
+    "wait_for_js": false,
+    "timeout": 30
+  },
+  "processing_settings": {
+    "chunk_size": 1000,
+    "chunk_overlap": 200,
+    "min_content_length": 50
+  },
+  "upload_settings": {
+    "use_unified_rag_service": true,
+    "pinecone_namespace_prefix": "test",
+    "supabase_table": "knowledge_documents"
+  },
+  "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
+  "metadata": {
+    "collection_name": "Pipeline Test Collection",
+    "collection_description": "Test collection to verify knowledge pipeline functionality",
+    "curator": "System Test",
+    "date_created": "2025-11-05"
+  }
+}
+

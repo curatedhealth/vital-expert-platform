@@ -36,24 +36,38 @@ class SupabaseClient:
                 return  # Gracefully skip if not configured
             
             # Initialize Supabase client (REST API)
+            # ✅ FIXED: Use supabase v2.3.0 API without any options (proxy parameter removed completely)
             try:
-                self.client = create_client(
-                    self.settings.supabase_url,
-                    self.settings.supabase_service_role_key
-                )
-                logger.info("✅ Supabase REST client initialized")
-            except TypeError as e:
-                # Handle version incompatibility (e.g. 'proxy' parameter)
-                if "proxy" in str(e):
-                    logger.warning(f"⚠️ Supabase client version incompatibility: {e}")
-                    logger.info("ℹ️ Trying alternative initialization...")
-                    # Try without any extra parameters
+                logger.info("🔄 Attempting to initialize Supabase client...")
+                logger.debug(f"   URL: {self.settings.supabase_url[:30]}...")
+                
+                # Simple initialization without any options (works with supabase-py v2.3.0)
+                try:
                     self.client = create_client(
-                        self.settings.supabase_url,
-                        self.settings.supabase_service_role_key
+                        supabase_url=self.settings.supabase_url,
+                        supabase_key=self.settings.supabase_service_role_key
                     )
-                else:
+                    logger.info("✅ Supabase client object created successfully")
+                except Exception as create_error:
+                    logger.error(f"❌ Failed during create_client(): {create_error}")
                     raise
+                
+                # Test connection to verify it works
+                try:
+                    logger.info("🔄 Testing Supabase connection with query...")
+                    _ = self.client.table('knowledge_domains').select('domain_id').limit(1).execute()
+                    logger.info("✅ Supabase REST client initialized successfully (v2.3.0)")
+                except Exception as test_error:
+                    logger.warning(f"⚠️ Supabase client initialized but test query failed: {test_error}")
+                    logger.warning("   This may be due to table permissions or RLS policies")
+                    # Don't fail completely - client might still work for other operations
+                    
+            except Exception as e:
+                logger.error(f"❌ Failed to initialize Supabase client: {e}")
+                logger.warning("⚠️ Supabase-dependent features will be unavailable")
+                logger.warning("   RAG will use direct SQL queries as fallback")
+                self.client = None
+                return
 
             # Optional: Initialize direct database connection for vector operations
             # Only if DATABASE_URL is provided and valid

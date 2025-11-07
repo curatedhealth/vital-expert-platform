@@ -667,7 +667,7 @@ Do NOT add citation numbers since no sources were provided."""
                     return {
                         **state,
                         'agent_response': response.content,  # type: ignore  # ✅ Has [1], [2] markers!
-                        'structured_citations': structured_citations,  # ✅ For frontend
+            'structured_citations': final_citations,  # ✅ For frontend
                         'response_confidence': 0.8,
                         'model_used': model,
                         'current_node': 'execute_agent'
@@ -759,6 +759,37 @@ Do NOT add citation numbers since no sources were provided."""
                 'current_node': 'format_output'
             }
         
+        def normalize_citation(
+            idx: int,
+            doc: Dict[str, Any],
+            *,
+            title: Optional[str] = None,
+            url: Optional[str] = None,
+            description: Optional[str] = None,
+            quote: Optional[str] = None,
+            number: Optional[int] = None
+        ) -> Dict[str, Any]:
+            """Normalize citation schema for frontend consumption."""
+            metadata = doc.get('metadata', {}) if isinstance(doc, dict) else {}
+            source_number = number if number is not None else idx
+            excerpt = doc.get('excerpt') or doc.get('content', '')
+            normalized = {
+                'number': str(source_number),
+                'id': doc.get('id') or f"source-{source_number}",
+                'title': title or doc.get('title') or f"Source {source_number}",
+                'url': url or doc.get('url') or '#',
+                'description': description or metadata.get('description') or excerpt[:200],
+                'quote': quote or metadata.get('quote') or excerpt[:300],
+                'excerpt': excerpt[:500] if isinstance(excerpt, str) else '',
+                'domain': doc.get('domain') or metadata.get('domain'),
+                'similarity': doc.get('similarity') or metadata.get('similarity'),
+                'organization': doc.get('organization') or metadata.get('organization'),
+                'sourceType': doc.get('sourceType') or metadata.get('sourceType'),
+                'evidenceLevel': doc.get('evidenceLevel') or metadata.get('evidenceLevel'),
+                'metadata': metadata,
+            }
+            return normalized
+
         # Use structured citations if available, otherwise format from retrieved_documents
         if structured_citations:
             # Structured output provided proper citations
@@ -767,21 +798,34 @@ Do NOT add citation numbers since no sources were provided."""
                 "✅ Using structured citations",
                 count=len(structured_citations)
             )
+            normalized_citations = []
+            for citation in structured_citations:
+                number = citation.get('number') or citation.get('id')
+                try:
+                    number_int = int(number)
+                except (ValueError, TypeError):
+                    number_int = len(normalized_citations) + 1
+                doc_index = max(number_int - 1, 0)
+                fallback_doc = retrieved_documents[doc_index] if doc_index < len(retrieved_documents) else {}
+                normalized_citations.append(
+                    normalize_citation(
+                        len(normalized_citations) + 1,
+                        {**fallback_doc, **citation},
+                        title=citation.get('title'),
+                        url=citation.get('url'),
+                        description=citation.get('description'),
+                        quote=citation.get('quote'),
+                        number=number_int
+                    )
+                )
+            final_citations = normalized_citations
         else:
             # Fallback: Format from retrieved documents
             final_citations = []
             for idx, doc in enumerate(retrieved_documents[:10], 1):
-                final_citations.append({
-                    'number': idx,
-                    'id': f"source-{idx}",
-                    'title': doc.get('title', f'Source {idx}'),
-                    'url': doc.get('url', '#'),
-                    'excerpt': doc.get('content', '')[:200],
-                    'description': doc.get('metadata', {}).get('description', ''),
-                    'domain': doc.get('domain', 'General'),
-                    'similarity': doc.get('similarity', 0.0),
-                    'metadata': doc.get('metadata', {})
-                })
+                final_citations.append(
+                    normalize_citation(idx, doc)
+                )
             logger.info(
                 "✅ Using fallback citation formatting",
                 count=len(final_citations)

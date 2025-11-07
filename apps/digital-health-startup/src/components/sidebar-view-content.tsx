@@ -13,6 +13,7 @@ import {
   CheckCircle2,
   Clock,
   Cloud,
+  Database,
   DollarSign,
   FileText,
   FolderOpen,
@@ -725,6 +726,15 @@ export function SidebarAdminContent() {
               >
                 <Settings className="h-4 w-4" />
                 <span>Tools</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton 
+                onClick={() => handleNavigation('knowledge-pipeline')}
+                isActive={isActive('knowledge-pipeline')}
+              >
+                <Database className="h-4 w-4" />
+                <span>Knowledge Pipeline</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
           </SidebarMenu>

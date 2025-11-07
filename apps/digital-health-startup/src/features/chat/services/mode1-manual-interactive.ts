@@ -39,14 +39,41 @@ interface Mode1ManualApiResponse {
   citations: Array<Record<string, unknown>>;
   metadata: Record<string, unknown>;
   processing_time_ms: number;
+  // Additional fields from AI Engine response
+  error?: string;
+  message?: string;
+  reasoning?: Array<Record<string, unknown>>;
+  sources?: Array<Record<string, unknown>>;
+  requestId?: string;
 }
 
-// Use API Gateway URL for compliance with Golden Rule (Python services via gateway)
-// NOTE: In development, we bypass API Gateway authentication by going directly to AI Engine
+/**
+ * ⚠️ LOCAL DEVELOPMENT: Direct AI Engine Connection
+ * 
+ * For speed in local development, we connect directly to the local AI Engine (port 8080)
+ * instead of going through the API Gateway (port 4000 / production URL).
+ * 
+ * PRODUCTION: Use API Gateway URL from environment variables
+ * LOCAL DEV: Use direct AI Engine connection (localhost:8080)
+ * 
+ * ⚠️ DO NOT MODIFY THIS WITHOUT UPDATING ALL MODE HANDLERS ⚠️
+ * - Mode 1, 2, 3, 4 all use this pattern
+ * - AI Engine runs on port 8080
+ * - API Gateway runs on port 4000 or production URL
+ */
+const AI_ENGINE_URL =
+  process.env.PYTHON_AI_ENGINE_URL ||
+  process.env.NEXT_PUBLIC_PYTHON_AI_ENGINE_URL ||
+  'http://localhost:8080'; // Direct connection to local AI Engine
+
+// Fallback to API Gateway if explicitly set (for production)
 const API_GATEWAY_URL =
   process.env.API_GATEWAY_URL ||
   process.env.NEXT_PUBLIC_API_GATEWAY_URL ||
-  'http://localhost:3001'; // Default to API Gateway (proper flow)
+  null; // No default - use AI_ENGINE_URL instead
+
+// Use AI Engine URL directly for local development
+const BASE_URL = AI_ENGINE_URL;
 
 const DEFAULT_TENANT_ID =
   process.env.API_GATEWAY_TENANT_ID ||
@@ -68,8 +95,8 @@ function mapCitationsToSources(citations: Array<Record<string, unknown>>): Array
     id: String(citation.id ?? `source-${index + 1}`),
     url: citation.url ?? citation.link ?? '#',
     title: citation.title ?? citation.name ?? `Source ${index + 1}`,
-    excerpt: citation.relevant_quote ?? citation.excerpt ?? citation.summary ?? '',
-    similarity: citation.similarity ?? citation.confidence_score ?? undefined,
+    excerpt: citation.relevant_quote ?? citation.excerpt ?? citation.summary ?? citation.content ?? '',
+    similarity: citation.similarity_score ?? citation.similarity ?? citation.confidence_score ?? undefined,
     domain: citation.domain,
     evidenceLevel: citation.evidence_level ?? citation.evidenceLevel ?? 'Unknown',
     organization: citation.organization,
@@ -128,10 +155,22 @@ export class Mode1ManualInteractiveHandler {
         conversation_history: config.conversationHistory ?? [],
       };
 
-      // Call AI Engine Mode 1 endpoint
+      // ✅ DEBUG LOGGING - AI Engine Request
+      console.group('🔍 [Mode 1] AI Engine Request');
+      console.log('Endpoint:', `${BASE_URL}/api/mode1/manual`);
+      console.log('agent_id:', payload.agent_id);
+      console.log('tenant_id:', payload.tenant_id);
+      console.log('enable_rag:', payload.enable_rag);
+      console.log('enable_tools:', payload.enable_tools);
+      console.log('Full Payload:', payload);
+      console.groupEnd();
+
+      // Call AI Engine Mode 1 endpoint directly
       // The AI Engine endpoint is: /api/mode1/manual
-      const mode1Endpoint = `${API_GATEWAY_URL}/api/mode1/manual`;
-      console.log('[Mode1] Calling AI Engine:', mode1Endpoint);
+      // ⚠️ LOCAL DEV: Connecting directly to AI Engine on port 8080
+      const mode1Endpoint = `${BASE_URL}/api/mode1/manual`;
+      console.log('[Mode1] Calling AI Engine directly:', mode1Endpoint);
+      console.log('[Mode1] Base URL:', BASE_URL, '| AI Engine URL:', AI_ENGINE_URL);
       
       let response: Response;
       try {
@@ -151,7 +190,7 @@ export class Mode1ManualInteractiveHandler {
         });
         throw new Error(
           `Failed to connect to AI Engine at ${mode1Endpoint}. ` +
-          `Please ensure the AI Engine server is running on port 8000. ` +
+          `Please ensure the AI Engine server is running on port 8080. ` +
           `Error: ${fetchError instanceof Error ? fetchError.message : String(fetchError)}`
         );
       }
@@ -174,20 +213,73 @@ export class Mode1ManualInteractiveHandler {
 
       const result = (await response.json()) as Mode1ManualApiResponse;
 
+      /**
+       * ⚠️ CRITICAL: Content Validation
+       * 
+       * PROBLEM: If result.content is missing or empty, chat completion will be empty.
+       * This happens when:
+       * 1. AI Engine returns response without content field
+       * 2. AI Engine returns empty content string
+       * 3. API Gateway fails to forward response correctly
+       * 
+       * SOLUTION: Validate content before streaming.
+       * 
+       * ⚠️ DO NOT REMOVE THIS CHECK ⚠️
+       * - Always check if result.content exists
+       * - Provide fallback error message if content is missing
+       * - Log full result for debugging
+       */
+      if (!result || !result.content) {
+        const errorMessage = result?.error || result?.message || 'AI Engine returned empty response';
+        console.error('❌ [Mode1] Empty response from AI Engine:', {
+          result,
+          errorMessage,
+          endpoint: mode1Endpoint,
+          status: response.status,
+        });
+        throw new Error(`AI Engine returned empty response: ${errorMessage}`);
+      }
+
+      // Validate content is not empty string
+      if (typeof result.content !== 'string' || result.content.trim().length === 0) {
+        console.error('❌ [Mode1] Empty content in response:', {
+          result,
+          contentLength: result.content?.length,
+          contentType: typeof result.content,
+        });
+        throw new Error('AI Engine returned empty content. Please try again or check AI Engine logs.');
+      }
+
       metrics.success = true;
       metrics.latency.totalMs = Date.now() - startTime;
       metrics.latency.llmCallMs = result.processing_time_ms;
       metrics.latency.agentFetchMs = metrics.latency.agentFetchMs ?? 0;
 
-      metrics.metadata = {
-        ...metrics.metadata,
-        confidence: result.confidence,
-        citations: result.citations?.length ?? 0,
-      };
+      // Update metrics metadata
+      if (result.confidence !== undefined) {
+        metrics.metadata = {
+          ...metrics.metadata,
+          confidence: result.confidence,
+          citations: result.citations?.length ?? 0,
+        };
+      } else {
+        metrics.metadata = {
+          ...metrics.metadata,
+          citations: result.citations?.length ?? 0,
+        };
+      }
 
       // Emit metadata events so the UI can keep existing visualisations.
+      console.log('🔍 [Mode1] AI Engine citations:', JSON.stringify(result.citations, null, 2));
+      console.log('🔍 [Mode1] AI Engine sources (if present):', JSON.stringify(result.sources, null, 2));
+      console.log('🔍 [Mode1] AI Engine reasoning:', JSON.stringify(result.reasoning, null, 2));
+      
       const sources = mapCitationsToSources(result.citations || []);
+      console.log('🔍 [Mode1] Mapped sources:', JSON.stringify(sources, null, 2));
+      console.log('📊 [Mode1] Sources count:', sources.length);
+      
       if (sources.length > 0) {
+        console.log('✅ [Mode1] Yielding rag_sources metadata chunk');
         yield buildMetadataChunk({
           event: 'rag_sources',
           total: sources.length,
@@ -196,11 +288,13 @@ export class Mode1ManualInteractiveHandler {
           cacheHit: false,
           domains: config.selectedRagDomains ?? [],
         });
+      } else {
+        console.warn('⚠️ [Mode1] No sources to yield - citations array was empty or undefined');
       }
 
       yield buildMetadataChunk({
         event: 'final',
-        confidence: result.confidence,
+        ...(result.confidence !== undefined && { confidence: result.confidence }),
         rag: {
           totalSources: sources.length,
           strategy: 'python_orchestrator',
@@ -223,8 +317,17 @@ export class Mode1ManualInteractiveHandler {
       });
 
       // ✅ Stream content word-by-word for smooth animation
+      // ⚠️ CRITICAL: Content must exist and be non-empty (validated above)
       const words = result.content.split(' ');
       const wordsPerChunk = 3; // Stream 3 words at a time
+      
+      if (words.length === 0) {
+        console.error('❌ [Mode1] No words to stream after split:', {
+          content: result.content,
+          contentLength: result.content.length,
+        });
+        throw new Error('AI Engine returned empty content after processing.');
+      }
       
       for (let i = 0; i < words.length; i += wordsPerChunk) {
         const chunk = words.slice(i, i + wordsPerChunk).join(' ') + (i + wordsPerChunk < words.length ? ' ' : '');
@@ -255,7 +358,7 @@ export class Mode1ManualInteractiveHandler {
         {
           agentId: config.agentId,
           operation: 'python_mode1_manual',
-          requestId,
+          ...(requestId && { requestId }),
         }
       );
       mode1Error.code = mode1Error.code ?? Mode1ErrorCode.UNKNOWN_ERROR;

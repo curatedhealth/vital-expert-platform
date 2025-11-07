@@ -190,11 +190,14 @@ export async function verifyAgentPermissions(
       }
 
       // Fetch agent details
-      const { data: agent, error: agentError } = await supabase
+      // For DELETE operations, include deleted agents (is_active = false or deleted_at IS NOT NULL)
+      let query = supabase
         .from('agents')
-        .select('id, created_by, tenant_id, is_custom, is_library_agent')
-        .eq('id', agentId)
-        .single();
+        .select('id, created_by, tenant_id, is_custom, is_library_agent, is_active, deleted_at')
+        .eq('id', agentId);
+      
+      // Don't apply is_active filter for DELETE - we need to check deleted agents
+      const { data: agent, error: agentError } = await query.single();
 
       if (agentError || !agent) {
         logger.warn('agent_auth_failed', {
@@ -205,12 +208,36 @@ export async function verifyAgentPermissions(
           userId: user.id,
           reason: 'agent_not_found',
           error: agentError?.message,
+          errorCode: agentError?.code,
         });
 
         return {
           allowed: false,
           error: 'Agent not found',
         };
+      }
+      
+      // If agent is already deleted and action is DELETE, allow it (idempotent delete)
+      if (action === 'delete' && (agent.is_active === false || agent.deleted_at)) {
+        logger.info('agent_already_deleted', {
+          operation: 'verifyAgentPermissions',
+          operationId,
+          action,
+          agentId,
+          userId: user.id,
+          reason: 'idempotent_delete',
+        });
+        
+        // Allow the delete to proceed - API will handle returning success
+        context.agent = {
+          id: agent.id,
+          created_by: agent.created_by || '',
+          tenant_id: agent.tenant_id || '',
+          is_custom: agent.is_custom === true,
+          is_library_agent: agent.is_library_agent === true,
+        };
+        
+        return { allowed: true, context };
       }
 
       context.agent = {
@@ -386,8 +413,21 @@ export function withAgentAuth(
 
     const action = actionMap[request.method || 'GET'] || 'read';
 
-    // Extract agent ID from params (Next.js App Router)
-    const agentId = params?.params?.id || params?.id;
+    // Extract agent ID from params (Next.js App Router with Promise support)
+    let agentId: string | undefined;
+    
+    // Handle both Promise-wrapped params (Next.js 15+) and regular params
+    if (params?.params) {
+      // Check if params is a Promise
+      if (params.params instanceof Promise) {
+        const resolvedParams = await params.params;
+        agentId = resolvedParams?.id;
+      } else {
+        agentId = params.params?.id;
+      }
+    } else if (params?.id) {
+      agentId = params.id;
+    }
 
     // Verify permissions
     const { allowed, context, error } = await verifyAgentPermissions(

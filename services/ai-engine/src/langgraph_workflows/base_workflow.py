@@ -94,6 +94,22 @@ class BaseWorkflow(ABC):
         self.graph: Optional[StateGraph] = None
         self.compiled_graph = None
         
+        # Add stream method wrapper for compatibility (redirects to astream)
+        # This prevents errors if code tries to call workflow.stream()
+        # Note: This is an async method that returns an async generator
+        async def stream_wrapper(*args, **kwargs):
+            """Wrapper to redirect stream() calls to astream() for async compatibility."""
+            if self.compiled_graph is None:
+                raise RuntimeError(f"Workflow {self.workflow_name} not initialized. Call initialize() first.")
+            if not hasattr(self.compiled_graph, 'astream'):
+                raise AttributeError(f"Compiled graph for {self.workflow_name} does not support streaming. Use execute() instead.")
+            # Return the async stream generator (astream returns AsyncIterator)
+            async for chunk in self.compiled_graph.astream(*args, **kwargs):
+                yield chunk
+        
+        # Add stream method for compatibility
+        self.stream = stream_wrapper
+        
         # Metrics
         self._execution_count = 0
         self._error_count = 0

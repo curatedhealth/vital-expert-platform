@@ -1,185 +1,181 @@
-# Scripts Directory
+# VITAL Knowledge Pipeline
 
-This directory contains utility scripts for development, testing, and maintenance of the VITAL Path platform.
+## 🚀 Production-Ready Setup
 
-## Organization
-
-### `/archive/`
-Historical scripts that are no longer actively used but preserved for reference.
-
-### `/maintenance/`
-Database maintenance, cleanup, and optimization scripts.
-
-### `/migration/`
-Database migration runners and utilities.
-
-### `/setup/`
-Initial setup and configuration scripts.
-
-### `/testing/`
-Test scripts and validation utilities.
-
-## Root-Level Scripts
-
-### Database Scripts
-- `check-tables.js` - Verify database table structure
-- `auto_fix_eslint.js` - Automated ESLint fixing
-
-### Agent Management
-- Various agent import, update, and verification scripts
-- Organizational structure management scripts
-
-## Usage
-
-Most scripts require environment variables to be set. Make sure you have a valid `.env.local` file configured before running scripts.
+### Installation
 
 ```bash
-# Example: Run a database check
-node scripts/check-tables.js
+# 1. Install dependencies
+cd scripts
+pip install -r requirements.txt
 
-# Example: Run with TypeScript
-npx tsx scripts/check-database-schema.ts
+# 2. Set up environment variables
+cp ../.env.local .env
+# Or manually create .env with required keys
+
+# 3. Verify setup
+python knowledge-pipeline.py --help
 ```
 
-## Important Notes
+### Quick Start
 
-⚠️ **Production Warning**: Many of these scripts interact directly with the database. Always:
-1. Test in development first
-2. Backup your data before running migration scripts
-3. Review the script code before execution
-4. Use caution with scripts that modify data
+```bash
+# Run with default settings (RAG service integration)
+python knowledge-pipeline.py --config config.json
 
-## Archive Policy
+# Test without uploading
+python knowledge-pipeline.py --config config.json --dry-run
 
-Scripts are moved to `/archive/` when:
-- They are no longer needed for active development
-- They have been replaced by newer versions
-- They served a one-time migration purpose
+# Custom embedding model
+python knowledge-pipeline.py \
+  --config config.json \
+  --embedding-model sentence-transformers/all-mpnet-base-v2
+```
 
-Scripts are NOT deleted to maintain git history and allow recovery if needed.
+### Configuration File Format
+
+Create a `config.json` file:
+
+```json
+{
+  "sources": [
+    {
+      "url": "https://www.fda.gov/medical-devices/overview",
+      "domain": "regulatory",
+      "category": "fda_guidelines",
+      "tags": ["fda", "medical-devices"],
+      "priority": "high",
+      "description": "FDA Medical Devices Overview"
+    }
+  ],
+  "output_settings": {
+    "create_subdirectories": true,
+    "include_metadata": true,
+    "markdown_format": true
+  }
+}
+```
+
+### Environment Variables
+
+Required in `.env` file:
+
+```bash
+# Supabase (Required)
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=your_service_key
+
+# Pinecone (Optional)
+PINECONE_API_KEY=your_pinecone_key
+PINECONE_RAG_INDEX_NAME=vital-rag-production
+```
+
+### Features
+
+✅ **Production-Ready**
+- Full type hints
+- Comprehensive error handling
+- Retry logic with exponential backoff
+- Clean logging
+
+✅ **RAG Service Integration**
+- Uses unified RAG service
+- Consistent chunking & embedding
+- Domain/namespace routing
+- Automatic metadata enrichment
+
+✅ **Clean Architecture**
+- Modular design
+- Easy to test
+- Well-documented
+- PEP 8 compliant
+
+### Usage Examples
+
+#### Basic Usage
+```bash
+python knowledge-pipeline.py --config my-sources.json
+```
+
+#### Dry Run (Test Mode)
+```bash
+python knowledge-pipeline.py --config my-sources.json --dry-run
+```
+
+#### Custom Output Directory
+```bash
+python knowledge-pipeline.py \
+  --config my-sources.json \
+  --output-dir ./my-knowledge
+```
+
+#### Different Embedding Model
+```bash
+python knowledge-pipeline.py \
+  --config my-sources.json \
+  --embedding-model sentence-transformers/multi-qa-mpnet-base-dot-v1
+```
+
+### Output
+
+The pipeline creates:
+
+```
+knowledge/
+├── regulatory/
+│   ├── FDA_Medical_Devices_abc123.md
+│   └── EMA_Guidelines_def456.md
+├── research/
+│   └── Clinical_Trial_xyz789.md
+└── pipeline_report_20251105_143022.md
+```
+
+### Monitoring
+
+Check logs:
+```bash
+tail -f knowledge-pipeline.log
+```
+
+View report:
+```bash
+cat knowledge/pipeline_report_*.md
+```
+
+### Troubleshooting
+
+**Import Error:**
+```bash
+# Make sure you're in the project root
+cd /path/to/VITAL\ path
+python scripts/knowledge-pipeline.py --config config.json
+```
+
+**Missing Dependencies:**
+```bash
+pip install -r scripts/requirements.txt
+```
+
+**RAG Service Connection:**
+```bash
+# Verify environment variables
+python -c "
+from dotenv import load_dotenv
+import os
+load_dotenv()
+print('✅ SUPABASE_URL:', os.getenv('SUPABASE_URL')[:30] + '...')
+"
+```
+
+### Documentation
+
+- **Full Guide**: [KNOWLEDGE_PIPELINE_README.md](KNOWLEDGE_PIPELINE_README.md)
+- **RAG Integration**: [RAG_INTEGRATION_GUIDE.md](RAG_INTEGRATION_GUIDE.md)
+- **Embedding Models**: [EMBEDDING_MODELS_GUIDE.md](EMBEDDING_MODELS_GUIDE.md)
+- **Environment Setup**: [KNOWLEDGE_PIPELINE_ENV_SETUP.md](KNOWLEDGE_PIPELINE_ENV_SETUP.md)
 
 ---
 
-## 🔧 Infrastructure Scripts
-
-### Environment Validation
-
-**validate-environment.ts** - Validates all required environment variables before deployment
-
-```bash
-npm run validate:env
-# or
-tsx scripts/validate-environment.ts
-```
-
-**What it checks**:
-- ✅ Required Supabase credentials
-- ✅ OpenAI API key configuration
-- ✅ Redis configuration (optional)
-- ✅ Database pool settings
-- ✅ URL format validation
-- ✅ API key format validation
-
-**Exit Codes**:
-- `0` - All validations passed
-- `1` - Critical validations failed
-- `2` - Warning validations failed (optional vars missing)
-
-### Database Migrations
-
-**run-migrations.ts** - Manages database schema migrations with transaction support
-
-```bash
-# Check migration status
-npm run migrate:status
-
-# Preview what will be executed (dry run)
-npm run migrate:dry-run
-
-# Apply all pending migrations
-npm run migrate
-```
-
-**Migration File Format**: `YYYYMMDDHHMMSS_description.sql`
-
-Example: `20251025000000_add_performance_indexes.sql`
-
-**Location**: `database/sql/migrations/YYYY/`
-
-**Features**:
-- Automatic migration tracking in `schema_migrations` table
-- Checksum validation to prevent modified migrations
-- Dry-run mode for preview
-- Transaction support
-- Detailed execution logging
-
-⚠️ **Note**: For production migrations, use Supabase CLI (`npx supabase db push`) or direct psql.
-
----
-
-## 📋 NPM Scripts
-
-The following scripts are available via `npm run`:
-
-```bash
-# Environment & Infrastructure
-npm run validate:env       # Validate environment variables
-npm run migrate            # Run database migrations
-npm run migrate:status     # Check migration status
-npm run migrate:dry-run    # Preview migrations without applying
-
-# Development
-npm run dev               # Start development server
-npm run build             # Build for production
-npm run type-check        # TypeScript type checking
-npm run lint              # Run ESLint
-npm run lint:fix          # Auto-fix ESLint issues
-
-# Testing
-npm run test              # Run all tests
-npm run test:unit         # Run unit tests only
-npm run test:integration  # Run integration tests
-npm run test:coverage     # Run tests with coverage
-npm run test:ci           # CI-optimized test run
-```
-
----
-
-## 🚀 Quick Start for New Developers
-
-1. **Clone repository and install dependencies**:
-```bash
-git clone <repo-url>
-cd vital-path
-npm install
-```
-
-2. **Set up environment**:
-```bash
-cp .env.example .env.local
-# Edit .env.local with your credentials
-npm run validate:env
-```
-
-3. **Run database migrations**:
-```bash
-npm run migrate:status
-npm run migrate
-```
-
-4. **Start development server**:
-```bash
-npm run dev
-```
-
----
-
-## 📚 Additional Documentation
-
-- [SECURITY_HARDENING_GUIDE.md](../SECURITY_HARDENING_GUIDE.md) - Security implementation details
-- [DEPLOYMENT_CHECKLIST.md](../DEPLOYMENT_CHECKLIST.md) - Production deployment guide
-- [MIGRATION_EXAMPLES.md](../MIGRATION_EXAMPLES.md) - Code migration examples
-
----
-
-**Last Updated**: 2025-01-25
+**Version:** 2.0.0 (Production Ready)
+**Python:** 3.8+
+**Status:** ✅ Ready for Production Use

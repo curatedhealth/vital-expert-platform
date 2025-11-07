@@ -60,6 +60,11 @@ const PersonasManagement = dynamic(
   { ssr: false }
 );
 
+const KnowledgePipelineConfig = dynamic(
+  () => import('@/components/admin/KnowledgePipelineConfig').then(mod => ({ default: mod.KnowledgePipelineConfig })),
+  { ssr: false }
+);
+
 const FeedbackDashboard = dynamic(
   () => import('@/app/(app)/admin/feedback-dashboard/page'),
   { ssr: false }
@@ -227,6 +232,13 @@ export default function AdminPage() {
         return (
           <div className="container mx-auto py-8">
             <PersonasManagement />
+          </div>
+        );
+      
+      case 'knowledge-pipeline':
+        return (
+          <div className="container mx-auto py-8">
+            <KnowledgePipelineConfig />
           </div>
         );
       

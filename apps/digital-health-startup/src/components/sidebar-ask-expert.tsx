@@ -108,13 +108,6 @@ export function SidebarAskExpert() {
     return filtered;
   }, [agents, searchQuery, filterTier])
 
-  const agentsByTier = useMemo(() => {
-    return filteredAgents.reduce((acc, agent) => {
-      if (!acc[agent.tier]) acc[agent.tier] = []
-      acc[agent.tier].push(agent)
-      return acc
-    }, {} as Record<number, typeof filteredAgents>)
-  }, [filteredAgents])
 
   const handleNewChat = useCallback(async () => {
     if (isCreatingChat) return
@@ -337,114 +330,112 @@ export function SidebarAskExpert() {
                 </SidebarMenuItem>
               )}
 
-              {Object.entries(agentsByTier)
-                .sort(([a], [b]) => Number(b) - Number(a))
-                .map(([tier, tierAgents]) => (
-                  <div key={tier} className="space-y-1">
-                    <span className="pl-2 text-xs font-semibold text-muted-foreground">
-                      Tier {tier}
-                    </span>
-                    {tierAgents.map((agent) => {
-                      const isSelected = selectedAgents.includes(agent.id)
-                      return (
-                        <SidebarMenuItem key={agent.id}>
-                          <SidebarMenuButton
-                            data-active={isSelected}
-                            onClick={() => {
-                              console.log('🔍 [Agent Click] Agent clicked:', agent.id, agent.displayName);
-                              const nextSelection = isSelected
-                                ? selectedAgents.filter((id) => id !== agent.id)
-                                : [...selectedAgents, agent.id]
-                              console.log('🔍 [Agent Click] New selection:', nextSelection);
-                              setSelectedAgents(nextSelection)
-                            }}
+              {filteredAgents.map((agent) => {
+                const isSelected = selectedAgents.includes(agent.id)
+                return (
+                  <SidebarMenuItem key={agent.id}>
+                    <SidebarMenuButton
+                      data-active={isSelected}
+                      onClick={() => {
+                        console.log('🔍 [Agent Click] Agent clicked:', agent.id, agent.displayName);
+                        const nextSelection = isSelected
+                          ? selectedAgents.filter((id) => id !== agent.id)
+                          : [...selectedAgents, agent.id]
+                        console.log('🔍 [Agent Click] New selection:', nextSelection);
+                        setSelectedAgents(nextSelection)
+                      }}
+                      className={cn(
+                        'items-center transition-all p-2 rounded-lg relative',
+                        agent.isUserAdded && !isSelected && 'bg-green-50/50 dark:bg-green-900/20 border-l-2 border-l-green-500',
+                        isSelected && 'bg-vital-primary-100 dark:bg-vital-primary-900/30 border-l-4 border-l-vital-primary-600 dark:border-l-vital-primary-500 shadow-md ring-2 ring-vital-primary-200 dark:ring-vital-primary-800'
+                      )}
+                    >
+                      {/* Avatar, Name, and Action Button in single row */}
+                      <div className="flex items-center gap-2 flex-1 min-w-0">
+                        {/* Avatar */}
+                        <div className="flex-shrink-0 relative">
+                          <AgentAvatar
+                            agent={agent}
+                            size="sm"
                             className={cn(
-                              'items-center transition-all p-2 rounded-lg',
-                              agent.isUserAdded && !isSelected && 'bg-green-50/50 border-l-2 border-l-green-500',
-                              isSelected && 'bg-vital-primary-100 border-l-4 border-l-vital-primary-600 shadow-sm'
+                              'w-7 h-7 rounded-lg border-2 transition-all',
+                              isSelected 
+                                ? 'border-vital-primary-500 dark:border-vital-primary-400 shadow-md ring-2 ring-vital-primary-200 dark:ring-vital-primary-800' 
+                                : 'border-gray-200 dark:border-gray-700'
                             )}
-                          >
-                            {/* Avatar, Name, and Action Button in single row */}
-                            <div className="flex items-center gap-2 flex-1 min-w-0">
-                              {/* Avatar */}
-                              <div className="flex-shrink-0">
-                                <AgentAvatar
-                                  agent={agent}
-                                  size="sm"
-                                  className={cn(
-                                    'w-7 h-7 rounded-lg border-2 transition-all',
-                                    isSelected 
-                                      ? 'border-vital-primary-500 shadow-sm' 
-                                      : 'border-gray-200'
-                                  )}
-                                />
-                              </div>
-
-                              {/* Name with Check Icon */}
-                              <div className="flex-1 min-w-0 flex items-center gap-1.5">
-                                {isSelected && (
-                                  <CheckIcon className="h-3 w-3 text-vital-primary-600 flex-shrink-0" />
-                                )}
-                                <span className={cn(
-                                  'text-xs font-medium leading-tight break-words',
-                                  isSelected && 'text-vital-primary-900 font-semibold'
-                                )}>
-                                  {cleanDisplayName(agent.displayName)}
-                                </span>
-                              </div>
-
-                              {/* Action Button */}
-                              <div className="flex-shrink-0">
-                                {!agent.isUserAdded ? (
-                                  <div
-                                    role="button"
-                                    tabIndex={0}
-                                    className="inline-flex items-center justify-center h-5 w-5 p-0 rounded-md hover:bg-gray-100 transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-vital-primary-500 focus:ring-offset-1"
-                                    onClick={(e) => {
-                                      console.log('🔍 [Button Click] Add button clicked for agent:', agent.id);
-                                      e.stopPropagation()
-                                      addAgentToUserList(agent.id)
-                                    }}
-                                    onKeyDown={(e) => {
-                                      if (e.key === 'Enter' || e.key === ' ') {
-                                        e.preventDefault()
-                                        e.stopPropagation()
-                                        addAgentToUserList(agent.id)
-                                      }
-                                    }}
-                                    title="Add to chat list"
-                                  >
-                                    <PlusIcon className="h-3 w-3" />
-                                  </div>
-                                ) : (
-                                  <div
-                                    role="button"
-                                    tabIndex={0}
-                                    className="inline-flex items-center justify-center h-5 w-5 p-0 rounded-md hover:bg-red-50 text-red-500 hover:text-red-700 transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1"
-                                    onClick={(e) => {
-                                      e.stopPropagation()
-                                      removeAgentFromUserList(agent.id)
-                                    }}
-                                    onKeyDown={(e) => {
-                                      if (e.key === 'Enter' || e.key === ' ') {
-                                        e.preventDefault()
-                                        e.stopPropagation()
-                                        removeAgentFromUserList(agent.id)
-                                      }
-                                    }}
-                                    title="Remove from chat list"
-                                  >
-                                    <Trash2Icon className="h-3 w-3" />
-                                  </div>
-                                )}
-                              </div>
+                          />
+                          {isSelected && (
+                            <div className="absolute -top-1 -right-1 w-4 h-4 bg-vital-primary-600 dark:bg-vital-primary-500 rounded-full flex items-center justify-center border-2 border-white dark:border-gray-900">
+                              <CheckIcon className="h-2.5 w-2.5 text-white" />
                             </div>
-                          </SidebarMenuButton>
-                        </SidebarMenuItem>
-                      )
-                    })}
-                  </div>
-                ))}
+                          )}
+                        </div>
+
+                        {/* Name with Check Icon */}
+                        <div className="flex-1 min-w-0 flex items-center gap-1.5">
+                          {isSelected && (
+                            <CheckIcon className="h-4 w-4 text-vital-primary-600 dark:text-vital-primary-400 flex-shrink-0" />
+                          )}
+                          <span className={cn(
+                            'text-xs font-medium leading-tight break-words transition-colors',
+                            isSelected 
+                              ? 'text-vital-primary-900 dark:text-vital-primary-200 font-semibold' 
+                              : 'text-gray-900 dark:text-gray-100'
+                          )}>
+                            {cleanDisplayName(agent.displayName)}
+                          </span>
+                        </div>
+
+                        {/* Action Button */}
+                        <div className="flex-shrink-0">
+                          {!agent.isUserAdded ? (
+                            <div
+                              role="button"
+                              tabIndex={0}
+                              className="inline-flex items-center justify-center h-5 w-5 p-0 rounded-md hover:bg-gray-100 transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-vital-primary-500 focus:ring-offset-1"
+                              onClick={(e) => {
+                                console.log('🔍 [Button Click] Add button clicked for agent:', agent.id);
+                                e.stopPropagation()
+                                addAgentToUserList(agent.id)
+                              }}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter' || e.key === ' ') {
+                                  e.preventDefault()
+                                  e.stopPropagation()
+                                  addAgentToUserList(agent.id)
+                                }
+                              }}
+                              title="Add to chat list"
+                            >
+                              <PlusIcon className="h-3 w-3" />
+                            </div>
+                          ) : (
+                            <div
+                              role="button"
+                              tabIndex={0}
+                              className="inline-flex items-center justify-center h-5 w-5 p-0 rounded-md hover:bg-red-50 text-red-500 hover:text-red-700 transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                removeAgentFromUserList(agent.id)
+                              }}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter' || e.key === ' ') {
+                                  e.preventDefault()
+                                  e.stopPropagation()
+                                  removeAgentFromUserList(agent.id)
+                                }
+                              }}
+                              title="Remove from chat list"
+                            >
+                              <Trash2Icon className="h-3 w-3" />
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                )
+              })}
             </SidebarMenu>
           </ScrollArea>
 

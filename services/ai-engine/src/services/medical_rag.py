@@ -7,7 +7,7 @@ import asyncio
 import numpy as np
 from typing import List, Dict, Any, Optional, Tuple
 from langchain_openai import OpenAIEmbeddings
-from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain_text_splitters import RecursiveCharacterTextSplitter  # ✅ LangChain 1.0
 from langchain_core.documents import Document
 import structlog
 from datetime import datetime, timezone

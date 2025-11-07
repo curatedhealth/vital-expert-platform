@@ -4,8 +4,8 @@
  * Routes to 4 simple, focused mode handlers:
  * - Mode 1: Manual Interactive (user selects agent)
  * - Mode 2: Automatic Agent Selection (orchestrator selects best agent)
- * - Mode 3: Autonomous-Automatic (orchestrator selects agent + autonomous reasoning)
- * - Mode 4: Autonomous-Manual (user selects agent + autonomous reasoning)
+ * - Mode 3: Manual Autonomous (user selects agent + autonomous reasoning) - SWAPPED
+ * - Mode 4: Automatic Autonomous (orchestrator selects agent + autonomous reasoning) - SWAPPED
  */
 
 import { NextRequest } from 'next/server';
@@ -26,7 +26,7 @@ import { createClient } from '@/lib/supabase/server';
 
 interface OrchestrateRequest {
   mode: 'manual' | 'automatic' | 'autonomous' | 'multi-expert';
-  agentId?: string; // For manual mode (Mode 1 & Mode 4)
+  agentId?: string; // For manual mode (Mode 1 & Mode 3 - SWAPPED)
   message: string;
   conversationHistory?: Array<{ role: 'user' | 'assistant'; content: string }>;
 
@@ -273,10 +273,17 @@ export async function POST(request: NextRequest) {
             }
 
             case 'autonomous': {
-              // MODE 3: Autonomous-Automatic
-              console.log('🎯 [Orchestrate] Routing to Mode 3: Autonomous-Automatic');
+              // MODE 3: Manual Autonomous (SWAPPED - user selects agent + autonomous)
+              if (!body.agentId) {
+                controller.enqueue(encoder.encode('data: {"error":"Agent ID required for Mode 3 (Manual Autonomous)"}\n\n'));
+                controller.close();
+                return;
+              }
+              console.log('🎯 [Orchestrate] Routing to Mode 3: Manual Autonomous');
 
-              const mode3Stream = await executeMode3({
+              // ⚠️ SWAPPED: Mode 3 (Manual) now calls executeMode4 (which calls /api/mode4/autonomous-manual endpoint)
+              const mode3Stream = await executeMode4({
+                agentId: body.agentId,
                 message: body.message,
                 conversationHistory: body.conversationHistory,
                 enableRAG: body.enableRAG !== false, // Default to true, only disable if explicitly false
@@ -321,34 +328,22 @@ export async function POST(request: NextRequest) {
             }
 
             case 'multi-expert': {
-              // MODE 4: Autonomous-Manual
-              if (!body.agentId) {
-                const errorEvent = {
-                  type: 'error',
-                  message: 'Agent ID required for multi-expert mode',
-                  content: 'Agent ID required for multi-expert mode',
-                  timestamp: new Date().toISOString()
-                };
-                controller.enqueue(encoder.encode(`data: ${JSON.stringify(errorEvent)}\n\n`));
-                controller.close();
-                return;
-              }
-
-              console.log('🎯 [Orchestrate] Routing to Mode 4: Autonomous-Manual');
+              // MODE 4: Automatic Autonomous (SWAPPED - system selects agent + autonomous)
+              console.log('🎯 [Orchestrate] Routing to Mode 4: Automatic Autonomous');
 
               try {
-                const mode4Stream = await executeMode4({
-                  agentId: body.agentId,
+                // ⚠️ SWAPPED: Mode 4 (Automatic) now calls executeMode3 (which calls /api/mode3/autonomous-automatic endpoint)
+                const mode4Stream = await executeMode3({
                   message: body.message,
                   conversationHistory: body.conversationHistory,
-                enableRAG: body.enableRAG !== false, // Default to true, only disable if explicitly false
-                enableTools: body.enableTools ?? true,
-                model: body.model,
-                temperature: body.temperature ?? 0.7,
-                maxTokens: body.maxTokens ?? 2000,
-                maxIterations: body.maxIterations ?? 10,
-                confidenceThreshold: body.confidenceThreshold ?? 0.95
-              });
+                  enableRAG: body.enableRAG !== false, // Default to true, only disable if explicitly false
+                  enableTools: body.enableTools ?? true,
+                  model: body.model,
+                  temperature: body.temperature ?? 0.7,
+                  maxTokens: body.maxTokens ?? 2000,
+                  maxIterations: body.maxIterations ?? 10,
+                  confidenceThreshold: body.confidenceThreshold ?? 0.95
+                });
 
                 // Stream autonomous chunks
                 try {

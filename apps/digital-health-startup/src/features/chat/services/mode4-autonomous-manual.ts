@@ -829,11 +829,33 @@ export class Mode4AutonomousManualHandler {
 /**
  * Execute Mode 4: Autonomous-Manual
  */
-// Use API Gateway URL for compliance with Golden Rule (Python services via gateway)
+/**
+ * ⚠️ LOCAL DEVELOPMENT: Direct AI Engine Connection
+ * 
+ * For speed in local development, we connect directly to the local AI Engine (port 8000)
+ * instead of going through the API Gateway (port 8080).
+ * 
+ * PRODUCTION: Use API Gateway URL from environment variables
+ * LOCAL DEV: Use direct AI Engine connection (localhost:8000)
+ * 
+ * ⚠️ DO NOT MODIFY THIS WITHOUT UPDATING ALL MODE HANDLERS ⚠️
+ * - Mode 1, 2, 3, 4 all use this pattern
+ * - AI Engine runs on port 8000
+ * - API Gateway runs on port 8080
+ */
+const AI_ENGINE_URL =
+  process.env.PYTHON_AI_ENGINE_URL ||
+  process.env.NEXT_PUBLIC_PYTHON_AI_ENGINE_URL ||
+  'http://localhost:8000'; // Direct connection to local AI Engine
+
+// Fallback to API Gateway if explicitly set (for production)
 const API_GATEWAY_URL =
   process.env.API_GATEWAY_URL ||
   process.env.NEXT_PUBLIC_API_GATEWAY_URL ||
-  'http://localhost:3001'; // Default to API Gateway (proper flow)
+  null; // No default - use AI_ENGINE_URL instead
+
+// Use AI Engine URL directly for local development
+const BASE_URL = AI_ENGINE_URL;
 
 const DEFAULT_TENANT_ID =
   process.env.API_GATEWAY_TENANT_ID ||
@@ -907,9 +929,11 @@ export async function* executeMode4(
       conversation_history: config.conversationHistory ?? [],
     };
 
-    const response = await fetch(
-      `${API_GATEWAY_URL}/api/mode4/autonomous-manual`,
-      {
+    // Call AI Engine Mode 4 endpoint directly
+    // ⚠️ LOCAL DEV: Connecting directly to AI Engine on port 8000
+    const mode4Endpoint = `${BASE_URL}/api/mode4/autonomous-manual`;
+    console.log('[Mode4] Calling AI Engine directly:', mode4Endpoint);
+    const response = await fetch(mode4Endpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

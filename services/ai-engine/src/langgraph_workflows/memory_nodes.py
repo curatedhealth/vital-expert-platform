@@ -400,10 +400,10 @@ class MemoryNodes:
         try:
             await self.supabase.set_tenant_context(tenant_id)
             
-            # Query past conversations for this user/session
-            # This is a simplified implementation - could use vector similarity
+            # ✅ FIXED: Query 'metadata' instead of non-existent columns
+            # The conversations table stores memory data in the metadata JSONB column
             query_builder = self.supabase.client.from_('conversations').select(
-                'semantic_memory, extracted_entities, user_preferences'
+                'id, metadata'
             ).eq('tenant_id', tenant_id)
             
             if user_id:
@@ -411,12 +411,13 @@ class MemoryNodes:
             elif session_id:
                 query_builder = query_builder.eq('session_id', session_id)
             
-            response = await query_builder.order('created_at', desc=True).limit(20).execute()
+            # ✅ FIXED: Remove await - Supabase v2 execute() is synchronous
+            response = query_builder.order('created_at', desc=True).limit(20).execute()
             
             if not response.data:
                 return {'entities': {}, 'preferences': {}, 'facts': []}
             
-            # Aggregate memory from past conversations
+            # Aggregate memory from past conversations (extract from metadata)
             aggregated_memory = self._aggregate_memory(response.data)
             
             return aggregated_memory
@@ -430,7 +431,7 @@ class MemoryNodes:
         Aggregate semantic memory from multiple conversations.
         
         Args:
-            conversations: List of conversation records
+            conversations: List of conversation records with metadata
             
         Returns:
             Aggregated memory
@@ -442,19 +443,22 @@ class MemoryNodes:
         }
         
         for conv in conversations:
-            # Merge entities
-            entities = conv.get('extracted_entities', {})
+            # ✅ FIXED: Extract memory data from metadata JSONB column
+            metadata = conv.get('metadata', {})
+            
+            # Merge entities (from metadata.semantic_memory.entities)
+            semantic_memory = metadata.get('semantic_memory', {})
+            entities = semantic_memory.get('entities', metadata.get('extracted_entities', {}))
             for category, items in entities.items():
                 if category not in aggregated['entities']:
                     aggregated['entities'][category] = set()
                 aggregated['entities'][category].update(items if isinstance(items, list) else [])
             
-            # Merge preferences (latest wins)
-            preferences = conv.get('user_preferences', {})
+            # Merge preferences (latest wins, from metadata.user_preferences)
+            preferences = metadata.get('user_preferences', {})
             aggregated['preferences'].update(preferences)
             
-            # Add facts
-            semantic_memory = conv.get('semantic_memory', {})
+            # Add facts (from metadata.semantic_memory.facts)
             facts = semantic_memory.get('facts', [])
             aggregated['facts'].extend(facts)
         
@@ -468,4 +472,5 @@ class MemoryNodes:
         aggregated['facts'] = aggregated['facts'][:20]
         
         return aggregated
+
 

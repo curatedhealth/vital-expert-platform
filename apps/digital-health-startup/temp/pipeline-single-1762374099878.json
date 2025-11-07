@@ -1,0 +1,173 @@
+{
+  "sources": [
+    {
+      "title": "The Widening AI Value Gap",
+      "abstract": "BCG's 2025 research on AI value generation, revealing that 5% of 'future-built' companies achieve 5x revenue increases and 3x cost reductions compared to laggards. Explores the emergence of agentic AI and the expanding value gap between AI leaders and followers.",
+      "firm": "Boston Consulting Group",
+      "firm_id": "BCG",
+      "authors": [
+        "BCG X Team"
+      ],
+      "publication_date": "2025-10-15",
+      "publication_year": 2025,
+      "publication_month": "Q4",
+      "version": "1.0",
+      "edition": "2025 Edition",
+      "series_name": "BCG AI Value Series",
+      "file_type": "pdf",
+      "content_file_type": "pdf",
+      "page_count": null,
+      "word_count": null,
+      "language_code": "en",
+      "url": "https://www.bcg.com/publications/2025/are-you-generating-value-from-ai-the-widening-gap",
+      "source_url": "https://www.bcg.com/publications/2025/are-you-generating-value-from-ai-the-widening-gap",
+      "pdf_link": "https://media-publications.bcg.com/The-Widening-AI-Value-Gap-Sept-2025.pdf",
+      "direct_download": true,
+      "access_type": "public",
+      "registration_required": false,
+      "paywall_status": "free",
+      "download_date": "2025-11-05T13:18:00Z",
+      "last_verified_date": "2025-11-05T13:18:00Z",
+      "quality_score": 9.7,
+      "credibility_score": 9.8,
+      "peer_reviewed": false,
+      "editorial_review_status": "published",
+      "last_reviewed_date": "2025-11-05",
+      "reviewed_by_user_id": null,
+      "confidence_level": "high",
+      "citation_count": 0,
+      "domain": "ai_ml_business_value",
+      "category": "consulting_reports",
+      "report_type": "research_study",
+      "tags": [
+        "AI value",
+        "agentic AI",
+        "AI agents",
+        "ROI",
+        "future-built companies",
+        "AI budgets"
+      ],
+      "topics": [
+        "AI value generation",
+        "agentic AI",
+        "AI agents",
+        "enterprise AI",
+        "AI ROI"
+      ],
+      "industry_sectors": [
+        "Cross-Industry",
+        "Technology",
+        "Financial Services"
+      ],
+      "geographic_scope": "global",
+      "geographic_regions": [
+        "Global"
+      ],
+      "target_audience": [
+        "C-Suite",
+        "CFO",
+        "CIO",
+        "CTO",
+        "VP Strategy"
+      ],
+      "practice_areas": [
+        "Artificial Intelligence",
+        "Digital Transformation",
+        "Business Value",
+        "Strategy"
+      ],
+      "seniority_level": "c_suite",
+      "use_case_category": "strategic",
+      "temporal_coverage": "forward_looking",
+      "forecast_year": 2028,
+      "historical_period": "2024-2025",
+      "is_time_sensitive": true,
+      "has_executive_summary": true,
+      "has_table_of_contents": true,
+      "has_appendices": true,
+      "has_data_tables": true,
+      "has_charts_graphs": true,
+      "section_count": 0,
+      "document_structure": {
+        "sections": []
+      },
+      "priority": "high",
+      "rag_priority_weight": 0.98,
+      "embedding_model_version": "sentence-transformers/all-MiniLM-L6-v2",
+      "chunk_strategy": "hybrid",
+      "context_window_tokens": 8192,
+      "summarization_available": true,
+      "query_history_count": 0,
+      "last_retrieved_at": null,
+      "doi": null,
+      "isbn": null,
+      "permanent_id": "BCG-2025-AI-VALUE-GAP-001",
+      "citation_format": "Boston Consulting Group. (2025). The Widening AI Value Gap.",
+      "related_document_ids": [],
+      "supersedes_document_id": null,
+      "superseded_by_document_id": null,
+      "access_policy": "public",
+      "data_classification": "public",
+      "retention_policy": "permanent",
+      "compliance_tags": [],
+      "pii_sensitivity": "Low",
+      "regulatory_exposure": "Low",
+      "contains_pii": false,
+      "requires_consent": false,
+      "view_count": 0,
+      "download_count": 0,
+      "share_count": 0,
+      "bookmark_count": 0,
+      "average_read_time_seconds": null,
+      "completion_rate": null,
+      "readability_score": 62,
+      "technical_complexity": "expert",
+      "data_richness_score": 9.5,
+      "visual_content_ratio": 0.4,
+      "freshness_score": 10,
+      "description": "BCG's empirical research proving future-built companies achieve 5x revenue increases and 3x cost reductions from AI compared to laggards",
+      "metadata": {
+        "key_findings": [
+          "5% of companies are AI 'future-built'",
+          "35% are scaling AI and generating value",
+          "60% report minimal value despite investment",
+          "AI agents account for 17% of total AI value in 2025",
+          "Expected to reach 29% by 2028",
+          "Future-built companies spend 26% more on IT"
+        ],
+        "methodology": "Global enterprise survey and financial analysis"
+      },
+      "source_metadata": {
+        "original_url": "https://www.bcg.com/publications/2025/are-you-generating-value-from-ai-the-widening-gap",
+        "scraping_timestamp": "2025-11-05T13:18:00Z",
+        "scraping_method": "web_search",
+        "last_modified": "2025-10-15"
+      }
+    }
+  ],
+  "scraping_settings": {
+    "timeout": 60,
+    "max_retries": 3,
+    "delay_between_requests": 1,
+    "wait_for_js": false,
+    "use_playwright": false
+  },
+  "processing_settings": {
+    "chunk_size": 1000,
+    "chunk_overlap": 200,
+    "min_word_count": 100,
+    "max_content_length": 1000000
+  },
+  "upload_settings": {
+    "enable_supabase": true,
+    "enable_pinecone": true,
+    "batch_size": 100,
+    "skip_duplicates": true
+  },
+  "output_settings": {
+    "create_subdirectories": true,
+    "include_metadata": true,
+    "markdown_format": true
+  },
+  "embedding_model": "sentence-transformers/all-MiniLM-L6-v2"
+}

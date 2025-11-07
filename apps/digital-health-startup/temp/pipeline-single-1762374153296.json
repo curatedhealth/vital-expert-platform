@@ -1,0 +1,173 @@
+{
+  "sources": [
+    {
+      "title": "EY FY2025 AI Revenue Growth and Strategy",
+      "abstract": "EY's FY2025 results showing AI-related revenue up 30%, with $53.2 billion total revenue (4% growth). Report covers 1,000 AI agents, 100+ internal AI applications, and $1B+ annual AI investment delivering enterprise-wide transformations and AI governance frameworks.",
+      "firm": "EY (Ernst & Young)",
+      "firm_id": "EY",
+      "authors": [
+        "Janet Truncale",
+        "EY Global Leadership"
+      ],
+      "publication_date": "2025-10-15",
+      "publication_year": 2025,
+      "publication_month": "Q4",
+      "version": "FY2025",
+      "edition": "Annual Results",
+      "series_name": "EY Financial Results",
+      "file_type": "html",
+      "content_file_type": "html",
+      "page_count": null,
+      "word_count": null,
+      "language_code": "en",
+      "url": "https://www.businessinsider.com/ey-annual-revenue-2025-big-four-earnings-ai-consulting-30-2025-10",
+      "source_url": "https://www.businessinsider.com/ey-annual-revenue-2025-big-four-earnings-ai-consulting-30-2025-10",
+      "pdf_link": null,
+      "direct_download": false,
+      "access_type": "public",
+      "registration_required": false,
+      "paywall_status": "free",
+      "download_date": "2025-11-05T13:18:00Z",
+      "last_verified_date": "2025-11-05T13:18:00Z",
+      "quality_score": 8.8,
+      "credibility_score": 8.7,
+      "peer_reviewed": false,
+      "editorial_review_status": "published",
+      "last_reviewed_date": "2025-11-05",
+      "reviewed_by_user_id": null,
+      "confidence_level": "high",
+      "citation_count": 0,
+      "domain": "ai_ml_professional_services",
+      "category": "consulting_reports",
+      "report_type": "financial_results",
+      "tags": [
+        "AI revenue",
+        "AI agents",
+        "AI governance",
+        "professional services",
+        "Big Four"
+      ],
+      "topics": [
+        "AI revenue growth",
+        "AI investments",
+        "AI agents",
+        "governance"
+      ],
+      "industry_sectors": [
+        "Professional Services",
+        "Consulting",
+        "Assurance"
+      ],
+      "geographic_scope": "global",
+      "geographic_regions": [
+        "Global"
+      ],
+      "target_audience": [
+        "C-Suite",
+        "CFO",
+        "Board Members",
+        "Investors"
+      ],
+      "practice_areas": [
+        "Artificial Intelligence",
+        "Consulting",
+        "Assurance",
+        "Tax"
+      ],
+      "seniority_level": "c_suite",
+      "use_case_category": "financial",
+      "temporal_coverage": "current",
+      "forecast_year": null,
+      "historical_period": "FY2025 (ending June 30, 2025)",
+      "is_time_sensitive": true,
+      "has_executive_summary": true,
+      "has_table_of_contents": false,
+      "has_appendices": false,
+      "has_data_tables": true,
+      "has_charts_graphs": false,
+      "section_count": 0,
+      "document_structure": {
+        "sections": []
+      },
+      "priority": "medium",
+      "rag_priority_weight": 0.82,
+      "embedding_model_version": "sentence-transformers/all-MiniLM-L6-v2",
+      "chunk_strategy": "semantic",
+      "context_window_tokens": 8192,
+      "summarization_available": true,
+      "query_history_count": 0,
+      "last_retrieved_at": null,
+      "doi": null,
+      "isbn": null,
+      "permanent_id": "EY-2025-FY-RESULTS-001",
+      "citation_format": "EY. (2025). EY FY2025 Financial Results: AI Revenue Growth and Strategy.",
+      "related_document_ids": [],
+      "supersedes_document_id": null,
+      "superseded_by_document_id": null,
+      "access_policy": "public",
+      "data_classification": "public",
+      "retention_policy": "permanent",
+      "compliance_tags": [],
+      "pii_sensitivity": "Low",
+      "regulatory_exposure": "Low",
+      "contains_pii": false,
+      "requires_consent": false,
+      "view_count": 0,
+      "download_count": 0,
+      "share_count": 0,
+      "bookmark_count": 0,
+      "average_read_time_seconds": null,
+      "completion_rate": null,
+      "readability_score": 70,
+      "technical_complexity": "basic",
+      "data_richness_score": 8,
+      "visual_content_ratio": 0.15,
+      "freshness_score": 10,
+      "description": "EY's FY2025 results showing 30% AI revenue growth, $1B+ AI investment, 1,000 AI agents deployed",
+      "metadata": {
+        "fiscal_year": "FY2025 (ending June 30, 2025)",
+        "key_findings": [
+          "AI revenue up 30%",
+          "Total revenue $53.2B (4% growth)",
+          "$1B+ annual AI investment",
+          "1,000 AI agents deployed",
+          "100+ internal AI applications",
+          "15,000+ EY people on AI projects",
+          "160,000+ audit engagements globally"
+        ],
+        "methodology": "Financial reporting"
+      },
+      "source_metadata": {
+        "original_url": "https://www.businessinsider.com/ey-annual-revenue-2025-big-four-earnings-ai-consulting-30-2025-10",
+        "scraping_timestamp": "2025-11-05T13:18:00Z",
+        "scraping_method": "web_search",
+        "last_modified": "2025-10-15"
+      }
+    }
+  ],
+  "scraping_settings": {
+    "timeout": 60,
+    "max_retries": 3,
+    "delay_between_requests": 1,
+    "wait_for_js": false,
+    "use_playwright": false
+  },
+  "processing_settings": {
+    "chunk_size": 1000,
+    "chunk_overlap": 200,
+    "min_word_count": 100,
+    "max_content_length": 1000000
+  },
+  "upload_settings": {
+    "enable_supabase": true,
+    "enable_pinecone": true,
+    "batch_size": 100,
+    "skip_duplicates": true
+  },
+  "output_settings": {
+    "create_subdirectories": true,
+    "include_metadata": true,
+    "markdown_format": true
+  },
+  "embedding_model": "sentence-transformers/all-MiniLM-L6-v2"
+}

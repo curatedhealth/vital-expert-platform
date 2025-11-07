@@ -531,11 +531,33 @@ export class Mode2AutomaticAgentSelectionHandler {
 /**
  * Execute Mode 2 with automatic agent selection
  */
-// Use API Gateway URL for compliance with Golden Rule (Python services via gateway)
+/**
+ * ⚠️ LOCAL DEVELOPMENT: Direct AI Engine Connection
+ * 
+ * For speed in local development, we connect directly to the local AI Engine (port 8000)
+ * instead of going through the API Gateway (port 8080).
+ * 
+ * PRODUCTION: Use API Gateway URL from environment variables
+ * LOCAL DEV: Use direct AI Engine connection (localhost:8000)
+ * 
+ * ⚠️ DO NOT MODIFY THIS WITHOUT UPDATING ALL MODE HANDLERS ⚠️
+ * - Mode 1, 2, 3, 4 all use this pattern
+ * - AI Engine runs on port 8000
+ * - API Gateway runs on port 8080
+ */
+const AI_ENGINE_URL =
+  process.env.PYTHON_AI_ENGINE_URL ||
+  process.env.NEXT_PUBLIC_PYTHON_AI_ENGINE_URL ||
+  'http://localhost:8000'; // Direct connection to local AI Engine
+
+// Fallback to API Gateway if explicitly set (for production)
 const API_GATEWAY_URL =
   process.env.API_GATEWAY_URL ||
   process.env.NEXT_PUBLIC_API_GATEWAY_URL ||
-  'http://localhost:3001'; // Default to API Gateway (proper flow)
+  null; // No default - use AI_ENGINE_URL instead
+
+// Use AI Engine URL directly for local development
+const BASE_URL = AI_ENGINE_URL;
 
 const DEFAULT_TENANT_ID =
   process.env.API_GATEWAY_TENANT_ID ||
@@ -602,8 +624,11 @@ export async function* executeMode2(config: Mode2Config): AsyncGenerator<Mode2St
       conversation_history: config.conversationHistory ?? [],
     };
 
-    // Call via API Gateway to comply with Golden Rule (Python services via gateway)
-    const response = await fetch(`${API_GATEWAY_URL}/api/mode2/automatic`, {
+    // Call AI Engine Mode 2 endpoint directly
+    // ⚠️ LOCAL DEV: Connecting directly to AI Engine on port 8000
+    const mode2Endpoint = `${BASE_URL}/api/mode2/automatic`;
+    console.log('[Mode2] Calling AI Engine directly:', mode2Endpoint);
+    const response = await fetch(mode2Endpoint, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

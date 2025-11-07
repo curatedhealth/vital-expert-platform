@@ -1,0 +1,167 @@
+{
+  "sources": [
+    {
+      "title": "2025 AI Business Predictions",
+      "abstract": "PwC's 2025 AI predictions covering the shift from AI adoption to AI success through vision and strategy. Survey shows 49% of tech leaders have AI fully integrated into core business strategy, with emphasis on AI choices as career-defining decisions.",
+      "firm": "PwC",
+      "firm_id": "PWC",
+      "authors": [
+        "PwC AI Team"
+      ],
+      "publication_date": "2024-12-02",
+      "publication_year": 2024,
+      "publication_month": "Q4",
+      "version": "1.0",
+      "edition": "2025 Predictions",
+      "series_name": "PwC AI Predictions",
+      "file_type": "html",
+      "content_file_type": "html",
+      "page_count": null,
+      "word_count": null,
+      "language_code": "en",
+      "url": "https://www.pwc.com/us/en/tech-effect/ai-analytics/ai-predictions.html",
+      "source_url": "https://www.pwc.com/us/en/tech-effect/ai-analytics/ai-predictions.html",
+      "pdf_link": null,
+      "direct_download": false,
+      "access_type": "public",
+      "registration_required": false,
+      "paywall_status": "free",
+      "download_date": "2025-11-05T13:18:00Z",
+      "last_verified_date": "2025-11-05T13:18:00Z",
+      "quality_score": 9,
+      "credibility_score": 8.8,
+      "peer_reviewed": false,
+      "editorial_review_status": "published",
+      "last_reviewed_date": "2025-11-05",
+      "reviewed_by_user_id": null,
+      "confidence_level": "high",
+      "citation_count": 0,
+      "domain": "ai_ml_business",
+      "category": "consulting_reports",
+      "report_type": "predictions",
+      "tags": [
+        "AI predictions",
+        "AI strategy",
+        "AI agents",
+        "digital workers",
+        "business transformation"
+      ],
+      "topics": [
+        "AI strategy",
+        "AI agents",
+        "digital transformation",
+        "business predictions"
+      ],
+      "industry_sectors": [
+        "Cross-Industry"
+      ],
+      "geographic_scope": "global",
+      "geographic_regions": [
+        "Global"
+      ],
+      "target_audience": [
+        "C-Suite",
+        "CIO",
+        "CTO",
+        "Technology Leaders"
+      ],
+      "practice_areas": [
+        "Artificial Intelligence",
+        "Technology Strategy",
+        "Digital Transformation"
+      ],
+      "seniority_level": "c_suite",
+      "use_case_category": "strategic",
+      "temporal_coverage": "forward_looking",
+      "forecast_year": 2025,
+      "historical_period": null,
+      "is_time_sensitive": true,
+      "has_executive_summary": true,
+      "has_table_of_contents": true,
+      "has_appendices": false,
+      "has_data_tables": true,
+      "has_charts_graphs": true,
+      "section_count": 0,
+      "document_structure": {
+        "sections": []
+      },
+      "priority": "high",
+      "rag_priority_weight": 0.87,
+      "embedding_model_version": "sentence-transformers/all-MiniLM-L6-v2",
+      "chunk_strategy": "semantic",
+      "context_window_tokens": 8192,
+      "summarization_available": true,
+      "query_history_count": 0,
+      "last_retrieved_at": null,
+      "doi": null,
+      "isbn": null,
+      "permanent_id": "PWC-2025-AI-PRED-001",
+      "citation_format": "PwC. (2024). 2025 AI Business Predictions.",
+      "related_document_ids": [],
+      "supersedes_document_id": null,
+      "superseded_by_document_id": null,
+      "access_policy": "public",
+      "data_classification": "public",
+      "retention_policy": "permanent",
+      "compliance_tags": [],
+      "pii_sensitivity": "Low",
+      "regulatory_exposure": "Low",
+      "contains_pii": false,
+      "requires_consent": false,
+      "view_count": 0,
+      "download_count": 0,
+      "share_count": 0,
+      "bookmark_count": 0,
+      "average_read_time_seconds": null,
+      "completion_rate": null,
+      "readability_score": 67,
+      "technical_complexity": "intermediate",
+      "data_richness_score": 8.4,
+      "visual_content_ratio": 0.33,
+      "freshness_score": 9.1,
+      "description": "PwC's 2025 predictions emphasizing AI success requires vision as much as adoption, with AI agents doubling knowledge workforce",
+      "metadata": {
+        "survey_source": "PwC Pulse Survey October 2024",
+        "key_findings": [
+          "49% have AI fully integrated in strategy",
+          "33% have AI integrated in products/services",
+          "20-30% gains in productivity and revenue at scale",
+          "AI agents could double knowledge workforce",
+          "Enterprise AI investment to reach $307B in 2025"
+        ],
+        "methodology": "Survey + strategic analysis"
+      },
+      "source_metadata": {
+        "original_url": "https://www.pwc.com/us/en/tech-effect/ai-analytics/ai-predictions.html",
+        "scraping_timestamp": "2025-11-05T13:18:00Z",
+        "scraping_method": "web_search",
+        "last_modified": "2024-12-02"
+      }
+    }
+  ],
+  "scraping_settings": {
+    "timeout": 60,
+    "max_retries": 3,
+    "delay_between_requests": 1,
+    "wait_for_js": false,
+    "use_playwright": false
+  },
+  "processing_settings": {
+    "chunk_size": 1000,
+    "chunk_overlap": 200,
+    "min_word_count": 100,
+    "max_content_length": 1000000
+  },
+  "upload_settings": {
+    "enable_supabase": true,
+    "enable_pinecone": true,
+    "batch_size": 100,
+    "skip_duplicates": true
+  },
+  "output_settings": {
+    "create_subdirectories": true,
+    "include_metadata": true,
+    "markdown_format": true
+  },
+  "embedding_model": "sentence-transformers/all-MiniLM-L6-v2"
+}

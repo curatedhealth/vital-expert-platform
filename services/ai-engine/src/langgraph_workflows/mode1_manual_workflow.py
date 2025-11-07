@@ -273,8 +273,21 @@ class Mode1ManualWorkflow(BaseWorkflow):
                 strategy="hybrid"
             )
             
+            logger.info(
+                "🔍 [DEBUG] RAG result received",
+                result_type=type(rag_result).__name__,
+                result_keys=list(rag_result.keys()) if isinstance(rag_result, dict) else 'not_a_dict',
+                has_sources='sources' in rag_result if isinstance(rag_result, dict) else False
+            )
+            
             # FIXED: Extract sources list from result dict
             sources = rag_result.get('sources', [])
+            
+            logger.info(
+                "📊 [DEBUG] Sources extracted",
+                sources_count=len(sources),
+                first_source_keys=list(sources[0].keys()) if sources else 'no_sources'
+            )
             
             # ✅ Emit AI reasoning about retrieval results
             writer({

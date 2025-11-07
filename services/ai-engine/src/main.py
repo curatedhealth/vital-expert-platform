@@ -120,13 +120,25 @@ from services.agent_selector_service import (
     QueryAnalysisRequest,
     QueryAnalysisResponse
 )
-from services.prompt_enhancement_service import (
-    PromptEnhancementService,
-    IntentClarificationRequest,
-    IntentClarificationResponse,
-    TemplateEnhancementRequest,
-    TemplateEnhancementResponse
-)
+# Try to import prompt enhancement service (optional dependency)
+try:
+    from services.prompt_enhancement_service import (
+        PromptEnhancementService,
+        IntentClarificationRequest,
+        IntentClarificationResponse,
+        TemplateEnhancementRequest,
+        TemplateEnhancementResponse
+    )
+    PROMPT_ENHANCEMENT_AVAILABLE = True
+except ImportError as e:
+    logger.warning(f"⚠️  Prompt enhancement service unavailable: {e}")
+    PromptEnhancementService = None
+    IntentClarificationRequest = None
+    IntentClarificationResponse = None
+    TemplateEnhancementRequest = None
+    TemplateEnhancementResponse = None
+    PROMPT_ENHANCEMENT_AVAILABLE = False
+    
 from services.cache_manager import CacheManager, initialize_cache_manager, get_cache_manager
 from services.tool_registry_service import ToolRegistryService, initialize_tool_registry, get_tool_registry
 from langgraph_workflows import (
@@ -587,9 +599,11 @@ async def initialize_services_background():
 
     # Initialize prompt enhancement service
     try:
-        if supabase_client:
+        if supabase_client and PROMPT_ENHANCEMENT_AVAILABLE:
             prompt_enhancement_service = PromptEnhancementService(supabase_client)
             logger.info("✅ Prompt enhancement service initialized")
+        else:
+            logger.info("⚠️  Prompt enhancement service disabled")
     except Exception as e:
         logger.error("❌ Failed to initialize prompt enhancement service", error=str(e))
         prompt_enhancement_service = None

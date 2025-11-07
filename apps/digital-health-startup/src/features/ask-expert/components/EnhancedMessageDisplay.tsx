@@ -27,7 +27,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@vital/ui';
-import { cn } from '@vital/ui/lib/utils';
+import { cn } from '@/lib/utils';
 import { Response as AIResponse } from '@/components/ai/response';
 import {
   Sources,

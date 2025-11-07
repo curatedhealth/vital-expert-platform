@@ -58,8 +58,8 @@ import { SelectedAgentsList } from '@/components/selected-agent-card';
 import { Reasoning, ReasoningTrigger, ReasoningContent } from '@/components/ui/shadcn-io/ai/reasoning';
 import { PageHeaderCompact } from '@/components/page-header';
 import {
-  __Conversation as Conversation,
-  __ConversationContent as ConversationContent,
+  Conversation,
+  ConversationContent,
 } from '@/components/ui/shadcn-io/ai/conversation';
 import { EnhancedMessageDisplay } from '@/features/ask-expert/components/EnhancedMessageDisplay';
 import { InlineArtifactGenerator } from '@/features/ask-expert/components/InlineArtifactGenerator';

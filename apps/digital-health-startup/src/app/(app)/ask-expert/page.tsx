@@ -1219,6 +1219,27 @@ function AskExpertPageContent() {
                         });
                         setIsStreamingReasoning(true);
                       }
+                    } else if (chunk.type === 'final') {
+                      // ✅ CRITICAL FIX: Handle final response event from format_output node
+                      console.log('✅ [Custom Mode] Received final event with response');
+                      
+                      if (chunk.response && typeof chunk.response === 'string') {
+                        console.log(`✅ [Final Event] Response length: ${chunk.response.length} chars`);
+                        // Store final response - this is the complete AI response with citations
+                        setStreamingMessage(chunk.response);
+                        setStreamingMeta(prev => ({
+                          ...prev,
+                          finalResponse: chunk.response,
+                          sources: chunk.sources || chunk.citations || prev?.sources,
+                          citations: chunk.citations || prev?.citations,
+                          ragSummary: chunk.rag || prev?.ragSummary
+                        }));
+                      }
+                      
+                      // Update confidence
+                      if (typeof chunk.confidence === 'number') {
+                        confidence = chunk.confidence;
+                      }
                     } else if (chunk.type === 'rag_sources') {
                       const incomingSources = Array.isArray(chunk.sources) ? chunk.sources : [];
                       sources = incomingSources.map((source: any, idx: number) => ({

@@ -1027,7 +1027,6 @@ function AskExpertPageContent() {
     
     // ✅ NEW: Initialize streaming state
     setIsStreaming(true);
-    setWorkflowSteps([]);
     setReasoningSteps([]);
     setStreamingMetrics(null);
     
@@ -1589,19 +1588,7 @@ function AskExpertPageContent() {
                         updateStreamingMeta();
                         break;
                       }
-                      // ✅ NEW: Handle LangGraph workflow step events
-                      case 'workflow_step': {
-                        const step = meta.step || {};
-                        setWorkflowSteps(prev => {
-                          const existing = prev.find(s => s.id === step.id);
-                          if (existing) {
-                            return prev.map(s => s.id === step.id ? { ...s, ...step } : s);
-                          }
-                          return [...prev, step];
-                        });
-                        break;
-                      }
-                      // ✅ NEW: Handle LangGraph reasoning events
+                      // ✅ NEW: Handle LangGraph reasoning events (Mode 1 doesn't emit workflow_step)
                       case 'langgraph_reasoning': {
                         const reasoningStep = meta.step || {};
                         if (reasoningStep.content) {

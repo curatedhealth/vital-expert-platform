@@ -795,6 +795,12 @@ Do NOT add citation numbers since no sources were provided."""
         
         # Emit final sources and summary via custom stream so frontend can render immediately
         if final_citations:
+            logger.info(
+                "📤 [DEBUG] Emitting rag_sources event",
+                citations_count=len(final_citations),
+                first_citation=final_citations[0] if final_citations else None
+            )
+            
             try:
                 writer({
                     "type": "rag_sources",
@@ -805,6 +811,7 @@ Do NOT add citation numbers since no sources were provided."""
                     "cacheHit": state.get('rag_cache_hit', False),
                     "retrievalTimeMs": state.get('retrieval_time_ms')
                 })
+                logger.info("✅ [DEBUG] rag_sources event emitted successfully")
             except Exception as stream_error:
                 logger.warning("⚠️ Failed to emit rag_sources event", error=str(stream_error))
 

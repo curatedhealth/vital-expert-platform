@@ -1241,6 +1241,12 @@ function AskExpertPageContent() {
                         confidence = chunk.confidence;
                       }
                     } else if (chunk.type === 'rag_sources') {
+                      console.log('📥 [DEBUG] Received rag_sources event:', {
+                        hasChunk: !!chunk,
+                        sourcesCount: chunk.sources?.length || 0,
+                        firstSource: chunk.sources?.[0]
+                      });
+                      
                       const incomingSources = Array.isArray(chunk.sources) ? chunk.sources : [];
                       sources = incomingSources.map((source: any, idx: number) => ({
                         number: typeof source.number === 'string' ? parseInt(source.number, 10) : source.number ?? idx + 1,
@@ -1259,6 +1265,12 @@ function AskExpertPageContent() {
                         sourceType: source.sourceType,
                         metadata: source.metadata,
                       }));
+                      
+                      console.log('📊 [DEBUG] After mapping sources:', {
+                        sourcesLength: sources.length,
+                        firstMapped: sources[0]
+                      });
+                      
                       citations = Array.isArray(chunk.sources) ? chunk.sources : citations;
                       ragSummary = {
                         totalSources: typeof chunk.total === 'number' ? chunk.total : sources.length,
@@ -1937,6 +1949,14 @@ function AskExpertPageContent() {
       const finalContent = streamingMessage || streamingMeta?.finalResponse || fullResponse || '';
       const finalSources = streamingMeta?.sources || sources || [];
       const finalReasoning = streamingMeta?.reasoning || reasoning || [];
+      
+      console.log('✅ [DEBUG] Final Message Sources Check:', {
+        streamingMetaSources: streamingMeta?.sources?.length || 0,
+        localSources: sources.length,
+        finalSourcesLength: finalSources.length,
+        firstFinalSource: finalSources[0]
+      });
+      
       // ✅ FIX: Merge backend ragSummary data with local data
       const finalRagSummary = {
         totalSources: finalSources.length,  // ✅ Correct count from final sources

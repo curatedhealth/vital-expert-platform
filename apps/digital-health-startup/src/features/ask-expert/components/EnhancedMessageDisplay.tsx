@@ -919,139 +919,135 @@ export function EnhancedMessageDisplay({
                   onClick={() => setShowReasoning(!showReasoning)}
                 />
                 <ReasoningContent>
-                  <div className="space-y-3">
-                      {/* ✅ NEW: Workflow Steps */}
-                      {metadata.workflowSteps && metadata.workflowSteps.length > 0 && (
-                        <div className="space-y-2">
-                          <div className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            Workflow Progress
-                          </div>
-                          {metadata.workflowSteps.map((step: any, idx: number) => {
-                            const getStepIcon = (status: string) => {
-                              switch (status) {
-                                case 'completed':
-                                  return <CheckCircle className="h-3 w-3 text-green-600" />;
-                                case 'running':
-                                  return <Loader2 className="h-3 w-3 text-blue-600 animate-spin" />;
-                                case 'error':
-                                  return <AlertCircle className="h-3 w-3 text-red-600" />;
-                                default:
-                                  return <Circle className="h-3 w-3 text-gray-400" />;
-                              }
-                            };
+                  {/* ✅ NEW: Workflow Steps */}
+                  {metadata.workflowSteps && metadata.workflowSteps.length > 0 && (
+                    <div className="space-y-2">
+                      <div className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Workflow Progress
+                      </div>
+                      {metadata.workflowSteps.map((step: any, idx: number) => {
+                        const getStepIcon = (status: string) => {
+                          switch (status) {
+                            case 'completed':
+                              return <CheckCircle className="h-3 w-3 text-green-600" />;
+                            case 'running':
+                              return <Loader2 className="h-3 w-3 text-blue-600 animate-spin" />;
+                            case 'error':
+                              return <AlertCircle className="h-3 w-3 text-red-600" />;
+                            default:
+                              return <Circle className="h-3 w-3 text-gray-400" />;
+                          }
+                        };
 
-                            return (
-                              <div
-                                key={step.id || idx}
-                                className="flex items-start gap-2 rounded-lg bg-white/90 p-2 text-xs dark:bg-gray-800/70"
-                              >
-                                {getStepIcon(step.status)}
-                                <div className="flex-1">
-                                  <div className="font-medium text-gray-900 dark:text-gray-100">
-                                    {step.name}
-                                  </div>
-                                  {step.description && (
-                                    <div className="text-gray-600 dark:text-gray-400 mt-0.5">
-                                      {step.description}
-                                    </div>
-                                  )}
-                                  {step.progress !== undefined && step.status === 'running' && (
-                                    <div className="mt-1 w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1">
-                                      <div
-                                        className="bg-blue-600 h-1 rounded-full transition-all"
-                                        style={{ width: `${step.progress}%` }}
-                                      />
-                                    </div>
-                                  )}
-                                </div>
+                        return (
+                          <div
+                            key={step.id || idx}
+                            className="flex items-start gap-2 rounded-lg bg-white/90 p-2 text-xs dark:bg-gray-800/70"
+                          >
+                            {getStepIcon(step.status)}
+                            <div className="flex-1">
+                              <div className="font-medium text-gray-900 dark:text-gray-100">
+                                {step.name}
                               </div>
-                            );
-                          })}
-                        </div>
-                      )}
-
-                      {/* ✅ NEW: LangGraph Reasoning Steps */}
-                      {metadata.reasoningSteps && metadata.reasoningSteps.length > 0 && (
-                        <div className="space-y-2">
-                          <div className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            AI Thinking
-                          </div>
-                          {metadata.reasoningSteps.map((step: any, idx: number) => {
-                            const getReasoningIcon = (type: string) => {
-                              switch (type) {
-                                case 'thought':
-                                  return <Sparkles className="h-3 w-3 text-purple-600" />;
-                                case 'action':
-                                  return <Zap className="h-3 w-3 text-blue-600" />;
-                                case 'observation':
-                                  return <Info className="h-3 w-3 text-green-600" />;
-                                default:
-                                  return <Info className="h-3 w-3 text-gray-600" />;
-                              }
-                            };
-
-                            return (
-                              <div
-                                key={step.id || idx}
-                                className="flex items-start gap-2 rounded-lg bg-white/90 p-2 text-xs text-gray-700 dark:bg-gray-800/70 dark:text-gray-200"
-                              >
-                                {getReasoningIcon(step.type)}
-                                <div className="flex-1">
-                                  <span>{step.content}</span>
-                                  {step.confidence !== undefined && (
-                                    <span className="ml-2 text-gray-500 dark:text-gray-400">
-                                      ({Math.round(step.confidence * 100)}%)
-                                    </span>
-                                  )}
+                              {step.description && (
+                                <div className="text-gray-600 dark:text-gray-400 mt-0.5">
+                                  {step.description}
                                 </div>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      )}
-
-                      {/* ✅ NEW: Streaming Metrics */}
-                      {metadata.streamingMetrics && (
-                        <div className="rounded-lg bg-white/90 p-2 dark:bg-gray-800/70">
-                          <div className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-                            Performance
+                              )}
+                              {step.progress !== undefined && step.status === 'running' && (
+                                <div className="mt-1 w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1">
+                                  <div
+                                    className="bg-blue-600 h-1 rounded-full transition-all"
+                                    style={{ width: `${step.progress}%` }}
+                                  />
+                                </div>
+                              )}
+                            </div>
                           </div>
-                          <div className="flex items-center gap-4 text-xs text-gray-600 dark:text-gray-400">
-                            <div className="flex items-center gap-1">
-                              <Zap className="h-3 w-3" />
-                              <span>{metadata.streamingMetrics.tokensPerSecond} tokens/sec</span>
-                            </div>
-                            {metadata.streamingMetrics.elapsedTime && (
-                              <span>
-                                {(metadata.streamingMetrics.elapsedTime / 1000).toFixed(1)}s elapsed
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Existing Reasoning (backward compatibility) */}
-                      {metadata.reasoning && metadata.reasoning.length > 0 && (
-                        <div className="space-y-2">
-                          {!metadata.workflowSteps && !metadata.reasoningSteps && (
-                            <div className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">
-                              AI Reasoning
-                            </div>
-                          )}
-                          {metadata.reasoning.map((step, idx) => (
-                            <div
-                              key={idx}
-                              className="flex items-start gap-2 rounded-lg bg-white/90 p-2 text-xs text-gray-700 dark:bg-gray-800/70 dark:text-gray-200"
-                            >
-                              <Info className="h-3 w-3 mt-0.5 text-blue-500 flex-shrink-0" />
-                              <span>{step}</span>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </motion.div>
+                        );
+                      })}
+                    </div>
                   )}
-                </AnimatePresence>
+
+                  {/* ✅ NEW: LangGraph Reasoning Steps */}
+                  {metadata.reasoningSteps && metadata.reasoningSteps.length > 0 && (
+                    <div className="space-y-2">
+                      <div className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        AI Thinking
+                      </div>
+                      {metadata.reasoningSteps.map((step: any, idx: number) => {
+                        const getReasoningIcon = (type: string) => {
+                          switch (type) {
+                            case 'thought':
+                              return <Sparkles className="h-3 w-3 text-purple-600" />;
+                            case 'action':
+                              return <Zap className="h-3 w-3 text-blue-600" />;
+                            case 'observation':
+                              return <Info className="h-3 w-3 text-green-600" />;
+                            default:
+                              return <Info className="h-3 w-3 text-gray-600" />;
+                          }
+                        };
+
+                        return (
+                          <div
+                            key={step.id || idx}
+                            className="flex items-start gap-2 rounded-lg bg-white/90 p-2 text-xs text-gray-700 dark:bg-gray-800/70 dark:text-gray-200"
+                          >
+                            {getReasoningIcon(step.type)}
+                            <div className="flex-1">
+                              <span>{step.content}</span>
+                              {step.confidence !== undefined && (
+                                <span className="ml-2 text-gray-500 dark:text-gray-400">
+                                  ({Math.round(step.confidence * 100)}%)
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  {/* ✅ NEW: Streaming Metrics */}
+                  {metadata.streamingMetrics && (
+                    <div className="rounded-lg bg-white/90 p-2 dark:bg-gray-800/70">
+                      <div className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        Performance
+                      </div>
+                      <div className="flex items-center gap-4 text-xs text-gray-600 dark:text-gray-400">
+                        <div className="flex items-center gap-1">
+                          <Zap className="h-3 w-3" />
+                          <span>{metadata.streamingMetrics.tokensPerSecond} tokens/sec</span>
+                        </div>
+                        {metadata.streamingMetrics.elapsedTime && (
+                          <span>
+                            {(metadata.streamingMetrics.elapsedTime / 1000).toFixed(1)}s elapsed
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Existing Reasoning (backward compatibility) */}
+                  {metadata.reasoning && metadata.reasoning.length > 0 && (
+                    <div className="space-y-2">
+                      {!metadata.workflowSteps && !metadata.reasoningSteps && (
+                        <div className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">
+                          AI Reasoning
+                        </div>
+                      )}
+                      {metadata.reasoning.map((step, idx) => (
+                        <div
+                          key={idx}
+                          className="flex items-start gap-2 rounded-lg bg-white/90 p-2 text-xs text-gray-700 dark:bg-gray-800/70 dark:text-gray-200"
+                        >
+                          <Info className="h-3 w-3 mt-0.5 text-blue-500 flex-shrink-0" />
+                          <span>{step}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </ReasoningContent>
               </Reasoning>
             )}

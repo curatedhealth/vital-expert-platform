@@ -1,6 +1,6 @@
 'use client';
 
-import { Button } from '@vital/ui/button';
+import { Button } from '@vital/ui';
 import { cn } from '@vital/ui/lib/utils';
 import { CheckIcon, CopyIcon } from 'lucide-react';
 import type { ComponentProps, HTMLAttributes, ReactNode } from 'react';

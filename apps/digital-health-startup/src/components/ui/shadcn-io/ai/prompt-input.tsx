@@ -1,14 +1,14 @@
 'use client';
 
-import { Button } from '@vital/ui/button';
+import { Button } from '@vital/ui';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@vital/ui/select';
-import { Textarea } from '@vital/ui/textarea';
+} from '@vital/ui';
+import { Textarea } from '@vital/ui';
 import { cn } from '@vital/ui/lib/utils';
 import type { ChatStatus } from 'ai';
 import { Loader2Icon, SendIcon, SquareIcon, XIcon } from 'lucide-react';

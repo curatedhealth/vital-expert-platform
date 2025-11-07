@@ -1,18 +1,18 @@
 'use client';
 
-import { Button } from '@vital/ui/button';
+import { Button } from '@vital/ui';
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
-} from '@vital/ui/collapsible';
-import { Input } from '@vital/ui/input';
+} from '@vital/ui';
+import { Input } from '@vital/ui';
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from '@vital/ui/tooltip';
+} from '@vital/ui';
 import { cn } from '@vital/ui/lib/utils';
 import { ChevronDownIcon } from 'lucide-react';
 import type { ComponentProps, ReactNode } from 'react';

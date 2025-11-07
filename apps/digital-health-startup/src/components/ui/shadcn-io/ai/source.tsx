@@ -4,7 +4,7 @@ import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
-} from '@vital/ui/collapsible';
+} from '@vital/ui';
 import { cn } from '@vital/ui/lib/utils';
 import { BookIcon, ChevronDownIcon } from 'lucide-react';
 import type { ComponentProps } from 'react';

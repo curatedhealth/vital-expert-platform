@@ -1,11 +1,11 @@
 'use client';
 
-import { Badge } from '@vital/ui/badge';
+import { Badge } from '@vital/ui';
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
-} from '@vital/ui/collapsible';
+} from '@vital/ui';
 import { cn } from '@vital/ui/lib/utils';
 import type { ToolUIPart } from 'ai';
 import {

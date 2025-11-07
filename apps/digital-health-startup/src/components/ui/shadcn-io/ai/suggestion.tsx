@@ -1,10 +1,10 @@
 'use client';
 
-import { Button } from '@vital/ui/button';
+import { Button } from '@vital/ui';
 import {
   ScrollArea,
   ScrollBar,
-} from '@vital/ui/scroll-area';
+} from '@vital/ui';
 import { cn } from '@vital/ui/lib/utils';
 import type { ComponentProps } from 'react';
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { Button } from '@vital/ui/button';
+import { Button } from '@vital/ui';
 import { cn } from '@vital/ui/lib/utils';
 import type { UIMessage } from 'ai';
 import { ChevronLeftIcon, ChevronRightIcon } from 'lucide-react';

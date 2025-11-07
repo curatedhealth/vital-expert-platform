@@ -33,7 +33,7 @@ import {
   Sources,
   SourcesContent,
   SourcesTrigger,
-} from '@/components/ai/sources';
+} from '@/components/ui/shadcn-io/ai/source';
 import {
   Branch,
   BranchMessages,
@@ -41,7 +41,7 @@ import {
   BranchPrevious,
   BranchNext,
   BranchPage,
-} from '@/components/ai/branch';
+} from '@/components/ui/shadcn-io/ai/branch';
 import {
   InlineCitation,
   InlineCitationCard,
@@ -55,7 +55,12 @@ import {
   InlineCitationCarouselItem,
   InlineCitationQuote,
   InlineCitationSource,
-} from '@/components/ai/inline-citation';
+} from '@/components/ui/shadcn-io/ai/inline-citation';
+import {
+  Reasoning,
+  ReasoningTrigger,
+  ReasoningContent,
+} from '@/components/ui/shadcn-io/ai/reasoning';
 import type { Components } from 'react-markdown';
 import type { PluggableList } from 'unified';
 
@@ -902,37 +907,19 @@ export function EnhancedMessageDisplay({
               </span>
             </div>
 
-            {/* Reasoning Section - Enhanced with LangGraph workflow steps */}
+            {/* Reasoning Section - Shadcn AI Component */}
             {!isUser && (metadata?.reasoning || metadata?.workflowSteps || metadata?.reasoningSteps) && (
-              <div className="mt-3 rounded-xl border border-gray-100 bg-gray-50/80 p-3 dark:border-gray-700 dark:bg-gray-900/40">
-                <Button
-                  variant="ghost"
-                  size="sm"
+              <Reasoning 
+                isStreaming={isStreaming} 
+                defaultOpen={showReasoning}
+                className="mt-3"
+              >
+                <ReasoningTrigger 
+                  title="AI Reasoning"
                   onClick={() => setShowReasoning(!showReasoning)}
-                  className="text-xs mb-2"
-                >
-                  <Sparkles className="h-3 w-3 mr-1" />
-                  {showReasoning ? 'Hide' : 'Show'} AI Reasoning
-                  {showReasoning ? (
-                    <ChevronUp className="h-3 w-3 ml-1" />
-                  ) : (
-                    <ChevronDown className="h-3 w-3 ml-1" />
-                  )}
-                </Button>
-
-                <AnimatePresence>
-                  {showReasoning && (
-                    <motion.div
-                      initial={
-                        prefersReducedMotion ? { opacity: 0 } : { height: 0, opacity: 0 }
-                      }
-                      animate={
-                        prefersReducedMotion ? { opacity: 1 } : { height: 'auto', opacity: 1 }
-                      }
-                      exit={prefersReducedMotion ? { opacity: 0 } : { height: 0, opacity: 0 }}
-                      transition={{ duration: prefersReducedMotion ? 0 : 0.2 }}
-                      className="space-y-3"
-                    >
+                />
+                <ReasoningContent>
+                  <div className="space-y-3">
                       {/* ✅ NEW: Workflow Steps */}
                       {metadata.workflowSteps && metadata.workflowSteps.length > 0 && (
                         <div className="space-y-2">
@@ -1065,7 +1052,8 @@ export function EnhancedMessageDisplay({
                     </motion.div>
                   )}
                 </AnimatePresence>
-              </div>
+                </ReasoningContent>
+              </Reasoning>
             )}
 
             {/* Message Content */}

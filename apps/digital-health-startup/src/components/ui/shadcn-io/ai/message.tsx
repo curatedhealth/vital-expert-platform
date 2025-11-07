@@ -2,9 +2,8 @@ import {
   Avatar,
   AvatarFallback,
   AvatarImage,
-} from '@vital/ui';
-import { cn } from '@vital/ui/lib/utils';
-
+} from '@repo/shadcn-ui/components/ui/avatar';
+import { cn } from '@repo/shadcn-ui/lib/utils';
 import type { UIMessage } from 'ai';
 import type { ComponentProps, HTMLAttributes } from 'react';
 
@@ -12,7 +11,7 @@ export type MessageProps = HTMLAttributes<HTMLDivElement> & {
   from: UIMessage['role'];
 };
 
-export const __Message = ({ className, from, ...props }: MessageProps) => (
+export const Message = ({ className, from, ...props }: MessageProps) => (
   <div
     className={cn(
       'group flex w-full items-end justify-end gap-2 py-4',
@@ -26,7 +25,7 @@ export const __Message = ({ className, from, ...props }: MessageProps) => (
 
 export type MessageContentProps = HTMLAttributes<HTMLDivElement>;
 
-export const __MessageContent = ({
+export const MessageContent = ({
   children,
   className,
   ...props
@@ -35,7 +34,7 @@ export const __MessageContent = ({
     className={cn(
       'flex flex-col gap-2 overflow-hidden rounded-lg px-4 py-3 text-foreground text-sm',
       'group-[.is-user]:bg-primary group-[.is-user]:text-primary-foreground',
-      'group-[.is-assistant]:text-foreground',
+      'group-[.is-assistant]:bg-secondary group-[.is-assistant]:text-foreground',
       className
     )}
     {...props}
@@ -49,7 +48,7 @@ export type MessageAvatarProps = ComponentProps<typeof Avatar> & {
   name?: string;
 };
 
-export const __MessageAvatar = ({
+export const MessageAvatar = ({
   src,
   name,
   className,

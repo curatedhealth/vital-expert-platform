@@ -1,17 +1,15 @@
 'use client';
 
+import { Button } from '@repo/shadcn-ui/components/ui/button';
+import { cn } from '@repo/shadcn-ui/lib/utils';
 import { CheckIcon, CopyIcon } from 'lucide-react';
+import type { ComponentProps, HTMLAttributes, ReactNode } from 'react';
 import { createContext, useContext, useState } from 'react';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import {
   oneDark,
-  oneLight
+  oneLight,
 } from 'react-syntax-highlighter/dist/esm/styles/prism';
-
-import { Button } from '@vital/ui';
-import { cn } from '@vital/ui/lib/utils';
-
-import type { ComponentProps, HTMLAttributes, ReactNode } from 'react';
 
 type CodeBlockContextType = {
   code: string;
@@ -28,7 +26,7 @@ export type CodeBlockProps = HTMLAttributes<HTMLDivElement> & {
   children?: ReactNode;
 };
 
-export const __CodeBlock = ({
+export const CodeBlock = ({
   code,
   language,
   showLineNumbers = false,
@@ -107,7 +105,7 @@ export type CodeBlockCopyButtonProps = ComponentProps<typeof Button> & {
   timeout?: number;
 };
 
-export const __CodeBlockCopyButton = ({
+export const CodeBlockCopyButton = ({
   onCopy,
   onError,
   timeout = 2000,
@@ -134,6 +132,8 @@ export const __CodeBlockCopyButton = ({
     }
   };
 
+  const Icon = isCopied ? CheckIcon : CopyIcon;
+
   return (
     <Button
       className={cn('shrink-0', className)}
@@ -142,7 +142,7 @@ export const __CodeBlockCopyButton = ({
       variant="ghost"
       {...props}
     >
-      {children ?? (isCopied ? <CheckIcon size={14} /> : <CopyIcon size={14} />)}
+      {children ?? <Icon size={14} />}
     </Button>
   );
 };

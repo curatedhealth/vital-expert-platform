@@ -707,21 +707,38 @@ Do NOT add citation numbers since no sources were provided."""
             number: Optional[int] = None
         ) -> Dict[str, Any]:
             """Normalize citation schema for frontend consumption."""
+            # ✅ FIX: Handle nested metadata structure from RAG service
+            # Documents have structure: { 'page_content': '...', 'metadata': {...} }
             metadata = doc.get('metadata', {}) if isinstance(doc, dict) else {}
+            page_content = doc.get('page_content') or doc.get('content', '')
+            
             source_number = number if number is not None else idx
-            excerpt = doc.get('excerpt') or doc.get('content', '')
+            
+            # ✅ Extract fields with proper fallbacks from nested metadata
+            doc_title = title or doc.get('title') or metadata.get('title') or metadata.get('document_name') or f"Source {source_number}"
+            doc_url = url or doc.get('url') or metadata.get('url') or metadata.get('link') or '#'
+            doc_domain = doc.get('domain') or metadata.get('domain') or metadata.get('collection') or 'Unknown'
+            doc_organization = doc.get('organization') or metadata.get('organization') or metadata.get('author')
+            doc_source_type = doc.get('sourceType') or metadata.get('sourceType') or metadata.get('type')
+            doc_similarity = doc.get('similarity') or metadata.get('similarity')
+            
+            # ✅ Build excerpt from page_content or description
+            excerpt = page_content[:500] if isinstance(page_content, str) else ''
+            if not excerpt and description:
+                excerpt = description[:500]
+            
             normalized = {
                 'number': str(source_number),
-                'id': doc.get('id') or f"source-{source_number}",
-                'title': title or doc.get('title') or f"Source {source_number}",
-                'url': url or doc.get('url') or '#',
+                'id': doc.get('id') or metadata.get('id') or metadata.get('document_id') or f"source-{source_number}",
+                'title': doc_title,
+                'url': doc_url,
                 'description': description or metadata.get('description') or excerpt[:200],
                 'quote': quote or metadata.get('quote') or excerpt[:300],
-                'excerpt': excerpt[:500] if isinstance(excerpt, str) else '',
-                'domain': doc.get('domain') or metadata.get('domain'),
-                'similarity': doc.get('similarity') or metadata.get('similarity'),
-                'organization': doc.get('organization') or metadata.get('organization'),
-                'sourceType': doc.get('sourceType') or metadata.get('sourceType'),
+                'excerpt': excerpt,
+                'domain': doc_domain,
+                'similarity': doc_similarity,
+                'organization': doc_organization,
+                'sourceType': doc_source_type,
                 'evidenceLevel': doc.get('evidenceLevel') or metadata.get('evidenceLevel'),
                 'metadata': metadata,
             }
@@ -855,14 +872,21 @@ Do NOT add citation numbers since no sources were provided."""
         
         context_parts = []
         for i, source in enumerate(sources[:10], 1):
+            # ✅ FIX: Handle nested metadata structure from RAG service
+            # Documents have structure: { 'page_content': '...', 'metadata': {...} }
             metadata = source.get('metadata', {})
+            page_content = source.get('page_content') or source.get('content', '')
+            title = source.get('title') or metadata.get('title') or metadata.get('document_name') or 'Unknown'
+            domain = source.get('domain') or metadata.get('domain') or metadata.get('collection') or 'General'
+            similarity = source.get('similarity') or metadata.get('similarity') or 0.0
+            
             context_parts.append(f"""
 [Source {i}]
-Title: {source.get('title', 'Unknown')}
+Title: {title}
 Year: {metadata.get('year', 'N/A')}
-Domain: {source.get('domain', 'General')}
-Relevance: {source.get('similarity', 0.0):.2f}
-Content: {source.get('content', '')[:1000]}...
+Domain: {domain}
+Relevance: {similarity:.2f}
+Content: {page_content[:1000] if isinstance(page_content, str) else ''}...
 """)
         
         return "\n".join(context_parts)

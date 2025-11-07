@@ -1,0 +1,59 @@
+{
+  "sources": [
+    {
+      "url": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC12093074/pdf/",
+      "description": "Effectiveness of Serious Games as Digital Therapeutics for Enhancing the Abilities of Children With Attention-Deficit/Hyperactivity Disorder (ADHD): Systematic Literature Review",
+      "firm": "PubMed Central / NIH",
+      "domain": "imported",
+      "category": "pubmed central",
+      "tags": [
+        "PubMed Central",
+        "JMIR Serious Games"
+      ],
+      "priority": "medium",
+      "title": "Effectiveness of Serious Games as Digital Therapeutics for Enhancing the Abilities of Children With Attention-Deficit/Hyperactivity Disorder (ADHD): Systematic Literature Review",
+      "abstract": "Full text available via PMC",
+      "authors": [
+        "Lin J",
+        "Chang WR"
+      ],
+      "publication_date": "2025 May 6",
+      "publication_year": 2025,
+      "source_url": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC12093074/",
+      "pdf_link": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC12093074/pdf/",
+      "file_type": "html",
+      "content_file_type": "html",
+      "direct_download": false,
+      "access_type": "public",
+      "source_id": "PMC:12093074",
+      "journal": "JMIR Serious Games",
+      "imported_from": "PubMed Central",
+      "import_date": "2025-11-07T16:59:10.171Z"
+    }
+  ],
+  "scraping_settings": {
+    "timeout": 60,
+    "max_retries": 3,
+    "delay_between_requests": 1,
+    "wait_for_js": false,
+    "use_playwright": false
+  },
+  "processing_settings": {
+    "chunk_size": 1000,
+    "chunk_overlap": 200,
+    "min_word_count": 100,
+    "max_content_length": 1000000
+  },
+  "upload_settings": {
+    "enable_supabase": true,
+    "enable_pinecone": true,
+    "batch_size": 100,
+    "skip_duplicates": true
+  },
+  "output_settings": {
+    "create_subdirectories": true,
+    "include_metadata": true,
+    "markdown_format": true
+  },
+  "embedding_model": "sentence-transformers/all-MiniLM-L6-v2"
+}

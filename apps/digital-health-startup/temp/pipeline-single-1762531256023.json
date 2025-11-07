@@ -1,0 +1,62 @@
+{
+  "sources": [
+    {
+      "url": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7505101/pdf/",
+      "description": "Telemedicine as the New Outpatient Clinic Gone Digital: Position Paper From the Pandemic Health System REsilience PROGRAM (REPROGRAM) International Consortium (Part 2)",
+      "firm": "PubMed Central / NIH",
+      "domain": "imported",
+      "category": "pubmed central",
+      "tags": [
+        "PubMed Central",
+        "Frontiers in Public Health"
+      ],
+      "priority": "medium",
+      "title": "Telemedicine as the New Outpatient Clinic Gone Digital: Position Paper From the Pandemic Health System REsilience PROGRAM (REPROGRAM) International Consortium (Part 2)",
+      "abstract": "Full text available via PMC",
+      "authors": [
+        "Bhaskar S",
+        "Bradley S",
+        "Chattu VK",
+        "Adisesh A",
+        "Nurtazina A"
+      ],
+      "publication_date": "2020 Sep 7",
+      "publication_year": 2020,
+      "source_url": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7505101/",
+      "pdf_link": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7505101/pdf/",
+      "file_type": "pdf",
+      "content_file_type": "pdf",
+      "direct_download": true,
+      "access_type": "public",
+      "source_id": "PMC:7505101",
+      "journal": "Frontiers in Public Health",
+      "imported_from": "PubMed Central",
+      "import_date": "2025-11-07T16:00:46.884Z"
+    }
+  ],
+  "scraping_settings": {
+    "timeout": 60,
+    "max_retries": 3,
+    "delay_between_requests": 1,
+    "wait_for_js": false,
+    "use_playwright": false
+  },
+  "processing_settings": {
+    "chunk_size": 1000,
+    "chunk_overlap": 200,
+    "min_word_count": 100,
+    "max_content_length": 1000000
+  },
+  "upload_settings": {
+    "enable_supabase": true,
+    "enable_pinecone": true,
+    "batch_size": 100,
+    "skip_duplicates": true
+  },
+  "output_settings": {
+    "create_subdirectories": true,
+    "include_metadata": true,
+    "markdown_format": true
+  },
+  "embedding_model": "sentence-transformers/all-MiniLM-L6-v2"
+}

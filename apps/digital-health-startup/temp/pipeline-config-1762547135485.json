@@ -1,0 +1,60 @@
+{
+  "sources": [
+    {
+      "url": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC8328933/pdf/",
+      "description": "The World Federation of ADHD International Consensus Statement: 208 Evidence-based Conclusions about the Disorder",
+      "firm": "PubMed Central / NIH",
+      "domain": "imported",
+      "category": "pubmed central",
+      "tags": [
+        "PubMed Central",
+        "Neuroscience and biobehavioral reviews"
+      ],
+      "priority": "medium",
+      "title": "The World Federation of ADHD International Consensus Statement: 208 Evidence-based Conclusions about the Disorder",
+      "abstract": "Full text available via PMC",
+      "authors": [
+        "Faraone SV",
+        "Banaschewski T",
+        "Coghill D",
+        "Zheng Y",
+        "Biederman J"
+      ],
+      "publication_date": "2021 Feb 4",
+      "publication_year": 2021,
+      "source_url": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC8328933/",
+      "pdf_link": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC8328933/pdf/",
+      "file_type": "html",
+      "content_file_type": "html",
+      "direct_download": false,
+      "access_type": "public",
+      "source_id": "PMC:8328933",
+      "journal": "Neuroscience and biobehavioral reviews",
+      "imported_from": "PubMed Central",
+      "import_date": "2025-11-07T20:24:47.470Z"
+    }
+  ],
+  "output_settings": {
+    "create_subdirectories": true,
+    "include_metadata": true,
+    "markdown_format": true
+  },
+  "scraping_settings": {
+    "timeout": 45,
+    "max_retries": 3,
+    "delay_between_requests": 1
+  },
+  "processing_settings": {
+    "chunk_size": 1000,
+    "chunk_overlap": 200,
+    "min_word_count": 100,
+    "max_content_length": 50000
+  },
+  "upload_settings": {
+    "enable_supabase": true,
+    "enable_pinecone": true,
+    "batch_size": 10,
+    "skip_duplicates": true
+  },
+  "embedding_model": "sentence-transformers/all-MiniLM-L6-v2"
+}

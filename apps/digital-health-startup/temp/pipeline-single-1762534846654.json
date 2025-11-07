@@ -1,0 +1,62 @@
+{
+  "sources": [
+    {
+      "url": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7422602/pdf/",
+      "description": "Females with ADHD: An expert consensus statement taking a lifespan approach providing guidance for the identification and treatment of attention-deficit/ hyperactivity disorder in girls and women",
+      "firm": "PubMed Central / NIH",
+      "domain": "imported",
+      "category": "pubmed central",
+      "tags": [
+        "PubMed Central",
+        "BMC Psychiatry"
+      ],
+      "priority": "medium",
+      "title": "Females with ADHD: An expert consensus statement taking a lifespan approach providing guidance for the identification and treatment of attention-deficit/ hyperactivity disorder in girls and women",
+      "abstract": "Full text available via PMC",
+      "authors": [
+        "Young S",
+        "Adamo N",
+        "Ásgeirsdóttir BB",
+        "Branney P",
+        "Beckett M"
+      ],
+      "publication_date": "2020 Aug 12",
+      "publication_year": 2020,
+      "source_url": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7422602/",
+      "pdf_link": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7422602/pdf/",
+      "file_type": "html",
+      "content_file_type": "html",
+      "direct_download": false,
+      "access_type": "public",
+      "source_id": "PMC:7422602",
+      "journal": "BMC Psychiatry",
+      "imported_from": "PubMed Central",
+      "import_date": "2025-11-07T16:59:10.171Z"
+    }
+  ],
+  "scraping_settings": {
+    "timeout": 60,
+    "max_retries": 3,
+    "delay_between_requests": 1,
+    "wait_for_js": false,
+    "use_playwright": false
+  },
+  "processing_settings": {
+    "chunk_size": 1000,
+    "chunk_overlap": 200,
+    "min_word_count": 100,
+    "max_content_length": 1000000
+  },
+  "upload_settings": {
+    "enable_supabase": true,
+    "enable_pinecone": true,
+    "batch_size": 100,
+    "skip_duplicates": true
+  },
+  "output_settings": {
+    "create_subdirectories": true,
+    "include_metadata": true,
+    "markdown_format": true
+  },
+  "embedding_model": "sentence-transformers/all-MiniLM-L6-v2"
+}

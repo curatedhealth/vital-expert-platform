@@ -8,6 +8,8 @@ import {
   CheckCircle,
   Globe,
   User,
+  Plus,
+  FolderPlus,
 } from 'lucide-react';
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 
@@ -20,6 +22,8 @@ import { Label } from '@vital/ui';
 import { Progress } from '@vital/ui';
 import { ScrollArea } from '@vital/ui';
 import { Separator } from '@vital/ui';
+import { Input } from '@vital/ui';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@vital/ui';
 import type { KnowledgeDomain } from '@/lib/services/model-selector';
 import { AVAILABLE_EMBEDDING_MODELS } from '@/lib/services/model-selector';
 import { useAgentsStore } from '@/lib/stores/agents-store';
@@ -33,11 +37,10 @@ interface UploadFile {
   progress: number;
   status: 'pending' | 'uploading' | 'processing' | 'completed' | 'error';
   error?: string;
-  domain: string;
+  domains: string[]; // Changed from 'domain' to 'domains' array
   isGlobal: boolean;
   selectedAgents: string[];
   embeddingModel: string;
-  // chatModel: string; // Not needed - selected per query/conversation
   duplicate?: boolean;
 }
 
@@ -58,13 +61,17 @@ export function KnowledgeUploader({ onUploadComplete }: KnowledgeUploaderProps) 
   const [selectedAccessPolicy, setSelectedAccessPolicy] = useState<string>('all');
   const [selectedDomainScope, setSelectedDomainScope] = useState<string>('all');
   const [uploadSettings, setUploadSettings] = useState({
-    domain: 'digital_health',
+    domains: ['digital_health'], // Changed to array
     isGlobal: true,
     selectedAgents: [] as string[],
     embeddingModel: 'text-embedding-3-large', // Default embedding model
-    // chatModel: 'gpt-4-turbo-preview', // Not needed - selected per query/conversation
   });
   const [domainInitialized, setDomainInitialized] = useState(false);
+  const [isCreateDomainOpen, setIsCreateDomainOpen] = useState(false);
+  const [newDomainName, setNewDomainName] = useState('');
+  const [newDomainDescription, setNewDomainDescription] = useState('');
+  const [newDomainSlug, setNewDomainSlug] = useState('');
+  const [createDomainLoading, setCreateDomainLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const acceptedTypes = [

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback, useEffect } from 'react';
-import { Upload, Plus, Download, Trash2, ExternalLink, FileText, Database, Play, CheckCircle, AlertCircle, Loader2, List, Search } from 'lucide-react';
+import { Upload, Plus, Download, Trash2, ExternalLink, FileText, Database, Play, CheckCircle, AlertCircle, Loader2, List, Search, X, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -204,6 +204,43 @@ export function KnowledgePipelineConfig() {
   const [queueSources, setQueueSources] = useState<QueueSource[]>([]);
   const [isProcessingQueue, setIsProcessingQueue] = useState(false);
   const [currentView, setCurrentView] = useState<'config' | 'queue' | 'search'>('config');
+
+  // Domain selection state
+  const [availableDomains, setAvailableDomains] = useState<any[]>([]);
+  const [selectedDomainIds, setSelectedDomainIds] = useState<string[]>([]);
+  const [loadingDomains, setLoadingDomains] = useState(true);
+
+  // Fetch available domains on mount
+  useEffect(() => {
+    async function fetchDomains() {
+      try {
+        const { createClient } = await import('@vital/sdk/client');
+        const supabase = createClient();
+        
+        const { data, error } = await supabase
+          .from('knowledge_domains_new')
+          .select('*')
+          .eq('is_active', true)
+          .order('tier', { ascending: true })
+          .order('priority', { ascending: true });
+        
+        if (error) throw error;
+        
+        setAvailableDomains(data || []);
+        // Set default domain if none selected
+        if (data && data.length > 0 && selectedDomainIds.length === 0) {
+          const defaultDomain = data.find(d => d.slug === 'digital_health') || data[0];
+          setSelectedDomainIds([defaultDomain.domain_id]);
+        }
+      } catch (error) {
+        console.error('Failed to fetch domains:', error);
+      } finally {
+        setLoadingDomains(false);
+      }
+    }
+    
+    fetchDomains();
+  }, []);
 
   // Sync sources to queue when config changes
   useEffect(() => {
@@ -503,11 +540,22 @@ export function KnowledgePipelineConfig() {
 
   // Run single source from queue
   const handleRunSingleSource = useCallback(async (sourceId: string) => {
+    console.log(`▶️ Starting single source: ${sourceId}`);
+    
     const sourceIndex = queueSources.findIndex(s => s.id === sourceId);
-    if (sourceIndex === -1) return;
+    if (sourceIndex === -1) {
+      console.error(`❌ Source not found in queue: ${sourceId}`);
+      return;
+    }
 
     const source = config.sources[sourceIndex];
-    if (!source) return;
+    if (!source) {
+      console.error(`❌ Source not found in config at index ${sourceIndex}`);
+      return;
+    }
+
+    console.log(`  URL: ${source.url}`);
+    console.log(`  Dry run: ${isDryRun}`);
 
     // Update status to processing
     setQueueSources(prev => prev.map(s => 
@@ -517,6 +565,8 @@ export function KnowledgePipelineConfig() {
     const startTime = Date.now();
 
     try {
+      console.log(`  📡 Calling API: /api/pipeline/run-single`);
+      
       const response = await fetch('/api/pipeline/run-single', {
         method: 'POST',
         headers: {
@@ -526,13 +576,17 @@ export function KnowledgePipelineConfig() {
           source,
           dryRun: isDryRun,
           embeddingModel: config.embedding_model,
+          domainIds: selectedDomainIds, // Add selected domains
         }),
       });
 
       const result = await response.json();
       const duration = Date.now() - startTime;
 
+      console.log(`  📊 API Response (${duration}ms):`, result);
+
       if (result.success) {
+        console.log(`  ✅ Success! Words: ${result.wordCount || 0}`);
         setQueueSources(prev => prev.map(s =>
           s.id === sourceId
             ? {
@@ -546,6 +600,22 @@ export function KnowledgePipelineConfig() {
             : s
         ));
       } else {
+        // Extract detailed error information
+        const errorMessage = result.error || 'Unknown error';
+        const errorDetails = result.details || result.errors || '';
+        const fullError = errorDetails ? `${errorMessage}: ${errorDetails}` : errorMessage;
+        
+        console.error(`  ❌ Failed:`, fullError);
+        console.error(`  📄 Full result:`, result);
+        
+        // If we have stdout/stderr, log it for debugging
+        if (result.stdout) {
+          console.log(`  📝 Python stdout:`, result.stdout);
+        }
+        if (result.stderr) {
+          console.error(`  ⚠️ Python stderr:`, result.stderr);
+        }
+        
         setQueueSources(prev => prev.map(s =>
           s.id === sourceId
             ? {
@@ -554,7 +624,7 @@ export function KnowledgePipelineConfig() {
                 result: {
                   wordCount: 0,
                   duration,
-                  error: result.error || result.details || 'Unknown error',
+                  error: fullError,
                 },
               }
             : s
@@ -562,6 +632,7 @@ export function KnowledgePipelineConfig() {
       }
     } catch (error: any) {
       const duration = Date.now() - startTime;
+      console.error(`  ❌ Network error:`, error);
       setQueueSources(prev => prev.map(s =>
         s.id === sourceId
           ? {
@@ -576,18 +647,23 @@ export function KnowledgePipelineConfig() {
           : s
       ));
     }
-  }, [queueSources, config.sources, isDryRun, config.embedding_model]);
+  }, [queueSources, config.sources, isDryRun, config.embedding_model, selectedDomainIds]);
 
   // Run all pending sources
   const handleRunAllSources = useCallback(async () => {
+    if (isProcessingQueue) return; // Prevent multiple runs
+    
     setIsProcessingQueue(true);
     const pendingSources = queueSources.filter(s => s.status === 'pending');
 
+    console.log(`🚀 Running all pending sources: ${pendingSources.length} sources`);
+
     for (const source of pendingSources) {
-      if (!isProcessingQueue) break; // Allow cancellation
+      console.log(`  Processing: ${source.title}`);
       await handleRunSingleSource(source.id);
     }
 
+    console.log(`✅ Completed processing all sources`);
     setIsProcessingQueue(false);
   }, [queueSources, isProcessingQueue, handleRunSingleSource]);
 
@@ -1030,6 +1106,77 @@ export function KnowledgePipelineConfig() {
                 ))}
               </SelectContent>
             </Select>
+          </div>
+
+          {/* Domain Selection */}
+          <div className="space-y-2">
+            <Label>RAG Knowledge Domains</Label>
+            <div className="text-sm text-muted-foreground mb-2">
+              Select which knowledge domains this content belongs to
+            </div>
+            {loadingDomains ? (
+              <div className="flex items-center gap-2 p-3 border rounded-lg">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                <span className="text-sm text-muted-foreground">Loading domains...</span>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <div className="flex flex-wrap gap-2 p-3 border rounded-lg min-h-[48px]">
+                  {selectedDomainIds.length === 0 ? (
+                    <span className="text-sm text-muted-foreground">No domains selected</span>
+                  ) : (
+                    selectedDomainIds.map(domainId => {
+                      const domain = availableDomains.find(d => d.domain_id === domainId);
+                      return domain ? (
+                        <Badge key={domainId} variant="secondary" className="flex items-center gap-1">
+                          {domain.domain_name}
+                          <button
+                            onClick={() => setSelectedDomainIds(prev => prev.filter(id => id !== domainId))}
+                            className="ml-1 hover:text-destructive"
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        </Badge>
+                      ) : null;
+                    })
+                  )}
+                </div>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-2 max-h-[200px] overflow-y-auto p-2 border rounded-lg">
+                  {availableDomains.map(domain => {
+                    const isSelected = selectedDomainIds.includes(domain.domain_id);
+                    return (
+                      <button
+                        key={domain.domain_id}
+                        onClick={() => {
+                          if (isSelected) {
+                            setSelectedDomainIds(prev => prev.filter(id => id !== domain.domain_id));
+                          } else {
+                            setSelectedDomainIds(prev => [...prev, domain.domain_id]);
+                          }
+                        }}
+                        className={`
+                          p-2 text-left text-sm rounded border transition-colors
+                          ${isSelected 
+                            ? 'border-primary bg-primary/10 text-primary' 
+                            : 'border-border hover:border-primary/50 hover:bg-accent'
+                          }
+                        `}
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="font-medium">{domain.domain_name}</span>
+                          {isSelected && <Check className="h-4 w-4" />}
+                        </div>
+                        {domain.tier && (
+                          <div className="text-xs text-muted-foreground mt-1">
+                            Tier {domain.tier}
+                          </div>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="grid grid-cols-2 gap-4">

@@ -325,7 +325,9 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
   // State for hybrid prompt generation
   const [isGeneratingCompletePrompt, setIsGeneratingCompletePrompt] = useState(false);
   const [promptGenerationMode, setPromptGenerationMode] = useState<'template' | 'ai'>('template');
-  const [promptViewMode, setPromptViewMode] = useState<'edit' | 'preview'>('preview');
+  const [promptViewMode, setPromptViewMode] = useState<'edit' | 'preview' | 'enhanced'>('preview');
+  const [enhancedPrompt, setEnhancedPrompt] = useState<string>('');
+  const [loadingEnhancedPrompt, setLoadingEnhancedPrompt] = useState(false);
 
   // Persona-Based Agent Designer State
   const [showPersonaWizard, setShowPersonaWizard] = useState(false);
@@ -3327,6 +3329,19 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
                           type="button"
                           variant="ghost"
                           size="sm"
+                          onClick={() => setPromptViewMode('edit')}
+                          className={cn(
+                            "h-8 px-3 text-xs",
+                            promptViewMode === 'edit' && "bg-progress-teal/10 text-progress-teal"
+                          )}
+                        >
+                          <Edit3 className="h-3 w-3 mr-1" />
+                          Edit
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
                           onClick={() => setPromptViewMode('preview')}
                           className={cn(
                             "h-8 px-3 text-xs",
@@ -3340,14 +3355,43 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
                           type="button"
                           variant="ghost"
                           size="sm"
-                          onClick={() => setPromptViewMode('edit')}
+                          onClick={async () => {
+                            setPromptViewMode('enhanced');
+                            if (!enhancedPrompt || promptViewMode !== 'enhanced') {
+                              setLoadingEnhancedPrompt(true);
+                              try {
+                                const response = await fetch('/api/prompts/compose', {
+                                  method: 'POST',
+                                  headers: { 'Content-Type': 'application/json' },
+                                  body: JSON.stringify({
+                                    agent_data: {
+                                      ...formData,
+                                      system_prompt: formData.systemPrompt,
+                                      display_name: formData.name,
+                                      description: formData.description,
+                                      rag_enabled: formData.ragEnabled,
+                                      tool_configurations: formData.toolConfigurations
+                                    }
+                                  })
+                                });
+                                const data = await response.json();
+                                if (data.success) {
+                                  setEnhancedPrompt(data.enhanced_prompt);
+                                }
+                              } catch (error) {
+                                console.error('Failed to compose enhanced prompt:', error);
+                              } finally {
+                                setLoadingEnhancedPrompt(false);
+                              }
+                            }
+                          }}
                           className={cn(
                             "h-8 px-3 text-xs",
-                            promptViewMode === 'edit' && "bg-progress-teal/10 text-progress-teal"
+                            promptViewMode === 'enhanced' && "bg-market-purple/10 text-market-purple"
                           )}
                         >
-                          <Edit3 className="h-3 w-3 mr-1" />
-                          Edit
+                          <Sparkles className="h-3 w-3 mr-1" />
+                          Enhanced View
                         </Button>
                       </div>
                     </div>
@@ -3361,11 +3405,42 @@ export function AgentCreator({ isOpen, onClose, onSave, editingAgent }: AgentCre
                         className="w-full min-h-[400px] p-3 border border-gray-200 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-market-purple font-mono text-sm"
                         required
                       />
-                    ) : (
+                    ) : promptViewMode === 'preview' ? (
                       <div className="w-full min-h-[400px] max-h-[600px] overflow-y-auto p-4 border border-gray-200 rounded-lg bg-gray-50 prose prose-sm max-w-none prose-headings:font-semibold prose-h1:text-2xl prose-h2:text-xl prose-h3:text-lg prose-h4:text-base prose-p:text-gray-700 prose-li:text-gray-700 prose-strong:text-gray-900 prose-code:text-progress-teal prose-code:bg-progress-teal/10 prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-pre:bg-gray-900 prose-pre:text-gray-100">
                         <ReactMarkdown>
                           {formData.systemPrompt || '*No system prompt defined*'}
                         </ReactMarkdown>
+                      </div>
+                    ) : (
+                      <div className="w-full min-h-[400px] max-h-[600px] overflow-y-auto p-4 border-2 border-market-purple/20 rounded-lg bg-gradient-to-br from-market-purple/5 to-progress-teal/5">
+                        {loadingEnhancedPrompt ? (
+                          <div className="flex items-center justify-center h-[400px]">
+                            <div className="text-center space-y-3">
+                              <div className="animate-spin h-8 w-8 border-4 border-market-purple/30 border-t-market-purple rounded-full mx-auto" />
+                              <p className="text-sm text-gray-600">Composing enhanced prompt...</p>
+                            </div>
+                          </div>
+                        ) : enhancedPrompt ? (
+                          <div className="prose prose-sm max-w-none prose-headings:font-semibold prose-h1:text-2xl prose-h1:text-market-purple prose-h2:text-xl prose-h2:text-progress-teal prose-h3:text-lg prose-h4:text-base prose-p:text-gray-700 prose-li:text-gray-700 prose-strong:text-gray-900 prose-code:text-progress-teal prose-code:bg-progress-teal/10 prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-pre:bg-gray-900 prose-pre:text-gray-100">
+                            <div className="mb-4 p-3 bg-market-purple/10 border border-market-purple/20 rounded-lg flex items-start gap-2">
+                              <Sparkles className="h-4 w-4 text-market-purple flex-shrink-0 mt-1" />
+                              <div className="text-xs text-gray-700">
+                                <strong className="text-market-purple">Enhanced System Prompt</strong>
+                                <p className="mt-1">This prompt is automatically composed from all agent dimensions including capabilities, tools, knowledge domains, and guidelines.</p>
+                              </div>
+                            </div>
+                            <ReactMarkdown>
+                              {enhancedPrompt}
+                            </ReactMarkdown>
+                          </div>
+                        ) : (
+                          <div className="flex items-center justify-center h-[400px] text-gray-500">
+                            <div className="text-center space-y-2">
+                              <Sparkles className="h-12 w-12 text-gray-300 mx-auto" />
+                              <p className="text-sm">Click "Enhanced View" to see the composed prompt</p>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>

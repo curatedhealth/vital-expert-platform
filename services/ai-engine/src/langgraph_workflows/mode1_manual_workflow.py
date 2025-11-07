@@ -278,13 +278,6 @@ class Mode1ManualWorkflow(BaseWorkflow):
                 first_source_keys=list(sources[0].keys()) if sources else 'no_sources'
             )
             
-            # ✅ Emit AI reasoning about retrieval results (via state update)
-            logger.info(
-                "✅ RAG retrieval completed",
-                sources_count=len(sources),
-                context_length=len(context)
-            )
-            
             # Build context summary
             context = self._build_context_summary(sources)
             
@@ -296,14 +289,20 @@ class Mode1ManualWorkflow(BaseWorkflow):
             
             # ✅ Add reasoning steps to state (for frontend streaming)
             reasoning_steps = state.get('reasoning_steps', [])
-            reasoning_steps.extend([
-                {
-                    "type": "observation",
-                    "content": f"Found {len(sources)} relevant sources from {domain_text} knowledge domains",
-                    "node": "rag_retrieval",
-                    "timestamp": datetime.now(timezone.utc).isoformat()
+            
+            # ✅ REAL-TIME REASONING: Add observation about RAG retrieval
+            new_step = {
+                "id": f"rag-obs-{datetime.now(timezone.utc).timestamp()}",
+                "type": "observation",
+                "content": f"Retrieved {len(sources)} relevant sources from {domain_text} domains. Ready to synthesize evidence-based response.",
+                "node": "rag_retrieval",
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "metadata": {
+                    "sources_count": len(sources),
+                    "domains": list(set([s.get('metadata', {}).get('domain', 'unknown') for s in sources]))
                 }
-            ])
+            }
+            reasoning_steps.append(new_step)
             
             return {
                 **state,
@@ -361,6 +360,21 @@ class Mode1ManualWorkflow(BaseWorkflow):
         logger.info("🤖 [Mode 1] Executing agent with structured citations")
         
         try:
+            # ✅ REAL-TIME REASONING: Add thought step at start of execution
+            reasoning_steps = state.get('reasoning_steps', [])
+            thinking_step = {
+                "id": f"agent-thought-{datetime.now(timezone.utc).timestamp()}",
+                "type": "thought",
+                "content": f"Analyzing the query to provide evidence-based response using {len(retrieved_documents)} retrieved sources.",
+                "node": "execute_agent",
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "metadata": {
+                    "agent_name": agent_data.get('name', 'AI Assistant'),
+                    "sources_available": len(retrieved_documents)
+                }
+            }
+            reasoning_steps.append(thinking_step)
+            
             # Get agent's system prompt
             system_prompt = agent_data.get('system_prompt', '')
             

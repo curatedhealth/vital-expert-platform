@@ -133,10 +133,21 @@ class RAGIntegrationUploader:
             }
             
             # Step 2: Get or create domain_id for namespace routing
-            domain_id = await self._get_or_create_domain(
-                content.get('domain', 'uncategorized'),
-                content.get('category', 'general')
-            )
+            # Support multiple domain_ids (new feature) or single domain (legacy)
+            domain_ids = content.get('domain_ids', [])
+            
+            if domain_ids and len(domain_ids) > 0:
+                # Use first domain_id from the list (primary domain)
+                # TODO: Full multi-domain support requires updates to document storage
+                domain_id = domain_ids[0]
+                logger.info(f"📂 Using primary domain: {domain_id} (from {len(domain_ids)} selected)")
+            else:
+                # Legacy behavior: derive domain_id from domain string
+                domain_id = await self._get_or_create_domain(
+                    content.get('domain', 'uncategorized'),
+                    content.get('category', 'general')
+                )
+            
             
             # Step 3: Store document metadata in Supabase
             document_id = await self._store_document_metadata(

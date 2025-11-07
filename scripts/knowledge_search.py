@@ -199,7 +199,8 @@ class KnowledgeSearcher:
                     if not title or title == 'No title':
                         continue
                     
-                    # Build PDF link (PMC provides free PDFs)
+                    # Build links - Use HTML version (more reliable than PDF)
+                    pmc_url = f"https://www.ncbi.nlm.nih.gov/pmc/articles/PMC{pmc_id}/"
                     pdf_link = f"https://www.ncbi.nlm.nih.gov/pmc/articles/PMC{pmc_id}/pdf/"
                     
                     results.append({
@@ -210,14 +211,14 @@ class KnowledgeSearcher:
                         'publication_date': pub_date,
                         'publication_year': pub_year,
                         'journal': article.get('fulljournalname', article.get('source', 'Unknown')),
-                        'url': f"https://www.ncbi.nlm.nih.gov/pmc/articles/PMC{pmc_id}/",
-                        'pdf_link': pdf_link,
+                        'url': pmc_url,  # Use HTML version for scraping
+                        'pdf_link': pdf_link,  # Still provide PDF link for reference
                         'source': 'PubMed Central',
                         'source_id': f"PMC:{pmc_id}",
                         'firm': 'PubMed Central / NIH',
-                        'file_type': 'pdf',
+                        'file_type': 'html',  # HTML is more reliable for automated scraping
                         'access_type': 'public',
-                        'direct_download': True,
+                        'direct_download': False,  # HTML needs parsing
                         'open_access': True
                     })
                 

@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface SearchResult {
   id: string;
@@ -84,6 +85,7 @@ export default function KnowledgeSearchImport({ onAddToQueue }: KnowledgeSearchI
   const [query, setQuery] = useState('');
   const [selectedSources, setSelectedSources] = useState<string[]>(['pubmed_central', 'arxiv']);
   const [maxResults, setMaxResults] = useState(20);
+  const [sortBy, setSortBy] = useState<'relevance' | 'date' | 'citations'>('relevance');
   const [isSearching, setIsSearching] = useState(false);
   const [searchResults, setSearchResults] = useState<SearchResults | null>(null);
   const [selectedResults, setSelectedResults] = useState<Set<string>>(new Set());
@@ -113,6 +115,7 @@ export default function KnowledgeSearchImport({ onAddToQueue }: KnowledgeSearchI
           query: query.trim(),
           sources: selectedSources,
           maxResults,
+          sortBy,
         }),
       });
 
@@ -306,18 +309,45 @@ export default function KnowledgeSearchImport({ onAddToQueue }: KnowledgeSearchI
             </div>
           </div>
 
-          {/* Max Results */}
-          <div className="space-y-2">
-            <Label htmlFor="max-results">Max Results per Source</Label>
-            <Input
-              id="max-results"
-              type="number"
-              min={1}
-              max={50}
-              value={maxResults}
-              onChange={(e) => setMaxResults(parseInt(e.target.value) || 20)}
-              className="w-32"
-            />
+          {/* Max Results & Sort By */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="max-results">Max Results per Source</Label>
+              <Input
+                id="max-results"
+                type="number"
+                min={1}
+                max={50}
+                value={maxResults}
+                onChange={(e) => setMaxResults(parseInt(e.target.value) || 20)}
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="sort-by">Sort By</Label>
+              <Select value={sortBy} onValueChange={(value: any) => setSortBy(value)}>
+                <SelectTrigger id="sort-by">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="relevance">
+                    <span className="flex items-center gap-2">
+                      🎯 Relevance
+                    </span>
+                  </SelectItem>
+                  <SelectItem value="date">
+                    <span className="flex items-center gap-2">
+                      📅 Newest First
+                    </span>
+                  </SelectItem>
+                  <SelectItem value="citations">
+                    <span className="flex items-center gap-2">
+                      ⭐ Most Cited
+                    </span>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
           {/* Error Display */}

@@ -5,7 +5,7 @@ import {
   Copy, Check, ThumbsUp, ThumbsDown, RefreshCw, Edit,
   ExternalLink, ChevronDown, ChevronUp,
   Sparkles, BookOpen, AlertCircle, Info, Bookmark, Share2, Wrench, GitBranch,
-  Loader2, CheckCircle, Circle, Zap
+  Loader2, CheckCircle, Circle, Zap, Brain, Search, Eye, Lightbulb
 } from 'lucide-react';
 import {
   useState,
@@ -603,39 +603,49 @@ export function EnhancedMessageDisplay({
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   }, []);
 
-  const keyInsightKeywords = useMemo(
-    () => ['key insight', 'key takeaway', 'important', 'critical', 'must', 'note that', 'remember'],
-    []
-  );
-
+  // ✅ TAG: KEY_INSIGHTS_EXTRACTION - Extract actionable insights, not summaries
   const keyInsights = useMemo(() => {
-    if (isUser) {
+    if (isUser || !displayContent || displayContent.length < 50) {
       return [];
     }
     
-    // ✅ FIX: Remove code blocks, mermaid diagrams, and ASCII art before extracting insights
+    // Remove code blocks, diagrams, and citations for clean text analysis
     let textOnly = displayContent
-      // Remove code blocks (```...```)
       .replace(/```[\s\S]*?```/g, '')
-      // Remove inline code (`...`)
       .replace(/`[^`]+`/g, '')
-      // Remove mermaid/ascii diagrams
-      .replace(/```(?:mermaid|ascii|mmd)[\s\S]*?```/gi, '')
-      // Remove citations [1], [2]
       .replace(/\[\d+(?:,\s*\d+)*\]/g, '')
-      // Clean up extra whitespace
       .replace(/\s+/g, ' ')
       .trim();
     
-    const sentences = textOnly.split(/(?<=[.!?])\s+/).filter(Boolean);
-    return sentences
-      .filter((sentence) =>
-        keyInsightKeywords.some((keyword) =>
-          sentence.toLowerCase().includes(keyword)
-        )
-      )
-      .slice(0, 3);
-  }, [displayContent, isUser, keyInsightKeywords]);
+    const insights: string[] = [];
+    
+    // Look for bullet points with asterisks (insights are often in lists)
+    const bulletMatches = textOnly.match(/\*\*[^*]+\*\*[^*.]+[.]/g);
+    if (bulletMatches && bulletMatches.length > 0) {
+      insights.push(...bulletMatches.slice(0, 3));
+    }
+    
+    // If no bullet insights found, look for sentences with insight markers
+    if (insights.length === 0) {
+      const insightKeywords = [
+        'importantly', 'significantly', 'notably', 'crucially',
+        'key finding', 'essential to', 'critical that', 'must consider',
+        'should note', 'worth noting', 'remember that', 'keep in mind'
+      ];
+      
+      const sentences = textOnly.split(/(?<=[.!?])\s+/).filter(Boolean);
+      const insightSentences = sentences.filter((sentence) => {
+        const lower = sentence.toLowerCase();
+        return insightKeywords.some((keyword) => lower.includes(keyword)) &&
+               sentence.length > 40 && // Avoid too-short sentences
+               sentence.length < 200;  // Avoid too-long summaries
+      });
+      
+      insights.push(...insightSentences.slice(0, 3));
+    }
+    
+    return insights;
+  }, [displayContent, isUser]);
 
   const activeBranchMeta = branches?.[activeBranch];
   const rawBranchReasoning = activeBranchMeta?.reasoning;
@@ -778,11 +788,15 @@ export function EnhancedMessageDisplay({
         }
       }
 
+      // ✅ TAG: INLINE_CITATION_PILL_STYLE - Show pill-style button even when source is missing
       if (!resolvedSources.length) {
         return (
-          <span className="inline-flex items-center gap-0.5 text-blue-600 dark:text-blue-400 text-[11px] font-medium">
-            [{number || '?'}]
-          </span>
+          <Badge 
+            variant="secondary"
+            className="ml-1 rounded-full text-[11px] bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400 cursor-default"
+          >
+            {number || '?'}
+          </Badge>
         );
       }
 
@@ -923,10 +937,12 @@ export function EnhancedMessageDisplay({
             </div>
 
             {/* Reasoning Section - Shadcn AI Component */}
+            {/* ✅ FIX: Added keepOpen={true} to prevent auto-close after streaming */}
             {!isUser && (metadata?.reasoning || metadata?.workflowSteps || metadata?.reasoningSteps) && (
               <Reasoning 
                 isStreaming={isStreaming} 
                 defaultOpen={true}
+                keepOpen={true}
                 open={showReasoning}
                 onOpenChange={setShowReasoning}
                 className="mt-3"
@@ -986,43 +1002,70 @@ export function EnhancedMessageDisplay({
                     </div>
                   )}
 
-                  {/* ✅ NEW: LangGraph Reasoning Steps */}
+                  {/* ✅ NEW: LangGraph Reasoning Steps with Progressive Disclosure */}
                   {metadata.reasoningSteps && metadata.reasoningSteps.length > 0 && (
                     <div className="space-y-2">
-                      {/* Removed duplicate "AI Thinking" heading - title already in trigger */}
-                      {metadata.reasoningSteps.map((step: any, idx: number) => {
-                        const getReasoningIcon = (type: string) => {
-                          switch (type) {
-                            case 'thought':
-                              return <Sparkles className="h-3 w-3 text-purple-600" />;
-                            case 'action':
-                              return <Zap className="h-3 w-3 text-blue-600" />;
-                            case 'observation':
-                              return <Info className="h-3 w-3 text-green-600" />;
-                            default:
-                              return <Info className="h-3 w-3 text-gray-600" />;
-                          }
-                        };
+                      <AnimatePresence mode="popLayout">
+                        {metadata.reasoningSteps.map((step: any, idx: number) => {
+                          const getReasoningIcon = (type: string) => {
+                            switch (type) {
+                              case 'thought':
+                                return <Brain className="h-4 w-4 text-purple-600" />;
+                              case 'action':
+                                return <Zap className="h-4 w-4 text-blue-600" />;
+                              case 'observation':
+                                return <Eye className="h-4 w-4 text-green-600" />;
+                              case 'search':
+                                return <Search className="h-4 w-4 text-orange-600" />;
+                              case 'reflection':
+                                return <Lightbulb className="h-4 w-4 text-yellow-600" />;
+                              default:
+                                return <Circle className="h-4 w-4 text-gray-400" />;
+                            }
+                          };
 
-                        return (
-                          <div
-                            key={step.id || `step-${idx}`}
-                            className="flex items-start gap-2 rounded-lg bg-white/90 p-2 dark:bg-gray-800/70"
-                          >
-                            {getReasoningIcon(step.type)}
-                            <div className="flex-1 min-w-0">
-                              <AIResponse className="text-xs text-gray-700 dark:text-gray-200 [&>p]:my-0">
-                                {step.content}
-                              </AIResponse>
-                              {step.confidence !== undefined && (
-                                <span className="ml-2 text-[11px] text-gray-500 dark:text-gray-400">
-                                  ({Math.round(step.confidence * 100)}%)
-                                </span>
+                          return (
+                            <motion.div
+                              key={step.id || `step-${idx}`}
+                              initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                              animate={{ opacity: 1, y: 0, scale: 1 }}
+                              exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                              transition={{ 
+                                duration: 0.3,
+                                delay: idx * 0.05  // Stagger by 50ms per step
+                              }}
+                              className={cn(
+                                "flex items-start gap-3 rounded-lg p-3 border",
+                                step.type === 'thought' && "bg-purple-50/50 border-purple-200 dark:bg-purple-900/20 dark:border-purple-800",
+                                step.type === 'action' && "bg-blue-50/50 border-blue-200 dark:bg-blue-900/20 dark:border-blue-800",
+                                step.type === 'observation' && "bg-green-50/50 border-green-200 dark:bg-green-900/20 dark:border-green-800",
+                                step.type === 'search' && "bg-orange-50/50 border-orange-200 dark:bg-orange-900/20 dark:border-orange-800",
+                                step.type === 'reflection' && "bg-yellow-50/50 border-yellow-200 dark:bg-yellow-900/20 dark:border-yellow-800",
+                                !step.type && "bg-gray-50/50 border-gray-200 dark:bg-gray-800/50 dark:border-gray-700"
                               )}
-                            </div>
-                          </div>
-                        );
-                      })}
+                            >
+                              <div className="mt-0.5">
+                                {getReasoningIcon(step.type)}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                {step.type && (
+                                  <div className="text-xs font-semibold text-gray-900 dark:text-gray-100 mb-1.5 uppercase tracking-wide">
+                                    {step.type}
+                                  </div>
+                                )}
+                                <AIResponse className="text-sm text-gray-700 dark:text-gray-200 [&>p]:my-0 [&>p]:leading-relaxed">
+                                  {step.content}
+                                </AIResponse>
+                                {step.confidence !== undefined && (
+                                  <Badge variant="secondary" className="mt-2 text-[10px] px-2 py-0.5">
+                                    {Math.round(step.confidence * 100)}% confident
+                                  </Badge>
+                                )}
+                              </div>
+                            </motion.div>
+                          );
+                        })}
+                      </AnimatePresence>
                     </div>
                   )}
 
@@ -1184,13 +1227,13 @@ export function EnhancedMessageDisplay({
 
             {!isUser && ragSummary && metadata?.sources && metadata.sources.length > 0 && (
               <>
-                {/* ✅ Chicago-style citations list with badges */}
-                <div className="mt-4 space-y-2">
-                  <div className="flex items-center gap-2 text-xs font-medium text-gray-700 dark:text-gray-300">
-                    <BookOpen className="h-3.5 w-3.5" />
+                {/* ✅ TAG: CHICAGO_STYLE_REFERENCES - Clean reference list */}
+                <div className="mt-4 space-y-3">
+                  <div className="flex items-center gap-2 text-xs font-semibold text-gray-700 dark:text-gray-300">
+                    <BookOpen className="h-4 w-4" />
                     <span>References ({metadata.sources.length})</span>
                   </div>
-                  <div className="space-y-2">
+                  <div className="space-y-3">
                     {metadata.sources.map((source, idx) => {
                       const sourceTypePresentation = getSourceTypePresentation(source.sourceType);
                       return (
@@ -1203,15 +1246,16 @@ export function EnhancedMessageDisplay({
                               delete sourceRefs.current[`ref-${idx}`];
                             }
                           }}
-                          className="flex items-start gap-2 pb-2 border-b border-gray-100 last:border-0 dark:border-gray-800"
+                          className="flex items-start gap-3 pb-3 border-b border-gray-100 last:border-0 dark:border-gray-800"
                         >
+                          {/* Number badge - Clean style without brackets */}
                           <Badge 
                             variant="outline" 
-                            className="shrink-0 h-5 text-[10px] font-medium mt-0.5"
+                            className="shrink-0 h-5 min-w-[24px] text-[10px] font-semibold mt-0.5 rounded-full"
                           >
-                            [{idx + 1}]
+                            {idx + 1}
                           </Badge>
-                          <div className="flex-1 min-w-0 space-y-1">
+                          <div className="flex-1 min-w-0 space-y-1.5">
                             {/* Chicago Citation as JSX */}
                             <ChicagoCitationJSX source={source} index={idx} />
                             
@@ -1231,7 +1275,7 @@ export function EnhancedMessageDisplay({
                             
                             {/* Excerpt (optional) */}
                             {source.excerpt && (
-                              <p className="text-[11px] text-gray-600 dark:text-gray-400 line-clamp-2 mt-1">
+                              <p className="text-[11px] text-gray-600 dark:text-gray-400 line-clamp-2 mt-1 leading-relaxed">
                                 {source.excerpt}
                               </p>
                             )}
@@ -1273,31 +1317,32 @@ export function EnhancedMessageDisplay({
               </div>
             )}
 
-            {/* Key Insights Callout - ✅ Show ONLY after completion */}
-            {!isUser && !isStreaming && (keyInsights.length > 0 || (metadata?.confidence ?? 0) > 0.85) && (
+            {/* Key Insights Callout - ✅ TAG: KEY_INSIGHTS_DISPLAY - Show ONLY after completion */}
+            {!isUser && !isStreaming && keyInsights.length > 0 && (
               <motion.div
                 initial={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, y: 10 }}
                 animate={prefersReducedMotion ? { opacity: 1 } : { opacity: 1, y: 0 }}
                 transition={{ duration: prefersReducedMotion ? 0 : 0.2 }}
-                className="mt-4 rounded-xl border border-blue-100 bg-blue-50/60 p-3"
+                className="mt-4 rounded-xl border border-blue-100 bg-blue-50/60 p-3 dark:border-blue-900/40 dark:bg-blue-900/20"
               >
                 <div className="flex items-start gap-2">
-                  <Sparkles className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
-                  <div className="flex-1">
-                    <h4 className="text-xs font-semibold text-blue-900 mb-1">Key Insight</h4>
-                    {keyInsights.length > 0 ? (
-                      <ul className="space-y-1 text-xs text-blue-800 list-disc list-inside" role="list">
-                        {keyInsights.map((insight, idx) => (
-                          <li key={idx} role="listitem">
+                  <Sparkles className="h-4 w-4 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <h4 className="text-xs font-semibold text-blue-900 dark:text-blue-200 mb-2">
+                      Key Insights
+                    </h4>
+                    <div className="space-y-2">
+                      {keyInsights.map((insight, idx) => (
+                        <div key={idx} className="flex items-start gap-2">
+                          <span className="text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0">•</span>
+                          <AIResponse 
+                            className="flex-1 text-xs text-blue-800 dark:text-blue-100 [&>p]:my-0 [&>p]:leading-relaxed prose-strong:text-blue-900 dark:prose-strong:text-blue-50"
+                          >
                             {insight}
-                          </li>
-                        ))}
-                      </ul>
-                    ) : (
-                      <p className="text-xs text-blue-800">
-                        High confidence response ({Math.round((metadata?.confidence ?? 0) * 100)}%) based on {metadata?.sources?.length || 0} verified source{metadata?.sources && metadata.sources.length !== 1 ? 's' : ''}.
-                      </p>
-                    )}
+                          </AIResponse>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </div>
               </motion.div>
@@ -1507,3 +1552,6 @@ export function EnhancedMessageDisplay({
     </motion.div>
   );
 }
+
+export { EnhancedMessageDisplay };
+export default EnhancedMessageDisplay;

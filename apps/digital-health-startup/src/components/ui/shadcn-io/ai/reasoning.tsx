@@ -6,7 +6,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@vital/ui';
-import { cn } from '@vital/ui/lib/utils';
+import { cn } from '@/lib/utils';
 import { BrainIcon, ChevronDownIcon } from 'lucide-react';
 import type { ComponentProps } from 'react';
 import { createContext, memo, useContext, useEffect, useState } from 'react';
@@ -35,6 +35,7 @@ export type ReasoningProps = ComponentProps<typeof Collapsible> & {
   defaultOpen?: boolean;
   onOpenChange?: (open: boolean) => void;
   duration?: number;
+  keepOpen?: boolean; // ✅ NEW: Prevents auto-close after streaming
 };
 
 const AUTO_CLOSE_DELAY = 1000;
@@ -47,6 +48,7 @@ export const Reasoning = memo(
     defaultOpen = false,
     onOpenChange,
     duration: durationProp,
+    keepOpen = false, // ✅ NEW: Extract keepOpen prop
     children,
     ...props
   }: ReasoningProps) => {
@@ -76,18 +78,20 @@ export const Reasoning = memo(
     }, [isStreaming, startTime, setDuration]);
 
     // Auto-open when streaming starts, auto-close when streaming ends (once only)
+    // ✅ FIX: Respect keepOpen prop to prevent auto-close
     useEffect(() => {
       if (isStreaming && !isOpen) {
         setIsOpen(true);
-      } else if (!isStreaming && isOpen && !defaultOpen && !hasAutoClosedRef) {
+      } else if (!isStreaming && isOpen && !defaultOpen && !hasAutoClosedRef && !keepOpen) {
         // Add a small delay before closing to allow user to see the content
+        // ✅ Only auto-close if keepOpen is false
         const timer = setTimeout(() => {
           setIsOpen(false);
           setHasAutoClosedRef(true);
         }, AUTO_CLOSE_DELAY);
         return () => clearTimeout(timer);
       }
-    }, [isStreaming, isOpen, defaultOpen, setIsOpen, hasAutoClosedRef]);
+    }, [isStreaming, isOpen, defaultOpen, setIsOpen, hasAutoClosedRef, keepOpen]);
 
     const handleOpenChange = (newOpen: boolean) => {
       setIsOpen(newOpen);

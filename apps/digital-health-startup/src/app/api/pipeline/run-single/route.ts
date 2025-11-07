@@ -9,12 +9,13 @@ const execAsync = promisify(exec);
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { source, dryRun = false, embeddingModel } = body;
+    const { source, dryRun = false, embeddingModel, domainIds = [] } = body;
 
     console.log('📥 Single source execution request:', {
       url: source?.url,
       dryRun,
       embeddingModel: embeddingModel || 'default',
+      domainIds: domainIds.length > 0 ? domainIds : 'none',
     });
 
     if (!source || !source.url) {
@@ -36,7 +37,10 @@ export async function POST(request: NextRequest) {
 
     // Create single-source config
     const config = {
-      sources: [source],
+      sources: [{
+        ...source,
+        domain_ids: domainIds, // Add selected domains to the source
+      }],
       scraping_settings: {
         timeout: 60,
         max_retries: 3,
@@ -100,6 +104,25 @@ export async function POST(request: NextRequest) {
       PINECONE_API_KEY: pythonEnv.PINECONE_API_KEY ? '✅ Set' : '❌ Missing',
     });
 
+    // Early validation - return error immediately if env vars are missing
+    if (!pythonEnv.SUPABASE_URL || !pythonEnv.SUPABASE_SERVICE_ROLE_KEY) {
+      console.error('❌ Critical: Environment variables missing!');
+      console.error('   NEXT_PUBLIC_SUPABASE_URL:', process.env.NEXT_PUBLIC_SUPABASE_URL ? '✅ Set' : '❌ Missing');
+      console.error('   SUPABASE_SERVICE_ROLE_KEY:', process.env.SUPABASE_SERVICE_ROLE_KEY ? '✅ Set' : '❌ Missing');
+      
+      return NextResponse.json({
+        success: false,
+        error: 'Environment variables not configured',
+        details: 'Missing required environment variables. Please check your .env.local file and restart the server.',
+        stdout: '',
+        stderr: 'SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY not found in environment',
+        missing_vars: [
+          !pythonEnv.SUPABASE_URL ? 'NEXT_PUBLIC_SUPABASE_URL' : null,
+          !pythonEnv.SUPABASE_SERVICE_ROLE_KEY ? 'SUPABASE_SERVICE_ROLE_KEY' : null,
+        ].filter(Boolean),
+      });
+    }
+
     // Execute pipeline (with timeout)
     const startTime = Date.now();
     const { stdout, stderr } = await execAsync(command, {
@@ -118,11 +141,31 @@ export async function POST(request: NextRequest) {
 
     // Extract error details from output
     let errorDetails = null;
-    const errorMatch = stdout.match(/❌ Error scraping[^:]*: (.+)/);
-    if (errorMatch) {
-      errorDetails = errorMatch[1].trim();
-    } else if (stderr) {
-      errorDetails = stderr.split('\n').find(line => line.includes('Error') || line.includes('❌')) || stderr.substring(0, 200);
+    
+    // Check for missing environment variables error
+    if (stdout.includes('Missing required environment variables') || stderr.includes('Missing required environment variables')) {
+      const envErrorMatch = (stdout + stderr).match(/Missing required environment variables: (.+)/);
+      if (envErrorMatch) {
+        errorDetails = `Missing environment variables: ${envErrorMatch[1]}. Check your .env.local file.`;
+      }
+    }
+    
+    // Check for scraping errors
+    if (!errorDetails) {
+      const errorMatch = stdout.match(/❌ Error scraping[^:]*: (.+)/);
+      if (errorMatch) {
+        errorDetails = errorMatch[1].trim();
+      } else if (stderr) {
+        errorDetails = stderr.split('\n').find(line => line.includes('Error') || line.includes('❌')) || stderr.substring(0, 200);
+      }
+    }
+    
+    // If still no error details, check for any ERROR log lines
+    if (!errorDetails && (stdout.includes('ERROR') || stderr.includes('ERROR'))) {
+      const errorLines = (stdout + '\n' + stderr).split('\n').filter(line => line.includes('ERROR'));
+      if (errorLines.length > 0) {
+        errorDetails = errorLines.join('\n');
+      }
     }
 
     // Check for success
@@ -135,6 +178,8 @@ export async function POST(request: NextRequest) {
       duration,
       output: stdout,
       errors: errorDetails || stderr || null,
+      stdout: stdout.substring(0, 5000), // Include first 5000 chars for debugging
+      stderr: stderr ? stderr.substring(0, 5000) : null,
       timestamp: new Date().toISOString(),
       configFile: configFilename,
       dryRun,

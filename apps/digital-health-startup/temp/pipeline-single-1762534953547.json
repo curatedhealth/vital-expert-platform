@@ -1,0 +1,62 @@
+{
+  "sources": [
+    {
+      "url": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC11680085/pdf/",
+      "description": "Alterations in Striatal Architecture and Biochemical Markers’ Levels During Postnatal Development in the Rat Model of an Attention Deficit/Hyperactivity Disorder (ADHD)",
+      "firm": "PubMed Central / NIH",
+      "domain": "imported",
+      "category": "pubmed central",
+      "tags": [
+        "PubMed Central",
+        "International Journal of Molecular Sciences"
+      ],
+      "priority": "medium",
+      "title": "Alterations in Striatal Architecture and Biochemical Markers’ Levels During Postnatal Development in the Rat Model of an Attention Deficit/Hyperactivity Disorder (ADHD)",
+      "abstract": "Full text available via PMC",
+      "authors": [
+        "Bogdańska-Chomczyk E",
+        "Wojtacha P",
+        "Tsai ML",
+        "Huang AC",
+        "Kozłowska A"
+      ],
+      "publication_date": "2024 Dec 20",
+      "publication_year": 2024,
+      "source_url": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC11680085/",
+      "pdf_link": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC11680085/pdf/",
+      "file_type": "html",
+      "content_file_type": "html",
+      "direct_download": false,
+      "access_type": "public",
+      "source_id": "PMC:11680085",
+      "journal": "International Journal of Molecular Sciences",
+      "imported_from": "PubMed Central",
+      "import_date": "2025-11-07T16:59:10.171Z"
+    }
+  ],
+  "scraping_settings": {
+    "timeout": 60,
+    "max_retries": 3,
+    "delay_between_requests": 1,
+    "wait_for_js": false,
+    "use_playwright": false
+  },
+  "processing_settings": {
+    "chunk_size": 1000,
+    "chunk_overlap": 200,
+    "min_word_count": 100,
+    "max_content_length": 1000000
+  },
+  "upload_settings": {
+    "enable_supabase": true,
+    "enable_pinecone": true,
+    "batch_size": 100,
+    "skip_duplicates": true
+  },
+  "output_settings": {
+    "create_subdirectories": true,
+    "include_metadata": true,
+    "markdown_format": true
+  },
+  "embedding_model": "sentence-transformers/all-MiniLM-L6-v2"
+}

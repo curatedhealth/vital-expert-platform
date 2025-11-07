@@ -18,7 +18,7 @@ interface SearchRequest {
 export async function POST(request: NextRequest) {
   try {
     const body: SearchRequest = await request.json();
-    const { query, sources, maxResults = 20 } = body;
+    const { query, sources, maxResults = 20, sortBy = 'relevance' } = body;
 
     if (!query || query.trim().length === 0) {
       return NextResponse.json(
@@ -55,7 +55,8 @@ async def main():
     results = await search_knowledge_sources(
         query='${query.replace(/'/g, "\\'")}',
         sources=[${sourcesArg}],
-        max_results_per_source=${maxResults}
+        max_results_per_source=${maxResults},
+        sort_by='${sortBy}'
     )
     print(json.dumps(results, default=str))
 

@@ -1498,6 +1498,17 @@ function AskExpertPageContent() {
                       }));
                     }
                     
+                    // ✅ FIX: Extract reasoning_steps from LangGraph state
+                    if (actualState.reasoning_steps && Array.isArray(actualState.reasoning_steps)) {
+                      console.log(`✅ [Updates Mode] Found ${actualState.reasoning_steps.length} reasoning steps from LangGraph`);
+                      reasoningStepsBuffer = actualState.reasoning_steps;
+                      setReasoningSteps(actualState.reasoning_steps);
+                      setStreamingMeta(prev => ({
+                        ...prev,
+                        reasoningSteps: actualState.reasoning_steps
+                      }));
+                    }
+                    
                     break;
                   }
                 }

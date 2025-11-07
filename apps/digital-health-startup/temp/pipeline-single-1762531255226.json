@@ -1,0 +1,62 @@
+{
+  "sources": [
+    {
+      "url": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7647817/pdf/",
+      "description": "Implementation and Application of Telemedicine in China: Cross-Sectional Study",
+      "firm": "PubMed Central / NIH",
+      "domain": "imported",
+      "category": "pubmed central",
+      "tags": [
+        "PubMed Central",
+        "JMIR mHealth and uHealth"
+      ],
+      "priority": "medium",
+      "title": "Implementation and Application of Telemedicine in China: Cross-Sectional Study",
+      "abstract": "Full text available via PMC",
+      "authors": [
+        "Cui F",
+        "Ma Q",
+        "He X",
+        "Zhai Y",
+        "Zhao J"
+      ],
+      "publication_date": "2020 Oct 23",
+      "publication_year": 2020,
+      "source_url": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7647817/",
+      "pdf_link": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7647817/pdf/",
+      "file_type": "pdf",
+      "content_file_type": "pdf",
+      "direct_download": true,
+      "access_type": "public",
+      "source_id": "PMC:7647817",
+      "journal": "JMIR mHealth and uHealth",
+      "imported_from": "PubMed Central",
+      "import_date": "2025-11-07T16:00:46.884Z"
+    }
+  ],
+  "scraping_settings": {
+    "timeout": 60,
+    "max_retries": 3,
+    "delay_between_requests": 1,
+    "wait_for_js": false,
+    "use_playwright": false
+  },
+  "processing_settings": {
+    "chunk_size": 1000,
+    "chunk_overlap": 200,
+    "min_word_count": 100,
+    "max_content_length": 1000000
+  },
+  "upload_settings": {
+    "enable_supabase": true,
+    "enable_pinecone": true,
+    "batch_size": 100,
+    "skip_duplicates": true
+  },
+  "output_settings": {
+    "create_subdirectories": true,
+    "include_metadata": true,
+    "markdown_format": true
+  },
+  "embedding_model": "sentence-transformers/all-MiniLM-L6-v2"
+}

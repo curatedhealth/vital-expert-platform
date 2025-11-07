@@ -30,14 +30,15 @@ from urllib.parse import urlparse
 
 # Try to import enhanced scraper, fall back to basic if not available
 try:
-    from enhanced_web_scraper import EnhancedWebScraper as WebScraper
+    from enhanced_web_scraper import EnhancedWebScraper
     ENHANCED_SCRAPER = True
     logger = logging.getLogger(__name__)
-    logger.info("✅ Using Enhanced Web Scraper (PDF support enabled)")
+    logger.info("✅ Using Enhanced Web Scraper (PDF + Playwright support enabled)")
 except ImportError:
+    EnhancedWebScraper = None  # type: ignore
     ENHANCED_SCRAPER = False
     logger = logging.getLogger(__name__)
-    logger.info("ℹ️  Using Basic Web Scraper (install PyPDF2 and pdfplumber for PDF support)")
+    logger.info("ℹ️  Using Basic Web Scraper (install PyPDF2, pdfplumber, playwright for full support)")
 
 import aiohttp
 from bs4 import BeautifulSoup, NavigableString, Tag
@@ -138,15 +139,16 @@ class PipelineConfig:
 # WEB SCRAPER
 # ============================================================================
 
-class WebScraper:
-    """Advanced web scraper with retry logic and content extraction."""
+class BasicWebScraper:
+    """Basic web scraper with retry logic and content extraction (fallback)."""
     
-    def __init__(self, timeout: int = 45, max_retries: int = 3):
+    def __init__(self, timeout: int = 45, max_retries: int = 3, **kwargs):
+        # Accept and ignore extra kwargs for compatibility with EnhancedWebScraper
         self.timeout = timeout
         self.max_retries = max_retries
         self.session: Optional[aiohttp.ClientSession] = None
     
-    async def __aenter__(self) -> 'WebScraper':
+    async def __aenter__(self) -> 'BasicWebScraper':
         # Create SSL context that doesn't verify certificates (for corporate proxies)
         import ssl
         ssl_context = ssl.create_default_context()
@@ -371,7 +373,10 @@ content_hash: {content_hash}
 # ============================================================================
 
 class RAGServiceUploader:
-    """Upload content using the Unified RAG Service (production method)."""
+    """
+    Upload content using the Unified RAG Service.
+    Uses the same standard RAG integration as the knowledge upload page.
+    """
     
     def __init__(self, embedding_model: str):
         self.embedding_model = embedding_model
@@ -379,16 +384,34 @@ class RAGServiceUploader:
         self.failed_count = 0
         self.chunks_created = 0
         self.rag_integration: Optional[Any] = None
+        self.langgraph_processor: Optional[Any] = None
+        self.use_langgraph = False  # Disabled - use standard RAG integration like upload page
     
     async def initialize(self) -> None:
-        """Initialize the RAG integration service."""
+        """Initialize the RAG integration service with LangGraph support."""
         try:
-            # Import here to avoid circular dependencies
+            if self.use_langgraph:
+                # Try to use advanced LangGraph workflow
+                try:
+                    from services.knowledge_pipeline_langgraph import create_knowledge_processor
+                    self.langgraph_processor = await create_knowledge_processor(
+                        embedding_model=self.embedding_model
+                    )
+                    logger.info("✅ LangGraph processor initialized - using advanced workflow 🚀")
+                    logger.info("   📋 Workflow stages: metadata enrichment → validation → chunking → embeddings → storage")
+                    return
+                except ImportError as e:
+                    logger.warning(f"⚠️ LangGraph not available: {e}")
+                    logger.info("📦 Falling back to standard RAG integration")
+                    self.use_langgraph = False
+            
+            # Fallback to standard RAG integration
             from services.knowledge_pipeline_integration import RAGIntegrationUploader
             
             self.rag_integration = RAGIntegrationUploader(embedding_model=self.embedding_model)
             await self.rag_integration.initialize()
-            logger.info("✅ RAG Service uploader initialized")
+            logger.info("✅ RAG Service uploader initialized (standard mode)")
+            
         except ImportError as e:
             logger.error(f"❌ Failed to import RAG integration: {e}")
             logger.error("💡 Make sure you're running from the project root")
@@ -398,22 +421,75 @@ class RAGServiceUploader:
             raise
     
     async def upload_content(self, content: Dict[str, Any]) -> bool:
-        """Upload content via RAG integration."""
-        if not self.rag_integration:
-            logger.error("❌ RAG integration not initialized")
-            return False
-        
+        """Upload content via LangGraph workflow or standard RAG integration."""
         try:
-            success = await self.rag_integration.upload_content(content)
-            if success:
-                self.uploaded_count += 1
-                stats = self.rag_integration.get_stats()
-                self.chunks_created = stats.get('chunks_created', 0)
+            logger.info(f"🔄 Upload method check: use_langgraph={self.use_langgraph}, processor={self.langgraph_processor is not None}, rag={self.rag_integration is not None}")
+            
+            if self.use_langgraph and self.langgraph_processor:
+                # Use advanced LangGraph workflow
+                logger.info(f"🔄 Processing with LangGraph workflow: {content.get('title', content.get('url'))[:60]}...")
+                
+                result = await self.langgraph_processor.process_document(
+                    raw_content=content.get('content', ''),
+                    source_url=content.get('url', ''),
+                    source_metadata={
+                        'title': content.get('title', ''),
+                        'domain': content.get('domain', 'uncategorized'),
+                        'category': content.get('category', 'general'),
+                        'tags': content.get('tags', []),
+                        'description': content.get('description', ''),
+                        'firm': content.get('firm', ''),
+                        **{k: v for k, v in content.items() if k not in ['content']}  # All metadata except content
+                    }
+                )
+                
+                # Extract statistics from LangGraph result
+                if result and result.get('success'):
+                    self.uploaded_count += 1
+                    self.chunks_created += result.get('chunk_count', 0)
+                    
+                    logger.info(f"✅ LangGraph processing complete:")
+                    logger.info(f"   📊 Quality Score: {result.get('quality_score', 0):.2f}")
+                    logger.info(f"   ✂️ Chunks: {result.get('chunk_count', 0)}")
+                    logger.info(f"   📤 Vectors uploaded: {result.get('pinecone_vectors_uploaded', 0)}")
+                    logger.info(f"   💾 Supabase: {'✅' if result.get('supabase_stored') else '❌'}")
+                    
+                    if result.get('warnings'):
+                        for warning in result['warnings']:
+                            logger.warning(f"   ⚠️ {warning}")
+                    
+                    return True
+                else:
+                    self.failed_count += 1
+                    errors = result.get('errors', ['Unknown error']) if result else ['Processing failed']
+                    logger.error(f"   ❌ LangGraph processing failed for: {content.get('url', 'unknown')}")
+                    logger.error(f"   📄 Full result: {result}")
+                    for error in errors:
+                        logger.error(f"   ❌ {error}")
+                    return False
+            
+            elif self.rag_integration:
+                # Fallback to standard integration
+                success = await self.rag_integration.upload_content(content)
+                if success:
+                    self.uploaded_count += 1
+                    stats = self.rag_integration.get_stats()
+                    self.chunks_created = stats.get('chunks_created', 0)
+                else:
+                    self.failed_count += 1
+                return success
+            
             else:
+                logger.error("❌ No upload method available")
                 self.failed_count += 1
-            return success
+                return False
+                
         except Exception as e:
-            logger.error(f"❌ Error uploading via RAG service: {e}")
+            logger.error(f"❌ Error uploading content: {str(e)}")
+            logger.error(f"   URL: {content.get('url', 'unknown')}")
+            logger.error(f"   Exception type: {type(e).__name__}")
+            import traceback
+            logger.error(f"   Traceback: {traceback.format_exc()}")
             self.failed_count += 1
             return False
     
@@ -421,6 +497,7 @@ class RAGServiceUploader:
         """Cleanup resources."""
         if self.rag_integration:
             await self.rag_integration.close()
+        # LangGraph processor doesn't need explicit closing
     
     def get_stats(self) -> Dict[str, int]:
         """Get upload statistics."""
@@ -574,7 +651,16 @@ class KnowledgePipeline:
         sources = self.config.config['sources']
         logger.info(f"📋 Processing {len(sources)} sources")
         
-        async with WebScraper() as scraper:
+        # Initialize scraper - use Enhanced if available, otherwise Basic
+        scraper_kwargs = {}
+        if ENHANCED_SCRAPER and EnhancedWebScraper:
+            scraper_kwargs['use_playwright'] = True
+            logger.info("🎭 Playwright enabled for anti-bot bypass")
+            WebScraperClass = EnhancedWebScraper
+        else:
+            WebScraperClass = BasicWebScraper
+        
+        async with WebScraperClass(**scraper_kwargs) as scraper:
             for idx, source in enumerate(sources, 1):
                 logger.info(f"\n{'='*60}")
                 logger.info(f"Processing source {idx}/{len(sources)}")
@@ -622,6 +708,12 @@ class KnowledgePipeline:
                 # Upload if not dry run
                 if not self.dry_run and self.uploader:
                     combined_data = {**scraped_data, **enriched_metadata}
+                    
+                    # Add domain_ids if provided in source config
+                    if 'domain_ids' in source and source['domain_ids']:
+                        combined_data['domain_ids'] = source['domain_ids']
+                        logger.info(f"📂 Domain IDs: {source['domain_ids']}")
+                    
                     await self.uploader.upload_content(combined_data)
                 
                 # Small delay between requests

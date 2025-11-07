@@ -14,6 +14,10 @@ const nextConfig = {
   },
   reactStrictMode: true,
   poweredByHeader: false,
+  // Disable Turbopack to avoid build manifest issues in Next.js 16
+  experimental: {
+    turbo: false,
+  },
 }
 
 export default nextConfig

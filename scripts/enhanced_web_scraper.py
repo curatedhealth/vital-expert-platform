@@ -144,7 +144,31 @@ class EnhancedWebScraper:
         if not self.session:
             raise RuntimeError("Session not initialized")
         
-        async with self.session.get(url) as response:
+        # Special headers for PMC PDFs (they block some automated requests)
+        headers = {}
+        if 'ncbi.nlm.nih.gov/pmc' in url:
+            headers = {
+                'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                'Accept': 'application/pdf,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+                'Accept-Language': 'en-US,en;q=0.9',
+                'Accept-Encoding': 'gzip, deflate, br',
+                'Referer': 'https://pubmed.ncbi.nlm.nih.gov/',
+                'Connection': 'keep-alive',
+            }
+        
+        async with self.session.get(url, headers=headers) as response:
+            if response.status == 403:
+                # Try alternative PMC format (remove /pdf/ from URL for HTML version)
+                if '/pmc/articles/' in url and '/pdf/' in url:
+                    alt_url = url.replace('/pdf/', '/')
+                    logger.warning(f"⚠️ PDF blocked, trying HTML version: {alt_url}")
+                    async with self.session.get(alt_url, headers=headers) as alt_response:
+                        if alt_response.status == 200:
+                            # Return HTML content instead
+                            html = await alt_response.text()
+                            return html.encode('utf-8')
+                        alt_response.raise_for_status()
+            
             response.raise_for_status()
             return await response.read()
     
@@ -168,6 +192,9 @@ class EnhancedWebScraper:
         try:
             logger.info(f"🔍 Processing: {url}")
             
+            # Auto-enable Playwright for known problematic sites
+            use_browser = wait_for_js or self._needs_real_browser(url)
+            
             # Detect content type
             content_type = await self._detect_content_type(url)
             logger.info(f"📄 Content type: {content_type}")
@@ -177,7 +204,8 @@ class EnhancedWebScraper:
                 return await self._scrape_pdf(url)
             elif content_type == 'local_file':
                 return await self._scrape_local_file(url)
-            elif wait_for_js and self.use_playwright:
+            elif use_browser and self.use_playwright:
+                logger.info("🎭 Using Playwright (real browser) for reliable extraction")
                 return await self._scrape_with_playwright(url, css_selector)
             else:
                 return await self._scrape_html(url, css_selector)
@@ -191,6 +219,17 @@ class EnhancedWebScraper:
                 'content': None,
                 'word_count': 0
             }
+    
+    def _needs_real_browser(self, url: str) -> bool:
+        """Check if URL needs real browser to bypass anti-bot protection"""
+        # Sites that block automated requests
+        protected_sites = [
+            'ncbi.nlm.nih.gov',
+            'pmc.ncbi.nlm.nih.gov',
+            'doaj.org',
+            'semanticscholar.org'
+        ]
+        return any(site in url for site in protected_sites)
     
     async def _detect_content_type(self, url: str) -> str:
         """Detect content type from URL or HEAD request."""
@@ -296,6 +335,35 @@ class EnhancedWebScraper:
             # Download PDF
             logger.info(f"📥 Downloading PDF: {url}")
             content_bytes = await self._fetch_with_retry(url)
+            
+            # Check if we actually got HTML (PMC fallback)
+            if content_bytes.startswith(b'<!DOCTYPE') or content_bytes.startswith(b'<html'):
+                logger.info("📄 Received HTML instead of PDF, parsing as HTML")
+                html = content_bytes.decode('utf-8')
+                soup = BeautifulSoup(html, 'html.parser')
+                
+                # Extract PMC article content
+                content_div = soup.find('div', class_='pmc-article') or soup.find('article') or soup.find('main')
+                if content_div:
+                    content = content_div.get_text(separator='\n\n', strip=True)
+                else:
+                    content = soup.get_text(separator='\n\n', strip=True)
+                
+                title_tag = soup.find('h1') or soup.find('title')
+                title = title_tag.get_text(strip=True) if title_tag else urlparse(url).path.split('/')[-1]
+                
+                return {
+                    'url': url,
+                    'success': True,
+                    'content': content,
+                    'title': title,
+                    'word_count': len(content.split()),
+                    'source_type': 'html_fallback',
+                    'metadata': {
+                        'original_format': 'pdf_unavailable',
+                        'extracted_from': 'html'
+                    }
+                }
             
             # Extract text with pdfplumber (better quality)
             text_content = []

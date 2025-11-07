@@ -972,9 +972,7 @@ export function EnhancedMessageDisplay({
                   {/* ✅ NEW: LangGraph Reasoning Steps */}
                   {metadata.reasoningSteps && metadata.reasoningSteps.length > 0 && (
                     <div className="space-y-2">
-                      <div className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        AI Thinking
-                      </div>
+                      {/* Removed duplicate "AI Thinking" heading - title already in trigger */}
                       {metadata.reasoningSteps.map((step: any, idx: number) => {
                         const getReasoningIcon = (type: string) => {
                           switch (type) {

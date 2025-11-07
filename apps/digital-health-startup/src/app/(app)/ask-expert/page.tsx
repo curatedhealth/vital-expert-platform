@@ -2723,29 +2723,7 @@ function AskExpertPageContent() {
               </div>
             ) : (
               <>
-                {recentReasoning.length > 0 && (
-                  <div className="mb-4">
-                    <Reasoning defaultOpen={false}>
-                      <ReasoningTrigger
-                        title={`Latest AI Reasoning${formatReasoningTimestamp(recentReasoningTimestamp) ? ` • ${formatReasoningTimestamp(recentReasoningTimestamp)}` : ''}`}
-                      />
-                      <ReasoningContent>
-                        <div className="space-y-2 text-xs text-muted-foreground">
-                      {recentReasoning.map((step, idx) => (
-                        <div
-                          key={`${idx}-${step.slice(0, 20)}`}
-                          className="flex items-start gap-2 rounded-lg bg-muted/30 p-2"
-                        >
-                          <Sparkles className="h-3 w-3 mt-0.5 text-primary flex-shrink-0" />
-                          <span className="whitespace-pre-wrap">{step}</span>
-                        </div>
-                      ))}
-                        </div>
-                      </ReasoningContent>
-                    </Reasoning>
-                  </div>
-                )}
-
+                {/* ✅ Removed top-level Reasoning component - reasoning now only shown per-message */}
                 {messages.map((msg, index) => {
                   // Get agent info for assistant messages
                   const agentInfo =

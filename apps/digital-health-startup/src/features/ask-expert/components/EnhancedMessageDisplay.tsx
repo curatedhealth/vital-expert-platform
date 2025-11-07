@@ -351,56 +351,46 @@ function getSourceTypePresentation(
 }
 
 /**
- * ✅ Render Chicago-style citation as JSX components (not plain string)
- * Chicago Manual of Style (17th edition) - Notes and Bibliography style
+ * ✅ Clean Chicago-style citation as JSX
+ * Format: [Number] Organization. "Title." Domain, Year. URL
  */
 function ChicagoCitationJSX({ source, index }: { source: Source; index: number }) {
-  // Extract hostname from URL
-  let hostname = '';
-  if (source.url) {
-    try {
-      const urlObj = new URL(source.url);
-      hostname = urlObj.hostname.replace(/^www\./, '');
-    } catch {
-      hostname = source.domain || '';
-    }
-  }
-
   return (
-    <span className="text-gray-700 dark:text-gray-300 text-xs leading-relaxed">
+    <div className="text-gray-700 dark:text-gray-300 text-xs leading-relaxed">
       {/* Author/Organization */}
       {(source.organization || source.author) && (
-        <span className="font-medium">
+        <span className="font-semibold">
           {source.organization || source.author}
-          {', '}
         </span>
       )}
       
       {/* Title (as clickable link if URL available) */}
       {source.title && (
         <>
+          {(source.organization || source.author) && '. '}
           {source.url ? (
             <a
               href={source.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-primary hover:underline"
+              className="text-primary hover:underline inline-flex items-center gap-1"
             >
               &ldquo;{source.title}&rdquo;
             </a>
           ) : (
             <span>&ldquo;{source.title}&rdquo;</span>
           )}
-          {source.domain || source.publicationDate || source.url ? ', ' : '.'}
         </>
       )}
       
       {/* Domain */}
       {source.domain && (
-        <span className="italic">
-          {source.domain}
-          {source.publicationDate || source.url ? ', ' : '.'}
-        </span>
+        <>
+          {'. '}
+          <span className="italic text-gray-600 dark:text-gray-400">
+            {source.domain}
+          </span>
+        </>
       )}
       
       {/* Publication Date */}
@@ -409,22 +399,16 @@ function ChicagoCitationJSX({ source, index }: { source: Source; index: number }
         const year = date.getFullYear();
         if (!isNaN(year)) {
           return (
-            <span>
-              ({year})
-              {source.url ? ', ' : '.'}
+            <span className="text-gray-600 dark:text-gray-400">
+              , {year}
             </span>
           );
         }
         return null;
       })()}
       
-      {/* URL (accessed via) */}
-      {source.url && hostname && (
-        <span className="text-gray-600 dark:text-gray-400">
-          accessed via {hostname}.
-        </span>
-      )}
-    </span>
+      {'.'}
+    </div>
   );
 }
 
@@ -785,16 +769,29 @@ export function EnhancedMessageDisplay({
           .map((src) => deriveSourceTag(src))
           .find((value): value is string => typeof value === 'string' && value.trim().length > 0) ?? undefined;
 
-      if (!sources.length) {
-        return <sup className="text-blue-600">[{number || '?'}]</sup>;
+      // ✅ FIX: If sources not embedded in citation, try to match from metadata sources by number
+      let resolvedSources = sources;
+      if (!sources.length && number && metadata?.sources) {
+        const citationNum = parseInt(number, 10);
+        if (!isNaN(citationNum) && citationNum > 0 && citationNum <= metadata.sources.length) {
+          resolvedSources = [metadata.sources[citationNum - 1]];
+        }
+      }
+
+      if (!resolvedSources.length) {
+        return (
+          <span className="inline-flex items-center gap-0.5 text-blue-600 dark:text-blue-400 text-[11px] font-medium">
+            [{number || '?'}]
+          </span>
+        );
       }
 
       return (
         <InlineCitation>
           <InlineCitationCard>
             <InlineCitationCardTrigger
-              sources={sources.map((source) => source.url || '')}
-              label={triggerLabel}
+              sources={resolvedSources.map((source) => source.url || '')}
+              label={number || triggerLabel}
               onClick={() => {
                 if (primarySourceId) {
                   scrollToSource(primarySourceId);
@@ -808,7 +805,7 @@ export function EnhancedMessageDisplay({
                   <InlineCitationCarouselControls />
                 </InlineCitationCarouselHeader>
                 <InlineCitationCarouselContent>
-                  {sources.map((source, idx) => (
+                  {resolvedSources.map((source, idx) => (
                     <InlineCitationCarouselItem key={source.id || idx}>
                       <InlineCitationSource
                         title={source.title || `Source ${number || idx + 1}`}
@@ -834,7 +831,7 @@ export function EnhancedMessageDisplay({
         </InlineCitation>
       );
     },
-  }), [scrollToSource, citationNumberMap]);
+  }), [scrollToSource, citationNumberMap, metadata]);
 
   useEffect(() => {
     setShareStatus('idle');

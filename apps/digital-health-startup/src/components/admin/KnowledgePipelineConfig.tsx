@@ -203,7 +203,7 @@ export function KnowledgePipelineConfig() {
   // Queue management state
   const [queueSources, setQueueSources] = useState<QueueSource[]>([]);
   const [isProcessingQueue, setIsProcessingQueue] = useState(false);
-  const [currentView, setCurrentView] = useState<'config' | 'queue'>('config');
+  const [currentView, setCurrentView] = useState<'config' | 'queue' | 'search'>('config');
 
   // Sync sources to queue when config changes
   useEffect(() => {
@@ -605,6 +605,19 @@ export function KnowledgePipelineConfig() {
     setConfig(prev => ({ ...prev, sources: [] }));
   }, []);
 
+  // Handle adding imported sources from search
+  const handleAddImportedSources = useCallback((importedSources: Source[]) => {
+    console.log(`✅ Adding ${importedSources.length} imported sources to config`);
+    
+    setConfig(prev => ({
+      ...prev,
+      sources: [...prev.sources, ...importedSources]
+    }));
+    
+    // Switch to queue view to see the newly added sources
+    setCurrentView('queue');
+  }, []);
+
   // Calculate overall progress
   const overallProgress = queueSources.length > 0
     ? ((queueSources.filter(s => s.status === 'success' || s.status === 'failed').length) / queueSources.length) * 100
@@ -675,8 +688,8 @@ export function KnowledgePipelineConfig() {
       </div>
 
       {/* View Tabs */}
-      <Tabs value={currentView} onValueChange={(v) => setCurrentView(v as 'config' | 'queue')}>
-        <TabsList className="grid w-full max-w-md grid-cols-2">
+      <Tabs value={currentView} onValueChange={(v) => setCurrentView(v as 'config' | 'queue' | 'search')}>
+        <TabsList className="grid w-full max-w-2xl grid-cols-3">
           <TabsTrigger value="config">
             <FileText className="h-4 w-4 mr-2" />
             Configuration
@@ -684,6 +697,10 @@ export function KnowledgePipelineConfig() {
           <TabsTrigger value="queue">
             <List className="h-4 w-4 mr-2" />
             Queue ({queueSources.length})
+          </TabsTrigger>
+          <TabsTrigger value="search">
+            <Search className="h-4 w-4 mr-2" />
+            Search & Import
           </TabsTrigger>
         </TabsList>
 
@@ -1178,6 +1195,10 @@ export function KnowledgePipelineConfig() {
             isProcessing={isProcessingQueue}
             overallProgress={overallProgress}
           />
+        </TabsContent>
+
+        <TabsContent value="search" className="space-y-6 mt-6">
+          <KnowledgeSearchImport onAddToQueue={handleAddImportedSources} />
         </TabsContent>
       </Tabs>
     </div>

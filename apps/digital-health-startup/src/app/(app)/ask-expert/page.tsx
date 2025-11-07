@@ -344,14 +344,12 @@ function AskExpertPageContent() {
     citations?: CitationMeta[];
     finalResponse?: string;
     reasoning: string[];
-    // ✅ Add LangGraph streaming fields
-    workflowSteps?: any[];
+    // ✅ LangGraph streaming fields (workflowSteps removed - not valuable)
     reasoningSteps?: any[];
     streamingMetrics?: any;
   } | null>(null);
 
-  // ✅ NEW: LangGraph Streaming State
-  const [workflowSteps, setWorkflowSteps] = useState<any[]>([]);
+  // ✅ LangGraph Streaming State (workflowSteps removed)
   const [reasoningSteps, setReasoningSteps] = useState<any[]>([]);
   const [streamingMetrics, setStreamingMetrics] = useState<any>(null);
   const [isStreaming, setIsStreaming] = useState(false);
@@ -1201,24 +1199,7 @@ function AskExpertPageContent() {
                 switch (stream_mode) {
                   case 'custom': {
                     // Custom events from get_stream_writer()
-                    if (chunk.type === 'workflow_step') {
-                      const step = chunk.step || {};
-                      setWorkflowSteps(prev => {
-                        const existing = prev.find(s => s.id === step.id);
-                        const updated = existing
-                          ? prev.map(s => s.id === step.id ? { ...s, ...step } : s)
-                          : [...prev, step];
-                        
-                        // ✅ CRITICAL FIX: Also store in streamingMeta for persistence
-                        setStreamingMeta(meta => ({
-                          ...meta,
-                          workflowSteps: updated,
-                          reasoning: meta?.reasoning || []
-                        }));
-                        
-                        return updated;
-                      });
-                    } else if (chunk.type === 'langgraph_reasoning') {
+                    if (chunk.type === 'langgraph_reasoning') {
                       const reasoningStep = chunk.step || {};
                       if (reasoningStep.content) {
                         setReasoningSteps(prev => {
@@ -1228,7 +1209,6 @@ function AskExpertPageContent() {
                           setStreamingMeta(meta => ({
                             ...meta,
                             reasoningSteps: updated,
-                            workflowSteps: meta?.workflowSteps || [],
                             reasoning: meta?.reasoning || []
                           }));
                           
@@ -2016,11 +1996,7 @@ function AskExpertPageContent() {
             : Array.isArray(streamingMeta?.citations)
               ? streamingMeta.citations
               : undefined,
-          // ✅ FIX: Include LangGraph streaming data for persistent AI reasoning display
-          // Pull from streamingMeta if available (priority), otherwise from state
-          workflowSteps: (streamingMeta?.workflowSteps && streamingMeta.workflowSteps.length > 0)
-            ? streamingMeta.workflowSteps
-            : (workflowSteps.length > 0 ? workflowSteps : undefined),
+          // ✅ Include LangGraph AI reasoning for persistent display
           reasoningSteps: (streamingMeta?.reasoningSteps && streamingMeta.reasoningSteps.length > 0)
             ? streamingMeta.reasoningSteps
             : (reasoningSteps.length > 0 ? reasoningSteps : undefined),

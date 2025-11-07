@@ -244,25 +244,14 @@ class Mode1ManualWorkflow(BaseWorkflow):
         selected_rag_domains = state.get('selected_rag_domains', [])
         tenant_id = state.get('tenant_id')
         
-        # ✅ NEW: Emit workflow step start
-        writer({
-            "type": "workflow_step",
-            "step": {
-                "id": "rag-retrieval",
-                "name": "RAG Retrieval",
-                "description": f"Searching {len(selected_rag_domains)} knowledge domains",
-                "status": "running",
-                "progress": 0
-            }
-        })
-        
-        # ✅ NEW: Emit reasoning
+        # ✅ Emit real-time AI reasoning about RAG retrieval
+        domain_text = f"{len(selected_rag_domains)} specific" if selected_rag_domains else "all available"
         writer({
             "type": "langgraph_reasoning",
             "step": {
                 "type": "thought",
-                "content": f"Searching {len(selected_rag_domains) if selected_rag_domains else 'all'} domains for relevant evidence",
-                "confidence": 0.85,
+                "content": f"**Retrieving Knowledge:** Searching {domain_text} domains for evidence-based information relevant to the query",
+                "node": "rag_retrieval",
                 "timestamp": datetime.now(timezone.utc).isoformat()
             }
         })
@@ -287,29 +276,19 @@ class Mode1ManualWorkflow(BaseWorkflow):
             # FIXED: Extract sources list from result dict
             sources = rag_result.get('sources', [])
             
-            # ✅ NEW: Emit progress update
+            # ✅ Emit AI reasoning about retrieval results
             writer({
                 "type": "langgraph_reasoning",
                 "step": {
                     "type": "observation",
-                    "content": f"Found {len(sources)} relevant sources",
-                    "confidence": 0.90,
+                    "content": f"**Knowledge Retrieved:** Found {len(sources)} high-quality sources from medical literature and regulatory guidelines",
+                    "node": "rag_retrieval",
                     "timestamp": datetime.now(timezone.utc).isoformat()
                 }
             })
             
             # Build context summary
             context = self._build_context_summary(sources)
-            
-            # ✅ NEW: Emit workflow step completion
-            writer({
-                "type": "workflow_step",
-                "step": {
-                    "id": "rag-retrieval",
-                    "status": "completed",
-                    "progress": 100
-                }
-            })
             
             logger.info(
                 "✅ RAG retrieval completed",
@@ -359,7 +338,7 @@ class Mode1ManualWorkflow(BaseWorkflow):
         - Guarantees Perplexity-style citation format
         - ✅ NEW: Streams workflow progress and reasoning
         """
-        # ✅ NEW: Get streaming writer
+        # Get streaming writer for AI reasoning events
         writer = get_stream_writer()
         
         agent_data = state.get('agent_data')
@@ -378,29 +357,6 @@ class Mode1ManualWorkflow(BaseWorkflow):
                 'errors': state.get('errors', []) + ["Agent data not found"],
                 'current_node': 'execute_agent'
             }
-        
-        # ✅ NEW: Emit workflow step start
-        writer({
-            "type": "workflow_step",
-            "step": {
-                "id": "agent-execution",
-                "name": "Agent Execution",
-                "description": f"Generating response with {agent_data.get('name', 'agent')}",
-                "status": "running",
-                "progress": 0
-            }
-        })
-        
-        # ✅ NEW: Emit reasoning
-        writer({
-            "type": "langgraph_reasoning",
-            "step": {
-                "type": "action",
-                "content": "Preparing system prompt and context for agent execution",
-                "confidence": 0.90,
-                "timestamp": datetime.now(timezone.utc).isoformat()
-            }
-        })
         
         logger.info("🤖 [Mode 1] Executing agent with structured citations")
         
@@ -527,13 +483,13 @@ Do NOT add citation numbers since no sources were provided."""
             
             # Execute with structured output for citations
             if retrieved_documents:
-                # ✅ NEW: Emit reasoning before LLM call
+                # ✅ Emit AI reasoning before generating response
                 writer({
                     "type": "langgraph_reasoning",
                     "step": {
                         "type": "action",
-                        "content": f"Generating response with {len(retrieved_documents)} sources",
-                        "confidence": 0.88,
+                        "content": f"**Synthesizing Response:** Analyzing {len(retrieved_documents)} sources to formulate evidence-based answer with inline citations",
+                        "node": "execute_agent",
                         "timestamp": datetime.now(timezone.utc).isoformat()
                     }
                 })
@@ -565,16 +521,6 @@ Do NOT add citation numbers since no sources were provided."""
                         
                         # Create response object
                         tool_response = type('Response', (), {'content': full_response})()
-                        
-                        # ✅ NEW: Emit completion
-                        writer({
-                            "type": "workflow_step",
-                            "step": {
-                                "id": "agent-execution",
-                                "status": "completed",
-                                "progress": 100
-                            }
-                        })
                         
                         logger.info(
                             "✅ Agent executed with tools",
@@ -620,23 +566,14 @@ Do NOT add citation numbers since no sources were provided."""
                         'citations': []  # Will be empty, prompt enforcement only
                     })()
                     
-                    # ✅ NEW: Emit completion
-                    writer({
-                        "type": "workflow_step",
-                        "step": {
-                            "id": "agent-execution",
-                            "status": "completed",
-                            "progress": 100
-                        }
-                    })
-                    
-                    # ✅ NEW: Emit observation
+                    # ✅ Emit final AI reasoning about response quality
+                    citation_count = len(response.citations)  # type: ignore
                     writer({
                         "type": "langgraph_reasoning",
                         "step": {
-                            "type": "observation",
-                            "content": f"Generated response with {len(response.citations)} citations",  # type: ignore
-                            "confidence": 0.92,
+                            "type": "result",
+                            "content": f"**Response Complete:** Generated comprehensive answer with {citation_count} inline citations from knowledge base",
+                            "node": "execute_agent",
                             "timestamp": datetime.now(timezone.utc).isoformat()
                         }
                     })

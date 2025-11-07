@@ -1059,7 +1059,7 @@ function AskExpertPageContent() {
 
       // 🔥 NEW: Call Python AI Engine directly for Mode 1 streaming
       const apiEndpoint = mode === 'manual' 
-        ? `${process.env.NEXT_PUBLIC_PYTHON_AI_ENGINE_URL || 'http://localhost:8080'}/api/mode1/manual`
+        ? `${process.env.NEXT_PUBLIC_PYTHON_AI_ENGINE_URL || 'http://localhost:8000'}/api/mode1/manual`
         : '/api/ask-expert/orchestrate';
 
       console.log('[AskExpert] Calling endpoint:', apiEndpoint);

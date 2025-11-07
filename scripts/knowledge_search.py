@@ -85,24 +85,24 @@ class KnowledgeSearcher:
             logger.warning(f"⚠️ Unsupported source: {source}")
             return []
     
-    async def _search_pubmed(
+    async def _search_pubmed_central(
         self,
         query: str,
         max_results: int,
         start_year: Optional[int],
         end_year: Optional[int]
     ) -> List[Dict]:
-        """Search PubMed Central"""
+        """Search PubMed Central for FREE FULL-TEXT articles only"""
         try:
-            # Build query with date filters
-            search_query = query
+            # Build query with date filters and free full-text requirement
+            search_query = f"{query} AND free fulltext[filter]"
             if start_year and end_year:
                 search_query += f" AND {start_year}:{end_year}[pdat]"
             
-            # Step 1: Search for IDs
+            # Step 1: Search PMC for IDs (use PMC database for free full-text)
             search_url = f"https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi"
             search_params = {
-                'db': 'pubmed',
+                'db': 'pmc',  # PubMed Central database (free full-text)
                 'term': search_query,
                 'retmax': max_results,
                 'retmode': 'json',
@@ -111,7 +111,7 @@ class KnowledgeSearcher:
             
             async with self.session.get(search_url, params=search_params) as response:
                 if response.status != 200:
-                    logger.error(f"❌ PubMed search failed: {response.status}")
+                    logger.error(f"❌ PMC search failed: {response.status}")
                     return []
                     
                 data = await response.json()
@@ -120,10 +120,10 @@ class KnowledgeSearcher:
             if not id_list:
                 return []
             
-            # Step 2: Fetch details for each ID
+            # Step 2: Fetch details for each PMC ID
             fetch_url = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi"
             fetch_params = {
-                'db': 'pubmed',
+                'db': 'pmc',
                 'id': ','.join(id_list),
                 'retmode': 'json'
             }
@@ -135,8 +135,8 @@ class KnowledgeSearcher:
                 data = await response.json()
                 results = []
                 
-                for pmid in id_list:
-                    article = data.get('result', {}).get(pmid, {})
+                for pmc_id in id_list:
+                    article = data.get('result', {}).get(pmc_id, {})
                     if not article:
                         continue
                     
@@ -149,34 +149,36 @@ class KnowledgeSearcher:
                     
                     # Get authors
                     authors = []
-                    for author in article.get('authors', [])[:5]:  # First 5 authors
+                    for author in article.get('authors', [])[:5]:
                         authors.append(author.get('name', ''))
                     
-                    # Get journal info
-                    journal = article.get('fulljournalname', article.get('source', ''))
+                    # Build PDF link (PMC provides free PDFs)
+                    pdf_link = f"https://www.ncbi.nlm.nih.gov/pmc/articles/PMC{pmc_id}/pdf/"
                     
                     results.append({
-                        'id': pmid,
+                        'id': f"PMC{pmc_id}",
                         'title': article.get('title', ''),
-                        'abstract': article.get('abstract', 'No abstract available'),
+                        'abstract': 'Full text available via PMC',
                         'authors': authors,
                         'publication_date': pub_date,
                         'publication_year': pub_year,
-                        'journal': journal,
-                        'url': f"https://pubmed.ncbi.nlm.nih.gov/{pmid}/",
-                        'pdf_link': None,  # PubMed doesn't provide direct PDF links
-                        'source': 'PubMed',
-                        'source_id': f"PMID:{pmid}",
-                        'firm': 'PubMed / NCBI',
-                        'file_type': 'html',
-                        'access_type': 'public'
+                        'journal': article.get('fulljournalname', article.get('source', '')),
+                        'url': f"https://www.ncbi.nlm.nih.gov/pmc/articles/PMC{pmc_id}/",
+                        'pdf_link': pdf_link,
+                        'source': 'PubMed Central',
+                        'source_id': f"PMC:{pmc_id}",
+                        'firm': 'PubMed Central / NIH',
+                        'file_type': 'pdf',
+                        'access_type': 'public',
+                        'direct_download': True,
+                        'open_access': True
                     })
                 
-                logger.info(f"✅ Found {len(results)} PubMed results")
+                logger.info(f"✅ Found {len(results)} PMC free full-text results")
                 return results
                 
         except Exception as e:
-            logger.error(f"❌ PubMed search error: {e}")
+            logger.error(f"❌ PMC search error: {e}")
             return []
     
     async def _search_arxiv(self, query: str, max_results: int) -> List[Dict]:
@@ -256,124 +258,167 @@ class KnowledgeSearcher:
             logger.error(f"❌ arXiv search error: {e}")
             return []
     
-    async def _search_bcg(self, query: str, max_results: int) -> List[Dict]:
-        """Search BCG Publications (simulated - would need real API or scraping)"""
-        # For now, return curated BCG publications related to query
-        logger.info("ℹ️  BCG search returning curated results (API integration pending)")
-        
-        bcg_publications = [
-            {
-                'title': 'AI at Work: Momentum Builds But Gaps Remain',
-                'abstract': 'BCG\'s comprehensive 2025 workplace AI survey covering 10,635 employees across 11 nations, identifying the \'silicon ceiling\' phenomenon affecting frontline workers.',
-                'url': 'https://www.bcg.com/publications/2025/ai-at-work-momentum-builds-but-gaps-remain',
-                'publication_year': 2025,
-            },
-            {
-                'title': 'Are You Generating Value from AI? The Widening Gap',
-                'abstract': 'BCG\'s empirical research proving future-built companies achieve 5x revenue increases and 3x cost reductions from AI compared to laggards.',
-                'url': 'https://www.bcg.com/publications/2025/are-you-generating-value-from-ai-the-widening-gap',
-                'publication_year': 2025,
+    async def _search_biorxiv(self, query: str, max_results: int) -> List[Dict]:
+        """Search bioRxiv for FREE biology preprints with PDFs"""
+        try:
+            logger.info("🔬 Searching bioRxiv...")
+            
+            # bioRxiv search API
+            search_url = "https://api.biorxiv.org/details/biorxiv"
+            
+            # Note: bioRxiv API is limited - we'll construct URL for latest papers
+            # For a full implementation, you'd need to use their bulk data endpoint
+            # This is a simplified version
+            
+            results = []
+            logger.info("⚠️ bioRxiv integration pending - returning empty results")
+            # TODO: Implement bioRxiv API when ready
+            
+            return results
+            
+        except Exception as e:
+            logger.error(f"❌ bioRxiv search error: {e}")
+            return []
+    
+    async def _search_doaj(self, query: str, max_results: int) -> List[Dict]:
+        """Search DOAJ (Directory of Open Access Journals)"""
+        try:
+            logger.info("📚 Searching DOAJ...")
+            
+            # DOAJ API
+            search_url = "https://doaj.org/api/search/articles/" + quote_plus(query)
+            params = {
+                'pageSize': max_results,
+                'page': 1
             }
-        ]
-        
-        # Filter by query keywords
-        results = []
-        query_lower = query.lower()
-        for pub in bcg_publications:
-            if any(word in pub['title'].lower() or word in pub['abstract'].lower() 
-                   for word in query_lower.split()):
-                results.append({
-                    'id': pub['url'].split('/')[-1],
-                    'title': pub['title'],
-                    'abstract': pub['abstract'],
-                    'authors': ['BCG Research'],
-                    'publication_date': f"{pub['publication_year']}-01-01",
-                    'publication_year': pub['publication_year'],
-                    'journal': 'BCG Publications',
-                    'url': pub['url'],
-                    'pdf_link': None,
-                    'source': 'BCG',
-                    'source_id': f"BCG:{pub['url'].split('/')[-1]}",
-                    'firm': 'Boston Consulting Group',
-                    'file_type': 'html',
-                    'access_type': 'public'
-                })
-        
-        return results[:max_results]
+            
+            async with self.session.get(search_url, params=params) as response:
+                if response.status != 200:
+                    logger.error(f"❌ DOAJ search failed: {response.status}")
+                    return []
+                
+                data = await response.json()
+                results = []
+                
+                for article in data.get('results', []):
+                    bibjson = article.get('bibjson', {})
+                    
+                    # Get title and abstract
+                    title = bibjson.get('title', 'No title')
+                    abstract = bibjson.get('abstract', 'No abstract available')
+                    
+                    # Get authors
+                    authors = []
+                    for author in bibjson.get('author', [])[:5]:
+                        name = author.get('name', '')
+                        if name:
+                            authors.append(name)
+                    
+                    # Get publication info
+                    pub_year = bibjson.get('year')
+                    journal = bibjson.get('journal', {}).get('title', 'Unknown')
+                    
+                    # Get link (DOAJ provides article URL)
+                    links = bibjson.get('link', [])
+                    url = None
+                    pdf_link = None
+                    
+                    for link in links:
+                        link_url = link.get('url', '')
+                        link_type = link.get('type', '')
+                        
+                        if 'fulltext' in link_type.lower() or 'pdf' in link_url.lower():
+                            pdf_link = link_url
+                        if not url:
+                            url = link_url
+                    
+                    if not url:
+                        continue
+                    
+                    results.append({
+                        'id': article.get('id', ''),
+                        'title': title,
+                        'abstract': abstract,
+                        'authors': authors,
+                        'publication_date': f"{pub_year}-01-01" if pub_year else '',
+                        'publication_year': pub_year,
+                        'journal': journal,
+                        'url': url,
+                        'pdf_link': pdf_link,
+                        'source': 'DOAJ',
+                        'source_id': f"DOAJ:{article.get('id', '')}",
+                        'firm': 'Directory of Open Access Journals',
+                        'file_type': 'pdf' if pdf_link else 'html',
+                        'access_type': 'public',
+                        'direct_download': bool(pdf_link),
+                        'open_access': True
+                    })
+                
+                logger.info(f"✅ Found {len(results)} DOAJ open access results")
+                return results
+                
+        except Exception as e:
+            logger.error(f"❌ DOAJ search error: {e}")
+            return []
     
-    async def _search_mckinsey(self, query: str, max_results: int) -> List[Dict]:
-        """Search McKinsey Insights (simulated)"""
-        logger.info("ℹ️  McKinsey search returning curated results (API integration pending)")
-        
-        mckinsey_publications = [
-            {
-                'title': 'The State of AI in 2025',
-                'abstract': 'McKinsey\'s flagship annual AI report surveying ~1,500 organizations globally, emphasizing workflow redesign as the #1 driver of AI impact.',
-                'url': 'https://www.mckinsey.com/capabilities/quantumblack/our-insights/the-state-of-ai',
-                'publication_year': 2025,
-            },
-            {
-                'title': 'Superagency in the Workplace',
-                'abstract': 'Research on empowering people to unlock AI\'s full potential at work through enhanced agency and decision-making capabilities.',
-                'url': 'https://www.mckinsey.com/capabilities/mckinsey-digital/our-insights/superagency-in-the-workplace-empowering-people-to-unlock-ais-full-potential-at-work',
-                'publication_year': 2025,
+    async def _search_semantic_scholar(self, query: str, max_results: int) -> List[Dict]:
+        """Search Semantic Scholar for academic papers"""
+        try:
+            logger.info("🧠 Searching Semantic Scholar...")
+            
+            # Semantic Scholar API
+            search_url = "https://api.semanticscholar.org/graph/v1/paper/search"
+            params = {
+                'query': query,
+                'limit': max_results,
+                'fields': 'title,abstract,authors,year,openAccessPdf,url,citationCount,venue'
             }
-        ]
-        
-        results = []
-        query_lower = query.lower()
-        for pub in mckinsey_publications:
-            if any(word in pub['title'].lower() or word in pub['abstract'].lower() 
-                   for word in query_lower.split()):
-                results.append({
-                    'id': pub['url'].split('/')[-1],
-                    'title': pub['title'],
-                    'abstract': pub['abstract'],
-                    'authors': ['McKinsey & Company'],
-                    'publication_date': f"{pub['publication_year']}-01-01",
-                    'publication_year': pub['publication_year'],
-                    'journal': 'McKinsey Insights',
-                    'url': pub['url'],
-                    'pdf_link': None,
-                    'source': 'McKinsey',
-                    'source_id': f"McKinsey:{pub['url'].split('/')[-1]}",
-                    'firm': 'McKinsey & Company',
-                    'file_type': 'html',
-                    'access_type': 'public'
-                })
-        
-        return results[:max_results]
-    
-    async def _search_accenture(self, query: str, max_results: int) -> List[Dict]:
-        """Search Accenture Research (simulated)"""
-        logger.info("ℹ️  Accenture search returning curated results")
-        
-        results = [
-            {
-                'id': 'tech-vision-2025',
-                'title': 'Accenture Technology Vision 2025',
-                'abstract': 'Annual technology trends report covering AI, cloud, cybersecurity, and digital transformation.',
-                'authors': ['Accenture Research'],
-                'publication_year': 2025,
-                'url': 'https://www.accenture.com/content/dam/accenture/final/accenture-com/document-3/Accenture-Tech-Vision-2025.pdf',
-                'pdf_link': 'https://www.accenture.com/content/dam/accenture/final/accenture-com/document-3/Accenture-Tech-Vision-2025.pdf',
-                'firm': 'Accenture',
-                'file_type': 'pdf',
-                'direct_download': True,
-            }
-        ]
-        
-        return [r for r in results if query.lower() in r['title'].lower() or query.lower() in r['abstract'].lower()][:max_results]
-    
-    async def _search_deloitte(self, query: str, max_results: int) -> List[Dict]:
-        """Search Deloitte Insights (simulated)"""
-        logger.info("ℹ️  Deloitte search returning curated results")
-        return []
-    
-    async def _search_bain(self, query: str, max_results: int) -> List[Dict]:
-        """Search Bain Insights (simulated)"""
-        logger.info("ℹ️  Bain search returning curated results")
-        return []
+            
+            async with self.session.get(search_url, params=params) as response:
+                if response.status != 200:
+                    logger.error(f"❌ Semantic Scholar search failed: {response.status}")
+                    return []
+                
+                data = await response.json()
+                results = []
+                
+                for paper in data.get('data', []):
+                    # Only include papers with open access PDFs
+                    pdf_info = paper.get('openAccessPdf')
+                    if not pdf_info or not pdf_info.get('url'):
+                        continue  # Skip papers without free PDFs
+                    
+                    # Get authors
+                    authors = []
+                    for author in paper.get('authors', [])[:5]:
+                        authors.append(author.get('name', ''))
+                    
+                    results.append({
+                        'id': paper.get('paperId', ''),
+                        'title': paper.get('title', ''),
+                        'abstract': paper.get('abstract', 'No abstract available'),
+                        'authors': authors,
+                        'publication_date': f"{paper.get('year', '')}-01-01",
+                        'publication_year': paper.get('year'),
+                        'journal': paper.get('venue', 'Unknown'),
+                        'url': paper.get('url', ''),
+                        'pdf_link': pdf_info.get('url'),
+                        'source': 'Semantic Scholar',
+                        'source_id': f"S2:{paper.get('paperId', '')}",
+                        'firm': 'Semantic Scholar / AI2',
+                        'file_type': 'pdf',
+                        'access_type': 'public',
+                        'direct_download': True,
+                        'open_access': True,
+                        'citation_count': paper.get('citationCount', 0)
+                    })
+                
+                logger.info(f"✅ Found {len(results)} Semantic Scholar open access results")
+                return results
+                
+        except Exception as e:
+            logger.error(f"❌ Semantic Scholar search error: {e}")
+            return []
 
 
 async def search_knowledge_sources(
@@ -415,18 +460,21 @@ async def search_knowledge_sources(
 
 
 if __name__ == '__main__':
-    # Test search
+    # Test search (PUBLIC ACCESS ONLY)
     async def test():
         results = await search_knowledge_sources(
             query='artificial intelligence healthcare',
-            sources=['pubmed', 'arxiv'],
+            sources=['pubmed_central', 'arxiv', 'semantic_scholar'],
             max_results_per_source=5
         )
         
         for source, items in results.items():
             print(f"\n=== {source.upper()} ({len(items)} results) ===")
             for item in items[:3]:
-                print(f"  - {item['title']}")
+                print(f"  ✓ {item['title']}")
+                if item.get('pdf_link'):
+                    print(f"    📄 PDF: {item['pdf_link']}")
+                print(f"    🔗 {item['url']}")
     
     asyncio.run(test())
 

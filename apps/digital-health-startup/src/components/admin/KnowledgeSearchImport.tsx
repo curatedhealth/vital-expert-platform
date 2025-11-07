@@ -37,18 +37,52 @@ interface KnowledgeSearchImportProps {
 }
 
 const AVAILABLE_SOURCES = [
-  { id: 'pubmed', name: 'PubMed', icon: Database, description: 'Medical & health research', color: 'bg-blue-500' },
-  { id: 'arxiv', name: 'arXiv', icon: FileText, description: 'Physics, CS, Math preprints', color: 'bg-green-500' },
-  { id: 'bcg', name: 'BCG', icon: Building2, description: 'Boston Consulting Group', color: 'bg-purple-500' },
-  { id: 'mckinsey', name: 'McKinsey', icon: Building2, description: 'McKinsey & Company', color: 'bg-indigo-500' },
-  { id: 'accenture', name: 'Accenture', icon: Building2, description: 'Accenture Research', color: 'bg-pink-500' },
-  { id: 'deloitte', name: 'Deloitte', icon: Building2, description: 'Deloitte Insights', color: 'bg-cyan-500' },
-  { id: 'bain', name: 'Bain', icon: Building2, description: 'Bain & Company', color: 'bg-orange-500' },
+  { 
+    id: 'pubmed_central', 
+    name: 'PubMed Central', 
+    icon: Database, 
+    description: 'FREE full-text medical research with PDFs',
+    color: 'bg-blue-500',
+    openAccess: true
+  },
+  { 
+    id: 'arxiv', 
+    name: 'arXiv', 
+    icon: FileText, 
+    description: '100% FREE preprints with PDFs',
+    color: 'bg-green-500',
+    openAccess: true
+  },
+  { 
+    id: 'semantic_scholar', 
+    name: 'Semantic Scholar', 
+    icon: BookOpen, 
+    description: 'AI-powered search, FREE PDFs only',
+    color: 'bg-purple-500',
+    openAccess: true
+  },
+  { 
+    id: 'doaj', 
+    name: 'DOAJ', 
+    icon: BookOpen, 
+    description: 'Open Access Journals Directory',
+    color: 'bg-cyan-500',
+    openAccess: true
+  },
+  { 
+    id: 'biorxiv', 
+    name: 'bioRxiv', 
+    icon: FileText, 
+    description: 'Biology preprints (Coming soon)',
+    color: 'bg-orange-500',
+    openAccess: true,
+    disabled: true
+  },
 ];
 
 export default function KnowledgeSearchImport({ onAddToQueue }: KnowledgeSearchImportProps) {
   const [query, setQuery] = useState('');
-  const [selectedSources, setSelectedSources] = useState<string[]>(['pubmed', 'arxiv']);
+  const [selectedSources, setSelectedSources] = useState<string[]>(['pubmed_central', 'arxiv']);
   const [maxResults, setMaxResults] = useState(20);
   const [isSearching, setIsSearching] = useState(false);
   const [searchResults, setSearchResults] = useState<SearchResults | null>(null);
@@ -223,18 +257,21 @@ export default function KnowledgeSearchImport({ onAddToQueue }: KnowledgeSearchI
 
           {/* Source Selection */}
           <div className="space-y-3">
-            <Label>Select Sources</Label>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+            <Label>Select Sources (Public Access Only)</Label>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
               {AVAILABLE_SOURCES.map((source) => {
                 const Icon = source.icon;
                 const isSelected = selectedSources.includes(source.id);
+                const isDisabled = source.disabled;
 
                 return (
                   <button
                     key={source.id}
-                    onClick={() => toggleSourceSelection(source.id)}
+                    onClick={() => !isDisabled && toggleSourceSelection(source.id)}
+                    disabled={isDisabled}
                     className={`
                       p-3 rounded-lg border-2 transition-all text-left
+                      ${isDisabled ? 'opacity-50 cursor-not-allowed' : ''}
                       ${
                         isSelected
                           ? 'border-primary bg-primary/5'
@@ -254,6 +291,13 @@ export default function KnowledgeSearchImport({ onAddToQueue }: KnowledgeSearchI
                         <div className="text-xs text-muted-foreground truncate">
                           {source.description}
                         </div>
+                        {source.openAccess && !isDisabled && (
+                          <div className="mt-1">
+                            <Badge variant="secondary" className="text-[10px] px-1 py-0">
+                              🔓 Free PDFs
+                            </Badge>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </button>

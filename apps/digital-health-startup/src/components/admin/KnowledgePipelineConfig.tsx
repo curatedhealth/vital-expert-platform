@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback, useEffect } from 'react';
-import { Upload, Plus, Download, Trash2, ExternalLink, FileText, Database, Play, CheckCircle, AlertCircle, Loader2, List } from 'lucide-react';
+import { Upload, Plus, Download, Trash2, ExternalLink, FileText, Database, Play, CheckCircle, AlertCircle, Loader2, List, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -14,6 +14,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import AdvancedMetadataForm from '@/components/admin/AdvancedMetadataForm';
 import KnowledgePipelineQueue, { QueueSource } from '@/components/admin/KnowledgePipelineQueue';
+import KnowledgeSearchImport from '@/components/admin/KnowledgeSearchImport';
 
 interface Source {
   // Core fields

@@ -1154,6 +1154,29 @@ function AskExpertPageContent() {
       let finalMeta: any = null;
       let branches: Message['branches'];
       let currentBranch = 0;
+      let reasoningStepsBuffer: any[] = [];
+
+      const normalizeReasoningArray = (incoming: any[]): string[] => {
+        return incoming
+          .map((step: any) => {
+            if (typeof step === 'string') {
+              return step;
+            }
+            if (step && typeof step === 'object') {
+              if (typeof step.content === 'string') {
+                return step.content;
+              }
+              if (typeof step.text === 'string') {
+                return step.text;
+              }
+            }
+            if (typeof step === 'number') {
+              return step.toString();
+            }
+            return '';
+          })
+          .filter((value) => Boolean(value && value.trim().length > 0));
+      };
 
       const updateStreamingMeta = () => {
         setStreamingMeta({
@@ -1165,6 +1188,7 @@ function AskExpertPageContent() {
           sources: [...sources],
           citations: Array.isArray(citations) ? [...citations] : [],
           reasoning: [...reasoning],
+          reasoningSteps: reasoningStepsBuffer.length > 0 ? [...reasoningStepsBuffer] : undefined,
         });
       };
 
@@ -1202,18 +1226,16 @@ function AskExpertPageContent() {
                     if (chunk.type === 'langgraph_reasoning') {
                       const reasoningStep = chunk.step || {};
                       if (reasoningStep.content) {
-                        setReasoningSteps(prev => {
-                          const updated = [...prev, reasoningStep];
-                          
-                          // ✅ CRITICAL FIX: Also store in streamingMeta for persistence
-                          setStreamingMeta(meta => ({
-                            ...meta,
-                            reasoningSteps: updated,
-                            reasoning: meta?.reasoning || []
-                          }));
-                          
-                          return updated;
-                        });
+                        reasoningStepsBuffer = [...reasoningStepsBuffer, reasoningStep];
+                        setReasoningSteps(reasoningStepsBuffer);
+                        
+                        // ✅ CRITICAL FIX: Also store in streamingMeta for persistence
+                        setStreamingMeta(meta => ({
+                          ...meta,
+                          reasoningSteps: reasoningStepsBuffer,
+                          reasoning: meta?.reasoning || []
+                        }));
+                        
                         setStreamingReasoning(prev => {
                           return prev ? `${prev}\n\n${reasoningStep.content}` : reasoningStep.content;
                         });
@@ -1227,6 +1249,7 @@ function AskExpertPageContent() {
                         console.log(`✅ [Final Event] Response length: ${chunk.response.length} chars`);
                         // Store final response - this is the complete AI response with citations
                         setStreamingMessage(chunk.response);
+                        fullResponse = chunk.response;
                         setStreamingMeta(prev => ({
                           ...prev,
                           finalResponse: chunk.response,
@@ -1331,10 +1354,7 @@ function AskExpertPageContent() {
                         };
                       }
                       if (Array.isArray(meta.reasoning) && meta.reasoning.length > 0) {
-                        reasoning = meta.reasoning.map((step: string) => ({
-                          type: 'reasoning',
-                          content: step,
-                        }));
+                        reasoning = normalizeReasoningArray(meta.reasoning);
                         console.log(`✅ [Mode1 Final] Extracted ${reasoning.length} reasoning steps from meta`);
                       }
                       if (Array.isArray(meta.branches) && meta.branches.length > 0) {
@@ -1382,6 +1402,7 @@ function AskExpertPageContent() {
                           if (typeof content === 'string' && content.trim()) {
                             console.log('✅ [Messages Mode] Received AIMessage:', content.substring(0, 100));
                             setStreamingMessage(prev => prev + content);
+                            fullResponse += content;
                           }
                         }
                       }
@@ -1391,6 +1412,7 @@ function AskExpertPageContent() {
                       if (content.trim()) {
                         console.log('✅ [Messages Mode] Received content:', content.substring(0, 100));
                         setStreamingMessage(prev => prev + content);
+                        fullResponse += content;
                       }
                     }
                     break;
@@ -1455,6 +1477,7 @@ function AskExpertPageContent() {
                     if (actualState.response && typeof actualState.response === 'string') {
                       console.log(`✅ [Updates Mode] Found final response (${actualState.response.length} chars): ${actualState.response.substring(0, 100)}...`);
                       // Store in streamingMeta for final message creation
+                      fullResponse = actualState.response;
                       setStreamingMeta(prev => ({
                         ...prev,
                         finalResponse: actualState.response
@@ -1464,6 +1487,7 @@ function AskExpertPageContent() {
                     // Also check for agent_response (alternative field name)
                     if (actualState.agent_response && typeof actualState.agent_response === 'string') {
                       console.log(`✅ [Updates Mode] Found agent_response (${actualState.agent_response.length} chars)`);
+                      fullResponse = actualState.agent_response;
                       setStreamingMeta(prev => ({
                         ...prev,
                         finalResponse: actualState.agent_response
@@ -1605,7 +1629,8 @@ function AskExpertPageContent() {
                       case 'langgraph_reasoning': {
                         const reasoningStep = meta.step || {};
                         if (reasoningStep.content) {
-                          setReasoningSteps(prev => [...prev, reasoningStep]);
+                          reasoningStepsBuffer = [...reasoningStepsBuffer, reasoningStep];
+                          setReasoningSteps(reasoningStepsBuffer);
                           // Also update the existing reasoning display
                           setStreamingReasoning(prev => {
                             return prev ? `${prev}\n\n${reasoningStep.content}` : reasoningStep.content;
@@ -1650,10 +1675,7 @@ function AskExpertPageContent() {
                         }
                         // ✅ Handle reasoning from API response
                         if (Array.isArray(meta.reasoning) && meta.reasoning.length > 0) {
-                          reasoning = meta.reasoning.map((step: string) => ({
-                            type: 'reasoning',
-                            content: step,
-                          }));
+                          reasoning = normalizeReasoningArray(meta.reasoning);
                           console.log(`✅ [Mode1 Final] Extracted ${reasoning.length} reasoning steps from meta`);
                         }
                         if (Array.isArray(meta.branches) && meta.branches.length > 0) {
@@ -1924,7 +1946,7 @@ function AskExpertPageContent() {
                   setIsStreamingReasoning(true);
                 }
               } else if (data.done && !data.type) {
-                reasoning = data.reasoning || [];
+                reasoning = Array.isArray(data.reasoning) ? normalizeReasoningArray(data.reasoning) : [];
                 // If reasoning was provided, show it
                 if (reasoning && reasoning.length > 0) {
                   setStreamingReasoning(reasoning.join('\n\n'));
@@ -1944,11 +1966,17 @@ function AskExpertPageContent() {
         }
       }
 
-      // ✅ FIX: Use accumulated streaming state instead of empty variables
-      // Priority: streamingMessage (from messages mode) > streamingMeta.finalResponse (from updates mode) > fullResponse (legacy)
-      const finalContent = streamingMessage || streamingMeta?.finalResponse || fullResponse || '';
-      const finalSources = streamingMeta?.sources || sources || [];
-      const finalReasoning = streamingMeta?.reasoning || reasoning || [];
+      // ✅ FIX: Use local streaming accumulators to build the final response
+      const resolvedFullResponse = fullResponse && fullResponse.trim().length > 0 ? fullResponse : '';
+      const finalContent = resolvedFullResponse || streamingMeta?.finalResponse || streamingMessage || '';
+      const finalSources = sources.length > 0 ? sources : (streamingMeta?.sources || []);
+      const finalReasoning = reasoning.length > 0 ? reasoning : (streamingMeta?.reasoning || []);
+      const finalReasoningSteps =
+        reasoningStepsBuffer.length > 0
+          ? reasoningStepsBuffer
+          : (streamingMeta?.reasoningSteps && streamingMeta.reasoningSteps.length > 0
+            ? streamingMeta.reasoningSteps
+            : undefined);
       
       console.log('✅ [DEBUG] Final Message Sources Check:', {
         streamingMetaSources: streamingMeta?.sources?.length || 0,
@@ -1960,22 +1988,41 @@ function AskExpertPageContent() {
       // ✅ FIX: Merge backend ragSummary data with local data
       const finalRagSummary = {
         totalSources: finalSources.length,  // ✅ Correct count from final sources
-        strategy: streamingMeta?.ragSummary?.strategy || ragSummary.strategy || 'hybrid',
-        domains: streamingMeta?.ragSummary?.domains || selectedRagDomains || [],
-        cacheHit: streamingMeta?.ragSummary?.cacheHit || ragSummary.cacheHit || false,
-        warning: streamingMeta?.ragSummary?.warning || ragSummary.warning,
-        retrievalTimeMs: streamingMeta?.ragSummary?.retrievalTimeMs || ragSummary.retrievalTimeMs,
+        strategy: ragSummary.strategy ?? streamingMeta?.ragSummary?.strategy ?? 'hybrid',
+        domains:
+          (ragSummary.domains && ragSummary.domains.length > 0
+            ? ragSummary.domains
+            : streamingMeta?.ragSummary?.domains) ?? selectedRagDomains ?? [],
+        cacheHit: ragSummary.cacheHit ?? streamingMeta?.ragSummary?.cacheHit ?? false,
+        warning: ragSummary.warning ?? streamingMeta?.ragSummary?.warning,
+        retrievalTimeMs: ragSummary.retrievalTimeMs ?? streamingMeta?.ragSummary?.retrievalTimeMs,
       };
-      const finalToolSummary = streamingMeta?.toolSummary || toolSummary;
+      const finalToolSummary = streamingMeta?.toolSummary
+        ? {
+            ...toolSummary,
+            ...streamingMeta.toolSummary,
+            totals: {
+              ...toolSummary.totals,
+              ...(streamingMeta.toolSummary?.totals ?? {}),
+            },
+          }
+        : toolSummary;
 
       console.log('✅ [Final Message] Using accumulated streaming state:', {
         contentLength: finalContent.length,
         sourcesCount: finalSources.length,
         reasoningCount: finalReasoning.length,
         streamingMessageLength: streamingMessage.length,
+        fullResponseLength: resolvedFullResponse.length,
         streamingMetaFinalResponse: streamingMeta?.finalResponse?.length || 0,
         streamingMetaSources: streamingMeta?.sources?.length || 0,
-        source: streamingMessage ? 'streamingMessage' : streamingMeta?.finalResponse ? 'streamingMeta.finalResponse' : fullResponse ? 'fullResponse' : 'empty'
+        source: resolvedFullResponse
+          ? 'fullResponse'
+          : streamingMeta?.finalResponse
+            ? 'streamingMeta.finalResponse'
+            : streamingMessage
+              ? 'streamingMessage'
+              : 'empty'
       });
 
       const assistantMessageId = nanoid();
@@ -2026,9 +2073,7 @@ function AskExpertPageContent() {
               ? streamingMeta.citations
               : undefined,
           // ✅ Include LangGraph AI reasoning for persistent display
-          reasoningSteps: (streamingMeta?.reasoningSteps && streamingMeta.reasoningSteps.length > 0)
-            ? streamingMeta.reasoningSteps
-            : (reasoningSteps.length > 0 ? reasoningSteps : undefined),
+          reasoningSteps: finalReasoningSteps && finalReasoningSteps.length > 0 ? finalReasoningSteps : undefined,
           streamingMetrics: streamingMetrics || streamingMeta?.streamingMetrics || undefined,
         },
       };

@@ -23,7 +23,7 @@ from pydantic import BaseModel, Field
 
 # LangGraph imports
 from langgraph.graph import StateGraph, END
-from langgraph.config import get_stream_writer  # ✅ NEW: For custom streaming events
+# from langgraph.config import get_stream_writer  # ✅ Commented out - not available in current version
 
 # Internal imports
 from langgraph_workflows.base_workflow import BaseWorkflow

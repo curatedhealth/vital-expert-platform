@@ -1014,9 +1014,9 @@ export function EnhancedMessageDisplay({
                           >
                             {getReasoningIcon(step.type)}
                             <div className="flex-1 min-w-0">
-                              <Response className="text-xs text-gray-700 dark:text-gray-200 [&>p]:my-0">
+                              <AIResponse className="text-xs text-gray-700 dark:text-gray-200 [&>p]:my-0">
                                 {step.content}
-                              </Response>
+                              </AIResponse>
                               {step.confidence !== undefined && (
                                 <span className="ml-2 text-[11px] text-gray-500 dark:text-gray-400">
                                   ({Math.round(step.confidence * 100)}%)

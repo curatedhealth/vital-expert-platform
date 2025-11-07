@@ -344,6 +344,10 @@ function AskExpertPageContent() {
     citations?: CitationMeta[];
     finalResponse?: string;
     reasoning: string[];
+    // ✅ Add LangGraph streaming fields
+    workflowSteps?: any[];
+    reasoningSteps?: any[];
+    streamingMetrics?: any;
   } | null>(null);
 
   // ✅ NEW: LangGraph Streaming State
@@ -1201,15 +1205,35 @@ function AskExpertPageContent() {
                       const step = chunk.step || {};
                       setWorkflowSteps(prev => {
                         const existing = prev.find(s => s.id === step.id);
-                        if (existing) {
-                          return prev.map(s => s.id === step.id ? { ...s, ...step } : s);
-                        }
-                        return [...prev, step];
+                        const updated = existing
+                          ? prev.map(s => s.id === step.id ? { ...s, ...step } : s)
+                          : [...prev, step];
+                        
+                        // ✅ CRITICAL FIX: Also store in streamingMeta for persistence
+                        setStreamingMeta(meta => ({
+                          ...meta,
+                          workflowSteps: updated,
+                          reasoning: meta?.reasoning || []
+                        }));
+                        
+                        return updated;
                       });
                     } else if (chunk.type === 'langgraph_reasoning') {
                       const reasoningStep = chunk.step || {};
                       if (reasoningStep.content) {
-                        setReasoningSteps(prev => [...prev, reasoningStep]);
+                        setReasoningSteps(prev => {
+                          const updated = [...prev, reasoningStep];
+                          
+                          // ✅ CRITICAL FIX: Also store in streamingMeta for persistence
+                          setStreamingMeta(meta => ({
+                            ...meta,
+                            reasoningSteps: updated,
+                            workflowSteps: meta?.workflowSteps || [],
+                            reasoning: meta?.reasoning || []
+                          }));
+                          
+                          return updated;
+                        });
                         setStreamingReasoning(prev => {
                           return prev ? `${prev}\n\n${reasoningStep.content}` : reasoningStep.content;
                         });
@@ -1993,9 +2017,14 @@ function AskExpertPageContent() {
               ? streamingMeta.citations
               : undefined,
           // ✅ FIX: Include LangGraph streaming data for persistent AI reasoning display
-          workflowSteps: workflowSteps.length > 0 ? workflowSteps : undefined,
-          reasoningSteps: reasoningSteps.length > 0 ? reasoningSteps : undefined,
-          streamingMetrics: streamingMetrics || undefined,
+          // Pull from streamingMeta if available (priority), otherwise from state
+          workflowSteps: (streamingMeta?.workflowSteps && streamingMeta.workflowSteps.length > 0)
+            ? streamingMeta.workflowSteps
+            : (workflowSteps.length > 0 ? workflowSteps : undefined),
+          reasoningSteps: (streamingMeta?.reasoningSteps && streamingMeta.reasoningSteps.length > 0)
+            ? streamingMeta.reasoningSteps
+            : (reasoningSteps.length > 0 ? reasoningSteps : undefined),
+          streamingMetrics: streamingMetrics || streamingMeta?.streamingMetrics || undefined,
         },
       };
 

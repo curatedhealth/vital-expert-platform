@@ -1834,19 +1834,19 @@ function AskExpertPageContent() {
                           retrievalTimeMs: typeof meta.retrievalTimeMs === 'number' ? meta.retrievalTimeMs : ragSummary.retrievalTimeMs,
                         };
                         setStreamingReasoning(prev => {
-                          const base = `📚 Retrieved ${sources.length} evidence source${sources.length === 1 ? '' : 's'}${meta.strategy ? ` (${meta.strategy})` : ''}`;
-                          return prev ? `${base}\n\n${prev}` : base;
+                          const base = "Retrieved " + sources.length + " evidence source" + (sources.length === 1 ? "" : "s") + (meta.strategy ? " (" + meta.strategy + ")" : "");
+                          return prev ? base + "\n\n" + prev : base;
                         });
                         setIsStreamingReasoning(true);
-                        reasoning.push(`Retrieved ${sources.length} evidence source${sources.length === 1 ? '' : 's'}${meta.strategy ? ` (${meta.strategy})` : ''}.`);
+                        reasoning.push("Retrieved " + sources.length + " evidence source" + (sources.length === 1 ? "" : "s") + (meta.strategy ? " (" + meta.strategy + ")" : "") + ".");
                         updateStreamingMeta();
                         break;
                       }
                       case 'rag_warning': {
                         ragSummary.warning = meta.message;
                         setStreamingReasoning(prev => {
-                          const base = `⚠️ ${meta.message || 'Evidence could not be retrieved.'}`;
-                          return prev ? `${base}\n\n${prev}` : base;
+                          const base = "WARNING: " + (meta.message || "Evidence could not be retrieved.");
+                          return prev ? base + "\n\n" + prev : base;
                         });
                         setIsStreamingReasoning(true);
                         if (meta.message) {
@@ -1864,7 +1864,7 @@ function AskExpertPageContent() {
                               : '';
                         if (message && message.trim().length > 0) {
                           setStreamingReasoning(prev => {
-                            return prev ? `${prev}\n\n${message}` : message;
+                            return prev ? prev + "\n\n" + message : message;
                           });
                           setIsStreamingReasoning(true);
                           reasoning.push(message);
@@ -1905,11 +1905,11 @@ function AskExpertPageContent() {
                           : undefined;
 
                         const base = success
-                          ? `🛠️ Tool ${toolName} succeeded${previewText ? ` → ${previewText}` : ''}`
-                          : `⚠️ Tool ${toolName} failed${errorMessage ? `: ${errorMessage}` : ''}`;
+                          ? "Tool " + toolName + " succeeded" + (previewText ? " -> " + previewText : "")
+                          : "Tool " + toolName + " failed" + (errorMessage ? ": " + errorMessage : "");
 
                         setStreamingReasoning(prev => {
-                          return prev ? `${base}\n\n${prev}` : base;
+                          return prev ? base + "\n\n" + prev : base;
                         });
                         setIsStreamingReasoning(true);
                         reasoning.push(base);
@@ -2015,7 +2015,7 @@ function AskExpertPageContent() {
                 // Skip error messages that start with "Error:"
                 if (typeof data.content === 'string' && data.content.startsWith('Error:')) {
                   const errorMessage = data.content.replace(/^Error:\s*/, '');
-                  setStreamingReasoning(prev => `❌ Error: ${errorMessage}`);
+                  setStreamingReasoning(prev => "ERROR: " + errorMessage);
                   setIsStreamingReasoning(true);
                   fullResponse += data.content;
                 } else {
@@ -2036,7 +2036,7 @@ function AskExpertPageContent() {
                 confidence = data.confidence;
                 // Add agent selection to reasoning
                 setStreamingReasoning(prev => {
-                  const agentInfo = `🤖 Selected Agent: ${data.agent.display_name || data.agent.name}`;
+                  const agentInfo = "Selected Agent: " + (data.agent.display_name || data.agent.name);
                   return prev && prev !== 'Thinking...' && prev !== 'Processing your request...'
                     ? `${prev}\n\n${agentInfo}`
                     : agentInfo;
@@ -2047,84 +2047,84 @@ function AskExpertPageContent() {
                 selectionReason = data.selectionReason;
                 // Add selection reason to reasoning
                 setStreamingReasoning(prev => {
-                  const reasonText = `💡 Selection Reason: ${data.selectionReason}`;
-                  return prev ? `${prev}\n\n${reasonText}` : reasonText;
+                  const reasonText = "Selection Reason: " + data.selectionReason;
+                  return prev ? prev + "\n\n" + reasonText : reasonText;
                 });
                 setIsStreamingReasoning(true);
               } else if (data.type === 'goal_understanding') {
                 // Mode 3 & Mode 4: Goal understanding
                 autonomousMetadata.goalUnderstanding = data.content;
                 // Accumulate reasoning for display
-                setStreamingReasoning(prev => `🎯 Goal Understanding: ${data.content}` + (prev ? '\n\n' + prev : ''));
+                setStreamingReasoning(prev => "Goal Understanding: " + data.content + (prev ? '\n\n' + prev : ''));
                 setIsStreamingReasoning(true);
                 console.log('🎯 Goal Understanding:', data.content);
               } else if (data.type === 'execution_plan') {
                 // Mode 3 & Mode 4: Execution plan
                 autonomousMetadata.executionPlan = data.content;
                 // Accumulate reasoning for display
-                setStreamingReasoning(prev => prev + (prev ? '\n\n' : '') + `📋 Execution Plan: ${data.content}`);
+                setStreamingReasoning(prev => prev + (prev ? "\n\n" : "") + "Execution Plan: " + data.content);
                 setIsStreamingReasoning(true);
                 console.log('📋 Execution Plan:', data.content);
               } else if (data.type === 'iteration_start') {
                 // Mode 3 & Mode 4: ReAct iteration start
                 autonomousMetadata.currentIteration = data.metadata?.iteration;
-                setStreamingReasoning(prev => prev + (prev ? '\n\n' : '') + `🔄 Iteration ${data.metadata?.iteration + 1}: Starting`);
+                setStreamingReasoning(prev => prev + (prev ? "\n\n" : "") + "Iteration " + (data.metadata?.iteration + 1) + ": Starting");
                 setIsStreamingReasoning(true);
                 console.log("[Iteration] " + data.metadata?.iteration}: Starting`);
               } else if (data.type === 'thinking_start') {
                 // Detailed step: Starting thinking
-                setStreamingReasoning(prev => prev + (prev ? '\n\n' : '') + `🧠 Analyzing current state...`);
+                setStreamingReasoning(prev => prev + (prev ? "\n\n" : "") + "Analyzing current state...");
                 setIsStreamingReasoning(true);
               } else if (data.type === 'thought') {
                 // Mode 3 & Mode 4: ReAct thought
                 autonomousMetadata.currentThought = data.content;
                 // Accumulate reasoning for display
-                setStreamingReasoning(prev => prev + (prev ? '\n\n' : '') + `🧠 Thought: ${data.content}`);
+                setStreamingReasoning(prev => prev + (prev ? "\n\n" : "") + "Thought: " + data.content);
                 setIsStreamingReasoning(true);
                 console.log('🧠 Thought:', data.content);
               } else if (data.type === 'action_decision_start') {
                 // Detailed step: Starting action decision
-                setStreamingReasoning(prev => prev + (prev ? '\n\n' : '') + `🎯 Deciding on next action...`);
+                setStreamingReasoning(prev => prev + (prev ? "\n\n" : "") + "Deciding on next action...");
                 setIsStreamingReasoning(true);
               } else if (data.type === 'action_decided') {
                 // Detailed step: Action decided
-                setStreamingReasoning(prev => prev + (prev ? '\n\n' : '') + `✅ Action Decided: ${data.content}`);
+                setStreamingReasoning(prev => prev + (prev ? "\n\n" : "") + "Action Decided: " + data.content);
                 setIsStreamingReasoning(true);
               } else if (data.type === 'action_execution_start') {
                 // Detailed step: Starting action execution
-                setStreamingReasoning(prev => prev + (prev ? '\n\n' : '') + `⚙️ Executing action...`);
+                setStreamingReasoning(prev => prev + (prev ? "\n\n" : "") + "Executing action...");
                 setIsStreamingReasoning(true);
               } else if (data.type === 'action_executed') {
                 // Detailed step: Action executed
-                setStreamingReasoning(prev => prev + (prev ? '\n\n' : '') + `✅ Action Executed: ${data.content}`);
+                setStreamingReasoning(prev => prev + (prev ? "\n\n" : "") + "Action Executed: " + data.content);
                 setIsStreamingReasoning(true);
               } else if (data.type === 'action') {
                 // Mode 3 & Mode 4: ReAct action (fallback for old format)
                 autonomousMetadata.currentAction = data.content;
                 // Accumulate reasoning for display
-                setStreamingReasoning(prev => prev + (prev ? '\n\n' : '') + `⚡ Action: ${data.content}`);
+                setStreamingReasoning(prev => prev + (prev ? "\n\n" : "") + "Action: " + data.content);
                 setIsStreamingReasoning(true);
                 console.log('⚡ Action:', data.content);
               } else if (data.type === 'observation_start') {
                 // Detailed step: Starting observation
-                setStreamingReasoning(prev => prev + (prev ? '\n\n' : '') + `🔍 Processing action results...`);
+                setStreamingReasoning(prev => prev + (prev ? "\n\n" : "") + "Processing action results...");
                 setIsStreamingReasoning(true);
               } else if (data.type === 'observation') {
                 // Mode 3 & Mode 4: ReAct observation
                 autonomousMetadata.currentObservation = data.content;
                 // Accumulate reasoning for display
-                setStreamingReasoning(prev => prev + (prev ? '\n\n' : '') + `👁️ Observation: ${data.content}`);
+                setStreamingReasoning(prev => prev + (prev ? "\n\n" : "") + "Observation: " + data.content);
                 setIsStreamingReasoning(true);
                 console.log('👁️ Observation:', data.content);
               } else if (data.type === 'reflection_start') {
                 // Detailed step: Starting reflection
-                setStreamingReasoning(prev => prev + (prev ? '\n\n' : '') + `💭 Reflecting on what we learned...`);
+                setStreamingReasoning(prev => prev + (prev ? "\n\n" : "") + "Reflecting on what we learned...");
                 setIsStreamingReasoning(true);
               } else if (data.type === 'reflection') {
                 // Mode 3 & Mode 4: ReAct reflection
                 autonomousMetadata.currentReflection = data.content;
                 // Accumulate reasoning for display
-                setStreamingReasoning(prev => prev + (prev ? '\n\n' : '') + `🤔 Reflection: ${data.content}`);
+                setStreamingReasoning(prev => prev + (prev ? "\n\n" : "") + "Reflection: " + data.content);
                 setIsStreamingReasoning(true);
                 console.log('🤔 Reflection:', data.content);
               } else if (data.type === 'final_answer') {
@@ -2199,8 +2199,8 @@ function AskExpertPageContent() {
                 }
                 
                 setStreamingReasoning(prev => {
-                  const errorText = `❌ ${userFriendlyMessage}`;
-                  return prev ? `${prev}\n\n${errorText}` : errorText;
+                  const errorText = "ERROR: " + userFriendlyMessage;
+                  return prev ? prev + "\n\n" + errorText : errorText;
                 });
                 setIsStreamingReasoning(true);
                 

@@ -811,7 +811,7 @@ function AskExpertPageContent() {
       .map((message) => {
         const speaker = message.role === 'user' ? 'User' : 'Expert';
         const text = message.content?.trim() ?? '';
-        return text.length > 0 ? speaker + ' + ": ' + text + '" : '';
+        return text.length > 0 ? speaker + ': ' + text : '';
       })
       .filter((line) => line.length > 0)
       .join('\n');
@@ -2710,7 +2710,7 @@ function AskExpertPageContent() {
         title="Ask Expert"
         description="1:1 expert consultation with AI agents"
         badge={{
-          label: 'Mode ' + currentMode.id + ' + ": ' + currentMode.name + '",
+          label: 'Mode ' + currentMode.id + ': ' + currentMode.name,
           variant: 'secondary'
         }}
         actions={
@@ -2763,11 +2763,11 @@ function AskExpertPageContent() {
             </DropdownMenu>
             <button
               onClick={() => setShowSettings(!showSettings)}
-              className={'p-2 rounded-lg transition-colors ${
+              className={
                 showSettings
-                  ? 'bg-gray-100 dark:bg-gray-800'
-                  : 'hover:bg-gray-100 dark:hover:bg-gray-800'
-              }`}
+                  ? 'p-2 rounded-lg transition-colors bg-gray-100 dark:bg-gray-800'
+                  : 'p-2 rounded-lg transition-colors hover:bg-gray-100 dark:hover:bg-gray-800'
+              }
             >
               <Settings2 className="w-4 h-4 text-gray-600 dark:text-gray-400" />
             </button>
@@ -3387,21 +3387,21 @@ function AskExpertPageContent() {
               // If agent not in user's list, add it first
               if (!isAgentInUserList) {
                 try {
-                  console.log("[Mode 1 Helper] Adding agent "${selectedAgent.name}" to user's list...`);
+                  console.log('[Mode 1 Helper] Adding agent "' + selectedAgent.name + '" to user\'s list...');
                   await addAgentToUserList(selectedAgent.id);
                   
                   // Refresh agents list to get the newly added agent
                   // This will update the agents state in context, which will trigger sidebar re-render
-                  console.log("[Mode 1 Helper] Refreshing agents list...');
+                  console.log('[Mode 1 Helper] Refreshing agents list...');
                   await refreshAgents();
                   
                   // Wait for React to propagate state updates through context to sidebar
                   // This ensures the sidebar component receives the updated agents list
                   await new Promise(resolve => setTimeout(resolve, 300));
                   
-                  console.log("[Mode 1 Helper] Agent "' + selectedAgent.name + '" added and should be visible in sidebar');
+                  console.log('[Mode 1 Helper] Agent "' + selectedAgent.name + '" added and should be visible in sidebar');
                 } catch (error) {
-                  console.error(`[ERROR] [Mode 1 Helper] Failed to add agent to user list:', error);
+                  console.error('[ERROR] [Mode 1 Helper] Failed to add agent to user list:', error);
                   // Still try to select the agent even if adding failed
                 }
               }
@@ -3413,12 +3413,12 @@ function AskExpertPageContent() {
               });
               
               // Verify the agent is selected and ready for LangGraph
-              console.log("[Mode 1 Helper] Agent "' + selectedAgent.name + '" is now:');
-              console.log('   - Added to user's list: ' + isAgentInUserList || 'yes (just added)');
-              console.log('   - Selected in context: ' + selectedAgents.includes(selectedAgent.id) ? 'yes' : 'checking...');
+              console.log('[Mode 1 Helper] Agent "' + selectedAgent.name + '" is now:');
+              console.log('   - Added to user\'s list: ' + (isAgentInUserList || 'yes (just added)'));
+              console.log('   - Selected in context: ' + (selectedAgents.includes(selectedAgent.id) ? 'yes' : 'checking...'));
               console.log('   - Agent ID: ' + selectedAgent.id);
-              console.log(`   - Ready for LangGraph: YES`);
-              console.log(`   - Prompt filled: YES`);
+              console.log('   - Ready for LangGraph: YES');
+              console.log('   - Prompt filled: YES');
               console.log(`   - Just press Enter to send!`);
             } else {
               console.warn('[WARN] [Mode 1 Helper] Could not find agent for example: ' + example.expert);

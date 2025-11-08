@@ -599,6 +599,194 @@ workflow_abandonments_total = Counter(
 )
 
 # ============================================================================
+# KNOWLEDGE ANALYTICS METRICS
+# ============================================================================
+
+# RAG retrieval quality
+rag_retrieval_quality_score = Histogram(
+    'vital_rag_retrieval_quality_score',
+    'RAG retrieval quality score (0-1)',
+    ['mode', 'source_type'],
+    buckets=[0.0, 0.5, 0.7, 0.8, 0.9, 0.95, 1.0],
+    registry=registry
+)
+
+# Source diversity
+rag_source_diversity = Histogram(
+    'vital_rag_source_diversity',
+    'Number of unique sources retrieved',
+    ['mode'],
+    buckets=[1, 2, 3, 5, 7, 10, 15, 20],
+    registry=registry
+)
+
+# Citation accuracy
+citation_accuracy_score = Histogram(
+    'vital_citation_accuracy_score',
+    'Citation accuracy score (0-1)',
+    ['mode'],
+    buckets=[0.0, 0.5, 0.7, 0.8, 0.9, 0.95, 1.0],
+    registry=registry
+)
+
+# Citations per response
+citations_per_response = Histogram(
+    'vital_citations_per_response',
+    'Number of citations per response',
+    ['mode'],
+    buckets=[0, 1, 3, 5, 10, 15, 20, 30],
+    registry=registry
+)
+
+# Knowledge base coverage
+knowledge_base_hits = Counter(
+    'vital_knowledge_base_hits_total',
+    'Knowledge base hits by namespace',
+    ['namespace', 'source_type'],
+    registry=registry
+)
+
+# RAG retrieval latency by component
+rag_component_latency = Histogram(
+    'vital_rag_component_latency_seconds',
+    'RAG component latency',
+    ['component'],  # component: embedding, vector_search, rerank, format
+    buckets=[0.01, 0.05, 0.1, 0.5, 1.0, 2.0, 5.0],
+    registry=registry
+)
+
+# Document relevance scores
+document_relevance_score = Histogram(
+    'vital_document_relevance_score',
+    'Retrieved document relevance scores',
+    ['mode', 'source_type'],
+    buckets=[0.0, 0.3, 0.5, 0.7, 0.8, 0.9, 0.95, 1.0],
+    registry=registry
+)
+
+# Knowledge freshness
+knowledge_freshness_days = Histogram(
+    'vital_knowledge_freshness_days',
+    'Age of retrieved knowledge in days',
+    ['source_type'],
+    buckets=[1, 7, 30, 90, 180, 365, 730],
+    registry=registry
+)
+
+# Empty retrieval rate
+rag_empty_retrievals = Counter(
+    'vital_rag_empty_retrievals_total',
+    'RAG retrievals with no results',
+    ['mode', 'query_type'],
+    registry=registry
+)
+
+# ============================================================================
+# PERFORMANCE ANALYTICS METRICS
+# ============================================================================
+
+# Latency by component
+component_latency = Histogram(
+    'vital_component_latency_seconds',
+    'Component-level latency',
+    ['component'],  # component: agent_load, rag, tool_suggest, tool_exec, llm, memory, total
+    buckets=[0.001, 0.01, 0.05, 0.1, 0.5, 1.0, 2.0, 5.0, 10.0],
+    registry=registry
+)
+
+# Accuracy metrics
+response_accuracy_score = Histogram(
+    'vital_response_accuracy_score',
+    'Response accuracy score (0-1)',
+    ['mode', 'evaluation_method'],  # evaluation_method: llm_judge, user_feedback, automated
+    buckets=[0.0, 0.5, 0.7, 0.8, 0.9, 0.95, 1.0],
+    registry=registry
+)
+
+# Confidence scores
+response_confidence_score = Histogram(
+    'vital_response_confidence_score',
+    'AI response confidence score (0-1)',
+    ['mode'],
+    buckets=[0.0, 0.5, 0.7, 0.8, 0.9, 0.95, 1.0],
+    registry=registry
+)
+
+# Low confidence responses
+low_confidence_responses = Counter(
+    'vital_low_confidence_responses_total',
+    'Responses with low confidence (<0.7)',
+    ['mode', 'confidence_range'],  # confidence_range: 0-0.3, 0.3-0.5, 0.5-0.7
+    registry=registry
+)
+
+# Hallucination detection
+hallucination_detected = Counter(
+    'vital_hallucination_detected_total',
+    'Detected hallucinations',
+    ['mode', 'detection_method'],  # detection_method: citation_check, consistency_check, user_report
+    registry=registry
+)
+
+# Response completeness
+response_completeness_score = Histogram(
+    'vital_response_completeness_score',
+    'Response completeness score (0-1)',
+    ['mode'],
+    buckets=[0.0, 0.5, 0.7, 0.8, 0.9, 0.95, 1.0],
+    registry=registry
+)
+
+# Time to first token (TTFT)
+time_to_first_token = Histogram(
+    'vital_time_to_first_token_seconds',
+    'Time to first token from LLM',
+    ['mode', 'model'],
+    buckets=[0.1, 0.5, 1.0, 2.0, 3.0, 5.0, 10.0],
+    registry=registry
+)
+
+# Tokens per second
+tokens_per_second = Histogram(
+    'vital_tokens_per_second',
+    'LLM token generation rate',
+    ['mode', 'model'],
+    buckets=[10, 20, 30, 50, 75, 100, 150, 200],
+    registry=registry
+)
+
+# Throughput (requests per second)
+throughput_requests_per_second = Gauge(
+    'vital_throughput_requests_per_second',
+    'Current throughput in requests per second',
+    ['mode'],
+    registry=registry
+)
+
+# Concurrent requests
+concurrent_requests = Gauge(
+    'vital_concurrent_requests',
+    'Number of concurrent requests being processed',
+    ['mode'],
+    registry=registry
+)
+
+# Queue depth
+request_queue_depth = Gauge(
+    'vital_request_queue_depth',
+    'Number of requests waiting in queue',
+    registry=registry
+)
+
+# Response validation failures
+response_validation_failures = Counter(
+    'vital_response_validation_failures_total',
+    'Response validation failures',
+    ['mode', 'validation_type'],  # validation_type: format, safety, quality, hallucination
+    registry=registry
+)
+
+# ============================================================================
 # SYSTEM METRICS
 # ============================================================================
 
@@ -1673,6 +1861,255 @@ def track_workflow_abandonment(
     workflow_abandonments_total.labels(
         mode=mode,
         abandoned_at_node=abandoned_at_node
+    ).inc()
+
+
+# ============================================================================
+# KNOWLEDGE ANALYTICS TRACKING FUNCTIONS
+# ============================================================================
+
+def track_rag_quality(
+    mode: str,
+    source_type: str,
+    quality_score: float,
+    source_diversity: int,
+    document_count: int = 0,
+    empty_retrieval: bool = False
+):
+    """
+    Track RAG retrieval quality.
+    
+    Args:
+        mode: Workflow mode
+        source_type: Source type (pinecone, supabase, etc.)
+        quality_score: Quality score (0-1)
+        source_diversity: Number of unique sources
+        document_count: Number of documents retrieved
+        empty_retrieval: Whether retrieval returned no results
+    """
+    rag_retrieval_quality_score.labels(
+        mode=mode,
+        source_type=source_type
+    ).observe(quality_score)
+    
+    rag_source_diversity.labels(mode=mode).observe(source_diversity)
+    
+    if empty_retrieval:
+        rag_empty_retrievals.labels(
+            mode=mode,
+            query_type="standard"
+        ).inc()
+
+
+def track_citation_quality(
+    mode: str,
+    citation_count: int,
+    accuracy_score: Optional[float] = None
+):
+    """
+    Track citation quality.
+    
+    Args:
+        mode: Workflow mode
+        citation_count: Number of citations
+        accuracy_score: Citation accuracy score (0-1)
+    """
+    citations_per_response.labels(mode=mode).observe(citation_count)
+    
+    if accuracy_score is not None:
+        citation_accuracy_score.labels(mode=mode).observe(accuracy_score)
+
+
+def track_knowledge_base(
+    namespace: str,
+    source_type: str
+):
+    """
+    Track knowledge base hits.
+    
+    Args:
+        namespace: Knowledge base namespace
+        source_type: Source type
+    """
+    knowledge_base_hits.labels(
+        namespace=namespace,
+        source_type=source_type
+    ).inc()
+
+
+def track_rag_component(
+    component: str,
+    latency_seconds: float
+):
+    """
+    Track RAG component latency.
+    
+    Args:
+        component: Component name (embedding, vector_search, rerank, format)
+        latency_seconds: Latency in seconds
+    """
+    rag_component_latency.labels(component=component).observe(latency_seconds)
+
+
+def track_document_quality(
+    mode: str,
+    source_type: str,
+    relevance_score: float,
+    freshness_days: Optional[int] = None
+):
+    """
+    Track document quality.
+    
+    Args:
+        mode: Workflow mode
+        source_type: Source type
+        relevance_score: Document relevance score (0-1)
+        freshness_days: Age of document in days
+    """
+    document_relevance_score.labels(
+        mode=mode,
+        source_type=source_type
+    ).observe(relevance_score)
+    
+    if freshness_days is not None:
+        knowledge_freshness_days.labels(source_type=source_type).observe(freshness_days)
+
+
+# ============================================================================
+# PERFORMANCE ANALYTICS TRACKING FUNCTIONS
+# ============================================================================
+
+def track_component_performance(
+    component: str,
+    latency_seconds: float
+):
+    """
+    Track component-level performance.
+    
+    Args:
+        component: Component name (agent_load, rag, tool_suggest, tool_exec, llm, memory, total)
+        latency_seconds: Latency in seconds
+    """
+    component_latency.labels(component=component).observe(latency_seconds)
+
+
+def track_response_quality(
+    mode: str,
+    accuracy_score: Optional[float] = None,
+    confidence_score: Optional[float] = None,
+    completeness_score: Optional[float] = None,
+    evaluation_method: str = "automated"
+):
+    """
+    Track response quality metrics.
+    
+    Args:
+        mode: Workflow mode
+        accuracy_score: Accuracy score (0-1)
+        confidence_score: Confidence score (0-1)
+        completeness_score: Completeness score (0-1)
+        evaluation_method: Evaluation method (llm_judge, user_feedback, automated)
+    """
+    if accuracy_score is not None:
+        response_accuracy_score.labels(
+            mode=mode,
+            evaluation_method=evaluation_method
+        ).observe(accuracy_score)
+    
+    if confidence_score is not None:
+        response_confidence_score.labels(mode=mode).observe(confidence_score)
+        
+        # Track low confidence
+        if confidence_score < 0.7:
+            if confidence_score < 0.3:
+                confidence_range = "0-0.3"
+            elif confidence_score < 0.5:
+                confidence_range = "0.3-0.5"
+            else:
+                confidence_range = "0.5-0.7"
+            
+            low_confidence_responses.labels(
+                mode=mode,
+                confidence_range=confidence_range
+            ).inc()
+    
+    if completeness_score is not None:
+        response_completeness_score.labels(mode=mode).observe(completeness_score)
+
+
+def track_hallucination(
+    mode: str,
+    detection_method: str
+):
+    """
+    Track hallucination detection.
+    
+    Args:
+        mode: Workflow mode
+        detection_method: Detection method (citation_check, consistency_check, user_report)
+    """
+    hallucination_detected.labels(
+        mode=mode,
+        detection_method=detection_method
+    ).inc()
+
+
+def track_llm_performance(
+    mode: str,
+    model: str,
+    ttft_seconds: Optional[float] = None,
+    tokens_per_sec: Optional[float] = None
+):
+    """
+    Track LLM performance metrics.
+    
+    Args:
+        mode: Workflow mode
+        model: Model name
+        ttft_seconds: Time to first token in seconds
+        tokens_per_sec: Token generation rate
+    """
+    if ttft_seconds is not None:
+        time_to_first_token.labels(mode=mode, model=model).observe(ttft_seconds)
+    
+    if tokens_per_sec is not None:
+        tokens_per_second.labels(mode=mode, model=model).observe(tokens_per_sec)
+
+
+def update_throughput_metrics(
+    mode: str,
+    requests_per_second: float,
+    concurrent_requests_count: int,
+    queue_depth_count: int = 0
+):
+    """
+    Update throughput metrics.
+    
+    Args:
+        mode: Workflow mode
+        requests_per_second: Current throughput
+        concurrent_requests_count: Number of concurrent requests
+        queue_depth_count: Queue depth
+    """
+    throughput_requests_per_second.labels(mode=mode).set(requests_per_second)
+    concurrent_requests.labels(mode=mode).set(concurrent_requests_count)
+    request_queue_depth.set(queue_depth_count)
+
+
+def track_response_validation(
+    mode: str,
+    validation_type: str
+):
+    """
+    Track response validation failure.
+    
+    Args:
+        mode: Workflow mode
+        validation_type: Validation type (format, safety, quality, hallucination)
+    """
+    response_validation_failures.labels(
+        mode=mode,
+        validation_type=validation_type
     ).inc()
 
 

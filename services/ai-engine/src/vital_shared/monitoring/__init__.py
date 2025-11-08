@@ -71,6 +71,21 @@ from vital_shared.monitoring.metrics import (
     update_workflow_completion_rate,
     track_workflow_abandonment,
     
+    # Knowledge analytics
+    track_rag_quality,
+    track_citation_quality,
+    track_knowledge_base,
+    track_rag_component,
+    track_document_quality,
+    
+    # Performance analytics
+    track_component_performance,
+    track_response_quality,
+    track_hallucination,
+    track_llm_performance,
+    update_throughput_metrics,
+    track_response_validation,
+    
     # Connection pool
     update_connection_pool_metrics,
     
@@ -146,6 +161,21 @@ __all__ = [
     "track_workflow_retry",
     "update_workflow_completion_rate",
     "track_workflow_abandonment",
+    
+    # Knowledge analytics
+    "track_rag_quality",
+    "track_citation_quality",
+    "track_knowledge_base",
+    "track_rag_component",
+    "track_document_quality",
+    
+    # Performance analytics
+    "track_component_performance",
+    "track_response_quality",
+    "track_hallucination",
+    "track_llm_performance",
+    "update_throughput_metrics",
+    "track_response_validation",
     
     # Connection pool
     "update_connection_pool_metrics",

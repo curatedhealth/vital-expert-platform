@@ -126,7 +126,7 @@ class UnifiedRAGService:
             if embedding_model.startswith('text-embedding') or embedding_model.startswith('ada'):
                 # OpenAI model
                 logger.info(f"🔵 Using requested OpenAI embedding model: {embedding_model}")
-                self.embedding_service = EmbeddingServiceFactory.create_embedding_service(
+                self.embedding_service = EmbeddingServiceFactory.create(
                     provider='openai',
                     model_name=embedding_model
                 )
@@ -139,7 +139,7 @@ class UnifiedRAGService:
             else:
                 # HuggingFace model
                 logger.info(f"🤗 Using requested HuggingFace embedding model: {embedding_model}")
-                self.embedding_service = EmbeddingServiceFactory.create_embedding_service(
+                self.embedding_service = EmbeddingServiceFactory.create(
                     provider='huggingface',
                     model_name=embedding_model
                 )

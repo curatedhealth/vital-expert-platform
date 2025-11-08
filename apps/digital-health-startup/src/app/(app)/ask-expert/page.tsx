@@ -83,6 +83,8 @@ import {
 import { ToolConfirmation, useToolConfirmation, type ToolSuggestion } from '@/features/ask-expert/components/ToolConfirmation';
 import { ToolExecutionStatusComponent, useToolExecutionStatus, type ExecutingTool, type ToolExecutionStatus } from '@/features/ask-expert/components/ToolExecutionStatus';
 import { ToolResults, type ToolResult } from '@/features/ask-expert/components/ToolResults';
+// ✅ NEW: Connection Status Component
+import { ConnectionStatusComponent, useConnectionStatus, type ConnectionStatus } from '@/features/ask-expert/components/ConnectionStatus';
 
 // ============================================================================
 // TYPES
@@ -486,6 +488,9 @@ function AskExpertPageContent() {
   } | null>(null);
   const toolConfirmation = useToolConfirmation();
   const toolExecutionStatus = useToolExecutionStatus();
+
+  // ✅ NEW: Connection Status
+  const connectionStatus = useConnectionStatus();
 
   const formatReasoningTimestamp = useCallback((value: number | null) => {
     if (!value) {
@@ -1203,6 +1208,9 @@ function AskExpertPageContent() {
 
       console.log('[AskExpert] Calling endpoint:', apiEndpoint);
 
+      // ✅ NEW: Mark connection as connecting
+      connectionStatus.connect();
+
       const response = await fetch(apiEndpoint, {
         method: 'POST',
         headers: { 
@@ -1265,6 +1273,9 @@ function AskExpertPageContent() {
       }
       
       console.log('[AskExpert] Response OK, starting stream processing');
+
+      // ✅ NEW: Mark connection as connected
+      connectionStatus.connected();
 
       const reader = response.body?.getReader();
       const decoder = new TextDecoder();
@@ -1351,7 +1362,7 @@ function AskExpertPageContent() {
                 const { stream_mode, data: chunk } = data;
                 
                 // 🔍 DEBUG: Log ALL incoming events
-                console.log(`🔍 [SSE Debug] Received ${stream_mode} event:`, {
+                console.log('[SSE Debug] Received ' + stream_mode + ' event:', {
                   mode: stream_mode,
                   chunkType: typeof chunk,
                   isArray: Array.isArray(chunk),
@@ -1497,7 +1508,7 @@ function AskExpertPageContent() {
                         }));
                         
                         setStreamingReasoning(prev => {
-                          return prev ? `${prev}\n\n${reasoningStep.content}` : reasoningStep.content;
+                          return prev ? prev + "\n\n" + reasoningStep.content : reasoningStep.content;
                         });
                         setIsStreamingReasoning(true);
                       }
@@ -1506,7 +1517,7 @@ function AskExpertPageContent() {
                       console.log('✅ [Custom Mode] Received final event with response');
                       
                       if (chunk.response && typeof chunk.response === 'string') {
-                        console.log(`✅ [Final Event] Response length: ${chunk.response.length} chars`);
+                        console.log('[Final Event] Response length: ' + chunk.response.length + ' chars');
                         // Store final response - this is the complete AI response with citations
                         setStreamingMessage(chunk.response);
                         fullResponse = chunk.response;
@@ -1566,9 +1577,9 @@ function AskExpertPageContent() {
                       if (meta.sources && Array.isArray(meta.sources)) {
                         sources = meta.sources.map((source: any, idx: number) => ({
                           number: typeof source.number === 'string' ? parseInt(source.number, 10) : source.number ?? idx + 1,
-                          id: source.id || `source-${idx + 1}`,
+                          id: source.id || 'source-' + (idx + 1),
                           url: source.url || '#',
-                          title: source.title || `Source ${idx + 1}`,
+                          title: source.title || 'Source ' + (idx + 1),
                           description: source.description || source.summary,
                           excerpt: source.excerpt || source.description,
                           quote: source.quote,
@@ -1601,7 +1612,7 @@ function AskExpertPageContent() {
                       }
                       if (Array.isArray(meta.reasoning) && meta.reasoning.length > 0) {
                         reasoning = normalizeReasoningArray(meta.reasoning);
-                        console.log(`✅ [Mode1 Final] Extracted ${reasoning.length} reasoning steps from meta`);
+                        console.log('[Mode1 Final] Extracted ' + reasoning.length + ' reasoning steps from meta');
                       }
                       if (Array.isArray(meta.branches) && meta.branches.length > 0) {
                         branches = meta.branches.map((branch: any, idx: number) => ({
@@ -1695,7 +1706,7 @@ function AskExpertPageContent() {
                     
                     // Extract sources from final format_output state
                     if (actualState.sources && Array.isArray(actualState.sources)) {
-                      console.log(`✅ [Updates Mode] Found ${actualState.sources.length} sources`);
+                      console.log('[Updates Mode] Found ' + actualState.sources.length + ' sources');
                       const normalizedSources = actualState.sources.map((source: any, idx: number) =>
                         normalizeSourceRecord(source, idx)
                       );
@@ -2473,6 +2484,13 @@ function AskExpertPageContent() {
       }
     } catch (error) {
       console.error('[AskExpert] Error:', error);
+      
+      // ✅ NEW: Mark connection as disconnected/error
+      if (error instanceof TypeError && error.message.includes('fetch')) {
+        connectionStatus.disconnect('Network error: Unable to connect to the AI engine');
+      } else {
+        connectionStatus.disconnect(error instanceof Error ? error.message : 'Unknown error occurred');
+      }
       
       // Handle fetch failures specifically
       if (error instanceof TypeError && error.message.includes('fetch')) {
@@ -3529,6 +3547,24 @@ function AskExpertPageContent() {
             }, 200);
           }}
         />
+        
+        {/* ✅ NEW: Connection Status (shown when not connected) */}
+        {connectionStatus.status !== 'connected' && (
+          <div className="fixed bottom-20 right-4 z-50 w-80">
+            <ConnectionStatusComponent
+              status={connectionStatus.status}
+              reconnectAttempts={connectionStatus.reconnectAttempts}
+              maxReconnectAttempts={connectionStatus.maxReconnectAttempts}
+              error={connectionStatus.error}
+              onReconnect={() => {
+                connectionStatus.reset();
+                // Trigger reconnection by refreshing the page or re-sending request
+                window.location.reload();
+              }}
+              showDetails={true}
+            />
+          </div>
+        )}
         
         {/* ✅ NEW: Tool Confirmation Modal */}
         <ToolConfirmation

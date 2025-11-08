@@ -359,14 +359,28 @@ class RAGIntegrationUploader:
                 logger.error("❌ Embedding service not available")
                 return []
             
-            # Use the embedding service from RAG
-            embeddings = await asyncio.get_event_loop().run_in_executor(
-                None,
-                self.rag_service.embedding_service.embed_documents,
-                texts
-            )
+            # Check if it's a HuggingFace service or OpenAI/LangChain service
+            embedding_service = self.rag_service.embedding_service
             
-            return embeddings
+            # Try HuggingFace method first (generate_embeddings_batch)
+            if hasattr(embedding_service, 'generate_embeddings_batch'):
+                logger.info(f"🤗 Using HuggingFace embedding service for {len(texts)} texts")
+                embeddings = await embedding_service.generate_embeddings_batch(texts)
+                return embeddings
+            
+            # Fall back to LangChain interface (embed_documents) for OpenAI
+            elif hasattr(embedding_service, 'embed_documents'):
+                logger.info(f"🔵 Using OpenAI/LangChain embedding service for {len(texts)} texts")
+                embeddings = await asyncio.get_event_loop().run_in_executor(
+                    None,
+                    embedding_service.embed_documents,
+                    texts
+                )
+                return embeddings
+            
+            else:
+                logger.error(f"❌ Embedding service has no supported embed method")
+                return []
             
         except Exception as e:
             logger.error(f"❌ Error generating embeddings: {e}")

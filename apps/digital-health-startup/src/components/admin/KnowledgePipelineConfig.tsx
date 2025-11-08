@@ -139,7 +139,7 @@ const DEFAULT_CONFIG: PipelineConfig = {
     batch_size: 100,
     skip_duplicates: true,
   },
-  embedding_model: 'sentence-transformers/all-MiniLM-L6-v2',
+  embedding_model: 'text-embedding-3-large', // Use OpenAI to match Pinecone index (3072 dims)
 };
 
 export default function KnowledgePipelineConfig() {

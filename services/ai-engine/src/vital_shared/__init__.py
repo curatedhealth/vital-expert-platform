@@ -68,6 +68,22 @@ from vital_shared.registry.service_registry import ServiceRegistry, initialize_s
 # Export base workflow
 from vital_shared.workflows.base_workflow import BaseWorkflow
 
+# Export monitoring
+from vital_shared.monitoring.metrics import (
+    track_workflow_execution,
+    track_cache_operation,
+    track_quality_score,
+    track_llm_call,
+    track_tool_execution,
+    track_rag_retrieval,
+    track_agent_usage,
+    update_cache_metrics,
+    update_connection_pool_metrics,
+    get_metrics_handler,
+    get_metrics_content_type,
+    set_build_info
+)
+
 __all__ = [
     # Version info
     "__version__",
@@ -130,5 +146,19 @@ __all__ = [
     
     # Workflows
     "BaseWorkflow",
+    
+    # Monitoring
+    "track_workflow_execution",
+    "track_cache_operation",
+    "track_quality_score",
+    "track_llm_call",
+    "track_tool_execution",
+    "track_rag_retrieval",
+    "track_agent_usage",
+    "update_cache_metrics",
+    "update_connection_pool_metrics",
+    "get_metrics_handler",
+    "get_metrics_content_type",
+    "set_build_info",
 ]
 

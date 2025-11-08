@@ -56,6 +56,13 @@ from vital_shared.models.citation import Citation, RAGResponse
 from vital_shared.utils.connection_pool import get_llm_client, get_http_client, get_db_client
 from vital_shared.utils.workflow_cache import get_cached_workflow, cache_workflow_result
 
+# Vital Shared Monitoring
+from vital_shared.monitoring.metrics import (
+    track_quality_score,
+    track_cache_operation,
+    update_cache_metrics
+)
+
 logger = structlog.get_logger()
 
 
@@ -287,12 +294,28 @@ class BaseWorkflow(ABC):
                     query_length=len(input.query)
                 )
                 
+                # Track cache hit metric
+                track_cache_operation("hit", input.mode.value)
+                
                 # Convert cached dict to WorkflowOutput
-                return WorkflowOutput(**cached_result) if isinstance(cached_result, dict) else cached_result
+                output = WorkflowOutput(**cached_result) if isinstance(cached_result, dict) else cached_result
+                
+                # Track quality metrics (even for cached)
+                track_quality_score(
+                    output.quality_score,
+                    input.mode.value,
+                    output.degradation_reasons,
+                    output.warnings
+                )
+                
+                return output
             
             # ===================================================================
             # Cache miss - Execute workflow
             # ===================================================================
+            # Track cache miss metric
+            track_cache_operation("miss", input.mode.value)
+            
             self.logger.info(
                 "workflow_execution_started_typed",
                 user_id=input.user_id,
@@ -328,6 +351,16 @@ class BaseWorkflow(ABC):
                 quality_score=output.quality_score,
                 is_degraded=output.is_degraded,
                 warnings_count=len(output.warnings)
+            )
+            
+            # ===================================================================
+            # METRICS: Track quality score and degradation
+            # ===================================================================
+            track_quality_score(
+                output.quality_score,
+                input.mode.value,
+                output.degradation_reasons,
+                output.warnings
             )
             
             # ===================================================================

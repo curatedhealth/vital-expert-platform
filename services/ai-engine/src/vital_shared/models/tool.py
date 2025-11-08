@@ -587,3 +587,185 @@ def register_tool(tool: ToolMetadata):
     """Register a new tool"""
     _registry.register(tool)
 
+
+# ========================================
+# Tool Execution Models
+# ========================================
+
+class ToolExecutionStatus(str, Enum):
+    """Tool execution status"""
+    PENDING = "pending"
+    RUNNING = "running"
+    SUCCESS = "success"
+    FAILED = "failed"
+    TIMEOUT = "timeout"
+    CANCELLED = "cancelled"
+
+
+class ToolExecutionResult(BaseModel):
+    """
+    Result of a tool execution
+    
+    Contains:
+    - Execution status
+    - Tool output (success or error)
+    - Timing information
+    - Metadata for tracking
+    """
+    
+    # Identity
+    execution_id: str = Field(
+        default_factory=lambda: datetime.now().strftime("%Y%m%d_%H%M%S_%f"),
+        description="Unique execution identifier"
+    )
+    tool_name: str = Field(..., description="Tool that was executed")
+    
+    # Status
+    status: ToolExecutionStatus
+    
+    # Results
+    output: Any = Field(None, description="Tool output (if successful)")
+    error: Optional[str] = Field(None, description="Error message (if failed)")
+    error_details: Optional[Dict[str, Any]] = Field(None, description="Detailed error info")
+    
+    # Timing
+    started_at: datetime = Field(default_factory=datetime.now)
+    completed_at: Optional[datetime] = None
+    duration_seconds: float = Field(default=0.0)
+    
+    # Metadata
+    input_parameters: Dict[str, Any] = Field(default_factory=dict)
+    metadata: Dict[str, Any] = Field(
+        default_factory=dict,
+        description="Additional metadata (user_id, tenant_id, etc.)"
+    )
+    
+    # Quality
+    confidence_score: Optional[float] = Field(
+        None,
+        description="Confidence in result quality (0-1)",
+        ge=0.0,
+        le=1.0
+    )
+    
+    @property
+    def is_success(self) -> bool:
+        """Check if execution was successful"""
+        return self.status == ToolExecutionStatus.SUCCESS
+    
+    @property
+    def is_failed(self) -> bool:
+        """Check if execution failed"""
+        return self.status in [
+            ToolExecutionStatus.FAILED,
+            ToolExecutionStatus.TIMEOUT,
+            ToolExecutionStatus.CANCELLED
+        ]
+    
+    def mark_complete(self, success: bool = True):
+        """Mark execution as complete"""
+        self.completed_at = datetime.now()
+        self.duration_seconds = (self.completed_at - self.started_at).total_seconds()
+        self.status = ToolExecutionStatus.SUCCESS if success else ToolExecutionStatus.FAILED
+    
+    def to_display_format(self) -> Dict[str, Any]:
+        """Format for frontend display"""
+        return {
+            "executionId": self.execution_id,
+            "toolName": self.tool_name,
+            "status": self.status.value,
+            "output": self.output,
+            "error": self.error,
+            "duration": f"{self.duration_seconds:.2f}s",
+            "startedAt": self.started_at.isoformat(),
+            "completedAt": self.completed_at.isoformat() if self.completed_at else None,
+            "confidenceScore": self.confidence_score,
+            "metadata": self.metadata
+        }
+
+
+class ToolSuggestion(BaseModel):
+    """
+    AI-suggested tool for a given query
+    
+    Used by LLM to suggest which tools would be helpful
+    """
+    
+    tool_name: str = Field(..., description="Suggested tool name")
+    reasoning: str = Field(..., description="Why this tool is suggested")
+    confidence: float = Field(..., description="Confidence in suggestion (0-1)", ge=0.0, le=1.0)
+    parameters: Dict[str, Any] = Field(
+        default_factory=dict,
+        description="Suggested parameters for the tool"
+    )
+    priority: int = Field(
+        default=1,
+        description="Execution priority (1=highest)",
+        ge=1
+    )
+    
+    def to_display_format(self) -> Dict[str, Any]:
+        """Format for frontend display"""
+        return {
+            "toolName": self.tool_name,
+            "reasoning": self.reasoning,
+            "confidence": f"{self.confidence * 100:.0f}%",
+            "parameters": self.parameters,
+            "priority": self.priority
+        }
+
+
+class ToolDecision(BaseModel):
+    """
+    Final decision on which tools to execute
+    
+    Combines AI suggestions with user preferences and system constraints
+    """
+    
+    selected_tools: List[str] = Field(
+        default_factory=list,
+        description="Tools selected for execution"
+    )
+    
+    suggestions: List[ToolSuggestion] = Field(
+        default_factory=list,
+        description="Original AI suggestions"
+    )
+    
+    reasoning: str = Field(
+        default="",
+        description="Overall reasoning for tool selection"
+    )
+    
+    needs_confirmation: bool = Field(
+        default=False,
+        description="Whether user confirmation is required"
+    )
+    
+    estimated_cost: float = Field(
+        default=0.0,
+        description="Estimated total cost in USD"
+    )
+    
+    estimated_duration: float = Field(
+        default=0.0,
+        description="Estimated total duration in seconds"
+    )
+    
+    warnings: List[str] = Field(
+        default_factory=list,
+        description="Warnings about tool selection"
+    )
+    
+    def to_display_format(self) -> Dict[str, Any]:
+        """Format for frontend display"""
+        return {
+            "selectedTools": self.selected_tools,
+            "suggestions": [s.to_display_format() for s in self.suggestions],
+            "reasoning": self.reasoning,
+            "needsConfirmation": self.needs_confirmation,
+            "estimatedCost": f"${self.estimated_cost:.3f}" if self.estimated_cost > 0 else "Free",
+            "estimatedDuration": f"{self.estimated_duration:.1f}s",
+            "warnings": self.warnings
+        }
+

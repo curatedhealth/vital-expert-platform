@@ -49,6 +49,7 @@ from vital_shared.models.workflow_state import (
     validate_base_state,
     initialize_base_state
 )
+from vital_shared.models.workflow_io import WorkflowInput, WorkflowOutput, WorkflowMode
 from vital_shared.models.citation import Citation, RAGResponse
 
 logger = structlog.get_logger()
@@ -242,6 +243,87 @@ class BaseWorkflow(ABC):
             )
             raise
     
+    async def execute_typed(
+        self,
+        input: WorkflowInput
+    ) -> WorkflowOutput:
+        """
+        Execute workflow with type-safe input/output (Hybrid State Management).
+        
+        This method implements the recommended Hybrid approach:
+        - Input: Strict Pydantic validation (external → workflow)
+        - Internal: Flexible Dict (LangGraph compatibility)
+        - Output: Strict Pydantic formatting (workflow → external)
+        
+        Args:
+            input: WorkflowInput with validated fields
+            
+        Returns:
+            WorkflowOutput with quality indicators
+        """
+        try:
+            start_time = datetime.now()
+            
+            self.logger.info(
+                "workflow_execution_started_typed",
+                user_id=input.user_id,
+                tenant_id=input.tenant_id,
+                mode=input.mode.value,
+                query_length=len(input.query)
+            )
+            
+            # Convert Pydantic input to Dict (for LangGraph)
+            state_dict = input.to_state_dict()
+            state_dict["started_at"] = start_time
+            state_dict["session_id"] = input.conversation_id or str(uuid.uuid4())
+            
+            # Validate state
+            if not validate_base_state(state_dict):
+                raise ValueError("Invalid workflow state")
+            
+            # Execute graph (internal Dict state)
+            self._execution_count += 1
+            result_dict = await self.compiled_graph.ainvoke(state_dict)
+            
+            # Convert Dict result to Pydantic output
+            output = WorkflowOutput.from_state_dict(result_dict)
+            
+            # Track execution
+            end_time = datetime.now()
+            execution_time = (end_time - start_time).total_seconds()
+            self._total_execution_time += execution_time
+            
+            self.logger.info(
+                "workflow_execution_completed_typed",
+                execution_time=execution_time,
+                quality_score=output.quality_score,
+                is_degraded=output.is_degraded,
+                warnings_count=len(output.warnings)
+            )
+            
+            return output
+            
+        except Exception as e:
+            self._error_count += 1
+            self.logger.error(
+                "workflow_execution_failed_typed",
+                error=str(e),
+                error_type=type(e).__name__
+            )
+            
+            # Return degraded response instead of raising
+            # (graceful degradation - Decision #2)
+            return WorkflowOutput(
+                response=f"I apologize, but I encountered an error processing your request: {str(e)}",
+                quality_score=0.0,
+                degradation_reasons=["critical_error"],
+                warnings=[
+                    "The system encountered a critical error",
+                    "Please try again or contact support if the issue persists"
+                ],
+                metadata={"error": str(e), "error_type": type(e).__name__}
+            )
+    
     # =========================================================================
     # SHARED NODES - Used by all modes
     # =========================================================================
@@ -373,7 +455,11 @@ class BaseWorkflow(ABC):
             
             if not enable_tools:
                 self.logger.info("tools_disabled_skipping")
-                return state
+                return {
+                    **state,
+                    "suggested_tools": [],
+                    "tools_awaiting_confirmation": False
+                }
             
             self.logger.info("tool_suggestion_started")
             

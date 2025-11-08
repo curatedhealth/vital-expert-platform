@@ -34,7 +34,7 @@ from vital_shared.interfaces.artifact_service import IArtifactService
 # Export service implementations
 from vital_shared.services.agent_service import AgentService
 from vital_shared.services.unified_rag_service import UnifiedRAGService
-from vital_shared.services.tool_service_stub import ToolService  # Stub for testing
+from vital_shared.services.tool_service import ToolService
 from vital_shared.services.memory_service import MemoryService
 from vital_shared.services.streaming_service import StreamingService
 from vital_shared.services.artifact_service import ArtifactService
@@ -43,7 +43,16 @@ from vital_shared.services.artifact_service import ArtifactService
 from vital_shared.models.agent import AgentProfile, AgentCapability
 from vital_shared.models.citation import Citation, RAGResponse, RAGEmptyResponse, SourceType
 from vital_shared.models.message import Message, ConversationTurn
-from vital_shared.models.tool import ToolMetadata, ToolExecutionResult, ToolCategory, ToolCostTier, ToolExecutionSpeed
+from vital_shared.models.tool import (
+    ToolMetadata,
+    ToolExecutionResult,
+    ToolExecutionStatus,
+    ToolSuggestion,
+    ToolDecision,
+    ToolCategory,
+    ToolCostTier,
+    ToolExecutionSpeed
+)
 from vital_shared.models.artifact import Artifact, ArtifactVersion
 from vital_shared.models.workflow_state import (
     BaseWorkflowState,
@@ -97,6 +106,9 @@ __all__ = [
     # Models - Tool
     "ToolMetadata",
     "ToolExecutionResult",
+    "ToolExecutionStatus",
+    "ToolSuggestion",
+    "ToolDecision",
     "ToolCategory",
     "ToolCostTier",
     "ToolExecutionSpeed",

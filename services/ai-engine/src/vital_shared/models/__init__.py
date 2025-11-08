@@ -75,6 +75,16 @@ from vital_shared.models.workflow_state import (
     initialize_mode4_state
 )
 
+# Workflow I/O models (Hybrid State Management)
+from vital_shared.models.workflow_io import (
+    WorkflowInput,
+    WorkflowOutput,
+    WorkflowMode,
+    WorkflowRequest,
+    WorkflowResponse,
+    WorkflowState
+)
+
 __all__ = [
     # Agent
     "AgentProfile",
@@ -133,5 +143,13 @@ __all__ = [
     "initialize_mode2_state",
     "initialize_mode3_state",
     "initialize_mode4_state",
+    
+    # Workflow I/O (Hybrid State Management)
+    "WorkflowInput",
+    "WorkflowOutput",
+    "WorkflowMode",
+    "WorkflowRequest",
+    "WorkflowResponse",
+    "WorkflowState",
 ]
 

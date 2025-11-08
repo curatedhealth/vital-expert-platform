@@ -23,9 +23,7 @@ from vital_shared.workflows.base_workflow import BaseWorkflow
 from vital_shared.models.workflow_state import BaseWorkflowState
 import structlog
 from vital_shared.monitoring.metrics import (
-    track_workflow_node,
     update_throughput_metrics,
-    track_component_performance,
 )
 
 logger = structlog.get_logger(__name__)
@@ -49,18 +47,47 @@ class ParallelBaseWorkflow(BaseWorkflow):
     - Target: ~1960ms (30% faster)
     """
     
-    def __init__(self, config: Optional[Dict[str, Any]] = None):
+    def __init__(
+        self,
+        workflow_name: str,
+        mode: int,
+        agent_service,  # AgentService
+        rag_service,    # UnifiedRAGService
+        tool_service,   # ToolService
+        memory_service, # MemoryService
+        streaming_service, # StreamingService
+        config: Optional[Dict[str, Any]] = None,
+        **kwargs
+    ):
         """
         Initialize ParallelBaseWorkflow.
         
         Args:
+            workflow_name: Human-readable workflow name
+            mode: Mode number (1, 2, 3, or 4)
+            agent_service: Agent service instance
+            rag_service: RAG service instance
+            tool_service: Tool service instance
+            memory_service: Memory service instance
+            streaming_service: Streaming service instance
             config: Optional configuration dict with:
                 - enable_parallel_tier1: bool (default: True)
                 - enable_parallel_tier2: bool (default: True)
                 - parallel_timeout_ms: int (default: 5000)
+            **kwargs: Additional arguments for BaseWorkflow
         """
-        super().__init__()
+        # Initialize parent with all required services
+        super().__init__(
+            workflow_name=workflow_name,
+            mode=mode,
+            agent_service=agent_service,
+            rag_service=rag_service,
+            tool_service=tool_service,
+            memory_service=memory_service,
+            streaming_service=streaming_service
+        )
         
+        # Configure parallel execution
         self.config = config or {}
         self.enable_parallel_tier1 = self.config.get('enable_parallel_tier1', True)
         self.enable_parallel_tier2 = self.config.get('enable_parallel_tier2', True)
@@ -68,6 +95,8 @@ class ParallelBaseWorkflow(BaseWorkflow):
         
         logger.info(
             "parallel_workflow_initialized",
+            workflow_name=workflow_name,
+            mode=mode,
             tier1_enabled=self.enable_parallel_tier1,
             tier2_enabled=self.enable_parallel_tier2,
             timeout_ms=self.parallel_timeout_ms
@@ -95,19 +124,60 @@ class ParallelBaseWorkflow(BaseWorkflow):
             Parallel: max(500ms, 300ms, 200ms) = 500ms
             Improvement: 500ms saved (50% faster for this tier)
         """
+        # Check if parallel execution is disabled
         if not self.enable_parallel_tier1:
-            # Fallback to sequential execution if parallel disabled
+            # Sequential fallback: call services directly
             logger.info("parallel_tier1_disabled_using_sequential")
-            state = await self.rag_retrieval_node(state) if state.enable_rag else state
-            state = await self.tool_suggestion_node(state) if state.enable_tools else state
-            state = await self.memory_retrieval_node(state)
+            
+            # RAG retrieval (if enabled)
+            if state.get('enable_rag', True):
+                try:
+                    rag_results = await self.rag_service.retrieve(
+                        query=state.get('user_query', state.get('query', '')),
+                        domains=state.get('selected_rag_domains', []),
+                        tenant_id=state.get('tenant_id', ''),
+                        top_k=10
+                    )
+                    state['rag_results'] = rag_results
+                except Exception as e:
+                    logger.error("sequential_rag_error", error=str(e))
+                    state['rag_results'] = []
+            
+            # Tool suggestion (if enabled)
+            if state.get('enable_tools', True):
+                try:
+                    tools = await self.tool_service.suggest_tools(
+                        query=state.get('user_query', state.get('query', '')),
+                        agent_id=state.get('agent_id', ''),
+                        context=state.get('conversation_context', [])
+                    )
+                    state['suggested_tools'] = tools
+                    state['tools_awaiting_confirmation'] = tools
+                except Exception as e:
+                    logger.error("sequential_tool_error", error=str(e))
+                    state['suggested_tools'] = []
+                    state['tools_awaiting_confirmation'] = []
+            
+            # Memory retrieval (always runs)
+            try:
+                memory = await self.memory_service.get_context(
+                    user_id=state.get('user_id', ''),
+                    conversation_id=state.get('conversation_id', ''),
+                    max_messages=10
+                )
+                state['memory'] = memory
+            except Exception as e:
+                logger.error("sequential_memory_error", error=str(e))
+                state['memory'] = {}
+            
             return state
         
+        # Parallel execution path
         logger.info(
             "parallel_retrieval_started",
             node="parallel_tier1",
-            rag_enabled=state.enable_rag,
-            tools_enabled=state.enable_tools
+            rag_enabled=state.get('enable_rag', True),
+            tools_enabled=state.get('enable_tools', True)
         )
         
         start_time = time.time()
@@ -115,17 +185,14 @@ class ParallelBaseWorkflow(BaseWorkflow):
         # Build list of tasks to execute
         tasks: List[Tuple[str, asyncio.Task]] = []
         
-        if state.enable_rag:
+        if state.get('enable_rag', True):
             tasks.append(("rag", asyncio.create_task(self._rag_retrieval_task(state))))
         
-        if state.enable_tools:
+        if state.get('enable_tools', True):
             tasks.append(("tools", asyncio.create_task(self._tool_suggestion_task(state))))
         
         # Memory always runs (for conversation context)
         tasks.append(("memory", asyncio.create_task(self._memory_retrieval_task(state))))
-        
-        # Track parallel execution start
-        track_workflow_node("parallel_retrieval", "started", state.tenant_id)
         
         try:
             # Execute all tasks in parallel with timeout
@@ -152,24 +219,18 @@ class ParallelBaseWorkflow(BaseWorkflow):
                         error_type=type(result).__name__
                     )
                     
-                    # Track task failure
-                    track_workflow_node(f"parallel_{task_name}", "error", state.tenant_id)
-                    
                     # Set safe defaults based on task type
                     if task_name == "rag":
-                        state.rag_results = []
+                        state['rag_results'] = []
                     elif task_name == "tools":
-                        state.suggested_tools = []
-                        state.tools_awaiting_confirmation = []
+                        state['suggested_tools'] = []
+                        state['tools_awaiting_confirmation'] = []
                     elif task_name == "memory":
-                        state.memory = {}
+                        state['memory'] = {}
                 else:
                     # Task succeeded - merge result into state
                     successful_tasks += 1
                     state = {**state, **result}
-                    
-                    # Track task success
-                    track_workflow_node(f"parallel_{task_name}", "completed", state.tenant_id)
             
             duration_ms = (time.time() - start_time) * 1000
             
@@ -181,13 +242,11 @@ class ParallelBaseWorkflow(BaseWorkflow):
                 total_tasks=len(tasks)
             )
             
-            # Track overall parallel execution
-            track_workflow_node("parallel_retrieval", "completed", state.tenant_id)
-            track_component_performance("parallel_tier1", duration_ms, state.tenant_id)
-            
             # Update state with execution metadata
-            state.metadata = state.metadata or {}
-            state.metadata['parallel_tier1'] = {
+            if 'metadata' not in state:
+                state['metadata'] = {}
+            
+            state['metadata']['parallel_tier1'] = {
                 'duration_ms': duration_ms,
                 'successful_tasks': successful_tasks,
                 'failed_tasks': failed_tasks,
@@ -204,18 +263,16 @@ class ParallelBaseWorkflow(BaseWorkflow):
                 tasks=[name for name, _ in tasks]
             )
             
-            track_workflow_node("parallel_retrieval", "timeout", state.tenant_id)
-            
             # Cancel all pending tasks
             for _, task in tasks:
                 if not task.done():
                     task.cancel()
             
             # Set safe defaults for all tasks
-            state.rag_results = []
-            state.suggested_tools = []
-            state.tools_awaiting_confirmation = []
-            state.memory = {}
+            state['rag_results'] = []
+            state['suggested_tools'] = []
+            state['tools_awaiting_confirmation'] = []
+            state['memory'] = {}
             
             return state
     
@@ -241,11 +298,27 @@ class ParallelBaseWorkflow(BaseWorkflow):
             Improvement: 150ms saved (50% faster for this tier)
         """
         if not self.enable_parallel_tier2:
-            # Fallback to sequential execution if parallel disabled
+            # Sequential fallback: Run tasks one by one
             logger.info("parallel_tier2_disabled_using_sequential")
-            state = await self.quality_scoring_node(state)
-            state = await self.citation_extraction_node(state)
-            state = await self.cost_tracking_node(state)
+            
+            try:
+                quality_result = await self._quality_scoring_task(state)
+                state = {**state, **quality_result}
+            except Exception as e:
+                logger.error("sequential_quality_error", error=str(e))
+            
+            try:
+                citation_result = await self._citation_extraction_task(state)
+                state = {**state, **citation_result}
+            except Exception as e:
+                logger.error("sequential_citation_error", error=str(e))
+            
+            try:
+                cost_result = await self._cost_tracking_task(state)
+                state = {**state, **cost_result}
+            except Exception as e:
+                logger.error("sequential_cost_error", error=str(e))
+            
             return state
         
         logger.info("parallel_post_generation_started", node="parallel_tier2")
@@ -258,8 +331,6 @@ class ParallelBaseWorkflow(BaseWorkflow):
             ("citations", asyncio.create_task(self._citation_extraction_task(state))),
             ("cost", asyncio.create_task(self._cost_tracking_task(state))),
         ]
-        
-        track_workflow_node("parallel_post_generation", "started", state.tenant_id)
         
         try:
             # Execute all tasks in parallel with timeout
@@ -283,11 +354,9 @@ class ParallelBaseWorkflow(BaseWorkflow):
                         task=task_name,
                         error=str(result)
                     )
-                    track_workflow_node(f"parallel_{task_name}", "error", state.tenant_id)
                 else:
                     successful_tasks += 1
                     state = {**state, **result}
-                    track_workflow_node(f"parallel_{task_name}", "completed", state.tenant_id)
             
             duration_ms = (time.time() - start_time) * 1000
             
@@ -298,12 +367,11 @@ class ParallelBaseWorkflow(BaseWorkflow):
                 failed_tasks=failed_tasks
             )
             
-            track_workflow_node("parallel_post_generation", "completed", state.tenant_id)
-            track_component_performance("parallel_tier2", duration_ms, state.tenant_id)
-            
             # Update state metadata
-            state.metadata = state.metadata or {}
-            state.metadata['parallel_tier2'] = {
+            if 'metadata' not in state:
+                state['metadata'] = {}
+            
+            state['metadata']['parallel_tier2'] = {
                 'duration_ms': duration_ms,
                 'successful_tasks': successful_tasks,
                 'failed_tasks': failed_tasks,
@@ -314,7 +382,6 @@ class ParallelBaseWorkflow(BaseWorkflow):
             
         except asyncio.TimeoutError:
             logger.error("parallel_post_generation_timeout", timeout_ms=2000)
-            track_workflow_node("parallel_post_generation", "timeout", state.tenant_id)
             
             # Cancel pending tasks
             for _, task in tasks:
@@ -335,12 +402,13 @@ class ParallelBaseWorkflow(BaseWorkflow):
             Dict with 'rag_results' key
         """
         try:
-            logger.debug("rag_task_started", query=state.user_query[:50])
+            query = state.get('user_query', state.get('query', ''))
+            logger.debug("rag_task_started", query=query[:50] if query else '')
             
             results = await self.rag_service.retrieve(
-                query=state.user_query,
-                domains=state.selected_rag_domains or [],
-                tenant_id=state.tenant_id,
+                query=query,
+                domains=state.get('selected_rag_domains', []),
+                tenant_id=state.get('tenant_id', ''),
                 top_k=10
             )
             
@@ -360,12 +428,13 @@ class ParallelBaseWorkflow(BaseWorkflow):
             Dict with 'suggested_tools' and 'tools_awaiting_confirmation' keys
         """
         try:
-            logger.debug("tool_task_started", agent_id=state.agent_id)
+            agent_id = state.get('agent_id', '')
+            logger.debug("tool_task_started", agent_id=agent_id)
             
             tools = await self.tool_service.suggest_tools(
-                query=state.user_query,
-                agent_id=state.agent_id,
-                context=state.conversation_context or []
+                query=state.get('user_query', state.get('query', '')),
+                agent_id=agent_id,
+                context=state.get('conversation_context', [])
             )
             
             logger.debug("tool_task_completed", tools_count=len(tools))
@@ -387,11 +456,12 @@ class ParallelBaseWorkflow(BaseWorkflow):
             Dict with 'memory' key
         """
         try:
-            logger.debug("memory_task_started", user_id=state.user_id)
+            user_id = state.get('user_id', '')
+            logger.debug("memory_task_started", user_id=user_id)
             
             memory = await self.memory_service.get_context(
-                user_id=state.user_id,
-                conversation_id=state.conversation_id,
+                user_id=user_id,
+                conversation_id=state.get('conversation_id', ''),
                 max_messages=10
             )
             
@@ -419,9 +489,9 @@ class ParallelBaseWorkflow(BaseWorkflow):
             
             # Use existing quality scoring logic from BaseWorkflow
             score = await self._calculate_quality_score(
-                response=state.response,
-                rag_results=state.rag_results or [],
-                confidence=state.confidence or 0.0
+                response=state.get('response', ''),
+                rag_results=state.get('rag_results', []),
+                confidence=state.get('confidence', 0.0)
             )
             
             logger.debug("quality_task_completed", score=score)
@@ -450,8 +520,8 @@ class ParallelBaseWorkflow(BaseWorkflow):
             
             # Use existing citation extraction logic from BaseWorkflow
             citations = await self._extract_citations(
-                response=state.response,
-                rag_results=state.rag_results or []
+                response=state.get('response', ''),
+                rag_results=state.get('rag_results', [])
             )
             
             logger.debug("citation_task_completed", citations_count=len(citations))
@@ -473,10 +543,11 @@ class ParallelBaseWorkflow(BaseWorkflow):
             logger.debug("cost_task_started")
             
             # Calculate costs based on token usage
+            metadata = state.get('metadata', {})
             cost = await self._calculate_cost(
-                input_tokens=state.metadata.get('input_tokens', 0),
-                output_tokens=state.metadata.get('output_tokens', 0),
-                model=state.metadata.get('model', 'gpt-4')
+                input_tokens=metadata.get('input_tokens', 0),
+                output_tokens=metadata.get('output_tokens', 0),
+                model=metadata.get('model', 'gpt-4')
             )
             
             logger.debug("cost_task_completed", cost_usd=cost)

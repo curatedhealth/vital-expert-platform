@@ -95,6 +95,11 @@ const ExecutiveDashboard = dynamic(
   { ssr: false }
 );
 
+const AIEngineMonitoringDashboard = dynamic(
+  () => import('@/components/admin/AIEngineMonitoringDashboard').then(mod => ({ default: mod.AIEngineMonitoringDashboard })),
+  { ssr: false }
+);
+
 function LoadingView() {
   return (
     <div className="flex items-center justify-center min-h-screen">
@@ -133,6 +138,9 @@ export default function AdminPage() {
     switch (view) {
       case 'executive':
         return <ExecutiveDashboard />;
+      
+      case 'ai-engine':
+        return <AIEngineMonitoringDashboard />;
       
       case 'overview':
         return (

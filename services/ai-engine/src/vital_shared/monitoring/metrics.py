@@ -216,6 +216,389 @@ agent_usage = Counter(
 )
 
 # ============================================================================
+# USER METRICS (Per-User Tracking)
+# ============================================================================
+
+# User queries
+user_queries_total = Counter(
+    'vital_user_queries_total',
+    'Total queries per user',
+    ['user_id', 'tenant_id', 'mode'],
+    registry=registry
+)
+
+# User token usage
+user_tokens_used = Counter(
+    'vital_user_tokens_used_total',
+    'Total tokens used per user',
+    ['user_id', 'tenant_id', 'token_type'],  # token_type: input, output
+    registry=registry
+)
+
+# User cost
+user_cost_dollars = Counter(
+    'vital_user_cost_dollars',
+    'Total cost per user in dollars',
+    ['user_id', 'tenant_id', 'cost_type'],  # cost_type: llm, tools, rag
+    registry=registry
+)
+
+# User agent usage
+user_agent_usage = Counter(
+    'vital_user_agent_usage_total',
+    'Agent usage per user',
+    ['user_id', 'tenant_id', 'agent_id', 'agent_name'],
+    registry=registry
+)
+
+# User workflow usage
+user_workflow_usage = Counter(
+    'vital_user_workflow_usage_total',
+    'Workflow usage per user',
+    ['user_id', 'tenant_id', 'mode'],
+    registry=registry
+)
+
+# User tool usage
+user_tool_usage = Counter(
+    'vital_user_tool_usage_total',
+    'Tool usage per user',
+    ['user_id', 'tenant_id', 'tool_name'],
+    registry=registry
+)
+
+# User feedback
+user_feedback_total = Counter(
+    'vital_user_feedback_total',
+    'User feedback count',
+    ['user_id', 'tenant_id', 'feedback_type'],  # feedback_type: thumbs_up, thumbs_down, rating
+    registry=registry
+)
+
+user_feedback_ratings = Histogram(
+    'vital_user_feedback_ratings',
+    'User feedback rating distribution (1-5)',
+    ['user_id', 'tenant_id'],
+    buckets=[1, 2, 3, 4, 5],
+    registry=registry
+)
+
+# ============================================================================
+# USER ABUSE DETECTION METRICS
+# ============================================================================
+
+# Rate limit violations
+user_rate_limit_violations = Counter(
+    'vital_user_rate_limit_violations_total',
+    'Rate limit violations per user',
+    ['user_id', 'tenant_id', 'limit_type'],  # limit_type: requests_per_minute, tokens_per_minute, cost_per_hour
+    registry=registry
+)
+
+# Suspicious patterns
+user_suspicious_activity = Counter(
+    'vital_user_suspicious_activity_total',
+    'Suspicious activity detected',
+    ['user_id', 'tenant_id', 'activity_type'],  # activity_type: rapid_requests, excessive_tokens, prompt_injection, abuse_detected
+    registry=registry
+)
+
+# Request rate per user
+user_request_rate = Histogram(
+    'vital_user_request_rate_per_minute',
+    'User request rate per minute',
+    ['user_id', 'tenant_id'],
+    buckets=[1, 5, 10, 20, 50, 100, 200],
+    registry=registry
+)
+
+# User session duration
+user_session_duration = Histogram(
+    'vital_user_session_duration_seconds',
+    'User session duration in seconds',
+    ['user_id', 'tenant_id'],
+    buckets=[60, 300, 600, 1800, 3600, 7200],  # 1min to 2hrs
+    registry=registry
+)
+
+# Blocked users
+blocked_users_total = Counter(
+    'vital_blocked_users_total',
+    'Total blocked users',
+    ['tenant_id', 'block_reason'],
+    registry=registry
+)
+
+# ============================================================================
+# MEMORY METRICS (Agent, Chat, User Memory)
+# ============================================================================
+
+# Agent memory
+agent_memory_size_bytes = Gauge(
+    'vital_agent_memory_size_bytes',
+    'Agent memory size in bytes',
+    ['agent_id', 'memory_type'],  # memory_type: context, history, state
+    registry=registry
+)
+
+agent_memory_items = Gauge(
+    'vital_agent_memory_items_total',
+    'Number of items in agent memory',
+    ['agent_id', 'memory_type'],
+    registry=registry
+)
+
+agent_memory_operations = Counter(
+    'vital_agent_memory_operations_total',
+    'Agent memory operations',
+    ['agent_id', 'operation'],  # operation: read, write, update, delete, clear
+    registry=registry
+)
+
+# Chat memory
+chat_memory_conversations = Gauge(
+    'vital_chat_memory_conversations_total',
+    'Total active conversations in memory',
+    ['user_id', 'tenant_id'],
+    registry=registry
+)
+
+chat_memory_messages = Gauge(
+    'vital_chat_memory_messages_total',
+    'Total messages in chat memory',
+    ['user_id', 'tenant_id'],
+    registry=registry
+)
+
+chat_memory_turns = Counter(
+    'vital_chat_memory_turns_total',
+    'Total conversation turns',
+    ['user_id', 'tenant_id', 'mode'],
+    registry=registry
+)
+
+chat_memory_size_bytes = Gauge(
+    'vital_chat_memory_size_bytes',
+    'Chat memory size in bytes',
+    ['user_id', 'tenant_id'],
+    registry=registry
+)
+
+chat_memory_operations = Counter(
+    'vital_chat_memory_operations_total',
+    'Chat memory operations',
+    ['user_id', 'tenant_id', 'operation'],  # operation: load, save, append, clear
+    registry=registry
+)
+
+# User memory (preferences, history)
+user_memory_preferences = Gauge(
+    'vital_user_memory_preferences_total',
+    'Number of user preferences stored',
+    ['user_id', 'tenant_id'],
+    registry=registry
+)
+
+user_memory_history_size = Gauge(
+    'vital_user_memory_history_size_total',
+    'User history size (number of items)',
+    ['user_id', 'tenant_id', 'history_type'],  # history_type: queries, feedback, interactions
+    registry=registry
+)
+
+user_memory_operations = Counter(
+    'vital_user_memory_operations_total',
+    'User memory operations',
+    ['user_id', 'tenant_id', 'operation'],  # operation: read, write, update, delete
+    registry=registry
+)
+
+user_memory_retrieval_latency = Histogram(
+    'vital_user_memory_retrieval_seconds',
+    'User memory retrieval latency',
+    ['user_id', 'tenant_id', 'memory_type'],
+    buckets=[0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1.0],
+    registry=registry
+)
+
+# Memory cache metrics
+memory_cache_hits = Counter(
+    'vital_memory_cache_hits_total',
+    'Memory cache hits',
+    ['memory_type'],  # memory_type: agent, chat, user
+    registry=registry
+)
+
+memory_cache_misses = Counter(
+    'vital_memory_cache_misses_total',
+    'Memory cache misses',
+    ['memory_type'],
+    registry=registry
+)
+
+memory_cache_evictions = Counter(
+    'vital_memory_cache_evictions_total',
+    'Memory cache evictions',
+    ['memory_type'],
+    registry=registry
+)
+
+# ============================================================================
+# PANEL ANALYTICS METRICS
+# ============================================================================
+
+# Panel views
+panel_views_total = Counter(
+    'vital_panel_views_total',
+    'Total panel views',
+    ['user_id', 'tenant_id', 'panel_name', 'panel_type'],  # panel_type: research, chat, settings, profile
+    registry=registry
+)
+
+# Panel interactions
+panel_interactions_total = Counter(
+    'vital_panel_interactions_total',
+    'Total panel interactions',
+    ['user_id', 'tenant_id', 'panel_name', 'interaction_type'],  # interaction_type: click, scroll, filter, sort, export
+    registry=registry
+)
+
+# Panel session duration
+panel_session_duration = Histogram(
+    'vital_panel_session_duration_seconds',
+    'Panel session duration in seconds',
+    ['user_id', 'tenant_id', 'panel_name'],
+    buckets=[1, 5, 10, 30, 60, 300, 600, 1800],  # 1s to 30min
+    registry=registry
+)
+
+# Panel load time
+panel_load_time = Histogram(
+    'vital_panel_load_time_seconds',
+    'Panel load time in seconds',
+    ['panel_name', 'panel_type'],
+    buckets=[0.1, 0.5, 1.0, 2.0, 5.0, 10.0],
+    registry=registry
+)
+
+# Panel errors
+panel_errors_total = Counter(
+    'vital_panel_errors_total',
+    'Total panel errors',
+    ['panel_name', 'error_type'],
+    registry=registry
+)
+
+# Panel data refresh
+panel_data_refresh_total = Counter(
+    'vital_panel_data_refresh_total',
+    'Total panel data refreshes',
+    ['user_id', 'tenant_id', 'panel_name'],
+    registry=registry
+)
+
+# Panel filters applied
+panel_filters_applied = Counter(
+    'vital_panel_filters_applied_total',
+    'Total filters applied to panels',
+    ['user_id', 'tenant_id', 'panel_name', 'filter_type'],
+    registry=registry
+)
+
+# Panel exports
+panel_exports_total = Counter(
+    'vital_panel_exports_total',
+    'Total panel data exports',
+    ['user_id', 'tenant_id', 'panel_name', 'export_format'],  # export_format: pdf, csv, json
+    registry=registry
+)
+
+# Panel search queries
+panel_search_queries = Counter(
+    'vital_panel_search_queries_total',
+    'Total search queries in panels',
+    ['user_id', 'tenant_id', 'panel_name'],
+    registry=registry
+)
+
+# Panel collaboration events
+panel_collaboration_events = Counter(
+    'vital_panel_collaboration_events_total',
+    'Panel collaboration events',
+    ['tenant_id', 'panel_name', 'event_type'],  # event_type: share, comment, annotate
+    registry=registry
+)
+
+# ============================================================================
+# WORKFLOW ANALYTICS METRICS
+# ============================================================================
+
+# Workflow node execution time
+workflow_node_duration = Histogram(
+    'vital_workflow_node_duration_seconds',
+    'Workflow node execution duration',
+    ['mode', 'node_name'],
+    buckets=[0.01, 0.05, 0.1, 0.5, 1.0, 2.0, 5.0, 10.0],
+    registry=registry
+)
+
+# Workflow node executions
+workflow_node_executions = Counter(
+    'vital_workflow_node_executions_total',
+    'Total workflow node executions',
+    ['mode', 'node_name', 'status'],  # status: success, failed, skipped
+    registry=registry
+)
+
+# Workflow path taken
+workflow_path_taken = Counter(
+    'vital_workflow_path_taken_total',
+    'Workflow paths taken',
+    ['mode', 'path_name'],  # path_name: standard, tool_required, cached, degraded
+    registry=registry
+)
+
+# Workflow transitions
+workflow_transitions = Counter(
+    'vital_workflow_transitions_total',
+    'Workflow state transitions',
+    ['mode', 'from_node', 'to_node'],
+    registry=registry
+)
+
+# Workflow bottlenecks (slowest nodes)
+workflow_bottleneck_duration = Gauge(
+    'vital_workflow_bottleneck_duration_seconds',
+    'Duration of workflow bottleneck nodes',
+    ['mode', 'node_name'],
+    registry=registry
+)
+
+# Workflow retry count
+workflow_retries_total = Counter(
+    'vital_workflow_retries_total',
+    'Total workflow retries',
+    ['mode', 'node_name', 'retry_reason'],
+    registry=registry
+)
+
+# Workflow completion rate
+workflow_completion_rate = Gauge(
+    'vital_workflow_completion_rate',
+    'Workflow completion rate (0-1)',
+    ['mode'],
+    registry=registry
+)
+
+# Workflow abandonment
+workflow_abandonments_total = Counter(
+    'vital_workflow_abandonments_total',
+    'Total workflow abandonments',
+    ['mode', 'abandoned_at_node'],
+    registry=registry
+)
+
+# ============================================================================
 # SYSTEM METRICS
 # ============================================================================
 
@@ -486,6 +869,811 @@ def track_rag_retrieval(
 def track_agent_usage(agent_id: str, agent_name: str):
     """Track agent usage"""
     agent_usage.labels(agent_id=agent_id, agent_name=agent_name).inc()
+
+
+# ============================================================================
+# USER TRACKING FUNCTIONS
+# ============================================================================
+
+def track_user_query(
+    user_id: str,
+    tenant_id: str,
+    mode: str
+):
+    """
+    Track user query.
+    
+    Args:
+        user_id: User identifier
+        tenant_id: Tenant identifier
+        mode: Workflow mode
+    """
+    user_queries_total.labels(
+        user_id=user_id,
+        tenant_id=tenant_id,
+        mode=mode
+    ).inc()
+
+
+def track_user_tokens(
+    user_id: str,
+    tenant_id: str,
+    input_tokens: int,
+    output_tokens: int
+):
+    """
+    Track user token usage.
+    
+    Args:
+        user_id: User identifier
+        tenant_id: Tenant identifier
+        input_tokens: Input tokens used
+        output_tokens: Output tokens used
+    """
+    user_tokens_used.labels(
+        user_id=user_id,
+        tenant_id=tenant_id,
+        token_type="input"
+    ).inc(input_tokens)
+    
+    user_tokens_used.labels(
+        user_id=user_id,
+        tenant_id=tenant_id,
+        token_type="output"
+    ).inc(output_tokens)
+
+
+def track_user_cost(
+    user_id: str,
+    tenant_id: str,
+    llm_cost: float = 0.0,
+    tool_cost: float = 0.0,
+    rag_cost: float = 0.0
+):
+    """
+    Track user cost.
+    
+    Args:
+        user_id: User identifier
+        tenant_id: Tenant identifier
+        llm_cost: LLM cost in dollars
+        tool_cost: Tool cost in dollars
+        rag_cost: RAG cost in dollars
+    """
+    if llm_cost > 0:
+        user_cost_dollars.labels(
+            user_id=user_id,
+            tenant_id=tenant_id,
+            cost_type="llm"
+        ).inc(llm_cost)
+    
+    if tool_cost > 0:
+        user_cost_dollars.labels(
+            user_id=user_id,
+            tenant_id=tenant_id,
+            cost_type="tools"
+        ).inc(tool_cost)
+    
+    if rag_cost > 0:
+        user_cost_dollars.labels(
+            user_id=user_id,
+            tenant_id=tenant_id,
+            cost_type="rag"
+        ).inc(rag_cost)
+
+
+def track_user_agent(
+    user_id: str,
+    tenant_id: str,
+    agent_id: str,
+    agent_name: str
+):
+    """
+    Track user agent usage.
+    
+    Args:
+        user_id: User identifier
+        tenant_id: Tenant identifier
+        agent_id: Agent identifier
+        agent_name: Agent name
+    """
+    user_agent_usage.labels(
+        user_id=user_id,
+        tenant_id=tenant_id,
+        agent_id=agent_id,
+        agent_name=agent_name
+    ).inc()
+
+
+def track_user_workflow(
+    user_id: str,
+    tenant_id: str,
+    mode: str
+):
+    """
+    Track user workflow usage.
+    
+    Args:
+        user_id: User identifier
+        tenant_id: Tenant identifier
+        mode: Workflow mode
+    """
+    user_workflow_usage.labels(
+        user_id=user_id,
+        tenant_id=tenant_id,
+        mode=mode
+    ).inc()
+
+
+def track_user_tool(
+    user_id: str,
+    tenant_id: str,
+    tool_name: str
+):
+    """
+    Track user tool usage.
+    
+    Args:
+        user_id: User identifier
+        tenant_id: Tenant identifier
+        tool_name: Tool name
+    """
+    user_tool_usage.labels(
+        user_id=user_id,
+        tenant_id=tenant_id,
+        tool_name=tool_name
+    ).inc()
+
+
+def track_user_feedback(
+    user_id: str,
+    tenant_id: str,
+    feedback_type: str,
+    rating: Optional[int] = None
+):
+    """
+    Track user feedback.
+    
+    Args:
+        user_id: User identifier
+        tenant_id: Tenant identifier
+        feedback_type: Feedback type (thumbs_up, thumbs_down, rating, comment)
+        rating: Optional rating (1-5)
+    """
+    user_feedback_total.labels(
+        user_id=user_id,
+        tenant_id=tenant_id,
+        feedback_type=feedback_type
+    ).inc()
+    
+    if rating is not None and 1 <= rating <= 5:
+        user_feedback_ratings.labels(
+            user_id=user_id,
+            tenant_id=tenant_id
+        ).observe(rating)
+
+
+# ============================================================================
+# USER ABUSE DETECTION FUNCTIONS
+# ============================================================================
+
+def track_rate_limit_violation(
+    user_id: str,
+    tenant_id: str,
+    limit_type: str
+):
+    """
+    Track rate limit violation.
+    
+    Args:
+        user_id: User identifier
+        tenant_id: Tenant identifier
+        limit_type: Limit type (requests_per_minute, tokens_per_minute, cost_per_hour)
+    """
+    user_rate_limit_violations.labels(
+        user_id=user_id,
+        tenant_id=tenant_id,
+        limit_type=limit_type
+    ).inc()
+
+
+def track_suspicious_activity(
+    user_id: str,
+    tenant_id: str,
+    activity_type: str
+):
+    """
+    Track suspicious user activity.
+    
+    Args:
+        user_id: User identifier
+        tenant_id: Tenant identifier
+        activity_type: Activity type (rapid_requests, excessive_tokens, prompt_injection, abuse_detected)
+    """
+    user_suspicious_activity.labels(
+        user_id=user_id,
+        tenant_id=tenant_id,
+        activity_type=activity_type
+    ).inc()
+
+
+def track_user_request_rate(
+    user_id: str,
+    tenant_id: str,
+    requests_per_minute: int
+):
+    """
+    Track user request rate.
+    
+    Args:
+        user_id: User identifier
+        tenant_id: Tenant identifier
+        requests_per_minute: Requests per minute
+    """
+    user_request_rate.labels(
+        user_id=user_id,
+        tenant_id=tenant_id
+    ).observe(requests_per_minute)
+
+
+def track_user_session(
+    user_id: str,
+    tenant_id: str,
+    duration_seconds: float
+):
+    """
+    Track user session duration.
+    
+    Args:
+        user_id: User identifier
+        tenant_id: Tenant identifier
+        duration_seconds: Session duration in seconds
+    """
+    user_session_duration.labels(
+        user_id=user_id,
+        tenant_id=tenant_id
+    ).observe(duration_seconds)
+
+
+def track_blocked_user(
+    tenant_id: str,
+    block_reason: str
+):
+    """
+    Track blocked user.
+    
+    Args:
+        tenant_id: Tenant identifier
+        block_reason: Reason for blocking (abuse, rate_limit, fraud, terms_violation)
+    """
+    blocked_users_total.labels(
+        tenant_id=tenant_id,
+        block_reason=block_reason
+    ).inc()
+
+
+# ============================================================================
+# MEMORY TRACKING FUNCTIONS
+# ============================================================================
+
+def track_agent_memory(
+    agent_id: str,
+    memory_type: str,
+    size_bytes: Optional[int] = None,
+    item_count: Optional[int] = None,
+    operation: Optional[str] = None
+):
+    """
+    Track agent memory metrics.
+    
+    Args:
+        agent_id: Agent identifier
+        memory_type: Memory type (context, history, state)
+        size_bytes: Memory size in bytes
+        item_count: Number of items in memory
+        operation: Operation (read, write, update, delete, clear)
+    """
+    if size_bytes is not None:
+        agent_memory_size_bytes.labels(
+            agent_id=agent_id,
+            memory_type=memory_type
+        ).set(size_bytes)
+    
+    if item_count is not None:
+        agent_memory_items.labels(
+            agent_id=agent_id,
+            memory_type=memory_type
+        ).set(item_count)
+    
+    if operation:
+        agent_memory_operations.labels(
+            agent_id=agent_id,
+            operation=operation
+        ).inc()
+
+
+def track_chat_memory(
+    user_id: str,
+    tenant_id: str,
+    mode: Optional[str] = None,
+    conversation_count: Optional[int] = None,
+    message_count: Optional[int] = None,
+    size_bytes: Optional[int] = None,
+    operation: Optional[str] = None,
+    turn_increment: bool = False
+):
+    """
+    Track chat memory metrics.
+    
+    Args:
+        user_id: User identifier
+        tenant_id: Tenant identifier
+        mode: Workflow mode
+        conversation_count: Number of active conversations
+        message_count: Number of messages in memory
+        size_bytes: Memory size in bytes
+        operation: Operation (load, save, append, clear)
+        turn_increment: Whether to increment conversation turn counter
+    """
+    if conversation_count is not None:
+        chat_memory_conversations.labels(
+            user_id=user_id,
+            tenant_id=tenant_id
+        ).set(conversation_count)
+    
+    if message_count is not None:
+        chat_memory_messages.labels(
+            user_id=user_id,
+            tenant_id=tenant_id
+        ).set(message_count)
+    
+    if size_bytes is not None:
+        chat_memory_size_bytes.labels(
+            user_id=user_id,
+            tenant_id=tenant_id
+        ).set(size_bytes)
+    
+    if operation:
+        chat_memory_operations.labels(
+            user_id=user_id,
+            tenant_id=tenant_id,
+            operation=operation
+        ).inc()
+    
+    if turn_increment and mode:
+        chat_memory_turns.labels(
+            user_id=user_id,
+            tenant_id=tenant_id,
+            mode=mode
+        ).inc()
+
+
+def track_user_memory(
+    user_id: str,
+    tenant_id: str,
+    preference_count: Optional[int] = None,
+    history_type: Optional[str] = None,
+    history_size: Optional[int] = None,
+    operation: Optional[str] = None,
+    retrieval_time: Optional[float] = None,
+    memory_type: Optional[str] = None
+):
+    """
+    Track user memory metrics.
+    
+    Args:
+        user_id: User identifier
+        tenant_id: Tenant identifier
+        preference_count: Number of preferences stored
+        history_type: History type (queries, feedback, interactions)
+        history_size: History size (number of items)
+        operation: Operation (read, write, update, delete)
+        retrieval_time: Retrieval latency in seconds
+        memory_type: Memory type for retrieval latency
+    """
+    if preference_count is not None:
+        user_memory_preferences.labels(
+            user_id=user_id,
+            tenant_id=tenant_id
+        ).set(preference_count)
+    
+    if history_type and history_size is not None:
+        user_memory_history_size.labels(
+            user_id=user_id,
+            tenant_id=tenant_id,
+            history_type=history_type
+        ).set(history_size)
+    
+    if operation:
+        user_memory_operations.labels(
+            user_id=user_id,
+            tenant_id=tenant_id,
+            operation=operation
+        ).inc()
+    
+    if retrieval_time is not None and memory_type:
+        user_memory_retrieval_latency.labels(
+            user_id=user_id,
+            tenant_id=tenant_id,
+            memory_type=memory_type
+        ).observe(retrieval_time)
+
+
+def track_memory_cache(
+    memory_type: str,
+    hit: bool = False,
+    miss: bool = False,
+    eviction: bool = False
+):
+    """
+    Track memory cache metrics.
+    
+    Args:
+        memory_type: Memory type (agent, chat, user)
+        hit: Cache hit
+        miss: Cache miss
+        eviction: Cache eviction
+    """
+    if hit:
+        memory_cache_hits.labels(memory_type=memory_type).inc()
+    
+    if miss:
+        memory_cache_misses.labels(memory_type=memory_type).inc()
+    
+    if eviction:
+        memory_cache_evictions.labels(memory_type=memory_type).inc()
+
+
+# ============================================================================
+# PANEL ANALYTICS TRACKING FUNCTIONS
+# ============================================================================
+
+def track_panel_view(
+    user_id: str,
+    tenant_id: str,
+    panel_name: str,
+    panel_type: str
+):
+    """
+    Track panel view.
+    
+    Args:
+        user_id: User identifier
+        tenant_id: Tenant identifier
+        panel_name: Panel name
+        panel_type: Panel type (research, chat, settings, profile)
+    """
+    panel_views_total.labels(
+        user_id=user_id,
+        tenant_id=tenant_id,
+        panel_name=panel_name,
+        panel_type=panel_type
+    ).inc()
+
+
+def track_panel_interaction(
+    user_id: str,
+    tenant_id: str,
+    panel_name: str,
+    interaction_type: str
+):
+    """
+    Track panel interaction.
+    
+    Args:
+        user_id: User identifier
+        tenant_id: Tenant identifier
+        panel_name: Panel name
+        interaction_type: Interaction type (click, scroll, filter, sort, export)
+    """
+    panel_interactions_total.labels(
+        user_id=user_id,
+        tenant_id=tenant_id,
+        panel_name=panel_name,
+        interaction_type=interaction_type
+    ).inc()
+
+
+def track_panel_session(
+    user_id: str,
+    tenant_id: str,
+    panel_name: str,
+    duration_seconds: float
+):
+    """
+    Track panel session duration.
+    
+    Args:
+        user_id: User identifier
+        tenant_id: Tenant identifier
+        panel_name: Panel name
+        duration_seconds: Session duration in seconds
+    """
+    panel_session_duration.labels(
+        user_id=user_id,
+        tenant_id=tenant_id,
+        panel_name=panel_name
+    ).observe(duration_seconds)
+
+
+def track_panel_load(
+    panel_name: str,
+    panel_type: str,
+    load_time_seconds: float
+):
+    """
+    Track panel load time.
+    
+    Args:
+        panel_name: Panel name
+        panel_type: Panel type
+        load_time_seconds: Load time in seconds
+    """
+    panel_load_time.labels(
+        panel_name=panel_name,
+        panel_type=panel_type
+    ).observe(load_time_seconds)
+
+
+def track_panel_error(
+    panel_name: str,
+    error_type: str
+):
+    """
+    Track panel error.
+    
+    Args:
+        panel_name: Panel name
+        error_type: Error type
+    """
+    panel_errors_total.labels(
+        panel_name=panel_name,
+        error_type=error_type
+    ).inc()
+
+
+def track_panel_data_refresh(
+    user_id: str,
+    tenant_id: str,
+    panel_name: str
+):
+    """
+    Track panel data refresh.
+    
+    Args:
+        user_id: User identifier
+        tenant_id: Tenant identifier
+        panel_name: Panel name
+    """
+    panel_data_refresh_total.labels(
+        user_id=user_id,
+        tenant_id=tenant_id,
+        panel_name=panel_name
+    ).inc()
+
+
+def track_panel_filter(
+    user_id: str,
+    tenant_id: str,
+    panel_name: str,
+    filter_type: str
+):
+    """
+    Track panel filter applied.
+    
+    Args:
+        user_id: User identifier
+        tenant_id: Tenant identifier
+        panel_name: Panel name
+        filter_type: Filter type
+    """
+    panel_filters_applied.labels(
+        user_id=user_id,
+        tenant_id=tenant_id,
+        panel_name=panel_name,
+        filter_type=filter_type
+    ).inc()
+
+
+def track_panel_export(
+    user_id: str,
+    tenant_id: str,
+    panel_name: str,
+    export_format: str
+):
+    """
+    Track panel export.
+    
+    Args:
+        user_id: User identifier
+        tenant_id: Tenant identifier
+        panel_name: Panel name
+        export_format: Export format (pdf, csv, json)
+    """
+    panel_exports_total.labels(
+        user_id=user_id,
+        tenant_id=tenant_id,
+        panel_name=panel_name,
+        export_format=export_format
+    ).inc()
+
+
+def track_panel_search(
+    user_id: str,
+    tenant_id: str,
+    panel_name: str
+):
+    """
+    Track panel search query.
+    
+    Args:
+        user_id: User identifier
+        tenant_id: Tenant identifier
+        panel_name: Panel name
+    """
+    panel_search_queries.labels(
+        user_id=user_id,
+        tenant_id=tenant_id,
+        panel_name=panel_name
+    ).inc()
+
+
+def track_panel_collaboration(
+    tenant_id: str,
+    panel_name: str,
+    event_type: str
+):
+    """
+    Track panel collaboration event.
+    
+    Args:
+        tenant_id: Tenant identifier
+        panel_name: Panel name
+        event_type: Event type (share, comment, annotate)
+    """
+    panel_collaboration_events.labels(
+        tenant_id=tenant_id,
+        panel_name=panel_name,
+        event_type=event_type
+    ).inc()
+
+
+# ============================================================================
+# WORKFLOW ANALYTICS TRACKING FUNCTIONS
+# ============================================================================
+
+def track_workflow_node(
+    mode: str,
+    node_name: str,
+    duration_seconds: float,
+    status: str = "success"
+):
+    """
+    Track workflow node execution.
+    
+    Args:
+        mode: Workflow mode
+        node_name: Node name
+        duration_seconds: Execution duration in seconds
+        status: Execution status (success, failed, skipped)
+    """
+    workflow_node_duration.labels(
+        mode=mode,
+        node_name=node_name
+    ).observe(duration_seconds)
+    
+    workflow_node_executions.labels(
+        mode=mode,
+        node_name=node_name,
+        status=status
+    ).inc()
+
+
+def track_workflow_path(
+    mode: str,
+    path_name: str
+):
+    """
+    Track workflow path taken.
+    
+    Args:
+        mode: Workflow mode
+        path_name: Path name (standard, tool_required, cached, degraded)
+    """
+    workflow_path_taken.labels(
+        mode=mode,
+        path_name=path_name
+    ).inc()
+
+
+def track_workflow_transition(
+    mode: str,
+    from_node: str,
+    to_node: str
+):
+    """
+    Track workflow state transition.
+    
+    Args:
+        mode: Workflow mode
+        from_node: Source node
+        to_node: Destination node
+    """
+    workflow_transitions.labels(
+        mode=mode,
+        from_node=from_node,
+        to_node=to_node
+    ).inc()
+
+
+def track_workflow_bottleneck(
+    mode: str,
+    node_name: str,
+    duration_seconds: float
+):
+    """
+    Track workflow bottleneck.
+    
+    Args:
+        mode: Workflow mode
+        node_name: Node name
+        duration_seconds: Duration in seconds
+    """
+    workflow_bottleneck_duration.labels(
+        mode=mode,
+        node_name=node_name
+    ).set(duration_seconds)
+
+
+def track_workflow_retry(
+    mode: str,
+    node_name: str,
+    retry_reason: str
+):
+    """
+    Track workflow retry.
+    
+    Args:
+        mode: Workflow mode
+        node_name: Node name
+        retry_reason: Reason for retry
+    """
+    workflow_retries_total.labels(
+        mode=mode,
+        node_name=node_name,
+        retry_reason=retry_reason
+    ).inc()
+
+
+def update_workflow_completion_rate(
+    mode: str,
+    completion_rate: float
+):
+    """
+    Update workflow completion rate.
+    
+    Args:
+        mode: Workflow mode
+        completion_rate: Completion rate (0-1)
+    """
+    workflow_completion_rate.labels(mode=mode).set(completion_rate)
+
+
+def track_workflow_abandonment(
+    mode: str,
+    abandoned_at_node: str
+):
+    """
+    Track workflow abandonment.
+    
+    Args:
+        mode: Workflow mode
+        abandoned_at_node: Node where workflow was abandoned
+    """
+    workflow_abandonments_total.labels(
+        mode=mode,
+        abandoned_at_node=abandoned_at_node
+    ).inc()
 
 
 def update_connection_pool_metrics(

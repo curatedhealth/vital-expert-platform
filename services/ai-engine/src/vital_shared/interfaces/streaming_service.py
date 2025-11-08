@@ -5,7 +5,7 @@ Defines the contract for Server-Sent Events (SSE) streaming.
 """
 
 from abc import ABC, abstractmethod
-from typing import Dict, Any, AsyncGenerator
+from typing import Dict, Any, AsyncGenerator, Optional
 
 
 class IStreamingService(ABC):

@@ -1,0 +1,166 @@
+[project]
+name = "vital-shared"
+version = "1.0.0"
+description = "Shared libraries for VITAL AI services"
+readme = "README.md"
+requires-python = ">=3.11"
+license = {text = "MIT"}
+authors = [
+    {name = "VITAL Path Team", email = "team@vitalpath.ai"}
+]
+keywords = ["ai", "langchain", "langgraph", "medical", "vital"]
+
+dependencies = [
+    "pydantic>=2.0.0",
+    "langchain>=0.1.0",
+    "langchain-openai>=0.1.0",
+    "langchain-core>=0.1.0",
+    "langgraph>=0.1.0",
+    "supabase>=2.0.0",
+    "pinecone-client>=3.0.0",
+    "structlog>=24.0.0",
+    "prometheus-client>=0.19.0",
+    "openai>=1.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-asyncio>=0.21.0",
+    "pytest-cov>=4.0.0",
+    "pytest-mock>=3.12.0",
+    "black>=23.0.0",
+    "ruff>=0.1.0",
+    "mypy>=1.0.0",
+    "types-requests",
+]
+
+test = [
+    "pytest>=7.0.0",
+    "pytest-asyncio>=0.21.0",
+    "pytest-cov>=4.0.0",
+    "pytest-mock>=3.12.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/vitalpath/vital-shared"
+Documentation = "https://docs.vitalpath.ai/vital-shared"
+Repository = "https://github.com/vitalpath/vital-shared"
+Issues = "https://github.com/vitalpath/vital-shared/issues"
+
+[build-system]
+requires = ["setuptools>=68.0.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+python_files = ["test_*.py", "*_test.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = [
+    "--strict-markers",
+    "--tb=short",
+    "--cov=vital_shared",
+    "--cov-report=term-missing",
+    "--cov-report=html",
+    "--cov-report=xml",
+]
+markers = [
+    "unit: Unit tests",
+    "integration: Integration tests",
+    "slow: Slow running tests",
+]
+
+[tool.black]
+line-length = 88
+target-version = ["py311", "py312"]
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+  # directories
+  \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | build
+  | dist
+)/
+'''
+
+[tool.ruff]
+line-length = 88
+target-version = "py311"
+select = [
+    "E",  # pycodestyle errors
+    "W",  # pycodestyle warnings
+    "F",  # pyflakes
+    "I",  # isort
+    "C",  # flake8-comprehensions
+    "B",  # flake8-bugbear
+    "UP", # pyupgrade
+]
+ignore = [
+    "E501",  # line too long, handled by black
+    "B008",  # do not perform function calls in argument defaults
+    "C901",  # too complex
+]
+exclude = [
+    ".git",
+    ".mypy_cache",
+    ".ruff_cache",
+    ".venv",
+    "__pycache__",
+    "build",
+    "dist",
+]
+
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+disallow_untyped_calls = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+follow_imports = "normal"
+strict_optional = true
+
+[[tool.mypy.overrides]]
+module = [
+    "supabase.*",
+    "pinecone.*",
+    "langchain.*",
+    "langgraph.*",
+]
+ignore_missing_imports = true
+
+[tool.coverage.run]
+source = ["vital_shared"]
+omit = [
+    "*/tests/*",
+    "*/testing/*",
+    "*/__pycache__/*",
+]
+
+[tool.coverage.report]
+precision = 2
+show_missing = true
+skip_covered = false
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if TYPE_CHECKING:",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+    "@abstractmethod",
+    "@abc.abstractmethod",
+]
+

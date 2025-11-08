@@ -52,6 +52,10 @@ from vital_shared.models.workflow_state import (
 from vital_shared.models.workflow_io import WorkflowInput, WorkflowOutput, WorkflowMode
 from vital_shared.models.citation import Citation, RAGResponse
 
+# Vital Shared Utils
+from vital_shared.utils.connection_pool import get_llm_client, get_http_client, get_db_client
+from vital_shared.utils.workflow_cache import get_cached_workflow, cache_workflow_result
+
 logger = structlog.get_logger()
 
 
@@ -248,12 +252,13 @@ class BaseWorkflow(ABC):
         input: WorkflowInput
     ) -> WorkflowOutput:
         """
-        Execute workflow with type-safe input/output (Hybrid State Management).
+        Execute workflow with type-safe input/output (Hybrid State Management + Caching).
         
-        This method implements the recommended Hybrid approach:
-        - Input: Strict Pydantic validation (external → workflow)
-        - Internal: Flexible Dict (LangGraph compatibility)
-        - Output: Strict Pydantic formatting (workflow → external)
+        This method implements:
+        - Hybrid State Management: Pydantic I/O, Dict internals
+        - Selective Caching: Mode 1/2 only, 5-minute TTL
+        - Connection Pooling: Reuse DB/HTTP/LLM connections
+        - Quality Indicators: Graceful degradation
         
         Args:
             input: WorkflowInput with validated fields
@@ -264,6 +269,30 @@ class BaseWorkflow(ABC):
         try:
             start_time = datetime.now()
             
+            # ===================================================================
+            # OPTIMIZATION 1: Check cache (Mode 1/2 only)
+            # ===================================================================
+            cached_result = await get_cached_workflow(
+                tenant_id=input.tenant_id,
+                query=input.query,
+                mode=input.mode.value
+            )
+            
+            if cached_result:
+                # Cache hit! Return immediately
+                self.logger.info(
+                    "workflow_cache_hit",
+                    tenant_id=input.tenant_id,
+                    mode=input.mode.value,
+                    query_length=len(input.query)
+                )
+                
+                # Convert cached dict to WorkflowOutput
+                return WorkflowOutput(**cached_result) if isinstance(cached_result, dict) else cached_result
+            
+            # ===================================================================
+            # Cache miss - Execute workflow
+            # ===================================================================
             self.logger.info(
                 "workflow_execution_started_typed",
                 user_id=input.user_id,
@@ -299,6 +328,17 @@ class BaseWorkflow(ABC):
                 quality_score=output.quality_score,
                 is_degraded=output.is_degraded,
                 warnings_count=len(output.warnings)
+            )
+            
+            # ===================================================================
+            # OPTIMIZATION 2: Cache result (Mode 1/2 only, high quality)
+            # ===================================================================
+            await cache_workflow_result(
+                tenant_id=input.tenant_id,
+                query=input.query,
+                mode=input.mode.value,
+                result=output.model_dump(),
+                input_data=state_dict
             )
             
             return output

@@ -339,7 +339,7 @@ function extractTopic(sentence: string): string | null {
   }
 
   if (candidate.length > 60) {
-    candidate = `${candidate.slice(0, 57)}...`;
+    candidate = candidate.slice(0, 57) + '...';
   }
 
   return candidate;
@@ -357,7 +357,7 @@ function generateFollowUpSuggestions(
   }
 
   if (!message || !message.content) {
-    suggestions.add(`What should I do next in ${modeName.toLowerCase()} mode?`);
+    suggestions.add('What should I do next in ' + modeName.toLowerCase() + ' mode?');
     suggestions.add('Suggest actionable next steps.');
     suggestions.add('Flag potential risks I should know about.');
     return Array.from(suggestions).slice(0, 4);
@@ -372,7 +372,7 @@ function generateFollowUpSuggestions(
   sentences.forEach((sentence) => {
     const topic = extractTopic(sentence);
     if (topic) {
-      suggestions.add(`Can you expand on ${topic}?`);
+      suggestions.add('Can you expand on ' + topic + '?');
     }
   });
 
@@ -386,7 +386,7 @@ function generateFollowUpSuggestions(
     const cleaned = line.replace(/^[-*•]\s*/, '');
     const topic = extractTopic(cleaned);
     if (topic) {
-      suggestions.add(`What are the implications of ${topic}?`);
+      suggestions.add('What are the implications of ' + topic + '?');
     }
   });
 
@@ -396,12 +396,12 @@ function generateFollowUpSuggestions(
 
   const domains = message.metadata?.ragSummary?.domains;
   if (domains && domains.length > 0) {
-    suggestions.add(`Share more insights on ${domains[0]}.`);
+    suggestions.add('Share more insights on ' + domains[0] + '.');
   }
 
   const usedTools = message.metadata?.toolSummary?.used;
   if (usedTools && usedTools.length > 0) {
-    suggestions.add(`What did the ${usedTools[0]} tool uncover?`);
+    suggestions.add('What did the ' + usedTools[0] + ' tool uncover?');
   }
 
   suggestions.add('What concrete steps should we prioritize next?');
@@ -619,7 +619,7 @@ function AskExpertPageContent() {
               .eq('agent_id', agentId);
 
             if (agentToolsError) {
-              console.warn(`[WARN] [Tool Selector] Error loading tools for agent ${agentId}:`, agentToolsError);
+              console.warn('[WARN] [Tool Selector] Error loading tools for agent ' + agentId + ':', agentToolsError);
               // Fallback to agents.tools JSON column for backward compatibility
               const agent = agents.find((a) => a.id === agentId);
               if (agent?.tools && Array.isArray(agent.tools)) {
@@ -666,7 +666,7 @@ function AskExpertPageContent() {
               }
             });
           } catch (error) {
-            console.error(`[ERROR] [Tool Selector] Error processing agent ${agentId}:`, error);
+            console.error('[ERROR] [Tool Selector] Error processing agent ' + agentId + ':', error);
             // Fallback to agents.tools JSON column
             const agent = agents.find((a) => a.id === agentId);
             if (agent?.tools && Array.isArray(agent.tools)) {
@@ -811,7 +811,7 @@ function AskExpertPageContent() {
       .map((message) => {
         const speaker = message.role === 'user' ? 'User' : 'Expert';
         const text = message.content?.trim() ?? '';
-        return text.length > 0 ? `${speaker} + ": ${text}" : '';
+        return text.length > 0 ? speaker + ' + ": ' + text + '" : '';
       })
       .filter((line) => line.length > 0)
       .join('\n');
@@ -1139,7 +1139,7 @@ function AskExpertPageContent() {
       content: messageContent,
       timestamp: Date.now(),
       attachments: (effectiveAttachments ?? []).map((file, i) => ({
-        id: `${nanoid()}-${i}`,
+        id: nanoid() + '-' + i.toString(),
         name: file.name,
         size: file.size,
         type: file.type,
@@ -1203,7 +1203,7 @@ function AskExpertPageContent() {
       // - services/ai-engine/src/main.py (uvicorn port - should be 8080)
       // - .env.local (NEXT_PUBLIC_PYTHON_AI_ENGINE_URL=http://localhost:8080)
       const apiEndpoint = mode === 'manual' 
-        ? `${process.env.NEXT_PUBLIC_PYTHON_AI_ENGINE_URL || 'http://localhost:8080'}/api/mode1/manual`
+        ? (process.env.NEXT_PUBLIC_PYTHON_AI_ENGINE_URL || 'http://localhost:8080') + '/api/mode1/manual'
         : '/api/ask-expert/orchestrate';
 
       console.log('[AskExpert] Calling endpoint:', apiEndpoint);
@@ -1262,14 +1262,14 @@ function AskExpertPageContent() {
         try {
           errorData = JSON.parse(errorText);
         } catch {
-          errorData = { message: errorText || `HTTP ${response.status}` };
+          errorData = { message: errorText || 'HTTP ' + response.status };
         }
         console.error('[AskExpert] Response not OK:', {
           status: response.status,
           statusText: response.statusText,
           error: errorData,
         });
-        throw new Error(errorData.message || `HTTP ${response.status} + ": ${response.statusText}");
+        throw new Error(errorData.message || 'HTTP ' + response.status + ': ' + response.statusText);
       }
       
       console.log('[AskExpert] Response OK, starting stream processing');
@@ -1400,7 +1400,7 @@ function AskExpertPageContent() {
                             console.log('[OK] [Tool Confirmation] User approved');
                             // Send approval to backend
                             try {
-                              await fetch(`${process.env.NEXT_PUBLIC_PYTHON_AI_ENGINE_URL || 'http://localhost:8080'}/api/tool/confirm`, {
+                              await fetch((process.env.NEXT_PUBLIC_PYTHON_AI_ENGINE_URL || 'http://localhost:8080') + '/api/tool/confirm', {
                                 method: 'POST',
                                 headers: { 'Content-Type': 'application/json' },
                                 body: JSON.stringify({ 
@@ -1416,7 +1416,7 @@ function AskExpertPageContent() {
                             console.log('[ERROR] [Tool Confirmation] User declined');
                             // Send decline to backend
                             try {
-                              await fetch(`${process.env.NEXT_PUBLIC_PYTHON_AI_ENGINE_URL || 'http://localhost:8080'}/api/tool/confirm', {
+                              await fetch((process.env.NEXT_PUBLIC_PYTHON_AI_ENGINE_URL || 'http://localhost:8080') + '/api/tool/confirm', {
                                 method: 'POST',
                                 headers: { 'Content-Type': 'application/json' },
                                 body: JSON.stringify({ 
@@ -2165,11 +2165,11 @@ function AskExpertPageContent() {
               } else if (data.type === 'error') {
                 // Handle structured error events from backend
                 const errorCode = data.code || 'UNKNOWN_ERROR';
-                const errorMessage = data.message || data.content || `Unknown error from ${mode}`;
-                console.error(`[${mode}] Error (${errorCode}):`, errorMessage);
-                console.error(`[${mode}] Full error data:`, JSON.stringify(data, null, 2));
+                const errorMessage = data.message || data.content || 'Unknown error from ' + mode;
+                console.error('[' + mode + '] Error (' + errorCode + '):', errorMessage);
+                console.error('[' + mode + '] Full error data:', JSON.stringify(data, null, 2));
                 if (data.stack) {
-                  console.error(`[${mode}] Error stack:`, data.stack);
+                  console.error('[' + mode + '] Error stack:', data.stack);
                 }
                 
                 // Map error codes to user-friendly messages
@@ -2214,7 +2214,7 @@ function AskExpertPageContent() {
                 if (reasoningText) {
                   setStreamingReasoning(prev => {
                     return prev && prev !== 'Thinking...' && prev !== 'Processing your request...'
-                      ? `${prev}\n\n${reasoningText}`
+                      ? prev + '\n\n' + reasoningText
                       : reasoningText;
                   });
                   setIsStreamingReasoning(true);
@@ -2335,7 +2335,7 @@ function AskExpertPageContent() {
           ? branches
           : [
               {
-                id: `${assistantMessageId}-branch-0`,
+                id: assistantMessageId + '-branch-0',
                 content: finalContent,  // [OK] Use accumulated content
                 confidence: typeof confidence === 'number' ? confidence : 0,
                 citations: Array.isArray(finalMeta?.citations)
@@ -2511,7 +2511,7 @@ function AskExpertPageContent() {
         const errorMessage: Message = {
           id: nanoid(),
           role: 'assistant',
-          content: `Sorry, I encountered an error: ${error.message}. Please try again.`,
+          content: 'Sorry, I encountered an error: ' + error.message + '. Please try again.',
           timestamp: Date.now(),
         };
         setMessages(prev => [...prev, errorMessage]);
@@ -2703,14 +2703,14 @@ function AskExpertPageContent() {
   }, [conversations, handleConversationSelect, handleNewConversation]);
 
   return (
-    <div className={`flex flex-col h-full w-full ${darkMode ? 'dark bg-gray-950' : 'bg-white'}`}>
+    <div className={'flex flex-col h-full w-full ' + darkMode ? 'dark bg-gray-950' : 'bg-white'}>
       {/* Top Bar - Standardized Compact Header */}
       <PageHeaderCompact
         icon={MessageSquare}
         title="Ask Expert"
         description="1:1 expert consultation with AI agents"
         badge={{
-          label: `Mode ${currentMode.id} + ": ${currentMode.name}",
+          label: 'Mode ' + currentMode.id + ' + ": ' + currentMode.name + '",
           variant: 'secondary'
         }}
         actions={
@@ -2763,7 +2763,7 @@ function AskExpertPageContent() {
             </DropdownMenu>
             <button
               onClick={() => setShowSettings(!showSettings)}
-              className={`p-2 rounded-lg transition-colors ${
+              className={'p-2 rounded-lg transition-colors ${
                 showSettings
                   ? 'bg-gray-100 dark:bg-gray-800'
                   : 'hover:bg-gray-100 dark:hover:bg-gray-800'
@@ -2830,11 +2830,11 @@ function AskExpertPageContent() {
                         setIsAutomatic(false);
                         setIsAutonomous(false);
                       }}
-                      className={`p-4 rounded-lg border-2 text-left transition-all ${
+                      className={'p-4 rounded-lg border-2 text-left transition-all ' + 
                         currentMode.id === 1
                           ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 dark:border-blue-400'
                           : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 bg-white dark:bg-gray-800'
-                      }`}
+                      }
                     >
                       <div className="flex items-center justify-between mb-2">
                         <span className="text-sm font-semibold text-gray-900 dark:text-white">
@@ -2855,11 +2855,11 @@ function AskExpertPageContent() {
                         setIsAutomatic(true);
                         setIsAutonomous(false);
                       }}
-                      className={`p-4 rounded-lg border-2 text-left transition-all ${
+                      className={'p-4 rounded-lg border-2 text-left transition-all ' + 
                         currentMode.id === 2
                           ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 dark:border-blue-400'
                           : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 bg-white dark:bg-gray-800'
-                      }`}
+                      }
                     >
                       <div className="flex items-center justify-between mb-2">
                         <span className="text-sm font-semibold text-gray-900 dark:text-white">
@@ -2880,11 +2880,11 @@ function AskExpertPageContent() {
                         setIsAutomatic(true);
                         setIsAutonomous(true);
                       }}
-                      className={`p-4 rounded-lg border-2 text-left transition-all ${
+                      className={'p-4 rounded-lg border-2 text-left transition-all ' + 
                         currentMode.id === 3
                           ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20 dark:border-purple-400'
                           : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 bg-white dark:bg-gray-800'
-                      }`}
+                      }
                     >
                       <div className="flex items-center justify-between mb-2">
                         <span className="text-sm font-semibold text-gray-900 dark:text-white">
@@ -2905,11 +2905,11 @@ function AskExpertPageContent() {
                         setIsAutomatic(false);
                         setIsAutonomous(true);
                       }}
-                      className={`p-4 rounded-lg border-2 text-left transition-all ${
+                      className={'p-4 rounded-lg border-2 text-left transition-all ' + 
                         currentMode.id === 4
                           ? 'border-green-500 bg-green-50 dark:bg-green-900/20 dark:border-green-400'
                           : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 bg-white dark:bg-gray-800'
-                      }`}
+                      }
                     >
                       <div className="flex items-center justify-between mb-2">
                         <span className="text-sm font-semibold text-gray-900 dark:text-white">
@@ -2940,12 +2940,12 @@ function AskExpertPageContent() {
                         {currentMode.description}
                       </div>
                     </div>
-                    <div className={`px-2 py-1 rounded-full text-xs font-medium ${
+                    <div className={'px-2 py-1 rounded-full text-xs font-medium ' + 
                       currentMode.color === 'purple' ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300' :
                       currentMode.color === 'green' ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300' :
                       currentMode.color === 'blue' ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300' :
                       'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300'
-                    }`}>
+                    }>
                       {currentMode.id}
                     </div>
                   </div>
@@ -3052,7 +3052,7 @@ function AskExpertPageContent() {
                             <span>{new Date(feedback.createdAt).toLocaleDateString()}</span>
                           </div>
                           <p className="text-xs text-amber-800 dark:text-amber-200">
-                            {feedback.comment ? `“${feedback.comment}”` : 'No comment provided'}
+                            {feedback.comment ? '“' + feedback.comment + '”' : 'No comment provided'}
                           </p>
                         </div>
                       ))}
@@ -3341,7 +3341,7 @@ function AskExpertPageContent() {
                 ).toLowerCase();
                 const description = String(agent.description || '').toLowerCase();
                 const specialty = String((agent as any).specialty || '').toLowerCase();
-                const searchText = `${name} ${displayName} ${description} ${specialty}`;
+                const searchText = name + ' ' + displayName + ' ' + description + ' ' + specialty;
                 
                 const matchCount = (example.agentSearchTerms || []).filter((term) =>
                   searchText.includes(term.toLowerCase())
@@ -3392,16 +3392,16 @@ function AskExpertPageContent() {
                   
                   // Refresh agents list to get the newly added agent
                   // This will update the agents state in context, which will trigger sidebar re-render
-                  console.log("[Mode 1 Helper] Refreshing agents list...`);
+                  console.log("[Mode 1 Helper] Refreshing agents list...');
                   await refreshAgents();
                   
                   // Wait for React to propagate state updates through context to sidebar
                   // This ensures the sidebar component receives the updated agents list
                   await new Promise(resolve => setTimeout(resolve, 300));
                   
-                  console.log("[Mode 1 Helper] Agent "${selectedAgent.name}" added and should be visible in sidebar`);
+                  console.log("[Mode 1 Helper] Agent "' + selectedAgent.name + '" added and should be visible in sidebar');
                 } catch (error) {
-                  console.error(`[ERROR] [Mode 1 Helper] Failed to add agent to user list:`, error);
+                  console.error(`[ERROR] [Mode 1 Helper] Failed to add agent to user list:', error);
                   // Still try to select the agent even if adding failed
                 }
               }
@@ -3413,15 +3413,15 @@ function AskExpertPageContent() {
               });
               
               // Verify the agent is selected and ready for LangGraph
-              console.log("[Mode 1 Helper] Agent "${selectedAgent.name}" is now:`);
-              console.log(`   - Added to user's list: ${isAgentInUserList || 'yes (just added)'}`);
-              console.log(`   - Selected in context: ${selectedAgents.includes(selectedAgent.id) ? 'yes' : 'checking...'}`);
-              console.log(`   - Agent ID: ${selectedAgent.id}`);
+              console.log("[Mode 1 Helper] Agent "' + selectedAgent.name + '" is now:');
+              console.log('   - Added to user's list: ' + isAgentInUserList || 'yes (just added)');
+              console.log('   - Selected in context: ' + selectedAgents.includes(selectedAgent.id) ? 'yes' : 'checking...');
+              console.log('   - Agent ID: ' + selectedAgent.id);
               console.log(`   - Ready for LangGraph: YES`);
               console.log(`   - Prompt filled: YES`);
               console.log(`   - Just press Enter to send!`);
             } else {
-              console.warn(`[WARN] [Mode 1 Helper] Could not find agent for example: ${example.expert}`);
+              console.warn('[WARN] [Mode 1 Helper] Could not find agent for example: ' + example.expert);
             }
             
             // Close the helper modal after a brief delay to ensure UI updates are visible
@@ -3473,7 +3473,7 @@ function AskExpertPageContent() {
                 const displayName = String((agent as any).displayName || (agent as any).display_name || '').toLowerCase();
                 const description = String(agent.description || '').toLowerCase();
                 const specialty = String((agent as any).specialty || '').toLowerCase();
-                const searchText = `${name} ${displayName} ${description} ${specialty}`;
+                const searchText = name + ' ' + displayName + ' ' + description + ' ' + specialty;
                 
                 const matchCount = (example.agentSearchTerms || []).filter((term) =>
                   searchText.includes(term.toLowerCase())

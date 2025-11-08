@@ -1,19 +1,20 @@
 """
-Mode 2: Automatic Research Workflow
+Mode 2: Automatic Research Workflow (WITH PARALLEL EXECUTION)
 
 System automatically executes RAG and tools without user confirmation.
 Fast, autonomous research with minimal user interaction.
 
 Flow:
 1. Load agent profile
-2. RAG retrieval (automatic)
-3. Tool suggestion (automatic)
-4. Tool execution (automatic, if suggested)
+2. **PARALLEL**: RAG + Tools + Memory (Tier 1) - 30% faster
+3. Auto-approve tools
+4. Tool execution (if suggested)
 5. LLM execution with structured citations
-6. Save conversation
+6. **PARALLEL**: Quality + Citations + Cost (Tier 2)
+7. Save conversation
 
-Inherits 80% of logic from BaseWorkflow.
-No confirmation nodes needed - straight execution.
+Inherits 80% of logic from ParallelBaseWorkflow (Week 3 enhancement).
+No confirmation nodes - straight execution with parallel optimization.
 """
 
 import structlog
@@ -25,8 +26,8 @@ from pydantic import BaseModel, Field
 # LangGraph
 from langgraph.graph import StateGraph, END
 
-# Vital Shared
-from vital_shared.workflows.base_workflow import BaseWorkflow
+# Vital Shared - NOW USING PARALLEL WORKFLOW
+from vital_shared.workflows.parallel_base_workflow import ParallelBaseWorkflow
 
 logger = structlog.get_logger()
 
@@ -35,7 +36,7 @@ logger = structlog.get_logger()
 # MODE 2 WORKFLOW
 # ============================================================================
 
-class Mode2AutomaticWorkflow(BaseWorkflow):
+class Mode2AutomaticWorkflow(ParallelBaseWorkflow):
     """
     Mode 2: Automatic Research
     

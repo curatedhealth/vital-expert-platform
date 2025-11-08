@@ -100,6 +100,12 @@ from vital_shared.monitoring.metrics import (
     # Connection pool
     update_connection_pool_metrics,
     
+    # Parallel execution tracking (Week 3)
+    track_parallel_execution,
+    track_parallel_task_failure,
+    track_parallel_task_duration,
+    track_parallel_timeout,
+    
     # Metrics endpoint
     get_metrics_handler,
     get_metrics_content_type,
@@ -212,6 +218,12 @@ __all__ = [
     
     # Connection pool
     "update_connection_pool_metrics",
+    
+    # Parallel execution (Week 3)
+    "track_parallel_execution",
+    "track_parallel_task_failure",
+    "track_parallel_task_duration",
+    "track_parallel_timeout",
     
     # Endpoint
     "get_metrics_handler",

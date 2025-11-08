@@ -2158,6 +2158,142 @@ def get_metrics_content_type():
 
 
 # ============================================================================
+# PARALLEL EXECUTION METRICS (Week 3)
+# ============================================================================
+
+# Parallel execution duration
+parallel_execution_duration_ms = Histogram(
+    'parallel_execution_duration_ms',
+    'Duration of parallel node execution in milliseconds',
+    ['tier', 'mode'],  # tier: tier1 (retrieval) or tier2 (post-gen), mode: workflow mode
+    buckets=[50, 100, 250, 500, 1000, 2500, 5000, 10000],
+    registry=registry
+)
+
+# Parallel task failures
+parallel_task_failures_total = Counter(
+    'parallel_task_failures_total',
+    'Number of parallel task failures',
+    ['task_name', 'failure_type', 'mode'],  # task_name: rag, tools, memory, etc.
+    registry=registry
+)
+
+# Parallel speedup ratio
+parallel_speedup_ratio = Gauge(
+    'parallel_speedup_ratio',
+    'Speedup ratio vs sequential execution',
+    ['tier', 'mode'],  # tier: tier1 or tier2
+    registry=registry
+)
+
+# Parallel task individual latencies
+parallel_task_duration_ms = Histogram(
+    'parallel_task_duration_ms',
+    'Duration of individual parallel tasks',
+    ['task_name', 'mode'],  # task_name: rag, tools, memory, quality, citations, cost
+    buckets=[10, 25, 50, 100, 250, 500, 1000, 2500],
+    registry=registry
+)
+
+# Parallel execution timeouts
+parallel_execution_timeouts_total = Counter(
+    'parallel_execution_timeouts_total',
+    'Number of parallel execution timeouts',
+    ['tier', 'mode'],
+    registry=registry
+)
+
+# Parallel execution success rate
+parallel_execution_success_rate = Gauge(
+    'parallel_execution_success_rate',
+    'Success rate of parallel executions (0-1)',
+    ['tier', 'mode'],
+    registry=registry
+)
+
+
+def track_parallel_execution(
+    tier: str,
+    mode: str,
+    duration_ms: float,
+    speedup_ratio: float,
+    successful_tasks: int,
+    failed_tasks: int
+):
+    """
+    Track parallel execution metrics.
+    
+    Args:
+        tier: Tier ('tier1' for retrieval, 'tier2' for post-generation)
+        mode: Workflow mode
+        duration_ms: Parallel execution duration
+        speedup_ratio: Speedup vs sequential (e.g., 1.5 = 50% faster)
+        successful_tasks: Number of successful tasks
+        failed_tasks: Number of failed tasks
+    """
+    parallel_execution_duration_ms.labels(tier=tier, mode=mode).observe(duration_ms)
+    parallel_speedup_ratio.labels(tier=tier, mode=mode).set(speedup_ratio)
+    
+    total_tasks = successful_tasks + failed_tasks
+    if total_tasks > 0:
+        success_rate = successful_tasks / total_tasks
+        parallel_execution_success_rate.labels(tier=tier, mode=mode).set(success_rate)
+
+
+def track_parallel_task_failure(
+    task_name: str,
+    failure_type: str,
+    mode: str
+):
+    """
+    Track parallel task failure.
+    
+    Args:
+        task_name: Task name (rag, tools, memory, quality, citations, cost)
+        failure_type: Failure type (exception, timeout, validation_error)
+        mode: Workflow mode
+    """
+    parallel_task_failures_total.labels(
+        task_name=task_name,
+        failure_type=failure_type,
+        mode=mode
+    ).inc()
+
+
+def track_parallel_task_duration(
+    task_name: str,
+    mode: str,
+    duration_ms: float
+):
+    """
+    Track individual parallel task duration.
+    
+    Args:
+        task_name: Task name (rag, tools, memory, quality, citations, cost)
+        mode: Workflow mode
+        duration_ms: Task duration in milliseconds
+    """
+    parallel_task_duration_ms.labels(
+        task_name=task_name,
+        mode=mode
+    ).observe(duration_ms)
+
+
+def track_parallel_timeout(
+    tier: str,
+    mode: str
+):
+    """
+    Track parallel execution timeout.
+    
+    Args:
+        tier: Tier ('tier1' or 'tier2')
+        mode: Workflow mode
+    """
+    parallel_execution_timeouts_total.labels(tier=tier, mode=mode).inc()
+
+
+# ============================================================================
 # TESTING UTILITIES
 # ============================================================================
 

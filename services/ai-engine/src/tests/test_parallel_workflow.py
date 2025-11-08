@@ -14,6 +14,25 @@ from vital_shared.models.workflow_state import BaseWorkflowState
 
 
 # ============================================================================
+# TEST WORKFLOW IMPLEMENTATION
+# ============================================================================
+
+class TestParallelWorkflow(ParallelBaseWorkflow):
+    """Concrete implementation of ParallelBaseWorkflow for testing"""
+    
+    def build_graph(self):
+        """Minimal graph implementation for testing"""
+        from langgraph.graph import StateGraph, END
+        
+        graph = StateGraph(dict)
+        graph.add_node("dummy", lambda state: state)
+        graph.set_entry_point("dummy")
+        graph.add_edge("dummy", END)
+        
+        return graph
+
+
+# ============================================================================
 # FIXTURES
 # ============================================================================
 
@@ -48,13 +67,16 @@ def sample_state():
 
 @pytest.fixture
 def parallel_workflow(mock_services):
-    """Create ParallelBaseWorkflow instance with mocked services"""
-    workflow = ParallelBaseWorkflow()
-    
-    # Inject mocked services
-    workflow.rag_service = mock_services['rag_service']
-    workflow.tool_service = mock_services['tool_service']
-    workflow.memory_service = mock_services['memory_service']
+    """Create TestParallelWorkflow instance with mocked services"""
+    workflow = TestParallelWorkflow(
+        workflow_name="test_parallel",
+        mode=1,
+        agent_service=AsyncMock(),
+        rag_service=mock_services['rag_service'],
+        tool_service=mock_services['tool_service'],
+        memory_service=mock_services['memory_service'],
+        streaming_service=AsyncMock()
+    )
     
     return workflow
 
@@ -282,7 +304,7 @@ async def test_parallel_disabled_tier1(mock_services, sample_state):
     """Test disabling Tier 1 parallelization"""
     # Arrange
     config = {'enable_parallel_tier1': False}
-    workflow = ParallelBaseWorkflow(config=config)
+    workflow = TestParallelWorkflow(config=config)
     workflow.rag_service = mock_services['rag_service']
     workflow.tool_service = mock_services['tool_service']
     workflow.memory_service = mock_services['memory_service']
@@ -308,7 +330,7 @@ async def test_parallel_disabled_tier2(sample_state):
     """Test disabling Tier 2 parallelization"""
     # Arrange
     config = {'enable_parallel_tier2': False}
-    workflow = ParallelBaseWorkflow(config=config)
+    workflow = TestParallelWorkflow(config=config)
     sample_state.response = "Test response"
     
     # Act
@@ -329,7 +351,7 @@ async def test_parallel_disabled_tier2(sample_state):
 
 def test_calculate_speedup():
     """Test speedup ratio calculation"""
-    workflow = ParallelBaseWorkflow()
+    workflow = TestParallelWorkflow()
     
     # Test perfect parallelization
     speedup = workflow._calculate_speedup(500, [500, 300, 200])

@@ -680,7 +680,7 @@ function AskExpertPageContent() {
         }
 
         const sortedTools = Array.from(toolSet).sort((a, b) => a.localeCompare(b));
-        console.log(`✅ [Tool Selector] Loaded ${sortedTools.length} tools from database for ${selectedAgents.length} agent(s):`, sortedTools);
+        console.log("[Tool Selector] Loaded " + sortedTools.length + " tools from database for " + selectedAgents.length + " agent(s):", sortedTools);
         setAvailableTools(sortedTools);
       } catch (error) {
         console.error('❌ [Tool Selector] Error fetching tools:', error);
@@ -1728,7 +1728,7 @@ function AskExpertPageContent() {
                     
                     // Extract citations
                     if (actualState.citations && Array.isArray(actualState.citations)) {
-                      console.log(`✅ [Updates Mode] Found ${actualState.citations.length} citations`);
+                      console.log('[Updates Mode] Found ' + actualState.citations.length + ' citations');
                       citations = actualState.citations;
                       setStreamingMeta(prev => ({
                         ...(prev ?? {}),
@@ -1738,7 +1738,7 @@ function AskExpertPageContent() {
                     
                     // Extract confidence
                     if (typeof actualState.confidence === 'number') {
-                      console.log(`✅ [Updates Mode] Confidence: ${actualState.confidence}`);
+                      console.log('[Updates Mode] Confidence: ' + actualState.confidence);
                       confidence = actualState.confidence;
                     }
                     
@@ -1750,7 +1750,7 @@ function AskExpertPageContent() {
                           ? actualState.agent_response
                           : undefined;
                     if (resolvedResponse) {
-                      console.log(`✅ [Updates Mode] Found final response (${resolvedResponse.length} chars)`);
+                      console.log("[Updates Mode] Found final response (" + resolvedResponse.length + " chars)");
                       fullResponse = resolvedResponse;
                       setStreamingMessage(prev => (prev && prev.trim().length > 0 ? prev : resolvedResponse));
                       setStreamingMeta(prev => ({
@@ -1761,7 +1761,7 @@ function AskExpertPageContent() {
                     
                     // ✅ FIX: Extract reasoning_steps from LangGraph state
                     if (actualState.reasoning_steps && Array.isArray(actualState.reasoning_steps)) {
-                      console.log(`✅ [Updates Mode] Found ${actualState.reasoning_steps.length} reasoning steps from LangGraph`);
+                      console.log("[Updates Mode] Found " + actualState.reasoning_steps.length + " reasoning steps from LangGraph");
                       reasoningStepsBuffer = actualState.reasoning_steps;
                       setReasoningSteps(actualState.reasoning_steps);
                       setStreamingMeta(prev => ({
@@ -2070,7 +2070,7 @@ function AskExpertPageContent() {
                 autonomousMetadata.currentIteration = data.metadata?.iteration;
                 setStreamingReasoning(prev => prev + (prev ? '\n\n' : '') + `🔄 Iteration ${data.metadata?.iteration + 1}: Starting`);
                 setIsStreamingReasoning(true);
-                console.log(`🔄 Iteration ${data.metadata?.iteration}: Starting`);
+                console.log("[Iteration] " + data.metadata?.iteration}: Starting`);
               } else if (data.type === 'thinking_start') {
                 // Detailed step: Starting thinking
                 setStreamingReasoning(prev => prev + (prev ? '\n\n' : '') + `🧠 Analyzing current state...`);
@@ -3387,19 +3387,19 @@ function AskExpertPageContent() {
               // If agent not in user's list, add it first
               if (!isAgentInUserList) {
                 try {
-                  console.log(`🔄 [Mode 1 Helper] Adding agent "${selectedAgent.name}" to user's list...`);
+                  console.log("[Mode 1 Helper] Adding agent "${selectedAgent.name}" to user's list...`);
                   await addAgentToUserList(selectedAgent.id);
                   
                   // Refresh agents list to get the newly added agent
                   // This will update the agents state in context, which will trigger sidebar re-render
-                  console.log(`🔄 [Mode 1 Helper] Refreshing agents list...`);
+                  console.log("[Mode 1 Helper] Refreshing agents list...`);
                   await refreshAgents();
                   
                   // Wait for React to propagate state updates through context to sidebar
                   // This ensures the sidebar component receives the updated agents list
                   await new Promise(resolve => setTimeout(resolve, 300));
                   
-                  console.log(`✅ [Mode 1 Helper] Agent "${selectedAgent.name}" added and should be visible in sidebar`);
+                  console.log("[Mode 1 Helper] Agent "${selectedAgent.name}" added and should be visible in sidebar`);
                 } catch (error) {
                   console.error(`❌ [Mode 1 Helper] Failed to add agent to user list:`, error);
                   // Still try to select the agent even if adding failed
@@ -3413,12 +3413,12 @@ function AskExpertPageContent() {
               });
               
               // Verify the agent is selected and ready for LangGraph
-              console.log(`✅ [Mode 1 Helper] Agent "${selectedAgent.name}" is now:`);
+              console.log("[Mode 1 Helper] Agent "${selectedAgent.name}" is now:`);
               console.log(`   - Added to user's list: ${isAgentInUserList || 'yes (just added)'}`);
               console.log(`   - Selected in context: ${selectedAgents.includes(selectedAgent.id) ? 'yes' : 'checking...'}`);
               console.log(`   - Agent ID: ${selectedAgent.id}`);
-              console.log(`   - Ready for LangGraph: ✅`);
-              console.log(`   - Prompt filled: ✅`);
+              console.log(`   - Ready for LangGraph: YES`);
+              console.log(`   - Prompt filled: YES`);
               console.log(`   - Just press Enter to send!`);
             } else {
               console.warn(`⚠️ [Mode 1 Helper] Could not find agent for example: ${example.expert}`);

@@ -45,6 +45,7 @@ class ComprehensiveMetadataMapper:
             # ===== SOURCE & PUBLICATION =====
             'firm': source.get('firm', ''),
             'firm_id': source.get('firm_id'),  # UUID reference to firms table
+            'source_name': source.get('source_name') or source.get('imported_from') or source.get('firm', 'Unknown'),  # Human-readable source
             'authors': source.get('authors', []),
             'publication_date': source.get('publication_date'),
             'publication_year': source.get('publication_year') or source.get('year'),

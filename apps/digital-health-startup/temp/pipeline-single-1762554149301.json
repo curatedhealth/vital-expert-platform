@@ -1,0 +1,65 @@
+{
+  "sources": [
+    {
+      "url": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC11629033/",
+      "description": "Perspectives of Digital Health Innovations in Low- and Middle-Income Health Care Systems From South and Southeast Asia",
+      "firm": "PubMed Central / NIH",
+      "domain": "imported",
+      "category": "pubmed central",
+      "tags": [
+        "PubMed Central",
+        "Journal of Medical Internet Research"
+      ],
+      "priority": "medium",
+      "title": "Perspectives of Digital Health Innovations in Low- and Middle-Income Health Care Systems From South and Southeast Asia",
+      "abstract": "Full text available via PMC",
+      "authors": [
+        "Yi S",
+        "Yam EL",
+        "Cheruvettolil K",
+        "Linos E",
+        "Gupta A"
+      ],
+      "publication_date": "2024 Nov 25",
+      "publication_year": 2024,
+      "source_url": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC11629033/",
+      "pdf_link": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC11629033/pdf/",
+      "file_type": "html",
+      "content_file_type": "html",
+      "direct_download": false,
+      "access_type": "public",
+      "source_id": "PMC:11629033",
+      "journal": "Journal of Medical Internet Research",
+      "imported_from": "PubMed Central",
+      "import_date": "2025-11-07T22:21:20.949Z",
+      "domain_ids": [
+        "digital_health"
+      ]
+    }
+  ],
+  "scraping_settings": {
+    "timeout": 60,
+    "max_retries": 3,
+    "delay_between_requests": 1,
+    "wait_for_js": false,
+    "use_playwright": false
+  },
+  "processing_settings": {
+    "chunk_size": 1000,
+    "chunk_overlap": 200,
+    "min_word_count": 100,
+    "max_content_length": 1000000
+  },
+  "upload_settings": {
+    "enable_supabase": false,
+    "enable_pinecone": false,
+    "batch_size": 100,
+    "skip_duplicates": true
+  },
+  "output_settings": {
+    "create_subdirectories": true,
+    "include_metadata": true,
+    "markdown_format": true
+  },
+  "embedding_model": "sentence-transformers/all-MiniLM-L6-v2"
+}

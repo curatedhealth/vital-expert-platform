@@ -1,0 +1,65 @@
+{
+  "sources": [
+    {
+      "url": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC12020140/",
+      "description": "Bridging the digital health divide: a narrative review of the causes, implications, and solutions for digital health inequalities",
+      "firm": "PubMed Central / NIH",
+      "domain": "imported",
+      "category": "pubmed central",
+      "tags": [
+        "PubMed Central",
+        "Health Psychology and Behavioral Medicine"
+      ],
+      "priority": "medium",
+      "title": "Bridging the digital health divide: a narrative review of the causes, implications, and solutions for digital health inequalities",
+      "abstract": "Full text available via PMC",
+      "authors": [
+        "Western MJ",
+        "Smit ES",
+        "Gültzow T",
+        "Neter E",
+        "Sniehotta FF"
+      ],
+      "publication_date": "2025 Apr 23",
+      "publication_year": 2025,
+      "source_url": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC12020140/",
+      "pdf_link": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC12020140/pdf/",
+      "file_type": "html",
+      "content_file_type": "html",
+      "direct_download": false,
+      "access_type": "public",
+      "source_id": "PMC:12020140",
+      "journal": "Health Psychology and Behavioral Medicine",
+      "imported_from": "PubMed Central",
+      "import_date": "2025-11-07T22:21:20.949Z",
+      "domain_ids": [
+        "digital_health"
+      ]
+    }
+  ],
+  "scraping_settings": {
+    "timeout": 60,
+    "max_retries": 3,
+    "delay_between_requests": 1,
+    "wait_for_js": false,
+    "use_playwright": false
+  },
+  "processing_settings": {
+    "chunk_size": 1000,
+    "chunk_overlap": 200,
+    "min_word_count": 100,
+    "max_content_length": 1000000
+  },
+  "upload_settings": {
+    "enable_supabase": false,
+    "enable_pinecone": false,
+    "batch_size": 100,
+    "skip_duplicates": true
+  },
+  "output_settings": {
+    "create_subdirectories": true,
+    "include_metadata": true,
+    "markdown_format": true
+  },
+  "embedding_model": "sentence-transformers/all-MiniLM-L6-v2"
+}

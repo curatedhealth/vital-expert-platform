@@ -6,6 +6,10 @@ import path from 'path';
 
 const execAsync = promisify(exec);
 
+// Increase timeout for long-running pipeline operations
+export const maxDuration = 300; // 5 minutes
+export const dynamic = 'force-dynamic';
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();

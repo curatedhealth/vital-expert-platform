@@ -61,7 +61,7 @@ const PersonasManagement = dynamic(
 );
 
 const KnowledgePipelineConfig = dynamic(
-  () => import('@/components/admin/KnowledgePipelineConfig').then(mod => ({ default: mod.KnowledgePipelineConfig })),
+  () => import('@/components/admin/KnowledgePipelineConfig'),
   { ssr: false }
 );
 

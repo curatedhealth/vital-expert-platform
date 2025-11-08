@@ -10,12 +10,42 @@ import remarkGfm from "remark-gfm"
 import remarkMath from "remark-math"
 import type { PluggableList } from "unified"
 import { Streamdown } from "streamdown"
-import mermaid from "mermaid"
 
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 
 import "katex/dist/katex.min.css"
+
+type MermaidModule = typeof import("mermaid")
+let mermaidModule: MermaidModule | null = null
+let mermaidModulePromise: Promise<MermaidModule> | null = null
+let mermaidInitialized = false
+
+const loadMermaid = async (): Promise<MermaidModule> => {
+  if (mermaidModule) {
+    return mermaidModule
+  }
+  if (!mermaidModulePromise) {
+    mermaidModulePromise = import("mermaid/dist/mermaid.esm.min.mjs").then((mod) => {
+      const mermaid = (mod?.default ?? mod) as MermaidModule
+      return mermaid
+    })
+  }
+  mermaidModule = await mermaidModulePromise
+  return mermaidModule
+}
+
+const encodeMermaidShareToken = (code: string): string => {
+  try {
+    if (typeof window === 'undefined') {
+      return Buffer.from(code, 'utf-8').toString('base64')
+    }
+    return window.btoa(unescape(encodeURIComponent(code)))
+  } catch (error) {
+    console.warn('⚠️ [Mermaid] Failed to encode diagram for sharing', error)
+    return ''
+  }
+}
 
 interface ResponseProps {
   children: string
@@ -162,8 +192,6 @@ export function Response({ children, className, remarkPlugins, rehypePlugins, co
 }
 
 // Initialize Mermaid once globally
-let mermaidInitialized = false
-
 // ✅ NEW: Error Boundary for Mermaid diagrams
 class MermaidErrorBoundary extends React.Component<
   { children: React.ReactNode; code: string },
@@ -238,6 +266,8 @@ function MermaidDiagram({ code }: { code: string }) {
         setError(null)
         
         // Initialize mermaid only once with improved config
+        const mermaid = await loadMermaid()
+
         if (!mermaidInitialized) {
           mermaid.initialize({
             startOnLoad: false,
@@ -309,6 +339,7 @@ function MermaidDiagram({ code }: { code: string }) {
   
   // ✅ IMPROVED: Better error display
   if (error) {
+    const shareToken = encodeMermaidShareToken(code)
     return (
       <div className="my-4 p-4 border border-yellow-300 rounded-lg bg-yellow-50 dark:bg-yellow-900/20">
         <p className="text-sm font-semibold text-yellow-700 dark:text-yellow-400 mb-2">
@@ -323,19 +354,21 @@ function MermaidDiagram({ code }: { code: string }) {
             {code}
           </pre>
         </details>
-        <div className="flex items-center gap-2 text-xs">
-          <a
-            href={`https://mermaid.live/edit#pako:${btoa(code)}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 px-2 py-1 bg-yellow-200 dark:bg-yellow-800 text-yellow-800 dark:text-yellow-200 rounded hover:bg-yellow-300 dark:hover:bg-yellow-700 transition-colors"
-          >
-            🔧 Debug in Mermaid Live
-          </a>
-          <span className="text-yellow-600 dark:text-yellow-400">
-            (opens in new tab)
-          </span>
-        </div>
+        {shareToken && (
+          <div className="flex items-center gap-2 text-xs">
+            <a
+              href={`https://mermaid.live/edit#pako:${shareToken}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 px-2 py-1 bg-yellow-200 dark:bg-yellow-800 text-yellow-800 dark:text-yellow-200 rounded hover:bg-yellow-300 dark:hover:bg-yellow-700 transition-colors"
+            >
+              Debug in Mermaid Live
+            </a>
+            <span className="text-yellow-600 dark:text-yellow-400">
+              (opens in new tab)
+            </span>
+          </div>
+        )}
       </div>
     )
   }

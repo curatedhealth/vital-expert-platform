@@ -129,17 +129,39 @@ class Mode1ManualWorkflow(BaseWorkflow):
     
     def build_graph(self) -> StateGraph:
         """
-        Build simple workflow graph.
+        Build workflow graph with tool support.
         
         Flow:
-        START → validate → fetch_agent → rag_retrieval → execute → format → END
+        START → validate → fetch_agent → rag_retrieval 
+              → tool_suggestion → [conditional] → tool_execution 
+              → execute_agent → format_output → END
+        
+        Tool Flow:
+        - tool_suggestion: Analyze query, suggest tools
+        - [conditional]: needs_confirmation? 
+          - Yes → emit event, wait for approval
+          - No → execute immediately
+        - tool_execution: Run approved tools
         """
         graph = StateGraph(UnifiedWorkflowState)
         
-        # Add nodes
+        # Import tool nodes
+        from langgraph_workflows.tool_nodes import (
+            tool_suggestion_node,
+            tool_execution_node,
+            should_execute_tools
+        )
+        
+        # Add existing nodes
         graph.add_node("validate_inputs", self.validate_inputs_node)
         graph.add_node("fetch_agent", self.fetch_agent_node)
         graph.add_node("rag_retrieval", self.rag_retrieval_node)
+        
+        # ✅ NEW: Add tool nodes
+        graph.add_node("tool_suggestion", tool_suggestion_node)
+        graph.add_node("tool_execution", tool_execution_node)
+        
+        # Existing execution nodes
         graph.add_node("execute_agent", self.execute_agent_node)
         graph.add_node("format_output", self.format_output_node)
         
@@ -147,9 +169,29 @@ class Mode1ManualWorkflow(BaseWorkflow):
         graph.set_entry_point("validate_inputs")
         graph.add_edge("validate_inputs", "fetch_agent")
         graph.add_edge("fetch_agent", "rag_retrieval")
-        graph.add_edge("rag_retrieval", "execute_agent")
+        
+        # ✅ NEW: After RAG, suggest tools
+        graph.add_edge("rag_retrieval", "tool_suggestion")
+        
+        # ✅ NEW: Conditional edge based on tool confirmation
+        graph.add_conditional_edges(
+            "tool_suggestion",
+            should_execute_tools,
+            {
+                "execute_tools": "tool_execution",
+                "wait_confirmation": "tool_execution",  # Will check approval in execution node
+                "skip_tools": "execute_agent"
+            }
+        )
+        
+        # ✅ NEW: After tool execution, continue to agent execution
+        graph.add_edge("tool_execution", "execute_agent")
+        
+        # Existing flow continues
         graph.add_edge("execute_agent", "format_output")
         graph.add_edge("format_output", END)
+        
+        logger.info("✅ Workflow graph built with tool support")
         
         return graph
     

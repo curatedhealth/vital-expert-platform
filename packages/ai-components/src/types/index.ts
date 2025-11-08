@@ -33,10 +33,19 @@ export interface Source {
  */
 export interface ReasoningStep {
   id?: string;
-  type?: 'thought' | 'observation' | 'action' | 'conclusion';
+  type?: 'thought' | 'observation' | 'action' | 'conclusion' | 'search' | 'reflection' | string;
   content: string;
   confidence?: number;
   timestamp?: Date | string;
+  metadata?: Record<string, any>;
+  node?: string;
+}
+
+export interface ModelReasoningPart {
+  id?: string;
+  text: string;
+  type?: string;
+  confidence?: number;
 }
 
 /**
@@ -47,6 +56,7 @@ export interface MessageMetadata {
   citations?: any[];
   reasoning?: string[];
   reasoningSteps?: ReasoningStep[];
+  modelReasoningParts?: ModelReasoningPart[];
   confidence?: number;
   toolsUsed?: string[];
   ragSummary?: {
@@ -97,4 +107,3 @@ export interface InlineCitationProps extends ComponentBaseProps {
   sources?: Source[];
   onClick?: () => void;
 }
-

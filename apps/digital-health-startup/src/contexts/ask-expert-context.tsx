@@ -405,25 +405,27 @@ export function AskExpertProvider({ children }: { children: React.ReactNode }) {
     try {
       const response = await fetch(`/api/ask-expert?userId=${encodeURIComponent(user.id)}`);
       if (!response.ok) {
-        throw new Error(`Failed to fetch sessions: ${response.statusText}`);
+        console.warn('⚠️ [AskExpertContext] Sessions endpoint returned', response.status, response.statusText);
+        setSessions([]);
+        setActiveSessionIdState(prev => prev ?? null);
+      } else {
+        const data = await response.json();
+        const fetchedSessions: AskExpertSession[] = (data.sessions || []).map((session: any) => ({
+          sessionId: session.sessionId,
+          agent: session.agent
+            ? {
+                name: session.agent.name,
+                description: session.agent.description,
+                avatar: session.agent.avatar,
+              }
+            : undefined,
+          lastMessage: session.lastMessage,
+          messageCount: session.messageCount ?? 0,
+        }));
+
+        setSessions(fetchedSessions);
+        setActiveSessionIdState(prev => prev ?? (fetchedSessions[0]?.sessionId ?? null));
       }
-
-      const data = await response.json();
-      const fetchedSessions: AskExpertSession[] = (data.sessions || []).map((session: any) => ({
-        sessionId: session.sessionId,
-        agent: session.agent
-          ? {
-              name: session.agent.name,
-              description: session.agent.description,
-              avatar: session.agent.avatar,
-            }
-          : undefined,
-        lastMessage: session.lastMessage,
-        messageCount: session.messageCount ?? 0,
-      }));
-
-      setSessions(fetchedSessions);
-      setActiveSessionIdState(prev => prev ?? (fetchedSessions[0]?.sessionId ?? null));
     } catch (error) {
       console.error('❌ [AskExpertContext] Error fetching sessions:', error);
       setSessions([]);

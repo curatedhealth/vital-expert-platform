@@ -2767,6 +2767,91 @@ async def get_recommended_suites(
             "error": str(e)
         }
 
+# ============================================================================
+# 🧪 TEST ENDPOINT: RAG Retrieval Test
+# ============================================================================
+@app.get("/api/test-rag")
+async def test_rag():
+    """
+    Test RAG retrieval directly (bypass LangGraph).
+    
+    This endpoint helps diagnose if:
+    1. Pinecone has any vectors
+    2. RAG service is working
+    3. Embeddings are generating correctly
+    
+    TAG: RAG_TEST_ENDPOINT
+    """
+    try:
+        logger.info("🧪 [TEST] Testing RAG retrieval...")
+        
+        # Test query
+        test_query = "digital health strategy for ADHD patients"
+        test_domains = ["digital-health", "regulatory-affairs"]
+        test_tenant_id = "test-tenant-id"
+        
+        # Get index stats first
+        index_stats = None
+        try:
+            if hasattr(unified_rag_service, 'index'):
+                index_stats = unified_rag_service.index.describe_index_stats()
+                logger.info(f"📊 [TEST] Pinecone stats: {index_stats.get('total_vector_count', 0)} vectors")
+        except Exception as stats_error:
+            logger.warning(f"⚠️ [TEST] Could not get index stats: {stats_error}")
+        
+        # Try retrieval
+        sources = []
+        try:
+            # Call the RAG service using the correct method: query()
+            rag_result = await unified_rag_service.query(
+                query_text=test_query,
+                domain_ids=test_domains,
+                tenant_id=test_tenant_id,
+                max_results=5,
+                similarity_threshold=0.3,
+                strategy="hybrid"
+            )
+            
+            # Extract sources from result
+            sources = rag_result.get('sources', []) if isinstance(rag_result, dict) else []
+            
+            logger.info(f"✅ [TEST] Retrieved {len(sources)} sources")
+            
+        except Exception as retrieval_error:
+            logger.error(f"❌ [TEST] RAG retrieval failed: {retrieval_error}")
+            import traceback
+            return {
+                "success": False,
+                "error": str(retrieval_error),
+                "error_type": type(retrieval_error).__name__,
+                "traceback": traceback.format_exc(),
+                "query": test_query,
+                "domains": test_domains
+            }
+        
+        return {
+            "success": True,
+            "query": test_query,
+            "domains": test_domains,
+            "sources_count": len(sources),
+            "sources": sources[:2] if sources else [],  # First 2 for brevity
+            "index_stats": {
+                "total_vector_count": index_stats.get('total_vector_count', 0) if index_stats else 0,
+                "dimension": index_stats.get('dimension', 0) if index_stats else 0,
+                "namespaces": index_stats.get('namespaces', {}) if index_stats else {}
+            }
+        }
+        
+    except Exception as e:
+        logger.error(f"❌ [TEST] RAG test failed: {e}")
+        import traceback
+        return {
+            "success": False,
+            "error": str(e),
+            "error_type": type(e).__name__,
+            "traceback": traceback.format_exc()
+        }
+
 if __name__ == "__main__":
     # ⚠️ CRITICAL: AI Engine MUST run on port 8080 (NOT 8000!)
     # Frontend (ask-expert/page.tsx) is configured to call port 8080

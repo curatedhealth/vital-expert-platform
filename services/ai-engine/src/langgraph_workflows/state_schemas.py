@@ -410,6 +410,9 @@ class UnifiedWorkflowState(TypedDict):
     sources: NotRequired[List[Dict[str, Any]]]  # ✅ NEW: Alias for citations (backward compat)
     evidence_level: NotRequired[str]
     
+    # AI reasoning transparency (LangGraph streaming)
+    reasoning_steps: NotRequired[Annotated[List[Dict[str, Any]], operator.add]]
+    
     # Metadata
     processing_time_ms: NotRequired[float]
     cache_hits: NotRequired[int]  # Total cache hits (GOLDEN RULE #2)
@@ -503,6 +506,7 @@ def create_initial_state(
         retrieved_documents=[],
         agent_responses=[],
         errors=[],
+        reasoning_steps=[],
         
         # Configuration from kwargs
         enable_rag=kwargs.get('enable_rag', True),
@@ -540,4 +544,3 @@ def validate_state(state: UnifiedWorkflowState) -> bool:
         raise ValueError(f"Missing required fields: {missing}")
     
     return True
-

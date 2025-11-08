@@ -80,7 +80,8 @@ class RAGIntegrationUploader:
             # Initialize unified RAG service
             self.rag_service = UnifiedRAGService(
                 supabase_client=self.supabase_client,
-                cache_manager=cache_manager
+                cache_manager=cache_manager,
+                embedding_model=self.embedding_model  # Pass the requested embedding model
             )
             await self.rag_service.initialize()
             
@@ -119,9 +120,12 @@ class RAGIntegrationUploader:
             # Step 1: Create metadata for Supabase
             metadata = {
                 'title': content.get('title', ''),
+                'abstract': content.get('abstract', ''),
                 'url': content.get('url', ''),
                 'domain': content.get('domain', 'uncategorized'),
                 'category': content.get('category', 'general'),
+                'source_name': content.get('source_name'),  # Human-readable source name
+                'firm': content.get('firm'),  # Organization/firm name
                 'tags': content.get('tags', []),
                 'description': content.get('description', ''),
                 'source_type': 'web_scrape',
@@ -238,10 +242,13 @@ class RAGIntegrationUploader:
             
             document_data = {
                 'title': metadata.get('title'),
+                'abstract': metadata.get('abstract') or metadata.get('description'),
                 'content': content,
                 'url': metadata.get('url'),
                 'domain_id': domain_id,
                 'category': metadata.get('category'),
+                'source_name': metadata.get('source_name'),  # e.g., "FDA", "Nature", "McKinsey", "PubMed Central"
+                'firm': metadata.get('firm'),  # Firm/organization name
                 'tags': metadata.get('tags', []),
                 'metadata': {
                     'description': metadata.get('description'),

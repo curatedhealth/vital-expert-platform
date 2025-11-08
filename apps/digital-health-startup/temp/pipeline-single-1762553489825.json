@@ -1,0 +1,65 @@
+{
+  "sources": [
+    {
+      "url": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC12434367/",
+      "description": "Attention‐deficit/hyperactivity disorder (ADHD) in adults: evidence base, uncertainties and controversies",
+      "firm": "PubMed Central / NIH",
+      "domain": "imported",
+      "category": "pubmed central",
+      "tags": [
+        "PubMed Central",
+        "World Psychiatry"
+      ],
+      "priority": "medium",
+      "title": "Attention‐deficit/hyperactivity disorder (ADHD) in adults: evidence base, uncertainties and controversies",
+      "abstract": "Full text available via PMC",
+      "authors": [
+        "Cortese S",
+        "Bellgrove MA",
+        "Brikell I",
+        "Franke B",
+        "Goodman DW"
+      ],
+      "publication_date": "2025 Sep 15",
+      "publication_year": 2025,
+      "source_url": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC12434367/",
+      "pdf_link": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC12434367/pdf/",
+      "file_type": "html",
+      "content_file_type": "html",
+      "direct_download": false,
+      "access_type": "public",
+      "source_id": "PMC:12434367",
+      "journal": "World Psychiatry",
+      "imported_from": "PubMed Central",
+      "import_date": "2025-11-07T22:10:32.979Z",
+      "domain_ids": [
+        "digital_health"
+      ]
+    }
+  ],
+  "scraping_settings": {
+    "timeout": 60,
+    "max_retries": 3,
+    "delay_between_requests": 1,
+    "wait_for_js": false,
+    "use_playwright": false
+  },
+  "processing_settings": {
+    "chunk_size": 1000,
+    "chunk_overlap": 200,
+    "min_word_count": 100,
+    "max_content_length": 1000000
+  },
+  "upload_settings": {
+    "enable_supabase": false,
+    "enable_pinecone": false,
+    "batch_size": 100,
+    "skip_duplicates": true
+  },
+  "output_settings": {
+    "create_subdirectories": true,
+    "include_metadata": true,
+    "markdown_format": true
+  },
+  "embedding_model": "text-embedding-3-large"
+}

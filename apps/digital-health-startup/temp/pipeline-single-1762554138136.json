@@ -1,0 +1,63 @@
+{
+  "sources": [
+    {
+      "url": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC11459536/",
+      "description": "Digital health literacy: A concept analysis",
+      "firm": "PubMed Central / NIH",
+      "domain": "imported",
+      "category": "pubmed central",
+      "tags": [
+        "PubMed Central",
+        "Digital Health"
+      ],
+      "priority": "medium",
+      "title": "Digital health literacy: A concept analysis",
+      "abstract": "Full text available via PMC",
+      "authors": [
+        "Ban S",
+        "Kim Y",
+        "Seomun G"
+      ],
+      "publication_date": "2024 Oct 7",
+      "publication_year": 2024,
+      "source_url": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC11459536/",
+      "pdf_link": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC11459536/pdf/",
+      "file_type": "html",
+      "content_file_type": "html",
+      "direct_download": false,
+      "access_type": "public",
+      "source_id": "PMC:11459536",
+      "journal": "Digital Health",
+      "imported_from": "PubMed Central",
+      "import_date": "2025-11-07T22:21:20.949Z",
+      "domain_ids": [
+        "digital_health"
+      ]
+    }
+  ],
+  "scraping_settings": {
+    "timeout": 60,
+    "max_retries": 3,
+    "delay_between_requests": 1,
+    "wait_for_js": false,
+    "use_playwright": false
+  },
+  "processing_settings": {
+    "chunk_size": 1000,
+    "chunk_overlap": 200,
+    "min_word_count": 100,
+    "max_content_length": 1000000
+  },
+  "upload_settings": {
+    "enable_supabase": false,
+    "enable_pinecone": false,
+    "batch_size": 100,
+    "skip_duplicates": true
+  },
+  "output_settings": {
+    "create_subdirectories": true,
+    "include_metadata": true,
+    "markdown_format": true
+  },
+  "embedding_model": "sentence-transformers/all-MiniLM-L6-v2"
+}

@@ -214,6 +214,7 @@ class KnowledgeSearcher:
                         'url': pmc_url,  # Use HTML version for scraping
                         'pdf_link': pdf_link,  # Still provide PDF link for reference
                         'source': 'PubMed Central',
+                        'source_name': 'PubMed Central',  # Human-readable source name
                         'source_id': f"PMC:{pmc_id}",
                         'firm': 'PubMed Central / NIH',
                         'file_type': 'html',  # HTML is more reliable for automated scraping
@@ -298,6 +299,7 @@ class KnowledgeSearcher:
                     'url': f"https://arxiv.org/abs/{arxiv_id}",
                     'pdf_link': pdf_link,
                     'source': 'arXiv',
+                    'source_name': 'arXiv',  # Human-readable source name
                     'source_id': f"arXiv:{arxiv_id}",
                     'firm': 'arXiv / Cornell University',
                     'file_type': 'pdf',
@@ -423,6 +425,7 @@ class KnowledgeSearcher:
                         'url': url,
                         'pdf_link': pdf_link,
                         'source': 'DOAJ',
+                        'source_name': 'DOAJ',  # Human-readable source name
                         'source_id': f"DOAJ:{article.get('id', '')}",
                         'firm': 'Directory of Open Access Journals',
                         'file_type': 'pdf' if pdf_link else 'html',
@@ -504,6 +507,7 @@ class KnowledgeSearcher:
                                 'url': paper.get('url', ''),
                                 'pdf_link': pdf_info.get('url'),
                                 'source': 'Semantic Scholar',
+                                'source_name': 'Semantic Scholar',  # Human-readable source name
                                 'source_id': f"S2:{paper.get('paperId', '')}",
                                 'firm': 'Semantic Scholar / AI2',
                                 'file_type': 'pdf',

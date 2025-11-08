@@ -1,7 +1,13 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
-import { Upload, Plus, Download, Trash2, ExternalLink, FileText, Database, Play, CheckCircle, AlertCircle, Loader2, List, Search, X, Check } from 'lucide-react';
+import { useState, useCallback, useEffect, useRef } from 'react';
+import { 
+  Upload, Plus, Download, Trash2, ExternalLink, FileText, Database, Play, 
+  CheckCircle, AlertCircle, Loader2, List, Search, X, Check, Sparkles,
+  TrendingUp, Clock, Target, Zap, BarChart3, Settings, Globe, Filter,
+  ArrowRight, Pause, RefreshCw, Eye, EyeOff, ChevronDown, ChevronUp,
+  Copy, CheckCheck, AlertTriangle, Info
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -12,6 +18,23 @@ import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Progress } from '@/components/ui/progress';
+import { Separator } from '@/components/ui/separator';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import AdvancedMetadataForm from '@/components/admin/AdvancedMetadataForm';
 import KnowledgePipelineQueue, { QueueSource } from '@/components/admin/KnowledgePipelineQueue';
 import KnowledgeSearchImport from '@/components/admin/KnowledgeSearchImport';
@@ -100,7 +123,7 @@ const DEFAULT_CONFIG: PipelineConfig = {
     markdown_format: true,
   },
   scraping_settings: {
-    timeout: 45,
+    timeout: 60,
     max_retries: 3,
     delay_between_requests: 1,
   },
@@ -108,97 +131,33 @@ const DEFAULT_CONFIG: PipelineConfig = {
     chunk_size: 1000,
     chunk_overlap: 200,
     min_word_count: 100,
-    max_content_length: 50000,
+    max_content_length: 1000000,
   },
   upload_settings: {
     enable_supabase: true,
     enable_pinecone: true,
-    batch_size: 10,
+    batch_size: 100,
     skip_duplicates: true,
   },
   embedding_model: 'sentence-transformers/all-MiniLM-L6-v2',
 };
 
-const EMBEDDING_MODELS = [
-  { 
-    value: 'sentence-transformers/all-MiniLM-L6-v2', 
-    label: 'all-MiniLM-L6-v2 (Fast, Default)',
-    description: '384 dims, ~14K sentences/sec'
-  },
-  { 
-    value: 'sentence-transformers/all-mpnet-base-v2', 
-    label: 'all-mpnet-base-v2 (High Quality)',
-    description: '768 dims, best quality'
-  },
-  { 
-    value: 'sentence-transformers/multi-qa-mpnet-base-dot-v1', 
-    label: 'multi-qa-mpnet (Q&A Optimized)',
-    description: '768 dims, perfect for Ask Expert'
-  },
-  { 
-    value: 'pritamdeka/BioBERT-mnli-snli-scinli-scitail-mednli-stsb', 
-    label: 'BioBERT (Medical)',
-    description: 'Medical/healthcare content'
-  },
-];
-
-// 30 Healthcare Knowledge Domains from Supabase
-const KNOWLEDGE_DOMAINS = [
-  // Tier 1: Core Domains (15)
-  { value: 'regulatory_affairs', label: 'Regulatory Affairs', tier: 1, color: '#DC2626' },
-  { value: 'clinical_development', label: 'Clinical Development', tier: 1, color: '#2563EB' },
-  { value: 'pharmacovigilance', label: 'Pharmacovigilance', tier: 1, color: '#DC2626' },
-  { value: 'quality_assurance', label: 'Quality Assurance', tier: 1, color: '#059669' },
-  { value: 'medical_affairs', label: 'Medical Affairs', tier: 1, color: '#7C3AED' },
-  { value: 'drug_safety', label: 'Drug Safety', tier: 1, color: '#DC2626' },
-  { value: 'clinical_operations', label: 'Clinical Operations', tier: 1, color: '#0891B2' },
-  { value: 'medical_writing', label: 'Medical Writing', tier: 1, color: '#4F46E5' },
-  { value: 'biostatistics', label: 'Biostatistics', tier: 1, color: '#7C3AED' },
-  { value: 'data_management', label: 'Data Management', tier: 1, color: '#0891B2' },
-  { value: 'translational_medicine', label: 'Translational Medicine', tier: 1, color: '#7C3AED' },
-  { value: 'market_access', label: 'Market Access', tier: 1, color: '#059669' },
-  { value: 'labeling_advertising', label: 'Labeling & Advertising', tier: 1, color: '#D97706' },
-  { value: 'post_market_surveillance', label: 'Post-Market Surveillance', tier: 1, color: '#DC2626' },
-  { value: 'patient_engagement', label: 'Patient Engagement', tier: 1, color: '#EC4899' },
-  
-  // Tier 2: Specialized Domains (10)
-  { value: 'scientific_publications', label: 'Scientific Publications', tier: 2, color: '#4F46E5' },
-  { value: 'nonclinical_sciences', label: 'Nonclinical Sciences', tier: 2, color: '#7C3AED' },
-  { value: 'risk_management', label: 'Risk Management', tier: 2, color: '#DC2626' },
-  { value: 'submissions_and_filings', label: 'Submissions & Filings', tier: 2, color: '#DC2626' },
-  { value: 'health_economics', label: 'Health Economics', tier: 2, color: '#059669' },
-  { value: 'medical_devices', label: 'Medical Devices', tier: 2, color: '#D97706' },
-  { value: 'bioinformatics', label: 'Bioinformatics', tier: 2, color: '#7C3AED' },
-  { value: 'companion_diagnostics', label: 'Companion Diagnostics', tier: 2, color: '#4F46E5' },
-  { value: 'regulatory_intelligence', label: 'Regulatory Intelligence', tier: 2, color: '#0891B2' },
-  { value: 'lifecycle_management', label: 'Lifecycle Management', tier: 2, color: '#059669' },
-  
-  // Tier 3: Emerging Domains (5)
-  { value: 'digital_health', label: 'Digital Health', tier: 3, color: '#10B981' },
-  { value: 'precision_medicine', label: 'Precision Medicine', tier: 3, color: '#7C3AED' },
-  { value: 'ai_ml_healthcare', label: 'AI/ML in Healthcare', tier: 3, color: '#6366F1' },
-  { value: 'telemedicine', label: 'Telemedicine', tier: 3, color: '#0891B2' },
-  { value: 'sustainability', label: 'Sustainability', tier: 3, color: '#059669' },
-];
-
-export function KnowledgePipelineConfig() {
+export default function KnowledgePipelineConfig() {
+  // Configuration state
   const [config, setConfig] = useState<PipelineConfig>(DEFAULT_CONFIG);
   const [newSource, setNewSource] = useState<Partial<Source>>({
-    url: '',
-    domain: 'uncategorized',
-    category: 'general',
-    tags: [],
     priority: 'medium',
-    description: '',
+    tags: [],
   });
-  const [tagInput, setTagInput] = useState('');
-  const [uploadStatus, setUploadStatus] = useState<string>('');
-  
-  // Pipeline execution state
+
+  // UI state
+  const [uploadStatus, setUploadStatus] = useState('');
   const [isRunning, setIsRunning] = useState(false);
-  const [isDryRun, setIsDryRun] = useState(false);
+  const [isDryRun, setIsDryRun] = useState(true);
   const [pipelineResult, setPipelineResult] = useState<any>(null);
   const [pipelineError, setPipelineError] = useState<string | null>(null);
+  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [activeTab, setActiveTab] = useState('sources');
 
   // Queue management state
   const [queueSources, setQueueSources] = useState<QueueSource[]>([]);
@@ -209,6 +168,26 @@ export function KnowledgePipelineConfig() {
   const [availableDomains, setAvailableDomains] = useState<any[]>([]);
   const [selectedDomainIds, setSelectedDomainIds] = useState<string[]>([]);
   const [loadingDomains, setLoadingDomains] = useState(true);
+
+  // Real-time streaming state
+  const [streamingLogs, setStreamingLogs] = useState<string[]>([]);
+  const [processingStats, setProcessingStats] = useState({
+    processed: 0,
+    successful: 0,
+    failed: 0,
+    totalWords: 0,
+    totalChunks: 0,
+    estimatedTime: 0,
+  });
+
+  const logsEndRef = useRef<HTMLDivElement>(null);
+
+  // Auto-scroll logs
+  useEffect(() => {
+    if (logsEndRef.current) {
+      logsEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [streamingLogs]);
 
   // Fetch available domains on mount
   useEffect(() => {
@@ -222,7 +201,7 @@ export function KnowledgePipelineConfig() {
           .select('*')
           .eq('is_active', true)
           .order('tier', { ascending: true })
-          .order('priority', { ascending: true });
+          .order('priority', { ascending: true});
         
         if (error) throw error;
         
@@ -245,7 +224,6 @@ export function KnowledgePipelineConfig() {
   // Sync sources to queue when config changes
   useEffect(() => {
     const newQueue: QueueSource[] = config.sources.map((source, index) => {
-      // Try to find existing queue item to preserve status
       const existing = queueSources.find(q => q.url === source.url);
       
       return {
@@ -264,6 +242,157 @@ export function KnowledgePipelineConfig() {
     setQueueSources(newQueue);
   }, [config.sources]);
 
+  // Add streaming log
+  const addLog = useCallback((message: string) => {
+    setStreamingLogs(prev => [...prev.slice(-99), message]); // Keep last 100 logs
+  }, []);
+
+  // Update processing stats
+  const updateStats = useCallback((updates: Partial<typeof processingStats>) => {
+    setProcessingStats(prev => ({ ...prev, ...updates }));
+  }, []);
+
+  // Handle single source execution with streaming
+  const handleRunSingleSource = useCallback(async (sourceId: string) => {
+    console.log(`▶️ Starting single source: ${sourceId}`);
+    
+    setQueueSources(prev => prev.map(s =>
+      s.id === sourceId
+        ? { ...s, status: 'processing' as const, progress: 0 }
+        : s
+    ));
+
+    const source = config.sources.find((_, idx) => 
+      queueSources[idx]?.id === sourceId
+    );
+
+    if (!source) {
+      console.error('Source not found');
+      return;
+    }
+
+    addLog(`🚀 Starting: ${source.url}`);
+    const startTime = Date.now();
+
+    try {
+      const response = await fetch('/api/pipeline/run-single', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          source,
+          dryRun: isDryRun,
+          embeddingModel: config.embedding_model,
+          domainIds: selectedDomainIds,
+        }),
+      });
+
+      const result = await response.json();
+      const duration = Date.now() - startTime;
+
+      console.log(`  📊 API Response (${duration}ms):`, result);
+
+      if (result.success) {
+        console.log(`  ✅ Success! Words: ${result.wordCount || 0}`);
+        addLog(`✅ Completed: ${source.url} (${result.wordCount || 0} words, ${(duration / 1000).toFixed(1)}s)`);
+        
+        setQueueSources(prev => prev.map(s =>
+          s.id === sourceId
+            ? {
+                ...s,
+                status: 'success' as const,
+                progress: 100,
+                result: {
+                  wordCount: result.wordCount || 0,
+                  duration,
+                },
+              }
+            : s
+        ));
+
+        updateStats({
+          processed: processingStats.processed + 1,
+          successful: processingStats.successful + 1,
+          totalWords: processingStats.totalWords + (result.wordCount || 0),
+        });
+      } else {
+        const errorMessage = result.error || 'Unknown error';
+        const errorDetails = result.details || result.errors || '';
+        const fullError = errorDetails ? `${errorMessage}: ${errorDetails}` : errorMessage;
+        
+        console.error(`  ❌ Failed:`, fullError);
+        addLog(`❌ Failed: ${source.url} - ${errorMessage}`);
+        
+        setQueueSources(prev => prev.map(s =>
+          s.id === sourceId
+            ? {
+                ...s,
+                status: 'failed' as const,
+                result: {
+                  wordCount: 0,
+                  duration,
+                  error: fullError,
+                },
+              }
+            : s
+        ));
+
+        updateStats({
+          processed: processingStats.processed + 1,
+          failed: processingStats.failed + 1,
+        });
+      }
+    } catch (error: any) {
+      const duration = Date.now() - startTime;
+      console.error(`  ❌ Network error:`, error.message);
+      addLog(`❌ Error: ${source.url} - ${error.message}`);
+      
+      setQueueSources(prev => prev.map(s =>
+        s.id === sourceId
+          ? {
+              ...s,
+              status: 'failed' as const,
+              result: {
+                wordCount: 0,
+                duration,
+                error: error.message,
+              },
+            }
+          : s
+      ));
+
+      updateStats({
+        processed: processingStats.processed + 1,
+        failed: processingStats.failed + 1,
+      });
+    }
+  }, [queueSources, config.sources, isDryRun, config.embedding_model, selectedDomainIds, addLog, updateStats, processingStats]);
+
+  // Handle running all pending sources
+  const handleRunAllSources = useCallback(async () => {
+    if (isProcessingQueue) return;
+    
+    setIsProcessingQueue(true);
+    setStreamingLogs([]);
+    setProcessingStats({
+      processed: 0,
+      successful: 0,
+      failed: 0,
+      totalWords: 0,
+      totalChunks: 0,
+      estimatedTime: 0,
+    });
+
+    const pendingSources = queueSources.filter(s => s.status === 'pending');
+    addLog(`🚀 Starting batch processing: ${pendingSources.length} sources`);
+
+    for (const source of pendingSources) {
+      await handleRunSingleSource(source.id);
+    }
+
+    addLog(`✅ Batch processing complete!`);
+    setIsProcessingQueue(false);
+  }, [queueSources, isProcessingQueue, handleRunSingleSource, addLog]);
+
   // Handle file upload (JSON, CSV, MD)
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -278,9 +407,7 @@ export function KnowledgePipelineConfig() {
         const data = JSON.parse(text);
         let sourcesToAdd: Source[] = [];
         
-        // Handle different JSON formats
         if (Array.isArray(data)) {
-          // Direct array of items: [{url: "...", ...}, ...]
           sourcesToAdd = data.map(item => ({
             url: item.url || item.pdf_link || '',
             domain: item.domain || 'uncategorized',
@@ -291,10 +418,8 @@ export function KnowledgePipelineConfig() {
             description: item.description || item.title || '',
           })).filter(s => s.url);
         } else if (data.sources && Array.isArray(data.sources)) {
-          // Structured format: {sources: [{url: "...", ...}]}
           sourcesToAdd = data.sources;
         } else if (data.url) {
-          // Single object: {url: "...", ...}
           sourcesToAdd = [{
             url: data.url,
             domain: data.domain || 'uncategorized',
@@ -316,7 +441,6 @@ export function KnowledgePipelineConfig() {
           setUploadStatus('❌ Error: No valid sources found in JSON file');
         }
       } else if (file.name.endsWith('.csv')) {
-        // Parse CSV
         const lines = text.split('\n').filter(line => line.trim());
         const headers = lines[0].split(',').map(h => h.trim());
         const sources: Source[] = [];
@@ -352,7 +476,6 @@ export function KnowledgePipelineConfig() {
         }));
         setUploadStatus(`✅ Added ${sources.length} sources from CSV`);
       } else if (file.name.endsWith('.md')) {
-        // Parse markdown - extract URLs
         const urlRegex = /https?:\/\/[^\s\)]+/g;
         const urls = text.match(urlRegex) || [];
         const sources: Source[] = urls.map(url => ({
@@ -371,7 +494,6 @@ export function KnowledgePipelineConfig() {
         setUploadStatus(`✅ Added ${sources.length} URLs from Markdown`);
       }
       
-      // Reset file input to allow re-uploading the same file
       event.target.value = '';
       setTimeout(() => setUploadStatus(''), 5000);
     } catch (error) {
@@ -401,16 +523,10 @@ export function KnowledgePipelineConfig() {
       sources: [...prev.sources, source],
     }));
 
-    // Reset form
     setNewSource({
-      url: '',
-      domain: 'uncategorized',
-      category: 'general',
-      tags: [],
       priority: 'medium',
-      description: '',
+      tags: [],
     });
-    setTagInput('');
   };
 
   // Remove source
@@ -421,934 +537,857 @@ export function KnowledgePipelineConfig() {
     }));
   };
 
-  // Add tag
-  const handleAddTag = () => {
-    if (!tagInput.trim()) return;
-    setNewSource(prev => ({
-      ...prev,
-      tags: [...(prev.tags || []), tagInput.trim()],
-    }));
-    setTagInput('');
+  // Download config
+  const handleDownloadConfig = () => {
+    const dataStr = JSON.stringify(config, null, 2);
+    const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+    
+    const exportFileDefaultName = `knowledge-pipeline-config-${new Date().toISOString().split('T')[0]}.json`;
+    
+    const linkElement = document.createElement('a');
+    linkElement.setAttribute('href', dataUri);
+    linkElement.setAttribute('download', exportFileDefaultName);
+    linkElement.click();
   };
-
-  // Remove tag
-  const handleRemoveTag = (tag: string) => {
-    setNewSource(prev => ({
-      ...prev,
-      tags: (prev.tags || []).filter(t => t !== tag),
-    }));
-  };
-
-  // Export configuration
-  const handleExport = () => {
-    const blob = new Blob([JSON.stringify(config, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `knowledge-pipeline-config-${new Date().toISOString().split('T')[0]}.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  };
-
-  // Export as CSV
-  const handleExportCSV = () => {
-    const headers = ['url', 'domain', 'category', 'tags', 'priority', 'css_selector', 'description'];
-    const rows = config.sources.map(source => [
-      source.url,
-      source.domain,
-      source.category,
-      source.tags.join('|'),
-      source.priority,
-      source.css_selector || '',
-      source.description,
-    ]);
-    
-    const csv = [
-      headers.join(','),
-      ...rows.map(row => row.map(cell => `"${cell}"`).join(',')),
-    ].join('\n');
-    
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `knowledge-pipeline-sources-${new Date().toISOString().split('T')[0]}.csv`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  };
-
-  // Group sources by domain
-  const sourcesByDomain = config.sources.reduce((acc, source) => {
-    if (!acc[source.domain]) {
-      acc[source.domain] = [];
-    }
-    acc[source.domain].push(source);
-    return acc;
-  }, {} as Record<string, Source[]>);
-
-  // Run pipeline
-  const handleRunPipeline = async () => {
-    if (config.sources.length === 0) {
-      setPipelineError('No sources configured. Please add sources before running the pipeline.');
-      return;
-    }
-
-    setIsRunning(true);
-    setPipelineError(null);
-    setPipelineResult(null);
-
-    try {
-      const response = await fetch('/api/pipeline/run', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          config,
-          dryRun: isDryRun,
-          embeddingModel: config.embedding_model,
-        }),
-      });
-
-      const result = await response.json();
-      
-      console.log('Pipeline API response:', { 
-        ok: response.ok, 
-        status: response.status,
-        result 
-      });
-
-      if (!response.ok) {
-        const errorMessage = result.error || result.details || 'Pipeline execution failed';
-        const errorDetails = result.stderr || result.stdout || '';
-        const fullError = errorDetails ? `${errorMessage}\n\nDetails:\n${errorDetails}` : errorMessage;
-        throw new Error(fullError);
-      }
-
-      setPipelineResult(result);
-    } catch (error: any) {
-      console.error('Pipeline error:', error);
-      setPipelineError(error.message || 'An unexpected error occurred');
-    } finally {
-      setIsRunning(false);
-    }
-  };
-
-  // Run single source from queue
-  const handleRunSingleSource = useCallback(async (sourceId: string) => {
-    console.log(`▶️ Starting single source: ${sourceId}`);
-    
-    const sourceIndex = queueSources.findIndex(s => s.id === sourceId);
-    if (sourceIndex === -1) {
-      console.error(`❌ Source not found in queue: ${sourceId}`);
-      return;
-    }
-
-    const source = config.sources[sourceIndex];
-    if (!source) {
-      console.error(`❌ Source not found in config at index ${sourceIndex}`);
-      return;
-    }
-
-    console.log(`  URL: ${source.url}`);
-    console.log(`  Dry run: ${isDryRun}`);
-
-    // Update status to processing
-    setQueueSources(prev => prev.map(s => 
-      s.id === sourceId ? { ...s, status: 'processing' as const, progress: 0 } : s
-    ));
-
-    const startTime = Date.now();
-
-    try {
-      console.log(`  📡 Calling API: /api/pipeline/run-single`);
-      
-      const response = await fetch('/api/pipeline/run-single', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          source,
-          dryRun: isDryRun,
-          embeddingModel: config.embedding_model,
-          domainIds: selectedDomainIds, // Add selected domains
-        }),
-      });
-
-      const result = await response.json();
-      const duration = Date.now() - startTime;
-
-      console.log(`  📊 API Response (${duration}ms):`, result);
-
-      if (result.success) {
-        console.log(`  ✅ Success! Words: ${result.wordCount || 0}`);
-        setQueueSources(prev => prev.map(s =>
-          s.id === sourceId
-            ? {
-                ...s,
-                status: 'success' as const,
-                result: {
-                  wordCount: result.wordCount || 0,
-                  duration,
-                },
-              }
-            : s
-        ));
-      } else {
-        // Extract detailed error information
-        const errorMessage = result.error || 'Unknown error';
-        const errorDetails = result.details || result.errors || '';
-        const fullError = errorDetails ? `${errorMessage}: ${errorDetails}` : errorMessage;
-        
-        console.error(`  ❌ Failed:`, fullError);
-        console.error(`  📄 Full result:`, result);
-        
-        // If we have stdout/stderr, log it for debugging
-        if (result.stdout) {
-          console.log(`  📝 Python stdout:`, result.stdout);
-        }
-        if (result.stderr) {
-          console.error(`  ⚠️ Python stderr:`, result.stderr);
-        }
-        
-        setQueueSources(prev => prev.map(s =>
-          s.id === sourceId
-            ? {
-                ...s,
-                status: 'failed' as const,
-                result: {
-                  wordCount: 0,
-                  duration,
-                  error: fullError,
-                },
-              }
-            : s
-        ));
-      }
-    } catch (error: any) {
-      const duration = Date.now() - startTime;
-      console.error(`  ❌ Network error:`, error);
-      setQueueSources(prev => prev.map(s =>
-        s.id === sourceId
-          ? {
-              ...s,
-              status: 'failed' as const,
-              result: {
-                wordCount: 0,
-                duration,
-                error: error.message || 'Network error',
-              },
-            }
-          : s
-      ));
-    }
-  }, [queueSources, config.sources, isDryRun, config.embedding_model, selectedDomainIds]);
-
-  // Run all pending sources
-  const handleRunAllSources = useCallback(async () => {
-    if (isProcessingQueue) return; // Prevent multiple runs
-    
-    setIsProcessingQueue(true);
-    const pendingSources = queueSources.filter(s => s.status === 'pending');
-
-    console.log(`🚀 Running all pending sources: ${pendingSources.length} sources`);
-
-    for (const source of pendingSources) {
-      console.log(`  Processing: ${source.title}`);
-      await handleRunSingleSource(source.id);
-    }
-
-    console.log(`✅ Completed processing all sources`);
-    setIsProcessingQueue(false);
-  }, [queueSources, isProcessingQueue, handleRunSingleSource]);
-
-  // Retry failed source
-  const handleRetrySource = useCallback((sourceId: string) => {
-    setQueueSources(prev => prev.map(s =>
-      s.id === sourceId ? { ...s, status: 'pending' as const, result: undefined } : s
-    ));
-    handleRunSingleSource(sourceId);
-  }, [handleRunSingleSource]);
-
-  // Clear queue
-  const handleClearQueue = useCallback(() => {
-    setQueueSources([]);
-    setConfig(prev => ({ ...prev, sources: [] }));
-  }, []);
-
-  // Handle adding imported sources from search
-  const handleAddImportedSources = useCallback((importedSources: Source[]) => {
-    console.log(`✅ Adding ${importedSources.length} imported sources to config`);
-    
-    setConfig(prev => ({
-      ...prev,
-      sources: [...prev.sources, ...importedSources]
-    }));
-    
-    // Switch to queue view to see the newly added sources
-    setCurrentView('queue');
-  }, []);
-
-  // Calculate overall progress
-  const overallProgress = queueSources.length > 0
-    ? ((queueSources.filter(s => s.status === 'success' || s.status === 'failed').length) / queueSources.length) * 100
-    : 0;
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Knowledge Pipeline Configuration</h1>
-          <p className="text-gray-600 mt-2">
-            Configure sources for automated content scraping and knowledge base upload
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <Button onClick={handleExportCSV} variant="outline">
-            <FileText className="h-4 w-4 mr-2" />
-            Export CSV
-          </Button>
-          <Button onClick={handleExport}>
-            <Download className="h-4 w-4 mr-2" />
-            Export JSON
-          </Button>
-        </div>
-      </div>
-
-      {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-gray-600">Total Sources</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{config.sources.length}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-gray-600">Domains</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{Object.keys(sourcesByDomain).length}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-gray-600">Queue Status</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {queueSources.filter(s => s.status === 'success').length}/{queueSources.length}
-            </div>
-            <p className="text-xs text-gray-500">Processed</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-gray-600">Total Words</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {(queueSources.reduce((sum, s) => sum + (s.result?.wordCount || 0), 0) / 1000).toFixed(1)}K
-            </div>
-            <p className="text-xs text-gray-500">Extracted</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* View Tabs */}
-      <Tabs value={currentView} onValueChange={(v) => setCurrentView(v as 'config' | 'queue' | 'search')}>
-        <TabsList className="grid w-full max-w-2xl grid-cols-3">
-          <TabsTrigger value="config">
-            <FileText className="h-4 w-4 mr-2" />
-            Configuration
-          </TabsTrigger>
-          <TabsTrigger value="queue">
-            <List className="h-4 w-4 mr-2" />
-            Queue ({queueSources.length})
-          </TabsTrigger>
-          <TabsTrigger value="search">
-            <Search className="h-4 w-4 mr-2" />
-            Search & Import
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="config" className="space-y-6 mt-6">
-          {/* Upload File */}
-          <Card>
-        <CardHeader>
-          <CardTitle>Import Sources</CardTitle>
-          <CardDescription>
-            Upload a JSON, CSV, or Markdown file containing source URLs
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center gap-4">
-            <Label
-              htmlFor="file-upload"
-              className="flex items-center justify-center gap-2 px-4 py-2 border-2 border-dashed rounded-lg cursor-pointer hover:bg-gray-50"
-            >
-              <Upload className="h-5 w-5" />
-              <span>Choose File</span>
-              <Input
-                id="file-upload"
-                type="file"
-                accept=".json,.csv,.md"
-                onChange={handleFileUpload}
-                className="hidden"
-              />
-            </Label>
-            {uploadStatus && (
-              <div className="text-sm font-medium">{uploadStatus}</div>
-            )}
-          </div>
-          <div className="mt-4 text-sm text-gray-600">
-            <p className="font-semibold mb-2">Supported formats:</p>
-            <ul className="list-disc list-inside space-y-1">
-              <li><strong>JSON:</strong> Full configuration with metadata</li>
-              <li><strong>CSV:</strong> Columns: url, domain, category, tags, priority, css_selector, description</li>
-              <li><strong>Markdown:</strong> Extracts all URLs from the document</li>
-            </ul>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Run Pipeline */}
-      <Card className="border-2 border-blue-200 bg-blue-50/50">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Play className="h-5 w-5 text-blue-600" />
-            Run Knowledge Pipeline
-          </CardTitle>
-          <CardDescription>
-            Execute the scraping and ingestion pipeline with your configured sources
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {/* Controls */}
-          <div className="flex items-center justify-between p-4 bg-white rounded-lg">
-            <div className="flex items-center gap-4">
-              <div className="flex items-center space-x-2">
-                <Switch
-                  id="dry-run"
-                  checked={isDryRun}
-                  onCheckedChange={setIsDryRun}
-                  disabled={isRunning}
-                />
-                <Label htmlFor="dry-run" className="cursor-pointer">
-                  Dry Run (No uploads)
-                </Label>
+    <TooltipProvider>
+      <div className="space-y-6 p-6">
+        {/* Header */}
+        <div className="flex items-start justify-between">
+          <div className="space-y-1">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg">
+                <Sparkles className="h-6 w-6 text-white" />
               </div>
-              <Badge variant="outline">
-                {config.sources.length} source{config.sources.length !== 1 ? 's' : ''}
-              </Badge>
-            </div>
-            
-            <Button
-              onClick={handleRunPipeline}
-              disabled={isRunning || config.sources.length === 0}
-              size="lg"
-              className="min-w-[200px]"
-            >
-              {isRunning ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Running...
-                </>
-              ) : (
-                <>
-                  <Play className="h-4 w-4 mr-2" />
-                  Run Pipeline
-                </>
-              )}
-            </Button>
-          </div>
-
-          {/* Error Display */}
-          {pipelineError && (
-            <Alert variant="destructive">
-              <AlertCircle className="h-4 w-4" />
-              <AlertTitle>Pipeline Error</AlertTitle>
-              <AlertDescription className="mt-2">
-                {pipelineError}
-              </AlertDescription>
-            </Alert>
-          )}
-
-          {/* Success Display */}
-          {pipelineResult && (
-            <Alert className="border-green-200 bg-green-50">
-              <CheckCircle className="h-4 w-4 text-green-600" />
-              <AlertTitle className="text-green-800">Pipeline Completed Successfully!</AlertTitle>
-              <AlertDescription className="mt-2 text-green-700">
-                <div className="space-y-2">
-                  <p><strong>Sources Processed:</strong> {pipelineResult.sourcesProcessed}</p>
-                  <p><strong>Mode:</strong> {pipelineResult.dryRun ? 'Dry Run (No uploads)' : 'Full Execution'}</p>
-                  <p><strong>Timestamp:</strong> {new Date(pipelineResult.timestamp).toLocaleString()}</p>
-                  {pipelineResult.output && (
-                    <details className="mt-4">
-                      <summary className="cursor-pointer font-medium text-green-800 hover:text-green-900">
-                        View Output Log
-                      </summary>
-                      <pre className="mt-2 p-3 bg-white rounded text-xs overflow-auto max-h-60 text-gray-800">
-                        {pipelineResult.output}
-                      </pre>
-                    </details>
-                  )}
-                </div>
-              </AlertDescription>
-            </Alert>
-          )}
-
-          {/* Info Message */}
-          {!isRunning && !pipelineResult && !pipelineError && (
-            <Alert>
-              <AlertCircle className="h-4 w-4" />
-              <AlertTitle>Ready to Run</AlertTitle>
-              <AlertDescription>
-                The pipeline will scrape all configured sources, process the content, and upload to Supabase and Pinecone.
-                {isDryRun && (
-                  <span className="block mt-2 text-orange-600 font-medium">
-                    ⚠️ Dry Run Mode: Content will be scraped but NOT uploaded to the database.
-                  </span>
-                )}
-              </AlertDescription>
-            </Alert>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Add Source Manually */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Add Source Manually</CardTitle>
-          <CardDescription>
-            Add individual URLs with metadata
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="url">URL *</Label>
-              <Input
-                id="url"
-                placeholder="https://example.com/article"
-                value={newSource.url || ''}
-                onChange={(e) => setNewSource(prev => ({ ...prev, url: e.target.value }))}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="domain">Domain *</Label>
-              <Select
-                value={newSource.domain || 'regulatory_affairs'}
-                onValueChange={(value) => setNewSource(prev => ({ ...prev, domain: value }))}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select domain" />
-                </SelectTrigger>
-                <SelectContent className="max-h-[400px]">
-                  <div className="px-2 py-1.5 text-xs font-semibold text-gray-500">Tier 1 - Core Domains</div>
-                  {KNOWLEDGE_DOMAINS.filter(d => d.tier === 1).map((domain) => (
-                    <SelectItem key={domain.value} value={domain.value}>
-                      <div className="flex items-center gap-2">
-                        <div className="w-2 h-2 rounded-full" style={{ backgroundColor: domain.color }}></div>
-                        <span>{domain.label}</span>
-                      </div>
-                    </SelectItem>
-                  ))}
-                  <div className="px-2 py-1.5 text-xs font-semibold text-gray-500 mt-2">Tier 2 - Specialized</div>
-                  {KNOWLEDGE_DOMAINS.filter(d => d.tier === 2).map((domain) => (
-                    <SelectItem key={domain.value} value={domain.value}>
-                      <div className="flex items-center gap-2">
-                        <div className="w-2 h-2 rounded-full" style={{ backgroundColor: domain.color }}></div>
-                        <span>{domain.label}</span>
-                      </div>
-                    </SelectItem>
-                  ))}
-                  <div className="px-2 py-1.5 text-xs font-semibold text-gray-500 mt-2">Tier 3 - Emerging</div>
-                  {KNOWLEDGE_DOMAINS.filter(d => d.tier === 3).map((domain) => (
-                    <SelectItem key={domain.value} value={domain.value}>
-                      <div className="flex items-center gap-2">
-                        <div className="w-2 h-2 rounded-full" style={{ backgroundColor: domain.color }}></div>
-                        <span>{domain.label}</span>
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <p className="text-xs text-gray-500">Choose from 30 healthcare domains</p>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="category">Category</Label>
-              <Input
-                id="category"
-                placeholder="fda_guidelines, clinical_trials..."
-                value={newSource.category || ''}
-                onChange={(e) => setNewSource(prev => ({ ...prev, category: e.target.value }))}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="priority">Priority</Label>
-              <Select
-                value={newSource.priority || 'medium'}
-                onValueChange={(value) => setNewSource(prev => ({ ...prev, priority: value as any }))}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="high">High</SelectItem>
-                  <SelectItem value="medium">Medium</SelectItem>
-                  <SelectItem value="low">Low</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="css_selector">CSS Selector (Optional)</Label>
-              <Input
-                id="css_selector"
-                placeholder=".article-content, #main, etc."
-                value={newSource.css_selector || ''}
-                onChange={(e) => setNewSource(prev => ({ ...prev, css_selector: e.target.value }))}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="tags">Tags</Label>
-              <div className="flex gap-2">
-                <Input
-                  id="tags"
-                  placeholder="Add tag and press Enter"
-                  value={tagInput}
-                  onChange={(e) => setTagInput(e.target.value)}
-                  onKeyPress={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault();
-                      handleAddTag();
-                    }
-                  }}
-                />
-                <Button type="button" variant="outline" onClick={handleAddTag}>
-                  Add
-                </Button>
-              </div>
-              <div className="flex flex-wrap gap-2 mt-2">
-                {(newSource.tags || []).map((tag) => (
-                  <Badge key={tag} variant="secondary" className="cursor-pointer" onClick={() => handleRemoveTag(tag)}>
-                    {tag} ×
-                  </Badge>
-                ))}
+              <div>
+                <h1 className="text-3xl font-bold tracking-tight">Knowledge Pipeline</h1>
+                <p className="text-muted-foreground">
+                  Intelligent content ingestion with real-time processing
+                </p>
               </div>
             </div>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="description">Description</Label>
-            <Textarea
-              id="description"
-              placeholder="Brief description of the content source"
-              value={newSource.description || ''}
-              onChange={(e) => setNewSource(prev => ({ ...prev, description: e.target.value }))}
-              rows={2}
+          <div className="flex items-center gap-2">
+            <Badge variant={isDryRun ? "secondary" : "default"} className="text-sm">
+              {isDryRun ? 'Dry Run Mode' : 'Live Mode'}
+            </Badge>
+            <Switch
+              checked={!isDryRun}
+              onCheckedChange={(checked) => setIsDryRun(!checked)}
             />
           </div>
+        </div>
 
-          {/* Advanced Metadata Form */}
-          <AdvancedMetadataForm
-            source={newSource}
-            onUpdate={(field, value) => setNewSource(prev => ({ ...prev, [field]: value }))}
-          />
+        {/* Stats Overview */}
+        {isProcessingQueue && (
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+            <Card>
+              <CardContent className="pt-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Processed</p>
+                    <p className="text-2xl font-bold">{processingStats.processed}</p>
+                  </div>
+                  <TrendingUp className="h-8 w-8 text-blue-500" />
+                </div>
+              </CardContent>
+            </Card>
 
-          <Button onClick={handleAddSource} disabled={!newSource.url}>
-            <Plus className="h-4 w-4 mr-2" />
-            Add Source
-          </Button>
-        </CardContent>
-      </Card>
+            <Card>
+              <CardContent className="pt-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Successful</p>
+                    <p className="text-2xl font-bold text-green-600">{processingStats.successful}</p>
+                  </div>
+                  <CheckCircle className="h-8 w-8 text-green-500" />
+                </div>
+              </CardContent>
+            </Card>
 
-      {/* Pipeline Settings */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Pipeline Settings</CardTitle>
-          <CardDescription>
-            Configure embedding model and processing options
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="embedding-model">Embedding Model</Label>
-            <Select
-              value={config.embedding_model}
-              onValueChange={(value) => setConfig(prev => ({ ...prev, embedding_model: value }))}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {EMBEDDING_MODELS.map((model) => (
-                  <SelectItem key={model.value} value={model.value}>
-                    <div className="flex flex-col">
-                      <span className="font-medium">{model.label}</span>
-                      <span className="text-xs text-gray-500">{model.description}</span>
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Card>
+              <CardContent className="pt-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Failed</p>
+                    <p className="text-2xl font-bold text-red-600">{processingStats.failed}</p>
+                  </div>
+                  <AlertCircle className="h-8 w-8 text-red-500" />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="pt-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Total Words</p>
+                    <p className="text-2xl font-bold">{processingStats.totalWords.toLocaleString()}</p>
+                  </div>
+                  <FileText className="h-8 w-8 text-purple-500" />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="pt-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Chunks</p>
+                    <p className="text-2xl font-bold">{processingStats.totalChunks}</p>
+                  </div>
+                  <Database className="h-8 w-8 text-orange-500" />
+                </div>
+              </CardContent>
+            </Card>
           </div>
+        )}
 
-          {/* Domain Selection */}
-          <div className="space-y-2">
-            <Label>RAG Knowledge Domains</Label>
-            <div className="text-sm text-muted-foreground mb-2">
-              Select which knowledge domains this content belongs to
-            </div>
-            {loadingDomains ? (
-              <div className="flex items-center gap-2 p-3 border rounded-lg">
-                <Loader2 className="h-4 w-4 animate-spin" />
-                <span className="text-sm text-muted-foreground">Loading domains...</span>
-              </div>
-            ) : (
-              <div className="space-y-2">
-                <div className="flex flex-wrap gap-2 p-3 border rounded-lg min-h-[48px]">
-                  {selectedDomainIds.length === 0 ? (
-                    <span className="text-sm text-muted-foreground">No domains selected</span>
-                  ) : (
-                    selectedDomainIds.map(domainId => {
-                      const domain = availableDomains.find(d => d.domain_id === domainId);
-                      return domain ? (
-                        <Badge key={domainId} variant="secondary" className="flex items-center gap-1">
-                          {domain.domain_name}
-                          <button
-                            onClick={() => setSelectedDomainIds(prev => prev.filter(id => id !== domainId))}
-                            className="ml-1 hover:text-destructive"
-                          >
-                            <X className="h-3 w-3" />
-                          </button>
-                        </Badge>
-                      ) : null;
-                    })
+        {/* Main Tabs */}
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+          <TabsList className="grid w-full grid-cols-4 lg:w-[600px]">
+            <TabsTrigger value="sources" className="flex items-center gap-2">
+              <List className="h-4 w-4" />
+              Sources
+              {config.sources.length > 0 && (
+                <Badge variant="secondary" className="ml-1">{config.sources.length}</Badge>
+              )}
+            </TabsTrigger>
+            <TabsTrigger value="search" className="flex items-center gap-2">
+              <Search className="h-4 w-4" />
+              Search & Import
+            </TabsTrigger>
+            <TabsTrigger value="processing" className="flex items-center gap-2">
+              <Zap className="h-4 w-4" />
+              Processing
+              {isProcessingQueue && <Loader2 className="h-3 w-3 animate-spin ml-1" />}
+            </TabsTrigger>
+            <TabsTrigger value="settings" className="flex items-center gap-2">
+              <Settings className="h-4 w-4" />
+              Settings
+            </TabsTrigger>
+          </TabsList>
+
+          {/* Sources Tab */}
+          <TabsContent value="sources" className="space-y-6">
+            {/* Quick Actions */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Plus className="h-5 w-5" />
+                  Add Sources
+                </CardTitle>
+                <CardDescription>
+                  Import sources from files or add them manually
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {/* File Upload */}
+                <div className="flex items-center gap-4">
+                  <input
+                    type="file"
+                    accept=".json,.csv,.md"
+                    onChange={handleFileUpload}
+                    id="file-upload"
+                    className="hidden"
+                  />
+                  <label htmlFor="file-upload">
+                    <Button variant="outline" asChild className="cursor-pointer">
+                      <span>
+                        <Upload className="h-4 w-4 mr-2" />
+                        Upload File
+                      </span>
+                    </Button>
+                  </label>
+                  <Button variant="outline" onClick={handleDownloadConfig}>
+                    <Download className="h-4 w-4 mr-2" />
+                    Download Config
+                  </Button>
+                  {uploadStatus && (
+                    <span className="text-sm text-muted-foreground">{uploadStatus}</span>
                   )}
                 </div>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-2 max-h-[200px] overflow-y-auto p-2 border rounded-lg">
-                  {availableDomains.map(domain => {
-                    const isSelected = selectedDomainIds.includes(domain.domain_id);
-                    return (
-                      <button
-                        key={domain.domain_id}
-                        onClick={() => {
-                          if (isSelected) {
-                            setSelectedDomainIds(prev => prev.filter(id => id !== domain.domain_id));
-                          } else {
-                            setSelectedDomainIds(prev => [...prev, domain.domain_id]);
-                          }
-                        }}
-                        className={`
-                          p-2 text-left text-sm rounded border transition-colors
-                          ${isSelected 
-                            ? 'border-primary bg-primary/10 text-primary' 
-                            : 'border-border hover:border-primary/50 hover:bg-accent'
-                          }
-                        `}
+
+                <Separator />
+
+                {/* Manual Add Form */}
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="url">Source URL *</Label>
+                      <Input
+                        id="url"
+                        placeholder="https://example.com/article"
+                        value={newSource.url || ''}
+                        onChange={(e) => setNewSource(prev => ({ ...prev, url: e.target.value }))}
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="description">Description</Label>
+                      <Input
+                        id="description"
+                        placeholder="Brief description"
+                        value={newSource.description || ''}
+                        onChange={(e) => setNewSource(prev => ({ ...prev, description: e.target.value }))}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="domain">Domain</Label>
+                      <Input
+                        id="domain"
+                        placeholder="e.g., healthcare"
+                        value={newSource.domain || ''}
+                        onChange={(e) => setNewSource(prev => ({ ...prev, domain: e.target.value }))}
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="category">Category</Label>
+                      <Input
+                        id="category"
+                        placeholder="e.g., research"
+                        value={newSource.category || ''}
+                        onChange={(e) => setNewSource(prev => ({ ...prev, category: e.target.value }))}
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="priority">Priority</Label>
+                      <Select
+                        value={newSource.priority}
+                        onValueChange={(value: any) => setNewSource(prev => ({ ...prev, priority: value }))}
                       >
-                        <div className="flex items-center justify-between">
-                          <span className="font-medium">{domain.domain_name}</span>
-                          {isSelected && <Check className="h-4 w-4" />}
-                        </div>
-                        {domain.tier && (
-                          <div className="text-xs text-muted-foreground mt-1">
-                            Tier {domain.tier}
-                          </div>
-                        )}
-                      </button>
-                    );
-                  })}
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="high">High</SelectItem>
+                          <SelectItem value="medium">Medium</SelectItem>
+                          <SelectItem value="low">Low</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  <Button onClick={handleAddSource} disabled={!newSource.url}>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Source
+                  </Button>
                 </div>
-              </div>
-            )}
-          </div>
+              </CardContent>
+            </Card>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>Chunk Size</Label>
-              <Input
-                type="number"
-                value={config.processing_settings.chunk_size}
-                onChange={(e) => setConfig(prev => ({
-                  ...prev,
-                  processing_settings: {
-                    ...prev.processing_settings,
-                    chunk_size: parseInt(e.target.value),
-                  },
-                }))}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Chunk Overlap</Label>
-              <Input
-                type="number"
-                value={config.processing_settings.chunk_overlap}
-                onChange={(e) => setConfig(prev => ({
-                  ...prev,
-                  processing_settings: {
-                    ...prev.processing_settings,
-                    chunk_overlap: parseInt(e.target.value),
-                  },
-                }))}
-              />
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Sources List */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Configured Sources ({config.sources.length})</CardTitle>
-          <CardDescription>
-            Review and manage your source URLs
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {config.sources.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
-              <Database className="h-12 w-12 mx-auto mb-4 opacity-20" />
-              <p>No sources configured yet</p>
-              <p className="text-sm mt-2">Upload a file or add sources manually</p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {Object.entries(sourcesByDomain).map(([domain, sources]) => (
-                <div key={domain} className="border rounded-lg p-4">
-                  <h3 className="font-semibold text-lg mb-3 capitalize">
-                    {domain} <Badge variant="outline" className="ml-2">{sources.length}</Badge>
-                  </h3>
-                  <div className="space-y-2">
-                    {sources.map((source, idx) => {
-                      const globalIndex = config.sources.indexOf(source);
-                      return (
+            {/* Sources List */}
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle>Source Queue</CardTitle>
+                    <CardDescription>
+                      {config.sources.length} source{config.sources.length !== 1 ? 's' : ''} ready to process
+                    </CardDescription>
+                  </div>
+                  {config.sources.length > 0 && (
+                    <Button 
+                      variant="destructive" 
+                      size="sm"
+                      onClick={() => setConfig(prev => ({ ...prev, sources: [] }))}
+                    >
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Clear All
+                    </Button>
+                  )}
+                </div>
+              </CardHeader>
+              <CardContent>
+                {config.sources.length === 0 ? (
+                  <div className="text-center py-12 text-muted-foreground">
+                    <Database className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                    <p>No sources added yet</p>
+                    <p className="text-sm">Upload a file or add sources manually</p>
+                  </div>
+                ) : (
+                  <ScrollArea className="h-[400px]">
+                    <div className="space-y-2">
+                      {config.sources.map((source, index) => (
                         <div
-                          key={globalIndex}
-                          className="flex items-start justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                          key={index}
+                          className="flex items-start gap-4 p-4 rounded-lg border bg-card hover:bg-accent/50 transition-colors"
                         >
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 mb-1">
-                              <a
-                                href={source.url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-sm font-medium text-blue-600 hover:underline truncate flex items-center gap-1"
-                              >
-                                {source.url}
-                                <ExternalLink className="h-3 w-3" />
-                              </a>
-                              <Badge
-                                variant={
-                                  source.priority === 'high' ? 'destructive' :
-                                  source.priority === 'medium' ? 'default' : 'secondary'
-                                }
-                                className="text-xs"
-                              >
-                                {source.priority}
-                              </Badge>
+                          <div className="flex-shrink-0 mt-1">
+                            {source.url.endsWith('.pdf') ? (
+                              <FileText className="h-5 w-5 text-red-500" />
+                            ) : (
+                              <Globe className="h-5 w-5 text-blue-500" />
+                            )}
+                          </div>
+                          
+                          <div className="flex-1 min-w-0 space-y-1">
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="space-y-1 flex-1">
+                                <p className="font-medium text-sm truncate">{source.description || source.url}</p>
+                                <p className="text-xs text-muted-foreground truncate">{source.url}</p>
+                              </div>
                             </div>
-                            <div className="flex flex-wrap gap-2 items-center text-xs text-gray-600">
-                              <span className="font-medium">{source.category}</span>
-                              {source.tags.map((tag) => (
-                                <Badge key={tag} variant="outline" className="text-xs">
+                            
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <Badge variant="outline" className="text-xs">
+                                {source.domain || 'uncategorized'}
+                              </Badge>
+                              {source.priority && (
+                                <Badge 
+                                  variant={
+                                    source.priority === 'high' ? 'destructive' :
+                                    source.priority === 'medium' ? 'default' : 'secondary'
+                                  }
+                                  className="text-xs"
+                                >
+                                  {source.priority}
+                                </Badge>
+                              )}
+                              {source.tags && source.tags.map((tag, idx) => (
+                                <Badge key={idx} variant="secondary" className="text-xs">
                                   {tag}
                                 </Badge>
                               ))}
                             </div>
-                            {source.description && (
-                              <p className="text-xs text-gray-500 mt-1">{source.description}</p>
-                            )}
-                            {source.css_selector && (
-                              <p className="text-xs text-gray-400 mt-1 font-mono">
-                                Selector: {source.css_selector}
-                              </p>
-                            )}
                           </div>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleRemoveSource(globalIndex)}
-                            className="ml-2"
-                          >
-                            <Trash2 className="h-4 w-4 text-red-500" />
-                          </Button>
+
+                          <div className="flex items-center gap-2">
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => window.open(source.url, '_blank')}
+                                >
+                                  <ExternalLink className="h-4 w-4" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>Open in new tab</TooltipContent>
+                            </Tooltip>
+                            
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleRemoveSource(index)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
                         </div>
-                      );
-                    })}
+                      ))}
+                    </div>
+                  </ScrollArea>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Search & Import Tab */}
+          <TabsContent value="search" className="space-y-6">
+            <KnowledgeSearchImport 
+              onAddToQueue={(sources: Source[]) => {
+                setConfig(prev => ({
+                  ...prev,
+                  sources: [...prev.sources, ...sources],
+                }));
+                setActiveTab('sources');
+              }}
+            />
+          </TabsContent>
+
+          {/* Processing Tab */}
+          <TabsContent value="processing" className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Processing Controls */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Zap className="h-5 w-5" />
+                    Processing Controls
+                  </CardTitle>
+                  <CardDescription>
+                    Execute your pipeline and monitor progress
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {/* Domain Selection */}
+                  <div className="space-y-2">
+                    <Label>RAG Knowledge Domains</Label>
+                    <div className="text-sm text-muted-foreground mb-2">
+                      Select which knowledge domains this content belongs to
+                    </div>
+                    {loadingDomains ? (
+                      <div className="flex items-center gap-2 p-3 border rounded-lg">
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        <span className="text-sm text-muted-foreground">Loading domains...</span>
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        <div className="flex flex-wrap gap-2 p-3 border rounded-lg min-h-[48px]">
+                          {selectedDomainIds.length === 0 ? (
+                            <span className="text-sm text-muted-foreground">No domains selected</span>
+                          ) : (
+                            selectedDomainIds.map(domainId => {
+                              const domain = availableDomains.find(d => d.domain_id === domainId);
+                              return domain ? (
+                                <Badge key={domainId} variant="secondary" className="flex items-center gap-1">
+                                  {domain.domain_name}
+                                  <button
+                                    onClick={() => setSelectedDomainIds(prev => prev.filter(id => id !== domainId))}
+                                    className="ml-1 hover:text-destructive"
+                                  >
+                                    <X className="h-3 w-3" />
+                                  </button>
+                                </Badge>
+                              ) : null;
+                            })
+                          )}
+                        </div>
+                        <ScrollArea className="h-[200px]">
+                          <div className="grid grid-cols-2 gap-2 p-2 border rounded-lg">
+                            {availableDomains.map(domain => {
+                              const isSelected = selectedDomainIds.includes(domain.domain_id);
+                              return (
+                                <button
+                                  key={domain.domain_id}
+                                  onClick={() => {
+                                    if (isSelected) {
+                                      setSelectedDomainIds(prev => prev.filter(id => id !== domain.domain_id));
+                                    } else {
+                                      setSelectedDomainIds(prev => [...prev, domain.domain_id]);
+                                    }
+                                  }}
+                                  className={`
+                                    p-2 text-left text-sm rounded border transition-colors
+                                    ${isSelected 
+                                      ? 'border-primary bg-primary/10 text-primary' 
+                                      : 'border-border hover:border-primary/50 hover:bg-accent'
+                                    }
+                                  `}
+                                >
+                                  <div className="flex items-center justify-between">
+                                    <span className="font-medium">{domain.domain_name}</span>
+                                    {isSelected && <Check className="h-4 w-4" />}
+                                  </div>
+                                  {domain.tier && (
+                                    <div className="text-xs text-muted-foreground mt-1">
+                                      Tier {domain.tier}
+                                    </div>
+                                  )}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </ScrollArea>
+                      </div>
+                    )}
                   </div>
-                </div>
-              ))}
+
+                  <Separator />
+
+                  {/* Action Buttons */}
+                  <div className="space-y-2">
+                    <Button
+                      onClick={handleRunAllSources}
+                      disabled={config.sources.length === 0 || isProcessingQueue}
+                      className="w-full"
+                      size="lg"
+                    >
+                      {isProcessingQueue ? (
+                        <>
+                          <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                          Processing...
+                        </>
+                      ) : (
+                        <>
+                          <Play className="h-5 w-5 mr-2" />
+                          Run All Sources ({config.sources.length})
+                        </>
+                      )}
+                    </Button>
+
+                    {isProcessingQueue && (
+                      <Button
+                        variant="outline"
+                        onClick={() => setIsProcessingQueue(false)}
+                        className="w-full"
+                      >
+                        <Pause className="h-4 w-4 mr-2" />
+                        Pause Processing
+                      </Button>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Real-time Logs */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <BarChart3 className="h-5 w-5" />
+                    Processing Logs
+                  </CardTitle>
+                  <CardDescription>
+                    Real-time updates from the pipeline
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <ScrollArea className="h-[400px] w-full rounded-md border p-4 bg-slate-950 text-slate-50 font-mono text-sm">
+                    {streamingLogs.length === 0 ? (
+                      <div className="text-center text-slate-400 py-8">
+                        <Info className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                        <p>No logs yet. Start processing to see updates.</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-1">
+                        {streamingLogs.map((log, idx) => (
+                          <div key={idx} className="text-xs leading-relaxed">
+                            {log}
+                          </div>
+                        ))}
+                        <div ref={logsEndRef} />
+                      </div>
+                    )}
+                  </ScrollArea>
+                </CardContent>
+              </Card>
             </div>
-          )}
-        </CardContent>
-      </Card>
 
-      {/* Command Line Preview */}
-      {config.sources.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Command Line Preview</CardTitle>
-            <CardDescription>
-              Run this command after exporting the configuration
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="bg-gray-900 text-green-400 p-4 rounded-lg font-mono text-sm overflow-x-auto">
-              <div className="space-y-2">
-                <div># Export the configuration first</div>
-                <div># Then run the pipeline:</div>
-                <div className="mt-2">
-                  python scripts/knowledge-pipeline.py \<br />
-                  &nbsp;&nbsp;--config knowledge-pipeline-config-{new Date().toISOString().split('T')[0]}.json \<br />
-                  &nbsp;&nbsp;--embedding-model {config.embedding_model} \<br />
-                  &nbsp;&nbsp;--output-dir ./knowledge
-                </div>
-                <div className="mt-4 text-gray-500"># Dry run (test without uploading)</div>
-                <div>
-                  python scripts/knowledge-pipeline.py \<br />
-                  &nbsp;&nbsp;--config your-config.json \<br />
-                  &nbsp;&nbsp;--dry-run
-                </div>
-              </div>
+            {/* Queue Status */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Queue Status</CardTitle>
+                <CardDescription>
+                  Track the progress of each source
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <KnowledgePipelineQueue 
+                  sources={queueSources}
+                  onRunSingle={handleRunSingleSource}
+                  onRunAll={handleRunAllSources}
+                  onRetry={handleRunSingleSource}
+                  onClear={() => setConfig(prev => ({ ...prev, sources: [] }))}
+                  isProcessing={isProcessingQueue}
+                  overallProgress={config.sources.length > 0 
+                    ? (queueSources.filter(s => s.status === 'success' || s.status === 'failed').length / queueSources.length) * 100
+                    : 0
+                  }
+                />
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Settings Tab */}
+          <TabsContent value="settings" className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Scraping Settings */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Scraping Settings</CardTitle>
+                  <CardDescription>
+                    Configure how content is extracted
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="timeout">Timeout (seconds)</Label>
+                    <Input
+                      id="timeout"
+                      type="number"
+                      value={config.scraping_settings.timeout}
+                      onChange={(e) => setConfig(prev => ({
+                        ...prev,
+                        scraping_settings: {
+                          ...prev.scraping_settings,
+                          timeout: parseInt(e.target.value) || 60,
+                        },
+                      }))}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="max_retries">Max Retries</Label>
+                    <Input
+                      id="max_retries"
+                      type="number"
+                      value={config.scraping_settings.max_retries}
+                      onChange={(e) => setConfig(prev => ({
+                        ...prev,
+                        scraping_settings: {
+                          ...prev.scraping_settings,
+                          max_retries: parseInt(e.target.value) || 3,
+                        },
+                      }))}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="delay">Delay Between Requests (seconds)</Label>
+                    <Input
+                      id="delay"
+                      type="number"
+                      value={config.scraping_settings.delay_between_requests}
+                      onChange={(e) => setConfig(prev => ({
+                        ...prev,
+                        scraping_settings: {
+                          ...prev.scraping_settings,
+                          delay_between_requests: parseInt(e.target.value) || 1,
+                        },
+                      }))}
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Processing Settings */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Processing Settings</CardTitle>
+                  <CardDescription>
+                    Configure content chunking and processing
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="chunk_size">Chunk Size (characters)</Label>
+                    <Input
+                      id="chunk_size"
+                      type="number"
+                      value={config.processing_settings.chunk_size}
+                      onChange={(e) => setConfig(prev => ({
+                        ...prev,
+                        processing_settings: {
+                          ...prev.processing_settings,
+                          chunk_size: parseInt(e.target.value) || 1000,
+                        },
+                      }))}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="chunk_overlap">Chunk Overlap (characters)</Label>
+                    <Input
+                      id="chunk_overlap"
+                      type="number"
+                      value={config.processing_settings.chunk_overlap}
+                      onChange={(e) => setConfig(prev => ({
+                        ...prev,
+                        processing_settings: {
+                          ...prev.processing_settings,
+                          chunk_overlap: parseInt(e.target.value) || 200,
+                        },
+                      }))}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="min_word_count">Minimum Word Count</Label>
+                    <Input
+                      id="min_word_count"
+                      type="number"
+                      value={config.processing_settings.min_word_count}
+                      onChange={(e) => setConfig(prev => ({
+                        ...prev,
+                        processing_settings: {
+                          ...prev.processing_settings,
+                          min_word_count: parseInt(e.target.value) || 100,
+                        },
+                      }))}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="embedding_model">Embedding Model</Label>
+                    <Select
+                      value={config.embedding_model}
+                      onValueChange={(value) => setConfig(prev => ({
+                        ...prev,
+                        embedding_model: value,
+                      }))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="sentence-transformers/all-MiniLM-L6-v2">
+                          MiniLM-L6-v2 (Fast)
+                        </SelectItem>
+                        <SelectItem value="text-embedding-3-small">
+                          OpenAI Small
+                        </SelectItem>
+                        <SelectItem value="text-embedding-3-large">
+                          OpenAI Large
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Upload Settings */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Upload Settings</CardTitle>
+                  <CardDescription>
+                    Configure where processed content is stored
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label>Enable Supabase</Label>
+                      <p className="text-sm text-muted-foreground">
+                        Store documents in Supabase
+                      </p>
+                    </div>
+                    <Switch
+                      checked={config.upload_settings.enable_supabase}
+                      onCheckedChange={(checked) => setConfig(prev => ({
+                        ...prev,
+                        upload_settings: {
+                          ...prev.upload_settings,
+                          enable_supabase: checked,
+                        },
+                      }))}
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label>Enable Pinecone</Label>
+                      <p className="text-sm text-muted-foreground">
+                        Upload vectors to Pinecone
+                      </p>
+                    </div>
+                    <Switch
+                      checked={config.upload_settings.enable_pinecone}
+                      onCheckedChange={(checked) => setConfig(prev => ({
+                        ...prev,
+                        upload_settings: {
+                          ...prev.upload_settings,
+                          enable_pinecone: checked,
+                        },
+                      }))}
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label>Skip Duplicates</Label>
+                      <p className="text-sm text-muted-foreground">
+                        Avoid re-processing existing content
+                      </p>
+                    </div>
+                    <Switch
+                      checked={config.upload_settings.skip_duplicates}
+                      onCheckedChange={(checked) => setConfig(prev => ({
+                        ...prev,
+                        upload_settings: {
+                          ...prev.upload_settings,
+                          skip_duplicates: checked,
+                        },
+                      }))}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="batch_size">Batch Size</Label>
+                    <Input
+                      id="batch_size"
+                      type="number"
+                      value={config.upload_settings.batch_size}
+                      onChange={(e) => setConfig(prev => ({
+                        ...prev,
+                        upload_settings: {
+                          ...prev.upload_settings,
+                          batch_size: parseInt(e.target.value) || 100,
+                        },
+                      }))}
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Output Settings */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Output Settings</CardTitle>
+                  <CardDescription>
+                    Configure file export options
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label>Create Subdirectories</Label>
+                      <p className="text-sm text-muted-foreground">
+                        Organize output by domain
+                      </p>
+                    </div>
+                    <Switch
+                      checked={config.output_settings.create_subdirectories}
+                      onCheckedChange={(checked) => setConfig(prev => ({
+                        ...prev,
+                        output_settings: {
+                          ...prev.output_settings,
+                          create_subdirectories: checked,
+                        },
+                      }))}
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label>Include Metadata</Label>
+                      <p className="text-sm text-muted-foreground">
+                        Save metadata files
+                      </p>
+                    </div>
+                    <Switch
+                      checked={config.output_settings.include_metadata}
+                      onCheckedChange={(checked) => setConfig(prev => ({
+                        ...prev,
+                        output_settings: {
+                          ...prev.output_settings,
+                          include_metadata: checked,
+                        },
+                      }))}
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label>Markdown Format</Label>
+                      <p className="text-sm text-muted-foreground">
+                        Export as Markdown
+                      </p>
+                    </div>
+                    <Switch
+                      checked={config.output_settings.markdown_format}
+                      onCheckedChange={(checked) => setConfig(prev => ({
+                        ...prev,
+                        output_settings: {
+                          ...prev.output_settings,
+                          markdown_format: checked,
+                        },
+                      }))}
+                    />
+                  </div>
+                </CardContent>
+              </Card>
             </div>
-          </CardContent>
-        </Card>
-      )}
-        </TabsContent>
-
-        <TabsContent value="queue" className="space-y-6 mt-6">
-          <KnowledgePipelineQueue
-            sources={queueSources}
-            onRunAll={handleRunAllSources}
-            onRunSingle={handleRunSingleSource}
-            onRetry={handleRetrySource}
-            onClear={handleClearQueue}
-            isProcessing={isProcessingQueue}
-            overallProgress={overallProgress}
-          />
-        </TabsContent>
-
-        <TabsContent value="search" className="space-y-6 mt-6">
-          <KnowledgeSearchImport onAddToQueue={handleAddImportedSources} />
-        </TabsContent>
-      </Tabs>
-    </div>
+          </TabsContent>
+        </Tabs>
+      </div>
+    </TooltipProvider>
   );
 }
-

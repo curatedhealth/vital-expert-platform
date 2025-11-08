@@ -231,13 +231,13 @@ export function ChatHistoryProvider({ children }: { children: React.ReactNode })
 
       const response = await fetch(`/api/chat/sessions?userId=${user.id}&limit=50`);
       if (!response.ok) {
-        throw new Error(`Failed to fetch sessions: ${response.statusText}`);
+        console.warn('⚠️ [ChatHistory] Sessions endpoint returned', response.status, response.statusText);
+        setSessions([]);
+      } else {
+        const { sessions: fetchedSessions } = await response.json();
+        console.log(`✅ [ChatHistory] Loaded ${fetchedSessions?.length || 0} sessions`);
+        setSessions(fetchedSessions || []);
       }
-
-      const { sessions: fetchedSessions } = await response.json();
-      console.log(`✅ [ChatHistory] Loaded ${fetchedSessions?.length || 0} sessions`);
-      
-      setSessions(fetchedSessions || []);
     } catch (error) {
       console.error('❌ [ChatHistory] Error refreshing sessions:', error);
       setSessions([]);

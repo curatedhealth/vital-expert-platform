@@ -101,6 +101,7 @@
     "@types/dagre": "^0.7.53",
     "@types/uuid": "^9.0.7",
     "@upstash/redis": "^1.35.5",
+    "@vital/ai-components": "workspace:*",
     "@vital/sdk": "workspace:*",
     "@vital/ui": "workspace:*",
     "@vital/utils": "workspace:*",

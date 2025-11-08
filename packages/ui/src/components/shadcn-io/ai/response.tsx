@@ -333,7 +333,7 @@ const components: Options['components'] = {
   },
 };
 
-export const __Response = memo(
+export const Response = memo(
   ({
     className,
     options,

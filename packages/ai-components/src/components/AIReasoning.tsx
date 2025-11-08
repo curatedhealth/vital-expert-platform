@@ -23,6 +23,7 @@
 
 'use client';
 
+import { useMemo, type ReactNode } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Brain, Zap, Eye, Search, Lightbulb, Circle } from 'lucide-react';
 import { Badge } from '@vital/ui';
@@ -31,28 +32,20 @@ import {
   Reasoning,
   ReasoningTrigger,
   ReasoningContent,
-} from '@vital/ui/shadcn-io/ai/reasoning';
+} from '@vital/ui/components/shadcn-io/ai/reasoning';
 
-// Import Response component for markdown rendering
-// Note: This should be available from your AI components or UI library
-// Adjust the import path as needed
-import { Response as AIResponse } from '@vital/ui/ai/response';
-
-export interface ReasoningStep {
-  id?: string;
-  type: 'thought' | 'action' | 'observation' | 'search' | 'reflection' | string;
-  content: string;
-  confidence?: number;
-  timestamp?: string;
-  metadata?: Record<string, any>;
-  node?: string;
-}
+import type { ModelReasoningPart, ReasoningStep } from '../types';
 
 export interface AIReasoningProps {
   /**
    * Array of reasoning steps from LangGraph workflow
    */
-  reasoningSteps: ReasoningStep[];
+  reasoningSteps?: ReasoningStep[];
+  
+  /**
+   * Optional reasoning parts streamed from reasoning-capable models (Vercel AI SDK)
+   */
+  modelReasoningParts?: ModelReasoningPart[];
   
   /**
    * Whether AI is currently streaming
@@ -88,47 +81,47 @@ export interface AIReasoningProps {
    * Callback when open state changes
    */
   onOpenChange?: (open: boolean) => void;
+  
+  /**
+   * Additional sections rendered under the reasoning steps (e.g., workflow progress, metrics)
+   */
+  supplementalContent?: ReactNode;
 }
 
-/**
- * Get the appropriate icon for a reasoning step type
- */
-function getReasoningIcon(type: string) {
-  switch (type) {
-    case 'thought':
-      return <Brain className="h-4 w-4 text-purple-600" />;
-    case 'action':
-      return <Zap className="h-4 w-4 text-blue-600" />;
-    case 'observation':
-      return <Eye className="h-4 w-4 text-green-600" />;
-    case 'search':
-      return <Search className="h-4 w-4 text-orange-600" />;
-    case 'reflection':
-      return <Lightbulb className="h-4 w-4 text-yellow-600" />;
-    default:
-      return <Circle className="h-4 w-4 text-gray-400" />;
-  }
-}
+const reasoningThemes: Record<string, { icon: JSX.Element; gradient: string; label: string }> = {
+  thought: {
+    icon: <Brain className="h-4 w-4 text-purple-600" />,
+    gradient: 'from-purple-400/80 to-purple-100/80',
+    label: 'text-purple-700 dark:text-purple-200',
+  },
+  action: {
+    icon: <Zap className="h-4 w-4 text-blue-500" />,
+    gradient: 'from-blue-400/80 to-blue-100/80',
+    label: 'text-blue-700 dark:text-blue-200',
+  },
+  observation: {
+    icon: <Eye className="h-4 w-4 text-emerald-600" />,
+    gradient: 'from-emerald-500/80 to-emerald-200/80',
+    label: 'text-emerald-700 dark:text-emerald-200',
+  },
+  search: {
+    icon: <Search className="h-4 w-4 text-orange-500" />,
+    gradient: 'from-orange-400/70 to-orange-100/70',
+    label: 'text-orange-700 dark:text-orange-200',
+  },
+  reflection: {
+    icon: <Lightbulb className="h-4 w-4 text-amber-500" />,
+    gradient: 'from-amber-400/70 to-amber-100/70',
+    label: 'text-amber-700 dark:text-amber-200',
+  },
+  default: {
+    icon: <Circle className="h-4 w-4 text-gray-400" />,
+    gradient: 'from-gray-300/70 to-gray-100/70',
+    label: 'text-gray-700 dark:text-gray-200',
+  },
+};
 
-/**
- * Get the appropriate background and border classes for a reasoning step type
- */
-function getReasoningStyles(type: string): string {
-  switch (type) {
-    case 'thought':
-      return "bg-purple-50/50 border-purple-200 dark:bg-purple-900/20 dark:border-purple-800";
-    case 'action':
-      return "bg-blue-50/50 border-blue-200 dark:bg-blue-900/20 dark:border-blue-800";
-    case 'observation':
-      return "bg-green-50/50 border-green-200 dark:bg-green-900/20 dark:border-green-800";
-    case 'search':
-      return "bg-orange-50/50 border-orange-200 dark:bg-orange-900/20 dark:border-orange-800";
-    case 'reflection':
-      return "bg-yellow-50/50 border-yellow-200 dark:bg-yellow-900/20 dark:border-yellow-800";
-    default:
-      return "bg-gray-50/50 border-gray-200 dark:bg-gray-800/50 dark:border-gray-700";
-  }
-}
+const getReasoningVisuals = (type: string) => reasoningThemes[type] ?? reasoningThemes.default;
 
 /**
  * AIReasoning Component
@@ -136,7 +129,8 @@ function getReasoningStyles(type: string): string {
  * Displays AI reasoning steps with progressive disclosure and professional styling.
  */
 export function AIReasoning({
-  reasoningSteps,
+  reasoningSteps = [],
+  modelReasoningParts,
   isStreaming = false,
   defaultOpen = true,
   keepOpen = true,
@@ -144,9 +138,21 @@ export function AIReasoning({
   className,
   open,
   onOpenChange,
+  supplementalContent,
 }: AIReasoningProps) {
-  // Don't render if no reasoning steps
-  if (!reasoningSteps || reasoningSteps.length === 0) {
+  const normalizedSteps = useMemo<ReasoningStep[]>(() => {
+    const baseSteps = Array.isArray(reasoningSteps) ? reasoningSteps : [];
+    const modelSteps =
+      modelReasoningParts?.map((part, idx) => ({
+        id: part.id || `model-reasoning-${idx}`,
+        type: part.type || 'thought',
+        content: part.text,
+        confidence: part.confidence,
+      })) ?? [];
+    return [...baseSteps, ...modelSteps];
+  }, [reasoningSteps, modelReasoningParts]);
+
+  if (!normalizedSteps.length && !supplementalContent) {
     return null;
   }
 
@@ -161,49 +167,72 @@ export function AIReasoning({
     >
       <ReasoningTrigger title={title} />
       <ReasoningContent>
-        <div className="space-y-2">
-          <AnimatePresence mode="popLayout">
-            {reasoningSteps.map((step, idx) => (
-              <motion.div
-                key={step.id || `step-${idx}`}
-                initial={{ opacity: 0, y: -10, scale: 0.95 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                transition={{
-                  duration: 0.3,
-                  delay: idx * 0.05, // Stagger by 50ms per step
-                }}
-                className={cn(
-                  "flex items-start gap-3 rounded-lg p-3 border",
-                  getReasoningStyles(step.type)
-                )}
-              >
-                <div className="mt-0.5">
-                  {getReasoningIcon(step.type)}
-                </div>
-                <div className="flex-1 min-w-0">
-                  {step.type && (
-                    <div className="text-xs font-semibold text-gray-900 dark:text-gray-100 mb-1.5 uppercase tracking-wide">
-                      {step.type}
+        {normalizedSteps.length > 0 && (
+          <div className="space-y-2">
+            <AnimatePresence mode="popLayout">
+              {normalizedSteps.map((step, idx) => {
+                const visuals = getReasoningVisuals(step.type || '');
+                const isLast = idx === normalizedSteps.length - 1;
+                return (
+                  <motion.div
+                    key={step.id || `step-${idx}`}
+                    initial={{ opacity: 0, x: -12 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: 12 }}
+                    transition={{ duration: 0.25, delay: idx * 0.04 }}
+                    className="flex items-start gap-4"
+                  >
+                    <div className="flex flex-col items-center">
+                      <span
+                        className={cn(
+                          'w-1 rounded-full block',
+                          'bg-gradient-to-b',
+                          visuals.gradient
+                        )}
+                        style={{ minHeight: '32px' }}
+                      />
+                      {!isLast && (
+                        <span className="w-px flex-1 bg-gradient-to-b from-transparent via-gray-200/70 to-transparent dark:via-gray-700/60" />
+                      )}
                     </div>
-                  )}
-                  <AIResponse className="text-sm text-gray-700 dark:text-gray-200 [&>p]:my-0 [&>p]:leading-relaxed">
-                    {step.content}
-                  </AIResponse>
-                  {step.confidence !== undefined && (
-                    <Badge variant="secondary" className="mt-2 text-[10px] px-2 py-0.5">
-                      {Math.round(step.confidence * 100)}% confident
-                    </Badge>
-                  )}
-                </div>
-              </motion.div>
-            ))}
-          </AnimatePresence>
-        </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1.5">
+                        <span>{visuals.icon}</span>
+                        {step.type && (
+                          <span
+                            className={cn(
+                              'text-xs font-semibold tracking-wide uppercase',
+                              visuals.label
+                            )}
+                          >
+                            {step.type}
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-sm text-slate-700 dark:text-slate-200 leading-relaxed">
+                        {step.content}
+                      </p>
+                      {step.confidence !== undefined && (
+                        <Badge variant="secondary" className="mt-1 text-[10px] px-2 py-0.5">
+                          {Math.round(step.confidence * 100)}% confident
+                        </Badge>
+                      )}
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </AnimatePresence>
+          </div>
+        )}
+
+        {supplementalContent && (
+          <div className={cn(normalizedSteps.length > 0 && 'mt-3')}>
+            {supplementalContent}
+          </div>
+        )}
       </ReasoningContent>
     </Reasoning>
   );
 }
 
 export default AIReasoning;
-

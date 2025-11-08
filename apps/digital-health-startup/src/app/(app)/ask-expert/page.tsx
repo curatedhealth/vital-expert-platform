@@ -79,6 +79,10 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
+// ✅ NEW: Tool Orchestration Components
+import { ToolConfirmation, useToolConfirmation, type ToolSuggestion } from '@/features/ask-expert/components/ToolConfirmation';
+import { ToolExecutionStatusComponent, useToolExecutionStatus, type ExecutingTool, type ToolExecutionStatus } from '@/features/ask-expert/components/ToolExecutionStatus';
+import { ToolResults, type ToolResult } from '@/features/ask-expert/components/ToolResults';
 
 // ============================================================================
 // TYPES
@@ -473,6 +477,15 @@ function AskExpertPageContent() {
   const [streamingMetrics, setStreamingMetrics] = useState<any>(null);
   const [isStreaming, setIsStreaming] = useState(false);
 
+  // ✅ NEW: Tool Orchestration State
+  const [toolResults, setToolResults] = useState<ToolResult[]>([]);
+  const [pendingToolConfirmation, setPendingToolConfirmation] = useState<{
+    tools: ToolSuggestion[];
+    message?: string;
+    reasoning?: string;
+  } | null>(null);
+  const toolConfirmation = useToolConfirmation();
+  const toolExecutionStatus = useToolExecutionStatus();
 
   const formatReasoningTimestamp = useCallback((value: number | null) => {
     if (!value) {
@@ -1149,6 +1162,10 @@ function AskExpertPageContent() {
     setReasoningSteps([]);
     setStreamingMetrics(null);
     
+    // ✅ NEW: Reset tool state
+    setToolResults([]);
+    toolExecutionStatus.completeExecution();
+    
     // Reset streaming message
     setStreamingMessage('');
 
@@ -1345,7 +1362,128 @@ function AskExpertPageContent() {
                 switch (stream_mode) {
                   case 'custom': {
                     // Custom events from get_stream_writer()
-                    if (chunk.type === 'langgraph_reasoning') {
+                    
+                    // ✅ NEW: Handle tool suggestion event
+                    if (chunk.type === 'tool_suggestion') {
+                      console.log('🔧 [Tool Suggestion] Received:', chunk);
+                      
+                      const toolSuggestions: ToolSuggestion[] = (chunk.suggestions || []).map((tool: any) => ({
+                        tool_name: tool.tool_name || tool.name,
+                        display_name: tool.display_name || tool.tool_name,
+                        description: tool.description,
+                        confidence: tool.confidence || 0,
+                        reasoning: tool.reasoning || '',
+                        parameters: tool.parameters || {},
+                        cost_tier: tool.cost_tier,
+                        estimated_cost: tool.estimated_cost,
+                        estimated_duration: tool.estimated_duration_seconds || tool.estimated_duration,
+                      }));
+                      
+                      if (chunk.needs_confirmation && toolSuggestions.length > 0) {
+                        // Show confirmation modal
+                        console.log('🔧 [Tool Confirmation] Showing modal for', toolSuggestions.length, 'tools');
+                        toolConfirmation.showConfirmation(toolSuggestions, {
+                          message: chunk.message || 'The following tools require your approval before execution.',
+                          reasoning: chunk.reasoning,
+                          onApprove: async () => {
+                            console.log('✅ [Tool Confirmation] User approved');
+                            // Send approval to backend
+                            try {
+                              await fetch(`${process.env.NEXT_PUBLIC_PYTHON_AI_ENGINE_URL || 'http://localhost:8080'}/api/tool/confirm`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ 
+                                  approved: true,
+                                  conversation_id: activeConversationId 
+                                }),
+                              });
+                            } catch (error) {
+                              console.error('❌ [Tool Confirmation] Failed to send approval:', error);
+                            }
+                          },
+                          onDecline: async () => {
+                            console.log('❌ [Tool Confirmation] User declined');
+                            // Send decline to backend
+                            try {
+                              await fetch(`${process.env.NEXT_PUBLIC_PYTHON_AI_ENGINE_URL || 'http://localhost:8080'}/api/tool/confirm', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ 
+                                  approved: false,
+                                  conversation_id: activeConversationId 
+                                }),
+                              });
+                            } catch (error) {
+                              console.error('❌ [Tool Confirmation] Failed to send decline:', error);
+                            }
+                          },
+                        });
+                      }
+                    }
+                    // ✅ NEW: Handle tool execution start event
+                    else if (chunk.type === 'tool_execution_start') {
+                      console.log('🔧 [Tool Execution] Starting:', chunk);
+                      
+                      const executingTools: ExecutingTool[] = (chunk.tools || []).map((tool: any) => ({
+                        tool_name: tool.tool_name || tool.name,
+                        display_name: tool.display_name || tool.tool_name,
+                        status: 'running' as ToolExecutionStatus,
+                        progress: 0,
+                        startedAt: new Date().toISOString(),
+                        estimatedDuration: tool.estimated_duration_seconds || tool.estimated_duration,
+                      }));
+                      
+                      toolExecutionStatus.startExecution(executingTools.map(t => ({
+                        tool_name: t.tool_name,
+                        display_name: t.display_name,
+                        estimatedDuration: t.estimatedDuration,
+                      })));
+                    }
+                    // ✅ NEW: Handle tool execution progress event
+                    else if (chunk.type === 'tool_execution_progress') {
+                      console.log('🔧 [Tool Execution] Progress:', chunk);
+                      
+                      toolExecutionStatus.updateToolStatus(chunk.tool_name, {
+                        status: 'running' as ToolExecutionStatus,
+                        progress: chunk.progress || 0,
+                      });
+                    }
+                    // ✅ NEW: Handle tool execution result event
+                    else if (chunk.type === 'tool_execution_result') {
+                      console.log('🔧 [Tool Execution] Result:', chunk);
+                      
+                      // Update execution status
+                      toolExecutionStatus.updateToolStatus(chunk.tool_name, {
+                        status: chunk.status === 'success' ? 'success' : 'error' as ToolExecutionStatus,
+                        progress: 100,
+                        completedAt: new Date().toISOString(),
+                        error: chunk.error,
+                      });
+                      
+                      // Store result for display
+                      const newResult: ToolResult = {
+                        tool_name: chunk.tool_name,
+                        display_name: chunk.display_name || chunk.tool_name,
+                        status: chunk.status,
+                        result: chunk.result,
+                        error: chunk.error,
+                        duration_seconds: chunk.duration_seconds || 0,
+                        cost: chunk.cost || 0,
+                      };
+                      
+                      setToolResults(prev => [...prev, newResult]);
+                    }
+                    // ✅ NEW: Handle tool execution complete event
+                    else if (chunk.type === 'tool_execution_complete') {
+                      console.log('🔧 [Tool Execution] All tools complete');
+                      
+                      // Keep results visible, just mark execution as done
+                      setTimeout(() => {
+                        toolExecutionStatus.completeExecution();
+                      }, 2000); // Show completion for 2 seconds
+                    }
+                    // Existing reasoning event handler
+                    else if (chunk.type === 'langgraph_reasoning') {
                       const reasoningStep = chunk.step || {};
                       if (reasoningStep.content) {
                         reasoningStepsBuffer = [...reasoningStepsBuffer, reasoningStep];
@@ -3046,6 +3184,27 @@ function AskExpertPageContent() {
                     userEmail={user?.email}
                   />
                 )}
+                
+                {/* ✅ NEW: Tool Execution Status (shown during tool execution) */}
+                {toolExecutionStatus.tools.length > 0 && (
+                  <div className="mb-4">
+                    <ToolExecutionStatusComponent
+                      tools={toolExecutionStatus.tools}
+                      showProgress={true}
+                    />
+                  </div>
+                )}
+                
+                {/* ✅ NEW: Tool Results (shown after tools complete) */}
+                {toolResults.length > 0 && (
+                  <div className="mb-4">
+                    <ToolResults
+                      results={toolResults}
+                      showCost={true}
+                      defaultExpanded={false}
+                    />
+                  </div>
+                )}
                       
               </>
             )}
@@ -3369,6 +3528,16 @@ function AskExpertPageContent() {
               setShowMode4Helper(false);
             }, 200);
           }}
+        />
+        
+        {/* ✅ NEW: Tool Confirmation Modal */}
+        <ToolConfirmation
+          open={toolConfirmation.isOpen}
+          tools={toolConfirmation.tools}
+          message={toolConfirmation.message}
+          reasoning={toolConfirmation.reasoning}
+          onApprove={toolConfirmation.handleApprove}
+          onDecline={toolConfirmation.handleDecline}
         />
     </div>
   );

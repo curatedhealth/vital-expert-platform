@@ -41,17 +41,19 @@ class UnifiedRAGService:
     - Comprehensive error handling and logging
     """
 
-    def __init__(self, supabase_client: SupabaseClient, cache_manager: Optional[CacheManager] = None):
+    def __init__(self, supabase_client: SupabaseClient, cache_manager: Optional[CacheManager] = None, embedding_model: Optional[str] = None):
         """
         Initialize the Unified RAG Service.
         
         Args:
             supabase_client: Supabase client for database operations
             cache_manager: Optional cache manager for Redis caching
+            embedding_model: Optional embedding model name (e.g., "sentence-transformers/all-MiniLM-L6-v2" or "text-embedding-3-large")
         """
         self.settings = get_settings()
         self.supabase = supabase_client
         self.cache_manager = cache_manager
+        self.requested_embedding_model = embedding_model  # Store the requested model
         self.embeddings: Optional[OpenAIEmbeddings] = None
         self.embedding_service = None
         self.pinecone: Optional[Pinecone] = None
@@ -115,22 +117,51 @@ class UnifiedRAGService:
         """Initialize embedding service (OpenAI or HuggingFace)."""
         logger.info("🔧 [INIT] Step 1: Initializing embeddings...")
         
-        # Use embedding service factory to auto-detect provider
-        self.embedding_service = EmbeddingServiceFactory.create_from_config()
-        logger.info("✅ [INIT] Embedding service factory created")
+        # Determine which embedding model to use
+        # Priority: requested_embedding_model > settings config
+        embedding_model = self.requested_embedding_model
         
-        # For backward compatibility with OpenAI
-        if self.settings.embedding_provider.lower() == 'openai' and self.settings.openai_api_key:
-            self.embeddings = OpenAIEmbeddings(
-                openai_api_key=self.settings.openai_api_key,
-                model=self.settings.openai_embedding_model,
-                chunk_size=1000
-            )
-            logger.info("✅ [INIT] OpenAI embeddings configured", 
-                       model=self.settings.openai_embedding_model)
+        if embedding_model:
+            # Use requested model - detect provider from model name
+            if embedding_model.startswith('text-embedding') or embedding_model.startswith('ada'):
+                # OpenAI model
+                logger.info(f"🔵 Using requested OpenAI embedding model: {embedding_model}")
+                self.embedding_service = EmbeddingServiceFactory.create_embedding_service(
+                    provider='openai',
+                    model_name=embedding_model
+                )
+                self.embeddings = OpenAIEmbeddings(
+                    openai_api_key=self.settings.openai_api_key,
+                    model=embedding_model,
+                    chunk_size=1000
+                )
+                logger.info(f"✅ [INIT] OpenAI embeddings configured model={embedding_model}")
+            else:
+                # HuggingFace model
+                logger.info(f"🤗 Using requested HuggingFace embedding model: {embedding_model}")
+                self.embedding_service = EmbeddingServiceFactory.create_embedding_service(
+                    provider='huggingface',
+                    model_name=embedding_model
+                )
+                self.embeddings = None
+                logger.info(f"✅ [INIT] HuggingFace embeddings configured model={embedding_model}")
         else:
-            self.embeddings = None
-            logger.info("✅ [INIT] Using HuggingFace embeddings")
+            # Fallback to config-based detection
+            self.embedding_service = EmbeddingServiceFactory.create_from_config()
+            logger.info("✅ [INIT] Embedding service factory created from config")
+            
+            # For backward compatibility with OpenAI
+            if self.settings.embedding_provider.lower() == 'openai' and self.settings.openai_api_key:
+                self.embeddings = OpenAIEmbeddings(
+                    openai_api_key=self.settings.openai_api_key,
+                    model=self.settings.openai_embedding_model,
+                    chunk_size=1000
+                )
+                logger.info("✅ [INIT] OpenAI embeddings configured", 
+                           model=self.settings.openai_embedding_model)
+            else:
+                self.embeddings = None
+                logger.info("✅ [INIT] Using HuggingFace embeddings")
 
     async def _initialize_pinecone(self):
         """Initialize Pinecone connection and indexes."""

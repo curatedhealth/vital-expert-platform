@@ -175,11 +175,12 @@ export default function KnowledgeSearchImport({ onAddToQueue }: KnowledgeSearchI
     const selectedItems = allResults.filter((r) => selectedResults.has(r.source_id));
 
     const pipelineSources = selectedItems.map((result) => ({
-      url: result.pdf_link || result.url,
+      url: result.url, // Use main URL (HTML for PMC, PDF for arXiv)
       description: result.title,
       firm: result.firm,
       domain: 'imported',
       category: result.source.toLowerCase(),
+      source_name: result.source_name || result.source, // Human-readable source name
       tags: [result.source, result.journal || result.firm].filter(Boolean),
       priority: 'medium',
       

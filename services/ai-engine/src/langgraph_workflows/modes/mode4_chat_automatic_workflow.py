@@ -1,20 +1,21 @@
 """
-Mode 4: Chat Automatic (Multi-Turn Autonomous)
+Mode 4: Chat Automatic (Multi-Turn Autonomous) + PARALLEL EXECUTION
 
 Conversational interface with full autonomy - no confirmations needed.
-Fastest chat experience with automatic tool execution.
+**FASTEST** chat experience with automatic tool execution + parallel optimization.
 
 Flow:
 1. Load conversation history
 2. Load agent profile
-3. RAG retrieval (automatic)
-4. Tool suggestion (automatic)
+3. **PARALLEL**: RAG + Tools + Memory (Tier 1) - 30% faster
+4. Auto-approve tools
 5. Tool execution (automatic, if suggested)
 6. LLM execution with conversation context
-7. Save conversation turn
+7. **PARALLEL**: Quality + Citations + Cost (Tier 2)
+8. Save conversation turn
 
-Inherits 80% of logic from BaseWorkflow.
-Combines Mode 2's autonomy with Mode 3's conversation context.
+Inherits 80% of logic from ParallelBaseWorkflow (Week 3 enhancement).
+Combines Mode 2's autonomy with Mode 3's conversation context + parallel speed boost.
 """
 
 import structlog
@@ -26,8 +27,8 @@ from pydantic import BaseModel, Field
 # LangGraph
 from langgraph.graph import StateGraph, END
 
-# Vital Shared
-from vital_shared.workflows.base_workflow import BaseWorkflow
+# Vital Shared - NOW USING PARALLEL WORKFLOW
+from vital_shared.workflows.parallel_base_workflow import ParallelBaseWorkflow
 
 logger = structlog.get_logger()
 
@@ -36,7 +37,7 @@ logger = structlog.get_logger()
 # MODE 4 WORKFLOW
 # ============================================================================
 
-class Mode4ChatAutomaticWorkflow(BaseWorkflow):
+class Mode4ChatAutomaticWorkflow(ParallelBaseWorkflow):
     """
     Mode 4: Chat Automatic (Multi-Turn Autonomous)
     

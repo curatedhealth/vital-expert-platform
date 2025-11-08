@@ -9,9 +9,6 @@ pytest-mock>=3.11.1
 # Async testing
 pytest-timeout>=2.1.0
 
-# Mocking
-unittest-mock>=1.5.0
-
 # Coverage
 coverage[toml]>=7.3.0
 
@@ -19,6 +16,6 @@ coverage[toml]>=7.3.0
 faker>=19.2.0
 factory-boy>=3.2.1
 
-# Async utilities
-asynctest>=0.13.0; python_version < '3.8'
+# Note: unittest.mock is built into Python 3.3+ standard library
+# Note: asynctest not needed for Python 3.8+ (use unittest.mock with AsyncMock)
 

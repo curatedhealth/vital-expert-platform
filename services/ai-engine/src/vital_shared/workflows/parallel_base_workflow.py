@@ -21,14 +21,14 @@ from datetime import datetime
 
 from vital_shared.workflows.base_workflow import BaseWorkflow
 from vital_shared.models.workflow_state import BaseWorkflowState
-from vital_shared.utils.logging import get_logger
+import structlog
 from vital_shared.monitoring.metrics import (
     track_workflow_node,
     update_throughput_metrics,
     track_component_performance,
 )
 
-logger = get_logger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class ParallelBaseWorkflow(BaseWorkflow):

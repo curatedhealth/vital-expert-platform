@@ -19,7 +19,8 @@ import time
 from typing import Dict, List, Tuple, Any, Optional
 from datetime import datetime
 
-from vital_shared.workflows.base_workflow import BaseWorkflow, WorkflowState
+from vital_shared.workflows.base_workflow import BaseWorkflow
+from vital_shared.models.workflow_state import BaseWorkflowState
 from vital_shared.utils.logging import get_logger
 from vital_shared.monitoring.metrics import (
     track_workflow_node,
@@ -76,7 +77,7 @@ class ParallelBaseWorkflow(BaseWorkflow):
     # TIER 1: PARALLEL RETRIEVAL (RAG + Tools + Memory)
     # =========================================================================
     
-    async def parallel_retrieval_node(self, state: WorkflowState) -> WorkflowState:
+    async def parallel_retrieval_node(self, state: BaseWorkflowState) -> BaseWorkflowState:
         """
         Execute RAG, Tool, and Memory retrieval in parallel.
         
@@ -165,7 +166,7 @@ class ParallelBaseWorkflow(BaseWorkflow):
                 else:
                     # Task succeeded - merge result into state
                     successful_tasks += 1
-                    state = WorkflowState(**{**state.dict(), **result})
+                    state = {**state, **result}
                     
                     # Track task success
                     track_workflow_node(f"parallel_{task_name}", "completed", state.tenant_id)
@@ -222,7 +223,7 @@ class ParallelBaseWorkflow(BaseWorkflow):
     # TIER 2: PARALLEL POST-GENERATION (Quality + Citations + Cost)
     # =========================================================================
     
-    async def parallel_post_generation_node(self, state: WorkflowState) -> WorkflowState:
+    async def parallel_post_generation_node(self, state: BaseWorkflowState) -> BaseWorkflowState:
         """
         Execute Quality Scoring, Citation Extraction, and Cost Tracking in parallel.
         
@@ -285,7 +286,7 @@ class ParallelBaseWorkflow(BaseWorkflow):
                     track_workflow_node(f"parallel_{task_name}", "error", state.tenant_id)
                 else:
                     successful_tasks += 1
-                    state = WorkflowState(**{**state.dict(), **result})
+                    state = {**state, **result}
                     track_workflow_node(f"parallel_{task_name}", "completed", state.tenant_id)
             
             duration_ms = (time.time() - start_time) * 1000
@@ -326,7 +327,7 @@ class ParallelBaseWorkflow(BaseWorkflow):
     # ISOLATED TASK METHODS (Tier 1)
     # =========================================================================
     
-    async def _rag_retrieval_task(self, state: WorkflowState) -> Dict[str, Any]:
+    async def _rag_retrieval_task(self, state: BaseWorkflowState) -> Dict[str, Any]:
         """
         Isolated RAG retrieval task for parallel execution.
         
@@ -351,7 +352,7 @@ class ParallelBaseWorkflow(BaseWorkflow):
             logger.error("rag_task_error", error=str(e), error_type=type(e).__name__)
             raise
     
-    async def _tool_suggestion_task(self, state: WorkflowState) -> Dict[str, Any]:
+    async def _tool_suggestion_task(self, state: BaseWorkflowState) -> Dict[str, Any]:
         """
         Isolated tool suggestion task for parallel execution.
         
@@ -378,7 +379,7 @@ class ParallelBaseWorkflow(BaseWorkflow):
             logger.error("tool_task_error", error=str(e), error_type=type(e).__name__)
             raise
     
-    async def _memory_retrieval_task(self, state: WorkflowState) -> Dict[str, Any]:
+    async def _memory_retrieval_task(self, state: BaseWorkflowState) -> Dict[str, Any]:
         """
         Isolated memory retrieval task for parallel execution.
         
@@ -406,7 +407,7 @@ class ParallelBaseWorkflow(BaseWorkflow):
     # ISOLATED TASK METHODS (Tier 2)
     # =========================================================================
     
-    async def _quality_scoring_task(self, state: WorkflowState) -> Dict[str, Any]:
+    async def _quality_scoring_task(self, state: BaseWorkflowState) -> Dict[str, Any]:
         """
         Isolated quality scoring task for parallel execution.
         
@@ -437,7 +438,7 @@ class ParallelBaseWorkflow(BaseWorkflow):
             logger.error("quality_task_error", error=str(e))
             raise
     
-    async def _citation_extraction_task(self, state: WorkflowState) -> Dict[str, Any]:
+    async def _citation_extraction_task(self, state: BaseWorkflowState) -> Dict[str, Any]:
         """
         Isolated citation extraction task for parallel execution.
         
@@ -461,7 +462,7 @@ class ParallelBaseWorkflow(BaseWorkflow):
             logger.error("citation_task_error", error=str(e))
             raise
     
-    async def _cost_tracking_task(self, state: WorkflowState) -> Dict[str, Any]:
+    async def _cost_tracking_task(self, state: BaseWorkflowState) -> Dict[str, Any]:
         """
         Isolated cost tracking task for parallel execution.
         

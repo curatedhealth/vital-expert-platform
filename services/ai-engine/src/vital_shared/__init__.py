@@ -68,6 +68,12 @@ from vital_shared.registry.service_registry import ServiceRegistry, initialize_s
 # Export base workflow
 from vital_shared.workflows.base_workflow import BaseWorkflow
 
+# Export observability
+from vital_shared.observability import (
+    LangfuseTracer,
+    get_langfuse_tracer,
+)
+
 # Export monitoring
 from vital_shared.monitoring import (
     track_workflow_execution,
@@ -206,6 +212,10 @@ __all__ = [
     
     # Workflows
     "BaseWorkflow",
+    
+    # Observability
+    "LangfuseTracer",
+    "get_langfuse_tracer",
     
     # Monitoring
     "track_workflow_execution",

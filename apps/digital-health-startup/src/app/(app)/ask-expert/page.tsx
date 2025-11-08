@@ -1616,15 +1616,15 @@ function AskExpertPageContent() {
                       }
                       if (Array.isArray(meta.branches) && meta.branches.length > 0) {
                         branches = meta.branches.map((branch: any, idx: number) => ({
-                          id: branch.id || `branch-${idx + 1}`,
+                          id: branch.id || 'branch-' + (idx + 1),
                           content: typeof branch.content === 'string' ? branch.content : '',
                           confidence: typeof branch.confidence === 'number' ? branch.confidence : 0,
                           citations: Array.isArray(branch.citations) ? branch.citations : [],
                           sources: Array.isArray(branch.sources)
                             ? branch.sources.map((src: any, sourceIdx: number) => ({
-                                id: src.id || `branch-${idx + 1}-source-${sourceIdx + 1}`,
+                                id: src.id || 'branch-' + (idx + 1) + '-source-' + (sourceIdx + 1),
                                 url: src.url || src.link || '#',
-                                title: src.title || src.name || `Source ${sourceIdx + 1}`,
+                                title: src.title || src.name || 'Source ' + (sourceIdx + 1),
                                 excerpt: src.excerpt || src.summary || src.description,
                                 similarity: typeof src.similarity === 'number' ? src.similarity : undefined,
                                 domain: src.domain,
@@ -1967,19 +1967,19 @@ function AskExpertPageContent() {
                         // ✅ Handle reasoning from API response
                         if (Array.isArray(meta.reasoning) && meta.reasoning.length > 0) {
                           reasoning = normalizeReasoningArray(meta.reasoning);
-                          console.log(`✅ [Mode1 Final] Extracted ${reasoning.length} reasoning steps from meta`);
+                          console.log('[Mode1 Final] Extracted ' + reasoning.length + ' reasoning steps from meta');
                         }
                         if (Array.isArray(meta.branches) && meta.branches.length > 0) {
                           branches = meta.branches.map((branch: any, idx: number) => ({
-                            id: branch.id || `branch-${idx + 1}`,
+                            id: branch.id || 'branch-' + (idx + 1),
                             content: typeof branch.content === 'string' ? branch.content : '',
                             confidence: typeof branch.confidence === 'number' ? branch.confidence : 0,
                             citations: Array.isArray(branch.citations) ? branch.citations : [],
                             sources: Array.isArray(branch.sources)
                               ? branch.sources.map((src: any, sourceIdx: number) => ({
-                                  id: src.id || `branch-${idx + 1}-source-${sourceIdx + 1}`,
+                                  id: src.id || 'branch-' + (idx + 1) + '-source-' + (sourceIdx + 1),
                                   url: src.url || src.link || '#',
-                                  title: src.title || src.name || `Source ${sourceIdx + 1}`,
+                                  title: src.title || src.name || 'Source ' + (sourceIdx + 1),
                                   excerpt: src.excerpt || src.summary || src.description,
                                   similarity: typeof src.similarity === 'number' ? src.similarity : undefined,
                                   domain: src.domain,

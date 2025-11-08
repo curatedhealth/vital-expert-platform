@@ -959,7 +959,7 @@ function AskExpertPageContent() {
       // Create first conversation if none exist
       conversationsInitialized.current = true; // Set early to prevent re-running
       const newConv: Conversation = {
-        id: `temp_${Date.now()}`,
+        id: 'temp_' + Date.now().toString(),
         title: 'New Conversation',
         messages: [],
         createdAt: Date.now(),

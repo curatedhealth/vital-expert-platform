@@ -130,9 +130,9 @@ const normalizeSourceRecord = (source: any, idx: number): Source => {
 
   return {
     number: Number.isFinite(parsedNumber) ? parsedNumber : idx + 1,
-    id: source?.id || metadata.id || `source-${idx + 1}`,
+    id: source?.id || metadata.id || 'source-' + (idx + 1),
     url: source?.url || source?.link || metadata.url || '#',
-    title: source?.title || metadata.title || `Source ${idx + 1}`,
+    title: source?.title || metadata.title || 'Source ' + (idx + 1),
     description: source?.description || source?.summary || metadata.description,
     excerpt: source?.excerpt || metadata.excerpt || source?.quote,
     similarity:
@@ -1814,9 +1814,9 @@ function AskExpertPageContent() {
                       case 'rag_sources': {
                         const incomingSources = Array.isArray(meta.sources) ? meta.sources : [];
                         sources = incomingSources.map((source: any, idx: number) => ({
-                          id: source.id || `source-${idx + 1}`,
+                          id: source.id || 'source-' + (idx + 1),
                           url: source.url || '#',
-                          title: source.title || `Source ${idx + 1}`,
+                          title: source.title || 'Source ' + (idx + 1),
                           excerpt: source.excerpt || source.description,
                           similarity: typeof source.similarity === 'number' ? source.similarity : undefined,
                           domain: source.domain,
@@ -2343,7 +2343,7 @@ function AskExpertPageContent() {
                   : Array.isArray(streamingMeta?.citations)
                     ? streamingMeta.citations
                     : [],
-                sources: finalSources.map((src, idx) => ({ ...src, id: src.id || `fallback-source-${idx + 1}` })),  // ✅ Use finalSources
+                sources: finalSources.map((src, idx) => ({ ...src, id: src.id || 'fallback-source-' + (idx + 1) })),  // ✅ Use finalSources
                 createdAt: new Date(),
                 reasoning: finalReasoning.length > 0 ? finalReasoning.join('\n') : undefined,  // ✅ Use finalReasoning
               },

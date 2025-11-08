@@ -123,6 +123,16 @@ from vital_shared.monitoring.timescale_integration import (
     ServiceProvider,
 )
 
+# Cost Attribution
+from vital_shared.monitoring.cost_attribution import (
+    CostAttribution,
+    get_cost_attribution,
+    ModelPricing,
+    CostBreakdown,
+    TenantCostSummary,
+    CostOptimizationRecommendation,
+)
+
 __all__ = [
     # Workflow
     "track_workflow_execution",
@@ -222,6 +232,14 @@ __all__ = [
     "EventCategory",
     "CostType",
     "ServiceProvider",
+    
+    # Cost Attribution
+    "CostAttribution",
+    "get_cost_attribution",
+    "ModelPricing",
+    "CostBreakdown",
+    "TenantCostSummary",
+    "CostOptimizationRecommendation",
 ]
 
 

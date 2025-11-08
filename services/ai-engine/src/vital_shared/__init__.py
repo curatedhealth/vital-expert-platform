@@ -148,6 +148,13 @@ from vital_shared.monitoring import (
     EventCategory,
     CostType,
     ServiceProvider,
+    # Cost Attribution
+    CostAttribution,
+    get_cost_attribution,
+    ModelPricing,
+    CostBreakdown,
+    TenantCostSummary,
+    CostOptimizationRecommendation,
 )
 
 __all__ = [
@@ -290,5 +297,13 @@ __all__ = [
     "EventCategory",
     "CostType",
     "ServiceProvider",
+    
+    # Cost Attribution
+    "CostAttribution",
+    "get_cost_attribution",
+    "ModelPricing",
+    "CostBreakdown",
+    "TenantCostSummary",
+    "CostOptimizationRecommendation",
 ]
 

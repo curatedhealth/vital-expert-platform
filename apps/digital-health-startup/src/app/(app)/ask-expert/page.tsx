@@ -79,11 +79,11 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
-// ✅ NEW: Tool Orchestration Components
+// [OK] NEW: Tool Orchestration Components
 import { ToolConfirmation, useToolConfirmation, type ToolSuggestion } from '@/features/ask-expert/components/ToolConfirmation';
 import { ToolExecutionStatusComponent, useToolExecutionStatus, type ExecutingTool, type ToolExecutionStatus } from '@/features/ask-expert/components/ToolExecutionStatus';
 import { ToolResults, type ToolResult } from '@/features/ask-expert/components/ToolResults';
-// ✅ NEW: Connection Status Component
+// [OK] NEW: Connection Status Component
 import { ConnectionStatusComponent, useConnectionStatus, type ConnectionStatus } from '@/features/ask-expert/components/ConnectionStatus';
 
 // ============================================================================
@@ -461,7 +461,7 @@ function AskExpertPageContent() {
   const [showMode4Helper, setShowMode4Helper] = useState(false);
   const [selectedTools, setSelectedTools] = useState<string[]>([]);
   const [selectedRagDomains, setSelectedRagDomains] = useState<string[]>([]);
-  const [useLangGraph, setUseLangGraph] = useState(true); // ✅ LangGraph enabled by default for quality AI responses, reasoning visibility, memory, and better tools
+  const [useLangGraph, setUseLangGraph] = useState(true); // [OK] LangGraph enabled by default for quality AI responses, reasoning visibility, memory, and better tools
   const [streamingMeta, setStreamingMeta] = useState<{
     ragSummary?: NonNullable<Message['metadata']>['ragSummary'];
     toolSummary?: NonNullable<Message['metadata']>['toolSummary'];
@@ -469,17 +469,17 @@ function AskExpertPageContent() {
     citations?: CitationMeta[];
     finalResponse?: string;
     reasoning: string[];
-    // ✅ LangGraph streaming fields (workflowSteps removed - not valuable)
+    // [OK] LangGraph streaming fields (workflowSteps removed - not valuable)
     reasoningSteps?: any[];
     streamingMetrics?: any;
   } | null>(null);
 
-  // ✅ LangGraph Streaming State (workflowSteps removed)
+  // [OK] LangGraph Streaming State (workflowSteps removed)
   const [reasoningSteps, setReasoningSteps] = useState<any[]>([]);
   const [streamingMetrics, setStreamingMetrics] = useState<any>(null);
   const [isStreaming, setIsStreaming] = useState(false);
 
-  // ✅ NEW: Tool Orchestration State
+  // [OK] NEW: Tool Orchestration State
   const [toolResults, setToolResults] = useState<ToolResult[]>([]);
   const [pendingToolConfirmation, setPendingToolConfirmation] = useState<{
     tools: ToolSuggestion[];
@@ -489,7 +489,7 @@ function AskExpertPageContent() {
   const toolConfirmation = useToolConfirmation();
   const toolExecutionStatus = useToolExecutionStatus();
 
-  // ✅ NEW: Connection Status
+  // [OK] NEW: Connection Status
   const connectionStatus = useConnectionStatus();
 
   const formatReasoningTimestamp = useCallback((value: number | null) => {
@@ -591,7 +591,7 @@ function AskExpertPageContent() {
     []
   );
 
-  // ⚠️ FIXED: Fetch tools from database (agent_tools table) instead of agents.tools JSON column
+  // [WARN] FIXED: Fetch tools from database (agent_tools table) instead of agents.tools JSON column
   const [availableTools, setAvailableTools] = useState<string[]>([]);
   const [loadingTools, setLoadingTools] = useState(false);
 
@@ -619,7 +619,7 @@ function AskExpertPageContent() {
               .eq('agent_id', agentId);
 
             if (agentToolsError) {
-              console.warn(`⚠️ [Tool Selector] Error loading tools for agent ${agentId}:`, agentToolsError);
+              console.warn(`[WARN] [Tool Selector] Error loading tools for agent ${agentId}:`, agentToolsError);
               // Fallback to agents.tools JSON column for backward compatibility
               const agent = agents.find((a) => a.id === agentId);
               if (agent?.tools && Array.isArray(agent.tools)) {
@@ -655,7 +655,7 @@ function AskExpertPageContent() {
               .eq('is_active', true); // Only active tools
 
             if (toolsError) {
-              console.warn(`⚠️ [Tool Selector] Error fetching tool details:`, toolsError);
+              console.warn(`[WARN] [Tool Selector] Error fetching tool details:`, toolsError);
               continue;
             }
 
@@ -666,7 +666,7 @@ function AskExpertPageContent() {
               }
             });
           } catch (error) {
-            console.error(`❌ [Tool Selector] Error processing agent ${agentId}:`, error);
+            console.error(`[ERROR] [Tool Selector] Error processing agent ${agentId}:`, error);
             // Fallback to agents.tools JSON column
             const agent = agents.find((a) => a.id === agentId);
             if (agent?.tools && Array.isArray(agent.tools)) {
@@ -683,7 +683,7 @@ function AskExpertPageContent() {
         console.log("[Tool Selector] Loaded " + sortedTools.length + " tools from database for " + selectedAgents.length + " agent(s):", sortedTools);
         setAvailableTools(sortedTools);
       } catch (error) {
-        console.error('❌ [Tool Selector] Error fetching tools:', error);
+        console.error('[ERROR] [Tool Selector] Error fetching tools:', error);
         // Fallback to agents.tools JSON column
         const toolSet = new Set<string>();
         selectedAgents.forEach((agentId) => {
@@ -811,7 +811,7 @@ function AskExpertPageContent() {
       .map((message) => {
         const speaker = message.role === 'user' ? 'User' : 'Expert';
         const text = message.content?.trim() ?? '';
-        return text.length > 0 ? `${speaker}: ${text}` : '';
+        return text.length > 0 ? `${speaker} + ": ${text}" : '';
       })
       .filter((line) => line.length > 0)
       .join('\n');
@@ -1120,7 +1120,7 @@ function AskExpertPageContent() {
 
     // Check if Mode 1 or Mode 4 requires an agent but none is selected
     if ((mode === 'manual' || mode === 'multi-expert') && !agentId) {
-      console.log('❌ [Mode Check] No agent selected for mode:', mode, 'selectedAgents:', selectedAgents);
+      console.log('[ERROR] [Mode Check] No agent selected for mode:', mode, 'selectedAgents:', selectedAgents);
       const errorMessage: Message = {
         id: nanoid(),
         role: 'assistant',
@@ -1131,7 +1131,7 @@ function AskExpertPageContent() {
       return;
     }
 
-    console.log('✅ [Mode Check] Mode:', mode, 'Agent ID:', agentId, 'Selected Agents:', selectedAgents);
+    console.log('[OK] [Mode Check] Mode:', mode, 'Agent ID:', agentId, 'Selected Agents:', selectedAgents);
 
     const userMessage: Message = existingUserMessage ?? {
       id: nanoid(),
@@ -1162,12 +1162,12 @@ function AskExpertPageContent() {
     setRecentReasoning([]);
     setRecentReasoningTimestamp(null);
     
-    // ✅ NEW: Initialize streaming state
+    // [OK] NEW: Initialize streaming state
     setIsStreaming(true);
     setReasoningSteps([]);
     setStreamingMetrics(null);
     
-    // ✅ NEW: Reset tool state
+    // [OK] NEW: Reset tool state
     setToolResults([]);
     toolExecutionStatus.completeExecution();
     
@@ -1186,8 +1186,8 @@ function AskExpertPageContent() {
         enableTools,
       });
 
-      // ✅ DEBUG LOGGING - Remove after fixing
-      console.group('🔍 [Mode 1 Debug] Request Details');
+      // [OK] DEBUG LOGGING - Remove after fixing
+      console.group('[DEBUG] [Mode 1 Debug] Request Details');
       console.log('Mode:', mode);
       console.log('Agent ID:', agentId);
       console.log('Selected Agents Array:', selectedAgents);
@@ -1198,7 +1198,7 @@ function AskExpertPageContent() {
       console.groupEnd();
 
       // 🔥 NEW: Call Python AI Engine directly for Mode 1 streaming
-      // ⚠️ CRITICAL: Python AI Engine runs on port 8080 (NOT 8000!)
+      // [WARN] CRITICAL: Python AI Engine runs on port 8080 (NOT 8000!)
       // If changing this, also update:
       // - services/ai-engine/src/main.py (uvicorn port - should be 8080)
       // - .env.local (NEXT_PUBLIC_PYTHON_AI_ENGINE_URL=http://localhost:8080)
@@ -1208,26 +1208,26 @@ function AskExpertPageContent() {
 
       console.log('[AskExpert] Calling endpoint:', apiEndpoint);
 
-      // ✅ NEW: Mark connection as connecting
+      // [OK] NEW: Mark connection as connecting
       connectionStatus.connect();
 
       const response = await fetch(apiEndpoint, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
-          // ✅ FIX: Use proper UUID format for tenant ID (AI Engine expects UUID)
+          // [OK] FIX: Use proper UUID format for tenant ID (AI Engine expects UUID)
           'x-tenant-id': user?.user_metadata?.tenant_id || '00000000-0000-0000-0000-000000000001',
         },
         body: JSON.stringify(
           mode === 'manual' 
             ? {
                 // 🔥 Mode 1 (Python AI Engine) format - MUST match Mode1ManualRequest
-                agent_id: agentId || '',  // ✅ Singular (backend expects agent_id)
-                message: messageContent,  // ✅ Renamed from user_query
+                agent_id: agentId || '',  // [OK] Singular (backend expects agent_id)
+                message: messageContent,  // [OK] Renamed from user_query
                 enable_rag: enableRAG,
                 enable_tools: enableTools,
                 selected_rag_domains: enableRAG ? selectedRagDomains : [],
-                requested_tools: enableTools ? selectedTools : [],  // ✅ Renamed from selected_tools
+                requested_tools: enableTools ? selectedTools : [],  // [OK] Renamed from selected_tools
                 model: selectedModel || 'gpt-4-turbo',
                 temperature: 0.7,
                 conversation_id: activeConversationId || undefined,
@@ -1269,12 +1269,12 @@ function AskExpertPageContent() {
           statusText: response.statusText,
           error: errorData,
         });
-        throw new Error(errorData.message || `HTTP ${response.status}: ${response.statusText}`);
+        throw new Error(errorData.message || `HTTP ${response.status} + ": ${response.statusText}");
       }
       
       console.log('[AskExpert] Response OK, starting stream processing');
 
-      // ✅ NEW: Mark connection as connected
+      // [OK] NEW: Mark connection as connected
       connectionStatus.connected();
 
       const reader = response.body?.getReader();
@@ -1356,12 +1356,12 @@ function AskExpertPageContent() {
             try {
               const data = JSON.parse(line.slice(6));
 
-              // ✅ NEW: Handle LangGraph streaming modes first
+              // [OK] NEW: Handle LangGraph streaming modes first
               if (data.stream_mode) {
                 // This is a proper LangGraph streaming event
                 const { stream_mode, data: chunk } = data;
                 
-                // 🔍 DEBUG: Log ALL incoming events
+                // [DEBUG] DEBUG: Log ALL incoming events
                 console.log('[SSE Debug] Received ' + stream_mode + ' event:', {
                   mode: stream_mode,
                   chunkType: typeof chunk,
@@ -1374,9 +1374,9 @@ function AskExpertPageContent() {
                   case 'custom': {
                     // Custom events from get_stream_writer()
                     
-                    // ✅ NEW: Handle tool suggestion event
+                    // [OK] NEW: Handle tool suggestion event
                     if (chunk.type === 'tool_suggestion') {
-                      console.log('🔧 [Tool Suggestion] Received:', chunk);
+                      console.log('[TOOL] [Tool Suggestion] Received:', chunk);
                       
                       const toolSuggestions: ToolSuggestion[] = (chunk.suggestions || []).map((tool: any) => ({
                         tool_name: tool.tool_name || tool.name,
@@ -1392,12 +1392,12 @@ function AskExpertPageContent() {
                       
                       if (chunk.needs_confirmation && toolSuggestions.length > 0) {
                         // Show confirmation modal
-                        console.log('🔧 [Tool Confirmation] Showing modal for', toolSuggestions.length, 'tools');
+                        console.log('[TOOL] [Tool Confirmation] Showing modal for', toolSuggestions.length, 'tools');
                         toolConfirmation.showConfirmation(toolSuggestions, {
                           message: chunk.message || 'The following tools require your approval before execution.',
                           reasoning: chunk.reasoning,
                           onApprove: async () => {
-                            console.log('✅ [Tool Confirmation] User approved');
+                            console.log('[OK] [Tool Confirmation] User approved');
                             // Send approval to backend
                             try {
                               await fetch(`${process.env.NEXT_PUBLIC_PYTHON_AI_ENGINE_URL || 'http://localhost:8080'}/api/tool/confirm`, {
@@ -1409,11 +1409,11 @@ function AskExpertPageContent() {
                                 }),
                               });
                             } catch (error) {
-                              console.error('❌ [Tool Confirmation] Failed to send approval:', error);
+                              console.error('[ERROR] [Tool Confirmation] Failed to send approval:', error);
                             }
                           },
                           onDecline: async () => {
-                            console.log('❌ [Tool Confirmation] User declined');
+                            console.log('[ERROR] [Tool Confirmation] User declined');
                             // Send decline to backend
                             try {
                               await fetch(`${process.env.NEXT_PUBLIC_PYTHON_AI_ENGINE_URL || 'http://localhost:8080'}/api/tool/confirm', {
@@ -1425,15 +1425,15 @@ function AskExpertPageContent() {
                                 }),
                               });
                             } catch (error) {
-                              console.error('❌ [Tool Confirmation] Failed to send decline:', error);
+                              console.error('[ERROR] [Tool Confirmation] Failed to send decline:', error);
                             }
                           },
                         });
                       }
                     }
-                    // ✅ NEW: Handle tool execution start event
+                    // [OK] NEW: Handle tool execution start event
                     else if (chunk.type === 'tool_execution_start') {
-                      console.log('🔧 [Tool Execution] Starting:', chunk);
+                      console.log('[TOOL] [Tool Execution] Starting:', chunk);
                       
                       const executingTools: ExecutingTool[] = (chunk.tools || []).map((tool: any) => ({
                         tool_name: tool.tool_name || tool.name,
@@ -1450,18 +1450,18 @@ function AskExpertPageContent() {
                         estimatedDuration: t.estimatedDuration,
                       })));
                     }
-                    // ✅ NEW: Handle tool execution progress event
+                    // [OK] NEW: Handle tool execution progress event
                     else if (chunk.type === 'tool_execution_progress') {
-                      console.log('🔧 [Tool Execution] Progress:', chunk);
+                      console.log('[TOOL] [Tool Execution] Progress:', chunk);
                       
                       toolExecutionStatus.updateToolStatus(chunk.tool_name, {
                         status: 'running' as ToolExecutionStatus,
                         progress: chunk.progress || 0,
                       });
                     }
-                    // ✅ NEW: Handle tool execution result event
+                    // [OK] NEW: Handle tool execution result event
                     else if (chunk.type === 'tool_execution_result') {
-                      console.log('🔧 [Tool Execution] Result:', chunk);
+                      console.log('[TOOL] [Tool Execution] Result:', chunk);
                       
                       // Update execution status
                       toolExecutionStatus.updateToolStatus(chunk.tool_name, {
@@ -1484,9 +1484,9 @@ function AskExpertPageContent() {
                       
                       setToolResults(prev => [...prev, newResult]);
                     }
-                    // ✅ NEW: Handle tool execution complete event
+                    // [OK] NEW: Handle tool execution complete event
                     else if (chunk.type === 'tool_execution_complete') {
-                      console.log('🔧 [Tool Execution] All tools complete');
+                      console.log('[TOOL] [Tool Execution] All tools complete');
                       
                       // Keep results visible, just mark execution as done
                       setTimeout(() => {
@@ -1500,7 +1500,7 @@ function AskExpertPageContent() {
                         reasoningStepsBuffer = [...reasoningStepsBuffer, reasoningStep];
                         setReasoningSteps(reasoningStepsBuffer);
                         
-                        // ✅ CRITICAL FIX: Also store in streamingMeta for persistence
+                        // [OK] CRITICAL FIX: Also store in streamingMeta for persistence
                         setStreamingMeta(meta => ({
                           ...meta,
                           reasoningSteps: reasoningStepsBuffer,
@@ -1513,8 +1513,8 @@ function AskExpertPageContent() {
                         setIsStreamingReasoning(true);
                       }
                     } else if (chunk.type === 'final') {
-                      // ✅ CRITICAL FIX: Handle final response event from format_output node
-                      console.log('✅ [Custom Mode] Received final event with response');
+                      // [OK] CRITICAL FIX: Handle final response event from format_output node
+                      console.log('[OK] [Custom Mode] Received final event with response');
                       
                       if (chunk.response && typeof chunk.response === 'string') {
                         console.log('[Final Event] Response length: ' + chunk.response.length + ' chars');
@@ -1546,7 +1546,7 @@ function AskExpertPageContent() {
                         normalizeSourceRecord(source, idx)
                       );
                       
-                      console.log('📊 [DEBUG] After mapping sources:', {
+                      console.log('[DATA] [DEBUG] After mapping sources:', {
                         sourcesLength: sources.length,
                         firstMapped: sources[0]
                       });
@@ -1649,7 +1649,7 @@ function AskExpertPageContent() {
                     break;
                   }
                   case 'messages': {
-                    // ✅ LangGraph messages mode: chunk is an array of LangChain messages
+                    // [OK] LangGraph messages mode: chunk is an array of LangChain messages
                     // Format: [HumanMessage(...), AIMessage(content="response")]
                     if (Array.isArray(chunk)) {
                       for (const message of chunk) {
@@ -1657,7 +1657,7 @@ function AskExpertPageContent() {
                         if (message.type === 'ai' || message.constructor?.name === 'AIMessage') {
                           const content = message.content || '';
                           if (typeof content === 'string' && content.trim()) {
-                            console.log('✅ [Messages Mode] Received AIMessage:', content.substring(0, 100));
+                            console.log('[OK] [Messages Mode] Received AIMessage:', content.substring(0, 100));
                             setStreamingMessage(prev => prev + content);
                             fullResponse += content;
                           }
@@ -1667,7 +1667,7 @@ function AskExpertPageContent() {
                       // Fallback: direct content field
                       const content = typeof chunk.content === 'string' ? chunk.content : '';
                       if (content.trim()) {
-                        console.log('✅ [Messages Mode] Received content:', content.substring(0, 100));
+                        console.log('[OK] [Messages Mode] Received content:', content.substring(0, 100));
                         setStreamingMessage(prev => prev + content);
                         fullResponse += content;
                       }
@@ -1675,16 +1675,16 @@ function AskExpertPageContent() {
                     break;
                   }
                   case 'updates': {
-                    // ✅ Node completion updates - extract final state with sources
+                    // [OK] Node completion updates - extract final state with sources
                     console.log('🔄 [LangGraph Update] Node completed:', chunk);
                     
-                    // ✅ DEBUG: Log all keys in the chunk to see what's available
+                    // [OK] DEBUG: Log all keys in the chunk to see what's available
                     if (chunk && typeof chunk === 'object') {
-                      console.log('🔍 [Updates Debug] Chunk keys:', Object.keys(chunk));
-                      console.log('🔍 [Updates Debug] Chunk preview:', JSON.stringify(chunk).substring(0, 300));
+                      console.log('[DEBUG] [Updates Debug] Chunk keys:', Object.keys(chunk));
+                      console.log('[DEBUG] [Updates Debug] Chunk preview:', JSON.stringify(chunk).substring(0, 300));
                     }
                     
-                    // ✅ CRITICAL FIX: Updates mode can wrap state inside multiple levels (node name, state.values, etc.)
+                    // [OK] CRITICAL FIX: Updates mode can wrap state inside multiple levels (node name, state.values, etc.)
                     const { state: extractedState, node: derivedNode } = unwrapLangGraphUpdateState(chunk);
                     const actualState =
                       extractedState && typeof extractedState === 'object' && !Array.isArray(extractedState)
@@ -1692,11 +1692,11 @@ function AskExpertPageContent() {
                         : {};
                     
                     if (derivedNode) {
-                      console.log('🔍 [Updates Unwrap] Extracted state from node:', derivedNode);
+                      console.log('[DEBUG] [Updates Unwrap] Extracted state from node:', derivedNode);
                     }
-                    console.log('🔍 [Updates Debug] actualState keys:', Object.keys(actualState));
-                    console.log('🔍 [Updates Debug] has_reasoning_steps:', Array.isArray(actualState?.reasoning_steps) ? actualState.reasoning_steps.length : 0);
-                    console.log('🔍 [Updates Debug] has_sources:', Array.isArray(actualState?.sources) ? actualState.sources.length : 0);
+                    console.log('[DEBUG] [Updates Debug] actualState keys:', Object.keys(actualState));
+                    console.log('[DEBUG] [Updates Debug] has_reasoning_steps:', Array.isArray(actualState?.reasoning_steps) ? actualState.reasoning_steps.length : 0);
+                    console.log('[DEBUG] [Updates Debug] has_sources:', Array.isArray(actualState?.sources) ? actualState.sources.length : 0);
                     
                     // Merge metadata for downstream consumers
                     finalMeta = {
@@ -1742,7 +1742,7 @@ function AskExpertPageContent() {
                       confidence = actualState.confidence;
                     }
                     
-                    // ✅ Extract final response content if present
+                    // [OK] Extract final response content if present
                     const resolvedResponse =
                       typeof actualState.response === 'string' && actualState.response.trim().length > 0
                         ? actualState.response
@@ -1759,7 +1759,7 @@ function AskExpertPageContent() {
                       }));
                     }
                     
-                    // ✅ FIX: Extract reasoning_steps from LangGraph state
+                    // [OK] FIX: Extract reasoning_steps from LangGraph state
                     if (actualState.reasoning_steps && Array.isArray(actualState.reasoning_steps)) {
                       console.log("[Updates Mode] Found " + actualState.reasoning_steps.length + " reasoning steps from LangGraph");
                       reasoningStepsBuffer = actualState.reasoning_steps;
@@ -1916,7 +1916,7 @@ function AskExpertPageContent() {
                         updateStreamingMeta();
                         break;
                       }
-                      // ✅ NEW: Handle LangGraph reasoning events (Mode 1 doesn't emit workflow_step)
+                      // [OK] NEW: Handle LangGraph reasoning events (Mode 1 doesn't emit workflow_step)
                       case 'langgraph_reasoning': {
                         const reasoningStep = meta.step || {};
                         if (reasoningStep.content) {
@@ -1924,13 +1924,13 @@ function AskExpertPageContent() {
                           setReasoningSteps(reasoningStepsBuffer);
                           // Also update the existing reasoning display
                           setStreamingReasoning(prev => {
-                            return prev ? `${prev}\n\n${reasoningStep.content}` : reasoningStep.content;
+                            return prev ? prev + '\n\n' + reasoningStep.content : reasoningStep.content;
                           });
                           setIsStreamingReasoning(true);
                         }
                         break;
                       }
-                      // ✅ NEW: Handle metrics events
+                      // [OK] NEW: Handle metrics events
                       case 'metrics': {
                         setStreamingMetrics({
                           tokensGenerated: meta.tokensGenerated,
@@ -1964,7 +1964,7 @@ function AskExpertPageContent() {
                             },
                           };
                         }
-                        // ✅ Handle reasoning from API response
+                        // [OK] Handle reasoning from API response
                         if (Array.isArray(meta.reasoning) && meta.reasoning.length > 0) {
                           reasoning = normalizeReasoningArray(meta.reasoning);
                           console.log('[Mode1 Final] Extracted ' + reasoning.length + ' reasoning steps from meta');
@@ -2021,7 +2021,7 @@ function AskExpertPageContent() {
                 } else {
                   fullResponse += data.content;
                   setStreamingMessage(fullResponse);
-                  if (!streamingReasoning || streamingReasoning === 'Thinking...' || streamingReasoning.startsWith('❌')) {
+                  if (!streamingReasoning || streamingReasoning === 'Thinking...' || streamingReasoning.startsWith('[ERROR]')) {
                     setStreamingReasoning('Processing your request...');
                     setIsStreamingReasoning(true);
                   }
@@ -2038,7 +2038,7 @@ function AskExpertPageContent() {
                 setStreamingReasoning(prev => {
                   const agentInfo = "Selected Agent: " + (data.agent.display_name || data.agent.name);
                   return prev && prev !== 'Thinking...' && prev !== 'Processing your request...'
-                    ? `${prev}\n\n${agentInfo}`
+                    ? prev + '\n\n' + agentInfo
                     : agentInfo;
                 });
                 setIsStreamingReasoning(true);
@@ -2057,20 +2057,20 @@ function AskExpertPageContent() {
                 // Accumulate reasoning for display
                 setStreamingReasoning(prev => "Goal Understanding: " + data.content + (prev ? '\n\n' + prev : ''));
                 setIsStreamingReasoning(true);
-                console.log('🎯 Goal Understanding:', data.content);
+                console.log('[GOAL] Goal Understanding:', data.content);
               } else if (data.type === 'execution_plan') {
                 // Mode 3 & Mode 4: Execution plan
                 autonomousMetadata.executionPlan = data.content;
                 // Accumulate reasoning for display
                 setStreamingReasoning(prev => prev + (prev ? "\n\n" : "") + "Execution Plan: " + data.content);
                 setIsStreamingReasoning(true);
-                console.log('📋 Execution Plan:', data.content);
+                console.log('[PLAN] Execution Plan:', data.content);
               } else if (data.type === 'iteration_start') {
                 // Mode 3 & Mode 4: ReAct iteration start
                 autonomousMetadata.currentIteration = data.metadata?.iteration;
                 setStreamingReasoning(prev => prev + (prev ? "\n\n" : "") + "Iteration " + (data.metadata?.iteration + 1) + ": Starting");
                 setIsStreamingReasoning(true);
-                console.log("[Iteration] " + data.metadata?.iteration}: Starting`);
+                console.log("[Iteration] " + (data.metadata?.iteration || 0) + ": Starting");
               } else if (data.type === 'thinking_start') {
                 // Detailed step: Starting thinking
                 setStreamingReasoning(prev => prev + (prev ? "\n\n" : "") + "Analyzing current state...");
@@ -2081,7 +2081,7 @@ function AskExpertPageContent() {
                 // Accumulate reasoning for display
                 setStreamingReasoning(prev => prev + (prev ? "\n\n" : "") + "Thought: " + data.content);
                 setIsStreamingReasoning(true);
-                console.log('🧠 Thought:', data.content);
+                console.log('[THINK] Thought:', data.content);
               } else if (data.type === 'action_decision_start') {
                 // Detailed step: Starting action decision
                 setStreamingReasoning(prev => prev + (prev ? "\n\n" : "") + "Deciding on next action...");
@@ -2104,7 +2104,7 @@ function AskExpertPageContent() {
                 // Accumulate reasoning for display
                 setStreamingReasoning(prev => prev + (prev ? "\n\n" : "") + "Action: " + data.content);
                 setIsStreamingReasoning(true);
-                console.log('⚡ Action:', data.content);
+                console.log('[ACTION] Action:', data.content);
               } else if (data.type === 'observation_start') {
                 // Detailed step: Starting observation
                 setStreamingReasoning(prev => prev + (prev ? "\n\n" : "") + "Processing action results...");
@@ -2115,7 +2115,7 @@ function AskExpertPageContent() {
                 // Accumulate reasoning for display
                 setStreamingReasoning(prev => prev + (prev ? "\n\n" : "") + "Observation: " + data.content);
                 setIsStreamingReasoning(true);
-                console.log('👁️ Observation:', data.content);
+                console.log('[OBS] Observation:', data.content);
               } else if (data.type === 'reflection_start') {
                 // Detailed step: Starting reflection
                 setStreamingReasoning(prev => prev + (prev ? "\n\n" : "") + "Reflecting on what we learned...");
@@ -2134,7 +2134,7 @@ function AskExpertPageContent() {
                 autonomousMetadata.finalAnswer = data.content;
                 autonomousMetadata.finalConfidence = data.metadata?.confidence;
                 autonomousMetadata.totalIterations = data.metadata?.iterations;
-                console.log('✅ Final Answer:', data.content);
+                console.log('[OK] Final Answer:', data.content);
               } else if (data.type === 'sources' && data.sources) {
                 // RAG sources from the API
                 sources = data.sources.map((src: any) => ({
@@ -2145,7 +2145,7 @@ function AskExpertPageContent() {
                   excerpt: src.excerpt || src.content?.substring(0, 200),
                   similarity: src.similarity || src.score,
                 }));
-                console.log('📚 Sources received:', sources.length);
+                console.log('[INFO] Sources received:', sources.length);
                 updateStreamingMeta();
               } else if (data.type === 'done') {
                 reasoning = data.reasoning || [];
@@ -2160,7 +2160,7 @@ function AskExpertPageContent() {
                     similarity: src.similarity || src.score,
                   }));
                 }
-                console.log('✅ Execution completed');
+                console.log('[OK] Execution completed');
                 updateStreamingMeta();
               } else if (data.type === 'error') {
                 // Handle structured error events from backend
@@ -2257,7 +2257,7 @@ function AskExpertPageContent() {
         }
       }
 
-      // ✅ FIX: Use local streaming accumulators to build the final response
+      // [OK] FIX: Use local streaming accumulators to build the final response
       const resolvedFullResponse = fullResponse && fullResponse.trim().length > 0 ? fullResponse : '';
       const finalContent = resolvedFullResponse || streamingMeta?.finalResponse || streamingMessage || '';
       const citationFallbackSources = (() => {
@@ -2282,16 +2282,16 @@ function AskExpertPageContent() {
             ? streamingMeta.reasoningSteps
             : undefined);
       
-      console.log('✅ [DEBUG] Final Message Sources Check:', {
+      console.log('[OK] [DEBUG] Final Message Sources Check:', {
         streamingMetaSources: streamingMeta?.sources?.length || 0,
         localSources: sources.length,
         finalSourcesLength: finalSources.length,
         firstFinalSource: finalSources[0]
       });
       
-      // ✅ FIX: Merge backend ragSummary data with local data
+      // [OK] FIX: Merge backend ragSummary data with local data
       const finalRagSummary = {
-        totalSources: finalSources.length,  // ✅ Correct count from final sources
+        totalSources: finalSources.length,  // [OK] Correct count from final sources
         strategy: ragSummary.strategy ?? streamingMeta?.ragSummary?.strategy ?? 'hybrid',
         domains:
           (ragSummary.domains && ragSummary.domains.length > 0
@@ -2312,7 +2312,7 @@ function AskExpertPageContent() {
           }
         : toolSummary;
 
-      console.log('✅ [Final Message] Using accumulated streaming state:', {
+      console.log('[OK] [Final Message] Using accumulated streaming state:', {
         contentLength: finalContent.length,
         sourcesCount: finalSources.length,
         reasoningCount: finalReasoning.length,
@@ -2336,16 +2336,16 @@ function AskExpertPageContent() {
           : [
               {
                 id: `${assistantMessageId}-branch-0`,
-                content: finalContent,  // ✅ Use accumulated content
+                content: finalContent,  // [OK] Use accumulated content
                 confidence: typeof confidence === 'number' ? confidence : 0,
                 citations: Array.isArray(finalMeta?.citations)
                   ? finalMeta.citations
                   : Array.isArray(streamingMeta?.citations)
                     ? streamingMeta.citations
                     : [],
-                sources: finalSources.map((src, idx) => ({ ...src, id: src.id || 'fallback-source-' + (idx + 1) })),  // ✅ Use finalSources
+                sources: finalSources.map((src, idx) => ({ ...src, id: src.id || 'fallback-source-' + (idx + 1) })),  // [OK] Use finalSources
                 createdAt: new Date(),
-                reasoning: finalReasoning.length > 0 ? finalReasoning.join('\n') : undefined,  // ✅ Use finalReasoning
+                reasoning: finalReasoning.length > 0 ? finalReasoning.join('\n') : undefined,  // [OK] Use finalReasoning
               },
             ];
       const activeBranchIndex = Math.min(currentBranch, messageBranches.length - 1);
@@ -2354,10 +2354,10 @@ function AskExpertPageContent() {
       const assistantMessage: Message = {
         id: assistantMessageId,
         role: 'assistant',
-        content: activeBranch?.content ?? finalContent,  // ✅ Use finalContent
+        content: activeBranch?.content ?? finalContent,  // [OK] Use finalContent
         timestamp: Date.now(),
-        reasoning: finalReasoning,  // ✅ Use finalReasoning
-        sources: activeBranch?.sources && activeBranch.sources.length > 0 ? activeBranch.sources : finalSources,  // ✅ Use finalSources
+        reasoning: finalReasoning,  // [OK] Use finalReasoning
+        sources: activeBranch?.sources && activeBranch.sources.length > 0 ? activeBranch.sources : finalSources,  // [OK] Use finalSources
         selectedAgent,
         selectionReason,
         confidence,
@@ -2366,17 +2366,17 @@ function AskExpertPageContent() {
         // Add autonomous metadata for Mode 3 & Mode 4
         ...(Object.keys(autonomousMetadata).length > 0 && { autonomousMetadata }),
         metadata: {
-          ragSummary: finalRagSummary,  // ✅ Use finalRagSummary
-          toolSummary: finalToolSummary,  // ✅ Use finalToolSummary
-          sources: activeBranch?.sources && activeBranch.sources.length > 0 ? activeBranch.sources : finalSources,  // ✅ Use finalSources
-          reasoning: finalReasoning,  // ✅ Use finalReasoning
+          ragSummary: finalRagSummary,  // [OK] Use finalRagSummary
+          toolSummary: finalToolSummary,  // [OK] Use finalToolSummary
+          sources: activeBranch?.sources && activeBranch.sources.length > 0 ? activeBranch.sources : finalSources,  // [OK] Use finalSources
+          reasoning: finalReasoning,  // [OK] Use finalReasoning
           confidence,
           citations: Array.isArray(finalMeta?.citations)
             ? finalMeta.citations
             : Array.isArray(streamingMeta?.citations)
               ? streamingMeta.citations
               : undefined,
-          // ✅ Include LangGraph AI reasoning for persistent display
+          // [OK] Include LangGraph AI reasoning for persistent display
           reasoningSteps: finalReasoningSteps && finalReasoningSteps.length > 0 ? finalReasoningSteps : undefined,
           streamingMetrics: streamingMetrics || streamingMeta?.streamingMetrics || undefined,
         },
@@ -2407,11 +2407,11 @@ function AskExpertPageContent() {
       // Debug: Log message creation for Mode 3
       console.group('📝 [AskExpert] Creating Assistant Message');
       console.log('Mode:', mode);
-      console.log('Content length:', finalContent.length);  // ✅ Use finalContent
+      console.log('Content length:', finalContent.length);  // [OK] Use finalContent
       console.log('Content preview:', finalContent.substring(0, 100));
       console.log('Selected agent:', selectedAgent);
-      console.log('Sources count:', finalSources.length);  // ✅ Use finalSources
-      console.log('Reasoning steps:', finalReasoning.length);  // ✅ Use finalReasoning
+      console.log('Sources count:', finalSources.length);  // [OK] Use finalSources
+      console.log('Reasoning steps:', finalReasoning.length);  // [OK] Use finalReasoning
       console.log('Autonomous metadata keys:', Object.keys(autonomousMetadata));
       console.log('Confidence:', confidence);
       console.log('Message ID:', assistantMessage.id);
@@ -2428,15 +2428,15 @@ function AskExpertPageContent() {
       });
       
       if (assistantMessage.metadata?.reasoning) {
-        console.log('🧠 Reasoning array:', assistantMessage.metadata.reasoning);
+        console.log('[THINK] Reasoning array:', assistantMessage.metadata.reasoning);
       } else {
-        console.warn('⚠️ No reasoning in metadata!');
+        console.warn('[WARN] No reasoning in metadata!');
       }
       
       if (assistantMessage.metadata?.sources) {
-        console.log('📚 Sources array:', assistantMessage.metadata.sources);
+        console.log('[INFO] Sources array:', assistantMessage.metadata.sources);
       } else {
-        console.warn('⚠️ No sources in metadata!');
+        console.warn('[WARN] No sources in metadata!');
       }
       
       console.log('Full message object:', JSON.stringify(assistantMessage, null, 2));
@@ -2444,9 +2444,9 @@ function AskExpertPageContent() {
 
       setMessages(prev => {
         const updated = [...prev, assistantMessage];
-        console.log('📊 [Mode 3 Debug] Messages array updated. Total messages:', updated.length);
-        console.log('📊 [Mode 3 Debug] Last message role:', updated[updated.length - 1].role);
-        console.log('📊 [Mode 3 Debug] Last message agent:', updated[updated.length - 1].selectedAgent);
+        console.log('[DATA] [Mode 3 Debug] Messages array updated. Total messages:', updated.length);
+        console.log('[DATA] [Mode 3 Debug] Last message role:', updated[updated.length - 1].role);
+        console.log('[DATA] [Mode 3 Debug] Last message agent:', updated[updated.length - 1].selectedAgent);
         return updated;
       });
       const branchReasoning = activeBranch?.reasoning;
@@ -2458,13 +2458,13 @@ function AskExpertPageContent() {
       setRecentReasoning(normalizedRecentReasoning);
       setRecentReasoningTimestamp(Date.now());
       
-      // ✅ Clear all streaming state after adding final message
+      // [OK] Clear all streaming state after adding final message
       setStreamingMessage('');
       setStreamingReasoning('');
       setIsStreamingReasoning(false);
       setStreamingMeta(null);
-      setReasoningSteps([]); // ✅ Clear reasoning steps to prevent streaming component from persisting
-      setStreamingMetrics(null); // ✅ Clear streaming metrics
+      setReasoningSteps([]); // [OK] Clear reasoning steps to prevent streaming component from persisting
+      setStreamingMetrics(null); // [OK] Clear streaming metrics
 
       if (activeConversationId) {
         setConversations(prev =>
@@ -2485,7 +2485,7 @@ function AskExpertPageContent() {
     } catch (error) {
       console.error('[AskExpert] Error:', error);
       
-      // ✅ NEW: Mark connection as disconnected/error
+      // [OK] NEW: Mark connection as disconnected/error
       if (error instanceof TypeError && error.message.includes('fetch')) {
         connectionStatus.disconnect('Network error: Unable to connect to the AI engine');
       } else {
@@ -2533,7 +2533,7 @@ function AskExpertPageContent() {
     } finally {
       setIsLoading(false);
       setStreamingMeta(null);
-      // ✅ NEW: Cleanup streaming state
+      // [OK] NEW: Cleanup streaming state
       setIsStreaming(false);
     }
   };
@@ -2710,7 +2710,7 @@ function AskExpertPageContent() {
         title="Ask Expert"
         description="1:1 expert consultation with AI agents"
         badge={{
-          label: `Mode ${currentMode.id}: ${currentMode.name}`,
+          label: `Mode ${currentMode.id} + ": ${currentMode.name}",
           variant: 'secondary'
         }}
         actions={
@@ -3104,7 +3104,7 @@ function AskExpertPageContent() {
               </div>
             ) : (
               <>
-                {/* ✅ Removed top-level Reasoning component - reasoning now only shown per-message */}
+                {/* [OK] Removed top-level Reasoning component - reasoning now only shown per-message */}
                 {messages.map((msg, index) => {
                   // Get agent info for assistant messages
                   const agentInfo =
@@ -3179,7 +3179,7 @@ function AskExpertPageContent() {
                     metadata={{
                       ...streamingMeta,
                       reasoning: streamingReasoning ? [streamingReasoning] : (streamingMeta?.reasoning || []),
-                      // ✅ Add LangGraph AI reasoning data
+                      // [OK] Add LangGraph AI reasoning data
                       reasoningSteps: reasoningSteps.length > 0 ? reasoningSteps : undefined,
                       streamingMetrics: streamingMetrics || undefined,
                     }}
@@ -3203,7 +3203,7 @@ function AskExpertPageContent() {
                   />
                 )}
                 
-                {/* ✅ NEW: Tool Execution Status (shown during tool execution) */}
+                {/* [OK] NEW: Tool Execution Status (shown during tool execution) */}
                 {toolExecutionStatus.tools.length > 0 && (
                   <div className="mb-4">
                     <ToolExecutionStatusComponent
@@ -3213,7 +3213,7 @@ function AskExpertPageContent() {
                   </div>
                 )}
                 
-                {/* ✅ NEW: Tool Results (shown after tools complete) */}
+                {/* [OK] NEW: Tool Results (shown after tools complete) */}
                 {toolResults.length > 0 && (
                   <div className="mb-4">
                     <ToolResults
@@ -3401,7 +3401,7 @@ function AskExpertPageContent() {
                   
                   console.log("[Mode 1 Helper] Agent "${selectedAgent.name}" added and should be visible in sidebar`);
                 } catch (error) {
-                  console.error(`❌ [Mode 1 Helper] Failed to add agent to user list:`, error);
+                  console.error(`[ERROR] [Mode 1 Helper] Failed to add agent to user list:`, error);
                   // Still try to select the agent even if adding failed
                 }
               }
@@ -3421,7 +3421,7 @@ function AskExpertPageContent() {
               console.log(`   - Prompt filled: YES`);
               console.log(`   - Just press Enter to send!`);
             } else {
-              console.warn(`⚠️ [Mode 1 Helper] Could not find agent for example: ${example.expert}`);
+              console.warn(`[WARN] [Mode 1 Helper] Could not find agent for example: ${example.expert}`);
             }
             
             // Close the helper modal after a brief delay to ensure UI updates are visible
@@ -3516,7 +3516,7 @@ function AskExpertPageContent() {
                   await refreshAgents();
                   await new Promise(resolve => setTimeout(resolve, 300));
                 } catch (error) {
-                  console.error(`❌ [Mode 3 Helper] Failed to add agent to user list:`, error);
+                  console.error(`[ERROR] [Mode 3 Helper] Failed to add agent to user list:`, error);
                 }
               }
               
@@ -3548,7 +3548,7 @@ function AskExpertPageContent() {
           }}
         />
         
-        {/* ✅ NEW: Connection Status (shown when not connected) */}
+        {/* [OK] NEW: Connection Status (shown when not connected) */}
         {connectionStatus.status !== 'connected' && (
           <div className="fixed bottom-20 right-4 z-50 w-80">
             <ConnectionStatusComponent
@@ -3566,7 +3566,7 @@ function AskExpertPageContent() {
           </div>
         )}
         
-        {/* ✅ NEW: Tool Confirmation Modal */}
+        {/* [OK] NEW: Tool Confirmation Modal */}
         <ToolConfirmation
           open={toolConfirmation.isOpen}
           tools={toolConfirmation.tools}

@@ -94,8 +94,8 @@ class CostMetrics(BaseModel):
     period: str
     total_cost: float
     cost_breakdown: Dict[str, float]
-    top_tenants: List[Dict[str, float]]
-    top_users: List[Dict[str, float]]
+    top_tenants: List[Dict[str, Any]]  # Allow both tenant_id (str) and cost (float)
+    top_users: List[Dict[str, Any]]    # Allow both user_id (str) and cost (float)
     cost_trend: str  # "increasing" | "decreasing" | "stable"
 
 

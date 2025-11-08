@@ -9,6 +9,17 @@ Exports:
     - Metrics endpoint handler
 """
 
+"""
+Monitoring and Observability for VITAL AI Engine.
+
+This package provides comprehensive monitoring capabilities including:
+- Prometheus metrics (110+ metrics)
+- TimescaleDB integration for analytics warehouse
+- LangFuse tracing for LLM observability
+- Cost attribution for per-tenant billing
+"""
+
+# Prometheus Metrics
 from vital_shared.monitoring.metrics import (
     # Workflow tracking
     track_workflow_execution,
@@ -100,6 +111,18 @@ from vital_shared.monitoring.metrics import (
     reset_metrics
 )
 
+# TimescaleDB Integration
+from vital_shared.monitoring.timescale_integration import (
+    TimescaleIntegration,
+    get_timescale_integration,
+    PlatformEvent,
+    CostEvent,
+    AgentExecution,
+    EventCategory,
+    CostType,
+    ServiceProvider,
+)
+
 __all__ = [
     # Workflow
     "track_workflow_execution",
@@ -188,6 +211,17 @@ __all__ = [
     "set_build_info",
     
     # Testing
-    "reset_metrics"
+    "reset_metrics",
+    
+    # TimescaleDB Integration
+    "TimescaleIntegration",
+    "get_timescale_integration",
+    "PlatformEvent",
+    "CostEvent",
+    "AgentExecution",
+    "EventCategory",
+    "CostType",
+    "ServiceProvider",
 ]
+
 

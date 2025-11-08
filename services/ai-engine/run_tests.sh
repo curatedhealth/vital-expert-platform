@@ -19,19 +19,19 @@ NC='\033[0m' # No Color
 cd "$(dirname "$0")"
 
 echo "📦 Installing test dependencies..."
-pip install -q -r test-requirements.txt
+python3 -m pip install -q -r test-requirements.txt
 
 echo ""
 echo "🔧 Running Unit Tests..."
 echo "------------------------"
-python -m pytest tests/unit/ -v --tb=short --cov=src/vital_shared --cov-report=term-missing
+python3 -m pytest tests/unit/ -v --tb=short --cov=src/vital_shared --cov-report=term-missing
 
 UNIT_EXIT_CODE=$?
 
 echo ""
 echo "🔗 Running Integration Tests..."
 echo "--------------------------------"
-python -m pytest tests/integration/ -v --tb=short
+python3 -m pytest tests/integration/ -v --tb=short
 
 INTEGRATION_EXIT_CODE=$?
 
@@ -56,7 +56,7 @@ echo ""
 # Generate coverage report
 if [ $UNIT_EXIT_CODE -eq 0 ] || [ $INTEGRATION_EXIT_CODE -eq 0 ]; then
     echo "📈 Generating coverage report..."
-    python -m pytest --cov=src/vital_shared --cov-report=html --cov-report=term
+    python3 -m pytest --cov=src/vital_shared --cov-report=html --cov-report=term
     echo ""
     echo -e "${GREEN}Coverage report generated at: htmlcov/index.html${NC}"
 fi

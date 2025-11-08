@@ -1,0 +1,3333 @@
+{
+  "metadata": {
+    "source": "Digital Health JTBD Library Complete v1.0",
+    "generated_at": "2025-11-08T19:25:10.225119",
+    "total_personas": 66,
+    "total_jobs": 110,
+    "parser_version": "2.0 - Enhanced with complete profile capture"
+  },
+  "personas": [
+    {
+      "persona_title": "Patient Solutions Director - Maria Gonzalez",
+      "profile": {
+        "name": "Maria Gonzalez",
+        "title": "VP Patient Solutions & Services",
+        "organization": "Global Pharma Company",
+        "therapeutic_areas": "Multiple chronic diseases",
+        "programs_managed": "50+ patient support programs",
+        "budget": "$100M annual",
+        "team": "75+ patient specialists",
+        "responsibilities": [
+          "Patient program strategy",
+          "Service design and delivery",
+          "Digital companion development",
+          "Adherence optimization",
+          "Patient journey mapping",
+          "Outcomes measurement"
+        ],
+        "pain_points": [
+          "Program fragmentation",
+          "Low patient enrollment",
+          "Engagement sustainability",
+          "ROI demonstration",
+          "Channel coordination",
+          "Privacy compliance"
+        ]
+      },
+      "jobs_to_be_done": [
+        {
+          "jtbd_id": "DH_GENERAL_PSD_001",
+          "jtbd_code": "DH_GENERAL_PSD_001",
+          "unique_id": "dh_general_psd_001",
+          "original_id": "JTBD-PSD-001",
+          "statement": "When designing comprehensive patient support ecosystems, I need integrated digital and human touchpoints, so I can improve adherence and outcomes",
+          "frequency": "Quarterly",
+          "importance": "10/10",
+          "current_satisfaction": "3/10",
+          "opportunity_score": "17",
+          "success_metrics": [
+            "Program enrollment >40%",
+            "Adherence improved >35%",
+            "Patient satisfaction >4.5/5",
+            "Cost per patient optimized",
+            "Outcomes demonstrated"
+          ]
+        },
+        {
+          "jtbd_id": "DH_GENERAL_PSD_002",
+          "jtbd_code": "DH_GENERAL_PSD_002",
+          "unique_id": "dh_general_psd_002",
+          "original_id": "JTBD-PSD-002",
+          "statement": "When personalizing patient journeys, I need predictive analytics and behavioral insights, so I can deliver right intervention at right time",
+          "frequency": "Weekly",
+          "importance": "9/10",
+          "current_satisfaction": "2/10",
+          "opportunity_score": "16",
+          "success_metrics": [
+            "Personalization achieved",
+            "Intervention timing optimal",
+            "Engagement sustained >12 months",
+            "Drop-off reduced 50%",
+            "ROI clearly demonstrated"
+          ]
+        },
+        {
+          "jtbd_id": "DH_GENERAL_PSD_003",
+          "jtbd_code": "DH_GENERAL_PSD_003",
+          "unique_id": "dh_general_psd_003",
+          "original_id": "JTBD-PSD-003",
+          "statement": "When coordinating omnichannel patient engagement, I need unified platforms and orchestration tools, so I can ensure consistent experience",
+          "frequency": "Daily",
+          "importance": "9/10",
+          "current_satisfaction": "3/10",
+          "opportunity_score": "15",
+          "success_metrics": [
+            "Channel integration seamless",
+            "Patient experience consistent",
+            "Data unified across touchpoints",
+            "Response time <24 hours"
+          ]
+        }
+      ]
+    },
+    {
+      "persona_title": "Patient Experience Designer - Sophie Chen",
+      "profile": {
+        "name": "Sophie Chen",
+        "title": "Director, Patient Experience Design",
+        "organization": "Pharma Digital Innovation Lab",
+        "background": "Service Design, Healthcare UX",
+        "projects": "30+ patient programs redesigned",
+        "focus": "Digital-first patient experiences",
+        "responsibilities": [
+          "Patient journey design",
+          "Service blueprinting",
+          "Digital experience optimization",
+          "Accessibility compliance",
+          "Behavioral intervention design",
+          "Experience measurement"
+        ]
+      },
+      "jobs_to_be_done": [
+        {
+          "jtbd_id": "DH_GENERAL_PXD_001",
+          "jtbd_code": "DH_GENERAL_PXD_001",
+          "unique_id": "dh_general_pxd_001",
+          "original_id": "JTBD-PXD-001",
+          "statement": "When designing patient-centric digital experiences, I need behavioral science frameworks and testing protocols, so I can drive sustained engagement",
+          "frequency": "Per project",
+          "importance": "10/10",
+          "current_satisfaction": "3/10",
+          "opportunity_score": "17",
+          "success_metrics": [
+            "User testing validated",
+            "Behavior change achieved",
+            "Accessibility AAA compliant",
+            "Engagement metrics improved",
+            "Clinical outcomes positive"
+          ]
+        },
+        {
+          "jtbd_id": "DH_GENERAL_PXD_002",
+          "jtbd_code": "DH_GENERAL_PXD_002",
+          "unique_id": "dh_general_pxd_002",
+          "original_id": "JTBD-PXD-002",
+          "statement": "When creating inclusive health experiences, I need diverse patient input and cultural adaptation tools, so I can ensure equity",
+          "frequency": "Monthly",
+          "importance": "9/10",
+          "current_satisfaction": "2/10",
+          "opportunity_score": "16",
+          "success_metrics": [
+            "Diverse representation achieved",
+            "Cultural appropriateness validated",
+            "Language barriers removed",
+            "Digital divide addressed"
+          ]
+        }
+      ]
+    },
+    {
+      "persona_title": "Patient Advocacy Lead - Dr. Rachel Thompson",
+      "profile": {
+        "name": "Dr. Rachel Thompson",
+        "title": "VP Patient Advocacy & Engagement",
+        "organization": "Top 10 Pharma",
+        "advocacy_groups": "200+ relationships",
+        "patient_councils": "15 active",
+        "budget": "$30M for patient initiatives",
+        "responsibilities": [
+          "Patient organization partnerships",
+          "Voice of patient programs",
+          "Advocacy strategy",
+          "Patient education",
+          "Community building",
+          "Policy influence"
+        ]
+      },
+      "jobs_to_be_done": [
+        {
+          "jtbd_id": "DH_GENERAL_PAL_001",
+          "jtbd_code": "DH_GENERAL_PAL_001",
+          "unique_id": "dh_general_pal_001",
+          "original_id": "JTBD-PAL-001",
+          "statement": "When building authentic patient partnerships, I need engagement platforms and feedback systems, so I can incorporate patient voice in development",
+          "frequency": "Weekly",
+          "importance": "9/10",
+          "current_satisfaction": "3/10",
+          "opportunity_score": "15",
+          "success_metrics": [
+            "Patient input integrated",
+            "Partnerships sustainable",
+            "Trust scores improved",
+            "Co-creation achieved"
+          ]
+        }
+      ]
+    },
+    {
+      "persona_title": "Market Access Director - James Williams",
+      "profile": {
+        "name": "James Williams",
+        "title": "VP Market Access & Pricing",
+        "organization": "Global Pharma Company",
+        "products": "15 brands + 5 DTx",
+        "payer_relationships": "100+ health plans",
+        "budget_influence": "$500M pricing decisions",
+        "responsibilities": [
+          "Access strategy",
+          "Value dossier development",
+          "Payer negotiations",
+          "HTA submissions",
+          "Real-world evidence",
+          "Digital therapeutic coverage"
+        ]
+      },
+      "jobs_to_be_done": [
+        {
+          "jtbd_id": "DH_GENERAL_MAD_001",
+          "jtbd_code": "DH_GENERAL_MAD_001",
+          "unique_id": "dh_general_mad_001",
+          "original_id": "JTBD-MAD-001",
+          "statement": "When securing coverage for digital companions, I need value demonstration frameworks and payer engagement tools, so I can achieve broad access",
+          "frequency": "Monthly",
+          "importance": "10/10",
+          "current_satisfaction": "2/10",
+          "opportunity_score": "18",
+          "success_metrics": [
+            "Coverage achieved >70%",
+            "Time to coverage <6 months",
+            "Tier placement optimal",
+            "Patient access simplified",
+            "Value story compelling"
+          ]
+        },
+        {
+          "jtbd_id": "DH_GENERAL_MAD_002",
+          "jtbd_code": "DH_GENERAL_MAD_002",
+          "unique_id": "dh_general_mad_002",
+          "original_id": "JTBD-MAD-002",
+          "statement": "When negotiating value-based contracts for digital health, I need outcome prediction models and risk assessment tools, so I can structure win-win agreements",
+          "frequency": "Quarterly",
+          "importance": "9/10",
+          "current_satisfaction": "2/10",
+          "opportunity_score": "16",
+          "success_metrics": [
+            "Contract terms favorable",
+            "Risk appropriately shared",
+            "Outcomes achievable",
+            "ROI demonstrated"
+          ]
+        }
+      ]
+    },
+    {
+      "persona_title": "Commercial Strategy Lead - Michael Zhang",
+      "profile": {
+        "name": "Michael Zhang",
+        "title": "SVP Commercial Strategy & Operations",
+        "organization": "Big Pharma",
+        "portfolio": "$10B revenue responsibility",
+        "teams": "Commercial, marketing, sales",
+        "digital_initiatives": "20+ active",
+        "responsibilities": [
+          "Commercial strategy",
+          "Portfolio optimization",
+          "Launch excellence",
+          "Digital commercialization",
+          "Analytics and insights",
+          "Competitive intelligence"
+        ]
+      },
+      "jobs_to_be_done": [
+        {
+          "jtbd_id": "DH_GENERAL_CSL_001",
+          "jtbd_code": "DH_GENERAL_CSL_001",
+          "unique_id": "dh_general_csl_001",
+          "original_id": "JTBD-CSL-001",
+          "statement": "When commercializing drug-digital combinations, I need integrated go-to-market strategies and success metrics, so I can maximize value capture",
+          "frequency": "Quarterly",
+          "importance": "10/10",
+          "current_satisfaction": "3/10",
+          "opportunity_score": "17",
+          "success_metrics": [
+            "Launch success rate >80%",
+            "Market share captured",
+            "Digital adoption >50%",
+            "Revenue targets achieved"
+          ]
+        }
+      ]
+    },
+    {
+      "persona_title": "Digital Marketing Manager - Jennifer Park",
+      "profile": {
+        "name": "Jennifer Park",
+        "title": "Director, Digital Marketing & Engagement",
+        "organization": "Pharma Marketing Excellence",
+        "campaigns": "50+ digital campaigns annually",
+        "budget": "$40M digital marketing",
+        "channels": "Omnichannel focus",
+        "responsibilities": [
+          "Digital campaign strategy",
+          "Content marketing",
+          "Social media engagement",
+          "SEO/SEM optimization",
+          "Marketing automation",
+          "Performance analytics"
+        ]
+      },
+      "jobs_to_be_done": [
+        {
+          "jtbd_id": "DH_GENERAL_DMM_001",
+          "jtbd_code": "DH_GENERAL_DMM_001",
+          "unique_id": "dh_general_dmm_001",
+          "original_id": "JTBD-DMM-001",
+          "statement": "When executing compliant digital marketing for healthcare, I need approved content workflows and regulatory guardrails, so I can engage effectively",
+          "frequency": "Daily",
+          "importance": "9/10",
+          "current_satisfaction": "3/10",
+          "opportunity_score": "15",
+          "success_metrics": [
+            "Content approved quickly",
+            "Compliance maintained 100%",
+            "Engagement rates >5%",
+            "Conversion improved"
+          ]
+        }
+      ]
+    },
+    {
+      "persona_title": "Chief Digital Officer (Pharma) - Dr. David Kim",
+      "profile": {
+        "name": "Dr. David Kim",
+        "title": "Chief Digital Officer",
+        "organization": "Top 5 Pharma Company",
+        "reports_to": "CEO",
+        "budget": "$200M digital transformation",
+        "team": "250+ digital professionals",
+        "responsibilities": [
+          "Digital strategy",
+          "Innovation portfolio",
+          "Digital therapeutics",
+          "Data strategy",
+          "Technology partnerships",
+          "Capability building"
+        ]
+      },
+      "jobs_to_be_done": [
+        {
+          "jtbd_id": "DH_GENERAL_CDO_001",
+          "jtbd_code": "DH_GENERAL_CDO_001",
+          "unique_id": "dh_general_cdo_001",
+          "original_id": "JTBD-CDO-001",
+          "statement": "When building pharma's digital health portfolio, I need innovation frameworks and partnership models, so I can accelerate transformation",
+          "frequency": "Monthly",
+          "importance": "10/10",
+          "current_satisfaction": "3/10",
+          "opportunity_score": "17",
+          "success_metrics": [
+            "Portfolio value >$1B",
+            "Time to market reduced 50%",
+            "Partnerships successful",
+            "Capabilities built",
+            "ROI demonstrated"
+          ]
+        },
+        {
+          "jtbd_id": "DH_GENERAL_CDO_002",
+          "jtbd_code": "DH_GENERAL_CDO_002",
+          "unique_id": "dh_general_cdo_002",
+          "original_id": "JTBD-CDO-002",
+          "statement": "When integrating digital health into pharma R&D, I need collaboration platforms and governance models, so I can drive innovation",
+          "frequency": "Weekly",
+          "importance": "9/10",
+          "current_satisfaction": "3/10",
+          "opportunity_score": "15",
+          "success_metrics": [
+            "R&D productivity improved",
+            "Digital biomarkers adopted",
+            "Trial timelines reduced",
+            "Innovation pipeline robust"
+          ]
+        }
+      ]
+    },
+    {
+      "persona_title": "Digital Health Product Manager - Alex Rodriguez",
+      "profile": {
+        "name": "Alex Rodriguez",
+        "title": "Senior Product Manager, Digital Therapeutics",
+        "organization": "Pharma Digital Health Unit",
+        "products": "3 DTx in development",
+        "users": "100K+ patients",
+        "background": "Tech + healthcare",
+        "responsibilities": [
+          "Product strategy and roadmap",
+          "User research and validation",
+          "Clinical evidence generation",
+          "Technical development",
+          "Go-to-market planning",
+          "Performance optimization"
+        ]
+      },
+      "jobs_to_be_done": [
+        {
+          "jtbd_id": "DH_GENERAL_DHPM_001",
+          "jtbd_code": "DH_GENERAL_DHPM_001",
+          "unique_id": "dh_general_dhpm_001",
+          "original_id": "JTBD-DHPM-001",
+          "statement": "When developing pharmaceutical-grade digital therapeutics, I need clinical validation frameworks and regulatory guidance, so I can ensure approval and adoption",
+          "frequency": "Weekly",
+          "importance": "10/10",
+          "current_satisfaction": "3/10",
+          "opportunity_score": "17",
+          "success_metrics": [
+            "Clinical efficacy proven",
+            "Regulatory approval achieved",
+            "User adoption >40%",
+            "Health outcomes improved",
+            "Revenue targets met"
+          ]
+        },
+        {
+          "jtbd_id": "DH_GENERAL_DHPM_002",
+          "jtbd_code": "DH_GENERAL_DHPM_002",
+          "unique_id": "dh_general_dhpm_002",
+          "original_id": "JTBD-DHPM-002",
+          "statement": "When scaling DTx alongside medications, I need integration strategies and channel coordination, so I can maximize combined value",
+          "frequency": "Monthly",
+          "importance": "9/10",
+          "current_satisfaction": "2/10",
+          "opportunity_score": "16",
+          "success_metrics": [
+            "Integration seamless",
+            "Adherence improved >30%",
+            "Synergies realized",
+            "Channels coordinated"
+          ]
+        }
+      ]
+    },
+    {
+      "persona_title": "Data & Analytics Lead - Dr. Priya Patel",
+      "profile": {
+        "name": "Dr. Priya Patel",
+        "title": "VP Data Science & Analytics",
+        "organization": "Pharma Data Innovation",
+        "team": "50+ data scientists",
+        "data_sources": "100+ integrated",
+        "models": "30+ in production",
+        "responsibilities": [
+          "Advanced analytics strategy",
+          "Real-world evidence generation",
+          "Predictive modeling",
+          "Data governance",
+          "AI/ML deployment",
+          "Insights delivery"
+        ]
+      },
+      "jobs_to_be_done": [
+        {
+          "jtbd_id": "DH_GENERAL_DAL_001",
+          "jtbd_code": "DH_GENERAL_DAL_001",
+          "unique_id": "dh_general_dal_001",
+          "original_id": "JTBD-DAL-001",
+          "statement": "When generating insights from digital health data, I need privacy-preserving analytics and federated learning approaches, so I can maintain compliance while deriving value",
+          "frequency": "Daily",
+          "importance": "10/10",
+          "current_satisfaction": "3/10",
+          "opportunity_score": "17",
+          "success_metrics": [
+            "Privacy maintained 100%",
+            "Insights actionable",
+            "Models accurate >90%",
+            "Value demonstrated",
+            "Compliance assured"
+          ]
+        },
+        {
+          "jtbd_id": "DH_GENERAL_DAL_002",
+          "jtbd_code": "DH_GENERAL_DAL_002",
+          "unique_id": "dh_general_dal_002",
+          "original_id": "JTBD-DAL-002",
+          "statement": "When predicting patient outcomes from digital biomarkers, I need validated algorithms and clinical correlation, so I can inform treatment decisions",
+          "frequency": "Weekly",
+          "importance": "9/10",
+          "current_satisfaction": "2/10",
+          "opportunity_score": "16",
+          "success_metrics": [
+            "Predictions accurate >85%",
+            "Clinical relevance proven",
+            "Decisions improved",
+            "Adoption by HCPs"
+          ]
+        }
+      ]
+    },
+    {
+      "persona_title": "IT Infrastructure Lead - Thomas Anderson",
+      "profile": {
+        "name": "Thomas Anderson",
+        "title": "VP IT Infrastructure & Cloud",
+        "organization": "Pharma IT Division",
+        "infrastructure": "Global, multi-cloud",
+        "budget": "$100M annual",
+        "systems": "500+ applications",
+        "responsibilities": [
+          "Cloud architecture",
+          "Security and compliance",
+          "API management",
+          "DevOps practices",
+          "Vendor management",
+          "Innovation enablement"
+        ]
+      },
+      "jobs_to_be_done": [
+        {
+          "jtbd_id": "DH_GENERAL_ITL_001",
+          "jtbd_code": "DH_GENERAL_ITL_001",
+          "unique_id": "dh_general_itl_001",
+          "original_id": "JTBD-ITL-001",
+          "statement": "When supporting digital health initiatives, I need scalable cloud infrastructure and security frameworks, so I can ensure reliability and compliance",
+          "frequency": "Daily",
+          "importance": "10/10",
+          "current_satisfaction": "4/10",
+          "opportunity_score": "16",
+          "success_metrics": [
+            "Uptime 99.99%",
+            "Security incidents zero",
+            "Compliance maintained",
+            "Scalability proven"
+          ]
+        }
+      ]
+    },
+    {
+      "persona_title": "Service Design Director - Emma Watson",
+      "profile": {
+        "name": "Emma Watson",
+        "title": "Director, Service Design & Innovation",
+        "organization": "Pharma Design Center",
+        "background": "IDEO, Healthcare design",
+        "projects": "50+ service transformations",
+        "team": "20 designers",
+        "responsibilities": [
+          "Service innovation",
+          "Experience design",
+          "Design thinking workshops",
+          "Journey mapping",
+          "Prototype development",
+          "Design systems"
+        ]
+      },
+      "jobs_to_be_done": [
+        {
+          "jtbd_id": "DH_GENERAL_SDD_001",
+          "jtbd_code": "DH_GENERAL_SDD_001",
+          "unique_id": "dh_general_sdd_001",
+          "original_id": "JTBD-SDD-001",
+          "statement": "When designing end-to-end patient services, I need service blueprinting tools and stakeholder alignment methods, so I can create seamless experiences",
+          "frequency": "Per project",
+          "importance": "10/10",
+          "current_satisfaction": "3/10",
+          "opportunity_score": "17",
+          "success_metrics": [
+            "Service coherence achieved",
+            "Touchpoints optimized",
+            "Pain points eliminated",
+            "Satisfaction >4.5/5",
+            "Implementation successful"
+          ]
+        },
+        {
+          "jtbd_id": "DH_GENERAL_SDD_002",
+          "jtbd_code": "DH_GENERAL_SDD_002",
+          "unique_id": "dh_general_sdd_002",
+          "original_id": "JTBD-SDD-002",
+          "statement": "When innovating healthcare service models, I need rapid prototyping methods and pilot frameworks, so I can test and scale quickly",
+          "frequency": "Monthly",
+          "importance": "9/10",
+          "current_satisfaction": "3/10",
+          "opportunity_score": "15",
+          "success_metrics": [
+            "Prototype cycle <2 weeks",
+            "Pilot results conclusive",
+            "Scale decision clear",
+            "Innovation adopted"
+          ]
+        }
+      ]
+    },
+    {
+      "persona_title": "UX Research Lead - Dr. Lisa Chen",
+      "profile": {
+        "name": "Dr. Lisa Chen",
+        "title": "Principal UX Researcher",
+        "organization": "Pharma Digital Lab",
+        "background": "PhD Cognitive Psychology",
+        "studies": "100+ user studies conducted",
+        "specialization": "Healthcare UX",
+        "responsibilities": [
+          "User research strategy",
+          "Usability testing",
+          "Ethnographic studies",
+          "Persona development",
+          "Insight synthesis",
+          "Research operations"
+        ]
+      },
+      "jobs_to_be_done": [
+        {
+          "jtbd_id": "DH_GENERAL_UXR_001",
+          "jtbd_code": "DH_GENERAL_UXR_001",
+          "unique_id": "dh_general_uxr_001",
+          "original_id": "JTBD-UXR-001",
+          "statement": "When understanding patient digital behaviors, I need mixed-method research tools and remote testing capabilities, so I can gather authentic insights",
+          "frequency": "Weekly",
+          "importance": "9/10",
+          "current_satisfaction": "3/10",
+          "opportunity_score": "15",
+          "success_metrics": [
+            "Insights actionable 100%",
+            "Sample representative",
+            "Methods rigorous",
+            "Time to insight <3 weeks"
+          ]
+        }
+      ]
+    },
+    {
+      "persona_title": "Behavioral Science Lead - Dr. Robert Johnson",
+      "profile": {
+        "name": "Dr. Robert Johnson",
+        "title": "VP Behavioral Science & Engagement",
+        "organization": "Pharma Innovation Unit",
+        "background": "PhD Behavioral Economics",
+        "focus": "Digital behavior change",
+        "interventions_designed": "50+",
+        "responsibilities": [
+          "Behavior change strategy",
+          "Intervention design",
+          "Nudge development",
+          "Efficacy measurement",
+          "Team consultation",
+          "Research partnerships"
+        ]
+      },
+      "jobs_to_be_done": [
+        {
+          "jtbd_id": "DH_GENERAL_BSL_001",
+          "jtbd_code": "DH_GENERAL_BSL_001",
+          "unique_id": "dh_general_bsl_001",
+          "original_id": "JTBD-BSL-001",
+          "statement": "When designing digital behavior change interventions, I need evidence-based frameworks and testing protocols, so I can drive sustained outcomes",
+          "frequency": "Monthly",
+          "importance": "10/10",
+          "current_satisfaction": "3/10",
+          "opportunity_score": "17",
+          "success_metrics": [
+            "Behavior change sustained >6 months",
+            "Intervention efficacy proven",
+            "Mechanisms understood",
+            "Personalization achieved"
+          ]
+        }
+      ]
+    },
+    {
+      "persona_title": "Medical Legal Director - Jonathan Pierce",
+      "profile": {
+        "name": "Jonathan Pierce",
+        "title": "VP Medical Legal & Compliance",
+        "organization": "Global Pharma Company",
+        "background": "JD/MD, Healthcare law",
+        "team": "20 attorneys, 15 compliance officers",
+        "scope": "Global digital health compliance",
+        "responsibilities": [
+          "Digital health legal strategy",
+          "Privacy and data protection",
+          "Promotional review",
+          "Contract negotiations",
+          "Compliance monitoring",
+          "Risk assessment"
+        ]
+      },
+      "jobs_to_be_done": [
+        {
+          "jtbd_id": "DH_GENERAL_MLD_001",
+          "jtbd_code": "DH_GENERAL_MLD_001",
+          "unique_id": "dh_general_mld_001",
+          "original_id": "JTBD-MLD-001",
+          "statement": "When reviewing digital health initiatives for compliance, I need regulatory mapping and risk assessment frameworks, so I can ensure legal protection",
+          "frequency": "Daily",
+          "importance": "10/10",
+          "current_satisfaction": "3/10",
+          "opportunity_score": "17",
+          "success_metrics": [
+            "Compliance violations: Zero",
+            "Review turnaround: <48 hours",
+            "Risk mitigation: 100%",
+            "Audit findings: Minimal",
+            "Legal exposure: Minimized"
+          ]
+        },
+        {
+          "jtbd_id": "DH_GENERAL_MLD_002",
+          "jtbd_code": "DH_GENERAL_MLD_002",
+          "unique_id": "dh_general_mld_002",
+          "original_id": "JTBD-MLD-002",
+          "statement": "When negotiating digital health partnerships, I need template agreements and liability frameworks, so I can protect company interests",
+          "frequency": "Weekly",
+          "importance": "9/10",
+          "current_satisfaction": "3/10",
+          "opportunity_score": "15",
+          "success_metrics": [
+            "Contract clarity: 100%",
+            "Risk allocation: Appropriate",
+            "IP protection: Secured",
+            "Liability limited: Yes"
+          ]
+        }
+      ]
+    },
+    {
+      "persona_title": "Chief Compliance Officer - Digital Health - Sarah Mitchell",
+      "profile": {
+        "name": "Sarah Mitchell",
+        "title": "Chief Compliance Officer, Digital Health",
+        "organization": "Pharma Compliance Division",
+        "certifications": "CCEP, CHC",
+        "team": "50+ compliance professionals",
+        "audit_frequency": "Continuous monitoring",
+        "responsibilities": [
+          "Compliance program design",
+          "Policy development",
+          "Training and education",
+          "Monitoring and auditing",
+          "Investigation management",
+          "Regulatory reporting"
+        ]
+      },
+      "jobs_to_be_done": [
+        {
+          "jtbd_id": "DH_GENERAL_CCO_001",
+          "jtbd_code": "DH_GENERAL_CCO_001",
+          "unique_id": "dh_general_cco_001",
+          "original_id": "JTBD-CCO-001",
+          "statement": "When implementing digital health compliance programs, I need automated monitoring and training systems, so I can ensure enterprise-wide adherence",
+          "frequency": "Daily",
+          "importance": "10/10",
+          "current_satisfaction": "3/10",
+          "opportunity_score": "17",
+          "success_metrics": [
+            "Training completion: 100%",
+            "Policy adherence: >95%",
+            "Audit scores: >90%",
+            "Issues detected early: 100%"
+          ]
+        }
+      ]
+    },
+    {
+      "persona_title": "Pharmacovigilance Director - Dr. Amanda Foster",
+      "profile": {
+        "name": "Dr. Amanda Foster",
+        "title": "VP Global Drug Safety & Pharmacovigilance",
+        "organization": "Global Pharma Safety Division",
+        "team": "100+ safety professionals",
+        "products_monitored": "50+ drugs, 10+ digital companions",
+        "reports_processed": "100K+ annually",
+        "responsibilities": [
+          "Safety signal detection",
+          "Adverse event management",
+          "Risk management plans",
+          "Digital safety monitoring",
+          "Regulatory reporting",
+          "Safety database management"
+        ]
+      },
+      "jobs_to_be_done": [
+        {
+          "jtbd_id": "DH_GENERAL_PVD_001",
+          "jtbd_code": "DH_GENERAL_PVD_001",
+          "unique_id": "dh_general_pvd_001",
+          "original_id": "JTBD-PVD-001",
+          "statement": "When monitoring digital therapeutics for safety signals, I need integrated surveillance systems and automated detection, so I can ensure patient safety",
+          "frequency": "Daily",
+          "importance": "10/10",
+          "current_satisfaction": "2/10",
+          "opportunity_score": "18",
+          "success_metrics": [
+            "Signal detection: <24 hours",
+            "False positive rate: <10%",
+            "Reporting compliance: 100%",
+            "Patient safety: Protected",
+            "Regulatory satisfaction: High"
+          ]
+        },
+        {
+          "jtbd_id": "DH_GENERAL_PVD_002",
+          "jtbd_code": "DH_GENERAL_PVD_002",
+          "unique_id": "dh_general_pvd_002",
+          "original_id": "JTBD-PVD-002",
+          "statement": "When managing adverse events from digital health products, I need classification frameworks and reporting workflows, so I can meet regulatory requirements",
+          "frequency": "Daily",
+          "importance": "10/10",
+          "current_satisfaction": "3/10",
+          "opportunity_score": "17",
+          "success_metrics": [
+            "AE processing: <24 hours",
+            "Classification accuracy: 100%",
+            "Regulatory compliance: 100%",
+            "Documentation complete: Yes"
+          ]
+        }
+      ]
+    },
+    {
+      "persona_title": "Real-World Evidence Director - Dr. Marcus Chen",
+      "profile": {
+        "name": "Dr. Marcus Chen",
+        "title": "VP Real-World Evidence & Data Science",
+        "organization": "Pharma Evidence Generation",
+        "background": "PhD Epidemiology, MS Biostatistics",
+        "team": "40 data scientists, 20 epidemiologists",
+        "data_sources": "50+ RWD sources",
+        "responsibilities": [
+          "RWE strategy development",
+          "Study design and protocol",
+          "Data source evaluation",
+          "Advanced analytics",
+          "Evidence synthesis",
+          "Regulatory submissions"
+        ]
+      },
+      "jobs_to_be_done": [
+        {
+          "jtbd_id": "DH_GENERAL_RWE_001",
+          "jtbd_code": "DH_GENERAL_RWE_001",
+          "unique_id": "dh_general_rwe_001",
+          "original_id": "JTBD-RWE-001",
+          "statement": "When generating RWE from digital health data, I need quality assessment frameworks and analytical pipelines, so I can produce regulatory-grade evidence",
+          "frequency": "Weekly",
+          "importance": "10/10",
+          "current_satisfaction": "3/10",
+          "opportunity_score": "17",
+          "success_metrics": [
+            "Data quality: >95%",
+            "Study completion: On time",
+            "Regulatory acceptance: Achieved",
+            "Publication success: Top tier",
+            "Decision impact: Demonstrated"
+          ]
+        },
+        {
+          "jtbd_id": "DH_GENERAL_RWE_002",
+          "jtbd_code": "DH_GENERAL_RWE_002",
+          "unique_id": "dh_general_rwe_002",
+          "original_id": "JTBD-RWE-002",
+          "statement": "When linking digital biomarkers to clinical outcomes, I need validation methodologies and statistical models, so I can establish causal relationships",
+          "frequency": "Monthly",
+          "importance": "9/10",
+          "current_satisfaction": "2/10",
+          "opportunity_score": "16",
+          "success_metrics": [
+            "Correlation established: >0.7",
+            "Clinical validity: Proven",
+            "Predictive accuracy: >85%",
+            "Regulatory acceptance: Yes"
+          ]
+        }
+      ]
+    },
+    {
+      "persona_title": "Outcomes Research Manager - Jennifer Liu",
+      "profile": {
+        "name": "Jennifer Liu",
+        "title": "Director, Patient-Centered Outcomes Research",
+        "organization": "Pharma Outcomes Division",
+        "focus": "Digital endpoints, ePROs",
+        "studies_managed": "30+ active",
+        "therapeutic_areas": "Multiple",
+        "responsibilities": [
+          "Digital endpoint strategy",
+          "ePRO implementation",
+          "Patient burden assessment",
+          "Outcome validation",
+          "Stakeholder engagement",
+          "Publication planning"
+        ]
+      },
+      "jobs_to_be_done": [
+        {
+          "jtbd_id": "DH_GENERAL_ORM_001",
+          "jtbd_code": "DH_GENERAL_ORM_001",
+          "unique_id": "dh_general_orm_001",
+          "original_id": "JTBD-ORM-001",
+          "statement": "When implementing digital patient-reported outcomes, I need validated instruments and collection platforms, so I can capture meaningful data",
+          "frequency": "Per study",
+          "importance": "9/10",
+          "current_satisfaction": "3/10",
+          "opportunity_score": "15",
+          "success_metrics": [
+            "Completion rates: >80%",
+            "Data quality: >95%",
+            "Patient burden: Minimized",
+            "Validation complete: Yes"
+          ]
+        }
+      ]
+    },
+    {
+      "persona_title": "Medical Writing Director - Dr. Elizabeth Taylor",
+      "profile": {
+        "name": "Dr. Elizabeth Taylor",
+        "title": "VP Medical Writing & Scientific Communications",
+        "organization": "Global Medical Affairs",
+        "team": "50+ medical writers",
+        "documents_annually": "500+ regulatory, 200+ publications",
+        "digital_focus": "Digital health evidence communication",
+        "responsibilities": [
+          "Regulatory document authoring",
+          "Publication planning",
+          "Digital evidence synthesis",
+          "Scientific communication",
+          "Document management",
+          "Quality control"
+        ]
+      },
+      "jobs_to_be_done": [
+        {
+          "jtbd_id": "DH_GENERAL_MWD_001",
+          "jtbd_code": "DH_GENERAL_MWD_001",
+          "unique_id": "dh_general_mwd_001",
+          "original_id": "JTBD-MWD-001",
+          "statement": "When communicating digital health evidence to regulators, I need structured templates and clarity frameworks, so I can ensure clear understanding",
+          "frequency": "Weekly",
+          "importance": "10/10",
+          "current_satisfaction": "3/10",
+          "opportunity_score": "17",
+          "success_metrics": [
+            "Document clarity: Excellent",
+            "Review cycles: Minimized",
+            "Regulatory questions: Few",
+            "Approval rate: High",
+            "Time to submission: Reduced"
+          ]
+        },
+        {
+          "jtbd_id": "DH_GENERAL_MWD_002",
+          "jtbd_code": "DH_GENERAL_MWD_002",
+          "unique_id": "dh_general_mwd_002",
+          "original_id": "JTBD-MWD-002",
+          "statement": "When developing digital health publications, I need evidence visualization tools and narrative frameworks, so I can tell compelling stories",
+          "frequency": "Monthly",
+          "importance": "8/10",
+          "current_satisfaction": "3/10",
+          "opportunity_score": "13",
+          "success_metrics": [
+            "Acceptance rate: >70%",
+            "Impact factor: >5",
+            "Citations: Increasing",
+            "Clarity scores: High"
+          ]
+        }
+      ]
+    },
+    {
+      "persona_title": "Clinical Data Management Lead - Robert Zhang",
+      "profile": {
+        "name": "Robert Zhang",
+        "title": "VP Clinical Data Management",
+        "organization": "Clinical Operations",
+        "team": "60+ data managers",
+        "trials_supported": "40+ active",
+        "data_volume": "Petabytes",
+        "responsibilities": [
+          "Data strategy and governance",
+          "Database design and build",
+          "Data quality management",
+          "Digital data integration",
+          "Standards implementation",
+          "Regulatory compliance"
+        ]
+      },
+      "jobs_to_be_done": [
+        {
+          "jtbd_id": "DH_GENERAL_CDM_001",
+          "jtbd_code": "DH_GENERAL_CDM_001",
+          "unique_id": "dh_general_cdm_001",
+          "original_id": "JTBD-CDM-001",
+          "statement": "When integrating digital health data into clinical trials, I need standardization protocols and quality frameworks, so I can ensure data integrity",
+          "frequency": "Daily",
+          "importance": "10/10",
+          "current_satisfaction": "3/10",
+          "opportunity_score": "17",
+          "success_metrics": [
+            "Data quality: >99%",
+            "Integration time: <7 days",
+            "Compliance: 100%",
+            "Query rate: <5%",
+            "Database lock: On schedule"
+          ]
+        },
+        {
+          "jtbd_id": "DH_GENERAL_CDM_002",
+          "jtbd_code": "DH_GENERAL_CDM_002",
+          "unique_id": "dh_general_cdm_002",
+          "original_id": "JTBD-CDM-002",
+          "statement": "When managing continuous digital endpoint data, I need streaming pipelines and automated validation, so I can handle high volumes efficiently",
+          "frequency": "Daily",
+          "importance": "9/10",
+          "current_satisfaction": "2/10",
+          "opportunity_score": "16",
+          "success_metrics": [
+            "Data latency: <1 hour",
+            "Processing capacity: Unlimited",
+            "Quality maintained: >99%",
+            "Cost per datapoint: Optimized"
+          ]
+        }
+      ]
+    },
+    {
+      "persona_title": "Biostatistics Director - Dr. Michael Wong",
+      "profile": {
+        "name": "Dr. Michael Wong",
+        "title": "VP Biostatistics & Statistical Programming",
+        "organization": "Clinical Development",
+        "background": "PhD Statistics",
+        "team": "40 biostatisticians, 30 programmers",
+        "specialization": "Digital endpoints, adaptive designs",
+        "responsibilities": [
+          "Statistical methodology",
+          "Study design optimization",
+          "Digital endpoint analysis",
+          "Regulatory submissions",
+          "Statistical programming",
+          "Methodology innovation"
+        ]
+      },
+      "jobs_to_be_done": [
+        {
+          "jtbd_id": "DH_GENERAL_BSD_001",
+          "jtbd_code": "DH_GENERAL_BSD_001",
+          "unique_id": "dh_general_bsd_001",
+          "original_id": "JTBD-BSD-001",
+          "statement": "When analyzing digital biomarker data, I need specialized statistical methods and validation approaches, so I can demonstrate clinical significance",
+          "frequency": "Per study",
+          "importance": "10/10",
+          "current_satisfaction": "3/10",
+          "opportunity_score": "17",
+          "success_metrics": [
+            "Statistical validity: Confirmed",
+            "Power achieved: >80%",
+            "Methods accepted: By FDA",
+            "Results reproducible: 100%",
+            "Timeline met: Yes"
+          ]
+        },
+        {
+          "jtbd_id": "DH_GENERAL_BSD_002",
+          "jtbd_code": "DH_GENERAL_BSD_002",
+          "unique_id": "dh_general_bsd_002",
+          "original_id": "JTBD-BSD-002",
+          "statement": "When designing adaptive trials with digital endpoints, I need simulation tools and decision algorithms, so I can optimize trial efficiency",
+          "frequency": "Quarterly",
+          "importance": "9/10",
+          "current_satisfaction": "2/10",
+          "opportunity_score": "16",
+          "success_metrics": [
+            "Sample size: Optimized",
+            "Adaptation success: >90%",
+            "Time saved: >6 months",
+            "Cost reduced: >30%"
+          ]
+        }
+      ]
+    },
+    {
+      "persona_title": "Digital Partnerships Director - Amanda Wilson",
+      "profile": {
+        "name": "Amanda Wilson",
+        "title": "VP Strategic Partnerships, Digital Health",
+        "organization": "Business Development",
+        "deals_managed": "50+ partnerships",
+        "deal_value": "$500M+ total",
+        "partner_types": "Tech, startups, academia",
+        "responsibilities": [
+          "Partnership strategy",
+          "Deal sourcing and evaluation",
+          "Negotiation and structuring",
+          "Alliance management",
+          "Value realization",
+          "Ecosystem development"
+        ]
+      },
+      "jobs_to_be_done": [
+        {
+          "jtbd_id": "DH_GENERAL_DPD_001",
+          "jtbd_code": "DH_GENERAL_DPD_001",
+          "unique_id": "dh_general_dpd_001",
+          "original_id": "JTBD-DPD-001",
+          "statement": "When evaluating digital health partnerships, I need assessment frameworks and value models, so I can identify strategic fits",
+          "frequency": "Weekly",
+          "importance": "9/10",
+          "current_satisfaction": "3/10",
+          "opportunity_score": "15",
+          "success_metrics": [
+            "Deal quality: High",
+            "Success rate: >60%",
+            "Value realized: >ROI",
+            "Time to deal: <6 months",
+            "Partner satisfaction: >4/5"
+          ]
+        },
+        {
+          "jtbd_id": "DH_GENERAL_DPD_002",
+          "jtbd_code": "DH_GENERAL_DPD_002",
+          "unique_id": "dh_general_dpd_002",
+          "original_id": "JTBD-DPD-002",
+          "statement": "When managing digital health alliances, I need governance models and performance tracking, so I can ensure mutual success",
+          "frequency": "Monthly",
+          "importance": "9/10",
+          "current_satisfaction": "3/10",
+          "opportunity_score": "15",
+          "success_metrics": [
+            "Milestone achievement: >80%",
+            "Value delivery: On target",
+            "Relationship health: Strong",
+            "Issues resolved: Quickly"
+          ]
+        }
+      ]
+    },
+    {
+      "persona_title": "Digital Adoption Lead - Christopher Davis",
+      "profile": {
+        "name": "Christopher Davis",
+        "title": "VP Digital Adoption & Change Management",
+        "organization": "Digital Transformation Office",
+        "background": "Organizational Psychology, MBA",
+        "team": "30 change agents",
+        "initiatives": "20+ digital programs",
+        "responsibilities": [
+          "Change strategy",
+          "Stakeholder engagement",
+          "Training programs",
+          "Adoption metrics",
+          "Resistance management",
+          "Culture transformation"
+        ]
+      },
+      "jobs_to_be_done": [
+        {
+          "jtbd_id": "DH_GENERAL_DAL_001",
+          "jtbd_code": "DH_GENERAL_DAL_001",
+          "unique_id": "dh_general_dal_001",
+          "original_id": "JTBD-DAL-001",
+          "statement": "When driving digital health adoption in pharma, I need change readiness assessments and engagement strategies, so I can overcome resistance",
+          "frequency": "Weekly",
+          "importance": "10/10",
+          "current_satisfaction": "3/10",
+          "opportunity_score": "17",
+          "success_metrics": [
+            "Adoption rate: >70%",
+            "Time to adoption: <6 months",
+            "Resistance overcome: Yes",
+            "Sustainability: Achieved",
+            "ROI demonstrated: Clear"
+          ]
+        },
+        {
+          "jtbd_id": "DH_GENERAL_DAL_002",
+          "jtbd_code": "DH_GENERAL_DAL_002",
+          "unique_id": "dh_general_dal_002",
+          "original_id": "JTBD-DAL-002",
+          "statement": "When transforming to digital-first mindset, I need culture change programs and success stories, so I can shift organizational behavior",
+          "frequency": "Monthly",
+          "importance": "9/10",
+          "current_satisfaction": "2/10",
+          "opportunity_score": "16",
+          "success_metrics": [
+            "Culture shift: Measurable",
+            "Digital fluency: >80%",
+            "Innovation increased: 2x",
+            "Engagement high: >70%"
+          ]
+        }
+      ]
+    },
+    {
+      "persona_title": "Digital Supply Chain Director - Michael Thompson",
+      "profile": {
+        "name": "Michael Thompson",
+        "title": "VP Digital Supply Chain & Manufacturing",
+        "organization": "Global Operations",
+        "scope": "30 manufacturing sites",
+        "products": "200+ SKUs including digital",
+        "innovation_focus": "Smart manufacturing, Track & trace",
+        "responsibilities": [
+          "Digital supply chain strategy",
+          "Smart manufacturing",
+          "Serialization/track-trace",
+          "Digital twin implementation",
+          "Predictive maintenance",
+          "Quality by design"
+        ]
+      },
+      "jobs_to_be_done": [
+        {
+          "jtbd_id": "DH_GENERAL_DSC_001",
+          "jtbd_code": "DH_GENERAL_DSC_001",
+          "unique_id": "dh_general_dsc_001",
+          "original_id": "JTBD-DSC-001",
+          "statement": "When integrating digital therapeutics into supply chain, I need distribution models and quality systems, so I can ensure product availability",
+          "frequency": "Monthly",
+          "importance": "9/10",
+          "current_satisfaction": "2/10",
+          "opportunity_score": "16",
+          "success_metrics": [
+            "Availability: 99.9%",
+            "Quality maintained: 100%",
+            "Distribution efficient: Yes",
+            "Compliance assured: 100%"
+          ]
+        }
+      ]
+    },
+    {
+      "persona_title": "Medical Affairs Director - Dr. Sofia Martinez",
+      "profile": {
+        "name": "Dr. Sofia Martinez",
+        "title": "VP Medical Affairs, Digital Health",
+        "organization": "Top 10 Pharma Company",
+        "therapeutic_areas": "Oncology, Cardiology, Neurology",
+        "budget": "$40M annual",
+        "team": "25 MSLs, 10 medical writers",
+        "responsibilities": [
+          "Real-world evidence generation",
+          "KOL engagement strategy",
+          "Patient support programs",
+          "Medical education content",
+          "Scientific communications",
+          "Digital companion apps"
+        ],
+        "pain_points": [
+          "Fragmented RWE sources",
+          "Digital engagement metrics unclear",
+          "Regulatory boundaries ambiguous",
+          "KOL digital skepticism",
+          "Patient program ROI unclear",
+          "Cross-functional silos"
+        ]
+      },
+      "jobs_to_be_done": [
+        {
+          "jtbd_id": "DH_GENERAL_MAD_001",
+          "jtbd_code": "DH_GENERAL_MAD_001",
+          "unique_id": "dh_general_mad_001",
+          "original_id": "JTBD-MAD-001",
+          "statement": "When developing patient support programs, I need to integrate digital tools that demonstrate clinical impact, so I can improve adherence and outcomes",
+          "frequency": "Quarterly",
+          "importance": "10/10",
+          "current_satisfaction": "3/10",
+          "opportunity_score": "17",
+          "success_metrics": [
+            "Adherence improvement >30%",
+            "Clinical outcomes tracked",
+            "Patient satisfaction >4.5/5",
+            "Regulatory compliance 100%",
+            "Cost per patient optimized"
+          ]
+        },
+        {
+          "jtbd_id": "DH_GENERAL_MAD_002",
+          "jtbd_code": "DH_GENERAL_MAD_002",
+          "unique_id": "dh_general_mad_002",
+          "original_id": "JTBD-MAD-002",
+          "statement": "When generating real-world evidence for label expansion, I need digital data collection methods that meet regulatory standards, so I can support new indications",
+          "frequency": "Monthly",
+          "importance": "9/10",
+          "current_satisfaction": "3/10",
+          "opportunity_score": "15",
+          "success_metrics": [
+            "Data quality meets FDA standards",
+            "Collection cost reduced 50%",
+            "Time to evidence <12 months",
+            "Multi-country harmonized",
+            "Publication-ready outputs"
+          ]
+        },
+        {
+          "jtbd_id": "DH_GENERAL_MAD_003",
+          "jtbd_code": "DH_GENERAL_MAD_003",
+          "unique_id": "dh_general_mad_003",
+          "original_id": "JTBD-MAD-003",
+          "statement": "When engaging KOLs digitally, I need compliant platforms that track interactions and content effectiveness, so I can optimize medical strategy",
+          "frequency": "Weekly",
+          "importance": "8/10",
+          "current_satisfaction": "4/10",
+          "opportunity_score": "12",
+          "success_metrics": [
+            "KOL engagement rate >60%",
+            "Content effectiveness measured",
+            "Compliance documented 100%",
+            "Insights actionable"
+          ]
+        }
+      ]
+    },
+    {
+      "persona_title": "Clinical Development Lead - Dr. Robert Harrison",
+      "profile": {
+        "name": "Dr. Robert Harrison",
+        "title": "VP Clinical Development",
+        "organization": "Big Pharma Digital Innovation",
+        "trials_managed": "20+ Phase II/III",
+        "focus": "Hybrid and decentralized trials",
+        "team": "50+ clinical operations staff",
+        "responsibilities": [
+          "Trial protocol design",
+          "Digital endpoint integration",
+          "Decentralized trial operations",
+          "Data quality management",
+          "Site network management",
+          "Regulatory submission support"
+        ]
+      },
+      "jobs_to_be_done": [
+        {
+          "jtbd_id": "DH_GENERAL_CDL_001",
+          "jtbd_code": "DH_GENERAL_CDL_001",
+          "unique_id": "dh_general_cdl_001",
+          "original_id": "JTBD-CDL-001",
+          "statement": "When designing hybrid trials with digital endpoints, I need validated digital biomarkers and collection methods, so I can ensure regulatory acceptance",
+          "frequency": "Per trial",
+          "importance": "10/10",
+          "current_satisfaction": "3/10",
+          "opportunity_score": "17",
+          "success_metrics": [
+            "Digital endpoints FDA-accepted",
+            "Data quality >95%",
+            "Patient burden reduced 40%",
+            "Site burden minimized",
+            "Timeline accelerated 6 months"
+          ]
+        },
+        {
+          "jtbd_id": "DH_GENERAL_CDL_002",
+          "jtbd_code": "DH_GENERAL_CDL_002",
+          "unique_id": "dh_general_cdl_002",
+          "original_id": "JTBD-CDL-002",
+          "statement": "When managing decentralized trial operations, I need integrated platforms for remote monitoring and data collection, so I can maintain quality and compliance",
+          "frequency": "Daily",
+          "importance": "9/10",
+          "current_satisfaction": "4/10",
+          "opportunity_score": "14",
+          "success_metrics": [
+            "Protocol deviations <5%",
+            "Data completeness >98%",
+            "Patient retention >85%",
+            "Cost per patient reduced 30%",
+            "Real-time visibility achieved"
+          ]
+        },
+        {
+          "jtbd_id": "DH_GENERAL_CDL_003",
+          "jtbd_code": "DH_GENERAL_CDL_003",
+          "unique_id": "dh_general_cdl_003",
+          "original_id": "JTBD-CDL-003",
+          "statement": "When integrating digital biomarkers into protocols, I need evidence of clinical validity and technical reliability, so I can justify to regulators",
+          "frequency": "Monthly",
+          "importance": "9/10",
+          "current_satisfaction": "2/10",
+          "opportunity_score": "16",
+          "success_metrics": [
+            "Clinical validity demonstrated",
+            "Technical reliability >99%",
+            "Regulatory precedent identified",
+            "Patient acceptability >80%"
+          ]
+        }
+      ]
+    },
+    {
+      "persona_title": "Regulatory Affairs Manager - Patricia Thompson",
+      "profile": {
+        "name": "Patricia Thompson",
+        "title": "Senior Director, Digital Health Regulatory",
+        "organization": "Global Pharma Company",
+        "experience": "15 years FDA/EMA submissions",
+        "specialization": "Combination products (drug+digital)",
+        "submissions_managed": "50+ NDAs/BLAs",
+        "responsibilities": [
+          "Digital health regulatory strategy",
+          "Combination product submissions",
+          "Global regulatory harmonization",
+          "Post-market surveillance",
+          "Regulatory intelligence",
+          "Agency negotiations"
+        ]
+      },
+      "jobs_to_be_done": [
+        {
+          "jtbd_id": "DH_GENERAL_RAM_001",
+          "jtbd_code": "DH_GENERAL_RAM_001",
+          "unique_id": "dh_general_ram_001",
+          "original_id": "JTBD-RAM-001",
+          "statement": "When navigating combo product regulations (drug+digital), I need clear pathways and precedents, so I can ensure timely approval",
+          "frequency": "Quarterly",
+          "importance": "10/10",
+          "current_satisfaction": "2/10",
+          "opportunity_score": "18",
+          "success_metrics": [
+            "Regulatory pathway clear",
+            "Submission timeline met",
+            "First-cycle approval achieved",
+            "Global alignment secured",
+            "No major surprises"
+          ]
+        },
+        {
+          "jtbd_id": "DH_GENERAL_RAM_002",
+          "jtbd_code": "DH_GENERAL_RAM_002",
+          "unique_id": "dh_general_ram_002",
+          "original_id": "JTBD-RAM-002",
+          "statement": "When preparing digital health regulatory submissions, I need comprehensive documentation templates and guidance, so I can meet all requirements",
+          "frequency": "Monthly",
+          "importance": "9/10",
+          "current_satisfaction": "3/10",
+          "opportunity_score": "15",
+          "success_metrics": [
+            "Submission complete first time",
+            "Review questions minimized",
+            "Approval timeline standard",
+            "Cross-functional aligned",
+            "Reusable for future"
+          ]
+        },
+        {
+          "jtbd_id": "DH_GENERAL_RAM_003",
+          "jtbd_code": "DH_GENERAL_RAM_003",
+          "unique_id": "dh_general_ram_003",
+          "original_id": "JTBD-RAM-003",
+          "statement": "When managing post-market surveillance for apps, I need automated monitoring and reporting systems, so I can maintain compliance efficiently",
+          "frequency": "Weekly",
+          "importance": "8/10",
+          "current_satisfaction": "3/10",
+          "opportunity_score": "13",
+          "success_metrics": [
+            "Adverse events detected quickly",
+            "Reports automated 80%",
+            "Compliance maintained 100%",
+            "Resource needs reduced 50%"
+          ]
+        }
+      ]
+    },
+    {
+      "persona_title": "Medical Science Liaison (MSL) - Dr. Jennifer Adams",
+      "profile": {
+        "name": "Dr. Jennifer Adams",
+        "title": "Senior Medical Science Liaison",
+        "organization": "Specialty Pharma Company",
+        "territory": "Northeast US",
+        "KOLs_managed": "75+ physicians",
+        "therapeutic_area": "Rare diseases",
+        "responsibilities": [
+          "Scientific exchange with KOLs",
+          "Medical education delivery",
+          "Clinical trial support",
+          "Real-world insights gathering",
+          "Digital tool training",
+          "Conference engagement"
+        ]
+      },
+      "jobs_to_be_done": [
+        {
+          "jtbd_id": "DH_GENERAL_MSL_001",
+          "jtbd_code": "DH_GENERAL_MSL_001",
+          "unique_id": "dh_general_msl_001",
+          "original_id": "JTBD-MSL-001",
+          "statement": "When engaging KOLs about digital therapeutics, I need scientific evidence and case studies, so I can build credibility and adoption",
+          "frequency": "Weekly",
+          "importance": "9/10",
+          "current_satisfaction": "3/10",
+          "opportunity_score": "15",
+          "success_metrics": [
+            "KOL interest increased",
+            "Scientific credibility established",
+            "Adoption barriers identified",
+            "Follow-up meetings secured",
+            "Insights documented"
+          ]
+        },
+        {
+          "jtbd_id": "DH_GENERAL_MSL_002",
+          "jtbd_code": "DH_GENERAL_MSL_002",
+          "unique_id": "dh_general_msl_002",
+          "original_id": "JTBD-MSL-002",
+          "statement": "When training HCPs on digital companions, I need interactive demo platforms and patient scenarios, so I can ensure proper implementation",
+          "frequency": "Bi-weekly",
+          "importance": "8/10",
+          "current_satisfaction": "4/10",
+          "opportunity_score": "12",
+          "success_metrics": [
+            "HCP confidence improved",
+            "Implementation correct",
+            "Patient enrollment increased",
+            "Support requests reduced"
+          ]
+        }
+      ]
+    },
+    {
+      "persona_title": "Commercial/Sales Leadership - Michael Roberts",
+      "profile": {
+        "name": "Michael Roberts",
+        "title": "VP Commercial Strategy, Digital Health",
+        "organization": "Large Pharma Company",
+        "sales_team": "500+ representatives",
+        "revenue_responsibility": "$2B annually",
+        "digital_products": "5 DTx in portfolio",
+        "responsibilities": [
+          "Sales force enablement",
+          "Digital product positioning",
+          "Omnichannel strategy",
+          "Customer segmentation",
+          "Revenue forecasting",
+          "Partnership development"
+        ]
+      },
+      "jobs_to_be_done": [
+        {
+          "jtbd_id": "DH_GENERAL_CSL_001",
+          "jtbd_code": "DH_GENERAL_CSL_001",
+          "unique_id": "dh_general_csl_001",
+          "original_id": "JTBD-CSL-001",
+          "statement": "When training sales force on digital therapeutics, I need clear value propositions and objection handling, so I can drive adoption",
+          "frequency": "Monthly",
+          "importance": "10/10",
+          "current_satisfaction": "3/10",
+          "opportunity_score": "17",
+          "success_metrics": [
+            "Sales confidence >80%",
+            "Call effectiveness improved",
+            "Digital product mentions >50%",
+            "Conversion rate increased",
+            "Revenue targets met"
+          ]
+        },
+        {
+          "jtbd_id": "DH_GENERAL_CSL_002",
+          "jtbd_code": "DH_GENERAL_CSL_002",
+          "unique_id": "dh_general_csl_002",
+          "original_id": "JTBD-CSL-002",
+          "statement": "When developing omnichannel strategies, I need integrated platforms that track customer journey, so I can optimize engagement",
+          "frequency": "Weekly",
+          "importance": "9/10",
+          "current_satisfaction": "3/10",
+          "opportunity_score": "15",
+          "success_metrics": [
+            "Customer journey mapped",
+            "Channel effectiveness measured",
+            "ROI per channel clear",
+            "Personalization achieved"
+          ]
+        }
+      ]
+    },
+    {
+      "persona_title": "Chief Medical Officer (Payer) - Dr. William Chang",
+      "profile": {
+        "name": "Dr. William Chang",
+        "title": "Chief Medical Officer",
+        "organization": "National Health Plan",
+        "members": "10 million covered lives",
+        "medical_spend": "$15B annually",
+        "focus": "Value-based care transformation",
+        "responsibilities": [
+          "Coverage policy development",
+          "Clinical program design",
+          "Quality metrics management",
+          "Provider network strategy",
+          "Digital health evaluation",
+          "Medical cost management"
+        ]
+      },
+      "jobs_to_be_done": [
+        {
+          "jtbd_id": "DH_GENERAL_CMO_001",
+          "jtbd_code": "DH_GENERAL_CMO_001",
+          "unique_id": "dh_general_cmo_001",
+          "original_id": "JTBD-CMO-001",
+          "statement": "When evaluating clinical effectiveness of digital interventions, I need real-world outcomes data and economic models, so I can make coverage decisions",
+          "frequency": "Monthly",
+          "importance": "10/10",
+          "current_satisfaction": "2/10",
+          "opportunity_score": "18",
+          "success_metrics": [
+            "Clinical evidence robust",
+            "Economic value demonstrated",
+            "Coverage policy defensible",
+            "Provider support secured",
+            "Member outcomes improved"
+          ]
+        },
+        {
+          "jtbd_id": "DH_GENERAL_CMO_002",
+          "jtbd_code": "DH_GENERAL_CMO_002",
+          "unique_id": "dh_general_cmo_002",
+          "original_id": "JTBD-CMO-002",
+          "statement": "When developing coverage policies for new modalities, I need clinical guidelines and utilization criteria, so I can ensure appropriate use",
+          "frequency": "Quarterly",
+          "importance": "9/10",
+          "current_satisfaction": "3/10",
+          "opportunity_score": "15",
+          "success_metrics": [
+            "Guidelines evidence-based",
+            "Criteria clear and measurable",
+            "Provider acceptance >70%",
+            "Utilization appropriate",
+            "Outcomes tracked"
+          ]
+        },
+        {
+          "jtbd_id": "DH_GENERAL_CMO_003",
+          "jtbd_code": "DH_GENERAL_CMO_003",
+          "unique_id": "dh_general_cmo_003",
+          "original_id": "JTBD-CMO-003",
+          "statement": "When ensuring quality metrics improvement, I need digital tools that engage members and providers, so I can achieve STAR ratings",
+          "frequency": "Weekly",
+          "importance": "9/10",
+          "current_satisfaction": "4/10",
+          "opportunity_score": "14",
+          "success_metrics": [
+            "HEDIS gaps closed >80%",
+            "STAR ratings improved",
+            "Member engagement increased",
+            "Provider participation high"
+          ]
+        }
+      ]
+    },
+    {
+      "persona_title": "Pharmacy Director - Dr. Lisa Anderson",
+      "profile": {
+        "name": "Dr. Lisa Anderson",
+        "title": "VP Pharmacy Services",
+        "organization": "Regional Health Plan",
+        "formulary_decisions": "500+ annually",
+        "pharmacy_spend": "$3B",
+        "digital_therapeutics": "Evaluating 20+",
+        "responsibilities": [
+          "Formulary management",
+          "Prior authorization design",
+          "Specialty pharmacy programs",
+          "DTx evaluation and coverage",
+          "Rebate negotiations",
+          "Clinical programs"
+        ]
+      },
+      "jobs_to_be_done": [
+        {
+          "jtbd_id": "DH_GENERAL_PD_001",
+          "jtbd_code": "DH_GENERAL_PD_001",
+          "unique_id": "dh_general_pd_001",
+          "original_id": "JTBD-PD-001",
+          "statement": "When integrating DTx into formulary management, I need clear classification and tier placement criteria, so I can maintain consistency",
+          "frequency": "Monthly",
+          "importance": "9/10",
+          "current_satisfaction": "2/10",
+          "opportunity_score": "16",
+          "success_metrics": [
+            "Classification framework clear",
+            "Tier placement justified",
+            "P&T committee approval",
+            "Provider understanding",
+            "Member access appropriate"
+          ]
+        },
+        {
+          "jtbd_id": "DH_GENERAL_PD_002",
+          "jtbd_code": "DH_GENERAL_PD_002",
+          "unique_id": "dh_general_pd_002",
+          "original_id": "JTBD-PD-002",
+          "statement": "When developing prior authorization for DTx, I need clinical criteria and workflow integration, so I can ensure appropriate utilization",
+          "frequency": "Weekly",
+          "importance": "8/10",
+          "current_satisfaction": "2/10",
+          "opportunity_score": "14",
+          "success_metrics": [
+            "PA criteria evidence-based",
+            "Approval time <24 hours",
+            "Provider burden minimized",
+            "Appropriate use ensured",
+            "Appeals rate <5%"
+          ]
+        },
+        {
+          "jtbd_id": "DH_GENERAL_PD_003",
+          "jtbd_code": "DH_GENERAL_PD_003",
+          "unique_id": "dh_general_pd_003",
+          "original_id": "JTBD-PD-003",
+          "statement": "When assessing digital therapeutic equivalence, I need comparative effectiveness data, so I can make substitution decisions",
+          "frequency": "Quarterly",
+          "importance": "8/10",
+          "current_satisfaction": "1/10",
+          "opportunity_score": "15",
+          "success_metrics": [
+            "Therapeutic equivalence established",
+            "Substitution criteria clear",
+            "Cost savings documented",
+            "Clinical outcomes maintained"
+          ]
+        }
+      ]
+    },
+    {
+      "persona_title": "Population Health Manager - Susan Mitchell",
+      "profile": {
+        "name": "Susan Mitchell",
+        "title": "Director, Population Health",
+        "organization": "Integrated Health System",
+        "members_managed": "500,000",
+        "risk_contracts": "50+ value-based",
+        "programs": "Diabetes, CHF, COPD, Mental Health",
+        "responsibilities": [
+          "Risk stratification",
+          "Care management programs",
+          "Digital health integration",
+          "Outcomes measurement",
+          "Provider engagement",
+          "Cost management"
+        ]
+      },
+      "jobs_to_be_done": [
+        {
+          "jtbd_id": "DH_GENERAL_PHM_001",
+          "jtbd_code": "DH_GENERAL_PHM_001",
+          "unique_id": "dh_general_phm_001",
+          "original_id": "JTBD-PHM-001",
+          "statement": "When managing high-risk populations, I need predictive analytics and digital interventions, so I can prevent acute events",
+          "frequency": "Daily",
+          "importance": "10/10",
+          "current_satisfaction": "3/10",
+          "opportunity_score": "17",
+          "success_metrics": [
+            "Risk prediction accurate >85%",
+            "Interventions timely",
+            "Admissions reduced 30%",
+            "ED visits decreased 25%",
+            "Cost savings achieved"
+          ]
+        },
+        {
+          "jtbd_id": "DH_GENERAL_PHM_002",
+          "jtbd_code": "DH_GENERAL_PHM_002",
+          "unique_id": "dh_general_phm_002",
+          "original_id": "JTBD-PHM-002",
+          "statement": "When deploying digital health programs, I need engagement strategies and outcome tracking, so I can demonstrate value",
+          "frequency": "Weekly",
+          "importance": "9/10",
+          "current_satisfaction": "3/10",
+          "opportunity_score": "15",
+          "success_metrics": [
+            "Engagement rate >40%",
+            "Outcomes measurable",
+            "ROI documented",
+            "Scalability proven"
+          ]
+        }
+      ]
+    },
+    {
+      "persona_title": "Quality/STAR Ratings Manager - David Brown",
+      "profile": {
+        "name": "David Brown",
+        "title": "VP Quality & STAR Ratings",
+        "organization": "Medicare Advantage Plan",
+        "members": "2 million MA lives",
+        "current_rating": "4.0 stars",
+        "target_rating": "4.5 stars",
+        "quality_bonus": "$50M at stake",
+        "responsibilities": [
+          "HEDIS measure management",
+          "STAR ratings improvement",
+          "Quality program design",
+          "Provider engagement",
+          "Member outreach",
+          "Digital tool deployment"
+        ]
+      },
+      "jobs_to_be_done": [
+        {
+          "jtbd_id": "DH_GENERAL_QRM_001",
+          "jtbd_code": "DH_GENERAL_QRM_001",
+          "unique_id": "dh_general_qrm_001",
+          "original_id": "JTBD-QRM-001",
+          "statement": "When improving HEDIS/STAR ratings with digital tools, I need automated gap closure and member engagement, so I can achieve quality bonuses",
+          "frequency": "Daily",
+          "importance": "10/10",
+          "current_satisfaction": "3/10",
+          "opportunity_score": "17",
+          "success_metrics": [
+            "Gap closure rate >85%",
+            "STAR rating improved 0.5",
+            "Member satisfaction >80%",
+            "Provider burden reduced",
+            "Bonus payments secured"
+          ]
+        },
+        {
+          "jtbd_id": "DH_GENERAL_QRM_002",
+          "jtbd_code": "DH_GENERAL_QRM_002",
+          "unique_id": "dh_general_qrm_002",
+          "original_id": "JTBD-QRM-002",
+          "statement": "When tracking quality metrics from digital interventions, I need real-time dashboards and predictive analytics, so I can intervene proactively",
+          "frequency": "Weekly",
+          "importance": "9/10",
+          "current_satisfaction": "3/10",
+          "opportunity_score": "15",
+          "success_metrics": [
+            "Real-time visibility achieved",
+            "Predictions accurate >80%",
+            "Interventions timely",
+            "Metrics improved"
+          ]
+        }
+      ]
+    },
+    {
+      "persona_title": "Frontline Physician - Dr. Emily Johnson",
+      "profile": {
+        "name": "Dr. Emily Johnson",
+        "title": "Primary Care Physician",
+        "organization": "Multi-specialty Group Practice",
+        "panel_size": "2,500 patients",
+        "daily_patients": "25-30",
+        "EMR_time": "4 hours/day",
+        "digital_tools_used": "10+ apps/platforms",
+        "responsibilities": [
+          "Patient care delivery",
+          "Chronic disease management",
+          "Preventive care",
+          "Digital tool prescribing",
+          "Care coordination",
+          "Documentation"
+        ]
+      },
+      "jobs_to_be_done": [
+        {
+          "jtbd_id": "DH_GENERAL_FP_001",
+          "jtbd_code": "DH_GENERAL_FP_001",
+          "unique_id": "dh_general_fp_001",
+          "original_id": "JTBD-FP-001",
+          "statement": "When integrating digital tools into clinical workflow, I need seamless EMR integration and evidence summaries, so I can use them efficiently",
+          "frequency": "Daily",
+          "importance": "10/10",
+          "current_satisfaction": "2/10",
+          "opportunity_score": "18",
+          "success_metrics": [
+            "EMR integration seamless",
+            "Time per patient unchanged",
+            "Evidence readily available",
+            "Patient outcomes improved",
+            "Documentation automated"
+          ]
+        },
+        {
+          "jtbd_id": "DH_GENERAL_FP_002",
+          "jtbd_code": "DH_GENERAL_FP_002",
+          "unique_id": "dh_general_fp_002",
+          "original_id": "JTBD-FP-002",
+          "statement": "When interpreting digital biomarker data, I need clinical context and actionable insights, so I can make treatment decisions",
+          "frequency": "Multiple daily",
+          "importance": "9/10",
+          "current_satisfaction": "2/10",
+          "opportunity_score": "16",
+          "success_metrics": [
+            "Data clinically relevant",
+            "Insights actionable",
+            "False positives minimal",
+            "Time to decision reduced",
+            "Confidence increased"
+          ]
+        },
+        {
+          "jtbd_id": "DH_GENERAL_FP_003",
+          "jtbd_code": "DH_GENERAL_FP_003",
+          "unique_id": "dh_general_fp_003",
+          "original_id": "JTBD-FP-003",
+          "statement": "When prescribing DTx, I need efficacy data and patient selection criteria, so I can ensure appropriate use",
+          "frequency": "Weekly",
+          "importance": "8/10",
+          "current_satisfaction": "3/10",
+          "opportunity_score": "13",
+          "success_metrics": [
+            "Efficacy evidence clear",
+            "Patient criteria defined",
+            "Insurance coverage known",
+            "Monitoring simplified"
+          ]
+        }
+      ]
+    },
+    {
+      "persona_title": "Chief Medical Information Officer (CMIO) - Dr. Richard Park",
+      "profile": {
+        "name": "Dr. Richard Park",
+        "title": "Chief Medical Information Officer",
+        "organization": "800-bed Academic Medical Center",
+        "background": "Internal medicine, Informatics fellowship",
+        "systems_managed": "Epic, 200+ integrated apps",
+        "clinicians_supported": "2,000+",
+        "responsibilities": [
+          "Clinical IT strategy",
+          "EMR optimization",
+          "Digital health integration",
+          "Clinical decision support",
+          "Provider training",
+          "Data governance"
+        ]
+      },
+      "jobs_to_be_done": [
+        {
+          "jtbd_id": "DH_GENERAL_CMIO_001",
+          "jtbd_code": "DH_GENERAL_CMIO_001",
+          "unique_id": "dh_general_cmio_001",
+          "original_id": "JTBD-CMIO-001",
+          "statement": "When ensuring clinical IT system integration, I need standards-based APIs and security protocols, so I can maintain interoperability",
+          "frequency": "Weekly",
+          "importance": "10/10",
+          "current_satisfaction": "3/10",
+          "opportunity_score": "17",
+          "success_metrics": [
+            "Integration time <30 days",
+            "FHIR compliance achieved",
+            "Security standards met",
+            "Downtime minimal",
+            "Clinician satisfaction >70%"
+          ]
+        },
+        {
+          "jtbd_id": "DH_GENERAL_CMIO_002",
+          "jtbd_code": "DH_GENERAL_CMIO_002",
+          "unique_id": "dh_general_cmio_002",
+          "original_id": "JTBD-CMIO-002",
+          "statement": "When validating clinical decision support tools, I need evidence base and performance metrics, so I can ensure safety and efficacy",
+          "frequency": "Monthly",
+          "importance": "10/10",
+          "current_satisfaction": "3/10",
+          "opportunity_score": "17",
+          "success_metrics": [
+            "Clinical accuracy >95%",
+            "Alert fatigue minimized",
+            "Outcomes improvement demonstrated",
+            "Liability risk managed",
+            "Physician trust earned"
+          ]
+        },
+        {
+          "jtbd_id": "DH_GENERAL_CMIO_003",
+          "jtbd_code": "DH_GENERAL_CMIO_003",
+          "unique_id": "dh_general_cmio_003",
+          "original_id": "JTBD-CMIO-003",
+          "statement": "When overseeing AI/ML implementation, I need explainability and bias detection, so I can ensure equitable care",
+          "frequency": "Quarterly",
+          "importance": "9/10",
+          "current_satisfaction": "2/10",
+          "opportunity_score": "16",
+          "success_metrics": [
+            "Model explainable",
+            "Bias detected and mitigated",
+            "Performance monitored",
+            "Governance established"
+          ]
+        }
+      ]
+    },
+    {
+      "persona_title": "Nurse Manager/Chief Nursing Officer - Margaret O'Brien",
+      "profile": {
+        "name": "Margaret O'Brien",
+        "title": "Chief Nursing Officer",
+        "organization": "Regional Health Network",
+        "nurses_managed": "3,000+",
+        "units": "50+ clinical units",
+        "focus": "Digital nursing transformation",
+        "responsibilities": [
+          "Nursing operations",
+          "Staff deployment",
+          "Digital tool adoption",
+          "Quality improvement",
+          "Patient safety",
+          "Workforce development"
+        ]
+      },
+      "jobs_to_be_done": [
+        {
+          "jtbd_id": "DH_GENERAL_NM_001",
+          "jtbd_code": "DH_GENERAL_NM_001",
+          "unique_id": "dh_general_nm_001",
+          "original_id": "JTBD-NM-001",
+          "statement": "When deploying nursing staff for virtual care, I need competency frameworks and workflow protocols, so I can ensure quality",
+          "frequency": "Weekly",
+          "importance": "9/10",
+          "current_satisfaction": "2/10",
+          "opportunity_score": "16",
+          "success_metrics": [
+            "Competencies defined",
+            "Training completed 100%",
+            "Workflows optimized",
+            "Quality maintained",
+            "Satisfaction high"
+          ]
+        },
+        {
+          "jtbd_id": "DH_GENERAL_NM_002",
+          "jtbd_code": "DH_GENERAL_NM_002",
+          "unique_id": "dh_general_nm_002",
+          "original_id": "JTBD-NM-002",
+          "statement": "When training nurses on digital tools, I need simulation platforms and competency assessments, so I can ensure safe use",
+          "frequency": "Monthly",
+          "importance": "9/10",
+          "current_satisfaction": "3/10",
+          "opportunity_score": "15",
+          "success_metrics": [
+            "Training completion 100%",
+            "Competency demonstrated",
+            "Error rates reduced",
+            "Efficiency improved",
+            "Confidence increased"
+          ]
+        },
+        {
+          "jtbd_id": "DH_GENERAL_NM_003",
+          "jtbd_code": "DH_GENERAL_NM_003",
+          "unique_id": "dh_general_nm_003",
+          "original_id": "JTBD-NM-003",
+          "statement": "When managing remote monitoring workflows, I need staffing models and escalation protocols, so I can optimize resources",
+          "frequency": "Daily",
+          "importance": "8/10",
+          "current_satisfaction": "3/10",
+          "opportunity_score": "13",
+          "success_metrics": [
+            "Staffing optimized",
+            "Response times met",
+            "Escalations appropriate",
+            "Outcomes improved"
+          ]
+        }
+      ]
+    },
+    {
+      "persona_title": "Quality/Safety Director - Dr. Barbara Wilson",
+      "profile": {
+        "name": "Dr. Barbara Wilson",
+        "title": "VP Quality & Patient Safety",
+        "organization": "Large Hospital System",
+        "scope": "10 hospitals, 100+ clinics",
+        "metrics_tracked": "200+ quality indicators",
+        "accreditations": "Joint Commission, NCQA, etc.",
+        "responsibilities": [
+          "Quality program oversight",
+          "Patient safety initiatives",
+          "Digital health validation",
+          "Outcome measurement",
+          "Regulatory compliance",
+          "Accreditation management"
+        ]
+      },
+      "jobs_to_be_done": [
+        {
+          "jtbd_id": "DH_GENERAL_QSD_001",
+          "jtbd_code": "DH_GENERAL_QSD_001",
+          "unique_id": "dh_general_qsd_001",
+          "original_id": "JTBD-QSD-001",
+          "statement": "When measuring digital intervention outcomes, I need validated metrics and attribution methods, so I can demonstrate impact",
+          "frequency": "Monthly",
+          "importance": "9/10",
+          "current_satisfaction": "2/10",
+          "opportunity_score": "16",
+          "success_metrics": [
+            "Metrics validated",
+            "Attribution clear",
+            "Outcomes improved",
+            "Reports automated",
+            "Stakeholders convinced"
+          ]
+        },
+        {
+          "jtbd_id": "DH_GENERAL_QSD_002",
+          "jtbd_code": "DH_GENERAL_QSD_002",
+          "unique_id": "dh_general_qsd_002",
+          "original_id": "JTBD-QSD-002",
+          "statement": "When ensuring patient safety with digital tools, I need risk assessment frameworks and monitoring systems, so I can prevent harm",
+          "frequency": "Weekly",
+          "importance": "10/10",
+          "current_satisfaction": "3/10",
+          "opportunity_score": "17",
+          "success_metrics": [
+            "Risks identified proactively",
+            "Adverse events prevented",
+            "Monitoring continuous",
+            "Response rapid"
+          ]
+        }
+      ]
+    },
+    {
+      "persona_title": "CTO/Technical Co-founder - Alex Kumar",
+      "profile": {
+        "name": "Alex Kumar",
+        "title": "Chief Technology Officer",
+        "organization": "Series B DTx Startup",
+        "team": "25 engineers",
+        "tech_stack": "AWS, React, Python, ML",
+        "compliance": "HIPAA, SOC2, ISO27001",
+        "responsibilities": [
+          "Platform architecture",
+          "Technical roadmap",
+          "Security & compliance",
+          "Scaling infrastructure",
+          "Team building",
+          "Technical partnerships"
+        ]
+      },
+      "jobs_to_be_done": [
+        {
+          "jtbd_id": "DH_GENERAL_CTO_001",
+          "jtbd_code": "DH_GENERAL_CTO_001",
+          "unique_id": "dh_general_cto_001",
+          "original_id": "JTBD-CTO-001",
+          "statement": "When building HIPAA-compliant infrastructure, I need security frameworks and audit tools, so I can ensure compliance and pass audits",
+          "frequency": "Weekly",
+          "importance": "10/10",
+          "current_satisfaction": "4/10",
+          "opportunity_score": "16",
+          "success_metrics": [
+            "HIPAA compliance achieved",
+            "Audits passed first time",
+            "Security incidents zero",
+            "Documentation complete",
+            "Cost optimized"
+          ]
+        },
+        {
+          "jtbd_id": "DH_GENERAL_CTO_002",
+          "jtbd_code": "DH_GENERAL_CTO_002",
+          "unique_id": "dh_general_cto_002",
+          "original_id": "JTBD-CTO-002",
+          "statement": "When scaling platform for growth, I need architecture patterns and performance optimization, so I can handle 10x users",
+          "frequency": "Monthly",
+          "importance": "9/10",
+          "current_satisfaction": "3/10",
+          "opportunity_score": "15",
+          "success_metrics": [
+            "10x scale achieved",
+            "Performance maintained",
+            "Costs linear not exponential",
+            "Reliability 99.99%",
+            "Team productivity high"
+          ]
+        },
+        {
+          "jtbd_id": "DH_GENERAL_CTO_003",
+          "jtbd_code": "DH_GENERAL_CTO_003",
+          "unique_id": "dh_general_cto_003",
+          "original_id": "JTBD-CTO-003",
+          "statement": "When managing technical debt, I need prioritization frameworks and refactoring strategies, so I can balance speed and quality",
+          "frequency": "Quarterly",
+          "importance": "8/10",
+          "current_satisfaction": "3/10",
+          "opportunity_score": "13",
+          "success_metrics": [
+            "Debt ratio controlled",
+            "Velocity maintained",
+            "Quality improved",
+            "Team morale high"
+          ]
+        }
+      ]
+    },
+    {
+      "persona_title": "VP Customer Success - Rachel Green",
+      "profile": {
+        "name": "Rachel Green",
+        "title": "VP Customer Success",
+        "organization": "Digital Health SaaS",
+        "accounts_managed": "50 enterprise",
+        "team": "15 CSMs",
+        "churn_rate": "Currently 15%",
+        "NPS": "42",
+        "responsibilities": [
+          "Customer onboarding",
+          "Adoption driving",
+          "Retention management",
+          "Upsell/expansion",
+          "Feedback collection",
+          "Success metrics"
+        ]
+      },
+      "jobs_to_be_done": [
+        {
+          "jtbd_id": "DH_GENERAL_CS_001",
+          "jtbd_code": "DH_GENERAL_CS_001",
+          "unique_id": "dh_general_cs_001",
+          "original_id": "JTBD-CS-001",
+          "statement": "When driving user engagement and retention, I need behavioral analytics and intervention playbooks, so I can reduce churn",
+          "frequency": "Daily",
+          "importance": "10/10",
+          "current_satisfaction": "3/10",
+          "opportunity_score": "17",
+          "success_metrics": [
+            "Churn reduced to <10%",
+            "Engagement increased 50%",
+            "NPS improved to >50",
+            "Expansion revenue 120%",
+            "CAC/LTV ratio >3"
+          ]
+        },
+        {
+          "jtbd_id": "DH_GENERAL_CS_002",
+          "jtbd_code": "DH_GENERAL_CS_002",
+          "unique_id": "dh_general_cs_002",
+          "original_id": "JTBD-CS-002",
+          "statement": "When ensuring clinical outcomes achievement, I need outcome tracking and success protocols, so I can demonstrate value",
+          "frequency": "Weekly",
+          "importance": "9/10",
+          "current_satisfaction": "3/10",
+          "opportunity_score": "15",
+          "success_metrics": [
+            "Outcomes tracked 100%",
+            "Success rate >80%",
+            "Case studies developed",
+            "Renewals secured"
+          ]
+        }
+      ]
+    },
+    {
+      "persona_title": "Growth Marketing Lead - Jason Martinez",
+      "profile": {
+        "name": "Jason Martinez",
+        "title": "Head of Growth Marketing",
+        "organization": "Consumer Health App",
+        "MAU": "500K seeking 5M",
+        "CAC": "$50 (target <$30)",
+        "marketing_budget": "$5M annual",
+        "responsibilities": [
+          "User acquisition",
+          "Conversion optimization",
+          "Retention marketing",
+          "Growth experiments",
+          "Channel management",
+          "Marketing analytics"
+        ]
+      },
+      "jobs_to_be_done": [
+        {
+          "jtbd_id": "DH_GENERAL_GM_001",
+          "jtbd_code": "DH_GENERAL_GM_001",
+          "unique_id": "dh_general_gm_001",
+          "original_id": "JTBD-GM-001",
+          "statement": "When optimizing patient acquisition funnels, I need attribution modeling and channel optimization, so I can reduce CAC below LTV/3",
+          "frequency": "Daily",
+          "importance": "10/10",
+          "current_satisfaction": "3/10",
+          "opportunity_score": "17",
+          "success_metrics": [
+            "CAC reduced <$30",
+            "Conversion rate >5%",
+            "Channel ROI clear",
+            "Scale achieved",
+            "Quality maintained"
+          ]
+        },
+        {
+          "jtbd_id": "DH_GENERAL_GM_002",
+          "jtbd_code": "DH_GENERAL_GM_002",
+          "unique_id": "dh_general_gm_002",
+          "original_id": "JTBD-GM-002",
+          "statement": "When building referral programs, I need incentive design and viral mechanics, so I can achieve organic growth",
+          "frequency": "Monthly",
+          "importance": "8/10",
+          "current_satisfaction": "2/10",
+          "opportunity_score": "14",
+          "success_metrics": [
+            "Viral coefficient >1.2",
+            "Referral rate >30%",
+            "CAC near zero",
+            "Quality high"
+          ]
+        }
+      ]
+    },
+    {
+      "persona_title": "VC Partner/Investor - Dr. James Mitchell",
+      "profile": {
+        "name": "Dr. James Mitchell",
+        "title": "Partner, Digital Health Ventures",
+        "fund_size": "$500M",
+        "portfolio": "25 digital health companies",
+        "check_size": "$5-20M Series A/B",
+        "exits": "3 unicorns, 5 acquisitions",
+        "responsibilities": [
+          "Deal sourcing",
+          "Due diligence",
+          "Portfolio support",
+          "Board governance",
+          "Exit planning",
+          "LP management"
+        ]
+      },
+      "jobs_to_be_done": [
+        {
+          "jtbd_id": "DH_GENERAL_VC_001",
+          "jtbd_code": "DH_GENERAL_VC_001",
+          "unique_id": "dh_general_vc_001",
+          "original_id": "JTBD-VC-001",
+          "statement": "When evaluating digital health opportunities, I need clinical validation and market sizing frameworks, so I can identify winners",
+          "frequency": "Weekly",
+          "importance": "10/10",
+          "current_satisfaction": "4/10",
+          "opportunity_score": "16",
+          "success_metrics": [
+            "Deal quality improved",
+            "Success rate >20%",
+            "Returns >3x",
+            "Portfolio diversified",
+            "Reputation enhanced"
+          ]
+        },
+        {
+          "jtbd_id": "DH_GENERAL_VC_002",
+          "jtbd_code": "DH_GENERAL_VC_002",
+          "unique_id": "dh_general_vc_002",
+          "original_id": "JTBD-VC-002",
+          "statement": "When providing strategic guidance, I need benchmarks and best practices, so I can accelerate portfolio growth",
+          "frequency": "Monthly",
+          "importance": "8/10",
+          "current_satisfaction": "4/10",
+          "opportunity_score": "12",
+          "success_metrics": [
+            "Portfolio growth accelerated",
+            "Milestones achieved",
+            "Next round secured",
+            "Exits optimized"
+          ]
+        }
+      ]
+    },
+    {
+      "persona_title": "Clinical Advisory Board Chair - Dr. Patricia Lee",
+      "profile": {
+        "name": "Dr. Patricia Lee",
+        "title": "Chief Medical Advisor",
+        "organization": "Multiple DTx startups",
+        "background": "Former Mayo Clinic department chair",
+        "specialty": "Cardiology",
+        "publications": "200+ peer-reviewed",
+        "responsibilities": [
+          "Clinical strategy guidance",
+          "Protocol development",
+          "Medical credibility",
+          "KOL introductions",
+          "Publication strategy",
+          "Regulatory guidance"
+        ]
+      },
+      "jobs_to_be_done": [
+        {
+          "jtbd_id": "DH_GENERAL_CAC_001",
+          "jtbd_code": "DH_GENERAL_CAC_001",
+          "unique_id": "dh_general_cac_001",
+          "original_id": "JTBD-CAC-001",
+          "statement": "When providing medical credibility, I need evidence frameworks and publication strategies, so I can build market trust",
+          "frequency": "Monthly",
+          "importance": "9/10",
+          "current_satisfaction": "3/10",
+          "opportunity_score": "15",
+          "success_metrics": [
+            "Publications achieved",
+            "KOLs engaged",
+            "Credibility established",
+            "Adoption accelerated"
+          ]
+        }
+      ]
+    },
+    {
+      "persona_title": "Regulatory Consultant - Mark Stevens",
+      "profile": {
+        "name": "Mark Stevens",
+        "title": "Principal Regulatory Consultant",
+        "organization": "Digital Health Regulatory Firm",
+        "clients": "50+ digital health companies",
+        "specialization": "FDA De Novo, 510(k), SaMD",
+        "success_rate": "90% first-pass approval",
+        "responsibilities": [
+          "Regulatory strategy",
+          "Submission preparation",
+          "FDA negotiations",
+          "Global harmonization",
+          "Quality systems",
+          "Post-market compliance"
+        ]
+      },
+      "jobs_to_be_done": [
+        {
+          "jtbd_id": "DH_GENERAL_RC_001",
+          "jtbd_code": "DH_GENERAL_RC_001",
+          "unique_id": "dh_general_rc_001",
+          "original_id": "JTBD-RC-001",
+          "statement": "When preparing FDA submissions for novel digital health products, I need precedent analysis and pathway optimization, so I can ensure approval",
+          "frequency": "Per project",
+          "importance": "10/10",
+          "current_satisfaction": "4/10",
+          "opportunity_score": "16",
+          "success_metrics": [
+            "Pathway optimized",
+            "Submission complete",
+            "Questions minimal",
+            "Approval achieved"
+          ]
+        }
+      ]
+    },
+    {
+      "persona_title": "Clinical Operations Director - Nancy White",
+      "profile": {
+        "name": "Nancy White",
+        "title": "Director of Clinical Operations",
+        "organization": "Community Hospital Network",
+        "departments": "15 clinical departments",
+        "providers": "500+ physicians, 2000+ staff",
+        "digital_initiatives": "20+ active projects",
+        "responsibilities": [
+          "Operational efficiency",
+          "Workflow optimization",
+          "Digital tool deployment",
+          "Staff coordination",
+          "Performance improvement",
+          "Change management"
+        ]
+      },
+      "jobs_to_be_done": [
+        {
+          "jtbd_id": "DH_GENERAL_COD_001",
+          "jtbd_code": "DH_GENERAL_COD_001",
+          "unique_id": "dh_general_cod_001",
+          "original_id": "JTBD-COD-001",
+          "statement": "When optimizing clinical workflows with digital tools, I need process mapping and change management, so I can improve efficiency",
+          "frequency": "Weekly",
+          "importance": "9/10",
+          "current_satisfaction": "3/10",
+          "opportunity_score": "15",
+          "success_metrics": [
+            "Workflow time reduced 30%",
+            "Staff satisfaction improved",
+            "Patient flow optimized",
+            "Quality maintained"
+          ]
+        }
+      ]
+    },
+    {
+      "persona_title": "IT Director/CIO - Thomas Anderson",
+      "profile": {
+        "name": "Thomas Anderson",
+        "title": "Chief Information Officer",
+        "organization": "Regional Health System",
+        "budget": "$100M annual IT",
+        "systems": "500+ applications",
+        "team": "200+ IT professionals",
+        "priorities": "Digital transformation, cybersecurity",
+        "responsibilities": [
+          "IT strategy",
+          "Infrastructure management",
+          "Cybersecurity",
+          "Vendor management",
+          "Digital innovation",
+          "Budget optimization"
+        ]
+      },
+      "jobs_to_be_done": [
+        {
+          "jtbd_id": "DH_GENERAL_ITD_001",
+          "jtbd_code": "DH_GENERAL_ITD_001",
+          "unique_id": "dh_general_itd_001",
+          "original_id": "JTBD-ITD-001",
+          "statement": "When managing healthcare IT infrastructure, I need integration standards and security frameworks, so I can ensure reliability",
+          "frequency": "Daily",
+          "importance": "10/10",
+          "current_satisfaction": "4/10",
+          "opportunity_score": "16",
+          "success_metrics": [
+            "Uptime 99.99%",
+            "Security incidents zero",
+            "Integration time reduced",
+            "Costs optimized"
+          ]
+        }
+      ]
+    },
+    {
+      "persona_title": "Brand Manager (Pharma) - Jessica Taylor",
+      "profile": {
+        "name": "Jessica Taylor",
+        "title": "Brand Director, Digital Innovation",
+        "organization": "Top 5 Pharma",
+        "brand_value": "$2B annual revenue",
+        "digital_budget": "$30M",
+        "campaigns": "Omnichannel focus",
+        "responsibilities": [
+          "Brand strategy",
+          "Digital marketing",
+          "Patient engagement",
+          "HCP marketing",
+          "Campaign ROI",
+          "Innovation adoption"
+        ]
+      },
+      "jobs_to_be_done": [
+        {
+          "jtbd_id": "DH_GENERAL_BM_001",
+          "jtbd_code": "DH_GENERAL_BM_001",
+          "unique_id": "dh_general_bm_001",
+          "original_id": "JTBD-BM-001",
+          "statement": "When positioning digital companions with our brand, I need messaging frameworks and ROI models, so I can drive adoption",
+          "frequency": "Quarterly",
+          "importance": "9/10",
+          "current_satisfaction": "3/10",
+          "opportunity_score": "15",
+          "success_metrics": [
+            "Message resonance tested",
+            "Adoption increased 40%",
+            "Brand equity enhanced",
+            "ROI demonstrated"
+          ]
+        }
+      ]
+    },
+    {
+      "persona_title": "Sales Leader (Digital Health) - Brian Foster",
+      "profile": {
+        "name": "Brian Foster",
+        "title": "VP Sales, Enterprise",
+        "organization": "Digital Health Platform",
+        "team": "50 sales reps",
+        "quota": "$100M annual",
+        "deal_size": "$500K-5M ACV",
+        "sales_cycle": "6-12 months",
+        "responsibilities": [
+          "Revenue generation",
+          "Team management",
+          "Pipeline development",
+          "Strategic accounts",
+          "Partnership development",
+          "Sales enablement"
+        ]
+      },
+      "jobs_to_be_done": [
+        {
+          "jtbd_id": "DH_GENERAL_SL_001",
+          "jtbd_code": "DH_GENERAL_SL_001",
+          "unique_id": "dh_general_sl_001",
+          "original_id": "JTBD-SL-001",
+          "statement": "When selling to health systems, I need ROI calculators and case studies, so I can demonstrate value",
+          "frequency": "Daily",
+          "importance": "10/10",
+          "current_satisfaction": "3/10",
+          "opportunity_score": "17",
+          "success_metrics": [
+            "Win rate >30%",
+            "Deal size increased",
+            "Cycle time reduced",
+            "Quota achieved"
+          ]
+        }
+      ]
+    },
+    {
+      "persona_title": "Product Development Lead - Jason Kim",
+      "profile": {
+        "name": "Jason Kim",
+        "title": "VP Product Development",
+        "organization": "Digital Health Startup",
+        "team": "15 developers, 5 designers",
+        "product_stage": "FDA submission phase",
+        "tech_stack": "React, Python, AWS",
+        "responsibilities": [
+          "Product roadmap",
+          "Feature development",
+          "Technical architecture",
+          "Quality assurance",
+          "Regulatory compliance",
+          "Team management"
+        ]
+      },
+      "jobs_to_be_done": [
+        {
+          "jtbd_id": "DH_GENERAL_PDL_001",
+          "jtbd_code": "DH_GENERAL_PDL_001",
+          "unique_id": "dh_general_pdl_001",
+          "original_id": "JTBD-PDL-001",
+          "statement": "When developing medical-grade software, I need quality management systems and validation protocols, so I can ensure FDA compliance",
+          "frequency": "Daily",
+          "importance": "10/10",
+          "current_satisfaction": "3/10",
+          "opportunity_score": "17",
+          "success_metrics": [
+            "FDA compliance: 100%",
+            "Quality system: Mature",
+            "Defect rate: <0.1%",
+            "Release cycle: Predictable",
+            "Audit ready: Always"
+          ]
+        },
+        {
+          "jtbd_id": "DH_GENERAL_PDL_002",
+          "jtbd_code": "DH_GENERAL_PDL_002",
+          "unique_id": "dh_general_pdl_002",
+          "original_id": "JTBD-PDL-002",
+          "statement": "When iterating based on clinical feedback, I need rapid development cycles and testing frameworks, so I can improve quickly while maintaining quality",
+          "frequency": "Weekly",
+          "importance": "9/10",
+          "current_satisfaction": "3/10",
+          "opportunity_score": "15",
+          "success_metrics": [
+            "Iteration speed: <2 weeks",
+            "Quality maintained: Yes",
+            "User satisfaction: >4.5/5",
+            "Compliance intact: 100%"
+          ]
+        }
+      ]
+    },
+    {
+      "persona_title": "Clinical Research Director (Startup) - Dr. Nancy Park",
+      "profile": {
+        "name": "Dr. Nancy Park",
+        "title": "VP Clinical Research & Validation",
+        "organization": "DTx Startup",
+        "background": "PhD Clinical Psychology",
+        "studies_managed": "5 clinical trials",
+        "regulatory_submissions": "2 FDA clearances",
+        "responsibilities": [
+          "Clinical study design",
+          "Protocol development",
+          "Site management",
+          "Data analysis",
+          "Regulatory submissions",
+          "Publication strategy"
+        ]
+      },
+      "jobs_to_be_done": [
+        {
+          "jtbd_id": "DH_GENERAL_CRD_001",
+          "jtbd_code": "DH_GENERAL_CRD_001",
+          "unique_id": "dh_general_crd_001",
+          "original_id": "JTBD-CRD-001",
+          "statement": "When validating digital therapeutics efficacy, I need lean clinical trial designs and efficient recruitment, so I can generate evidence within budget",
+          "frequency": "Per study",
+          "importance": "10/10",
+          "current_satisfaction": "3/10",
+          "opportunity_score": "17",
+          "success_metrics": [
+            "Primary endpoint met: Yes",
+            "Timeline achieved: On schedule",
+            "Budget maintained: Within 10%",
+            "Quality assured: 100%",
+            "FDA acceptance: Achieved"
+          ]
+        },
+        {
+          "jtbd_id": "DH_GENERAL_CRD_002",
+          "jtbd_code": "DH_GENERAL_CRD_002",
+          "unique_id": "dh_general_crd_002",
+          "original_id": "JTBD-CRD-002",
+          "statement": "When publishing clinical results, I need publication strategies and journal relationships, so I can build scientific credibility",
+          "frequency": "Quarterly",
+          "importance": "8/10",
+          "current_satisfaction": "3/10",
+          "opportunity_score": "13",
+          "success_metrics": [
+            "Publication accepted: Top tier",
+            "Time to publication: <6 months",
+            "Citations growing: Yes",
+            "KOL engagement: High"
+          ]
+        }
+      ]
+    },
+    {
+      "persona_title": "Quality & Regulatory Manager (Startup) - Linda Chen",
+      "profile": {
+        "name": "Linda Chen",
+        "title": "Director, Quality & Regulatory Affairs",
+        "organization": "Digital Health Startup",
+        "certifications": "RAC, ASQ",
+        "experience": "10 years medical device",
+        "team": "3 QA/RA specialists",
+        "responsibilities": [
+          "QMS implementation",
+          "Regulatory strategy",
+          "FDA submissions",
+          "Audit management",
+          "Risk management",
+          "Documentation control"
+        ]
+      },
+      "jobs_to_be_done": [
+        {
+          "jtbd_id": "DH_GENERAL_QRM_001",
+          "jtbd_code": "DH_GENERAL_QRM_001",
+          "unique_id": "dh_general_qrm_001",
+          "original_id": "JTBD-QRM-001",
+          "statement": "When building QMS for digital health startup, I need scalable frameworks and automation tools, so I can maintain compliance efficiently",
+          "frequency": "Daily",
+          "importance": "10/10",
+          "current_satisfaction": "3/10",
+          "opportunity_score": "17",
+          "success_metrics": [
+            "QMS maturity: Level 3+",
+            "Audit findings: Minimal",
+            "Compliance: 100%",
+            "Efficiency: Optimized"
+          ]
+        }
+      ]
+    },
+    {
+      "persona_title": "Business Development Director (Startup) - Kevin Miller",
+      "profile": {
+        "name": "Kevin Miller",
+        "title": "VP Business Development & Partnerships",
+        "organization": "Digital Therapeutics Company",
+        "deals_closed": "10 enterprise, 5 pharma",
+        "pipeline_value": "$50M",
+        "focus": "B2B2C partnerships",
+        "responsibilities": [
+          "Partnership strategy",
+          "Deal origination",
+          "Negotiation",
+          "Contract management",
+          "Channel development",
+          "Strategic alliances"
+        ]
+      },
+      "jobs_to_be_done": [
+        {
+          "jtbd_id": "DH_GENERAL_BDD_001",
+          "jtbd_code": "DH_GENERAL_BDD_001",
+          "unique_id": "dh_general_bdd_001",
+          "original_id": "JTBD-BDD-001",
+          "statement": "When securing pharma partnerships for DTx, I need value proposition frameworks and pilot programs, so I can demonstrate mutual benefit",
+          "frequency": "Monthly",
+          "importance": "10/10",
+          "current_satisfaction": "3/10",
+          "opportunity_score": "17",
+          "success_metrics": [
+            "Partnerships secured: >5/year",
+            "Deal value: >$5M each",
+            "Time to close: <6 months",
+            "Pilot success: >80%"
+          ]
+        }
+      ]
+    },
+    {
+      "persona_title": "Implementation Success Manager - Sarah Johnson",
+      "profile": {
+        "name": "Sarah Johnson",
+        "title": "Director, Implementation & Customer Success",
+        "organization": "Digital Health Platform",
+        "accounts": "20 health systems",
+        "implementation_time": "Average 90 days",
+        "success_rate": "85%",
+        "responsibilities": [
+          "Implementation planning",
+          "Customer onboarding",
+          "Training delivery",
+          "Success metrics",
+          "Issue resolution",
+          "Account growth"
+        ]
+      },
+      "jobs_to_be_done": [
+        {
+          "jtbd_id": "DH_GENERAL_ISM_001",
+          "jtbd_code": "DH_GENERAL_ISM_001",
+          "unique_id": "dh_general_ism_001",
+          "original_id": "JTBD-ISM-001",
+          "statement": "When implementing digital health solutions at scale, I need deployment playbooks and change management tools, so I can ensure adoption",
+          "frequency": "Per implementation",
+          "importance": "10/10",
+          "current_satisfaction": "3/10",
+          "opportunity_score": "17",
+          "success_metrics": [
+            "Go-live on time: >90%",
+            "Adoption rate: >70%",
+            "User satisfaction: >4/5",
+            "Issues resolved: <24 hours"
+          ]
+        }
+      ]
+    },
+    {
+      "persona_title": "Clinical Content Developer - Dr. Rachel Martinez",
+      "profile": {
+        "name": "Dr. Rachel Martinez",
+        "title": "Director, Clinical Content & Education",
+        "organization": "Digital Therapeutics Startup",
+        "background": "PhD Psychology, MPH",
+        "content_created": "500+ modules",
+        "therapeutic_areas": "Mental health, chronic disease",
+        "responsibilities": [
+          "Clinical content strategy",
+          "Evidence-based content",
+          "Educational design",
+          "Localization/translation",
+          "Clinical accuracy",
+          "Engagement optimization"
+        ]
+      },
+      "jobs_to_be_done": [
+        {
+          "jtbd_id": "DH_GENERAL_CCD_001",
+          "jtbd_code": "DH_GENERAL_CCD_001",
+          "unique_id": "dh_general_ccd_001",
+          "original_id": "JTBD-CCD-001",
+          "statement": "When developing therapeutic content, I need evidence-based frameworks and engagement strategies, so I can drive behavior change",
+          "frequency": "Weekly",
+          "importance": "10/10",
+          "current_satisfaction": "3/10",
+          "opportunity_score": "17",
+          "success_metrics": [
+            "Clinical accuracy: 100%",
+            "Engagement rate: >60%",
+            "Completion rate: >40%",
+            "Behavior change: Measurable"
+          ]
+        }
+      ]
+    },
+    {
+      "persona_title": "Reimbursement Strategy Lead - William Davis",
+      "profile": {
+        "name": "William Davis",
+        "title": "VP Reimbursement & Market Access",
+        "organization": "DTx Company",
+        "background": "Former payer executive",
+        "coverage_wins": "15 health plans",
+        "CPT_codes_secured": "3",
+        "responsibilities": [
+          "Reimbursement strategy",
+          "Payer negotiations",
+          "Economic modeling",
+          "CPT code applications",
+          "Coverage documentation",
+          "Policy advocacy"
+        ]
+      },
+      "jobs_to_be_done": [
+        {
+          "jtbd_id": "DH_GENERAL_RSL_001",
+          "jtbd_code": "DH_GENERAL_RSL_001",
+          "unique_id": "dh_general_rsl_001",
+          "original_id": "JTBD-RSL-001",
+          "statement": "When securing reimbursement for digital therapeutics, I need economic models and clinical dossiers, so I can convince payers",
+          "frequency": "Monthly",
+          "importance": "10/10",
+          "current_satisfaction": "2/10",
+          "opportunity_score": "18",
+          "success_metrics": [
+            "Coverage achieved: >50%",
+            "Time to coverage: <12 months",
+            "Reimbursement rate: Sustainable",
+            "CPT codes: Secured"
+          ]
+        }
+      ]
+    },
+    {
+      "persona_title": "Data Science Lead (Startup) - Dr. Anthony Lee",
+      "profile": {
+        "name": "Dr. Anthony Lee",
+        "title": "Head of Data Science & Analytics",
+        "organization": "Digital Health AI Startup",
+        "team": "8 data scientists",
+        "models_in_production": "15",
+        "data_processed": "100TB+",
+        "responsibilities": [
+          "ML model development",
+          "Predictive analytics",
+          "Data infrastructure",
+          "Algorithm validation",
+          "Privacy preservation",
+          "Insights generation"
+        ]
+      },
+      "jobs_to_be_done": [
+        {
+          "jtbd_id": "DH_GENERAL_DSL_001",
+          "jtbd_code": "DH_GENERAL_DSL_001",
+          "unique_id": "dh_general_dsl_001",
+          "original_id": "JTBD-DSL-001",
+          "statement": "When developing healthcare ML models, I need validation frameworks and explainability tools, so I can ensure clinical reliability",
+          "frequency": "Weekly",
+          "importance": "10/10",
+          "current_satisfaction": "3/10",
+          "opportunity_score": "17",
+          "success_metrics": [
+            "Model accuracy: >92%",
+            "Explainability: Clear",
+            "Bias eliminated: Yes",
+            "Clinical validation: Complete"
+          ]
+        }
+      ]
+    },
+    {
+      "persona_title": "Security & Privacy Officer - Michael Brown",
+      "profile": {
+        "name": "Michael Brown",
+        "title": "Chief Security & Privacy Officer",
+        "organization": "Digital Health Platform",
+        "certifications": "CISSP, CIPP",
+        "team": "5 security engineers",
+        "compliance": "HIPAA, GDPR, SOC2",
+        "responsibilities": [
+          "Security architecture",
+          "Privacy program",
+          "Risk management",
+          "Incident response",
+          "Compliance audits",
+          "Vendor assessment"
+        ]
+      },
+      "jobs_to_be_done": [
+        {
+          "jtbd_id": "DH_GENERAL_SPO_001",
+          "jtbd_code": "DH_GENERAL_SPO_001",
+          "unique_id": "dh_general_spo_001",
+          "original_id": "JTBD-SPO-001",
+          "statement": "When protecting patient data in digital health, I need zero-trust architectures and privacy controls, so I can prevent breaches",
+          "frequency": "Daily",
+          "importance": "10/10",
+          "current_satisfaction": "4/10",
+          "opportunity_score": "16",
+          "success_metrics": [
+            "Breaches: Zero",
+            "Compliance: 100%",
+            "Audit findings: Minimal",
+            "Privacy preserved: Always"
+          ]
+        }
+      ]
+    },
+    {
+      "persona_title": "Digital Therapeutics CEO - Dr. Sarah Mitchell",
+      "profile": {
+        "name": "Dr. Sarah Mitchell",
+        "title": "CEO & Founder",
+        "organization": "Leading DTx Company",
+        "funding": "Series C ($75M raised)",
+        "revenue": "$20M ARR",
+        "team": "100+ employees",
+        "responsibilities": [
+          "Vision and strategy",
+          "Fundraising",
+          "Regulatory strategy",
+          "Commercial partnerships",
+          "Team building",
+          "Board management"
+        ]
+      },
+      "jobs_to_be_done": [
+        {
+          "jtbd_id": "DH_GENERAL_DTXC_001",
+          "jtbd_code": "DH_GENERAL_DTXC_001",
+          "unique_id": "dh_general_dtxc_001",
+          "original_id": "JTBD-DTXC-001",
+          "statement": "When building prescription digital therapeutics business, I need regulatory pathways and reimbursement strategies, so I can achieve sustainable growth",
+          "frequency": "Daily",
+          "importance": "10/10",
+          "current_satisfaction": "3/10",
+          "opportunity_score": "17",
+          "success_metrics": [
+            "FDA clearance achieved",
+            "CPT codes secured",
+            "Payer coverage >50%",
+            "Revenue growing >100% YoY"
+          ]
+        }
+      ]
+    },
+    {
+      "persona_title": "Digital Biomarker Scientist - Dr. Ming Li",
+      "profile": {
+        "name": "Dr. Ming Li",
+        "title": "Chief Scientific Officer",
+        "organization": "Digital Biomarker Company",
+        "background": "PhD Computational Biology",
+        "publications": "50+ peer-reviewed",
+        "biomarkers_validated": "10+",
+        "responsibilities": [
+          "Biomarker discovery",
+          "Clinical validation",
+          "Algorithm development",
+          "Regulatory submissions",
+          "Scientific partnerships",
+          "IP strategy"
+        ]
+      },
+      "jobs_to_be_done": [
+        {
+          "jtbd_id": "DH_GENERAL_DBS_001",
+          "jtbd_code": "DH_GENERAL_DBS_001",
+          "unique_id": "dh_general_dbs_001",
+          "original_id": "JTBD-DBS-001",
+          "statement": "When validating novel digital biomarkers, I need clinical correlation methods and regulatory acceptance criteria, so I can achieve industry adoption",
+          "frequency": "Monthly",
+          "importance": "10/10",
+          "current_satisfaction": "2/10",
+          "opportunity_score": "18",
+          "success_metrics": [
+            "Clinical correlation >0.8",
+            "FDA qualification achieved",
+            "Pharma partnerships secured",
+            "Publications in top journals"
+          ]
+        }
+      ]
+    },
+    {
+      "persona_title": "Virtual Care Platform CPO - Jennifer Adams",
+      "profile": {
+        "name": "Jennifer Adams",
+        "title": "Chief Product Officer",
+        "organization": "Telehealth Platform",
+        "users": "5M patients, 50K providers",
+        "platform": "B2B2C model",
+        "growth": "200% YoY",
+        "responsibilities": [
+          "Product strategy",
+          "Platform development",
+          "User experience",
+          "Clinical workflows",
+          "Integration strategy",
+          "Growth initiatives"
+        ]
+      },
+      "jobs_to_be_done": [
+        {
+          "jtbd_id": "DH_GENERAL_VCP_001",
+          "jtbd_code": "DH_GENERAL_VCP_001",
+          "unique_id": "dh_general_vcp_001",
+          "original_id": "JTBD-VCP-001",
+          "statement": "When scaling virtual care platform, I need interoperability standards and workflow optimization tools, so I can serve enterprise health systems",
+          "frequency": "Weekly",
+          "importance": "10/10",
+          "current_satisfaction": "3/10",
+          "opportunity_score": "17",
+          "success_metrics": [
+            "Enterprise clients >100",
+            "Provider satisfaction >4.5/5",
+            "Patient NPS >60",
+            "Platform reliability 99.99%"
+          ]
+        }
+      ]
+    },
+    {
+      "persona_title": "Digital Health Consultant - Mark Thompson",
+      "profile": {
+        "name": "Mark Thompson",
+        "title": "Managing Partner",
+        "organization": "Digital Health Advisory",
+        "clients": "50+ health systems, 20+ pharma",
+        "projects": "$100M+ in engagements",
+        "expertise": "Digital transformation",
+        "responsibilities": [
+          "Strategy consulting",
+          "Digital roadmaps",
+          "Vendor selection",
+          "Change management",
+          "ROI modeling",
+          "Implementation oversight"
+        ]
+      },
+      "jobs_to_be_done": [
+        {
+          "jtbd_id": "DH_GENERAL_DHC_001",
+          "jtbd_code": "DH_GENERAL_DHC_001",
+          "unique_id": "dh_general_dhc_001",
+          "original_id": "JTBD-DHC-001",
+          "statement": "When advising on digital health strategy, I need maturity assessment tools and transformation playbooks, so I can deliver measurable value",
+          "frequency": "Per engagement",
+          "importance": "10/10",
+          "current_satisfaction": "4/10",
+          "opportunity_score": "16",
+          "success_metrics": [
+            "Client satisfaction >9/10",
+            "ROI achieved >3x",
+            "Repeat business >60%",
+            "Referrals generated"
+          ]
+        }
+      ]
+    },
+    {
+      "persona_title": "Health Tech Investor - Dr. Rebecca Chen",
+      "profile": {
+        "name": "Dr. Rebecca Chen",
+        "title": "General Partner",
+        "organization": "Digital Health Ventures",
+        "fund_size": "$750M",
+        "portfolio": "40 companies",
+        "exits": "5 IPOs, 10 acquisitions",
+        "responsibilities": [
+          "Investment thesis",
+          "Due diligence",
+          "Portfolio support",
+          "Board participation",
+          "Exit planning",
+          "LP relations"
+        ]
+      },
+      "jobs_to_be_done": [
+        {
+          "jtbd_id": "DH_GENERAL_HTI_001",
+          "jtbd_code": "DH_GENERAL_HTI_001",
+          "unique_id": "dh_general_hti_001",
+          "original_id": "JTBD-HTI-001",
+          "statement": "When evaluating digital health investments, I need clinical validation frameworks and market sizing models, so I can identify unicorns",
+          "frequency": "Weekly",
+          "importance": "10/10",
+          "current_satisfaction": "4/10",
+          "opportunity_score": "16",
+          "success_metrics": [
+            "IRR >30%",
+            "Portfolio success rate >25%",
+            "Fund multiple >3x",
+            "Reputation enhanced"
+          ]
+        }
+      ]
+    },
+    {
+      "persona_title": "Healthcare API Platform Lead - Kevin Zhang",
+      "profile": {
+        "name": "Kevin Zhang",
+        "title": "VP Platform & Ecosystem",
+        "organization": "Healthcare API Company",
+        "developers": "10,000+ using platform",
+        "API_calls": "1B+ monthly",
+        "integrations": "500+ health systems",
+        "responsibilities": [
+          "Platform strategy",
+          "Developer experience",
+          "Partnership ecosystem",
+          "Standards adoption",
+          "Marketplace development",
+          "Technical documentation"
+        ]
+      },
+      "jobs_to_be_done": [
+        {
+          "jtbd_id": "DH_GENERAL_HAP_001",
+          "jtbd_code": "DH_GENERAL_HAP_001",
+          "unique_id": "dh_general_hap_001",
+          "original_id": "JTBD-HAP-001",
+          "statement": "When building healthcare API ecosystem, I need interoperability standards and developer tools, so I can accelerate digital health innovation",
+          "frequency": "Daily",
+          "importance": "10/10",
+          "current_satisfaction": "3/10",
+          "opportunity_score": "17",
+          "success_metrics": [
+            "Developer adoption >10K",
+            "API reliability 99.99%",
+            "Time to integration <1 week",
+            "Marketplace GMV >$100M"
+          ]
+        }
+      ]
+    },
+    {
+      "persona_title": "AI/ML Healthcare Researcher - Dr. Sophia Kumar",
+      "profile": {
+        "name": "Dr. Sophia Kumar",
+        "title": "Principal AI Scientist",
+        "organization": "Healthcare AI Research Lab",
+        "background": "PhD Machine Learning, MD",
+        "models_deployed": "20+ in production",
+        "publications": "100+ papers",
+        "responsibilities": [
+          "AI model development",
+          "Clinical validation",
+          "Bias detection",
+          "Explainability research",
+          "Regulatory submissions",
+          "Academic partnerships"
+        ]
+      },
+      "jobs_to_be_done": [
+        {
+          "jtbd_id": "DH_GENERAL_AML_001",
+          "jtbd_code": "DH_GENERAL_AML_001",
+          "unique_id": "dh_general_aml_001",
+          "original_id": "JTBD-AML-001",
+          "statement": "When developing medical AI models, I need bias detection tools and clinical validation frameworks, so I can ensure safe deployment",
+          "frequency": "Per model",
+          "importance": "10/10",
+          "current_satisfaction": "3/10",
+          "opportunity_score": "17",
+          "success_metrics": [
+            "Model accuracy >95%",
+            "Bias metrics acceptable",
+            "Clinical validation complete",
+            "Regulatory approval achieved"
+          ]
+        }
+      ]
+    },
+    {
+      "persona_title": "Digital Clinical Trials Director - Dr. Michael Brown",
+      "profile": {
+        "name": "Dr. Michael Brown",
+        "title": "VP Digital Clinical Trials",
+        "organization": "CRO Innovation Division",
+        "trials_managed": "50+ DCTs",
+        "sponsors": "20+ pharma companies",
+        "innovation_focus": "Fully decentralized trials",
+        "responsibilities": [
+          "DCT strategy",
+          "Technology selection",
+          "Site network management",
+          "Patient recruitment",
+          "Data quality assurance",
+          "Regulatory compliance"
+        ]
+      },
+      "jobs_to_be_done": [
+        {
+          "jtbd_id": "DH_GENERAL_DCT_001",
+          "jtbd_code": "DH_GENERAL_DCT_001",
+          "unique_id": "dh_general_dct_001",
+          "original_id": "JTBD-DCT-001",
+          "statement": "When running decentralized clinical trials, I need integrated technology platforms and remote monitoring capabilities, so I can ensure quality and efficiency",
+          "frequency": "Per trial",
+          "importance": "10/10",
+          "current_satisfaction": "3/10",
+          "opportunity_score": "17",
+          "success_metrics": [
+            "Enrollment 2x faster",
+            "Retention >90%",
+            "Data quality maintained",
+            "Cost reduced 30%"
+          ]
+        }
+      ]
+    },
+    {
+      "persona_title": "Patient Data Platform Architect - David Lee",
+      "profile": {
+        "name": "David Lee",
+        "title": "Chief Architect, Patient Data Platform",
+        "organization": "Health Data Exchange",
+        "data_sources": "1000+ connected",
+        "patients": "50M records",
+        "queries": "100M+ daily",
+        "responsibilities": [
+          "Platform architecture",
+          "Data standardization",
+          "Privacy engineering",
+          "Interoperability standards",
+          "Performance optimization",
+          "Security framework"
+        ]
+      },
+      "jobs_to_be_done": [
+        {
+          "jtbd_id": "DH_GENERAL_PDP_001",
+          "jtbd_code": "DH_GENERAL_PDP_001",
+          "unique_id": "dh_general_pdp_001",
+          "original_id": "JTBD-PDP-001",
+          "statement": "When building patient data platforms, I need consent management systems and privacy-preserving computation, so I can enable compliant data sharing",
+          "frequency": "Daily",
+          "importance": "10/10",
+          "current_satisfaction": "3/10",
+          "opportunity_score": "17",
+          "success_metrics": [
+            "Data quality >99%",
+            "Query performance <100ms",
+            "Privacy guaranteed",
+            "Consent tracked 100%"
+          ]
+        }
+      ]
+    },
+    {
+      "persona_title": "Digital Health Policy Advisor - Patricia Williams",
+      "profile": {
+        "name": "Patricia Williams",
+        "title": "Senior Policy Advisor",
+        "organization": "Digital Health Think Tank",
+        "influence": "Congressional testimony, FDA advisor",
+        "publications": "Policy briefs, white papers",
+        "focus": "DTx regulation, reimbursement",
+        "responsibilities": [
+          "Policy research",
+          "Regulatory advocacy",
+          "Stakeholder engagement",
+          "Legislative strategy",
+          "Industry guidance",
+          "Thought leadership"
+        ]
+      },
+      "jobs_to_be_done": [
+        {
+          "jtbd_id": "DH_GENERAL_DHP_001",
+          "jtbd_code": "DH_GENERAL_DHP_001",
+          "unique_id": "dh_general_dhp_001",
+          "original_id": "JTBD-DHP-001",
+          "statement": "When shaping digital health policy, I need evidence synthesis tools and stakeholder alignment methods, so I can drive meaningful change",
+          "frequency": "Monthly",
+          "importance": "9/10",
+          "current_satisfaction": "3/10",
+          "opportunity_score": "15",
+          "success_metrics": [
+            "Policy adopted",
+            "Industry aligned",
+            "Patient access improved",
+            "Innovation enabled"
+          ]
+        }
+      ]
+    }
+  ]
+}

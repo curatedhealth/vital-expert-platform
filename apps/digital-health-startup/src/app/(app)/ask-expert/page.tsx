@@ -1900,7 +1900,7 @@ function AskExpertPageContent() {
 
                         const previewText = outputPreview
                           ? outputPreview.length > 160
-                            ? `${outputPreview.slice(0, 157)}...`
+                            ? outputPreview.slice(0, 157) + '...'
                             : outputPreview
                           : undefined;
 

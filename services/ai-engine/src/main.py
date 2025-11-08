@@ -1091,7 +1091,7 @@ async def execute_mode2_automatic(
             user_id=request.user_id,
             enable_rag=request.enable_rag,
             enable_tools=request.enable_tools,
-            model=request.model or "gpt-4",
+            model="gpt-4",  # Mode 2 doesn't expose model selection
             temperature=request.temperature,
             max_tokens=request.max_tokens,
             selected_rag_domains=request.selected_rag_domains or [],
@@ -1191,10 +1191,9 @@ async def execute_mode3_autonomous_automatic(
         # Initialize LangGraph workflow with autonomous capabilities
         workflow = Mode3AutonomousAutoWorkflow(
             supabase_client=supabase_client,
-            agent_selector_service=get_agent_selector_service() if agent_orchestrator else None,
+            agent_selector=get_agent_selector_service() if agent_orchestrator else None,
             rag_service=unified_rag_service,
-            agent_orchestrator=agent_orchestrator,
-            conversation_manager=None
+            cache_manager=None  # Will use default CacheManager
         )
         await workflow.initialize()
         
@@ -1206,7 +1205,7 @@ async def execute_mode3_autonomous_automatic(
             user_id=request.user_id,
             enable_rag=request.enable_rag,
             enable_tools=request.enable_tools,
-            model=request.model or "gpt-4",
+            model="gpt-4",  # Mode 3 doesn't expose model selection
             max_iterations=request.max_iterations or 10,
             confidence_threshold=request.confidence_threshold or 0.95,
             conversation_history=[]
@@ -1312,8 +1311,7 @@ async def execute_mode4_autonomous_manual(
         workflow = Mode4AutonomousManualWorkflow(
             supabase_client=supabase_client,
             rag_service=unified_rag_service,
-            agent_orchestrator=agent_orchestrator,
-            conversation_manager=None
+            cache_manager=None  # Will use default CacheManager
         )
         await workflow.initialize()
         
@@ -1326,7 +1324,7 @@ async def execute_mode4_autonomous_manual(
             user_id=request.user_id,
             enable_rag=request.enable_rag,
             enable_tools=request.enable_tools,
-            model=request.model or "gpt-4",
+            model="gpt-4",  # Mode 4 doesn't expose model selection
             max_iterations=request.max_iterations or 10,
             confidence_threshold=request.confidence_threshold or 0.95,
             conversation_history=[]

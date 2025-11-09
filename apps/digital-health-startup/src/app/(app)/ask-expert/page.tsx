@@ -40,11 +40,12 @@ import {
 
 // Component imports
 import { PromptInput } from '@/components/prompt-input';
-import { type Agent as SidebarAgent } from '@/components/ask-expert-sidebar';
-import { AskExpertProvider, useAskExpert } from '@/contexts/ask-expert-context';
+import { useAskExpert } from '@/contexts/ask-expert-context';
+import type { Agent } from '@/contexts/ask-expert-context';
 import { ChatHistoryProvider, useChatHistory } from '@/contexts/chat-history-context';
 import { PromptStarters, type PromptStarter } from '@/components/prompt-starters';
 import { useAuth } from '@/lib/auth/supabase-auth-context';
+import { useTenant } from '@/contexts/TenantContext';
 import { ChatHistorySidebar } from '@/components/chat-history-sidebar';
 import { SelectedAgentsList } from '@/components/selected-agent-card';
 import { Reasoning, ReasoningTrigger, ReasoningContent } from '@/components/ui/shadcn-io/ai/reasoning';
@@ -133,7 +134,19 @@ function AskExpertPageContent() {
   
   const { selectedAgents, agents, setSelectedAgents, addAgentToUserList, refreshAgents, getAllAgents } = useAskExpert();
   const { user } = useAuth();
+  const tenant = useTenant();
   const { currentSession, messages: chatMessages, addMessage, createSession, updateSession } = useChatHistory();
+
+  // Debug logging for agents
+  useEffect(() => {
+    console.log('🔍 [AskExpert] Agent State:', {
+      totalAgents: agents.length,
+      selectedAgentIds: selectedAgents,
+      selectedCount: selectedAgents.length,
+      availableAgentIds: agents.map(a => a.id),
+      availableAgentNames: agents.map(a => a.displayName || a.name),
+    });
+  }, [agents, selectedAgents]);
   
   // ============================================================================
   // CUSTOM HOOKS (Replacing 39 useState hooks!)
@@ -220,7 +233,6 @@ function AskExpertPageContent() {
   // ============================================================================
   
   const [inputValue, setInputValue] = useState('');
-  const [copiedId, setCopiedId] = useState<string | null>(null);
   const [attachments, setAttachments] = useState<File[]>([]);
   const [showArtifactGenerator, setShowArtifactGenerator] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
@@ -240,8 +252,8 @@ function AskExpertPageContent() {
   const [loadingTools, setLoadingTools] = useState(false);
   
   // Refs
-  const abortControllerRef = useRef<AbortController | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const primaryAgentRef = useRef<Agent | null>(null);
   
   // ============================================================================
   // COMPUTED VALUES (Using hooks)
@@ -252,13 +264,39 @@ function AskExpertPageContent() {
   const currentModeConfig = modeLogic.modeConfig;
   
   // Validation
+  useEffect(() => {
+    if (!selectedAgents.length) {
+      primaryAgentRef.current = null;
+      return;
+    }
+    const firstSelectedAgent = agents.find((agent) => agent.id === selectedAgents[0]) || null;
+    primaryAgentRef.current = firstSelectedAgent;
+  }, [agents, selectedAgents]);
+  
   const canSubmit = useMemo(() => {
     const validation = modeLogic.validateRequirements({
       hasAgents: selectedAgents.length > 0,
       hasQuery: inputValue.trim().length > 0,
     });
+    console.log('🔍 [canSubmit] Validation check:', {
+      canSubmit: validation.isValid,
+      hasAgents: selectedAgents.length > 0,
+      agentCount: selectedAgents.length,
+      selectedAgents: selectedAgents,
+      hasQuery: inputValue.trim().length > 0,
+      queryLength: inputValue.trim().length,
+      mode: currentMode,
+      isLoading: isLoading,
+    });
     return validation.isValid;
-  }, [modeLogic, selectedAgents, inputValue]);
+  }, [modeLogic, selectedAgents, inputValue, currentMode, isLoading]);
+  
+  const activeStreamingAgent = useMemo(() => {
+    if (!selectedAgents.length) {
+      return null;
+    }
+    return agents.find((agent) => agent.id === selectedAgents[0]) || null;
+  }, [agents, selectedAgents]);
   
   // ============================================================================
   // EVENT HANDLERS
@@ -268,15 +306,18 @@ function AskExpertPageContent() {
    * Handle message submission
    */
   const handleSubmit = useCallback(async () => {
+    console.log('🚀🚀🚀 [handleSubmit] FUNCTION CALLED!');
     console.log('[handleSubmit] Clicked! canSubmit:', canSubmit);
     console.log('[handleSubmit] selectedAgents (IDs):', selectedAgents);
     console.log('[handleSubmit] inputValue:', inputValue);
     console.log('[handleSubmit] currentMode:', currentMode);
     console.log('[handleSubmit] RAG domains:', selectedRagDomains);
     console.log('[handleSubmit] Tools:', selectedTools);
+    console.log('[handleSubmit] isLoading:', isLoading);
+    console.log('[handleSubmit] Button should be:', canSubmit && !isLoading ? 'ENABLED' : 'DISABLED');
     
     if (!canSubmit) {
-      console.warn('[AskExpert] Cannot submit - validation failed');
+      console.warn('❌ [AskExpert] Cannot submit - validation failed');
       console.warn('[AskExpert] Validation details:', {
         hasAgents: selectedAgents.length > 0,
         hasQuery: inputValue.trim().length > 0,
@@ -285,7 +326,14 @@ function AskExpertPageContent() {
       return;
     }
     
+    if (isLoading) {
+      console.warn('❌ [AskExpert] Cannot submit - already loading');
+      return;
+    }
+    
     const query = inputValue.trim();
+    const primaryAgentId = selectedAgents[0];
+
     const userMessage: Message = {
       id: nanoid(),
       role: 'user',
@@ -306,21 +354,32 @@ function AskExpertPageContent() {
     setInputValue('');
     setAttachments([]);
     
-    // Prepare request payload
+    const conversationHistory = messageManager.messages.slice(-10).map((m) => ({
+      role: m.role,
+      content: m.content,
+      timestamp: new Date(typeof m.timestamp === 'number' ? m.timestamp : Date.now()).toISOString(),
+      agent_id: m.selectedAgent?.id,
+    }));
+
+    // Prepare request payload aligned with Python AI engine contract
     const payload = {
+      message: query,
       query,
-      // ✅ FIX: selectedAgents is already string[] (agent IDs), no need to map
-      agent_ids: currentMode === 1 ? selectedAgents : undefined,
+      agent_id: currentMode === 1 ? primaryAgentId : undefined,
+      agent_ids: selectedAgents.length > 0 ? selectedAgents : undefined,
       model: 'gpt-4',
+      mode: currentMode,
       enable_rag: modeLogic.enableRAG,
       enable_tools: modeLogic.enableTools,
+      requested_tools: selectedTools.length > 0 ? selectedTools : undefined,
       selected_tools: selectedTools.length > 0 ? selectedTools : undefined,
+      selected_rag_domains: selectedRagDomains.length > 0 ? selectedRagDomains : undefined,
       rag_domains: selectedRagDomains.length > 0 ? selectedRagDomains : undefined,
       use_langgraph: true,
-      conversation_history: messageManager.messages.slice(-10).map(m => ({
-        role: m.role,
-        content: m.content,
-      })),
+      conversation_history: conversationHistory,
+      user_id: user?.id,
+      tenant_id: tenant?.id,
+      session_id: currentSession?.id,
     };
     
     console.log('📦 [handleSubmit] Payload:', JSON.stringify(payload, null, 2));
@@ -338,16 +397,24 @@ function AskExpertPageContent() {
         timestamp: Date.now(),
       });
     }
-  }, [canSubmit, inputValue, attachments, selectedAgents, currentMode, currentModeConfig, modeLogic, selectedTools, selectedRagDomains, messageManager, streaming]);
-  
-  /**
-   * Handle copy message
-   */
-  const handleCopy = useCallback((text: string, id: string) => {
-    navigator.clipboard.writeText(text);
-    setCopiedId(id);
-    setTimeout(() => setCopiedId(null), 2000);
-  }, []);
+  }, [
+    canSubmit,
+    inputValue,
+    attachments,
+    selectedAgents,
+    currentMode,
+    currentModeConfig,
+    modeLogic,
+    selectedTools,
+    selectedRagDomains,
+    messageManager,
+    messageManager.messages,
+    streaming,
+    agents,
+    user?.id,
+    tenant?.id,
+    currentSession?.id,
+  ]);
   
   /**
    * Handle prompt starter click
@@ -487,13 +554,42 @@ function AskExpertPageContent() {
       tokenStreaming.stop();
       performanceMetrics.endSession(true); // successful completion
       
+      const agentFromStream = data?.agent as Partial<Agent> | undefined;
+      const fallbackAgent = primaryAgentRef.current || null;
+      const resolvedAgent = agentFromStream?.id
+        ? {
+            id: agentFromStream.id,
+            name: agentFromStream.name || agentFromStream.display_name || agentFromStream.displayName || 'AI Assistant',
+            displayName: agentFromStream.display_name || agentFromStream.displayName || agentFromStream.name || 'AI Assistant',
+            avatar: (agentFromStream as any)?.avatar,
+          }
+        : fallbackAgent
+          ? {
+              id: fallbackAgent.id,
+              name: fallbackAgent.name,
+              displayName: fallbackAgent.displayName || fallbackAgent.name,
+              avatar: fallbackAgent.avatar,
+            }
+          : undefined;
+      
+      const selectedAgentForMessage = resolvedAgent
+        ? {
+            id: resolvedAgent.id,
+            name: resolvedAgent.name || resolvedAgent.displayName || 'AI Assistant',
+            display_name: resolvedAgent.displayName || resolvedAgent.name || 'AI Assistant',
+          }
+        : undefined;
+      
       // Commit streaming message
       const messageId = messageManager.commitStreamingMessage({
         reasoning: recentReasoning,
         sources: rag.sources,
+        selectedAgent: selectedAgentForMessage,
         metadata: {
           ragSummary: data.rag_summary,
           toolSummary: data.tool_summary,
+          agentAvatar: resolvedAgent?.avatar,
+          agentName: resolvedAgent?.displayName || resolvedAgent?.name,
           // ✨ PHASE 2: Add performance metrics to metadata
           performanceMetrics: {
             timeToFirstToken: performanceMetrics.timeToFirstToken,
@@ -721,61 +817,89 @@ function AskExpertPageContent() {
           {/* Selected Agents (Mode 1 only) */}
           {currentMode === 1 && selectedAgents.length > 0 && (
             <SelectedAgentsList 
-              agents={selectedAgents}
-              onRemoveAgent={(agentId) => {
-                setSelectedAgents(selectedAgents.filter(a => a.id !== agentId));
+              agents={
+                // Convert agent IDs to agent objects
+                selectedAgents
+                  .map(agentId => agents.find(a => a.id === agentId))
+                  .filter((agent): agent is NonNullable<typeof agent> => agent !== undefined)
+              }
+              onAgentRemove={(agentId) => {
+                // Remove agent ID from selectedAgents array
+                setSelectedAgents(selectedAgents.filter(id => id !== agentId));
               }}
             />
           )}
           
           {/* Messages */}
           <div className="space-y-6">
-            {messageManager.messages.map((message) => (
-              <div key={message.id} className={`flex gap-4 ${message.role === 'user' ? 'justify-end' : ''}`}>
-                {message.role === 'assistant' && (
-                  <AgentAvatar 
-                    agentId={message.selectedAgent?.id || 'assistant'}
-                    size="sm"
-                  />
-                )}
-                
-                <div className={`flex-1 max-w-3xl ${message.role === 'user' ? 'flex justify-end' : ''}`}>
-                  <EnhancedMessageDisplay 
-                    message={message}
-                    onCopy={(text) => handleCopy(text, message.id)}
-                    isCopied={copiedId === message.id}
-                  />
+            {messageManager.messages.map((message) => {
+              const agentFromMessage = message.selectedAgent
+                ? agents.find((agent) => agent.id === message.selectedAgent?.id)
+                : null;
+              const metadataAgentName = typeof message.metadata?.agentName === 'string'
+                ? message.metadata?.agentName
+                : undefined;
+              const agentDisplayName =
+                agentFromMessage?.displayName ||
+                message.selectedAgent?.display_name ||
+                message.selectedAgent?.name ||
+                metadataAgentName;
+              const agentAvatar =
+                agentFromMessage?.avatar ||
+                (typeof message.metadata?.agentAvatar === 'string' ? message.metadata?.agentAvatar : undefined);
+              
+              return (
+                <div key={message.id} className={`flex gap-4 ${message.role === 'user' ? 'justify-end' : ''}`}>
+                  {message.role === 'assistant' && (
+                    <AgentAvatar 
+                      agentId={message.selectedAgent?.id || 'assistant'}
+                      size="sm"
+                    />
+                  )}
                   
-                  {/* Follow-up suggestions */}
-                  {message.role === 'assistant' && message.id === messageManager.getLastAssistantMessage()?.id && (
-                    <div className="mt-4">
-                      <Suggestions>
-                        {generateFollowUpSuggestions(message).map((suggestion, idx) => (
-                          <Suggestion 
-                            key={idx}
-                            onClick={() => setInputValue(suggestion)}
-                          >
-                            {suggestion}
-                          </Suggestion>
-                        ))}
-                      </Suggestions>
+                  <div className={`flex-1 max-w-3xl ${message.role === 'user' ? 'flex justify-end' : ''}`}>
+                    <EnhancedMessageDisplay 
+                      {...message}
+                      agentName={agentDisplayName}
+                      agentAvatar={agentAvatar}
+                      userName={user?.user_metadata?.full_name || user?.user_metadata?.name}
+                      userEmail={user?.email}
+                    />
+                    
+                    {/* Follow-up suggestions */}
+                    {message.role === 'assistant' && message.id === messageManager.getLastAssistantMessage()?.id && (
+                      <div className="mt-4">
+                        <Suggestions>
+                          {generateFollowUpSuggestions(message).map((suggestion, idx) => (
+                            <Suggestion 
+                              key={idx}
+                              onClick={() => setInputValue(suggestion)}
+                            >
+                              {suggestion}
+                            </Suggestion>
+                          ))}
+                        </Suggestions>
+                      </div>
+                    )}
+                  </div>
+                  
+                  {message.role === 'user' && (
+                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground">
+                      <User className="h-4 w-4" />
                     </div>
                   )}
                 </div>
-                
-                {message.role === 'user' && (
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground">
-                    <User className="h-4 w-4" />
-                  </div>
-                )}
-              </div>
-            ))}
+              );
+            })}
             
             {/* Streaming Message - ✨ PHASE 2: Token-by-Token Animation */}
             {messageManager.streamingMessage && (
               <div className="flex gap-4">
-                <AgentAvatar agentId="assistant" size="sm" />
+                <AgentAvatar agentId={activeStreamingAgent?.id || 'assistant'} size="sm" />
                 <div className="flex-1 max-w-3xl">
+                  <div className="mb-1 text-sm font-medium text-muted-foreground">
+                    {activeStreamingAgent?.displayName || activeStreamingAgent?.name || 'AI Assistant'}
+                  </div>
                   <div className="rounded-lg border bg-card p-4">
                     {/* ✨ PHASE 2: Animated token display */}
                     <TokenDisplay
@@ -979,12 +1103,10 @@ function AskExpertPageContent() {
 // ============================================================================
 
 export default function AskExpertPage() {
+  // AskExpertProvider already wraps the entire app in AppLayoutClient, so we only add ChatHistoryProvider here.
   return (
-    <AskExpertProvider>
-      <ChatHistoryProvider>
-        <AskExpertPageContent />
-      </ChatHistoryProvider>
-    </AskExpertProvider>
+    <ChatHistoryProvider>
+      <AskExpertPageContent />
+    </ChatHistoryProvider>
   );
 }
-

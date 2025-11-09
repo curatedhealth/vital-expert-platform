@@ -73,12 +73,16 @@ logger = logging.getLogger(__name__)
 class PipelineConfig:
     """Configuration and validation for the knowledge pipeline."""
     
-    def __init__(self, config_path: str):
+    def __init__(self, config_path: str, dry_run: bool = False):
         self.config_path = config_path
         self.config: Dict[str, Any] = {}
+        self.dry_run = dry_run
         self.load_config()
         self.validate_config()
-        self.validate_env()
+        if not dry_run:
+            self.validate_env()
+        else:
+            logger.info("🔍 Dry run mode - skipping environment validation")
     
     def load_config(self) -> None:
         """Load JSON configuration file."""
@@ -615,7 +619,7 @@ class KnowledgePipeline:
         embedding_model: str = "sentence-transformers/all-MiniLM-L6-v2",
         use_rag_service: bool = True
     ):
-        self.config = PipelineConfig(config_path)
+        self.config = PipelineConfig(config_path, dry_run=dry_run)
         self.output_dir = output_dir
         self.dry_run = dry_run
         self.use_rag_service = use_rag_service

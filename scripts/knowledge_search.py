@@ -133,7 +133,7 @@ class KnowledgeSearcher:
             if start_year and end_year:
                 search_query += f" AND {start_year}:{end_year}[pdat]"
             
-            # Step 1: Search PMC for IDs (use PMC database for free full-text)
+            # Step 1: Search PubMed for IDs
             search_url = f"https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi"
             
             # Map sort_by to PMC sort parameter
@@ -146,41 +146,98 @@ class KnowledgeSearcher:
             search_params = {
                 'db': 'pubmed',  # PubMed database (use pubmed for searching)
                 'term': search_query,
-                'retmax': max_results,
+                'retmax': max_results * 3,  # Request more to filter for PMC availability
                 'retmode': 'json',
                 'sort': pmc_sort,
                 'retstart': 0
             }
             
+            # Add delay to be nice to NCBI servers
+            await asyncio.sleep(0.5)
+            
             async with self.session.get(search_url, params=search_params) as response:
                 if response.status != 200:
-                    logger.error(f"❌ PMC search failed: {response.status}")
+                    logger.error(f"❌ PubMed search failed: {response.status}")
                     return []
                     
                 data = await response.json()
                 id_list = data.get('esearchresult', {}).get('idlist', [])
                 
             if not id_list:
-                logger.warning(f"⚠️ No PMC results for query: {query}")
+                logger.warning(f"⚠️ No PubMed results for query: {query}")
                 return []
             
-            # Step 2: Fetch details for each PMC ID
-            fetch_url = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi"
-            fetch_params = {
+            logger.info(f"📚 Found {len(id_list)} PubMed IDs, checking for PMC availability...")
+            
+            # Step 2: Use E-Link to find which have PMC full-text
+            link_url = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/elink.fcgi"
+            link_params = {
+                'dbfrom': 'pubmed',
                 'db': 'pmc',
                 'id': ','.join(id_list),
                 'retmode': 'json'
             }
             
-            async with self.session.get(fetch_url, params=fetch_params) as response:
+            # Add delay
+            await asyncio.sleep(0.5)
+            
+            async with self.session.get(link_url, params=link_params) as response:
                 if response.status != 200:
-                    logger.error(f"❌ PMC fetch failed: {response.status}")
+                    logger.error(f"❌ PMC link check failed: {response.status}")
+                    return []
+                
+                text = await response.text()
+                if not text or len(text) == 0:
+                    logger.warning("⚠️ Empty response from PMC link API")
                     return []
                     
-                data = await response.json()
+                # Clean and parse
+                import re
+                cleaned = re.sub(r'[\x00-\x1f\x7f-\x9f]', ' ', text)
+                link_data = json.loads(cleaned)
+            
+            # Extract PMC IDs
+            pmc_ids = []
+            for linkset in link_data.get('linksets', []):
+                for linksetdb in linkset.get('linksetdbs', []):
+                    if linksetdb.get('dbto') == 'pmc':
+                        pmc_ids.extend(linksetdb.get('links', []))
+            
+            if not pmc_ids:
+                logger.warning(f"⚠️ No PMC full-text available for query: {query}")
+                return []
+            
+            # Limit to requested max_results
+            pmc_ids = pmc_ids[:max_results]
+            logger.info(f"✅ Found {len(pmc_ids)} PMC full-text articles")
+            
+            # Step 3: Fetch details using PMC database directly
+            fetch_url = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi"
+            fetch_params = {
+                'db': 'pmc',
+                'id': ','.join(pmc_ids),
+                'retmode': 'json'
+            }
+            
+            # Add delay
+            await asyncio.sleep(0.5)
+            
+            async with self.session.get(fetch_url, params=fetch_params) as response:
+                if response.status != 200:
+                    logger.error(f"❌ PMC details fetch failed: {response.status}")
+                    return []
+                    
+                text = await response.text()
+                if not text or len(text) == 0:
+                    logger.warning("⚠️ Empty response from PMC details API")
+                    return []
+                    
+                # Clean and parse
+                cleaned = re.sub(r'[\x00-\x1f\x7f-\x9f]', ' ', text)
+                data = json.loads(cleaned)
                 results = []
                 
-                for pmc_id in id_list:
+                for pmc_id in pmc_ids:
                     article = data.get('result', {}).get(pmc_id, {})
                     if not article or article.get('error'):
                         continue
@@ -204,8 +261,8 @@ class KnowledgeSearcher:
                     if not title or title == 'No title':
                         continue
                     
-                    # Build links - Use HTML version (more reliable than PDF)
-                    pmc_url = f"https://www.ncbi.nlm.nih.gov/pmc/articles/PMC{pmc_id}/"
+                    # Build URLs using PMC ID
+                    article_url = f"https://www.ncbi.nlm.nih.gov/pmc/articles/PMC{pmc_id}/"
                     pdf_link = f"https://www.ncbi.nlm.nih.gov/pmc/articles/PMC{pmc_id}/pdf/"
                     
                     results.append({
@@ -216,23 +273,25 @@ class KnowledgeSearcher:
                         'publication_date': pub_date,
                         'publication_year': pub_year,
                         'journal': article.get('fulljournalname', article.get('source', 'Unknown')),
-                        'url': pmc_url,  # Use HTML version for scraping
-                        'pdf_link': pdf_link,  # Still provide PDF link for reference
+                        'url': article_url,
+                        'pdf_link': pdf_link,
                         'source': 'PubMed Central',
-                        'source_name': 'PubMed Central',  # Human-readable source name
+                        'source_name': 'PubMed Central',
                         'source_id': f"PMC:{pmc_id}",
                         'firm': 'PubMed Central / NIH',
-                        'file_type': 'html',  # HTML is more reliable for automated scraping
+                        'file_type': 'html',
                         'access_type': 'public',
-                        'direct_download': False,  # HTML needs parsing
+                        'direct_download': False,
                         'open_access': True
                     })
                 
-                logger.info(f"✅ Found {len(results)} PMC free full-text results")
+                logger.info(f"✅ Successfully retrieved {len(results)} PMC articles with details")
                 return results
                 
         except Exception as e:
             logger.error(f"❌ PMC search error: {e}")
+            import traceback
+            logger.debug(traceback.format_exc())
             return []
     
     async def _search_arxiv(self, query: str, max_results: int, sort_by: str = 'relevance') -> List[Dict]:

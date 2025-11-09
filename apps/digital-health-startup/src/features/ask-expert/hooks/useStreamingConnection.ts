@@ -14,6 +14,7 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import type { SSEEvent, ConnectionStatus } from '../types';
 import { parseSSEChunk } from '../utils';
+import { parseLangGraphEvent } from '../utils/parseLangGraphEvent';
 
 export interface UseStreamingConnectionOptions {
   maxReconnectAttempts?: number;
@@ -161,22 +162,49 @@ export function useStreamingConnection(
           
           // Process each event
           for (const event of events) {
-            const handler = eventHandlersRef.current.get(event.event);
-            if (handler) {
-              try {
-                handler(event.data);
-              } catch (err) {
-                console.error(`[useStreamingConnection] Error in handler for ${event.event}:`, err);
-              }
-            }
+            // Try to parse as LangGraph event first (backend format)
+            const langGraphEvent = parseLangGraphEvent(event.data);
             
-            // Also call wildcard handler
-            const wildcardHandler = eventHandlersRef.current.get('*');
-            if (wildcardHandler) {
-              try {
-                wildcardHandler(event);
-              } catch (err) {
-                console.error('[useStreamingConnection] Error in wildcard handler:', err);
+            if (langGraphEvent) {
+              console.log(`[useStreamingConnection] LangGraph event: ${langGraphEvent.eventType}`);
+              
+              const handler = eventHandlersRef.current.get(langGraphEvent.eventType);
+              if (handler) {
+                try {
+                  handler(langGraphEvent.data);
+                } catch (err) {
+                  console.error(`[useStreamingConnection] Error in handler for ${langGraphEvent.eventType}:`, err);
+                }
+              }
+              
+              // Also call wildcard handler
+              const wildcardHandler = eventHandlersRef.current.get('*');
+              if (wildcardHandler) {
+                try {
+                  wildcardHandler({ event: langGraphEvent.eventType, data: langGraphEvent.data });
+                } catch (err) {
+                  console.error('[useStreamingConnection] Error in wildcard handler:', err);
+                }
+              }
+            } else {
+              // Fallback to original SSE event format
+              const handler = eventHandlersRef.current.get(event.event);
+              if (handler) {
+                try {
+                  handler(event.data);
+                } catch (err) {
+                  console.error(`[useStreamingConnection] Error in handler for ${event.event}:`, err);
+                }
+              }
+              
+              // Also call wildcard handler
+              const wildcardHandler = eventHandlersRef.current.get('*');
+              if (wildcardHandler) {
+                try {
+                  wildcardHandler(event);
+                } catch (err) {
+                  console.error('[useStreamingConnection] Error in wildcard handler:', err);
+                }
               }
             }
           }

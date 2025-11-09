@@ -1,0 +1,64 @@
+{
+  "sources": [
+    {
+      "url": "https://arxiv.org/abs/2311.03363v1",
+      "description": "The Path to a Modular and Standards-based Digital Health Ecosystem",
+      "firm": "arXiv / Cornell University",
+      "domain": "imported",
+      "category": "arxiv",
+      "source_name": "arXiv",
+      "tags": [
+        "arXiv",
+        "arXiv (cs.SE)"
+      ],
+      "priority": "medium",
+      "title": "The Path to a Modular and Standards-based Digital Health Ecosystem",
+      "abstract": "Software engineering for digital health applications entails several challenges, including heterogeneous data acquisition, data standardization, software reuse, security, and privacy considerations. We explore these challenges and how our Stanford Spezi ecosystem addresses these challenges by providing a modular and standards-based open-source digital health ecosystem. Spezi enables developers to select and integrate modules according to their needs and facilitates an open-source community to democratize access to building digital health innovations.",
+      "authors": [
+        "Paul Schmiedmayer",
+        "Vishnu Ravi",
+        "Oliver Aalami"
+      ],
+      "publication_date": "2023-09-29",
+      "publication_year": 2023,
+      "source_url": "https://arxiv.org/abs/2311.03363v1",
+      "pdf_link": "https://arxiv.org/pdf/2311.03363v1.pdf",
+      "file_type": "pdf",
+      "content_file_type": "pdf",
+      "direct_download": true,
+      "access_type": "public",
+      "source_id": "arXiv:2311.03363v1",
+      "journal": "arXiv (cs.SE)",
+      "imported_from": "arXiv",
+      "import_date": "2025-11-09T11:25:36.505Z",
+      "domain_ids": [
+        "digital_health"
+      ]
+    }
+  ],
+  "scraping_settings": {
+    "timeout": 60,
+    "max_retries": 3,
+    "delay_between_requests": 1,
+    "wait_for_js": false,
+    "use_playwright": false
+  },
+  "processing_settings": {
+    "chunk_size": 1000,
+    "chunk_overlap": 200,
+    "min_word_count": 100,
+    "max_content_length": 1000000
+  },
+  "upload_settings": {
+    "enable_supabase": false,
+    "enable_pinecone": false,
+    "batch_size": 100,
+    "skip_duplicates": true
+  },
+  "output_settings": {
+    "create_subdirectories": true,
+    "include_metadata": true,
+    "markdown_format": true
+  },
+  "embedding_model": "text-embedding-3-large"
+}

@@ -145,7 +145,7 @@ interface EnhancedMessageDisplayProps {
   id: string;
   role: 'user' | 'assistant';
   content: string;
-  timestamp: Date;
+  timestamp?: Date | string | number | null;
   metadata?: MessageMetadata;
   agentName?: string;
   agentAvatar?: string;
@@ -580,8 +580,25 @@ export function EnhancedMessageDisplay({
     }
   }, [displayContent, resolvedAgentName]);
 
-  const formatTimestamp = useCallback((date: Date) => {
-    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  const normalizedTimestamp = useMemo(() => {
+    if (!timestamp) {
+      return undefined;
+    }
+
+    const date = timestamp instanceof Date ? timestamp : new Date(timestamp);
+    return Number.isNaN(date.getTime()) ? undefined : date;
+  }, [timestamp]);
+
+  const formatTimestamp = useCallback((date?: Date) => {
+    if (!date) {
+      return '--:--';
+    }
+
+    try {
+      return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    } catch {
+      return '--:--';
+    }
   }, []);
 
   // ✅ TAG: KEY_INSIGHTS_EXTRACTION - Extract actionable insights, not summaries
@@ -1084,7 +1101,7 @@ export function EnhancedMessageDisplay({
                 )}
               </div>
               <span className="text-xs text-gray-500">
-                {formatTimestamp(timestamp)}
+                {formatTimestamp(normalizedTimestamp)}
               </span>
             </div>
 

@@ -89,3 +89,8 @@ export const __PopoverContent = ({
     </div>
   )
 }
+
+// Re-export with standard names for compatibility
+export const Popover = __Popover;
+export const PopoverTrigger = __PopoverTrigger;
+export const PopoverContent = __PopoverContent;

@@ -133,6 +133,8 @@ function parseAgentKnowledgeDomains(rawDomains: unknown): string[] {
 }
 
 export function AskExpertProvider({ children }: { children: React.ReactNode }) {
+  console.log('🔧🔧🔧 [AskExpertProvider] INITIALIZING - Component rendering!');
+  
   const [agents, setAgents] = useState<Agent[]>([]);
   const [selectedAgents, setSelectedAgents] = useState<string[]>([]);
   const [agentsLoading, setAgentsLoading] = useState(false);
@@ -176,12 +178,14 @@ export function AskExpertProvider({ children }: { children: React.ReactNode }) {
      * 4. Check browser console for "Multiple GoTrueClient instances" warnings
      */
     if (!user?.id) {
-      console.log('🔄 [AskExpertContext] No user ID, clearing agents');
+      console.log('🔄 [AskExpertContext] No user ID yet - auth might still be loading');
       console.warn('⚠️ [AskExpertContext] User ID is missing. This may indicate:');
       console.warn('   1. Auth context not loaded yet (check loading state)');
       console.warn('   2. Multiple GoTrueClient instances (check console for warnings)');
       console.warn('   3. User not authenticated (should redirect to login)');
-      setAgents([]);
+      // DON'T clear agents immediately - wait for auth to load
+      // setAgents([]);  // ← COMMENTED OUT - this was clearing agents too early!
+      console.log('🔄 [AskExpertContext] Skipping agent refresh - waiting for user auth');
       return;
     }
 
@@ -374,10 +378,13 @@ export function AskExpertProvider({ children }: { children: React.ReactNode }) {
   // Initial load of agents based on the signed-in user
   useEffect(() => {
     if (!user?.id) {
-      setAgents([]);
+      console.log('⏳ [AskExpertContext] Waiting for user auth before loading agents');
+      // DON'T clear agents - just wait for auth
+      // setAgents([]);  // ← REMOVED - was clearing agents too early
       return;
     }
 
+    console.log('✅ [AskExpertContext] User authenticated, loading agents for:', user.id);
     void refreshAgents();
   }, [refreshAgents, user?.id]);
 

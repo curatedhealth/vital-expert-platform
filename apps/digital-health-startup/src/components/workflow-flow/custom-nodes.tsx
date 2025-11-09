@@ -254,3 +254,6 @@ export const TaskNode = memo(({ data, selected }: NodeProps) => {
 });
 TaskNode.displayName = 'TaskNode';
 
+// Export both the original and interactive versions
+export { InteractiveTaskNode } from './InteractiveTaskNode';
+

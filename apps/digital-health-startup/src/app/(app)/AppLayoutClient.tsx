@@ -26,7 +26,18 @@ export function AppLayoutClient({ children, initialUser }: AppLayoutClientProps)
 
   const shouldShowLoader = loading && !hasAuthContext && hasInitialUser;
 
+  // 🔍 DEBUG: Log auth state to diagnose context initialization
+  console.log('🔧 [AppLayoutClient] Render check:', {
+    hasInitialUser,
+    hasAuthContext,
+    shouldShowLoader,
+    loading,
+    user: user?.email || 'none',
+    userProfile: userProfile?.email || 'none',
+  });
+
   if (!hasAuthContext && !hasInitialUser) {
+    console.warn('⚠️ [AppLayoutClient] Early exit - no auth context!');
     return null;
   }
 

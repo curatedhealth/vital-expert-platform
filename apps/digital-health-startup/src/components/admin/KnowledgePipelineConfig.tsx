@@ -315,12 +315,23 @@ export default function KnowledgePipelineConfig() {
           totalWords: processingStats.totalWords + (result.wordCount || 0),
         });
       } else {
+        // Extract just the error part, not the entire stdout
         const errorMessage = result.error || 'Unknown error';
-        const errorDetails = result.details || result.errors || '';
-        const fullError = errorDetails ? `${errorMessage}: ${errorDetails}` : errorMessage;
+        const errorDetails = result.errors || '';
+        
+        // Try to extract the actual error from stdout/stderr if available
+        let actualError = errorMessage;
+        if (result.stdout && result.stdout.includes('ERROR')) {
+          const errorLines = result.stdout.split('\n').filter(line => line.includes('ERROR') || line.includes('❌'));
+          if (errorLines.length > 0) {
+            actualError = errorLines.slice(0, 3).join('\n'); // First 3 error lines only
+          }
+        }
+        
+        const fullError = errorDetails ? `${actualError}: ${errorDetails}` : actualError;
         
         console.error(`  ❌ Failed:`, fullError);
-        addLog(`❌ Failed: ${source.url} - ${errorMessage}`);
+        addLog(`❌ Failed: ${source.url} - ${actualError}`);
         
         setQueueSources(prev => prev.map(s =>
           s.id === sourceId

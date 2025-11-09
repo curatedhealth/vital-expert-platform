@@ -39,19 +39,19 @@ interface KnowledgeSearchImportProps {
 
 const AVAILABLE_SOURCES = [
   { 
-    id: 'pubmed_central', 
-    name: 'PubMed Central', 
-    icon: Database, 
-    description: 'FREE full-text medical research with PDFs',
-    color: 'bg-blue-500',
-    openAccess: true
-  },
-  { 
     id: 'arxiv', 
     name: 'arXiv', 
     icon: FileText, 
-    description: '100% FREE preprints with PDFs',
+    description: '100% FREE preprints with PDFs (Recommended)',
     color: 'bg-green-500',
+    openAccess: true
+  },
+  { 
+    id: 'pubmed_central', 
+    name: 'PubMed Central', 
+    icon: Database, 
+    description: 'FREE medical research (May have rate limits)',
+    color: 'bg-blue-500',
     openAccess: true
   },
   { 
@@ -83,7 +83,7 @@ const AVAILABLE_SOURCES = [
 
 export default function KnowledgeSearchImport({ onAddToQueue }: KnowledgeSearchImportProps) {
   const [query, setQuery] = useState('');
-  const [selectedSources, setSelectedSources] = useState<string[]>(['pubmed_central', 'arxiv']);
+  const [selectedSources, setSelectedSources] = useState<string[]>(['arxiv']);  // Default to arXiv (most reliable)
   const [maxResults, setMaxResults] = useState(20);
   const [sortBy, setSortBy] = useState<'relevance' | 'date' | 'citations'>('relevance');
   const [isSearching, setIsSearching] = useState(false);

@@ -15,18 +15,18 @@ import ReactFlow, {
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 
-import { StartNode, EndNode, WorkflowHeaderNode, TaskNode } from './custom-nodes';
+import { StartNode, EndNode, WorkflowHeaderNode, TaskNode, InteractiveTaskNode } from './custom-nodes';
 import { WorkflowEdge, TaskEdge, StartEdge, EndEdge } from './custom-edges';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Workflow as WorkflowIcon, GitBranch, ZoomIn, ZoomOut, Maximize2 } from 'lucide-react';
 
-// Register custom node types
+// Register custom node types - using InteractiveTaskNode for editable nodes
 const nodeTypes = {
   start: StartNode,
   end: EndNode,
   workflowHeader: WorkflowHeaderNode,
-  task: TaskNode,
+  task: InteractiveTaskNode, // Use interactive version
 };
 
 // Register custom edge types
@@ -160,11 +160,21 @@ export function WorkflowFlowVisualizer({
           type: 'task',
           position: { x: HORIZONTAL_SPACING - 50 + xOffset, y: currentY },
           data: {
-            ...task,
+            taskId: task.id, // Required for API calls
+            title: task.title,
+            position: task.position,
             workflowPosition: workflow.position,
             agents: task.agents || [],
             tools: task.tools || [],
             rags: task.rags || [],
+            userPrompt: task.extra?.userPrompt || '',
+            guardrails: task.guardrails || { humanInLoop: false },
+            runPolicy: task.run_policy || { pharmaProtocol: false, verifyProtocol: false },
+            onUpdate: (updatedData: any) => {
+              // Handle task update - refresh the node data
+              console.log('Task updated:', task.id, updatedData);
+              // You can add additional logic here to refresh the workflow data
+            },
           },
           draggable: true,
         });

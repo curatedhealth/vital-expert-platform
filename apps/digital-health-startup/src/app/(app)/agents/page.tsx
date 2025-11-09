@@ -14,7 +14,6 @@ import { AgentCreator } from '@/features/chat/components/agent-creator';
 import { useAuth } from '@/lib/auth/supabase-auth-context';
 import { type Agent as AgentsStoreAgent, useAgentsStore } from '@/lib/stores/agents-store';
 import { type Agent } from '@/lib/stores/chat-store';
-import { PageHeader } from '@/components/page-header';
 import { Users } from 'lucide-react';
 
 function AgentsPageContent() {
@@ -245,13 +244,6 @@ function AgentsPageContent() {
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
-      {/* Page Header */}
-      <PageHeader
-        icon={Users}
-        title="Agents"
-        description="Discover and manage AI expert agents"
-      />
-
       {/* Main Content Area */}
       <div className="flex-1 overflow-y-auto">
         <div className="max-w-7xl mx-auto p-6 space-y-6">

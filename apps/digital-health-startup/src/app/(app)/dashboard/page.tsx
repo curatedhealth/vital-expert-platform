@@ -10,7 +10,6 @@ import { useRouter } from 'next/navigation';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@vital/ui';
 import { Button } from '@vital/ui';
 import { Badge } from '@vital/ui';
-import { PageHeader } from '@/components/page-header';
 import {
   MessageSquare,
   Users,
@@ -34,13 +33,6 @@ export default function DashboardPage() {
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
-      {/* Page Header */}
-      <PageHeader
-        icon={BarChart3}
-        title="Dashboard"
-        description="Overview of your services and recent activity"
-      />
-
       {/* Main Content Area */}
       <div className="flex-1 overflow-y-auto">
         <div className="max-w-7xl mx-auto p-6 space-y-8">

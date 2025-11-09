@@ -1,0 +1,511 @@
+{
+  "metadata": {
+    "title": "Medical Affairs Jobs-to-be-Done (JTBD) Complete Library",
+    "version": "4.0",
+    "created_date": "2025-11-09",
+    "document_owner": "Medical Affairs Leadership",
+    "framework": "JTBD Framework with VPANES Priority Scoring",
+    "description": "Complete template for developing all 120 Medical Affairs JTBDs with pre-mapped personas, strategic pillars, and use cases",
+    "total_jtbd_target": 120,
+    "instructions": "Fill in each JTBD following the template structure. All persona IDs, strategic pillars, and categories are pre-defined for easy mapping."
+  },
+  
+  "reference_data": {
+    "personas": [
+      {"id": "P001", "name": "VP Medical Affairs / Chief Medical Officer", "tier": 1},
+      {"id": "P002", "name": "Medical Director (Therapeutic Area/Product Lead)", "tier": 1},
+      {"id": "P003", "name": "Head of Field Medical", "tier": 1},
+      {"id": "P004", "name": "Head of HEOR", "tier": 1},
+      {"id": "P005", "name": "Global Medical Advisor", "tier": 1},
+      {"id": "P006", "name": "Head of Medical Communications", "tier": 1},
+      {"id": "P007", "name": "Regional Medical Director", "tier": 2},
+      {"id": "P008", "name": "MSL Manager", "tier": 2},
+      {"id": "P009", "name": "Therapeutic Area MSL Lead", "tier": 2},
+      {"id": "P010", "name": "Medical Science Liaison (MSL)", "tier": 1},
+      {"id": "P011", "name": "Field Medical Trainer", "tier": 2},
+      {"id": "P012", "name": "Medical Information Manager", "tier": 2},
+      {"id": "P013", "name": "Medical Information Specialist", "tier": 1},
+      {"id": "P014", "name": "Medical Librarian", "tier": 3},
+      {"id": "P015", "name": "Medical Content Manager", "tier": 2},
+      {"id": "P016", "name": "Publication Strategy Lead", "tier": 1},
+      {"id": "P017", "name": "Medical Writer (Scientific)", "tier": 1},
+      {"id": "P018", "name": "Medical Writer (Regulatory)", "tier": 2},
+      {"id": "P019", "name": "Medical Editor", "tier": 2},
+      {"id": "P020", "name": "Medical Education Director", "tier": 2},
+      {"id": "P021", "name": "Medical Communications Manager", "tier": 2},
+      {"id": "P022", "name": "Congress & Events Manager", "tier": 2},
+      {"id": "P023", "name": "Health Economics Specialist (HEOR Analyst)", "tier": 1},
+      {"id": "P024", "name": "Real-World Evidence (RWE) Specialist", "tier": 1},
+      {"id": "P025", "name": "Biostatistician", "tier": 2},
+      {"id": "P026", "name": "Epidemiologist", "tier": 2},
+      {"id": "P027", "name": "Outcomes Research Manager", "tier": 2},
+      {"id": "P028", "name": "Clinical Study Liaison", "tier": 2},
+      {"id": "P029", "name": "Medical Monitor", "tier": 2},
+      {"id": "P030", "name": "Clinical Data Manager", "tier": 3},
+      {"id": "P031", "name": "Clinical Trial Disclosure Manager", "tier": 2},
+      {"id": "P032", "name": "Medical Excellence Director", "tier": 2},
+      {"id": "P033", "name": "Medical Review Committee Coordinator", "tier": 2},
+      {"id": "P034", "name": "Medical QA Manager", "tier": 2},
+      {"id": "P035", "name": "Medical Affairs Compliance Officer", "tier": 2},
+      {"id": "P036", "name": "Medical Affairs Strategist", "tier": 2},
+      {"id": "P037", "name": "Therapeutic Area Expert", "tier": 2},
+      {"id": "P038", "name": "Medical Affairs Operations Manager", "tier": 2},
+      {"id": "P039", "name": "Medical Affairs Technology Lead", "tier": 2},
+      {"id": "P040", "name": "Medical Affairs Project Manager", "tier": 2},
+      {"id": "P041", "name": "Medical Affairs Data Analyst", "tier": 2},
+      {"id": "P042", "name": "Medical Affairs Training & Development Manager", "tier": 2},
+      {"id": "P043", "name": "Medical Affairs Vendor Manager", "tier": 3}
+    ],
+    
+    "strategic_pillars": [
+      {"id": "SP01", "name": "Growth & Market Access", "description": "Evidence generation and value demonstration to drive market access and product adoption"},
+      {"id": "SP02", "name": "Scientific Excellence", "description": "Advancing medical knowledge and maintaining scientific credibility"},
+      {"id": "SP03", "name": "Stakeholder Engagement", "description": "Building relationships with KOLs, HCPs, payers, and patient advocates"},
+      {"id": "SP04", "name": "Compliance & Quality", "description": "Maintaining regulatory compliance and operational excellence"},
+      {"id": "SP05", "name": "Operational Excellence", "description": "Optimizing resources, processes, and ROI"},
+      {"id": "SP06", "name": "Talent Development", "description": "Building capabilities and organizational effectiveness"},
+      {"id": "SP07", "name": "Innovation & Digital", "description": "Leveraging technology and innovation for competitive advantage"}
+    ],
+    
+    "jtbd_categories": [
+      {"id": "CAT01", "name": "Strategic Leadership", "description": "Leadership-level jobs focused on strategy, resource allocation, and organizational direction"},
+      {"id": "CAT02", "name": "Evidence Generation & HEOR", "description": "Jobs focused on creating economic and clinical evidence"},
+      {"id": "CAT03", "name": "Field Medical Operations", "description": "Jobs related to MSL activities and KOL engagement"},
+      {"id": "CAT04", "name": "Medical Information Operations", "description": "Jobs related to responding to medical inquiries and information management"},
+      {"id": "CAT05", "name": "Publications & Communications", "description": "Jobs related to scientific publications and medical communications"},
+      {"id": "CAT06", "name": "Clinical Operations", "description": "Jobs related to clinical trial support and monitoring"},
+      {"id": "CAT07", "name": "Compliance & Quality", "description": "Jobs related to regulatory compliance and quality assurance"},
+      {"id": "CAT08", "name": "Operations & Technology", "description": "Jobs related to operational excellence and technology enablement"},
+      {"id": "CAT09", "name": "Training & Development", "description": "Jobs related to capability building and talent development"}
+    ],
+    
+    "complexity_levels": ["Beginner", "Intermediate", "Advanced", "Expert"],
+    
+    "frequency_options": ["Daily", "Weekly", "Monthly", "Quarterly", "Annual", "Ongoing", "Ad-hoc"],
+    
+    "impact_levels": ["Low", "Medium", "High", "Critical"],
+    
+    "existing_jtbds": [
+      {"id": "JTBD-MA-001", "title": "Annual Strategic Planning"},
+      {"id": "JTBD-MA-002", "title": "Evidence Generation Planning"},
+      {"id": "JTBD-MA-003", "title": "Cross-Functional Coordination"},
+      {"id": "JTBD-MA-004", "title": "Budget Management"},
+      {"id": "JTBD-MA-005", "title": "Compliance & Quality Assurance"},
+      {"id": "JTBD-MA-010", "title": "KOL Engagement"},
+      {"id": "JTBD-MA-020", "title": "Medical Inquiry Response"},
+      {"id": "JTBD-MA-025", "title": "Publications Strategy"},
+      {"id": "JTBD-MA-040", "title": "Health Economics Models"}
+    ]
+  },
+  
+  "jobs_to_be_done": [
+    {
+      "_template_instructions": "Copy this template for each of your 120 JTBDs. Update JTBD-MA-XXX with sequential numbers (001-120)",
+      "id": "JTBD-MA-XXX",
+      "category": "SELECT FROM: Strategic Leadership | Evidence Generation & HEOR | Field Medical Operations | Medical Information Operations | Publications & Communications | Clinical Operations | Compliance & Quality | Operations & Technology | Training & Development",
+      "jtbd_statement": "When [situation/context], I want to [action/capability], so I can [desired outcome/goal]",
+      "persona_ids": ["P001", "P002"],
+      "personas_names_reference": ["VP Medical Affairs", "Medical Director"],
+      "strategic_pillar": "SELECT FROM: SP01 | SP02 | SP03 | SP04 | SP05 | SP06 | SP07",
+      "frequency": "SELECT FROM: Daily | Weekly | Monthly | Quarterly | Annual | Ongoing | Ad-hoc",
+      "impact": "SELECT FROM: Low | Medium | High | Critical",
+      "complexity": "SELECT FROM: Beginner | Intermediate | Advanced | Expert",
+      "use_case_ids": ["UC_MA_XXX"],
+      "description": "Brief description of what this job entails (2-3 sentences)",
+      "success_criteria": [
+        "Measurable success metric 1 (e.g., >85% completion)",
+        "Measurable success metric 2 (e.g., <10% variance)",
+        "Measurable success metric 3 (e.g., >90% satisfaction)"
+      ],
+      "pain_points": [
+        "Specific challenge or obstacle 1",
+        "Specific challenge or obstacle 2",
+        "Specific challenge or obstacle 3"
+      ],
+      "workflows": [
+        {
+          "workflow_id": "WF-XXX-A",
+          "workflow_name": "Descriptive name of the workflow",
+          "duration": "Time estimate (e.g., 4-6 weeks, 2-4 hours)",
+          "phases": [
+            {
+              "phase_number": 1,
+              "phase_name": "Name of Phase 1",
+              "duration": "Phase duration",
+              "tasks": [
+                {
+                  "task_id": "TXXX",
+                  "task_name": "Specific task description",
+                  "duration": "Task duration (e.g., 4 hours)",
+                  "owner": "Role responsible (e.g., Medical Director)",
+                  "outputs": ["Deliverable 1", "Deliverable 2"],
+                  "tools": ["Tool or system used"]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    
+    {
+      "_comment": "=== STRATEGIC LEADERSHIP JTBDs (001-025) ===",
+      "_instructions": "Start filling from here. Replace XXX with sequential numbers starting from 001"
+    },
+    
+    {
+      "id": "JTBD-MA-006",
+      "category": "Strategic Leadership",
+      "jtbd_statement": "When [YOUR CONTEXT], I want to [YOUR ACTION], so I can [YOUR OUTCOME]",
+      "persona_ids": [],
+      "personas_names_reference": [],
+      "strategic_pillar": "",
+      "frequency": "",
+      "impact": "",
+      "complexity": "",
+      "use_case_ids": [],
+      "description": "",
+      "success_criteria": [],
+      "pain_points": [],
+      "workflows": []
+    },
+    
+    {
+      "id": "JTBD-MA-007",
+      "category": "Strategic Leadership",
+      "jtbd_statement": "",
+      "persona_ids": [],
+      "personas_names_reference": [],
+      "strategic_pillar": "",
+      "frequency": "",
+      "impact": "",
+      "complexity": "",
+      "use_case_ids": [],
+      "description": "",
+      "success_criteria": [],
+      "pain_points": [],
+      "workflows": []
+    },
+    
+    {
+      "id": "JTBD-MA-008",
+      "category": "Strategic Leadership",
+      "jtbd_statement": "",
+      "persona_ids": [],
+      "personas_names_reference": [],
+      "strategic_pillar": "",
+      "frequency": "",
+      "impact": "",
+      "complexity": "",
+      "use_case_ids": [],
+      "description": "",
+      "success_criteria": [],
+      "pain_points": [],
+      "workflows": []
+    },
+    
+    {
+      "id": "JTBD-MA-009",
+      "category": "Strategic Leadership",
+      "jtbd_statement": "",
+      "persona_ids": [],
+      "personas_names_reference": [],
+      "strategic_pillar": "",
+      "frequency": "",
+      "impact": "",
+      "complexity": "",
+      "use_case_ids": [],
+      "description": "",
+      "success_criteria": [],
+      "pain_points": [],
+      "workflows": []
+    },
+    
+    {
+      "_comment": "Continue with JTBD-MA-011 through JTBD-MA-025 for Strategic Leadership"
+    },
+    
+    {
+      "_comment": "=== EVIDENCE GENERATION & HEOR JTBDs (026-045) ===",
+      "_instructions": "20 JTBDs focused on HEOR, RWE, publications, evidence generation"
+    },
+    
+    {
+      "id": "JTBD-MA-026",
+      "category": "Evidence Generation & HEOR",
+      "jtbd_statement": "",
+      "persona_ids": [],
+      "personas_names_reference": [],
+      "strategic_pillar": "",
+      "frequency": "",
+      "impact": "",
+      "complexity": "",
+      "use_case_ids": [],
+      "description": "",
+      "success_criteria": [],
+      "pain_points": [],
+      "workflows": []
+    },
+    
+    {
+      "_comment": "Continue with JTBD-MA-027 through JTBD-MA-045"
+    },
+    
+    {
+      "_comment": "=== FIELD MEDICAL OPERATIONS JTBDs (046-065) ===",
+      "_instructions": "20 JTBDs focused on MSL activities, KOL engagement, territory management"
+    },
+    
+    {
+      "id": "JTBD-MA-046",
+      "category": "Field Medical Operations",
+      "jtbd_statement": "",
+      "persona_ids": [],
+      "personas_names_reference": [],
+      "strategic_pillar": "",
+      "frequency": "",
+      "impact": "",
+      "complexity": "",
+      "use_case_ids": [],
+      "description": "",
+      "success_criteria": [],
+      "pain_points": [],
+      "workflows": []
+    },
+    
+    {
+      "_comment": "Continue with JTBD-MA-047 through JTBD-MA-065"
+    },
+    
+    {
+      "_comment": "=== MEDICAL INFORMATION OPERATIONS JTBDs (066-075) ===",
+      "_instructions": "10 JTBDs focused on medical inquiries, SRDs, knowledge management"
+    },
+    
+    {
+      "id": "JTBD-MA-066",
+      "category": "Medical Information Operations",
+      "jtbd_statement": "",
+      "persona_ids": [],
+      "personas_names_reference": [],
+      "strategic_pillar": "",
+      "frequency": "",
+      "impact": "",
+      "complexity": "",
+      "use_case_ids": [],
+      "description": "",
+      "success_criteria": [],
+      "pain_points": [],
+      "workflows": []
+    },
+    
+    {
+      "_comment": "Continue with JTBD-MA-067 through JTBD-MA-075"
+    },
+    
+    {
+      "_comment": "=== PUBLICATIONS & COMMUNICATIONS JTBDs (076-090) ===",
+      "_instructions": "15 JTBDs focused on publications, medical writing, congress management"
+    },
+    
+    {
+      "id": "JTBD-MA-076",
+      "category": "Publications & Communications",
+      "jtbd_statement": "",
+      "persona_ids": [],
+      "personas_names_reference": [],
+      "strategic_pillar": "",
+      "frequency": "",
+      "impact": "",
+      "complexity": "",
+      "use_case_ids": [],
+      "description": "",
+      "success_criteria": [],
+      "pain_points": [],
+      "workflows": []
+    },
+    
+    {
+      "_comment": "Continue with JTBD-MA-077 through JTBD-MA-090"
+    },
+    
+    {
+      "_comment": "=== CLINICAL OPERATIONS JTBDs (091-100) ===",
+      "_instructions": "10 JTBDs focused on clinical trial support, monitoring, data management"
+    },
+    
+    {
+      "id": "JTBD-MA-091",
+      "category": "Clinical Operations",
+      "jtbd_statement": "",
+      "persona_ids": [],
+      "personas_names_reference": [],
+      "strategic_pillar": "",
+      "frequency": "",
+      "impact": "",
+      "complexity": "",
+      "use_case_ids": [],
+      "description": "",
+      "success_criteria": [],
+      "pain_points": [],
+      "workflows": []
+    },
+    
+    {
+      "_comment": "Continue with JTBD-MA-092 through JTBD-MA-100"
+    },
+    
+    {
+      "_comment": "=== COMPLIANCE & QUALITY JTBDs (101-110) ===",
+      "_instructions": "10 JTBDs focused on MLR, audits, SOPs, training compliance"
+    },
+    
+    {
+      "id": "JTBD-MA-101",
+      "category": "Compliance & Quality",
+      "jtbd_statement": "",
+      "persona_ids": [],
+      "personas_names_reference": [],
+      "strategic_pillar": "",
+      "frequency": "",
+      "impact": "",
+      "complexity": "",
+      "use_case_ids": [],
+      "description": "",
+      "success_criteria": [],
+      "pain_points": [],
+      "workflows": []
+    },
+    
+    {
+      "_comment": "Continue with JTBD-MA-102 through JTBD-MA-110"
+    },
+    
+    {
+      "_comment": "=== OPERATIONS & TECHNOLOGY JTBDs (111-115) ===",
+      "_instructions": "5 JTBDs focused on operations, analytics, technology enablement"
+    },
+    
+    {
+      "id": "JTBD-MA-111",
+      "category": "Operations & Technology",
+      "jtbd_statement": "",
+      "persona_ids": [],
+      "personas_names_reference": [],
+      "strategic_pillar": "",
+      "frequency": "",
+      "impact": "",
+      "complexity": "",
+      "use_case_ids": [],
+      "description": "",
+      "success_criteria": [],
+      "pain_points": [],
+      "workflows": []
+    },
+    
+    {
+      "_comment": "Continue with JTBD-MA-112 through JTBD-MA-115"
+    },
+    
+    {
+      "_comment": "=== TRAINING & DEVELOPMENT JTBDs (116-120) ===",
+      "_instructions": "5 JTBDs focused on training, capability building, performance management"
+    },
+    
+    {
+      "id": "JTBD-MA-116",
+      "category": "Training & Development",
+      "jtbd_statement": "",
+      "persona_ids": [],
+      "personas_names_reference": [],
+      "strategic_pillar": "",
+      "frequency": "",
+      "impact": "",
+      "complexity": "",
+      "use_case_ids": [],
+      "description": "",
+      "success_criteria": [],
+      "pain_points": [],
+      "workflows": []
+    },
+    
+    {
+      "_comment": "Continue with JTBD-MA-117 through JTBD-MA-120"
+    }
+  ],
+  
+  "development_guidelines": {
+    "jtbd_statement_format": {
+      "template": "When [situation/context], I want to [action/capability], so I can [desired outcome/goal]",
+      "examples": [
+        "When preparing annual strategic planning, I want to synthesize evidence gaps, competitive intelligence, and stakeholder insights, so I can define a 3-5 year Medical Affairs roadmap aligned with business objectives",
+        "When engaging with KOLs and HCPs, I want to share balanced clinical evidence and gather field insights, so I can educate stakeholders and inform Medical Affairs strategy"
+      ]
+    },
+    
+    "suggested_distribution": {
+      "strategic_leadership": "25 JTBDs (001-025)",
+      "evidence_heor": "20 JTBDs (026-045)",
+      "field_medical": "20 JTBDs (046-065)",
+      "medical_information": "10 JTBDs (066-075)",
+      "publications_comms": "15 JTBDs (076-090)",
+      "clinical_operations": "10 JTBDs (091-100)",
+      "compliance_quality": "10 JTBDs (101-110)",
+      "operations_tech": "5 JTBDs (111-115)",
+      "training_development": "5 JTBDs (116-120)"
+    },
+    
+    "workflow_guidelines": {
+      "minimum_phases": 2,
+      "recommended_phases": "3-5",
+      "tasks_per_phase": "2-6 tasks",
+      "include_for_each_task": [
+        "task_id",
+        "task_name",
+        "duration",
+        "owner",
+        "outputs",
+        "tools"
+      ]
+    },
+    
+    "success_criteria_guidelines": {
+      "quantity": "3-5 criteria per JTBD",
+      "format": "Measurable metrics with targets (e.g., >85%, <2 weeks, >4.0/5)",
+      "types": [
+        "Completion rates",
+        "Quality scores",
+        "Time-based metrics",
+        "Satisfaction scores",
+        "Compliance percentages"
+      ]
+    },
+    
+    "pain_points_guidelines": {
+      "quantity": "3-5 pain points per JTBD",
+      "format": "Specific, actionable challenges",
+      "focus_areas": [
+        "Data/system fragmentation",
+        "Resource constraints",
+        "Time/timeline challenges",
+        "Coordination difficulties",
+        "Compliance complexity"
+      ]
+    }
+  },
+  
+  "quick_reference": {
+    "persona_mapping_tips": {
+      "strategic_jtbds": ["P001", "P002", "P036", "P038"],
+      "heor_jtbds": ["P004", "P023", "P024", "P025", "P026", "P027"],
+      "field_medical_jtbds": ["P003", "P007", "P008", "P009", "P010", "P011"],
+      "medical_info_jtbds": ["P012", "P013", "P014", "P015"],
+      "publications_jtbds": ["P006", "P013", "P014", "P015", "P016", "P017", "P018", "P019", "P020", "P021", "P022"],
+      "clinical_ops_jtbds": ["P028", "P029", "P030", "P031"],
+      "compliance_jtbds": ["P032", "P033", "P034", "P035"],
+      "operations_jtbds": ["P038", "P039", "P040", "P041"],
+      "training_jtbds": ["P011", "P042"]
+    }
+  }
+}
+

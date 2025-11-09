@@ -26,7 +26,6 @@ import { Button } from '@vital/ui';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@vital/ui';
 import { Input } from '@vital/ui';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@vital/ui';
-import { PageHeader } from '@/components/page-header';
 
 // Domain configuration for better UI
 const DOMAIN_CONFIG = {
@@ -170,19 +169,6 @@ export default function WorkflowsPage() {
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
-      {/* Page Header */}
-      <PageHeader
-        icon={WorkflowIcon}
-        title="Workflows"
-        description="Guided multi-step processes for digital health use cases"
-        actions={
-          <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-md">
-            <Plus className="mr-2 h-4 w-4" />
-            Create Use Case
-          </Button>
-        }
-      />
-
       {/* Main Content Area */}
       <div className="flex-1 overflow-y-auto">
         <div className="max-w-7xl mx-auto p-6 space-y-6">

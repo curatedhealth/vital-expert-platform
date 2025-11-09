@@ -18,8 +18,18 @@ import {
   Sparkles,
   Brain,
   Wrench,
+  HelpCircle,
+  Settings2,
 } from 'lucide-react';
 import dynamic from 'next/dynamic';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 // Dynamically import PromptEnhancementModal to avoid SSR issues
 const PromptEnhancementModal = dynamic(
@@ -79,6 +89,15 @@ interface PromptInputProps {
   selectedAgentName?: string;
   selectedAgentId?: string;
   selectedAgentDomain?: string;
+
+  // Header action buttons
+  showSettings?: boolean;
+  onSettingsToggle?: () => void;
+  onHelpClick?: () => void;
+  onMode1HelperClick?: () => void;
+  onMode2HelperClick?: () => void;
+  onMode3HelperClick?: () => void;
+  onMode4HelperClick?: () => void;
 }
 
 export function PromptInput({
@@ -119,6 +138,14 @@ export function PromptInput({
   selectedAgentName,
   selectedAgentId,
   selectedAgentDomain,
+  // Header action buttons
+  showSettings,
+  onSettingsToggle,
+  onHelpClick,
+  onMode1HelperClick,
+  onMode2HelperClick,
+  onMode3HelperClick,
+  onMode4HelperClick,
 }: PromptInputProps) {
   const fallbackTextareaRef = useRef<HTMLTextAreaElement>(null);
   const internalTextareaRef = textareaRef ?? fallbackTextareaRef;
@@ -132,7 +159,7 @@ export function PromptInput({
     if (!availableTools.length) {
       setShowToolsDropdown(false);
     }
-  }, [availableTools]);
+  }, [availableTools.length]); // Use length (primitive) instead of array reference
 
   useEffect(() => {
     if (!enableRAG) {
@@ -144,7 +171,7 @@ export function PromptInput({
     if (!availableRagDomains.length) {
       setShowRagDropdown(false);
     }
-  }, [availableRagDomains]);
+  }, [availableRagDomains.length]); // Use length (primitive) instead of array reference
 
   const formattedTools = Array.from(new Set(availableTools)).sort((a, b) => a.localeCompare(b));
   const formattedSelectedTools = Array.isArray(selectedTools) ? selectedTools : [];
@@ -400,6 +427,21 @@ export function PromptInput({
             Autonomous
           </button>
 
+          {/* Separator */}
+          <div className="h-4 w-px bg-gray-300 dark:bg-gray-600" />
+
+          {/* Settings/Modes Button */}
+          {onSettingsToggle && (
+            <button
+              onClick={onSettingsToggle}
+              className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-md bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600 transition-all"
+              title="Mode Settings"
+            >
+              <Settings2 className="w-3.5 h-3.5" />
+              Modes
+            </button>
+          )}
+
           {/* LangGraph is now always enabled by default for quality AI responses, reasoning visibility, memory, and better tools */}
           
           {/* RAG Dropdown */}
@@ -627,6 +669,47 @@ export function PromptInput({
             >
               <Sparkles className="w-4 h-4 text-purple-500 dark:text-purple-400 group-hover:text-purple-600 dark:group-hover:text-purple-300" />
             </button>
+
+            {/* Info/Help Button with Dropdown */}
+            {onHelpClick && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors group"
+                    title="Help & Info"
+                    disabled={isLoading}
+                  >
+                    <HelpCircle className="w-4 h-4 text-gray-500 dark:text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuLabel className="text-xs font-semibold text-gray-500">
+                    Mode Help
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  {onMode1HelperClick && (
+                    <DropdownMenuItem onClick={onMode1HelperClick} className="cursor-pointer text-sm">
+                      Mode 1: Manual Interactive
+                    </DropdownMenuItem>
+                  )}
+                  {onMode2HelperClick && (
+                    <DropdownMenuItem onClick={onMode2HelperClick} className="cursor-pointer text-sm">
+                      Mode 2: Automatic Selection
+                    </DropdownMenuItem>
+                  )}
+                  {onMode3HelperClick && (
+                    <DropdownMenuItem onClick={onMode3HelperClick} className="cursor-pointer text-sm">
+                      Mode 3: Autonomous Chat
+                    </DropdownMenuItem>
+                  )}
+                  {onMode4HelperClick && (
+                    <DropdownMenuItem onClick={onMode4HelperClick} className="cursor-pointer text-sm">
+                      Mode 4: Autonomous Manual
+                    </DropdownMenuItem>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
 
             {/* Attachment Button */}
             <input

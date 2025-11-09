@@ -1,8 +1,21 @@
-export { EnhancedModeSelector } from './EnhancedModeSelector';
-export { ExpertAgentCard } from './ExpertAgentCard';
+/**
+ * Components Index
+ * 
+ * Exports all components from the ask-expert feature.
+ */
+
+// Phase 2: Streaming components
+export { TokenDisplay } from './TokenDisplay';
+export { StreamingProgress } from './StreamingProgress';
+export { ConnectionStatusBanner } from './ConnectionStatusBanner';
+
+// Existing components
 export { EnhancedMessageDisplay } from './EnhancedMessageDisplay';
+export { ToolConfirmation } from './ToolConfirmation';
+export { ToolExecutionStatusComponent } from './ToolExecutionStatus';
+export { ToolResults } from './ToolResults';
+export { ConnectionStatusComponent } from './ConnectionStatus';
 export { InlineArtifactGenerator } from './InlineArtifactGenerator';
-export { InlineDocumentGenerator } from './InlineDocumentGenerator';
-export { NextGenChatInput } from './NextGenChatInput';
-export { IntelligentSidebar } from './IntelligentSidebar';
-export { AdvancedStreamingWindow } from './AdvancedStreamingWindow';
+
+// Types
+export type { ToolSuggestion } from './ToolConfirmation';

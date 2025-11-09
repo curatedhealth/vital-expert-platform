@@ -38,15 +38,25 @@ import {
   Wand2,
   Workflow,
   Zap,
+  GitBranch,
+  Box,
+  Sparkles,
+  Hammer,
 } from "lucide-react"
 
 import { SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar"
+import { SidebarPageHeader } from "@/components/sidebar-page-header"
 import { createClient } from "@vital/sdk/client"
 import { useSavedPanels } from "@/contexts/ask-panel-context"
 
 export function SidebarDashboardContent() {
   return (
     <>
+      <SidebarPageHeader
+        icon={BarChart}
+        title="Dashboard"
+        description="Overview of your services and recent activity"
+      />
       <SidebarGroup>
         <SidebarGroupLabel>Overview</SidebarGroupLabel>
         <SidebarGroupContent>
@@ -139,6 +149,11 @@ export function SidebarAskPanelContent() {
 
   return (
     <>
+      <SidebarPageHeader
+        icon={Users}
+        title="Ask Panel"
+        description="Multi-expert advisory board consultations"
+      />
       {/* My Panels */}
       {savedPanels.length > 0 && (
         <SidebarGroup>
@@ -219,6 +234,11 @@ export function SidebarAskPanelContent() {
 export function SidebarAgentsContent() {
   return (
     <>
+      <SidebarPageHeader
+        icon={Bot}
+        title="Agents"
+        description="Manage your AI expert agents"
+      />
       <SidebarGroup>
         <SidebarGroupLabel>Browse</SidebarGroupLabel>
         <SidebarGroupContent>
@@ -399,6 +419,11 @@ export function SidebarKnowledgeContent() {
 
   return (
     <>
+      <SidebarPageHeader
+        icon={BookOpen}
+        title="Knowledge"
+        description="Manage your knowledge base and documents"
+      />
       <SidebarGroup>
         <SidebarGroupLabel>Knowledge Actions</SidebarGroupLabel>
         <SidebarGroupContent>
@@ -494,6 +519,11 @@ export function SidebarKnowledgeContent() {
 export function SidebarWorkflowsContent() {
   return (
     <>
+      <SidebarPageHeader
+        icon={GitBranch}
+        title="Workflows"
+        description="Guided multi-step processes for digital health use cases"
+      />
       <SidebarGroup>
         <SidebarGroupLabel>Workflow Status</SidebarGroupLabel>
         <SidebarGroupContent>
@@ -546,6 +576,11 @@ export function SidebarWorkflowsContent() {
 export function SidebarSolutionBuilderContent() {
   return (
     <>
+      <SidebarPageHeader
+        icon={Box}
+        title="Solution Builder"
+        description="Build digital health solutions with pre-validated templates"
+      />
       <SidebarGroup>
         <SidebarGroupLabel>Builder</SidebarGroupLabel>
         <SidebarGroupContent>
@@ -598,6 +633,11 @@ export function SidebarSolutionBuilderContent() {
 export function SidebarPromptPrismContent() {
   return (
     <>
+      <SidebarPageHeader
+        icon={Sparkles}
+        title="Prompt Prism"
+        description="Advanced prompt engineering and optimization"
+      />
       <SidebarGroup>
         <SidebarGroupLabel>Prompt Assets</SidebarGroupLabel>
         <SidebarGroupContent>
@@ -654,6 +694,11 @@ export function SidebarAdminContent() {
 
   return (
     <>
+      <SidebarPageHeader
+        icon={ShieldCheck}
+        title="Admin"
+        description="System administration and monitoring"
+      />
       <SidebarGroup>
         <SidebarGroupLabel>Overview</SidebarGroupLabel>
         <SidebarGroupContent>

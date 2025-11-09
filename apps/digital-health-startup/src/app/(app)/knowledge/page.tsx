@@ -20,7 +20,6 @@ import { useState, useCallback, useEffect, Suspense } from 'react';
 import { Badge } from '@vital/ui';
 import { Button } from '@vital/ui';
 import { Card, CardContent, CardHeader, CardTitle } from '@vital/ui';
-import { PageHeader } from '@/components/page-header';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -220,13 +219,6 @@ function KnowledgePageContent() {
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
-      {/* Page Header */}
-      <PageHeader
-        icon={BookOpen}
-        title="Knowledge"
-        description="Manage documents and knowledge bases for AI agents"
-      />
-
       {/* Main Content Area */}
       <div className="flex-1 overflow-y-auto">
         <div className="max-w-7xl mx-auto p-6 space-y-6">

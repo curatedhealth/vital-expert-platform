@@ -7,7 +7,6 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { PageHeader } from '@/components/page-header';
 import { ToolDetailModal } from '@/components/tools/ToolDetailModal';
 import { 
   Search, 
@@ -219,13 +218,6 @@ export default function ToolsPage() {
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
-      {/* Page Header */}
-      <PageHeader
-        icon={Wrench}
-        title="Tool Registry"
-        description={`Comprehensive catalog of ${stats.total} AI, healthcare, and research tools`}
-      />
-
       {/* Main Content Area */}
       <div className="flex-1 overflow-y-auto">
         <div className="max-w-7xl mx-auto p-6 space-y-6">

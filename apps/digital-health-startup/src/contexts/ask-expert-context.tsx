@@ -1,6 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { toast } from 'sonner';
 import { AgentService } from '@/features/agents/services/agent-service';
 import { useAuth } from '@/lib/auth/supabase-auth-context';
 import { useAgentsStore } from '@/lib/stores/agents-store';
@@ -613,10 +614,41 @@ export function AskExpertProvider({ children }: { children: React.ReactNode }) {
   const addAgentToUserList = useCallback(async (agentId: string) => {
     if (!user?.id) {
       console.warn('[AskExpertContext] Cannot add agent: user not authenticated');
+      toast.error('Please sign in to add agents');
       return;
     }
 
     try {
+      console.log('➕ [AskExpertContext] Adding agent to user list:', agentId);
+      
+      // ✨ OPTIMISTIC UPDATE: Get agent details from getAllAgents cache
+      const allAgentsCache = await getAllAgents();
+      const agentToAdd = allAgentsCache.find(a => a.id === agentId);
+      
+      if (agentToAdd) {
+        // Optimistically add agent to UI immediately
+        setAgents(prev => {
+          // Check if already exists
+          if (prev.some(a => a.id === agentId)) {
+            console.log('ℹ️ [AskExpertContext] Agent already in list');
+            toast.info(`${agentToAdd.displayName} is already in your list`);
+            return prev;
+          }
+          
+          const updated = [...prev, { ...agentToAdd, isUserAdded: true }];
+          console.log(`✨ [AskExpertContext] Optimistically added agent. Total: ${updated.length}`);
+          
+          // ✅ Show success toast immediately
+          toast.success(`Added ${agentToAdd.displayName} to your agents`);
+          
+          return updated;
+        });
+        
+        // Add to userAddedAgentIds set
+        setUserAddedAgentIds(prev => new Set(prev).add(agentId));
+      }
+
+      // Then make the API call in background
       const response = await fetch('/api/user-agents', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -628,22 +660,41 @@ export function AskExpertProvider({ children }: { children: React.ReactNode }) {
       });
 
       if (!response.ok) {
+        console.error('❌ [AskExpertContext] API call failed, reverting optimistic update');
         throw new Error(`Failed to add agent: ${response.statusText}`);
       }
 
-      // Refresh agents after adding
-      await refreshAgents();
+      console.log('✅ [AskExpertContext] Agent added successfully to database');
+      
+      // Optionally refresh to ensure consistency (but UI already updated)
+      // await refreshAgents();
     } catch (error) {
       console.error('[AskExpertContext] Failed to add agent to user list:', error);
+      
+      // Revert optimistic update on error
+      const agentToAdd = (await getAllAgents()).find(a => a.id === agentId);
+      toast.error(`Failed to add ${agentToAdd?.displayName || 'agent'}. Please try again.`);
+      
+      setAgents(prev => prev.filter(a => a.id !== agentId));
+      setUserAddedAgentIds(prev => {
+        const updated = new Set(prev);
+        updated.delete(agentId);
+        return updated;
+      });
       throw error;
     }
-  }, [user?.id, refreshAgents]);
+  }, [user?.id, getAllAgents]);
 
   const removeAgentFromUserList = useCallback(async (agentId: string) => {
     if (!user?.id) {
       console.warn('[AskExpertContext] Cannot remove agent: user not authenticated');
+      toast.error('Please sign in to remove agents');
       return;
     }
+
+    // Get agent name before removal for toast message
+    const agentToRemove = agents.find(a => a.id === agentId);
+    const agentName = agentToRemove?.displayName || 'Agent';
 
     try {
       console.log('🗑️ [AskExpertContext] Removing agent from user list:', agentId);
@@ -652,6 +703,10 @@ export function AskExpertProvider({ children }: { children: React.ReactNode }) {
       setAgents(prev => {
         const updated = prev.filter(agent => agent.id !== agentId);
         console.log(`✨ [AskExpertContext] Optimistically removed agent. Remaining: ${updated.length}`);
+        
+        // ✅ Show success toast immediately
+        toast.success(`Removed ${agentName} from your agents`);
+        
         return updated;
       });
       
@@ -686,11 +741,13 @@ export function AskExpertProvider({ children }: { children: React.ReactNode }) {
       // await refreshAgents();
     } catch (error) {
       console.error('[AskExpertContext] Failed to remove agent from user list:', error);
+      
       // Revert optimistic update on error
+      toast.error(`Failed to remove ${agentName}. Please try again.`);
       await refreshAgents();
       throw error;
     }
-  }, [user?.id, setSelectedAgents, refreshAgents]);
+  }, [user?.id, agents, setSelectedAgents, refreshAgents]);
 
   // Auto-refresh agents when user changes
   useEffect(() => {

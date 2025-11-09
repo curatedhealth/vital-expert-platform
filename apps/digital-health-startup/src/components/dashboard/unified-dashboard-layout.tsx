@@ -28,10 +28,14 @@ import {
   Sparkles,
   Hammer,
   ShieldCheck,
+  Moon,
+  Sun,
+  Monitor,
 } from 'lucide-react'
 import { useAuth } from '@/lib/auth/supabase-auth-context'
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
+import { ThemeProvider, useTheme } from '@/contexts/ThemeContext'
 
 // Top navigation routes with icons
 const topNavRoutes = [
@@ -50,6 +54,7 @@ const topNavRoutes = [
 function DashboardHeader() {
   const pathname = usePathname()
   const { user, userProfile, signOut } = useAuth()
+  const { theme, setTheme, actualTheme } = useTheme()
 
 
   const handleSignOut = async () => {
@@ -94,6 +99,38 @@ function DashboardHeader() {
 
       {/* User Menu */}
       <div className="flex items-center gap-2">
+        {/* Theme Toggle */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon" title="Toggle theme">
+              {actualTheme === 'dark' ? (
+                <Moon className="h-5 w-5" />
+              ) : (
+                <Sun className="h-5 w-5" />
+              )}
+              <span className="sr-only">Toggle theme</span>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={() => setTheme('light')} className="cursor-pointer">
+              <Sun className="mr-2 h-4 w-4" />
+              <span>Light</span>
+              {theme === 'light' && <span className="ml-auto text-xs">✓</span>}
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setTheme('dark')} className="cursor-pointer">
+              <Moon className="mr-2 h-4 w-4" />
+              <span>Dark</span>
+              {theme === 'dark' && <span className="ml-auto text-xs">✓</span>}
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setTheme('system')} className="cursor-pointer">
+              <Monitor className="mr-2 h-4 w-4" />
+              <span>System</span>
+              {theme === 'system' && <span className="ml-auto text-xs">✓</span>}
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+        {/* User Menu */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="icon">
@@ -154,21 +191,23 @@ export function UnifiedDashboardLayout({ children }: { children: React.ReactNode
   }
 
   return (
-    <SidebarProvider>
-      <div className="flex min-h-screen w-full">
-        <AppSidebar />
+    <ThemeProvider>
+      <SidebarProvider>
+        <div className="flex min-h-screen w-full">
+          <AppSidebar />
 
-        {/* Main Content Area */}
-        <SidebarInset className="flex flex-1 flex-col">
-          {/* Header with View Selector, Breadcrumbs, and User Menu */}
-          <DashboardHeader />
+          {/* Main Content Area */}
+          <SidebarInset className="flex flex-1 flex-col">
+            {/* Header with View Selector, Breadcrumbs, and User Menu */}
+            <DashboardHeader />
 
-          {/* Main Content */}
-          <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6">
-            {children}
-          </main>
-        </SidebarInset>
-      </div>
-    </SidebarProvider>
+            {/* Main Content */}
+            <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6">
+              {children}
+            </main>
+          </SidebarInset>
+        </div>
+      </SidebarProvider>
+    </ThemeProvider>
   )
 }

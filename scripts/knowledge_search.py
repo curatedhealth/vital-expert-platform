@@ -123,6 +123,11 @@ class KnowledgeSearcher:
     ) -> List[Dict]:
         """Search PubMed Central for FREE FULL-TEXT articles only"""
         try:
+            # Check if session is initialized
+            if not self.session:
+                logger.error("❌ Session not initialized")
+                return []
+            
             # Build query - PMC search is more lenient
             search_query = query
             if start_year and end_year:
@@ -139,7 +144,7 @@ class KnowledgeSearcher:
                 pmc_sort = 'pub_date'  # PMC doesn't support citation sort, fall back to date
             
             search_params = {
-                'db': 'pmc',  # PubMed Central database (free full-text)
+                'db': 'pubmed',  # PubMed database (use pubmed for searching)
                 'term': search_query,
                 'retmax': max_results,
                 'retmode': 'json',

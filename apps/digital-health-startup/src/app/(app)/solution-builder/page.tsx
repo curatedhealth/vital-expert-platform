@@ -7,7 +7,6 @@ import Image from 'next/image';
 import { Badge } from '@vital/ui';
 import { Button } from '@vital/ui';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@vital/ui';
-import { PageHeader } from '@/components/page-header';
 
 // Helper function to render icons
 const renderIcon = (iconPath: string, size: number = 48) => {
@@ -166,23 +165,6 @@ export default function SolutionBuilderPage() {
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
-      {/* Page Header */}
-      <PageHeader
-        icon={Rocket}
-        title="Solution Builder"
-        description="Build digital health solutions with pre-validated templates"
-        actions={
-          <Button
-            size="default"
-            className="flex items-center gap-2"
-            onClick={() => window.alert('Custom solution builder coming soon!')}
-          >
-            <Layers className="h-4 w-4" />
-            Start from Scratch
-          </Button>
-        }
-      />
-
       {/* Main Content Area */}
       <div className="flex-1 overflow-y-auto">
         <div className="max-w-7xl mx-auto p-6">

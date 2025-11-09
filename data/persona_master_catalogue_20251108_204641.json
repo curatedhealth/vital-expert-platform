@@ -1,0 +1,367 @@
+{
+  "metadata": {
+    "source": "Persona Master Catalogue v6.0",
+    "timestamp": "2025-11-08T19:46:41.345335+00:00",
+    "total_personas": 8,
+    "total_jtbds": 18,
+    "jtbd_target": 750
+  },
+  "personas": [
+    {
+      "unique_id": "healthcare_clinical_development_director",
+      "persona_code": "P001_CDD",
+      "name": "Dr. Sarah Chen",
+      "title": "VP Clinical Development",
+      "sector": "Pharmaceutical & Biotech Companies",
+      "tier": 1,
+      "org_size": "Mid to Large Pharma ($1B+ revenue)",
+      "team_size": "15-50 clinical professionals",
+      "budget_authority": "$50-200M annual clinical budget",
+      "priority_score_target": 9.2,
+      "pain_points": [
+        "Clinical trial timelines extending 20-40% beyond plan",
+        "Regulatory pathway uncertainty causing $50M+ delays",
+        "Patient recruitment failures (60% of trials miss enrollment)",
+        "Data quality issues discovered late in process",
+        "Cross-functional alignment across 200+ stakeholders"
+      ],
+      "source": "Persona Master Catalogue v6.0",
+      "has_detailed_profile": true
+    },
+    {
+      "unique_id": "dtx_dtx_startup_ceo",
+      "persona_code": "P002_DSC",
+      "name": "Alex Rivera",
+      "title": "CEO & Co-Founder",
+      "sector": "Digital Therapeutics Companies",
+      "tier": 1,
+      "org_size": "Startup to Series B ($10M-100M valuation)",
+      "team_size": "20-100 employees",
+      "budget_authority": "$5-25M total company budget",
+      "priority_score_target": 9.1,
+      "pain_points": [
+        "FDA regulatory pathway uncertainty (De Novo vs 510(k))",
+        "Clinical trial design and execution with limited resources",
+        "Payer reimbursement strategy and evidence requirements",
+        "Limited regulatory expertise on small team",
+        "Competitive landscape intelligence",
+        "Partnership and licensing strategy",
+        "FDA clearance within 18-24 months",
+        "Clinical evidence demonstrating superior outcomes",
+        "Payer coverage and reimbursement pathway",
+        "Strategic partnerships with pharma or health systems",
+        "Intellectual property protection"
+      ],
+      "source": "Persona Master Catalogue v6.0",
+      "has_detailed_profile": true
+    },
+    {
+      "unique_id": "healthcare_regulatory_affairs_director",
+      "persona_code": "P003_RAD",
+      "name": "Dr. Robert Kim",
+      "title": "Senior Director, Regulatory Affairs",
+      "sector": "Medical Device & Pharma Companies",
+      "tier": 1,
+      "org_size": "Mid to Large Companies ($500M+ revenue)",
+      "team_size": "10-25 regulatory professionals",
+      "budget_authority": "$10-50M regulatory budget",
+      "priority_score_target": 9.0,
+      "pain_points": [
+        "Keeping up with rapidly changing FDA guidance (especially AI/ML)",
+        "Managing global regulatory harmonization",
+        "Predicate device research and substantial equivalence documentation",
+        "Cross-functional coordination with clinical, quality, and commercial teams",
+        "Resource allocation across multiple submission timelines",
+        "Post-market surveillance and reporting requirements",
+        "Software as Medical Device (SaMD) guidance evolution",
+        "AI/ML-enabled device requirements",
+        "Combination product pathway decisions",
+        "International regulatory harmonization",
+        "Post-market surveillance automation"
+      ],
+      "source": "Persona Master Catalogue v6.0",
+      "has_detailed_profile": true
+    },
+    {
+      "unique_id": "payer_payer_chief_medical_officer",
+      "persona_code": "P004_PCM",
+      "name": "Dr. Jennifer Walsh",
+      "title": "Chief Medical Officer",
+      "sector": "Health Insurance Companies",
+      "tier": 1,
+      "org_size": null,
+      "team_size": "50-200 medical professionals",
+      "budget_authority": "$100M+ medical management budget",
+      "priority_score_target": 8.9,
+      "pain_points": [
+        "Evaluating new technology and treatment coverage decisions",
+        "Managing medical cost trend (8-12% annually)",
+        "Measuring and improving quality outcomes across network",
+        "Prior authorization and medical necessity determinations",
+        "Value-based contract performance monitoring",
+        "Population health management at scale",
+        "Reduce total cost of care while improving outcomes",
+        "Accelerate adoption of value-based care models",
+        "Leverage digital health and remote monitoring",
+        "Improve member experience and satisfaction",
+        "Ensure regulatory compliance and accreditation"
+      ],
+      "source": "Persona Master Catalogue v6.0",
+      "has_detailed_profile": true
+    },
+    {
+      "unique_id": "healthtech_digital_health_product_manager",
+      "persona_code": "P005_DHP",
+      "name": "Maria Rodriguez",
+      "title": "Senior Product Manager, Digital Health",
+      "sector": "Health Technology Companies",
+      "tier": 1,
+      "org_size": "Growth stage health tech ($50M-500M revenue)",
+      "team_size": "5-15 product team members",
+      "budget_authority": "$5-25M product development budget",
+      "priority_score_target": 8.8,
+      "pain_points": [
+        "Defining product requirements that meet clinical and regulatory standards",
+        "Validating product-market fit in complex healthcare buying process",
+        "Managing regulatory requirements (FDA, HIPAA, state regulations)",
+        "Integrating with diverse healthcare IT systems",
+        "Measuring clinical outcomes and real-world evidence",
+        "Balancing innovation with safety and compliance",
+        "User engagement and clinical outcome improvements",
+        "Revenue growth and customer acquisition",
+        "Regulatory approval and compliance maintenance",
+        "Healthcare system integration success",
+        "Provider and patient satisfaction scores"
+      ],
+      "source": "Persona Master Catalogue v6.0",
+      "has_detailed_profile": true
+    },
+    {
+      "unique_id": "healthcare_clinical_trial_operations_mana",
+      "persona_code": "P006_CTO",
+      "name": "Dr. Michael Zhang",
+      "title": "Director, Clinical Trial Operations",
+      "sector": "CROs & Pharmaceutical Companies",
+      "tier": 1,
+      "org_size": null,
+      "team_size": "20-50 operations professionals",
+      "budget_authority": "$25-100M clinical operations budget",
+      "priority_score_target": 8.7,
+      "pain_points": [
+        "Patient recruitment challenges (60% of trials miss enrollment targets)",
+        "Site selection and performance optimization",
+        "Clinical data quality and monitoring efficiency",
+        "Regulatory compliance across multiple jurisdictions",
+        "Budget management and cost control",
+        "Timeline delays and milestone management",
+        "Remote monitoring and decentralized trials",
+        "Real-time data quality assessment",
+        "Site performance prediction and improvement",
+        "Patient engagement and retention",
+        "Regulatory inspection readiness"
+      ],
+      "source": "Persona Master Catalogue v6.0",
+      "has_detailed_profile": true
+    },
+    {
+      "unique_id": "pharma_medical_affairs_director",
+      "persona_code": "P007_MAD",
+      "name": "MEDICAL AFFAIRS DIRECTOR",
+      "title": "MEDICAL AFFAIRS DIRECTOR",
+      "sector": "Pharmaceutical Companies",
+      "tier": 1,
+      "org_size": null,
+      "team_size": null,
+      "budget_authority": null,
+      "priority_score_target": null,
+      "pain_points": [],
+      "source": "Persona Master Catalogue v6.0",
+      "has_detailed_profile": false
+    },
+    {
+      "unique_id": "healthcare_health_economics_director",
+      "persona_code": "P008_HED",
+      "name": "HEALTH ECONOMICS DIRECTOR",
+      "title": "HEALTH ECONOMICS DIRECTOR",
+      "sector": "Pharmaceutical & Medical Device Companies",
+      "tier": 1,
+      "org_size": null,
+      "team_size": null,
+      "budget_authority": null,
+      "priority_score_target": null,
+      "pain_points": [],
+      "source": "Persona Master Catalogue v6.0",
+      "has_detailed_profile": false
+    }
+  ],
+  "jtbds": [
+    {
+      "statement": "When planning clinical development strategy, I need comprehensive regulatory pathway analysis with predictive timelines, so I can optimize resource allocation and minimize approval risk",
+      "frequency": "Quarterly for new programs, Monthly for active programs",
+      "current_satisfaction": 3,
+      "opportunity_score": 9.5,
+      "persona_title": "CLINICAL DEVELOPMENT DIRECTOR",
+      "persona_code": "P001_CDD",
+      "persona_unique_id": "healthcare_clinical_development_director"
+    },
+    {
+      "statement": "When managing multiple clinical trials, I need real-time visibility into enrollment, data quality, and regulatory requirements, so I can proactively prevent delays and cost overruns",
+      "frequency": "Daily",
+      "current_satisfaction": 4,
+      "opportunity_score": 9.2,
+      "persona_title": "CLINICAL DEVELOPMENT DIRECTOR",
+      "persona_code": "P001_CDD",
+      "persona_unique_id": "healthcare_clinical_development_director"
+    },
+    {
+      "statement": "When preparing regulatory submissions, I need automated evidence synthesis and gap analysis, so I can ensure complete, high-quality dossiers and avoid FDA questions",
+      "frequency": "Per milestone (6-12 times/year)",
+      "current_satisfaction": 5,
+      "opportunity_score": 8.8,
+      "persona_title": "CLINICAL DEVELOPMENT DIRECTOR",
+      "persona_code": "P001_CDD",
+      "persona_unique_id": "healthcare_clinical_development_director"
+    },
+    {
+      "statement": "When developing DTx regulatory strategy, I need comprehensive FDA pathway analysis and predicate device research, so I can choose the optimal approval route and avoid costly delays",
+      "frequency": "Weekly in early development",
+      "current_satisfaction": 2,
+      "opportunity_score": 9.8,
+      "persona_title": "DTx STARTUP CEO",
+      "persona_code": "P002_DSC",
+      "persona_unique_id": "dtx_dtx_startup_ceo"
+    },
+    {
+      "statement": "When designing clinical trials, I need evidence-based protocol development and statistical planning, so I can demonstrate efficacy with minimal sample size and budget",
+      "frequency": "2-3 times per year",
+      "current_satisfaction": 3,
+      "opportunity_score": 9.5,
+      "persona_title": "DTx STARTUP CEO",
+      "persona_code": "P002_DSC",
+      "persona_unique_id": "dtx_dtx_startup_ceo"
+    },
+    {
+      "statement": "When seeking partnerships, I need competitive landscape analysis and partnership opportunity identification, so I can maximize valuation and market access potential",
+      "frequency": "Monthly",
+      "current_satisfaction": 4,
+      "opportunity_score": 9.2,
+      "persona_title": "DTx STARTUP CEO",
+      "persona_code": "P002_DSC",
+      "persona_unique_id": "dtx_dtx_startup_ceo"
+    },
+    {
+      "statement": "When determining regulatory pathway, I need comprehensive analysis of device classification, predicate devices, and substantial equivalence requirements, so I can choose the most efficient approval route",
+      "frequency": "Per product (10-20 times/year)",
+      "current_satisfaction": 4,
+      "opportunity_score": 9.3,
+      "persona_title": "REGULATORY AFFAIRS DIRECTOR",
+      "persona_code": "P003_RAD",
+      "persona_unique_id": "healthcare_regulatory_affairs_director"
+    },
+    {
+      "statement": "When preparing regulatory submissions, I need automated document compilation, gap analysis, and quality review, so I can ensure complete, accurate submissions and avoid FDA questions",
+      "frequency": "Multiple times per month",
+      "current_satisfaction": 3,
+      "opportunity_score": 9.1,
+      "persona_title": "REGULATORY AFFAIRS DIRECTOR",
+      "persona_code": "P003_RAD",
+      "persona_unique_id": "healthcare_regulatory_affairs_director"
+    },
+    {
+      "statement": "When monitoring regulatory changes, I need proactive alerts on new guidance, policy updates, and industry precedents, so I can adapt strategy and maintain compliance",
+      "frequency": "Daily monitoring, Weekly analysis",
+      "current_satisfaction": 5,
+      "opportunity_score": 8.7,
+      "persona_title": "REGULATORY AFFAIRS DIRECTOR",
+      "persona_code": "P003_RAD",
+      "persona_unique_id": "healthcare_regulatory_affairs_director"
+    },
+    {
+      "statement": "When evaluating new digital health technologies for coverage, I need comprehensive clinical evidence analysis and cost-effectiveness modeling, so I can make evidence-based coverage decisions that improve outcomes and control costs",
+      "frequency": "Weekly for new technology reviews",
+      "current_satisfaction": 4,
+      "opportunity_score": 9.4,
+      "persona_title": "PAYER CHIEF MEDICAL OFFICER",
+      "persona_code": "P004_PCM",
+      "persona_unique_id": "payer_payer_chief_medical_officer"
+    },
+    {
+      "statement": "When managing population health initiatives, I need real-time analytics on member outcomes, provider performance, and program effectiveness, so I can optimize interventions and demonstrate value",
+      "frequency": "Daily monitoring, Monthly optimization",
+      "current_satisfaction": 5,
+      "opportunity_score": 9.1,
+      "persona_title": "PAYER CHIEF MEDICAL OFFICER",
+      "persona_code": "P004_PCM",
+      "persona_unique_id": "payer_payer_chief_medical_officer"
+    },
+    {
+      "statement": "When designing value-based contracts, I need predictive modeling of clinical and financial outcomes, so I can structure arrangements that align incentives and share risk appropriately",
+      "frequency": "Monthly for new contracts",
+      "current_satisfaction": 3,
+      "opportunity_score": 8.9,
+      "persona_title": "PAYER CHIEF MEDICAL OFFICER",
+      "persona_code": "P004_PCM",
+      "persona_unique_id": "payer_payer_chief_medical_officer"
+    },
+    {
+      "statement": "When developing digital health products, I need comprehensive regulatory requirement analysis and clinical evidence planning, so I can build compliant solutions that achieve approval and adoption",
+      "frequency": "Per product release cycle",
+      "current_satisfaction": 4,
+      "opportunity_score": 9.2,
+      "persona_title": "DIGITAL HEALTH PRODUCT MANAGER",
+      "persona_code": "P005_DHP",
+      "persona_unique_id": "healthtech_digital_health_product_manager"
+    },
+    {
+      "statement": "When validating product-market fit, I need healthcare-specific user research and clinical outcome measurement, so I can optimize products for both user satisfaction and health outcomes",
+      "frequency": "Ongoing throughout development",
+      "current_satisfaction": 5,
+      "opportunity_score": 8.8,
+      "persona_title": "DIGITAL HEALTH PRODUCT MANAGER",
+      "persona_code": "P005_DHP",
+      "persona_unique_id": "healthtech_digital_health_product_manager"
+    },
+    {
+      "statement": "When planning product roadmap, I need competitive intelligence and market trend analysis specific to digital health, so I can prioritize features that differentiate and succeed in market",
+      "frequency": "Quarterly planning cycles",
+      "current_satisfaction": 6,
+      "opportunity_score": 8.5,
+      "persona_title": "DIGITAL HEALTH PRODUCT MANAGER",
+      "persona_code": "P005_DHP",
+      "persona_unique_id": "healthtech_digital_health_product_manager"
+    },
+    {
+      "statement": "When planning clinical trial operations, I need predictive site performance analysis and optimal site selection recommendations, so I can maximize enrollment speed and data quality while minimizing costs",
+      "frequency": "Per trial initiation",
+      "current_satisfaction": 3,
+      "opportunity_score": 9.1,
+      "persona_title": "CLINICAL TRIAL OPERATIONS MANAGER",
+      "persona_code": "P006_CTO",
+      "persona_unique_id": "healthcare_clinical_trial_operations_mana"
+    },
+    {
+      "statement": "When managing patient recruitment, I need real-time enrollment analytics and intervention recommendations, so I can proactively address recruitment challenges and meet timeline targets",
+      "frequency": "Daily during active recruitment",
+      "current_satisfaction": 4,
+      "opportunity_score": 8.9,
+      "persona_title": "CLINICAL TRIAL OPERATIONS MANAGER",
+      "persona_code": "P006_CTO",
+      "persona_unique_id": "healthcare_clinical_trial_operations_mana"
+    },
+    {
+      "statement": "When monitoring trial data quality, I need automated data review and risk-based monitoring insights, so I can ensure compliance and data integrity while optimizing monitoring resources",
+      "frequency": "Continuous during trial conduct",
+      "current_satisfaction": 5,
+      "opportunity_score": 8.6,
+      "persona_title": "CLINICAL TRIAL OPERATIONS MANAGER",
+      "persona_code": "P006_CTO",
+      "persona_unique_id": "healthcare_clinical_trial_operations_mana"
+    }
+  ],
+  "jtbd_summary": {
+    "total_target": 750,
+    "by_sector": {},
+    "by_lifecycle_stage": {},
+    "value_breakdown": {}
+  }
+}

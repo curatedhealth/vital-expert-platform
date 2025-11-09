@@ -2,6 +2,7 @@
 
 import React, { useMemo } from 'react';
 import type { User } from '@supabase/supabase-js';
+import { Toaster } from 'sonner';
 
 import { AgentsFilterProvider } from '@/contexts/agents-filter-context';
 import { AskExpertProvider } from '@/contexts/ask-expert-context';
@@ -31,6 +32,22 @@ export function AppLayoutClient({ children, initialUser }: AppLayoutClientProps)
 
   return (
     <QueryProvider>
+      {/* ✨ PHASE C: Toast notifications for optimistic updates */}
+      <Toaster 
+        position="top-right" 
+        richColors 
+        closeButton 
+        duration={3000}
+        toastOptions={{
+          className: 'toast',
+          style: {
+            background: 'hsl(var(--background))',
+            color: 'hsl(var(--foreground))',
+            border: '1px solid hsl(var(--border))',
+          },
+        }}
+      />
+      
       <DashboardProvider>
         <AskExpertProvider>
           <AskPanelProvider>

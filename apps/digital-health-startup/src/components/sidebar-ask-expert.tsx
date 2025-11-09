@@ -11,6 +11,7 @@ import {
   UserCircle2Icon,
   Trash2Icon,
   CheckIcon,
+  MessageSquare,
 } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
@@ -32,6 +33,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar"
+import { SidebarPageHeader } from "@/components/sidebar-page-header"
 
 // Helper function to clean agent display names
 function cleanDisplayName(displayName: string): string {
@@ -171,6 +173,11 @@ export function SidebarAskExpert() {
 
   return (
     <>
+      <SidebarPageHeader
+        icon={MessageSquare}
+        title="Ask Expert"
+        description="1:1 expert consultation with AI agents"
+      />
       <SidebarGroup>
         <SidebarGroupLabel>Quick Actions</SidebarGroupLabel>
         <SidebarGroupContent>

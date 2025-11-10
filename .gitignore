@@ -229,3 +229,88 @@ services/ai-engine/.env.backup
 # Railway environment variables (contain secrets)
 railway-environment-variables.json
 railway-env-*.txt
+
+# ============================================================================
+# DOCUMENTATION & NON-CRITICAL FILES (Excluded from Git)
+# ============================================================================
+# Keep only essential code for running services
+# All documentation, reports, and non-critical files are excluded
+
+# Documentation - All markdown files except essential
+*.md
+!README.md
+!CONTRIBUTING.md
+!LICENSE.md
+!CHANGELOG.md
+
+# Documentation directories
+/docs/
+!/docs/api-docs/
+/ROOT_FILE_ANALYSIS.md
+/PROJECT_ORGANIZATION_COMPLETE.md
+/DOCUMENTATION_INDEX.md
+
+# Migration logs and documentation
+/supabase/migrations/archive/
+/supabase/migrations/README.md
+/supabase/migrations/*.md
+# Keep actual migration files
+!/supabase/migrations/*.sql
+
+# Scripts - Exclude non-essential scripts
+/scripts/archive/
+/scripts/data-import/
+/scripts/migrations/
+/scripts/utilities/organize*.sh
+/scripts/utilities/verify*.py
+/scripts/utilities/check*.py
+/scripts/utilities/cleanup*.py
+/scripts/sql/
+/scripts/phase*/
+/scripts/README.md
+/scripts/KNOWLEDGE_PIPELINE_README.md
+# Keep only essential utility scripts
+!/scripts/utilities/
+!/scripts/*.sh
+!/scripts/*.py
+
+# Status reports and completion logs
+*COMPLETE*.md
+*COMPLETE*.txt
+*STATUS*.md
+*STATUS*.txt
+*SUMMARY*.md
+*SUMMARY*.txt
+*REPORT*.md
+*FIX*.md
+*AUDIT*.md
+*MIGRATION*.md
+
+# Templates and examples (keep schemas, exclude templates)
+/docs/architecture/templates/
+/docs/examples/
+/docs/archive/
+
+# Organization logs
+.markdown_files_backup.txt
+.root_files_organization*.log
+*.log.txt
+
+# Temporary organization files
+/logs/
+*.pid
+
+# Keep only essential configuration
+!package.json
+!tsconfig.json
+!next.config.mjs
+!tailwind.config.ts
+!vercel.json
+!docker-compose*.yml
+!Makefile
+!CODEOWNERS
+
+# Root level template and example files
+/INTERACTIVE_WORKFLOW_USAGE_EXAMPLES.tsx
+/MEDICAL_AFFAIRS_120_JTBD_TEMPLATE.json
+/TEMPLATE_*.json

@@ -314,3 +314,7 @@ railway-env-*.txt
 /INTERACTIVE_WORKFLOW_USAGE_EXAMPLES.tsx
 /MEDICAL_AFFAIRS_120_JTBD_TEMPLATE.json
 /TEMPLATE_*.json
+
+# Secret-containing files (GitHub security)
+services/ai-engine/.env.backup*
+PIPELINE_COMPREHENSIVE_DIAGNOSTIC_REPORT.md

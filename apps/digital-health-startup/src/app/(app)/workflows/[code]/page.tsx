@@ -2,7 +2,7 @@
 
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { ArrowLeft, Play, Settings, Clock, FileText, CheckCircle, AlertCircle, Workflow as WorkflowIcon, Bot, Wrench, Database, GitBranch } from 'lucide-react';
+import { ArrowLeft, Play, Settings, Clock, FileText, CheckCircle, AlertCircle, Workflow as WorkflowIcon, Bot, Wrench, Database, GitBranch, Pencil } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -312,6 +312,14 @@ export default function UseCaseDetailPage() {
                       </p>
                     </div>
                     <div className="flex gap-2">
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        onClick={() => router.push(`/workflows/editor?mode=edit&workflowId=${workflow.id}&useCaseId=${useCase.id}`)}
+                      >
+                        <Pencil className="mr-1 h-3 w-3" />
+                        Edit
+                      </Button>
                       <Button size="sm" className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white">
                         <Play className="mr-1 h-3 w-3" />
                         Run

@@ -80,7 +80,7 @@ export const GET = withPromptAuth(async (
       query = query.eq('created_by', context.user.id);
     }
 
-    const { data: allPrompts, error } = await query;
+    const { data: prompts, error } = await query;
 
     if (error) {
       const duration = Date.now() - startTime;
@@ -100,69 +100,14 @@ export const GET = withPromptAuth(async (
         { status: 500 }
       );
     }
-    
-    // Filter for active prompts
-    const prompts = allPrompts?.filter((p: any) => {
-      const status = p.status || p.validation_status;
-      // Show if active or no status (backward compatibility)
-      return !status || status === 'active';
-    }) || [];
 
-    // Post-process to add derived fields and map suites from metadata
-    const enrichedPrompts = prompts?.map(prompt => {
-      // Extract suite from metadata (stored in Supabase)
-      // Try to get suite from metadata first (from CSV import)
-      let suite = null;
-      
-      // Check if we have metadata with suite information
-      if (prompt.metadata && typeof prompt.metadata === 'object') {
-        const metadata = prompt.metadata as any;
-        suite = metadata.suite || null;
-      }
-      
-      // If no suite in metadata, try to infer from name/domain/display_name
-      if (!suite) {
-        const nameLower = (prompt.name || '').toLowerCase();
-        const displayNameLower = (prompt.display_name || '').toLowerCase();
-        const categoryLower = (prompt.category || '').toLowerCase();
-        const domainLower = (prompt.domain || '').toLowerCase();
-        
-        // Check for suite prefixes (e.g., "GUARD_MANAGE_PV...", "VALUE_BUDGET...")
-        // These prompts from CSV have suite prefixes in their names
-        if (nameLower.startsWith('rules') || displayNameLower.includes('rules') || nameLower.includes('_rules_') || domainLower.includes('regulatory')) {
-          suite = 'RULES™';
-        } else if (nameLower.startsWith('trial') || displayNameLower.includes('trial') || nameLower.includes('_trial_') || domainLower.includes('clinical')) {
-          suite = 'TRIALS™';
-        } else if (nameLower.startsWith('guard') || displayNameLower.includes('guard') || nameLower.includes('_guard_') || nameLower.includes('guard_') || domainLower.includes('safety')) {
-          suite = 'GUARD™';
-        } else if (nameLower.startsWith('value') || displayNameLower.includes('value') || nameLower.includes('_value_') || nameLower.includes('value_') || domainLower.includes('commercial')) {
-          suite = 'VALUE™';
-        } else if (nameLower.startsWith('bridge') || displayNameLower.includes('bridge') || nameLower.includes('_bridge_') || nameLower.includes('bridge_')) {
-          suite = 'BRIDGE™';
-        } else if (nameLower.startsWith('proof') || displayNameLower.includes('proof') || nameLower.includes('_proof_') || nameLower.includes('proof_')) {
-          suite = 'PROOF™';
-        } else if (nameLower.startsWith('craft') || displayNameLower.includes('craft') || nameLower.includes('_craft_') || nameLower.includes('craft_')) {
-          suite = 'CRAFT™';
-        } else if (nameLower.startsWith('scout') || displayNameLower.includes('scout') || nameLower.includes('_scout_') || nameLower.includes('scout_')) {
-          suite = 'SCOUT™';
-        } else if (nameLower.startsWith('project') || displayNameLower.includes('project') || nameLower.includes('_project_') || nameLower.includes('project_') || domainLower.includes('project')) {
-          suite = 'PROJECT™';
-        } else if (nameLower.startsWith('forge') || displayNameLower.includes('forge') || nameLower.includes('_forge_') || nameLower.includes('forge_')) {
-          suite = 'FORGE™';
-        } else {
-          // Default to RULES if we can't determine
-          suite = 'RULES™';
-        }
-      }
-      
-      return {
-        ...prompt,
-        suite: suite,
-        is_user_created: prompt.created_by !== null
-      };
-    }) || [];
+    // Post-process to add derived fields
+    const enrichedPrompts = (prompts || []).map(prompt => ({
+      ...prompt,
+      is_user_created: prompt.created_by !== null
+    }));
 
-    // Apply suite filter
+    // Apply suite filter if specified
     const filteredPrompts = suite
       ? enrichedPrompts.filter((p: any) => p.suite === suite)
       : enrichedPrompts;

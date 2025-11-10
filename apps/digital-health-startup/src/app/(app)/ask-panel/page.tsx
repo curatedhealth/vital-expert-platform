@@ -52,6 +52,8 @@ import { PanelExecutionView } from '@/features/ask-panel/components/PanelExecuti
 import { PANEL_TEMPLATES } from '@/features/ask-panel/constants/panel-templates';
 import type { PanelConfiguration } from '@/features/ask-panel/types/agent';
 import { useSavedPanels, type SavedPanel } from '@/contexts/ask-panel-context';
+import { PanelTypesShowcase } from '@/features/ask-panel/components/PanelTypesShowcase';
+import { PanelManagementTypes } from '@/features/ask-panel/components/PanelManagementTypes';
 
 // Map emoji categories to lucide-react icons
 const CATEGORY_ICONS: Record<string, any> = {
@@ -334,6 +336,8 @@ export default function AskPanelPage() {
           <TabsTrigger value="grid">Grid View</TabsTrigger>
           <TabsTrigger value="list">List View</TabsTrigger>
           <TabsTrigger value="category">By Category</TabsTrigger>
+          <TabsTrigger value="panel-types">🎯 Panel Types</TabsTrigger>
+          <TabsTrigger value="management">👥 Management</TabsTrigger>
         </TabsList>
 
         {/* Grid View */}
@@ -588,6 +592,26 @@ export default function AskPanelPage() {
               </div>
             );
           })}
+        </TabsContent>
+
+        {/* Panel Types Tab */}
+        <TabsContent value="panel-types" className="space-y-6 mt-6">
+          <PanelTypesShowcase
+            onSelectType={(type) => {
+              console.log('Selected panel type:', type);
+              // You can handle type selection here
+            }}
+          />
+        </TabsContent>
+
+        {/* Management Types Tab */}
+        <TabsContent value="management" className="space-y-6 mt-6">
+          <PanelManagementTypes
+            onSelectType={(type) => {
+              console.log('Selected management type:', type);
+              // You can handle management selection here
+            }}
+          />
         </TabsContent>
       </Tabs>
 

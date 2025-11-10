@@ -15,16 +15,28 @@ export interface LangGraphEvent {
 /**
  * Parse a LangGraph SSE event
  * 
- * @param sseData - Raw SSE data string from backend
+ * @param sseData - Raw SSE data (string or already-parsed object) from backend
  * @returns Parsed event with eventType and data, or null if invalid
  */
-export function parseLangGraphEvent(sseData: string): LangGraphEvent | null {
+export function parseLangGraphEvent(sseData: string | any): LangGraphEvent | null {
   try {
-    const parsed = JSON.parse(sseData);
+    // Handle both string and already-parsed object
+    const parsed = typeof sseData === 'string' ? JSON.parse(sseData) : sseData;
     
     // Handle messages stream mode (token-by-token LLM output)
     if (parsed.stream_mode === 'messages') {
       const content = parsed.data?.content;
+      const messageType = parsed.data?.type;
+      const messageId = parsed.data?.id;
+      
+      // ✅ FIX: Only skip COMPLETE messages (no chunk ID), not streaming chunks
+      // Streaming chunks have IDs like "chunk-0", "chunk-1", etc.
+      // Complete messages have no ID or a non-chunk ID
+      if (messageType === 'ai' && (!messageId || !messageId.includes('chunk'))) {
+        console.log('[parseLangGraphEvent] Skipping final complete "ai" message to prevent duplication');
+        return null;
+      }
+      
       if (content !== undefined && content !== '') {
         return {
           eventType: 'content',
@@ -51,6 +63,14 @@ export function parseLangGraphEvent(sseData: string): LangGraphEvent | null {
       return {
         eventType: parsed.type || 'custom',
         data: parsed.data,
+      };
+    }
+    
+    // 🔥 FIX: Handle completion event (sent at end of stream)
+    if (parsed.type === 'complete') {
+      return {
+        eventType: 'complete',
+        data: parsed,
       };
     }
     

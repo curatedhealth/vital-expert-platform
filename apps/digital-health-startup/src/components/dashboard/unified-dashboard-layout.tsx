@@ -14,9 +14,9 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Button } from '@/components/ui/button'
-import { 
-  UserCircle, 
-  LogOut, 
+import {
+  UserCircle,
+  LogOut,
   Settings as SettingsIcon,
   LayoutDashboard,
   MessageSquare,
@@ -31,6 +31,7 @@ import {
   Moon,
   Sun,
   Monitor,
+  User,
 } from 'lucide-react'
 import { useAuth } from '@/lib/auth/supabase-auth-context'
 import { usePathname } from 'next/navigation'
@@ -40,6 +41,7 @@ import { ThemeProvider, useTheme } from '@/contexts/ThemeContext'
 // Top navigation routes with icons
 const topNavRoutes = [
   { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, color: 'text-blue-600' },
+  { label: 'Personas', href: '/personas', icon: User, color: 'text-cyan-600' },
   { label: 'Ask Expert', href: '/ask-expert', icon: MessageSquare, color: 'text-blue-600' },
   { label: 'Ask Panel', href: '/ask-panel', icon: Users, color: 'text-purple-600' },
   { label: 'Workflows', href: '/workflows', icon: GitBranch, color: 'text-green-600' },
@@ -47,7 +49,7 @@ const topNavRoutes = [
   { label: 'Agents', href: '/agents', icon: UsersRound, color: 'text-indigo-600' },
   { label: 'Tools', href: '/tools', icon: Hammer, color: 'text-gray-600' },
   { label: 'Knowledge', href: '/knowledge', icon: BookOpen, color: 'text-teal-600' },
-  { label: 'Prompt Prism', href: '/prism', icon: Sparkles, color: 'text-pink-600' },
+  { label: 'PROMPTS', href: '/prism', icon: Sparkles, color: 'text-pink-600' },
   { label: 'Admin', href: '/admin', icon: ShieldCheck, color: 'text-red-600' },
 ];
 

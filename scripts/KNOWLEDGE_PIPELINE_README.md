@@ -1,65 +1,40 @@
-# Knowledge Pipeline - Automated Content Scraping & Upload
+# VITAL Knowledge Pipeline
 
-A comprehensive Python script for automating the process of scraping web content, organizing it by domain, and uploading to Supabase and Pinecone for your VITAL AI platform.
+## 🚀 Production-Ready Setup
 
-## Features
-
-✅ **Web Scraping**
-- Robust scraping with retry logic and backoff
-- CSS selector support for targeted extraction
-- Clean text extraction with metadata
-- Link and image extraction
-- Content hashing for deduplication
-
-✅ **Content Curation**
-- Automatic organization by domain/category
-- Markdown file generation with frontmatter
-- Directory structure creation
-- Content quality validation
-
-✅ **Database Integration**
-- Supabase metadata upload
-- Pinecone vector embeddings
-- Duplicate detection and handling
-- Batch processing support
-
-✅ **Reporting**
-- Comprehensive execution reports
-- Success/failure statistics
-- Domain-wise breakdowns
-- Failed URLs tracking
-
-## Prerequisites
-
-### Required Packages
+### Installation
 
 ```bash
-pip install supabase-py pinecone-client langchain sentence-transformers torch beautifulsoup4 aiohttp python-dotenv backoff
+# 1. Install dependencies
+cd scripts
+pip install -r requirements.txt
+
+# 2. Set up environment variables
+cp ../.env.local .env
+# Or manually create .env with required keys
+
+# 3. Verify setup
+python knowledge-pipeline.py --help
 ```
 
-**Note:** Uses Hugging Face `sentence-transformers` for embeddings (no OpenAI API key required!)
-
-### Environment Variables
-
-Create a `.env` file or set these environment variables:
+### Quick Start
 
 ```bash
-# Required
-SUPABASE_URL=your_supabase_url
-SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+# Run with default settings (RAG service integration)
+python knowledge-pipeline.py --config config.json
 
-# Optional (for Pinecone vector upload)
-PINECONE_API_KEY=your_pinecone_key
-PINECONE_ENVIRONMENT=your_environment
+# Test without uploading
+python knowledge-pipeline.py --config config.json --dry-run
+
+# Custom embedding model
+python knowledge-pipeline.py \
+  --config config.json \
+  --embedding-model sentence-transformers/all-mpnet-base-v2
 ```
 
-**No OpenAI API key needed!** This pipeline uses free Hugging Face models for embeddings.
+### Configuration File Format
 
-## Quick Start
-
-### 1. Create Configuration File
-
-Create a JSON file (e.g., `sources.json`) with your source URLs and metadata:
+Create a `config.json` file:
 
 ```json
 {
@@ -68,19 +43,9 @@ Create a JSON file (e.g., `sources.json`) with your source URLs and metadata:
       "url": "https://www.fda.gov/medical-devices/overview",
       "domain": "regulatory",
       "category": "fda_guidelines",
-      "tags": ["medical-devices", "fda", "regulatory"],
+      "tags": ["fda", "medical-devices"],
       "priority": "high",
-      "css_selector": null,
       "description": "FDA Medical Devices Overview"
-    },
-    {
-      "url": "https://example.com/article",
-      "domain": "research",
-      "category": "clinical_trials",
-      "tags": ["research", "trials"],
-      "priority": "medium",
-      "css_selector": ".article-content",
-      "description": "Research article on clinical trials"
     }
   ],
   "output_settings": {
@@ -91,342 +56,126 @@ Create a JSON file (e.g., `sources.json`) with your source URLs and metadata:
 }
 ```
 
-### 2. Run the Pipeline
+### Environment Variables
+
+Required in `.env` file:
 
 ```bash
-# Basic usage (uses default Hugging Face model)
-python scripts/knowledge-pipeline.py --config sources.json
+# Supabase (Required)
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=your_service_key
 
-# Use a specific embedding model
-python scripts/knowledge-pipeline.py --config sources.json \
-  --embedding-model sentence-transformers/all-mpnet-base-v2
-
-# Dry run (test without uploading)
-python scripts/knowledge-pipeline.py --config sources.json --dry-run
-
-# Custom output directory
-python scripts/knowledge-pipeline.py --config sources.json --output-dir ./my-knowledge
-
-# Medical content with specialized model
-python scripts/knowledge-pipeline.py --config medical-sources.json \
-  --embedding-model pritamdeka/BioBERT-mnli-snli-scinli-scitail-mednli-stsb
+# Pinecone (Optional)
+PINECONE_API_KEY=your_pinecone_key
+PINECONE_RAG_INDEX_NAME=vital-rag-production
 ```
 
-## Configuration Reference
+### Features
 
-### Source Object Fields
+✅ **Production-Ready**
+- Full type hints
+- Comprehensive error handling
+- Retry logic with exponential backoff
+- Clean logging
 
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `url` | string | Yes | URL to scrape |
-| `domain` | string | No | Domain category (e.g., "regulatory", "research") |
-| `category` | string | No | Specific category (e.g., "fda_guidelines") |
-| `tags` | array | No | Tags for categorization |
-| `priority` | string | No | Priority level: "high", "medium", "low" |
-| `css_selector` | string | No | CSS selector for targeted content extraction |
-| `description` | string | No | Human-readable description |
+✅ **RAG Service Integration**
+- Uses unified RAG service
+- Consistent chunking & embedding
+- Domain/namespace routing
+- Automatic metadata enrichment
 
-### Example Configurations
+✅ **Clean Architecture**
+- Modular design
+- Easy to test
+- Well-documented
+- PEP 8 compliant
 
-#### Medical Device Regulatory Content
+### Usage Examples
 
-```json
-{
-  "sources": [
-    {
-      "url": "https://www.fda.gov/medical-devices/device-advice-comprehensive-regulatory-assistance",
-      "domain": "regulatory",
-      "category": "fda_guidance",
-      "tags": ["fda", "medical-devices", "510k", "pma"],
-      "priority": "high"
-    },
-    {
-      "url": "https://www.ema.europa.eu/en/medical-devices-sector",
-      "domain": "regulatory",
-      "category": "ema_guidance",
-      "tags": ["ema", "medical-devices", "europe", "mdr"],
-      "priority": "high"
-    }
-  ]
-}
+#### Basic Usage
+```bash
+python knowledge-pipeline.py --config my-sources.json
 ```
 
-#### Clinical Research Papers
-
-```json
-{
-  "sources": [
-    {
-      "url": "https://pubmed.ncbi.nlm.nih.gov/12345678/",
-      "domain": "research",
-      "category": "clinical_research",
-      "tags": ["pubmed", "clinical-trial", "rct"],
-      "priority": "medium",
-      "css_selector": ".article-content"
-    }
-  ]
-}
+#### Dry Run (Test Mode)
+```bash
+python knowledge-pipeline.py --config my-sources.json --dry-run
 ```
 
-#### Industry Standards
-
-```json
-{
-  "sources": [
-    {
-      "url": "https://www.iso.org/standard/59752.html",
-      "domain": "standards",
-      "category": "iso_standards",
-      "tags": ["iso-13485", "quality-management", "medical-devices"],
-      "priority": "high"
-    }
-  ]
-}
+#### Custom Output Directory
+```bash
+python knowledge-pipeline.py \
+  --config my-sources.json \
+  --output-dir ./my-knowledge
 ```
 
-## Output Structure
+#### Different Embedding Model
+```bash
+python knowledge-pipeline.py \
+  --config my-sources.json \
+  --embedding-model sentence-transformers/multi-qa-mpnet-base-dot-v1
+```
 
-The pipeline creates the following directory structure:
+### Output
+
+The pipeline creates:
 
 ```
 knowledge/
 ├── regulatory/
-│   ├── FDA_Medical_Devices_Overview_a1b2c3d4.md
-│   └── EMA_Regulatory_Framework_e5f6g7h8.md
+│   ├── FDA_Medical_Devices_abc123.md
+│   └── EMA_Guidelines_def456.md
 ├── research/
-│   ├── Clinical_Trial_Study_Design_i9j0k1l2.md
-│   └── Statistical_Analysis_Methods_m3n4o5p6.md
-├── standards/
-│   └── ISO_13485_Requirements_q7r8s9t0.md
+│   └── Clinical_Trial_xyz789.md
 └── pipeline_report_20251105_143022.md
 ```
 
-Each markdown file includes:
-- Frontmatter with metadata (title, URL, domain, tags, etc.)
-- Full content extracted from the source
-- Word count and scraping timestamp
-- Content hash for deduplication
+### Monitoring
 
-## Pipeline Flow
-
-```
-1. Load Configuration
-   ↓
-2. Validate Config & Environment
-   ↓
-3. For Each Source:
-   ├── Scrape Content (with retry)
-   ├── Extract & Clean Text
-   ├── Save to Knowledge Folder
-   ├── Upload Metadata to Supabase
-   └── Upload Vectors to Pinecone
-   ↓
-4. Generate Comprehensive Report
-```
-
-## Database Schema
-
-### Supabase Table: `knowledge_documents`
-
-The pipeline expects a table with these columns:
-
-```sql
-CREATE TABLE knowledge_documents (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  title TEXT NOT NULL,
-  content TEXT NOT NULL,
-  url TEXT UNIQUE,
-  domain TEXT,
-  category TEXT,
-  tags TEXT[],
-  metadata JSONB,
-  created_at TIMESTAMPTZ DEFAULT now(),
-  updated_at TIMESTAMPTZ DEFAULT now()
-);
-
--- Indexes for performance
-CREATE INDEX idx_knowledge_domain ON knowledge_documents(domain);
-CREATE INDEX idx_knowledge_category ON knowledge_documents(category);
-CREATE INDEX idx_knowledge_tags ON knowledge_documents USING GIN(tags);
-```
-
-### Pinecone Index
-
-Vectors are stored with this metadata structure:
-
-```json
-{
-  "title": "Document Title",
-  "url": "https://...",
-  "domain": "regulatory",
-  "category": "fda_guidelines",
-  "chunk_index": 0,
-  "chunk_text": "Preview of chunk content...",
-  "scraped_at": "2025-11-05T14:30:22Z"
-}
-```
-
-## Embedding Models
-
-The pipeline uses **Hugging Face sentence-transformers** for generating embeddings. No OpenAI API key required!
-
-### Available Models
-
-**Default:** `sentence-transformers/all-MiniLM-L6-v2`
-- Fast, efficient, good quality
-- 384 dimensions
-- ~14,000 sentences/sec on CPU
-
-**High Quality:** `sentence-transformers/all-mpnet-base-v2`
-- Best quality embeddings
-- 768 dimensions
-- ~2,800 sentences/sec on CPU
-
-**Q&A Optimized:** `sentence-transformers/multi-qa-mpnet-base-dot-v1`
-- Perfect for RAG/Ask Expert
-- 768 dimensions
-- Optimized for question-answer matching
-
-**Medical/Healthcare:** `pritamdeka/BioBERT-mnli-snli-scinli-scitail-mednli-stsb`
-- Specialized for medical content
-- Better understanding of clinical terms
-- Trained on biomedical literature
-
-See `EMBEDDING_MODELS_GUIDE.md` for complete comparison and recommendations.
-
-### GPU Acceleration
-
-The pipeline automatically uses GPU if available (via PyTorch/CUDA):
-- 3-5x faster embedding generation
-- Recommended for large-scale processing
-
-Check GPU availability:
+Check logs:
 ```bash
-python -c "import torch; print(f'GPU: {torch.cuda.is_available()}')"
-```
-
-## Advanced Usage
-
-### Batch Processing Multiple Config Files
-
-```bash
-# Process multiple domains
-for config in configs/*.json; do
-  python scripts/knowledge-pipeline.py --config "$config"
-done
-```
-
-### Scheduled Execution (Cron)
-
-```bash
-# Add to crontab for daily execution at 2 AM
-0 2 * * * cd /path/to/project && python scripts/knowledge-pipeline.py --config daily-sources.json
-```
-
-### Custom Integration
-
-```python
-from knowledge_pipeline import KnowledgePipeline
-
-# Create custom pipeline
-pipeline = KnowledgePipeline(
-    config_path='sources.json',
-    output_dir='./knowledge',
-    dry_run=False
-)
-
-# Run asynchronously
-await pipeline.run()
-```
-
-## Error Handling
-
-The pipeline includes robust error handling:
-
-- **Network Errors**: Automatic retry with exponential backoff
-- **Parsing Errors**: Graceful failure with detailed logging
-- **Upload Errors**: Continues processing, tracks failures
-- **Validation Errors**: Early detection with clear error messages
-
-Failed URLs are tracked and included in the final report.
-
-## Performance
-
-- **Concurrent Scraping**: Async/await for efficient I/O
-- **Batch Processing**: Optimized database operations
-- **Rate Limiting**: Configurable delays between requests
-- **Resource Management**: Automatic cleanup of connections
-
-Typical performance:
-- 10-15 URLs per minute (depending on content size)
-- ~1-2 seconds per page including upload
-- Minimal memory footprint with streaming
-
-## Monitoring
-
-Check the logs:
-
-```bash
-# Real-time monitoring
 tail -f knowledge-pipeline.log
-
-# View recent errors
-grep "ERROR" knowledge-pipeline.log
 ```
 
-## Troubleshooting
-
-### Common Issues
-
-**"Missing required environment variables"**
-- Ensure `.env` file exists with required variables
-- Or export variables in your shell
-
-**"Pinecone index not found"**
-- Create the index in Pinecone dashboard first
-- Or set `PINECONE_API_KEY` to empty to skip vector upload
-
-**"Failed to upload to Supabase"**
-- Check service role key permissions
-- Verify table schema matches expected structure
-
-**"Connection timeout"**
-- Increase timeout in config: `"timeout": 60`
-- Check network connectivity
-
-### Debug Mode
-
-Enable detailed logging:
-
-```python
-import logging
-logging.basicConfig(level=logging.DEBUG)
+View report:
+```bash
+cat knowledge/pipeline_report_*.md
 ```
 
-## Future Enhancements
+### Troubleshooting
 
-Planned features:
-- [ ] Recursive crawling (follow links)
-- [ ] PDF and document parsing
-- [ ] Multi-language support
-- [ ] Custom post-processing hooks
-- [ ] Webhook notifications
-- [ ] Web UI for configuration
+**Import Error:**
+```bash
+# Make sure you're in the project root
+cd /path/to/VITAL\ path
+python scripts/knowledge-pipeline.py --config config.json
+```
 
-## Support
+**Missing Dependencies:**
+```bash
+pip install -r scripts/requirements.txt
+```
 
-For issues or questions:
-1. Check the logs in `knowledge-pipeline.log`
-2. Review the execution report
-3. Verify configuration against examples
-4. Check environment variables
+**RAG Service Connection:**
+```bash
+# Verify environment variables
+python -c "
+from dotenv import load_dotenv
+import os
+load_dotenv()
+print('✅ SUPABASE_URL:', os.getenv('SUPABASE_URL')[:30] + '...')
+"
+```
 
-## License
+### Documentation
 
-Part of the VITAL AI Platform - Internal Use
+- **Full Guide**: [KNOWLEDGE_PIPELINE_README.md](KNOWLEDGE_PIPELINE_README.md)
+- **RAG Integration**: [RAG_INTEGRATION_GUIDE.md](RAG_INTEGRATION_GUIDE.md)
+- **Embedding Models**: [EMBEDDING_MODELS_GUIDE.md](EMBEDDING_MODELS_GUIDE.md)
+- **Environment Setup**: [KNOWLEDGE_PIPELINE_ENV_SETUP.md](KNOWLEDGE_PIPELINE_ENV_SETUP.md)
 
 ---
 
-**Last Updated**: 2025-11-05
-**Version**: 1.0.0
-
+**Version:** 2.0.0 (Production Ready)
+**Python:** 3.8+
+**Status:** ✅ Ready for Production Use

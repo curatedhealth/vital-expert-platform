@@ -25,7 +25,7 @@
 
 import { useMemo, type ReactNode } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Brain, Zap, Eye, Search, Lightbulb, Circle } from 'lucide-react';
+import { Brain, Zap, Eye, Search, Lightbulb, Circle, CheckCircle2, Loader2 } from 'lucide-react';
 import { Badge } from '@vital/ui';
 import { cn } from '@vital/ui/lib/utils';
 import {
@@ -167,6 +167,22 @@ export function AIReasoning({
     >
       <ReasoningTrigger title={title} />
       <ReasoningContent>
+        {/* Progress indicator when streaming */}
+        {isStreaming && normalizedSteps.length > 0 && (
+          <div className="mb-3 flex items-center gap-2 text-sm text-muted-foreground">
+            <Loader2 className="h-4 w-4 animate-spin text-blue-500" />
+            <span>Processing step {normalizedSteps.length}...</span>
+            <div className="flex-1 h-1 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden ml-2">
+              <motion.div
+                className="h-full bg-gradient-to-r from-blue-500 to-purple-500"
+                initial={{ width: "0%" }}
+                animate={{ width: "100%" }}
+                transition={{ duration: 1.5, ease: "easeInOut", repeat: Infinity }}
+              />
+            </div>
+          </div>
+        )}
+        
         {normalizedSteps.length > 0 && (
           <div className="space-y-2">
             <AnimatePresence mode="popLayout">

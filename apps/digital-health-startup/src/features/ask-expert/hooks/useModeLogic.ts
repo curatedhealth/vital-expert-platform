@@ -76,15 +76,16 @@ function getModeConfiguration(
   isAutomatic: boolean,
   isAutonomous: boolean
 ): ModeConfig {
-  const baseUrl = process.env.NEXT_PUBLIC_PYTHON_AI_ENGINE_URL || 'http://localhost:8080';
-  
+  // Use relative URLs so Next.js rewrites can proxy to AI Engine
+  // This avoids CORS issues when connecting from browser
+
   switch (mode) {
     case 1:
       return {
         mode: 1,
         isAutomatic: false,
         isAutonomous: false,
-        endpoint: `${baseUrl}/api/mode1/manual`,
+        endpoint: '/api/mode1/manual',
         requiresAgentSelection: true,
         supportsTools: true,
         supportsRAG: true,
@@ -94,7 +95,7 @@ function getModeConfiguration(
         mode: 2,
         isAutomatic: true,
         isAutonomous: false,
-        endpoint: `${baseUrl}/api/mode2/automatic`,
+        endpoint: '/api/mode2/automatic',
         requiresAgentSelection: false,
         supportsTools: true,
         supportsRAG: true,
@@ -104,7 +105,7 @@ function getModeConfiguration(
         mode: 3,
         isAutomatic: false,
         isAutonomous: true,
-        endpoint: `${baseUrl}/api/mode3/autonomous-automatic`,
+        endpoint: '/api/mode3/autonomous-automatic',
         requiresAgentSelection: false,
         supportsTools: true,
         supportsRAG: true,
@@ -114,7 +115,7 @@ function getModeConfiguration(
         mode: 4,
         isAutomatic: true,
         isAutonomous: true,
-        endpoint: `${baseUrl}/api/mode4/autonomous-manual`,
+        endpoint: '/api/mode4/autonomous-manual',
         requiresAgentSelection: false,
         supportsTools: true,
         supportsRAG: true,
@@ -124,7 +125,7 @@ function getModeConfiguration(
         mode: 1,
         isAutomatic,
         isAutonomous,
-        endpoint: `${baseUrl}/api/mode1/manual`,
+        endpoint: '/api/mode1/manual',
         requiresAgentSelection: true,
         supportsTools: true,
         supportsRAG: true,

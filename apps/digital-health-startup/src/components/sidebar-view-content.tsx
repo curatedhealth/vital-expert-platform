@@ -42,6 +42,9 @@ import {
   Box,
   Sparkles,
   Hammer,
+  Filter,
+  Briefcase,
+  Award,
 } from "lucide-react"
 
 import { SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar"
@@ -635,7 +638,7 @@ export function SidebarPromptPrismContent() {
     <>
       <SidebarPageHeader
         icon={Sparkles}
-        title="Prompt Prism"
+        title="PROMPTS"
         description="Advanced prompt engineering and optimization"
       />
       <SidebarGroup>
@@ -949,12 +952,208 @@ export function SidebarAdminContent() {
               </SidebarMenuButton>
             </SidebarMenuItem>
             <SidebarMenuItem>
-              <SidebarMenuButton 
+              <SidebarMenuButton
                 onClick={() => handleNavigation('personas')}
                 isActive={isActive('personas')}
               >
                 <User className="h-4 w-4" />
                 <span>Personas</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarGroupContent>
+      </SidebarGroup>
+    </>
+  )
+}
+
+export function SidebarPersonasContent() {
+  const [filterOptions, setFilterOptions] = useState<any>(null)
+  const [selectedIndustry, setSelectedIndustry] = useState<string>('all')
+  const [selectedFunction, setSelectedFunction] = useState<string>('all')
+  const [selectedSource, setSelectedSource] = useState<string>('all')
+  const [selectedTier, setSelectedTier] = useState<string>('all')
+  const router = useRouter()
+  const searchParams = useSearchParams()
+
+  useEffect(() => {
+    // Load filter options
+    const fetchFilters = async () => {
+      try {
+        const response = await fetch('/api/personas?source=all')
+        const data = await response.json()
+        if (data.success) {
+          setFilterOptions(data.data.filters)
+        }
+      } catch (error) {
+        console.error('Error fetching filter options:', error)
+      }
+    }
+    fetchFilters()
+
+    // Read current filters from URL
+    setSelectedIndustry(searchParams.get('industry_id') || 'all')
+    setSelectedFunction(searchParams.get('function_id') || 'all')
+    setSelectedSource(searchParams.get('source') || 'all')
+    setSelectedTier(searchParams.get('tier') || 'all')
+  }, [searchParams])
+
+  const updateFilter = (key: string, value: string) => {
+    const params = new URLSearchParams(searchParams.toString())
+    if (value === 'all') {
+      params.delete(key)
+    } else {
+      params.set(key, value)
+    }
+    router.push(`/personas?${params.toString()}`)
+  }
+
+  return (
+    <>
+      <SidebarPageHeader
+        icon={Users}
+        title="Personas"
+        description="Browse organizational personas and roles"
+      />
+
+      <SidebarGroup>
+        <SidebarGroupLabel>Filters</SidebarGroupLabel>
+        <SidebarGroupContent>
+          <div className="px-3 space-y-3">
+            {/* Source Filter */}
+            <div>
+              <label className="text-xs font-medium text-muted-foreground mb-1 block">
+                Source
+              </label>
+              <select
+                value={selectedSource}
+                onChange={(e) => {
+                  setSelectedSource(e.target.value)
+                  updateFilter('source', e.target.value)
+                }}
+                className="w-full text-sm border rounded-md px-2 py-1.5 bg-background"
+              >
+                <option value="all">All Sources</option>
+                <option value="dh_personas">JTBD Library</option>
+                <option value="org_personas">Organizational</option>
+              </select>
+            </div>
+
+            {/* Industry Filter */}
+            <div>
+              <label className="text-xs font-medium text-muted-foreground mb-1 block">
+                Industry
+              </label>
+              <select
+                value={selectedIndustry}
+                onChange={(e) => {
+                  setSelectedIndustry(e.target.value)
+                  updateFilter('industry_id', e.target.value)
+                }}
+                className="w-full text-sm border rounded-md px-2 py-1.5 bg-background"
+              >
+                <option value="all">All Industries</option>
+                {filterOptions?.industries?.map((industry: any) => (
+                  <option key={industry.id} value={industry.id}>
+                    {industry.industry_name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Function Filter */}
+            <div>
+              <label className="text-xs font-medium text-muted-foreground mb-1 block">
+                Function
+              </label>
+              <select
+                value={selectedFunction}
+                onChange={(e) => {
+                  setSelectedFunction(e.target.value)
+                  updateFilter('function_id', e.target.value)
+                }}
+                className="w-full text-sm border rounded-md px-2 py-1.5 bg-background"
+              >
+                <option value="all">All Functions</option>
+                {filterOptions?.functions?.map((func: any) => (
+                  <option key={func.id} value={func.id}>
+                    {func.org_function}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Tier Filter */}
+            <div>
+              <label className="text-xs font-medium text-muted-foreground mb-1 block">
+                Priority Tier
+              </label>
+              <select
+                value={selectedTier}
+                onChange={(e) => {
+                  setSelectedTier(e.target.value)
+                  updateFilter('tier', e.target.value)
+                }}
+                className="w-full text-sm border rounded-md px-2 py-1.5 bg-background"
+              >
+                <option value="all">All Tiers</option>
+                <option value="1">Tier 1 - Highest</option>
+                <option value="2">Tier 2 - High</option>
+                <option value="3">Tier 3 - Medium</option>
+                <option value="4">Tier 4 - Low</option>
+                <option value="5">Tier 5 - Lowest</option>
+              </select>
+            </div>
+          </div>
+        </SidebarGroupContent>
+      </SidebarGroup>
+
+      <SidebarGroup>
+        <SidebarGroupLabel>Quick Filters</SidebarGroupLabel>
+        <SidebarGroupContent>
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton onClick={() => updateFilter('tier', '1')}>
+                <Award className="h-4 w-4 text-purple-600" />
+                <span>Top Priority</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton onClick={() => updateFilter('source', 'dh_personas')}>
+                <Target className="h-4 w-4 text-blue-600" />
+                <span>JTBD Personas</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton onClick={() => updateFilter('source', 'org_personas')}>
+                <Building2 className="h-4 w-4 text-green-600" />
+                <span>Organizational</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarGroupContent>
+      </SidebarGroup>
+
+      <SidebarGroup>
+        <SidebarGroupLabel>View Options</SidebarGroupLabel>
+        <SidebarGroupContent>
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton>
+                <Users className="h-4 w-4" />
+                <span>All Personas</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton>
+                <Briefcase className="h-4 w-4" />
+                <span>By Function</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton>
+                <Building2 className="h-4 w-4" />
+                <span>By Department</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
           </SidebarMenu>

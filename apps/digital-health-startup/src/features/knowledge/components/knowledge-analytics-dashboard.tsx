@@ -929,11 +929,13 @@ export function KnowledgeAnalyticsDashboard({
                   <Badge variant="outline">{analytics.contentStats.domains.length} domains</Badge>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  {analytics.contentStats.domains.map((domain) => (
-                    <Badge key={domain} variant="outline" className="capitalize hover:bg-gray-100 transition-colors">
-                      {domain.replace('-', ' ')}
-                    </Badge>
-                  ))}
+                  {analytics.contentStats.domains
+                    .filter((domain): domain is string => domain != null && typeof domain === 'string')
+                    .map((domain) => (
+                      <Badge key={domain} variant="outline" className="capitalize hover:bg-gray-100 transition-colors">
+                        {domain.replace('-', ' ')}
+                      </Badge>
+                    ))}
                 </div>
               </div>
             </CardContent>

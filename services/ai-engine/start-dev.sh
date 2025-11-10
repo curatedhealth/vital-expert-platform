@@ -34,12 +34,12 @@ export SKIP_HEAVY_DEPS=true
 
 # Kill existing
 echo "🛑 Stopping any existing AI Engine..."
-lsof -ti:8000 | xargs kill -9 2>/dev/null || true
+lsof -ti:8080 | xargs kill -9 2>/dev/null || true
 sleep 2
 
-echo "🚀 Starting AI Engine on port 8000..."
+echo "🚀 Starting AI Engine on port 8080..."
 cd src
-python3 -m uvicorn main:app --host 0.0.0.0 --port 8000 --reload &
+python3 -m uvicorn main:app --host 0.0.0.0 --port 8080 --reload &
 AI_PID=$!
 
 echo "✅ AI Engine started (PID: $AI_PID)"
@@ -48,13 +48,12 @@ echo ""
 sleep 5
 
 # Test
-if lsof -ti:8000 > /dev/null; then
-    echo "✅ AI Engine is running on port 8000"
+if lsof -ti:8080 > /dev/null; then
+    echo "✅ AI Engine is running on port 8080"
     echo ""
     echo "Test it:"
-    echo "  curl http://localhost:8000/health"
+    echo "  curl http://localhost:8080/health"
 else
     echo "❌ AI Engine failed to start"
     exit 1
 fi
-

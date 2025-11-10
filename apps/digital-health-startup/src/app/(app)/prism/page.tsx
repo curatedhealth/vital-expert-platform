@@ -1,7 +1,11 @@
 'use client';
 
-import PromptLibrary from '@/shared/components/prompts/PromptLibrary';
+import PromptViewManager from '@/components/prompts/PromptViewManager';
 
 export default function PRISMPage() {
-  return <PromptLibrary />;
+  return (
+    <div className="h-screen flex flex-col">
+      <PromptViewManager />
+    </div>
+  );
 }

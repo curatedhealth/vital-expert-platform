@@ -1,12 +1,14 @@
 'use client';
 
-import { Copy, Star } from 'lucide-react';
+import { Copy, Star, Search, Filter } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
 import { Badge } from '@vital/ui';
 import { Button } from '@vital/ui';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@vital/ui';
 import { useToast } from '@vital/ui';
+import { Input } from '@vital/ui';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@vital/ui';
 
 interface Prompt {
   id: string;
@@ -17,6 +19,16 @@ interface Prompt {
   system_prompt: string;
   suite?: string;
   is_favorite?: boolean;
+  category?: string;
+  metadata?: {
+    pattern?: string;
+    tags?: string[];
+    source?: 'prompts' | 'dh_prompt';
+    unique_id?: string;
+    suite?: string;
+    workflow?: string;
+    sub_suite?: string;
+  };
 }
 
 const PRISM_SUITES = [
@@ -36,6 +48,8 @@ export default function PromptLibrary() {
   const [prompts, setPrompts] = useState<Prompt[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('RULES™');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedPattern, setSelectedPattern] = useState<string>('all');
   const { toast } = useToast();
 
   const fetchPrompts = async () => {
@@ -100,7 +114,37 @@ export default function PromptLibrary() {
       console.error('prompts is not an array:', prompts);
       return [];
     }
-    return prompts.filter(prompt => prompt.suite === suiteName);
+
+    let filtered = prompts.filter(prompt => prompt.suite === suiteName);
+
+    // Apply search filter
+    if (searchTerm) {
+      const searchLower = searchTerm.toLowerCase();
+      filtered = filtered.filter(prompt =>
+        prompt.display_name.toLowerCase().includes(searchLower) ||
+        prompt.description.toLowerCase().includes(searchLower) ||
+        prompt.name.toLowerCase().includes(searchLower) ||
+        prompt.metadata?.tags?.some(tag => tag.toLowerCase().includes(searchLower))
+      );
+    }
+
+    // Apply pattern filter
+    if (selectedPattern !== 'all') {
+      filtered = filtered.filter(prompt => prompt.metadata?.pattern === selectedPattern);
+    }
+
+    return filtered;
+  };
+
+  // Get unique patterns for filter dropdown
+  const getAvailablePatterns = () => {
+    const patterns = new Set<string>();
+    prompts.forEach(prompt => {
+      if (prompt.metadata?.pattern) {
+        patterns.add(prompt.metadata.pattern);
+      }
+    });
+    return Array.from(patterns).sort();
   };
 
   if (loading) {
@@ -118,13 +162,50 @@ export default function PromptLibrary() {
 
   const activeSuite = PRISM_SUITES.find((s: any) => s.name === activeTab);
   const activePrompts = getPromptsForSuite(activeTab);
+  const availablePatterns = getAvailablePatterns();
 
   return (
     <div className="container mx-auto p-6">
-      <h1 className="text-3xl font-bold mb-4">PROMPTS Library</h1>
-      <p className="text-gray-600 mb-8">
-        Professional Healthcare Prompt Templates & Strategies
-      </p>
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold mb-2">PROMPTS Library</h1>
+        <p className="text-gray-600 mb-4">
+          Professional Healthcare Prompt Templates & Strategies
+        </p>
+
+        {/* Stats */}
+        <div className="flex gap-4 text-sm text-gray-600">
+          <span>Total Prompts: <strong>{prompts.length}</strong></span>
+          <span>Active Suite: <strong>{activePrompts.length}</strong></span>
+        </div>
+      </div>
+
+      {/* Search and Filters */}
+      <div className="mb-6 flex gap-4">
+        <div className="flex-1 relative">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <Input
+            type="text"
+            placeholder="Search prompts by name, description, or tags..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-10"
+          />
+        </div>
+        <Select value={selectedPattern} onValueChange={setSelectedPattern}>
+          <SelectTrigger className="w-[200px]">
+            <Filter className="h-4 w-4 mr-2" />
+            <SelectValue placeholder="Filter by pattern" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Patterns</SelectItem>
+            {availablePatterns.map(pattern => (
+              <SelectItem key={pattern} value={pattern}>
+                {pattern}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
 
       {/* Tabs */}
       <div className="border-b border-gray-200 mb-6">
@@ -173,6 +254,11 @@ export default function PromptLibrary() {
                       <CardTitle className="text-sm font-medium line-clamp-2">
                         {prompt.display_name}
                       </CardTitle>
+                      {prompt.metadata?.unique_id && (
+                        <div className="text-xs text-gray-500 mt-1 font-mono">
+                          {prompt.metadata.unique_id}
+                        </div>
+                      )}
                     </div>
                     <Button
                       variant="ghost"
@@ -185,6 +271,41 @@ export default function PromptLibrary() {
                   <CardDescription className="text-xs line-clamp-2">
                     {prompt.description}
                   </CardDescription>
+
+                  {/* Metadata badges */}
+                  <div className="flex flex-wrap gap-1 mt-2">
+                    {prompt.metadata?.pattern && (
+                      <Badge variant="outline" className="text-xs">
+                        {prompt.metadata.pattern}
+                      </Badge>
+                    )}
+                    {prompt.category && (
+                      <Badge variant="secondary" className="text-xs">
+                        {prompt.category}
+                      </Badge>
+                    )}
+                    {prompt.metadata?.source === 'dh_prompt' && (
+                      <Badge variant="default" className="text-xs bg-emerald-500">
+                        Workflow
+                      </Badge>
+                    )}
+                  </div>
+
+                  {/* Tags */}
+                  {prompt.metadata?.tags && prompt.metadata.tags.length > 0 && (
+                    <div className="flex flex-wrap gap-1 mt-2">
+                      {prompt.metadata.tags.slice(0, 3).map((tag, idx) => (
+                        <span key={idx} className="text-xs px-2 py-0.5 bg-gray-100 text-gray-600 rounded">
+                          {tag}
+                        </span>
+                      ))}
+                      {prompt.metadata.tags.length > 3 && (
+                        <span className="text-xs px-2 py-0.5 bg-gray-100 text-gray-600 rounded">
+                          +{prompt.metadata.tags.length - 3}
+                        </span>
+                      )}
+                    </div>
+                  )}
                 </CardHeader>
                 <CardContent className="pt-0">
                   <div className="flex gap-2">

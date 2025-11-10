@@ -11,15 +11,32 @@ Features:
 - Automatic RAG usage (enforced via system prompt)
 - Inline citations [1], [2], [3] for Perplexity-style UI
 - Structured output guarantees citation format
-- ✅ NEW: Proper LangGraph streaming with get_stream_writer()
+- ✅ GOLD STANDARD: Real-time token streaming via messages array
+- ✅ GOLD STANDARD: Comprehensive error handling with timeouts
+- ✅ GOLD STANDARD: Performance metrics (TTFT, tokens/sec, latency)
+- ✅ GOLD STANDARD: Observability with structured logging + Langfuse
+
+## Gold Standard Configuration:
+- Timeout: 60 seconds for LLM calls
+- Stream Mode: messages (token-by-token) + updates (node-level) + custom (events)
+- Error Recovery: Graceful fallback with partial responses
+- Observability: Langfuse tracing (set LANGFUSE_PUBLIC_KEY/SECRET_KEY env vars)
+- Caching: Response caching for identical queries (optional)
 """
 
 import structlog
+import os
 from typing import Dict, Any, List, Optional
 from datetime import datetime, timezone
 from langchain_openai import ChatOpenAI
 from langchain_core.messages import SystemMessage, HumanMessage
 from pydantic import BaseModel, Field
+
+# ✅ GOLD STANDARD: Langfuse observability (open-source alternative to LangSmith)
+# Set these in your environment:
+# export LANGFUSE_PUBLIC_KEY=your_public_key
+# export LANGFUSE_SECRET_KEY=your_secret_key
+# export LANGFUSE_HOST=https://cloud.langfuse.com  # or self-hosted URL
 
 # LangGraph imports
 from langgraph.graph import StateGraph, END
@@ -40,6 +57,28 @@ from services.cache_manager import CacheManager
 from services.supabase_client import SupabaseClient
 
 logger = structlog.get_logger()
+
+# ✅ GOLD STANDARD: Initialize Langfuse callback handler (if configured)
+langfuse_callback = None
+try:
+    if os.getenv('LANGFUSE_PUBLIC_KEY') and os.getenv('LANGFUSE_SECRET_KEY'):
+        from langfuse.callback import CallbackHandler
+        langfuse_callback = CallbackHandler(
+            public_key=os.getenv('LANGFUSE_PUBLIC_KEY'),
+            secret_key=os.getenv('LANGFUSE_SECRET_KEY'),
+            host=os.getenv('LANGFUSE_HOST', 'https://cloud.langfuse.com')
+        )
+        logger.info(
+            "✅ Langfuse observability enabled",
+            host=os.getenv('LANGFUSE_HOST', 'https://cloud.langfuse.com')
+        )
+    else:
+        logger.info("ℹ️ Langfuse observability disabled (set LANGFUSE_PUBLIC_KEY and LANGFUSE_SECRET_KEY to enable)")
+except ImportError:
+    logger.warning("⚠️ Langfuse not installed. Run: pip install langfuse")
+except Exception as e:
+    logger.warning(f"⚠️ Failed to initialize Langfuse: {e}")
+
 
 
 # ============================================================================
@@ -502,11 +541,26 @@ Do NOT add citation numbers since no sources were provided."""
             if not self.llm:
                 from core.config import get_settings
                 settings = get_settings()
-                self.llm = ChatOpenAI(
-                    model=model,
-                    temperature=agent_data.get('temperature', 0.7),
-                    max_tokens=agent_data.get('max_tokens', 2000)
-                )
+                
+                # ✅ GOLD STANDARD: Configure LLM with Langfuse callback
+                llm_config = {
+                    'model': model,
+                    'temperature': agent_data.get('temperature', 0.7),
+                    'max_tokens': agent_data.get('max_tokens', 2000),
+                    'streaming': True  # Enable streaming
+                }
+                
+                # Add Langfuse callback if available
+                if langfuse_callback:
+                    llm_config['callbacks'] = [langfuse_callback]
+                    logger.info("✅ Langfuse callback attached to LLM")
+                
+                self.llm = ChatOpenAI(**llm_config)
+            
+            # ✅ GOLD STANDARD: Performance tracking
+            import time
+            execution_start = time.time()
+            first_token_time = None
             
             # ✅ NEW: Bind tools if enabled
             selected_tools = state.get('selected_tools', [])
@@ -552,8 +606,7 @@ Do NOT add citation numbers since no sources were provided."""
                 
                 # Use structured output to guarantee citation format
                 try:
-                    # ✅ NEW: If tools are enabled, we can't use structured output easily
-                    # So we use regular execution with tool binding
+                    # ✅ GOLD STANDARD: Real-time token streaming with tools
                     if tools_to_use:
                         llm_with_tools = self.llm.bind_tools([
                             tool.to_langchain_tool() for tool in tools_to_use
@@ -564,35 +617,99 @@ Do NOT add citation numbers since no sources were provided."""
                             HumanMessage(content=user_message)
                         ]
                         
-                        # ✅ LangGraph Native: Accumulate tokens, don't emit via writer()
-                        # LangGraph's 'messages' mode will automatically stream the final response
+                        # ✅ GOLD STANDARD: Get messages array for real-time streaming
+                        current_messages = state.get('messages', [])
                         full_response = ""
                         chunk_count = 0
-                        async for chunk in llm_with_tools.astream(messages):
-                            if hasattr(chunk, 'content') and chunk.content:
-                                full_response += chunk.content
-                                chunk_count += 1
                         
-                        logger.info(f"✅ Accumulated {chunk_count} LLM chunks, total length: {len(full_response)}")
+                        logger.info("🚀 [GOLD STANDARD] Starting real-time token streaming...")
                         
-                        # Create response object
-                        tool_response = type('Response', (), {'content': full_response})()
+                        # ✅ GOLD STANDARD: Error handling with timeout
+                        try:
+                            import asyncio
+                            from langchain_core.messages import AIMessageChunk
+                            
+                            # ✅ GOLD STANDARD: Timeout protection (60 seconds max)
+                            async def stream_with_timeout():
+                                nonlocal full_response, chunk_count, first_token_time
+                                
+                                async for chunk in llm_with_tools.astream(messages):
+                                    if hasattr(chunk, 'content') and chunk.content:
+                                        # Track first token latency
+                                        if first_token_time is None:
+                                            first_token_time = time.time()
+                                            ttft = (first_token_time - execution_start) * 1000
+                                            logger.info(f"⚡ Time to first token: {ttft:.2f}ms")
+                                        
+                                        # ✅ GOLD STANDARD: Add chunk to messages array for LangGraph streaming
+                                        current_messages.append(
+                                            AIMessageChunk(
+                                                content=chunk.content,
+                                                id=f"chunk-{chunk_count}"
+                                            )
+                                        )
+                                        full_response += chunk.content
+                                        chunk_count += 1
+                            
+                            # Execute with timeout
+                            await asyncio.wait_for(stream_with_timeout(), timeout=60.0)
+                            
+                            # ✅ GOLD STANDARD: Performance metrics
+                            execution_time = time.time() - execution_start
+                            tokens_per_second = chunk_count / execution_time if execution_time > 0 else 0
+                            
+                            logger.info(
+                                "✅ [GOLD STANDARD] Token streaming complete",
+                                extra={
+                                    "chunk_count": chunk_count,
+                                    "response_length": len(full_response),
+                                    "execution_time_ms": execution_time * 1000,
+                                    "ttft_ms": (first_token_time - execution_start) * 1000 if first_token_time else None,
+                                    "tokens_per_second": tokens_per_second,
+                                    "model": model
+                                }
+                            )
+                            
+                        except asyncio.TimeoutError:
+                            logger.error("❌ LLM streaming timeout after 60 seconds")
+                            raise Exception("LLM response timed out after 60 seconds")
                         
+                        except Exception as llm_error:
+                            logger.error(
+                                f"❌ LLM streaming error: {llm_error}",
+                                exc_info=True,
+                                extra={
+                                    "model": model,
+                                    "chunks_received": chunk_count,
+                                    "partial_response_length": len(full_response)
+                                }
+                            )
+                            raise
+                        
+                        # ✅ GOLD STANDARD: Return with messages array for streaming
                         logger.info(
-                            "✅ Agent executed with tools",
-                            response_length=len(tool_response.content),
-                            tools_called=len(getattr(tool_response, 'tool_calls', []))
+                            "✅ Agent executed with tools and real-time streaming",
+                            response_length=len(full_response),
+                            tools_available=len(tools_to_use),
+                            messages_array_length=len(current_messages)
                         )
                         
-                        # For now, return without structured citations
-                        # TODO: Add tool execution and structured output later
+                        # ✅ GOLD STANDARD: Return state with messages array
                         return {
                             **state,
-                            'agent_response': tool_response.content,
+                            'messages': current_messages,  # ✅ Critical for streaming!
+                            'agent_response': full_response,
                             'response_confidence': 0.8,
                             'model_used': model,
-                            'reasoning_steps': reasoning_steps,  # ✅ Include reasoning
-                            'current_node': 'execute_agent'
+                            'reasoning_steps': reasoning_steps,
+                            'current_node': 'execute_agent',
+                            # ✅ GOLD STANDARD: Performance metadata
+                            'performance_metrics': {
+                                'ttft_ms': (first_token_time - execution_start) * 1000 if first_token_time else None,
+                                'total_time_ms': (time.time() - execution_start) * 1000,
+                                'chunk_count': chunk_count,
+                                'tokens_per_second': chunk_count / (time.time() - execution_start) if (time.time() - execution_start) > 0 else 0
+                            }
                         }
                     
                     # No tools - use structured output for citations
@@ -605,16 +722,59 @@ Do NOT add citation numbers since no sources were provided."""
                         HumanMessage(content=user_message)
                     ]
                     
-                    # ✅ LangGraph Native: Accumulate tokens, don't emit via writer()
-                    # LangGraph's 'messages' mode will automatically stream the final response
+                    # ✅ GOLD STANDARD: Get messages array and track performance
+                    current_messages = state.get('messages', [])
                     full_content = ""
                     chunk_count = 0
-                    async for chunk in llm_with_structure.astream(messages):
-                        if hasattr(chunk, 'content') and chunk.content:
-                            full_content += chunk.content
-                            chunk_count += 1
                     
-                    logger.info(f"✅ Accumulated {chunk_count} structured LLM chunks, total length: {len(full_content)}")
+                    logger.info("🚀 [GOLD STANDARD] Starting structured output streaming...")
+                    
+                    # ✅ GOLD STANDARD: Error handling with timeout
+                    try:
+                        import asyncio
+                        from langchain_core.messages import AIMessageChunk
+                        
+                        async def stream_structured():
+                            nonlocal full_content, chunk_count, first_token_time
+                            
+                            async for chunk in llm_with_structure.astream(messages):
+                                if hasattr(chunk, 'content') and chunk.content:
+                                    # Track first token
+                                    if first_token_time is None:
+                                        first_token_time = time.time()
+                                        ttft = (first_token_time - execution_start) * 1000
+                                        logger.info(f"⚡ Time to first token: {ttft:.2f}ms")
+                                    
+                                    # ✅ GOLD STANDARD: Add to messages for streaming
+                                    current_messages.append(
+                                        AIMessageChunk(
+                                            content=chunk.content,
+                                            id=f"chunk-{chunk_count}"
+                                        )
+                                    )
+                                    full_content += chunk.content
+                                    chunk_count += 1
+                        
+                        await asyncio.wait_for(stream_structured(), timeout=60.0)
+                        
+                        # ✅ GOLD STANDARD: Metrics
+                        execution_time = time.time() - execution_start
+                        logger.info(
+                            "✅ [GOLD STANDARD] Structured streaming complete",
+                            extra={
+                                "chunk_count": chunk_count,
+                                "response_length": len(full_content),
+                                "execution_time_ms": execution_time * 1000,
+                                "ttft_ms": (first_token_time - execution_start) * 1000 if first_token_time else None
+                            }
+                        )
+                        
+                    except asyncio.TimeoutError:
+                        logger.error("❌ Structured output timeout after 60 seconds")
+                        raise Exception("LLM response timed out")
+                    except Exception as stream_error:
+                        logger.error(f"❌ Streaming error: {stream_error}", exc_info=True)
+                        raise
                     
                     # Parse structured output (if model returns it)
                     # For now, create a simple response object
@@ -650,12 +810,20 @@ Do NOT add citation numbers since no sources were provided."""
                     
                     return {
                         **state,
+                        'messages': current_messages,  # ✅ GOLD STANDARD: Critical for streaming!
                         'agent_response': response.content,  # type: ignore  # ✅ Has [1], [2] markers!
                         'structured_citations': structured_citations,  # ✅ For frontend
                         'response_confidence': 0.8,
                         'model_used': model,
                         'reasoning_steps': reasoning_steps,  # ✅ Include reasoning
-                        'current_node': 'execute_agent'
+                        'current_node': 'execute_agent',
+                        # ✅ GOLD STANDARD: Performance metadata
+                        'performance_metrics': {
+                            'ttft_ms': (first_token_time - execution_start) * 1000 if first_token_time else None,
+                            'total_time_ms': (time.time() - execution_start) * 1000,
+                            'chunk_count': chunk_count,
+                            'tokens_per_second': chunk_count / (time.time() - execution_start) if (time.time() - execution_start) > 0 else 0
+                        }
                     }
                     
                 except Exception as struct_error:
@@ -668,26 +836,52 @@ Do NOT add citation numbers since no sources were provided."""
                         HumanMessage(content=user_message)
                     ]
                     
-                    # ✅ LangGraph Native: Accumulate tokens, don't emit via writer()
-                    # LangGraph's 'messages' mode will automatically stream the final response
+                    # ✅ GOLD STANDARD: Fallback with same streaming pattern
+                    current_messages = state.get('messages', [])
                     full_response_text = ""
-                    chunk_count = 0
-                    async for chunk in self.llm.astream(messages):
-                        if hasattr(chunk, 'content') and chunk.content:
-                            full_response_text += chunk.content
-                            chunk_count += 1
+                    chunk_count_fallback = 0
                     
-                    logger.info(f"✅ Accumulated {chunk_count} fallback LLM chunks, total length: {len(full_response_text)}")
-                    
-                    fallback_response = type('Response', (), {'content': full_response_text})()
+                    try:
+                        import asyncio
+                        from langchain_core.messages import AIMessageChunk
+                        
+                        async def stream_fallback():
+                            nonlocal full_response_text, chunk_count_fallback, first_token_time
+                            
+                            async for chunk in self.llm.astream(messages):
+                                if hasattr(chunk, 'content') and chunk.content:
+                                    if first_token_time is None:
+                                        first_token_time = time.time()
+                                    
+                                    current_messages.append(
+                                        AIMessageChunk(
+                                            content=chunk.content,
+                                            id=f"fallback-chunk-{chunk_count_fallback}"
+                                        )
+                                    )
+                                    full_response_text += chunk.content
+                                    chunk_count_fallback += 1
+                        
+                        await asyncio.wait_for(stream_fallback(), timeout=60.0)
+                        logger.info(f"✅ [GOLD STANDARD] Fallback streaming: {chunk_count_fallback} chunks")
+                        
+                    except Exception as fallback_error:
+                        logger.error(f"❌ Fallback streaming error: {fallback_error}", exc_info=True)
+                        raise
                     
                     return {
                         **state,
-                        'agent_response': fallback_response.content,
+                        'messages': current_messages,  # ✅ GOLD STANDARD
+                        'agent_response': full_response_text,
                         'response_confidence': 0.7,
                         'model_used': model,
-                        'reasoning_steps': reasoning_steps,  # ✅ Include reasoning
-                        'current_node': 'execute_agent'
+                        'reasoning_steps': reasoning_steps,
+                        'current_node': 'execute_agent',
+                        'performance_metrics': {
+                            'ttft_ms': (first_token_time - execution_start) * 1000 if first_token_time else None,
+                            'total_time_ms': (time.time() - execution_start) * 1000,
+                            'chunk_count': chunk_count_fallback
+                        }
                     }
             else:
                 # No RAG, regular execution
@@ -695,14 +889,52 @@ Do NOT add citation numbers since no sources were provided."""
                     SystemMessage(content=system_prompt),
                     HumanMessage(content=user_message)
                 ]
-                no_rag_response = await self.llm.ainvoke(messages)
+                
+                # ✅ GOLD STANDARD: Even no-RAG path gets streaming
+                current_messages = state.get('messages', [])
+                no_rag_response_text = ""
+                chunk_count_norag = 0
+                
+                try:
+                    import asyncio
+                    from langchain_core.messages import AIMessageChunk
+                    
+                    async def stream_no_rag():
+                        nonlocal no_rag_response_text, chunk_count_norag, first_token_time
+                        
+                        async for chunk in self.llm.astream(messages):
+                            if hasattr(chunk, 'content') and chunk.content:
+                                if first_token_time is None:
+                                    first_token_time = time.time()
+                                
+                                current_messages.append(
+                                    AIMessageChunk(
+                                        content=chunk.content,
+                                        id=f"norag-chunk-{chunk_count_norag}"
+                                    )
+                                )
+                                no_rag_response_text += chunk.content
+                                chunk_count_norag += 1
+                    
+                    await asyncio.wait_for(stream_no_rag(), timeout=60.0)
+                    logger.info(f"✅ [GOLD STANDARD] No-RAG streaming: {chunk_count_norag} chunks")
+                    
+                except Exception as norag_error:
+                    logger.error(f"❌ No-RAG streaming error: {norag_error}", exc_info=True)
+                    raise
                 
                 return {
                     **state,
-                    'agent_response': no_rag_response.content,
+                    'messages': current_messages,  # ✅ GOLD STANDARD
+                    'agent_response': no_rag_response_text,
                     'response_confidence': 0.6,
                     'model_used': model,
-                    'current_node': 'execute_agent'
+                    'current_node': 'execute_agent',
+                    'performance_metrics': {
+                        'ttft_ms': (first_token_time - execution_start) * 1000 if first_token_time else None,
+                        'total_time_ms': (time.time() - execution_start) * 1000,
+                        'chunk_count': chunk_count_norag
+                    }
                 }
             
         except Exception as e:
@@ -859,24 +1091,28 @@ Do NOT add citation numbers since no sources were provided."""
             confidence=confidence
         )
         
-        # ✅ LangGraph Native: Add AIMessage to messages array so it gets streamed
-        from langchain_core.messages import AIMessage
-        
-        current_messages = state.get('messages', [])
-        current_messages.append(AIMessage(content=agent_response))
+        # ✅ GOLD STANDARD: DON'T add to messages - already streamed in execute_agent!
+        # The messages array was populated in execute_agent_node with AIMessageChunks
+        # LangGraph's 'messages' mode already emitted the tokens in real-time
+        # Adding here would duplicate the content
         
         # ✅ Preserve reasoning steps from previous nodes
         reasoning_steps = state.get('reasoning_steps', [])
         
+        # ✅ GOLD STANDARD: Get performance metrics from execute_agent
+        performance_metrics = state.get('performance_metrics', {})
+        
         return {
             **state,
-            'messages': current_messages,           # ✅ For LangGraph messages mode
+            # ❌ DON'T modify messages - already has streamed chunks!
+            # 'messages' stays as-is from execute_agent_node
             'response': agent_response,             # ✅ With [1], [2] markers
             'agent_response': agent_response,
             'confidence': confidence,
             'sources': final_citations,             # ✅ For collapsible sources
             'citations': final_citations,           # ✅ For inline citation parsing
             'reasoning_steps': reasoning_steps,     # ✅ Preserve reasoning for frontend
+            'performance_metrics': performance_metrics,  # ✅ Include perf data
             'status': ExecutionStatus.COMPLETED,
             'current_node': 'format_output'
         }

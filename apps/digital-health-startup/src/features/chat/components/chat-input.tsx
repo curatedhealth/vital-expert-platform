@@ -11,6 +11,10 @@ import {
   Code,
   ChevronDown,
   Sparkles,
+  Database,
+  Wrench,
+  Check,
+  Plus,
 } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 
@@ -27,7 +31,7 @@ import {
 } from '@vital/ui';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@vital/ui';
 import { Agent } from '@/lib/stores/chat-store';
-import { cn } from '@vital/ui/lib/utils';
+import { cn } from '@/lib/utils';
 import {
   PromptInput,
   PromptInputTextarea,
@@ -51,6 +55,26 @@ export interface AIModel {
   maxTokens?: number;
 }
 
+export interface RAGSource {
+  id: string;
+  code: string;
+  name: string;
+  source_type?: string;
+  description?: string;
+  domain?: string;
+  source?: string;
+}
+
+export interface Tool {
+  id: string;
+  code: string;
+  name: string;
+  description?: string;
+  category?: string;
+  is_active?: boolean;
+  usage_count?: number;
+}
+
 interface ChatInputProps {
   value: string;
   onChange: (value: string) => void;
@@ -62,6 +86,10 @@ interface ChatInputProps {
   selectedModel?: AIModel;
   onModelChange?: (model: AIModel) => void;
   onStop?: () => void;
+  selectedRags?: string[];
+  onRagsChange?: (rags: string[]) => void;
+  selectedTools?: string[];
+  onToolsChange?: (tools: string[]) => void;
 }
 
 // Available AI Models
@@ -219,6 +247,10 @@ export function ChatInput({
   selectedModel: externalSelectedModel,
   onModelChange,
   onStop,
+  selectedRags = [],
+  onRagsChange,
+  selectedTools = [],
+  onToolsChange,
 }: ChatInputProps) {
   const [isRecording, setIsRecording] = useState(false);
   const [showAttachments, setShowAttachments] = useState(false);
@@ -227,6 +259,14 @@ export function ChatInput({
   const [internalSelectedModel, setInternalSelectedModel] = useState(AI_MODELS[0]);
   const [showPromptEnhancement, setShowPromptEnhancement] = useState(false);
   const recognitionRef = useRef<any>(null);
+
+  // RAG and Tools state
+  const [availableRags, setAvailableRags] = useState<RAGSource[]>([]);
+  const [loadingRags, setLoadingRags] = useState(false);
+  const [availableTools, setAvailableTools] = useState<Tool[]>([]);
+  const [loadingTools, setLoadingTools] = useState(false);
+  const [showRagSelector, setShowRagSelector] = useState(false);
+  const [showToolSelector, setShowToolSelector] = useState(false);
 
   // Use external model if provided, otherwise use internal state
   const selectedModel = externalSelectedModel || internalSelectedModel;
@@ -270,6 +310,55 @@ export function ChatInput({
     };
 
     fetchModels();
+  }, []);
+
+  // Fetch available RAGs
+  useEffect(() => {
+    const fetchRags = async () => {
+      try {
+        setLoadingRags(true);
+        const response = await fetch('/api/workflows/rags');
+        const data = await response.json();
+
+        if (data.success && data.rags) {
+          setAvailableRags(data.rags);
+          console.log(`✅ Chat Input: Loaded ${data.rags.length} RAG sources`);
+        }
+      } catch (error) {
+        console.error('❌ Chat Input: Error fetching RAGs:', error);
+      } finally {
+        setLoadingRags(false);
+      }
+    };
+
+    fetchRags();
+  }, []);
+
+  // Fetch available tools (top 10 most used)
+  useEffect(() => {
+    const fetchTools = async () => {
+      try {
+        setLoadingTools(true);
+        const response = await fetch('/api/workflows/tools');
+        const data = await response.json();
+
+        if (data.success && data.tools) {
+          // Sort by usage_count if available, otherwise take first 10
+          const sortedTools = data.tools
+            .sort((a: Tool, b: Tool) => (b.usage_count || 0) - (a.usage_count || 0))
+            .slice(0, 10);
+
+          setAvailableTools(sortedTools);
+          console.log(`✅ Chat Input: Loaded ${sortedTools.length} tools`);
+        }
+      } catch (error) {
+        console.error('❌ Chat Input: Error fetching tools:', error);
+      } finally {
+        setLoadingTools(false);
+      }
+    };
+
+    fetchTools();
   }, []);
 
   // Initialize speech recognition
@@ -355,6 +444,26 @@ export function ChatInput({
   const handleApplyEnhancedPrompt = (enhancedPrompt: string) => {
     onChange(enhancedPrompt);
     setShowPromptEnhancement(false);
+  };
+
+  const toggleRag = (ragCode: string) => {
+    if (!onRagsChange) return;
+
+    const newSelection = selectedRags.includes(ragCode)
+      ? selectedRags.filter(r => r !== ragCode)
+      : [...selectedRags, ragCode];
+
+    onRagsChange(newSelection);
+  };
+
+  const toggleTool = (toolCode: string) => {
+    if (!onToolsChange) return;
+
+    const newSelection = selectedTools.includes(toolCode)
+      ? selectedTools.filter(t => t !== toolCode)
+      : [...selectedTools, toolCode];
+
+    onToolsChange(newSelection);
   };
 
   return (
@@ -451,7 +560,136 @@ export function ChatInput({
             )}
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
+            {/* RAG Selector */}
+            <DropdownMenu open={showRagSelector} onOpenChange={setShowRagSelector}>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 gap-1 rounded-full border border-blue-200 bg-blue-50 px-3 text-xs font-medium hover:bg-blue-100"
+                >
+                  <Database className="h-3 w-3" />
+                  RAGs ({selectedRags.length})
+                  <ChevronDown className="h-3 w-3 opacity-50" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-80 max-h-96 overflow-y-auto">
+                <DropdownMenuLabel className="text-xs text-gray-500 flex items-center justify-between">
+                  <span>Knowledge Sources (RAGs)</span>
+                  {loadingRags && <span className="text-xs">Loading...</span>}
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+
+                {!loadingRags && availableRags.length === 0 && (
+                  <div className="px-2 py-3 text-xs text-gray-500 text-center">
+                    No RAG sources available
+                  </div>
+                )}
+
+                {availableRags.map((rag) => (
+                  <DropdownMenuItem
+                    key={rag.id}
+                    onClick={() => toggleRag(rag.code)}
+                    className="flex items-start gap-2 py-2 cursor-pointer"
+                  >
+                    <div className={cn(
+                      "h-4 w-4 rounded border flex items-center justify-center mt-0.5",
+                      selectedRags.includes(rag.code)
+                        ? "bg-blue-600 border-blue-600"
+                        : "border-gray-300"
+                    )}>
+                      {selectedRags.includes(rag.code) && (
+                        <Check className="h-3 w-3 text-white" />
+                      )}
+                    </div>
+                    <div className="flex-1">
+                      <div className="font-medium text-sm">{rag.name}</div>
+                      {rag.description && (
+                        <div className="text-xs text-gray-500 mt-0.5">{rag.description}</div>
+                      )}
+                      {rag.domain && (
+                        <Badge variant="outline" className="text-xs mt-1">{rag.domain}</Badge>
+                      )}
+                    </div>
+                  </DropdownMenuItem>
+                ))}
+
+                {availableRags.length > 0 && (
+                  <div className="px-2 py-2 text-xs text-gray-400 border-t mt-1">
+                    {selectedRags.length} of {availableRags.length} selected
+                  </div>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            {/* Tools Selector */}
+            <DropdownMenu open={showToolSelector} onOpenChange={setShowToolSelector}>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 gap-1 rounded-full border border-green-200 bg-green-50 px-3 text-xs font-medium hover:bg-green-100"
+                >
+                  <Wrench className="h-3 w-3" />
+                  Tools ({selectedTools.length})
+                  <ChevronDown className="h-3 w-3 opacity-50" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-80 max-h-96 overflow-y-auto">
+                <DropdownMenuLabel className="text-xs text-gray-500 flex items-center justify-between">
+                  <span>Top 10 Most Used Tools</span>
+                  {loadingTools && <span className="text-xs">Loading...</span>}
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+
+                {!loadingTools && availableTools.length === 0 && (
+                  <div className="px-2 py-3 text-xs text-gray-500 text-center">
+                    No tools available
+                  </div>
+                )}
+
+                {availableTools.map((tool, index) => (
+                  <DropdownMenuItem
+                    key={tool.id}
+                    onClick={() => toggleTool(tool.code)}
+                    className="flex items-start gap-2 py-2 cursor-pointer"
+                  >
+                    <div className={cn(
+                      "h-4 w-4 rounded border flex items-center justify-center mt-0.5",
+                      selectedTools.includes(tool.code)
+                        ? "bg-green-600 border-green-600"
+                        : "border-gray-300"
+                    )}>
+                      {selectedTools.includes(tool.code) && (
+                        <Check className="h-3 w-3 text-white" />
+                      )}
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-bold text-gray-400">#{index + 1}</span>
+                        <span className="font-medium text-sm">{tool.name}</span>
+                      </div>
+                      {tool.description && (
+                        <div className="text-xs text-gray-500 mt-0.5">{tool.description}</div>
+                      )}
+                      {tool.category && (
+                        <Badge variant="outline" className="text-xs mt-1">{tool.category}</Badge>
+                      )}
+                    </div>
+                  </DropdownMenuItem>
+                ))}
+
+                {availableTools.length > 0 && (
+                  <div className="px-2 py-2 text-xs text-gray-400 border-t mt-1">
+                    {selectedTools.length} of {availableTools.length} selected
+                  </div>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+
             {/* Model Selector */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -465,7 +703,7 @@ export function ChatInput({
                   <ChevronDown className="h-3 w-3 opacity-50" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-72 max-h-96 overflow-y-auto">
+              <DropdownMenuContent className="w-72 max-h-96 overflow-y-auto">
                 {loadingModels && (
                   <div className="p-4 text-center text-sm text-gray-500">
                     Loading available models...

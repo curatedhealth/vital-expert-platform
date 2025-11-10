@@ -1,9 +1,11 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { getServiceSupabaseClient } from '@/lib/supabase/service-client';
 
 export async function GET() {
   try {
-    const supabase = await createClient();
+    const supabase = getServiceSupabaseClient();
+
+    console.log('Fetching all knowledge domains from library...');
 
     const { data: domains, error } = await supabase
       .from('knowledge_domains')
@@ -19,9 +21,12 @@ export async function GET() {
       );
     }
 
+    console.log(`✅ Fetched ${domains?.length || 0} knowledge domains for library`);
+
     return NextResponse.json({
       success: true,
       domains: domains || [],
+      count: domains?.length || 0,
     });
   } catch (error) {
     console.error('Error in knowledge domains API:', error);

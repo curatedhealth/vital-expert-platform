@@ -1,4 +1,4 @@
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { createClient } from '@/lib/supabase/client';
 import { User } from '@supabase/supabase-js';
 import { useState, useEffect, useCallback, createContext, useContext } from 'react';
 
@@ -49,7 +49,7 @@ export const _useAuthState = () => {
     initialized: false
   });
 
-  const supabase = createClientComponentClient();
+  const supabase = createClient();
 
   // Permission mappings (should match the backend)
   const rolePermissions = new Map<UserRole, Set<string>>([

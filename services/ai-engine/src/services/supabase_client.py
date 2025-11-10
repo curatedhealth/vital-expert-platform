@@ -41,11 +41,12 @@ class SupabaseClient:
                 logger.info("🔄 Attempting to initialize Supabase client...")
                 logger.debug(f"   URL: {self.settings.supabase_url[:30]}...")
                 
-                # Simple initialization without any options (works with supabase-py v2.3.0)
+                # Simple initialization using positional args (supabase-py v2.3.0 compatibility)
                 try:
+                    # Use positional arguments to avoid any keyword argument issues
                     self.client = create_client(
-                        supabase_url=self.settings.supabase_url,
-                        supabase_key=self.settings.supabase_service_role_key
+                        self.settings.supabase_url,
+                        self.settings.supabase_service_role_key
                     )
                     logger.info("✅ Supabase client object created successfully")
                 except Exception as create_error:

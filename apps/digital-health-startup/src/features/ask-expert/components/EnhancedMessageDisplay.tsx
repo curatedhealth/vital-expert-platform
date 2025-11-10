@@ -13,7 +13,6 @@ import {
   useMemo,
   useEffect,
   useRef,
-  useDeferredValue,
   useId,
 } from 'react';
 import { Badge } from '@vital/ui';
@@ -61,6 +60,7 @@ import { AIReasoning } from '@vital/ai-components';
 import type { ReasoningStep as SharedReasoningStep, ModelReasoningPart } from '@vital/ai-components';
 import type { Components } from 'react-markdown';
 import type { PluggableList } from 'unified';
+import { SourceSkeleton, CompactSourceSkeleton } from './SourceSkeleton';
 
 interface Source {
   number?: number;
@@ -225,23 +225,24 @@ function createInlineCitationRemarkPlugin(citationMap: Map<number, Source[]>) {
 
           numbers.forEach((number, idx) => {
             const sources = citationMap.get(number) ?? [];
-            if (sources.length === 0) {
-              transformed.push({ type: 'text', value: `[${number}]` });
-            } else {
-              transformed.push({
-                type: 'citation',
-                data: {
+
+            // ✅ FIX: ALWAYS create citation node, even if sources are empty
+            // The citation component will handle fetching sources from metadata
+            console.log(`[RemarkPlugin] Creating citation node for [${number}] with ${sources.length} sources`);
+
+            transformed.push({
+              type: 'citation',
+              data: {
+                citationNumber: String(number),
+                sources,
+                hName: 'citation',
+                hProperties: {
                   citationNumber: String(number),
                   sources,
-                  hName: 'citation',
-                  hProperties: {
-                    citationNumber: String(number),
-                    sources,
-                  },
                 },
-                children: [],
-              });
-            }
+              },
+              children: [],
+            });
 
             if (idx < numbers.length - 1) {
               transformed.push({ type: 'text', value: ' ' });
@@ -432,49 +433,16 @@ export function EnhancedMessageDisplay({
   className,
   allowRegenerate = true,
 }: EnhancedMessageDisplayProps) {
-  // Debug logging for Mode 3
+  // Debug logging for Mode 3 (only in development)
   useEffect(() => {
-    if (role === 'assistant') {
-      console.group(`🎨 [EnhancedMessageDisplay] Rendering message ${id}`);
-      console.log('Role:', role);
-      console.log('Content length:', content?.length);
-      console.log('Content preview:', content?.substring(0, 100));
-      console.log('Agent name:', agentName);
-      console.log('Has metadata:', !!metadata);
-      console.log('Has sources:', metadata?.sources?.length || 0);
-      console.log('Has reasoning:', metadata?.reasoning?.length || 0);
-      console.log('Is streaming:', isStreaming);
-      console.log('Has branches:', branches?.length || 0);
-      
-      // Enhanced debugging for missing features
-      if (metadata) {
-        console.log('📦 Full metadata:', JSON.stringify(metadata, null, 2));
-        
-        if (metadata.reasoning) {
-          console.log('🧠 Reasoning data:', metadata.reasoning);
-          console.log('🧠 Reasoning type:', Array.isArray(metadata.reasoning) ? 'Array' : typeof metadata.reasoning);
-        } else {
-          console.warn('⚠️ No reasoning data in metadata!');
-        }
-        
-        if (metadata.sources) {
-          console.log('📚 Sources data:', metadata.sources);
-          console.log('📚 Sources type:', Array.isArray(metadata.sources) ? 'Array' : typeof metadata.sources);
-          console.log('📚 First source:', metadata.sources[0]);
-        } else {
-          console.warn('⚠️ No sources data in metadata!');
-        }
-        
-        if (metadata.confidence) {
-          console.log('🎯 Confidence:', metadata.confidence);
-        }
-      } else {
-        console.warn('⚠️ No metadata at all!');
-      }
-      
-      console.groupEnd();
+    if (process.env.NODE_ENV === 'development' && role === 'assistant') {
+      console.log(`[EnhancedMessageDisplay] Rendering ${id}:`, {
+        hasMetadata: !!metadata,
+        hasSources: metadata?.sources?.length || 0,
+        isStreaming,
+      });
     }
-  }, [id, role, content, agentName, metadata, isStreaming, branches]);
+  }, [id, role, metadata, isStreaming]);
   const [copied, setCopied] = useState(false);
   const [showReasoning, setShowReasoning] = useState(false);
   const [feedback, setFeedback] = useState<'positive' | 'negative' | null>(null);
@@ -487,20 +455,16 @@ export function EnhancedMessageDisplay({
   const prefersReducedMotion = useReducedMotion();
   const branchDescriptorId = useId();
 
-  // ✅ DEBUG: Log metadata to understand what's available
+  // Metadata validation (development only)
   useEffect(() => {
-    if (!isUser && metadata) {
-      console.log('🔍 [EnhancedMessageDisplay] Metadata check:', {
-        hasReasoning: !!metadata.reasoning,
-        reasoningLength: metadata.reasoning?.length,
-        hasWorkflowSteps: !!metadata.workflowSteps,
-        workflowStepsLength: metadata.workflowSteps?.length,
-        hasReasoningSteps: !!metadata.reasoningSteps,
-        reasoningStepsLength: metadata.reasoningSteps?.length,
-        fullMetadata: metadata
-      });
+    if (process.env.NODE_ENV === 'development' && !isUser && metadata) {
+      // Lightweight metadata check
+      const hasData = !!(metadata.reasoning?.length || metadata.workflowSteps?.length);
+      if (!hasData && !isStreaming) {
+        console.warn('[EnhancedMessageDisplay] No reasoning/workflow data');
+      }
     }
-  }, [metadata, isUser]);
+  }, [metadata, isUser, isStreaming]);
 
   const resolvedAgentName = useMemo(() => {
     if (isUser) {
@@ -853,59 +817,74 @@ export function EnhancedMessageDisplay({
     });
   }, []);
 
-  const citationSources = metadata?.sources ?? [];
+  // ⚡ OPTIMIZATION: Memoize sources array reference
+  const citationSources = useMemo(() => metadata?.sources ?? [], [metadata?.sources]);
+
+  // ⚡ OPTIMIZATION: Early return if no sources - skip expensive mapping
+  const hasCitationSources = citationSources.length > 0;
 
   const citationNumberMap = useMemo(() => {
+    // Early return for empty state
+    if (!hasCitationSources) {
+      return new Map<number, Source[]>();
+    }
+
     const map = new Map<number, Source[]>();
 
+    // Pre-populate with source numbers (1-indexed)
     citationSources.forEach((source, index) => {
       if (source) {
         map.set(index + 1, [source]);
       }
     });
 
-    metadata?.citations?.forEach((citation) => {
-      const numberValue =
-        typeof citation.number === 'string'
-          ? parseInt(citation.number, 10)
-          : citation.number;
-      const number = Number.isFinite(numberValue) ? Number(numberValue) : NaN;
-      if (!Number.isFinite(number)) {
-        return;
-      }
-
-      const bucket = map.get(number) ?? [];
-      const addSource = (candidate?: Source) => {
-        if (!candidate) {
+    // Only process citations if they exist
+    if (metadata?.citations?.length) {
+      metadata.citations.forEach((citation) => {
+        const numberValue =
+          typeof citation.number === 'string'
+            ? parseInt(citation.number, 10)
+            : citation.number;
+        const number = Number.isFinite(numberValue) ? Number(numberValue) : NaN;
+        if (!Number.isFinite(number)) {
           return;
         }
-        if (!bucket.some((existing) => existing?.id === candidate.id && existing?.url === candidate.url)) {
-          bucket.push(candidate);
+
+        const bucket = map.get(number) ?? [];
+        const addSource = (candidate?: Source) => {
+          if (!candidate) {
+            return;
+          }
+          // Quick duplicate check
+          if (!bucket.some((existing) => existing?.id === candidate.id && existing?.url === candidate.url)) {
+            bucket.push(candidate);
+          }
+        };
+
+        if (citation.sourceId) {
+          const resolvedById = citationSources.find((source) => source?.id === citation.sourceId);
+          addSource(resolvedById);
         }
-      };
 
-      if (citation.sourceId) {
-        const resolvedById = citationSources.find((source) => source?.id === citation.sourceId);
-        addSource(resolvedById);
-      }
+        if (Array.isArray(citation.sources)) {
+          citation.sources.forEach(addSource);
+        }
 
-      if (Array.isArray(citation.sources)) {
-        citation.sources.forEach(addSource);
-      }
+        // Fallback to sequential source list if nothing matched
+        if (!bucket.length) {
+          addSource(citationSources[number - 1]);
+        }
 
-      // Fallback to sequential source list if nothing matched
-      if (!bucket.length) {
-        addSource(citationSources[number - 1]);
-      }
-
-      if (bucket.length) {
-        map.set(number, bucket);
-      }
-    });
+        if (bucket.length) {
+          map.set(number, bucket);
+        }
+      });
+    }
 
     return map;
-  }, [citationSources, metadata?.citations]);
+  }, [citationSources, hasCitationSources, metadata?.citations]);
 
+  // ⚡ OPTIMIZATION: Remove useDeferredValue - causes stuttering during streaming
   const normalizedContent = useMemo(() => {
     if (!displayContent) {
       return displayContent;
@@ -913,26 +892,37 @@ export function EnhancedMessageDisplay({
 
     let text = displayContent;
 
+    // Normalize citation formats
     text = text.replace(/\[\s*Source\s+([\d,\s]+)\s*\]/gi, '[$1]');
     text = text.replace(/\((?:source|Source)\s+([\d,\s]+)\)/gi, '[$1]');
     text = text.replace(/Source\s+([\d,\s]+)/gi, '[$1]');
 
+    // Clean up whitespace in citations
     text = text.replace(/\[\s+/g, '[').replace(/\s+\]/g, ']');
+
+    // Debug: Log citations found in content
+    const citationsFound = text.match(/\[\d+(?:\s*,\s*\d+)*\]/g);
+    if (citationsFound && citationsFound.length > 0) {
+      console.log('[EnhancedMessageDisplay] Citations found in content:', citationsFound);
+    } else {
+      console.log('[EnhancedMessageDisplay] No citations found in content');
+    }
 
     return text;
   }, [displayContent]);
 
-  const deferredContent = useDeferredValue(normalizedContent);
-
   const citationRemarkPlugins = useMemo<PluggableList | undefined>(() => {
-    if (!citationSources.length) {
-      return undefined;
-    }
+    // ✅ FIX: Enable plugin even without sources - citations may arrive after content
+    // The plugin will create nodes, and the component will resolve sources from metadata
+    console.log('[EnhancedMessageDisplay] Citation remark plugin enabled');
+    console.log('[EnhancedMessageDisplay] Sources available:', citationSources.length);
+    console.log('[EnhancedMessageDisplay] Citation number map:', Array.from(citationNumberMap.entries()));
     return [createInlineCitationRemarkPlugin(citationNumberMap)];
-  }, [citationNumberMap]);
+  }, [citationNumberMap, citationSources]);
 
   const citationComponents = useMemo<Partial<Components>>(() => ({
     citation({ node }) {
+      console.log('[EnhancedMessageDisplay] Citation component called!', node);
       const data = (node as any)?.data ?? {};
       const props = data.hProperties ?? data;
       const number = props.citationNumber as string | undefined;
@@ -941,6 +931,7 @@ export function EnhancedMessageDisplay({
         : Array.isArray(data.sources)
           ? data.sources
           : [];
+      console.log('[EnhancedMessageDisplay] Citation data:', { number, sourcesCount: sources.length, props });
       const primarySourceId: string | undefined = sources[0]?.id;
       const triggerLabel =
         sources
@@ -1140,7 +1131,7 @@ export function EnhancedMessageDisplay({
                     components={citationComponents}
                     isStreaming={isStreaming}
                   >
-                    {deferredContent}
+                    {normalizedContent}
                   </AIResponse>
                 </>
               )}
@@ -1232,66 +1223,90 @@ export function EnhancedMessageDisplay({
               </Branch>
             )}
 
-            {!isUser && ragSummary && metadata?.sources && metadata.sources.length > 0 && (
+            {/* ⚡ KNOWLEDGE VIEW: Sources with skeleton loading */}
+            {!isUser && ragSummary && (
               <>
-                {/* ✅ TAG: CHICAGO_STYLE_REFERENCES - Clean reference list */}
-                <div className="mt-4 space-y-3">
-                  <div className="flex items-center gap-2 text-xs font-semibold text-gray-700 dark:text-gray-300">
-                    <BookOpen className="h-4 w-4" />
-                    <span>References ({metadata.sources.length})</span>
-                  </div>
-                  <div className="space-y-3">
-                    {metadata.sources.map((source, idx) => {
-                      const sourceTypePresentation = getSourceTypePresentation(source.sourceType);
-                      return (
-                        <div
-                          key={`ref-${idx}`}
-                          ref={(el) => {
-                            if (el) {
-                              sourceRefs.current[`ref-${idx}`] = el;
-                            } else {
-                              delete sourceRefs.current[`ref-${idx}`];
-                            }
-                          }}
-                          className="flex items-start gap-3 pb-3 border-b border-gray-100 last:border-0 dark:border-gray-800"
-                        >
-                          {/* Number badge - Clean style without brackets */}
-                          <Badge 
-                            variant="outline" 
-                            className="shrink-0 h-5 min-w-[24px] text-[10px] font-semibold mt-0.5 rounded-full"
+                {/* Show skeleton while streaming and no sources yet */}
+                {isStreaming && (!metadata?.sources || metadata.sources.length === 0) && (
+                  <SourceSkeleton count={ragSummary.totalSources || 3} />
+                )}
+
+                {/* Show sources once available (with progressive rendering during streaming) */}
+                {metadata?.sources && metadata.sources.length > 0 && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="mt-4 space-y-3"
+                  >
+                    {/* ✅ TAG: CHICAGO_STYLE_REFERENCES - Clean reference list */}
+                    <div className="flex items-center gap-2 text-xs font-semibold text-gray-700 dark:text-gray-300">
+                      <BookOpen className="h-4 w-4" />
+                      <span>References ({metadata.sources.length})</span>
+                      {isStreaming && (
+                        <span className="text-[10px] text-muted-foreground font-normal">
+                          Loading...
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Sources list with staggered animation */}
+                    <div className="space-y-3">
+                      {metadata.sources.map((source, idx) => {
+                        const sourceTypePresentation = getSourceTypePresentation(source.sourceType);
+                        return (
+                          <motion.div
+                            key={`ref-${idx}`}
+                            initial={{ opacity: 0, x: -10 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ duration: 0.2, delay: idx * 0.05 }}
+                            ref={(el) => {
+                              if (el) {
+                                sourceRefs.current[`ref-${idx}`] = el;
+                              } else {
+                                delete sourceRefs.current[`ref-${idx}`];
+                              }
+                            }}
+                            className="flex items-start gap-3 pb-3 border-b border-gray-100 last:border-0 dark:border-gray-800"
                           >
-                            {idx + 1}
-                          </Badge>
-                          <div className="flex-1 min-w-0 space-y-1.5">
-                            {/* Chicago Citation as JSX */}
-                            <ChicagoCitationJSX source={source} index={idx} />
-                            
-                            {/* Badges */}
-                            <div className="flex flex-wrap items-center gap-1.5">
-                              {sourceTypePresentation && (
-                                <Badge variant="secondary" className="text-[10px] bg-blue-50 text-blue-700 dark:bg-blue-900/40 dark:text-blue-200">
-                                  {sourceTypePresentation.label}
-                                </Badge>
-                              )}
-                              {typeof source.similarity === 'number' && source.similarity > 0 && (
-                                <Badge variant="secondary" className="text-[10px]">
-                                  {Math.round(source.similarity * 100)}% match
-                                </Badge>
+                            {/* Number badge - Clean style without brackets */}
+                            <Badge
+                              variant="outline"
+                              className="shrink-0 h-5 min-w-[24px] text-[10px] font-semibold mt-0.5 rounded-full"
+                            >
+                              {idx + 1}
+                            </Badge>
+                            <div className="flex-1 min-w-0 space-y-1.5">
+                              {/* Chicago Citation as JSX */}
+                              <ChicagoCitationJSX source={source} index={idx} />
+
+                              {/* Badges */}
+                              <div className="flex flex-wrap items-center gap-1.5">
+                                {sourceTypePresentation && (
+                                  <Badge variant="secondary" className="text-[10px] bg-blue-50 text-blue-700 dark:bg-blue-900/40 dark:text-blue-200">
+                                    {sourceTypePresentation.label}
+                                  </Badge>
+                                )}
+                                {typeof source.similarity === 'number' && source.similarity > 0 && (
+                                  <Badge variant="secondary" className="text-[10px]">
+                                    {Math.round(source.similarity * 100)}% match
+                                  </Badge>
+                                )}
+                              </div>
+
+                              {/* Excerpt (optional) */}
+                              {source.excerpt && (
+                                <p className="text-[11px] text-gray-600 dark:text-gray-400 line-clamp-2 mt-1 leading-relaxed">
+                                  {source.excerpt}
+                                </p>
                               )}
                             </div>
-                            
-                            {/* Excerpt (optional) */}
-                            {source.excerpt && (
-                              <p className="text-[11px] text-gray-600 dark:text-gray-400 line-clamp-2 mt-1 leading-relaxed">
-                                {source.excerpt}
-                              </p>
-                            )}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
+                          </motion.div>
+                        );
+                      })}
+                    </div>
+                  </motion.div>
+                )}
               </>
             )}
 

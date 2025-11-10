@@ -29,18 +29,17 @@ export PYTHONPATH="${AI_ENGINE_DIR}/src:${PYTHONPATH}"
 echo "✅ PYTHONPATH set to: $PYTHONPATH"
 echo ""
 
-# Kill any existing AI Engine process on port 8000
-echo "🛑 Checking for existing processes on port 8000..."
-if lsof -ti:8000 > /dev/null 2>&1; then
+# Kill any existing AI Engine process on port 8080
+echo "🛑 Checking for existing processes on port 8080..."
+if lsof -ti:8080 > /dev/null 2>&1; then
     echo "   Killing existing process..."
-    lsof -ti:8000 | xargs kill -9 2>/dev/null || true
+    lsof -ti:8080 | xargs kill -9 2>/dev/null || true
     sleep 2
 fi
 
 # Start the AI Engine
-echo "🚀 Starting AI Engine on port 8000..."
+echo "🚀 Starting AI Engine on port 8080..."
 cd src
-python3 -m uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+python3 -m uvicorn main:app --host 0.0.0.0 --port 8080 --reload
 
 # Note: --reload will auto-restart on code changes
-

@@ -23,6 +23,7 @@ import {
   SidebarSolutionBuilderContent,
   SidebarWorkflowsContent,
   SidebarAdminContent,
+  SidebarPersonasContent,
 } from "@/components/sidebar-view-content"
 
 export function AppSidebar({
@@ -80,6 +81,9 @@ export function AppSidebar({
     }
     if (pathname.startsWith("/prism")) {
       return <SidebarPromptPrismContent />
+    }
+    if (pathname.startsWith("/personas")) {
+      return <SidebarPersonasContent />
     }
     return <SidebarDashboardContent />
   }

@@ -1,15 +1,17 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { getServiceSupabaseClient } from '@/lib/supabase/service-client';
 
 export async function GET() {
   try {
-    const supabase = await createClient();
+    const supabase = getServiceSupabaseClient();
+
+    console.log('Fetching all RAG sources from library...');
 
     // Fetch from both dh_rag_source and rag_knowledge_sources
     const [dhRagResult, ragKnowledgeResult] = await Promise.all([
       supabase
         .from('dh_rag_source')
-        .select('id, code, name, source_type, description')
+        .select('id, code, name, source_type, description, metadata')
         .order('name'),
       
       supabase
@@ -29,7 +31,7 @@ export async function GET() {
     // Combine both sources
     const dhRags = (dhRagResult.data || []).map(rag => ({
       ...rag,
-      domain: null, // dh_rag_source doesn't have domain field
+      domain: rag.metadata?.domain || null, // Extract domain from metadata if exists
       source: 'dh_rag_source'
     }));
 
@@ -49,9 +51,14 @@ export async function GET() {
       return acc;
     }, [] as any[]);
 
+    const sortedRags = uniqueRags.sort((a, b) => a.name.localeCompare(b.name));
+
+    console.log(`✅ Fetched ${sortedRags.length} RAG sources for library (${dhRags.length} from dh_rag_source, ${knowledgeRags.length} from rag_knowledge_sources)`);
+
     return NextResponse.json({
       success: true,
-      rags: uniqueRags.sort((a, b) => a.name.localeCompare(b.name)),
+      rags: sortedRags,
+      count: sortedRags.length,
     });
   } catch (error) {
     console.error('Error in RAG sources API:', error);

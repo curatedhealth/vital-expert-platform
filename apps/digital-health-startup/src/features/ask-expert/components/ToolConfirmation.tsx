@@ -92,15 +92,18 @@ export function ToolConfirmation({
   onDecline,
   loading = false,
 }: ToolConfirmationProps) {
+  // Handle undefined tools gracefully
+  const safeTools = tools || [];
+  
   // Calculate totals
-  const totalCost = tools.reduce(
+  const totalCost = safeTools.reduce(
     (sum, tool) => sum + (tool.estimated_cost || 0),
     0
   );
   
-  const maxDuration = Math.max(
-    ...tools.map(t => t.estimated_duration || 0)
-  );
+  const maxDuration = safeTools.length > 0 
+    ? Math.max(...safeTools.map(t => t.estimated_duration || 0))
+    : 0;
   
   // Get cost tier color
   const getCostTierColor = (tier?: string) => {
@@ -147,7 +150,7 @@ export function ToolConfirmation({
           
           {/* Tools List */}
           <div className="space-y-3">
-            {tools.map((tool, index) => {
+            {safeTools.map((tool, index) => {
               const Icon = TOOL_ICONS[tool.tool_name] || Zap;
               
               return (
@@ -245,7 +248,7 @@ export function ToolConfirmation({
               
               {/* Tool Count */}
               <Badge variant="secondary">
-                {tools.length} tool{tools.length !== 1 ? 's' : ''}
+                {safeTools.length} tool{safeTools.length !== 1 ? 's' : ''}
               </Badge>
             </div>
           </Card>

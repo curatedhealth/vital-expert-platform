@@ -28,14 +28,22 @@ import { createClient } from '@/lib/supabase/client';
 
 interface Persona {
   id: string;
-  code: string;
   name: string;
-  unique_id: string;
-  expertise_level: string | null;
-  years_experience: number | null;
-  department: string | null;
-  category_code: string | null;
+  description: string | null;
+  title: string | null;
+  expertise: string[] | null;
+  specialties: string[] | null;
+  category: string | null;
+  agent_category: string | null;
+  is_active: boolean;
   created_at: string;
+  // Additional fields from schema
+  slug: string | null;
+  background: string | null;
+  personality_traits: string[] | null;
+  communication_style: string | null;
+  capabilities: string[] | null;
+  avatar_url: string | null;
 }
 
 export function PersonasManagement() {
@@ -48,8 +56,8 @@ export function PersonasManagement() {
   const fetchPersonas = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('dh_persona')
+      const { data, error} = await supabase
+        .from('personas')
         .select('*')
         .order('name', { ascending: true });
 
@@ -68,16 +76,20 @@ export function PersonasManagement() {
 
   const filteredPersonas = personas.filter((persona) =>
     persona.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    persona.code.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    (persona.department && persona.department.toLowerCase().includes(searchQuery.toLowerCase()))
+    (persona.title && persona.title.toLowerCase().includes(searchQuery.toLowerCase())) ||
+    (persona.category && persona.category.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
-  const expertiseLevels = {
-    junior: personas.filter(p => p.expertise_level === 'junior').length,
-    mid: personas.filter(p => p.expertise_level === 'mid-level').length,
-    senior: personas.filter(p => p.expertise_level === 'senior').length,
-    expert: personas.filter(p => p.expertise_level === 'expert').length,
-  };
+  // Group by category
+  const categoryCounts = personas.reduce((acc, p) => {
+    const cat = p.agent_category || p.category || 'uncategorized';
+    acc[cat] = (acc[cat] || 0) + 1;
+    return acc;
+  }, {} as Record<string, number>);
+
+  const topCategories = Object.entries(categoryCounts)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 4);
 
   if (loading) {
     return (
@@ -108,22 +120,14 @@ export function PersonasManagement() {
               <div className="text-sm text-muted-foreground">Total Personas</div>
               <div className="text-2xl font-bold">{personas.length}</div>
             </div>
-            <div>
-              <div className="text-sm text-muted-foreground">Junior</div>
-              <div className="text-2xl font-bold">{expertiseLevels.junior}</div>
-            </div>
-            <div>
-              <div className="text-sm text-muted-foreground">Mid-Level</div>
-              <div className="text-2xl font-bold">{expertiseLevels.mid}</div>
-            </div>
-            <div>
-              <div className="text-sm text-muted-foreground">Senior</div>
-              <div className="text-2xl font-bold">{expertiseLevels.senior}</div>
-            </div>
-            <div>
-              <div className="text-sm text-muted-foreground">Expert</div>
-              <div className="text-2xl font-bold">{expertiseLevels.expert}</div>
-            </div>
+            {topCategories.map(([category, count]) => (
+              <div key={category}>
+                <div className="text-sm text-muted-foreground truncate" title={category}>
+                  {category.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                </div>
+                <div className="text-2xl font-bold">{count}</div>
+              </div>
+            ))}
           </div>
         </CardContent>
       </Card>
@@ -154,33 +158,61 @@ export function PersonasManagement() {
             <TableHeader>
               <TableRow>
                 <TableHead>Name</TableHead>
-                <TableHead>Code</TableHead>
-                <TableHead>Department</TableHead>
-                <TableHead>Expertise</TableHead>
-                <TableHead>Experience</TableHead>
+                <TableHead>Title</TableHead>
                 <TableHead>Category</TableHead>
+                <TableHead>Expertise</TableHead>
+                <TableHead>Specialties</TableHead>
+                <TableHead>Status</TableHead>
                 <TableHead>Created</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredPersonas.map((persona) => (
                 <TableRow key={persona.id}>
-                  <TableCell className="font-medium">{persona.name}</TableCell>
-                  <TableCell>
-                    <code className="text-sm bg-gray-100 px-2 py-1 rounded">
-                      {persona.code}
-                    </code>
+                  <TableCell className="font-medium">
+                    <div className="flex items-center gap-2">
+                      {persona.avatar_url && (
+                        <img
+                          src={persona.avatar_url}
+                          alt={persona.name}
+                          className="h-8 w-8 rounded-full"
+                        />
+                      )}
+                      <span>{persona.name}</span>
+                    </div>
                   </TableCell>
-                  <TableCell>{persona.department || '-'}</TableCell>
+                  <TableCell>{persona.title || '-'}</TableCell>
                   <TableCell>
                     <Badge variant="secondary">
-                      {persona.expertise_level || 'Unknown'}
+                      {persona.agent_category || persona.category || 'General'}
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    {persona.years_experience ? `${persona.years_experience} yrs` : '-'}
+                    {persona.expertise && persona.expertise.length > 0 ? (
+                      <div className="flex flex-wrap gap-1">
+                        {persona.expertise.slice(0, 2).map((exp, i) => (
+                          <Badge key={i} variant="outline" className="text-xs">
+                            {exp}
+                          </Badge>
+                        ))}
+                        {persona.expertise.length > 2 && (
+                          <Badge variant="outline" className="text-xs">
+                            +{persona.expertise.length - 2}
+                          </Badge>
+                        )}
+                      </div>
+                    ) : '-'}
                   </TableCell>
-                  <TableCell>{persona.category_code || '-'}</TableCell>
+                  <TableCell>
+                    {persona.specialties && persona.specialties.length > 0
+                      ? persona.specialties.slice(0, 2).join(', ')
+                      : '-'}
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant={persona.is_active ? 'default' : 'secondary'}>
+                      {persona.is_active ? 'Active' : 'Inactive'}
+                    </Badge>
+                  </TableCell>
                   <TableCell>
                     {new Date(persona.created_at).toLocaleDateString()}
                   </TableCell>

@@ -6,26 +6,42 @@
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import type { Database } from '@/types/database.types';
 
-// ============================================================================
-// CLIENT COMPONENT CLIENT (Browser)
-// ============================================================================
+type SupabaseBrowserClient = ReturnType<typeof createClientComponentClient<Database>>;
 
-let clientInstance: ReturnType<typeof createClientComponentClient<Database>> | null = null;
+declare global {
+  // eslint-disable-next-line no-var
+  var __askPanelSupabaseClient: SupabaseBrowserClient | undefined;
+}
+
+const isBrowser = typeof window !== 'undefined';
+
+const getClientInstance = (): SupabaseBrowserClient | undefined => {
+  if (!isBrowser) return undefined;
+  return globalThis.__askPanelSupabaseClient;
+};
+
+const setClientInstance = (client: SupabaseBrowserClient) => {
+  if (!isBrowser) return;
+  globalThis.__askPanelSupabaseClient = client;
+};
 
 /**
  * Get or create Supabase client for client components
- * Singleton pattern ensures one instance per browser session
+ * Singleton pattern ensures one instance per browser session and survives HMR
  */
-export function getSupabaseClient() {
-  if (typeof window === 'undefined') {
+export function getSupabaseClient(): SupabaseBrowserClient {
+  if (!isBrowser) {
     throw new Error('getSupabaseClient can only be used in client components');
   }
 
-  if (!clientInstance) {
-    clientInstance = createClientComponentClient<Database>();
+  const existing = getClientInstance();
+  if (existing) {
+    return existing;
   }
 
-  return clientInstance;
+  const client = createClientComponentClient<Database>();
+  setClientInstance(client);
+  return client;
 }
 
 // ============================================================================
@@ -372,4 +388,3 @@ export function isRLSError(error: unknown): boolean {
   }
   return false;
 }
-

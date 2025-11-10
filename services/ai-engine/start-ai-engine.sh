@@ -31,11 +31,10 @@ if [ ! -f ".env" ]; then
 fi
 
 # Start the server
-echo "🚀 Starting AI Engine on port 8000..."
-echo "   Access health check: http://localhost:8000/health"
-echo "   Access docs: http://localhost:8000/docs"
+echo "🚀 Starting AI Engine on port 8080..."
+echo "   Access health check: http://localhost:8080/health"
+echo "   Access docs: http://localhost:8080/docs"
 echo ""
 
 # Run uvicorn with proper module path
-python3 -m uvicorn main:app --reload --port 8000 --app-dir src
-
+python3 -m uvicorn main:app --reload --port 8080 --app-dir src

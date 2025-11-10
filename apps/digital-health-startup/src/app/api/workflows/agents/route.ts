@@ -1,13 +1,15 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { getServiceSupabaseClient } from '@/lib/supabase/service-client';
 
 export async function GET() {
   try {
-    const supabase = await createClient();
+    const supabase = getServiceSupabaseClient();
+
+    console.log('Fetching all agents from library...');
 
     const { data: agents, error } = await supabase
       .from('dh_agent')
-      .select('id, code, name, agent_type, framework, status')
+      .select('*')
       .or('status.eq.active,status.is.null')
       .order('name');
 
@@ -19,9 +21,12 @@ export async function GET() {
       );
     }
 
+    console.log(`✅ Fetched ${agents?.length || 0} agents for library`);
+
     return NextResponse.json({
       success: true,
       agents: agents || [],
+      count: agents?.length || 0,
     });
   } catch (error) {
     console.error('Error in agents API:', error);

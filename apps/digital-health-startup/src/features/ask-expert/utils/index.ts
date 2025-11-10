@@ -138,6 +138,10 @@ export const unwrapLangGraphUpdateState = (
 
 /**
  * Parses Server-Sent Events (SSE) from a text chunk
+ * 
+ * Supports both standard SSE format AND LangGraph format:
+ * - Standard: event: name\ndata: value\n\n
+ * - LangGraph: data: {"stream_mode": "messages", ...}\n\n (no event field)
  */
 export const parseSSEChunk = (chunk: string): SSEEvent[] => {
   const events: SSEEvent[] = [];
@@ -161,7 +165,12 @@ export const parseSSEChunk = (chunk: string): SSEEvent[] => {
       currentEvent.retry = parseInt(line.substring(6).trim(), 10);
     } else if (line === '') {
       // Empty line indicates end of event
-      if (currentEvent.event && currentEvent.data !== undefined) {
+      // ✅ FIX: Allow events without explicit event field (LangGraph format)
+      // If no event field is set, default to 'message' so parseLangGraphEvent can process it
+      if (currentEvent.data !== undefined) {
+        if (!currentEvent.event) {
+          currentEvent.event = 'message'; // Default event type for LangGraph
+        }
         events.push(currentEvent as SSEEvent);
       }
       currentEvent = {};

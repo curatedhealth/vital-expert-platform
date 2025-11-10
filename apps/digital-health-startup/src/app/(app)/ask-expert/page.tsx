@@ -36,6 +36,8 @@ import {
   BookOpen,
   AlertCircle,
   MessageSquare,
+  Target,
+  MessageCircle,
 } from 'lucide-react';
 
 // Component imports
@@ -52,7 +54,7 @@ import { Reasoning, ReasoningTrigger, ReasoningContent } from '@/components/ui/s
 import { Conversation, ConversationContent } from '@/components/ui/shadcn-io/ai/conversation';
 import { EnhancedMessageDisplay } from '@/features/ask-expert/components/EnhancedMessageDisplay';
 import { InlineArtifactGenerator } from '@/features/ask-expert/components/InlineArtifactGenerator';
-import { AgentAvatar, Button } from '@vital/ui';
+import { AgentAvatar, Button, Badge } from '@vital/ui';
 import { Suggestions, Suggestion } from '@/components/ai/suggestion';
 import { useAgentWithStats } from '@/features/ask-expert/hooks/useAgentWithStats';
 import { AskExpertOnboarding } from '@/components/onboarding/ask-expert-onboarding';
@@ -65,6 +67,8 @@ import { ToolConfirmation, type ToolSuggestion } from '@/features/ask-expert/com
 import { ToolExecutionStatusComponent } from '@/features/ask-expert/components/ToolExecutionStatus';
 import { ToolResults } from '@/features/ask-expert/components/ToolResults';
 import { ConnectionStatusComponent } from '@/features/ask-expert/components/ConnectionStatus';
+import { EnhancedModeSelector } from '@/features/ask-expert/components/EnhancedModeSelector';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 
 // ✨ PHASE 1: Custom Hooks (Extracted from 3,515-line monolith)
 import {
@@ -456,6 +460,8 @@ function AskExpertPageContent() {
     
     // Content chunk (UPDATED with Phase 2 token streaming)
     streaming.onEvent('content', (data) => {
+      console.log('[🎯 HANDLER CALLED] content:', typeof data, data);
+      
       if (typeof data === 'string') {
         // ✨ PHASE 2: Token-by-token animation
         tokenStreaming.addToken(data);
@@ -491,25 +497,38 @@ function AskExpertPageContent() {
       }
     });
     
-    // Sources
-    streaming.onEvent('sources', (data) => {
-      if (Array.isArray(data)) {
-        const normalized = rag.normalizeSources(data);
+    // 🔥 NEW: LangGraph workflow nodes (for AI reasoning visibility)
+    streaming.onEvent('validate_inputs', (data) => {
+      console.log('[Workflow] validate_inputs:', data);
+      setRecentReasoning(prev => [...prev, 'Input validation complete']);
+      typingIndicator.startTyping('Validating inputs...');
+    });
+    
+    streaming.onEvent('fetch_agent', (data) => {
+      console.log('[Workflow] fetch_agent:', data);
+      setRecentReasoning(prev => [...prev, `Loaded agent: ${data?.agent?.name || 'AI Assistant'}`]);
+      typingIndicator.startTyping('Loading AI agent...');
+    });
+    
+    streaming.onEvent('rag_retrieval', (data) => {
+      console.log('[Workflow] rag_retrieval:', data);
+      
+      // 🔥 FIX: Add sources to RAG store when received
+      if (data?.sources && Array.isArray(data.sources) && data.sources.length > 0) {
+        const normalized = rag.normalizeSources(data.sources);
         rag.addSources(normalized);
-        
-        // ✨ PHASE 2: Track RAG stage
-        streamingProgress.setStage('rag');
+        console.log('[Workflow] ✅ Added', normalized.length, 'sources to RAG store');
       }
+      
+      setRecentReasoning(prev => [...prev, `Retrieved ${data?.sources?.length || 0} sources from knowledge base`]);
+      typingIndicator.startTyping('Searching knowledge base...');
+      streamingProgress.setStage('rag');
     });
     
-    // ✨ PHASE 2: Tool execution started
-    streaming.onEvent('tools_start', () => {
-      streamingProgress.setStage('tools');
-      typingIndicator.startTyping('Executing tools...');
-    });
-    
-    // Tool suggestion
     streaming.onEvent('tool_suggestion', async (data) => {
+      console.log('[Workflow] tool_suggestion:', data);
+      setRecentReasoning(prev => [...prev, `Suggesting tool: ${data?.name || 'Tool'}`]);
+      
       const toolSuggestion: ToolSuggestion = {
         id: data.id || nanoid(),
         name: data.name,
@@ -529,6 +548,40 @@ function AskExpertPageContent() {
       }
     });
     
+    // 🔥 IMPORTANT: Skip execute_agent content to avoid duplicate/garbled text
+    streaming.onEvent('execute_agent', (data) => {
+      console.log('[Workflow] execute_agent (skipping full response):', data?.response?.substring?.(0, 50));
+      setRecentReasoning(prev => [...prev, 'Agent execution complete']);
+      streamingProgress.setStage('generating');
+      // DON'T call messageManager.appendStreamingMessage here!
+      // The token-by-token streaming already happened via 'content' events
+    });
+    
+    // 🔥 NEW: Handle format_output - this is where the final response comes
+    streaming.onEvent('format_output', (data) => {
+      console.log('[Workflow] format_output:', data);
+      setRecentReasoning(prev => [...prev, 'Formatting response']);
+      streamingProgress.setStage('complete');
+      typingIndicator.stopTyping();
+    });
+    
+    // Sources
+    streaming.onEvent('sources', (data) => {
+      if (Array.isArray(data)) {
+        const normalized = rag.normalizeSources(data);
+        rag.addSources(normalized);
+        
+        // ✨ PHASE 2: Track RAG stage
+        streamingProgress.setStage('rag');
+      }
+    });
+    
+    // ✨ PHASE 2: Tool execution started
+    streaming.onEvent('tools_start', () => {
+      streamingProgress.setStage('tools');
+      typingIndicator.startTyping('Executing tools...');
+    });
+    
     // Tool result
     streaming.onEvent('tool_result', (data) => {
       tools.addToolResult({
@@ -546,8 +599,9 @@ function AskExpertPageContent() {
       }
     });
     
-    // Stream complete (UPDATED with Phase 2)
-    streaming.onEvent('done', (data) => {
+    // 🔥 FIX: Backend sends 'complete' event, not 'done'
+    streaming.onEvent('complete', (data) => {
+      console.log('[Workflow] complete event received:', data);
       // ✨ PHASE 2: Stop all trackers
       streamingProgress.complete();
       typingIndicator.stopTyping();
@@ -581,11 +635,19 @@ function AskExpertPageContent() {
         : undefined;
       
       // Commit streaming message
+      console.log('[AskExpert] Committing message with sources:', rag.sources.length, 'sources');
+      console.log('[AskExpert] Sources data:', rag.sources.map(s => ({
+        id: s.id,
+        title: s.title,
+        url: s.url
+      })));
+
       const messageId = messageManager.commitStreamingMessage({
-        reasoning: recentReasoning,
-        sources: rag.sources,
+        sources: rag.sources, // ✅ Top-level sources for Message type
         selectedAgent: selectedAgentForMessage,
         metadata: {
+          reasoning: recentReasoning, // ✅ Store reasoning in metadata
+          sources: rag.sources, // ✅ CRITICAL: Also add sources to metadata for EnhancedMessageDisplay
           ragSummary: data.rag_summary,
           toolSummary: data.tool_summary,
           agentAvatar: resolvedAgent?.avatar,
@@ -639,7 +701,11 @@ function AskExpertPageContent() {
       streaming.offEvent('content');
       streaming.offEvent('reasoning');
       streaming.offEvent('sources');
+      streaming.offEvent('validate_inputs');
+      streaming.offEvent('fetch_agent');
+      streaming.offEvent('rag_retrieval');
       streaming.offEvent('tool_suggestion');
+      streaming.offEvent('execute_agent');
       streaming.offEvent('tool_result');
       streaming.offEvent('done');
       streaming.offEvent('error');
@@ -850,12 +916,7 @@ function AskExpertPageContent() {
               
               return (
                 <div key={message.id} className={`flex gap-4 ${message.role === 'user' ? 'justify-end' : ''}`}>
-                  {message.role === 'assistant' && (
-                    <AgentAvatar 
-                      agentId={message.selectedAgent?.id || 'assistant'}
-                      size="sm"
-                    />
-                  )}
+                  {/* ✅ FIX #1: Removed duplicate AgentAvatar - EnhancedMessageDisplay already renders it */}
                   
                   <div className={`flex-1 max-w-3xl ${message.role === 'user' ? 'flex justify-end' : ''}`}>
                     <EnhancedMessageDisplay 
@@ -883,11 +944,7 @@ function AskExpertPageContent() {
                     )}
                   </div>
                   
-                  {message.role === 'user' && (
-                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground">
-                      <User className="h-4 w-4" />
-                    </div>
-                  )}
+                  {/* ✅ FIX #1: Removed duplicate user avatar - EnhancedMessageDisplay already renders it */}
                 </div>
               );
             })}
@@ -895,9 +952,17 @@ function AskExpertPageContent() {
             {/* Streaming Message - ✨ PHASE 2: Token-by-Token Animation */}
             {messageManager.streamingMessage && (
               <div className="flex gap-4">
-                <AgentAvatar agentId={activeStreamingAgent?.id || 'assistant'} size="sm" />
+                {/* ✅ FIX: Use same avatar style as committed messages */}
+                <div className="mt-0.5">
+                  <AgentAvatar 
+                    avatar={activeStreamingAgent?.avatar} 
+                    name={activeStreamingAgent?.displayName || activeStreamingAgent?.name || 'AI Assistant'}
+                    size="list"
+                    className="rounded-full"
+                  />
+                </div>
                 <div className="flex-1 max-w-3xl">
-                  <div className="mb-1 text-sm font-medium text-muted-foreground">
+                  <div className="mb-1 text-sm font-medium text-gray-900">
                     {activeStreamingAgent?.displayName || activeStreamingAgent?.name || 'AI Assistant'}
                   </div>
                   <div className="rounded-lg border bg-card p-4">
@@ -924,12 +989,12 @@ function AskExpertPageContent() {
                       </div>
                     )}
                     
-                    {/* Sources (if any) */}
+                    {/* Sources indicator during streaming */}
                     {rag.sources.length > 0 && (
                       <div className="mt-4 space-y-2 border-t pt-4">
                         <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-                          <BookOpen className="h-4 w-4" />
-                          <span>Sources ({rag.sources.length})</span>
+                          <BookOpen className="h-4 w-4 animate-pulse" />
+                          <span>Retrieving sources ({rag.sources.length})</span>
                         </div>
                       </div>
                     )}
@@ -1053,9 +1118,278 @@ function AskExpertPageContent() {
         </div>
       )}
       
+      {/* Mode Selector Dialog - 2x2 Matrix */}
+      <Dialog open={showSettings} onOpenChange={setShowSettings}>
+        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-bold">Select Your Interaction Mode</DialogTitle>
+            <DialogDescription className="text-base">
+              Choose how you want to interact with AI experts. Each mode offers different capabilities and workflows.
+            </DialogDescription>
+          </DialogHeader>
+
+          {/* Beautiful 2x2 Matrix */}
+          <div className="space-y-6 p-4">
+            {/* Axis Labels */}
+            <div className="relative">
+              {/* Y-Axis Label (Conversation Type) */}
+              <div className="absolute -left-16 top-1/2 -translate-y-1/2 -rotate-90 origin-center">
+                <div className="text-sm font-semibold text-muted-foreground whitespace-nowrap">
+                  Conversation Type
+                </div>
+              </div>
+
+              {/* X-Axis Label (Expert Selection) */}
+              <div className="absolute -top-12 left-1/2 -translate-x-1/2">
+                <div className="text-sm font-semibold text-muted-foreground">
+                  Expert Selection
+                </div>
+              </div>
+
+              {/* Matrix Grid */}
+              <div className="grid grid-cols-2 gap-4 mt-8">
+                {/* Mode 1: Top-Left (Manual + Query) */}
+                <motion.button
+                  onClick={() => {
+                    modeLogic.setIsAutomatic(false);
+                    modeLogic.setIsAutonomous(false);
+                    setShowSettings(false);
+                  }}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  className={`group relative p-6 border-2 rounded-xl transition-all ${
+                    currentMode === 1
+                      ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 shadow-lg ring-2 ring-blue-500/20'
+                      : 'border-gray-300 dark:border-gray-600 hover:border-blue-400 hover:shadow-md'
+                  }`}
+                >
+                  {currentMode === 1 && (
+                    <div className="absolute top-3 right-3 bg-blue-500 rounded-full p-1">
+                      <Check className="h-4 w-4 text-white" />
+                    </div>
+                  )}
+                  <div className="flex flex-col items-center text-center gap-3">
+                    <div className="p-4 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500">
+                      <Target className="h-8 w-8 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-lg mb-1">Manual Selection</h3>
+                      <p className="text-sm text-muted-foreground mb-3">Choose your specific expert for precise answers</p>
+                      <div className="flex gap-2 justify-center flex-wrap">
+                        <Badge variant="secondary" className="text-xs">
+                          <User className="h-3 w-3 mr-1" />
+                          You Choose
+                        </Badge>
+                        <Badge variant="outline" className="text-xs">One-Shot</Badge>
+                      </div>
+                      <div className="mt-3 text-xs text-muted-foreground">
+                        ⏱️ 20-30 sec • 👤 1 expert
+                      </div>
+                    </div>
+                  </div>
+                </motion.button>
+
+                {/* Mode 2: Top-Right (Automatic + Query) */}
+                <motion.button
+                  onClick={() => {
+                    modeLogic.setIsAutomatic(true);
+                    modeLogic.setIsAutonomous(false);
+                    setShowSettings(false);
+                  }}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  className={`group relative p-6 border-2 rounded-xl transition-all ${
+                    currentMode === 2
+                      ? 'border-amber-500 bg-amber-50 dark:bg-amber-900/20 shadow-lg ring-2 ring-amber-500/20'
+                      : 'border-gray-300 dark:border-gray-600 hover:border-amber-400 hover:shadow-md'
+                  }`}
+                >
+                  {currentMode === 2 && (
+                    <div className="absolute top-3 right-3">
+                      <Badge className="bg-amber-500 text-white">Most Popular</Badge>
+                    </div>
+                  )}
+                  <div className="flex flex-col items-center text-center gap-3">
+                    <div className="p-4 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500">
+                      <Sparkles className="h-8 w-8 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-lg mb-1">Auto Selection</h3>
+                      <p className="text-sm text-muted-foreground mb-3">Get instant answers from multiple experts automatically</p>
+                      <div className="flex gap-2 justify-center flex-wrap">
+                        <Badge variant="secondary" className="text-xs">
+                          <Sparkles className="h-3 w-3 mr-1" />
+                          AI Selects
+                        </Badge>
+                        <Badge variant="outline" className="text-xs">One-Shot</Badge>
+                      </div>
+                      <div className="mt-3 text-xs text-muted-foreground">
+                        ⏱️ 30-45 sec • 👥 3 experts
+                      </div>
+                    </div>
+                  </div>
+                </motion.button>
+
+                {/* Mode 3: Bottom-Left (Manual + Autonomous) */}
+                <motion.button
+                  onClick={() => {
+                    modeLogic.setIsAutomatic(false);
+                    modeLogic.setIsAutonomous(true);
+                    setShowSettings(false);
+                  }}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  className={`group relative p-6 border-2 rounded-xl transition-all ${
+                    currentMode === 3
+                      ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20 shadow-lg ring-2 ring-purple-500/20'
+                      : 'border-gray-300 dark:border-gray-600 hover:border-purple-400 hover:shadow-md'
+                  }`}
+                >
+                  {currentMode === 3 && (
+                    <div className="absolute top-3 right-3">
+                      <Badge className="bg-purple-500 text-white">Best for Experts</Badge>
+                    </div>
+                  )}
+                  <div className="flex flex-col items-center text-center gap-3">
+                    <div className="p-4 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500">
+                      <Brain className="h-8 w-8 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-lg mb-1">Manual + Autonomous</h3>
+                      <p className="text-sm text-muted-foreground mb-3">You select agent + autonomous reasoning with checkpoints</p>
+                      <div className="flex gap-2 justify-center flex-wrap">
+                        <Badge variant="secondary" className="text-xs">
+                          <User className="h-3 w-3 mr-1" />
+                          You Choose
+                        </Badge>
+                        <Badge variant="outline" className="text-xs">Multi-turn</Badge>
+                      </div>
+                      <div className="mt-3 text-xs text-muted-foreground">
+                        ⏱️ 60-90 sec • 👤 1 expert
+                      </div>
+                    </div>
+                  </div>
+                </motion.button>
+
+                {/* Mode 4: Bottom-Right (Automatic + Autonomous) */}
+                <motion.button
+                  onClick={() => {
+                    modeLogic.setIsAutomatic(true);
+                    modeLogic.setIsAutonomous(true);
+                    setShowSettings(false);
+                  }}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  className={`group relative p-6 border-2 rounded-xl transition-all ${
+                    currentMode === 4
+                      ? 'border-green-500 bg-green-50 dark:bg-green-900/20 shadow-lg ring-2 ring-green-500/20'
+                      : 'border-gray-300 dark:border-gray-600 hover:border-green-400 hover:shadow-md'
+                  }`}
+                >
+                  {currentMode === 4 && (
+                    <div className="absolute top-3 right-3">
+                      <Badge className="bg-green-500 text-white">Most Powerful</Badge>
+                    </div>
+                  )}
+                  <div className="flex flex-col items-center text-center gap-3">
+                    <div className="p-4 rounded-xl bg-gradient-to-br from-green-500 to-emerald-500">
+                      <MessageCircle className="h-8 w-8 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-lg mb-1">Auto + Autonomous</h3>
+                      <p className="text-sm text-muted-foreground mb-3">AI selects best agent + autonomous reasoning with checkpoints</p>
+                      <div className="flex gap-2 justify-center flex-wrap">
+                        <Badge variant="secondary" className="text-xs">
+                          <Sparkles className="h-3 w-3 mr-1" />
+                          AI Selects
+                        </Badge>
+                        <Badge variant="outline" className="text-xs">Multi-turn</Badge>
+                      </div>
+                      <div className="mt-3 text-xs text-muted-foreground">
+                        ⏱️ 45-60 sec • 👥 2 experts
+                      </div>
+                    </div>
+                  </div>
+                </motion.button>
+              </div>
+
+              {/* Axis Labels on Grid */}
+              <div className="mt-4 flex justify-between text-sm font-medium text-muted-foreground px-2">
+                <span>← Manual</span>
+                <span>Automatic →</span>
+              </div>
+
+              <div className="absolute -left-12 top-1/2 -translate-y-1/2 flex flex-col items-center gap-32 text-sm font-medium text-muted-foreground">
+                <span className="-rotate-90 whitespace-nowrap">Query ↑</span>
+                <span className="-rotate-90 whitespace-nowrap">Chat ↓</span>
+              </div>
+            </div>
+
+            {/* Comparison Table */}
+            <div className="mt-8 overflow-x-auto border rounded-lg">
+              <table className="w-full text-sm">
+                <thead className="bg-muted">
+                  <tr>
+                    <th className="text-left p-3 font-semibold">Feature</th>
+                    <th className="text-center p-3 font-semibold">Mode 1</th>
+                    <th className="text-center p-3 font-semibold">Mode 2</th>
+                    <th className="text-center p-3 font-semibold">Mode 3</th>
+                    <th className="text-center p-3 font-semibold">Mode 4</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr className="border-b">
+                    <td className="p-3">Expert Selection</td>
+                    <td className="text-center p-3">You choose</td>
+                    <td className="text-center p-3">AI finds best</td>
+                    <td className="text-center p-3">You choose</td>
+                    <td className="text-center p-3">AI finds best</td>
+                  </tr>
+                  <tr className="border-b bg-muted/30">
+                    <td className="p-3">Conversation Style</td>
+                    <td className="text-center p-3">One Q&A</td>
+                    <td className="text-center p-3">One Q&A</td>
+                    <td className="text-center p-3">Multi-turn</td>
+                    <td className="text-center p-3">Multi-turn</td>
+                  </tr>
+                  <tr className="border-b">
+                    <td className="p-3">Memory/Context</td>
+                    <td className="text-center p-3">❌</td>
+                    <td className="text-center p-3">❌</td>
+                    <td className="text-center p-3">✅</td>
+                    <td className="text-center p-3">✅</td>
+                  </tr>
+                  <tr className="border-b bg-muted/30">
+                    <td className="p-3">Autonomous Reasoning</td>
+                    <td className="text-center p-3">❌</td>
+                    <td className="text-center p-3">❌</td>
+                    <td className="text-center p-3">✅</td>
+                    <td className="text-center p-3">✅</td>
+                  </tr>
+                  <tr className="border-b">
+                    <td className="p-3">Tool Integration</td>
+                    <td className="text-center p-3">❌</td>
+                    <td className="text-center p-3">❌</td>
+                    <td className="text-center p-3">✅</td>
+                    <td className="text-center p-3">✅</td>
+                  </tr>
+                  <tr className="bg-blue-50 dark:bg-blue-900/20 font-semibold">
+                    <td className="p-3">Best For</td>
+                    <td className="text-center p-3 text-xs">Quick Q&A with known expert</td>
+                    <td className="text-center p-3 text-xs">Quick research</td>
+                    <td className="text-center p-3 text-xs">Deep work with expert</td>
+                    <td className="text-center p-3 text-xs">Complex multi-domain tasks</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       {/* Tool Confirmation Modal */}
       {tools.pendingToolConfirmation && (
-        <ToolConfirmation 
+        <ToolConfirmation
           tool={tools.pendingToolConfirmation.tool}
           onConfirm={tools.confirmTool}
           onDecline={tools.declineTool}

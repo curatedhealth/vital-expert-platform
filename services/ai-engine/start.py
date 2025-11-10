@@ -5,10 +5,24 @@ Reads PORT from environment variable and starts FastAPI server
 """
 import os
 import sys
+from pathlib import Path
 from dotenv import load_dotenv
 
-# Load environment variables from .env file
-load_dotenv()
+# Load environment variables from .env.local (priority) or .env (fallback)
+# Look in project root (2 levels up from this script)
+project_root = Path(__file__).parent.parent.parent
+env_local = project_root / '.env.local'
+env_default = project_root / '.env'
+
+if env_local.exists():
+    print(f"🔧 Loading environment from: {env_local}", flush=True)
+    load_dotenv(env_local, override=True)
+elif env_default.exists():
+    print(f"🔧 Loading environment from: {env_default}", flush=True)
+    load_dotenv(env_default, override=True)
+else:
+    print("⚠️ No .env.local or .env file found, using system environment", flush=True)
+    load_dotenv()  # Try default locations
 
 # Critical: Ensure output is unbuffered so logs appear immediately
 os.environ['PYTHONUNBUFFERED'] = '1'
@@ -32,8 +46,8 @@ sys.path.insert(0, src_dir)
 sys.path.insert(0, script_dir)  # Also add script dir in case needed
 
 if __name__ == "__main__":
-    # Get port from environment or default to 8000
-    port = os.getenv("PORT", "8000")
+    # Get port from environment or default to 8080
+    port = os.getenv("PORT", "8080")
 
     # Validate port is an integer
     try:

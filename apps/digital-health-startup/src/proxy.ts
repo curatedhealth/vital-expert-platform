@@ -58,17 +58,28 @@ export async function proxy(request: NextRequest) {
 
   // Allow Ask Expert API routes without authentication (uses service role key internally)
   // Also allow monitoring/metrics endpoints for internal use
+  // Also allow workflow library APIs (tasks, agents, tools, rags, domains) for editor
+  // Also allow mode endpoints for AI Engine streaming connections
   const publicApiRoutes = [
-    '/api/ask-expert/chat', 
-    '/api/ask-expert/generate-document', 
-    '/api/user-agents', 
-    '/api/chat/conversations', 
-    '/api/chat/sessions', 
+    '/api/ask-expert/chat',
+    '/api/ask-expert/generate-document',
+    '/api/user-agents',
+    '/api/chat/conversations',
+    '/api/chat/sessions',
     '/api/chat/messages',
     '/api/agents-crud',  // Agents CRUD endpoint (uses service role internally)
     '/api/knowledge',    // Knowledge management endpoints (uses service role internally)
-    '/api/metrics',  // Prometheus metrics endpoint
-    '/api/health',    // Health check endpoint
+    '/api/metrics',      // Prometheus metrics endpoint
+    '/api/health',       // Health check endpoint
+    '/api/workflows/tasks',   // Task library for workflow editor
+    '/api/workflows/agents',  // Agent library for workflow editor
+    '/api/workflows/tools',   // Tool library for workflow editor
+    '/api/workflows/rags',    // RAG library for workflow editor
+    '/api/workflows/domains', // Domain library for workflow editor
+    '/api/mode1',        // Mode 1: Manual Interactive (proxied to AI Engine)
+    '/api/mode2',        // Mode 2: Automatic Agent Selection (proxied to AI Engine)
+    '/api/mode3',        // Mode 3: Autonomous Multi-Agent (proxied to AI Engine)
+    '/api/mode4',        // Mode 4: Fully Autonomous (proxied to AI Engine)
   ];
   const isPublicApiRoute = publicApiRoutes.some(route => url.pathname.startsWith(route));
 

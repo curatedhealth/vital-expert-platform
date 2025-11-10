@@ -18,6 +18,15 @@ import {
   Search,
   Filter,
   ArrowRight,
+  Pencil,
+  ChevronDown,
+  ChevronRight,
+  Target,
+  Lightbulb,
+  Shield,
+  Cog,
+  GraduationCap,
+  Rocket,
 } from 'lucide-react';
 import Image from 'next/image';
 
@@ -37,7 +46,7 @@ const DOMAIN_CONFIG = {
     borderColor: 'border-clinical-green',
   },
   MA: {
-    name: 'Market Access',
+    name: 'Medical Affairs',
     icon: TrendingUp,
     color: 'text-trust-blue',
     bgColor: 'bg-trust-blue/10',
@@ -80,6 +89,90 @@ const COMPLEXITY_COLORS = {
   EXPERT: 'text-red-600 bg-red-100',
 };
 
+// Use Case Categories (SP) for Pharma/Medical Affairs
+const USE_CASE_CATEGORIES = {
+  'SP01': {
+    code: 'SP01',
+    name: 'SP01: Growth & Market Access',
+    shortName: 'Growth',
+    icon: Target,
+    color: 'text-emerald-700',
+    bgColor: 'bg-emerald-50',
+    borderColor: 'border-emerald-300',
+    description: 'Evidence generation and value demonstration to drive market access and product adoption',
+  },
+  'SP02': {
+    code: 'SP02',
+    name: 'SP02: Scientific Excellence',
+    shortName: 'Science',
+    icon: Lightbulb,
+    color: 'text-blue-700',
+    bgColor: 'bg-blue-50',
+    borderColor: 'border-blue-300',
+    description: 'Advancing medical knowledge and maintaining scientific credibility',
+  },
+  'SP03': {
+    code: 'SP03',
+    name: 'SP03: Stakeholder Engagement',
+    shortName: 'Engagement',
+    icon: Users,
+    color: 'text-purple-700',
+    bgColor: 'bg-purple-50',
+    borderColor: 'border-purple-300',
+    description: 'Building relationships with KOLs, HCPs, payers, and patient advocates',
+  },
+  'SP04': {
+    code: 'SP04',
+    name: 'SP04: Compliance & Quality',
+    shortName: 'Compliance',
+    icon: Shield,
+    color: 'text-red-700',
+    bgColor: 'bg-red-50',
+    borderColor: 'border-red-300',
+    description: 'Maintaining regulatory compliance and operational excellence',
+  },
+  'SP05': {
+    code: 'SP05',
+    name: 'SP05: Operational Excellence',
+    shortName: 'Operations',
+    icon: Cog,
+    color: 'text-orange-700',
+    bgColor: 'bg-orange-50',
+    borderColor: 'border-orange-300',
+    description: 'Optimizing resources, processes, and ROI',
+  },
+  'SP06': {
+    code: 'SP06',
+    name: 'SP06: Talent Development',
+    shortName: 'Talent',
+    icon: GraduationCap,
+    color: 'text-indigo-700',
+    bgColor: 'bg-indigo-50',
+    borderColor: 'border-indigo-300',
+    description: 'Building capabilities and organizational effectiveness',
+  },
+  'SP07': {
+    code: 'SP07',
+    name: 'SP07: Innovation & Digital',
+    shortName: 'Innovation',
+    icon: Rocket,
+    color: 'text-pink-700',
+    bgColor: 'bg-pink-50',
+    borderColor: 'border-pink-300',
+    description: 'Leveraging technology and innovation for competitive advantage',
+  },
+  'Uncategorized': {
+    code: 'Uncategorized',
+    name: 'Uncategorized Workflows',
+    shortName: 'Other',
+    icon: FileText,
+    color: 'text-gray-700',
+    bgColor: 'bg-gray-50',
+    borderColor: 'border-gray-300',
+    description: 'Workflows pending strategic pillar assignment',
+  },
+};
+
 interface UseCase {
   id: string;
   code: string;
@@ -91,21 +184,39 @@ interface UseCase {
   estimated_duration_minutes: number;
   deliverables: string[];
   prerequisites: string[];
+  strategic_pillar?: string;
+  source?: string;
+  category?: string;
+  importance?: number;
+  frequency?: string;
+  sector?: string;
+  industry?: string;
 }
 
 interface WorkflowStats {
   total_workflows: number;
   total_tasks: number;
+  total_jtbds: number;
   by_domain: Record<string, number>;
   by_complexity: Record<string, number>;
+  by_source: Record<string, number>;
+  by_industry: Record<string, number>;
+  by_strategic_pillar?: Record<string, number>;
+}
+
+interface StrategicPillarData {
+  [pillar: string]: UseCase[];
 }
 
 export default function WorkflowsPage() {
   const [useCases, setUseCases] = useState<UseCase[]>([]);
   const [stats, setStats] = useState<WorkflowStats | null>(null);
+  const [strategicPillars, setStrategicPillars] = useState<StrategicPillarData>({});
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedDomain, setSelectedDomain] = useState<string>('all');
+  const [selectedIndustry, setSelectedIndustry] = useState<string>('all');
+  const [expandedPillars, setExpandedPillars] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     fetchWorkflows();
@@ -125,9 +236,11 @@ export default function WorkflowsPage() {
         console.log(`✅ Received ${data.data.useCases?.length || 0} use cases`);
         console.log('📊 Use cases:', data.data.useCases);
         console.log('📈 Stats:', data.data.stats);
-        
+        console.log('🎯 Strategic Pillars:', data.data.strategicPillars);
+
         setUseCases(data.data.useCases || []);
         setStats(data.data.stats || null);
+        setStrategicPillars(data.data.strategicPillars || {});
       } else {
         console.error('❌ API returned error:', data.error);
       }
@@ -139,26 +252,32 @@ export default function WorkflowsPage() {
   };
 
   const filteredUseCases = useCases.filter((uc) => {
-    const matchesSearch = 
+    const matchesSearch =
       searchQuery === '' ||
       uc.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       uc.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
       uc.code.toLowerCase().includes(searchQuery.toLowerCase());
-    
+
     const matchesDomain = selectedDomain === 'all' || uc.domain === selectedDomain;
-    
+
+    const matchesIndustry = selectedIndustry === 'all' ||
+      (uc.industry || uc.sector || '').toLowerCase().includes(selectedIndustry.toLowerCase());
+
     // Debug logging (remove in production)
     if (useCases.length > 0 && useCases.indexOf(uc) === 0) {
       console.log('🔍 Filter check (first use case):', {
         selectedDomain,
+        selectedIndustry,
         ucDomain: uc.domain,
+        ucIndustry: uc.industry,
         matchesDomain,
+        matchesIndustry,
         matchesSearch,
         code: uc.code
       });
     }
-    
-    return matchesSearch && matchesDomain;
+
+    return matchesSearch && matchesDomain && matchesIndustry;
   });
 
   const groupedByDomain = filteredUseCases.reduce((acc, uc) => {
@@ -167,24 +286,64 @@ export default function WorkflowsPage() {
     return acc;
   }, {} as Record<string, UseCase[]>);
 
+  const togglePillar = (pillarId: string) => {
+    const newExpanded = new Set(expandedPillars);
+    if (newExpanded.has(pillarId)) {
+      newExpanded.delete(pillarId);
+    } else {
+      newExpanded.add(pillarId);
+    }
+    setExpandedPillars(newExpanded);
+  };
+
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
       {/* Main Content Area */}
       <div className="flex-1 overflow-y-auto">
         <div className="max-w-7xl mx-auto p-6 space-y-6">
+          
+          {/* Header with Create Workflow Button */}
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">Workflows</h1>
+              <p className="text-gray-600 mt-1">Browse and manage your workflow use cases</p>
+            </div>
+            <Button
+              size="lg"
+              className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-md"
+              onClick={() => window.location.href = '/workflows/editor?mode=create'}
+            >
+              <Plus className="mr-2 h-5 w-5" />
+              Create Workflow
+            </Button>
+          </div>
 
       {/* Statistics Cards - Clean Design */}
       {stats && (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-xs font-medium text-gray-600 flex items-center gap-1">
                 <WorkflowIcon className="h-3 w-3" />
-                Use Cases
+                Total Items
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{useCases.length}</div>
+              <p className="text-xs text-muted-foreground mt-1">Use Cases + JTBDs</p>
+            </CardContent>
+          </Card>
+
+          <Card className="border-2 border-blue-200 bg-blue-50">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-xs font-medium text-blue-800 flex items-center gap-1">
+                <TrendingUp className="h-3 w-3" />
+                Medical Affairs
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-blue-600">{stats.total_jtbds || 0}</div>
+              <p className="text-xs text-muted-foreground mt-1">JTBDs</p>
             </CardContent>
           </Card>
 
@@ -231,7 +390,7 @@ export default function WorkflowsPage() {
       {/* Search & Filters - Clean Design */}
       <Card>
         <CardContent className="pt-6">
-          <div className="flex gap-3">
+          <div className="flex gap-3 mb-4">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
               <Input
@@ -245,8 +404,50 @@ export default function WorkflowsPage() {
               <Filter className="h-4 w-4" />
             </Button>
           </div>
-          <div className="mt-4 text-sm text-muted-foreground">
-            Showing {filteredUseCases.length} of {useCases.length} use cases
+
+          {/* Industry Filter Tabs */}
+          <div className="flex items-center gap-3">
+            <span className="text-sm font-medium text-gray-700">Industry:</span>
+            <div className="flex gap-2">
+              <Button
+                variant={selectedIndustry === 'all' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setSelectedIndustry('all')}
+                className="h-8"
+              >
+                All Industries
+              </Button>
+              <Button
+                variant={selectedIndustry === 'startup' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setSelectedIndustry('startup')}
+                className={`h-8 ${selectedIndustry === 'startup' ? 'bg-green-600 hover:bg-green-700' : ''}`}
+              >
+                Digital Health Startups
+              </Button>
+              <Button
+                variant={selectedIndustry === 'pharma' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setSelectedIndustry('pharma')}
+                className={`h-8 ${selectedIndustry === 'pharma' ? 'bg-blue-600 hover:bg-blue-700' : ''}`}
+              >
+                Pharma & Life Sciences
+              </Button>
+            </div>
+          </div>
+
+          <div className="mt-4 flex items-center justify-between text-sm text-muted-foreground">
+            <span>Showing {filteredUseCases.length} of {useCases.length} use cases</span>
+            {stats?.by_industry && (
+              <div className="flex gap-4 text-xs">
+                {Object.entries(stats.by_industry).map(([industry, count]) => (
+                  <span key={industry} className="flex items-center gap-1">
+                    <span className="font-medium">{industry}:</span>
+                    <span>{count}</span>
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -275,19 +476,84 @@ export default function WorkflowsPage() {
             </div>
           ) : filteredUseCases.length > 0 ? (
             <div className="space-y-6">
-              {selectedDomain === 'all' ? (
+              {/* Pharma Industry with Use Case Categories (SP) View */}
+              {selectedIndustry === 'pharma' && selectedDomain === 'MA' ? (
+                <div className="space-y-4">
+                  <div className="mb-6">
+                    <h2 className="text-2xl font-bold text-gray-900 mb-2">Medical Affairs Use Case Categories</h2>
+                    <p className="text-gray-600">Click on each category to view related workflows and tasks</p>
+                  </div>
+
+                  {Object.entries(strategicPillars).length === 0 ? (
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-8 text-center">
+                      <p className="text-gray-600">No Strategic Pillars found. Please check the database configuration.</p>
+                    </div>
+                  ) : null}
+
+                  {Object.entries(strategicPillars).map(([spCode, workflows]) => {
+                    const categoryConfig = USE_CASE_CATEGORIES[spCode as keyof typeof USE_CASE_CATEGORIES];
+                    if (!categoryConfig) return null;
+
+                    const CategoryIcon = categoryConfig.icon;
+                    const isExpanded = expandedPillars.has(spCode);
+
+                    return (
+                      <Card key={spCode} className={`border-2 ${categoryConfig.borderColor}`}>
+                        <CardHeader
+                          className={`cursor-pointer hover:bg-gray-50 transition-colors ${categoryConfig.bgColor}`}
+                          onClick={() => togglePillar(spCode)}
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-4">
+                              <div className={`p-3 rounded-lg ${categoryConfig.bgColor} ${categoryConfig.borderColor} border-2`}>
+                                <CategoryIcon className={`h-6 w-6 ${categoryConfig.color}`} />
+                              </div>
+                              <div>
+                                <div className="flex items-center gap-3">
+                                  <CardTitle className="text-xl font-bold">{categoryConfig.name}</CardTitle>
+                                  <Badge variant="secondary" className="font-semibold">
+                                    {workflows.length} Workflows
+                                  </Badge>
+                                </div>
+                                <CardDescription className="mt-1 text-sm">
+                                  {categoryConfig.description}
+                                </CardDescription>
+                              </div>
+                            </div>
+                            {isExpanded ? (
+                              <ChevronDown className="h-6 w-6 text-gray-500" />
+                            ) : (
+                              <ChevronRight className="h-6 w-6 text-gray-500" />
+                            )}
+                          </div>
+                        </CardHeader>
+
+                        {isExpanded && (
+                          <CardContent className="pt-6">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                              {workflows.map((workflow) => (
+                                <UseCaseCard key={workflow.id} useCase={workflow} />
+                              ))}
+                            </div>
+                          </CardContent>
+                        )}
+                      </Card>
+                    );
+                  })}
+                </div>
+              ) : selectedDomain === 'all' ? (
                 // Group by domain
                 Object.entries(groupedByDomain).map(([domain, cases]) => {
                   const config = DOMAIN_CONFIG[domain as keyof typeof DOMAIN_CONFIG];
-                  
+
                   // Skip if domain config not found
                   if (!config) {
                     console.warn(`Unknown domain: ${domain}`);
                     return null;
                   }
-                  
+
                   const Icon = config.icon;
-                  
+
                   return (
                     <div key={domain} className="space-y-4">
                       <div className="flex items-center gap-3 pb-2 border-b">
@@ -379,8 +645,21 @@ function UseCaseCard({ useCase }: UseCaseCardProps) {
     console.log('Configure workflow:', useCase.code);
   };
 
+  // Determine industry badge
+  const getIndustryBadge = () => {
+    const industry = useCase.industry || useCase.sector || '';
+    if (industry.toLowerCase().includes('startup') || industry.toLowerCase().includes('digital health')) {
+      return { label: 'Startup', color: 'bg-green-100 text-green-800 border-green-300' };
+    } else if (industry.toLowerCase().includes('pharma')) {
+      return { label: 'Pharma', color: 'bg-blue-100 text-blue-800 border-blue-300' };
+    }
+    return null;
+  };
+
+  const industryBadge = getIndustryBadge();
+
   return (
-    <Card 
+    <Card
       className="hover:shadow-lg transition-shadow cursor-pointer"
       onClick={handleCardClick}
     >
@@ -392,6 +671,11 @@ function UseCaseCard({ useCase }: UseCaseCardProps) {
               {useCase.title}
             </CardTitle>
           </div>
+          {industryBadge && (
+            <Badge variant="outline" className={`text-xs font-semibold ${industryBadge.color}`}>
+              {industryBadge.label}
+            </Badge>
+          )}
         </div>
         <CardDescription className="text-sm mb-4">
           {useCase.description}
@@ -405,6 +689,16 @@ function UseCaseCard({ useCase }: UseCaseCardProps) {
           <Badge className={`text-xs ${complexityColor} border-0`}>
             {useCase.complexity}
           </Badge>
+          {useCase.strategic_pillar && (
+            <Badge variant="outline" className="text-xs bg-purple-50 text-purple-700 border-purple-200">
+              {useCase.strategic_pillar}
+            </Badge>
+          )}
+          {useCase.frequency && (
+            <Badge variant="outline" className="text-xs">
+              {useCase.frequency}
+            </Badge>
+          )}
           <Badge variant="outline" className="text-xs">
             <Clock className="w-3 h-3 mr-1" />
             {useCase.estimated_duration_minutes || 0} min
@@ -413,14 +707,26 @@ function UseCaseCard({ useCase }: UseCaseCardProps) {
             <FileText className="w-3 h-3 mr-1" />
             {useCase.deliverables?.length || 0} deliverables
           </Badge>
+          {useCase.importance && (
+            <Badge variant="outline" className="text-xs bg-orange-50 text-orange-700 border-orange-200">
+              Priority: {useCase.importance}/10
+            </Badge>
+          )}
         </div>
       </CardHeader>
 
       <CardContent>
         <div className="flex items-center justify-between text-sm">
-          <span className="text-muted-foreground text-xs">
-            Click to view details
-          </span>
+          <div className="flex items-center gap-2">
+            {useCase.source && (
+              <Badge variant="outline" className="text-xs">
+                {useCase.source === 'Medical Affairs JTBD Library' ? 'MA JTBD' : 'DH Use Case'}
+              </Badge>
+            )}
+            <span className="text-muted-foreground text-xs">
+              Click to view details
+            </span>
+          </div>
           <Button
             variant="ghost"
             size="sm"

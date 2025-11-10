@@ -5,10 +5,22 @@ Medical AI Agent Orchestration with LangChain
 
 import os
 import sys
+from pathlib import Path
 from dotenv import load_dotenv
 
 # Load environment variables FIRST before any other imports
-load_dotenv()
+# Priority: .env.local > .env > system environment
+# Look in project root (3 levels up from this file: src/ -> ai-engine/ -> services/ -> project_root/)
+project_root = Path(__file__).parent.parent.parent.parent
+env_local = project_root / '.env.local'
+env_default = project_root / '.env'
+
+if env_local.exists():
+    load_dotenv(env_local, override=True)
+elif env_default.exists():
+    load_dotenv(env_default, override=True)
+else:
+    load_dotenv()  # Try default locations
 
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException, Depends, WebSocket, WebSocketDisconnect, Request
@@ -33,7 +45,7 @@ import asyncio
 import json
 from datetime import datetime
 from enum import Enum
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 
 # Initialize Sentry FIRST for error tracking
 sentry_dsn = os.getenv("SENTRY_DSN")
@@ -220,6 +232,7 @@ class ConversationTurn(BaseModel):
 
 
 class Mode1ManualRequest(BaseModel):
+    model_config = ConfigDict(extra="ignore")
     """Payload for Mode 1 manual interactive requests"""
     agent_id: str = Field(..., description="Agent ID to execute")
     message: str = Field(..., min_length=1, description="User message")
@@ -278,6 +291,7 @@ class Mode1ManualResponse(BaseModel):
 
 
 class Mode2AutomaticRequest(BaseModel):
+    model_config = ConfigDict(extra="ignore")
     """Payload for Mode 2 automatic agent selection requests"""
     message: str = Field(..., min_length=1, description="User message")
     enable_rag: bool = Field(True, description="Enable RAG retrieval")
@@ -902,6 +916,11 @@ async def get_cache_stats():
     
     return stats
 
+
+# Allow CORS preflight without hitting dependency stack
+@app.options("/api/mode1/manual")
+async def options_mode1_manual():
+    return JSONResponse(status_code=200, content={})
 
 @app.post("/api/mode1/manual")
 async def execute_mode1_manual_streaming(

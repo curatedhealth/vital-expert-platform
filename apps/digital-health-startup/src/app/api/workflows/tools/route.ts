@@ -1,13 +1,15 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { getServiceSupabaseClient } from '@/lib/supabase/service-client';
 
 export async function GET() {
   try {
-    const supabase = await createClient();
+    const supabase = getServiceSupabaseClient();
+
+    console.log('Fetching all tools from library...');
 
     const { data: tools, error } = await supabase
       .from('dh_tool')
-      .select('id, code, name, category, tool_type, is_active')
+      .select('*')
       .eq('is_active', true)
       .order('name');
 
@@ -19,9 +21,12 @@ export async function GET() {
       );
     }
 
+    console.log(`✅ Fetched ${tools?.length || 0} tools for library`);
+
     return NextResponse.json({
       success: true,
       tools: tools || [],
+      count: tools?.length || 0,
     });
   } catch (error) {
     console.error('Error in tools API:', error);

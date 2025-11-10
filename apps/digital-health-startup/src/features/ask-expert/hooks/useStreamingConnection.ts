@@ -157,16 +157,34 @@ export function useStreamingConnection(
           const chunk = decoder.decode(value, { stream: true });
           buffer += chunk;
           
+          // 🔍 DEBUG: Log raw chunk
+          console.log('[🔍 DEBUG] Raw chunk received:', chunk.substring(0, 100));
+          
           // Parse SSE events
           const events = parseSSEChunk(buffer);
           
+          // 🔍 DEBUG: Log parsed events count
+          console.log(`[🔍 DEBUG] Parsed ${events.length} events from buffer`);
+          if (events.length > 0) {
+            console.log('[🔍 DEBUG] First event:', events[0]);
+          }
+          
           // Process each event
           for (const event of events) {
+            // 🔍 DEBUG: Log event data
+            console.log('[🔍 DEBUG] Processing event:', event.event, 'Data:', typeof event.data === 'string' ? event.data.substring(0, 50) : event.data);
+            
             // Try to parse as LangGraph event first (backend format)
             const langGraphEvent = parseLangGraphEvent(event.data);
             
+            // 🔍 DEBUG: Log LangGraph parsing result
             if (langGraphEvent) {
-              console.log(`[useStreamingConnection] LangGraph event: ${langGraphEvent.eventType}`);
+              console.log(`[useStreamingConnection] ✅ LangGraph event: ${langGraphEvent.eventType}`, langGraphEvent.data);
+            } else {
+              console.log('[useStreamingConnection] ❌ Not a LangGraph event, using standard SSE format');
+            }
+            
+            if (langGraphEvent) {
               
               const handler = eventHandlersRef.current.get(langGraphEvent.eventType);
               if (handler) {

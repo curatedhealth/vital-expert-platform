@@ -12,37 +12,140 @@ export async function GET(
     console.log(`[API] Fetching complete use case data for: ${code}`);
     const startTime = Date.now();
 
-    // Step 1: Fetch use case
-    const { data: useCase, error: useCaseError } = await supabase
+    let useCase: any = null;
+    let isJTBD = false;
+
+    // Step 1: Try fetching from dh_use_case first
+    const { data: dhUseCase, error: useCaseError } = await supabase
       .from('dh_use_case')
       .select('*')
       .eq('code', code)
-      .single();
+      .maybeSingle();
 
-    if (useCaseError) {
-      console.error('[API] Use case fetch error:', useCaseError);
-      throw useCaseError;
+    if (dhUseCase) {
+      useCase = {
+        ...dhUseCase,
+        domain: dhUseCase.code?.split('_')[1] || 'UNKNOWN',
+        source: 'Digital Health Use Cases',
+      };
+      console.log(`[API] ✅ Found Digital Health use case: ${code}`);
+    } else {
+      // Try fetching from jtbd_library (Medical Affairs)
+      console.log(`[API] Trying to fetch JTBD with code: ${code}`);
+
+      const { data: jtbd, error: jtbdError } = await supabase
+        .from('jtbd_library')
+        .select('*')
+        .eq('jtbd_code', code)
+        .maybeSingle();
+
+      console.log(`[API] JTBD query result:`, { found: !!jtbd, error: jtbdError });
+
+      // If not found by jtbd_code, try by id (only if it looks like a UUID)
+      if (!jtbd && !jtbdError && isValidUuid(code)) {
+        console.log(`[API] JTBD not found by jtbd_code, trying by id (UUID)...`);
+        const { data: jtbdById, error: jtbdByIdError } = await supabase
+          .from('jtbd_library')
+          .select('*')
+          .eq('id', code)
+          .maybeSingle();
+
+        console.log(`[API] JTBD by id result:`, { found: !!jtbdById, error: jtbdByIdError });
+
+        if (jtbdById) {
+          isJTBD = true;
+          useCase = {
+            id: jtbdById.id,
+            code: jtbdById.jtbd_code || code,
+            unique_id: jtbdById.unique_id,
+            title: jtbdById.title || jtbdById.statement || 'Untitled JTBD',
+            description: jtbdById.description || jtbdById.goal || '',
+            domain: 'MA',
+            complexity: jtbdById.complexity || 'INTERMEDIATE',
+            estimated_duration_minutes: estimateDurationFromComplexity(jtbdById.complexity),
+            strategic_pillar: jtbdById.function || 'Uncategorized',
+            source: 'Medical Affairs JTBD Library',
+            category: jtbdById.category,
+            importance: jtbdById.importance,
+            frequency: jtbdById.frequency,
+            sector: 'Pharma',
+            industry: 'Pharma',
+            deliverables: parseJsonField(jtbdById.success_criteria) || [],
+            prerequisites: parseJsonField(jtbdById.pain_points) || [],
+            success_metrics: parseJsonField(jtbdById.success_criteria) || {},
+          };
+          console.log(`[API] ✅ Found JTBD by id: ${code}`);
+        }
+      }
+
+      if (jtbd) {
+        isJTBD = true;
+        useCase = {
+          id: jtbd.id,
+          code: jtbd.jtbd_code || code,
+          unique_id: jtbd.unique_id,
+          title: jtbd.title || jtbd.statement || 'Untitled JTBD',
+          description: jtbd.description || jtbd.goal || '',
+          domain: 'MA',
+          complexity: jtbd.complexity || 'INTERMEDIATE',
+          estimated_duration_minutes: estimateDurationFromComplexity(jtbd.complexity),
+          strategic_pillar: jtbd.function || 'Uncategorized',
+          source: 'Medical Affairs JTBD Library',
+          category: jtbd.category,
+          importance: jtbd.importance,
+          frequency: jtbd.frequency,
+          sector: 'Pharma',
+          industry: 'Pharma',
+          deliverables: parseJsonField(jtbd.success_criteria) || [],
+          prerequisites: parseJsonField(jtbd.pain_points) || [],
+          success_metrics: parseJsonField(jtbd.success_criteria) || {},
+        };
+        console.log(`[API] ✅ Found JTBD by jtbd_code: ${code}`);
+      }
     }
 
     if (!useCase) {
+      console.log(`[API] ❌ Use case/JTBD not found: ${code}`);
       return NextResponse.json(
-        { success: false, error: 'Use case not found' },
+        {
+          success: false,
+          error: 'Use case not found',
+          details: `No use case or JTBD found with code: ${code}`,
+          debugInfo: {
+            code,
+            checkedTables: ['dh_use_case', 'jtbd_library'],
+          },
+        },
         { status: 404 }
       );
     }
 
     // Step 2: Fetch all workflows for this use case
-    const { data: workflows, error: workflowsError } = await supabase
-      .from('dh_workflow')
-      .select('*')
-      .eq('use_case_id', useCase.id)
-      .order('position', { ascending: true });
+    // NOTE: Only query workflows if useCase.id is a valid UUID
+    // JTBDs from jtbd_library have VARCHAR ids like "JTBD-MA-042" which will cause 22P02 error
+    let workflows: any[] = [];
+    let workflowsError: any = null;
 
-    if (workflowsError) throw workflowsError;
+    if (isValidUuid(useCase.id)) {
+      const result = await supabase
+        .from('dh_workflow')
+        .select('*')
+        .eq('use_case_id', useCase.id)
+        .order('position', { ascending: true });
 
-    const workflowIds = workflows?.map(w => w.id) || [];
-    
+      workflows = result.data || [];
+      workflowsError = result.error;
+
+      if (workflowsError) throw workflowsError;
+    } else {
+      // JTBD from jtbd_library - no workflows in dh_workflow table yet
+      console.log(`[API] Skipping workflow query for non-UUID use case id: ${useCase.id}`);
+    }
+
+    const workflowIds = workflows.map(w => w.id);
+
     if (workflowIds.length === 0) {
+      console.log(`[API] No workflows found for use case: ${code}`);
       return NextResponse.json({
         success: true,
         data: { useCase, workflows: [], tasksByWorkflow: {} },
@@ -180,4 +283,33 @@ export async function GET(
       { status: 500 }
     );
   }
+}
+
+// Helper functions
+function isValidUuid(str: string): boolean {
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  return uuidRegex.test(str);
+}
+
+function estimateDurationFromComplexity(complexity?: string): number {
+  if (!complexity) return 60;
+  const lower = complexity.toLowerCase();
+  if (lower.includes('expert') || lower.includes('high')) return 240;
+  if (lower.includes('advanced')) return 120;
+  if (lower.includes('intermediate') || lower.includes('medium')) return 60;
+  if (lower.includes('beginner') || lower.includes('basic') || lower.includes('low')) return 30;
+  return 60;
+}
+
+function parseJsonField(field: any): any {
+  if (!field) return null;
+  if (typeof field === 'object') return field;
+  if (typeof field === 'string') {
+    try {
+      return JSON.parse(field);
+    } catch {
+      return null;
+    }
+  }
+  return null;
 }

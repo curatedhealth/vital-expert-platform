@@ -97,37 +97,33 @@ export async function verifyAgentPermissions(
     }
 
     // Get user profile with role and tenant
-    const { data: profile, error: profileError } = await supabase
-      .from('profiles')
-      .select('tenant_id, role')
+    // Note: tenant_id comes from users.organization_id, not profiles table
+    const { data: userData, error: userError } = await supabase
+      .from('users')
+      .select('organization_id, role')
       .eq('id', user.id)
       .single();
 
-    if (profileError || !profile) {
-      logger.warn('agent_auth_failed', {
-        operation: 'verifyAgentPermissions',
-        operationId,
-        action,
-        userId: user.id,
-        reason: 'profile_not_found',
-        error: profileError?.message,
-      });
+    // Also get role from profiles table as fallback
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .maybeSingle();
 
-      return {
-        allowed: false,
-        error: 'User profile not found',
-      };
-    }
+    // Use users table data if available, otherwise fallback to profiles
+    const userRole = userData?.role || profile?.role || 'guest';
+    const organizationId = userData?.organization_id;
 
     // Normalize role (handle both 'superadmin' and 'super_admin')
     const normalizedRole =
-      profile.role === 'superadmin' || profile.role === 'super_admin'
+      userRole === 'superadmin' || userRole === 'super_admin'
         ? 'super_admin'
-        : (profile.role as 'admin' | 'manager' | 'member' | 'guest') || 'guest';
+        : (userRole as 'admin' | 'manager' | 'member' | 'guest') || 'guest';
 
     // Ensure tenant_id exists (fallback to platform tenant from env config)
     const tenantIds = env.getTenantIds();
-    const tenantId = profile.tenant_id || tenantIds.platform;
+    const tenantId = organizationId || tenantIds.platform;
 
     const context: AgentPermissionContext = {
       user: {

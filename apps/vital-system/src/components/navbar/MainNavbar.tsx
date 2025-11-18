@@ -26,6 +26,8 @@ const navItems = [
   { label: 'Agents', href: '/agents' },
   { label: 'Tools', href: '/tools' },
   { label: 'Knowledge', href: '/knowledge' },
+  { label: 'Personas', href: '/personas' },
+  { label: 'JTBD', href: '/jobs-to-be-done' },
   { label: 'Prompt Prism', href: '/prism' },
   { label: 'Admin', href: '/admin' },
 ]

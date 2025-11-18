@@ -136,36 +136,19 @@ function KnowledgePageContent() {
     }
   }, [selectedDomain]);
 
-  // Fetch knowledge domains from new architecture (with fallback)
+  // Fetch knowledge domains from database
   const fetchDomains = useCallback(async () => {
     try {
-      // Try new architecture first
-      const { data: newData, error: newError } = await supabase
-        .from('knowledge_domains_new')
-        .select('domain_id, domain_name, domain_scope, tier, priority, access_policy, rag_priority_weight, embedding_model, maturity_level, function_id, function_name, parent_domain_id, slug, name, is_active')
-        .eq('is_active', true)
-        .order('tier', { ascending: true })
-        .order('priority', { ascending: true });
-
-      if (!newError && newData && newData.length > 0) {
-        // Map to compatible format
-        const mappedDomains = newData.map((d: any) => ({
-          ...d,
-          id: d.domain_id,
-          slug: d.domain_id,
-          name: d.domain_name || d.name || d.domain_id,
-        }));
-        setDomains(mappedDomains);
-        return;
-      }
-
-      // Fallback to old table
+      // Fetch from knowledge_domains table
       const { data, error } = await supabase
         .from('knowledge_domains')
         .select('id, name, tier')
         .order('name', { ascending: true });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Knowledge domains query error:', error);
+        throw error;
+      }
       setDomains(data || []);
     } catch (err) {
       console.error('Error fetching knowledge domains:', err);

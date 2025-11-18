@@ -66,9 +66,10 @@ CREATE INDEX IF NOT EXISTS idx_document_chunks_domain_id ON document_chunks(doma
 CREATE INDEX IF NOT EXISTS idx_document_chunks_content_fts ON document_chunks
   USING GIN (to_tsvector('english', content));
 
--- Vector similarity search index (IVFFlat for better performance)
+-- Vector similarity search index (HNSW for high-dimensional vectors)
+-- HNSW supports up to 2000+ dimensions, better for text-embedding-3-large (3072d)
 CREATE INDEX IF NOT EXISTS idx_document_chunks_embedding ON document_chunks
-  USING ivfflat (embedding vector_cosine_ops) WITH (lists = 100);
+  USING hnsw (embedding vector_cosine_ops) WITH (m = 16, ef_construction = 64);
 
 -- =====================================================================
 -- 3. EXTRACTED_ENTITIES - LangExtract entity storage

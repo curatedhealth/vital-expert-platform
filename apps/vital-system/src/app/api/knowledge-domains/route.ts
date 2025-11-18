@@ -22,10 +22,10 @@ export async function GET(request: NextRequest) {
     // Get tenant_id from headers or cookies
     const tenantId = request.headers.get('x-tenant-id') || request.cookies.get('tenant_id')?.value;
 
-    // Build query
+    // Build query - select only columns that exist
     let query = supabase
       .from('knowledge_domains')
-      .select('id, name, tier')
+      .select('id, name')
       .order('name', { ascending: true });
 
     // Apply tenant filtering if tenant_id exists

@@ -25,8 +25,8 @@ export async function GET(request: NextRequest) {
     // Build query
     let query = supabase
       .from('knowledge_domains')
-      .select('code, name, tier, priority')
-      .order('priority', { ascending: true });
+      .select('id, name, tier')
+      .order('name', { ascending: true });
 
     // Apply tenant filtering if tenant_id exists
     if (tenantId) {

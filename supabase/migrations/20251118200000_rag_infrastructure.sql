@@ -48,7 +48,7 @@ CREATE TABLE IF NOT EXISTS document_chunks (
   document_id UUID NOT NULL REFERENCES knowledge_documents(id) ON DELETE CASCADE,
   chunk_index INTEGER NOT NULL,
   content TEXT NOT NULL,
-  embedding vector(3072), -- OpenAI text-embedding-3-large dimension
+  embedding vector(1536), -- OpenAI text-embedding-3-small / ada-002 dimension (pgvector limit: 2000)
   metadata JSONB DEFAULT '{}',
   domain_id TEXT,
   access_policy TEXT,
@@ -66,10 +66,9 @@ CREATE INDEX IF NOT EXISTS idx_document_chunks_domain_id ON document_chunks(doma
 CREATE INDEX IF NOT EXISTS idx_document_chunks_content_fts ON document_chunks
   USING GIN (to_tsvector('english', content));
 
--- Vector similarity search index (HNSW for high-dimensional vectors)
--- HNSW supports up to 2000+ dimensions, better for text-embedding-3-large (3072d)
+-- Vector similarity search index (IVFFlat for 1536d vectors)
 CREATE INDEX IF NOT EXISTS idx_document_chunks_embedding ON document_chunks
-  USING hnsw (embedding vector_cosine_ops) WITH (m = 16, ef_construction = 64);
+  USING ivfflat (embedding vector_cosine_ops) WITH (lists = 100);
 
 -- =====================================================================
 -- 3. EXTRACTED_ENTITIES - LangExtract entity storage

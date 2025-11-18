@@ -272,11 +272,13 @@ export async function GET(request: NextRequest) {
     try {
       
       // Get all agents that the user has added, including agent details
+      // Note: Using agents!user_agents_agent_id_fkey to specify which foreign key relationship to use
+      // (the user_agents table has two foreign keys to agents: agent_id and original_agent_id)
       const { data, error } = await supabaseAdmin
         .from('user_agents')
         .select(`
           *,
-          agents (
+          agents!user_agents_agent_id_fkey (
             id,
             name,
             description,

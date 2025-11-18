@@ -1,14 +1,14 @@
 import { createClient } from '@supabase/supabase-js';
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 
 /**
  * GET /api/knowledge-domains
  * Fetches all available RAG knowledge domains from the database
  */
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
     if (!supabaseUrl || !supabaseKey) {
       return NextResponse.json(
@@ -19,11 +19,22 @@ export async function GET() {
 
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Fetch knowledge domains from database
-    const { data: domains, error } = await supabase
+    // Get tenant_id from headers or cookies
+    const tenantId = request.headers.get('x-tenant-id') || request.cookies.get('tenant_id')?.value;
+
+    // Build query
+    let query = supabase
       .from('knowledge_domains')
       .select('code, name, tier, priority')
       .order('priority', { ascending: true });
+
+    // Apply tenant filtering if tenant_id exists
+    if (tenantId) {
+      query = query.contains('allowed_tenants', [tenantId]);
+    }
+
+    // Fetch knowledge domains from database
+    const { data: domains, error } = await query;
 
     if (error) {
       console.error('Error fetching knowledge domains:', error);

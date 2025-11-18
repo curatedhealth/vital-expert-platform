@@ -17,7 +17,7 @@ export const GET = withAgentAuth(async (
 
     const { searchParams } = new URL(request.url);
     const showAll = searchParams.get('showAll') === 'true';
-    const limit = parseInt(searchParams.get('limit') || '100');
+    const limit = parseInt(searchParams.get('limit') || '10000');
     const offset = parseInt(searchParams.get('offset') || '0');
 
     logger.info('personas_get_started', {
@@ -31,7 +31,7 @@ export const GET = withAgentAuth(async (
       offset,
     });
 
-    // Build query
+    // Build query using actual database column names
     let query = supabase
       .from('personas')
       .select(`
@@ -39,40 +39,59 @@ export const GET = withAgentAuth(async (
         slug,
         name,
         title,
-        description,
+        one_liner,
+        tagline,
+        archetype,
+        persona_type,
+        persona_number,
+        section,
+        segment,
         organization_type,
-        company_size,
+        typical_organization_size,
         seniority_level,
-        department,
-        industry,
-        location,
-        years_experience,
+        department_id,
+        department_slug,
+        function_id,
+        function_slug,
+        role_id,
+        role_slug,
+        years_of_experience,
+        years_in_function,
+        years_in_industry,
+        years_in_current_role,
         education_level,
         budget_authority,
-        primary_goals,
-        pain_points,
-        motivations,
-        challenges,
-        success_metrics,
         key_responsibilities,
-        decision_criteria,
-        preferred_channels,
-        content_preferences,
         technology_adoption,
         risk_tolerance,
+        decision_making_style,
+        learning_style,
+        work_style,
+        work_style_preference,
+        work_arrangement,
+        location_type,
+        geographic_scope,
+        team_size,
+        team_size_typical,
+        direct_reports,
+        reporting_to,
+        span_of_control,
+        salary_min_usd,
+        salary_median_usd,
+        salary_max_usd,
         metadata,
         tags,
-        status,
+        is_active,
         tenant_id,
         created_at,
         updated_at
       `, { count: 'exact' });
 
-    // Apply tenant filtering
+    // Apply tenant filtering using allowed_tenants array
     if (showAll && (profile.role === 'super_admin' || profile.role === 'admin')) {
       logger.debug('personas_get_admin_view_all_tenants', { operationId });
     } else {
-      query = query.eq('tenant_id', profile.tenant_id);
+      query = query.contains('allowed_tenants', [profile.tenant_id]);
       logger.debug('personas_get_tenant_filtered', { operationId, tenantId: profile.tenant_id });
     }
 

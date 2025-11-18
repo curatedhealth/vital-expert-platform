@@ -1,11 +1,22 @@
 /**
  * Tenant Context Middleware for Next.js
- * Full multi-tenant implementation with subdomain/header/cookie detection
+ * Subdomain-based multitenancy with tenant_key mapping
  */
 
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+
+// Subdomain to tenant_key mapping (matches database tenant_key values)
+const SUBDOMAIN_TO_TENANT_KEY: Record<string, string> = {
+  'vital-system': 'vital-system',
+  'digital-health': 'digital-health',
+  'pharma': 'pharma',
+  'pharmaceuticals': 'pharma', // Alias
+};
+
+// Default tenant if no subdomain or unknown subdomain
+const DEFAULT_TENANT_KEY = 'vital-system';
 
 // Platform Tenant ID (fallback)
 const PLATFORM_TENANT_ID = '00000000-0000-0000-0000-000000000001';
@@ -16,44 +27,59 @@ export async function tenantMiddleware(
   userId?: string
 ): Promise<NextResponse> {
   let tenantId = PLATFORM_TENANT_ID;
+  let tenantKey = DEFAULT_TENANT_KEY;
   let detectionMethod = 'fallback';
 
   // 1. SUBDOMAIN DETECTION (highest priority)
-  // Example: acme.vital.expert → query for tenant with slug="acme"
+  // Examples: vital-system.localhost:3000, digital-health.localhost:3000, pharma.localhost:3000
   const hostname = request.headers.get('host') || '';
-  const parts = hostname.split('.');
+  console.log('[Tenant Middleware] Request hostname:', hostname);
 
-  // Check if subdomain exists and is not www/vital/app
-  if (parts.length >= 3 || (parts.length === 2 && hostname.includes('localhost'))) {
+  // Extract subdomain from hostname
+  const hostWithoutPort = hostname.split(':')[0];
+  const parts = hostWithoutPort.split('.');
+
+  // For localhost: vital-system.localhost → parts[0] = "vital-system"
+  // For production: vital-system.yourdomain.com → parts[0] = "vital-system"
+  if (parts.length >= 2 || hostname.includes('localhost')) {
     const subdomain = parts[0];
+    console.log('[Tenant Middleware] Extracted subdomain:', subdomain);
 
-    if (subdomain && subdomain !== 'www' && subdomain !== 'vital' && subdomain !== 'app' && subdomain !== 'localhost') {
+    // Map subdomain to tenant_key
+    if (subdomain && subdomain !== 'localhost' && SUBDOMAIN_TO_TENANT_KEY[subdomain]) {
+      tenantKey = SUBDOMAIN_TO_TENANT_KEY[subdomain];
+
       try {
-        // Query Supabase for tenant by slug
+        // Query Supabase for tenant by tenant_key (use service role to bypass RLS)
         const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-        const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+        const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
-        if (supabaseUrl && supabaseKey) {
-          const supabase = createClient(supabaseUrl, supabaseKey);
+        if (supabaseUrl && supabaseServiceKey) {
+          const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-          const { data: tenant, error } = await supabase
-            .from('tenants')
-            .select('id')
-            .eq('slug', subdomain)
-            .eq('status', 'active')
+          const { data: org, error } = await supabase
+            .from('organizations')
+            .select('id, name, tenant_key')
+            .eq('tenant_key', tenantKey)
+            .eq('is_active', true)
             .single();
 
-          if (tenant && !error) {
-            tenantId = tenant.id;
+          if (org && !error) {
+            tenantId = org.id;
+            tenantKey = org.tenant_key;
             detectionMethod = 'subdomain';
-            console.log(`[Tenant Middleware] Detected tenant from subdomain: ${subdomain} → ${tenantId}`);
+            console.log(`[Tenant Middleware] Detected tenant: ${org.name} (${tenantKey}) → ${tenantId}`);
           } else {
-            console.warn(`[Tenant Middleware] No tenant found for subdomain: ${subdomain}`);
+            console.warn(`[Tenant Middleware] No organization found for tenant_key: ${tenantKey}`, error);
           }
         }
       } catch (error) {
-        console.error('[Tenant Middleware] Error querying tenant:', error);
+        console.error('[Tenant Middleware] Error querying organization:', error);
       }
+    } else if (hostname.includes('localhost') && parts.length === 1) {
+      // Plain localhost without subdomain → use default
+      console.log('[Tenant Middleware] No subdomain detected, using default:', DEFAULT_TENANT_KEY);
+      tenantKey = DEFAULT_TENANT_KEY;
     }
   }
 
@@ -112,18 +138,19 @@ export async function tenantMiddleware(
     console.log('[Tenant Middleware] Using Platform Tenant (fallback)');
   }
 
-  // Create response with tenant header
+  // Create response with tenant headers
   const newResponse = NextResponse.next({
     request: {
       headers: request.headers,
     },
   });
 
-  // Set tenant ID in response headers (for client-side access)
+  // Set tenant ID and tenant_key in response headers (for client-side access)
   newResponse.headers.set('x-tenant-id', tenantId);
+  newResponse.headers.set('x-tenant-key', tenantKey);
   newResponse.headers.set('x-tenant-detection-method', detectionMethod);
 
-  // Set tenant ID cookie (for persistence across requests)
+  // Set tenant ID cookie (for persistence across requests, backward compatibility)
   newResponse.cookies.set('tenant_id', tenantId, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
@@ -131,6 +158,17 @@ export async function tenantMiddleware(
     maxAge: 60 * 60 * 24 * 30, // 30 days
     path: '/',
   });
+
+  // Set tenant_key cookie (for subdomain-based tenant context provider)
+  newResponse.cookies.set('vital-tenant-key', tenantKey, {
+    httpOnly: false, // Allow client-side JavaScript to read
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    maxAge: 60 * 60 * 24 * 30, // 30 days
+    path: '/',
+  });
+
+  console.log('[Tenant Middleware] Set cookies: tenant_id=', tenantId, ', vital-tenant-key=', tenantKey);
 
   return newResponse;
 }

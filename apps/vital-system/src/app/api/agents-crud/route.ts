@@ -240,17 +240,17 @@ export const GET = withAgentAuth(async (
         updated_at
       `);
 
-    // Apply tenant filtering
+    // Apply tenant filtering using allowed_tenants array
     if (showAll && (profile.role === 'super_admin' || profile.role === 'admin')) {
       // Only super admins/admins with explicit showAll=true can see all agents across all tenants
       logger.debug('agents_crud_get_admin_view_all_tenants', { operationId });
     } else if (profile.tenant_id) {
-      // Everyone else sees only their current tenant's agents
-      query = query.eq('tenant_id', profile.tenant_id);
+      // Everyone else sees only agents that allow their current tenant
+      query = query.contains('allowed_tenants', [profile.tenant_id]);
       logger.debug('agents_crud_get_tenant_filtered', { operationId, tenantId: profile.tenant_id });
     } else {
       // If no tenant_id, default to showing no agents (safe fallback)
-      query = query.eq('tenant_id', '00000000-0000-0000-0000-000000000000');
+      query = query.contains('allowed_tenants', ['00000000-0000-0000-0000-000000000000']);
       logger.warn('agents_crud_get_no_tenant', { operationId, userId: context.user.id });
     }
 

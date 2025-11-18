@@ -43,11 +43,6 @@ export function TenantSwitcher() {
   const [isOpen, setIsOpen] = useState(false);
   const supabase = createClient();
 
-  // Only show for system tenant
-  if (!showSwitcher) {
-    return null;
-  }
-
   /**
    * Load available tenants with their configurations
    */
@@ -154,6 +149,11 @@ export function TenantSwitcher() {
 
   const currentTenantInfo = tenant ? getTenantInfo(tenant.tenant_type) : null;
   const currentLogo = uiConfig?.logo_url;
+
+  // Only show for system tenant - check AFTER all hooks
+  if (!showSwitcher) {
+    return null;
+  }
 
   return (
     <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>

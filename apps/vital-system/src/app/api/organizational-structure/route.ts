@@ -31,13 +31,13 @@ export async function GET(request: NextRequest) {
     let functions: any[] = [];
     try {
       const { data: functionsData, error: functionsError } = await supabase
-        .from('business_functions')
+        .from('suite_functions')
         .select('id, name, description')
         .order('name');
 
       if (functionsError) {
         if (functionsError.code === '42P01' || functionsError.code === '42501' || functionsError.code === '42703') {
-          console.warn('[Org Structure API] business_functions unavailable:', functionsError.code);
+          console.warn('[Org Structure API] suite_functions unavailable:', functionsError.code);
         } else {
           throw functionsError;
         }
@@ -45,20 +45,20 @@ export async function GET(request: NextRequest) {
         functions = functionsData || [];
       }
     } catch (error) {
-      console.warn('[Org Structure API] business_functions query failed:', error);
+      console.warn('[Org Structure API] suite_functions query failed:', error);
     }
 
     // Try to get departments, but handle missing table/columns gracefully
     let departments: any[] = [];
     try {
       const { data: departmentsData, error: departmentsError } = await supabase
-        .from('departments')
-        .select('id, name, description, business_function_id')
+        .from('org_departments')
+        .select('id, name, description')
         .order('name');
 
       if (departmentsError) {
         if (departmentsError.code === '42P01' || departmentsError.code === '42501' || departmentsError.code === '42703') {
-          console.warn('[Org Structure API] departments unavailable:', departmentsError.code);
+          console.warn('[Org Structure API] org_departments unavailable:', departmentsError.code);
         } else {
           throw departmentsError;
         }
@@ -66,20 +66,20 @@ export async function GET(request: NextRequest) {
         departments = departmentsData || [];
       }
     } catch (error) {
-      console.warn('[Org Structure API] departments query failed:', error);
+      console.warn('[Org Structure API] org_departments query failed:', error);
     }
 
     // Try to get roles, but handle missing table/columns gracefully
     let roles: any[] = [];
     try {
       const { data: rolesData, error: rolesError } = await supabase
-        .from('organizational_roles')
-        .select('id, name, description, department_id, business_function_id, level')
+        .from('organizational_levels')
+        .select('id, name, description, level')
         .order('name');
 
       if (rolesError) {
         if (rolesError.code === '42P01' || rolesError.code === '42501' || rolesError.code === '42703') {
-          console.warn('[Org Structure API] organizational_roles unavailable:', rolesError.code);
+          console.warn('[Org Structure API] organizational_levels unavailable:', rolesError.code);
         } else {
           throw rolesError;
         }
@@ -87,7 +87,7 @@ export async function GET(request: NextRequest) {
         roles = rolesData || [];
       }
     } catch (error) {
-      console.warn('[Org Structure API] organizational_roles query failed:', error);
+      console.warn('[Org Structure API] organizational_levels query failed:', error);
     }
 
     const departmentsByFunction: Record<string, any[]> = {};

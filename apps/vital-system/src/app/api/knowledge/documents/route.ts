@@ -43,13 +43,13 @@ export async function GET(request: NextRequest) {
     
     console.log('[Documents API] Query params:', { domain, agentId, isGlobal });
     
-    // Build query for knowledge_documents table (matches upload process)
+    // Build query for knowledge_sources table
     // Note: Excluding 'content' field as it can be very large and cause performance issues
     // Content is only needed when viewing individual documents, not in list view
     console.log('[Documents API] Building query...');
-    // Query columns with new architecture fields
+    // Query columns from knowledge_sources table
     let query = supabase
-      .from('knowledge_documents')
+      .from('knowledge_sources')
       .select(`
         id,
         title,
@@ -57,22 +57,13 @@ export async function GET(request: NextRequest) {
         file_size,
         file_type,
         domain,
-        domain_id,
         status,
-        processed_at,
         created_at,
         updated_at,
         tags,
         metadata,
-        chunk_count,
-        access_policy,
-        rag_priority_weight,
-        pii_sensitivity,
-        regulatory_exposure,
-        enterprise_id,
-        owner_user_id,
-        user_id,
-        upload_url
+        tenant_id,
+        user_id
       `)
       .order('created_at', { ascending: false });
 

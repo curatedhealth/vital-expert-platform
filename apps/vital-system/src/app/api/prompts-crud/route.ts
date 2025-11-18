@@ -31,9 +31,9 @@ export async function GET(request: NextRequest) {
         .select('*')
         .eq('id', id);
 
-      // Apply tenant filter unless showAll is true
+      // Apply tenant filter using allowed_tenants array unless showAll is true
       if (!showAll && tenantId) {
-        promptQuery = promptQuery.eq('tenant_id', tenantId);
+        promptQuery = promptQuery.contains('allowed_tenants', [tenantId]);
       }
 
       const { data: prompt, error } = await promptQuery.single();
@@ -52,7 +52,7 @@ export async function GET(request: NextRequest) {
     const complexity = searchParams.get('complexity');
     const status = searchParams.get('status');
     const page = parseInt(searchParams.get('page') || '1');
-    const limit = parseInt(searchParams.get('limit') || '50');
+    const limit = parseInt(searchParams.get('limit') || '10000');
     const offset = (page - 1) * limit;
 
     let query = supabase
@@ -60,10 +60,10 @@ export async function GET(request: NextRequest) {
       .select('*', { count: 'exact' })
       .order('created_at', { ascending: false });
 
-    // Apply tenant filtering unless showAll is true
+    // Apply tenant filtering using allowed_tenants array unless showAll is true
     if (!showAll && tenantId) {
       console.log('Prompts API: Applying tenant filter:', tenantId);
-      query = query.eq('tenant_id', tenantId);
+      query = query.contains('allowed_tenants', [tenantId]);
     } else {
       console.log('Prompts API: Loading all prompts (showAll=true or no tenant)');
     }

@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
     const category = searchParams.get('category');
     // Build query
     let query = supabase
-      .from('business_functions')
+      .from('suite_functions')
       .select('*');
 
     // Add filters
@@ -83,7 +83,7 @@ export async function POST(request: NextRequest) {
 
     // Check for duplicate name
     const { data: existing, error: checkError } = await supabase
-      .from('business_functions')
+      .from('suite_functions')
       .select('id')
       .eq('name', body.name)
       .single();
@@ -113,7 +113,7 @@ export async function POST(request: NextRequest) {
     };
 
     const { data, error } = await supabase
-      .from('business_functions')
+      .from('suite_functions')
       .insert([businessFunctionData])
       .select()
       .single();

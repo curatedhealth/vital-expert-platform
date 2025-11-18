@@ -121,9 +121,14 @@ export async function verifyAgentPermissions(
         ? 'super_admin'
         : (userRole as 'admin' | 'manager' | 'member' | 'guest') || 'guest';
 
-    // Ensure tenant_id exists (fallback to platform tenant from env config)
+    // For subdomain-based multitenancy, use the tenant_id from cookie/header
+    // This is set by the tenant-middleware based on the subdomain
+    const cookieTenantId = request.cookies.get('tenant_id')?.value;
+    const headerTenantId = request.headers.get('x-tenant-id');
+
+    // Priority: cookie (set by middleware) > header > user's organization > platform default
     const tenantIds = env.getTenantIds();
-    const tenantId = organizationId || tenantIds.platform;
+    const tenantId = cookieTenantId || headerTenantId || organizationId || tenantIds.platform;
 
     const context: AgentPermissionContext = {
       user: {

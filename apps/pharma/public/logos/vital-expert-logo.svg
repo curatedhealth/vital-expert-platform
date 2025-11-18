@@ -1,0 +1,12 @@
+<svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Vital Expert Logo - Professional gradient design -->
+  <rect width="48" height="48" rx="8" fill="url(#gradient-expert)"/>
+  <defs>
+    <linearGradient id="gradient-expert" x1="0" y1="0" x2="48" y2="48" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#3B82F6"/>
+      <stop offset="100%" stop-color="#8B5CF6"/>
+    </linearGradient>
+  </defs>
+  <!-- VE monogram in elegant italic style -->
+  <text x="24" y="32" font-family="serif" font-size="24" font-style="italic" font-weight="700" fill="white" text-anchor="middle">VE</text>
+</svg>

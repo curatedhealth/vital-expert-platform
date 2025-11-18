@@ -1,0 +1,14 @@
+<svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Vital Startup Logo - Modern tech startup design -->
+  <rect width="48" height="48" rx="8" fill="url(#gradient-startup)"/>
+  <defs>
+    <linearGradient id="gradient-startup" x1="0" y1="0" x2="48" y2="48" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#F59E0B"/>
+      <stop offset="100%" stop-color="#EF4444"/>
+    </linearGradient>
+  </defs>
+  <!-- VS monogram with rocket/growth accent -->
+  <text x="14" y="32" font-family="sans-serif" font-size="22" font-weight="700" fill="white">VS</text>
+  <!-- Upward arrow/rocket accent -->
+  <path d="M36 28 L36 16 M36 16 L32 20 M36 16 L40 20" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

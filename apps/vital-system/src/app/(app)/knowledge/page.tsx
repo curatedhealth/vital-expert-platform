@@ -162,9 +162,8 @@ function KnowledgePageContent() {
       // Fallback to old table
       const { data, error } = await supabase
         .from('knowledge_domains')
-        .select('*')
-        .eq('is_active', true)
-        .order('priority');
+        .select('id, name, tier')
+        .order('name', { ascending: true });
 
       if (error) throw error;
       setDomains(data || []);

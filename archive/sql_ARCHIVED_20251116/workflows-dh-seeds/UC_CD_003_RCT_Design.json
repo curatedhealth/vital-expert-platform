@@ -1,0 +1,82 @@
+{
+  "domain": "Clinical Development",
+  "use_case": {
+    "code": "UC_CD_003",
+    "title": "DTx RCT Design",
+    "summary": "Design FDA-acceptable randomized controlled trial for digital therapeutics.",
+    "complexity": "Advanced",
+    "workflows": [
+      {
+        "name": "RCT Design Workflow",
+        "description": "End-to-end trial design and SAP creation.",
+        "tasks": [
+          {
+            "code": "T1",
+            "title": "Define Objectives & Hypotheses",
+            "objective": "Specify primary and secondary hypotheses aligned with endpoints.",
+            "agents": ["P01_CMO", "P04_BIOSTAT"],
+            "tools": ["MS Word", "EDC"],
+            "dependencies": [],
+            "inputs": ["Endpoint Selection Report"],
+            "outputs": ["Study Objectives Document"],
+            "prompts": [
+              {
+                "name": "Define_Hypotheses_Prompt",
+                "pattern": "CoT",
+                "system_prompt": "You are a clinical scientist designing endpoints for an FDA trial.",
+                "user_template": "Given {indication} and {endpoint}, propose hypotheses and success criteria."
+              }
+            ],
+            "kpis": {
+              "Documentation Completeness (%)": 100,
+              "Regulatory Acceptance (%)": 90
+            }
+          },
+          {
+            "code": "T2",
+            "title": "Comparator & Blinding Strategy",
+            "objective": "Select comparator and blinding plan acceptable to regulators.",
+            "agents": ["P05_REGDIR", "P01_CMO"],
+            "tools": ["FDA Guidance DB"],
+            "dependencies": ["T1"],
+            "inputs": ["Clinical Rationale Document"],
+            "outputs": ["Comparator and Blinding Plan"],
+            "prompts": [
+              {
+                "name": "Comparator_Blinding_Checklist",
+                "pattern": "CoT",
+                "system_prompt": "You are a regulatory-aware trial designer.",
+                "user_template": "Propose comparator and blinding method for {indication} referencing FDA precedents."
+              }
+            ],
+            "kpis": {
+              "Approval Probability (%)": 85
+            }
+          },
+          {
+            "code": "T5",
+            "title": "Sample Size Calculation",
+            "objective": "Determine minimum N to achieve statistical power ≥80%.",
+            "agents": ["P04_BIOSTAT", "DTX_VALIDATOR"],
+            "tools": ["R", "TreeAge"],
+            "dependencies": ["T1", "T2"],
+            "inputs": ["Effect Size Estimate", "Variance Data"],
+            "outputs": ["Sample Size Justification Report"],
+            "prompts": [
+              {
+                "name": "Sample_Size_Prompt",
+                "pattern": "CoT",
+                "system_prompt": "You are a senior biostatistician performing power analysis.",
+                "user_template": "Calculate required N given {effect_size}, {variance}, and {alpha=0.05}."
+              }
+            ],
+            "kpis": {
+              "Power Achieved (%)": 80
+            }
+          }
+        ]
+      }
+    ]
+  }
+}
+

@@ -34,7 +34,8 @@ export default function AppError({
             </p>
           </div>
 
-          {process.env.NODE_ENV === 'development' && (
+          {/* Show error details only in development - using runtime check to avoid HMR issues */}
+          {typeof window !== 'undefined' && window.location.hostname === 'localhost' && (
             <div className="w-full p-3 bg-muted rounded-md text-left">
               <p className="text-xs font-mono text-destructive break-all">
                 {error.message}

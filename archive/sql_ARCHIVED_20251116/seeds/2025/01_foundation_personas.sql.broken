@@ -1,0 +1,511 @@
+-- =====================================================================================
+-- 01_foundation_personas.sql
+-- Foundation Human Personas - Cross-Domain Organizational Roles
+-- =====================================================================================
+-- Purpose: Seed foundational human personas (organizational roles) used across use cases
+-- Dependencies: Tenant must exist, dh_persona table must be created
+-- Execution Order: 1 (foundation - after 00_foundation_agents.sql)
+-- =====================================================================================
+--
+-- PERSONA CATEGORIES:
+-- - Executive Leadership (C-Suite)
+-- - Clinical Development
+-- - Regulatory Affairs
+-- - Biostatistics & Data Science
+-- - Medical Affairs
+-- - Commercial & Market Access
+-- - Product & Engineering
+-- - Patient Advocacy
+-- =====================================================================================
+
+-- =====================================================================================
+-- SECTION 0: TENANT LOOKUP & SESSION CONFIGURATION
+-- =====================================================================================
+
+DO $$
+DECLARE
+  v_tenant_id UUID;
+  v_tenant_slug TEXT := 'digital-health-startup';
+BEGIN
+  SELECT id INTO v_tenant_id 
+  FROM tenants 
+  WHERE slug = v_tenant_slug;
+  
+  IF v_tenant_id IS NULL THEN
+    RAISE EXCEPTION 'Tenant with slug "%" not found. Please create tenant first.', v_tenant_slug;
+  END IF;
+  
+  RAISE NOTICE 'Using tenant: % (ID: %)', v_tenant_slug, v_tenant_id;
+END $$;
+
+CREATE TEMP TABLE IF NOT EXISTS session_config (
+  tenant_id UUID,
+  tenant_slug TEXT
+);
+
+DELETE FROM session_config;
+
+INSERT INTO session_config (tenant_id, tenant_slug)
+SELECT id, slug 
+FROM tenants 
+WHERE slug = 'digital-health-startup';
+
+-- =====================================================================================
+-- SECTION 1: EXECUTIVE LEADERSHIP PERSONAS
+-- =====================================================================================
+
+INSERT INTO dh_persona (
+  tenant_id,
+  code,
+  name,
+  unique_id,
+  expertise_level,
+  years_experience,
+  education,
+  typical_titles,
+  decision_authority,
+  capabilities,
+  key_responsibilities,
+  department,
+  typical_availability_hours,
+  response_time_sla_hours,
+  description,
+  metadata
+)
+SELECT 
+  sc.tenant_id,
+  p_data.code,
+  p_data.name,
+  p_data.unique_id,
+  p_data.expertise_level,
+  p_data.years_experience,
+  p_data.education,
+  p_data.typical_titles,
+  p_data.decision_authority,
+  p_data.capabilities,
+  p_data.key_responsibilities,
+  p_data.department,
+  p_data.typical_availability_hours,
+  p_data.response_time_sla_hours,
+  p_data.description,
+  p_data.metadata
+FROM session_config sc
+CROSS JOIN (
+  VALUES
+    -- P01_CMO: Chief Medical Officer
+    (
+      'P01_CMO',
+      'Chief Medical Officer',
+      'PERSONA-P01-CMO',
+      'EXPERT',
+      '15+',
+      json_build_array('MD', 'PhD')::jsonb,
+      json_build_array('CMO', 'VP Medical Affairs', 'Chief Scientific Officer', 'Chief Clinical Officer')::jsonb,
+      'VERY_HIGH',
+      json_build_array(
+        'Clinical Trial Strategy',
+        'FDA Interactions',
+        'Risk-benefit Assessment',
+        'Scientific Leadership',
+        'Endpoint Selection',
+        'Clinical Meaningfulness Assessment'
+      )::jsonb,
+      json_build_array(
+        'Final approval of clinical endpoint strategy',
+        'FDA submission oversight',
+        'Scientific risk management',
+        'Clinical development leadership',
+        'Chairs endpoint selection meetings',
+        'Approves validation strategies'
+      )::jsonb,
+      'Clinical Development',
+      10,
+      72,
+      'Senior executive providing strategic oversight and final approval for clinical development decisions',
+      jsonb_build_object(
+        'review_stage', 'FINAL_APPROVAL',
+        'decision_scope', 'STRATEGIC',
+        'typical_time_per_usecase', '2-3 hours'
+      )
+    ),
+    
+    -- P02_VPCLIN: VP Clinical Development
+    (
+      'P02_VPCLIN',
+      'VP Clinical Development',
+      'PERSONA-P02-VPCLIN',
+      'EXPERT',
+      '10-15',
+      json_build_array('MD', 'PhD', 'PharmD', 'MPH')::jsonb,
+      json_build_array('VP Clinical Development', 'Clinical Development Director', 'Head of Clinical Operations')::jsonb,
+      'HIGH',
+      json_build_array(
+        'Clinical Trial Design',
+        'Protocol Development',
+        'CRO Management',
+        'GCP Compliance',
+        'Regulatory Precedent Research',
+        'Operational Feasibility Assessment'
+      )::jsonb,
+      json_build_array(
+        'Clinical trial strategy execution',
+        'Protocol development and oversight',
+        'CRO coordination',
+        'Regulatory precedent research',
+        'Operational feasibility evaluation',
+        'Timeline and budget management'
+      )::jsonb,
+      'Clinical Development',
+      20,
+      48,
+      'Senior clinical leader responsible for operational execution of clinical development strategy',
+      jsonb_build_object(
+        'review_stage', 'STRATEGIC_REVIEW',
+        'decision_scope', 'OPERATIONAL',
+        'typical_time_per_usecase', '2-2.5 hours'
+      )
+    ),
+    
+    -- P03_CEO: Chief Executive Officer
+    (
+      'P03_CEO',
+      'Chief Executive Officer',
+      'PERSONA-P03-CEO',
+      'EXPERT',
+      '15+',
+      json_build_array('MBA', 'MD', 'PhD')::jsonb,
+      json_build_array('CEO', 'President', 'Founder & CEO')::jsonb,
+      'VERY_HIGH',
+      json_build_array(
+        'Strategic Vision',
+        'Stakeholder Management',
+        'Resource Allocation',
+        'Business Development',
+        'Investor Relations'
+      )::jsonb,
+      json_build_array(
+        'Company strategic direction',
+        'Major investment decisions',
+        'Board and investor communications',
+        'Partnership and M&A strategy',
+        'Executive team leadership'
+      )::jsonb,
+      'Executive',
+      5,
+      120,
+      'Chief executive responsible for overall company strategy and major decisions',
+      jsonb_build_object(
+        'review_stage', 'STRATEGIC_APPROVAL',
+        'decision_scope', 'CORPORATE',
+        'involvement_frequency', 'Major milestones only'
+      )
+    )
+) AS p_data(
+  code, name, unique_id, expertise_level, years_experience,
+  education, typical_titles, decision_authority, capabilities,
+  key_responsibilities, department, typical_availability_hours,
+  response_time_sla_hours, description, metadata
+)
+ON CONFLICT (tenant_id, code)
+DO UPDATE SET
+  name = EXCLUDED.name,
+  unique_id = EXCLUDED.unique_id,
+  expertise_level = EXCLUDED.expertise_level,
+  years_experience = EXCLUDED.years_experience,
+  education = EXCLUDED.education,
+  typical_titles = EXCLUDED.typical_titles,
+  decision_authority = EXCLUDED.decision_authority,
+  capabilities = EXCLUDED.capabilities,
+  key_responsibilities = EXCLUDED.key_responsibilities,
+  department = EXCLUDED.department,
+  description = EXCLUDED.description,
+  metadata = EXCLUDED.metadata,
+  updated_at = CURRENT_TIMESTAMP;
+
+-- =====================================================================================
+-- SECTION 2: BIOSTATISTICS & DATA SCIENCE PERSONAS
+-- =====================================================================================
+
+INSERT INTO dh_persona (
+  tenant_id, code, name, unique_id, expertise_level, years_experience,
+  education, typical_titles, decision_authority, capabilities,
+  key_responsibilities, department, description, metadata
+)
+SELECT 
+  sc.tenant_id, p_data.code, p_data.name, p_data.unique_id, p_data.expertise_level, p_data.years_experience,
+  p_data.education, p_data.typical_titles, p_data.decision_authority, p_data.capabilities,
+  p_data.key_responsibilities, p_data.department, p_data.description, p_data.metadata
+FROM session_config sc
+CROSS JOIN (
+  VALUES
+    -- P04_BIOSTAT: Principal Biostatistician
+    (
+      'P04_BIOSTAT',
+      'Principal Biostatistician',
+      'PERSONA-P04-BIOSTAT',
+      'EXPERT',
+      '8-15',
+      json_build_array('PhD', 'MS Statistics', 'MS Biostatistics')::jsonb,
+      json_build_array('Principal Biostatistician', 'Director Biostatistics', 'Lead Statistician', 'Senior Biostatistician')::jsonb,
+      'HIGH',
+      json_build_array(
+        'Psychometric Evaluation',
+        'Statistical Analysis Planning',
+        'Sample Size Calculation',
+        'Power Analysis',
+        'Measurement Properties Assessment',
+        'Missing Data Handling'
+      )::jsonb,
+      json_build_array(
+        'Psychometric property evaluation',
+        'Statistical analysis plan development',
+        'Sample size and power calculations',
+        'Responsiveness and MCID determination',
+        'Statistical methodology selection',
+        'Data quality assessment'
+      )::jsonb,
+      'Biostatistics',
+      'Expert statistician responsible for statistical design and analysis of clinical studies',
+      jsonb_build_object(
+        'review_stage', 'TECHNICAL_REVIEW',
+        'decision_scope', 'STATISTICAL',
+        'typical_availability_hours', 25,
+        'response_time_sla_hours', 48,
+        'typical_time_per_usecase', '2-3 hours'
+      )
+    )
+) AS p_data(
+  code, name, unique_id, expertise_level, years_experience,
+  education, typical_titles, decision_authority, capabilities,
+  key_responsibilities, department, description, metadata
+)
+ON CONFLICT (tenant_id, code)
+DO UPDATE SET
+  name = EXCLUDED.name, unique_id = EXCLUDED.unique_id,
+  expertise_level = EXCLUDED.expertise_level, years_experience = EXCLUDED.years_experience,
+  education = EXCLUDED.education, typical_titles = EXCLUDED.typical_titles,
+  decision_authority = EXCLUDED.decision_authority, capabilities = EXCLUDED.capabilities,
+  key_responsibilities = EXCLUDED.key_responsibilities, department = EXCLUDED.department,
+  description = EXCLUDED.description, metadata = EXCLUDED.metadata,
+  updated_at = CURRENT_TIMESTAMP;
+
+-- =====================================================================================
+-- SECTION 3: REGULATORY AFFAIRS PERSONAS
+-- =====================================================================================
+
+INSERT INTO dh_persona (
+  tenant_id, code, name, unique_id, expertise_level, years_experience,
+  education, typical_titles, decision_authority, capabilities,
+  key_responsibilities, department, description, metadata
+)
+SELECT 
+  sc.tenant_id, p_data.code, p_data.name, p_data.unique_id, p_data.expertise_level, p_data.years_experience,
+  p_data.education, p_data.typical_titles, p_data.decision_authority, p_data.capabilities,
+  p_data.key_responsibilities, p_data.department, p_data.description, p_data.metadata
+FROM session_config sc
+CROSS JOIN (
+  VALUES
+    -- P05_REGAFF: Regulatory Affairs Director
+    (
+      'P05_REGAFF',
+      'Regulatory Affairs Director',
+      'PERSONA-P05-REGAFF',
+      'EXPERT',
+      '10-15',
+      json_build_array('PharmD', 'RAC', 'MS', 'PhD')::jsonb,
+      json_build_array('Regulatory Affairs Director', 'Head of Regulatory Strategy', 'VP Regulatory Affairs')::jsonb,
+      'VERY_HIGH',
+      json_build_array(
+        'FDA Guidance Interpretation',
+        'Regulatory Strategy Development',
+        'COA Qualification Pathway',
+        'FDA Submission Preparation',
+        'Pre-Sub Meeting Strategy',
+        'Regulatory Precedent Analysis'
+      )::jsonb,
+      json_build_array(
+        'FDA compliance assessment',
+        'Regulatory risk evaluation',
+        'Submission strategy development',
+        'Agency interaction preparation',
+        'Regulatory precedent research',
+        'Labeling strategy'
+      )::jsonb,
+      'Regulatory Affairs',
+      'Regulatory expert ensuring compliance with FDA/EMA requirements and guiding submission strategy',
+      jsonb_build_object(
+        'review_stage', 'REGULATORY_REVIEW',
+        'decision_scope', 'COMPLIANCE',
+        'typical_availability_hours', 25,
+        'response_time_sla_hours', 48,
+        'typical_time_per_usecase', '2-3 hours'
+      )
+    )
+) AS p_data(
+  code, name, unique_id, expertise_level, years_experience,
+  education, typical_titles, decision_authority, capabilities,
+  key_responsibilities, department, description, metadata
+)
+ON CONFLICT (tenant_id, code)
+DO UPDATE SET
+  name = EXCLUDED.name, unique_id = EXCLUDED.unique_id,
+  expertise_level = EXCLUDED.expertise_level, years_experience = EXCLUDED.years_experience,
+  education = EXCLUDED.education, typical_titles = EXCLUDED.typical_titles,
+  decision_authority = EXCLUDED.decision_authority, capabilities = EXCLUDED.capabilities,
+  key_responsibilities = EXCLUDED.key_responsibilities, department = EXCLUDED.department,
+  description = EXCLUDED.description, metadata = EXCLUDED.metadata,
+  updated_at = CURRENT_TIMESTAMP;
+
+-- =====================================================================================
+-- SECTION 4: PRODUCT & DIGITAL HEALTH PERSONAS
+-- =====================================================================================
+
+INSERT INTO dh_persona (
+  tenant_id, code, name, unique_id, expertise_level, years_experience,
+  education, typical_titles, decision_authority, capabilities,
+  key_responsibilities, department, description, metadata
+)
+SELECT 
+  sc.tenant_id, p_data.code, p_data.name, p_data.unique_id, p_data.expertise_level, p_data.years_experience,
+  p_data.education, p_data.typical_titles, p_data.decision_authority, p_data.capabilities,
+  p_data.key_responsibilities, p_data.department, p_data.description, p_data.metadata
+FROM session_config sc
+CROSS JOIN (
+  VALUES
+    -- P06_PMDIG: Product Manager (Digital Health)
+    (
+      'P06_PMDIG',
+      'Product Manager (Digital Health)',
+      'PERSONA-P06-PMDIG',
+      'ADVANCED',
+      '5-10',
+      json_build_array('MBA', 'MS', 'MPH', 'BS Engineering')::jsonb,
+      json_build_array('Product Manager', 'Senior Product Manager', 'Head of Product', 'Director of Product')::jsonb,
+      'MEDIUM',
+      json_build_array(
+        'Digital Product Strategy',
+        'Feature Prioritization',
+        'User Experience Design',
+        'Data Collection Workflow Design',
+        'Engagement Strategy',
+        'ePRO Implementation'
+      )::jsonb,
+      json_build_array(
+        'Product roadmap development',
+        'Feature prioritization',
+        'User research and testing',
+        'Digital biomarker integration',
+        'Engagement optimization',
+        'Technical feasibility assessment'
+      )::jsonb,
+      'Product',
+      'Product leader responsible for digital therapeutic app design and user experience',
+      jsonb_build_object(
+        'review_stage', 'PRODUCT_REVIEW',
+        'decision_scope', 'TECHNICAL_FEASIBILITY',
+        'typical_availability_hours', 30,
+        'response_time_sla_hours', 48,
+        'typical_time_per_usecase', '1.5-2 hours'
+      )
+    ),
+    
+    -- P10_PATADV: Patient Advocate
+    (
+      'P10_PATADV',
+      'Patient Advocate',
+      'PERSONA-P10-PATADV',
+      'ADVANCED',
+      '5-10',
+      json_build_array('Patient Experience', 'Social Work', 'MPH', 'Advocacy Training')::jsonb,
+      json_build_array('Patient Advocate', 'Patient Representative', 'Patient Advisory Board Member')::jsonb,
+      'ADVISORY',
+      json_build_array(
+        'Patient Perspective',
+        'Patient Burden Assessment',
+        'Health Literacy Evaluation',
+        'Patient-Centered Outcomes',
+        'Accessibility Review',
+        'Patient Communication'
+      )::jsonb,
+      json_build_array(
+        'Representing patient voice',
+        'Evaluating patient burden',
+        'Assessing outcome relevance',
+        'Reviewing patient materials',
+        'Ensuring accessibility',
+        'Providing real-world insight'
+      )::jsonb,
+      'Patient Advocacy',
+      'Patient representative ensuring study design is patient-centered and outcomes are meaningful',
+      jsonb_build_object(
+        'review_stage', 'PATIENT_REVIEW',
+        'decision_scope', 'PATIENT_IMPACT',
+        'typical_availability_hours', 15,
+        'response_time_sla_hours', 96,
+        'typical_time_per_usecase', '1-2 hours'
+      )
+    )
+) AS p_data(
+  code, name, unique_id, expertise_level, years_experience,
+  education, typical_titles, decision_authority, capabilities,
+  key_responsibilities, department, description, metadata
+)
+ON CONFLICT (tenant_id, code)
+DO UPDATE SET
+  name = EXCLUDED.name, unique_id = EXCLUDED.unique_id,
+  expertise_level = EXCLUDED.expertise_level, years_experience = EXCLUDED.years_experience,
+  education = EXCLUDED.education, typical_titles = EXCLUDED.typical_titles,
+  decision_authority = EXCLUDED.decision_authority, capabilities = EXCLUDED.capabilities,
+  key_responsibilities = EXCLUDED.key_responsibilities, department = EXCLUDED.department,
+  description = EXCLUDED.description, metadata = EXCLUDED.metadata,
+  updated_at = CURRENT_TIMESTAMP;
+
+-- =====================================================================================
+-- VERIFICATION QUERIES
+-- =====================================================================================
+
+-- Summary by department
+SELECT 
+  'Foundation Personas by Department' as status,
+  department,
+  COUNT(*) as persona_count
+FROM dh_persona
+WHERE tenant_id = (SELECT tenant_id FROM session_config)
+GROUP BY department
+ORDER BY persona_count DESC;
+
+-- Summary by expertise level
+SELECT 
+  'Foundation Personas by Expertise' as status,
+  expertise_level,
+  COUNT(*) as persona_count
+FROM dh_persona
+WHERE tenant_id = (SELECT tenant_id FROM session_config)
+GROUP BY expertise_level
+ORDER BY 
+  CASE expertise_level
+    WHEN 'EXPERT' THEN 1
+    WHEN 'ADVANCED' THEN 2
+    WHEN 'INTERMEDIATE' THEN 3
+    WHEN 'BEGINNER' THEN 4
+  END;
+
+-- Overall summary
+SELECT 
+  'Foundation Personas Seeded' as status,
+  jsonb_build_object(
+    'total_personas', COUNT(*),
+    'executive', COUNT(*) FILTER (WHERE department = 'Executive'),
+    'clinical_development', COUNT(*) FILTER (WHERE department = 'Clinical Development'),
+    'regulatory_affairs', COUNT(*) FILTER (WHERE department = 'Regulatory Affairs'),
+    'biostatistics', COUNT(*) FILTER (WHERE department = 'Biostatistics'),
+    'product', COUNT(*) FILTER (WHERE department = 'Product'),
+    'patient_advocacy', COUNT(*) FILTER (WHERE department = 'Patient Advocacy')
+  ) as summary
+FROM dh_persona
+WHERE tenant_id = (SELECT tenant_id FROM session_config);
+
+-- =====================================================================================
+-- END OF SCRIPT
+-- =====================================================================================
+

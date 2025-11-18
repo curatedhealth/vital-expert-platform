@@ -56,6 +56,12 @@ class Settings(BaseSettings):
     pinecone_index_name: str = Field(default="vital-knowledge", env="PINECONE_INDEX_NAME")
     pinecone_environment: Optional[str] = Field(default=None, env="PINECONE_ENVIRONMENT")
 
+    # Neo4j Configuration (Graph Database for Agent Relationships)
+    neo4j_uri: Optional[str] = Field(default=None, env="NEO4J_URI")
+    neo4j_user: str = Field(default="neo4j", env="NEO4J_USER")
+    neo4j_password: Optional[str] = Field(default=None, env="NEO4J_PASSWORD")
+    neo4j_database: str = Field(default="neo4j", env="NEO4J_DATABASE")
+
     # Redis Configuration (for caching and task queue)
     redis_url: str = Field(default="redis://localhost:6379", env="REDIS_URL")
 

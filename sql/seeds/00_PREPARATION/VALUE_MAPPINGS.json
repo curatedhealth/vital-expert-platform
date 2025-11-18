@@ -1,0 +1,24 @@
+{
+  "persona_annual_conferences": {
+    "conference_type": {
+      "clinical": "technical",
+      "professional_development": "leadership"
+    },
+    "role": {
+      "panelist": "speaker"
+    }
+  },
+  "persona_week_in_life": {
+    "energy_pattern": {
+      "recovery": "medium",
+      "medium-high": "high",
+      "variable": "medium"
+    },
+    "meeting_load": {
+      "5": "moderate",
+      "6": "moderate",
+      "7": "heavy",
+      "8": "heavy"
+    }
+  }
+}

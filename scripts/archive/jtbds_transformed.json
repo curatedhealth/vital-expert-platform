@@ -1,0 +1,5590 @@
+[
+  {
+    "tenant_id": "f7aa6fd4-0af9-4706-8b31-034f1f7accda",
+    "code": "JTBD_001",
+    "name": "When planning clinical development strategy, I need comprehensive regulatory pathway analysis with predictive timelines, so I can optimize resource allocation and minimize approval risk",
+    "description": "When planning clinical development strategy, I need comprehensive regulatory pathway analysis with predictive timelines, so I can optimize resource allocation and minimize approval risk",
+    "strategic_priority_id": null,
+    "domain_id": null,
+    "functional_area": "Clinical",
+    "job_category": "operational",
+    "complexity": "high",
+    "frequency": "monthly",
+    "success_criteria": [
+      "optimize resource allocation and minimize approval risk"
+    ],
+    "kpis": [],
+    "pain_points": [
+      {
+        "pain_point": "Challenge: planning clinical development strategy"
+      }
+    ],
+    "desired_outcomes": [
+      {
+        "outcome": "optimize resource allocation and minimize approval risk"
+      }
+    ],
+    "status": "active",
+    "validation_score": 0.65,
+    "workflow_id": null,
+    "tags": [],
+    "metadata": {
+      "unique_id": "phase2_jtbd_00001",
+      "id": "jtbd00001",
+      "verb": "regulatory",
+      "object": "comprehensive regulatory pathway analysis with predictive timelines",
+      "persona_code": "P001_CDD",
+      "persona_title": "CLINICAL DEVELOPMENT DIRECTOR",
+      "persona_unique_id": "healthcare_clinical_development_director",
+      "sector": "Multi-sector",
+      "source": "Persona Master Catalogue v6.0",
+      "importance": 10,
+      "satisfaction": 3,
+      "original_frequency": "Quarterly for new programs, Monthly for active programs"
+    }
+  },
+  {
+    "tenant_id": "f7aa6fd4-0af9-4706-8b31-034f1f7accda",
+    "code": "JTBD_002",
+    "name": "When managing multiple clinical trials, I need real-time visibility into enrollment, data quality, and regulatory requirements, so I can proactively prevent delays and cost overruns",
+    "description": "When managing multiple clinical trials, I need real-time visibility into enrollment, data quality, and regulatory requirements, so I can proactively prevent delays and cost overruns",
+    "strategic_priority_id": null,
+    "domain_id": null,
+    "functional_area": "Clinical",
+    "job_category": "operational",
+    "complexity": "high",
+    "frequency": "daily",
+    "success_criteria": [
+      "proactively prevent delays and cost overruns"
+    ],
+    "kpis": [],
+    "pain_points": [
+      {
+        "pain_point": "Challenge: managing multiple clinical trials"
+      }
+    ],
+    "desired_outcomes": [
+      {
+        "outcome": "proactively prevent delays and cost overruns"
+      }
+    ],
+    "status": "active",
+    "validation_score": 0.65,
+    "workflow_id": null,
+    "tags": [],
+    "metadata": {
+      "unique_id": "phase2_jtbd_00002",
+      "id": "jtbd00002",
+      "verb": "visibility",
+      "object": "real-time visibility into enrollment",
+      "persona_code": "P001_CDD",
+      "persona_title": "CLINICAL DEVELOPMENT DIRECTOR",
+      "persona_unique_id": "healthcare_clinical_development_director",
+      "sector": "Multi-sector",
+      "source": "Persona Master Catalogue v6.0",
+      "importance": 9,
+      "satisfaction": 4,
+      "original_frequency": "Daily"
+    }
+  },
+  {
+    "tenant_id": "f7aa6fd4-0af9-4706-8b31-034f1f7accda",
+    "code": "JTBD_003",
+    "name": "When preparing regulatory submissions, I need automated evidence synthesis and gap analysis, so I can ensure complete, high-quality dossiers and avoid FDA questions",
+    "description": "When preparing regulatory submissions, I need automated evidence synthesis and gap analysis, so I can ensure complete, high-quality dossiers and avoid FDA questions",
+    "strategic_priority_id": null,
+    "domain_id": null,
+    "functional_area": "Clinical",
+    "job_category": "operational",
+    "complexity": "medium",
+    "frequency": "yearly",
+    "success_criteria": [
+      "ensure complete"
+    ],
+    "kpis": [],
+    "pain_points": [
+      {
+        "pain_point": "Challenge: preparing regulatory submissions"
+      }
+    ],
+    "desired_outcomes": [
+      {
+        "outcome": "ensure complete"
+      }
+    ],
+    "status": "active",
+    "validation_score": 0.7,
+    "workflow_id": null,
+    "tags": [],
+    "metadata": {
+      "unique_id": "phase2_jtbd_00003",
+      "id": "jtbd00003",
+      "verb": "evidence",
+      "object": "automated evidence synthesis and gap analysis",
+      "persona_code": "P001_CDD",
+      "persona_title": "CLINICAL DEVELOPMENT DIRECTOR",
+      "persona_unique_id": "healthcare_clinical_development_director",
+      "sector": "Multi-sector",
+      "source": "Persona Master Catalogue v6.0",
+      "importance": 9,
+      "satisfaction": 5,
+      "original_frequency": "Per milestone (6-12 times/year)"
+    }
+  },
+  {
+    "tenant_id": "f7aa6fd4-0af9-4706-8b31-034f1f7accda",
+    "code": "JTBD_004",
+    "name": "When developing DTx regulatory strategy, I need comprehensive FDA pathway analysis and predicate device research, so I can choose the optimal approval route and avoid costly delays",
+    "description": "When developing DTx regulatory strategy, I need comprehensive FDA pathway analysis and predicate device research, so I can choose the optimal approval route and avoid costly delays",
+    "strategic_priority_id": null,
+    "domain_id": null,
+    "functional_area": "Regulatory",
+    "job_category": "operational",
+    "complexity": "high",
+    "frequency": "weekly",
+    "success_criteria": [
+      "choose the optimal approval route and avoid costly delays"
+    ],
+    "kpis": [],
+    "pain_points": [
+      {
+        "pain_point": "Challenge: developing DTx regulatory strategy"
+      }
+    ],
+    "desired_outcomes": [
+      {
+        "outcome": "choose the optimal approval route and avoid costly delays"
+      }
+    ],
+    "status": "active",
+    "validation_score": 0.6,
+    "workflow_id": null,
+    "tags": [],
+    "metadata": {
+      "unique_id": "phase2_jtbd_00004",
+      "id": "jtbd00004",
+      "verb": "fda",
+      "object": "comprehensive FDA pathway analysis and predicate device research",
+      "persona_code": "P002_DSC",
+      "persona_title": "DTx STARTUP CEO",
+      "persona_unique_id": "dtx_dtx_startup_ceo",
+      "sector": "Multi-sector",
+      "source": "Persona Master Catalogue v6.0",
+      "importance": 10,
+      "satisfaction": 2,
+      "original_frequency": "Weekly in early development"
+    }
+  },
+  {
+    "tenant_id": "f7aa6fd4-0af9-4706-8b31-034f1f7accda",
+    "code": "JTBD_005",
+    "name": "When designing clinical trials, I need evidence-based protocol development and statistical planning, so I can demonstrate efficacy with minimal sample size and budget",
+    "description": "When designing clinical trials, I need evidence-based protocol development and statistical planning, so I can demonstrate efficacy with minimal sample size and budget",
+    "strategic_priority_id": null,
+    "domain_id": null,
+    "functional_area": "Clinical",
+    "job_category": "operational",
+    "complexity": "high",
+    "frequency": "yearly",
+    "success_criteria": [
+      "demonstrate efficacy with minimal sample size and budget"
+    ],
+    "kpis": [],
+    "pain_points": [
+      {
+        "pain_point": "Challenge: designing clinical trials"
+      }
+    ],
+    "desired_outcomes": [
+      {
+        "outcome": "demonstrate efficacy with minimal sample size and budget"
+      }
+    ],
+    "status": "active",
+    "validation_score": 0.65,
+    "workflow_id": null,
+    "tags": [],
+    "metadata": {
+      "unique_id": "phase2_jtbd_00005",
+      "id": "jtbd00005",
+      "verb": "evidence-based",
+      "object": "evidence-based protocol development and statistical planning",
+      "persona_code": "P002_DSC",
+      "persona_title": "DTx STARTUP CEO",
+      "persona_unique_id": "dtx_dtx_startup_ceo",
+      "sector": "Multi-sector",
+      "source": "Persona Master Catalogue v6.0",
+      "importance": 10,
+      "satisfaction": 3,
+      "original_frequency": "2-3 times per year"
+    }
+  },
+  {
+    "tenant_id": "f7aa6fd4-0af9-4706-8b31-034f1f7accda",
+    "code": "JTBD_006",
+    "name": "When seeking partnerships, I need competitive landscape analysis and partnership opportunity identification, so I can maximize valuation and market access potential",
+    "description": "When seeking partnerships, I need competitive landscape analysis and partnership opportunity identification, so I can maximize valuation and market access potential",
+    "strategic_priority_id": null,
+    "domain_id": null,
+    "functional_area": "Operations",
+    "job_category": "operational",
+    "complexity": "high",
+    "frequency": "monthly",
+    "success_criteria": [
+      "maximize valuation and market access potential"
+    ],
+    "kpis": [],
+    "pain_points": [
+      {
+        "pain_point": "Challenge: seeking partnerships"
+      }
+    ],
+    "desired_outcomes": [
+      {
+        "outcome": "maximize valuation and market access potential"
+      }
+    ],
+    "status": "active",
+    "validation_score": 0.65,
+    "workflow_id": null,
+    "tags": [],
+    "metadata": {
+      "unique_id": "phase2_jtbd_00006",
+      "id": "jtbd00006",
+      "verb": "competitive",
+      "object": "competitive landscape analysis and partnership opportunity identification",
+      "persona_code": "P002_DSC",
+      "persona_title": "DTx STARTUP CEO",
+      "persona_unique_id": "dtx_dtx_startup_ceo",
+      "sector": "Multi-sector",
+      "source": "Persona Master Catalogue v6.0",
+      "importance": 9,
+      "satisfaction": 4,
+      "original_frequency": "Monthly"
+    }
+  },
+  {
+    "tenant_id": "f7aa6fd4-0af9-4706-8b31-034f1f7accda",
+    "code": "JTBD_007",
+    "name": "When determining regulatory pathway, I need comprehensive analysis of device classification, predicate devices, and substantial equivalence requirements, so I can choose the most efficient approval ro",
+    "description": "When determining regulatory pathway, I need comprehensive analysis of device classification, predicate devices, and substantial equivalence requirements, so I can choose the most efficient approval route",
+    "strategic_priority_id": null,
+    "domain_id": null,
+    "functional_area": "Regulatory",
+    "job_category": "operational",
+    "complexity": "high",
+    "frequency": "yearly",
+    "success_criteria": [
+      "choose the most efficient approval route"
+    ],
+    "kpis": [],
+    "pain_points": [
+      {
+        "pain_point": "Challenge: determining regulatory pathway"
+      }
+    ],
+    "desired_outcomes": [
+      {
+        "outcome": "choose the most efficient approval route"
+      }
+    ],
+    "status": "active",
+    "validation_score": 0.65,
+    "workflow_id": null,
+    "tags": [],
+    "metadata": {
+      "unique_id": "phase2_jtbd_00007",
+      "id": "jtbd00007",
+      "verb": "analysis",
+      "object": "comprehensive analysis of device classification",
+      "persona_code": "P003_RAD",
+      "persona_title": "REGULATORY AFFAIRS DIRECTOR",
+      "persona_unique_id": "healthcare_regulatory_affairs_director",
+      "sector": "Multi-sector",
+      "source": "Persona Master Catalogue v6.0",
+      "importance": 9,
+      "satisfaction": 4,
+      "original_frequency": "Per product (10-20 times/year)"
+    }
+  },
+  {
+    "tenant_id": "f7aa6fd4-0af9-4706-8b31-034f1f7accda",
+    "code": "JTBD_008",
+    "name": "When preparing regulatory submissions, I need automated document compilation, gap analysis, and quality review, so I can ensure complete, accurate submissions and avoid FDA questions",
+    "description": "When preparing regulatory submissions, I need automated document compilation, gap analysis, and quality review, so I can ensure complete, accurate submissions and avoid FDA questions",
+    "strategic_priority_id": null,
+    "domain_id": null,
+    "functional_area": "Regulatory",
+    "job_category": "operational",
+    "complexity": "high",
+    "frequency": "monthly",
+    "success_criteria": [
+      "ensure complete"
+    ],
+    "kpis": [],
+    "pain_points": [
+      {
+        "pain_point": "Challenge: preparing regulatory submissions"
+      }
+    ],
+    "desired_outcomes": [
+      {
+        "outcome": "ensure complete"
+      }
+    ],
+    "status": "active",
+    "validation_score": 0.6,
+    "workflow_id": null,
+    "tags": [],
+    "metadata": {
+      "unique_id": "phase2_jtbd_00008",
+      "id": "jtbd00008",
+      "verb": "document",
+      "object": "automated document compilation",
+      "persona_code": "P003_RAD",
+      "persona_title": "REGULATORY AFFAIRS DIRECTOR",
+      "persona_unique_id": "healthcare_regulatory_affairs_director",
+      "sector": "Multi-sector",
+      "source": "Persona Master Catalogue v6.0",
+      "importance": 9,
+      "satisfaction": 3,
+      "original_frequency": "Multiple times per month"
+    }
+  },
+  {
+    "tenant_id": "f7aa6fd4-0af9-4706-8b31-034f1f7accda",
+    "code": "JTBD_009",
+    "name": "When monitoring regulatory changes, I need proactive alerts on new guidance, policy updates, and industry precedents, so I can adapt strategy and maintain compliance",
+    "description": "When monitoring regulatory changes, I need proactive alerts on new guidance, policy updates, and industry precedents, so I can adapt strategy and maintain compliance",
+    "strategic_priority_id": null,
+    "domain_id": null,
+    "functional_area": "Regulatory",
+    "job_category": "operational",
+    "complexity": "medium",
+    "frequency": "daily",
+    "success_criteria": [
+      "adapt strategy and maintain compliance"
+    ],
+    "kpis": [],
+    "pain_points": [
+      {
+        "pain_point": "Challenge: monitoring regulatory changes"
+      }
+    ],
+    "desired_outcomes": [
+      {
+        "outcome": "adapt strategy and maintain compliance"
+      }
+    ],
+    "status": "active",
+    "validation_score": 0.7,
+    "workflow_id": null,
+    "tags": [],
+    "metadata": {
+      "unique_id": "phase2_jtbd_00009",
+      "id": "jtbd00009",
+      "verb": "alerts",
+      "object": "proactive alerts on new guidance",
+      "persona_code": "P003_RAD",
+      "persona_title": "REGULATORY AFFAIRS DIRECTOR",
+      "persona_unique_id": "healthcare_regulatory_affairs_director",
+      "sector": "Multi-sector",
+      "source": "Persona Master Catalogue v6.0",
+      "importance": 9,
+      "satisfaction": 5,
+      "original_frequency": "Daily monitoring, Weekly analysis"
+    }
+  },
+  {
+    "tenant_id": "f7aa6fd4-0af9-4706-8b31-034f1f7accda",
+    "code": "JTBD_010",
+    "name": "When evaluating new digital health technologies for coverage, I need comprehensive clinical evidence analysis and cost-effectiveness modeling, so I can make evidence-based coverage decisions that impr",
+    "description": "When evaluating new digital health technologies for coverage, I need comprehensive clinical evidence analysis and cost-effectiveness modeling, so I can make evidence-based coverage decisions that improve outcomes and control costs",
+    "strategic_priority_id": null,
+    "domain_id": null,
+    "functional_area": "Market Access",
+    "job_category": "operational",
+    "complexity": "high",
+    "frequency": "weekly",
+    "success_criteria": [
+      "make evidence-based coverage decisions that improve outcomes and control costs"
+    ],
+    "kpis": [],
+    "pain_points": [
+      {
+        "pain_point": "Challenge: evaluating new digital health technologies for coverage"
+      }
+    ],
+    "desired_outcomes": [
+      {
+        "outcome": "make evidence-based coverage decisions that improve outcomes and control costs"
+      }
+    ],
+    "status": "active",
+    "validation_score": 0.65,
+    "workflow_id": null,
+    "tags": [],
+    "metadata": {
+      "unique_id": "phase2_jtbd_00010",
+      "id": "jtbd00010",
+      "verb": "clinical",
+      "object": "comprehensive clinical evidence analysis and cost-effectiveness modeling",
+      "persona_code": "P004_PCM",
+      "persona_title": "PAYER CHIEF MEDICAL OFFICER",
+      "persona_unique_id": "payer_payer_chief_medical_officer",
+      "sector": "Multi-sector",
+      "source": "Persona Master Catalogue v6.0",
+      "importance": 9,
+      "satisfaction": 4,
+      "original_frequency": "Weekly for new technology reviews"
+    }
+  },
+  {
+    "tenant_id": "f7aa6fd4-0af9-4706-8b31-034f1f7accda",
+    "code": "JTBD_011",
+    "name": "When managing population health initiatives, I need real-time analytics on member outcomes, provider performance, and program effectiveness, so I can optimize interventions and demonstrate value",
+    "description": "When managing population health initiatives, I need real-time analytics on member outcomes, provider performance, and program effectiveness, so I can optimize interventions and demonstrate value",
+    "strategic_priority_id": null,
+    "domain_id": null,
+    "functional_area": "Market Access",
+    "job_category": "operational",
+    "complexity": "medium",
+    "frequency": "daily",
+    "success_criteria": [
+      "optimize interventions and demonstrate value"
+    ],
+    "kpis": [],
+    "pain_points": [
+      {
+        "pain_point": "Challenge: managing population health initiatives"
+      }
+    ],
+    "desired_outcomes": [
+      {
+        "outcome": "optimize interventions and demonstrate value"
+      }
+    ],
+    "status": "active",
+    "validation_score": 0.7,
+    "workflow_id": null,
+    "tags": [],
+    "metadata": {
+      "unique_id": "phase2_jtbd_00011",
+      "id": "jtbd00011",
+      "verb": "analytics",
+      "object": "real-time analytics on member outcomes",
+      "persona_code": "P004_PCM",
+      "persona_title": "PAYER CHIEF MEDICAL OFFICER",
+      "persona_unique_id": "payer_payer_chief_medical_officer",
+      "sector": "Multi-sector",
+      "source": "Persona Master Catalogue v6.0",
+      "importance": 9,
+      "satisfaction": 5,
+      "original_frequency": "Daily monitoring, Monthly optimization"
+    }
+  },
+  {
+    "tenant_id": "f7aa6fd4-0af9-4706-8b31-034f1f7accda",
+    "code": "JTBD_012",
+    "name": "When designing value-based contracts, I need predictive modeling of clinical and financial outcomes, so I can structure arrangements that align incentives and share risk appropriately",
+    "description": "When designing value-based contracts, I need predictive modeling of clinical and financial outcomes, so I can structure arrangements that align incentives and share risk appropriately",
+    "strategic_priority_id": null,
+    "domain_id": null,
+    "functional_area": "Market Access",
+    "job_category": "operational",
+    "complexity": "high",
+    "frequency": "monthly",
+    "success_criteria": [
+      "structure arrangements that align incentives and share risk appropriately"
+    ],
+    "kpis": [],
+    "pain_points": [
+      {
+        "pain_point": "Challenge: designing value-based contracts"
+      }
+    ],
+    "desired_outcomes": [
+      {
+        "outcome": "structure arrangements that align incentives and share risk appropriately"
+      }
+    ],
+    "status": "active",
+    "validation_score": 0.6,
+    "workflow_id": null,
+    "tags": [],
+    "metadata": {
+      "unique_id": "phase2_jtbd_00012",
+      "id": "jtbd00012",
+      "verb": "modeling",
+      "object": "predictive modeling of clinical and financial outcomes",
+      "persona_code": "P004_PCM",
+      "persona_title": "PAYER CHIEF MEDICAL OFFICER",
+      "persona_unique_id": "payer_payer_chief_medical_officer",
+      "sector": "Multi-sector",
+      "source": "Persona Master Catalogue v6.0",
+      "importance": 9,
+      "satisfaction": 3,
+      "original_frequency": "Monthly for new contracts"
+    }
+  },
+  {
+    "tenant_id": "f7aa6fd4-0af9-4706-8b31-034f1f7accda",
+    "code": "JTBD_013",
+    "name": "When developing digital health products, I need comprehensive regulatory requirement analysis and clinical evidence planning, so I can build compliant solutions that achieve approval and adoption",
+    "description": "When developing digital health products, I need comprehensive regulatory requirement analysis and clinical evidence planning, so I can build compliant solutions that achieve approval and adoption",
+    "strategic_priority_id": null,
+    "domain_id": null,
+    "functional_area": "Operations",
+    "job_category": "operational",
+    "complexity": "high",
+    "frequency": "quarterly",
+    "success_criteria": [
+      "build compliant solutions that achieve approval and adoption"
+    ],
+    "kpis": [],
+    "pain_points": [
+      {
+        "pain_point": "Challenge: developing digital health products"
+      }
+    ],
+    "desired_outcomes": [
+      {
+        "outcome": "build compliant solutions that achieve approval and adoption"
+      }
+    ],
+    "status": "active",
+    "validation_score": 0.65,
+    "workflow_id": null,
+    "tags": [],
+    "metadata": {
+      "unique_id": "phase2_jtbd_00013",
+      "id": "jtbd00013",
+      "verb": "regulatory",
+      "object": "comprehensive regulatory requirement analysis and clinical evidence planning",
+      "persona_code": "P005_DHP",
+      "persona_title": "DIGITAL HEALTH PRODUCT MANAGER",
+      "persona_unique_id": "healthtech_digital_health_product_manager",
+      "sector": "Multi-sector",
+      "source": "Persona Master Catalogue v6.0",
+      "importance": 9,
+      "satisfaction": 4,
+      "original_frequency": "Per product release cycle"
+    }
+  },
+  {
+    "tenant_id": "f7aa6fd4-0af9-4706-8b31-034f1f7accda",
+    "code": "JTBD_014",
+    "name": "When validating product-market fit, I need healthcare-specific user research and clinical outcome measurement, so I can optimize products for both user satisfaction and health outcomes",
+    "description": "When validating product-market fit, I need healthcare-specific user research and clinical outcome measurement, so I can optimize products for both user satisfaction and health outcomes",
+    "strategic_priority_id": null,
+    "domain_id": null,
+    "functional_area": "Operations",
+    "job_category": "operational",
+    "complexity": "medium",
+    "frequency": "monthly",
+    "success_criteria": [
+      "optimize products for both user satisfaction and health outcomes"
+    ],
+    "kpis": [],
+    "pain_points": [
+      {
+        "pain_point": "Challenge: validating product-market fit"
+      }
+    ],
+    "desired_outcomes": [
+      {
+        "outcome": "optimize products for both user satisfaction and health outcomes"
+      }
+    ],
+    "status": "active",
+    "validation_score": 0.7,
+    "workflow_id": null,
+    "tags": [],
+    "metadata": {
+      "unique_id": "phase2_jtbd_00014",
+      "id": "jtbd00014",
+      "verb": "healthcare-specific",
+      "object": "healthcare-specific user research and clinical outcome measurement",
+      "persona_code": "P005_DHP",
+      "persona_title": "DIGITAL HEALTH PRODUCT MANAGER",
+      "persona_unique_id": "healthtech_digital_health_product_manager",
+      "sector": "Multi-sector",
+      "source": "Persona Master Catalogue v6.0",
+      "importance": 9,
+      "satisfaction": 5,
+      "original_frequency": "Ongoing throughout development"
+    }
+  },
+  {
+    "tenant_id": "f7aa6fd4-0af9-4706-8b31-034f1f7accda",
+    "code": "JTBD_015",
+    "name": "When planning product roadmap, I need competitive intelligence and market trend analysis specific to digital health, so I can prioritize features that differentiate and succeed in market",
+    "description": "When planning product roadmap, I need competitive intelligence and market trend analysis specific to digital health, so I can prioritize features that differentiate and succeed in market",
+    "strategic_priority_id": null,
+    "domain_id": null,
+    "functional_area": "Operations",
+    "job_category": "operational",
+    "complexity": "medium",
+    "frequency": "quarterly",
+    "success_criteria": [
+      "prioritize features that differentiate and succeed in market"
+    ],
+    "kpis": [],
+    "pain_points": [
+      {
+        "pain_point": "Challenge: planning product roadmap"
+      }
+    ],
+    "desired_outcomes": [
+      {
+        "outcome": "prioritize features that differentiate and succeed in market"
+      }
+    ],
+    "status": "active",
+    "validation_score": 0.7,
+    "workflow_id": null,
+    "tags": [],
+    "metadata": {
+      "unique_id": "phase2_jtbd_00015",
+      "id": "jtbd00015",
+      "verb": "competitive",
+      "object": "competitive intelligence and market trend analysis specific to digital health",
+      "persona_code": "P005_DHP",
+      "persona_title": "DIGITAL HEALTH PRODUCT MANAGER",
+      "persona_unique_id": "healthtech_digital_health_product_manager",
+      "sector": "Multi-sector",
+      "source": "Persona Master Catalogue v6.0",
+      "importance": 8,
+      "satisfaction": 6,
+      "original_frequency": "Quarterly planning cycles"
+    }
+  },
+  {
+    "tenant_id": "f7aa6fd4-0af9-4706-8b31-034f1f7accda",
+    "code": "JTBD_016",
+    "name": "When planning clinical trial operations, I need predictive site performance analysis and optimal site selection recommendations, so I can maximize enrollment speed and data quality while minimizing co",
+    "description": "When planning clinical trial operations, I need predictive site performance analysis and optimal site selection recommendations, so I can maximize enrollment speed and data quality while minimizing costs",
+    "strategic_priority_id": null,
+    "domain_id": null,
+    "functional_area": "Clinical",
+    "job_category": "operational",
+    "complexity": "high",
+    "frequency": "quarterly",
+    "success_criteria": [
+      "maximize enrollment speed and data quality while minimizing costs"
+    ],
+    "kpis": [],
+    "pain_points": [
+      {
+        "pain_point": "Challenge: planning clinical trial operations"
+      }
+    ],
+    "desired_outcomes": [
+      {
+        "outcome": "maximize enrollment speed and data quality while minimizing costs"
+      }
+    ],
+    "status": "active",
+    "validation_score": 0.6,
+    "workflow_id": null,
+    "tags": [],
+    "metadata": {
+      "unique_id": "phase2_jtbd_00016",
+      "id": "jtbd00016",
+      "verb": "site",
+      "object": "predictive site performance analysis and optimal site selection recommendations",
+      "persona_code": "P006_CTO",
+      "persona_title": "CLINICAL TRIAL OPERATIONS MANAGER",
+      "persona_unique_id": "healthcare_clinical_trial_operations_mana",
+      "sector": "Multi-sector",
+      "source": "Persona Master Catalogue v6.0",
+      "importance": 9,
+      "satisfaction": 3,
+      "original_frequency": "Per trial initiation"
+    }
+  },
+  {
+    "tenant_id": "f7aa6fd4-0af9-4706-8b31-034f1f7accda",
+    "code": "JTBD_017",
+    "name": "When managing patient recruitment, I need real-time enrollment analytics and intervention recommendations, so I can proactively address recruitment challenges and meet timeline targets",
+    "description": "When managing patient recruitment, I need real-time enrollment analytics and intervention recommendations, so I can proactively address recruitment challenges and meet timeline targets",
+    "strategic_priority_id": null,
+    "domain_id": null,
+    "functional_area": "Clinical",
+    "job_category": "operational",
+    "complexity": "high",
+    "frequency": "daily",
+    "success_criteria": [
+      "proactively address recruitment challenges and meet timeline targets"
+    ],
+    "kpis": [],
+    "pain_points": [
+      {
+        "pain_point": "Challenge: managing patient recruitment"
+      }
+    ],
+    "desired_outcomes": [
+      {
+        "outcome": "proactively address recruitment challenges and meet timeline targets"
+      }
+    ],
+    "status": "active",
+    "validation_score": 0.65,
+    "workflow_id": null,
+    "tags": [],
+    "metadata": {
+      "unique_id": "phase2_jtbd_00017",
+      "id": "jtbd00017",
+      "verb": "enrollment",
+      "object": "real-time enrollment analytics and intervention recommendations",
+      "persona_code": "P006_CTO",
+      "persona_title": "CLINICAL TRIAL OPERATIONS MANAGER",
+      "persona_unique_id": "healthcare_clinical_trial_operations_mana",
+      "sector": "Multi-sector",
+      "source": "Persona Master Catalogue v6.0",
+      "importance": 9,
+      "satisfaction": 4,
+      "original_frequency": "Daily during active recruitment"
+    }
+  },
+  {
+    "tenant_id": "f7aa6fd4-0af9-4706-8b31-034f1f7accda",
+    "code": "JTBD_018",
+    "name": "When monitoring trial data quality, I need automated data review and risk-based monitoring insights, so I can ensure compliance and data integrity while optimizing monitoring resources",
+    "description": "When monitoring trial data quality, I need automated data review and risk-based monitoring insights, so I can ensure compliance and data integrity while optimizing monitoring resources",
+    "strategic_priority_id": null,
+    "domain_id": null,
+    "functional_area": "Clinical",
+    "job_category": "operational",
+    "complexity": "medium",
+    "frequency": "monthly",
+    "success_criteria": [
+      "ensure compliance and data integrity while optimizing monitoring resources"
+    ],
+    "kpis": [],
+    "pain_points": [
+      {
+        "pain_point": "Challenge: monitoring trial data quality"
+      }
+    ],
+    "desired_outcomes": [
+      {
+        "outcome": "ensure compliance and data integrity while optimizing monitoring resources"
+      }
+    ],
+    "status": "active",
+    "validation_score": 0.7,
+    "workflow_id": null,
+    "tags": [],
+    "metadata": {
+      "unique_id": "phase2_jtbd_00018",
+      "id": "jtbd00018",
+      "verb": "data",
+      "object": "automated data review and risk-based monitoring insights",
+      "persona_code": "P006_CTO",
+      "persona_title": "CLINICAL TRIAL OPERATIONS MANAGER",
+      "persona_unique_id": "healthcare_clinical_trial_operations_mana",
+      "sector": "Multi-sector",
+      "source": "Persona Master Catalogue v6.0",
+      "importance": 9,
+      "satisfaction": 5,
+      "original_frequency": "Continuous during trial conduct"
+    }
+  },
+  {
+    "tenant_id": "f7aa6fd4-0af9-4706-8b31-034f1f7accda",
+    "code": "JTBD_019",
+    "name": "When designing comprehensive patient support ecosystems, I need integrated digital and human touchpoints, so I can improve adherence and outcomes",
+    "description": "When designing comprehensive patient support ecosystems, I need integrated digital and human touchpoints, so I can improve adherence and outcomes",
+    "strategic_priority_id": null,
+    "domain_id": null,
+    "functional_area": "Operations",
+    "job_category": "operational",
+    "complexity": "medium",
+    "frequency": "monthly",
+    "success_criteria": [
+      "improve adherence and outcomes"
+    ],
+    "kpis": [],
+    "pain_points": [
+      {
+        "pain_point": "Challenge: designing comprehensive patient support ecosystems"
+      }
+    ],
+    "desired_outcomes": [
+      {
+        "outcome": "improve adherence and outcomes"
+      }
+    ],
+    "status": "active",
+    "validation_score": 0.65,
+    "workflow_id": null,
+    "tags": [],
+    "metadata": {
+      "unique_id": "phase2_jtbd_00019",
+      "id": "jtbd00019",
+      "verb": "digital",
+      "object": "integrated digital and human touchpoints",
+      "persona_code": null,
+      "persona_title": null,
+      "persona_unique_id": null,
+      "sector": "Multi-sector",
+      "source": "Digital Health JTBD Library Complete.md",
+      "importance": 8,
+      "satisfaction": 5,
+      "original_frequency": "Not specified"
+    }
+  },
+  {
+    "tenant_id": "f7aa6fd4-0af9-4706-8b31-034f1f7accda",
+    "code": "JTBD_020",
+    "name": "When personalizing patient journeys, I need predictive analytics and behavioral insights, so I can deliver right intervention at right time",
+    "description": "When personalizing patient journeys, I need predictive analytics and behavioral insights, so I can deliver right intervention at right time",
+    "strategic_priority_id": null,
+    "domain_id": null,
+    "functional_area": "Operations",
+    "job_category": "operational",
+    "complexity": "medium",
+    "frequency": "monthly",
+    "success_criteria": [
+      "deliver right intervention at right time"
+    ],
+    "kpis": [],
+    "pain_points": [
+      {
+        "pain_point": "Challenge: personalizing patient journeys"
+      }
+    ],
+    "desired_outcomes": [
+      {
+        "outcome": "deliver right intervention at right time"
+      }
+    ],
+    "status": "active",
+    "validation_score": 0.65,
+    "workflow_id": null,
+    "tags": [],
+    "metadata": {
+      "unique_id": "phase2_jtbd_00020",
+      "id": "jtbd00020",
+      "verb": "analytics",
+      "object": "predictive analytics and behavioral insights",
+      "persona_code": null,
+      "persona_title": null,
+      "persona_unique_id": null,
+      "sector": "Multi-sector",
+      "source": "Digital Health JTBD Library Complete.md",
+      "importance": 8,
+      "satisfaction": 5,
+      "original_frequency": "Not specified"
+    }
+  },
+  {
+    "tenant_id": "f7aa6fd4-0af9-4706-8b31-034f1f7accda",
+    "code": "JTBD_021",
+    "name": "When coordinating omnichannel patient engagement, I need unified platforms and orchestration tools, so I can ensure consistent experience",
+    "description": "When coordinating omnichannel patient engagement, I need unified platforms and orchestration tools, so I can ensure consistent experience",
+    "strategic_priority_id": null,
+    "domain_id": null,
+    "functional_area": "Operations",
+    "job_category": "operational",
+    "complexity": "medium",
+    "frequency": "monthly",
+    "success_criteria": [
+      "ensure consistent experience"
+    ],
+    "kpis": [],
+    "pain_points": [
+      {
+        "pain_point": "Challenge: coordinating omnichannel patient engagement"
+      }
+    ],
+    "desired_outcomes": [
+      {
+        "outcome": "ensure consistent experience"
+      }
+    ],
+    "status": "active",
+    "validation_score": 0.65,
+    "workflow_id": null,
+    "tags": [],
+    "metadata": {
+      "unique_id": "phase2_jtbd_00021",
+      "id": "jtbd00021",
+      "verb": "unified",
+      "object": "unified platforms and orchestration tools",
+      "persona_code": null,
+      "persona_title": null,
+      "persona_unique_id": null,
+      "sector": "Multi-sector",
+      "source": "Digital Health JTBD Library Complete.md",
+      "importance": 8,
+      "satisfaction": 5,
+      "original_frequency": "Not specified"
+    }
+  },
+  {
+    "tenant_id": "f7aa6fd4-0af9-4706-8b31-034f1f7accda",
+    "code": "JTBD_022",
+    "name": "When designing patient-centric digital experiences, I need behavioral science frameworks and testing protocols, so I can drive sustained engagement",
+    "description": "When designing patient-centric digital experiences, I need behavioral science frameworks and testing protocols, so I can drive sustained engagement",
+    "strategic_priority_id": null,
+    "domain_id": null,
+    "functional_area": "Operations",
+    "job_category": "operational",
+    "complexity": "medium",
+    "frequency": "monthly",
+    "success_criteria": [
+      "drive sustained engagement"
+    ],
+    "kpis": [],
+    "pain_points": [
+      {
+        "pain_point": "Challenge: designing patient-centric digital experiences"
+      }
+    ],
+    "desired_outcomes": [
+      {
+        "outcome": "drive sustained engagement"
+      }
+    ],
+    "status": "active",
+    "validation_score": 0.65,
+    "workflow_id": null,
+    "tags": [],
+    "metadata": {
+      "unique_id": "phase2_jtbd_00022",
+      "id": "jtbd00022",
+      "verb": "behavioral",
+      "object": "behavioral science frameworks and testing protocols",
+      "persona_code": null,
+      "persona_title": null,
+      "persona_unique_id": null,
+      "sector": "Multi-sector",
+      "source": "Digital Health JTBD Library Complete.md",
+      "importance": 8,
+      "satisfaction": 5,
+      "original_frequency": "Not specified"
+    }
+  },
+  {
+    "tenant_id": "f7aa6fd4-0af9-4706-8b31-034f1f7accda",
+    "code": "JTBD_023",
+    "name": "When creating inclusive health experiences, I need diverse patient input and cultural adaptation tools, so I can ensure equity",
+    "description": "When creating inclusive health experiences, I need diverse patient input and cultural adaptation tools, so I can ensure equity",
+    "strategic_priority_id": null,
+    "domain_id": null,
+    "functional_area": "Operations",
+    "job_category": "operational",
+    "complexity": "medium",
+    "frequency": "monthly",
+    "success_criteria": [
+      "ensure equity"
+    ],
+    "kpis": [],
+    "pain_points": [
+      {
+        "pain_point": "Challenge: creating inclusive health experiences"
+      }
+    ],
+    "desired_outcomes": [
+      {
+        "outcome": "ensure equity"
+      }
+    ],
+    "status": "active",
+    "validation_score": 0.65,
+    "workflow_id": null,
+    "tags": [],
+    "metadata": {
+      "unique_id": "phase2_jtbd_00023",
+      "id": "jtbd00023",
+      "verb": "diverse",
+      "object": "diverse patient input and cultural adaptation tools",
+      "persona_code": null,
+      "persona_title": null,
+      "persona_unique_id": null,
+      "sector": "Multi-sector",
+      "source": "Digital Health JTBD Library Complete.md",
+      "importance": 8,
+      "satisfaction": 5,
+      "original_frequency": "Not specified"
+    }
+  },
+  {
+    "tenant_id": "f7aa6fd4-0af9-4706-8b31-034f1f7accda",
+    "code": "JTBD_024",
+    "name": "When building authentic patient partnerships, I need engagement platforms and feedback systems, so I can incorporate patient voice in development",
+    "description": "When building authentic patient partnerships, I need engagement platforms and feedback systems, so I can incorporate patient voice in development",
+    "strategic_priority_id": null,
+    "domain_id": null,
+    "functional_area": "Operations",
+    "job_category": "operational",
+    "complexity": "medium",
+    "frequency": "monthly",
+    "success_criteria": [
+      "incorporate patient voice in development"
+    ],
+    "kpis": [],
+    "pain_points": [
+      {
+        "pain_point": "Challenge: building authentic patient partnerships"
+      }
+    ],
+    "desired_outcomes": [
+      {
+        "outcome": "incorporate patient voice in development"
+      }
+    ],
+    "status": "active",
+    "validation_score": 0.65,
+    "workflow_id": null,
+    "tags": [],
+    "metadata": {
+      "unique_id": "phase2_jtbd_00024",
+      "id": "jtbd00024",
+      "verb": "engagement",
+      "object": "engagement platforms and feedback systems",
+      "persona_code": null,
+      "persona_title": null,
+      "persona_unique_id": null,
+      "sector": "Multi-sector",
+      "source": "Digital Health JTBD Library Complete.md",
+      "importance": 8,
+      "satisfaction": 5,
+      "original_frequency": "Not specified"
+    }
+  },
+  {
+    "tenant_id": "f7aa6fd4-0af9-4706-8b31-034f1f7accda",
+    "code": "JTBD_025",
+    "name": "When securing coverage for digital companions, I need value demonstration frameworks and payer engagement tools, so I can achieve broad access",
+    "description": "When securing coverage for digital companions, I need value demonstration frameworks and payer engagement tools, so I can achieve broad access",
+    "strategic_priority_id": null,
+    "domain_id": null,
+    "functional_area": "Operations",
+    "job_category": "operational",
+    "complexity": "medium",
+    "frequency": "monthly",
+    "success_criteria": [
+      "achieve broad access"
+    ],
+    "kpis": [],
+    "pain_points": [
+      {
+        "pain_point": "Challenge: securing coverage for digital companions"
+      }
+    ],
+    "desired_outcomes": [
+      {
+        "outcome": "achieve broad access"
+      }
+    ],
+    "status": "active",
+    "validation_score": 0.65,
+    "workflow_id": null,
+    "tags": [],
+    "metadata": {
+      "unique_id": "phase2_jtbd_00025",
+      "id": "jtbd00025",
+      "verb": "value",
+      "object": "value demonstration frameworks and payer engagement tools",
+      "persona_code": null,
+      "persona_title": null,
+      "persona_unique_id": null,
+      "sector": "Multi-sector",
+      "source": "Digital Health JTBD Library Complete.md",
+      "importance": 8,
+      "satisfaction": 5,
+      "original_frequency": "Not specified"
+    }
+  },
+  {
+    "tenant_id": "f7aa6fd4-0af9-4706-8b31-034f1f7accda",
+    "code": "JTBD_026",
+    "name": "When negotiating value-based contracts for digital health, I need outcome prediction models and risk assessment tools, so I can structure win-win agreements",
+    "description": "When negotiating value-based contracts for digital health, I need outcome prediction models and risk assessment tools, so I can structure win-win agreements",
+    "strategic_priority_id": null,
+    "domain_id": null,
+    "functional_area": "Operations",
+    "job_category": "operational",
+    "complexity": "medium",
+    "frequency": "monthly",
+    "success_criteria": [
+      "structure win-win agreements"
+    ],
+    "kpis": [],
+    "pain_points": [
+      {
+        "pain_point": "Challenge: negotiating value-based contracts for digital health"
+      }
+    ],
+    "desired_outcomes": [
+      {
+        "outcome": "structure win-win agreements"
+      }
+    ],
+    "status": "active",
+    "validation_score": 0.65,
+    "workflow_id": null,
+    "tags": [],
+    "metadata": {
+      "unique_id": "phase2_jtbd_00026",
+      "id": "jtbd00026",
+      "verb": "outcome",
+      "object": "outcome prediction models and risk assessment tools",
+      "persona_code": null,
+      "persona_title": null,
+      "persona_unique_id": null,
+      "sector": "Multi-sector",
+      "source": "Digital Health JTBD Library Complete.md",
+      "importance": 8,
+      "satisfaction": 5,
+      "original_frequency": "Not specified"
+    }
+  },
+  {
+    "tenant_id": "f7aa6fd4-0af9-4706-8b31-034f1f7accda",
+    "code": "JTBD_027",
+    "name": "When commercializing drug-digital combinations, I need integrated go-to-market strategies and success metrics, so I can maximize value capture",
+    "description": "When commercializing drug-digital combinations, I need integrated go-to-market strategies and success metrics, so I can maximize value capture",
+    "strategic_priority_id": null,
+    "domain_id": null,
+    "functional_area": "Commercial",
+    "job_category": "operational",
+    "complexity": "medium",
+    "frequency": "monthly",
+    "success_criteria": [
+      "maximize value capture"
+    ],
+    "kpis": [],
+    "pain_points": [
+      {
+        "pain_point": "Challenge: commercializing drug-digital combinations"
+      }
+    ],
+    "desired_outcomes": [
+      {
+        "outcome": "maximize value capture"
+      }
+    ],
+    "status": "active",
+    "validation_score": 0.65,
+    "workflow_id": null,
+    "tags": [],
+    "metadata": {
+      "unique_id": "phase2_jtbd_00027",
+      "id": "jtbd00027",
+      "verb": "go-to-market",
+      "object": "integrated go-to-market strategies and success metrics",
+      "persona_code": null,
+      "persona_title": null,
+      "persona_unique_id": null,
+      "sector": "Multi-sector",
+      "source": "Digital Health JTBD Library Complete.md",
+      "importance": 8,
+      "satisfaction": 5,
+      "original_frequency": "Not specified"
+    }
+  },
+  {
+    "tenant_id": "f7aa6fd4-0af9-4706-8b31-034f1f7accda",
+    "code": "JTBD_028",
+    "name": "When executing compliant digital marketing for healthcare, I need approved content workflows and regulatory guardrails, so I can engage effectively",
+    "description": "When executing compliant digital marketing for healthcare, I need approved content workflows and regulatory guardrails, so I can engage effectively",
+    "strategic_priority_id": null,
+    "domain_id": null,
+    "functional_area": "Commercial",
+    "job_category": "operational",
+    "complexity": "medium",
+    "frequency": "monthly",
+    "success_criteria": [
+      "engage effectively"
+    ],
+    "kpis": [],
+    "pain_points": [
+      {
+        "pain_point": "Challenge: executing compliant digital marketing for healthcare"
+      }
+    ],
+    "desired_outcomes": [
+      {
+        "outcome": "engage effectively"
+      }
+    ],
+    "status": "active",
+    "validation_score": 0.65,
+    "workflow_id": null,
+    "tags": [],
+    "metadata": {
+      "unique_id": "phase2_jtbd_00028",
+      "id": "jtbd00028",
+      "verb": "approved",
+      "object": "approved content workflows and regulatory guardrails",
+      "persona_code": null,
+      "persona_title": null,
+      "persona_unique_id": null,
+      "sector": "Multi-sector",
+      "source": "Digital Health JTBD Library Complete.md",
+      "importance": 8,
+      "satisfaction": 5,
+      "original_frequency": "Not specified"
+    }
+  },
+  {
+    "tenant_id": "f7aa6fd4-0af9-4706-8b31-034f1f7accda",
+    "code": "JTBD_029",
+    "name": "When integrating digital health into pharma R&D, I need collaboration platforms and governance models, so I can drive innovation",
+    "description": "When integrating digital health into pharma R&D, I need collaboration platforms and governance models, so I can drive innovation",
+    "strategic_priority_id": null,
+    "domain_id": null,
+    "functional_area": "Research & Development",
+    "job_category": "operational",
+    "complexity": "medium",
+    "frequency": "monthly",
+    "success_criteria": [
+      "drive innovation"
+    ],
+    "kpis": [],
+    "pain_points": [
+      {
+        "pain_point": "Challenge: integrating digital health into pharma R&D"
+      }
+    ],
+    "desired_outcomes": [
+      {
+        "outcome": "drive innovation"
+      }
+    ],
+    "status": "active",
+    "validation_score": 0.65,
+    "workflow_id": null,
+    "tags": [],
+    "metadata": {
+      "unique_id": "phase2_jtbd_00029",
+      "id": "jtbd00029",
+      "verb": "collaboration",
+      "object": "collaboration platforms and governance models",
+      "persona_code": null,
+      "persona_title": null,
+      "persona_unique_id": null,
+      "sector": "Multi-sector",
+      "source": "Digital Health JTBD Library Complete.md",
+      "importance": 8,
+      "satisfaction": 5,
+      "original_frequency": "Not specified"
+    }
+  },
+  {
+    "tenant_id": "f7aa6fd4-0af9-4706-8b31-034f1f7accda",
+    "code": "JTBD_030",
+    "name": "When developing pharmaceutical-grade digital therapeutics, I need clinical validation frameworks and regulatory guidance, so I can ensure approval and adoption",
+    "description": "When developing pharmaceutical-grade digital therapeutics, I need clinical validation frameworks and regulatory guidance, so I can ensure approval and adoption",
+    "strategic_priority_id": null,
+    "domain_id": null,
+    "functional_area": "Operations",
+    "job_category": "operational",
+    "complexity": "medium",
+    "frequency": "monthly",
+    "success_criteria": [
+      "ensure approval and adoption"
+    ],
+    "kpis": [],
+    "pain_points": [
+      {
+        "pain_point": "Challenge: developing pharmaceutical-grade digital therapeutics"
+      }
+    ],
+    "desired_outcomes": [
+      {
+        "outcome": "ensure approval and adoption"
+      }
+    ],
+    "status": "active",
+    "validation_score": 0.65,
+    "workflow_id": null,
+    "tags": [],
+    "metadata": {
+      "unique_id": "phase2_jtbd_00030",
+      "id": "jtbd00030",
+      "verb": "clinical",
+      "object": "clinical validation frameworks and regulatory guidance",
+      "persona_code": null,
+      "persona_title": null,
+      "persona_unique_id": null,
+      "sector": "Multi-sector",
+      "source": "Digital Health JTBD Library Complete.md",
+      "importance": 8,
+      "satisfaction": 5,
+      "original_frequency": "Not specified"
+    }
+  },
+  {
+    "tenant_id": "f7aa6fd4-0af9-4706-8b31-034f1f7accda",
+    "code": "JTBD_031",
+    "name": "When scaling DTx alongside medications, I need integration strategies and channel coordination, so I can maximize combined value",
+    "description": "When scaling DTx alongside medications, I need integration strategies and channel coordination, so I can maximize combined value",
+    "strategic_priority_id": null,
+    "domain_id": null,
+    "functional_area": "Operations",
+    "job_category": "operational",
+    "complexity": "medium",
+    "frequency": "monthly",
+    "success_criteria": [
+      "maximize combined value"
+    ],
+    "kpis": [],
+    "pain_points": [
+      {
+        "pain_point": "Challenge: scaling DTx alongside medications"
+      }
+    ],
+    "desired_outcomes": [
+      {
+        "outcome": "maximize combined value"
+      }
+    ],
+    "status": "active",
+    "validation_score": 0.65,
+    "workflow_id": null,
+    "tags": [],
+    "metadata": {
+      "unique_id": "phase2_jtbd_00031",
+      "id": "jtbd00031",
+      "verb": "integration",
+      "object": "integration strategies and channel coordination",
+      "persona_code": null,
+      "persona_title": null,
+      "persona_unique_id": null,
+      "sector": "Multi-sector",
+      "source": "Digital Health JTBD Library Complete.md",
+      "importance": 8,
+      "satisfaction": 5,
+      "original_frequency": "Not specified"
+    }
+  },
+  {
+    "tenant_id": "f7aa6fd4-0af9-4706-8b31-034f1f7accda",
+    "code": "JTBD_032",
+    "name": "When generating insights from digital health data, I need privacy-preserving analytics and federated learning approaches, so I can maintain compliance while deriving value",
+    "description": "When generating insights from digital health data, I need privacy-preserving analytics and federated learning approaches, so I can maintain compliance while deriving value",
+    "strategic_priority_id": null,
+    "domain_id": null,
+    "functional_area": "Operations",
+    "job_category": "operational",
+    "complexity": "medium",
+    "frequency": "monthly",
+    "success_criteria": [
+      "maintain compliance while deriving value"
+    ],
+    "kpis": [],
+    "pain_points": [
+      {
+        "pain_point": "Challenge: generating insights from digital health data"
+      }
+    ],
+    "desired_outcomes": [
+      {
+        "outcome": "maintain compliance while deriving value"
+      }
+    ],
+    "status": "active",
+    "validation_score": 0.65,
+    "workflow_id": null,
+    "tags": [],
+    "metadata": {
+      "unique_id": "phase2_jtbd_00032",
+      "id": "jtbd00032",
+      "verb": "privacy-preserving",
+      "object": "privacy-preserving analytics and federated learning approaches",
+      "persona_code": null,
+      "persona_title": null,
+      "persona_unique_id": null,
+      "sector": "Multi-sector",
+      "source": "Digital Health JTBD Library Complete.md",
+      "importance": 8,
+      "satisfaction": 5,
+      "original_frequency": "Not specified"
+    }
+  },
+  {
+    "tenant_id": "f7aa6fd4-0af9-4706-8b31-034f1f7accda",
+    "code": "JTBD_033",
+    "name": "When predicting patient outcomes from digital biomarkers, I need validated algorithms and clinical correlation, so I can inform treatment decisions",
+    "description": "When predicting patient outcomes from digital biomarkers, I need validated algorithms and clinical correlation, so I can inform treatment decisions",
+    "strategic_priority_id": null,
+    "domain_id": null,
+    "functional_area": "Operations",
+    "job_category": "operational",
+    "complexity": "medium",
+    "frequency": "monthly",
+    "success_criteria": [
+      "inform treatment decisions"
+    ],
+    "kpis": [],
+    "pain_points": [
+      {
+        "pain_point": "Challenge: predicting patient outcomes from digital biomarkers"
+      }
+    ],
+    "desired_outcomes": [
+      {
+        "outcome": "inform treatment decisions"
+      }
+    ],
+    "status": "active",
+    "validation_score": 0.65,
+    "workflow_id": null,
+    "tags": [],
+    "metadata": {
+      "unique_id": "phase2_jtbd_00033",
+      "id": "jtbd00033",
+      "verb": "validated",
+      "object": "validated algorithms and clinical correlation",
+      "persona_code": null,
+      "persona_title": null,
+      "persona_unique_id": null,
+      "sector": "Multi-sector",
+      "source": "Digital Health JTBD Library Complete.md",
+      "importance": 8,
+      "satisfaction": 5,
+      "original_frequency": "Not specified"
+    }
+  },
+  {
+    "tenant_id": "f7aa6fd4-0af9-4706-8b31-034f1f7accda",
+    "code": "JTBD_034",
+    "name": "When supporting digital health initiatives, I need scalable cloud infrastructure and security frameworks, so I can ensure reliability and compliance",
+    "description": "When supporting digital health initiatives, I need scalable cloud infrastructure and security frameworks, so I can ensure reliability and compliance",
+    "strategic_priority_id": null,
+    "domain_id": null,
+    "functional_area": "Operations",
+    "job_category": "operational",
+    "complexity": "medium",
+    "frequency": "monthly",
+    "success_criteria": [
+      "ensure reliability and compliance"
+    ],
+    "kpis": [],
+    "pain_points": [
+      {
+        "pain_point": "Challenge: supporting digital health initiatives"
+      }
+    ],
+    "desired_outcomes": [
+      {
+        "outcome": "ensure reliability and compliance"
+      }
+    ],
+    "status": "active",
+    "validation_score": 0.65,
+    "workflow_id": null,
+    "tags": [],
+    "metadata": {
+      "unique_id": "phase2_jtbd_00034",
+      "id": "jtbd00034",
+      "verb": "scalable",
+      "object": "scalable cloud infrastructure and security frameworks",
+      "persona_code": null,
+      "persona_title": null,
+      "persona_unique_id": null,
+      "sector": "Multi-sector",
+      "source": "Digital Health JTBD Library Complete.md",
+      "importance": 8,
+      "satisfaction": 5,
+      "original_frequency": "Not specified"
+    }
+  },
+  {
+    "tenant_id": "f7aa6fd4-0af9-4706-8b31-034f1f7accda",
+    "code": "JTBD_035",
+    "name": "When designing end-to-end patient services, I need service blueprinting tools and stakeholder alignment methods, so I can create seamless experiences",
+    "description": "When designing end-to-end patient services, I need service blueprinting tools and stakeholder alignment methods, so I can create seamless experiences",
+    "strategic_priority_id": null,
+    "domain_id": null,
+    "functional_area": "Operations",
+    "job_category": "operational",
+    "complexity": "medium",
+    "frequency": "monthly",
+    "success_criteria": [
+      "create seamless experiences"
+    ],
+    "kpis": [],
+    "pain_points": [
+      {
+        "pain_point": "Challenge: designing end-to-end patient services"
+      }
+    ],
+    "desired_outcomes": [
+      {
+        "outcome": "create seamless experiences"
+      }
+    ],
+    "status": "active",
+    "validation_score": 0.65,
+    "workflow_id": null,
+    "tags": [],
+    "metadata": {
+      "unique_id": "phase2_jtbd_00035",
+      "id": "jtbd00035",
+      "verb": "service",
+      "object": "service blueprinting tools and stakeholder alignment methods",
+      "persona_code": null,
+      "persona_title": null,
+      "persona_unique_id": null,
+      "sector": "Multi-sector",
+      "source": "Digital Health JTBD Library Complete.md",
+      "importance": 8,
+      "satisfaction": 5,
+      "original_frequency": "Not specified"
+    }
+  },
+  {
+    "tenant_id": "f7aa6fd4-0af9-4706-8b31-034f1f7accda",
+    "code": "JTBD_036",
+    "name": "When innovating healthcare service models, I need rapid prototyping methods and pilot frameworks, so I can test and scale quickly",
+    "description": "When innovating healthcare service models, I need rapid prototyping methods and pilot frameworks, so I can test and scale quickly",
+    "strategic_priority_id": null,
+    "domain_id": null,
+    "functional_area": "Operations",
+    "job_category": "operational",
+    "complexity": "medium",
+    "frequency": "monthly",
+    "success_criteria": [
+      "test and scale quickly"
+    ],
+    "kpis": [],
+    "pain_points": [
+      {
+        "pain_point": "Challenge: innovating healthcare service models"
+      }
+    ],
+    "desired_outcomes": [
+      {
+        "outcome": "test and scale quickly"
+      }
+    ],
+    "status": "active",
+    "validation_score": 0.65,
+    "workflow_id": null,
+    "tags": [],
+    "metadata": {
+      "unique_id": "phase2_jtbd_00036",
+      "id": "jtbd00036",
+      "verb": "rapid",
+      "object": "rapid prototyping methods and pilot frameworks",
+      "persona_code": null,
+      "persona_title": null,
+      "persona_unique_id": null,
+      "sector": "Multi-sector",
+      "source": "Digital Health JTBD Library Complete.md",
+      "importance": 8,
+      "satisfaction": 5,
+      "original_frequency": "Not specified"
+    }
+  },
+  {
+    "tenant_id": "f7aa6fd4-0af9-4706-8b31-034f1f7accda",
+    "code": "JTBD_037",
+    "name": "When understanding patient digital behaviors, I need mixed-method research tools and remote testing capabilities, so I can gather authentic insights",
+    "description": "When understanding patient digital behaviors, I need mixed-method research tools and remote testing capabilities, so I can gather authentic insights",
+    "strategic_priority_id": null,
+    "domain_id": null,
+    "functional_area": "Operations",
+    "job_category": "operational",
+    "complexity": "medium",
+    "frequency": "monthly",
+    "success_criteria": [
+      "gather authentic insights"
+    ],
+    "kpis": [],
+    "pain_points": [
+      {
+        "pain_point": "Challenge: understanding patient digital behaviors"
+      }
+    ],
+    "desired_outcomes": [
+      {
+        "outcome": "gather authentic insights"
+      }
+    ],
+    "status": "active",
+    "validation_score": 0.65,
+    "workflow_id": null,
+    "tags": [],
+    "metadata": {
+      "unique_id": "phase2_jtbd_00037",
+      "id": "jtbd00037",
+      "verb": "mixed-method",
+      "object": "mixed-method research tools and remote testing capabilities",
+      "persona_code": null,
+      "persona_title": null,
+      "persona_unique_id": null,
+      "sector": "Multi-sector",
+      "source": "Digital Health JTBD Library Complete.md",
+      "importance": 8,
+      "satisfaction": 5,
+      "original_frequency": "Not specified"
+    }
+  },
+  {
+    "tenant_id": "f7aa6fd4-0af9-4706-8b31-034f1f7accda",
+    "code": "JTBD_038",
+    "name": "When designing digital behavior change interventions, I need evidence-based frameworks and testing protocols, so I can drive sustained outcomes",
+    "description": "When designing digital behavior change interventions, I need evidence-based frameworks and testing protocols, so I can drive sustained outcomes",
+    "strategic_priority_id": null,
+    "domain_id": null,
+    "functional_area": "Operations",
+    "job_category": "operational",
+    "complexity": "medium",
+    "frequency": "monthly",
+    "success_criteria": [
+      "drive sustained outcomes"
+    ],
+    "kpis": [],
+    "pain_points": [
+      {
+        "pain_point": "Challenge: designing digital behavior change interventions"
+      }
+    ],
+    "desired_outcomes": [
+      {
+        "outcome": "drive sustained outcomes"
+      }
+    ],
+    "status": "active",
+    "validation_score": 0.65,
+    "workflow_id": null,
+    "tags": [],
+    "metadata": {
+      "unique_id": "phase2_jtbd_00038",
+      "id": "jtbd00038",
+      "verb": "evidence-based",
+      "object": "evidence-based frameworks and testing protocols",
+      "persona_code": null,
+      "persona_title": null,
+      "persona_unique_id": null,
+      "sector": "Multi-sector",
+      "source": "Digital Health JTBD Library Complete.md",
+      "importance": 8,
+      "satisfaction": 5,
+      "original_frequency": "Not specified"
+    }
+  },
+  {
+    "tenant_id": "f7aa6fd4-0af9-4706-8b31-034f1f7accda",
+    "code": "JTBD_039",
+    "name": "When reviewing digital health initiatives for compliance, I need regulatory mapping and risk assessment frameworks, so I can ensure legal protection",
+    "description": "When reviewing digital health initiatives for compliance, I need regulatory mapping and risk assessment frameworks, so I can ensure legal protection",
+    "strategic_priority_id": null,
+    "domain_id": null,
+    "functional_area": "Quality",
+    "job_category": "operational",
+    "complexity": "medium",
+    "frequency": "monthly",
+    "success_criteria": [
+      "ensure legal protection"
+    ],
+    "kpis": [],
+    "pain_points": [
+      {
+        "pain_point": "Challenge: reviewing digital health initiatives for compliance"
+      }
+    ],
+    "desired_outcomes": [
+      {
+        "outcome": "ensure legal protection"
+      }
+    ],
+    "status": "active",
+    "validation_score": 0.65,
+    "workflow_id": null,
+    "tags": [],
+    "metadata": {
+      "unique_id": "phase2_jtbd_00039",
+      "id": "jtbd00039",
+      "verb": "regulatory",
+      "object": "regulatory mapping and risk assessment frameworks",
+      "persona_code": null,
+      "persona_title": null,
+      "persona_unique_id": null,
+      "sector": "Multi-sector",
+      "source": "Digital Health JTBD Library Complete.md",
+      "importance": 8,
+      "satisfaction": 5,
+      "original_frequency": "Not specified"
+    }
+  },
+  {
+    "tenant_id": "f7aa6fd4-0af9-4706-8b31-034f1f7accda",
+    "code": "JTBD_040",
+    "name": "When negotiating digital health partnerships, I need template agreements and liability frameworks, so I can protect company interests",
+    "description": "When negotiating digital health partnerships, I need template agreements and liability frameworks, so I can protect company interests",
+    "strategic_priority_id": null,
+    "domain_id": null,
+    "functional_area": "Operations",
+    "job_category": "operational",
+    "complexity": "medium",
+    "frequency": "monthly",
+    "success_criteria": [
+      "protect company interests"
+    ],
+    "kpis": [],
+    "pain_points": [
+      {
+        "pain_point": "Challenge: negotiating digital health partnerships"
+      }
+    ],
+    "desired_outcomes": [
+      {
+        "outcome": "protect company interests"
+      }
+    ],
+    "status": "active",
+    "validation_score": 0.65,
+    "workflow_id": null,
+    "tags": [],
+    "metadata": {
+      "unique_id": "phase2_jtbd_00040",
+      "id": "jtbd00040",
+      "verb": "template",
+      "object": "template agreements and liability frameworks",
+      "persona_code": null,
+      "persona_title": null,
+      "persona_unique_id": null,
+      "sector": "Multi-sector",
+      "source": "Digital Health JTBD Library Complete.md",
+      "importance": 8,
+      "satisfaction": 5,
+      "original_frequency": "Not specified"
+    }
+  },
+  {
+    "tenant_id": "f7aa6fd4-0af9-4706-8b31-034f1f7accda",
+    "code": "JTBD_041",
+    "name": "When implementing digital health compliance programs, I need automated monitoring and training systems, so I can ensure enterprise-wide adherence",
+    "description": "When implementing digital health compliance programs, I need automated monitoring and training systems, so I can ensure enterprise-wide adherence",
+    "strategic_priority_id": null,
+    "domain_id": null,
+    "functional_area": "Quality",
+    "job_category": "operational",
+    "complexity": "medium",
+    "frequency": "monthly",
+    "success_criteria": [
+      "ensure enterprise-wide adherence"
+    ],
+    "kpis": [],
+    "pain_points": [
+      {
+        "pain_point": "Challenge: implementing digital health compliance programs"
+      }
+    ],
+    "desired_outcomes": [
+      {
+        "outcome": "ensure enterprise-wide adherence"
+      }
+    ],
+    "status": "active",
+    "validation_score": 0.65,
+    "workflow_id": null,
+    "tags": [],
+    "metadata": {
+      "unique_id": "phase2_jtbd_00041",
+      "id": "jtbd00041",
+      "verb": "monitoring",
+      "object": "automated monitoring and training systems",
+      "persona_code": null,
+      "persona_title": null,
+      "persona_unique_id": null,
+      "sector": "Multi-sector",
+      "source": "Digital Health JTBD Library Complete.md",
+      "importance": 8,
+      "satisfaction": 5,
+      "original_frequency": "Not specified"
+    }
+  },
+  {
+    "tenant_id": "f7aa6fd4-0af9-4706-8b31-034f1f7accda",
+    "code": "JTBD_042",
+    "name": "When monitoring digital therapeutics for safety signals, I need integrated surveillance systems and automated detection, so I can ensure patient safety",
+    "description": "When monitoring digital therapeutics for safety signals, I need integrated surveillance systems and automated detection, so I can ensure patient safety",
+    "strategic_priority_id": null,
+    "domain_id": null,
+    "functional_area": "Operations",
+    "job_category": "operational",
+    "complexity": "medium",
+    "frequency": "monthly",
+    "success_criteria": [
+      "ensure patient safety"
+    ],
+    "kpis": [],
+    "pain_points": [
+      {
+        "pain_point": "Challenge: monitoring digital therapeutics for safety signals"
+      }
+    ],
+    "desired_outcomes": [
+      {
+        "outcome": "ensure patient safety"
+      }
+    ],
+    "status": "active",
+    "validation_score": 0.65,
+    "workflow_id": null,
+    "tags": [],
+    "metadata": {
+      "unique_id": "phase2_jtbd_00042",
+      "id": "jtbd00042",
+      "verb": "surveillance",
+      "object": "integrated surveillance systems and automated detection",
+      "persona_code": null,
+      "persona_title": null,
+      "persona_unique_id": null,
+      "sector": "Multi-sector",
+      "source": "Digital Health JTBD Library Complete.md",
+      "importance": 8,
+      "satisfaction": 5,
+      "original_frequency": "Not specified"
+    }
+  },
+  {
+    "tenant_id": "f7aa6fd4-0af9-4706-8b31-034f1f7accda",
+    "code": "JTBD_043",
+    "name": "When managing adverse events from digital health products, I need classification frameworks and reporting workflows, so I can meet regulatory requirements",
+    "description": "When managing adverse events from digital health products, I need classification frameworks and reporting workflows, so I can meet regulatory requirements",
+    "strategic_priority_id": null,
+    "domain_id": null,
+    "functional_area": "Operations",
+    "job_category": "operational",
+    "complexity": "medium",
+    "frequency": "monthly",
+    "success_criteria": [
+      "meet regulatory requirements"
+    ],
+    "kpis": [],
+    "pain_points": [
+      {
+        "pain_point": "Challenge: managing adverse events from digital health products"
+      }
+    ],
+    "desired_outcomes": [
+      {
+        "outcome": "meet regulatory requirements"
+      }
+    ],
+    "status": "active",
+    "validation_score": 0.65,
+    "workflow_id": null,
+    "tags": [],
+    "metadata": {
+      "unique_id": "phase2_jtbd_00043",
+      "id": "jtbd00043",
+      "verb": "classification",
+      "object": "classification frameworks and reporting workflows",
+      "persona_code": null,
+      "persona_title": null,
+      "persona_unique_id": null,
+      "sector": "Multi-sector",
+      "source": "Digital Health JTBD Library Complete.md",
+      "importance": 8,
+      "satisfaction": 5,
+      "original_frequency": "Not specified"
+    }
+  },
+  {
+    "tenant_id": "f7aa6fd4-0af9-4706-8b31-034f1f7accda",
+    "code": "JTBD_044",
+    "name": "When generating RWE from digital health data, I need quality assessment frameworks and analytical pipelines, so I can produce regulatory-grade evidence",
+    "description": "When generating RWE from digital health data, I need quality assessment frameworks and analytical pipelines, so I can produce regulatory-grade evidence",
+    "strategic_priority_id": null,
+    "domain_id": null,
+    "functional_area": "Operations",
+    "job_category": "operational",
+    "complexity": "medium",
+    "frequency": "monthly",
+    "success_criteria": [
+      "produce regulatory-grade evidence"
+    ],
+    "kpis": [],
+    "pain_points": [
+      {
+        "pain_point": "Challenge: generating RWE from digital health data"
+      }
+    ],
+    "desired_outcomes": [
+      {
+        "outcome": "produce regulatory-grade evidence"
+      }
+    ],
+    "status": "active",
+    "validation_score": 0.65,
+    "workflow_id": null,
+    "tags": [],
+    "metadata": {
+      "unique_id": "phase2_jtbd_00044",
+      "id": "jtbd00044",
+      "verb": "quality",
+      "object": "quality assessment frameworks and analytical pipelines",
+      "persona_code": null,
+      "persona_title": null,
+      "persona_unique_id": null,
+      "sector": "Multi-sector",
+      "source": "Digital Health JTBD Library Complete.md",
+      "importance": 8,
+      "satisfaction": 5,
+      "original_frequency": "Not specified"
+    }
+  },
+  {
+    "tenant_id": "f7aa6fd4-0af9-4706-8b31-034f1f7accda",
+    "code": "JTBD_045",
+    "name": "When linking digital biomarkers to clinical outcomes, I need validation methodologies and statistical models, so I can establish causal relationships",
+    "description": "When linking digital biomarkers to clinical outcomes, I need validation methodologies and statistical models, so I can establish causal relationships",
+    "strategic_priority_id": null,
+    "domain_id": null,
+    "functional_area": "Clinical",
+    "job_category": "operational",
+    "complexity": "medium",
+    "frequency": "monthly",
+    "success_criteria": [
+      "establish causal relationships"
+    ],
+    "kpis": [],
+    "pain_points": [
+      {
+        "pain_point": "Challenge: linking digital biomarkers to clinical outcomes"
+      }
+    ],
+    "desired_outcomes": [
+      {
+        "outcome": "establish causal relationships"
+      }
+    ],
+    "status": "active",
+    "validation_score": 0.65,
+    "workflow_id": null,
+    "tags": [],
+    "metadata": {
+      "unique_id": "phase2_jtbd_00045",
+      "id": "jtbd00045",
+      "verb": "validation",
+      "object": "validation methodologies and statistical models",
+      "persona_code": null,
+      "persona_title": null,
+      "persona_unique_id": null,
+      "sector": "Multi-sector",
+      "source": "Digital Health JTBD Library Complete.md",
+      "importance": 8,
+      "satisfaction": 5,
+      "original_frequency": "Not specified"
+    }
+  },
+  {
+    "tenant_id": "f7aa6fd4-0af9-4706-8b31-034f1f7accda",
+    "code": "JTBD_046",
+    "name": "When implementing digital patient-reported outcomes, I need validated instruments and collection platforms, so I can capture meaningful data",
+    "description": "When implementing digital patient-reported outcomes, I need validated instruments and collection platforms, so I can capture meaningful data",
+    "strategic_priority_id": null,
+    "domain_id": null,
+    "functional_area": "Operations",
+    "job_category": "operational",
+    "complexity": "medium",
+    "frequency": "monthly",
+    "success_criteria": [
+      "capture meaningful data"
+    ],
+    "kpis": [],
+    "pain_points": [
+      {
+        "pain_point": "Challenge: implementing digital patient-reported outcomes"
+      }
+    ],
+    "desired_outcomes": [
+      {
+        "outcome": "capture meaningful data"
+      }
+    ],
+    "status": "active",
+    "validation_score": 0.65,
+    "workflow_id": null,
+    "tags": [],
+    "metadata": {
+      "unique_id": "phase2_jtbd_00046",
+      "id": "jtbd00046",
+      "verb": "validated",
+      "object": "validated instruments and collection platforms",
+      "persona_code": null,
+      "persona_title": null,
+      "persona_unique_id": null,
+      "sector": "Multi-sector",
+      "source": "Digital Health JTBD Library Complete.md",
+      "importance": 8,
+      "satisfaction": 5,
+      "original_frequency": "Not specified"
+    }
+  },
+  {
+    "tenant_id": "f7aa6fd4-0af9-4706-8b31-034f1f7accda",
+    "code": "JTBD_047",
+    "name": "When communicating digital health evidence to regulators, I need structured templates and clarity frameworks, so I can ensure clear understanding",
+    "description": "When communicating digital health evidence to regulators, I need structured templates and clarity frameworks, so I can ensure clear understanding",
+    "strategic_priority_id": null,
+    "domain_id": null,
+    "functional_area": "Operations",
+    "job_category": "operational",
+    "complexity": "medium",
+    "frequency": "monthly",
+    "success_criteria": [
+      "ensure clear understanding"
+    ],
+    "kpis": [],
+    "pain_points": [
+      {
+        "pain_point": "Challenge: communicating digital health evidence to regulators"
+      }
+    ],
+    "desired_outcomes": [
+      {
+        "outcome": "ensure clear understanding"
+      }
+    ],
+    "status": "active",
+    "validation_score": 0.65,
+    "workflow_id": null,
+    "tags": [],
+    "metadata": {
+      "unique_id": "phase2_jtbd_00047",
+      "id": "jtbd00047",
+      "verb": "structured",
+      "object": "structured templates and clarity frameworks",
+      "persona_code": null,
+      "persona_title": null,
+      "persona_unique_id": null,
+      "sector": "Multi-sector",
+      "source": "Digital Health JTBD Library Complete.md",
+      "importance": 8,
+      "satisfaction": 5,
+      "original_frequency": "Not specified"
+    }
+  },
+  {
+    "tenant_id": "f7aa6fd4-0af9-4706-8b31-034f1f7accda",
+    "code": "JTBD_048",
+    "name": "When developing digital health publications, I need evidence visualization tools and narrative frameworks, so I can tell compelling stories",
+    "description": "When developing digital health publications, I need evidence visualization tools and narrative frameworks, so I can tell compelling stories",
+    "strategic_priority_id": null,
+    "domain_id": null,
+    "functional_area": "Operations",
+    "job_category": "operational",
+    "complexity": "medium",
+    "frequency": "monthly",
+    "success_criteria": [
+      "tell compelling stories"
+    ],
+    "kpis": [],
+    "pain_points": [
+      {
+        "pain_point": "Challenge: developing digital health publications"
+      }
+    ],
+    "desired_outcomes": [
+      {
+        "outcome": "tell compelling stories"
+      }
+    ],
+    "status": "active",
+    "validation_score": 0.65,
+    "workflow_id": null,
+    "tags": [],
+    "metadata": {
+      "unique_id": "phase2_jtbd_00048",
+      "id": "jtbd00048",
+      "verb": "evidence",
+      "object": "evidence visualization tools and narrative frameworks",
+      "persona_code": null,
+      "persona_title": null,
+      "persona_unique_id": null,
+      "sector": "Multi-sector",
+      "source": "Digital Health JTBD Library Complete.md",
+      "importance": 8,
+      "satisfaction": 5,
+      "original_frequency": "Not specified"
+    }
+  },
+  {
+    "tenant_id": "f7aa6fd4-0af9-4706-8b31-034f1f7accda",
+    "code": "JTBD_049",
+    "name": "When integrating digital health data into clinical trials, I need standardization protocols and quality frameworks, so I can ensure data integrity",
+    "description": "When integrating digital health data into clinical trials, I need standardization protocols and quality frameworks, so I can ensure data integrity",
+    "strategic_priority_id": null,
+    "domain_id": null,
+    "functional_area": "Clinical",
+    "job_category": "operational",
+    "complexity": "medium",
+    "frequency": "monthly",
+    "success_criteria": [
+      "ensure data integrity"
+    ],
+    "kpis": [],
+    "pain_points": [
+      {
+        "pain_point": "Challenge: integrating digital health data into clinical trials"
+      }
+    ],
+    "desired_outcomes": [
+      {
+        "outcome": "ensure data integrity"
+      }
+    ],
+    "status": "active",
+    "validation_score": 0.65,
+    "workflow_id": null,
+    "tags": [],
+    "metadata": {
+      "unique_id": "phase2_jtbd_00049",
+      "id": "jtbd00049",
+      "verb": "standardization",
+      "object": "standardization protocols and quality frameworks",
+      "persona_code": null,
+      "persona_title": null,
+      "persona_unique_id": null,
+      "sector": "Multi-sector",
+      "source": "Digital Health JTBD Library Complete.md",
+      "importance": 8,
+      "satisfaction": 5,
+      "original_frequency": "Not specified"
+    }
+  },
+  {
+    "tenant_id": "f7aa6fd4-0af9-4706-8b31-034f1f7accda",
+    "code": "JTBD_050",
+    "name": "When managing continuous digital endpoint data, I need streaming pipelines and automated validation, so I can handle high volumes efficiently",
+    "description": "When managing continuous digital endpoint data, I need streaming pipelines and automated validation, so I can handle high volumes efficiently",
+    "strategic_priority_id": null,
+    "domain_id": null,
+    "functional_area": "Operations",
+    "job_category": "operational",
+    "complexity": "medium",
+    "frequency": "monthly",
+    "success_criteria": [
+      "handle high volumes efficiently"
+    ],
+    "kpis": [],
+    "pain_points": [
+      {
+        "pain_point": "Challenge: managing continuous digital endpoint data"
+      }
+    ],
+    "desired_outcomes": [
+      {
+        "outcome": "handle high volumes efficiently"
+      }
+    ],
+    "status": "active",
+    "validation_score": 0.65,
+    "workflow_id": null,
+    "tags": [],
+    "metadata": {
+      "unique_id": "phase2_jtbd_00050",
+      "id": "jtbd00050",
+      "verb": "streaming",
+      "object": "streaming pipelines and automated validation",
+      "persona_code": null,
+      "persona_title": null,
+      "persona_unique_id": null,
+      "sector": "Multi-sector",
+      "source": "Digital Health JTBD Library Complete.md",
+      "importance": 8,
+      "satisfaction": 5,
+      "original_frequency": "Not specified"
+    }
+  },
+  {
+    "tenant_id": "f7aa6fd4-0af9-4706-8b31-034f1f7accda",
+    "code": "JTBD_051",
+    "name": "When analyzing digital biomarker data, I need specialized statistical methods and validation approaches, so I can demonstrate clinical significance",
+    "description": "When analyzing digital biomarker data, I need specialized statistical methods and validation approaches, so I can demonstrate clinical significance",
+    "strategic_priority_id": null,
+    "domain_id": null,
+    "functional_area": "Operations",
+    "job_category": "operational",
+    "complexity": "medium",
+    "frequency": "monthly",
+    "success_criteria": [
+      "demonstrate clinical significance"
+    ],
+    "kpis": [],
+    "pain_points": [
+      {
+        "pain_point": "Challenge: analyzing digital biomarker data"
+      }
+    ],
+    "desired_outcomes": [
+      {
+        "outcome": "demonstrate clinical significance"
+      }
+    ],
+    "status": "active",
+    "validation_score": 0.65,
+    "workflow_id": null,
+    "tags": [],
+    "metadata": {
+      "unique_id": "phase2_jtbd_00051",
+      "id": "jtbd00051",
+      "verb": "specialized",
+      "object": "specialized statistical methods and validation approaches",
+      "persona_code": null,
+      "persona_title": null,
+      "persona_unique_id": null,
+      "sector": "Multi-sector",
+      "source": "Digital Health JTBD Library Complete.md",
+      "importance": 8,
+      "satisfaction": 5,
+      "original_frequency": "Not specified"
+    }
+  },
+  {
+    "tenant_id": "f7aa6fd4-0af9-4706-8b31-034f1f7accda",
+    "code": "JTBD_052",
+    "name": "When designing adaptive trials with digital endpoints, I need simulation tools and decision algorithms, so I can optimize trial efficiency",
+    "description": "When designing adaptive trials with digital endpoints, I need simulation tools and decision algorithms, so I can optimize trial efficiency",
+    "strategic_priority_id": null,
+    "domain_id": null,
+    "functional_area": "Clinical",
+    "job_category": "operational",
+    "complexity": "medium",
+    "frequency": "monthly",
+    "success_criteria": [
+      "optimize trial efficiency"
+    ],
+    "kpis": [],
+    "pain_points": [
+      {
+        "pain_point": "Challenge: designing adaptive trials with digital endpoints"
+      }
+    ],
+    "desired_outcomes": [
+      {
+        "outcome": "optimize trial efficiency"
+      }
+    ],
+    "status": "active",
+    "validation_score": 0.65,
+    "workflow_id": null,
+    "tags": [],
+    "metadata": {
+      "unique_id": "phase2_jtbd_00052",
+      "id": "jtbd00052",
+      "verb": "simulation",
+      "object": "simulation tools and decision algorithms",
+      "persona_code": null,
+      "persona_title": null,
+      "persona_unique_id": null,
+      "sector": "Multi-sector",
+      "source": "Digital Health JTBD Library Complete.md",
+      "importance": 8,
+      "satisfaction": 5,
+      "original_frequency": "Not specified"
+    }
+  },
+  {
+    "tenant_id": "f7aa6fd4-0af9-4706-8b31-034f1f7accda",
+    "code": "JTBD_053",
+    "name": "When evaluating digital health partnerships, I need assessment frameworks and value models, so I can identify strategic fits",
+    "description": "When evaluating digital health partnerships, I need assessment frameworks and value models, so I can identify strategic fits",
+    "strategic_priority_id": null,
+    "domain_id": null,
+    "functional_area": "Operations",
+    "job_category": "operational",
+    "complexity": "medium",
+    "frequency": "monthly",
+    "success_criteria": [
+      "identify strategic fits"
+    ],
+    "kpis": [],
+    "pain_points": [
+      {
+        "pain_point": "Challenge: evaluating digital health partnerships"
+      }
+    ],
+    "desired_outcomes": [
+      {
+        "outcome": "identify strategic fits"
+      }
+    ],
+    "status": "active",
+    "validation_score": 0.65,
+    "workflow_id": null,
+    "tags": [],
+    "metadata": {
+      "unique_id": "phase2_jtbd_00053",
+      "id": "jtbd00053",
+      "verb": "assessment",
+      "object": "assessment frameworks and value models",
+      "persona_code": null,
+      "persona_title": null,
+      "persona_unique_id": null,
+      "sector": "Multi-sector",
+      "source": "Digital Health JTBD Library Complete.md",
+      "importance": 8,
+      "satisfaction": 5,
+      "original_frequency": "Not specified"
+    }
+  },
+  {
+    "tenant_id": "f7aa6fd4-0af9-4706-8b31-034f1f7accda",
+    "code": "JTBD_054",
+    "name": "When managing digital health alliances, I need governance models and performance tracking, so I can ensure mutual success",
+    "description": "When managing digital health alliances, I need governance models and performance tracking, so I can ensure mutual success",
+    "strategic_priority_id": null,
+    "domain_id": null,
+    "functional_area": "Operations",
+    "job_category": "operational",
+    "complexity": "medium",
+    "frequency": "monthly",
+    "success_criteria": [
+      "ensure mutual success"
+    ],
+    "kpis": [],
+    "pain_points": [
+      {
+        "pain_point": "Challenge: managing digital health alliances"
+      }
+    ],
+    "desired_outcomes": [
+      {
+        "outcome": "ensure mutual success"
+      }
+    ],
+    "status": "active",
+    "validation_score": 0.65,
+    "workflow_id": null,
+    "tags": [],
+    "metadata": {
+      "unique_id": "phase2_jtbd_00054",
+      "id": "jtbd00054",
+      "verb": "governance",
+      "object": "governance models and performance tracking",
+      "persona_code": null,
+      "persona_title": null,
+      "persona_unique_id": null,
+      "sector": "Multi-sector",
+      "source": "Digital Health JTBD Library Complete.md",
+      "importance": 8,
+      "satisfaction": 5,
+      "original_frequency": "Not specified"
+    }
+  },
+  {
+    "tenant_id": "f7aa6fd4-0af9-4706-8b31-034f1f7accda",
+    "code": "JTBD_055",
+    "name": "When driving digital health adoption in pharma, I need change readiness assessments and engagement strategies, so I can overcome resistance",
+    "description": "When driving digital health adoption in pharma, I need change readiness assessments and engagement strategies, so I can overcome resistance",
+    "strategic_priority_id": null,
+    "domain_id": null,
+    "functional_area": "Operations",
+    "job_category": "operational",
+    "complexity": "medium",
+    "frequency": "monthly",
+    "success_criteria": [
+      "overcome resistance"
+    ],
+    "kpis": [],
+    "pain_points": [
+      {
+        "pain_point": "Challenge: driving digital health adoption in pharma"
+      }
+    ],
+    "desired_outcomes": [
+      {
+        "outcome": "overcome resistance"
+      }
+    ],
+    "status": "active",
+    "validation_score": 0.65,
+    "workflow_id": null,
+    "tags": [],
+    "metadata": {
+      "unique_id": "phase2_jtbd_00055",
+      "id": "jtbd00055",
+      "verb": "change",
+      "object": "change readiness assessments and engagement strategies",
+      "persona_code": null,
+      "persona_title": null,
+      "persona_unique_id": null,
+      "sector": "Multi-sector",
+      "source": "Digital Health JTBD Library Complete.md",
+      "importance": 8,
+      "satisfaction": 5,
+      "original_frequency": "Not specified"
+    }
+  },
+  {
+    "tenant_id": "f7aa6fd4-0af9-4706-8b31-034f1f7accda",
+    "code": "JTBD_056",
+    "name": "When transforming to digital-first mindset, I need culture change programs and success stories, so I can shift organizational behavior",
+    "description": "When transforming to digital-first mindset, I need culture change programs and success stories, so I can shift organizational behavior",
+    "strategic_priority_id": null,
+    "domain_id": null,
+    "functional_area": "Operations",
+    "job_category": "operational",
+    "complexity": "medium",
+    "frequency": "monthly",
+    "success_criteria": [
+      "shift organizational behavior"
+    ],
+    "kpis": [],
+    "pain_points": [
+      {
+        "pain_point": "Challenge: transforming to digital-first mindset"
+      }
+    ],
+    "desired_outcomes": [
+      {
+        "outcome": "shift organizational behavior"
+      }
+    ],
+    "status": "active",
+    "validation_score": 0.65,
+    "workflow_id": null,
+    "tags": [],
+    "metadata": {
+      "unique_id": "phase2_jtbd_00056",
+      "id": "jtbd00056",
+      "verb": "culture",
+      "object": "culture change programs and success stories",
+      "persona_code": null,
+      "persona_title": null,
+      "persona_unique_id": null,
+      "sector": "Multi-sector",
+      "source": "Digital Health JTBD Library Complete.md",
+      "importance": 8,
+      "satisfaction": 5,
+      "original_frequency": "Not specified"
+    }
+  },
+  {
+    "tenant_id": "f7aa6fd4-0af9-4706-8b31-034f1f7accda",
+    "code": "JTBD_057",
+    "name": "When integrating digital therapeutics into supply chain, I need distribution models and quality systems, so I can ensure product availability",
+    "description": "When integrating digital therapeutics into supply chain, I need distribution models and quality systems, so I can ensure product availability",
+    "strategic_priority_id": null,
+    "domain_id": null,
+    "functional_area": "Operations",
+    "job_category": "operational",
+    "complexity": "medium",
+    "frequency": "monthly",
+    "success_criteria": [
+      "ensure product availability"
+    ],
+    "kpis": [],
+    "pain_points": [
+      {
+        "pain_point": "Challenge: integrating digital therapeutics into supply chain"
+      }
+    ],
+    "desired_outcomes": [
+      {
+        "outcome": "ensure product availability"
+      }
+    ],
+    "status": "active",
+    "validation_score": 0.65,
+    "workflow_id": null,
+    "tags": [],
+    "metadata": {
+      "unique_id": "phase2_jtbd_00057",
+      "id": "jtbd00057",
+      "verb": "distribution",
+      "object": "distribution models and quality systems",
+      "persona_code": null,
+      "persona_title": null,
+      "persona_unique_id": null,
+      "sector": "Multi-sector",
+      "source": "Digital Health JTBD Library Complete.md",
+      "importance": 8,
+      "satisfaction": 5,
+      "original_frequency": "Not specified"
+    }
+  },
+  {
+    "tenant_id": "f7aa6fd4-0af9-4706-8b31-034f1f7accda",
+    "code": "JTBD_058",
+    "name": "When developing patient support programs, I need to integrate digital tools that demonstrate clinical impact, so I can improve adherence and outcomes",
+    "description": "When developing patient support programs, I need to integrate digital tools that demonstrate clinical impact, so I can improve adherence and outcomes",
+    "strategic_priority_id": null,
+    "domain_id": null,
+    "functional_area": "Operations",
+    "job_category": "operational",
+    "complexity": "medium",
+    "frequency": "monthly",
+    "success_criteria": [
+      "improve adherence and outcomes"
+    ],
+    "kpis": [],
+    "pain_points": [
+      {
+        "pain_point": "Challenge: developing patient support programs"
+      }
+    ],
+    "desired_outcomes": [
+      {
+        "outcome": "improve adherence and outcomes"
+      }
+    ],
+    "status": "active",
+    "validation_score": 0.65,
+    "workflow_id": null,
+    "tags": [],
+    "metadata": {
+      "unique_id": "phase2_jtbd_00058",
+      "id": "jtbd00058",
+      "verb": "to",
+      "object": "to integrate digital tools that demonstrate clinical impact",
+      "persona_code": null,
+      "persona_title": null,
+      "persona_unique_id": null,
+      "sector": "Multi-sector",
+      "source": "Digital Health JTBD Library Complete.md",
+      "importance": 8,
+      "satisfaction": 5,
+      "original_frequency": "Not specified"
+    }
+  },
+  {
+    "tenant_id": "f7aa6fd4-0af9-4706-8b31-034f1f7accda",
+    "code": "JTBD_059",
+    "name": "When generating real-world evidence for label expansion, I need digital data collection methods that meet regulatory standards, so I can support new indications",
+    "description": "When generating real-world evidence for label expansion, I need digital data collection methods that meet regulatory standards, so I can support new indications",
+    "strategic_priority_id": null,
+    "domain_id": null,
+    "functional_area": "Operations",
+    "job_category": "operational",
+    "complexity": "medium",
+    "frequency": "monthly",
+    "success_criteria": [
+      "support new indications"
+    ],
+    "kpis": [],
+    "pain_points": [
+      {
+        "pain_point": "Challenge: generating real-world evidence for label expansion"
+      }
+    ],
+    "desired_outcomes": [
+      {
+        "outcome": "support new indications"
+      }
+    ],
+    "status": "active",
+    "validation_score": 0.65,
+    "workflow_id": null,
+    "tags": [],
+    "metadata": {
+      "unique_id": "phase2_jtbd_00059",
+      "id": "jtbd00059",
+      "verb": "digital",
+      "object": "digital data collection methods that meet regulatory standards",
+      "persona_code": null,
+      "persona_title": null,
+      "persona_unique_id": null,
+      "sector": "Multi-sector",
+      "source": "Digital Health JTBD Library Complete.md",
+      "importance": 8,
+      "satisfaction": 5,
+      "original_frequency": "Not specified"
+    }
+  },
+  {
+    "tenant_id": "f7aa6fd4-0af9-4706-8b31-034f1f7accda",
+    "code": "JTBD_060",
+    "name": "When engaging KOLs digitally, I need compliant platforms that track interactions and content effectiveness, so I can optimize medical strategy",
+    "description": "When engaging KOLs digitally, I need compliant platforms that track interactions and content effectiveness, so I can optimize medical strategy",
+    "strategic_priority_id": null,
+    "domain_id": null,
+    "functional_area": "Operations",
+    "job_category": "operational",
+    "complexity": "medium",
+    "frequency": "monthly",
+    "success_criteria": [
+      "optimize medical strategy"
+    ],
+    "kpis": [],
+    "pain_points": [
+      {
+        "pain_point": "Challenge: engaging KOLs digitally"
+      }
+    ],
+    "desired_outcomes": [
+      {
+        "outcome": "optimize medical strategy"
+      }
+    ],
+    "status": "active",
+    "validation_score": 0.65,
+    "workflow_id": null,
+    "tags": [],
+    "metadata": {
+      "unique_id": "phase2_jtbd_00060",
+      "id": "jtbd00060",
+      "verb": "compliant",
+      "object": "compliant platforms that track interactions and content effectiveness",
+      "persona_code": null,
+      "persona_title": null,
+      "persona_unique_id": null,
+      "sector": "Multi-sector",
+      "source": "Digital Health JTBD Library Complete.md",
+      "importance": 8,
+      "satisfaction": 5,
+      "original_frequency": "Not specified"
+    }
+  },
+  {
+    "tenant_id": "f7aa6fd4-0af9-4706-8b31-034f1f7accda",
+    "code": "JTBD_061",
+    "name": "When designing hybrid trials with digital endpoints, I need validated digital biomarkers and collection methods, so I can ensure regulatory acceptance",
+    "description": "When designing hybrid trials with digital endpoints, I need validated digital biomarkers and collection methods, so I can ensure regulatory acceptance",
+    "strategic_priority_id": null,
+    "domain_id": null,
+    "functional_area": "Clinical",
+    "job_category": "operational",
+    "complexity": "medium",
+    "frequency": "monthly",
+    "success_criteria": [
+      "ensure regulatory acceptance"
+    ],
+    "kpis": [],
+    "pain_points": [
+      {
+        "pain_point": "Challenge: designing hybrid trials with digital endpoints"
+      }
+    ],
+    "desired_outcomes": [
+      {
+        "outcome": "ensure regulatory acceptance"
+      }
+    ],
+    "status": "active",
+    "validation_score": 0.65,
+    "workflow_id": null,
+    "tags": [],
+    "metadata": {
+      "unique_id": "phase2_jtbd_00061",
+      "id": "jtbd00061",
+      "verb": "validated",
+      "object": "validated digital biomarkers and collection methods",
+      "persona_code": null,
+      "persona_title": null,
+      "persona_unique_id": null,
+      "sector": "Multi-sector",
+      "source": "Digital Health JTBD Library Complete.md",
+      "importance": 8,
+      "satisfaction": 5,
+      "original_frequency": "Not specified"
+    }
+  },
+  {
+    "tenant_id": "f7aa6fd4-0af9-4706-8b31-034f1f7accda",
+    "code": "JTBD_062",
+    "name": "When managing decentralized trial operations, I need integrated platforms for remote monitoring and data collection, so I can maintain quality and compliance",
+    "description": "When managing decentralized trial operations, I need integrated platforms for remote monitoring and data collection, so I can maintain quality and compliance",
+    "strategic_priority_id": null,
+    "domain_id": null,
+    "functional_area": "Clinical",
+    "job_category": "operational",
+    "complexity": "medium",
+    "frequency": "monthly",
+    "success_criteria": [
+      "maintain quality and compliance"
+    ],
+    "kpis": [],
+    "pain_points": [
+      {
+        "pain_point": "Challenge: managing decentralized trial operations"
+      }
+    ],
+    "desired_outcomes": [
+      {
+        "outcome": "maintain quality and compliance"
+      }
+    ],
+    "status": "active",
+    "validation_score": 0.65,
+    "workflow_id": null,
+    "tags": [],
+    "metadata": {
+      "unique_id": "phase2_jtbd_00062",
+      "id": "jtbd00062",
+      "verb": "platforms",
+      "object": "integrated platforms for remote monitoring and data collection",
+      "persona_code": null,
+      "persona_title": null,
+      "persona_unique_id": null,
+      "sector": "Multi-sector",
+      "source": "Digital Health JTBD Library Complete.md",
+      "importance": 8,
+      "satisfaction": 5,
+      "original_frequency": "Not specified"
+    }
+  },
+  {
+    "tenant_id": "f7aa6fd4-0af9-4706-8b31-034f1f7accda",
+    "code": "JTBD_063",
+    "name": "When integrating digital biomarkers into protocols, I need evidence of clinical validity and technical reliability, so I can justify to regulators",
+    "description": "When integrating digital biomarkers into protocols, I need evidence of clinical validity and technical reliability, so I can justify to regulators",
+    "strategic_priority_id": null,
+    "domain_id": null,
+    "functional_area": "Operations",
+    "job_category": "operational",
+    "complexity": "medium",
+    "frequency": "monthly",
+    "success_criteria": [
+      "justify to regulators"
+    ],
+    "kpis": [],
+    "pain_points": [
+      {
+        "pain_point": "Challenge: integrating digital biomarkers into protocols"
+      }
+    ],
+    "desired_outcomes": [
+      {
+        "outcome": "justify to regulators"
+      }
+    ],
+    "status": "active",
+    "validation_score": 0.65,
+    "workflow_id": null,
+    "tags": [],
+    "metadata": {
+      "unique_id": "phase2_jtbd_00063",
+      "id": "jtbd00063",
+      "verb": "evidence",
+      "object": "evidence of clinical validity and technical reliability",
+      "persona_code": null,
+      "persona_title": null,
+      "persona_unique_id": null,
+      "sector": "Multi-sector",
+      "source": "Digital Health JTBD Library Complete.md",
+      "importance": 8,
+      "satisfaction": 5,
+      "original_frequency": "Not specified"
+    }
+  },
+  {
+    "tenant_id": "f7aa6fd4-0af9-4706-8b31-034f1f7accda",
+    "code": "JTBD_064",
+    "name": "When navigating combo product regulations (drug+digital), I need clear pathways and precedents, so I can ensure timely approval",
+    "description": "When navigating combo product regulations (drug+digital), I need clear pathways and precedents, so I can ensure timely approval",
+    "strategic_priority_id": null,
+    "domain_id": null,
+    "functional_area": "Operations",
+    "job_category": "operational",
+    "complexity": "medium",
+    "frequency": "monthly",
+    "success_criteria": [
+      "ensure timely approval"
+    ],
+    "kpis": [],
+    "pain_points": [
+      {
+        "pain_point": "Challenge: navigating combo product regulations (drug+digital)"
+      }
+    ],
+    "desired_outcomes": [
+      {
+        "outcome": "ensure timely approval"
+      }
+    ],
+    "status": "active",
+    "validation_score": 0.65,
+    "workflow_id": null,
+    "tags": [],
+    "metadata": {
+      "unique_id": "phase2_jtbd_00064",
+      "id": "jtbd00064",
+      "verb": "clear",
+      "object": "clear pathways and precedents",
+      "persona_code": null,
+      "persona_title": null,
+      "persona_unique_id": null,
+      "sector": "Multi-sector",
+      "source": "Digital Health JTBD Library Complete.md",
+      "importance": 8,
+      "satisfaction": 5,
+      "original_frequency": "Not specified"
+    }
+  },
+  {
+    "tenant_id": "f7aa6fd4-0af9-4706-8b31-034f1f7accda",
+    "code": "JTBD_065",
+    "name": "When preparing digital health regulatory submissions, I need comprehensive documentation templates and guidance, so I can meet all requirements",
+    "description": "When preparing digital health regulatory submissions, I need comprehensive documentation templates and guidance, so I can meet all requirements",
+    "strategic_priority_id": null,
+    "domain_id": null,
+    "functional_area": "Regulatory",
+    "job_category": "operational",
+    "complexity": "medium",
+    "frequency": "monthly",
+    "success_criteria": [
+      "meet all requirements"
+    ],
+    "kpis": [],
+    "pain_points": [
+      {
+        "pain_point": "Challenge: preparing digital health regulatory submissions"
+      }
+    ],
+    "desired_outcomes": [
+      {
+        "outcome": "meet all requirements"
+      }
+    ],
+    "status": "active",
+    "validation_score": 0.65,
+    "workflow_id": null,
+    "tags": [],
+    "metadata": {
+      "unique_id": "phase2_jtbd_00065",
+      "id": "jtbd00065",
+      "verb": "documentation",
+      "object": "comprehensive documentation templates and guidance",
+      "persona_code": null,
+      "persona_title": null,
+      "persona_unique_id": null,
+      "sector": "Multi-sector",
+      "source": "Digital Health JTBD Library Complete.md",
+      "importance": 8,
+      "satisfaction": 5,
+      "original_frequency": "Not specified"
+    }
+  },
+  {
+    "tenant_id": "f7aa6fd4-0af9-4706-8b31-034f1f7accda",
+    "code": "JTBD_066",
+    "name": "When managing post-market surveillance for apps, I need automated monitoring and reporting systems, so I can maintain compliance efficiently",
+    "description": "When managing post-market surveillance for apps, I need automated monitoring and reporting systems, so I can maintain compliance efficiently",
+    "strategic_priority_id": null,
+    "domain_id": null,
+    "functional_area": "Operations",
+    "job_category": "operational",
+    "complexity": "medium",
+    "frequency": "monthly",
+    "success_criteria": [
+      "maintain compliance efficiently"
+    ],
+    "kpis": [],
+    "pain_points": [
+      {
+        "pain_point": "Challenge: managing post-market surveillance for apps"
+      }
+    ],
+    "desired_outcomes": [
+      {
+        "outcome": "maintain compliance efficiently"
+      }
+    ],
+    "status": "active",
+    "validation_score": 0.65,
+    "workflow_id": null,
+    "tags": [],
+    "metadata": {
+      "unique_id": "phase2_jtbd_00066",
+      "id": "jtbd00066",
+      "verb": "monitoring",
+      "object": "automated monitoring and reporting systems",
+      "persona_code": null,
+      "persona_title": null,
+      "persona_unique_id": null,
+      "sector": "Multi-sector",
+      "source": "Digital Health JTBD Library Complete.md",
+      "importance": 8,
+      "satisfaction": 5,
+      "original_frequency": "Not specified"
+    }
+  },
+  {
+    "tenant_id": "f7aa6fd4-0af9-4706-8b31-034f1f7accda",
+    "code": "JTBD_067",
+    "name": "When engaging KOLs about digital therapeutics, I need scientific evidence and case studies, so I can build credibility and adoption",
+    "description": "When engaging KOLs about digital therapeutics, I need scientific evidence and case studies, so I can build credibility and adoption",
+    "strategic_priority_id": null,
+    "domain_id": null,
+    "functional_area": "Operations",
+    "job_category": "operational",
+    "complexity": "medium",
+    "frequency": "monthly",
+    "success_criteria": [
+      "build credibility and adoption"
+    ],
+    "kpis": [],
+    "pain_points": [
+      {
+        "pain_point": "Challenge: engaging KOLs about digital therapeutics"
+      }
+    ],
+    "desired_outcomes": [
+      {
+        "outcome": "build credibility and adoption"
+      }
+    ],
+    "status": "active",
+    "validation_score": 0.65,
+    "workflow_id": null,
+    "tags": [],
+    "metadata": {
+      "unique_id": "phase2_jtbd_00067",
+      "id": "jtbd00067",
+      "verb": "scientific",
+      "object": "scientific evidence and case studies",
+      "persona_code": null,
+      "persona_title": null,
+      "persona_unique_id": null,
+      "sector": "Multi-sector",
+      "source": "Digital Health JTBD Library Complete.md",
+      "importance": 8,
+      "satisfaction": 5,
+      "original_frequency": "Not specified"
+    }
+  },
+  {
+    "tenant_id": "f7aa6fd4-0af9-4706-8b31-034f1f7accda",
+    "code": "JTBD_068",
+    "name": "When training HCPs on digital companions, I need interactive demo platforms and patient scenarios, so I can ensure proper implementation",
+    "description": "When training HCPs on digital companions, I need interactive demo platforms and patient scenarios, so I can ensure proper implementation",
+    "strategic_priority_id": null,
+    "domain_id": null,
+    "functional_area": "Operations",
+    "job_category": "operational",
+    "complexity": "medium",
+    "frequency": "monthly",
+    "success_criteria": [
+      "ensure proper implementation"
+    ],
+    "kpis": [],
+    "pain_points": [
+      {
+        "pain_point": "Challenge: training HCPs on digital companions"
+      }
+    ],
+    "desired_outcomes": [
+      {
+        "outcome": "ensure proper implementation"
+      }
+    ],
+    "status": "active",
+    "validation_score": 0.65,
+    "workflow_id": null,
+    "tags": [],
+    "metadata": {
+      "unique_id": "phase2_jtbd_00068",
+      "id": "jtbd00068",
+      "verb": "interactive",
+      "object": "interactive demo platforms and patient scenarios",
+      "persona_code": null,
+      "persona_title": null,
+      "persona_unique_id": null,
+      "sector": "Multi-sector",
+      "source": "Digital Health JTBD Library Complete.md",
+      "importance": 8,
+      "satisfaction": 5,
+      "original_frequency": "Not specified"
+    }
+  },
+  {
+    "tenant_id": "f7aa6fd4-0af9-4706-8b31-034f1f7accda",
+    "code": "JTBD_069",
+    "name": "When training sales force on digital therapeutics, I need clear value propositions and objection handling, so I can drive adoption",
+    "description": "When training sales force on digital therapeutics, I need clear value propositions and objection handling, so I can drive adoption",
+    "strategic_priority_id": null,
+    "domain_id": null,
+    "functional_area": "Commercial",
+    "job_category": "operational",
+    "complexity": "medium",
+    "frequency": "monthly",
+    "success_criteria": [
+      "drive adoption"
+    ],
+    "kpis": [],
+    "pain_points": [
+      {
+        "pain_point": "Challenge: training sales force on digital therapeutics"
+      }
+    ],
+    "desired_outcomes": [
+      {
+        "outcome": "drive adoption"
+      }
+    ],
+    "status": "active",
+    "validation_score": 0.65,
+    "workflow_id": null,
+    "tags": [],
+    "metadata": {
+      "unique_id": "phase2_jtbd_00069",
+      "id": "jtbd00069",
+      "verb": "clear",
+      "object": "clear value propositions and objection handling",
+      "persona_code": null,
+      "persona_title": null,
+      "persona_unique_id": null,
+      "sector": "Multi-sector",
+      "source": "Digital Health JTBD Library Complete.md",
+      "importance": 8,
+      "satisfaction": 5,
+      "original_frequency": "Not specified"
+    }
+  },
+  {
+    "tenant_id": "f7aa6fd4-0af9-4706-8b31-034f1f7accda",
+    "code": "JTBD_070",
+    "name": "When developing omnichannel strategies, I need integrated platforms that track customer journey, so I can optimize engagement",
+    "description": "When developing omnichannel strategies, I need integrated platforms that track customer journey, so I can optimize engagement",
+    "strategic_priority_id": null,
+    "domain_id": null,
+    "functional_area": "Operations",
+    "job_category": "operational",
+    "complexity": "medium",
+    "frequency": "monthly",
+    "success_criteria": [
+      "optimize engagement"
+    ],
+    "kpis": [],
+    "pain_points": [
+      {
+        "pain_point": "Challenge: developing omnichannel strategies"
+      }
+    ],
+    "desired_outcomes": [
+      {
+        "outcome": "optimize engagement"
+      }
+    ],
+    "status": "active",
+    "validation_score": 0.65,
+    "workflow_id": null,
+    "tags": [],
+    "metadata": {
+      "unique_id": "phase2_jtbd_00070",
+      "id": "jtbd00070",
+      "verb": "platforms",
+      "object": "integrated platforms that track customer journey",
+      "persona_code": null,
+      "persona_title": null,
+      "persona_unique_id": null,
+      "sector": "Multi-sector",
+      "source": "Digital Health JTBD Library Complete.md",
+      "importance": 8,
+      "satisfaction": 5,
+      "original_frequency": "Not specified"
+    }
+  },
+  {
+    "tenant_id": "f7aa6fd4-0af9-4706-8b31-034f1f7accda",
+    "code": "JTBD_071",
+    "name": "When evaluating clinical effectiveness of digital interventions, I need real-world outcomes data and economic models, so I can make coverage decisions",
+    "description": "When evaluating clinical effectiveness of digital interventions, I need real-world outcomes data and economic models, so I can make coverage decisions",
+    "strategic_priority_id": null,
+    "domain_id": null,
+    "functional_area": "Clinical",
+    "job_category": "operational",
+    "complexity": "medium",
+    "frequency": "monthly",
+    "success_criteria": [
+      "make coverage decisions"
+    ],
+    "kpis": [],
+    "pain_points": [
+      {
+        "pain_point": "Challenge: evaluating clinical effectiveness of digital interventions"
+      }
+    ],
+    "desired_outcomes": [
+      {
+        "outcome": "make coverage decisions"
+      }
+    ],
+    "status": "active",
+    "validation_score": 0.65,
+    "workflow_id": null,
+    "tags": [],
+    "metadata": {
+      "unique_id": "phase2_jtbd_00071",
+      "id": "jtbd00071",
+      "verb": "real-world",
+      "object": "real-world outcomes data and economic models",
+      "persona_code": null,
+      "persona_title": null,
+      "persona_unique_id": null,
+      "sector": "Multi-sector",
+      "source": "Digital Health JTBD Library Complete.md",
+      "importance": 8,
+      "satisfaction": 5,
+      "original_frequency": "Not specified"
+    }
+  },
+  {
+    "tenant_id": "f7aa6fd4-0af9-4706-8b31-034f1f7accda",
+    "code": "JTBD_072",
+    "name": "When developing coverage policies for new modalities, I need clinical guidelines and utilization criteria, so I can ensure appropriate use",
+    "description": "When developing coverage policies for new modalities, I need clinical guidelines and utilization criteria, so I can ensure appropriate use",
+    "strategic_priority_id": null,
+    "domain_id": null,
+    "functional_area": "Operations",
+    "job_category": "operational",
+    "complexity": "medium",
+    "frequency": "monthly",
+    "success_criteria": [
+      "ensure appropriate use"
+    ],
+    "kpis": [],
+    "pain_points": [
+      {
+        "pain_point": "Challenge: developing coverage policies for new modalities"
+      }
+    ],
+    "desired_outcomes": [
+      {
+        "outcome": "ensure appropriate use"
+      }
+    ],
+    "status": "active",
+    "validation_score": 0.65,
+    "workflow_id": null,
+    "tags": [],
+    "metadata": {
+      "unique_id": "phase2_jtbd_00072",
+      "id": "jtbd00072",
+      "verb": "clinical",
+      "object": "clinical guidelines and utilization criteria",
+      "persona_code": null,
+      "persona_title": null,
+      "persona_unique_id": null,
+      "sector": "Multi-sector",
+      "source": "Digital Health JTBD Library Complete.md",
+      "importance": 8,
+      "satisfaction": 5,
+      "original_frequency": "Not specified"
+    }
+  },
+  {
+    "tenant_id": "f7aa6fd4-0af9-4706-8b31-034f1f7accda",
+    "code": "JTBD_073",
+    "name": "When ensuring quality metrics improvement, I need digital tools that engage members and providers, so I can achieve STAR ratings",
+    "description": "When ensuring quality metrics improvement, I need digital tools that engage members and providers, so I can achieve STAR ratings",
+    "strategic_priority_id": null,
+    "domain_id": null,
+    "functional_area": "Quality",
+    "job_category": "operational",
+    "complexity": "medium",
+    "frequency": "monthly",
+    "success_criteria": [
+      "achieve STAR ratings"
+    ],
+    "kpis": [],
+    "pain_points": [
+      {
+        "pain_point": "Challenge: ensuring quality metrics improvement"
+      }
+    ],
+    "desired_outcomes": [
+      {
+        "outcome": "achieve STAR ratings"
+      }
+    ],
+    "status": "active",
+    "validation_score": 0.65,
+    "workflow_id": null,
+    "tags": [],
+    "metadata": {
+      "unique_id": "phase2_jtbd_00073",
+      "id": "jtbd00073",
+      "verb": "digital",
+      "object": "digital tools that engage members and providers",
+      "persona_code": null,
+      "persona_title": null,
+      "persona_unique_id": null,
+      "sector": "Multi-sector",
+      "source": "Digital Health JTBD Library Complete.md",
+      "importance": 8,
+      "satisfaction": 5,
+      "original_frequency": "Not specified"
+    }
+  },
+  {
+    "tenant_id": "f7aa6fd4-0af9-4706-8b31-034f1f7accda",
+    "code": "JTBD_074",
+    "name": "When integrating DTx into formulary management, I need clear classification and tier placement criteria, so I can maintain consistency",
+    "description": "When integrating DTx into formulary management, I need clear classification and tier placement criteria, so I can maintain consistency",
+    "strategic_priority_id": null,
+    "domain_id": null,
+    "functional_area": "Operations",
+    "job_category": "operational",
+    "complexity": "medium",
+    "frequency": "monthly",
+    "success_criteria": [
+      "maintain consistency"
+    ],
+    "kpis": [],
+    "pain_points": [
+      {
+        "pain_point": "Challenge: integrating DTx into formulary management"
+      }
+    ],
+    "desired_outcomes": [
+      {
+        "outcome": "maintain consistency"
+      }
+    ],
+    "status": "active",
+    "validation_score": 0.65,
+    "workflow_id": null,
+    "tags": [],
+    "metadata": {
+      "unique_id": "phase2_jtbd_00074",
+      "id": "jtbd00074",
+      "verb": "clear",
+      "object": "clear classification and tier placement criteria",
+      "persona_code": null,
+      "persona_title": null,
+      "persona_unique_id": null,
+      "sector": "Multi-sector",
+      "source": "Digital Health JTBD Library Complete.md",
+      "importance": 8,
+      "satisfaction": 5,
+      "original_frequency": "Not specified"
+    }
+  },
+  {
+    "tenant_id": "f7aa6fd4-0af9-4706-8b31-034f1f7accda",
+    "code": "JTBD_075",
+    "name": "When developing prior authorization for DTx, I need clinical criteria and workflow integration, so I can ensure appropriate utilization",
+    "description": "When developing prior authorization for DTx, I need clinical criteria and workflow integration, so I can ensure appropriate utilization",
+    "strategic_priority_id": null,
+    "domain_id": null,
+    "functional_area": "Operations",
+    "job_category": "operational",
+    "complexity": "medium",
+    "frequency": "monthly",
+    "success_criteria": [
+      "ensure appropriate utilization"
+    ],
+    "kpis": [],
+    "pain_points": [
+      {
+        "pain_point": "Challenge: developing prior authorization for DTx"
+      }
+    ],
+    "desired_outcomes": [
+      {
+        "outcome": "ensure appropriate utilization"
+      }
+    ],
+    "status": "active",
+    "validation_score": 0.65,
+    "workflow_id": null,
+    "tags": [],
+    "metadata": {
+      "unique_id": "phase2_jtbd_00075",
+      "id": "jtbd00075",
+      "verb": "clinical",
+      "object": "clinical criteria and workflow integration",
+      "persona_code": null,
+      "persona_title": null,
+      "persona_unique_id": null,
+      "sector": "Multi-sector",
+      "source": "Digital Health JTBD Library Complete.md",
+      "importance": 8,
+      "satisfaction": 5,
+      "original_frequency": "Not specified"
+    }
+  },
+  {
+    "tenant_id": "f7aa6fd4-0af9-4706-8b31-034f1f7accda",
+    "code": "JTBD_076",
+    "name": "When assessing digital therapeutic equivalence, I need comparative effectiveness data, so I can make substitution decisions",
+    "description": "When assessing digital therapeutic equivalence, I need comparative effectiveness data, so I can make substitution decisions",
+    "strategic_priority_id": null,
+    "domain_id": null,
+    "functional_area": "Operations",
+    "job_category": "operational",
+    "complexity": "medium",
+    "frequency": "monthly",
+    "success_criteria": [
+      "make substitution decisions"
+    ],
+    "kpis": [],
+    "pain_points": [
+      {
+        "pain_point": "Challenge: assessing digital therapeutic equivalence"
+      }
+    ],
+    "desired_outcomes": [
+      {
+        "outcome": "make substitution decisions"
+      }
+    ],
+    "status": "active",
+    "validation_score": 0.65,
+    "workflow_id": null,
+    "tags": [],
+    "metadata": {
+      "unique_id": "phase2_jtbd_00076",
+      "id": "jtbd00076",
+      "verb": "comparative",
+      "object": "comparative effectiveness data",
+      "persona_code": null,
+      "persona_title": null,
+      "persona_unique_id": null,
+      "sector": "Multi-sector",
+      "source": "Digital Health JTBD Library Complete.md",
+      "importance": 8,
+      "satisfaction": 5,
+      "original_frequency": "Not specified"
+    }
+  },
+  {
+    "tenant_id": "f7aa6fd4-0af9-4706-8b31-034f1f7accda",
+    "code": "JTBD_077",
+    "name": "When managing high-risk populations, I need predictive analytics and digital interventions, so I can prevent acute events",
+    "description": "When managing high-risk populations, I need predictive analytics and digital interventions, so I can prevent acute events",
+    "strategic_priority_id": null,
+    "domain_id": null,
+    "functional_area": "Operations",
+    "job_category": "operational",
+    "complexity": "medium",
+    "frequency": "monthly",
+    "success_criteria": [
+      "prevent acute events"
+    ],
+    "kpis": [],
+    "pain_points": [
+      {
+        "pain_point": "Challenge: managing high-risk populations"
+      }
+    ],
+    "desired_outcomes": [
+      {
+        "outcome": "prevent acute events"
+      }
+    ],
+    "status": "active",
+    "validation_score": 0.65,
+    "workflow_id": null,
+    "tags": [],
+    "metadata": {
+      "unique_id": "phase2_jtbd_00077",
+      "id": "jtbd00077",
+      "verb": "analytics",
+      "object": "predictive analytics and digital interventions",
+      "persona_code": null,
+      "persona_title": null,
+      "persona_unique_id": null,
+      "sector": "Multi-sector",
+      "source": "Digital Health JTBD Library Complete.md",
+      "importance": 8,
+      "satisfaction": 5,
+      "original_frequency": "Not specified"
+    }
+  },
+  {
+    "tenant_id": "f7aa6fd4-0af9-4706-8b31-034f1f7accda",
+    "code": "JTBD_078",
+    "name": "When deploying digital health programs, I need engagement strategies and outcome tracking, so I can demonstrate value",
+    "description": "When deploying digital health programs, I need engagement strategies and outcome tracking, so I can demonstrate value",
+    "strategic_priority_id": null,
+    "domain_id": null,
+    "functional_area": "Operations",
+    "job_category": "operational",
+    "complexity": "medium",
+    "frequency": "monthly",
+    "success_criteria": [
+      "demonstrate value"
+    ],
+    "kpis": [],
+    "pain_points": [
+      {
+        "pain_point": "Challenge: deploying digital health programs"
+      }
+    ],
+    "desired_outcomes": [
+      {
+        "outcome": "demonstrate value"
+      }
+    ],
+    "status": "active",
+    "validation_score": 0.65,
+    "workflow_id": null,
+    "tags": [],
+    "metadata": {
+      "unique_id": "phase2_jtbd_00078",
+      "id": "jtbd00078",
+      "verb": "engagement",
+      "object": "engagement strategies and outcome tracking",
+      "persona_code": null,
+      "persona_title": null,
+      "persona_unique_id": null,
+      "sector": "Multi-sector",
+      "source": "Digital Health JTBD Library Complete.md",
+      "importance": 8,
+      "satisfaction": 5,
+      "original_frequency": "Not specified"
+    }
+  },
+  {
+    "tenant_id": "f7aa6fd4-0af9-4706-8b31-034f1f7accda",
+    "code": "JTBD_079",
+    "name": "When improving HEDIS/STAR ratings with digital tools, I need automated gap closure and member engagement, so I can achieve quality bonuses",
+    "description": "When improving HEDIS/STAR ratings with digital tools, I need automated gap closure and member engagement, so I can achieve quality bonuses",
+    "strategic_priority_id": null,
+    "domain_id": null,
+    "functional_area": "Operations",
+    "job_category": "operational",
+    "complexity": "medium",
+    "frequency": "monthly",
+    "success_criteria": [
+      "achieve quality bonuses"
+    ],
+    "kpis": [],
+    "pain_points": [
+      {
+        "pain_point": "Challenge: improving HEDIS/STAR ratings with digital tools"
+      }
+    ],
+    "desired_outcomes": [
+      {
+        "outcome": "achieve quality bonuses"
+      }
+    ],
+    "status": "active",
+    "validation_score": 0.65,
+    "workflow_id": null,
+    "tags": [],
+    "metadata": {
+      "unique_id": "phase2_jtbd_00079",
+      "id": "jtbd00079",
+      "verb": "gap",
+      "object": "automated gap closure and member engagement",
+      "persona_code": null,
+      "persona_title": null,
+      "persona_unique_id": null,
+      "sector": "Multi-sector",
+      "source": "Digital Health JTBD Library Complete.md",
+      "importance": 8,
+      "satisfaction": 5,
+      "original_frequency": "Not specified"
+    }
+  },
+  {
+    "tenant_id": "f7aa6fd4-0af9-4706-8b31-034f1f7accda",
+    "code": "JTBD_080",
+    "name": "When tracking quality metrics from digital interventions, I need real-time dashboards and predictive analytics, so I can intervene proactively",
+    "description": "When tracking quality metrics from digital interventions, I need real-time dashboards and predictive analytics, so I can intervene proactively",
+    "strategic_priority_id": null,
+    "domain_id": null,
+    "functional_area": "Quality",
+    "job_category": "operational",
+    "complexity": "medium",
+    "frequency": "monthly",
+    "success_criteria": [
+      "intervene proactively"
+    ],
+    "kpis": [],
+    "pain_points": [
+      {
+        "pain_point": "Challenge: tracking quality metrics from digital interventions"
+      }
+    ],
+    "desired_outcomes": [
+      {
+        "outcome": "intervene proactively"
+      }
+    ],
+    "status": "active",
+    "validation_score": 0.65,
+    "workflow_id": null,
+    "tags": [],
+    "metadata": {
+      "unique_id": "phase2_jtbd_00080",
+      "id": "jtbd00080",
+      "verb": "dashboards",
+      "object": "real-time dashboards and predictive analytics",
+      "persona_code": null,
+      "persona_title": null,
+      "persona_unique_id": null,
+      "sector": "Multi-sector",
+      "source": "Digital Health JTBD Library Complete.md",
+      "importance": 8,
+      "satisfaction": 5,
+      "original_frequency": "Not specified"
+    }
+  },
+  {
+    "tenant_id": "f7aa6fd4-0af9-4706-8b31-034f1f7accda",
+    "code": "JTBD_081",
+    "name": "When integrating digital tools into clinical workflow, I need seamless EMR integration and evidence summaries, so I can use them efficiently",
+    "description": "When integrating digital tools into clinical workflow, I need seamless EMR integration and evidence summaries, so I can use them efficiently",
+    "strategic_priority_id": null,
+    "domain_id": null,
+    "functional_area": "Clinical",
+    "job_category": "operational",
+    "complexity": "medium",
+    "frequency": "monthly",
+    "success_criteria": [
+      "use them efficiently"
+    ],
+    "kpis": [],
+    "pain_points": [
+      {
+        "pain_point": "Challenge: integrating digital tools into clinical workflow"
+      }
+    ],
+    "desired_outcomes": [
+      {
+        "outcome": "use them efficiently"
+      }
+    ],
+    "status": "active",
+    "validation_score": 0.65,
+    "workflow_id": null,
+    "tags": [],
+    "metadata": {
+      "unique_id": "phase2_jtbd_00081",
+      "id": "jtbd00081",
+      "verb": "seamless",
+      "object": "seamless EMR integration and evidence summaries",
+      "persona_code": null,
+      "persona_title": null,
+      "persona_unique_id": null,
+      "sector": "Multi-sector",
+      "source": "Digital Health JTBD Library Complete.md",
+      "importance": 8,
+      "satisfaction": 5,
+      "original_frequency": "Not specified"
+    }
+  },
+  {
+    "tenant_id": "f7aa6fd4-0af9-4706-8b31-034f1f7accda",
+    "code": "JTBD_082",
+    "name": "When interpreting digital biomarker data, I need clinical context and actionable insights, so I can make treatment decisions",
+    "description": "When interpreting digital biomarker data, I need clinical context and actionable insights, so I can make treatment decisions",
+    "strategic_priority_id": null,
+    "domain_id": null,
+    "functional_area": "Operations",
+    "job_category": "operational",
+    "complexity": "medium",
+    "frequency": "monthly",
+    "success_criteria": [
+      "make treatment decisions"
+    ],
+    "kpis": [],
+    "pain_points": [
+      {
+        "pain_point": "Challenge: interpreting digital biomarker data"
+      }
+    ],
+    "desired_outcomes": [
+      {
+        "outcome": "make treatment decisions"
+      }
+    ],
+    "status": "active",
+    "validation_score": 0.65,
+    "workflow_id": null,
+    "tags": [],
+    "metadata": {
+      "unique_id": "phase2_jtbd_00082",
+      "id": "jtbd00082",
+      "verb": "clinical",
+      "object": "clinical context and actionable insights",
+      "persona_code": null,
+      "persona_title": null,
+      "persona_unique_id": null,
+      "sector": "Multi-sector",
+      "source": "Digital Health JTBD Library Complete.md",
+      "importance": 8,
+      "satisfaction": 5,
+      "original_frequency": "Not specified"
+    }
+  },
+  {
+    "tenant_id": "f7aa6fd4-0af9-4706-8b31-034f1f7accda",
+    "code": "JTBD_083",
+    "name": "When prescribing DTx, I need efficacy data and patient selection criteria, so I can ensure appropriate use",
+    "description": "When prescribing DTx, I need efficacy data and patient selection criteria, so I can ensure appropriate use",
+    "strategic_priority_id": null,
+    "domain_id": null,
+    "functional_area": "Operations",
+    "job_category": "operational",
+    "complexity": "medium",
+    "frequency": "monthly",
+    "success_criteria": [
+      "ensure appropriate use"
+    ],
+    "kpis": [],
+    "pain_points": [
+      {
+        "pain_point": "Challenge: prescribing DTx"
+      }
+    ],
+    "desired_outcomes": [
+      {
+        "outcome": "ensure appropriate use"
+      }
+    ],
+    "status": "active",
+    "validation_score": 0.65,
+    "workflow_id": null,
+    "tags": [],
+    "metadata": {
+      "unique_id": "phase2_jtbd_00083",
+      "id": "jtbd00083",
+      "verb": "efficacy",
+      "object": "efficacy data and patient selection criteria",
+      "persona_code": null,
+      "persona_title": null,
+      "persona_unique_id": null,
+      "sector": "Multi-sector",
+      "source": "Digital Health JTBD Library Complete.md",
+      "importance": 8,
+      "satisfaction": 5,
+      "original_frequency": "Not specified"
+    }
+  },
+  {
+    "tenant_id": "f7aa6fd4-0af9-4706-8b31-034f1f7accda",
+    "code": "JTBD_084",
+    "name": "When ensuring clinical IT system integration, I need standards-based APIs and security protocols, so I can maintain interoperability",
+    "description": "When ensuring clinical IT system integration, I need standards-based APIs and security protocols, so I can maintain interoperability",
+    "strategic_priority_id": null,
+    "domain_id": null,
+    "functional_area": "Clinical",
+    "job_category": "operational",
+    "complexity": "medium",
+    "frequency": "monthly",
+    "success_criteria": [
+      "maintain interoperability"
+    ],
+    "kpis": [],
+    "pain_points": [
+      {
+        "pain_point": "Challenge: ensuring clinical IT system integration"
+      }
+    ],
+    "desired_outcomes": [
+      {
+        "outcome": "maintain interoperability"
+      }
+    ],
+    "status": "active",
+    "validation_score": 0.65,
+    "workflow_id": null,
+    "tags": [],
+    "metadata": {
+      "unique_id": "phase2_jtbd_00084",
+      "id": "jtbd00084",
+      "verb": "standards-based",
+      "object": "standards-based APIs and security protocols",
+      "persona_code": null,
+      "persona_title": null,
+      "persona_unique_id": null,
+      "sector": "Multi-sector",
+      "source": "Digital Health JTBD Library Complete.md",
+      "importance": 8,
+      "satisfaction": 5,
+      "original_frequency": "Not specified"
+    }
+  },
+  {
+    "tenant_id": "f7aa6fd4-0af9-4706-8b31-034f1f7accda",
+    "code": "JTBD_085",
+    "name": "When validating clinical decision support tools, I need evidence base and performance metrics, so I can ensure safety and efficacy",
+    "description": "When validating clinical decision support tools, I need evidence base and performance metrics, so I can ensure safety and efficacy",
+    "strategic_priority_id": null,
+    "domain_id": null,
+    "functional_area": "Clinical",
+    "job_category": "operational",
+    "complexity": "medium",
+    "frequency": "monthly",
+    "success_criteria": [
+      "ensure safety and efficacy"
+    ],
+    "kpis": [],
+    "pain_points": [
+      {
+        "pain_point": "Challenge: validating clinical decision support tools"
+      }
+    ],
+    "desired_outcomes": [
+      {
+        "outcome": "ensure safety and efficacy"
+      }
+    ],
+    "status": "active",
+    "validation_score": 0.65,
+    "workflow_id": null,
+    "tags": [],
+    "metadata": {
+      "unique_id": "phase2_jtbd_00085",
+      "id": "jtbd00085",
+      "verb": "evidence",
+      "object": "evidence base and performance metrics",
+      "persona_code": null,
+      "persona_title": null,
+      "persona_unique_id": null,
+      "sector": "Multi-sector",
+      "source": "Digital Health JTBD Library Complete.md",
+      "importance": 8,
+      "satisfaction": 5,
+      "original_frequency": "Not specified"
+    }
+  },
+  {
+    "tenant_id": "f7aa6fd4-0af9-4706-8b31-034f1f7accda",
+    "code": "JTBD_086",
+    "name": "When overseeing AI/ML implementation, I need explainability and bias detection, so I can ensure equitable care",
+    "description": "When overseeing AI/ML implementation, I need explainability and bias detection, so I can ensure equitable care",
+    "strategic_priority_id": null,
+    "domain_id": null,
+    "functional_area": "Operations",
+    "job_category": "operational",
+    "complexity": "medium",
+    "frequency": "monthly",
+    "success_criteria": [
+      "ensure equitable care"
+    ],
+    "kpis": [],
+    "pain_points": [
+      {
+        "pain_point": "Challenge: overseeing AI/ML implementation"
+      }
+    ],
+    "desired_outcomes": [
+      {
+        "outcome": "ensure equitable care"
+      }
+    ],
+    "status": "active",
+    "validation_score": 0.65,
+    "workflow_id": null,
+    "tags": [],
+    "metadata": {
+      "unique_id": "phase2_jtbd_00086",
+      "id": "jtbd00086",
+      "verb": "explainability",
+      "object": "explainability and bias detection",
+      "persona_code": null,
+      "persona_title": null,
+      "persona_unique_id": null,
+      "sector": "Multi-sector",
+      "source": "Digital Health JTBD Library Complete.md",
+      "importance": 8,
+      "satisfaction": 5,
+      "original_frequency": "Not specified"
+    }
+  },
+  {
+    "tenant_id": "f7aa6fd4-0af9-4706-8b31-034f1f7accda",
+    "code": "JTBD_087",
+    "name": "When deploying nursing staff for virtual care, I need competency frameworks and workflow protocols, so I can ensure quality",
+    "description": "When deploying nursing staff for virtual care, I need competency frameworks and workflow protocols, so I can ensure quality",
+    "strategic_priority_id": null,
+    "domain_id": null,
+    "functional_area": "Operations",
+    "job_category": "operational",
+    "complexity": "medium",
+    "frequency": "monthly",
+    "success_criteria": [
+      "ensure quality"
+    ],
+    "kpis": [],
+    "pain_points": [
+      {
+        "pain_point": "Challenge: deploying nursing staff for virtual care"
+      }
+    ],
+    "desired_outcomes": [
+      {
+        "outcome": "ensure quality"
+      }
+    ],
+    "status": "active",
+    "validation_score": 0.65,
+    "workflow_id": null,
+    "tags": [],
+    "metadata": {
+      "unique_id": "phase2_jtbd_00087",
+      "id": "jtbd00087",
+      "verb": "competency",
+      "object": "competency frameworks and workflow protocols",
+      "persona_code": null,
+      "persona_title": null,
+      "persona_unique_id": null,
+      "sector": "Multi-sector",
+      "source": "Digital Health JTBD Library Complete.md",
+      "importance": 8,
+      "satisfaction": 5,
+      "original_frequency": "Not specified"
+    }
+  },
+  {
+    "tenant_id": "f7aa6fd4-0af9-4706-8b31-034f1f7accda",
+    "code": "JTBD_088",
+    "name": "When training nurses on digital tools, I need simulation platforms and competency assessments, so I can ensure safe use",
+    "description": "When training nurses on digital tools, I need simulation platforms and competency assessments, so I can ensure safe use",
+    "strategic_priority_id": null,
+    "domain_id": null,
+    "functional_area": "Operations",
+    "job_category": "operational",
+    "complexity": "medium",
+    "frequency": "monthly",
+    "success_criteria": [
+      "ensure safe use"
+    ],
+    "kpis": [],
+    "pain_points": [
+      {
+        "pain_point": "Challenge: training nurses on digital tools"
+      }
+    ],
+    "desired_outcomes": [
+      {
+        "outcome": "ensure safe use"
+      }
+    ],
+    "status": "active",
+    "validation_score": 0.65,
+    "workflow_id": null,
+    "tags": [],
+    "metadata": {
+      "unique_id": "phase2_jtbd_00088",
+      "id": "jtbd00088",
+      "verb": "simulation",
+      "object": "simulation platforms and competency assessments",
+      "persona_code": null,
+      "persona_title": null,
+      "persona_unique_id": null,
+      "sector": "Multi-sector",
+      "source": "Digital Health JTBD Library Complete.md",
+      "importance": 8,
+      "satisfaction": 5,
+      "original_frequency": "Not specified"
+    }
+  },
+  {
+    "tenant_id": "f7aa6fd4-0af9-4706-8b31-034f1f7accda",
+    "code": "JTBD_089",
+    "name": "When managing remote monitoring workflows, I need staffing models and escalation protocols, so I can optimize resources",
+    "description": "When managing remote monitoring workflows, I need staffing models and escalation protocols, so I can optimize resources",
+    "strategic_priority_id": null,
+    "domain_id": null,
+    "functional_area": "Operations",
+    "job_category": "operational",
+    "complexity": "medium",
+    "frequency": "monthly",
+    "success_criteria": [
+      "optimize resources"
+    ],
+    "kpis": [],
+    "pain_points": [
+      {
+        "pain_point": "Challenge: managing remote monitoring workflows"
+      }
+    ],
+    "desired_outcomes": [
+      {
+        "outcome": "optimize resources"
+      }
+    ],
+    "status": "active",
+    "validation_score": 0.65,
+    "workflow_id": null,
+    "tags": [],
+    "metadata": {
+      "unique_id": "phase2_jtbd_00089",
+      "id": "jtbd00089",
+      "verb": "staffing",
+      "object": "staffing models and escalation protocols",
+      "persona_code": null,
+      "persona_title": null,
+      "persona_unique_id": null,
+      "sector": "Multi-sector",
+      "source": "Digital Health JTBD Library Complete.md",
+      "importance": 8,
+      "satisfaction": 5,
+      "original_frequency": "Not specified"
+    }
+  },
+  {
+    "tenant_id": "f7aa6fd4-0af9-4706-8b31-034f1f7accda",
+    "code": "JTBD_090",
+    "name": "When measuring digital intervention outcomes, I need validated metrics and attribution methods, so I can demonstrate impact",
+    "description": "When measuring digital intervention outcomes, I need validated metrics and attribution methods, so I can demonstrate impact",
+    "strategic_priority_id": null,
+    "domain_id": null,
+    "functional_area": "Operations",
+    "job_category": "operational",
+    "complexity": "medium",
+    "frequency": "monthly",
+    "success_criteria": [
+      "demonstrate impact"
+    ],
+    "kpis": [],
+    "pain_points": [
+      {
+        "pain_point": "Challenge: measuring digital intervention outcomes"
+      }
+    ],
+    "desired_outcomes": [
+      {
+        "outcome": "demonstrate impact"
+      }
+    ],
+    "status": "active",
+    "validation_score": 0.65,
+    "workflow_id": null,
+    "tags": [],
+    "metadata": {
+      "unique_id": "phase2_jtbd_00090",
+      "id": "jtbd00090",
+      "verb": "validated",
+      "object": "validated metrics and attribution methods",
+      "persona_code": null,
+      "persona_title": null,
+      "persona_unique_id": null,
+      "sector": "Multi-sector",
+      "source": "Digital Health JTBD Library Complete.md",
+      "importance": 8,
+      "satisfaction": 5,
+      "original_frequency": "Not specified"
+    }
+  },
+  {
+    "tenant_id": "f7aa6fd4-0af9-4706-8b31-034f1f7accda",
+    "code": "JTBD_091",
+    "name": "When ensuring patient safety with digital tools, I need risk assessment frameworks and monitoring systems, so I can prevent harm",
+    "description": "When ensuring patient safety with digital tools, I need risk assessment frameworks and monitoring systems, so I can prevent harm",
+    "strategic_priority_id": null,
+    "domain_id": null,
+    "functional_area": "Operations",
+    "job_category": "operational",
+    "complexity": "medium",
+    "frequency": "monthly",
+    "success_criteria": [
+      "prevent harm"
+    ],
+    "kpis": [],
+    "pain_points": [
+      {
+        "pain_point": "Challenge: ensuring patient safety with digital tools"
+      }
+    ],
+    "desired_outcomes": [
+      {
+        "outcome": "prevent harm"
+      }
+    ],
+    "status": "active",
+    "validation_score": 0.65,
+    "workflow_id": null,
+    "tags": [],
+    "metadata": {
+      "unique_id": "phase2_jtbd_00091",
+      "id": "jtbd00091",
+      "verb": "risk",
+      "object": "risk assessment frameworks and monitoring systems",
+      "persona_code": null,
+      "persona_title": null,
+      "persona_unique_id": null,
+      "sector": "Multi-sector",
+      "source": "Digital Health JTBD Library Complete.md",
+      "importance": 8,
+      "satisfaction": 5,
+      "original_frequency": "Not specified"
+    }
+  },
+  {
+    "tenant_id": "f7aa6fd4-0af9-4706-8b31-034f1f7accda",
+    "code": "JTBD_092",
+    "name": "When building HIPAA-compliant infrastructure, I need security frameworks and audit tools, so I can ensure compliance and pass audits",
+    "description": "When building HIPAA-compliant infrastructure, I need security frameworks and audit tools, so I can ensure compliance and pass audits",
+    "strategic_priority_id": null,
+    "domain_id": null,
+    "functional_area": "Operations",
+    "job_category": "operational",
+    "complexity": "medium",
+    "frequency": "monthly",
+    "success_criteria": [
+      "ensure compliance and pass audits"
+    ],
+    "kpis": [],
+    "pain_points": [
+      {
+        "pain_point": "Challenge: building HIPAA-compliant infrastructure"
+      }
+    ],
+    "desired_outcomes": [
+      {
+        "outcome": "ensure compliance and pass audits"
+      }
+    ],
+    "status": "active",
+    "validation_score": 0.65,
+    "workflow_id": null,
+    "tags": [],
+    "metadata": {
+      "unique_id": "phase2_jtbd_00092",
+      "id": "jtbd00092",
+      "verb": "security",
+      "object": "security frameworks and audit tools",
+      "persona_code": null,
+      "persona_title": null,
+      "persona_unique_id": null,
+      "sector": "Multi-sector",
+      "source": "Digital Health JTBD Library Complete.md",
+      "importance": 8,
+      "satisfaction": 5,
+      "original_frequency": "Not specified"
+    }
+  },
+  {
+    "tenant_id": "f7aa6fd4-0af9-4706-8b31-034f1f7accda",
+    "code": "JTBD_093",
+    "name": "When scaling platform for growth, I need architecture patterns and performance optimization, so I can handle 10x users",
+    "description": "When scaling platform for growth, I need architecture patterns and performance optimization, so I can handle 10x users",
+    "strategic_priority_id": null,
+    "domain_id": null,
+    "functional_area": "Operations",
+    "job_category": "operational",
+    "complexity": "medium",
+    "frequency": "monthly",
+    "success_criteria": [
+      "handle 10x users"
+    ],
+    "kpis": [],
+    "pain_points": [
+      {
+        "pain_point": "Challenge: scaling platform for growth"
+      }
+    ],
+    "desired_outcomes": [
+      {
+        "outcome": "handle 10x users"
+      }
+    ],
+    "status": "active",
+    "validation_score": 0.65,
+    "workflow_id": null,
+    "tags": [],
+    "metadata": {
+      "unique_id": "phase2_jtbd_00093",
+      "id": "jtbd00093",
+      "verb": "architecture",
+      "object": "architecture patterns and performance optimization",
+      "persona_code": null,
+      "persona_title": null,
+      "persona_unique_id": null,
+      "sector": "Multi-sector",
+      "source": "Digital Health JTBD Library Complete.md",
+      "importance": 8,
+      "satisfaction": 5,
+      "original_frequency": "Not specified"
+    }
+  },
+  {
+    "tenant_id": "f7aa6fd4-0af9-4706-8b31-034f1f7accda",
+    "code": "JTBD_094",
+    "name": "When managing technical debt, I need prioritization frameworks and refactoring strategies, so I can balance speed and quality",
+    "description": "When managing technical debt, I need prioritization frameworks and refactoring strategies, so I can balance speed and quality",
+    "strategic_priority_id": null,
+    "domain_id": null,
+    "functional_area": "Operations",
+    "job_category": "operational",
+    "complexity": "medium",
+    "frequency": "monthly",
+    "success_criteria": [
+      "balance speed and quality"
+    ],
+    "kpis": [],
+    "pain_points": [
+      {
+        "pain_point": "Challenge: managing technical debt"
+      }
+    ],
+    "desired_outcomes": [
+      {
+        "outcome": "balance speed and quality"
+      }
+    ],
+    "status": "active",
+    "validation_score": 0.65,
+    "workflow_id": null,
+    "tags": [],
+    "metadata": {
+      "unique_id": "phase2_jtbd_00094",
+      "id": "jtbd00094",
+      "verb": "prioritization",
+      "object": "prioritization frameworks and refactoring strategies",
+      "persona_code": null,
+      "persona_title": null,
+      "persona_unique_id": null,
+      "sector": "Multi-sector",
+      "source": "Digital Health JTBD Library Complete.md",
+      "importance": 8,
+      "satisfaction": 5,
+      "original_frequency": "Not specified"
+    }
+  },
+  {
+    "tenant_id": "f7aa6fd4-0af9-4706-8b31-034f1f7accda",
+    "code": "JTBD_095",
+    "name": "When driving user engagement and retention, I need behavioral analytics and intervention playbooks, so I can reduce churn",
+    "description": "When driving user engagement and retention, I need behavioral analytics and intervention playbooks, so I can reduce churn",
+    "strategic_priority_id": null,
+    "domain_id": null,
+    "functional_area": "Operations",
+    "job_category": "operational",
+    "complexity": "medium",
+    "frequency": "monthly",
+    "success_criteria": [
+      "reduce churn"
+    ],
+    "kpis": [],
+    "pain_points": [
+      {
+        "pain_point": "Challenge: driving user engagement and retention"
+      }
+    ],
+    "desired_outcomes": [
+      {
+        "outcome": "reduce churn"
+      }
+    ],
+    "status": "active",
+    "validation_score": 0.65,
+    "workflow_id": null,
+    "tags": [],
+    "metadata": {
+      "unique_id": "phase2_jtbd_00095",
+      "id": "jtbd00095",
+      "verb": "behavioral",
+      "object": "behavioral analytics and intervention playbooks",
+      "persona_code": null,
+      "persona_title": null,
+      "persona_unique_id": null,
+      "sector": "Multi-sector",
+      "source": "Digital Health JTBD Library Complete.md",
+      "importance": 8,
+      "satisfaction": 5,
+      "original_frequency": "Not specified"
+    }
+  },
+  {
+    "tenant_id": "f7aa6fd4-0af9-4706-8b31-034f1f7accda",
+    "code": "JTBD_096",
+    "name": "When ensuring clinical outcomes achievement, I need outcome tracking and success protocols, so I can demonstrate value",
+    "description": "When ensuring clinical outcomes achievement, I need outcome tracking and success protocols, so I can demonstrate value",
+    "strategic_priority_id": null,
+    "domain_id": null,
+    "functional_area": "Clinical",
+    "job_category": "operational",
+    "complexity": "medium",
+    "frequency": "monthly",
+    "success_criteria": [
+      "demonstrate value"
+    ],
+    "kpis": [],
+    "pain_points": [
+      {
+        "pain_point": "Challenge: ensuring clinical outcomes achievement"
+      }
+    ],
+    "desired_outcomes": [
+      {
+        "outcome": "demonstrate value"
+      }
+    ],
+    "status": "active",
+    "validation_score": 0.65,
+    "workflow_id": null,
+    "tags": [],
+    "metadata": {
+      "unique_id": "phase2_jtbd_00096",
+      "id": "jtbd00096",
+      "verb": "outcome",
+      "object": "outcome tracking and success protocols",
+      "persona_code": null,
+      "persona_title": null,
+      "persona_unique_id": null,
+      "sector": "Multi-sector",
+      "source": "Digital Health JTBD Library Complete.md",
+      "importance": 8,
+      "satisfaction": 5,
+      "original_frequency": "Not specified"
+    }
+  },
+  {
+    "tenant_id": "f7aa6fd4-0af9-4706-8b31-034f1f7accda",
+    "code": "JTBD_097",
+    "name": "When optimizing patient acquisition funnels, I need attribution modeling and channel optimization, so I can reduce CAC below LTV/3",
+    "description": "When optimizing patient acquisition funnels, I need attribution modeling and channel optimization, so I can reduce CAC below LTV/3",
+    "strategic_priority_id": null,
+    "domain_id": null,
+    "functional_area": "Operations",
+    "job_category": "operational",
+    "complexity": "medium",
+    "frequency": "monthly",
+    "success_criteria": [
+      "reduce CAC below LTV/3"
+    ],
+    "kpis": [],
+    "pain_points": [
+      {
+        "pain_point": "Challenge: optimizing patient acquisition funnels"
+      }
+    ],
+    "desired_outcomes": [
+      {
+        "outcome": "reduce CAC below LTV/3"
+      }
+    ],
+    "status": "active",
+    "validation_score": 0.65,
+    "workflow_id": null,
+    "tags": [],
+    "metadata": {
+      "unique_id": "phase2_jtbd_00097",
+      "id": "jtbd00097",
+      "verb": "attribution",
+      "object": "attribution modeling and channel optimization",
+      "persona_code": null,
+      "persona_title": null,
+      "persona_unique_id": null,
+      "sector": "Multi-sector",
+      "source": "Digital Health JTBD Library Complete.md",
+      "importance": 8,
+      "satisfaction": 5,
+      "original_frequency": "Not specified"
+    }
+  },
+  {
+    "tenant_id": "f7aa6fd4-0af9-4706-8b31-034f1f7accda",
+    "code": "JTBD_098",
+    "name": "When building referral programs, I need incentive design and viral mechanics, so I can achieve organic growth",
+    "description": "When building referral programs, I need incentive design and viral mechanics, so I can achieve organic growth",
+    "strategic_priority_id": null,
+    "domain_id": null,
+    "functional_area": "Operations",
+    "job_category": "operational",
+    "complexity": "medium",
+    "frequency": "monthly",
+    "success_criteria": [
+      "achieve organic growth"
+    ],
+    "kpis": [],
+    "pain_points": [
+      {
+        "pain_point": "Challenge: building referral programs"
+      }
+    ],
+    "desired_outcomes": [
+      {
+        "outcome": "achieve organic growth"
+      }
+    ],
+    "status": "active",
+    "validation_score": 0.65,
+    "workflow_id": null,
+    "tags": [],
+    "metadata": {
+      "unique_id": "phase2_jtbd_00098",
+      "id": "jtbd00098",
+      "verb": "incentive",
+      "object": "incentive design and viral mechanics",
+      "persona_code": null,
+      "persona_title": null,
+      "persona_unique_id": null,
+      "sector": "Multi-sector",
+      "source": "Digital Health JTBD Library Complete.md",
+      "importance": 8,
+      "satisfaction": 5,
+      "original_frequency": "Not specified"
+    }
+  },
+  {
+    "tenant_id": "f7aa6fd4-0af9-4706-8b31-034f1f7accda",
+    "code": "JTBD_099",
+    "name": "When evaluating digital health opportunities, I need clinical validation and market sizing frameworks, so I can identify winners",
+    "description": "When evaluating digital health opportunities, I need clinical validation and market sizing frameworks, so I can identify winners",
+    "strategic_priority_id": null,
+    "domain_id": null,
+    "functional_area": "Operations",
+    "job_category": "operational",
+    "complexity": "medium",
+    "frequency": "monthly",
+    "success_criteria": [
+      "identify winners"
+    ],
+    "kpis": [],
+    "pain_points": [
+      {
+        "pain_point": "Challenge: evaluating digital health opportunities"
+      }
+    ],
+    "desired_outcomes": [
+      {
+        "outcome": "identify winners"
+      }
+    ],
+    "status": "active",
+    "validation_score": 0.65,
+    "workflow_id": null,
+    "tags": [],
+    "metadata": {
+      "unique_id": "phase2_jtbd_00099",
+      "id": "jtbd00099",
+      "verb": "clinical",
+      "object": "clinical validation and market sizing frameworks",
+      "persona_code": null,
+      "persona_title": null,
+      "persona_unique_id": null,
+      "sector": "Multi-sector",
+      "source": "Digital Health JTBD Library Complete.md",
+      "importance": 8,
+      "satisfaction": 5,
+      "original_frequency": "Not specified"
+    }
+  },
+  {
+    "tenant_id": "f7aa6fd4-0af9-4706-8b31-034f1f7accda",
+    "code": "JTBD_100",
+    "name": "When providing strategic guidance, I need benchmarks and best practices, so I can accelerate portfolio growth",
+    "description": "When providing strategic guidance, I need benchmarks and best practices, so I can accelerate portfolio growth",
+    "strategic_priority_id": null,
+    "domain_id": null,
+    "functional_area": "Operations",
+    "job_category": "operational",
+    "complexity": "medium",
+    "frequency": "monthly",
+    "success_criteria": [
+      "accelerate portfolio growth"
+    ],
+    "kpis": [],
+    "pain_points": [
+      {
+        "pain_point": "Challenge: providing strategic guidance"
+      }
+    ],
+    "desired_outcomes": [
+      {
+        "outcome": "accelerate portfolio growth"
+      }
+    ],
+    "status": "active",
+    "validation_score": 0.65,
+    "workflow_id": null,
+    "tags": [],
+    "metadata": {
+      "unique_id": "phase2_jtbd_00100",
+      "id": "jtbd00100",
+      "verb": "benchmarks",
+      "object": "benchmarks and best practices",
+      "persona_code": null,
+      "persona_title": null,
+      "persona_unique_id": null,
+      "sector": "Multi-sector",
+      "source": "Digital Health JTBD Library Complete.md",
+      "importance": 8,
+      "satisfaction": 5,
+      "original_frequency": "Not specified"
+    }
+  },
+  {
+    "tenant_id": "f7aa6fd4-0af9-4706-8b31-034f1f7accda",
+    "code": "JTBD_101",
+    "name": "When providing medical credibility, I need evidence frameworks and publication strategies, so I can build market trust",
+    "description": "When providing medical credibility, I need evidence frameworks and publication strategies, so I can build market trust",
+    "strategic_priority_id": null,
+    "domain_id": null,
+    "functional_area": "Operations",
+    "job_category": "operational",
+    "complexity": "medium",
+    "frequency": "monthly",
+    "success_criteria": [
+      "build market trust"
+    ],
+    "kpis": [],
+    "pain_points": [
+      {
+        "pain_point": "Challenge: providing medical credibility"
+      }
+    ],
+    "desired_outcomes": [
+      {
+        "outcome": "build market trust"
+      }
+    ],
+    "status": "active",
+    "validation_score": 0.65,
+    "workflow_id": null,
+    "tags": [],
+    "metadata": {
+      "unique_id": "phase2_jtbd_00101",
+      "id": "jtbd00101",
+      "verb": "evidence",
+      "object": "evidence frameworks and publication strategies",
+      "persona_code": null,
+      "persona_title": null,
+      "persona_unique_id": null,
+      "sector": "Multi-sector",
+      "source": "Digital Health JTBD Library Complete.md",
+      "importance": 8,
+      "satisfaction": 5,
+      "original_frequency": "Not specified"
+    }
+  },
+  {
+    "tenant_id": "f7aa6fd4-0af9-4706-8b31-034f1f7accda",
+    "code": "JTBD_102",
+    "name": "When preparing FDA submissions for novel digital health products, I need precedent analysis and pathway optimization, so I can ensure approval",
+    "description": "When preparing FDA submissions for novel digital health products, I need precedent analysis and pathway optimization, so I can ensure approval",
+    "strategic_priority_id": null,
+    "domain_id": null,
+    "functional_area": "Regulatory",
+    "job_category": "operational",
+    "complexity": "medium",
+    "frequency": "monthly",
+    "success_criteria": [
+      "ensure approval"
+    ],
+    "kpis": [],
+    "pain_points": [
+      {
+        "pain_point": "Challenge: preparing FDA submissions for novel digital health products"
+      }
+    ],
+    "desired_outcomes": [
+      {
+        "outcome": "ensure approval"
+      }
+    ],
+    "status": "active",
+    "validation_score": 0.65,
+    "workflow_id": null,
+    "tags": [],
+    "metadata": {
+      "unique_id": "phase2_jtbd_00102",
+      "id": "jtbd00102",
+      "verb": "precedent",
+      "object": "precedent analysis and pathway optimization",
+      "persona_code": null,
+      "persona_title": null,
+      "persona_unique_id": null,
+      "sector": "Multi-sector",
+      "source": "Digital Health JTBD Library Complete.md",
+      "importance": 8,
+      "satisfaction": 5,
+      "original_frequency": "Not specified"
+    }
+  },
+  {
+    "tenant_id": "f7aa6fd4-0af9-4706-8b31-034f1f7accda",
+    "code": "JTBD_103",
+    "name": "When optimizing clinical workflows with digital tools, I need process mapping and change management, so I can improve efficiency",
+    "description": "When optimizing clinical workflows with digital tools, I need process mapping and change management, so I can improve efficiency",
+    "strategic_priority_id": null,
+    "domain_id": null,
+    "functional_area": "Clinical",
+    "job_category": "operational",
+    "complexity": "medium",
+    "frequency": "monthly",
+    "success_criteria": [
+      "improve efficiency"
+    ],
+    "kpis": [],
+    "pain_points": [
+      {
+        "pain_point": "Challenge: optimizing clinical workflows with digital tools"
+      }
+    ],
+    "desired_outcomes": [
+      {
+        "outcome": "improve efficiency"
+      }
+    ],
+    "status": "active",
+    "validation_score": 0.65,
+    "workflow_id": null,
+    "tags": [],
+    "metadata": {
+      "unique_id": "phase2_jtbd_00103",
+      "id": "jtbd00103",
+      "verb": "process",
+      "object": "process mapping and change management",
+      "persona_code": null,
+      "persona_title": null,
+      "persona_unique_id": null,
+      "sector": "Multi-sector",
+      "source": "Digital Health JTBD Library Complete.md",
+      "importance": 8,
+      "satisfaction": 5,
+      "original_frequency": "Not specified"
+    }
+  },
+  {
+    "tenant_id": "f7aa6fd4-0af9-4706-8b31-034f1f7accda",
+    "code": "JTBD_104",
+    "name": "When managing healthcare IT infrastructure, I need integration standards and security frameworks, so I can ensure reliability",
+    "description": "When managing healthcare IT infrastructure, I need integration standards and security frameworks, so I can ensure reliability",
+    "strategic_priority_id": null,
+    "domain_id": null,
+    "functional_area": "Operations",
+    "job_category": "operational",
+    "complexity": "medium",
+    "frequency": "monthly",
+    "success_criteria": [
+      "ensure reliability"
+    ],
+    "kpis": [],
+    "pain_points": [
+      {
+        "pain_point": "Challenge: managing healthcare IT infrastructure"
+      }
+    ],
+    "desired_outcomes": [
+      {
+        "outcome": "ensure reliability"
+      }
+    ],
+    "status": "active",
+    "validation_score": 0.65,
+    "workflow_id": null,
+    "tags": [],
+    "metadata": {
+      "unique_id": "phase2_jtbd_00104",
+      "id": "jtbd00104",
+      "verb": "integration",
+      "object": "integration standards and security frameworks",
+      "persona_code": null,
+      "persona_title": null,
+      "persona_unique_id": null,
+      "sector": "Multi-sector",
+      "source": "Digital Health JTBD Library Complete.md",
+      "importance": 8,
+      "satisfaction": 5,
+      "original_frequency": "Not specified"
+    }
+  },
+  {
+    "tenant_id": "f7aa6fd4-0af9-4706-8b31-034f1f7accda",
+    "code": "JTBD_105",
+    "name": "When positioning digital companions with our brand, I need messaging frameworks and ROI models, so I can drive adoption",
+    "description": "When positioning digital companions with our brand, I need messaging frameworks and ROI models, so I can drive adoption",
+    "strategic_priority_id": null,
+    "domain_id": null,
+    "functional_area": "Commercial",
+    "job_category": "operational",
+    "complexity": "medium",
+    "frequency": "monthly",
+    "success_criteria": [
+      "drive adoption"
+    ],
+    "kpis": [],
+    "pain_points": [
+      {
+        "pain_point": "Challenge: positioning digital companions with our brand"
+      }
+    ],
+    "desired_outcomes": [
+      {
+        "outcome": "drive adoption"
+      }
+    ],
+    "status": "active",
+    "validation_score": 0.65,
+    "workflow_id": null,
+    "tags": [],
+    "metadata": {
+      "unique_id": "phase2_jtbd_00105",
+      "id": "jtbd00105",
+      "verb": "messaging",
+      "object": "messaging frameworks and ROI models",
+      "persona_code": null,
+      "persona_title": null,
+      "persona_unique_id": null,
+      "sector": "Multi-sector",
+      "source": "Digital Health JTBD Library Complete.md",
+      "importance": 8,
+      "satisfaction": 5,
+      "original_frequency": "Not specified"
+    }
+  },
+  {
+    "tenant_id": "f7aa6fd4-0af9-4706-8b31-034f1f7accda",
+    "code": "JTBD_106",
+    "name": "When selling to health systems, I need ROI calculators and case studies, so I can demonstrate value",
+    "description": "When selling to health systems, I need ROI calculators and case studies, so I can demonstrate value",
+    "strategic_priority_id": null,
+    "domain_id": null,
+    "functional_area": "Operations",
+    "job_category": "operational",
+    "complexity": "medium",
+    "frequency": "monthly",
+    "success_criteria": [
+      "demonstrate value"
+    ],
+    "kpis": [],
+    "pain_points": [
+      {
+        "pain_point": "Challenge: selling to health systems"
+      }
+    ],
+    "desired_outcomes": [
+      {
+        "outcome": "demonstrate value"
+      }
+    ],
+    "status": "active",
+    "validation_score": 0.65,
+    "workflow_id": null,
+    "tags": [],
+    "metadata": {
+      "unique_id": "phase2_jtbd_00106",
+      "id": "jtbd00106",
+      "verb": "roi",
+      "object": "ROI calculators and case studies",
+      "persona_code": null,
+      "persona_title": null,
+      "persona_unique_id": null,
+      "sector": "Multi-sector",
+      "source": "Digital Health JTBD Library Complete.md",
+      "importance": 8,
+      "satisfaction": 5,
+      "original_frequency": "Not specified"
+    }
+  },
+  {
+    "tenant_id": "f7aa6fd4-0af9-4706-8b31-034f1f7accda",
+    "code": "JTBD_107",
+    "name": "When developing medical-grade software, I need quality management systems and validation protocols, so I can ensure FDA compliance",
+    "description": "When developing medical-grade software, I need quality management systems and validation protocols, so I can ensure FDA compliance",
+    "strategic_priority_id": null,
+    "domain_id": null,
+    "functional_area": "Operations",
+    "job_category": "operational",
+    "complexity": "medium",
+    "frequency": "monthly",
+    "success_criteria": [
+      "ensure FDA compliance"
+    ],
+    "kpis": [],
+    "pain_points": [
+      {
+        "pain_point": "Challenge: developing medical-grade software"
+      }
+    ],
+    "desired_outcomes": [
+      {
+        "outcome": "ensure FDA compliance"
+      }
+    ],
+    "status": "active",
+    "validation_score": 0.65,
+    "workflow_id": null,
+    "tags": [],
+    "metadata": {
+      "unique_id": "phase2_jtbd_00107",
+      "id": "jtbd00107",
+      "verb": "quality",
+      "object": "quality management systems and validation protocols",
+      "persona_code": null,
+      "persona_title": null,
+      "persona_unique_id": null,
+      "sector": "Multi-sector",
+      "source": "Digital Health JTBD Library Complete.md",
+      "importance": 8,
+      "satisfaction": 5,
+      "original_frequency": "Not specified"
+    }
+  },
+  {
+    "tenant_id": "f7aa6fd4-0af9-4706-8b31-034f1f7accda",
+    "code": "JTBD_108",
+    "name": "When iterating based on clinical feedback, I need rapid development cycles and testing frameworks, so I can improve quickly while maintaining quality",
+    "description": "When iterating based on clinical feedback, I need rapid development cycles and testing frameworks, so I can improve quickly while maintaining quality",
+    "strategic_priority_id": null,
+    "domain_id": null,
+    "functional_area": "Clinical",
+    "job_category": "operational",
+    "complexity": "medium",
+    "frequency": "monthly",
+    "success_criteria": [
+      "improve quickly while maintaining quality"
+    ],
+    "kpis": [],
+    "pain_points": [
+      {
+        "pain_point": "Challenge: iterating based on clinical feedback"
+      }
+    ],
+    "desired_outcomes": [
+      {
+        "outcome": "improve quickly while maintaining quality"
+      }
+    ],
+    "status": "active",
+    "validation_score": 0.65,
+    "workflow_id": null,
+    "tags": [],
+    "metadata": {
+      "unique_id": "phase2_jtbd_00108",
+      "id": "jtbd00108",
+      "verb": "rapid",
+      "object": "rapid development cycles and testing frameworks",
+      "persona_code": null,
+      "persona_title": null,
+      "persona_unique_id": null,
+      "sector": "Multi-sector",
+      "source": "Digital Health JTBD Library Complete.md",
+      "importance": 8,
+      "satisfaction": 5,
+      "original_frequency": "Not specified"
+    }
+  },
+  {
+    "tenant_id": "f7aa6fd4-0af9-4706-8b31-034f1f7accda",
+    "code": "JTBD_109",
+    "name": "When validating digital therapeutics efficacy, I need lean clinical trial designs and efficient recruitment, so I can generate evidence within budget",
+    "description": "When validating digital therapeutics efficacy, I need lean clinical trial designs and efficient recruitment, so I can generate evidence within budget",
+    "strategic_priority_id": null,
+    "domain_id": null,
+    "functional_area": "Operations",
+    "job_category": "operational",
+    "complexity": "medium",
+    "frequency": "monthly",
+    "success_criteria": [
+      "generate evidence within budget"
+    ],
+    "kpis": [],
+    "pain_points": [
+      {
+        "pain_point": "Challenge: validating digital therapeutics efficacy"
+      }
+    ],
+    "desired_outcomes": [
+      {
+        "outcome": "generate evidence within budget"
+      }
+    ],
+    "status": "active",
+    "validation_score": 0.65,
+    "workflow_id": null,
+    "tags": [],
+    "metadata": {
+      "unique_id": "phase2_jtbd_00109",
+      "id": "jtbd00109",
+      "verb": "lean",
+      "object": "lean clinical trial designs and efficient recruitment",
+      "persona_code": null,
+      "persona_title": null,
+      "persona_unique_id": null,
+      "sector": "Multi-sector",
+      "source": "Digital Health JTBD Library Complete.md",
+      "importance": 8,
+      "satisfaction": 5,
+      "original_frequency": "Not specified"
+    }
+  },
+  {
+    "tenant_id": "f7aa6fd4-0af9-4706-8b31-034f1f7accda",
+    "code": "JTBD_110",
+    "name": "When publishing clinical results, I need publication strategies and journal relationships, so I can build scientific credibility",
+    "description": "When publishing clinical results, I need publication strategies and journal relationships, so I can build scientific credibility",
+    "strategic_priority_id": null,
+    "domain_id": null,
+    "functional_area": "Clinical",
+    "job_category": "operational",
+    "complexity": "medium",
+    "frequency": "monthly",
+    "success_criteria": [
+      "build scientific credibility"
+    ],
+    "kpis": [],
+    "pain_points": [
+      {
+        "pain_point": "Challenge: publishing clinical results"
+      }
+    ],
+    "desired_outcomes": [
+      {
+        "outcome": "build scientific credibility"
+      }
+    ],
+    "status": "active",
+    "validation_score": 0.65,
+    "workflow_id": null,
+    "tags": [],
+    "metadata": {
+      "unique_id": "phase2_jtbd_00110",
+      "id": "jtbd00110",
+      "verb": "publication",
+      "object": "publication strategies and journal relationships",
+      "persona_code": null,
+      "persona_title": null,
+      "persona_unique_id": null,
+      "sector": "Multi-sector",
+      "source": "Digital Health JTBD Library Complete.md",
+      "importance": 8,
+      "satisfaction": 5,
+      "original_frequency": "Not specified"
+    }
+  },
+  {
+    "tenant_id": "f7aa6fd4-0af9-4706-8b31-034f1f7accda",
+    "code": "JTBD_111",
+    "name": "When building QMS for digital health startup, I need scalable frameworks and automation tools, so I can maintain compliance efficiently",
+    "description": "When building QMS for digital health startup, I need scalable frameworks and automation tools, so I can maintain compliance efficiently",
+    "strategic_priority_id": null,
+    "domain_id": null,
+    "functional_area": "Operations",
+    "job_category": "operational",
+    "complexity": "medium",
+    "frequency": "monthly",
+    "success_criteria": [
+      "maintain compliance efficiently"
+    ],
+    "kpis": [],
+    "pain_points": [
+      {
+        "pain_point": "Challenge: building QMS for digital health startup"
+      }
+    ],
+    "desired_outcomes": [
+      {
+        "outcome": "maintain compliance efficiently"
+      }
+    ],
+    "status": "active",
+    "validation_score": 0.65,
+    "workflow_id": null,
+    "tags": [],
+    "metadata": {
+      "unique_id": "phase2_jtbd_00111",
+      "id": "jtbd00111",
+      "verb": "scalable",
+      "object": "scalable frameworks and automation tools",
+      "persona_code": null,
+      "persona_title": null,
+      "persona_unique_id": null,
+      "sector": "Multi-sector",
+      "source": "Digital Health JTBD Library Complete.md",
+      "importance": 8,
+      "satisfaction": 5,
+      "original_frequency": "Not specified"
+    }
+  },
+  {
+    "tenant_id": "f7aa6fd4-0af9-4706-8b31-034f1f7accda",
+    "code": "JTBD_112",
+    "name": "When securing pharma partnerships for DTx, I need value proposition frameworks and pilot programs, so I can demonstrate mutual benefit",
+    "description": "When securing pharma partnerships for DTx, I need value proposition frameworks and pilot programs, so I can demonstrate mutual benefit",
+    "strategic_priority_id": null,
+    "domain_id": null,
+    "functional_area": "Operations",
+    "job_category": "operational",
+    "complexity": "medium",
+    "frequency": "monthly",
+    "success_criteria": [
+      "demonstrate mutual benefit"
+    ],
+    "kpis": [],
+    "pain_points": [
+      {
+        "pain_point": "Challenge: securing pharma partnerships for DTx"
+      }
+    ],
+    "desired_outcomes": [
+      {
+        "outcome": "demonstrate mutual benefit"
+      }
+    ],
+    "status": "active",
+    "validation_score": 0.65,
+    "workflow_id": null,
+    "tags": [],
+    "metadata": {
+      "unique_id": "phase2_jtbd_00112",
+      "id": "jtbd00112",
+      "verb": "value",
+      "object": "value proposition frameworks and pilot programs",
+      "persona_code": null,
+      "persona_title": null,
+      "persona_unique_id": null,
+      "sector": "Multi-sector",
+      "source": "Digital Health JTBD Library Complete.md",
+      "importance": 8,
+      "satisfaction": 5,
+      "original_frequency": "Not specified"
+    }
+  },
+  {
+    "tenant_id": "f7aa6fd4-0af9-4706-8b31-034f1f7accda",
+    "code": "JTBD_113",
+    "name": "When implementing digital health solutions at scale, I need deployment playbooks and change management tools, so I can ensure adoption",
+    "description": "When implementing digital health solutions at scale, I need deployment playbooks and change management tools, so I can ensure adoption",
+    "strategic_priority_id": null,
+    "domain_id": null,
+    "functional_area": "Operations",
+    "job_category": "operational",
+    "complexity": "medium",
+    "frequency": "monthly",
+    "success_criteria": [
+      "ensure adoption"
+    ],
+    "kpis": [],
+    "pain_points": [
+      {
+        "pain_point": "Challenge: implementing digital health solutions at scale"
+      }
+    ],
+    "desired_outcomes": [
+      {
+        "outcome": "ensure adoption"
+      }
+    ],
+    "status": "active",
+    "validation_score": 0.65,
+    "workflow_id": null,
+    "tags": [],
+    "metadata": {
+      "unique_id": "phase2_jtbd_00113",
+      "id": "jtbd00113",
+      "verb": "deployment",
+      "object": "deployment playbooks and change management tools",
+      "persona_code": null,
+      "persona_title": null,
+      "persona_unique_id": null,
+      "sector": "Multi-sector",
+      "source": "Digital Health JTBD Library Complete.md",
+      "importance": 8,
+      "satisfaction": 5,
+      "original_frequency": "Not specified"
+    }
+  },
+  {
+    "tenant_id": "f7aa6fd4-0af9-4706-8b31-034f1f7accda",
+    "code": "JTBD_114",
+    "name": "When developing therapeutic content, I need evidence-based frameworks and engagement strategies, so I can drive behavior change",
+    "description": "When developing therapeutic content, I need evidence-based frameworks and engagement strategies, so I can drive behavior change",
+    "strategic_priority_id": null,
+    "domain_id": null,
+    "functional_area": "Operations",
+    "job_category": "operational",
+    "complexity": "medium",
+    "frequency": "monthly",
+    "success_criteria": [
+      "drive behavior change"
+    ],
+    "kpis": [],
+    "pain_points": [
+      {
+        "pain_point": "Challenge: developing therapeutic content"
+      }
+    ],
+    "desired_outcomes": [
+      {
+        "outcome": "drive behavior change"
+      }
+    ],
+    "status": "active",
+    "validation_score": 0.65,
+    "workflow_id": null,
+    "tags": [],
+    "metadata": {
+      "unique_id": "phase2_jtbd_00114",
+      "id": "jtbd00114",
+      "verb": "evidence-based",
+      "object": "evidence-based frameworks and engagement strategies",
+      "persona_code": null,
+      "persona_title": null,
+      "persona_unique_id": null,
+      "sector": "Multi-sector",
+      "source": "Digital Health JTBD Library Complete.md",
+      "importance": 8,
+      "satisfaction": 5,
+      "original_frequency": "Not specified"
+    }
+  },
+  {
+    "tenant_id": "f7aa6fd4-0af9-4706-8b31-034f1f7accda",
+    "code": "JTBD_115",
+    "name": "When securing reimbursement for digital therapeutics, I need economic models and clinical dossiers, so I can convince payers",
+    "description": "When securing reimbursement for digital therapeutics, I need economic models and clinical dossiers, so I can convince payers",
+    "strategic_priority_id": null,
+    "domain_id": null,
+    "functional_area": "Market Access",
+    "job_category": "operational",
+    "complexity": "medium",
+    "frequency": "monthly",
+    "success_criteria": [
+      "convince payers"
+    ],
+    "kpis": [],
+    "pain_points": [
+      {
+        "pain_point": "Challenge: securing reimbursement for digital therapeutics"
+      }
+    ],
+    "desired_outcomes": [
+      {
+        "outcome": "convince payers"
+      }
+    ],
+    "status": "active",
+    "validation_score": 0.65,
+    "workflow_id": null,
+    "tags": [],
+    "metadata": {
+      "unique_id": "phase2_jtbd_00115",
+      "id": "jtbd00115",
+      "verb": "economic",
+      "object": "economic models and clinical dossiers",
+      "persona_code": null,
+      "persona_title": null,
+      "persona_unique_id": null,
+      "sector": "Multi-sector",
+      "source": "Digital Health JTBD Library Complete.md",
+      "importance": 8,
+      "satisfaction": 5,
+      "original_frequency": "Not specified"
+    }
+  },
+  {
+    "tenant_id": "f7aa6fd4-0af9-4706-8b31-034f1f7accda",
+    "code": "JTBD_116",
+    "name": "When developing healthcare ML models, I need validation frameworks and explainability tools, so I can ensure clinical reliability",
+    "description": "When developing healthcare ML models, I need validation frameworks and explainability tools, so I can ensure clinical reliability",
+    "strategic_priority_id": null,
+    "domain_id": null,
+    "functional_area": "Operations",
+    "job_category": "operational",
+    "complexity": "medium",
+    "frequency": "monthly",
+    "success_criteria": [
+      "ensure clinical reliability"
+    ],
+    "kpis": [],
+    "pain_points": [
+      {
+        "pain_point": "Challenge: developing healthcare ML models"
+      }
+    ],
+    "desired_outcomes": [
+      {
+        "outcome": "ensure clinical reliability"
+      }
+    ],
+    "status": "active",
+    "validation_score": 0.65,
+    "workflow_id": null,
+    "tags": [],
+    "metadata": {
+      "unique_id": "phase2_jtbd_00116",
+      "id": "jtbd00116",
+      "verb": "validation",
+      "object": "validation frameworks and explainability tools",
+      "persona_code": null,
+      "persona_title": null,
+      "persona_unique_id": null,
+      "sector": "Multi-sector",
+      "source": "Digital Health JTBD Library Complete.md",
+      "importance": 8,
+      "satisfaction": 5,
+      "original_frequency": "Not specified"
+    }
+  },
+  {
+    "tenant_id": "f7aa6fd4-0af9-4706-8b31-034f1f7accda",
+    "code": "JTBD_117",
+    "name": "When protecting patient data in digital health, I need zero-trust architectures and privacy controls, so I can prevent breaches",
+    "description": "When protecting patient data in digital health, I need zero-trust architectures and privacy controls, so I can prevent breaches",
+    "strategic_priority_id": null,
+    "domain_id": null,
+    "functional_area": "Operations",
+    "job_category": "operational",
+    "complexity": "medium",
+    "frequency": "monthly",
+    "success_criteria": [
+      "prevent breaches"
+    ],
+    "kpis": [],
+    "pain_points": [
+      {
+        "pain_point": "Challenge: protecting patient data in digital health"
+      }
+    ],
+    "desired_outcomes": [
+      {
+        "outcome": "prevent breaches"
+      }
+    ],
+    "status": "active",
+    "validation_score": 0.65,
+    "workflow_id": null,
+    "tags": [],
+    "metadata": {
+      "unique_id": "phase2_jtbd_00117",
+      "id": "jtbd00117",
+      "verb": "zero-trust",
+      "object": "zero-trust architectures and privacy controls",
+      "persona_code": null,
+      "persona_title": null,
+      "persona_unique_id": null,
+      "sector": "Multi-sector",
+      "source": "Digital Health JTBD Library Complete.md",
+      "importance": 8,
+      "satisfaction": 5,
+      "original_frequency": "Not specified"
+    }
+  },
+  {
+    "tenant_id": "f7aa6fd4-0af9-4706-8b31-034f1f7accda",
+    "code": "JTBD_118",
+    "name": "When building prescription digital therapeutics business, I need regulatory pathways and reimbursement strategies, so I can achieve sustainable growth",
+    "description": "When building prescription digital therapeutics business, I need regulatory pathways and reimbursement strategies, so I can achieve sustainable growth",
+    "strategic_priority_id": null,
+    "domain_id": null,
+    "functional_area": "Operations",
+    "job_category": "operational",
+    "complexity": "medium",
+    "frequency": "monthly",
+    "success_criteria": [
+      "achieve sustainable growth"
+    ],
+    "kpis": [],
+    "pain_points": [
+      {
+        "pain_point": "Challenge: building prescription digital therapeutics business"
+      }
+    ],
+    "desired_outcomes": [
+      {
+        "outcome": "achieve sustainable growth"
+      }
+    ],
+    "status": "active",
+    "validation_score": 0.65,
+    "workflow_id": null,
+    "tags": [],
+    "metadata": {
+      "unique_id": "phase2_jtbd_00118",
+      "id": "jtbd00118",
+      "verb": "regulatory",
+      "object": "regulatory pathways and reimbursement strategies",
+      "persona_code": null,
+      "persona_title": null,
+      "persona_unique_id": null,
+      "sector": "Multi-sector",
+      "source": "Digital Health JTBD Library Complete.md",
+      "importance": 8,
+      "satisfaction": 5,
+      "original_frequency": "Not specified"
+    }
+  },
+  {
+    "tenant_id": "f7aa6fd4-0af9-4706-8b31-034f1f7accda",
+    "code": "JTBD_119",
+    "name": "When validating novel digital biomarkers, I need clinical correlation methods and regulatory acceptance criteria, so I can achieve industry adoption",
+    "description": "When validating novel digital biomarkers, I need clinical correlation methods and regulatory acceptance criteria, so I can achieve industry adoption",
+    "strategic_priority_id": null,
+    "domain_id": null,
+    "functional_area": "Operations",
+    "job_category": "operational",
+    "complexity": "medium",
+    "frequency": "monthly",
+    "success_criteria": [
+      "achieve industry adoption"
+    ],
+    "kpis": [],
+    "pain_points": [
+      {
+        "pain_point": "Challenge: validating novel digital biomarkers"
+      }
+    ],
+    "desired_outcomes": [
+      {
+        "outcome": "achieve industry adoption"
+      }
+    ],
+    "status": "active",
+    "validation_score": 0.65,
+    "workflow_id": null,
+    "tags": [],
+    "metadata": {
+      "unique_id": "phase2_jtbd_00119",
+      "id": "jtbd00119",
+      "verb": "clinical",
+      "object": "clinical correlation methods and regulatory acceptance criteria",
+      "persona_code": null,
+      "persona_title": null,
+      "persona_unique_id": null,
+      "sector": "Multi-sector",
+      "source": "Digital Health JTBD Library Complete.md",
+      "importance": 8,
+      "satisfaction": 5,
+      "original_frequency": "Not specified"
+    }
+  },
+  {
+    "tenant_id": "f7aa6fd4-0af9-4706-8b31-034f1f7accda",
+    "code": "JTBD_120",
+    "name": "When scaling virtual care platform, I need interoperability standards and workflow optimization tools, so I can serve enterprise health systems",
+    "description": "When scaling virtual care platform, I need interoperability standards and workflow optimization tools, so I can serve enterprise health systems",
+    "strategic_priority_id": null,
+    "domain_id": null,
+    "functional_area": "Operations",
+    "job_category": "operational",
+    "complexity": "medium",
+    "frequency": "monthly",
+    "success_criteria": [
+      "serve enterprise health systems"
+    ],
+    "kpis": [],
+    "pain_points": [
+      {
+        "pain_point": "Challenge: scaling virtual care platform"
+      }
+    ],
+    "desired_outcomes": [
+      {
+        "outcome": "serve enterprise health systems"
+      }
+    ],
+    "status": "active",
+    "validation_score": 0.65,
+    "workflow_id": null,
+    "tags": [],
+    "metadata": {
+      "unique_id": "phase2_jtbd_00120",
+      "id": "jtbd00120",
+      "verb": "interoperability",
+      "object": "interoperability standards and workflow optimization tools",
+      "persona_code": null,
+      "persona_title": null,
+      "persona_unique_id": null,
+      "sector": "Multi-sector",
+      "source": "Digital Health JTBD Library Complete.md",
+      "importance": 8,
+      "satisfaction": 5,
+      "original_frequency": "Not specified"
+    }
+  },
+  {
+    "tenant_id": "f7aa6fd4-0af9-4706-8b31-034f1f7accda",
+    "code": "JTBD_121",
+    "name": "When advising on digital health strategy, I need maturity assessment tools and transformation playbooks, so I can deliver measurable value",
+    "description": "When advising on digital health strategy, I need maturity assessment tools and transformation playbooks, so I can deliver measurable value",
+    "strategic_priority_id": null,
+    "domain_id": null,
+    "functional_area": "Operations",
+    "job_category": "operational",
+    "complexity": "medium",
+    "frequency": "monthly",
+    "success_criteria": [
+      "deliver measurable value"
+    ],
+    "kpis": [],
+    "pain_points": [
+      {
+        "pain_point": "Challenge: advising on digital health strategy"
+      }
+    ],
+    "desired_outcomes": [
+      {
+        "outcome": "deliver measurable value"
+      }
+    ],
+    "status": "active",
+    "validation_score": 0.65,
+    "workflow_id": null,
+    "tags": [],
+    "metadata": {
+      "unique_id": "phase2_jtbd_00121",
+      "id": "jtbd00121",
+      "verb": "maturity",
+      "object": "maturity assessment tools and transformation playbooks",
+      "persona_code": null,
+      "persona_title": null,
+      "persona_unique_id": null,
+      "sector": "Multi-sector",
+      "source": "Digital Health JTBD Library Complete.md",
+      "importance": 8,
+      "satisfaction": 5,
+      "original_frequency": "Not specified"
+    }
+  },
+  {
+    "tenant_id": "f7aa6fd4-0af9-4706-8b31-034f1f7accda",
+    "code": "JTBD_122",
+    "name": "When evaluating digital health investments, I need clinical validation frameworks and market sizing models, so I can identify unicorns",
+    "description": "When evaluating digital health investments, I need clinical validation frameworks and market sizing models, so I can identify unicorns",
+    "strategic_priority_id": null,
+    "domain_id": null,
+    "functional_area": "Operations",
+    "job_category": "operational",
+    "complexity": "medium",
+    "frequency": "monthly",
+    "success_criteria": [
+      "identify unicorns"
+    ],
+    "kpis": [],
+    "pain_points": [
+      {
+        "pain_point": "Challenge: evaluating digital health investments"
+      }
+    ],
+    "desired_outcomes": [
+      {
+        "outcome": "identify unicorns"
+      }
+    ],
+    "status": "active",
+    "validation_score": 0.65,
+    "workflow_id": null,
+    "tags": [],
+    "metadata": {
+      "unique_id": "phase2_jtbd_00122",
+      "id": "jtbd00122",
+      "verb": "clinical",
+      "object": "clinical validation frameworks and market sizing models",
+      "persona_code": null,
+      "persona_title": null,
+      "persona_unique_id": null,
+      "sector": "Multi-sector",
+      "source": "Digital Health JTBD Library Complete.md",
+      "importance": 8,
+      "satisfaction": 5,
+      "original_frequency": "Not specified"
+    }
+  },
+  {
+    "tenant_id": "f7aa6fd4-0af9-4706-8b31-034f1f7accda",
+    "code": "JTBD_123",
+    "name": "When building healthcare API ecosystem, I need interoperability standards and developer tools, so I can accelerate digital health innovation",
+    "description": "When building healthcare API ecosystem, I need interoperability standards and developer tools, so I can accelerate digital health innovation",
+    "strategic_priority_id": null,
+    "domain_id": null,
+    "functional_area": "Operations",
+    "job_category": "operational",
+    "complexity": "medium",
+    "frequency": "monthly",
+    "success_criteria": [
+      "accelerate digital health innovation"
+    ],
+    "kpis": [],
+    "pain_points": [
+      {
+        "pain_point": "Challenge: building healthcare API ecosystem"
+      }
+    ],
+    "desired_outcomes": [
+      {
+        "outcome": "accelerate digital health innovation"
+      }
+    ],
+    "status": "active",
+    "validation_score": 0.65,
+    "workflow_id": null,
+    "tags": [],
+    "metadata": {
+      "unique_id": "phase2_jtbd_00123",
+      "id": "jtbd00123",
+      "verb": "interoperability",
+      "object": "interoperability standards and developer tools",
+      "persona_code": null,
+      "persona_title": null,
+      "persona_unique_id": null,
+      "sector": "Multi-sector",
+      "source": "Digital Health JTBD Library Complete.md",
+      "importance": 8,
+      "satisfaction": 5,
+      "original_frequency": "Not specified"
+    }
+  },
+  {
+    "tenant_id": "f7aa6fd4-0af9-4706-8b31-034f1f7accda",
+    "code": "JTBD_124",
+    "name": "When developing medical AI models, I need bias detection tools and clinical validation frameworks, so I can ensure safe deployment",
+    "description": "When developing medical AI models, I need bias detection tools and clinical validation frameworks, so I can ensure safe deployment",
+    "strategic_priority_id": null,
+    "domain_id": null,
+    "functional_area": "Operations",
+    "job_category": "operational",
+    "complexity": "medium",
+    "frequency": "monthly",
+    "success_criteria": [
+      "ensure safe deployment"
+    ],
+    "kpis": [],
+    "pain_points": [
+      {
+        "pain_point": "Challenge: developing medical AI models"
+      }
+    ],
+    "desired_outcomes": [
+      {
+        "outcome": "ensure safe deployment"
+      }
+    ],
+    "status": "active",
+    "validation_score": 0.65,
+    "workflow_id": null,
+    "tags": [],
+    "metadata": {
+      "unique_id": "phase2_jtbd_00124",
+      "id": "jtbd00124",
+      "verb": "bias",
+      "object": "bias detection tools and clinical validation frameworks",
+      "persona_code": null,
+      "persona_title": null,
+      "persona_unique_id": null,
+      "sector": "Multi-sector",
+      "source": "Digital Health JTBD Library Complete.md",
+      "importance": 8,
+      "satisfaction": 5,
+      "original_frequency": "Not specified"
+    }
+  },
+  {
+    "tenant_id": "f7aa6fd4-0af9-4706-8b31-034f1f7accda",
+    "code": "JTBD_125",
+    "name": "When running decentralized clinical trials, I need integrated technology platforms and remote monitoring capabilities, so I can ensure quality and efficiency",
+    "description": "When running decentralized clinical trials, I need integrated technology platforms and remote monitoring capabilities, so I can ensure quality and efficiency",
+    "strategic_priority_id": null,
+    "domain_id": null,
+    "functional_area": "Clinical",
+    "job_category": "operational",
+    "complexity": "medium",
+    "frequency": "monthly",
+    "success_criteria": [
+      "ensure quality and efficiency"
+    ],
+    "kpis": [],
+    "pain_points": [
+      {
+        "pain_point": "Challenge: running decentralized clinical trials"
+      }
+    ],
+    "desired_outcomes": [
+      {
+        "outcome": "ensure quality and efficiency"
+      }
+    ],
+    "status": "active",
+    "validation_score": 0.65,
+    "workflow_id": null,
+    "tags": [],
+    "metadata": {
+      "unique_id": "phase2_jtbd_00125",
+      "id": "jtbd00125",
+      "verb": "technology",
+      "object": "integrated technology platforms and remote monitoring capabilities",
+      "persona_code": null,
+      "persona_title": null,
+      "persona_unique_id": null,
+      "sector": "Multi-sector",
+      "source": "Digital Health JTBD Library Complete.md",
+      "importance": 8,
+      "satisfaction": 5,
+      "original_frequency": "Not specified"
+    }
+  },
+  {
+    "tenant_id": "f7aa6fd4-0af9-4706-8b31-034f1f7accda",
+    "code": "JTBD_126",
+    "name": "When building patient data platforms, I need consent management systems and privacy-preserving computation, so I can enable compliant data sharing",
+    "description": "When building patient data platforms, I need consent management systems and privacy-preserving computation, so I can enable compliant data sharing",
+    "strategic_priority_id": null,
+    "domain_id": null,
+    "functional_area": "Operations",
+    "job_category": "operational",
+    "complexity": "medium",
+    "frequency": "monthly",
+    "success_criteria": [
+      "enable compliant data sharing"
+    ],
+    "kpis": [],
+    "pain_points": [
+      {
+        "pain_point": "Challenge: building patient data platforms"
+      }
+    ],
+    "desired_outcomes": [
+      {
+        "outcome": "enable compliant data sharing"
+      }
+    ],
+    "status": "active",
+    "validation_score": 0.65,
+    "workflow_id": null,
+    "tags": [],
+    "metadata": {
+      "unique_id": "phase2_jtbd_00126",
+      "id": "jtbd00126",
+      "verb": "consent",
+      "object": "consent management systems and privacy-preserving computation",
+      "persona_code": null,
+      "persona_title": null,
+      "persona_unique_id": null,
+      "sector": "Multi-sector",
+      "source": "Digital Health JTBD Library Complete.md",
+      "importance": 8,
+      "satisfaction": 5,
+      "original_frequency": "Not specified"
+    }
+  },
+  {
+    "tenant_id": "f7aa6fd4-0af9-4706-8b31-034f1f7accda",
+    "code": "JTBD_127",
+    "name": "When shaping digital health policy, I need evidence synthesis tools and stakeholder alignment methods, so I can drive meaningful change",
+    "description": "When shaping digital health policy, I need evidence synthesis tools and stakeholder alignment methods, so I can drive meaningful change",
+    "strategic_priority_id": null,
+    "domain_id": null,
+    "functional_area": "Operations",
+    "job_category": "operational",
+    "complexity": "medium",
+    "frequency": "monthly",
+    "success_criteria": [
+      "drive meaningful change"
+    ],
+    "kpis": [],
+    "pain_points": [
+      {
+        "pain_point": "Challenge: shaping digital health policy"
+      }
+    ],
+    "desired_outcomes": [
+      {
+        "outcome": "drive meaningful change"
+      }
+    ],
+    "status": "active",
+    "validation_score": 0.65,
+    "workflow_id": null,
+    "tags": [],
+    "metadata": {
+      "unique_id": "phase2_jtbd_00127",
+      "id": "jtbd00127",
+      "verb": "evidence",
+      "object": "evidence synthesis tools and stakeholder alignment methods",
+      "persona_code": null,
+      "persona_title": null,
+      "persona_unique_id": null,
+      "sector": "Multi-sector",
+      "source": "Digital Health JTBD Library Complete.md",
+      "importance": 8,
+      "satisfaction": 5,
+      "original_frequency": "Not specified"
+    }
+  }
+]

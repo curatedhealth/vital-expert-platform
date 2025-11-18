@@ -41,9 +41,9 @@ export default function RegisterPage() {
     }
 
     try {
-      // Check if Supabase is configured
-      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://xazinxsiglqokwfmogyk.supabase.co';
-      
+      // SECURITY: Check if Supabase is configured (no fallback credentials)
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+
       if (!supabaseUrl || supabaseUrl === 'undefined') {
         // Development mode - use mock registration
         console.log('🔧 Development mode: Using mock registration');

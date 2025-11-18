@@ -43,7 +43,6 @@ import { KnowledgeUploader } from '@/features/knowledge/components/knowledge-upl
 import { KnowledgeViewer } from '@/features/knowledge/components/knowledge-viewer';
 import { DocumentsLibraryView } from '@/features/knowledge/components/documents-library-view';
 import type { KnowledgeDomain } from '@/lib/services/model-selector';
-import { createClient } from '@vital/sdk/client';
 
 interface Document {
   id: string;
@@ -64,8 +63,6 @@ function KnowledgePageContent() {
   const [domains, setDomains] = useState<KnowledgeDomain[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  const supabase = createClient();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedDomain, setSelectedDomain] = useState('all');
@@ -136,20 +133,17 @@ function KnowledgePageContent() {
     }
   }, [selectedDomain]);
 
-  // Fetch knowledge domains from database
+  // Fetch knowledge domains from API
   const fetchDomains = useCallback(async () => {
     try {
-      // Fetch from knowledge_domains table
-      const { data, error } = await supabase
-        .from('knowledge_domains')
-        .select('id, name, tier')
-        .order('name', { ascending: true });
-
-      if (error) {
-        console.error('Knowledge domains query error:', error);
-        throw error;
+      const response = await fetch('/api/knowledge-domains');
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        console.error('Knowledge domains API error:', errorData);
+        throw new Error(errorData.error || 'Failed to fetch domains');
       }
-      setDomains(data || []);
+      const data = await response.json();
+      setDomains(data.domains || []);
     } catch (err) {
       console.error('Error fetching knowledge domains:', err);
     }

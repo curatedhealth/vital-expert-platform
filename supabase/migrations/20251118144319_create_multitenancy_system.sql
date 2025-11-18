@@ -421,24 +421,19 @@ $$;
 CREATE OR REPLACE FUNCTION get_tenant_agents(p_tenant_id UUID)
 RETURNS TABLE (
     agent_id UUID,
-    agent_name VARCHAR,
-    agent_tier INTEGER,
-    agent_domains TEXT[]
+    agent_name VARCHAR
 )
 LANGUAGE sql
 STABLE
 AS $$
     SELECT
         a.id as agent_id,
-        a.name as agent_name,
-        a.tier as agent_tier,
-        a.knowledge_domains as agent_domains
+        a.name as agent_name
     FROM tenant_agents ta
     JOIN agents a ON ta.agent_id = a.id
     WHERE ta.tenant_id = p_tenant_id
     AND ta.is_enabled = true
-    AND a.status = 'active'
-    ORDER BY a.tier, a.name;
+    ORDER BY a.name;
 $$;
 
 -- Update timestamps trigger

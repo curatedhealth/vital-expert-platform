@@ -102,7 +102,11 @@ CREATE INDEX IF NOT EXISTS idx_extracted_entities_text ON extracted_entities(ent
 -- =====================================================================
 -- 4. KNOWLEDGE_SOURCES - Alias view for documents API compatibility
 -- =====================================================================
-CREATE OR REPLACE VIEW knowledge_sources AS
+-- Drop existing table/view if it conflicts
+DROP TABLE IF EXISTS knowledge_sources CASCADE;
+DROP VIEW IF EXISTS knowledge_sources CASCADE;
+
+CREATE VIEW knowledge_sources AS
 SELECT
   id,
   title,

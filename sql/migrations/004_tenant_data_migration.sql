@@ -28,7 +28,7 @@ END $$;
 -- MIGRATE TIER 3 AGENTS TO TENANTS
 -- ============================================================================
 
-\echo 'Migrating Tier 3 agents to appropriate tenants...'
+DO $$ BEGIN RAISE NOTICE 'Migrating Tier 3 agents to appropriate tenants...'; END $$;
 
 -- Digital Health focused agents
 UPDATE agents
@@ -100,7 +100,7 @@ ORDER BY t.name, a.tier;
 -- MIGRATE PROMPTS TO TENANTS
 -- ============================================================================
 
-\echo 'Migrating prompts to appropriate tenants...'
+DO $$ BEGIN RAISE NOTICE 'Migrating prompts to appropriate tenants...'; END $$;
 
 -- PRISM Suite prompts → Pharma
 UPDATE prompts
@@ -152,7 +152,7 @@ ORDER BY t.name, p.domain;
 -- MIGRATE KNOWLEDGE BASE TO TENANTS
 -- ============================================================================
 
-\echo 'Migrating knowledge base to appropriate tenants...'
+DO $$ BEGIN RAISE NOTICE 'Migrating knowledge base to appropriate tenants...'; END $$;
 
 -- Pharmaceutical/Regulatory knowledge → Pharma
 UPDATE knowledge_base
@@ -237,7 +237,7 @@ ORDER BY t.name, kb.domain;
 -- MIGRATE USERS TO TENANTS (If tenant_id is NULL)
 -- ============================================================================
 
-\echo 'Checking user tenant assignments...'
+DO $$ BEGIN RAISE NOTICE 'Checking user tenant assignments...'; END $$;
 
 -- Report on users without tenant
 SELECT
@@ -269,7 +269,7 @@ END $$;
 -- MIGRATE CONVERSATIONS TO TENANTS
 -- ============================================================================
 
-\echo 'Migrating conversations to match user tenants...'
+DO $$ BEGIN RAISE NOTICE 'Migrating conversations to match user tenants...'; END $$;
 
 -- Update conversations to match their user's tenant
 UPDATE conversations c
@@ -290,7 +290,7 @@ WHERE tenant_id IS NULL;
 -- CREATE TENANT-SPECIFIC TOOL ASSIGNMENTS
 -- ============================================================================
 
-\echo 'Creating tool assignments for tenant agents...'
+DO $$ BEGIN RAISE NOTICE 'Creating tool assignments for tenant agents...'; END $$;
 
 -- Assign all platform tools to Digital Health Tier 3 agents
 INSERT INTO agent_tool_assignments (agent_id, tool_id, is_enabled, auto_use, priority)
@@ -340,7 +340,7 @@ FROM agent_tool_assignments;
 -- VALIDATION
 -- ============================================================================
 
-\echo 'Validating tenant data migration...'
+DO $$ BEGIN RAISE NOTICE 'Validating tenant data migration...'; END $$;
 
 DO $$
 DECLARE
@@ -440,9 +440,11 @@ WHERE migration_name = 'multi_tenant_migration'
 
 COMMIT;
 
-\echo '============================================'
-\echo 'Tenant data migration completed successfully!'
-\echo '============================================'
+DO $$ BEGIN
+    RAISE NOTICE '============================================';
+    RAISE NOTICE 'Tenant data migration completed successfully!';
+    RAISE NOTICE '============================================';
+END $$;
 
 -- Final report
 SELECT * FROM tenant_data_summary;

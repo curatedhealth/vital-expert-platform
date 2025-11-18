@@ -291,23 +291,33 @@ export async function GET(request: NextRequest) {
         .eq('user_id', userId)
         .order('created_at', { ascending: false });
 
-      // If table doesn't exist, return error
+      // If table doesn't exist, return empty array (graceful degradation)
       if (error && error.code === '42P01') {
-        requestLogger.error(
+        requestLogger.warn(
           'user_agents_table_missing',
-          new DatabaseConnectionError('user_agents table does not exist', {
-            context: { code: error.code },
-          }),
-          { operation: 'get_user_agents', userId }
+          {
+            message: 'user_agents table does not exist, returning empty array',
+            code: error.code,
+            operation: 'get_user_agents',
+            userId,
+          }
         );
 
         return NextResponse.json(
           {
-            error: 'Database table not found',
-            message: 'user_agents table is not initialized. Please run migrations.',
+            success: true,
             agents: [],
+            requestId,
+            count: 0,
+            warning: 'user_agents table not initialized',
           },
-          { status: 503 }
+          {
+            status: 200,
+            headers: {
+              'Cache-Control': 'private, max-age=60',
+              'X-Request-ID': requestId,
+            },
+          }
         );
       }
 
@@ -351,23 +361,33 @@ export async function GET(request: NextRequest) {
       );
 
     } catch (tableError: any) {
-      // If the table doesn't exist, return error
+      // If the table doesn't exist, return empty array (graceful degradation)
       if (tableError.code === '42P01') {
-        requestLogger.error(
-          'user_agents_table_missing',
-          new DatabaseConnectionError('user_agents table does not exist', {
-            context: { code: tableError.code },
-          }),
-          { operation: 'get_user_agents', userId }
+        requestLogger.warn(
+          'user_agents_table_missing_catch',
+          {
+            message: 'user_agents table does not exist, returning empty array',
+            code: tableError.code,
+            operation: 'get_user_agents',
+            userId,
+          }
         );
 
         return NextResponse.json(
           {
-            error: 'Database table not found',
-            message: 'user_agents table is not initialized. Please run migrations.',
+            success: true,
             agents: [],
+            requestId,
+            count: 0,
+            warning: 'user_agents table not initialized',
           },
-          { status: 503 }
+          {
+            status: 200,
+            headers: {
+              'Cache-Control': 'private, max-age=60',
+              'X-Request-ID': requestId,
+            },
+          }
         );
       }
 

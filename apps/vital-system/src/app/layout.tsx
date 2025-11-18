@@ -7,7 +7,7 @@ import type { Metadata } from 'next'
 
 import './globals.css'
 import { SupabaseAuthProvider } from '@/lib/auth/supabase-auth-context'
-import { TenantProvider } from '@/contexts/TenantContext'
+import { TenantProvider } from '@/contexts/tenant-context'
 import { Toaster } from '@/components/toaster-wrapper'
 import { ThemeProvider } from '@/providers/theme-provider'
 

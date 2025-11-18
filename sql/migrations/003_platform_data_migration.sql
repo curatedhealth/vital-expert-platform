@@ -37,7 +37,7 @@ END $$;
 -- MIGRATE TOOLS TO PLATFORM
 -- ============================================================================
 
-\echo 'Migrating tools to Platform tenant...'
+DO $$ BEGIN RAISE NOTICE 'Migrating tools to Platform tenant...'; END $$;
 
 -- All tools are platform-level (shared across tenants)
 -- Tool assignments are tenant-specific
@@ -56,7 +56,7 @@ FROM tools;
 -- MIGRATE TIER 1 & TIER 2 AGENTS TO PLATFORM
 -- ============================================================================
 
-\echo 'Migrating Tier 1 & Tier 2 agents to Platform tenant...'
+DO $$ BEGIN RAISE NOTICE 'Migrating Tier 1 & Tier 2 agents to Platform tenant...'; END $$;
 
 -- Strategic (Tier 1) and Specialized (Tier 2) agents are shared
 -- These should be available to all tenants
@@ -79,7 +79,7 @@ ORDER BY tier;
 -- MIGRATE SYSTEM PROMPTS TO PLATFORM
 -- ============================================================================
 
-\echo 'Migrating system prompts to Platform tenant...'
+DO $$ BEGIN RAISE NOTICE 'Migrating system prompts to Platform tenant...'; END $$;
 
 -- System prompts (not user-created) go to platform
 -- These serve as templates for all tenants
@@ -106,7 +106,7 @@ FROM prompts;
 -- MIGRATE GENERAL KNOWLEDGE TO PLATFORM
 -- ============================================================================
 
-\echo 'Migrating general healthcare knowledge to Platform tenant...'
+DO $$ BEGIN RAISE NOTICE 'Migrating general healthcare knowledge to Platform tenant...'; END $$;
 
 -- General healthcare knowledge that all tenants can use
 -- Domain-specific knowledge stays with respective tenants (handled in next migration)
@@ -150,7 +150,7 @@ WHERE kb.tenant_id = '00000000-0000-0000-0000-000000000001'::uuid;
 -- MIGRATE KNOWLEDGE DOMAINS (ALL TO PLATFORM)
 -- ============================================================================
 
-\echo 'Migrating knowledge domains to Platform tenant...'
+DO $$ BEGIN RAISE NOTICE 'Migrating knowledge domains to Platform tenant...'; END $$;
 
 -- Knowledge domains are system-wide classifications
 -- Add tenant_id if column exists, otherwise skip
@@ -173,7 +173,7 @@ END $$;
 -- CREATE PLATFORM ADMIN USER (If doesn't exist)
 -- ============================================================================
 
-\echo 'Checking for platform admin user...'
+DO $$ BEGIN RAISE NOTICE 'Checking for platform admin user...'; END $$;
 
 DO $$
 DECLARE
@@ -203,7 +203,7 @@ END $$;
 -- UPDATE AGENT METADATA FOR SHARED AGENTS
 -- ============================================================================
 
-\echo 'Updating metadata for platform agents...'
+DO $$ BEGIN RAISE NOTICE 'Updating metadata for platform agents...'; END $$;
 
 UPDATE agents
 SET metadata = metadata || jsonb_build_object(
@@ -218,7 +218,7 @@ WHERE tenant_id = '00000000-0000-0000-0000-000000000001'::uuid
 -- VALIDATION
 -- ============================================================================
 
-\echo 'Validating platform data migration...'
+DO $$ BEGIN RAISE NOTICE 'Validating platform data migration...'; END $$;
 
 DO $$
 DECLARE
@@ -304,9 +304,11 @@ WHERE migration_name = 'multi_tenant_migration'
 
 COMMIT;
 
-\echo '============================================'
-\echo 'Platform data migration completed successfully!'
-\echo '============================================'
+DO $$ BEGIN
+    RAISE NOTICE '============================================';
+    RAISE NOTICE 'Platform data migration completed successfully!';
+    RAISE NOTICE '============================================';
+END $$;
 
 -- Final summary
 SELECT

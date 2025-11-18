@@ -20,7 +20,7 @@ SAVEPOINT tenant_setup_start;
 -- TENANT 1: Platform (Admin/Shared Resources)
 -- ============================================================================
 
-\echo 'Setting up Platform tenant...'
+DO $$ BEGIN RAISE NOTICE 'Setting up Platform tenant...'; END $$;
 
 INSERT INTO tenants (
     id,
@@ -78,7 +78,7 @@ SET
 -- TENANT 2: Digital Health Startup
 -- ============================================================================
 
-\echo 'Setting up Digital Health Startup tenant...'
+DO $$ BEGIN RAISE NOTICE 'Setting up Digital Health Startup tenant...'; END $$;
 
 INSERT INTO tenants (
     id,
@@ -143,7 +143,7 @@ SET
 -- TENANT 3: Pharmaceuticals
 -- ============================================================================
 
-\echo 'Setting up Pharmaceuticals tenant...'
+DO $$ BEGIN RAISE NOTICE 'Setting up Pharmaceuticals tenant...'; END $$;
 
 INSERT INTO tenants (
     id,
@@ -224,7 +224,7 @@ SET
 -- SEED ORGANIZATIONAL DATA FOR TENANTS
 -- ============================================================================
 
-\echo 'Seeding organizational departments...'
+DO $$ BEGIN RAISE NOTICE 'Seeding organizational departments...'; END $$;
 
 -- Digital Health Departments
 INSERT INTO org_departments (tenant_id, code, name, description, healthcare_domain, level, is_active)
@@ -246,7 +246,7 @@ VALUES
     ('f7aa6fd4-0af9-4706-8b31-034f1f7accda', 'QUAL_ASSURE', 'Quality Assurance', 'Quality management and compliance', 'quality_management', 1, true)
 ON CONFLICT (tenant_id, code) DO NOTHING;
 
-\echo 'Seeding organizational levels...'
+DO $$ BEGIN RAISE NOTICE 'Seeding organizational levels...'; END $$;
 
 -- Digital Health Organizational Levels
 INSERT INTO organizational_levels (tenant_id, code, name, description, level_number, role_type, is_active)
@@ -270,7 +270,7 @@ VALUES
     ('f7aa6fd4-0af9-4706-8b31-034f1f7accda', 'SPEC', 'Specialist', 'Subject matter experts', 7, 'professional', true)
 ON CONFLICT (tenant_id, code) DO NOTHING;
 
-\echo 'Seeding business functions...'
+DO $$ BEGIN RAISE NOTICE 'Seeding business functions...'; END $$;
 
 -- Pharma Business Functions (PRISM Suite aligned)
 INSERT INTO business_functions (tenant_id, name, description, department, healthcare_category, regulatory_requirements)
@@ -296,7 +296,7 @@ ON CONFLICT (tenant_id, name) DO NOTHING;
 -- VALIDATION
 -- ============================================================================
 
-\echo 'Validating tenant setup...'
+DO $$ BEGIN RAISE NOTICE 'Validating tenant setup...'; END $$;
 
 DO $$
 DECLARE
@@ -360,9 +360,11 @@ WHERE migration_name = 'multi_tenant_migration'
 
 COMMIT;
 
-\echo '============================================'
-\echo 'Tenant setup completed successfully!'
-\echo '============================================'
+DO $$ BEGIN
+    RAISE NOTICE '============================================';
+    RAISE NOTICE 'Tenant setup completed successfully!';
+    RAISE NOTICE '============================================';
+END $$;
 
 -- Display summary
 SELECT

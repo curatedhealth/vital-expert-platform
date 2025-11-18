@@ -6,17 +6,20 @@
 -- Purpose: Create baseline metrics for migration validation
 -- ============================================================================
 
--- Enable output to file (if running via psql)
-\o /tmp/pre_migration_counts.txt
+-- ============================================================================
+-- PRE-MIGRATION DATA COUNTS
+-- ============================================================================
 
-\echo '================================'
-\echo 'PRE-MIGRATION DATA COUNTS'
-\echo 'Date: ' `date`
-\echo '================================'
-\echo ''
+DO $$ BEGIN
+    RAISE NOTICE '================================';
+    RAISE NOTICE 'PRE-MIGRATION DATA COUNTS';
+    RAISE NOTICE 'Date: %', NOW();
+    RAISE NOTICE '================================';
+    RAISE NOTICE '';
+END $$;
 
 -- Table: tenants
-\echo '--- TENANTS ---'
+DO $$ BEGIN RAISE NOTICE '--- TENANTS ---'; END $$;
 SELECT
   'tenants' as table_name,
   COUNT(*) as total_count,
@@ -27,10 +30,10 @@ SELECT id, name, slug, compliance_level, is_active
 FROM tenants
 ORDER BY created_at;
 
-\echo ''
+DO $$ BEGIN RAISE NOTICE ''; END $$;
 
 -- Table: agents
-\echo '--- AGENTS ---'
+DO $$ BEGIN RAISE NOTICE '--- AGENTS ---'; END $$;
 SELECT
   'agents' as table_name,
   COUNT(*) as total_count,
@@ -51,10 +54,10 @@ FROM agents
 GROUP BY tier, status
 ORDER BY tier, status;
 
-\echo ''
+DO $$ BEGIN RAISE NOTICE ''; END $$;
 
 -- Table: tools
-\echo '--- TOOLS ---'
+DO $$ BEGIN RAISE NOTICE '--- TOOLS ---'; END $$;
 SELECT
   'tools' as table_name,
   COUNT(*) as total_count,
@@ -74,10 +77,10 @@ WHERE table_name = 'tools'
   AND column_name IN ('category', 'category_id')
 ORDER BY column_name;
 
-\echo ''
+DO $$ BEGIN RAISE NOTICE ''; END $$;
 
 -- Table: tool_categories
-\echo '--- TOOL CATEGORIES ---'
+DO $$ BEGIN RAISE NOTICE '--- TOOL CATEGORIES ---'; END $$;
 SELECT
   'tool_categories' as table_name,
   COUNT(*) as total_count
@@ -87,10 +90,10 @@ SELECT id, name, description, display_order
 FROM tool_categories
 ORDER BY display_order;
 
-\echo ''
+DO $$ BEGIN RAISE NOTICE ''; END $$;
 
 -- Table: prompts
-\echo '--- PROMPTS ---'
+DO $$ BEGIN RAISE NOTICE '--- PROMPTS ---'; END $$;
 SELECT
   'prompts' as table_name,
   COUNT(*) as total_count,
@@ -109,10 +112,10 @@ GROUP BY domain
 ORDER BY count DESC
 LIMIT 10;
 
-\echo ''
+DO $$ BEGIN RAISE NOTICE ''; END $$;
 
 -- Table: knowledge_base
-\echo '--- KNOWLEDGE BASE ---'
+DO $$ BEGIN RAISE NOTICE '--- KNOWLEDGE BASE ---'; END $$;
 SELECT
   'knowledge_base' as table_name,
   COUNT(*) as total_count,
@@ -130,10 +133,10 @@ GROUP BY domain
 ORDER BY count DESC
 LIMIT 10;
 
-\echo ''
+DO $$ BEGIN RAISE NOTICE ''; END $$;
 
 -- Table: knowledge_domains
-\echo '--- KNOWLEDGE DOMAINS ---'
+DO $$ BEGIN RAISE NOTICE '--- KNOWLEDGE DOMAINS ---'; END $$;
 SELECT
   'knowledge_domains' as table_name,
   COUNT(*) as total_count
@@ -144,10 +147,10 @@ FROM knowledge_domains
 ORDER BY priority
 LIMIT 10;
 
-\echo ''
+DO $$ BEGIN RAISE NOTICE ''; END $$;
 
 -- Table: users
-\echo '--- USERS ---'
+DO $$ BEGIN RAISE NOTICE '--- USERS ---'; END $$;
 SELECT
   'users' as table_name,
   COUNT(*) as total_count,
@@ -163,10 +166,10 @@ FROM users
 GROUP BY role
 ORDER BY count DESC;
 
-\echo ''
+DO $$ BEGIN RAISE NOTICE ''; END $$;
 
 -- Table: conversations
-\echo '--- CONVERSATIONS ---'
+DO $$ BEGIN RAISE NOTICE '--- CONVERSATIONS ---'; END $$;
 SELECT
   'conversations' as table_name,
   COUNT(*) as total_count,
@@ -174,10 +177,10 @@ SELECT
   COUNT(CASE WHEN status = 'active' THEN 1 END) as active_count
 FROM conversations;
 
-\echo ''
+DO $$ BEGIN RAISE NOTICE ''; END $$;
 
 -- Table: messages
-\echo '--- MESSAGES ---'
+DO $$ BEGIN RAISE NOTICE '--- MESSAGES ---'; END $$;
 SELECT
   'messages' as table_name,
   COUNT(*) as total_count,
@@ -185,10 +188,10 @@ SELECT
   COUNT(CASE WHEN role = 'assistant' THEN 1 END) as assistant_messages
 FROM messages;
 
-\echo ''
+DO $$ BEGIN RAISE NOTICE ''; END $$;
 
 -- Check for tables mentioned in code
-\echo '--- CHECKING FOR EXPECTED TABLES ---'
+DO $$ BEGIN RAISE NOTICE '--- CHECKING FOR EXPECTED TABLES ---'; END $$;
 SELECT
   table_name,
   CASE
@@ -210,10 +213,10 @@ WHERE table_schema = 'public'
   )
 ORDER BY table_name;
 
-\echo ''
+DO $$ BEGIN RAISE NOTICE ''; END $$;
 
 -- Check for referential integrity issues
-\echo '--- REFERENTIAL INTEGRITY CHECK ---'
+DO $$ BEGIN RAISE NOTICE '--- REFERENTIAL INTEGRITY CHECK ---'; END $$;
 
 -- Agents with invalid tenant_id
 SELECT
@@ -246,13 +249,12 @@ FROM agent_tool_assignments ata
 LEFT JOIN tools t ON ata.tool_id = t.id
 WHERE t.id IS NULL;
 
-\echo ''
-\echo '================================'
-\echo 'PRE-MIGRATION VALIDATION COMPLETE'
-\echo '================================'
-
--- Stop output to file
-\o
+DO $$ BEGIN
+    RAISE NOTICE '';
+    RAISE NOTICE '================================';
+    RAISE NOTICE 'PRE-MIGRATION VALIDATION COMPLETE';
+    RAISE NOTICE '================================';
+END $$;
 
 -- Return summary statistics
 SELECT

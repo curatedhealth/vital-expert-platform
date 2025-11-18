@@ -20,7 +20,7 @@ SAVEPOINT schema_fixes_start;
 -- FIX #1: Tools Table - Add category column
 -- ============================================================================
 
-\echo 'Adding category column to tools table...'
+DO $$ BEGIN RAISE NOTICE 'Adding category column to tools table...'; END $$;
 
 -- Check if category column exists
 DO $$
@@ -57,7 +57,7 @@ END $$;
 -- FIX #2: Add tenant_id to tools if missing
 -- ============================================================================
 
-\echo 'Ensuring tenant_id column exists on tools table...'
+DO $$ BEGIN RAISE NOTICE 'Ensuring tenant_id column exists on tools table...'; END $$;
 
 DO $$
 BEGIN
@@ -80,7 +80,7 @@ END $$;
 -- FIX #3: Ensure tenant_id on all required tables
 -- ============================================================================
 
-\echo 'Checking tenant_id columns on all tables...'
+DO $$ BEGIN RAISE NOTICE 'Checking tenant_id columns on all tables...'; END $$;
 
 -- Prompts
 ALTER TABLE prompts
@@ -107,7 +107,7 @@ CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_knowledge_sources_tenant_id
 -- FIX #4: Create business_functions table (if doesn't exist)
 -- ============================================================================
 
-\echo 'Creating business_functions table...'
+DO $$ BEGIN RAISE NOTICE 'Creating business_functions table...'; END $$;
 
 CREATE TABLE IF NOT EXISTS business_functions (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -160,7 +160,7 @@ COMMENT ON TABLE business_functions IS 'Healthcare business functions and depart
 -- FIX #5: Create org_departments table (if doesn't exist)
 -- ============================================================================
 
-\echo 'Creating org_departments table...'
+DO $$ BEGIN RAISE NOTICE 'Creating org_departments table...'; END $$;
 
 CREATE TABLE IF NOT EXISTS org_departments (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -221,7 +221,7 @@ COMMENT ON TABLE org_departments IS 'Organizational departments structure';
 -- FIX #6: Create organizational_levels table (if doesn't exist)
 -- ============================================================================
 
-\echo 'Creating organizational_levels table...'
+DO $$ BEGIN RAISE NOTICE 'Creating organizational_levels table...'; END $$;
 
 CREATE TABLE IF NOT EXISTS organizational_levels (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -284,7 +284,7 @@ COMMENT ON TABLE organizational_levels IS 'Organizational hierarchy levels and r
 -- FIX #7: Add updated_at triggers to new tables
 -- ============================================================================
 
-\echo 'Adding updated_at triggers...'
+DO $$ BEGIN RAISE NOTICE 'Adding updated_at triggers...'; END $$;
 
 CREATE TRIGGER update_business_functions_updated_at
     BEFORE UPDATE ON business_functions
@@ -305,7 +305,7 @@ CREATE TRIGGER update_organizational_levels_updated_at
 -- FIX #8: Create composite indexes for common queries
 -- ============================================================================
 
-\echo 'Creating composite indexes for performance...'
+DO $$ BEGIN RAISE NOTICE 'Creating composite indexes for performance...'; END $$;
 
 -- Agents: tenant + tier + status
 CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_agents_tenant_tier_status
@@ -331,7 +331,7 @@ CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_tools_tenant_type_active
 -- VALIDATION
 -- ============================================================================
 
-\echo 'Validating schema fixes...'
+DO $$ BEGIN RAISE NOTICE 'Validating schema fixes...'; END $$;
 
 DO $$
 DECLARE
@@ -413,6 +413,8 @@ WHERE migration_name = 'multi_tenant_migration'
 
 COMMIT;
 
-\echo '============================================'
-\echo 'Schema fixes completed successfully!'
-\echo '============================================'
+DO $$ BEGIN
+    RAISE NOTICE '============================================';
+    RAISE NOTICE 'Schema fixes completed successfully!';
+    RAISE NOTICE '============================================';
+END $$;

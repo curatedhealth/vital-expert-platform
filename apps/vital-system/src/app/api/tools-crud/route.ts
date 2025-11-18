@@ -31,7 +31,7 @@ export const GET = withAgentAuth(async (
       offset,
     });
 
-    // Build query
+    // Build query with category JOIN
     let query = supabase
       .from('tools')
       .select(`
@@ -39,7 +39,10 @@ export const GET = withAgentAuth(async (
         slug,
         name,
         description,
-        category,
+        category_id,
+        tool_categories!inner(
+          name
+        ),
         implementation_type,
         function_signature,
         parameters_schema,
@@ -96,17 +99,24 @@ export const GET = withAgentAuth(async (
       );
     }
 
+    // Transform tools to flatten category
+    const transformedTools = tools?.map(tool => ({
+      ...tool,
+      category: tool.tool_categories?.name || 'Uncategorized',
+      tool_categories: undefined, // Remove nested object
+    })) || [];
+
     const duration = Date.now() - startTime;
     logger.infoWithMetrics('tools_get_completed', duration, {
       operation: 'GET /api/tools-crud',
       operationId,
-      toolCount: tools?.length || 0,
+      toolCount: transformedTools.length,
       totalCount: count,
     });
 
     return NextResponse.json({
       success: true,
-      tools: tools || [],
+      tools: transformedTools,
       count: count || 0,
       limit,
       offset,

@@ -16,6 +16,7 @@ import { useAuth } from '@/lib/auth/supabase-auth-context'
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
 import { ThemeToggle } from '@/components/theme-toggle'
+import { TenantSwitcher } from '@/components/tenant-switcher'
 
 const navItems = [
   { label: 'Dashboard', href: '/dashboard' },
@@ -36,30 +37,6 @@ export function MainNavbar() {
   const pathname = usePathname()
   const { user, userProfile, signOut } = useAuth()
 
-  const [activeTenant, setActiveTenant] = React.useState({
-    name: 'Vital Expert',
-    logo: '/logos/vital-expert-logo.svg',
-    plan: 'Enterprise',
-  })
-
-  const tenants = [
-    {
-      name: 'Vital Expert',
-      logo: '/logos/vital-expert-logo.svg',
-      plan: 'Enterprise',
-    },
-    {
-      name: 'Vital Pharma',
-      logo: '/logos/vital-pharma-logo.svg',
-      plan: 'Pro',
-    },
-    {
-      name: 'Vital Startup',
-      logo: '/logos/vital-startup-logo.svg',
-      plan: 'Free',
-    },
-  ]
-
   const handleSignOut = async () => {
     try {
       await signOut()
@@ -71,51 +48,9 @@ export function MainNavbar() {
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="flex h-16 items-center px-4">
-        {/* Tenant Switcher - With Actual Logos */}
+        {/* Tenant Switcher - Database-driven with actual logos */}
         <div className="flex items-center">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                className="relative h-12 w-12 rounded-lg p-0 hover:bg-accent"
-              >
-                <div className="flex aspect-square size-12 items-center justify-center rounded-lg bg-white">
-                  <Image
-                    src={activeTenant.logo}
-                    alt={activeTenant.name}
-                    width={48}
-                    height={48}
-                    className="size-12 object-contain"
-                  />
-                </div>
-                <ChevronsUpDown className="absolute -bottom-1 -right-1 size-3.5 bg-background rounded-full" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent
-              className="w-auto min-w-[80px] rounded-lg"
-              align="start"
-              side="bottom"
-              sideOffset={4}
-            >
-              {tenants.map((tenant) => (
-                <DropdownMenuItem
-                  key={tenant.name}
-                  onClick={() => setActiveTenant(tenant)}
-                  className="gap-2 p-3 cursor-pointer justify-center"
-                >
-                  <div className="flex size-14 items-center justify-center rounded-lg bg-white border">
-                    <Image
-                      src={tenant.logo}
-                      alt={tenant.name}
-                      width={56}
-                      height={56}
-                      className="size-14 object-contain"
-                    />
-                  </div>
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <TenantSwitcher />
         </div>
 
         {/* Navigation Items - Aligned to start after 16rem (sidebar width) */}

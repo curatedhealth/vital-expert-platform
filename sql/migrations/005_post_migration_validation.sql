@@ -7,11 +7,13 @@
 -- Dependencies: All previous migration scripts
 -- ============================================================================
 
-\echo '================================'
-\echo 'POST-MIGRATION VALIDATION'
-\echo 'Date: ' `date`
-\echo '================================'
-\echo ''
+DO $$ BEGIN
+    RAISE NOTICE '================================';
+    RAISE NOTICE 'POST-MIGRATION VALIDATION';
+    RAISE NOTICE 'Date: %', NOW();
+    RAISE NOTICE '================================';
+    RAISE NOTICE '';
+END $$;
 
 -- Track validation
 INSERT INTO migration_tracking (migration_name, phase, status)
@@ -21,8 +23,10 @@ VALUES ('multi_tenant_migration', '005_post_migration_validation', 'started');
 -- TEST 1: Verify All Data Has tenant_id
 -- ============================================================================
 
-\echo '=== TEST 1: Checking for NULL tenant_id ==='
-\echo ''
+DO $$ BEGIN
+    RAISE NOTICE '=== TEST 1: Checking for NULL tenant_id ===';
+    RAISE NOTICE '';
+END $$;
 
 SELECT
     'agents' as table_name,
@@ -85,14 +89,16 @@ SELECT
     CASE WHEN COUNT(*) = COUNT(tenant_id) THEN '✅ PASS' ELSE '❌ FAIL' END
 FROM conversations;
 
-\echo ''
+DO $$ BEGIN RAISE NOTICE ''; END $$;
 
 -- ============================================================================
 -- TEST 2: Verify Referential Integrity
 -- ============================================================================
 
-\echo '=== TEST 2: Checking Referential Integrity ==='
-\echo ''
+DO $$ BEGIN
+    RAISE NOTICE '=== TEST 2: Checking Referential Integrity ===';
+    RAISE NOTICE '';
+END $$;
 
 -- Agents with invalid tenant_id
 SELECT
@@ -158,14 +164,16 @@ FROM agent_tool_assignments ata
 LEFT JOIN tools t ON ata.tool_id = t.id
 WHERE t.id IS NULL;
 
-\echo ''
+DO $$ BEGIN RAISE NOTICE ''; END $$;
 
 -- ============================================================================
 -- TEST 3: Verify Tenant Distribution
 -- ============================================================================
 
-\echo '=== TEST 3: Tenant Data Distribution ==='
-\echo ''
+DO $$ BEGIN
+    RAISE NOTICE '=== TEST 3: Tenant Data Distribution ===';
+    RAISE NOTICE '';
+END $$;
 
 SELECT
     t.name as tenant,
@@ -206,14 +214,16 @@ ORDER BY
         WHEN 'f7aa6fd4-0af9-4706-8b31-034f1f7accda'::uuid THEN 3
     END;
 
-\echo ''
+DO $$ BEGIN RAISE NOTICE ''; END $$;
 
 -- ============================================================================
 -- TEST 4: Verify Platform Resources (Shared)
 -- ============================================================================
 
-\echo '=== TEST 4: Platform Shared Resources ==='
-\echo ''
+DO $$ BEGIN
+    RAISE NOTICE '=== TEST 4: Platform Shared Resources ===';
+    RAISE NOTICE '';
+END $$;
 
 -- All tools should be on platform
 SELECT
@@ -240,14 +250,16 @@ SELECT
 FROM agents
 WHERE tier IN ('tier_1', 'tier_2');
 
-\echo ''
+DO $$ BEGIN RAISE NOTICE ''; END $$;
 
 -- ============================================================================
 -- TEST 5: Verify Schema Fixes
 -- ============================================================================
 
-\echo '=== TEST 5: Schema Structure Validation ==='
-\echo ''
+DO $$ BEGIN
+    RAISE NOTICE '=== TEST 5: Schema Structure Validation ===';
+    RAISE NOTICE '';
+END $$;
 
 -- Check tools.category column exists
 SELECT
@@ -304,14 +316,16 @@ SELECT
         ELSE '❌ FAIL - Table missing'
     END as test_result;
 
-\echo ''
+DO $$ BEGIN RAISE NOTICE ''; END $$;
 
 -- ============================================================================
 -- TEST 6: Verify Data Consistency
 -- ============================================================================
 
-\echo '=== TEST 6: Data Consistency Checks ==='
-\echo ''
+DO $$ BEGIN
+    RAISE NOTICE '=== TEST 6: Data Consistency Checks ===';
+    RAISE NOTICE '';
+END $$;
 
 -- Check for duplicate agent names within same tenant
 SELECT
@@ -342,17 +356,17 @@ FROM knowledge_base kb
 LEFT JOIN knowledge_sources ks ON kb.source_id = ks.id
 WHERE kb.source_id IS NOT NULL AND ks.id IS NULL;
 
-\echo ''
+DO $$ BEGIN RAISE NOTICE ''; END $$;
 
 -- ============================================================================
 -- TEST 7: Verify API Compatibility
 -- ============================================================================
 
-\echo '=== TEST 7: API Query Compatibility ==='
-\echo ''
-
--- Simulate API query: GET /api/tools-crud?tenantId=<digital-health>
-\echo 'Simulating: GET /api/tools-crud (Digital Health tenant)'
+DO $$ BEGIN
+    RAISE NOTICE '=== TEST 7: API Query Compatibility ===';
+    RAISE NOTICE '';
+    RAISE NOTICE 'Simulating: GET /api/tools-crud (Digital Health tenant)';
+END $$;
 SELECT
     'api_tools_digital_health' as test_name,
     COUNT(*) as tool_count,
@@ -363,8 +377,7 @@ WHERE tenant_id IN (
     '11111111-1111-1111-1111-111111111111'::uuid   -- Digital Health
 );
 
--- Simulate API query: GET /api/prompts-crud?tenantId=<pharma>
-\echo 'Simulating: GET /api/prompts-crud (Pharma tenant)'
+DO $$ BEGIN RAISE NOTICE 'Simulating: GET /api/prompts-crud (Pharma tenant)'; END $$;
 SELECT
     'api_prompts_pharma' as test_name,
     COUNT(*) as prompt_count,
@@ -375,8 +388,7 @@ WHERE tenant_id IN (
     'f7aa6fd4-0af9-4706-8b31-034f1f7accda'::uuid   -- Pharma
 );
 
--- Check that tools have category column for API
-\echo 'Checking tools.category column for API compatibility'
+DO $$ BEGIN RAISE NOTICE 'Checking tools.category column for API compatibility'; END $$;
 SELECT
     'api_tools_category_field' as test_name,
     COUNT(*) as total_tools,
@@ -388,14 +400,16 @@ SELECT
     END as test_result
 FROM tools;
 
-\echo ''
+DO $$ BEGIN RAISE NOTICE ''; END $$;
 
 -- ============================================================================
 -- TEST 8: Verify Indexes for Performance
 -- ============================================================================
 
-\echo '=== TEST 8: Index Validation ==='
-\echo ''
+DO $$ BEGIN
+    RAISE NOTICE '=== TEST 8: Index Validation ===';
+    RAISE NOTICE '';
+END $$;
 
 -- Check critical indexes exist
 SELECT
@@ -416,14 +430,16 @@ WHERE schemaname = 'public'
   )
 ORDER BY tablename, indexname;
 
-\echo ''
+DO $$ BEGIN RAISE NOTICE ''; END $$;
 
 -- ============================================================================
 -- TEST 9: Verify Tenant Isolation (Security)
 -- ============================================================================
 
-\echo '=== TEST 9: Tenant Isolation Verification ==='
-\echo ''
+DO $$ BEGIN
+    RAISE NOTICE '=== TEST 9: Tenant Isolation Verification ===';
+    RAISE NOTICE '';
+END $$;
 
 -- Check no data is shared between Digital Health and Pharma
 -- (Platform data is intentionally shared)
@@ -441,16 +457,18 @@ FROM (
       AND c.tenant_id NOT IN ('00000000-0000-0000-0000-000000000001'::uuid)
 ) AS violations;
 
-\echo ''
+DO $$ BEGIN RAISE NOTICE ''; END $$;
 
 -- ============================================================================
 -- FINAL SUMMARY
 -- ============================================================================
 
-\echo '================================'
-\echo 'VALIDATION SUMMARY'
-\echo '================================'
-\echo ''
+DO $$ BEGIN
+    RAISE NOTICE '================================';
+    RAISE NOTICE 'VALIDATION SUMMARY';
+    RAISE NOTICE '================================';
+    RAISE NOTICE '';
+END $$;
 
 -- Count test results
 SELECT
@@ -473,7 +491,7 @@ FROM (
     ) AS test_results
 ) AS all_tests;
 
-\echo ''
+DO $$ BEGIN RAISE NOTICE ''; END $$;
 
 -- Update migration tracking
 UPDATE migration_tracking
@@ -482,7 +500,9 @@ SET status = 'completed',
 WHERE migration_name = 'multi_tenant_migration'
   AND phase = '005_post_migration_validation';
 
-\echo '================================'
-\echo 'VALIDATION COMPLETE'
-\echo 'Review results above for any failures or warnings'
-\echo '================================'
+DO $$ BEGIN
+    RAISE NOTICE '================================';
+    RAISE NOTICE 'VALIDATION COMPLETE';
+    RAISE NOTICE 'Review results above for any failures or warnings';
+    RAISE NOTICE '================================';
+END $$;

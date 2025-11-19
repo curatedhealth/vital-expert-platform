@@ -99,10 +99,11 @@ class Settings(BaseSettings):
     rate_limit_requests_per_minute: int = Field(default=100, env="RATE_LIMIT_RPM")
     rate_limit_tokens_per_minute: int = Field(default=100000, env="RATE_LIMIT_TPM")
 
-    class Config:
-        env_file = ".env"
-        case_sensitive = False
-        extra = "ignore"  # Allow extra fields in .env without validation errors
+    model_config = {
+        "extra": "ignore",  # Pydantic v2 syntax - allow extra fields
+        "env_file": ".env",
+        "case_sensitive": False
+    }
 
 @lru_cache()
 def get_settings() -> Settings:

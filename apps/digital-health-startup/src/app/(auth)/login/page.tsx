@@ -34,12 +34,34 @@ export default function LoginPage() {
     formData.append('redirectTo', redirectTo);
 
     startTransition(async () => {
-      const result = await login(formData);
+      try {
+        // Call the server action
+        const result = await login(formData);
 
-      if (result?.error) {
-        setError(result.error);
+        // Check if result exists and has an error
+        if (result && typeof result === 'object' && 'error' in result) {
+          setError(result.error);
+        }
+        // If successful, the Server Action will redirect automatically
+        // (redirect() throws a special Next.js error that we don't catch)
+      } catch (error: any) {
+        // Handle redirect errors (Next.js redirect throws a special error)
+        if (error?.digest?.startsWith('NEXT_REDIRECT')) {
+          // This is expected - Next.js will handle the redirect
+          return;
+        }
+        
+        // Handle fetch/network errors with more detail
+        if (error?.message?.includes('fetch') || error?.name === 'TypeError' || error?.message === 'fetch failed') {
+          console.error('[Login] Network error details:', error);
+          setError('Unable to connect to server. Please check your connection and try again. If the problem persists, the server may need to be restarted.');
+          return;
+        }
+        
+        // Handle unexpected errors
+        console.error('[Login] Form submission error:', error);
+        setError(error?.message || 'An unexpected error occurred. Please try again.');
       }
-      // If successful, the Server Action will redirect automatically
     });
   };
 
@@ -67,7 +89,10 @@ export default function LoginPage() {
             </CardDescription>
           </CardHeader>
         <CardContent className="px-6 pb-6">
-          <form action={handleSubmit} className="space-y-6">
+          <form 
+            action={handleSubmit}
+            className="space-y-6"
+          >
             <div className="space-y-2">
               <Label htmlFor="email" className="text-sm font-medium text-gray-700">Email</Label>
               <Input

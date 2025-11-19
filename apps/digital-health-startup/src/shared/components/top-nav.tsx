@@ -16,7 +16,8 @@ import {
   Target,
   TestTube,
   Play,
-  BookOpen
+  BookOpen,
+  Sparkles
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -55,6 +56,11 @@ const mainNavItems = [
     href: '/dashboard/queries',
     icon: MessageSquare,
     badge: 'New',
+  },
+  {
+    title: 'Ask Panel v1',
+    href: '/ask-panel-v1',
+    icon: Sparkles,
   },
   {
     title: 'Documents',

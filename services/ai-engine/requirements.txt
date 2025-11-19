@@ -64,3 +64,9 @@ passlib[bcrypt]==1.7.4
 # Development
 pytest==7.4.3
 pytest-asyncio==0.21.1
+
+# LangGraph GUI Dependencies
+# Note: Using custom implementation in src/langgraph_gui/
+# Official langgraph-gui package not required as we have custom integration
+reportlab>=4.0.0  # For PDF generation in workflows
+langchain-ollama>=0.1.0  # For Ollama LLM support (optional)

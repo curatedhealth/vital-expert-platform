@@ -1,5 +1,6 @@
 # VITAL Platform Scripts
 
+<<<<<<< Updated upstream
 Organized collection of scripts for managing the VITAL platform development, deployment, and operations.
 
 ## Quick Reference
@@ -313,3 +314,138 @@ For issues or questions:
 - Review logs in `./data/` directory
 - Consult team documentation
 - Create issue in project tracker
+=======
+This directory contains utility scripts for the VITAL Platform, organized by purpose.
+
+## 📁 Directory Structure
+
+### Root Level (Actively Used)
+These scripts are referenced in `package.json` or `Makefile` and should remain in the root:
+
+- `check-langchain-imports.js` - Compliance check for LangChain imports (used in `pnpm compliance:langchain`)
+- `validate-environment.ts` - Environment validation (used in `pnpm validate:env`)
+- `run-migrations.ts` - Database migration runner (used in `pnpm migrate`)
+
+### `organized/` - Active Scripts by Category
+
+#### `docker/` - Docker & Container Management
+- `docker-backend-start.sh` - Start all backend services
+- `docker-python-start.sh` - Start Python AI Engine only
+- `start-services.sh` - Start all services
+- `stop-services.sh` - Stop all services
+- `start-docker-and-monitoring.sh` - Start Docker and monitoring stack
+
+#### `deployment/` - Deployment & Verification
+- `verify-phase2-deployment.sh` - Verify Phase 2 deployment
+- `verify-phase3-deployment.sh` - Verify Phase 3 deployment
+- `verify-phase4-deployment.sh` - Verify Phase 4 deployment
+- `verify-phase4-enhanced-deployment.sh` - Verify enhanced Phase 4
+- `deploy-rls.sh` - Deploy Row-Level Security policies
+- `deploy.sh` - General deployment script
+- `dev.sh` - Development environment setup
+
+#### `database/` - Database Operations
+- `verify-rls.sh` - Verify RLS policies (symlinked in root for backward compatibility)
+- `deploy-rls.sh` - Deploy RLS policies (symlinked in root for backward compatibility)
+- `backup-database.sh` - Backup database
+- `backup-db.sh` - Alternative backup script
+- `restore-database.sh` - Restore database
+- `restore-db.sh` - Alternative restore script
+
+#### `testing/` - Testing & Debugging
+- `test-ask-expert-fixes.sh` - Test Ask Expert fixes
+- `test-autonomous-modes.sh` - Test autonomous modes
+- `test-db-connection.ts` - Test database connection
+- `test-metrics-endpoints.sh` - Test metrics endpoints
+- `test-mode2-fixes.sh` - Test Mode 2 fixes
+- `test-pinecone-namespace.ts` - Test Pinecone namespace
+- `test-verification-api-complete.ts` - Complete API verification tests
+- `test-verification-ui.ts` - UI verification tests
+- `backend-health-check.sh` - Backend health check
+- `debug-*.sh`, `debug-*.js` - Debug scripts
+
+#### `validation/` - Validation & Verification
+- `validate-env.sh` - Environment validation (shell)
+- `validate-org-hierarchy.js` - Organization hierarchy validation
+- `verify-agent-org-data.ts` - Verify agent organization data
+- `verify-agents.ts` - Verify agents
+- `verify-business-function-assignments.ts` - Verify business function assignments
+- `verify-migration.ts` - Verify migrations
+- `verify-org-structure.ts` - Verify organization structure
+- `check-*.ts`, `check-*.js` - Various check scripts
+- `quick-audit.sh` - Quick audit script
+- `schema-audit.js` - Schema audit
+
+#### `maintenance/` - Maintenance & Analysis
+- `analyze-*.js`, `analyze-*.ts` - Analysis scripts
+- `query-*.js`, `query-*.ts` - Query scripts
+
+#### `setup/` - Setup & Configuration
+- `setup-*.sh`, `setup-*.ts`, `setup-*.mjs` - Setup scripts
+
+#### `utilities/` - General Utilities
+- `sync-*.js`, `sync-*.ts` - Synchronization scripts
+- `cleanup-*.js` - Cleanup scripts
+- `export-*.js` - Export scripts
+- `import-*.js` - Import scripts
+- Various utility scripts
+
+### `archive/obsolete/` - Obsolete Scripts
+
+Scripts that are no longer actively used but kept for reference:
+
+- `migrations/` - Old migration scripts
+- `data-seeding/` - One-time data seeding scripts
+- `one-time-fixes/` - One-time fix scripts
+- `old-updates/` - Old update scripts
+
+### Existing Subdirectories
+
+- `database/` - Database-specific scripts (RLS, etc.)
+- `migration/` - Migration utilities
+- `maintenance/` - Maintenance scripts
+- `utilities/` - General utilities
+- `testing/` - Testing scripts
+- `tools/` - Tool-specific scripts
+- `setup/` - Setup scripts
+- `notion/` - Notion integration scripts
+- `langchain/` - LangChain-related scripts
+
+## 🚀 Usage
+
+### Actively Used Scripts
+
+```bash
+# Check LangChain compliance
+pnpm compliance:langchain
+
+# Validate environment
+pnpm validate:env
+
+# Run migrations
+pnpm migrate
+pnpm migrate:status
+pnpm migrate:dry-run
+
+# Start Docker services
+./scripts/organized/docker/docker-backend-start.sh
+./scripts/organized/docker/docker-python-start.sh
+
+# Verify RLS (symlink in root for backward compatibility)
+./scripts/verify-rls.sh dev
+# Or use direct path:
+./scripts/organized/database/verify-rls.sh dev
+
+# Deploy RLS (symlink in root for backward compatibility)
+./scripts/deploy-rls.sh production
+# Or use direct path:
+./scripts/organized/database/deploy-rls.sh production
+```
+
+## 📝 Notes
+
+- Scripts in the root directory are actively used and should not be moved
+- Scripts in `organized/` are categorized by purpose
+- Scripts in `archive/obsolete/` are kept for reference only
+- Always check script dependencies before running
+>>>>>>> Stashed changes

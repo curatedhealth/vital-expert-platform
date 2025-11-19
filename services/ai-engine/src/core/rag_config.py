@@ -5,7 +5,8 @@ Replaces hardcoded similarity thresholds and boost values
 
 import os
 from typing import Dict
-from pydantic import BaseSettings, Field
+from pydantic import Field
+from pydantic_settings import BaseSettings
 from functools import lru_cache
 
 
@@ -137,9 +138,11 @@ class RAGSettings(BaseSettings):
         description="Default maximum tokens for LLM responses"
     )
 
-    class Config:
-        env_file = ".env"
-        case_sensitive = False
+    model_config = {
+        "extra": "ignore",  # Pydantic v2 syntax - allow extra fields
+        "env_file": ".env",
+        "case_sensitive": False
+    }
 
 
 @lru_cache()
@@ -262,6 +265,16 @@ class MedicalRankingBoosts:
 
 # Export singleton instance
 _medical_ranking_boosts = None
+_rag_settings = None
+
+
+@lru_cache()
+def get_settings() -> RAGSettings:
+    """Get singleton RAG settings instance"""
+    global _rag_settings
+    if _rag_settings is None:
+        _rag_settings = RAGSettings()
+    return _rag_settings
 
 
 def get_medical_ranking_boosts() -> MedicalRankingBoosts:

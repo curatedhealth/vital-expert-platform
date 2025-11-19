@@ -1,8 +1,8 @@
 import { createClient as createSupabaseClient } from '@supabase/supabase-js';
 
 // Use environment variables for Supabase configuration
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL || 'https://xazinxsiglqokwfmogyk.supabase.co';
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhhemlueHNpZ2xxb2t3Zm1vZ3lrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzQ2ODkzNzgsImV4cCI6MjA1MDI2NTM3OH0.5qrfkThPewEuFize6meh47xngCvg_9FRKcepFZ7IxsY';
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL || 'https://bomltkhixeatxuoxmolq.supabase.co';
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJvbWx0a2hpeGVhdHh1b3htb2xxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI3ODM5MTUsImV4cCI6MjA3ODM1OTkxNX0.wJICHy82PKz4O9CTfeZ34sd5hjlXIkZBt0M-57zN9WU';
 
 // Create a function that returns a new Supabase client
 export const createClient = () => {
@@ -12,7 +12,7 @@ export const createClient = () => {
     ? supabaseUrl 
     : supabaseUrl.startsWith('https://') 
       ? supabaseUrl 
-      : 'https://xazinxsiglqokwfmogyk.supabase.co';
+      : 'https://bomltkhixeatxuoxmolq.supabase.co';
       
   return createSupabaseClient(validUrl, supabaseAnonKey);
 };

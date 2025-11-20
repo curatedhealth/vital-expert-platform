@@ -25,7 +25,7 @@ from datetime import datetime
 from typing import Dict, Any
 
 # Import routes
-from api.routes import hybrid_search
+from api.routes import hybrid_search, mode1_interactive
 
 # Configure logging
 logging.basicConfig(
@@ -236,6 +236,7 @@ async def log_requests(request: Request, call_next):
 
 # Include routers
 app.include_router(hybrid_search.router)
+app.include_router(mode1_interactive.router)
 
 
 @app.get("/", include_in_schema=False)

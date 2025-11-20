@@ -31,10 +31,10 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../'))
 from services.hybrid_agent_search import HybridAgentSearch
 from services.search_cache import SearchCache
 from services.ab_testing_framework import ABTestingFramework
-from core.rag_config import get_settings
+# from core.rag_config import get_settings  # Not used - commenting out
 
 logger = logging.getLogger(__name__)
-settings = get_settings()
+# settings = get_settings()  # Not used - commenting out
 
 # Initialize services
 hybrid_search = HybridAgentSearch()

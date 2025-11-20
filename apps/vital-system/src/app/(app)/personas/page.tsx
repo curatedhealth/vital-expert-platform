@@ -1,145 +1,269 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import React, { useState, useEffect, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { PageHeader } from '@/components/page-header';
+import { Users, Building2 } from 'lucide-react';
 import {
-  Search,
-  Users,
-  Briefcase,
-  Target,
-  TrendingUp,
-  Building2,
-  UserCircle
-} from 'lucide-react';
-
-interface Persona {
-  id: string;
-  name: string;
-  description: string;
-  role?: string;
-  department?: string;
-  business_function?: string;
-  goals?: string[];
-  pain_points?: string[];
-  context?: string;
-  tenant_id?: string;
-  created_at?: string;
-  updated_at?: string;
-}
+  PersonaCard,
+  PersonaListItem,
+  PersonaStatsCards,
+  PersonaFilters,
+  type Persona,
+  type PersonaStats,
+  type PersonaFiltersType,
+} from '@/components/personas';
 
 export default function PersonasPage() {
   const [personas, setPersonas] = useState<Persona[]>([]);
-  const [filteredPersonas, setFilteredPersonas] = useState<Persona[]>([]);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedRole, setSelectedRole] = useState<string>('all');
-  const [selectedDepartment, setSelectedDepartment] = useState<string>('all');
-  const [stats, setStats] = useState({
+  const [allDepartments, setAllDepartments] = useState<Array<{ id: string; name: string; department_code?: string }>>([]);
+  const [filters, setFilters] = useState<PersonaFiltersType>({
+    searchQuery: '',
+    selectedRole: 'all',
+    selectedDepartment: 'all',
+    selectedFunction: 'all',
+    selectedSeniority: 'all',
+  });
+  const [stats, setStats] = useState<PersonaStats>({
     total: 0,
-    byRole: {} as Record<string, number>,
-    byDepartment: {} as Record<string, number>,
-    byFunction: {} as Record<string, number>,
+    byRole: {},
+    byDepartment: {},
+    byFunction: {},
+    bySeniority: {},
   });
   const [loading, setLoading] = useState(true);
-  const [selectedPersona, setSelectedPersona] = useState<Persona | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
 
   useEffect(() => {
+    console.log('[PersonasPage] Component mounted, loading personas...');
     loadPersonas();
+    loadOrgStructure();
   }, []);
 
+  // Load org structure to get all departments for "By Department" view
+  const loadOrgStructure = async () => {
+    try {
+      const response = await fetch('/api/org-structure');
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success && data.data?.departments) {
+          console.log('[PersonasPage] Loaded', data.data.departments.length, 'departments from org structure');
+          setAllDepartments(data.data.departments || []);
+        }
+      }
+    } catch (error) {
+      console.warn('[PersonasPage] Failed to load org structure:', error);
+      // Don't set error state - this is optional data for grouping
+    }
+  };
+
+  // Sync filters with sidebar
   useEffect(() => {
-    filterPersonas();
-  }, [searchQuery, selectedRole, selectedDepartment, personas]);
+    const handleFilterChange = (e: CustomEvent) => {
+      setFilters(e.detail.filters);
+    };
+
+    window.addEventListener('personas-filters-change' as any, handleFilterChange);
+    return () => {
+      window.removeEventListener('personas-filters-change' as any, handleFilterChange);
+    };
+  }, []);
+
+  // Memoized filtered personas
+  const filteredPersonas = useMemo(() => {
+    let filtered = [...personas];
+
+    // Search filter
+    if (filters.searchQuery) {
+      const query = filters.searchQuery.toLowerCase();
+      filtered = filtered.filter(persona =>
+        persona.name.toLowerCase().includes(query) ||
+        persona.title?.toLowerCase().includes(query) ||
+        persona.tagline?.toLowerCase().includes(query) ||
+        persona.one_liner?.toLowerCase().includes(query) ||
+        persona.role_slug?.toLowerCase().includes(query) ||
+        persona.department_slug?.toLowerCase().includes(query) ||
+        persona.function_slug?.toLowerCase().includes(query) ||
+        persona.seniority_level?.toLowerCase().includes(query) ||
+        persona.tags?.some(tag => tag.toLowerCase().includes(query))
+      );
+    }
+
+    // Role filter - filter by role_id
+    if (filters.selectedRole !== 'all') {
+      filtered = filtered.filter(persona => persona.role_id === filters.selectedRole);
+    }
+
+    // Department filter - filter by department_id
+    if (filters.selectedDepartment !== 'all') {
+      filtered = filtered.filter(persona => persona.department_id === filters.selectedDepartment);
+    }
+
+    // Function filter - filter by function_id
+    if (filters.selectedFunction !== 'all') {
+      filtered = filtered.filter(persona => persona.function_id === filters.selectedFunction);
+    }
+
+    // Seniority filter
+    if (filters.selectedSeniority !== 'all') {
+      filtered = filtered.filter(persona => persona.seniority_level === filters.selectedSeniority);
+    }
+
+    return filtered;
+  }, [personas, filters]);
+
+  // Notify sidebar of filter updates
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent('personas-filters-update', {
+      detail: {
+        filters,
+        filteredCount: filteredPersonas.length,
+        totalCount: stats.total,
+      },
+    }));
+  }, [filters, filteredPersonas.length, stats.total]);
 
   const loadPersonas = async () => {
     try {
       setLoading(true);
-      console.log('Personas page: Loading personas for current tenant...');
+      setError(null);
+      console.log('[PersonasPage] Loading personas for current tenant...');
 
       // Fetch from API endpoint - no showAll parameter means tenant-filtered
       const response = await fetch('/api/personas');
+      console.log('[PersonasPage] API response status:', response.status, response.statusText);
 
       if (!response.ok) {
-        throw new Error(`Failed to fetch personas: ${response.statusText}`);
+        let errorData;
+        try {
+          errorData = await response.json();
+        } catch {
+          errorData = { error: `HTTP ${response.status}: ${response.statusText}` };
+        }
+        
+        const errorMessage = errorData.error || errorData.details || `Failed to fetch personas: ${response.statusText}`;
+        
+        // Handle authentication errors specifically
+        if (response.status === 401 || response.status === 403) {
+          throw new Error('Authentication required. Please sign in to view personas.');
+        }
+        
+        throw new Error(errorMessage);
       }
 
       const data = await response.json();
+      
+      if (data.error) {
+        throw new Error(data.error);
+      }
+
       const allPersonas = data.personas || [];
+      const apiStats = data.stats || {};
 
       console.log('Personas page: Loaded', allPersonas.length, 'personas');
+      console.log('API Stats:', apiStats);
 
       setPersonas(allPersonas);
 
-      // Calculate stats
+      // Calculate stats from personas for filtering
       const byRole: Record<string, number> = {};
       const byDepartment: Record<string, number> = {};
       const byFunction: Record<string, number> = {};
+      const bySeniority: Record<string, number> = {};
 
       allPersonas.forEach((persona: Persona) => {
-        if (persona.role) {
-          byRole[persona.role] = (byRole[persona.role] || 0) + 1;
+        if (persona.role_slug) {
+          byRole[persona.role_slug] = (byRole[persona.role_slug] || 0) + 1;
         }
-        if (persona.department) {
-          byDepartment[persona.department] = (byDepartment[persona.department] || 0) + 1;
+        if (persona.department_slug) {
+          byDepartment[persona.department_slug] = (byDepartment[persona.department_slug] || 0) + 1;
         }
-        if (persona.business_function) {
-          byFunction[persona.business_function] = (byFunction[persona.business_function] || 0) + 1;
+        if (persona.function_slug) {
+          byFunction[persona.function_slug] = (byFunction[persona.function_slug] || 0) + 1;
+        }
+        if (persona.seniority_level) {
+          bySeniority[persona.seniority_level] = (bySeniority[persona.seniority_level] || 0) + 1;
         }
       });
 
+      // Use API stats for total counts (from org tables), but keep persona-based counts for filtering
       setStats({
-        total: allPersonas.length,
+        total: apiStats.totalPersonas || allPersonas.length,
+        totalRoles: apiStats.totalRoles || Object.keys(byRole).length,
+        totalDepartments: apiStats.totalDepartments || Object.keys(byDepartment).length,
+        totalFunctions: apiStats.totalFunctions || Object.keys(byFunction).length,
         byRole,
         byDepartment,
         byFunction,
+        bySeniority,
       });
     } catch (error) {
       console.error('Error loading personas:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Failed to load personas. Please try again.';
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
   };
 
-  const filterPersonas = () => {
-    let filtered = [...personas];
-
-    // Search filter
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      filtered = filtered.filter(persona =>
-        persona.name.toLowerCase().includes(query) ||
-        persona.description?.toLowerCase().includes(query) ||
-        persona.role?.toLowerCase().includes(query) ||
-        persona.department?.toLowerCase().includes(query)
-      );
+  // Get departments for grouping - use all departments from org structure if available
+  // Otherwise fall back to departments from personas
+  const getDepartmentsForGrouping = () => {
+    // If we have org structure data, use all departments (even if they have 0 personas)
+    if (allDepartments.length > 0) {
+      // Create a map of department_id -> department_name for lookup
+      const deptMap = new Map(allDepartments.map(d => [d.id, d.name || d.department_code || 'Unknown']));
+      
+      // Get unique department IDs from personas
+      const personaDeptIds = new Set(personas.map(p => p.department_id).filter(Boolean));
+      
+      // Return all departments, but prioritize those with personas
+      const withPersonas = allDepartments
+        .filter(d => personaDeptIds.has(d.id))
+        .map(d => ({ id: d.id, name: d.name || d.department_code || 'Unknown', slug: d.department_code || d.id }));
+      
+      const withoutPersonas = allDepartments
+        .filter(d => !personaDeptIds.has(d.id))
+        .map(d => ({ id: d.id, name: d.name || d.department_code || 'Unknown', slug: d.department_code || d.id }));
+      
+      // Return departments with personas first, then others
+      return [...withPersonas, ...withoutPersonas];
     }
-
-    // Role filter
-    if (selectedRole !== 'all') {
-      filtered = filtered.filter(persona => persona.role === selectedRole);
-    }
-
-    // Department filter
-    if (selectedDepartment !== 'all') {
-      filtered = filtered.filter(persona => persona.department === selectedDepartment);
-    }
-
-    setFilteredPersonas(filtered);
+    
+    // Fallback: use department slugs from personas (old behavior)
+    const departments = new Set(personas.map(p => p.department_slug).filter(Boolean));
+    return Array.from(departments).map(slug => ({ id: slug, name: slug, slug }));
   };
 
-  const getUniqueRoles = () => {
-    const roles = new Set(personas.map(p => p.role).filter(Boolean));
-    return Array.from(roles).sort();
-  };
-
-  const getUniqueDepartments = () => {
-    const departments = new Set(personas.map(p => p.department).filter(Boolean));
-    return Array.from(departments).sort();
-  };
+  // Early return for loading state with visible indicator
+  if (loading && personas.length === 0 && !error) {
+    return (
+      <div className="flex-1 flex flex-col overflow-hidden">
+        <PageHeader
+          icon={Users}
+          title="Personas"
+          description="Loading personas..."
+        />
+        <div className="flex-1 overflow-y-auto">
+          <div className="max-w-7xl mx-auto p-6">
+            <Card>
+              <CardContent className="py-12 text-center">
+                <div className="flex flex-col items-center gap-4">
+                  <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-300 border-t-blue-600"></div>
+                  <p className="text-gray-500">Loading personas...</p>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
@@ -153,123 +277,59 @@ export default function PersonasPage() {
       {/* Main Content Area */}
       <div className="flex-1 overflow-y-auto">
         <div className="max-w-7xl mx-auto p-6 space-y-6">
-
-          {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-xs font-medium text-gray-600">Total Personas</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{stats.total}</div>
-              </CardContent>
-            </Card>
-
-            <Card className="border-2 border-blue-200 bg-blue-50">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-xs font-medium text-blue-800 flex items-center gap-1">
-                  <Briefcase className="h-3 w-3" />
-                  Roles
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-blue-600">
-                  {Object.keys(stats.byRole).length}
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="border-2 border-green-200 bg-green-50">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-xs font-medium text-green-800 flex items-center gap-1">
-                  <Building2 className="h-3 w-3" />
-                  Departments
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-green-600">
-                  {Object.keys(stats.byDepartment).length}
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="border-2 border-purple-200 bg-purple-50">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-xs font-medium text-purple-800 flex items-center gap-1">
-                  <Target className="h-3 w-3" />
-                  Functions
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-purple-600">
-                  {Object.keys(stats.byFunction).length}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Filters */}
-          <Card className="mb-8">
-            <CardContent className="pt-6">
-              <div className="flex flex-col md:flex-row gap-4">
-                {/* Search */}
-                <div className="flex-1">
-                  <div className="relative">
-                    <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                    <Input
-                      placeholder="Search personas by name, description, or role..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="pl-10"
-                    />
+          {/* Error Message */}
+          {error && (
+            <Card className="border-red-200 bg-red-50">
+              <CardContent className="pt-6">
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2 text-red-800">
+                    <span className="font-semibold">Error:</span>
+                    <span>{error}</span>
+                  </div>
+                  {error.includes('Authentication required') && (
+                    <div className="text-sm text-red-700 bg-red-100 p-3 rounded">
+                      <p>You need to be signed in to view personas. Please sign in and try again.</p>
+                    </div>
+                  )}
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      onClick={() => loadPersonas()}
+                    >
+                      Retry
+                    </Button>
+                    {error.includes('Authentication required') && (
+                      <Button
+                        variant="default"
+                        onClick={() => window.location.href = '/auth/signin'}
+                      >
+                        Sign In
+                      </Button>
+                    )}
                   </div>
                 </div>
+              </CardContent>
+            </Card>
+          )}
 
-                {/* Role Filter */}
-                <select
-                  value={selectedRole}
-                  onChange={(e) => setSelectedRole(e.target.value)}
-                  className="px-4 py-2 border rounded-md bg-white dark:bg-gray-800"
-                >
-                  <option value="all">All Roles</option>
-                  {getUniqueRoles().map(role => (
-                    <option key={role} value={role}>{role}</option>
-                  ))}
-                </select>
+          {/* Loading State */}
+          {loading && !error && (
+            <Card>
+              <CardContent className="py-12 text-center">
+                <div className="flex flex-col items-center gap-4">
+                  <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-300 border-t-blue-600"></div>
+                  <p className="text-gray-500">Loading personas...</p>
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
-                {/* Department Filter */}
-                <select
-                  value={selectedDepartment}
-                  onChange={(e) => setSelectedDepartment(e.target.value)}
-                  className="px-4 py-2 border rounded-md bg-white dark:bg-gray-800"
-                >
-                  <option value="all">All Departments</option>
-                  {getUniqueDepartments().map(dept => (
-                    <option key={dept} value={dept}>{dept}</option>
-                  ))}
-                </select>
-
-                {/* Reset */}
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setSearchQuery('');
-                    setSelectedRole('all');
-                    setSelectedDepartment('all');
-                  }}
-                >
-                  Reset
-                </Button>
-              </div>
-
-              <div className="mt-4 text-sm text-gray-500">
-                Showing {filteredPersonas.length} of {stats.total} personas
-              </div>
-            </CardContent>
-          </Card>
+          {/* Stats Cards */}
+          {!loading && !error && <PersonaStatsCards stats={stats} />}
 
           {/* Personas Grid */}
-          <Tabs defaultValue="grid" className="w-full">
+          {!loading && !error && (
+            <Tabs defaultValue="grid" className="w-full">
             <TabsList className="mb-4">
               <TabsTrigger value="grid">Grid View</TabsTrigger>
               <TabsTrigger value="list">List View</TabsTrigger>
@@ -279,7 +339,11 @@ export default function PersonasPage() {
             <TabsContent value="grid">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {filteredPersonas.map((persona) => (
-                  <PersonaCard key={persona.id} persona={persona} onClick={setSelectedPersona} />
+                  <PersonaCard 
+                    key={persona.id} 
+                    persona={persona} 
+                    onClick={(p) => router.push(`/personas/${p.slug}`)} 
+                  />
                 ))}
               </div>
             </TabsContent>
@@ -287,37 +351,58 @@ export default function PersonasPage() {
             <TabsContent value="list">
               <div className="space-y-4">
                 {filteredPersonas.map((persona) => (
-                  <PersonaListItem key={persona.id} persona={persona} onClick={setSelectedPersona} />
+                  <PersonaListItem 
+                    key={persona.id} 
+                    persona={persona} 
+                    onClick={(p) => router.push(`/personas/${p.slug}`)} 
+                  />
                 ))}
               </div>
             </TabsContent>
 
             <TabsContent value="departments">
               <div className="space-y-8">
-                {getUniqueDepartments().map(department => {
-                  const deptPersonas = filteredPersonas.filter(p => p.department === department);
-                  if (deptPersonas.length === 0) return null;
-
+                {getDepartmentsForGrouping().map(dept => {
+                  // Match personas by department_id (preferred) or department_slug (fallback)
+                  const deptPersonas = filteredPersonas.filter(p => 
+                    p.department_id === dept.id || p.department_slug === dept.slug
+                  );
+                  
+                  // Show all departments, even if they have 0 personas (so user can see all 296)
                   return (
-                    <div key={department}>
+                    <div key={dept.id || dept.slug}>
                       <div className="flex items-center gap-3 mb-4">
                         <Building2 className="h-6 w-6" />
-                        <h2 className="text-2xl font-bold">{department}</h2>
-                        <Badge variant="secondary">{deptPersonas.length}</Badge>
+                        <h2 className="text-2xl font-bold">{dept.name}</h2>
+                        <Badge variant={deptPersonas.length > 0 ? "default" : "secondary"}>
+                          {deptPersonas.length}
+                        </Badge>
                       </div>
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {deptPersonas.map((persona) => (
-                          <PersonaCard key={persona.id} persona={persona} compact onClick={setSelectedPersona} />
-                        ))}
-                      </div>
+                      {deptPersonas.length > 0 ? (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                          {deptPersonas.map((persona) => (
+                            <PersonaCard 
+                              key={persona.id} 
+                              persona={persona} 
+                              compact 
+                              onClick={(p) => router.push(`/personas/${p.slug}`)} 
+                            />
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="text-sm text-gray-500 italic py-4">
+                          No personas in this department
+                        </div>
+                      )}
                     </div>
                   );
                 })}
               </div>
             </TabsContent>
           </Tabs>
+          )}
 
-          {filteredPersonas.length === 0 && !loading && (
+          {filteredPersonas.length === 0 && !loading && !error && (
             <Card>
               <CardContent className="py-12 text-center">
                 <p className="text-gray-500">No personas found matching your filters.</p>
@@ -327,99 +412,5 @@ export default function PersonasPage() {
         </div>
       </div>
     </div>
-  );
-}
-
-function PersonaCard({ persona, compact = false, onClick }: { persona: Persona; compact?: boolean; onClick?: (persona: Persona) => void }) {
-  return (
-    <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => onClick?.(persona)}>
-      <CardHeader className={compact ? 'pb-3' : ''}>
-        <div className="flex items-start justify-between">
-          <div className="flex items-center gap-2">
-            <UserCircle className="h-5 w-5" />
-            <CardTitle className="text-lg">{persona.name}</CardTitle>
-          </div>
-        </div>
-        {!compact && (
-          <CardDescription className="line-clamp-2">
-            {persona.description || 'No description available'}
-          </CardDescription>
-        )}
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-3">
-          {/* Badges */}
-          <div className="flex flex-wrap gap-2">
-            {persona.role && (
-              <Badge className="bg-blue-100 text-blue-800 border-blue-200">
-                {persona.role}
-              </Badge>
-            )}
-
-            {persona.department && (
-              <Badge className="bg-green-100 text-green-800 border-green-200">
-                {persona.department}
-              </Badge>
-            )}
-
-            {persona.business_function && (
-              <Badge className="bg-purple-100 text-purple-800 border-purple-200">
-                {persona.business_function}
-              </Badge>
-            )}
-          </div>
-
-          {/* Goals and Pain Points Preview */}
-          {!compact && (
-            <div className="text-xs text-gray-500 space-y-1">
-              {persona.goals && persona.goals.length > 0 && (
-                <div>
-                  <span className="font-semibold">Goals:</span> {persona.goals.length}
-                </div>
-              )}
-              {persona.pain_points && persona.pain_points.length > 0 && (
-                <div>
-                  <span className="font-semibold">Pain Points:</span> {persona.pain_points.length}
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
-function PersonaListItem({ persona, onClick }: { persona: Persona; onClick?: (persona: Persona) => void }) {
-  return (
-    <Card className="cursor-pointer hover:bg-gray-50" onClick={() => onClick?.(persona)}>
-      <CardContent className="py-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4 flex-1">
-            <UserCircle className="h-6 w-6 text-gray-600" />
-            <div className="flex-1">
-              <h3 className="font-semibold">{persona.name}</h3>
-              <p className="text-sm text-gray-500 line-clamp-1">
-                {persona.description}
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2">
-            {persona.role && (
-              <Badge className="bg-blue-100 text-blue-800 border-blue-200">
-                {persona.role}
-              </Badge>
-            )}
-
-            {persona.department && (
-              <Badge className="bg-green-100 text-green-800 border-green-200">
-                {persona.department}
-              </Badge>
-            )}
-          </div>
-        </div>
-      </CardContent>
-    </Card>
   );
 }

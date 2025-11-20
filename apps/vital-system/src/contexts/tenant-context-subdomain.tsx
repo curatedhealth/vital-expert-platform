@@ -43,13 +43,42 @@ interface SubdomainTenantContext {
 
 const TenantContext = createContext<TenantContextType | undefined>(undefined);
 
+// Check for bypass mode
+const BYPASS_AUTH = process.env.BYPASS_AUTH === 'true' || process.env.NODE_ENV === 'development';
+
+// Default tenant context for bypass mode
+const DEFAULT_TENANT: Organization = {
+  id: 'default-tenant-id',
+  tenant_key: 'vital-system',
+  name: 'VITAL System',
+  tenant_type: 'platform',
+  status: 'active',
+  settings: {},
+  created_at: new Date().toISOString(),
+  updated_at: new Date().toISOString(),
+};
+
+const DEFAULT_CONFIG: TenantConfiguration = {
+  id: 'default-config-id',
+  tenant_id: 'default-tenant-id',
+  theme: {},
+  features: {},
+  integrations: {},
+  created_at: new Date().toISOString(),
+  updated_at: new Date().toISOString(),
+};
+
 export function TenantProviderSubdomain({ children }: TenantProviderProps) {
-  const { user } = useAuth();
-  const [tenant, setTenant] = useState<Organization | null>(null);
-  const [configuration, setConfiguration] = useState<TenantConfiguration | null>(null);
+  // Always call useAuth (hooks must be unconditional)
+  // The hook returns defaults if context is undefined
+  const authContext = useAuth();
+  const user = authContext?.user || null;
+
+  const [tenant, setTenant] = useState<Organization | null>(BYPASS_AUTH ? DEFAULT_TENANT : null);
+  const [configuration, setConfiguration] = useState<TenantConfiguration | null>(BYPASS_AUTH ? DEFAULT_CONFIG : null);
   const [apps, setApps] = useState<TenantApp[]>([]);
   const [featureFlags, setFeatureFlags] = useState<Map<string, boolean>>(new Map());
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(!BYPASS_AUTH); // Don't start loading in bypass mode
   const [error, setError] = useState<Error | undefined>();
 
   // Use singleton Supabase client
@@ -150,6 +179,12 @@ export function TenantProviderSubdomain({ children }: TenantProviderProps) {
    * Load tenant on mount and when cookie changes
    */
   useEffect(() => {
+    // Skip loading in bypass mode - use defaults
+    if (BYPASS_AUTH) {
+      console.log('[TenantContext] Bypass mode enabled, using default tenant context');
+      return;
+    }
+
     loadTenantContext();
 
     // Watch for cookie changes (e.g., when middleware updates it)

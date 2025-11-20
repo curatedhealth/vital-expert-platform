@@ -1,8 +1,8 @@
 "use client"
 
+import React, { useEffect, useState } from "react"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
-import { useEffect, useState } from "react"
 import {
   Activity,
   ArrowRight,
@@ -789,6 +789,86 @@ export function SidebarPromptPrismContent() {
           </CollapsibleContent>
         </SidebarGroup>
       </Collapsible>
+    </>
+  )
+}
+
+export function SidebarPersonasContent() {
+  // Dynamic import to avoid SSR issues
+  const [PersonaFiltersSidebar, setPersonaFiltersSidebar] = useState<React.ComponentType<any> | null>(null);
+  const [filters, setFilters] = useState({
+    searchQuery: '',
+    selectedRole: 'all',
+    selectedDepartment: 'all',
+    selectedFunction: 'all',
+    selectedSeniority: 'all',
+  });
+  const [filteredCount, setFilteredCount] = useState(0);
+  const [totalCount, setTotalCount] = useState(0);
+
+  useEffect(() => {
+    import('@/components/personas/PersonaFiltersSidebar').then((mod) => {
+      setPersonaFiltersSidebar(() => mod.PersonaFiltersSidebar);
+    });
+  }, []);
+
+  // Listen for filter updates from the page
+  useEffect(() => {
+    const handleFilterUpdate = (e: CustomEvent) => {
+      setFilters(e.detail.filters);
+      setFilteredCount(e.detail.filteredCount);
+      setTotalCount(e.detail.totalCount);
+    };
+
+    window.addEventListener('personas-filters-update' as any, handleFilterUpdate);
+    return () => {
+      window.removeEventListener('personas-filters-update' as any, handleFilterUpdate);
+    };
+  }, []);
+
+  const handleFiltersChange = (newFilters: typeof filters) => {
+    setFilters(newFilters);
+    // Dispatch event to update the page
+    window.dispatchEvent(new CustomEvent('personas-filters-change', { detail: { filters: newFilters } }));
+  };
+
+  return (
+    <>
+      <Collapsible defaultOpen className="group/collapsible">
+        <SidebarGroup>
+          <SidebarGroupLabel asChild>
+            <CollapsibleTrigger className="flex w-full items-center justify-between hover:bg-sidebar-accent rounded-md px-2 py-1.5">
+              Overview
+              <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
+            </CollapsibleTrigger>
+          </SidebarGroupLabel>
+          <CollapsibleContent>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild>
+                    <Link href="/personas">
+                      <Users className="h-4 w-4" />
+                      <span>All Personas</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </CollapsibleContent>
+        </SidebarGroup>
+      </Collapsible>
+
+      {PersonaFiltersSidebar && (
+        <div className="mt-4">
+          <PersonaFiltersSidebar
+            filters={filters}
+            onFiltersChange={handleFiltersChange}
+            filteredCount={filteredCount}
+            totalCount={totalCount}
+          />
+        </div>
+      )}
     </>
   )
 }

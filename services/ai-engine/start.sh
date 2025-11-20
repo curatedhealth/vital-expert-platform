@@ -1,46 +1,39 @@
 #!/bin/bash
-# AI Engine Startup Script with proper PYTHONPATH
+# Start VITAL AI Engine Backend with Environment Variables
 
-set -e  # Exit on error
+set -e
 
-echo "🚀 Starting VITAL AI Engine..."
-echo ""
+cd "/Users/hichamnaim/Downloads/Cursor/VITAL path/services/ai-engine"
 
-# Navigate to AI Engine directory
-cd "$(dirname "$0")"
-AI_ENGINE_DIR="$(pwd)"
-
-echo "📁 Working directory: $AI_ENGINE_DIR"
-echo ""
-
-# Check if venv exists
-if [ ! -d "venv" ]; then
-    echo "❌ Virtual environment not found!"
-    echo "Please run: python3 -m venv venv && source venv/bin/activate && pip install -r requirements.txt"
+# Load environment variables from .env.local
+if [ -f .env.local ]; then
+    echo "Loading environment variables from .env.local..."
+    export $(cat .env.local | grep -v '^#' | grep -v '^$' | xargs)
+else
+    echo "❌ .env.local not found!"
     exit 1
 fi
 
-# Activate virtual environment
-echo "🔧 Activating virtual environment..."
-source venv/bin/activate
+# Set PYTHONPATH
+export PYTHONPATH="${PWD}/src"
 
-# Set PYTHONPATH to include src directory
-export PYTHONPATH="${AI_ENGINE_DIR}/src:${PYTHONPATH}"
-echo "✅ PYTHONPATH set to: $PYTHONPATH"
-echo ""
-
-# Kill any existing AI Engine process on port 8000
-echo "🛑 Checking for existing processes on port 8000..."
-if lsof -ti:8000 > /dev/null 2>&1; then
-    echo "   Killing existing process..."
-    lsof -ti:8000 | xargs kill -9 2>/dev/null || true
-    sleep 2
+# Verify critical env vars
+if [ -z "$OPENAI_API_KEY" ]; then
+    echo "❌ OPENAI_API_KEY not set!"
+    exit 1
 fi
 
-# Start the AI Engine
-echo "🚀 Starting AI Engine on port 8000..."
-cd src
-python3 -m uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+if [ -z "$SUPABASE_URL" ]; then
+    echo "❌ SUPABASE_URL not set!"
+    exit 1
+fi
 
-# Note: --reload will auto-restart on code changes
+echo "✅ Environment variables loaded"
+echo "✅ PYTHONPATH: $PYTHONPATH"
+echo "✅ PORT: ${PORT:-8080}"
+echo ""
+echo "🚀 Starting uvicorn on port ${PORT:-8080}..."
+echo ""
 
+# Start uvicorn
+python3 -m uvicorn src.api.main:app --reload --host 0.0.0.0 --port ${PORT:-8080}

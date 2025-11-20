@@ -83,8 +83,8 @@ export function PromptStarters({
     }
   };
 
-  // Show prompts in a grid layout
-  const allPrompts = Object.values(groupedPrompts).flat().slice(0, 6);
+  // Show exactly 4 prompts in a grid layout
+  const allPrompts = Object.values(groupedPrompts).flat().slice(0, 4);
 
   return (
     <div className="w-full max-w-4xl mx-auto py-6">
@@ -95,7 +95,7 @@ export function PromptStarters({
         </h3>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         {allPrompts.map((prompt, index) => (
           <motion.button
             key={prompt.id}

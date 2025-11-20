@@ -1,0 +1,339 @@
+{
+  "$schema": "VITAL Platform Workflow Data Template",
+  "$version": "1.0.0",
+  "$date": "2025-11-19",
+  "$description": "JSON template for seeding Work Hierarchy tables (Processes, Projects, Tasks)",
+  "$prerequisite": "Run jtbd_data_template first for JTBD references",
+
+  "tenant": {
+    "id": "uuid-here",
+    "name": "Tenant Name",
+    "slug": "tenant-slug"
+  },
+
+  "project_types": [
+    {
+      "id": "uuid-or-gen_random_uuid",
+      "tenant_id": null,
+      "code": "clinical_decision_support",
+      "name": "Clinical Decision Support",
+      "description": "Systems supporting clinical decisions",
+      "category": "clinical",
+      "is_active": true,
+      "display_order": 1
+    }
+  ],
+
+  "operations_domain": {
+    "processes": [
+      {
+        "id": "process-uuid",
+        "tenant_id": "tenant-uuid",
+        "code": "PROC-001",
+        "name": "Process Name",
+        "description": "Process description",
+        "version": "1.0",
+        "process_category": "operate",
+        "process_group": "Customer Service",
+        "functional_area": "medical_affairs",
+        "status": "active",
+        "effective_date": "2024-01-01",
+        "review_date": "2025-01-01",
+        "primary_jtbd_id": "jtbd-uuid",
+        "target_cycle_time": "24 hours",
+        "target_cost": 150.00,
+
+        "sla_targets": [
+          {
+            "sla_name": "Response Time SLA",
+            "metric_type": "time",
+            "target_value": "24",
+            "unit_of_measure": "hours",
+            "measurement_frequency": "weekly"
+          }
+        ],
+
+        "kpis": [
+          {
+            "kpi_name": "KPI Name",
+            "kpi_description": "KPI description",
+            "target_value": "95",
+            "current_value": "87",
+            "unit_of_measure": "percentage",
+            "measurement_frequency": "weekly",
+            "data_source": "System Name"
+          }
+        ],
+
+        "activities": [
+          {
+            "id": "activity-uuid",
+            "sequence_order": 1,
+            "code": "ACT-001",
+            "name": "Activity Name",
+            "description": "Activity description",
+            "purpose_statement": "Purpose statement",
+            "typical_duration": "30 minutes",
+            "is_milestone": false,
+            "activity_owner_role": "Role Name",
+            "jtbd_stage_id": "jtbd-stage-uuid",
+
+            "entry_criteria": [
+              {
+                "criterion_text": "Entry criterion",
+                "is_mandatory": true,
+                "verification_method": "Verification method",
+                "sequence_order": 1
+              }
+            ],
+
+            "exit_criteria": [
+              {
+                "criterion_text": "Exit criterion",
+                "is_mandatory": true,
+                "verification_method": "Verification method",
+                "sequence_order": 1
+              }
+            ],
+
+            "deliverables": [
+              {
+                "deliverable_name": "Deliverable Name",
+                "deliverable_type": "document",
+                "description": "Deliverable description",
+                "is_mandatory": true
+              }
+            ],
+
+            "pain_points": [
+              {
+                "pain_point_text": "Pain point description",
+                "pain_point_type": "technical",
+                "severity": "high",
+                "frequency": "often"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+
+  "projects_domain": {
+    "projects": [
+      {
+        "id": "project-uuid",
+        "name": "Project Name",
+        "description": "Project description",
+        "organization_id": "organization-uuid",
+        "project_type_id": "use get_project_type_id('clinical_decision_support')",
+        "primary_jtbd_id": "jtbd-uuid",
+        "budget": 500000.00,
+
+        "objectives": [
+          {
+            "objective_text": "Objective description",
+            "objective_type": "business",
+            "is_primary": true,
+            "success_metric": "Metric name",
+            "target_value": "Target value"
+          }
+        ],
+
+        "deliverables": [
+          {
+            "deliverable_name": "Deliverable Name",
+            "description": "Deliverable description",
+            "deliverable_type": "software",
+            "due_date": "2024-06-30",
+            "acceptance_criteria": "Acceptance criteria",
+            "status": "pending"
+          }
+        ],
+
+        "success_criteria": [
+          {
+            "criterion_text": "Success criterion",
+            "measurement_method": "Measurement method",
+            "target_value": "Target value",
+            "is_mandatory": true
+          }
+        ],
+
+        "phases": [
+          {
+            "id": "phase-uuid",
+            "phase_number": 1,
+            "name": "Phase Name",
+            "description": "Phase description",
+            "planned_start_date": "2024-01-01",
+            "planned_end_date": "2024-03-31",
+            "milestone_name": "Milestone Name",
+            "is_gate_review": true,
+            "gate_criteria": "Gate criteria",
+            "status": "not_started",
+            "jtbd_stage_id": "jtbd-stage-uuid",
+
+            "entry_criteria": [
+              {
+                "criterion_text": "Entry criterion",
+                "is_mandatory": true,
+                "verification_method": "Verification method"
+              }
+            ],
+
+            "exit_criteria": [
+              {
+                "criterion_text": "Exit criterion",
+                "is_mandatory": true,
+                "verification_method": "Verification method"
+              }
+            ],
+
+            "deliverables": [
+              {
+                "deliverable_name": "Phase Deliverable",
+                "deliverable_type": "document",
+                "description": "Deliverable description",
+                "is_mandatory": true
+              }
+            ],
+
+            "work_packages": [
+              {
+                "id": "wp-uuid",
+                "wbs_code": "1.1.1",
+                "name": "Work Package Name",
+                "description": "WP description",
+                "scope_statement": "Scope statement",
+                "responsible_team": "Team Name",
+                "estimated_effort_hours": 160,
+                "estimated_cost": 25000,
+                "planned_start_date": "2024-01-15",
+                "planned_end_date": "2024-02-28",
+                "status": "not_started",
+                "percent_complete": 0,
+
+                "acceptance_criteria": [
+                  {
+                    "criterion_text": "Acceptance criterion",
+                    "verification_method": "Verification method",
+                    "is_met": false
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+
+  "tasks": [
+    {
+      "id": "uuid-or-gen_random_uuid",
+      "tenant_id": "tenant-uuid",
+      "name": "Task Name",
+      "slug": "task-slug",
+      "description": "Task description",
+      "activity_id": "process-activity-uuid",
+      "work_package_id": "wp-uuid",
+      "priority": "high",
+      "estimated_duration_minutes": 30,
+
+      "inputs": [
+        {
+          "input_name": "Input Name",
+          "input_type": "data",
+          "description": "Input description",
+          "is_required": true,
+          "source": "Source system"
+        }
+      ],
+
+      "outputs": [
+        {
+          "output_name": "Output Name",
+          "output_type": "data",
+          "description": "Output description",
+          "destination": "Destination system"
+        }
+      ],
+
+      "steps": [
+        {
+          "id": "step-uuid",
+          "sequence_order": 1,
+          "name": "Step Name",
+          "description": "Step description",
+          "step_type": "action",
+          "is_conditional": false,
+          "on_failure_action": "stop",
+          "timeout_seconds": 300,
+          "estimated_duration_seconds": 60,
+
+          "parameters": [
+            {
+              "parameter_name": "param_name",
+              "parameter_value": "param_value",
+              "parameter_type": "string",
+              "is_required": true,
+              "default_value": "default"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+
+  "mappings": {
+    "jtbd_process": [
+      {
+        "jtbd_id": "jtbd-uuid",
+        "process_id": "process-uuid",
+        "tenant_id": "tenant-uuid",
+        "mapping_type": "primary"
+      }
+    ],
+    "jtbd_project": [
+      {
+        "jtbd_id": "jtbd-uuid",
+        "project_id": "project-uuid",
+        "tenant_id": "tenant-uuid",
+        "mapping_type": "primary"
+      }
+    ]
+  },
+
+  "_enums": {
+    "process_category": ["operate", "manage", "support"],
+    "process_status": ["draft", "active", "under_review", "deprecated", "archived"],
+    "metric_type": ["time", "quality", "cost", "compliance"],
+    "objective_type": ["business", "technical", "compliance", "quality"],
+    "phase_status": ["not_started", "in_progress", "completed", "on_hold", "cancelled"],
+    "deliverable_status": ["pending", "in_progress", "completed", "approved", "rejected"],
+    "priority": ["low", "medium", "high", "critical"],
+    "input_type": ["data", "document", "parameter", "artifact"],
+    "output_type": ["data", "document", "notification", "artifact"],
+    "step_type": ["action", "decision", "validation", "transformation"],
+    "on_failure_action": ["stop", "continue", "retry", "escalate"],
+    "parameter_type": ["string", "number", "boolean", "date", "json"],
+    "mapping_type": ["primary", "secondary", "supporting"],
+    "project_type_codes": [
+      "digital_therapeutic",
+      "ai_diagnostic",
+      "clinical_decision_support",
+      "remote_monitoring",
+      "telemedicine_platform",
+      "health_analytics"
+    ]
+  },
+
+  "_notes": {
+    "uuid_format": "Must be valid hex only (0-9, a-f). Example: a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+    "task_slug": "Required field - must be unique, lowercase with hyphens",
+    "project_type_id": "Use get_project_type_id('code') helper function",
+    "jtbd_references": "Ensure JTBDs exist before referencing (run jtbd_data_template first)",
+    "activity_id_vs_work_package_id": "Task can reference process activity OR work package, not both typically"
+  }
+}

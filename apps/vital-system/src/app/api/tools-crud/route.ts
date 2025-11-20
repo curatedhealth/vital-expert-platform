@@ -68,6 +68,12 @@ export const GET = withAgentAuth(async (
       logger.debug('tools_get_tenant_filtered', { operationId, tenantId: profile.tenant_id });
     }
 
+    // Filter by active status - only show active tools
+    query = query.eq('is_active', true);
+    
+    // Filter out soft-deleted tools
+    query = query.is('deleted_at', null);
+
     // Add pagination
     query = query.range(offset, offset + limit - 1);
 

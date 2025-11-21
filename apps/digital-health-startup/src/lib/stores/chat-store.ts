@@ -7,16 +7,19 @@ import { useAgentsStore, type Agent as GlobalAgent } from '@/lib/stores/agents-s
 export interface Agent {
   id: string;
   name: string;
+  display_name: string; // Add this
   description: string;
-  systemPrompt: string;
+  system_prompt: string;
   model: string;
   avatar: string;
   color: string;
   capabilities: string[];
-  ragEnabled: boolean;
+  rag_enabled: boolean;
   temperature: number;
-  maxTokens: number;
-  isCustom?: boolean;
+  max_tokens: number;
+  isCustom: boolean; // Make non-optional
+  is_user_copy: boolean; // Add this
+  original_agent_id: string | null; // Add this
   knowledgeUrls?: string[];
   tools?: string[];
   knowledgeDomains?: string[]; // Knowledge domains this agent can access
@@ -26,6 +29,9 @@ export interface Agent {
   department?: string; // Department name
   organizationalRole?: string; // Organizational role name
   tier?: number; // Agent tier (1, 2, 3)
+  status?: 'development' | 'testing' | 'active' | 'deprecated'; // Update status to literal union
+  priority?: number; // Add priority
+  implementation_phase?: number; // Add implementation_phase
 }
 
 export interface ChatMessage {

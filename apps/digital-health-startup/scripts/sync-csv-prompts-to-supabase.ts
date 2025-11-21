@@ -166,7 +166,7 @@ function convertToSupabasePrompt(row: any) {
     description = metadata.suite;
   } else {
     // Extract first meaningful line from prompt
-    const firstLines = detailedPrompt.split('\n').filter(l => l.trim() && !l.trim().startsWith('#')).slice(0, 3);
+    const firstLines = detailedPrompt.split('\n').filter((l: string) => l.trim() && !l.trim().startsWith('#')).slice(0, 3);
     description = firstLines.join(' ').substring(0, 500);
   }
   

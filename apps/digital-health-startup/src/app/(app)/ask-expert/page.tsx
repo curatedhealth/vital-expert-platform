@@ -82,7 +82,7 @@ interface Source {
 
 interface Message {
   id: string;
-  role: 'user' | 'assistant';
+  role: 'user' | 'assistant' | 'system';
   content: string;
   timestamp: number;
   attachments?: AttachmentInfo[];
@@ -602,8 +602,6 @@ function AskExpertPageContent() {
         createMutation.mutate({
           title: newConv.title,
           messages: newConv.messages,
-          createdAt: newConv.createdAt,
-          updatedAt: newConv.updatedAt,
         }, {
           onSuccess: (created) => {
             setConversations([created]);

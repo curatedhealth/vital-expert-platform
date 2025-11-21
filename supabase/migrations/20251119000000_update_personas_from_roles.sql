@@ -92,3 +92,4 @@ CREATE TRIGGER trigger_update_persona_org_from_role
 -- WHERE role_id IS NOT NULL
 --   AND (function_id IS NULL OR department_id IS NULL);
 
+

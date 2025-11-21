@@ -95,3 +95,4 @@ SELECT
   COUNT(*) FILTER (WHERE allowed_tenants IS NULL)
 FROM org_roles;
 
+

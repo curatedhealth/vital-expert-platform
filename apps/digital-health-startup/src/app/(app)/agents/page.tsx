@@ -65,22 +65,28 @@ function AgentsPageContent() {
     const chatStoreAgent: Agent = {
       id: agent.id,
       name: agent.name,
+      display_name: agent.display_name, // Added
       description: agent.description,
-      systemPrompt: agent.system_prompt || '',
+      system_prompt: agent.system_prompt || '', // Changed to system_prompt
       model: agent.model || 'gpt-4',
       avatar: agent.avatar || '🤖',
       color: agent.color || 'text-market-purple',
       capabilities: Array.isArray(agent.capabilities) ? agent.capabilities : [],
-      ragEnabled: agent.rag_enabled || false,
+      rag_enabled: agent.rag_enabled || false, // Changed to rag_enabled
       temperature: agent.temperature || 0.7,
-      maxTokens: agent.max_tokens || 2000,
-      isCustom: agent.is_custom || false,
+      max_tokens: agent.max_tokens || 2000, // Changed to max_tokens
+      isCustom: agent.is_custom || false, // Ensure it's always boolean
+      is_user_copy: agent.is_user_copy || false, // Added
+      original_agent_id: agent.original_agent_id || null, // Added
       tools: [],
       knowledgeDomains: Array.isArray(agent.knowledge_domains) ? agent.knowledge_domains : [],
       businessFunction: agent.business_function || undefined,
       department: agent.department || undefined,
       organizationalRole: (agent as any).organizational_role || agent.role || undefined,
       tier: agent.tier || undefined,
+      status: agent.status || 'active', // Added
+      priority: agent.priority || 1, // Added
+      implementation_phase: agent.implementation_phase || 1, // Added
     };
 
     console.log('✅ Chat store agent:', {
@@ -97,7 +103,7 @@ function AgentsPageContent() {
     const agentForEditing: AgentsStoreAgent = {
       id: agent.id,
       name: agent.name,
-      display_name: agent.name,
+      display_name: agent.display_name,
       description: agent.description,
       system_prompt: agent.systemPrompt || '',
       model: agent.model || 'gpt-4',
@@ -110,11 +116,13 @@ function AgentsPageContent() {
       knowledge_domains: agent.knowledgeDomains || [],
       business_function: agent.businessFunction || '',
       role: agent.role || '',
-      status: 'active',
-      tier: 1,
-      priority: 1,
-      implementation_phase: 1,
-      is_custom: agent.isCustom || false,
+      status: agent.status || 'active',
+      tier: agent.tier || 1,
+      priority: agent.priority || 1,
+      implementation_phase: agent.implementation_phase || 1,
+      is_custom: agent.isCustom,
+      is_user_copy: agent.is_user_copy,
+      original_agent_id: agent.original_agent_id,
     };
 
     setEditingAgent(agentForEditing);
@@ -327,7 +335,7 @@ function AgentsPageContent() {
             const agentForStore: AgentsStoreAgent = {
               id: agent.id,
               name: agent.name,
-              display_name: agent.name,
+              display_name: agent.display_name, // Use display_name from chat-store Agent
               description: agent.description,
               system_prompt: agent.systemPrompt || '',
               model: agent.model || 'gpt-4',
@@ -341,11 +349,13 @@ function AgentsPageContent() {
               business_function: agent.businessFunction || '',
               department: agent.department || '',
               role: agent.organizationalRole || agent.role || '',
-              status: 'active',
+              status: agent.status || 'active',
               tier: agent.tier || 1,
-              priority: 1,
-              implementation_phase: 1,
-              is_custom: agent.isCustom || false,
+              priority: agent.priority || 1,
+              implementation_phase: agent.implementation_phase || 1,
+              is_custom: agent.isCustom, // Use isCustom from chat-store Agent
+              is_user_copy: agent.is_user_copy, // Use is_user_copy from chat-store Agent
+              original_agent_id: agent.original_agent_id, // Use original_agent_id from chat-store Agent
             };
             handleAddAgentToChat(agentForStore);
           }}

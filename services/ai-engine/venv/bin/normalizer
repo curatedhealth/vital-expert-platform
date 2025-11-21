@@ -1,4 +1,6 @@
-#!/Users/amine/Desktop/vital/services/ai-engine/venv/bin/python3
+#!/bin/sh
+'''exec' "/Users/hichamnaim/Downloads/Cursor/VITAL path/services/ai-engine/venv/bin/python3.13" "$0" "$@"
+' '''
 import sys
 from charset_normalizer.cli import cli_detect
 if __name__ == '__main__':

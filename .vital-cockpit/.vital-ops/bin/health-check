@@ -1,0 +1,99 @@
+#!/usr/bin/env bash
+# Health Check - Quick system status check
+
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+VITAL_OPS_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+
+# Source common functions
+source "$VITAL_OPS_ROOT/lib/shell/common.sh"
+
+# Colors
+GREEN='\033[0;32m'
+RED='\033[0;31m'
+YELLOW='\033[1;33m'
+NC='\033[0m'
+
+print_header "VITAL Platform Health Check"
+
+# Check services
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "🔍 Checking Services..."
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+# Check if health check script exists
+if [ -f "$VITAL_OPS_ROOT/scripts/services/health/health-check.sh" ]; then
+    "$VITAL_OPS_ROOT/scripts/services/health/health-check.sh" all
+else
+    echo -e "${YELLOW}⚠️  Service health check script not found${NC}"
+fi
+
+# Check database
+echo ""
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "🗄️  Checking Database..."
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+if [ -z "${DATABASE_URL:-}" ]; then
+    echo -e "${YELLOW}⚠️  DATABASE_URL not set${NC}"
+else
+    if command -v psql &> /dev/null; then
+        if psql "$DATABASE_URL" -c "SELECT 1" &> /dev/null; then
+            echo -e "${GREEN}✅ Database connection OK${NC}"
+        else
+            echo -e "${RED}❌ Database connection FAILED${NC}"
+        fi
+    else
+        echo -e "${YELLOW}⚠️  psql not installed, skipping database check${NC}"
+    fi
+fi
+
+# Check environment variables
+echo ""
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "🔐 Checking Environment..."
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+required_vars=(
+    "DATABASE_URL"
+    "SUPABASE_URL"
+    "SUPABASE_ANON_KEY"
+    "OPENAI_API_KEY"
+)
+
+for var in "${required_vars[@]}"; do
+    if [ -n "${!var:-}" ]; then
+        echo -e "${GREEN}✅ $var${NC} is set"
+    else
+        echo -e "${RED}❌ $var${NC} is NOT set"
+    fi
+done
+
+# Check disk space
+echo ""
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "💾 Checking Disk Space..."
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+df -h | grep -E '(Filesystem|/dev/)' | head -5
+
+# Check memory
+echo ""
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "🧠 Checking Memory..."
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+if [[ "$OSTYPE" == "darwin"* ]]; then
+    # macOS
+    vm_stat | head -5
+elif command -v free &> /dev/null; then
+    # Linux
+    free -h
+fi
+
+echo ""
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "✅ Health check complete"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+

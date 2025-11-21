@@ -1,0 +1,88 @@
+#!/usr/bin/env bash
+# Setup Environment - Quick environment setup for dev/staging/prod
+
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+VITAL_OPS_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+
+# Source common functions
+source "$VITAL_OPS_ROOT/lib/shell/common.sh"
+
+ENVIRONMENT="${1:-dev}"
+
+print_header "Setting up VITAL Platform Environment: $ENVIRONMENT"
+
+# Validate environment
+if [[ ! "$ENVIRONMENT" =~ ^(dev|staging|prod)$ ]]; then
+    log_error "Invalid environment: $ENVIRONMENT"
+    echo "Usage: $0 <dev|staging|prod>"
+    exit 1
+fi
+
+# Load environment-specific config
+ENV_FILE="$VITAL_OPS_ROOT/config/environments/$ENVIRONMENT.env"
+
+if [ -f "$ENV_FILE" ]; then
+    log_info "Loading environment config from $ENV_FILE"
+    set -a
+    source "$ENV_FILE"
+    set +a
+    log_success "Environment config loaded"
+else
+    log_warning "No environment file found at $ENV_FILE"
+fi
+
+# Check dependencies
+log_info "Checking dependencies..."
+
+dependencies=(
+    "node:Node.js"
+    "pnpm:pnpm"
+    "psql:PostgreSQL client"
+    "docker:Docker"
+)
+
+for dep in "${dependencies[@]}"; do
+    cmd="${dep%%:*}"
+    name="${dep##*:}"
+    
+    if command -v "$cmd" &> /dev/null; then
+        log_success "$name is installed"
+    else
+        log_warning "$name is NOT installed"
+    fi
+done
+
+# Install pnpm dependencies
+log_info "Installing pnpm dependencies..."
+if [ -f "../../pnpm-lock.yaml" ]; then
+    cd ../.. && pnpm install && cd - > /dev/null
+    log_success "Dependencies installed"
+else
+    log_warning "No pnpm-lock.yaml found in project root"
+fi
+
+# Setup database
+log_info "Checking database..."
+if [ -n "${DATABASE_URL:-}" ]; then
+    if psql "$DATABASE_URL" -c "SELECT 1" &> /dev/null; then
+        log_success "Database connection OK"
+    else
+        log_error "Database connection FAILED"
+    fi
+else
+    log_warning "DATABASE_URL not set"
+fi
+
+# Setup complete
+log_success "Environment setup complete for: $ENVIRONMENT"
+
+echo ""
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "Next steps:"
+echo "  1. Run health check: ./bin/health-check"
+echo "  2. Start services: ./scripts/services/start-all.sh"
+echo "  3. Run tests: ./scripts/testing/integration/run-all.sh"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+

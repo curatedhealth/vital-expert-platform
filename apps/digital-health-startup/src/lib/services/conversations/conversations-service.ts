@@ -16,9 +16,10 @@ export interface Conversation {
   id: string;
   title: string;
   messages: Array<{
+    id: string; // Added this
     role: 'user' | 'assistant' | 'system';
     content: string;
-    timestamp?: number;
+    timestamp: number; // Made not optional
   }>;
   createdAt: number;
   updatedAt: number;
@@ -33,7 +34,7 @@ export interface ConversationRecord {
   user_id: string;
   tenant_id?: string;
   title: string;
-  messages: any; // JSONB in database
+  messages: Array<any>; // Changed to Array<any> for JSONB
   agent_id?: string;
   mode?: string;
   is_pinned: boolean;

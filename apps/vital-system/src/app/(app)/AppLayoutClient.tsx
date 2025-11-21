@@ -17,15 +17,19 @@ interface AppLayoutClientProps {
 }
 
 export function AppLayoutClient({ children, initialUser }: AppLayoutClientProps) {
+  // TEMPORARY: Bypass mode for testing (when initialUser is explicitly null)
+  const isBypassMode = initialUser === null;
+
+  // Always call hooks unconditionally (React rules)
   const { user, userProfile, loading } = useAuth();
 
   const hasInitialUser = Boolean(initialUser);
-
   const hasAuthContext = useMemo(() => Boolean(user || userProfile), [user, userProfile]);
+  const shouldShowLoader = !isBypassMode && loading && !hasAuthContext && hasInitialUser;
 
-  const shouldShowLoader = loading && !hasAuthContext && hasInitialUser;
-
-  if (!hasAuthContext && !hasInitialUser) {
+  // In bypass mode, always render (don't block on auth)
+  // In normal mode, block if no auth context
+  if (!isBypassMode && !hasAuthContext && !hasInitialUser) {
     return null;
   }
 

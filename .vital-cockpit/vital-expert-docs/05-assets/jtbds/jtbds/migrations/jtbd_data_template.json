@@ -1,0 +1,266 @@
+{
+  "$schema": "VITAL Platform JTBD Data Template",
+  "$version": "1.0.0",
+  "$date": "2025-11-19",
+  "$description": "JSON template for seeding JTBD normalized tables",
+
+  "tenant": {
+    "id": "uuid-here",
+    "name": "Tenant Name",
+    "slug": "tenant-slug"
+  },
+
+  "organizational_structure": {
+    "functions": [
+      {
+        "id": "uuid-or-gen_random_uuid",
+        "tenant_id": "tenant-uuid",
+        "name": "Medical Affairs",
+        "slug": "medical-affairs",
+        "description": "Function description"
+      }
+    ],
+    "departments": [
+      {
+        "id": "uuid-or-gen_random_uuid",
+        "tenant_id": "tenant-uuid",
+        "name": "Department Name",
+        "slug": "department-slug",
+        "function_id": "function-uuid",
+        "description": "Department description"
+      }
+    ],
+    "roles": [
+      {
+        "id": "uuid-or-gen_random_uuid",
+        "tenant_id": "tenant-uuid",
+        "name": "Role Name",
+        "slug": "role-slug",
+        "department_id": "department-uuid",
+        "function_id": "function-uuid",
+        "description": "Role description"
+      }
+    ],
+    "personas": [
+      {
+        "id": "uuid-or-gen_random_uuid",
+        "tenant_id": "tenant-uuid",
+        "name": "Persona Name",
+        "role_id": "role-uuid",
+        "department_id": "department-uuid",
+        "function_id": "function-uuid",
+        "description": "Persona description"
+      }
+    ]
+  },
+
+  "jobs_to_be_done": [
+    {
+      "id": "jtbd-uuid",
+      "tenant_id": "tenant-uuid",
+      "code": "JTBD-MA-001",
+      "name": "JTBD Name",
+      "description": "JTBD description",
+      "functional_area": "medical_affairs",
+      "job_category": "operational",
+      "complexity": "medium",
+      "frequency": "daily",
+      "priority_score": 8,
+      "status": "active",
+      "validation_score": 0.85,
+      "job_statement": "When [situation], I want to [motivation], so I can [outcome]",
+      "functional_job": "What the user is trying to accomplish",
+      "emotional_job": "How the user wants to feel",
+      "social_job": "How the user wants to be perceived",
+      "job_context": "Situational context",
+
+      "role_mappings": [
+        {
+          "role_id": "role-uuid",
+          "relevance_score": 0.95,
+          "is_primary": true,
+          "notes": "Additional context",
+          "mapping_source": "manual"
+        }
+      ],
+
+      "pain_points": [
+        {
+          "issue": "Pain point description",
+          "severity": "high",
+          "pain_point_type": "technical",
+          "frequency": "often",
+          "impact_description": "Impact description"
+        }
+      ],
+
+      "desired_outcomes": [
+        {
+          "outcome": "Outcome description",
+          "importance": 9,
+          "outcome_type": "speed",
+          "current_satisfaction": 4,
+          "sequence_order": 1
+        }
+      ],
+
+      "outcomes_odi": [
+        {
+          "outcome_id": "OUT-001",
+          "outcome_statement": "Minimize time to locate relevant information",
+          "outcome_type": "speed",
+          "importance_score": 9,
+          "satisfaction_score": 4
+        }
+      ],
+
+      "obstacles": [
+        {
+          "obstacle_text": "Obstacle description",
+          "obstacle_type": "technical",
+          "severity": "high"
+        }
+      ],
+
+      "kpis": [
+        {
+          "kpi_code": "KPI-001",
+          "kpi_name": "KPI Name",
+          "kpi_description": "KPI description",
+          "target_value": 95,
+          "current_value": 87
+        }
+      ],
+
+      "success_criteria": [
+        {
+          "criterion_text": "Success criterion description"
+        }
+      ],
+
+      "competitive_alternatives": [
+        {
+          "id": "alternative-uuid",
+          "alternative_name": "Alternative Name",
+          "description": "Alternative description",
+          "strengths": [
+            {
+              "strength_text": "Strength description",
+              "sequence_order": 1
+            }
+          ],
+          "weaknesses": [
+            {
+              "weakness_text": "Weakness description",
+              "sequence_order": 1
+            }
+          ]
+        }
+      ],
+
+      "value_drivers": [
+        {
+          "value_description": "Value description",
+          "quantified_impact": "$75,000 annual savings",
+          "beneficiary": "Department Name"
+        }
+      ],
+
+      "workflow_stages": [
+        {
+          "id": "stage-uuid",
+          "stage_name": "Stage Name",
+          "stage_order": 1,
+          "description": "Stage description",
+          "duration_estimate": "2 hours",
+          "success_criteria": "Stage success criteria",
+          "key_activities": [
+            {
+              "activity_text": "Activity description",
+              "sequence_order": 1
+            }
+          ],
+          "pain_points": [
+            {
+              "pain_point_text": "Stage pain point"
+            }
+          ]
+        }
+      ],
+
+      "workflow_activities": [
+        {
+          "id": "activity-uuid",
+          "workflow_stage_id": "stage-uuid",
+          "activity_name": "Activity Name",
+          "description": "Activity description",
+          "sequence_order": 1,
+          "estimated_duration": "30 minutes",
+          "is_automatable": true,
+          "automation_potential": 8,
+          "tools": [
+            {
+              "tool_name": "Tool Name",
+              "sequence_order": 1
+            }
+          ],
+          "outputs": [
+            {
+              "output_name": "Output Name",
+              "sequence_order": 1
+            }
+          ]
+        }
+      ],
+
+      "gen_ai_opportunity": {
+        "id": "opportunity-uuid",
+        "automation_potential_score": 7.5,
+        "augmentation_potential_score": 8.5,
+        "total_estimated_value": "$150,000 annual savings",
+        "implementation_complexity": "medium",
+        "recommended_approach": "Start with AI-powered search",
+        "capabilities": [
+          {
+            "capability_text": "AI capability description",
+            "sequence_order": 1
+          }
+        ],
+        "risks": [
+          {
+            "risk_text": "Risk description",
+            "sequence_order": 1
+          }
+        ],
+        "mitigations": [
+          {
+            "mitigation_text": "Mitigation strategy",
+            "sequence_order": 1
+          }
+        ]
+      }
+    }
+  ],
+
+  "_enums": {
+    "functional_area": ["medical_affairs", "market_access", "regulatory", "commercial", "clinical_development", "pharmacovigilance"],
+    "job_category": ["strategic", "operational", "tactical"],
+    "complexity": ["low", "medium", "high", "very_high"],
+    "frequency": ["daily", "weekly", "monthly", "quarterly", "annually"],
+    "status": ["draft", "validated", "active", "deprecated"],
+    "severity": ["low", "medium", "high", "critical"],
+    "pain_point_type": ["technical", "resource", "process", "political", "knowledge", "compliance"],
+    "obstacle_type": ["technical", "resource", "process", "political", "knowledge"],
+    "outcome_type": ["speed", "stability", "output", "cost", "risk"],
+    "mapping_source": ["manual", "ai_suggested", "imported", "derived"],
+    "implementation_complexity": ["low", "medium", "high"]
+  },
+
+  "_notes": {
+    "uuid_format": "Must be valid hex only (0-9, a-f). Example: a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+    "relevance_score": "Decimal 0.00 to 1.00",
+    "scores": "Integer 1-10 for importance, satisfaction, priority",
+    "validation_score": "Decimal 0.00 to 1.00",
+    "gen_ai_opportunity": "One per JTBD (UNIQUE constraint on jtbd_id)"
+  }
+}

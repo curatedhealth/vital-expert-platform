@@ -211,7 +211,8 @@ export default function PatternLibrary() {
         </Button>
       </div>
 
-      <Tabs defaultValue="patterns" className="w-full">
+      <div className="w-full">
+        <Tabs defaultValue="patterns">
         <TabsList>
           <TabsTrigger value="patterns">Pattern Gallery</TabsTrigger>
           <TabsTrigger value="builder">Pattern Builder</TabsTrigger>
@@ -468,7 +469,7 @@ export default function PatternLibrary() {
             </CardContent>
           </Card>
         </TabsContent>
-      </Tabs>
-    </div>
+              </Tabs>
+            </div>    </div>
   );
 }

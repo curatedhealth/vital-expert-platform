@@ -59,14 +59,14 @@ import type { Components } from 'react-markdown';
 import type { PluggableList } from 'unified';
 
 interface Source {
-  id: string;
-  title: string;
+  id?: string;
+  title?: string;
   excerpt?: string;
   similarity?: number;
   domain?: string;
   url?: string;
   metadata?: Record<string, any>;
-  evidenceLevel?: 'A' | 'B' | 'C' | 'D'; // A=high quality, B=good, C=moderate, D=low
+  evidenceLevel?: 'A' | 'B' | 'C' | 'D' | 'Unknown'; // A=high quality, B=good, C=moderate, D=low
   sourceType?: 'fda_guidance' | 'clinical_trial' | 'research_paper' | 'regulatory_filing' | 'company_document' | 'other';
   organization?: string;
   reliabilityScore?: number; // 0-1
@@ -83,11 +83,11 @@ interface Citation {
 interface MessageBranch {
   id: string;
   content: string;
-  confidence: number;
+  confidence?: number;
   citations?: Citation[];
   sources?: Source[];
-  createdAt: Date;
-  reasoning?: string;
+  createdAt?: Date;
+  reasoning?: string | string[];
 }
 
 interface MessageMetadata {
@@ -123,7 +123,7 @@ interface MessageMetadata {
 
 interface EnhancedMessageDisplayProps {
   id: string;
-  role: 'user' | 'assistant';
+  role: 'user' | 'assistant' | 'system';
   content: string;
   timestamp: Date;
   metadata?: MessageMetadata;

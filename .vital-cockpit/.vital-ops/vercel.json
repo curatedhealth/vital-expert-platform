@@ -1,0 +1,25 @@
+{
+  "version": 2,
+  "public": false,
+  "github": {
+    "enabled": true,
+    "autoAlias": true,
+    "silent": false
+  },
+  "git": {
+    "deploymentEnabled": {
+      "restructure/world-class-architecture": true,
+      "main": true
+    }
+  },
+  "buildCommand": "cd apps/digital-health-startup && npm run build",
+  "outputDirectory": "apps/digital-health-startup/.next",
+  "installCommand": "npm install --prefix apps/digital-health-startup",
+  "framework": "nextjs",
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/apps/digital-health-startup/$1"
+    }
+  ]
+}

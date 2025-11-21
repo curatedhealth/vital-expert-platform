@@ -146,7 +146,7 @@ export async function POST(request: NextRequest) {
     console.log('Returning prompts:', prompts.length);
 
     return NextResponse.json({
-      prompts: prompts.slice(0, 12), // Return up to 12 prompts
+      prompts: prompts.slice(0, 4), // Return exactly 4 prompts
       agents: uniqueAgents,
       domains: uniqueDomains,
       total: promptStarters.length

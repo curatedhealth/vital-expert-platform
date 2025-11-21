@@ -565,7 +565,8 @@ Would you like me to elaborate on any of these areas?`,
         </div>
 
         {/* Tabs */}
-        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'setup' | 'chat')} className="flex-1 flex flex-col">
+        <div className="flex-1 flex flex-col">
+          <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'setup' | 'chat')}>
           <TabsList className="mx-6 mt-4 w-auto">
             <TabsTrigger value="setup">Setup</TabsTrigger>
             <TabsTrigger value="chat">Chat</TabsTrigger>
@@ -693,8 +694,8 @@ Would you like me to elaborate on any of these areas?`,
               />
             </div>
           </TabsContent>
-        </Tabs>
-      </div>
+                  </Tabs>
+                </div>      </div>
     </div>
   );
 }

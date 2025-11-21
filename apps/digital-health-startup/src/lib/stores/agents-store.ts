@@ -20,7 +20,7 @@ export interface Agent {
   // User ownership fields
   user_id?: string;
   is_user_copy?: boolean;
-  original_agent_id?: string;
+  original_agent_id?: string | null;
   copied_at?: string;
   status: 'development' | 'testing' | 'active' | 'deprecated';
   tier: number;

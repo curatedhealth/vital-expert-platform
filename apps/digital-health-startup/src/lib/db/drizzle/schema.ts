@@ -73,6 +73,8 @@ export const dsrStatusEnum = pgEnum('dsr_status', ['pending', 'processing', 'com
 
 export const regulationTypeEnum = pgEnum('regulation_type', ['GDPR', 'CCPA', 'HIPAA']);
 
+export const validationStatusEnum = pgEnum('validation_status', ['draft', 'pending_review', 'validated', 'archived']);
+
 // ============================================================================
 // TABLES
 // ============================================================================
@@ -96,6 +98,100 @@ export const tenants = pgTable(
     slugIdx: uniqueIndex('idx_tenants_slug').on(table.slug),
     domainIdx: index('idx_tenants_domain').on(table.domain),
     activeIdx: index('idx_tenants_active').on(table.isActive),
+  })
+);
+
+// Personas
+export const personas = pgTable(
+  'personas',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    tenantId: uuid('tenant_id')
+      .notNull()
+      .references(() => tenants.id, { onDelete: 'cascade' }),
+    name: text('name').notNull(),
+    slug: text('slug').notNull().unique(),
+    title: text('title'),
+    tagline: text('tagline'),
+    roleId: uuid('role_id'), // No references for now
+    functionId: uuid('function_id'), // No references for now
+    departmentId: uuid('department_id'), // No references for now
+    roleSlug: text('role_slug'),
+    functionSlug: text('function_slug'),
+    departmentSlug: text('role_slug'),
+    seniorityLevel: text('seniority_level'),
+    yearsOfExperience: integer('years_of_experience'),
+    yearsInCurrentRole: integer('years_in_current_role'),
+    yearsInIndustry: integer('years_in_industry'),
+    yearsInFunction: integer('years_in_function'),
+    typicalOrganizationSize: text('typical_organization_size'),
+    organizationType: text('organization_type'),
+    keyResponsibilities: text('key_responsibilities').array().default([]),
+    geographicScope: text('geographic_scope'),
+    reportingTo: text('reporting_to'),
+    teamSize: text('team_size'),
+    teamSizeTypical: integer('team_size_typical'),
+    directReports: integer('direct_reports'),
+    spanOfControl: text('span_of_control'),
+    budgetAuthority: text('budget_authority'),
+    workStyle: text('work_style'),
+    workStylePreference: text('work_style_preference'),
+    workArrangement: text('work_arrangement'),
+    learningStyle: text('learning_style'),
+    technologyAdoption: text('technology_adoption'),
+    riskTolerance: text('risk_tolerance'),
+    changeReadiness: text('change_readiness'),
+    decisionMakingStyle: text('decision_making_style'),
+    ageRange: text('age_range'),
+    educationLevel: text('education_level'),
+    locationType: text('location_type'),
+    painPoints: jsonb('pain_points').default([]),
+    goals: jsonb('goals').default([]),
+    challenges: jsonb('challenges').default([]),
+    communicationPreferences: jsonb('communication_preferences').default({}),
+    preferredTools: text('preferred_tools').array().default([]),
+    tags: text('tags').array().default([]),
+    metadata: jsonb('metadata').notNull().default({}),
+    avatarUrl: text('avatar_url'),
+    avatarDescription: text('avatar_description'),
+    colorCode: text('color_code'),
+    icon: text('icon'),
+    personaType: text('persona_type'),
+    segment: text('segment'),
+    archetype: text('archetype'),
+    journeyStage: text('journey_stage'),
+    section: text('section'),
+    backgroundStory: text('background_story'),
+    aDayInTheLife: text('a_day_in_the_life'),
+    oneLiner: text('one_liner'),
+    salaryMinUsd: integer('salary_min_usd'),
+    salaryMaxUsd: integer('salary_max_usd'),
+    salaryMedianUsd: integer('salary_median_usd'),
+    salaryCurrency: text('salary_currency').default('USD'),
+    salaryYear: integer('salary_year'),
+    salarySources: text('salary_sources'),
+    geographicBenchmarkScope: text('geographic_benchmark_scope'),
+    sampleSize: text('sample_size'),
+    confidenceLevel: text('confidence_level'),
+    dataRecency: text('data_recency'),
+    notes: text('notes'),
+    isActive: boolean('is_active').notNull().default(true),
+    validationStatus: validationStatusEnum('validation_status').notNull().default('draft'),
+    validatedBy: uuid('validated_by').references(() => users.id, { onDelete: 'set null' }),
+    validatedAt: timestamp('validated_at', { withTimezone: true }),
+    personaNumber: integer('persona_number'),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+    deletedAt: timestamp('deleted_at', { withTimezone: true }),
+  },
+  (table) => ({
+    tenantIdIdx: index('idx_personas_tenant_id').on(table.tenantId),
+    slugIdx: uniqueIndex('idx_personas_slug').on(table.slug),
+    isActiveIdx: index('idx_personas_is_active').on(table.isActive),
+    validationStatusIdx: index('idx_personas_validation_status').on(table.validationStatus),
+    roleIdIdx: index('idx_personas_role_id').on(table.roleId),
+    functionIdIdx: index('idx_personas_function_id').on(table.functionId),
+    departmentIdIdx: index('idx_personas_department_id').on(table.departmentId),
   })
 );
 
@@ -384,6 +480,7 @@ export const auditLogs = pgTable(
     requestId: uuid('request_id').notNull(),
     metadata: jsonb('metadata').notNull().default({}),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => ({
     tenantIdIdx: index('idx_audit_logs_tenant_id').on(table.tenantId),
@@ -455,6 +552,19 @@ export const tenantsRelations = relations(tenants, ({ many }) => ({
   conversations: many(conversations),
   agentMetrics: many(agentMetrics),
   auditLogs: many(auditLogs),
+  personas: many(personas), // Add relation to personas table
+}));
+
+export const personasRelations = relations(personas, ({ one, many }) => ({
+  tenant: one(tenants, {
+    fields: [personas.tenantId],
+    references: [tenants.id],
+  }),
+  validatedByUser: one(users, {
+    fields: [personas.validatedBy],
+    references: [users.id],
+  }),
+  // Add relations for junction tables here later
 }));
 
 export const usersRelations = relations(users, ({ one, many }) => ({
@@ -560,6 +670,10 @@ export type InsertDataSubjectRequest = InferInsertModel<typeof dataSubjectReques
 export type ConsentRecord = InferSelectModel<typeof consentRecords>;
 export type InsertConsentRecord = InferInsertModel<typeof consentRecords>;
 
+export type Persona = InferSelectModel<typeof personas>;
+export type InsertPersona = InferInsertModel<typeof personas>;
+
+
 // ============================================================================
 // ZOD SCHEMAS (Runtime Validation)
 // ============================================================================
@@ -605,3 +719,6 @@ export const selectDataSubjectRequestSchema = createSelectSchema(dataSubjectRequ
 
 export const insertConsentRecordSchema = createInsertSchema(consentRecords);
 export const selectConsentRecordSchema = createSelectSchema(consentRecords);
+
+export const insertPersonaSchema = createInsertSchema(personas);
+export const selectPersonaSchema = createSelectSchema(personas);

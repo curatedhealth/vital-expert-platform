@@ -242,8 +242,8 @@ function AskExpertPageContent() {
   // Default: Both OFF → Mode 1: Manual Interactive
   const [isAutomatic, setIsAutomatic] = useState(false);
   const [isAutonomous, setIsAutonomous] = useState(false);
-  const [enableRAG, setEnableRAG] = useState(true); // Enable RAG by default
-  const [enableTools, setEnableTools] = useState(true); // Tools enabled by default
+  const [enableRAG, setEnableRAG] = useState(false); // RAG disabled by default - user must enable
+  const [enableTools, setEnableTools] = useState(false); // Tools disabled by default - user must enable
   const [hasManualToolsToggle, setHasManualToolsToggle] = useState(false);
   const [attachments, setAttachments] = useState<File[]>([]);
   const [tokenCount, setTokenCount] = useState(0);
@@ -251,6 +251,10 @@ function AskExpertPageContent() {
   const [showSettings, setShowSettings] = useState(false);
   const [selectedTools, setSelectedTools] = useState<string[]>([]);
   const [selectedRagDomains, setSelectedRagDomains] = useState<string[]>([]);
+  const [allAvailableTools, setAllAvailableTools] = useState<string[]>([]);
+  const [allAvailableRagDomains, setAllAvailableRagDomains] = useState<string[]>([]);
+  const [loadingTools, setLoadingTools] = useState(false);
+  const [loadingRagDomains, setLoadingRagDomains] = useState(false);
   const [streamingMeta, setStreamingMeta] = useState<{
     ragSummary?: NonNullable<Message['metadata']>['ragSummary'];
     toolSummary?: NonNullable<Message['metadata']>['toolSummary'];
@@ -390,50 +394,65 @@ function AskExpertPageContent() {
     []
   );
 
-  const availableTools = useMemo(() => {
-    if (!selectedAgents.length) {
-      return [] as string[];
-    }
-
-    const toolSet = new Set<string>();
-    selectedAgents.forEach((agentId) => {
-      const agent = agents.find((a) => a.id === agentId);
-      if (agent?.tools && Array.isArray(agent.tools)) {
-        agent.tools.forEach((tool) => {
-          if (typeof tool === 'string' && tool.trim().length > 0) {
-            toolSet.add(tool.trim());
-          }
-        });
+  // Fetch all available tools from database
+  useEffect(() => {
+    const fetchAllTools = async () => {
+      try {
+        setLoadingTools(true);
+        const response = await fetch('/api/tools-crud?limit=10000');
+        if (response.ok) {
+          const data = await response.json();
+          const toolNames = (data.tools || []).map((tool: any) => tool.name || tool.slug).filter(Boolean);
+          setAllAvailableTools(toolNames);
+        } else {
+          console.error('Failed to fetch tools:', response.statusText);
+        }
+      } catch (error) {
+        console.error('Error fetching tools:', error);
+      } finally {
+        setLoadingTools(false);
       }
-    });
+    };
 
-    return Array.from(toolSet).sort((a, b) => a.localeCompare(b));
-  }, [agents, selectedAgents]);
+    fetchAllTools();
+  }, []);
+
+  // Fetch all available RAG domains from database
+  useEffect(() => {
+    const fetchAllRagDomains = async () => {
+      try {
+        setLoadingRagDomains(true);
+        const response = await fetch('/api/knowledge-domains');
+        if (response.ok) {
+          const data = await response.json();
+          const domainNames = (data.domains || []).map((domain: any) => domain.name).filter(Boolean);
+          setAllAvailableRagDomains(domainNames);
+        } else {
+          console.error('Failed to fetch RAG domains:', response.statusText);
+        }
+      } catch (error) {
+        console.error('Error fetching RAG domains:', error);
+      } finally {
+        setLoadingRagDomains(false);
+      }
+    };
+
+    fetchAllRagDomains();
+  }, []);
+
+  // Use all available tools from database (not just from selected agents)
+  const availableTools = useMemo(() => {
+    // Return all tools from database, sorted
+    return Array.from(new Set(allAvailableTools)).sort((a, b) => a.localeCompare(b));
+  }, [allAvailableTools]);
 
   useEffect(() => {
-    if (availableTools.length === 0) {
-      setSelectedTools([]);
-      if (enableTools) {
-        setEnableTools(false);
-      }
-      if (hasManualToolsToggle) {
-        setHasManualToolsToggle(false);
-      }
-      return;
-    }
-
-    if (!hasManualToolsToggle && !enableTools) {
-      setEnableTools(true);
-    }
-
+    // Update selected tools to only include valid ones (remove invalid selections)
     setSelectedTools((prev) => {
       const valid = prev.filter((tool) => availableTools.includes(tool));
-      if (valid.length > 0) {
-        return valid;
-      }
-      return [...availableTools];
+      return valid;
     });
-  }, [availableTools, enableTools, hasManualToolsToggle]);
+  }, [availableTools]);
 
   const currentMode = useMemo(() => {
     if (isAutonomous && isAutomatic) {
@@ -532,42 +551,19 @@ function AskExpertPageContent() {
     followUpSuggestions.length > 0 &&
     (hasAssistantResponse || Boolean(streamingMessage && streamingMessage.trim().length > 0));
 
+  // Use all available RAG domains from database (not just from selected agents)
   const availableRagDomains = useMemo(() => {
-    if (!selectedAgents.length) {
-      return [] as string[];
-    }
-
-    const domainSet = new Set<string>();
-    selectedAgents.forEach((agentId) => {
-      const agent = agents.find((a) => a.id === agentId);
-      if (agent?.knowledge_domains && Array.isArray(agent.knowledge_domains)) {
-        agent.knowledge_domains
-          .map((domain) => (typeof domain === 'string' ? domain.trim() : ''))
-          .filter((domain) => domain.length > 0)
-          .forEach((domain) => domainSet.add(domain));
-      }
-    });
-
-    return Array.from(domainSet).sort((a, b) => a.localeCompare(b));
-  }, [agents, selectedAgents]);
+    // Return all RAG domains from database, sorted
+    return Array.from(new Set(allAvailableRagDomains)).sort((a, b) => a.localeCompare(b));
+  }, [allAvailableRagDomains]);
 
   useEffect(() => {
-    if (availableRagDomains.length === 0) {
-      setSelectedRagDomains([]);
-      if (enableRAG) {
-        setEnableRAG(false);
-      }
-      return;
-    }
-
+    // Update selected RAG domains to only include valid ones (remove invalid selections)
     setSelectedRagDomains((prev) => {
       const valid = prev.filter((domain) => availableRagDomains.includes(domain));
-      if (valid.length > 0) {
-        return valid;
-      }
-      return [...availableRagDomains];
+      return valid;
     });
-  }, [availableRagDomains, enableRAG]);
+  }, [availableRagDomains]);
 
   useEffect(() => {
     if (messages.length === 0 && showArtifactGenerator) {

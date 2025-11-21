@@ -23,6 +23,7 @@ export async function GET(request: NextRequest) {
     const tenantId = request.headers.get('x-tenant-id') || request.cookies.get('tenant_id')?.value;
 
     // Build query - select only columns that exist
+    // Only return domains that have associated knowledge sources with content
     let query = supabase
       .from('knowledge_domains')
       .select('id, name')
@@ -44,9 +45,47 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    // Filter domains to only include those with content (knowledge sources)
+    if (domains && domains.length > 0) {
+      const domainNames = domains.map((d: any) => d.name);
+      
+      // Check which domains have knowledge sources with content
+      const { data: sources, error: sourcesError } = await supabase
+        .from('knowledge_sources')
+        .select('domain')
+        .in('domain', domainNames)
+        .eq('is_active', true)
+        .not('processing_status', 'eq', 'failed');
+
+      if (sourcesError) {
+        console.error('Error checking knowledge sources:', sourcesError);
+        // If check fails, return empty array to be safe
+        return NextResponse.json({
+          domains: [],
+          count: 0,
+        });
+      } else if (sources && sources.length > 0) {
+        // Get unique domains that have sources
+        const domainsWithContent = new Set(sources.map((s: any) => s.domain));
+        // Filter domains to only those with content
+        const filteredDomains = domains.filter((d: any) => domainsWithContent.has(d.name));
+        return NextResponse.json({
+          domains: filteredDomains,
+          count: filteredDomains.length,
+        });
+      } else {
+        // No sources found, return empty array
+        return NextResponse.json({
+          domains: [],
+          count: 0,
+        });
+      }
+    }
+
+    // No domains found
     return NextResponse.json({
-      domains: domains || [],
-      count: domains?.length || 0,
+      domains: [],
+      count: 0,
     });
   } catch (error) {
     console.error('Unexpected error in knowledge-domains API:', error);

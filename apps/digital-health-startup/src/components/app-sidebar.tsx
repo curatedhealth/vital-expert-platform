@@ -26,6 +26,7 @@ import {
   SidebarDesignerContent,
   SidebarServiceTemplatesContent,
 } from "@/components/sidebar-view-content"
+import { SidebarPersonasContent } from "@/components/sidebar-view-content/sidebar-personas-content"
 
 export function AppSidebar({
   className,
@@ -88,6 +89,9 @@ export function AppSidebar({
     }
     if (pathname.startsWith("/service-templates")) {
       return <SidebarServiceTemplatesContent />
+    }
+    if (pathname.startsWith("/personas")) {
+      return <SidebarPersonasContent />
     }
     return <SidebarDashboardContent />
   }

@@ -18,7 +18,14 @@ pnpm dev
 ./scripts/verify-rls.sh production
 ```
 
-**📚 Full Documentation**: See [`DOCUMENTATION_INDEX.md`](./DOCUMENTATION_INDEX.md) for comprehensive navigation
+**📚 Full Documentation**: See [`.vital-cockpit/INDEX.md`](.vital-cockpit/INDEX.md) for comprehensive navigation
+
+> **🎛️ VITAL Cockpit**: All documentation, operations, and DevOps resources consolidated into [`.vital-cockpit/`](.vital-cockpit/)  
+> - **📚 Documentation**: [`.vital-cockpit/vital-expert-docs/`](.vital-cockpit/vital-expert-docs/)  
+> - **🔧 Operations**: [`.vital-cockpit/.vital-ops/`](.vital-cockpit/.vital-ops/)  
+> - **📦 Archives**: [`.vital-cockpit/_archive/`](.vital-cockpit/_archive/)  
+> 
+> **Quick Start**: See [CONSOLIDATION_SUMMARY.md](CONSOLIDATION_SUMMARY.md) | [STRUCTURE.md](STRUCTURE.md)
 
 ---
 

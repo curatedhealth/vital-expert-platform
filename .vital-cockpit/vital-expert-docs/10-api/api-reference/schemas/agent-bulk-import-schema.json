@@ -1,0 +1,697 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://vitalpath.com/schemas/agent-bulk-import.json",
+  "title": "VITALpath Agent Bulk Import Schema",
+  "description": "Schema for importing agents into the VITALpath digital health platform",
+  "type": "object",
+  "required": ["agents", "metadata"],
+  "properties": {
+    "agents": {
+      "type": "array",
+      "description": "Array of agent configurations to import",
+      "minItems": 1,
+      "maxItems": 100,
+      "items": {
+        "$ref": "#/definitions/Agent"
+      }
+    },
+    "metadata": {
+      "$ref": "#/definitions/ImportMetadata"
+    }
+  },
+  "definitions": {
+    "Agent": {
+      "type": "object",
+      "required": ["name", "display_name", "description", "domain_expertise", "model", "system_prompt", "capabilities"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "pattern": "^[a-z0-9-]+$",
+          "minLength": 3,
+          "maxLength": 255,
+          "description": "Unique lowercase hyphenated identifier"
+        },
+        "display_name": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 255,
+          "description": "Human-readable name"
+        },
+        "description": {
+          "type": "string",
+          "minLength": 10,
+          "maxLength": 1000,
+          "description": "Brief description of agent purpose and capabilities"
+        },
+        "avatar": {
+          "type": "string",
+          "maxLength": 100,
+          "description": "Emoji or icon representing the agent"
+        },
+        "color": {
+          "type": "string",
+          "pattern": "^#[0-9A-Fa-f]{6}$",
+          "description": "Hex color code for agent branding"
+        },
+        "version": {
+          "type": "string",
+          "pattern": "^\\d+\\.\\d+\\.\\d+$",
+          "description": "Semantic version number"
+        },
+        "domain_expertise": {
+          "type": "string",
+          "enum": ["medical", "regulatory", "legal", "financial", "business", "technical", "commercial", "access", "general"],
+          "description": "Primary domain of expertise"
+        },
+        "model": {
+          "type": "string",
+          "enum": ["gpt-4", "gpt-4-turbo", "gpt-3.5-turbo", "claude-3-opus", "claude-3-sonnet", "claude-3-haiku"],
+          "description": "AI model to use"
+        },
+        "system_prompt": {
+          "type": "string",
+          "minLength": 10,
+          "maxLength": 10000,
+          "description": "System prompt defining agent behavior and instructions"
+        },
+        "temperature": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Model temperature (0-1) controlling randomness"
+        },
+        "max_tokens": {
+          "type": "integer",
+          "minimum": 100,
+          "maximum": 10000,
+          "description": "Maximum response tokens"
+        },
+        "rag_enabled": {
+          "type": "boolean",
+          "description": "Whether retrieval-augmented generation is enabled"
+        },
+        "context_window": {
+          "type": "integer",
+          "minimum": 1000,
+          "maximum": 100000,
+          "description": "Context window size in tokens"
+        },
+        "response_format": {
+          "type": "string",
+          "enum": ["markdown", "json", "text", "html"],
+          "description": "Default response format"
+        },
+        "capabilities": {
+          "type": "array",
+          "items": {"type": "string"},
+          "minItems": 1,
+          "maxItems": 20,
+          "description": "List of agent capabilities"
+        },
+        "knowledge_domains": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "Knowledge domain tags"
+        },
+        "competency_levels": {
+          "type": "object",
+          "description": "Competency levels in different areas"
+        },
+        "knowledge_sources": {
+          "type": "object",
+          "description": "Knowledge source configurations"
+        },
+        "tool_configurations": {
+          "type": "object",
+          "description": "Tool integration configurations"
+        },
+        "business_function": {
+          "type": "string",
+          "maxLength": 100,
+          "description": "Business function or department"
+        },
+        "role": {
+          "type": "string",
+          "maxLength": 100,
+          "description": "Specific role or position"
+        },
+        "tier": {
+          "type": "integer",
+          "enum": [1, 2, 3],
+          "description": "Priority tier (1=highest)"
+        },
+        "priority": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 999,
+          "description": "Sort priority within tier"
+        },
+        "implementation_phase": {
+          "type": "integer",
+          "enum": [1, 2, 3],
+          "description": "Implementation phase"
+        },
+        "is_custom": {
+          "type": "boolean",
+          "description": "Whether this is a custom agent"
+        },
+        "cost_per_query": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Cost per query in dollars"
+        },
+        "target_users": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "Target user groups or roles"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["development", "testing", "active", "deprecated"],
+          "description": "Agent lifecycle status"
+        },
+        "validation_status": {
+          "type": "string",
+          "enum": ["validated", "pending", "in_review", "expired", "not_required"],
+          "description": "Validation status"
+        },
+        "validation_metadata": {
+          "$ref": "#/definitions/ValidationMetadata"
+        },
+        "performance_metrics": {
+          "$ref": "#/definitions/PerformanceMetrics"
+        },
+        "accuracy_score": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Overall accuracy score (0-1)"
+        },
+        "evidence_required": {
+          "type": "boolean",
+          "description": "Whether evidence is required for responses"
+        },
+        "regulatory_context": {
+          "$ref": "#/definitions/RegulatoryContext"
+        },
+        "compliance_tags": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "Compliance and regulatory tags"
+        },
+        "hipaa_compliant": {
+          "type": "boolean",
+          "description": "HIPAA compliance status"
+        },
+        "gdpr_compliant": {
+          "type": "boolean",
+          "description": "GDPR compliance status"
+        },
+        "audit_trail_enabled": {
+          "type": "boolean",
+          "description": "Whether audit trail is enabled"
+        },
+        "data_classification": {
+          "type": "string",
+          "enum": ["public", "internal", "confidential", "restricted"],
+          "description": "Data classification level"
+        },
+        "medical_specialty": {
+          "type": "string",
+          "maxLength": 100,
+          "description": "Medical specialty (for medical domain agents)"
+        },
+        "pharma_enabled": {
+          "type": "boolean",
+          "description": "PHARMA protocol enabled (for medical agents)"
+        },
+        "verify_enabled": {
+          "type": "boolean",
+          "description": "VERIFY protocol enabled (for medical agents)"
+        },
+        "jurisdiction_coverage": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "Legal jurisdictions covered (for legal agents)"
+        },
+        "legal_domains": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "Legal practice areas (for legal agents)"
+        },
+        "bar_admissions": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "Bar admissions (for legal agents)"
+        },
+        "legal_specialties": {
+          "$ref": "#/definitions/LegalSpecialties"
+        },
+        "market_segments": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "Market segments (for commercial agents)"
+        },
+        "customer_segments": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "Customer segments (for commercial agents)"
+        },
+        "sales_methodology": {
+          "type": "string",
+          "maxLength": 100,
+          "description": "Sales methodology (for commercial agents)"
+        },
+        "geographic_focus": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "Geographic focus areas"
+        },
+        "payer_types": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "Payer types (for market access agents)"
+        },
+        "reimbursement_models": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "Reimbursement models (for market access agents)"
+        },
+        "coverage_determination_types": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "Coverage determination types (for market access agents)"
+        },
+        "hta_experience": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "Health Technology Assessment experience"
+        },
+        "confidence_thresholds": {
+          "$ref": "#/definitions/ConfidenceThresholds"
+        },
+        "rate_limits": {
+          "$ref": "#/definitions/RateLimits"
+        },
+        "escalation_rules": {
+          "type": "object",
+          "description": "Escalation rules configuration"
+        },
+        "input_validation_rules": {
+          "type": "object",
+          "description": "Input validation rules"
+        },
+        "output_format_rules": {
+          "type": "object",
+          "description": "Output formatting rules"
+        },
+        "citation_requirements": {
+          "type": "object",
+          "description": "Citation and reference requirements"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "domain_expertise": {"const": "medical"}
+            }
+          },
+          "then": {
+            "required": ["medical_specialty"],
+            "properties": {
+              "accuracy_score": {"minimum": 0.95},
+              "hipaa_compliant": {"const": true}
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "domain_expertise": {"const": "legal"}
+            }
+          },
+          "then": {
+            "required": ["jurisdiction_coverage", "legal_domains"],
+            "properties": {
+              "accuracy_score": {"minimum": 0.98},
+              "audit_trail_enabled": {"const": true}
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "domain_expertise": {"const": "regulatory"}
+            }
+          },
+          "then": {
+            "properties": {
+              "accuracy_score": {"minimum": 0.97},
+              "audit_trail_enabled": {"const": true}
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "domain_expertise": {"const": "financial"}
+            }
+          },
+          "then": {
+            "properties": {
+              "accuracy_score": {"minimum": 0.95},
+              "audit_trail_enabled": {"const": true}
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "domain_expertise": {"const": "commercial"}
+            }
+          },
+          "then": {
+            "required": ["market_segments", "sales_methodology"],
+            "properties": {
+              "accuracy_score": {"minimum": 0.90}
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "domain_expertise": {"const": "access"}
+            }
+          },
+          "then": {
+            "required": ["payer_types", "reimbursement_models"],
+            "properties": {
+              "accuracy_score": {"minimum": 0.95}
+            }
+          }
+        }
+      ]
+    },
+    "ImportMetadata": {
+      "type": "object",
+      "required": ["version", "created_date", "created_by", "total_agents"],
+      "properties": {
+        "version": {
+          "type": "string",
+          "pattern": "^\\d+\\.\\d+$",
+          "description": "Schema version"
+        },
+        "created_date": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO date when file was created"
+        },
+        "created_by": {
+          "type": "string",
+          "format": "email",
+          "description": "Email of file creator"
+        },
+        "last_modified": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO date when file was last modified"
+        },
+        "total_agents": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Total number of agents in file"
+        },
+        "deployment_phase": {
+          "type": "string",
+          "maxLength": 100,
+          "description": "Deployment phase description"
+        },
+        "validation_status": {
+          "type": "string",
+          "enum": ["validated", "pending", "draft"],
+          "description": "Overall validation status of the import"
+        },
+        "import_mode": {
+          "type": "string",
+          "enum": ["create", "update", "upsert"],
+          "description": "How to handle existing agents"
+        },
+        "domain_focus": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["medical", "regulatory", "legal", "financial", "business", "technical", "commercial", "access", "general"]
+          },
+          "description": "Primary domains in this import"
+        },
+        "target_environment": {
+          "type": "string",
+          "enum": ["development", "staging", "production"],
+          "description": "Target deployment environment"
+        },
+        "rollback_enabled": {
+          "type": "boolean",
+          "description": "Whether rollback is enabled for this import"
+        },
+        "dependencies": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "Dependencies or prerequisites for this import"
+        }
+      }
+    },
+    "ValidationMetadata": {
+      "type": "object",
+      "required": ["type", "validated_by", "validation_date", "scope"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["clinical", "regulatory", "technical", "business", "financial", "legal"],
+          "description": "Type of validation performed"
+        },
+        "validated_by": {
+          "type": "string",
+          "description": "Identifier of validator"
+        },
+        "validation_date": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Date of validation"
+        },
+        "expiry_date": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Validation expiry date"
+        },
+        "scope": {
+          "type": "string",
+          "description": "Scope of validation"
+        },
+        "notes": {
+          "type": "string",
+          "maxLength": 1000,
+          "description": "Validation notes"
+        },
+        "evidence_links": {
+          "type": "array",
+          "items": {"type": "string", "format": "uri"},
+          "description": "Links to validation evidence"
+        },
+        "certification_level": {
+          "type": "string",
+          "enum": ["basic", "intermediate", "advanced", "expert"],
+          "description": "Certification level achieved"
+        }
+      }
+    },
+    "PerformanceMetrics": {
+      "type": "object",
+      "required": ["accuracy"],
+      "properties": {
+        "accuracy": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Overall accuracy score"
+        },
+        "hallucination_rate": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Rate of hallucinated responses"
+        },
+        "citation_accuracy": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Accuracy of citations provided"
+        },
+        "confidence_calibration": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "How well confidence correlates with accuracy"
+        },
+        "domain_expertise_score": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Domain-specific expertise score"
+        },
+        "response_quality": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Overall response quality score"
+        },
+        "response_time_p95": {
+          "type": "number",
+          "minimum": 0,
+          "description": "95th percentile response time in milliseconds"
+        },
+        "error_recovery_rate": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Rate of successful error recovery"
+        },
+        "user_satisfaction": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "User satisfaction score"
+        },
+        "calculation_precision": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Precision of calculations (for financial agents)"
+        }
+      }
+    },
+    "RegulatoryContext": {
+      "type": "object",
+      "required": ["is_regulated"],
+      "properties": {
+        "is_regulated": {
+          "type": "boolean",
+          "description": "Whether the agent operates in a regulated context"
+        },
+        "risk_level": {
+          "type": "string",
+          "enum": ["low", "medium", "high", "critical"],
+          "description": "Risk level classification"
+        },
+        "applicable_frameworks": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "Applicable regulatory frameworks"
+        },
+        "classifications": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["framework"],
+            "properties": {
+              "framework": {"type": "string"},
+              "class": {"type": "string"},
+              "region": {"type": "string"},
+              "authority": {"type": "string"},
+              "effective_date": {"type": "string", "format": "date"},
+              "expiry_date": {"type": "string", "format": "date"}
+            }
+          }
+        },
+        "compliance_requirements": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "Specific compliance requirements"
+        },
+        "audit_frequency": {
+          "type": "string",
+          "enum": ["monthly", "quarterly", "annually", "as_needed"],
+          "description": "Required audit frequency"
+        }
+      }
+    },
+    "LegalSpecialties": {
+      "type": "object",
+      "required": ["practice_areas"],
+      "properties": {
+        "practice_areas": {
+          "type": "array",
+          "items": {"type": "string"},
+          "minItems": 1,
+          "description": "Legal practice areas"
+        },
+        "years_experience": {
+          "type": "object",
+          "patternProperties": {
+            ".*": {"type": "number", "minimum": 0}
+          },
+          "description": "Years of experience in each practice area"
+        },
+        "certifications": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "Professional certifications"
+        },
+        "court_admissions": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "Court admissions"
+        }
+      }
+    },
+    "ConfidenceThresholds": {
+      "type": "object",
+      "required": ["low", "medium", "high"],
+      "properties": {
+        "low": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Low confidence threshold"
+        },
+        "medium": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Medium confidence threshold"
+        },
+        "high": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "High confidence threshold"
+        }
+      }
+    },
+    "RateLimits": {
+      "type": "object",
+      "properties": {
+        "per_minute": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Requests per minute"
+        },
+        "per_hour": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Requests per hour"
+        },
+        "per_day": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Requests per day"
+        },
+        "burst_limit": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Burst limit for short periods"
+        }
+      }
+    }
+  }
+}

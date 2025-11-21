@@ -2002,12 +2002,32 @@ export const WorkflowBuilder: React.FC<WorkflowBuilderProps> = ({ apiBaseUrl, in
         .then(res => {
           if (!res.ok) {
             // 404 is expected for workflows that don't exist yet - fallback to default
-            if (res.status === 404) {
-              throw new Error('WORKFLOW_NOT_FOUND'); // Special error to trigger fallback
+            // 500 errors also trigger fallback (backend might be unavailable or endpoint missing)
+            if (res.status === 404 || res.status === 500) {
+              const errorType = res.status === 404 ? 'WORKFLOW_NOT_FOUND' : 'BACKEND_ERROR';
+              console.warn(`[WorkflowBuilder] Backend returned ${res.status} for workflow ${workflowId}, falling back to default`);
+              throw new Error(errorType); // Special error to trigger fallback
             }
-            throw new Error(`Failed to load workflow: ${res.statusText}`);
+            // For other errors, try to get more details
+            return res.text().then(text => {
+              try {
+                const errorData = JSON.parse(text);
+                throw new Error(`Failed to load workflow: ${errorData.error || res.statusText}`);
+              } catch {
+                throw new Error(`Failed to load workflow: ${res.status} ${res.statusText}`);
+              }
+            });
           }
           return res.json();
+        })
+        .catch(err => {
+          // Handle network errors and other fetch failures
+          if (err.name === 'TypeError' && err.message.includes('fetch')) {
+            console.warn('[WorkflowBuilder] Network error fetching workflow, falling back to default:', err.message);
+            throw new Error('NETWORK_ERROR');
+          }
+          // Re-throw other errors
+          throw err;
         })
         .then(workflow => {
           // Check if workflow is empty
@@ -2066,11 +2086,16 @@ export const WorkflowBuilder: React.FC<WorkflowBuilderProps> = ({ apiBaseUrl, in
           }
         })
         .catch(err => {
-          // Only log non-404 errors as errors (404 is expected for new workflows)
-          if (err.message !== 'WORKFLOW_NOT_FOUND') {
-            console.error('Error loading workflow from backend:', err);
+          // Handle different error types - all should fallback to default workflow
+          if (err.message === 'WORKFLOW_NOT_FOUND' || err.message === 'BACKEND_ERROR' || err.message === 'NETWORK_ERROR') {
+            const reason = err.message === 'WORKFLOW_NOT_FOUND' 
+              ? 'not found in backend' 
+              : err.message === 'BACKEND_ERROR'
+              ? 'backend error (500)'
+              : 'network error';
+            console.log(`[WorkflowBuilder] Workflow ${reason}, creating default panel workflow for type: ${useCaseType}`);
           } else {
-            console.log(`Workflow not found in backend, creating default panel workflow for type: ${useCaseType}`);
+            console.warn('[WorkflowBuilder] Error loading workflow from backend, falling back to default:', err.message);
           }
           
           // Use factory function to create default panel workflow

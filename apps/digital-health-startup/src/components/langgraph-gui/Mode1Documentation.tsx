@@ -36,7 +36,7 @@ export function Mode1Documentation({ isOpen, onClose }: Mode1DocumentationProps)
             Ask Expert Mode 1: Interactive Manual - Documentation
           </DialogTitle>
           <DialogDescription>
-            Comprehensive workflow visualization and implementation guide
+            Focused Expert Conversation - You select the expert and have a multi-turn conversation
           </DialogDescription>
         </DialogHeader>
 
@@ -61,7 +61,7 @@ export function Mode1Documentation({ isOpen, onClose }: Mode1DocumentationProps)
                 <div className="bg-muted/50 p-4 rounded-lg">
                   <h4 className="font-semibold mb-2">What is Mode 1?</h4>
                   <p className="text-sm text-muted-foreground mb-3">
-                    <strong>Mode 1: Interactive Manual</strong> is a conversational AI service where:
+                    <strong>Mode 1: Interactive Manual</strong> ("Focused Expert Conversation") is a conversational AI service where:
                   </p>
                   <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground ml-2">
                     <li>User explicitly selects a specific expert agent</li>

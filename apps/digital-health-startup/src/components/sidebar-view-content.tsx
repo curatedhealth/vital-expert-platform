@@ -260,41 +260,35 @@ export function SidebarDesignerContent() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isCreatingWorkflow, setIsCreatingWorkflow] = useState(false);
 
-  // Define Ask Expert Modes
+  // Define Ask Expert Modes (aligned with 4_MODE_SYSTEM_FINAL.md)
   const askExpertModes = [
     {
-      id: 'mode-1-query-automatic',
-      name: 'Mode 1: Query Automatic',
-      description: 'Automatic expert selection with parallel consultation',
-      icon: Zap,
+      id: 'mode-1-interactive-manual',
+      name: 'Mode 1: Interactive Manual',
+      description: 'Focused Expert Conversation - You select the expert and have a multi-turn conversation',
+      icon: UserCheck,
       workflowId: 'mode1_ask_expert', // Links to Mode 1 workflow template
     },
     {
-      id: 'mode-2-query-manual',
-      name: 'Mode 2: Query Manual',
-      description: 'Single expert consultation with focused response',
-      icon: UserCheck,
+      id: 'mode-2-interactive-automatic',
+      name: 'Mode 2: Interactive Automatic',
+      description: 'Smart Expert Discussion - AI selects best expert(s) for multi-turn conversation',
+      icon: Zap,
       workflowId: 'mode2_ask_expert', // Links to Mode 2 workflow template
     },
     {
-      id: 'mode-3-chat-automatic',
-      name: 'Mode 3: Chat Automatic',
-      description: 'Multi-turn conversation with dynamic expert switching',
-      icon: MessageSquare,
+      id: 'mode-3-autonomous-manual',
+      name: 'Mode 3: Autonomous Manual',
+      description: 'Expert-Driven Workflow - You select the expert for goal-driven autonomous execution',
+      icon: Rocket,
       workflowId: 'mode3_ask_expert', // Links to Mode 3 workflow template
     },
     {
-      id: 'mode-4-chat-manual',
-      name: 'Mode 4: Chat Manual',
-      description: 'Extended conversation with dedicated expert',
+      id: 'mode-4-autonomous-automatic',
+      name: 'Mode 4: Autonomous Automatic',
+      description: 'AI Collaborative Workflow - AI assembles team of experts for complex goal-driven execution',
       icon: MessageSquare,
       workflowId: 'mode4_ask_expert', // Links to Mode 4 workflow template
-    },
-    {
-      id: 'mode-5-agent-autonomous',
-      name: 'Mode 5: Agent Autonomous',
-      description: 'Autonomous agent with multi-step workflow execution',
-      icon: Rocket,
     },
   ];
 
@@ -531,12 +525,12 @@ export function SidebarDesignerContent() {
       }
     } else {
       // Dispatch event to open documentation modal
-      // Simple direct mapping based on mode number
+      // Direct mapping based on mode number
       const modeDocMap: Record<string, string> = {
-        'mode-2-query-manual': 'mode2',     // Mode 2 → Mode 2 docs
-        'mode-3-chat-automatic': 'mode3',  // Mode 3 → Mode 3 docs
-        'mode-4-chat-manual': 'mode4',     // Mode 4 → Mode 4 docs
-        'mode-5-agent-autonomous': 'mode4', // Mode 5 → Mode 4 docs (closest match)
+        'mode-1-interactive-manual': 'mode1',     // Mode 1 → Mode 1 docs
+        'mode-2-interactive-automatic': 'mode2',  // Mode 2 → Mode 2 docs
+        'mode-3-autonomous-manual': 'mode3',      // Mode 3 → Mode 3 docs
+        'mode-4-autonomous-automatic': 'mode4',   // Mode 4 → Mode 4 docs
       };
 
       const docMode = modeDocMap[mode.id];

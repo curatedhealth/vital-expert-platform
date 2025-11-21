@@ -1,0 +1,268 @@
+{
+  "tenant_id": "digital-health-startup",
+  "org_id": "clinical-dev",
+  "project_id": "biomarker-validation-program",
+  "product_id": "biomarker-suite-v1",
+  "environment": "prod",
+  "domain": "Clinical Development",
+  "use_case": {
+    "code": "UC_CD_002",
+    "title": "Digital Biomarker Validation Strategy (DiMe V3 Framework)",
+    "summary": "Prompt-driven, DiMe V3-aligned workflow to verify, analytically validate, and clinically validate digital biomarkers derived from wearables, sensors, or apps for regulatory acceptance and clinical utility.",
+    "complexity": "Expert",
+    "version": "v1.0",
+    "status": "approved",
+    "tags": ["digital-biomarker","validation","FDA","DiMe","FORGE"],
+    "therapeutic_area": "Digital Health / Multi-Indication",
+    "indication": "Generic — framework applicable to any digital biomarker",
+    "phase": "Validation",
+    "regulatory_references": [
+      "DiMe V3 Framework (2021)",
+      "21st Century Cures Act (2016)",
+      "FDA Digital Health Innovation Action Plan (2017)",
+      "FDA Guidance: Clinical Decision Support Software (2019)"
+    ],
+    "compliance_flags": {"hipaa": true, "gdpr": true, "part11": true, "gxp": "device"},
+    "data_classification": {"phi": false, "pii": true, "sensitivity": "medium"},
+    "owners": ["role:DTXCMO"],
+    "reviewers": ["role:DATASC","role:CLINRES","role:REGDIR"],
+    "approvers": ["role:Head_Medical_Affairs"],
+    "change_log": [
+      {"at": "2025-10-12T00:00:00Z", "by": "system", "note": "Initial version 1.0 approved"}
+    ],
+    "workflows": [
+      {
+        "name": "Digital Biomarker Validation Workflow (V1–V3)",
+        "description": "Nine-step process covering intended-use definition, V1 verification, V2 analytical validation, V3 clinical validation, and regulatory submission preparation.",
+        "sla": {"target_duration_hours": 480, "quality_gate_pass_rate": 0.95},
+        "templates": {
+          "documents": [
+            {"name": "Intended Use Template", "template_id": "biomarker_intent_v1", "link": "drive://templates/biomarker_intent.docx"},
+            {"name": "Verification Protocol", "template_id": "v1_protocol_v1", "link": "drive://templates/verification_protocol.docx"},
+            {"name": "Analytical Validation Protocol", "template_id": "v2_protocol_v1", "link": "drive://templates/analytical_validation_protocol.docx"},
+            {"name": "Clinical Validation Protocol", "template_id": "v3_protocol_v1", "link": "drive://templates/clinical_validation_protocol.docx"},
+            {"name": "FDA Pre-Submission Package", "template_id": "presub_pkg_v1", "link": "drive://templates/fda_presub.docx"}
+          ],
+          "prompts": [{"name": "Intended_Use_Definition", "template_id": "prompt_uc02_1_1"}],
+          "reports": [{"name": "Digital Biomarker Validation Report", "template_id": "validation_report_v1"}]
+        },
+        "rag_sources": [
+          {"id": "DiMe_V3", "title": "DiMe V3 Framework", "link": "https://www.dimesociety.org/", "kind": "framework"},
+          {"id": "FDA_RWE_2021", "title": "FDA Draft Guidance on Real-World Data (2021)", "link": "https://www.fda.gov/", "kind": "guidance"}
+        ],
+        "tasks": [
+          {
+            "code": "T1",
+            "title": "Define Intended Use & Context of Use",
+            "objective": "Clarify digital biomarker’s construct, population, endpoint type, and regulatory pathway.",
+            "agents": ["P06_DTXCMO"],
+            "tools": ["PICO Framework","Intended Use Template"],
+            "inputs": [
+              {"name": "Digital Measure Concept Note", "content_type": "application/pdf", "required": true}
+            ],
+            "outputs": [
+              {"name": "Intended Use Document", "artifact_kind": "doc", "content_type": "application/pdf", "schema_uri": "https://schema.dhx.io/intended_use.schema.json"}
+            ],
+            "prompts": [
+              {
+                "name": "Intended_Use_Definition",
+                "pattern": "CoT",
+                "prompt_id": "uc02_1_1",
+                "system_prompt": "You are a DTx Chief Medical Officer defining the Intended Use and Context of Use for a digital biomarker.",
+                "user_template": "Draft Intended Use statement and determine validation level (V1/V2/V3) for {biomarker_name}.",
+                "model_config": {"model": "gpt-5", "temperature": 0.2}
+              }
+            ],
+            "kpis": {"Intended_Use_Clarity(%)": 100}
+          },
+          {
+            "code": "T2",
+            "title": "Design Verification Study (V1)",
+            "objective": "Plan accuracy, precision, and data-quality testing against gold standard comparators.",
+            "agents": ["P07_DATASC"],
+            "tools": ["Verification Protocol Template"],
+            "dependencies": ["T1"],
+            "inputs": [{"name": "Intended Use Document", "content_type": "application/pdf"}],
+            "outputs": [{"name": "Verification Protocol (V1)", "artifact_kind": "doc", "content_type": "application/pdf"}],
+            "prompts": [
+              {
+                "name": "Verification_Study_Design",
+                "pattern": "CoT",
+                "prompt_id": "uc02_2_1",
+                "system_prompt": "You are a Data Scientist designing a digital biomarker verification protocol.",
+                "user_template": "Define comparator, sample size, and ICC/Bland-Altman criteria for {biomarker_name}.",
+                "model_config": {"model": "gpt-5", "temperature": 0.25}
+              }
+            ],
+            "kpis": {"ICC_Target": 0.85}
+          },
+          {
+            "code": "T3",
+            "title": "Execute Verification & Analysis",
+            "objective": "Conduct data collection and statistical analyses (ICC, Bland-Altman, correlation).",
+            "agents": ["P07_DATASC"],
+            "tools": ["Python","R","Bland-Altman Toolkit"],
+            "dependencies": ["T2"],
+            "inputs": [{"name": "Verification Protocol (V1)", "content_type": "application/pdf"}],
+            "outputs": [{"name": "Verification Report (V1)", "artifact_kind": "doc", "content_type": "application/pdf"}],
+            "prompts": [
+              {
+                "name": "Verification_Data_Analysis",
+                "pattern": "Code-Assist",
+                "prompt_id": "uc02_3_1",
+                "system_prompt": "You are analyzing digital vs. gold-standard data for verification.",
+                "user_template": "Compute ICC, bias, limits of agreement, and data-quality metrics for {biomarker_name}."
+              }
+            ],
+            "kpis": {"ICC_Result": 0.9, "Missing_Data(%)": 5}
+          },
+          {
+            "code": "T4",
+            "title": "Design Analytical Validation Study (V2)",
+            "objective": "Plan construct, convergent, and divergent validity analyses.",
+            "agents": ["P08_CLINRES"],
+            "tools": ["Analytical Validation Protocol Template"],
+            "dependencies": ["T3"],
+            "outputs": [{"name": "Analytical Validation Protocol (V2)", "artifact_kind": "doc", "content_type": "application/pdf"}],
+            "prompts": [
+              {
+                "name": "Analytical_Validation_Design",
+                "pattern": "CoT",
+                "prompt_id": "uc02_4_1",
+                "system_prompt": "You are a Clinical Research Scientist designing analytical validation.",
+                "user_template": "Define study objectives, comparators, sample size, and validity metrics for {biomarker_name}."
+              }
+            ],
+            "kpis": {"Protocol_Completion(%)": 100}
+          },
+          {
+            "code": "T5",
+            "title": "Execute Analytical Validation",
+            "objective": "Collect data and evaluate reliability and validity statistics.",
+            "agents": ["P08_CLINRES"],
+            "dependencies": ["T4"],
+            "outputs": [{"name": "Analytical Validation Report (V2)", "artifact_kind": "doc", "content_type": "application/pdf"}],
+            "prompts": [
+              {
+                "name": "Analytical_Validation_Execution",
+                "pattern": "CoT",
+                "prompt_id": "uc02_5_1",
+                "system_prompt": "You are executing analytical validation analyses.",
+                "user_template": "Report construct validity, convergent/divergent correlations, and reliability (α, ICC) for {biomarker_name}."
+              }
+            ],
+            "kpis": {"Convergent_r": 0.75, "Divergent_r": 0.25}
+          },
+          {
+            "code": "T6",
+            "title": "Design Clinical Validation Study (V3)",
+            "objective": "Plan prospective study linking biomarker to clinical outcomes and treatment response.",
+            "agents": ["P08_CLINRES","P06_DTXCMO"],
+            "tools": ["Clinical Validation Protocol Template"],
+            "dependencies": ["T5"],
+            "outputs": [{"name": "Clinical Validation Protocol (V3)", "artifact_kind": "doc", "content_type": "application/pdf"}],
+            "prompts": [
+              {
+                "name": "Clinical_Validation_Design",
+                "pattern": "CoT",
+                "prompt_id": "uc02_6_1",
+                "system_prompt": "You are a Clinical Scientist designing clinical validation for a digital biomarker.",
+                "user_template": "Define outcomes, statistical plan, and MCID methods to test clinical relevance of {biomarker_name}."
+              }
+            ],
+            "kpis": {"Protocol_Finalized(%)": 100}
+          },
+          {
+            "code": "T7",
+            "title": "Execute Clinical Validation & MCID Determination",
+            "objective": "Conduct clinical validation study and determine MCID using anchor- and distribution-based methods.",
+            "agents": ["P08_CLINRES","P15_HEOR"],
+            "tools": ["R","SAS","Anchor-Based MCID Toolkit"],
+            "dependencies": ["T6"],
+            "outputs": [
+              {"name": "Clinical Validation Report (V3)", "artifact_kind": "doc", "content_type": "application/pdf"},
+              {"name": "MCID Summary", "artifact_kind": "dataset", "content_type": "application/json"}
+            ],
+            "prompts": [
+              {
+                "name": "Clinical_Validation_Analysis",
+                "pattern": "CoT",
+                "prompt_id": "uc02_7_1",
+                "system_prompt": "You are analyzing clinical validation data.",
+                "user_template": "Assess correlation with outcomes (p<0.05) and compute MCID via anchor- and distribution-based methods for {biomarker_name}."
+              }
+            ],
+            "kpis": {"pValue": 0.05, "MCID_Established": true}
+          },
+          {
+            "code": "T8",
+            "title": "Regulatory Strategy & FDA Pre-Submission",
+            "objective": "Prepare and submit FDA Pre-Submission package summarizing validation results.",
+            "agents": ["P04_REGDIR"],
+            "tools": ["FDA Pre-Submission Template"],
+            "dependencies": ["T7"],
+            "outputs": [{"name": "FDA Pre-Sub Package", "artifact_kind": "doc", "content_type": "application/pdf"}],
+            "prompts": [
+              {
+                "name": "Regulatory_PreSub_Plan",
+                "pattern": "RAG",
+                "prompt_id": "uc02_8_1",
+                "system_prompt": "You are a Regulatory Director preparing an FDA Pre-Submission for a validated digital biomarker.",
+                "user_template": "Draft Pre-Sub questions on validation sufficiency, comparator adequacy, and endpoint acceptability."
+              }
+            ],
+            "kpis": {"FDA_Feedback_Positive(%)": 90}
+          },
+          {
+            "code": "T9",
+            "title": "Validation Report & Publication",
+            "objective": "Consolidate all validation evidence into final report and peer-reviewed manuscript.",
+            "agents": ["P16_MEDWRIT","P08_CLINRES"],
+            "tools": ["Validation Report Template","ICMJE Checklist"],
+            "dependencies": ["T8"],
+            "outputs": [
+              {"name": "Comprehensive Validation Report", "artifact_kind": "doc", "content_type": "application/pdf"},
+              {"name": "Peer-Reviewed Manuscript", "artifact_kind": "doc", "content_type": "application/pdf"}
+            ],
+            "prompts": [
+              {
+                "name": "Validation_Report_Publication",
+                "pattern": "Few-Shot",
+                "prompt_id": "uc02_9_1",
+                "system_prompt": "You are a Medical Writer compiling the final digital biomarker validation report.",
+                "user_template": "Summarize V1-V3 methods and results per DiMe V3 Framework and draft manuscript for submission."
+              }
+            ],
+            "kpis": {"Publication_Submitted": true}
+          }
+        ],
+        "links": [
+          {"type": "use_case_dependency", "use_case_code": "UC_CD_001", "note": "Digital biomarker must align with endpoint strategy from UC-01."},
+          {"type": "informs", "use_case_code": "UC_CD_003", "note": "Validated biomarker feeds into RCT Design workflow."}
+        ]
+      }
+    ],
+    "risk_register": [
+      {"id": "R1", "title": "Poor agreement with gold standard during V1", "probability": "MEDIUM", "impact": "HIGH", "mitigation": "Pilot test; refine algorithm before full V1.", "owner": "P07_DATASC"},
+      {"id": "R2", "title": "Unclear FDA precedent for novel biomarker", "probability": "MEDIUM", "impact": "HIGH", "mitigation": "Early Pre-Sub meeting with FDA; cite analogous precedents (e.g., EndeavorRx).", "owner": "P04_REGDIR"},
+      {"id": "R3", "title": "Algorithm update post-validation invalidates results", "probability": "LOW", "impact": "HIGH", "mitigation": "Version lock algorithm for trial duration; re-validate after updates.", "owner": "P07_DATASC"}
+    ],
+    "milestones": [
+      {"name": "V1 Verification Complete", "due_date": "2026-02-01", "owner": "P07_DATASC", "status": "planned"},
+      {"name": "V2 Analytical Validation Complete", "due_date": "2026-06-01", "owner": "P08_CLINRES", "status": "planned"},
+      {"name": "V3 Clinical Validation Complete", "due_date": "2027-03-01", "owner": "P08_CLINRES", "status": "planned"}
+    ],
+    "integrations": [
+      {"system": "CTMS", "vendor": "Medidata", "endpoint": "https://ctms.medidata.com/api", "auth": "oauth2"},
+      {"system": "FDA_eCTD", "vendor": "FDA", "endpoint": "https://ectd.fda.gov/api", "auth": "api-key"}
+    ],
+    "audit": {
+      "created_by": "user:data-science-lead@dhx.io",
+      "created_at": "2025-10-12T10:00:00Z",
+      "updated_by": "user:reg-affairs@dhx.io",
+      "updated_at": "2025-10-12T15:00:00Z",
+      "approved_by": "user:chief-medical-officer@dhx.io",
+      "approved_at": "2025-10-12T16:00:00Z"
+    }
+  }
+}

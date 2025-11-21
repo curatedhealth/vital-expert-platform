@@ -10,12 +10,30 @@ All tools are production-ready with real API implementations
 
 from typing import List, Dict
 import requests
-from Bio import Entrez
+# Conditional Bio import - only import when needed
+try:
+    from Bio import Entrez
+    BIO_AVAILABLE = True
+except ImportError:
+    Entrez = None
+    BIO_AVAILABLE = False
 import urllib.request
 import urllib.parse
 from xml.etree.ElementTree import fromstring
-import feedparser
-from bs4 import BeautifulSoup
+# Conditional feedparser import - only import when needed
+try:
+    import feedparser
+    FEEDPARSER_AVAILABLE = True
+except ImportError:
+    feedparser = None
+    FEEDPARSER_AVAILABLE = False
+# Conditional BeautifulSoup import - only import when needed
+try:
+    from bs4 import BeautifulSoup
+    BS4_AVAILABLE = True
+except ImportError:
+    BeautifulSoup = None
+    BS4_AVAILABLE = False
 from datetime import datetime
 import time
 import sys
@@ -77,6 +95,10 @@ class FDASearchTool:
     def _scrape_fda_approvals(self, query: str, max_results: int) -> List[Dict]:
         """Fallback: scrape FDA news for approvals"""
         results = []
+        
+        if not FEEDPARSER_AVAILABLE:
+            print("    Warning: feedparser not installed, skipping FDA RSS feed parsing")
+            return results
         
         try:
             # FDA press announcements feed

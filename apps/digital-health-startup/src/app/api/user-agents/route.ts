@@ -19,8 +19,16 @@ import {
 } from '@/lib/errors/agent-errors';
 
 // Get Supabase credentials from environment variables
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+const supabaseUrl =
+  process.env.NEXT_PUBLIC_SUPABASE_URL ||
+  process.env.SUPABASE_URL;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+if (!supabaseUrl || !supabaseServiceKey) {
+  throw new Error(
+    'Supabase credentials are not configured. Please set NEXT_PUBLIC_SUPABASE_URL/SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY.'
+  );
+}
 
 const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 
@@ -282,8 +290,16 @@ export async function GET(request: NextRequest) {
             id,
             name,
             description,
-            capabilities,
             metadata,
+            specializations,
+            expertise_level,
+            avatar_url,
+            color_scheme,
+            system_prompt,
+            base_model,
+            temperature,
+            max_tokens,
+            status,
             created_at,
             updated_at
           )

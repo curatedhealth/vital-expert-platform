@@ -38,7 +38,7 @@ const topNavRoutes = [
   { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, color: 'text-blue-600' },
   { label: 'Ask Expert', href: '/ask-expert', icon: MessageSquare, color: 'text-blue-600' },
   { label: 'Ask Panel', href: '/ask-panel', icon: Users, color: 'text-purple-600' },
-  { label: 'Ask Panel v1', href: '/ask-panel-v1', icon: Sparkles, color: 'text-purple-600' },
+  { label: 'Designer', href: '/ask-panel-v1', icon: Sparkles, color: 'text-purple-600' },
   { label: 'Workflows', href: '/workflows', icon: GitBranch, color: 'text-green-600' },
   { label: 'Solution Builder', href: '/solution-builder', icon: Box, color: 'text-orange-600' },
   { label: 'Agents', href: '/agents', icon: UsersRound, color: 'text-indigo-600' },

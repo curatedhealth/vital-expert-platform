@@ -141,6 +141,10 @@ async function normalizeAgent(agent: any, adminSupabase: any) {
   let normalizedCapabilities: string[] = [];
   if (Array.isArray(agent.capabilities)) {
     normalizedCapabilities = agent.capabilities;
+  } else if (Array.isArray(agent.specializations)) {
+    normalizedCapabilities = agent.specializations;
+  } else if (Array.isArray(agent.metadata?.capabilities)) {
+    normalizedCapabilities = agent.metadata.capabilities;
   } else if (typeof agent.capabilities === 'string') {
     const cleanString = agent.capabilities.replace(/[{}]/g, '');
     normalizedCapabilities = cleanString
@@ -155,7 +159,7 @@ async function normalizeAgent(agent: any, adminSupabase: any) {
   const metadata = agent.metadata || {};
   
   // Resolve avatar URL from icons table if needed
-  const avatarValue = metadata.avatar || '🤖';
+  const avatarValue = metadata.avatar || agent.avatar_url || agent.avatar || '🤖';
   const resolvedAvatar = await resolveAvatarUrl(avatarValue, adminSupabase);
   
   return {
@@ -166,14 +170,14 @@ async function normalizeAgent(agent: any, adminSupabase: any) {
     system_prompt: agent.system_prompt,
     capabilities: normalizedCapabilities,
     knowledge_domains: metadata.knowledge_domains || [],
-    tier: metadata.tier || 1,
-    model: metadata.model || 'gpt-4',
+    tier: metadata.tier || mapExpertiseToTier(agent.expertise_level),
+    model: metadata.model || agent.base_model || 'gpt-4',
     avatar: resolvedAvatar, // Resolved avatar URL/path
-    color: metadata.color || '#3B82F6',
-    temperature: metadata.temperature || 0.7,
-    max_tokens: metadata.max_tokens || 2000,
+    color: metadata.color || agent.color_scheme?.primary || '#3B82F6',
+    temperature: metadata.temperature ?? agent.temperature ?? 0.7,
+    max_tokens: metadata.max_tokens ?? agent.max_tokens ?? 2000,
     metadata: metadata,
-    status: metadata.status || 'active',
+    status: metadata.status || agent.status || 'active',
     is_custom: metadata.is_custom || false,
     business_function: metadata.business_function || null,
     department: metadata.department || null,
@@ -181,6 +185,24 @@ async function normalizeAgent(agent: any, adminSupabase: any) {
     created_at: agent.created_at,
     updated_at: agent.updated_at,
   };
+}
+
+function mapExpertiseToTier(expertise?: string | null): number {
+  switch ((expertise || '').toLowerCase()) {
+    case 'expert':
+    case 'specialist':
+      return 1;
+    case 'advanced':
+    case 'senior':
+      return 2;
+    case 'intermediate':
+      return 3;
+    case 'junior':
+    case 'basic':
+      return 4;
+    default:
+      return 3;
+  }
 }
 
 export const GET = withAgentAuth(async (
@@ -215,12 +237,19 @@ export const GET = withAgentAuth(async (
       .from('agents')
       .select(`
         id,
+        tenant_id,
         name,
         description,
         system_prompt,
-        capabilities,
         metadata,
-        tenant_id,
+        specializations,
+        expertise_level,
+        avatar_url,
+        color_scheme,
+        base_model,
+        temperature,
+        max_tokens,
+        status,
         created_at,
         updated_at
       `);

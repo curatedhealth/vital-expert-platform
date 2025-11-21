@@ -6,7 +6,7 @@ import { WorkflowBuilder } from '@/components/langgraph-gui/WorkflowBuilder';
 import { PageHeader } from '@/components/page-header';
 
 /**
- * Ask Panel v1 Page
+ * Designer Page
  * Visual workflow builder for creating and executing AI-powered panel discussions
  * Integrated into VITAL dashboard layout
  */
@@ -15,7 +15,7 @@ export default function AskPanelV1Page() {
     <div className="flex h-full flex-col min-h-0 overflow-hidden">
       <PageHeader
         icon={Sparkles}
-        title="Ask Panel v1"
+        title="Designer"
         description="Visual workflow builder for creating and executing AI-powered panel discussions"
       />
       <div className="flex-1 overflow-hidden min-h-0">

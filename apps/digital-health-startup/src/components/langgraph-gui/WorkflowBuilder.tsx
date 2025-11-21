@@ -31,10 +31,11 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { WorkflowCreator } from './WorkflowCreator';
 import { TaskDefinition, TASK_DEFINITIONS } from './TaskLibrary';
 import { NodePalette } from './NodePalette';
 import { TaskNode } from './TaskNode';
+import { AgentNode } from './AgentNode';
+import { AgentConfigModal } from './AgentConfigModal';
 import { TaskFlowModal } from './TaskFlowModal';
 import { NodePropertiesPanel } from './NodePropertiesPanel';
 import { WorkflowCodeView } from './WorkflowCodeView';
@@ -45,6 +46,11 @@ import { autoLayoutWorkflow } from '@/lib/langgraph-gui/workflowLayout';
 import { AIChatbot, ChatMessage } from './AIChatbot';
 import { apiEndpoints, setApiBaseUrl } from '@/lib/langgraph-gui/config/api';
 import { createDefaultPanelWorkflow, getAvailablePanelTypes } from './panel-workflows';
+import { Mode1Documentation } from './Mode1Documentation';
+import { Mode2Documentation } from './Mode2Documentation';
+import { Mode3Documentation } from './Mode3Documentation';
+import { Mode4Documentation } from './Mode4Documentation';
+import { useAgentsStore, type Agent } from '@/lib/stores/agents-store';
 
 export interface WorkflowBuilderProps {
   apiBaseUrl?: string;
@@ -65,19 +71,40 @@ export interface WorkflowBuilderProps {
 
 
 // Custom Node Components
-const OrchestratorNode = () => (
-  <div className="orchestrator-node">
-    <Handle type="target" position={Position.Left} />
-    <Handle type="target" position={Position.Top} />
-    <Handle type="source" position={Position.Right} />
-    <Handle type="source" position={Position.Bottom} />
-    <div className="node-header">🎯 Orchestrator</div>
-    <div className="node-body">
-      <p>Core AI brain</p>
-      <p className="node-status">Always Active</p>
+const OrchestratorNode = ({ data }: { data?: any }) => {
+  // Use node's label if available, otherwise default text
+  const label = data?.label || '🎯 Orchestrator';
+  const description = data?.description || 'Conditional decision node';
+  const icon = data?.icon || '🎯';
+  
+  // Check if this is a conditional decision node (from Mode 1 workflows)
+  const isConditionalDecision = data?.phase === 'decision' || data?.condition;
+  
+  return (
+    <div className="orchestrator-node">
+      <Handle type="target" position={Position.Left} />
+      <Handle type="target" position={Position.Top} />
+      <Handle type="source" position={Position.Right} />
+      <Handle type="source" position={Position.Bottom} />
+      <div className="node-header">{label}</div>
+      <div className="node-body">
+        {isConditionalDecision ? (
+          <>
+            <p>{description}</p>
+            {data?.condition && (
+              <p className="node-status">Condition: {data.condition}</p>
+            )}
+          </>
+        ) : (
+          <>
+            <p>Core AI brain</p>
+            <p className="node-status">Always Active</p>
+          </>
+        )}
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 interface Message {
   id: string;
@@ -200,12 +227,31 @@ export const WorkflowBuilder: React.FC<WorkflowBuilderProps> = ({ apiBaseUrl, in
   const [showTaskBuilder, setShowTaskBuilder] = useState(false);
   const [showTaskCombiner, setShowTaskCombiner] = useState(false);
   const [showWorkflowPhaseEditor, setShowWorkflowPhaseEditor] = useState(false);
+  const [showMode1Docs, setShowMode1Docs] = useState(false);
+  const [showMode2Docs, setShowMode2Docs] = useState(false);
+  const [showMode3Docs, setShowMode3Docs] = useState(false);
+  const [showMode4Docs, setShowMode4Docs] = useState(false);
   const [workflowPhaseNodes, setWorkflowPhaseNodes] = useState<any[]>([]);
   const [workflowPhaseEdges, setWorkflowPhaseEdges] = useState<any[]>([]);
   const [currentWorkflowId, setCurrentWorkflowId] = useState<string | null>(null);
   const [currentWorkflowName, setCurrentWorkflowName] = useState<string>('Untitled Workflow');
   const [isSaving, setIsSaving] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Agent configuration modal state
+  const [agentConfigModal, setAgentConfigModal] = useState<{
+    isOpen: boolean;
+    nodeId: string | null;
+    currentAgent: Agent | null;
+  }>({
+    isOpen: false,
+    nodeId: null,
+    currentAgent: null,
+  });
+  const handleOpenAgentConfigRef = useRef<((nodeId: string) => void) | null>(null);
+  
+  // Ref to store handleCreateWorkflow function for event listener
+  const handleCreateWorkflowRef = useRef<((useCaseType: string) => void) | null>(null);
   
   // Detect panel type helper function
   const detectPanelType = (): 'structured' | 'open' | null => {
@@ -589,17 +635,35 @@ export const WorkflowBuilder: React.FC<WorkflowBuilderProps> = ({ apiBaseUrl, in
       if (taskData) {
         const task: TaskDefinition = JSON.parse(taskData);
 
-        const newNode: Node = {
-          id: `task-${task.id}-${Date.now()}`,
-          type: 'task',
-          position,
-          data: {
-            task,
-            enabled: false,
-          },
-        };
-
-        setNodes((nds) => nds.concat(newNode));
+        // Check if this is an agent node
+        if (task.id === 'agent_node') {
+          const newNode: Node = {
+            id: `agent-${Date.now()}`,
+            type: 'agent',
+            position,
+            data: {
+              agentId: null,
+              agentName: null,
+              label: 'AI Agent',
+              configured: false,
+              enabled: true,
+              _original_type: 'agent',
+            },
+          };
+          setNodes((nds) => nds.concat(newNode));
+        } else {
+          // Regular task node
+          const newNode: Node = {
+            id: `task-${task.id}-${Date.now()}`,
+            type: 'task',
+            position,
+            data: {
+              task,
+              enabled: false,
+            },
+          };
+          setNodes((nds) => nds.concat(newNode));
+        }
       }
     },
     [reactFlowInstance, setNodes, setEdges, nodes, combineTasks]
@@ -1036,8 +1100,14 @@ export const WorkflowBuilder: React.FC<WorkflowBuilderProps> = ({ apiBaseUrl, in
   const getEnabledTasks = () => {
     const isPanel = detectPanelType() !== null;
     
-    if (isPanel) {
-      // For panel workflows, get all task nodes (they're all part of the workflow)
+    // Check if this is Mode 1 workflow (has input/start node and task nodes with edges)
+    const hasStartNode = nodes.some(n => n.type === 'input' || n.id === 'start');
+    const hasTaskNodes = nodes.some(n => n.type === 'task');
+    const hasEdges = edges.length > 0;
+    const isMode1Workflow = hasStartNode && hasTaskNodes && hasEdges;
+    
+    if (isPanel || isMode1Workflow) {
+      // For panel workflows and Mode 1 workflows, get all task nodes that are part of the workflow
       const taskNodes = nodes.filter((node) => {
         if (node.type !== 'task') return false;
         const taskData = node.data as any;
@@ -1045,11 +1115,12 @@ export const WorkflowBuilder: React.FC<WorkflowBuilderProps> = ({ apiBaseUrl, in
         return taskData?.task?.id || taskData?.task?.name;
       });
       
-      // Return task names for panel workflows
+      // Return task names/labels
       const taskNames: string[] = [];
       taskNodes.forEach((node) => {
         const taskData = node.data as any;
-        const taskName = taskData?.task?.name || taskData?.task?.id || node.data?.label || node.id;
+        // Prefer label, then task name, then task id
+        const taskName = node.data?.label || taskData?.task?.name || taskData?.task?.id || node.id;
         if (taskName && !taskNames.includes(taskName)) {
           taskNames.push(taskName);
         }
@@ -1164,10 +1235,50 @@ export const WorkflowBuilder: React.FC<WorkflowBuilderProps> = ({ apiBaseUrl, in
       setShowNodeConfig(false);
     }
   }, [setNodes, setEdges, selectedNode]);
-  
+
   // Immediately set the ref after defining the callback
   handleDeleteNodeRef.current = handleDeleteNode;
-  
+
+  // Handle opening agent configuration modal
+  const handleOpenAgentConfig = useCallback((nodeId: string) => {
+    const node = nodes.find((n) => n.id === nodeId);
+    if (node && node.type === 'agent') {
+      setAgentConfigModal({
+        isOpen: true,
+        nodeId,
+        currentAgent: (node.data as any)?.agent || null,
+      });
+    }
+  }, [nodes]);
+
+  // Handle agent selection from modal
+  const handleSelectAgent = useCallback((agent: Agent) => {
+    if (agentConfigModal.nodeId) {
+      setNodes((nds) =>
+        nds.map((node) => {
+          if (node.id === agentConfigModal.nodeId) {
+            return {
+              ...node,
+              data: {
+                ...node.data,
+                agent,
+                agentId: agent.id,
+                agentName: agent.name,
+                label: agent.display_name,
+                configured: true,
+              },
+            };
+          }
+          return node;
+        })
+      );
+    }
+    setAgentConfigModal({ isOpen: false, nodeId: null, currentAgent: null });
+  }, [agentConfigModal.nodeId, setNodes]);
+
+  // Set refs
+  handleOpenAgentConfigRef.current = handleOpenAgentConfig;
+
   // Update selectedNodeId ref
   selectedNodeIdRef.current = selectedNode?.id || null;
 
@@ -1213,7 +1324,7 @@ export const WorkflowBuilder: React.FC<WorkflowBuilderProps> = ({ apiBaseUrl, in
       const isSelected = nodeId === selectedNodeIdRef.current;
       return (
         <TaskNode
-          {...props} 
+          {...props}
           selected={isSelected}
           updateNodeData={(data: any) => {
             if (handleNodeUpdateRef.current) {
@@ -1228,6 +1339,26 @@ export const WorkflowBuilder: React.FC<WorkflowBuilderProps> = ({ apiBaseUrl, in
           onOpenTaskEditor={() => {
             if (handleOpenTaskEditorRef.current) {
               handleOpenTaskEditorRef.current(nodeId);
+            }
+          }}
+          onDelete={(id: string) => {
+            if (handleDeleteNodeRef.current) {
+              handleDeleteNodeRef.current(id);
+            }
+          }}
+        />
+      );
+    },
+    agent: (props: any) => {
+      const nodeId = props.id;
+      const isSelected = nodeId === selectedNodeIdRef.current;
+      return (
+        <AgentNode
+          {...props}
+          selected={isSelected}
+          onOpenConfig={() => {
+            if (handleOpenAgentConfigRef.current) {
+              handleOpenAgentConfigRef.current(nodeId);
             }
           }}
           onDelete={(id: string) => {
@@ -1558,7 +1689,8 @@ export const WorkflowBuilder: React.FC<WorkflowBuilderProps> = ({ apiBaseUrl, in
     }
   };
 
-  const handleCreateWorkflow = (useCaseType: string) => {
+  const handleCreateWorkflow = useCallback((useCaseType: string) => {
+    console.log('[WorkflowBuilder] handleCreateWorkflow called with:', useCaseType);
     // Clear existing workflow
     setNodes([]);
     setEdges([]);
@@ -1848,16 +1980,31 @@ export const WorkflowBuilder: React.FC<WorkflowBuilderProps> = ({ apiBaseUrl, in
       setNodes(templateNodes);
       setEdges(templateEdges);
     } else if (getAvailablePanelTypes().includes(useCaseType)) {
+      // Note: Mode 1 documentation is now opened separately via sidebar click
+      // Don't auto-open docs when creating workflow - let user open it manually if needed
+      
       // Panel workflow - try to load from backend first, fallback to default
-      const workflowId = useCaseType === 'structured_panel' 
-        ? 'template-structured-panel' 
+      const workflowId = useCaseType === 'structured_panel'
+        ? 'template-structured-panel'
         : useCaseType === 'open_panel'
         ? 'template-open-panel'
+        : useCaseType === 'mode1_ask_expert'
+        ? 'template-mode1-ask-expert'
+        : useCaseType === 'mode2_ask_expert'
+        ? 'template-mode2-ask-expert'
+        : useCaseType === 'mode3_ask_expert'
+        ? 'template-mode3-ask-expert'
+        : useCaseType === 'mode4_ask_expert'
+        ? 'template-mode4-ask-expert'
         : `template-${useCaseType}`;
       
       fetch(apiEndpoints.workflow(workflowId))
         .then(res => {
           if (!res.ok) {
+            // 404 is expected for workflows that don't exist yet - fallback to default
+            if (res.status === 404) {
+              throw new Error('WORKFLOW_NOT_FOUND'); // Special error to trigger fallback
+            }
             throw new Error(`Failed to load workflow: ${res.statusText}`);
           }
           return res.json();
@@ -1919,23 +2066,55 @@ export const WorkflowBuilder: React.FC<WorkflowBuilderProps> = ({ apiBaseUrl, in
           }
         })
         .catch(err => {
-          console.error('Error loading workflow from backend:', err);
-          console.log(`Creating default panel workflow for type: ${useCaseType}`);
+          // Only log non-404 errors as errors (404 is expected for new workflows)
+          if (err.message !== 'WORKFLOW_NOT_FOUND') {
+            console.error('Error loading workflow from backend:', err);
+          } else {
+            console.log(`Workflow not found in backend, creating default panel workflow for type: ${useCaseType}`);
+          }
           
           // Use factory function to create default panel workflow
           try {
+            console.log(`[WorkflowBuilder] Creating default panel workflow for: ${useCaseType}`);
             const workflow = createDefaultPanelWorkflow(useCaseType);
-            console.log(`Created workflow with ${workflow.nodes.length} nodes and ${workflow.edges.length} edges`);
-            console.log('Workflow nodes:', workflow.nodes.map(n => ({ id: n.id, type: n.type, label: n.data?.label })));
+            console.log(`[WorkflowBuilder] Created workflow with ${workflow.nodes.length} nodes and ${workflow.edges.length} edges`);
+            console.log('[WorkflowBuilder] Workflow nodes:', workflow.nodes.map(n => ({ id: n.id, type: n.type, label: n.data?.label })));
             
             if (workflow.nodes.length === 0) {
-              console.error('Warning: Created workflow has no nodes!');
+              console.error('[WorkflowBuilder] Warning: Created workflow has no nodes!');
               alert(`Created workflow for ${useCaseType} but it has no nodes. Please check the panel configuration.`);
               return;
             }
             
-            setNodes(workflow.nodes);
-            setEdges(workflow.edges);
+            console.log('[WorkflowBuilder] Setting nodes and edges in state...');
+            console.log('[WorkflowBuilder] Edges to set:', workflow.edges.map(e => ({ id: e.id, source: e.source, target: e.target })));
+            
+            // Filter out any default orchestrator nodes that shouldn't be in panel/Mode workflows
+            // Mode 1 uses 'orchestrator' type for conditional decision nodes (check_specialist_need, etc.)
+            // But we don't want the default 'orchestrator' node from initializeDefaultWorkflow
+            const filteredNodes = workflow.nodes.filter(node => {
+              // Only filter out the default orchestrator node (id === 'orchestrator')
+              // Keep conditional orchestrator nodes (check_specialist_need, check_tools_need, etc.)
+              if (node.type === 'orchestrator' && node.id === 'orchestrator') {
+                // Check if this is a Mode 1 workflow - if so, don't include the default orchestrator
+                const isMode1Workflow = workflow.nodes.some(n => n.id === 'start' || n.type === 'input');
+                if (isMode1Workflow) {
+                  return false; // Remove default orchestrator from Mode 1
+                }
+              }
+              return true;
+            });
+            
+            // Filter edges that reference non-existent nodes
+            const filteredEdges = workflow.edges.filter(edge => {
+              const sourceExists = filteredNodes.some(n => n.id === edge.source);
+              const targetExists = filteredNodes.some(n => n.id === edge.target);
+              return sourceExists && targetExists;
+            });
+            
+            console.log('[WorkflowBuilder] Filtered nodes:', filteredNodes.length, 'Filtered edges:', filteredEdges.length);
+            setNodes(filteredNodes);
+            setEdges(filteredEdges);
             setCurrentWorkflowName(workflow.workflowName);
             setCurrentWorkflowId(null);
             
@@ -1943,10 +2122,17 @@ export const WorkflowBuilder: React.FC<WorkflowBuilderProps> = ({ apiBaseUrl, in
             setWorkflowPhaseNodes(workflow.phases.nodes);
             setWorkflowPhaseEdges(workflow.phases.edges);
             
-            console.log('Workflow created successfully');
+            // Fit view after a short delay to ensure nodes are rendered
+            setTimeout(() => {
+              if (reactFlowInstance) {
+                reactFlowInstance.fitView({ padding: 0.3, duration: 600, minZoom: 0.3, maxZoom: 1.5 });
+              }
+            }, 200);
+            
+            console.log('[WorkflowBuilder] Workflow created successfully, nodes and edges set in state');
           } catch (error: any) {
-            console.error('Error creating default workflow:', error);
-            console.error('Error stack:', error.stack);
+            console.error('[WorkflowBuilder] Error creating default workflow:', error);
+            console.error('[WorkflowBuilder] Error stack:', error.stack);
             alert(`Failed to create ${useCaseType} workflow: ${error.message}`);
           }
         });
@@ -1963,7 +2149,56 @@ export const WorkflowBuilder: React.FC<WorkflowBuilderProps> = ({ apiBaseUrl, in
       setEdges([]);
       setSelectedNode(null);
     }
-  };
+  }, [setNodes, setEdges, setSelectedNode, setCurrentWorkflowId, setCurrentWorkflowName, setWorkflowPhaseNodes, setWorkflowPhaseEdges]);
+  
+  // Store handleCreateWorkflow in ref for event listener
+  useEffect(() => {
+    handleCreateWorkflowRef.current = handleCreateWorkflow;
+  }, [handleCreateWorkflow]);
+  
+  // Listen for workflow creation events from sidebar
+  useEffect(() => {
+    const handleWorkflowCreate = (event: CustomEvent) => {
+      const { workflowId } = event.detail;
+      console.log('[WorkflowBuilder] Received workflow create event:', workflowId);
+      if (workflowId && handleCreateWorkflowRef.current) {
+        console.log('[WorkflowBuilder] Calling handleCreateWorkflow with:', workflowId);
+        handleCreateWorkflowRef.current(workflowId);
+      } else {
+        console.warn('[WorkflowBuilder] Missing workflowId or handleCreateWorkflowRef not set', { workflowId, hasRef: !!handleCreateWorkflowRef.current });
+      }
+    };
+
+    window.addEventListener('designer:create-workflow', handleWorkflowCreate as EventListener);
+    
+    // Listen for mode documentation open events
+    const handleOpenModeDocs = (event: CustomEvent) => {
+      const { mode } = event.detail;
+      console.log('[WorkflowBuilder] Received open mode docs event:', mode);
+      if (mode === 'mode1') {
+        console.log('[WorkflowBuilder] Opening Mode 1 docs');
+        setShowMode1Docs(true);
+      } else if (mode === 'mode2') {
+        console.log('[WorkflowBuilder] Opening Mode 2 docs');
+        setShowMode2Docs(true);
+      } else if (mode === 'mode3') {
+        console.log('[WorkflowBuilder] Opening Mode 3 docs');
+        setShowMode3Docs(true);
+      } else if (mode === 'mode4') {
+        console.log('[WorkflowBuilder] Opening Mode 4 docs');
+        setShowMode4Docs(true);
+      } else {
+        console.warn('[WorkflowBuilder] Unknown mode for docs:', mode);
+      }
+    };
+    
+    window.addEventListener('designer:open-mode-docs', handleOpenModeDocs as EventListener);
+    
+    return () => {
+      window.removeEventListener('designer:create-workflow', handleWorkflowCreate as EventListener);
+      window.removeEventListener('designer:open-mode-docs', handleOpenModeDocs as EventListener);
+    };
+  }, []);
 
   // Helper function to generate reasoning text based on expert response
   const generateReasoning = (expertName: string, content: string, question?: string): string => {
@@ -2043,7 +2278,20 @@ export const WorkflowBuilder: React.FC<WorkflowBuilderProps> = ({ apiBaseUrl, in
   }, []);
 
   const handleExecute = async () => {
-    if (!userQuery.trim()) return;
+    console.log('[WorkflowBuilder] handleExecute called');
+    console.log('[WorkflowBuilder] Current nodes:', nodes.length);
+    console.log('[WorkflowBuilder] Current edges:', edges.length);
+    console.log('[WorkflowBuilder] Edges:', edges.map(e => ({ id: e.id, source: e.source, target: e.target })));
+    
+    if (!userQuery.trim()) {
+      console.warn('[WorkflowBuilder] No user query provided');
+      return;
+    }
+    
+    if (edges.length === 0) {
+      console.warn('[WorkflowBuilder] No edges found in workflow. Workflow may not be properly connected.');
+      alert('Warning: No edges found in workflow. Please ensure nodes are connected.');
+    }
     if (apiKeys.provider === 'openai' && !apiKeys.openai) {
       alert('Please configure your OpenAI API key in Settings');
       setShowSettings(true);
@@ -2086,15 +2334,12 @@ export const WorkflowBuilder: React.FC<WorkflowBuilderProps> = ({ apiBaseUrl, in
     };
     setMessages((prev) => [...prev, loadingMsg]);
 
-    // Detect panel workflow using both methods:
-    // 1. Check metadata for panel_type
-    // 2. Check for panel-specific task IDs (moderator, expert_agent)
+    // Detect panel workflow using multiple methods:
+    // Note: Mode 1 is NOT a panel workflow - it uses a different execution system
+    // 1. Check for panel-specific task IDs (moderator, expert_agent in panel format)
+    // 2. Check metadata for panel_type
     const detectPanelType = (): 'structured' | 'open' | null => {
-      // Method 1: Check metadata (if stored in workflow)
-      // Note: We'd need to store workflow metadata somewhere accessible
-      // For now, we'll rely on task ID detection
-      
-      // Method 2: Check task IDs
+      // Method 1: Check task IDs for panel-specific tasks
       const taskIds: string[] = [];
       nodes.forEach(n => {
         const taskData = n.data as any;
@@ -2103,7 +2348,8 @@ export const WorkflowBuilder: React.FC<WorkflowBuilderProps> = ({ apiBaseUrl, in
         }
       });
       
-      // Check for panel-specific tasks
+      // Check for panel-specific tasks (moderator + expert_agent in panel context)
+      // Mode 1 has different task structure, so it won't match this
       if (taskIds.includes('moderator') && taskIds.includes('expert_agent')) {
         // Check for structured panel tasks
         if (taskIds.includes('opening_statements') || taskIds.includes('discussion_round')) {
@@ -2130,8 +2376,8 @@ export const WorkflowBuilder: React.FC<WorkflowBuilderProps> = ({ apiBaseUrl, in
       if (isPanelWorkflow) {
         // Build workflow definition for panel execution
         const workflowDefinition = {
-          id: 'current-workflow',
-          name: 'Panel Workflow',
+          id: currentWorkflowId || 'current-workflow',
+          name: currentWorkflowName || 'Panel Workflow',
           description: 'Panel workflow execution',
           nodes: nodes.map(n => ({
             id: n.id,
@@ -2149,7 +2395,7 @@ export const WorkflowBuilder: React.FC<WorkflowBuilderProps> = ({ apiBaseUrl, in
             targetHandle: e.targetHandle
           })),
           metadata: {
-            panel_type: panelType,
+            panel_type: panelType === 'mode1' ? 'mode1' : panelType,
             system_prompt: orchestratorPrompt,  // Workflow-level system prompt
             rounds: nodes.filter(n => {
               const taskData = n.data as any;
@@ -2164,7 +2410,15 @@ export const WorkflowBuilder: React.FC<WorkflowBuilderProps> = ({ apiBaseUrl, in
         };
 
         // Use the API base URL (which goes through Next.js API proxy)
+        // All panel workflows (including Mode 1) use panels/execute endpoint
         const panelExecuteUrl = `${apiBaseUrl || '/api/langgraph-gui'}/panels/execute`;
+        console.log('[WorkflowBuilder] Executing panel workflow:', {
+          url: panelExecuteUrl,
+          panelType: panelType === 'mode1' ? 'mode1' : panelType,
+          workflowId: currentWorkflowId,
+          nodeCount: nodes.length,
+          edgeCount: edges.length
+        });
         response = await fetch(panelExecuteUrl, {
           method: 'POST',
           headers: {
@@ -2178,10 +2432,16 @@ export const WorkflowBuilder: React.FC<WorkflowBuilderProps> = ({ apiBaseUrl, in
             ollama_base_url: apiKeys.ollama_base_url || 'http://localhost:11434',
             ollama_model: apiKeys.ollama_model || 'qwen3:4b',
             workflow: workflowDefinition,
-            panel_type: panelType,  // Explicit panel type
+            panel_type: panelType === 'mode1' ? 'mode1' : panelType,  // Explicit panel type (mode1, structured, or open)
             user_id: 'user'
           }),
           signal: abortController.signal,
+        });
+        console.log('[WorkflowBuilder] Panel workflow response:', {
+          ok: response.ok,
+          status: response.status,
+          statusText: response.statusText,
+          contentType: response.headers.get('content-type')
         });
       } else {
         // Regular workflow execution
@@ -2206,7 +2466,14 @@ export const WorkflowBuilder: React.FC<WorkflowBuilderProps> = ({ apiBaseUrl, in
         const agentsToUse = assignedAgents.length > 0 ? assignedAgents : enabledTasks;
 
         try {
-          response = await fetch('http://localhost:8000/api/execute', {
+          // Use the Next.js API proxy route instead of hardcoded localhost
+          const executeUrl = `${apiBaseUrl || '/api/langgraph-gui'}/execute`;
+          console.log('[WorkflowBuilder] Executing regular workflow:', {
+            url: executeUrl,
+            enabledTasks: agentsToUse,
+            taskCount: agentsToUse.length
+          });
+          response = await fetch(executeUrl, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -2215,10 +2482,19 @@ export const WorkflowBuilder: React.FC<WorkflowBuilderProps> = ({ apiBaseUrl, in
               query,
               openai_api_key: apiKeys.openai,
               pinecone_api_key: apiKeys.pinecone || '',
+              provider: apiKeys.provider || 'openai',
+              ollama_base_url: apiKeys.ollama_base_url || 'http://localhost:11434',
+              ollama_model: apiKeys.ollama_model || 'qwen3:4b',
               orchestrator_system_prompt: orchestratorPrompt,
               enabled_agents: agentsToUse,
             }),
             signal: abortController.signal,
+          });
+          console.log('[WorkflowBuilder] Regular workflow response:', {
+            ok: response.ok,
+            status: response.status,
+            statusText: response.statusText,
+            contentType: response.headers.get('content-type')
           });
         } catch (error: any) {
           console.error('Fetch error:', error);
@@ -2228,7 +2504,7 @@ export const WorkflowBuilder: React.FC<WorkflowBuilderProps> = ({ apiBaseUrl, in
             return [...filtered, {
               id: `msg-error-${Date.now()}`,
               type: 'assistant',
-              content: `❌ Error: Failed to connect to backend. Make sure the backend server is running on http://localhost:8000. Error: ${error.message}`,
+              content: `❌ Error: Failed to connect to backend API. Please check your API configuration and ensure the backend service is running. Error: ${error.message}`,
               timestamp: new Date().toLocaleTimeString(),
             }];
           });
@@ -2238,39 +2514,104 @@ export const WorkflowBuilder: React.FC<WorkflowBuilderProps> = ({ apiBaseUrl, in
 
       clearTimeout(timeoutId);
 
-      if (!response || !response.ok) {
-        throw new Error(`Backend error: ${response?.statusText || 'No response received'}`);
+      if (!response) {
+        throw new Error('No response received from the backend. Check the console for errors.');
+      }
+
+      if (!response.ok) {
+        // Try to get error details from response
+        let errorMessage = `Backend error: ${response.status} ${response.statusText}`;
+        try {
+          const errorData = await response.text();
+          if (errorData) {
+            try {
+              const errorJson = JSON.parse(errorData);
+              errorMessage = errorJson.error || errorJson.message || errorMessage;
+            } catch {
+              // If not JSON, use the text as is
+              errorMessage = errorData.length > 200 ? errorData.substring(0, 200) + '...' : errorData;
+            }
+          }
+        } catch (e) {
+          // If we can't read the error, use the status
+          console.error('Failed to read error response:', e);
+        }
+        throw new Error(errorMessage);
+      }
+
+      // Check if response is streaming (SSE) or regular JSON
+      const contentType = response.headers.get('content-type') || '';
+      const isStreaming = contentType.includes('text/event-stream') || contentType.includes('text/plain');
+      
+      if (!isStreaming) {
+        // Handle non-streaming error response
+        try {
+          const errorData = await response.json();
+          throw new Error(errorData.error || errorData.message || `Backend error: ${response.status} ${response.statusText}`);
+        } catch (e: any) {
+          if (e.message && !e.message.includes('Backend error')) {
+            throw e;
+          }
+          // If JSON parsing fails, try text
+          const errorText = await response.text();
+          throw new Error(errorText || `Backend error: ${response.status} ${response.statusText}`);
+        }
       }
 
       const reader = response.body?.getReader();
-      const decoder = new TextDecoder();
 
       if (!reader) {
-        throw new Error('No response body');
+        throw new Error('No response body - backend may not be responding correctly');
       }
 
+      const decoder = new TextDecoder();
       let finalReport = '';
       let buffer = '';
+      let eventCount = 0;
+      let hasReceivedEvents = false;
       
       // Remove loading message
       setMessages((prev) => prev.filter(msg => !msg.id.startsWith('msg-loading-')));
 
       while (true) {
         const { done, value } = await reader.read();
-        if (done) break;
+        if (done) {
+          // Stream ended - check if we got any events
+          if (!hasReceivedEvents && eventCount === 0) {
+            throw new Error('Backend stream ended without sending any events. The backend may have crashed or encountered an error. Check backend logs.');
+          }
+          break;
+        }
 
         buffer += decoder.decode(value, { stream: true });
         const lines = buffer.split('\n');
         buffer = lines.pop() || '';
 
         for (const line of lines) {
-          if (!line.trim() || !line.startsWith('data: ')) continue;
+          if (!line.trim()) continue;
+          
+          // Handle SSE format: "data: {json}\n\n"
+          if (!line.startsWith('data: ')) {
+            // Skip non-data lines (like "event: ..." or empty lines)
+            continue;
+          }
 
-          const data = line.slice(6);
-          if (data === '[DONE]') continue;
+          const data = line.slice(6).trim();
+          if (data === '[DONE]' || data === '') continue;
 
           try {
             const event = JSON.parse(data);
+            eventCount++;
+            hasReceivedEvents = true;
+            
+            // Debug: Log all events to console
+            console.log('[WorkflowBuilder] Received event:', {
+              type: event.type,
+              hasData: !!event.data,
+              isPanelWorkflow,
+              eventCount,
+              event
+            });
 
             // Handle panel events (both structured and open)
             if (isPanelWorkflow) {
@@ -2522,18 +2863,92 @@ export const WorkflowBuilder: React.FC<WorkflowBuilderProps> = ({ apiBaseUrl, in
                 setMessages((prev) => [...prev, logMsg]);
               }
             } else {
-              // Regular workflow events
+              // Regular workflow events (including Mode 1)
+              // ALWAYS display events - even if we don't recognize the type
+              let shouldDisplay = true;
+              let displayContent = '';
+              
               if (event.type === 'complete') {
-              finalReport = event.result;
-            } else if (event.type === 'error') {
-                throw new Error(event.message);
+                finalReport = event.result || event.data?.result || event.data?.final_report || '';
+                displayContent = finalReport || 'Workflow completed successfully.';
+              } else if (event.type === 'error') {
+                throw new Error(event.message || event.data?.message || 'Unknown error');
+              } else if (event.type === 'log') {
+                // Handle log events for regular workflows
+                const logLevel = event.level || event.data?.level || 'info';
+                const logMessage = event.message || event.data?.message || JSON.stringify(event);
+                displayContent = logMessage;
+              } else if (event.type === 'node_output' || event.type === 'task_output') {
+                // Handle node/task output events
+                const nodeName = event.node_name || event.node_id || event.data?.node_name || 'Task';
+                const output = event.output || event.result || event.data?.output || event.data?.result || '';
+                displayContent = `**${nodeName}**: ${output}`;
+              } else {
+                // Handle ANY other event type - always display something
+                console.log('[WorkflowBuilder] Event received (regular workflow):', event.type, event);
+                
+                // Try to extract meaningful content from various event structures
+                if (event.message) {
+                  displayContent = event.message;
+                } else if (event.data) {
+                  if (typeof event.data === 'string') {
+                    displayContent = event.data;
+                  } else if (event.data.content) {
+                    displayContent = event.data.content;
+                  } else if (event.data.message) {
+                    displayContent = event.data.message;
+                  } else if (event.data.result) {
+                    displayContent = typeof event.data.result === 'string' ? event.data.result : JSON.stringify(event.data.result, null, 2);
+                  } else {
+                    displayContent = JSON.stringify(event.data, null, 2);
+                  }
+                } else if (event.result) {
+                  displayContent = typeof event.result === 'string' ? event.result : JSON.stringify(event.result, null, 2);
+                } else if (event.content) {
+                  displayContent = event.content;
+                } else if (event.type) {
+                  // Even if we don't know the structure, show the event type and data
+                  displayContent = `[${event.type}] ${JSON.stringify(event, null, 2).substring(0, 500)}`;
+                } else {
+                  // Last resort: show the entire event
+                  displayContent = JSON.stringify(event, null, 2).substring(0, 500);
+                }
+              }
+              
+              // Always display the content if we have something to show
+              if (shouldDisplay && displayContent) {
+                setMessages((prev) => [...prev, {
+                  id: `msg-${event.type || 'event'}-${Date.now()}-${Math.random()}`,
+                  type: 'assistant',
+                  content: displayContent,
+                  timestamp: new Date().toLocaleTimeString(),
+                }]);
               }
             }
           } catch (e) {
-            console.error('Parse error:', e);
+            console.error('Parse error:', e, 'Line:', line);
+            // If it's not valid JSON, it might be a plain error message
+            if (data && !data.startsWith('{')) {
+              // Treat as plain text error message
+              setMessages((prev) => [...prev, {
+                id: `msg-parse-error-${Date.now()}`,
+                type: 'assistant',
+                content: `⚠️ Backend message: ${data}`,
+                timestamp: new Date().toLocaleTimeString(),
+              }]);
+            }
           }
         }
       }
+
+      // Debug: Log final state
+      console.log('[WorkflowBuilder] Stream completed:', {
+        eventCount,
+        hasReceivedEvents,
+        finalReport: !!finalReport,
+        finalReportLength: finalReport?.length || 0,
+        currentMessagesCount: messages.length
+      });
 
       // Add assistant response
       if (finalReport) {
@@ -2547,7 +2962,7 @@ export const WorkflowBuilder: React.FC<WorkflowBuilderProps> = ({ apiBaseUrl, in
       } else {
         // Check if we received any messages - if yes, workflow completed but no final report
         const hasMessages = messages.some(msg => 
-          msg.type === 'expert' || msg.type === 'moderator' || msg.type === 'assistant'
+          msg.type === 'expert' || msg.type === 'moderator' || msg.type === 'assistant' || msg.type === 'log'
         );
         if (hasMessages) {
           // Workflow completed but no final report - this is okay for some workflows
@@ -2560,10 +2975,14 @@ export const WorkflowBuilder: React.FC<WorkflowBuilderProps> = ({ apiBaseUrl, in
           setMessages((prev) => [...prev, assistantMsg]);
         } else {
           // No messages at all - likely an error
+          const errorDetails = eventCount === 0 
+            ? `The backend stream ended without sending any events (received ${eventCount} events). This usually means:\n• The backend encountered an error during execution\n• The backend service is not running\n• There was a network connectivity issue\n• The workflow executor didn't produce any events\n\nCheck the browser console (look for "[WorkflowBuilder] Received event:" logs) and backend logs for more details.`
+            : `Workflow completed but no messages were displayed. Received ${eventCount} events but none were displayed. Check the console for "[WorkflowBuilder] Received event:" logs to see what events were received.`;
+          
           setMessages((prev) => [...prev, {
             id: `msg-no-response-${Date.now()}`,
             type: 'assistant',
-            content: '⚠️ No response received from the backend. Check the console for errors.',
+            content: `⚠️ ${errorDetails}`,
             timestamp: new Date().toLocaleTimeString(),
           }]);
         }
@@ -2878,19 +3297,17 @@ export const WorkflowBuilder: React.FC<WorkflowBuilderProps> = ({ apiBaseUrl, in
           )}
         </div>
 
-        {/* Right Sidebar - Properties Panel or Workflow Creator */}
-        <div className="h-full overflow-hidden">
-          {selectedNode && !showNodeConfig ? (
+        {/* Right Sidebar - Properties Panel Only (Workflow Creator moved to left sidebar) */}
+        {selectedNode && !showNodeConfig && (
+          <div className="h-full overflow-hidden">
             <NodePropertiesPanel
               key={selectedNode?.id + JSON.stringify(selectedNode?.data)}
               node={selectedNode}
               onUpdate={handleNodeUpdate}
               onClose={() => setSelectedNode(null)}
             />
-          ) : (
-            <WorkflowCreator onCreateWorkflow={handleCreateWorkflow} />
-          )}
-        </div>
+          </div>
+        )}
       </div>
 
       {/* Chat Popup */}
@@ -3125,6 +3542,15 @@ export const WorkflowBuilder: React.FC<WorkflowBuilderProps> = ({ apiBaseUrl, in
         openaiApiKey={apiKeys.openai}
       />
 
+      {/* Agent Configuration Modal */}
+      <AgentConfigModal
+        open={agentConfigModal.isOpen}
+        onClose={() => setAgentConfigModal({ isOpen: false, nodeId: null, currentAgent: null })}
+        onSelectAgent={handleSelectAgent}
+        currentAgent={agentConfigModal.currentAgent}
+        nodeId={agentConfigModal.nodeId || undefined}
+      />
+
       {/* Workflow Phase Editor Modal */}
       <Dialog open={showWorkflowPhaseEditor && isPanelWorkflow} onOpenChange={setShowWorkflowPhaseEditor}>
         <DialogContent className="max-w-6xl max-h-[90vh] flex flex-col p-0">
@@ -3148,6 +3574,24 @@ export const WorkflowBuilder: React.FC<WorkflowBuilderProps> = ({ apiBaseUrl, in
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Mode Documentation Modals */}
+      <Mode1Documentation
+        isOpen={showMode1Docs}
+        onClose={() => setShowMode1Docs(false)}
+      />
+      <Mode2Documentation
+        isOpen={showMode2Docs}
+        onClose={() => setShowMode2Docs(false)}
+      />
+      <Mode3Documentation
+        isOpen={showMode3Docs}
+        onClose={() => setShowMode3Docs(false)}
+      />
+      <Mode4Documentation
+        isOpen={showMode4Docs}
+        onClose={() => setShowMode4Docs(false)}
+      />
     </div>
   );
 }

@@ -10,12 +10,30 @@ All tools are production-ready with real API implementations
 
 from typing import List, Dict
 import requests
-from Bio import Entrez
+# Conditional Bio import - only import when needed
+try:
+    from Bio import Entrez
+    BIO_AVAILABLE = True
+except ImportError:
+    Entrez = None
+    BIO_AVAILABLE = False
 import urllib.request
 import urllib.parse
 from xml.etree.ElementTree import fromstring
-import feedparser
-from bs4 import BeautifulSoup
+# Conditional feedparser import - only import when needed
+try:
+    import feedparser
+    FEEDPARSER_AVAILABLE = True
+except ImportError:
+    feedparser = None
+    FEEDPARSER_AVAILABLE = False
+# Conditional BeautifulSoup import - only import when needed
+try:
+    from bs4 import BeautifulSoup
+    BS4_AVAILABLE = True
+except ImportError:
+    BeautifulSoup = None
+    BS4_AVAILABLE = False
 from datetime import datetime
 import time
 import sys
@@ -76,6 +94,10 @@ class ScraperTool:
         cutoff_date = datetime.now() - timedelta(days=days_back)
         
         # Try RSS feeds first (most reliable)
+        if not FEEDPARSER_AVAILABLE:
+            print("    Warning: feedparser not installed, skipping RSS feed parsing")
+            return []
+        
         try:
             # PubMed recent articles with date filter
             pubmed_feed = f"https://pubmed.ncbi.nlm.nih.gov/rss/search/?term={urllib.parse.quote(query)}&limit={max_results * 2}&sort=date"
@@ -118,6 +140,10 @@ class ScraperTool:
         """Scrape health tech news"""
         all_results = []
         
+        if not FEEDPARSER_AVAILABLE:
+            print("    Warning: feedparser not installed, skipping healthtech RSS feed parsing")
+            return all_results
+        
         # MobiHealthNews RSS
         try:
             feed_url = "https://www.mobihealthnews.com/feed"
@@ -150,6 +176,10 @@ class ScraperTool:
     def scrape_regulatory_news(self, query: str, max_results: int = 10) -> List[Dict]:
         """Scrape regulatory news"""
         all_results = []
+        
+        if not FEEDPARSER_AVAILABLE:
+            print("    Warning: feedparser not installed, skipping regulatory RSS feed parsing")
+            return all_results
         
         # FDA Press Announcements
         try:
@@ -212,6 +242,9 @@ class ScraperTool:
             print(f"      Pharma scraping error: {str(e)}")
         
         # BioPharma Dive RSS
+        if not FEEDPARSER_AVAILABLE:
+            return all_results[:max_results]
+        
         try:
             feed_url = "https://www.biopharmadive.com/feeds/news/"
             feed = feedparser.parse(feed_url)

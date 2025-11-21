@@ -63,7 +63,7 @@ const nextConfig = {
 
   // Skip build-time errors in development
   onDemandEntries: {
-    maxInactiveAge: 25 * 1000,
+    maxInactiveAge: 25 * 60 * 1000,
     pagesBufferLength: 2,
   },
 

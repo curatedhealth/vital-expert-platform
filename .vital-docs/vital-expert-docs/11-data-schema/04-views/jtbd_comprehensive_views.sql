@@ -19,12 +19,11 @@ END $$;
 
 CREATE OR REPLACE VIEW v_jtbd_complete AS
 SELECT 
-  -- Core JTBD fields
+  -- Core JTBD fields (using actual columns from table)
   j.id,
   j.code,
   j.name,
-  j.job_statement,
-  j.when_situation,
+  j.description,
   j.circumstance,
   j.desired_outcome,
   j.job_type,
@@ -35,6 +34,9 @@ SELECT
   j.status,
   j.validation_score,
   j.tenant_id,
+  j.strategic_priority_id,
+  j.domain_id,
+  j.industry_id,
   j.created_at,
   j.updated_at,
   
@@ -61,7 +63,8 @@ SELECT
   COUNT(DISTINCT jk.id) as kpi_count,
   COUNT(DISTINCT jsc.id) as success_criteria_count,
   COUNT(DISTINCT jt.id) as tag_count,
-  COUNT(DISTINCT ao.id) as ai_opportunity_count
+  COUNT(DISTINCT ao.id) as ai_opportunity_count,
+  COUNT(DISTINCT jc.id) as context_count
   
 FROM jtbd j
 LEFT JOIN jtbd_functions jf ON j.id = jf.jtbd_id
@@ -79,12 +82,14 @@ LEFT JOIN jtbd_kpis jk ON j.id = jk.jtbd_id
 LEFT JOIN jtbd_success_criteria jsc ON j.id = jsc.jtbd_id
 LEFT JOIN jtbd_tags jt ON j.id = jt.jtbd_id
 LEFT JOIN ai_opportunities ao ON j.id = ao.jtbd_id
+LEFT JOIN jtbd_context jc ON j.id = jc.jtbd_id
 WHERE j.deleted_at IS NULL
 GROUP BY 
-  j.id, j.code, j.name, j.job_statement, j.when_situation, j.circumstance,
+  j.id, j.code, j.name, j.description, j.circumstance,
   j.desired_outcome, j.job_type, j.functional_area, j.job_category,
   j.complexity, j.frequency, j.status, j.validation_score,
-  j.tenant_id, j.created_at, j.updated_at,
+  j.tenant_id, j.strategic_priority_id, j.domain_id, j.industry_id,
+  j.created_at, j.updated_at,
   ai.overall_ai_readiness, ai.automation_score, ai.rag_score,
   ai.summary_score, ai.generation_score, ait.name;
 
@@ -104,6 +109,7 @@ SELECT
   p.name as persona_name,
   p.archetype,
   p.seniority_level,
+  p.geographic_scope,
   r.id as role_id,
   r.name as role_name,
   j.id as jtbd_id,
@@ -140,7 +146,20 @@ SELECT
   'function' as entity_type,
   jf.function_id as entity_id,
   jf.function_name as entity_name,
-  j.*
+  j.id,
+  j.code,
+  j.name,
+  j.description,
+  j.job_type,
+  j.functional_area,
+  j.job_category,
+  j.complexity,
+  j.frequency,
+  j.status,
+  j.validation_score,
+  j.tenant_id,
+  j.created_at,
+  j.updated_at
 FROM jtbd_functions jf
 JOIN jtbd j ON jf.jtbd_id = j.id
 WHERE j.deleted_at IS NULL
@@ -152,7 +171,20 @@ SELECT
   'department' as entity_type,
   jd.department_id as entity_id,
   jd.department_name as entity_name,
-  j.*
+  j.id,
+  j.code,
+  j.name,
+  j.description,
+  j.job_type,
+  j.functional_area,
+  j.job_category,
+  j.complexity,
+  j.frequency,
+  j.status,
+  j.validation_score,
+  j.tenant_id,
+  j.created_at,
+  j.updated_at
 FROM jtbd_departments jd
 JOIN jtbd j ON jd.jtbd_id = j.id
 WHERE j.deleted_at IS NULL
@@ -164,7 +196,20 @@ SELECT
   'role' as entity_type,
   jr.role_id as entity_id,
   jr.role_name as entity_name,
-  j.*
+  j.id,
+  j.code,
+  j.name,
+  j.description,
+  j.job_type,
+  j.functional_area,
+  j.job_category,
+  j.complexity,
+  j.frequency,
+  j.status,
+  j.validation_score,
+  j.tenant_id,
+  j.created_at,
+  j.updated_at
 FROM jtbd_roles jr
 JOIN jtbd j ON jr.jtbd_id = j.id
 WHERE j.deleted_at IS NULL;
@@ -246,7 +291,8 @@ SELECT
   ARRAY_AGG(DISTINCT j.name ORDER BY j.name) FILTER (WHERE j.name IS NOT NULL) as all_jtbds
   
 FROM org_roles r
-LEFT JOIN tenants t ON r.tenant_id = t.id
+LEFT JOIN role_tenants rt ON r.id = rt.role_id
+LEFT JOIN tenants t ON rt.tenant_id = t.id
 LEFT JOIN org_functions f ON r.function_id = f.id
 LEFT JOIN org_departments d ON r.department_id = d.id
 LEFT JOIN personas p ON r.id = p.role_id AND p.deleted_at IS NULL
@@ -330,4 +376,3 @@ SELECT
   'v_role_persona_jtbd_hierarchy',
   COUNT(*)::TEXT
 FROM v_role_persona_jtbd_hierarchy;
-

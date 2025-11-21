@@ -23,6 +23,8 @@ import {
   SidebarSolutionBuilderContent,
   SidebarWorkflowsContent,
   SidebarAdminContent,
+  SidebarDesignerContent,
+  SidebarServiceTemplatesContent,
 } from "@/components/sidebar-view-content"
 import { SidebarPersonasContent } from "@/components/sidebar-view-content/sidebar-personas-content"
 
@@ -64,6 +66,9 @@ export function AppSidebar({
     if (pathname.startsWith("/ask-expert")) {
       return <SidebarAskExpert />
     }
+    if (pathname.startsWith("/ask-panel-v1")) {
+      return <SidebarDesignerContent />
+    }
     if (pathname.startsWith("/ask-panel")) {
       return <SidebarAskPanelContent />
     }
@@ -81,6 +86,9 @@ export function AppSidebar({
     }
     if (pathname.startsWith("/prism")) {
       return <SidebarPromptPrismContent />
+    }
+    if (pathname.startsWith("/service-templates")) {
+      return <SidebarServiceTemplatesContent />
     }
     if (pathname.startsWith("/personas")) {
       return <SidebarPersonasContent />

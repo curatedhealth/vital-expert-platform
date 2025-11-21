@@ -27,6 +27,13 @@ from typing import Dict, Any
 # Import routes
 from api.routes import hybrid_search
 
+# Import LangGraph GUI routes
+from langgraph_gui.storage.file_storage import WorkflowStorage
+from langgraph_gui.integration.pharma_intelligence import PharmaIntelligenceIntegration
+from langgraph_gui.api import router as langgraph_router, init_routes as init_langgraph_routes
+from langgraph_gui.api.export import router as langgraph_export_router
+from langgraph_gui.api.panels import get_panel_types, get_panel_schema, execute_panel
+
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
@@ -55,6 +62,15 @@ async def lifespan(app: FastAPI):
         logger.info("✓ Hybrid search service initialized")
         logger.info("✓ Cache service initialized")
         logger.info("✓ A/B testing service initialized")
+        
+        # Initialize LangGraph GUI
+        import os
+        workflows_path = os.getenv("LANGGRAPH_GUI_WORKFLOWS_PATH", "./workflows")
+        langgraph_storage = WorkflowStorage(base_path=workflows_path)
+        langgraph_pharma = PharmaIntelligenceIntegration()
+        init_langgraph_routes(langgraph_storage, langgraph_pharma)
+        logger.info(f"✓ LangGraph GUI initialized (workflows: {workflows_path})")
+        
         logger.info("=" * 80)
         logger.info("API is ready to accept requests")
         logger.info("=" * 80)
@@ -236,6 +252,15 @@ async def log_requests(request: Request, call_next):
 
 # Include routers
 app.include_router(hybrid_search.router)
+
+# Include LangGraph GUI routers
+app.include_router(langgraph_router, prefix="/api/langgraph-gui", tags=["langgraph-gui"])
+app.include_router(langgraph_export_router, prefix="/api/langgraph-gui", tags=["langgraph-gui-export"])
+
+# LangGraph GUI panel endpoints
+app.get("/api/langgraph-gui/panels/types", tags=["langgraph-gui"])(get_panel_types)
+app.get("/api/langgraph-gui/panels/schema/{panel_type}", tags=["langgraph-gui"])(get_panel_schema)
+app.post("/api/langgraph-gui/panels/execute", tags=["langgraph-gui"])(execute_panel)
 
 
 @app.get("/", include_in_schema=False)

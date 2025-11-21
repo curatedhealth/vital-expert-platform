@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { useRouter, useSearchParams } from "next/navigation"
+import { useRouter, useSearchParams, usePathname } from "next/navigation"
 import { useEffect, useState } from "react"
 import {
   Activity,
@@ -23,6 +23,7 @@ import {
   MessageSquare,
   Pen,
   Puzzle,
+  Rocket,
   SearchIcon,
   Server,
   Settings,
@@ -33,6 +34,7 @@ import {
   TrendingUp,
   Upload,
   User,
+  UserCheck,
   Users,
   Wand2,
   Workflow,
@@ -42,6 +44,37 @@ import {
 import { SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar"
 import { createClient } from "@vital/sdk/client"
 import { useSavedPanels } from "@/contexts/ask-panel-context"
+import { Input } from "@/components/ui/input"
+import { ScrollArea } from "@/components/ui/scroll-area"
+import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import {
+  PlusIcon,
+  RefreshCwIcon,
+  Loader2Icon,
+  SparklesIcon,
+  ChevronDown,
+  Pin,
+  PinOff,
+  Archive,
+  Trash2Icon,
+  MoreVertical,
+  Calendar,
+} from "lucide-react"
+import { TASK_DEFINITIONS, type TaskDefinition } from "@/components/langgraph-gui/TaskLibrary"
+import { cn } from "@/lib/utils"
 
 export function SidebarDashboardContent() {
   return (
@@ -211,6 +244,559 @@ export function SidebarAskPanelContent() {
           </SidebarMenu>
         </SidebarGroupContent>
       </SidebarGroup>
+    </>
+  )
+}
+
+export function SidebarDesignerContent() {
+  const router = useRouter();
+  const pathname = usePathname();
+
+  // Import panel configs dynamically to avoid circular dependencies
+  const [panelConfigs, setPanelConfigs] = useState<any[]>([]);
+  const [templateSearch, setTemplateSearch] = useState("");
+  const [librarySearch, setLibrarySearch] = useState("");
+  const [pinnedTemplates, setPinnedTemplates] = useState<Set<string>>(new Set());
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isCreatingWorkflow, setIsCreatingWorkflow] = useState(false);
+
+  // Define Ask Expert Modes (aligned with 4_MODE_SYSTEM_FINAL.md)
+  const askExpertModes = [
+    {
+      id: 'mode-1-interactive-manual',
+      name: 'Mode 1: Interactive Manual',
+      description: 'Focused Expert Conversation - You select the expert and have a multi-turn conversation',
+      icon: UserCheck,
+      workflowId: 'mode1_ask_expert', // Links to Mode 1 workflow template
+    },
+    {
+      id: 'mode-2-interactive-automatic',
+      name: 'Mode 2: Interactive Automatic',
+      description: 'Smart Expert Discussion - AI selects best expert(s) for multi-turn conversation',
+      icon: Zap,
+      workflowId: 'mode2_ask_expert', // Links to Mode 2 workflow template
+    },
+    {
+      id: 'mode-3-autonomous-manual',
+      name: 'Mode 3: Autonomous Manual',
+      description: 'Expert-Driven Workflow - You select the expert for goal-driven autonomous execution',
+      icon: Rocket,
+      workflowId: 'mode3_ask_expert', // Links to Mode 3 workflow template
+    },
+    {
+      id: 'mode-4-autonomous-automatic',
+      name: 'Mode 4: Autonomous Automatic',
+      description: 'AI Collaborative Workflow - AI assembles team of experts for complex goal-driven execution',
+      icon: MessageSquare,
+      workflowId: 'mode4_ask_expert', // Links to Mode 4 workflow template
+    },
+  ];
+
+  useEffect(() => {
+    // Dynamically import to avoid SSR issues
+    import('@/components/langgraph-gui/panel-workflows/panel-definitions').then((module) => {
+      const configs = Object.values(module.PANEL_CONFIGS).map((config: any) => ({
+        id: config.id,
+        name: config.name,
+        description: config.description,
+        icon: config.icon,
+      }));
+      setPanelConfigs(configs);
+    });
+  }, []);
+
+  // Load pinned templates from localStorage
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('designer-pinned-templates');
+      if (stored) {
+        setPinnedTemplates(new Set(JSON.parse(stored)));
+      }
+    }
+  }, []);
+
+  // Save pinned templates to localStorage
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('designer-pinned-templates', JSON.stringify(Array.from(pinnedTemplates)));
+    }
+  }, [pinnedTemplates]);
+
+  const handleWorkflowClick = (workflowId: string) => {
+    console.log('[Sidebar] Workflow template clicked:', workflowId);
+
+    // Check if we're already on the designer page
+    const isOnDesignerPage = pathname === '/ask-panel-v1';
+
+    if (isOnDesignerPage) {
+      // Already on designer page, dispatch event immediately
+      console.log('[Sidebar] Already on designer page, dispatching event immediately');
+      window.dispatchEvent(new CustomEvent('designer:create-workflow', { detail: { workflowId } }));
+    } else {
+      // Navigate to designer page first, then dispatch event after component mounts
+      console.log('[Sidebar] Navigating to designer page first');
+      router.push('/ask-panel-v1');
+
+      // Dispatch event after a short delay to ensure WorkflowBuilder is mounted
+      setTimeout(() => {
+        console.log('[Sidebar] Dispatching workflow create event after navigation:', workflowId);
+        window.dispatchEvent(new CustomEvent('designer:create-workflow', { detail: { workflowId } }));
+      }, 300);
+    }
+  };
+
+  const handleNewWorkflow = () => {
+    if (isCreatingWorkflow) return;
+    setIsCreatingWorkflow(true);
+
+    // Check if we're already on the designer page
+    const isOnDesignerPage = pathname === '/ask-panel-v1';
+
+    if (isOnDesignerPage) {
+      // Already on designer page, dispatch event immediately
+      window.dispatchEvent(new CustomEvent('designer:create-workflow', { detail: { workflowId: 'blank' } }));
+      setTimeout(() => setIsCreatingWorkflow(false), 500);
+    } else {
+      // Navigate to designer page first
+      router.push('/ask-panel-v1');
+
+      // Dispatch event after a short delay to ensure WorkflowBuilder is mounted
+      setTimeout(() => {
+        window.dispatchEvent(new CustomEvent('designer:create-workflow', { detail: { workflowId: 'blank' } }));
+        setIsCreatingWorkflow(false);
+      }, 300);
+    }
+  };
+
+  const handleRefresh = () => {
+    if (isRefreshing) return;
+    setIsRefreshing(true);
+    // Reload panel configs
+    import('@/components/langgraph-gui/panel-workflows/panel-definitions').then((module) => {
+      const configs = Object.values(module.PANEL_CONFIGS).map((config: any) => ({
+        id: config.id,
+        name: config.name,
+        description: config.description,
+        icon: config.icon,
+      }));
+      setPanelConfigs(configs);
+      setIsRefreshing(false);
+    });
+  };
+
+  const togglePin = (templateId: string) => {
+    setPinnedTemplates(prev => {
+      const next = new Set(prev);
+      if (next.has(templateId)) {
+        next.delete(templateId);
+      } else {
+        next.add(templateId);
+      }
+      return next;
+    });
+  };
+
+  // Filter templates by search
+  const filteredTemplates = panelConfigs.filter((config) => {
+    if (!templateSearch.trim()) return true;
+    const searchLower = templateSearch.toLowerCase();
+    return (
+      config.name.toLowerCase().includes(searchLower) ||
+      config.description.toLowerCase().includes(searchLower)
+    );
+  });
+
+  // Separate pinned and unpinned templates
+  const pinnedTemplatesList = filteredTemplates.filter(t => pinnedTemplates.has(t.id));
+  const unpinnedTemplatesList = filteredTemplates.filter(t => !pinnedTemplates.has(t.id));
+
+  // Filter library components by search
+  const filteredTasks = TASK_DEFINITIONS.filter((task) => {
+    if (!librarySearch.trim()) return true;
+    const searchLower = librarySearch.toLowerCase();
+    return (
+      task.name.toLowerCase().includes(searchLower) ||
+      task.description.toLowerCase().includes(searchLower) ||
+      task.category.toLowerCase().includes(searchLower)
+    );
+  });
+
+  // Group tasks by category
+  const tasksByCategory = filteredTasks.reduce((acc, task) => {
+    if (!acc[task.category]) acc[task.category] = [];
+    acc[task.category].push(task);
+    return acc;
+  }, {} as Record<string, TaskDefinition[]>);
+
+  const renderTemplateItem = (config: any) => {
+    const isPinned = pinnedTemplates.has(config.id);
+    const IconComponent = config.icon || Users;
+
+    return (
+      <SidebarMenuItem key={config.id}>
+        <div className="group/template relative">
+          <SidebarMenuButton
+            onClick={() => handleWorkflowClick(config.id)}
+            className={cn(
+              "w-full transition-all",
+              isPinned && "bg-yellow-50/50 dark:bg-yellow-900/10 border-l-2 border-l-yellow-500"
+            )}
+          >
+            <div className="flex w-full items-center gap-2">
+              <IconComponent className="h-4 w-4 shrink-0" />
+              <div className="flex flex-1 flex-col items-start gap-0.5 min-w-0">
+                <div className="flex items-center gap-1.5 w-full">
+                  {isPinned && <Pin className="h-3 w-3 text-yellow-600 dark:text-yellow-400 flex-shrink-0" />}
+                  <span className="text-sm font-medium truncate">{config.name}</span>
+                </div>
+                <span className="text-xs text-muted-foreground truncate">{config.description}</span>
+              </div>
+            </div>
+          </SidebarMenuButton>
+
+          {/* Quick Actions Dropdown */}
+          <div className="absolute top-1 right-1 opacity-0 group-hover/template:opacity-100 transition-opacity">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-6 w-6 p-0 hover:bg-gray-200 dark:hover:bg-gray-700"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <MoreVertical className="h-3 w-3" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-40">
+                <DropdownMenuItem
+                  className="text-xs"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    togglePin(config.id);
+                  }}
+                >
+                  {isPinned ? (
+                    <>
+                      <PinOff className="h-3 w-3 mr-2" />
+                      Unpin
+                    </>
+                  ) : (
+                    <>
+                      <Pin className="h-3 w-3 mr-2" />
+                      Pin
+                    </>
+                  )}
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem className="text-xs text-red-600 dark:text-red-400">
+                  <Trash2Icon className="h-3 w-3 mr-2" />
+                  Delete
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </div>
+      </SidebarMenuItem>
+    );
+  };
+
+  const handleModeClick = (mode: typeof askExpertModes[0]) => {
+    // If mode has a workflowId, create that workflow
+    if (mode.workflowId) {
+      console.log('[Sidebar] Mode clicked with workflowId:', mode.workflowId);
+
+      // Check if we're already on the designer page
+      const isOnDesignerPage = pathname === '/ask-panel-v1';
+
+      if (isOnDesignerPage) {
+        // Already on designer page, dispatch event immediately
+        console.log('[Sidebar] Already on designer page, dispatching event immediately');
+        window.dispatchEvent(new CustomEvent('designer:create-workflow', { detail: { workflowId: mode.workflowId } }));
+      } else {
+        // Navigate to designer page first, then dispatch event after component mounts
+        console.log('[Sidebar] Navigating to designer page first');
+        router.push('/ask-panel-v1');
+
+        // Dispatch event after a short delay to ensure WorkflowBuilder is mounted
+        setTimeout(() => {
+          console.log('[Sidebar] Dispatching workflow create event after navigation:', mode.workflowId);
+          window.dispatchEvent(new CustomEvent('designer:create-workflow', { detail: { workflowId: mode.workflowId } }));
+        }, 300);
+      }
+    } else {
+      // Dispatch event to open documentation modal
+      // Direct mapping based on mode number
+      const modeDocMap: Record<string, string> = {
+        'mode-1-interactive-manual': 'mode1',     // Mode 1 → Mode 1 docs
+        'mode-2-interactive-automatic': 'mode2',  // Mode 2 → Mode 2 docs
+        'mode-3-autonomous-manual': 'mode3',      // Mode 3 → Mode 3 docs
+        'mode-4-autonomous-automatic': 'mode4',   // Mode 4 → Mode 4 docs
+      };
+
+      const docMode = modeDocMap[mode.id];
+      if (docMode) {
+        console.log('[Sidebar] Dispatching open mode docs event for:', mode.id, '→', docMode);
+
+        // Navigate to designer page first if not already there
+        const isOnDesignerPage = pathname === '/ask-panel-v1';
+        if (!isOnDesignerPage) {
+          router.push('/ask-panel-v1');
+        }
+
+        // Dispatch event after a short delay
+        setTimeout(() => {
+          window.dispatchEvent(new CustomEvent('designer:open-mode-docs', { detail: { mode: docMode } }));
+        }, isOnDesignerPage ? 0 : 300);
+      } else {
+        // Fallback: navigate to ask-expert page
+        window.location.href = `/ask-expert?mode=${mode.id}`;
+      }
+    }
+  };
+
+  return (
+    <>
+      {/* Quick Actions */}
+      <Collapsible defaultOpen className="group/collapsible">
+        <SidebarGroup>
+          <SidebarGroupLabel asChild>
+            <CollapsibleTrigger className="flex w-full items-center justify-between hover:bg-sidebar-accent rounded-md px-2 py-1.5">
+              Quick Actions
+              <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
+            </CollapsibleTrigger>
+          </SidebarGroupLabel>
+          <CollapsibleContent>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    className="justify-between"
+                    onClick={handleNewWorkflow}
+                    disabled={isCreatingWorkflow}
+                  >
+                    <div className="flex items-center gap-2">
+                      {isCreatingWorkflow ? (
+                        <Loader2Icon className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <PlusIcon className="h-4 w-4" />
+                      )}
+                      <span>New Workflow</span>
+                    </div>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    className="justify-between"
+                    onClick={handleRefresh}
+                    disabled={isRefreshing}
+                  >
+                    <div className="flex items-center gap-2">
+                      {isRefreshing ? (
+                        <Loader2Icon className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <RefreshCwIcon className="h-4 w-4" />
+                      )}
+                      <span>Refresh</span>
+                    </div>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem className="group-data-[collapsible=icon]:hidden">
+                  <SidebarMenuButton asChild>
+                    <Link href="/service-templates">
+                      <SparklesIcon className="h-4 w-4" />
+                      <span>Browse Templates</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </CollapsibleContent>
+        </SidebarGroup>
+      </Collapsible>
+
+      {/* Modes */}
+      <Collapsible defaultOpen className="group/collapsible">
+        <SidebarGroup className="group-data-[collapsible=icon]:hidden">
+          <SidebarGroupLabel asChild>
+            <CollapsibleTrigger className="flex w-full items-center justify-between hover:bg-sidebar-accent rounded-md px-2 py-1.5">
+              Modes
+              <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
+            </CollapsibleTrigger>
+          </SidebarGroupLabel>
+          <CollapsibleContent>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {askExpertModes.map((mode) => {
+                  const IconComponent = mode.icon;
+                  return (
+                    <SidebarMenuItem key={mode.id}>
+                      <SidebarMenuButton
+                        onClick={() => handleModeClick(mode)}
+                        className="w-full cursor-pointer"
+                      >
+                        <IconComponent className="h-4 w-4 shrink-0" />
+                        <div className="flex flex-1 flex-col items-start gap-0.5 min-w-0">
+                          <span className="text-sm font-medium truncate">{mode.name}</span>
+                          <span className="text-xs text-muted-foreground truncate">{mode.description}</span>
+                        </div>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  );
+                })}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </CollapsibleContent>
+        </SidebarGroup>
+      </Collapsible>
+
+      {/* Service Templates */}
+      <Collapsible defaultOpen className="group/collapsible">
+        <SidebarGroup className="group-data-[collapsible=icon]:hidden">
+          <SidebarGroupLabel asChild>
+            <CollapsibleTrigger className="flex w-full items-center justify-between hover:bg-sidebar-accent rounded-md px-2 py-1.5">
+              Service Templates
+              <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
+            </CollapsibleTrigger>
+          </SidebarGroupLabel>
+          <CollapsibleContent>
+            <SidebarGroupContent className="space-y-2">
+              {/* Template Search */}
+              <div className="relative px-2">
+                <SearchIcon className="pointer-events-none absolute left-5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  value={templateSearch}
+                  onChange={(e) => setTemplateSearch(e.target.value)}
+                  placeholder="Search templates…"
+                  className="h-8 pl-8 text-xs"
+                />
+              </div>
+
+              {panelConfigs.length === 0 && (
+                <SidebarMenuItem>
+                  <SidebarMenuButton disabled>
+                    <Loader2Icon className="h-4 w-4 animate-spin" />
+                    <span>Loading templates…</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              )}
+
+              {panelConfigs.length > 0 && filteredTemplates.length === 0 && (
+                <SidebarMenuItem>
+                  <SidebarMenuButton disabled>
+                    <SearchIcon className="h-4 w-4" />
+                    <span>No templates match your search</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              )}
+
+              {filteredTemplates.length > 0 && (
+                <ScrollArea className="max-h-[400px]">
+                  <div className="space-y-4">
+                    {/* Pinned Templates */}
+                    {pinnedTemplatesList.length > 0 && (
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-1.5 px-2 py-1">
+                          <Pin className="h-3 w-3 text-muted-foreground" />
+                          <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                            Pinned
+                          </span>
+                        </div>
+                        <SidebarMenu>
+                          {pinnedTemplatesList.map(renderTemplateItem)}
+                        </SidebarMenu>
+                      </div>
+                    )}
+
+                    {/* Unpinned Templates */}
+                    {unpinnedTemplatesList.length > 0 && (
+                      <div className="space-y-1">
+                        <SidebarMenu>
+                          {unpinnedTemplatesList.map(renderTemplateItem)}
+                        </SidebarMenu>
+                      </div>
+                    )}
+                  </div>
+                </ScrollArea>
+              )}
+            </SidebarGroupContent>
+          </CollapsibleContent>
+        </SidebarGroup>
+      </Collapsible>
+
+      {/* Library */}
+      <Collapsible defaultOpen className="group/collapsible">
+        <SidebarGroup className="group-data-[collapsible=icon]:hidden">
+          <SidebarGroupLabel asChild>
+            <CollapsibleTrigger className="flex w-full items-center justify-between hover:bg-sidebar-accent rounded-md px-2 py-1.5">
+              Library
+              <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
+            </CollapsibleTrigger>
+          </SidebarGroupLabel>
+          <CollapsibleContent>
+            <SidebarGroupContent className="space-y-3">
+              <div className="space-y-2">
+                <div className="relative">
+                  <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    value={librarySearch}
+                    onChange={(event) => setLibrarySearch(event.target.value)}
+                    placeholder="Search components…"
+                    className="pl-9"
+                  />
+                </div>
+              </div>
+
+              <ScrollArea className="max-h-[320px] pr-2">
+                <SidebarMenu className="space-y-2">
+                  {filteredTasks.length === 0 && (
+                    <SidebarMenuItem>
+                      <SidebarMenuButton disabled>
+                        <SearchIcon className="h-4 w-4" />
+                        <span>No components match your search</span>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  )}
+
+                  {Object.entries(tasksByCategory)
+                    .sort(([a], [b]) => a.localeCompare(b))
+                    .map(([category, tasks]) => (
+                      <div key={category} className="space-y-1">
+                        <span className="pl-2 text-xs font-semibold text-muted-foreground">
+                          {category}
+                        </span>
+                        {tasks.map((task) => (
+                          <SidebarMenuItem key={task.id}>
+                            <SidebarMenuButton
+                              className="items-center transition-all p-2 rounded-lg"
+                              onClick={() => {
+                                // Dispatch event to add component to canvas
+                                window.dispatchEvent(new CustomEvent('designer:add-component', {
+                                  detail: { taskId: task.id, task }
+                                }));
+                              }}
+                            >
+                              <div className="flex items-center gap-2 flex-1 min-w-0">
+                                <span className="text-lg flex-shrink-0">{task.icon}</span>
+                                <div className="flex-1 min-w-0">
+                                  <div className="text-xs font-medium leading-tight break-words">
+                                    {task.name}
+                                  </div>
+                                  <div className="text-xs text-muted-foreground truncate">
+                                    {task.description}
+                                  </div>
+                                </div>
+                              </div>
+                            </SidebarMenuButton>
+                          </SidebarMenuItem>
+                        ))}
+                      </div>
+                    ))}
+                </SidebarMenu>
+              </ScrollArea>
+            </SidebarGroupContent>
+          </CollapsibleContent>
+        </SidebarGroup>
+      </Collapsible>
     </>
   )
 }
@@ -894,12 +1480,124 @@ export function SidebarAdminContent() {
               </SidebarMenuButton>
             </SidebarMenuItem>
             <SidebarMenuItem>
-              <SidebarMenuButton 
+              <SidebarMenuButton
                 onClick={() => handleNavigation('personas')}
                 isActive={isActive('personas')}
               >
                 <User className="h-4 w-4" />
                 <span>Personas</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarGroupContent>
+      </SidebarGroup>
+    </>
+  )
+}
+
+export function SidebarServiceTemplatesContent() {
+  const [templates, setTemplates] = useState<any[]>([]);
+
+  useEffect(() => {
+    // Dynamically import service templates to avoid circular dependencies
+    import('@/lib/service-templates/template-definitions').then((module) => {
+      const configs = module.SERVICE_TEMPLATES.slice(0, 8).map((config: any) => ({
+        id: config.id,
+        name: config.name,
+        description: config.description,
+        category: config.category,
+        icon: config.icon,
+        timeToValue: config.timeToValue,
+        route: config.route,
+      }));
+      setTemplates(configs);
+    });
+  }, []);
+
+  return (
+    <>
+      {/* Quick Start */}
+      <SidebarGroup>
+        <SidebarGroupLabel>Quick Start</SidebarGroupLabel>
+        <SidebarGroupContent>
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild>
+                <Link href="/service-templates">
+                  <Sparkles className="h-4 w-4" />
+                  <span>Browse All Templates</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarGroupContent>
+      </SidebarGroup>
+
+      {/* Popular Templates */}
+      <SidebarGroup>
+        <SidebarGroupLabel>Popular Templates</SidebarGroupLabel>
+        <SidebarGroupContent>
+          <SidebarMenu>
+            {templates.map((template) => {
+              const IconComponent = template.icon || Users;
+              return (
+                <SidebarMenuItem key={template.id}>
+                  <SidebarMenuButton
+                    asChild
+                    className="w-full cursor-pointer"
+                  >
+                    <Link href={template.route || '/service-templates'}>
+                      <IconComponent className="h-4 w-4" />
+                      <div className="flex-1 min-w-0 text-left">
+                        <div className="text-sm font-medium truncate">{template.name}</div>
+                        <div className="text-xs text-muted-foreground truncate">
+                          {template.category} • {template.timeToValue}
+                        </div>
+                      </div>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              );
+            })}
+          </SidebarMenu>
+        </SidebarGroupContent>
+      </SidebarGroup>
+
+      {/* Categories */}
+      <SidebarGroup>
+        <SidebarGroupLabel>Categories</SidebarGroupLabel>
+        <SidebarGroupContent>
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild>
+                <Link href="/service-templates?category=advisory">
+                  <MessageSquare className="h-4 w-4" />
+                  <span>Advisory Services</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild>
+                <Link href="/service-templates?category=workflow">
+                  <Workflow className="h-4 w-4" />
+                  <span>Workflows</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild>
+                <Link href="/service-templates?category=analysis">
+                  <SearchIcon className="h-4 w-4" />
+                  <span>Analysis</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild>
+                <Link href="/service-templates?category=research">
+                  <BookOpen className="h-4 w-4" />
+                  <span>Research</span>
+                </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
           </SidebarMenu>

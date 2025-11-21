@@ -14,8 +14,8 @@ pnpm install
 pnpm dev
 
 # Deploy RLS security (required for production)
-./scripts/database/deploy-rls.sh production
-./scripts/database/verify-rls.sh production
+./scripts/deploy-rls.sh production
+./scripts/verify-rls.sh production
 ```
 
 **📚 Full Documentation**: See [`.vital-cockpit/INDEX.md`](.vital-cockpit/INDEX.md) for comprehensive navigation

@@ -69,6 +69,7 @@ export async function proxy(request: NextRequest) {
     '/api/knowledge',    // Knowledge management endpoints (uses service role internally)
     '/api/metrics',  // Prometheus metrics endpoint
     '/api/health',    // Health check endpoint
+    '/api/langgraph-gui',  // LangGraph GUI API proxy (proxies to AI Engine)
   ];
   const isPublicApiRoute = publicApiRoutes.some(route => url.pathname.startsWith(route));
 

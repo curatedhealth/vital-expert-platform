@@ -14,6 +14,8 @@
 
 import type { Message } from '@/types/chat';
 import { executePanel, ExecutionMode } from '@/lib/orchestration/multi-framework-orchestrator';
+import { fetchAgentsByIds, fetchAgentsByNames, convertAgentToPanelDefinition } from './agent-store-integration';
+import type { AgentDefinition } from './agent-store-integration';
 
 export enum PanelMode {
   Sequential = 'sequential',      // One expert at a time (LangGraph)
@@ -34,7 +36,8 @@ export enum ExpertType {
 
 export interface PanelConfig {
   mode: PanelMode;
-  experts: ExpertType[];
+  experts: ExpertType[]; // Legacy: expert types, or agent IDs when using agent store
+  agentIds?: string[]; // New: agent IDs from agent store
   maxRounds?: number;
   allowDebate?: boolean;
   requireConsensus?: boolean;
@@ -175,24 +178,70 @@ export class AskPanelOrchestrator {
     
     console.log(`🎯 [Panel] Using ${framework.toUpperCase()} for panel consultation`);
     console.log(`📋 [Panel] Experts: ${config.experts.join(', ')}`);
+    console.log(`👥 [Panel] Agent IDs: ${config.agentIds?.join(', ') || 'none'}`);
     console.log(`⚙️ [Panel] Mode: ${config.mode}`);
     
-    // Build agent definitions from expert templates
-    const agents = config.experts.map(expertType => {
-      const expert = EXPERT_TEMPLATES[expertType];
-      return {
-        id: expertType,
-        role: expert.role,
-        goal: expert.goal,
-        backstory: expert.backstory,
-        systemPrompt: expert.systemPrompt,
-        model: 'gpt-4o',
-        temperature: 0.7,
-        maxTokens: 2000,
-        tools: [],
-        allowDelegation: config.allowDebate || false,
-      };
-    });
+    // Build agent definitions - use agent store if agent IDs provided, otherwise use templates
+    let agents: AgentDefinition[];
+    
+    if (config.agentIds && config.agentIds.length > 0) {
+      // NEW: Fetch agents from agent store
+      console.log('📦 [Panel] Using Agent Store - Fetching agents by IDs...');
+      agents = await fetchAgentsByIds(config.agentIds);
+      
+      if (agents.length === 0) {
+        console.warn('⚠️ [Panel] No agents found in store, falling back to legacy expert templates');
+        // Fallback to legacy templates if no agents found
+        agents = config.experts.map(expertType => {
+          const expert = EXPERT_TEMPLATES[expertType as ExpertType];
+          if (!expert) {
+            throw new Error(`Unknown expert type: ${expertType}`);
+          }
+          return {
+            id: expertType,
+            role: expert.role,
+            goal: expert.goal,
+            backstory: expert.backstory,
+            systemPrompt: expert.systemPrompt,
+            model: 'gpt-4o',
+            temperature: 0.7,
+            maxTokens: 2000,
+            tools: [],
+            expertise: expert.expertise,
+            allowDelegation: config.allowDebate || false,
+          };
+        });
+      } else {
+        // Set allowDelegation based on config
+        agents = agents.map(agent => ({
+          ...agent,
+          allowDelegation: config.allowDebate || false,
+        }));
+        console.log(`✅ [Panel] Using ${agents.length} agents from Agent Store`);
+      }
+    } else {
+      // LEGACY: Use expert templates
+      console.log('📋 [Panel] Using legacy expert templates...');
+      agents = config.experts.map(expertType => {
+        const expert = EXPERT_TEMPLATES[expertType as ExpertType];
+        if (!expert) {
+          throw new Error(`Unknown expert type: ${expertType}`);
+        }
+        return {
+          id: expertType,
+          role: expert.role,
+          goal: expert.goal,
+          backstory: expert.backstory,
+          systemPrompt: expert.systemPrompt,
+          model: 'gpt-4o',
+          temperature: 0.7,
+          maxTokens: 2000,
+          tools: [],
+          expertise: expert.expertise,
+          allowDelegation: config.allowDebate || false,
+        };
+      });
+    }
     
     // Determine execution mode
     const mode: ExecutionMode = 

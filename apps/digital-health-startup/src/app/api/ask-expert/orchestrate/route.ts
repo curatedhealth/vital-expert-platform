@@ -23,6 +23,7 @@ import {
   TimeoutError,
 } from '@/features/ask-expert/mode-1/utils/timeout-handler';
 import { createClient } from '@/lib/supabase/server';
+import { getAgentConfig, selectBestAgentForQuery } from '@/features/ask-expert/services/agent-store-integration';
 
 interface OrchestrateRequest {
   mode: 'manual' | 'automatic' | 'autonomous' | 'multi-expert';
@@ -161,22 +162,39 @@ export async function POST(request: NextRequest) {
               }
 
               console.log('🎯 [Orchestrate] Routing to Mode 1: Manual Interactive');
+              console.log(`👤 [Orchestrate] Agent ID: ${body.agentId}`);
 
               try {
+                // Fetch agent configuration from agent store
+                const agentConfig = await getAgentConfig(body.agentId);
+                
+                if (!agentConfig) {
+                  controller.enqueue(encoder.encode(`data: ${JSON.stringify({
+                    type: 'error',
+                    message: `Agent not found or not active: ${body.agentId}`,
+                    timestamp: new Date().toISOString()
+                  })}\n\n`));
+                  controller.close();
+                  return;
+                }
+                
+                console.log(`✅ [Orchestrate] Agent loaded: ${agentConfig.display_name} (${agentConfig.model})`);
+                
                 // Execute Mode 1 - returns AsyncGenerator
-              const mode1Stream = executeMode1({
-                agentId: body.agentId,
-                message: body.message,
-                conversationHistory: body.conversationHistory,
-                enableRAG: body.enableRAG !== false, // Default to true, only disable if explicitly false
-                enableTools: body.enableTools ?? false,
-                requestedTools: body.requestedTools,
-                selectedRagDomains: body.selectedRagDomains,
-                model: body.model,
-                temperature: body.temperature ?? 0.7,
-                maxTokens: body.maxTokens ?? 2000,
-                userId: user?.id,
-                tenantId,
+                // Use agent config from store, but allow overrides from request
+                const mode1Stream = executeMode1({
+                  agentId: body.agentId,
+                  message: body.message,
+                  conversationHistory: body.conversationHistory,
+                  enableRAG: body.enableRAG !== false ? (agentConfig.rag_enabled ?? true) : false,
+                  enableTools: body.enableTools ?? (agentConfig.tools.length > 0),
+                  requestedTools: body.requestedTools || agentConfig.tools,
+                  selectedRagDomains: body.selectedRagDomains || agentConfig.knowledge_domains,
+                  model: body.model || agentConfig.model,
+                  temperature: body.temperature ?? agentConfig.temperature,
+                  maxTokens: body.maxTokens ?? agentConfig.max_tokens,
+                  userId: user?.id,
+                  tenantId,
                   sessionId,
                 });
 
@@ -241,12 +259,35 @@ export async function POST(request: NextRequest) {
             case 'automatic': {
               // MODE 2: Automatic Agent Selection
               console.log('🎯 [Orchestrate] Routing to Mode 2: Automatic Agent Selection');
+              
+              // Select best agent from agent store
+              const selectedAgent = await selectBestAgentForQuery(body.message, {
+                requiredCapabilities: body.requestedTools,
+              });
+              
+              if (!selectedAgent) {
+                controller.enqueue(encoder.encode(`data: ${JSON.stringify({
+                  type: 'error',
+                  message: 'No suitable agent found for your query. Please try selecting an agent manually.',
+                  timestamp: new Date().toISOString()
+                })}\n\n`));
+                controller.close();
+                return;
+              }
+              
+              console.log(`✅ [Orchestrate] Auto-selected agent: ${selectedAgent.display_name} (${selectedAgent.id})`);
 
               const mode2Stream = await executeMode2({
                 message: body.message,
                 conversationHistory: body.conversationHistory,
-                enableRAG: body.enableRAG ?? true,
-                enableTools: body.enableTools ?? false,
+                enableRAG: body.enableRAG ?? (selectedAgent.rag_enabled ?? true),
+                enableTools: body.enableTools ?? (selectedAgent.tools.length > 0),
+                requestedTools: body.requestedTools || selectedAgent.tools,
+                selectedRagDomains: body.selectedRagDomains || selectedAgent.knowledge_domains,
+                model: body.model || selectedAgent.model,
+                temperature: body.temperature ?? selectedAgent.temperature,
+                maxTokens: body.maxTokens ?? selectedAgent.max_tokens,
+                selectedAgentId: selectedAgent.id, // Pass selected agent ID
                 model: body.model,
                 temperature: body.temperature ?? 0.7,
                 maxTokens: body.maxTokens ?? 2000,

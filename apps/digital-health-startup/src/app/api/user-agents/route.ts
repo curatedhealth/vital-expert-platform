@@ -19,8 +19,16 @@ import {
 } from '@/lib/errors/agent-errors';
 
 // Get Supabase credentials from environment variables
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+const supabaseUrl =
+  process.env.NEXT_PUBLIC_SUPABASE_URL ||
+  process.env.SUPABASE_URL;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+if (!supabaseUrl || !supabaseServiceKey) {
+  throw new Error(
+    'Supabase credentials are not configured. Please set NEXT_PUBLIC_SUPABASE_URL/SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY.'
+  );
+}
 
 const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 
@@ -272,16 +280,26 @@ export async function GET(request: NextRequest) {
     try {
       
       // Get all agents that the user has added, including agent details
+      // Note: Using agents!user_agents_agent_id_fkey to specify which foreign key relationship to use
+      // (the user_agents table has two foreign keys to agents: agent_id and original_agent_id)
       const { data, error } = await supabaseAdmin
         .from('user_agents')
         .select(`
           *,
-          agents (
+          agents!user_agents_agent_id_fkey (
             id,
             name,
             description,
-            capabilities,
             metadata,
+            specializations,
+            expertise_level,
+            avatar_url,
+            color_scheme,
+            system_prompt,
+            base_model,
+            temperature,
+            max_tokens,
+            status,
             created_at,
             updated_at
           )
@@ -289,23 +307,33 @@ export async function GET(request: NextRequest) {
         .eq('user_id', userId)
         .order('created_at', { ascending: false });
 
-      // If table doesn't exist, return error
+      // If table doesn't exist, return empty array (graceful degradation)
       if (error && error.code === '42P01') {
-        requestLogger.error(
+        requestLogger.warn(
           'user_agents_table_missing',
-          new DatabaseConnectionError('user_agents table does not exist', {
-            context: { code: error.code },
-          }),
-          { operation: 'get_user_agents', userId }
+          {
+            message: 'user_agents table does not exist, returning empty array',
+            code: error.code,
+            operation: 'get_user_agents',
+            userId,
+          }
         );
 
         return NextResponse.json(
           {
-            error: 'Database table not found',
-            message: 'user_agents table is not initialized. Please run migrations.',
+            success: true,
             agents: [],
+            requestId,
+            count: 0,
+            warning: 'user_agents table not initialized',
           },
-          { status: 503 }
+          {
+            status: 200,
+            headers: {
+              'Cache-Control': 'private, max-age=60',
+              'X-Request-ID': requestId,
+            },
+          }
         );
       }
 
@@ -349,23 +377,33 @@ export async function GET(request: NextRequest) {
       );
 
     } catch (tableError: any) {
-      // If the table doesn't exist, return error
+      // If the table doesn't exist, return empty array (graceful degradation)
       if (tableError.code === '42P01') {
-        requestLogger.error(
-          'user_agents_table_missing',
-          new DatabaseConnectionError('user_agents table does not exist', {
-            context: { code: tableError.code },
-          }),
-          { operation: 'get_user_agents', userId }
+        requestLogger.warn(
+          'user_agents_table_missing_catch',
+          {
+            message: 'user_agents table does not exist, returning empty array',
+            code: tableError.code,
+            operation: 'get_user_agents',
+            userId,
+          }
         );
 
         return NextResponse.json(
           {
-            error: 'Database table not found',
-            message: 'user_agents table is not initialized. Please run migrations.',
+            success: true,
             agents: [],
+            requestId,
+            count: 0,
+            warning: 'user_agents table not initialized',
           },
-          { status: 503 }
+          {
+            status: 200,
+            headers: {
+              'Cache-Control': 'private, max-age=60',
+              'X-Request-ID': requestId,
+            },
+          }
         );
       }
 

@@ -675,7 +675,7 @@ try:
     logger.info(f"🔍 File exists: {_os_check.path.exists(frameworks_path)}")
     logger.info(f"🔍 Current working directory: {_os_check.getcwd()}")
     logger.info(f"🔍 Python path (first 3): {sys.path[:3]}")
-    
+
     from api.frameworks import router as frameworks_router
     app.include_router(frameworks_router, prefix="", tags=["frameworks"])
     logger.info("✅ Shared Framework routes registered (LangGraph, AutoGen, CrewAI)")
@@ -684,6 +684,32 @@ except ImportError as e:
     logger.warning("   Continuing without shared framework endpoints")
 except Exception as e:
     logger.error(f"❌ Unexpected error loading frameworks router: {e}")
+    import traceback
+    logger.error(traceback.format_exc())
+
+# Include Enhanced Features routes (319 agents, prompt starters, compliance)
+try:
+    from api.enhanced_features import router as enhanced_router
+    app.include_router(enhanced_router, prefix="", tags=["enhanced-features"])
+    logger.info("✅ Enhanced Features routes registered (319 agents, 1,276 prompt starters, HIPAA+GDPR)")
+except ImportError as e:
+    logger.warning(f"⚠️  Could not import enhanced features router: {e}")
+    logger.warning("   Continuing without enhanced features endpoints")
+except Exception as e:
+    logger.error(f"❌ Unexpected error loading enhanced features router: {e}")
+    import traceback
+    logger.error(traceback.format_exc())
+
+# Include Authentication routes (Supabase Auth integration)
+try:
+    from api.auth import router as auth_router
+    app.include_router(auth_router, prefix="/api", tags=["authentication"])
+    logger.info("✅ Authentication routes registered (signup, signin, JWT, multi-tenant)")
+except ImportError as e:
+    logger.warning(f"⚠️  Could not import auth router: {e}")
+    logger.warning("   Continuing without auth endpoints")
+except Exception as e:
+    logger.error(f"❌ Unexpected error loading auth router: {e}")
     import traceback
     logger.error(traceback.format_exc())
 

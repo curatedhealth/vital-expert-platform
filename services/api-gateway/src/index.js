@@ -84,6 +84,44 @@ const limiter = rateLimit({
 app.use('/v1/', limiter);
 
 // ============================================================================
+// ROOT ROUTE
+// ============================================================================
+
+app.get('/', (req, res) => {
+  res.json({
+    service: 'VITAL Platform API Gateway',
+    version: '1.0.0',
+    status: 'running',
+    timestamp: new Date().toISOString(),
+    documentation: {
+      health: 'GET /health',
+      metrics: 'GET /metrics',
+      api: {
+        chat: 'POST /v1/chat/completions',
+        agents: {
+          query: 'POST /v1/agents/query',
+          getById: 'GET /v1/agents/:id',
+        },
+      },
+    },
+    availableRoutes: [
+      'GET /health',
+      'GET /metrics',
+      'POST /v1/chat/completions',
+      'POST /v1/agents/query',
+      'GET /v1/agents/:id',
+      'POST /api/rag/query',
+      'POST /api/mode1/manual',
+      'POST /api/mode2/automatic',
+      'POST /api/mode3/autonomous-automatic',
+      'POST /api/mode4/autonomous-manual',
+      'ALL /api/langgraph-gui/*',
+    ],
+    frontend: 'http://localhost:3000',
+  });
+});
+
+// ============================================================================
 // HEALTH CHECK & METRICS
 // ============================================================================
 
@@ -1149,6 +1187,91 @@ app.get('/api/agents/:id/stats', async (req, res) => {
           availability: 'offline',
           recentFeedback: [],
         },
+      });
+    }
+  }
+});
+
+/**
+ * LangGraph GUI Proxy Routes
+ * Proxy all /api/langgraph-gui/* requests to Python AI Engine
+ */
+app.all('/api/langgraph-gui/*', async (req, res) => {
+  try {
+    const tenantId = req.tenantId || '00000000-0000-0000-0000-000000000001';
+    // Extract the path after /api/langgraph-gui
+    const remainingPath = req.path.replace(/^\/api\/langgraph-gui/, '') || '/';
+    const url = `${AI_ENGINE_URL}/api/langgraph-gui${remainingPath}`;
+    const queryString = req.url.includes('?') ? req.url.split('?')[1] : '';
+    const fullUrl = queryString ? `${url}?${queryString}` : url;
+
+    console.log(`[Gateway] LangGraph GUI - ${req.method} ${remainingPath} - Tenant: ${tenantId}`);
+
+    const config = {
+      method: req.method,
+      url: fullUrl,
+      headers: {
+        'Content-Type': 'application/json',
+        'x-tenant-id': tenantId,
+        ...req.headers,
+      },
+      timeout: 300000, // 5 minutes for long-running workflow executions
+      validateStatus: () => true, // Don't throw on any status
+    };
+
+    // Add request body for POST, PUT, PATCH
+    if (['POST', 'PUT', 'PATCH'].includes(req.method) && req.body) {
+      config.data = req.body;
+    }
+
+    // Handle streaming responses (SSE)
+    if (req.headers.accept?.includes('text/event-stream')) {
+      config.responseType = 'stream';
+      const response = await axios(config);
+      
+      res.setHeader('Content-Type', 'text/event-stream');
+      res.setHeader('Cache-Control', 'no-cache');
+      res.setHeader('Connection', 'keep-alive');
+      res.setHeader('X-Accel-Buffering', 'no');
+      res.status(response.status);
+      
+      response.data.pipe(res);
+      return;
+    }
+
+    const response = await axios(config);
+
+    // Forward response headers
+    Object.keys(response.headers).forEach(key => {
+      if (!['content-encoding', 'content-length', 'transfer-encoding'].includes(key.toLowerCase())) {
+        res.setHeader(key, response.headers[key]);
+      }
+    });
+
+    res.status(response.status);
+    
+    // Handle different response types
+    if (response.headers['content-type']?.includes('application/json')) {
+      res.json(response.data);
+    } else if (response.headers['content-type']?.includes('text/')) {
+      res.send(response.data);
+    } else {
+      res.send(response.data);
+    }
+  } catch (error) {
+    console.error('[Gateway] LangGraph GUI error:', error.message);
+
+    if (error.response) {
+      res.status(error.response.status).json(error.response.data || { error: error.message });
+    } else if (error.code === 'ECONNREFUSED') {
+      res.status(503).json({
+        error: 'Service unavailable',
+        message: 'AI Engine is not responding. Please try again later.',
+      });
+    } else {
+      res.status(500).json({
+        error: 'Gateway error',
+        message: error.message,
       });
     }
   }

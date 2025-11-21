@@ -16,7 +16,8 @@ import {
   Target,
   TestTube,
   Play,
-  BookOpen
+  BookOpen,
+  Sparkles
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -46,6 +47,12 @@ const mainNavItems = [
     icon: Home,
   },
   {
+    title: 'Service Templates',
+    href: '/service-templates',
+    icon: Sparkles,
+    badge: 'New',
+  },
+  {
     title: 'Projects',
     href: '/dashboard/projects',
     icon: FolderOpen,
@@ -54,7 +61,11 @@ const mainNavItems = [
     title: 'AI Queries',
     href: '/dashboard/queries',
     icon: MessageSquare,
-    badge: 'New',
+  },
+  {
+    title: 'Designer',
+    href: '/ask-panel-v1',
+    icon: Target,
   },
   {
     title: 'Documents',

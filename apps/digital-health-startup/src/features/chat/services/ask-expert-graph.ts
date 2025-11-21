@@ -204,13 +204,13 @@ async function retrieveContext(state: AskExpertState): Promise<Partial<AskExpert
 /**
  * AI Response Generation Node
  * 
- * Generates the final AI response using the enhanced LangChain service.
+ * Generates the final AI response using OpenAI directly.
  * This node combines the user's question with retrieved context and agent-specific
  * prompts to produce a comprehensive, accurate response.
  * 
  * Process:
- * 1. Calls the enhanced LangChain service with all context
- * 2. Uses agent-specific system prompts and configurations
+ * 1. Builds agent-specific system prompt with context
+ * 2. Calls OpenAI API with the prompt and context
  * 3. Incorporates retrieved context for accurate, cited responses
  * 4. Tracks token usage for budget management
  * 5. Handles errors gracefully with fallback responses
@@ -222,31 +222,87 @@ async function generateResponse(state: AskExpertState): Promise<Partial<AskExper
   console.log('🤖 Generating AI response...');
 
   try {
-    // Import enhanced LangChain service dynamically
-    const { enhancedLangChainService } = await import('./enhanced-langchain-service');
+    const openaiApiKey = process.env.OPENAI_API_KEY;
+    if (!openaiApiKey) {
+      throw new Error('OPENAI_API_KEY is not configured');
+    }
+
+    // Build system prompt with agent information and context
+    const agentName = state.agent?.display_name || state.agent?.name || 'Expert Assistant';
+    const agentDescription = state.agent?.description || '';
+    const agentPrompt = state.agent?.system_prompt || 'You are a helpful expert assistant.';
     
-    // Use the enhanced LangChain service to generate response
-    // This service handles agent-specific prompts, context integration, and token tracking
-    const result = await enhancedLangChainService.queryWithChain(
-      state.question,
-      state.agentId,
-      state.sessionId,
-      state.agent,
-      state.userId
-    );
+    const contextText = state.context || 'No additional context available.';
+    const sourcesText = state.sources?.length > 0
+      ? state.sources.map((s, i) => `[${i + 1}] ${s.title || 'Source'}: ${s.excerpt || s.content?.substring(0, 200)}`).join('\n\n')
+      : '';
+
+    const systemPrompt = `You are ${agentName}${agentDescription ? `, ${agentDescription}` : ''}.
+
+${agentPrompt}
+
+**Context from Knowledge Base:**
+${contextText}
+
+${sourcesText ? `**Available Sources:**\n${sourcesText}\n\nPlease cite sources using [1], [2], etc. when referencing them.` : ''}
+
+**Instructions:**
+- Provide accurate, well-reasoned responses based on the context and your expertise
+- Cite sources when using information from the knowledge base
+- If the context doesn't fully answer the question, acknowledge this and provide your best expert opinion
+- Be comprehensive but concise`;
+
+    // Call OpenAI API
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${openaiApiKey}`,
+      },
+      body: JSON.stringify({
+        model: state.agent?.model || 'gpt-4',
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: state.question },
+        ],
+        temperature: 0.7,
+        max_tokens: 2000,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(`OpenAI API error: ${errorData.error?.message || response.statusText}`);
+    }
+
+    const data = await response.json();
+    const answer = data.choices[0]?.message?.content || 'No response generated.';
+    const tokenUsage = {
+      prompt: data.usage?.prompt_tokens || 0,
+      completion: data.usage?.completion_tokens || 0,
+      total: data.usage?.total_tokens || 0,
+    };
+
+    // Generate citations from sources
+    const citations = state.sources?.map((s, i) => ({
+      id: s.id || `${i + 1}`,
+      reference: `[${i + 1}]`,
+      title: s.title || 'Source',
+      excerpt: s.excerpt || s.content?.substring(0, 200),
+    })) || [];
 
     console.log('✅ Response generated successfully');
 
     return {
-      answer: result.answer,           // Final AI response
-      sources: result.sources,          // Source documents used
-      citations: result.citations,     // Citation references in the response
-      tokenUsage: result.tokenUsage,    // Token count for cost tracking
+      answer,                    // Final AI response
+      sources: state.sources,     // Source documents used
+      citations,                  // Citation references in the response
+      tokenUsage,                 // Token count for cost tracking
     };
   } catch (error) {
     console.error('Response generation error:', error);
     return {
-      error: 'Failed to generate response. Please try again.',
+      error: error instanceof Error ? error.message : 'Failed to generate response. Please try again.',
     };
   }
 }

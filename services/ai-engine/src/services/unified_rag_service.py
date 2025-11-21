@@ -10,7 +10,13 @@ from typing import List, Dict, Any, Optional, Tuple
 from datetime import datetime
 import structlog
 import os
-from pinecone import Pinecone
+# Conditional pinecone import - only import when needed
+try:
+    from pinecone import Pinecone
+    PINECONE_AVAILABLE = True
+except ImportError:
+    Pinecone = None
+    PINECONE_AVAILABLE = False
 from langchain_openai import OpenAIEmbeddings
 from services.embedding_service_factory import EmbeddingServiceFactory
 from services.cache_manager import CacheManager
@@ -58,13 +64,17 @@ class UnifiedRAGService:
                 # LangChain-compatible embeddings will use embedding_service directly
                 self.embeddings = None
 
-            # Initialize Pinecone
+            # Initialize Pinecone (if available)
             pinecone_api_key = os.getenv("PINECONE_API_KEY")
             pinecone_index_name = os.getenv("PINECONE_INDEX_NAME", "vital-knowledge")
             
-            if pinecone_api_key:
-                self.pinecone = Pinecone(api_key=pinecone_api_key)
+            if not PINECONE_AVAILABLE:
+                logger.warning("⚠️ Pinecone module not installed, using Supabase only")
+                self.pinecone = None
+                self.pinecone_index = None
+            elif pinecone_api_key:
                 try:
+                    self.pinecone = Pinecone(api_key=pinecone_api_key)
                     self.pinecone_index = self.pinecone.Index(pinecone_index_name)
                     logger.info("✅ Pinecone index connected", index_name=pinecone_index_name)
                 except Exception as e:
@@ -72,6 +82,8 @@ class UnifiedRAGService:
                     self.pinecone_index = None
             else:
                 logger.warning("⚠️ PINECONE_API_KEY not set, using Supabase only")
+                self.pinecone = None
+                self.pinecone_index = None
 
             logger.info("✅ Unified RAG service initialized", caching_enabled=self.cache_manager is not None and self.cache_manager.enabled)
 

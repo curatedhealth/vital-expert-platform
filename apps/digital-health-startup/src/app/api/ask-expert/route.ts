@@ -2,7 +2,7 @@ import { createClient } from '@supabase/supabase-js';
 import { NextRequest, NextResponse } from 'next/server';
 
 import { streamAskExpertWorkflow } from '@/features/chat/services/ask-expert-graph';
-import { enhancedLangChainService } from '@/features/chat/services/enhanced-langchain-service';
+// import { enhancedLangChainService } from '@/features/chat/services/enhanced-langchain-service'; // Removed: file doesn't exist
 import { getAnalyticsService } from '@/lib/analytics/UnifiedAnalyticsService';
 import { getObservabilityService } from '@/lib/observability/UnifiedObservabilityService';
 import { STARTUP_TENANT_ID } from '@/lib/constants/tenant';
@@ -55,9 +55,10 @@ export async function POST(request: NextRequest) {
     const effectiveSessionId = sessionId || `ask-expert-${Date.now()}`;
 
     // Load chat history into memory if continuing conversation
-    if (chatHistory.length > 0) {
-      await enhancedLangChainService.loadChatHistory(effectiveSessionId, chatHistory);
-    }
+    // Note: Chat history is handled by the workflow itself
+    // if (chatHistory.length > 0) {
+    //   await enhancedLangChainService.loadChatHistory(effectiveSessionId, chatHistory);
+    // }
 
     // Handle streaming response
     if (stream) {

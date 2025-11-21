@@ -38,6 +38,7 @@ const topNavRoutes = [
   { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, color: 'text-blue-600' },
   { label: 'Ask Expert', href: '/ask-expert', icon: MessageSquare, color: 'text-blue-600' },
   { label: 'Ask Panel', href: '/ask-panel', icon: Users, color: 'text-purple-600' },
+  { label: 'Designer', href: '/ask-panel-v1', icon: Sparkles, color: 'text-purple-600' },
   { label: 'Workflows', href: '/workflows', icon: GitBranch, color: 'text-green-600' },
   { label: 'Solution Builder', href: '/solution-builder', icon: Box, color: 'text-orange-600' },
   { label: 'Agents', href: '/agents', icon: UsersRound, color: 'text-indigo-600' },
@@ -155,16 +156,16 @@ export function UnifiedDashboardLayout({ children }: { children: React.ReactNode
 
   return (
     <SidebarProvider>
-      <div className="flex min-h-screen w-full">
+      <div className="flex h-screen w-full overflow-hidden">
         <AppSidebar />
 
         {/* Main Content Area */}
-        <SidebarInset className="flex flex-1 flex-col">
+        <SidebarInset className="flex flex-1 flex-col min-h-0 overflow-hidden">
           {/* Header with View Selector, Breadcrumbs, and User Menu */}
           <DashboardHeader />
 
           {/* Main Content */}
-          <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6">
+          <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6 min-h-0 overflow-y-auto">
             {children}
           </main>
         </SidebarInset>

@@ -1,61 +1,91 @@
-# VITAL Path - Cloud-Only Configuration
-# Local Supabase services deprecated - using cloud instance
-# Generated: 2025-10-08T20:05:32.299Z
-
-# VITAL Path - Hybrid 3-Tier Architecture
-# Docker Compose configuration for production deployment
+# VITAL Platform - Docker Compose
+# Backend services: API Gateway, Python AI Engine, Redis
+# 
+# Usage:
+#   docker-compose up -d          # Start all services
+#   docker-compose logs -f         # View logs
+#   docker-compose down            # Stop all services
+#
+# Note: This project uses Supabase (cloud) for the database, so no local PostgreSQL is needed.
 
 version: '3.8'
 
 services:
-  # Frontend - Next.js TypeScript Application
-  frontend:
-    build:
-      context: .
-      dockerfile: Dockerfile.frontend
-      target: production
+  # Redis - Caching and Session Storage
+  redis:
+    image: redis:7-alpine
+    container_name: vital-redis
     ports:
-      - "3002:3000"
-    environment:
-      - NODE_ENV=production
-      - NEXT_PUBLIC_API_URL=http://localhost:3001
-      - NEXT_PUBLIC_WS_URL=ws://localhost:3001
-      - NEXT_PUBLIC_SUPABASE_URL=${SUPABASE_URL}
-      - NEXT_PUBLIC_SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY}
-    depends_on:
-      - node-gateway
+      - "6379:6379"
+    command: redis-server --appendonly yes
     networks:
-      - vital-path-network
+      - vital-backend-network
     restart: unless-stopped
+    volumes:
+      - redis-data:/data
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      test: ["CMD", "redis-cli", "ping"]
       interval: 30s
       timeout: 10s
       retries: 3
 
+  # Python AI Engine - FastAPI Backend
+  python-ai-engine:
+    build:
+      context: ./services/ai-engine
+      dockerfile: Dockerfile
+    container_name: vital-python-ai-engine
+    ports:
+      - "8000:8000"
+    environment:
+      - PYTHONUNBUFFERED=1
+      - PORT=8000
+      - LOG_LEVEL=info
+      - SUPABASE_URL=${SUPABASE_URL:-}
+      - SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY:-}
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY:-}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - REDIS_URL=redis://redis:6379
+      - LANGGRAPH_GUI_WORKFLOWS_PATH=/app/workflows
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - vital-backend-network
+    restart: unless-stopped
+    volumes:
+      - ./logs/python:/app/logs
+      - ./services/ai-engine/workflows:/app/workflows
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      start_period: 40s
+      retries: 3
+
   # Node.js API Gateway
-  node-gateway:
+  api-gateway:
     build:
       context: ./services/api-gateway
       dockerfile: Dockerfile
+    container_name: vital-api-gateway
     ports:
       - "3001:3001"
-      - "9091:9090"  # Metrics port
     environment:
       - NODE_ENV=production
-      - GATEWAY_PORT=3001
-      - PYTHON_SERVICE_URL=http://python-ai-services:8000
+      - PORT=3001
+      - AI_ENGINE_URL=http://python-ai-engine:8000
       - REDIS_URL=redis://redis:6379
-      - SUPABASE_URL=${SUPABASE_URL}
-      - SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY}
-      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
-      - JWT_SECRET=${JWT_SECRET}
-      - CORS_ORIGINS=http://localhost:3002,http://localhost:3000
+      - SUPABASE_URL=${SUPABASE_URL:-}
+      - SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY:-}
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY:-}
     depends_on:
-      - python-ai-services
-      - redis
+      python-ai-engine:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     networks:
-      - vital-path-network
+      - vital-backend-network
     restart: unless-stopped
     volumes:
       - ./logs/gateway:/app/logs
@@ -63,396 +93,15 @@ services:
       test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
       interval: 30s
       timeout: 10s
+      start_period: 40s
       retries: 3
 
-  # Python AI Services - FastAPI Backend
-  python-ai-services:
-    build:
-      context: ./services/ai-engine
-      dockerfile: Dockerfile
-    ports:
-      - "8000:8000"
-      - "9090:9090"  # Metrics port
-    environment:
-      - PYTHONUNBUFFERED=1
-      - ENVIRONMENT=production
-      - SUPABASE_URL=${SUPABASE_URL}
-      - SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY}
-      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
-      - DATABASE_URL=${DATABASE_URL}
-      - OPENAI_API_KEY=${OPENAI_API_KEY}
-      - REDIS_URL=redis://redis:6379
-      - LOG_LEVEL=info
-      - VECTOR_DIMENSION=1536
-      - MEDICAL_ACCURACY_THRESHOLD=0.95
-      - PHARMA_PROTOCOL_ENABLED=true
-      - VERIFY_PROTOCOL_ENABLED=true
-    depends_on:
-      - redis
-    networks:
-      - vital-path-network
-    restart: unless-stopped
-    volumes:
-      - ./logs/python:/app/logs
-      - ./data/models:/app/models
-    healthcheck:
-      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:8000/health')"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-
-  # Redis - Caching and Session Storage
-  redis:
-    image: redis:7-alpine
-    ports:
-      - "6379:6379"
-    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD}
-    environment:
-      - REDIS_PASSWORD=${REDIS_PASSWORD}
-    networks:
-      - vital-path-network
-    restart: unless-stopped
-    volumes:
-      - redis-data:/data
-    healthcheck:
-      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-
-  # Nginx - Load Balancer and Reverse Proxy
-  nginx:
-    image: nginx:alpine
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./nginx/conf.d:/etc/nginx/conf.d:ro
-      - ./ssl:/etc/nginx/ssl:ro
-      - ./logs/nginx:/var/log/nginx
-    depends_on:
-      - frontend
-      - node-gateway
-    networks:
-      - vital-path-network
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "nginx", "-t"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-
-  # Prometheus - Metrics Collection
-  prometheus:
-    image: prom/prometheus:latest
-    ports:
-      - "9090:9090"
-    command:
-      - '--config.file=/etc/prometheus/prometheus.yml'
-      - '--storage.tsdb.path=/prometheus'
-      - '--web.console.libraries=/etc/prometheus/console_libraries'
-      - '--web.console.templates=/etc/prometheus/consoles'
-      - '--storage.tsdb.retention.time=200h'
-      - '--web.enable-lifecycle'
-    volumes:
-      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
-      - prometheus-data:/prometheus
-    networks:
-      - vital-path-network
-    restart: unless-stopped
-
-  # Grafana - Metrics Visualization
-  grafana:
-    image: grafana/grafana:latest
-    ports:
-      - "3000:3000"
-    environment:
-      - GF_SECURITY_ADMIN_USER=${GRAFANA_ADMIN_USER:-admin}
-      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-admin}
-      - GF_USERS_ALLOW_SIGN_UP=false
-    volumes:
-      - grafana-data:/var/lib/grafana
-      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
-    depends_on:
-      - prometheus
-    networks:
-      - vital-path-network
-    restart: unless-stopped
-
-  # Jaeger - Distributed Tracing
-  jaeger:
-    image: jaegertracing/all-in-one:latest
-    ports:
-      - "14268:14268"
-      - "16686:16686"
-    environment:
-      - COLLECTOR_OTLP_ENABLED=true
-    networks:
-      - vital-path-network
-    restart: unless-stopped
-
-  # Vector Database Backup Service
-  vector-backup:
-    build:
-      context: ./scripts/backup
-      dockerfile: Dockerfile
-    environment:
-      - DATABASE_URL=${DATABASE_URL}
-      - BACKUP_SCHEDULE="0 2 * * *"  # Daily at 2 AM
-      - BACKUP_RETENTION_DAYS=30
-      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
-      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
-      - S3_BUCKET=${BACKUP_S3_BUCKET}
-    volumes:
-      - ./data/backups:/app/backups
-    networks:
-      - vital-path-network
-    restart: unless-stopped
-
-  # PostgreSQL Database for Platform Data
-  # postgres: # DEPRECATED - Using cloud instance
-    image: # postgres: # DEPRECATED - Using cloud instance15-alpine
-    ports:
-      - "5432:5432"
-    environment:
-      - POSTGRES_DB=${POSTGRES_DB:-vital_path}
-      - POSTGRES_USER=${POSTGRES_USER:-vital_path}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-      - POSTGRES_INITDB_ARGS=--auth-host=scram-sha-256
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-      - ./database/sql/init:/docker-entrypoint-initdb.d
-      - ./database/sql/migrations:/migrations
-    networks:
-      - vital-path-network
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-vital_path} -d ${POSTGRES_DB:-vital_path}"]
-      interval: 30s
-      timeout: 5s
-      retries: 5
-
-  # Elasticsearch for logging and search
-  elasticsearch:
-    image: elasticsearch:8.11.0
-    ports:
-      - "9200:9200"
-      - "9300:9300"
-    environment:
-      - discovery.type=single-node
-      - xpack.security.enabled=false
-      - ES_JAVA_OPTS=-Xms512m -Xmx512m
-    volumes:
-      - elasticsearch_data:/usr/share/elasticsearch/data
-    networks:
-      - vital-path-network
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:9200/_cluster/health || exit 1"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
-
-  # Kibana for log visualization
-  kibana:
-    image: kibana:8.11.0
-    ports:
-      - "5601:5601"
-    environment:
-      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
-    depends_on:
-      - elasticsearch
-    networks:
-      - vital-path-network
-    restart: unless-stopped
-
-  # Clinical Validation Service
-  clinical-validator:
-    build:
-      context: .
-      dockerfile: Dockerfile.clinical-validator
-    ports:
-      - "8002:8002"
-    environment:
-      - ENVIRONMENT=production
-      - DATABASE_URL=${DATABASE_URL}
-      - REDIS_URL=redis://redis:6379
-      - SECRET_KEY=${SECRET_KEY}
-      - MEDICAL_ACCURACY_THRESHOLD=0.98
-      - VALIDATION_LEVEL=strict
-      - FDA_COMPLIANCE_ENABLED=true
-      - HIPAA_COMPLIANCE_ENABLED=true
-    depends_on:
-      - postgres
-      - redis
-    networks:
-      - vital-path-network
-    restart: unless-stopped
-    volumes:
-      - ./data/medical-knowledge:/app/medical-knowledge
-      - ./logs/clinical:/app/logs
-
-  # Security and Compliance Service
-  security-compliance:
-    build:
-      context: .
-      dockerfile: Dockerfile.security-compliance
-    ports:
-      - "8003:8003"
-    environment:
-      - ENVIRONMENT=production
-      - SECRET_KEY=${SECRET_KEY}
-      - REDIS_URL=redis://redis:6379
-      - AUDIT_LOG_LEVEL=detailed
-      - ENCRYPTION_KEY=${ENCRYPTION_KEY}
-      - HIPAA_ENABLED=true
-      - GDPR_ENABLED=true
-      - SOC2_ENABLED=true
-    depends_on:
-      - postgres
-      - redis
-    networks:
-      - vital-path-network
-    restart: unless-stopped
-    volumes:
-      - ./logs/security:/app/logs
-      - ./data/compliance:/app/compliance
-
-  # Monitoring and Alerting Service
-  monitoring-service:
-    build:
-      context: .
-      dockerfile: Dockerfile.monitoring
-    ports:
-      - "8004:8004"
-    environment:
-      - ENVIRONMENT=production
-      - REDIS_URL=redis://redis:6379
-      - PROMETHEUS_URL=http://prometheus:9090
-      - ELASTICSEARCH_URL=http://elasticsearch:9200
-      - ALERT_EMAIL_ENABLED=true
-      - SMTP_HOST=${SMTP_HOST}
-      - SMTP_USER=${SMTP_USER}
-      - SMTP_PASSWORD=${SMTP_PASSWORD}
-      - SLACK_WEBHOOK_URL=${SLACK_WEBHOOK_URL}
-    depends_on:
-      - prometheus
-      - elasticsearch
-      - redis
-    networks:
-      - vital-path-network
-    restart: unless-stopped
-    volumes:
-      - ./logs/monitoring:/app/logs
-
-  # API Gateway Enhanced
-  api-gateway-enhanced:
-    build:
-      context: .
-      dockerfile: Dockerfile.api-gateway-enhanced
-    ports:
-      - "8001:8001"
-    environment:
-      - ENVIRONMENT=production
-      - SECRET_KEY=${SECRET_KEY}
-      - REDIS_URL=redis://redis:6379
-      - VITAL_PATH_ENDPOINT=http://python-ai-services:8000
-      - CLINICAL_VALIDATOR_ENDPOINT=http://clinical-validator:8002
-      - SECURITY_ENDPOINT=http://security-compliance:8003
-      - MONITORING_ENDPOINT=http://monitoring-service:8004
-      - RATE_LIMIT_ENABLED=true
-      - AUTHENTICATION_ENABLED=true
-      - CORS_ORIGINS=${CORS_ORIGINS:-*}
-    depends_on:
-      - python-ai-services
-      - clinical-validator
-      - security-compliance
-      - monitoring-service
-      - redis
-    networks:
-      - vital-path-network
-    restart: unless-stopped
-    volumes:
-      - ./logs/api-gateway:/app/logs
-
-  # Background Task Worker
-  worker:
-    build:
-      context: .
-      dockerfile: Dockerfile.worker
-    environment:
-      - ENVIRONMENT=production
-      - DATABASE_URL=${DATABASE_URL}
-      - REDIS_URL=redis://redis:6379
-      - SECRET_KEY=${SECRET_KEY}
-      - WORKER_CONCURRENCY=4
-      - QUEUE_NAME=vital_path_tasks
-    volumes:
-      - ./data:/app/data
-      - ./logs/worker:/app/logs
-    depends_on:
-      - postgres
-      - redis
-    networks:
-      - vital-path-network
-    restart: unless-stopped
-    deploy:
-      replicas: 2
-
-  # Log Shipper
-  filebeat:
-    image: elastic/filebeat:8.11.0
-    user: root
-    volumes:
-      - ./monitoring/filebeat.yml:/usr/share/filebeat/filebeat.yml:ro
-      - ./logs:/var/log/app:ro
-      - /var/lib/docker/containers:/var/lib/docker/containers:ro
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-    depends_on:
-      - elasticsearch
-    networks:
-      - vital-path-network
-    restart: unless-stopped
-
-  # Health Check Service
-  health-checker:
-    build:
-      context: .
-      dockerfile: Dockerfile.health-checker
-    environment:
-      - CHECK_INTERVAL=60
-      - SERVICES_TO_CHECK=python-ai-services,clinical-validator,security-compliance,monitoring-service,api-gateway-enhanced
-      - ALERT_WEBHOOK_URL=${HEALTH_ALERT_WEBHOOK_URL}
-    depends_on:
-      - python-ai-services
-      - clinical-validator
-      - security-compliance
-      - monitoring-service
-    networks:
-      - vital-path-network
-    restart: unless-stopped
-
-# Volumes for persistent data
+# Volumes
 volumes:
   redis-data:
     driver: local
-  prometheus-data:
-    driver: local
-  grafana-data:
-    driver: local
-  postgres_data:
-    driver: local
-  elasticsearch_data:
-    driver: local
 
-# Network configuration
+# Network
 networks:
-  vital-path-network:
+  vital-backend-network:
     driver: bridge
-    ipam:
-      config:
-        - subnet: 172.20.0.0/16
-
-# Development override file for local development
-# Use: docker-compose -f docker-compose.yml -f docker-compose.dev.yml up

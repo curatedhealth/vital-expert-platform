@@ -1,0 +1,1 @@
+{"type":"error","error":{"type":"not_found_error","message":"File not found in container: /home/claude/VITAL_GRAPHRAG_AGENT_SELECTION_V2.md","details":{"error_visibility":"user_facing"}},"request_id":"req_011CVDFaLpsuKHpxTRi2bHJe"}

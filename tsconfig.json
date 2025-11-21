@@ -23,5 +23,11 @@
     "**/build",
     "**/coverage"
   ],
-  "include": []
+  "include": [
+    "**/*.ts",
+    "**/*.tsx",
+    "**/*.js",
+    "**/*.jsx",
+    "**/*.json"
+  ]
 }

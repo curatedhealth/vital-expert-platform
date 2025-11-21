@@ -1,0 +1,4586 @@
+{
+  "discovered_at": "2025-11-10T07:40:30.291684",
+  "tables": {
+    "jtbd_library": {
+      "exists": true,
+      "record_count": 371,
+      "columns": [
+        {
+          "name": "id",
+          "type": "text/varchar",
+          "sample_value": "jtbd00008"
+        },
+        {
+          "name": "title",
+          "type": "text/varchar",
+          "sample_value": "Strategic Leadership"
+        },
+        {
+          "name": "verb",
+          "type": "text/varchar",
+          "sample_value": "align"
+        },
+        {
+          "name": "goal",
+          "type": "text/varchar",
+          "sample_value": "achieve outcome"
+        },
+        {
+          "name": "function",
+          "type": "text/varchar",
+          "sample_value": "SP01"
+        },
+        {
+          "name": "category",
+          "type": "text/varchar",
+          "sample_value": "Strategic Leadership"
+        },
+        {
+          "name": "description",
+          "type": "text/varchar",
+          "sample_value": "Lifecycle planning that aligns Medical Affairs activities with product phase including pre-launch, l"
+        },
+        {
+          "name": "business_value",
+          "type": "unknown (null)",
+          "sample_value": null
+        },
+        {
+          "name": "complexity",
+          "type": "text/varchar",
+          "sample_value": "High"
+        },
+        {
+          "name": "time_to_value",
+          "type": "unknown (null)",
+          "sample_value": null
+        },
+        {
+          "name": "implementation_cost",
+          "type": "unknown (null)",
+          "sample_value": null
+        },
+        {
+          "name": "created_at",
+          "type": "text/varchar",
+          "sample_value": "2025-11-09T10:13:40.817591"
+        },
+        {
+          "name": "updated_at",
+          "type": "text/varchar",
+          "sample_value": "2025-11-09T10:13:41.057222"
+        },
+        {
+          "name": "is_active",
+          "type": "integer",
+          "sample_value": "True"
+        },
+        {
+          "name": "usage_count",
+          "type": "integer",
+          "sample_value": null
+        },
+        {
+          "name": "success_rate",
+          "type": "numeric",
+          "sample_value": null
+        },
+        {
+          "name": "avg_execution_time",
+          "type": "unknown (null)",
+          "sample_value": null
+        },
+        {
+          "name": "tags",
+          "type": "array",
+          "sample_value": "['pain_point', 'pain_point']"
+        },
+        {
+          "name": "keywords",
+          "type": "unknown (null)",
+          "sample_value": null
+        },
+        {
+          "name": "workshop_potential",
+          "type": "unknown (null)",
+          "sample_value": null
+        },
+        {
+          "name": "maturity_level",
+          "type": "unknown (null)",
+          "sample_value": null
+        },
+        {
+          "name": "industry_id",
+          "type": "unknown (null)",
+          "sample_value": null
+        },
+        {
+          "name": "org_function_id",
+          "type": "unknown (null)",
+          "sample_value": null
+        },
+        {
+          "name": "unique_id",
+          "type": "text/varchar",
+          "sample_value": "pmc_jtbd00008"
+        },
+        {
+          "name": "jtbd_code",
+          "type": "text/varchar",
+          "sample_value": "JTBD-MA-008"
+        },
+        {
+          "name": "original_id",
+          "type": "text/varchar",
+          "sample_value": "JTBD-MA-008"
+        },
+        {
+          "name": "statement",
+          "type": "text/varchar",
+          "sample_value": "When managing product lifecycle strategy, I want to align evidence generation with product milestone"
+        },
+        {
+          "name": "frequency",
+          "type": "text/varchar",
+          "sample_value": "Ongoing"
+        },
+        {
+          "name": "importance",
+          "type": "integer",
+          "sample_value": "9"
+        },
+        {
+          "name": "satisfaction",
+          "type": "integer",
+          "sample_value": "3"
+        },
+        {
+          "name": "opportunity_score",
+          "type": "unknown (null)",
+          "sample_value": null
+        },
+        {
+          "name": "success_metrics",
+          "type": "jsonb",
+          "sample_value": "{'criteria': ['Evidence readiness 100% at key milestones', 'Launch preparedness score >90%', 'Post-l"
+        },
+        {
+          "name": "source",
+          "type": "text/varchar",
+          "sample_value": "Medical Affairs Consolidated Library"
+        },
+        {
+          "name": "persona_context",
+          "type": "unknown (null)",
+          "sample_value": null
+        },
+        {
+          "name": "frequency_category",
+          "type": "unknown (null)",
+          "sample_value": null
+        },
+        {
+          "name": "use_case_category",
+          "type": "unknown (null)",
+          "sample_value": null
+        },
+        {
+          "name": "solution_type",
+          "type": "unknown (null)",
+          "sample_value": null
+        },
+        {
+          "name": "outcome_type",
+          "type": "unknown (null)",
+          "sample_value": null
+        },
+        {
+          "name": "priority_tier",
+          "type": "unknown (null)",
+          "sample_value": null
+        },
+        {
+          "name": "persona_id",
+          "type": "unknown (null)",
+          "sample_value": null
+        },
+        {
+          "name": "persona_name",
+          "type": "unknown (null)",
+          "sample_value": null
+        },
+        {
+          "name": "persona_title",
+          "type": "unknown (null)",
+          "sample_value": null
+        },
+        {
+          "name": "persona_function",
+          "type": "unknown (null)",
+          "sample_value": null
+        },
+        {
+          "name": "industry_name",
+          "type": "unknown (null)",
+          "sample_value": null
+        },
+        {
+          "name": "sector",
+          "type": "text/varchar",
+          "sample_value": "Multi-sector"
+        },
+        {
+          "name": "metrics_count",
+          "type": "integer",
+          "sample_value": null
+        },
+        {
+          "name": "has_quantitative_metrics",
+          "type": "integer",
+          "sample_value": null
+        }
+      ],
+      "sample_data": [
+        {
+          "id": "jtbd00008",
+          "title": "Strategic Leadership",
+          "verb": "align",
+          "goal": "achieve outcome",
+          "function": "SP01",
+          "category": "Strategic Leadership",
+          "description": "Lifecycle planning that aligns Medical Affairs activities with product phase including pre-launch, launch, growth, maturity, and LOE management.",
+          "business_value": null,
+          "complexity": "High",
+          "time_to_value": null,
+          "implementation_cost": null,
+          "created_at": "2025-11-09T10:13:40.817591",
+          "updated_at": "2025-11-09T10:13:41.057222",
+          "is_active": true,
+          "usage_count": 0,
+          "success_rate": 0.0,
+          "avg_execution_time": null,
+          "tags": [
+            "pain_point",
+            "pain_point"
+          ],
+          "keywords": null,
+          "workshop_potential": null,
+          "maturity_level": null,
+          "industry_id": null,
+          "org_function_id": null,
+          "unique_id": "pmc_jtbd00008",
+          "jtbd_code": "JTBD-MA-008",
+          "original_id": "JTBD-MA-008",
+          "statement": "When managing product lifecycle strategy, I want to align evidence generation with product milestones, so Medical Affairs activities support launch, growth, maturity, and lifecycle management phases",
+          "frequency": "Ongoing",
+          "importance": 9,
+          "satisfaction": 3,
+          "opportunity_score": null,
+          "success_metrics": {
+            "criteria": [
+              "Evidence readiness 100% at key milestones",
+              "Launch preparedness score >90%",
+              "Post-launch evidence generated on schedule",
+              "Lifecycle extension supported by new data",
+              "LOE transition managed proactively"
+            ]
+          },
+          "source": "Medical Affairs Consolidated Library",
+          "persona_context": null,
+          "frequency_category": null,
+          "use_case_category": null,
+          "solution_type": null,
+          "outcome_type": null,
+          "priority_tier": null,
+          "persona_id": null,
+          "persona_name": null,
+          "persona_title": null,
+          "persona_function": null,
+          "industry_name": null,
+          "sector": "Multi-sector",
+          "metrics_count": 0,
+          "has_quantitative_metrics": false
+        },
+        {
+          "id": "jtbd00042",
+          "title": "Market Access & HEOR",
+          "verb": "compile",
+          "goal": "achieve outcome",
+          "function": "SP01",
+          "category": "Market Access & HEOR",
+          "description": "HTA submission preparation for NICE, ICER, CADTH, IQWiG, HAS, PBAC including clinical dossier, economic evaluation, and budget impact",
+          "business_value": null,
+          "complexity": "High",
+          "time_to_value": null,
+          "implementation_cost": null,
+          "created_at": "2025-11-09T10:13:41.238925",
+          "updated_at": "2025-11-09T10:13:41.415876",
+          "is_active": true,
+          "usage_count": 0,
+          "success_rate": 0.0,
+          "avg_execution_time": null,
+          "tags": null,
+          "keywords": null,
+          "workshop_potential": null,
+          "maturity_level": null,
+          "industry_id": null,
+          "org_function_id": null,
+          "unique_id": "pmc_jtbd00042",
+          "jtbd_code": "JTBD-MA-042",
+          "original_id": "JTBD-MA-042",
+          "statement": "When preparing HTA submissions, I want to compile comprehensive dossiers meeting agency requirements, so products achieve positive reimbursement recommendations",
+          "frequency": "Per product/market",
+          "importance": 8,
+          "satisfaction": 5,
+          "opportunity_score": null,
+          "success_metrics": {
+            "criteria": [
+              "Submission completeness >99%",
+              "On-time submission 100%",
+              "Positive/acceptable recommendation >70%",
+              "Successful response to agency questions >90%",
+              "Market access achieved per timeline"
+            ]
+          },
+          "source": "Medical Affairs Consolidated Library",
+          "persona_context": null,
+          "frequency_category": null,
+          "use_case_category": null,
+          "solution_type": null,
+          "outcome_type": null,
+          "priority_tier": null,
+          "persona_id": null,
+          "persona_name": null,
+          "persona_title": null,
+          "persona_function": null,
+          "industry_name": null,
+          "sector": "Multi-sector",
+          "metrics_count": 0,
+          "has_quantitative_metrics": false
+        }
+      ]
+    },
+    "workflows": {
+      "exists": true,
+      "record_count": 141,
+      "columns": [
+        {
+          "name": "id",
+          "type": "text/varchar",
+          "sample_value": "badc72c6-f481-4381-a1f6-4e62ccdd8584"
+        },
+        {
+          "name": "name",
+          "type": "text/varchar",
+          "sample_value": "Annual Strategic Planning Process"
+        },
+        {
+          "name": "description",
+          "type": "text/varchar",
+          "sample_value": "Annual Strategic Planning Process for JTBD-MA-001 (4\u20136 weeks, 4 phases, 16 tasks)"
+        },
+        {
+          "name": "definition",
+          "type": "jsonb",
+          "sample_value": "{'phases': [{'tasks': [{'owner': 'Medical Director', 'tools': ['Evidence tracking system', 'Publicat"
+        },
+        {
+          "name": "status",
+          "type": "text/varchar",
+          "sample_value": "active"
+        },
+        {
+          "name": "created_by",
+          "type": "unknown (null)",
+          "sample_value": null
+        },
+        {
+          "name": "organization_id",
+          "type": "unknown (null)",
+          "sample_value": null
+        },
+        {
+          "name": "is_public",
+          "type": "integer",
+          "sample_value": "True"
+        },
+        {
+          "name": "created_at",
+          "type": "text/varchar",
+          "sample_value": "2025-11-09T10:54:07.268443+00:00"
+        },
+        {
+          "name": "updated_at",
+          "type": "text/varchar",
+          "sample_value": "2025-11-09T10:54:07.268444+00:00"
+        }
+      ],
+      "sample_data": [
+        {
+          "id": "badc72c6-f481-4381-a1f6-4e62ccdd8584",
+          "name": "Annual Strategic Planning Process",
+          "description": "Annual Strategic Planning Process for JTBD-MA-001 (4\u20136 weeks, 4 phases, 16 tasks)",
+          "definition": {
+            "phases": [
+              {
+                "tasks": [
+                  {
+                    "owner": "Medical Director",
+                    "tools": [
+                      "Evidence tracking system",
+                      "Publication database",
+                      "Clinical trial registry"
+                    ],
+                    "outputs": [
+                      "Evidence inventory spreadsheet"
+                    ],
+                    "task_id": "T001",
+                    "duration": "4 hours",
+                    "task_name": "Review current evidence portfolio"
+                  },
+                  {
+                    "owner": "Medical Director",
+                    "tools": [
+                      "Gap analysis framework",
+                      "PICO framework"
+                    ],
+                    "outputs": [
+                      "Evidence gap prioritization matrix"
+                    ],
+                    "task_id": "T002",
+                    "duration": "3 hours",
+                    "task_name": "Identify critical evidence gaps"
+                  },
+                  {
+                    "owner": "Competitive Intelligence Manager",
+                    "tools": [
+                      "Competitive intelligence DB",
+                      "ClinicalTrials.gov",
+                      "PubMed"
+                    ],
+                    "outputs": [
+                      "Competitor evidence comparison"
+                    ],
+                    "task_id": "T003",
+                    "duration": "4 hours",
+                    "task_name": "Benchmark competitor evidence"
+                  },
+                  {
+                    "owner": "Market Access Director",
+                    "tools": [
+                      "Payer policy DB",
+                      "HTA guidance docs"
+                    ],
+                    "outputs": [
+                      "HTA landscape analysis",
+                      "Payer evidence requirements matrix"
+                    ],
+                    "task_id": "T004",
+                    "duration": "3 hours",
+                    "task_name": "Assess regulatory & payer requirements"
+                  }
+                ],
+                "duration": "1 week",
+                "phase_name": "Evidence Gap Analysis",
+                "phase_number": 1
+              },
+              {
+                "tasks": [
+                  {
+                    "owner": "Medical Director",
+                    "tools": [
+                      "Virtual meeting platform",
+                      "Ad board materials"
+                    ],
+                    "outputs": [
+                      "KOL strategic recommendations"
+                    ],
+                    "task_id": "T005",
+                    "duration": "4 hours",
+                    "task_name": "Conduct KOL advisory board"
+                  },
+                  {
+                    "owner": "Regional Medical Director",
+                    "tools": [
+                      "Survey tool",
+                      "CRM insights DB"
+                    ],
+                    "outputs": [
+                      "Field insights report"
+                    ],
+                    "task_id": "T006",
+                    "duration": "2 hours",
+                    "task_name": "Survey MSL field insights"
+                  },
+                  {
+                    "owner": "Market Access Director",
+                    "tools": [
+                      "Interview guide",
+                      "Payer relationship DB"
+                    ],
+                    "outputs": [
+                      "Payer needs assessment"
+                    ],
+                    "task_id": "T007",
+                    "duration": "6 hours",
+                    "task_name": "Interview payer stakeholders"
+                  },
+                  {
+                    "owner": "VP Medical Affairs",
+                    "tools": [
+                      "Collaboration suite",
+                      "Workshops"
+                    ],
+                    "outputs": [
+                      "Cross-functional requirements"
+                    ],
+                    "task_id": "T008",
+                    "duration": "4 hours",
+                    "task_name": "Gather cross-functional input"
+                  }
+                ],
+                "duration": "1 week",
+                "phase_name": "Stakeholder Input Collection",
+                "phase_number": 2
+              },
+              {
+                "tasks": [
+                  {
+                    "owner": "VP Medical Affairs",
+                    "tools": [
+                      "Strategy canvas",
+                      "OKR framework"
+                    ],
+                    "outputs": [
+                      "Strategic objectives (5\u20137)"
+                    ],
+                    "task_id": "T009",
+                    "duration": "8 hours",
+                    "task_name": "Define strategic objectives"
+                  },
+                  {
+                    "owner": "Medical Director",
+                    "tools": [
+                      "Roadmap template",
+                      "Project planning tool"
+                    ],
+                    "outputs": [
+                      "3-year evidence roadmap",
+                      "Study prioritization matrix"
+                    ],
+                    "task_id": "T010",
+                    "duration": "12 hours",
+                    "task_name": "Develop evidence generation roadmap"
+                  },
+                  {
+                    "owner": "Medical Affairs Operations",
+                    "tools": [
+                      "Financial planning tool",
+                      "Resource mgmt"
+                    ],
+                    "outputs": [
+                      "Resource allocation by initiative",
+                      "Budget model"
+                    ],
+                    "task_id": "T011",
+                    "duration": "8 hours",
+                    "task_name": "Create resource allocation model"
+                  },
+                  {
+                    "owner": "Head of Talent Development",
+                    "tools": [
+                      "Competency framework",
+                      "LMS"
+                    ],
+                    "outputs": [
+                      "Capabilities assessment",
+                      "Training roadmap"
+                    ],
+                    "task_id": "T012",
+                    "duration": "6 hours",
+                    "task_name": "Design capability plan"
+                  }
+                ],
+                "duration": "2 weeks",
+                "phase_name": "Strategic Framework Development",
+                "phase_number": 3
+              },
+              {
+                "tasks": [
+                  {
+                    "owner": "VP Medical Affairs",
+                    "tools": [
+                      "Presentation deck",
+                      "Financial models"
+                    ],
+                    "outputs": [
+                      "Leadership approval",
+                      "Executive feedback"
+                    ],
+                    "task_id": "T013",
+                    "duration": "2 hours",
+                    "task_name": "Present to executive leadership"
+                  },
+                  {
+                    "owner": "VP Medical Affairs",
+                    "tools": [
+                      "Comms platform",
+                      "Video conferencing"
+                    ],
+                    "outputs": [
+                      "Town hall",
+                      "Strategy one-pager"
+                    ],
+                    "task_id": "T014",
+                    "duration": "4 hours",
+                    "task_name": "Cascade to organization"
+                  },
+                  {
+                    "owner": "Medical Affairs Operations",
+                    "tools": [
+                      "BI platform",
+                      "Performance mgmt"
+                    ],
+                    "outputs": [
+                      "KPI dashboard",
+                      "Tracking protocols"
+                    ],
+                    "task_id": "T015",
+                    "duration": "4 hours",
+                    "task_name": "Establish KPIs & tracking"
+                  },
+                  {
+                    "owner": "Program Manager",
+                    "tools": [
+                      "Project mgmt software",
+                      "Gantt charts"
+                    ],
+                    "outputs": [
+                      "Implementation roadmap",
+                      "Milestone tracker"
+                    ],
+                    "task_id": "T016",
+                    "duration": "4 hours",
+                    "task_name": "Create implementation timeline"
+                  }
+                ],
+                "duration": "2 weeks",
+                "phase_name": "Validation & Finalization",
+                "phase_number": 4
+              }
+            ],
+            "source": "SP01 Operational Library",
+            "jtbd_id": "JTBD-MA-001",
+            "duration": "4\u20136 weeks",
+            "task_count": 16,
+            "imported_at": "2025-11-09T10:54:07.268432+00:00",
+            "phase_count": 4,
+            "workflow_id": "WF-001-A",
+            "total_effort": "120\u2013160 hours",
+            "workflow_name": "Annual Strategic Planning Process"
+          },
+          "status": "active",
+          "created_by": null,
+          "organization_id": null,
+          "is_public": true,
+          "created_at": "2025-11-09T10:54:07.268443+00:00",
+          "updated_at": "2025-11-09T10:54:07.268444+00:00"
+        },
+        {
+          "id": "b547743d-0256-4191-ae67-cf75146c412a",
+          "name": "Evidence Gap Identification & Prioritization",
+          "description": "Evidence Gap Identification & Prioritization for JTBD-MA-002 (6\u20138 weeks, 3 phases, 10 tasks)",
+          "definition": {
+            "phases": [
+              {
+                "tasks": [
+                  {
+                    "owner": "Market Access Director",
+                    "tools": [
+                      "CRM",
+                      "Payer meeting notes"
+                    ],
+                    "outputs": [
+                      "Payer evidence requirements list"
+                    ],
+                    "task_id": "T017",
+                    "duration": "3 hours",
+                    "task_name": "Review Payer Value Dossier feedback"
+                  },
+                  {
+                    "owner": "HEOR Specialist",
+                    "tools": [
+                      "HTA guidance"
+                    ],
+                    "outputs": [
+                      "HTA evidence requirements matrix"
+                    ],
+                    "task_id": "T018",
+                    "duration": "4 hours",
+                    "task_name": "Analyze HTA requirements"
+                  },
+                  {
+                    "owner": "Regional Medical Director",
+                    "tools": [
+                      "MSL insights platform"
+                    ],
+                    "outputs": [
+                      "Field insights on evidence gaps"
+                    ],
+                    "task_id": "T019",
+                    "duration": "2 hours",
+                    "task_name": "Survey field medical insights"
+                  },
+                  {
+                    "owner": "Competitive Intelligence Manager",
+                    "tools": [
+                      "PubMed",
+                      "CI DB"
+                    ],
+                    "outputs": [
+                      "Competitor evidence mapping"
+                    ],
+                    "task_id": "T020",
+                    "duration": "4 hours",
+                    "task_name": "Review competitor publications"
+                  }
+                ],
+                "duration": "2 weeks",
+                "phase_name": "Gap Identification",
+                "phase_number": 1
+              },
+              {
+                "tasks": [
+                  {
+                    "owner": "Medical Director",
+                    "tools": [
+                      "Decision matrix template"
+                    ],
+                    "outputs": [
+                      "Criteria (impact, urgency, feasibility)"
+                    ],
+                    "task_id": "T021",
+                    "duration": "2 hours",
+                    "task_name": "Define prioritization criteria"
+                  },
+                  {
+                    "owner": "HEOR Team",
+                    "tools": [
+                      "Scoring tool"
+                    ],
+                    "outputs": [
+                      "Evidence gap scoring spreadsheet"
+                    ],
+                    "task_id": "T022",
+                    "duration": "4 hours",
+                    "task_name": "Score each evidence gap"
+                  },
+                  {
+                    "owner": "Medical Director",
+                    "tools": [
+                      "Facilitation toolkit"
+                    ],
+                    "outputs": [
+                      "Prioritized evidence roadmap (top 10\u201315)"
+                    ],
+                    "task_id": "T023",
+                    "duration": "3 hours",
+                    "task_name": "Leadership prioritization workshop"
+                  }
+                ],
+                "duration": "2 weeks",
+                "phase_name": "Gap Prioritization",
+                "phase_number": 2
+              },
+              {
+                "tasks": [
+                  {
+                    "owner": "Epidemiologist",
+                    "tools": [
+                      "Protocol template"
+                    ],
+                    "outputs": [
+                      "Study protocol document"
+                    ],
+                    "task_id": "T024",
+                    "duration": "20 hours",
+                    "task_name": "Design RWE study protocols"
+                  },
+                  {
+                    "owner": "HEOR Manager",
+                    "tools": [
+                      "Project planning tool"
+                    ],
+                    "outputs": [
+                      "Study budget",
+                      "Gantt chart"
+                    ],
+                    "task_id": "T025",
+                    "duration": "4 hours",
+                    "task_name": "Develop budget & timeline"
+                  },
+                  {
+                    "owner": "Data Scientist",
+                    "tools": [
+                      "Claims DB",
+                      "EHR partners"
+                    ],
+                    "outputs": [
+                      "Data feasibility assessment"
+                    ],
+                    "task_id": "T026",
+                    "duration": "6 hours",
+                    "task_name": "Identify data sources & feasibility"
+                  }
+                ],
+                "duration": "2\u20134 weeks",
+                "phase_name": "Study Design & Planning",
+                "phase_number": 3
+              }
+            ],
+            "source": "SP01 Operational Library",
+            "jtbd_id": "JTBD-MA-002",
+            "duration": "6\u20138 weeks",
+            "task_count": 10,
+            "imported_at": "2025-11-09T10:54:07.523924+00:00",
+            "phase_count": 3,
+            "workflow_id": "WF-002-A",
+            "total_effort": null,
+            "workflow_name": "Evidence Gap Identification & Prioritization"
+          },
+          "status": "active",
+          "created_by": null,
+          "organization_id": null,
+          "is_public": true,
+          "created_at": "2025-11-09T10:54:07.523932+00:00",
+          "updated_at": "2025-11-09T10:54:07.523934+00:00"
+        }
+      ]
+    },
+    "tasks": {
+      "exists": true,
+      "record_count": 0,
+      "columns": [
+        {
+          "error": "{'code': '42P01', 'details': None, 'hint': None, 'message': 'relation \"public.tasks\" does not exist'}"
+        }
+      ],
+      "sample_data": [
+        {
+          "error": "{'code': '42P01', 'details': None, 'hint': None, 'message': 'relation \"public.tasks\" does not exist'}"
+        }
+      ]
+    },
+    "agents": {
+      "exists": true,
+      "record_count": 190,
+      "columns": [
+        {
+          "name": "id",
+          "type": "text/varchar",
+          "sample_value": "1eb1fba8-58ce-4802-a011-b50b955ae797"
+        },
+        {
+          "name": "name",
+          "type": "text/varchar",
+          "sample_value": "Epidemiologist"
+        },
+        {
+          "name": "description",
+          "type": "text/varchar",
+          "sample_value": "Population health expert studying disease patterns, risk factors, and epidemiological trends for evi"
+        },
+        {
+          "name": "system_prompt",
+          "type": "text/varchar",
+          "sample_value": "You are an Epidemiologist studying disease patterns and population health. Conduct epidemiological r"
+        },
+        {
+          "name": "model",
+          "type": "text/varchar",
+          "sample_value": "gpt-4o"
+        },
+        {
+          "name": "temperature",
+          "type": "numeric",
+          "sample_value": "0.7"
+        },
+        {
+          "name": "max_tokens",
+          "type": "integer",
+          "sample_value": "2000"
+        },
+        {
+          "name": "is_active",
+          "type": "integer",
+          "sample_value": "True"
+        },
+        {
+          "name": "created_by",
+          "type": "unknown (null)",
+          "sample_value": null
+        },
+        {
+          "name": "created_at",
+          "type": "text/varchar",
+          "sample_value": "2025-11-05T20:41:49.896368+00:00"
+        },
+        {
+          "name": "updated_at",
+          "type": "text/varchar",
+          "sample_value": "2025-11-09T16:45:27.535198+00:00"
+        },
+        {
+          "name": "slug",
+          "type": "unknown (null)",
+          "sample_value": null
+        },
+        {
+          "name": "title",
+          "type": "text/varchar",
+          "sample_value": "Epidemiologist"
+        },
+        {
+          "name": "expertise",
+          "type": "array",
+          "sample_value": null
+        },
+        {
+          "name": "specialties",
+          "type": "array",
+          "sample_value": null
+        },
+        {
+          "name": "background",
+          "type": "unknown (null)",
+          "sample_value": null
+        },
+        {
+          "name": "personality_traits",
+          "type": "array",
+          "sample_value": null
+        },
+        {
+          "name": "communication_style",
+          "type": "unknown (null)",
+          "sample_value": null
+        },
+        {
+          "name": "capabilities",
+          "type": "array",
+          "sample_value": null
+        },
+        {
+          "name": "avatar_url",
+          "type": "text/varchar",
+          "sample_value": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0075.png"
+        },
+        {
+          "name": "popularity_score",
+          "type": "integer",
+          "sample_value": null
+        },
+        {
+          "name": "rating",
+          "type": "numeric",
+          "sample_value": null
+        },
+        {
+          "name": "total_consultations",
+          "type": "integer",
+          "sample_value": null
+        },
+        {
+          "name": "metadata",
+          "type": "unknown (null)",
+          "sample_value": null
+        },
+        {
+          "name": "tenant_id",
+          "type": "unknown (null)",
+          "sample_value": null
+        },
+        {
+          "name": "created_by_user_id",
+          "type": "unknown (null)",
+          "sample_value": null
+        },
+        {
+          "name": "is_shared",
+          "type": "integer",
+          "sample_value": null
+        },
+        {
+          "name": "sharing_mode",
+          "type": "text/varchar",
+          "sample_value": "private"
+        },
+        {
+          "name": "shared_with",
+          "type": "array",
+          "sample_value": null
+        },
+        {
+          "name": "resource_type",
+          "type": "text/varchar",
+          "sample_value": "custom"
+        },
+        {
+          "name": "tags",
+          "type": "array",
+          "sample_value": null
+        },
+        {
+          "name": "category",
+          "type": "text/varchar",
+          "sample_value": "medical_affairs"
+        },
+        {
+          "name": "access_count",
+          "type": "integer",
+          "sample_value": null
+        },
+        {
+          "name": "last_accessed_at",
+          "type": "unknown (null)",
+          "sample_value": null
+        },
+        {
+          "name": "agent_category",
+          "type": "text/varchar",
+          "sample_value": "specialized_knowledge"
+        },
+        {
+          "name": "category_color",
+          "type": "text/varchar",
+          "sample_value": "#3B82F6"
+        },
+        {
+          "name": "agent_type",
+          "type": "unknown (null)",
+          "sample_value": null
+        },
+        {
+          "name": "specialization",
+          "type": "unknown (null)",
+          "sample_value": null
+        },
+        {
+          "name": "can_delegate",
+          "type": "integer",
+          "sample_value": null
+        },
+        {
+          "name": "is_public",
+          "type": "integer",
+          "sample_value": null
+        },
+        {
+          "name": "is_featured",
+          "type": "integer",
+          "sample_value": null
+        },
+        {
+          "name": "owner_tenant_id",
+          "type": "unknown (null)",
+          "sample_value": null
+        }
+      ],
+      "sample_data": [
+        {
+          "id": "1eb1fba8-58ce-4802-a011-b50b955ae797",
+          "name": "Epidemiologist",
+          "description": "Population health expert studying disease patterns, risk factors, and epidemiological trends for evidence generation.",
+          "system_prompt": "You are an Epidemiologist studying disease patterns and population health. Conduct epidemiological research, assess disease burden, and provide insights for medical strategy.\n\n## \ud83d\udcca DIAGRAM CREATION CAPABILITIES\n\nYou MUST support creating visual diagrams when requested:\n\n### Mermaid Diagrams (REQUIRED):\nUse Mermaid syntax for flowcharts, sequence diagrams, and process flows.\n\n**Supported Types**:\n1. **Flowcharts**: Use `graph TD` or `graph LR`\n2. **Sequence Diagrams**: Use `sequenceDiagram`\n3. **Gantt Charts**: Use `gantt`\n4. **State Diagrams**: Use `stateDiagram-v2`\n\n**Syntax Rules**:\n- Always use ```mermaid code blocks\n- Node format: `A[Label]` for boxes, `A(Label)` for rounded, `A{Label}` for diamonds\n- Arrows: `-->` for solid, `-.->` for dotted, `==>` for thick\n- Labels on arrows: `-->|text|` or `--text-->`\n- Keep diagrams under 20 nodes for clarity\n- Test syntax validity before generating\n\n**Example Flowchart**:\n```mermaid\ngraph TD\n    A[Start] --> B{Decision}\n    B -->|Yes| C[Success]\n    B -->|No| D[Retry]\n    D --> A\n```\n\n**Example Sequence**:\n```mermaid\nsequenceDiagram\n    User->>System: Request\n    System->>Database: Query\n    Database-->>System: Data\n    System-->>User: Response\n```\n\n### ASCII Diagrams (REQUIRED):\nUse ASCII art for simple diagrams when Mermaid is not suitable.\n\n**Format**:\n```ascii\n    \u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510\n    \u2502   Start     \u2502\n    \u2514\u2500\u2500\u2500\u2500\u2500\u2500\u252c\u2500\u2500\u2500\u2500\u2500\u2500\u2518\n           \u2502\n    \u250c\u2500\u2500\u2500\u2500\u2500\u2500\u25bc\u2500\u2500\u2500\u2500\u2500\u2500\u2510\n    \u2502   Process   \u2502\n    \u2514\u2500\u2500\u2500\u2500\u2500\u2500\u252c\u2500\u2500\u2500\u2500\u2500\u2500\u2518\n           \u2502\n    \u250c\u2500\u2500\u2500\u2500\u2500\u2500\u25bc\u2500\u2500\u2500\u2500\u2500\u2500\u2510\n    \u2502     End     \u2502\n    \u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518\n```\n\n**Guidelines**:\n1. ALWAYS create diagrams when asked\n2. Use Mermaid for complex workflows\n3. Use ASCII for simple structures\n4. Explain the diagram after showing it\n5. Offer to modify or create alternative diagrams\n6. NEVER say you cannot create diagrams\n\n**When to Use**:\n- User asks for \"flowchart\", \"diagram\", \"visualization\", \"process flow\"\n- Explaining complex processes\n- Showing workflows or decision trees\n- Illustrating relationships or hierarchies\n",
+          "model": "gpt-4o",
+          "temperature": 0.7,
+          "max_tokens": 2000,
+          "is_active": true,
+          "created_by": null,
+          "created_at": "2025-11-05T20:41:49.896368+00:00",
+          "updated_at": "2025-11-09T16:45:27.535198+00:00",
+          "slug": null,
+          "title": "Epidemiologist",
+          "expertise": [],
+          "specialties": [],
+          "background": null,
+          "personality_traits": [],
+          "communication_style": null,
+          "capabilities": [],
+          "avatar_url": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0075.png",
+          "popularity_score": 0,
+          "rating": 0.0,
+          "total_consultations": 0,
+          "metadata": null,
+          "tenant_id": null,
+          "created_by_user_id": null,
+          "is_shared": false,
+          "sharing_mode": "private",
+          "shared_with": [],
+          "resource_type": "custom",
+          "tags": [],
+          "category": "medical_affairs",
+          "access_count": 0,
+          "last_accessed_at": null,
+          "agent_category": "specialized_knowledge",
+          "category_color": "#3B82F6",
+          "agent_type": null,
+          "specialization": null,
+          "can_delegate": false,
+          "is_public": false,
+          "is_featured": false,
+          "owner_tenant_id": null
+        },
+        {
+          "id": "fb033d40-c34c-44c2-b7a7-c281ca393c83",
+          "name": "Pricing Analyst",
+          "description": "Analytical expert supporting pricing decisions with competitive analysis, elasticity modeling, and price optimization.",
+          "system_prompt": "You are a Pricing Analyst providing analytical support for pricing decisions.\n\n## \ud83d\udcca DIAGRAM CREATION CAPABILITIES\n\nYou MUST support creating visual diagrams when requested:\n\n### Mermaid Diagrams (REQUIRED):\nUse Mermaid syntax for flowcharts, sequence diagrams, and process flows.\n\n**Supported Types**:\n1. **Flowcharts**: Use `graph TD` or `graph LR`\n2. **Sequence Diagrams**: Use `sequenceDiagram`\n3. **Gantt Charts**: Use `gantt`\n4. **State Diagrams**: Use `stateDiagram-v2`\n\n**Syntax Rules**:\n- Always use ```mermaid code blocks\n- Node format: `A[Label]` for boxes, `A(Label)` for rounded, `A{Label}` for diamonds\n- Arrows: `-->` for solid, `-.->` for dotted, `==>` for thick\n- Labels on arrows: `-->|text|` or `--text-->`\n- Keep diagrams under 20 nodes for clarity\n- Test syntax validity before generating\n\n**Example Flowchart**:\n```mermaid\ngraph TD\n    A[Start] --> B{Decision}\n    B -->|Yes| C[Success]\n    B -->|No| D[Retry]\n    D --> A\n```\n\n**Example Sequence**:\n```mermaid\nsequenceDiagram\n    User->>System: Request\n    System->>Database: Query\n    Database-->>System: Data\n    System-->>User: Response\n```\n\n### ASCII Diagrams (REQUIRED):\nUse ASCII art for simple diagrams when Mermaid is not suitable.\n\n**Format**:\n```ascii\n    \u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510\n    \u2502   Start     \u2502\n    \u2514\u2500\u2500\u2500\u2500\u2500\u2500\u252c\u2500\u2500\u2500\u2500\u2500\u2500\u2518\n           \u2502\n    \u250c\u2500\u2500\u2500\u2500\u2500\u2500\u25bc\u2500\u2500\u2500\u2500\u2500\u2500\u2510\n    \u2502   Process   \u2502\n    \u2514\u2500\u2500\u2500\u2500\u2500\u2500\u252c\u2500\u2500\u2500\u2500\u2500\u2500\u2518\n           \u2502\n    \u250c\u2500\u2500\u2500\u2500\u2500\u2500\u25bc\u2500\u2500\u2500\u2500\u2500\u2500\u2510\n    \u2502     End     \u2502\n    \u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518\n```\n\n**Guidelines**:\n1. ALWAYS create diagrams when asked\n2. Use Mermaid for complex workflows\n3. Use ASCII for simple structures\n4. Explain the diagram after showing it\n5. Offer to modify or create alternative diagrams\n6. NEVER say you cannot create diagrams\n\n**When to Use**:\n- User asks for \"flowchart\", \"diagram\", \"visualization\", \"process flow\"\n- Explaining complex processes\n- Showing workflows or decision trees\n- Illustrating relationships or hierarchies\n",
+          "model": "gpt-4o",
+          "temperature": 0.7,
+          "max_tokens": 2000,
+          "is_active": true,
+          "created_by": null,
+          "created_at": "2025-11-05T20:48:15.400533+00:00",
+          "updated_at": "2025-11-06T16:57:32.226843+00:00",
+          "slug": null,
+          "title": "Pricing Analyst",
+          "expertise": [],
+          "specialties": [],
+          "background": null,
+          "personality_traits": [],
+          "communication_style": null,
+          "capabilities": [],
+          "avatar_url": "https://xazinxsiglqokwfmogyk.supabase.co/storage/v1/object/public/avatars/avatar_0061.png",
+          "popularity_score": 0,
+          "rating": 0.0,
+          "total_consultations": 0,
+          "metadata": {
+            "tier": 2,
+            "priority": 6,
+            "department": "Pricing & Reimbursement",
+            "lucide_icon": "dollar-sign",
+            "rag_domains": [
+              "Regulatory Affairs",
+              "Infectious Diseases",
+              "Rare Diseases",
+              "Digital Health",
+              "Precision Medicine",
+              "Regenerative Medicine",
+              "Nanotechnology",
+              "AI/ML in Healthcare",
+              "Big Data Analytics",
+              "Blockchain in Healthcare",
+              "IoT in Healthcare",
+              "VR/AR in Healthcare",
+              "Medical Robotics",
+              "Quantum Computing",
+              "Medical Affairs",
+              "Quality Assurance",
+              "Drug Development",
+              "Drug Safety",
+              "Manufacturing",
+              "Biostatistics",
+              "Pharmacology",
+              "Oncology",
+              "Cardiology",
+              "Neurology",
+              "Diabetes",
+              "Immunology",
+              "Pediatrics",
+              "Geriatrics",
+              "Mental Health",
+              "Clinical Development",
+              "Quality Management",
+              "Medical Devices",
+              "Legal & Compliance",
+              "Product Labeling",
+              "Risk Management",
+              "Clinical Data Analytics",
+              "Health Economics",
+              "Post-Market Activities",
+              "Patient Engagement",
+              "KOL & Stakeholder Engagement",
+              "Real-World Data & Evidence",
+              "Sustainability & ESG",
+              "Pharmacovigilance",
+              "Commercial Strategy",
+              "Manufacturing Operations",
+              "Supply Chain",
+              "Business Strategy",
+              "Companion Diagnostics",
+              "Evidence Generation",
+              "Rare Diseases & Orphan Drugs",
+              "Nonclinical Sciences",
+              "Scientific Publications",
+              "Global Market Access",
+              "Telemedicine & Remote Care"
+            ],
+            "rag_enabled": true
+          },
+          "tenant_id": null,
+          "created_by_user_id": null,
+          "is_shared": false,
+          "sharing_mode": "private",
+          "shared_with": [],
+          "resource_type": "custom",
+          "tags": [],
+          "category": "market_access",
+          "access_count": 0,
+          "last_accessed_at": null,
+          "agent_category": "specialized_knowledge",
+          "category_color": "#3B82F6",
+          "agent_type": null,
+          "specialization": null,
+          "can_delegate": false,
+          "is_public": false,
+          "is_featured": false,
+          "owner_tenant_id": null
+        }
+      ]
+    },
+    "prompts": {
+      "exists": true,
+      "record_count": 3570,
+      "columns": [
+        {
+          "name": "id",
+          "type": "text/varchar",
+          "sample_value": "8ed757f6-a783-41c5-8e8f-22615a6c52b4"
+        },
+        {
+          "name": "name",
+          "type": "text/varchar",
+          "sample_value": "create-factorial-design"
+        },
+        {
+          "name": "display_name",
+          "type": "text/varchar",
+          "sample_value": "Create Factorial Design"
+        },
+        {
+          "name": "description",
+          "type": "text/varchar",
+          "sample_value": "FORGE - VALIDATE"
+        },
+        {
+          "name": "category",
+          "type": "text/varchar",
+          "sample_value": "Creation; Analysis"
+        },
+        {
+          "name": "system_prompt",
+          "type": "text/varchar",
+          "sample_value": "# FORGE_VALIDATE_FACTORIAL_DESIGN_EXPERT_v1.0: Forge task \u2014 Factorial\n\n---\n\n## \ud83d\udcdd CONTEXT & BACKGROUN"
+        },
+        {
+          "name": "user_prompt_template",
+          "type": "text/varchar",
+          "sample_value": "# FORGE_VALIDATE_FACTORIAL_DESIGN_EXPERT_v1.0: Forge task \u2014 Factorial\n\n---\n\n## \ud83d\udcdd CONTEXT & BACKGROUN"
+        },
+        {
+          "name": "execution_instructions",
+          "type": "jsonb",
+          "sample_value": null
+        },
+        {
+          "name": "success_criteria",
+          "type": "jsonb",
+          "sample_value": null
+        },
+        {
+          "name": "model_requirements",
+          "type": "jsonb",
+          "sample_value": "{'model': 'gpt-4', 'max_tokens': 2000, 'temperature': 0.7}"
+        },
+        {
+          "name": "input_schema",
+          "type": "jsonb",
+          "sample_value": null
+        },
+        {
+          "name": "output_schema",
+          "type": "jsonb",
+          "sample_value": null
+        },
+        {
+          "name": "validation_rules",
+          "type": "jsonb",
+          "sample_value": null
+        },
+        {
+          "name": "complexity_level",
+          "type": "text/varchar",
+          "sample_value": "expert"
+        },
+        {
+          "name": "domain",
+          "type": "text/varchar",
+          "sample_value": "general"
+        },
+        {
+          "name": "estimated_tokens",
+          "type": "integer",
+          "sample_value": "1000"
+        },
+        {
+          "name": "prerequisite_prompts",
+          "type": "unknown (null)",
+          "sample_value": null
+        },
+        {
+          "name": "prerequisite_capabilities",
+          "type": "array",
+          "sample_value": null
+        },
+        {
+          "name": "related_capabilities",
+          "type": "unknown (null)",
+          "sample_value": null
+        },
+        {
+          "name": "required_context",
+          "type": "unknown (null)",
+          "sample_value": null
+        },
+        {
+          "name": "validation_status",
+          "type": "text/varchar",
+          "sample_value": "active"
+        },
+        {
+          "name": "accuracy_threshold",
+          "type": "numeric",
+          "sample_value": "0.85"
+        },
+        {
+          "name": "testing_scenarios",
+          "type": "array",
+          "sample_value": null
+        },
+        {
+          "name": "hipaa_relevant",
+          "type": "integer",
+          "sample_value": null
+        },
+        {
+          "name": "phi_handling_rules",
+          "type": "jsonb",
+          "sample_value": null
+        },
+        {
+          "name": "compliance_tags",
+          "type": "array",
+          "sample_value": null
+        },
+        {
+          "name": "version",
+          "type": "text/varchar",
+          "sample_value": "v1.0"
+        },
+        {
+          "name": "status",
+          "type": "text/varchar",
+          "sample_value": "active"
+        },
+        {
+          "name": "created_at",
+          "type": "text/varchar",
+          "sample_value": "2025-10-29T11:02:40.209885+00:00"
+        },
+        {
+          "name": "updated_at",
+          "type": "text/varchar",
+          "sample_value": "2025-10-29T11:06:58.286292+00:00"
+        },
+        {
+          "name": "created_by",
+          "type": "unknown (null)",
+          "sample_value": null
+        }
+      ],
+      "sample_data": [
+        {
+          "id": "8ed757f6-a783-41c5-8e8f-22615a6c52b4",
+          "name": "create-factorial-design",
+          "display_name": "Create Factorial Design",
+          "description": "FORGE - VALIDATE",
+          "category": "Creation; Analysis",
+          "system_prompt": "# FORGE_VALIDATE_FACTORIAL_DESIGN_EXPERT_v1.0: Forge task \u2014 Factorial\n\n---\n\n## \ud83d\udcdd CONTEXT & BACKGROUND\n\n**Project/Product Information**:\n- **Product Name**: {product_name}\n- **Product Type**: {product_type} [Drug/Device/Biologic/Combination/Digital/Other]\n- **Therapeutic Area**: {therapeutic_area}\n- **Indication**: {indication}\n- **Target Population**: {target_population}\n- **Stage**: {development_stage} [Preclinical/Phase I/II/III/Post-Market/Other]\n\n**Regulatory Context** (if applicable):\n- **Primary Market**: {target_market} [US/EU/Japan/Global/Other]\n- **Regulatory Authority**: {regulatory_authority} [FDA/EMA/PMDA/Health Canada/Other]\n- **Regulatory Pathway**: {regulatory_pathway} [510(k)/PMA/NDA/BLA/MAA/Other]\n- **Device Class** (if applicable): {device_class} [Class I/II/III]\n- **Risk Classification**: {risk_level} [Low/Moderate/High]\n\n**Clinical Context** (if applicable):\n- **Study Phase**: {study_phase} [Phase I/II/III/IV]\n- **Study Design**: {study_design} [RCT/Observational/Real-World/Other]\n- **Sample Size**: {sample_size}\n- **Primary Endpoint**: {primary_endpoint}\n- **Key Secondary Endpoints**: {secondary_endpoints}\n\n**Commercial Context** (if applicable):\n- **Launch Timeline**: {launch_date}\n- **Competitive Landscape**: {competitors}\n- **Pricing Strategy**: {pricing_approach}\n- **Payer Segment**: {payer_type} [Commercial/Medicare/Medicaid/Mixed]\n\n**Operational Context** (if applicable):\n- **Timeline**: {project_timeline}\n- **Budget**: {budget_constraint}\n- **Team Size**: {team_composition}\n- **Key Stakeholders**: {stakeholders}\n\n---\n\n## \ud83c\udfaf SPECIFIC REQUEST\n\n**Primary Objective**:\n[Clear statement of what you need - be specific]\n\n**Specific Questions/Tasks**:\n1. {question_1}\n2. {question_2}\n3. {question_3}\n[Add more as needed]\n\n**Constraints or Special Considerations**:\n- {constraint_1}\n- {constraint_2}\n- {constraint_3}\n\n**Preferred Approach** (optional):\n[Any specific methodologies, frameworks, or approaches you prefer]\n\n---\n\n## \ud83d\udce4 DESIRED OUTPUT\n\n**Please provide the following:**\n\n### 1. **Executive Summary**\n   - Key findings or recommendations (2-3 paragraphs)\n   - Critical action items\n   - Timeline considerations\n   - Risk flags (if any)\n\n### 2. **Detailed Analysis** [Customize based on task type]\n   \n   **For ANALYSIS tasks**:\n   - Situation assessment\n   - Key findings with supporting evidence\n   - Gap analysis (if applicable)\n   - Risk-benefit evaluation\n   - Data interpretation and insights\n   \n   **For CREATION tasks**:\n   - Comprehensive document/strategy/plan\n   - Structured sections with clear organization\n   - Supporting rationale for recommendations\n   - Implementation guidance\n   - Quality checkpoints\n   \n   **For EVALUATION tasks**:\n   - Scoring or rating with criteria\n   - Strengths and weaknesses analysis\n   - Benchmark comparisons\n   - Improvement recommendations\n   - Priority ranking\n   \n   **For PLANNING tasks**:\n   - Strategic roadmap or timeline\n   - Resource requirements\n   - Milestone definitions\n   - Risk mitigation strategies\n   - Success metrics\n   \n   **For COMMUNICATION tasks**:\n   - Stakeholder-appropriate messaging\n   - Key talking points\n   - Anticipated questions and responses\n   - Supporting materials recommendations\n   - Communication timeline\n\n### 3. **Recommendations** [If applicable]\n   - Prioritized recommendations (High/Medium/Low priority)\n   - Rationale for each recommendation\n   - Implementation steps\n   - Success metrics\n   - Timeline estimates\n\n### 4. **Regulatory/Clinical Considerations** [If applicable]\n   - Applicable regulations or guidelines (with citations)\n   - Compliance requirements\n   - Precedent analysis\n   - Regulatory strategy recommendations\n   - Required submissions or filings\n\n### 5. **Risk Assessment & Mitigation** [If applicable]\n   - Identified risks (likelihood x impact)\n   - Risk mitigation strategies\n   - Contingency plans\n   - Escalation triggers\n   - Monitoring requirements\n\n### 6. **Implementation Guidance**\n   - Step-by-step action plan\n   - Resource requirements (people, budget, time)\n   - Dependencies and prerequisites\n   - Timeline with milestones\n   - Success criteria and KPIs\n\n### 7. **References & Citations**\n   - Regulatory citations [21 CFR \u00a7XXX, ICH guidelines]\n   - Clinical guidelines and literature\n   - Industry precedents\n   - Relevant case studies or examples\n   - Additional resources for deep-dive\n\n---\n\n## \u2699\ufe0f OUTPUT SPECIFICATIONS\n\n**Format**:\n- [ ] Structured markdown with clear sections\n- [ ] Executive summary at top\n- [ ] Numbered recommendations\n- [ ] Tables for comparisons (if applicable)\n- [ ] Bullet points for lists\n- [ ] Bold for critical information\n\n**Length**: \n- {desired_length} [e.g., \"2-3 pages\", \"Comprehensive\", \"Concise summary\"]\n\n**Technical Level**:\n- EXPERT [BASIC/INTERMEDIATE/ADVANCED/EXPERT based on template complexity]\n\n**Tone**:\n- [ ] Professional and formal\n- [ ] Evidence-based and objective\n- [ ] Action-oriented\n- [ ] Clear and unambiguous\n\n**Critical Requirements**:\n- \u2713 All recommendations must be evidence-based with citations\n- \u2713 Regulatory compliance must be ensured\n- \u2713 Patient safety must be prioritized\n- \u2713 Uncertainties must be clearly stated\n- \u2713 Limitations must be acknowledged\n\n---\n\n## \ud83d\udea8 IMPORTANT NOTES\n\n**What I Need Most**:\n[Highlight the single most important aspect of the output]\n\n**Deadline Considerations**:\n[Any time-sensitive aspects]\n\n**Known Constraints**:\n[Any limitations, resource constraints, or special circumstances]\n\n**Follow-up Plans**:\n[How this output will be used, next steps, or additional analyses planned]\n",
+          "user_prompt_template": "# FORGE_VALIDATE_FACTORIAL_DESIGN_EXPERT_v1.0: Forge task \u2014 Factorial\n\n---\n\n## \ud83d\udcdd CONTEXT & BACKGROUND\n\n**Project/Product Information**:\n- **Product Name**: {product_name}\n- **Product Type**: {product_type} [Drug/Device/Biologic/Combination/Digital/Other]\n- **Therapeutic Area**: {therapeutic_area}\n- **Indication**: {indication}\n- **Target Population**: {target_population}\n- **Stage**: {development_stage} [Preclinical/Phase I/II/III/Post-Market/Other]\n\n**Regulatory Context** (if applicable):\n- **Primary Market**: {target_market} [US/EU/Japan/Global/Other]\n- **Regulatory Authority**: {regulatory_authority} [FDA/EMA/PMDA/Health Canada/Other]\n- **Regulatory Pathway**: {regulatory_pathway} [510(k)/PMA/NDA/BLA/MAA/Other]\n- **Device Class** (if applicable): {device_class} [Class I/II/III]\n- **Risk Classification**: {risk_level} [Low/Moderate/High]\n\n**Clinical Context** (if applicable):\n- **Study Phase**: {study_phase} [Phase I/II/III/IV]\n- **Study Design**: {study_design} [RCT/Observational/Real-World/Other]\n- **Sample Size**: {sample_size}\n- **Primary Endpoint**: {primary_endpoint}\n- **Key Secondary Endpoints**: {secondary_endpoints}\n\n**Commercial Context** (if applicable):\n- **Launch Timeline**: {launch_date}\n- **Competitive Landscape**: {competitors}\n- **Pricing Strategy**: {pricing_approach}\n- **Payer Segment**: {payer_type} [Commercial/Medicare/Medicaid/Mixed]\n\n**Operational Context** (if applicable):\n- **Timeline**: {project_timeline}\n- **Budget**: {budget_constraint}\n- **Team Size**: {team_composition}\n- **Key Stakeholders**: {stakeholders}\n\n---\n\n## \ud83c\udfaf SPECIFIC REQUEST\n\n**Primary Objective**:\n[Clear statement of what you need - be specific]\n\n**Specific Questions/Tasks**:\n1. {question_1}\n2. {question_2}\n3. {question_3}\n[Add more as needed]\n\n**Constraints or Special Considerations**:\n- {constraint_1}\n- {constraint_2}\n- {constraint_3}\n\n**Preferred Approach** (optional):\n[Any specific methodologies, frameworks, or approaches you prefer]\n\n---\n\n## \ud83d\udce4 DESIRED OUTPUT\n\n**Please provide the following:**\n\n### 1. **Executive Summary**\n   - Key findings or recommendations (2-3 paragraphs)\n   - Critical action items\n   - Timeline considerations\n   - Risk flags (if any)\n\n### 2. **Detailed Analysis** [Customize based on task type]\n   \n   **For ANALYSIS tasks**:\n   - Situation assessment\n   - Key findings with supporting evidence\n   - Gap analysis (if applicable)\n   - Risk-benefit evaluation\n   - Data interpretation and insights\n   \n   **For CREATION tasks**:\n   - Comprehensive document/strategy/plan\n   - Structured sections with clear organization\n   - Supporting rationale for recommendations\n   - Implementation guidance\n   - Quality checkpoints\n   \n   **For EVALUATION tasks**:\n   - Scoring or rating with criteria\n   - Strengths and weaknesses analysis\n   - Benchmark comparisons\n   - Improvement recommendations\n   - Priority ranking\n   \n   **For PLANNING tasks**:\n   - Strategic roadmap or timeline\n   - Resource requirements\n   - Milestone definitions\n   - Risk mitigation strategies\n   - Success metrics\n   \n   **For COMMUNICATION tasks**:\n   - Stakeholder-appropriate messaging\n   - Key talking points\n   - Anticipated questions and responses\n   - Supporting materials recommendations\n   - Communication timeline\n\n### 3. **Recommendations** [If applicable]\n   - Prioritized recommendations (High/Medium/Low priority)\n   - Rationale for each recommendation\n   - Implementation steps\n   - Success metrics\n   - Timeline estimates\n\n### 4. **Regulatory/Clinical Considerations** [If applicable]\n   - Applicable regulations or guidelines (with citations)\n   - Compliance requirements\n   - Precedent analysis\n   - Regulatory strategy recommendations\n   - Required submissions or filings\n\n### 5. **Risk Assessment & Mitigation** [If applicable]\n   - Identified risks (likelihood x impact)\n   - Risk mitigation strategies\n   - Contingency plans\n   - Escalation triggers\n   - Monitoring requirements\n\n### 6. **Implementation Guidance**\n   - Step-by-step action plan\n   - Resource requirements (people, budget, time)\n   - Dependencies and prerequisites\n   - Timeline with milestones\n   - Success criteria and KPIs\n\n### 7. **References & Citations**\n   - Regulatory citations [21 CFR \u00a7XXX, ICH guidelines]\n   - Clinical guidelines and literature\n   - Industry precedents\n   - Relevant case studies or examples\n   - Additional resources for deep-dive\n\n---\n\n## \u2699\ufe0f OUTPUT SPECIFICATIONS\n\n**Format**:\n- [ ] Structured markdown with clear sections\n- [ ] Executive summary at top\n- [ ] Numbered recommendations\n- [ ] Tables for comparisons (if applicable)\n- [ ] Bullet points for lists\n- [ ] Bold for critical information\n\n**Length**: \n- {desired_length} [e.g., \"2-3 pages\", \"Comprehensive\", \"Concise summary\"]\n\n**Technical Level**:\n- EXPERT [BASIC/INTERMEDIATE/ADVANCED/EXPERT based on template complexity]\n\n**Tone**:\n- [ ] Professional and formal\n- [ ] Evidence-based and objective\n- [ ] Action-oriented\n- [ ] Clear and unambiguous\n\n**Critical Requirements**:\n- \u2713 All recommendations must be evidence-based with citations\n- \u2713 Regulatory compliance must be ensured\n- \u2713 Patient safety must be prioritized\n- \u2713 Uncertainties must be clearly stated\n- \u2713 Limitations must be acknowledged\n\n---\n\n## \ud83d\udea8 IMPORTANT NOTES\n\n**What I Need Most**:\n[Highlight the single most important aspect of the output]\n\n**Deadline Considerations**:\n[Any time-sensitive aspects]\n\n**Known Constraints**:\n[Any limitations, resource constraints, or special circumstances]\n\n**Follow-up Plans**:\n[How this output will be used, next steps, or additional analyses planned]\n",
+          "execution_instructions": {},
+          "success_criteria": {},
+          "model_requirements": {
+            "model": "gpt-4",
+            "max_tokens": 2000,
+            "temperature": 0.7
+          },
+          "input_schema": {},
+          "output_schema": {},
+          "validation_rules": {},
+          "complexity_level": "expert",
+          "domain": "general",
+          "estimated_tokens": 1000,
+          "prerequisite_prompts": null,
+          "prerequisite_capabilities": [],
+          "related_capabilities": null,
+          "required_context": null,
+          "validation_status": "active",
+          "accuracy_threshold": 0.85,
+          "testing_scenarios": [],
+          "hipaa_relevant": false,
+          "phi_handling_rules": {},
+          "compliance_tags": [],
+          "version": "v1.0",
+          "status": "active",
+          "created_at": "2025-10-29T11:02:40.209885+00:00",
+          "updated_at": "2025-10-29T11:06:58.286292+00:00",
+          "created_by": null
+        },
+        {
+          "id": "4c3d5d0b-8438-49b1-95d6-1bd4734c8fd3",
+          "name": "PRM-CD-002-9.1-PUBLICATION",
+          "display_name": "Validation Report & Publication",
+          "description": "Prepare comprehensive validation report, draft manuscript for peer-reviewed journal, and present at conferences",
+          "category": "medical_writing",
+          "system_prompt": "You are a Medical Writer with expertise in scientific manuscript preparation, digital health and biomarker validation, regulatory and clinical study reporting, journal submission and publication process, ICMJE authorship guidelines, and data transparency and reproducibility standards. Provide publication-ready, scientifically rigorous, and journal-compliant manuscripts.",
+          "user_prompt_template": "# Validation Study Data for Publication\n**Biomarker**: {{biomarker_name}}\n**Indication**: {{indication}}\n**Validation Framework**: DiMe V3\n\n## V1 Verification Summary\n{{v1_summary}}\n\n## V2 Analytical Validation Summary\n{{v2_summary}}\n\n## V3 Clinical Validation Summary\n{{v3_summary}}\n\n## FDA Feedback Summary\n{{fda_feedback}}\n\n## Target Journal\n{{target_journal}}\n\n---\n\n**TASK**: Prepare comprehensive validation report and manuscript for peer-reviewed publication.\n\n**KEY COMPONENTS**:\n\n**Comprehensive Validation Report** (50-100 pages):\n- Executive Summary\n- Introduction (DiMe V3 Framework)\n- V1 Verification Methods and Results\n- V2 Analytical Validation Methods and Results\n- V3 Clinical Validation Methods and Results\n- Regulatory Implications\n- Conclusion (Fit-for-Purpose Statement)\n\n**Manuscript** (5,000-8,000 words):\n- Introduction (DiMe V3 framework)\n- Methods (V1+V2+V3 studies)\n- Results (all validation data)\n- Discussion (regulatory and clinical implications)\n- Conclusion (fit-for-purpose statement)\n\n**Target Journals**: npj Digital Medicine, JMIR, Lancet Digital Health, Digital Health\n\n**DELIVERABLE**: Comprehensive Validation Report + Peer-Reviewed Manuscript",
+          "execution_instructions": {},
+          "success_criteria": {},
+          "model_requirements": {
+            "model": "claude-3-5-sonnet",
+            "max_tokens": 8000,
+            "temperature": 0.5
+          },
+          "input_schema": {
+            "indication": "string",
+            "v1_summary": "string",
+            "v2_summary": "string",
+            "v3_summary": "string",
+            "fda_feedback": "string",
+            "biomarker_name": "string",
+            "target_journal": "string"
+          },
+          "output_schema": {},
+          "validation_rules": {},
+          "complexity_level": "advanced",
+          "domain": "medical_writing",
+          "estimated_tokens": 1000,
+          "prerequisite_prompts": null,
+          "prerequisite_capabilities": [
+            "medical_writing",
+            "publication"
+          ],
+          "related_capabilities": [
+            "biomarker_validation",
+            "manuscript_preparation"
+          ],
+          "required_context": null,
+          "validation_status": "active",
+          "accuracy_threshold": 0.85,
+          "testing_scenarios": [],
+          "hipaa_relevant": false,
+          "phi_handling_rules": {},
+          "compliance_tags": [],
+          "version": "1.0.0",
+          "status": "active",
+          "created_at": "2025-11-02T16:11:33.82853+00:00",
+          "updated_at": "2025-11-02T16:31:59.728789+00:00",
+          "created_by": null
+        }
+      ]
+    },
+    "tools": {
+      "exists": true,
+      "record_count": 0,
+      "columns": [
+        {
+          "error": "{'code': '42P01', 'details': None, 'hint': None, 'message': 'relation \"public.tools\" does not exist'}"
+        }
+      ],
+      "sample_data": [
+        {
+          "error": "{'code': '42P01', 'details': None, 'hint': None, 'message': 'relation \"public.tools\" does not exist'}"
+        }
+      ]
+    },
+    "personas": {
+      "exists": true,
+      "record_count": 210,
+      "columns": [
+        {
+          "name": "id",
+          "type": "text/varchar",
+          "sample_value": "0aa9491a-2b1e-4b34-aa5d-716d304c772c"
+        },
+        {
+          "name": "unique_id",
+          "type": "text/varchar",
+          "sample_value": "dh_global_pha_maria_gonzalez"
+        },
+        {
+          "name": "name",
+          "type": "text/varchar",
+          "sample_value": "Unknown Persona"
+        },
+        {
+          "name": "display_name",
+          "type": "unknown (null)",
+          "sample_value": null
+        },
+        {
+          "name": "persona_type",
+          "type": "text/varchar",
+          "sample_value": "professional"
+        },
+        {
+          "name": "seniority_level",
+          "type": "unknown (null)",
+          "sample_value": null
+        },
+        {
+          "name": "decision_authority",
+          "type": "unknown (null)",
+          "sample_value": null
+        },
+        {
+          "name": "description",
+          "type": "unknown (null)",
+          "sample_value": null
+        },
+        {
+          "name": "short_bio",
+          "type": "unknown (null)",
+          "sample_value": null
+        },
+        {
+          "name": "tagline",
+          "type": "unknown (null)",
+          "sample_value": null
+        },
+        {
+          "name": "profile",
+          "type": "jsonb",
+          "sample_value": null
+        },
+        {
+          "name": "responsibilities",
+          "type": "text/varchar",
+          "sample_value": "[\"Patient program strategy\", \"Service design and delivery\", \"Digital companion development\", \"Adhere"
+        },
+        {
+          "name": "pain_points",
+          "type": "text/varchar",
+          "sample_value": "[\"Program fragmentation\", \"Low patient enrollment\", \"Engagement sustainability\", \"ROI demonstration\""
+        },
+        {
+          "name": "goals",
+          "type": "text/varchar",
+          "sample_value": "[]"
+        },
+        {
+          "name": "attributes",
+          "type": "jsonb",
+          "sample_value": null
+        },
+        {
+          "name": "communication_style",
+          "type": "jsonb",
+          "sample_value": null
+        },
+        {
+          "name": "work_patterns",
+          "type": "jsonb",
+          "sample_value": null
+        },
+        {
+          "name": "preferences",
+          "type": "jsonb",
+          "sample_value": null
+        },
+        {
+          "name": "ai_interaction_profile",
+          "type": "jsonb",
+          "sample_value": null
+        },
+        {
+          "name": "is_active",
+          "type": "integer",
+          "sample_value": "True"
+        },
+        {
+          "name": "is_public",
+          "type": "integer",
+          "sample_value": "True"
+        },
+        {
+          "name": "is_featured",
+          "type": "integer",
+          "sample_value": null
+        },
+        {
+          "name": "is_verified",
+          "type": "integer",
+          "sample_value": null
+        },
+        {
+          "name": "tenant_id",
+          "type": "unknown (null)",
+          "sample_value": null
+        },
+        {
+          "name": "owner_tenant_id",
+          "type": "unknown (null)",
+          "sample_value": null
+        },
+        {
+          "name": "created_at",
+          "type": "text/varchar",
+          "sample_value": "2025-11-08T18:56:29.838462+00:00"
+        },
+        {
+          "name": "updated_at",
+          "type": "text/varchar",
+          "sample_value": "2025-11-08T18:56:29.838462+00:00"
+        },
+        {
+          "name": "created_by",
+          "type": "unknown (null)",
+          "sample_value": null
+        },
+        {
+          "name": "updated_by",
+          "type": "unknown (null)",
+          "sample_value": null
+        },
+        {
+          "name": "deleted_at",
+          "type": "unknown (null)",
+          "sample_value": null
+        },
+        {
+          "name": "version",
+          "type": "integer",
+          "sample_value": "1"
+        }
+      ],
+      "sample_data": [
+        {
+          "id": "0aa9491a-2b1e-4b34-aa5d-716d304c772c",
+          "unique_id": "dh_global_pha_maria_gonzalez",
+          "name": "Unknown Persona",
+          "display_name": null,
+          "persona_type": "professional",
+          "seniority_level": null,
+          "decision_authority": null,
+          "description": null,
+          "short_bio": null,
+          "tagline": null,
+          "profile": {},
+          "responsibilities": "[\"Patient program strategy\", \"Service design and delivery\", \"Digital companion development\", \"Adherence optimization\", \"Patient journey mapping\", \"Outcomes measurement\"]",
+          "pain_points": "[\"Program fragmentation\", \"Low patient enrollment\", \"Engagement sustainability\", \"ROI demonstration\", \"Channel coordination\", \"Privacy compliance\"]",
+          "goals": "[]",
+          "attributes": {},
+          "communication_style": {},
+          "work_patterns": {},
+          "preferences": {},
+          "ai_interaction_profile": {},
+          "is_active": true,
+          "is_public": true,
+          "is_featured": false,
+          "is_verified": false,
+          "tenant_id": null,
+          "owner_tenant_id": null,
+          "created_at": "2025-11-08T18:56:29.838462+00:00",
+          "updated_at": "2025-11-08T18:56:29.838462+00:00",
+          "created_by": null,
+          "updated_by": null,
+          "deleted_at": null,
+          "version": 1
+        },
+        {
+          "id": "7a8fe78a-90fd-4c0a-9a43-8ce90919dd76",
+          "unique_id": "govt_health_policy_director",
+          "name": "Unknown Persona",
+          "display_name": null,
+          "persona_type": "professional",
+          "seniority_level": null,
+          "decision_authority": "VP Medical Affairs",
+          "description": null,
+          "short_bio": null,
+          "tagline": null,
+          "profile": {},
+          "responsibilities": "[]",
+          "pain_points": "[]",
+          "goals": "[]",
+          "attributes": {},
+          "communication_style": {},
+          "work_patterns": {},
+          "preferences": {},
+          "ai_interaction_profile": {},
+          "is_active": true,
+          "is_public": true,
+          "is_featured": false,
+          "is_verified": false,
+          "tenant_id": null,
+          "owner_tenant_id": null,
+          "created_at": "2025-11-08T23:11:31.838973+00:00",
+          "updated_at": "2025-11-09T15:31:18.27892+00:00",
+          "created_by": null,
+          "updated_by": null,
+          "deleted_at": null,
+          "version": 1
+        }
+      ]
+    },
+    "dh_personas": {
+      "exists": true,
+      "record_count": 185,
+      "columns": [
+        {
+          "name": "id",
+          "type": "text/varchar",
+          "sample_value": "832cb181-bf98-4214-bc70-78978c0d1279"
+        },
+        {
+          "name": "unique_id",
+          "type": "text/varchar",
+          "sample_value": "dh_global_pha_maria_gonzalez"
+        },
+        {
+          "name": "persona_code",
+          "type": "text/varchar",
+          "sample_value": "PGON86"
+        },
+        {
+          "name": "name",
+          "type": "text/varchar",
+          "sample_value": "Maria Gonzalez"
+        },
+        {
+          "name": "title",
+          "type": "text/varchar",
+          "sample_value": "VP Patient Solutions & Services"
+        },
+        {
+          "name": "organization",
+          "type": "text/varchar",
+          "sample_value": "Global Pharma Company"
+        },
+        {
+          "name": "background",
+          "type": "unknown (null)",
+          "sample_value": null
+        },
+        {
+          "name": "sector",
+          "type": "text/varchar",
+          "sample_value": "Pharma"
+        },
+        {
+          "name": "tier",
+          "type": "integer",
+          "sample_value": "3"
+        },
+        {
+          "name": "function",
+          "type": "unknown (null)",
+          "sample_value": null
+        },
+        {
+          "name": "role_category",
+          "type": "unknown (null)",
+          "sample_value": null
+        },
+        {
+          "name": "org_type",
+          "type": "unknown (null)",
+          "sample_value": null
+        },
+        {
+          "name": "org_size",
+          "type": "unknown (null)",
+          "sample_value": null
+        },
+        {
+          "name": "budget_authority",
+          "type": "unknown (null)",
+          "sample_value": null
+        },
+        {
+          "name": "team_size",
+          "type": "unknown (null)",
+          "sample_value": null
+        },
+        {
+          "name": "value_score",
+          "type": "integer",
+          "sample_value": "5"
+        },
+        {
+          "name": "pain_score",
+          "type": "integer",
+          "sample_value": "5"
+        },
+        {
+          "name": "adoption_score",
+          "type": "integer",
+          "sample_value": "5"
+        },
+        {
+          "name": "ease_score",
+          "type": "integer",
+          "sample_value": "5"
+        },
+        {
+          "name": "strategic_score",
+          "type": "integer",
+          "sample_value": "5"
+        },
+        {
+          "name": "network_score",
+          "type": "integer",
+          "sample_value": "5"
+        },
+        {
+          "name": "priority_score",
+          "type": "numeric",
+          "sample_value": "5.0"
+        },
+        {
+          "name": "key_need",
+          "type": "unknown (null)",
+          "sample_value": null
+        },
+        {
+          "name": "decision_cycle",
+          "type": "unknown (null)",
+          "sample_value": null
+        },
+        {
+          "name": "therapeutic_areas",
+          "type": "text/varchar",
+          "sample_value": "Multiple chronic diseases"
+        },
+        {
+          "name": "programs_managed",
+          "type": "text/varchar",
+          "sample_value": "50+ patient support programs"
+        },
+        {
+          "name": "budget",
+          "type": "text/varchar",
+          "sample_value": "$100M annual"
+        },
+        {
+          "name": "team",
+          "type": "text/varchar",
+          "sample_value": "75+ patient specialists"
+        },
+        {
+          "name": "focus",
+          "type": "unknown (null)",
+          "sample_value": null
+        },
+        {
+          "name": "projects",
+          "type": "unknown (null)",
+          "sample_value": null
+        },
+        {
+          "name": "specialization",
+          "type": "unknown (null)",
+          "sample_value": null
+        },
+        {
+          "name": "certifications",
+          "type": "unknown (null)",
+          "sample_value": null
+        },
+        {
+          "name": "experience",
+          "type": "unknown (null)",
+          "sample_value": null
+        },
+        {
+          "name": "responsibilities",
+          "type": "text/varchar",
+          "sample_value": "[\"Patient program strategy\", \"Service design and delivery\", \"Digital companion development\", \"Adhere"
+        },
+        {
+          "name": "pain_points",
+          "type": "text/varchar",
+          "sample_value": "[\"Program fragmentation\", \"Low patient enrollment\", \"Engagement sustainability\", \"ROI demonstration\""
+        },
+        {
+          "name": "goals",
+          "type": "text/varchar",
+          "sample_value": "[]"
+        },
+        {
+          "name": "needs",
+          "type": "text/varchar",
+          "sample_value": "[]"
+        },
+        {
+          "name": "behaviors",
+          "type": "text/varchar",
+          "sample_value": "[]"
+        },
+        {
+          "name": "typical_titles",
+          "type": "array",
+          "sample_value": null
+        },
+        {
+          "name": "preferred_channels",
+          "type": "array",
+          "sample_value": null
+        },
+        {
+          "name": "frustrations",
+          "type": "array",
+          "sample_value": null
+        },
+        {
+          "name": "motivations",
+          "type": "array",
+          "sample_value": null
+        },
+        {
+          "name": "expertise_level",
+          "type": "unknown (null)",
+          "sample_value": null
+        },
+        {
+          "name": "decision_authority",
+          "type": "unknown (null)",
+          "sample_value": null
+        },
+        {
+          "name": "ai_relationship",
+          "type": "unknown (null)",
+          "sample_value": null
+        },
+        {
+          "name": "tech_proficiency",
+          "type": "unknown (null)",
+          "sample_value": null
+        },
+        {
+          "name": "primary_role_id",
+          "type": "unknown (null)",
+          "sample_value": null
+        },
+        {
+          "name": "industry_id",
+          "type": "text/varchar",
+          "sample_value": "0571859c-25a1-47d6-aac6-8d945bfeed87"
+        },
+        {
+          "name": "is_active",
+          "type": "integer",
+          "sample_value": "True"
+        },
+        {
+          "name": "source",
+          "type": "text/varchar",
+          "sample_value": "Digital Health JTBD Library"
+        },
+        {
+          "name": "created_at",
+          "type": "text/varchar",
+          "sample_value": "2025-11-08T18:56:29.838462+00:00"
+        },
+        {
+          "name": "updated_at",
+          "type": "text/varchar",
+          "sample_value": "2025-11-08T18:56:29.838462+00:00"
+        },
+        {
+          "name": "notes",
+          "type": "unknown (null)",
+          "sample_value": null
+        },
+        {
+          "name": "tags",
+          "type": "array",
+          "sample_value": null
+        },
+        {
+          "name": "digital_health_id",
+          "type": "unknown (null)",
+          "sample_value": null
+        },
+        {
+          "name": "pharma_id",
+          "type": "unknown (null)",
+          "sample_value": null
+        },
+        {
+          "name": "biotech_id",
+          "type": "unknown (null)",
+          "sample_value": null
+        },
+        {
+          "name": "meddev_id",
+          "type": "unknown (null)",
+          "sample_value": null
+        },
+        {
+          "name": "dx_id",
+          "type": "unknown (null)",
+          "sample_value": null
+        }
+      ],
+      "sample_data": [
+        {
+          "id": "832cb181-bf98-4214-bc70-78978c0d1279",
+          "unique_id": "dh_global_pha_maria_gonzalez",
+          "persona_code": "PGON86",
+          "name": "Maria Gonzalez",
+          "title": "VP Patient Solutions & Services",
+          "organization": "Global Pharma Company",
+          "background": null,
+          "sector": "Pharma",
+          "tier": 3,
+          "function": null,
+          "role_category": null,
+          "org_type": null,
+          "org_size": null,
+          "budget_authority": null,
+          "team_size": null,
+          "value_score": 5,
+          "pain_score": 5,
+          "adoption_score": 5,
+          "ease_score": 5,
+          "strategic_score": 5,
+          "network_score": 5,
+          "priority_score": 5.0,
+          "key_need": null,
+          "decision_cycle": null,
+          "therapeutic_areas": "Multiple chronic diseases",
+          "programs_managed": "50+ patient support programs",
+          "budget": "$100M annual",
+          "team": "75+ patient specialists",
+          "focus": null,
+          "projects": null,
+          "specialization": null,
+          "certifications": null,
+          "experience": null,
+          "responsibilities": "[\"Patient program strategy\", \"Service design and delivery\", \"Digital companion development\", \"Adherence optimization\", \"Patient journey mapping\", \"Outcomes measurement\"]",
+          "pain_points": "[\"Program fragmentation\", \"Low patient enrollment\", \"Engagement sustainability\", \"ROI demonstration\", \"Channel coordination\", \"Privacy compliance\"]",
+          "goals": "[]",
+          "needs": "[]",
+          "behaviors": "[]",
+          "typical_titles": [],
+          "preferred_channels": [],
+          "frustrations": [],
+          "motivations": [],
+          "expertise_level": null,
+          "decision_authority": null,
+          "ai_relationship": null,
+          "tech_proficiency": null,
+          "primary_role_id": null,
+          "industry_id": "0571859c-25a1-47d6-aac6-8d945bfeed87",
+          "is_active": true,
+          "source": "Digital Health JTBD Library",
+          "created_at": "2025-11-08T18:56:29.838462+00:00",
+          "updated_at": "2025-11-08T18:56:29.838462+00:00",
+          "notes": null,
+          "tags": [],
+          "digital_health_id": null,
+          "pharma_id": null,
+          "biotech_id": null,
+          "meddev_id": null,
+          "dx_id": null
+        },
+        {
+          "id": "e7e720b8-e9b3-4b00-9bb7-215e88afdc0a",
+          "unique_id": "dh_top_10_pha_dr\u00a0rachel_thomp",
+          "persona_code": "PTHO92",
+          "name": "Dr.\u00a0Rachel Thompson",
+          "title": "VP Patient Advocacy & Engagement",
+          "organization": "Top 10 Pharma",
+          "background": null,
+          "sector": "Pharma",
+          "tier": 3,
+          "function": null,
+          "role_category": null,
+          "org_type": null,
+          "org_size": null,
+          "budget_authority": null,
+          "team_size": null,
+          "value_score": 5,
+          "pain_score": 5,
+          "adoption_score": 5,
+          "ease_score": 5,
+          "strategic_score": 5,
+          "network_score": 5,
+          "priority_score": 5.0,
+          "key_need": null,
+          "decision_cycle": null,
+          "therapeutic_areas": null,
+          "programs_managed": null,
+          "budget": "$30M for patient initiatives",
+          "team": null,
+          "focus": null,
+          "projects": null,
+          "specialization": null,
+          "certifications": null,
+          "experience": null,
+          "responsibilities": "[\"Patient organization partnerships\", \"Voice of patient programs\", \"Advocacy strategy\", \"Patient education\", \"Community building\", \"Policy influence\"]",
+          "pain_points": "[]",
+          "goals": "[]",
+          "needs": "[]",
+          "behaviors": "[]",
+          "typical_titles": [],
+          "preferred_channels": [],
+          "frustrations": [],
+          "motivations": [],
+          "expertise_level": null,
+          "decision_authority": null,
+          "ai_relationship": null,
+          "tech_proficiency": null,
+          "primary_role_id": null,
+          "industry_id": "0571859c-25a1-47d6-aac6-8d945bfeed87",
+          "is_active": true,
+          "source": "Digital Health JTBD Library",
+          "created_at": "2025-11-08T18:56:30.933929+00:00",
+          "updated_at": "2025-11-08T18:56:30.933929+00:00",
+          "notes": null,
+          "tags": [],
+          "digital_health_id": null,
+          "pharma_id": null,
+          "biotech_id": null,
+          "meddev_id": null,
+          "dx_id": null
+        }
+      ]
+    },
+    "strategic_priorities": {
+      "exists": true,
+      "record_count": 0,
+      "columns": [
+        {
+          "error": "{'code': '42P01', 'details': None, 'hint': None, 'message': 'relation \"public.strategic_priorities\" does not exist'}"
+        }
+      ],
+      "sample_data": [
+        {
+          "error": "{'code': '42P01', 'details': None, 'hint': None, 'message': 'relation \"public.strategic_priorities\" does not exist'}"
+        }
+      ]
+    },
+    "dh_domain": {
+      "exists": true,
+      "record_count": 5,
+      "columns": [
+        {
+          "name": "id",
+          "type": "text/varchar",
+          "sample_value": "e72e643e-a2e1-4e46-864d-557aa8b6f087"
+        },
+        {
+          "name": "tenant_id",
+          "type": "text/varchar",
+          "sample_value": "b8026534-02a7-4d24-bf4c-344591964e02"
+        },
+        {
+          "name": "code",
+          "type": "text/varchar",
+          "sample_value": "CD"
+        },
+        {
+          "name": "name",
+          "type": "text/varchar",
+          "sample_value": "Clinical Development"
+        },
+        {
+          "name": "description",
+          "type": "text/varchar",
+          "sample_value": "Clinical trial design, endpoint selection, and protocol development for digital health products. Sup"
+        },
+        {
+          "name": "metadata",
+          "type": "jsonb",
+          "sample_value": "{'focus_areas': ['Trial Design', 'Endpoints', 'Biomarker Development', 'Protocol Development'], 'tot"
+        },
+        {
+          "name": "created_at",
+          "type": "text/varchar",
+          "sample_value": "2025-11-01T22:47:16.962507+00:00"
+        },
+        {
+          "name": "updated_at",
+          "type": "text/varchar",
+          "sample_value": "2025-11-02T12:41:48.123175+00:00"
+        },
+        {
+          "name": "unique_id",
+          "type": "text/varchar",
+          "sample_value": "DMN-CD"
+        }
+      ],
+      "sample_data": [
+        {
+          "id": "e72e643e-a2e1-4e46-864d-557aa8b6f087",
+          "tenant_id": "b8026534-02a7-4d24-bf4c-344591964e02",
+          "code": "CD",
+          "name": "Clinical Development",
+          "description": "Clinical trial design, endpoint selection, and protocol development for digital health products. Supports clinical scientists, biostatisticians, and medical directors.",
+          "metadata": {
+            "focus_areas": [
+              "Trial Design",
+              "Endpoints",
+              "Biomarker Development",
+              "Protocol Development"
+            ],
+            "total_use_cases": 10,
+            "primary_stakeholders": [
+              "Clinical Scientists",
+              "Biostatisticians",
+              "Medical Directors",
+              "Clinical Research"
+            ],
+            "complexity_distribution": {
+              "basic": 2,
+              "expert": 2,
+              "advanced": 3,
+              "intermediate": 3
+            }
+          },
+          "created_at": "2025-11-01T22:47:16.962507+00:00",
+          "updated_at": "2025-11-02T12:41:48.123175+00:00",
+          "unique_id": "DMN-CD"
+        },
+        {
+          "id": "cbe089c0-7ff6-4ecb-aaa1-347719a6ac6d",
+          "tenant_id": "b8026534-02a7-4d24-bf4c-344591964e02",
+          "code": "RA",
+          "name": "Regulatory Affairs",
+          "description": "Navigate FDA/EMA regulatory pathways for digital health products. Supports regulatory affairs managers, quality assurance, and compliance teams.",
+          "metadata": {
+            "focus_areas": [
+              "FDA Pathways",
+              "Documentation",
+              "Compliance",
+              "International"
+            ],
+            "total_use_cases": 10,
+            "primary_stakeholders": [
+              "Regulatory Affairs",
+              "Quality Assurance",
+              "Legal",
+              "Compliance"
+            ],
+            "complexity_distribution": {
+              "basic": 1,
+              "expert": 3,
+              "advanced": 4,
+              "intermediate": 2
+            }
+          },
+          "created_at": "2025-11-02T12:41:48.123175+00:00",
+          "updated_at": "2025-11-02T12:41:48.123175+00:00",
+          "unique_id": "DMN-RA"
+        }
+      ]
+    },
+    "dh_use_case": {
+      "exists": true,
+      "record_count": 50,
+      "columns": [
+        {
+          "name": "id",
+          "type": "text/varchar",
+          "sample_value": "1ff5df44-1ebc-4ea1-8975-5a42702b630f"
+        },
+        {
+          "name": "tenant_id",
+          "type": "text/varchar",
+          "sample_value": "b8026534-02a7-4d24-bf4c-344591964e02"
+        },
+        {
+          "name": "domain_id",
+          "type": "text/varchar",
+          "sample_value": "cbe089c0-7ff6-4ecb-aaa1-347719a6ac6d"
+        },
+        {
+          "name": "code",
+          "type": "text/varchar",
+          "sample_value": "UC_RA_003"
+        },
+        {
+          "name": "title",
+          "type": "text/varchar",
+          "sample_value": "Predicate Device Identification"
+        },
+        {
+          "name": "summary",
+          "type": "text/varchar",
+          "sample_value": "Systematic identification and analysis of potential predicate devices for 510(k) submissions"
+        },
+        {
+          "name": "complexity",
+          "type": "text/varchar",
+          "sample_value": "Advanced"
+        },
+        {
+          "name": "metadata",
+          "type": "jsonb",
+          "sample_value": "{'deliverables': ['3-5 predicate candidates', 'Substantial equivalence matrix', 'Primary predicate r"
+        },
+        {
+          "name": "created_at",
+          "type": "text/varchar",
+          "sample_value": "2025-11-02T12:41:48.123175+00:00"
+        },
+        {
+          "name": "updated_at",
+          "type": "text/varchar",
+          "sample_value": "2025-11-03T11:39:55.800198+00:00"
+        },
+        {
+          "name": "org_id",
+          "type": "unknown (null)",
+          "sample_value": null
+        },
+        {
+          "name": "project_id",
+          "type": "unknown (null)",
+          "sample_value": null
+        },
+        {
+          "name": "product_id",
+          "type": "unknown (null)",
+          "sample_value": null
+        },
+        {
+          "name": "environment",
+          "type": "text/varchar",
+          "sample_value": "dev"
+        },
+        {
+          "name": "therapeutic_area",
+          "type": "unknown (null)",
+          "sample_value": null
+        },
+        {
+          "name": "indication",
+          "type": "unknown (null)",
+          "sample_value": null
+        },
+        {
+          "name": "phase",
+          "type": "unknown (null)",
+          "sample_value": null
+        },
+        {
+          "name": "version",
+          "type": "unknown (null)",
+          "sample_value": null
+        },
+        {
+          "name": "status",
+          "type": "text/varchar",
+          "sample_value": "draft"
+        },
+        {
+          "name": "tags",
+          "type": "array",
+          "sample_value": null
+        },
+        {
+          "name": "owners",
+          "type": "array",
+          "sample_value": null
+        },
+        {
+          "name": "reviewers",
+          "type": "array",
+          "sample_value": null
+        },
+        {
+          "name": "approvers",
+          "type": "array",
+          "sample_value": null
+        },
+        {
+          "name": "change_log",
+          "type": "array",
+          "sample_value": null
+        },
+        {
+          "name": "regulatory_references",
+          "type": "array",
+          "sample_value": null
+        },
+        {
+          "name": "compliance_flags",
+          "type": "jsonb",
+          "sample_value": null
+        },
+        {
+          "name": "data_classification",
+          "type": "jsonb",
+          "sample_value": null
+        },
+        {
+          "name": "sla",
+          "type": "jsonb",
+          "sample_value": null
+        },
+        {
+          "name": "kpi_targets",
+          "type": "jsonb",
+          "sample_value": null
+        },
+        {
+          "name": "permissions",
+          "type": "jsonb",
+          "sample_value": null
+        },
+        {
+          "name": "integrations",
+          "type": "array",
+          "sample_value": null
+        },
+        {
+          "name": "milestones",
+          "type": "array",
+          "sample_value": null
+        },
+        {
+          "name": "risk_register",
+          "type": "array",
+          "sample_value": null
+        },
+        {
+          "name": "templates",
+          "type": "jsonb",
+          "sample_value": null
+        },
+        {
+          "name": "rag_sources",
+          "type": "array",
+          "sample_value": null
+        },
+        {
+          "name": "rag_citations",
+          "type": "array",
+          "sample_value": null
+        },
+        {
+          "name": "audit",
+          "type": "jsonb",
+          "sample_value": null
+        },
+        {
+          "name": "unique_id",
+          "type": "text/varchar",
+          "sample_value": "USC-RA-003"
+        }
+      ],
+      "sample_data": [
+        {
+          "id": "1ff5df44-1ebc-4ea1-8975-5a42702b630f",
+          "tenant_id": "b8026534-02a7-4d24-bf4c-344591964e02",
+          "domain_id": "cbe089c0-7ff6-4ecb-aaa1-347719a6ac6d",
+          "code": "UC_RA_003",
+          "title": "Predicate Device Identification",
+          "summary": "Systematic identification and analysis of potential predicate devices for 510(k) submissions",
+          "complexity": "Advanced",
+          "metadata": {
+            "deliverables": [
+              "3-5 predicate candidates",
+              "Substantial equivalence matrix",
+              "Primary predicate recommendation",
+              "Risk mitigation for differences"
+            ],
+            "prerequisites": [
+              "Device description",
+              "Intended use",
+              "Technological characteristics",
+              "Performance specifications"
+            ],
+            "success_metrics": {
+              "time_saved": "75% vs manual search",
+              "predicate_quality": "90% acceptance rate by FDA"
+            },
+            "estimated_duration_minutes": 90
+          },
+          "created_at": "2025-11-02T12:41:48.123175+00:00",
+          "updated_at": "2025-11-03T11:39:55.800198+00:00",
+          "org_id": null,
+          "project_id": null,
+          "product_id": null,
+          "environment": "dev",
+          "therapeutic_area": null,
+          "indication": null,
+          "phase": null,
+          "version": null,
+          "status": "draft",
+          "tags": [],
+          "owners": [],
+          "reviewers": [],
+          "approvers": [],
+          "change_log": [],
+          "regulatory_references": [],
+          "compliance_flags": {},
+          "data_classification": {},
+          "sla": {},
+          "kpi_targets": {},
+          "permissions": {},
+          "integrations": [],
+          "milestones": [],
+          "risk_register": [],
+          "templates": {},
+          "rag_sources": [],
+          "rag_citations": [],
+          "audit": {},
+          "unique_id": "USC-RA-003"
+        },
+        {
+          "id": "1281fead-662b-4b86-8a01-a59b92923d18",
+          "tenant_id": "b8026534-02a7-4d24-bf4c-344591964e02",
+          "domain_id": "e72e643e-a2e1-4e46-864d-557aa8b6f087",
+          "code": "UC_CD_001",
+          "title": "DTx Clinical Endpoint Selection & Validation",
+          "summary": "Comprehensive guidance for selecting primary and secondary clinical endpoints for digital therapeutic interventions, aligned with FDA expectations and clinical meaningfulness.",
+          "complexity": "Expert",
+          "metadata": {
+            "pattern": "FEW_SHOT_WITH_COT",
+            "dependencies": [],
+            "success_metrics": {
+              "fda_acceptance_rate": ">90%",
+              "clinical_meaningfulness": ">95%",
+              "expert_validation_score": ">4.5/5"
+            },
+            "total_workflows": 8,
+            "key_stakeholders": [
+              "P01_CMO",
+              "P02_VPCLIN",
+              "P04_BIOSTAT",
+              "P05_REGDIR",
+              "P10_PATADV",
+              "P06_PMDIG"
+            ],
+            "regulatory_focus": [
+              "FDA",
+              "EMA",
+              "MCID"
+            ],
+            "related_use_cases": [
+              "UC_CD_002",
+              "UC_CD_003",
+              "UC_RA_001",
+              "UC_MA_007"
+            ],
+            "estimated_duration": "2-3 hours"
+          },
+          "created_at": "2025-11-01T22:54:54.365239+00:00",
+          "updated_at": "2025-11-02T12:42:34.984403+00:00",
+          "org_id": null,
+          "project_id": null,
+          "product_id": null,
+          "environment": "dev",
+          "therapeutic_area": null,
+          "indication": null,
+          "phase": null,
+          "version": null,
+          "status": "draft",
+          "tags": [],
+          "owners": [],
+          "reviewers": [],
+          "approvers": [],
+          "change_log": [],
+          "regulatory_references": [],
+          "compliance_flags": {},
+          "data_classification": {},
+          "sla": {},
+          "kpi_targets": {},
+          "permissions": {},
+          "integrations": [],
+          "milestones": [],
+          "risk_register": [],
+          "templates": {},
+          "rag_sources": [],
+          "rag_citations": [],
+          "audit": {},
+          "unique_id": "USC-CD-001"
+        }
+      ]
+    },
+    "dh_workflow": {
+      "exists": true,
+      "record_count": 116,
+      "columns": [
+        {
+          "name": "id",
+          "type": "text/varchar",
+          "sample_value": "91154f56-4524-4fdc-ba4e-ce1177e5f6bf"
+        },
+        {
+          "name": "tenant_id",
+          "type": "text/varchar",
+          "sample_value": "b8026534-02a7-4d24-bf4c-344591964e02"
+        },
+        {
+          "name": "use_case_id",
+          "type": "text/varchar",
+          "sample_value": "412b190c-6771-4f44-b67f-17beee5d0c75"
+        },
+        {
+          "name": "name",
+          "type": "text/varchar",
+          "sample_value": "Breakthrough Designation Workflow"
+        },
+        {
+          "name": "description",
+          "type": "text/varchar",
+          "sample_value": "Systematic breakthrough designation assessment and application development"
+        },
+        {
+          "name": "position",
+          "type": "integer",
+          "sample_value": "1"
+        },
+        {
+          "name": "metadata",
+          "type": "jsonb",
+          "sample_value": "{'pattern': 'COT_WITH_CRITERIA', 'complexity': 'EXPERT', 'duration_minutes': 120}"
+        },
+        {
+          "name": "created_at",
+          "type": "text/varchar",
+          "sample_value": "2025-11-03T11:51:02.425096+00:00"
+        },
+        {
+          "name": "updated_at",
+          "type": "text/varchar",
+          "sample_value": "2025-11-03T11:51:02.425096+00:00"
+        },
+        {
+          "name": "tags",
+          "type": "array",
+          "sample_value": null
+        },
+        {
+          "name": "sla",
+          "type": "jsonb",
+          "sample_value": null
+        },
+        {
+          "name": "templates",
+          "type": "jsonb",
+          "sample_value": null
+        },
+        {
+          "name": "rag_sources",
+          "type": "array",
+          "sample_value": null
+        },
+        {
+          "name": "integrations",
+          "type": "array",
+          "sample_value": null
+        },
+        {
+          "name": "milestones",
+          "type": "array",
+          "sample_value": null
+        },
+        {
+          "name": "risk_register",
+          "type": "array",
+          "sample_value": null
+        },
+        {
+          "name": "unique_id",
+          "type": "text/varchar",
+          "sample_value": "WFL-RA-006-001"
+        }
+      ],
+      "sample_data": [
+        {
+          "id": "91154f56-4524-4fdc-ba4e-ce1177e5f6bf",
+          "tenant_id": "b8026534-02a7-4d24-bf4c-344591964e02",
+          "use_case_id": "412b190c-6771-4f44-b67f-17beee5d0c75",
+          "name": "Breakthrough Designation Workflow",
+          "description": "Systematic breakthrough designation assessment and application development",
+          "position": 1,
+          "metadata": {
+            "pattern": "COT_WITH_CRITERIA",
+            "complexity": "EXPERT",
+            "duration_minutes": 120
+          },
+          "created_at": "2025-11-03T11:51:02.425096+00:00",
+          "updated_at": "2025-11-03T11:51:02.425096+00:00",
+          "tags": [],
+          "sla": {},
+          "templates": {},
+          "rag_sources": [],
+          "integrations": [],
+          "milestones": [],
+          "risk_register": [],
+          "unique_id": "WFL-RA-006-001"
+        },
+        {
+          "id": "66678f07-4c32-4ac8-826b-b7e0204dc7cc",
+          "tenant_id": "b8026534-02a7-4d24-bf4c-344591964e02",
+          "use_case_id": "140da2ec-10b5-4710-bcfc-d5b94ec188a2",
+          "name": "International Harmonization Workflow",
+          "description": "Plan and execute harmonized regulatory strategy",
+          "position": 1,
+          "metadata": {},
+          "created_at": "2025-11-03T16:10:30.42804+00:00",
+          "updated_at": "2025-11-03T16:10:30.42804+00:00",
+          "tags": [],
+          "sla": {},
+          "templates": {},
+          "rag_sources": [],
+          "integrations": [],
+          "milestones": [],
+          "risk_register": [],
+          "unique_id": "WFL-RA-007-001"
+        }
+      ]
+    },
+    "dh_task": {
+      "exists": true,
+      "record_count": 343,
+      "columns": [
+        {
+          "name": "id",
+          "type": "text/varchar",
+          "sample_value": "ae379488-a4ec-4ba5-96ad-a588e381ccae"
+        },
+        {
+          "name": "tenant_id",
+          "type": "text/varchar",
+          "sample_value": "b8026534-02a7-4d24-bf4c-344591964e02"
+        },
+        {
+          "name": "workflow_id",
+          "type": "text/varchar",
+          "sample_value": "656dcee4-0c14-4663-81a9-fa25e97b234e"
+        },
+        {
+          "name": "code",
+          "type": "text/varchar",
+          "sample_value": "TSK-CD-001-P5-01"
+        },
+        {
+          "name": "title",
+          "type": "text/varchar",
+          "sample_value": "Assess Regulatory Risk"
+        },
+        {
+          "name": "objective",
+          "type": "text/varchar",
+          "sample_value": "Evaluate FDA acceptance risk for each endpoint option"
+        },
+        {
+          "name": "position",
+          "type": "integer",
+          "sample_value": "1"
+        },
+        {
+          "name": "extra",
+          "type": "jsonb",
+          "sample_value": "{'prompt_id': '5.1.1', 'complexity': 'ADVANCED', 'estimated_duration_minutes': 25}"
+        },
+        {
+          "name": "created_at",
+          "type": "text/varchar",
+          "sample_value": "2025-11-02T15:01:10.361114+00:00"
+        },
+        {
+          "name": "updated_at",
+          "type": "text/varchar",
+          "sample_value": "2025-11-02T15:01:10.361114+00:00"
+        },
+        {
+          "name": "duration_estimate_minutes",
+          "type": "unknown (null)",
+          "sample_value": null
+        },
+        {
+          "name": "effort_hours",
+          "type": "unknown (null)",
+          "sample_value": null
+        },
+        {
+          "name": "run_policy",
+          "type": "jsonb",
+          "sample_value": null
+        },
+        {
+          "name": "state",
+          "type": "text/varchar",
+          "sample_value": "planned"
+        },
+        {
+          "name": "assignees",
+          "type": "array",
+          "sample_value": null
+        },
+        {
+          "name": "logs",
+          "type": "array",
+          "sample_value": null
+        },
+        {
+          "name": "webhooks",
+          "type": "array",
+          "sample_value": null
+        },
+        {
+          "name": "schedule",
+          "type": "jsonb",
+          "sample_value": null
+        },
+        {
+          "name": "guardrails",
+          "type": "jsonb",
+          "sample_value": null
+        },
+        {
+          "name": "model_config",
+          "type": "jsonb",
+          "sample_value": null
+        },
+        {
+          "name": "rollout",
+          "type": "text/varchar",
+          "sample_value": "stable"
+        },
+        {
+          "name": "permissions",
+          "type": "jsonb",
+          "sample_value": null
+        },
+        {
+          "name": "integrations",
+          "type": "array",
+          "sample_value": null
+        },
+        {
+          "name": "unique_id",
+          "type": "text/varchar",
+          "sample_value": "TSK-CD-001-P5-01"
+        }
+      ],
+      "sample_data": [
+        {
+          "id": "ae379488-a4ec-4ba5-96ad-a588e381ccae",
+          "tenant_id": "b8026534-02a7-4d24-bf4c-344591964e02",
+          "workflow_id": "656dcee4-0c14-4663-81a9-fa25e97b234e",
+          "code": "TSK-CD-001-P5-01",
+          "title": "Assess Regulatory Risk",
+          "objective": "Evaluate FDA acceptance risk for each endpoint option",
+          "position": 1,
+          "extra": {
+            "prompt_id": "5.1.1",
+            "complexity": "ADVANCED",
+            "estimated_duration_minutes": 25
+          },
+          "created_at": "2025-11-02T15:01:10.361114+00:00",
+          "updated_at": "2025-11-02T15:01:10.361114+00:00",
+          "duration_estimate_minutes": null,
+          "effort_hours": null,
+          "run_policy": {},
+          "state": "planned",
+          "assignees": [],
+          "logs": [],
+          "webhooks": [],
+          "schedule": {},
+          "guardrails": {},
+          "model_config": {},
+          "rollout": "stable",
+          "permissions": {},
+          "integrations": [],
+          "unique_id": "TSK-CD-001-P5-01"
+        },
+        {
+          "id": "d7080a61-f29f-4c82-adda-92f731eb1dd7",
+          "tenant_id": "b8026534-02a7-4d24-bf4c-344591964e02",
+          "workflow_id": "273a3fa0-d508-4ae0-bc75-9fa69e9203db",
+          "code": "TSK-EG-002-06",
+          "title": "Create Report",
+          "objective": "Create analysis report",
+          "position": 6,
+          "extra": {},
+          "created_at": "2025-11-03T16:44:38.952263+00:00",
+          "updated_at": "2025-11-03T16:44:38.952263+00:00",
+          "duration_estimate_minutes": null,
+          "effort_hours": null,
+          "run_policy": {},
+          "state": "planned",
+          "assignees": [],
+          "logs": [],
+          "webhooks": [],
+          "schedule": {},
+          "guardrails": {},
+          "model_config": {},
+          "rollout": "stable",
+          "permissions": {},
+          "integrations": [],
+          "unique_id": "TSK-EG-002-06"
+        }
+      ]
+    },
+    "dh_agent": {
+      "exists": true,
+      "record_count": 17,
+      "columns": [
+        {
+          "name": "id",
+          "type": "text/varchar",
+          "sample_value": "fe9f77cf-a579-415c-ae13-ef2006b17dc9"
+        },
+        {
+          "name": "tenant_id",
+          "type": "text/varchar",
+          "sample_value": "b8026534-02a7-4d24-bf4c-344591964e02"
+        },
+        {
+          "name": "code",
+          "type": "text/varchar",
+          "sample_value": "AGT-WORKFLOW-ORCHESTRATOR"
+        },
+        {
+          "name": "name",
+          "type": "text/varchar",
+          "sample_value": "Workflow Orchestration Agent"
+        },
+        {
+          "name": "unique_id",
+          "type": "text/varchar",
+          "sample_value": "AGT-WORKFLOW-ORCHESTRATOR"
+        },
+        {
+          "name": "agent_type",
+          "type": "text/varchar",
+          "sample_value": "ORCHESTRATOR"
+        },
+        {
+          "name": "framework",
+          "type": "text/varchar",
+          "sample_value": "langgraph"
+        },
+        {
+          "name": "model_config",
+          "type": "jsonb",
+          "sample_value": "{'model': 'gpt-4', 'max_tokens': 4000, 'temperature': 0.2}"
+        },
+        {
+          "name": "capabilities",
+          "type": "array",
+          "sample_value": "['Workflow planning and decomposition', 'Agent task assignment', 'Dependency management', 'Error rec"
+        },
+        {
+          "name": "tools",
+          "type": "array",
+          "sample_value": null
+        },
+        {
+          "name": "prompt_templates",
+          "type": "array",
+          "sample_value": null
+        },
+        {
+          "name": "rag_sources",
+          "type": "array",
+          "sample_value": null
+        },
+        {
+          "name": "autonomy_level",
+          "type": "text/varchar",
+          "sample_value": "SUPERVISED"
+        },
+        {
+          "name": "max_iterations",
+          "type": "integer",
+          "sample_value": "3"
+        },
+        {
+          "name": "timeout_seconds",
+          "type": "integer",
+          "sample_value": "1800"
+        },
+        {
+          "name": "guardrails",
+          "type": "jsonb",
+          "sample_value": null
+        },
+        {
+          "name": "validation_rules",
+          "type": "jsonb",
+          "sample_value": null
+        },
+        {
+          "name": "output_schema",
+          "type": "unknown (null)",
+          "sample_value": null
+        },
+        {
+          "name": "success_rate",
+          "type": "unknown (null)",
+          "sample_value": null
+        },
+        {
+          "name": "avg_execution_time_sec",
+          "type": "unknown (null)",
+          "sample_value": null
+        },
+        {
+          "name": "total_executions",
+          "type": "integer",
+          "sample_value": null
+        },
+        {
+          "name": "last_executed_at",
+          "type": "unknown (null)",
+          "sample_value": null
+        },
+        {
+          "name": "estimated_cost_per_run",
+          "type": "unknown (null)",
+          "sample_value": null
+        },
+        {
+          "name": "total_cost",
+          "type": "unknown (null)",
+          "sample_value": null
+        },
+        {
+          "name": "status",
+          "type": "text/varchar",
+          "sample_value": "active"
+        },
+        {
+          "name": "version",
+          "type": "text/varchar",
+          "sample_value": "v1.0"
+        },
+        {
+          "name": "changelog",
+          "type": "array",
+          "sample_value": null
+        },
+        {
+          "name": "depends_on_agents",
+          "type": "array",
+          "sample_value": null
+        },
+        {
+          "name": "can_delegate_to",
+          "type": "array",
+          "sample_value": null
+        },
+        {
+          "name": "description",
+          "type": "text/varchar",
+          "sample_value": "Master orchestrator that coordinates multi-agent workflows, manages task dependencies, and handles e"
+        },
+        {
+          "name": "tags",
+          "type": "array",
+          "sample_value": "['orchestration', 'workflow', 'coordination']"
+        },
+        {
+          "name": "metadata",
+          "type": "jsonb",
+          "sample_value": "{'domains': ['clinical_development', 'regulatory_affairs', 'medical_affairs'], 'retry_strategy': 'ex"
+        },
+        {
+          "name": "created_at",
+          "type": "text/varchar",
+          "sample_value": "2025-11-02T13:44:57.293167+00:00"
+        },
+        {
+          "name": "updated_at",
+          "type": "text/varchar",
+          "sample_value": "2025-11-02T13:44:57.293167+00:00"
+        }
+      ],
+      "sample_data": [
+        {
+          "id": "fe9f77cf-a579-415c-ae13-ef2006b17dc9",
+          "tenant_id": "b8026534-02a7-4d24-bf4c-344591964e02",
+          "code": "AGT-WORKFLOW-ORCHESTRATOR",
+          "name": "Workflow Orchestration Agent",
+          "unique_id": "AGT-WORKFLOW-ORCHESTRATOR",
+          "agent_type": "ORCHESTRATOR",
+          "framework": "langgraph",
+          "model_config": {
+            "model": "gpt-4",
+            "max_tokens": 4000,
+            "temperature": 0.2
+          },
+          "capabilities": [
+            "Workflow planning and decomposition",
+            "Agent task assignment",
+            "Dependency management",
+            "Error recovery and retry logic",
+            "Progress tracking and reporting"
+          ],
+          "tools": [],
+          "prompt_templates": [],
+          "rag_sources": [],
+          "autonomy_level": "SUPERVISED",
+          "max_iterations": 3,
+          "timeout_seconds": 1800,
+          "guardrails": {},
+          "validation_rules": {},
+          "output_schema": null,
+          "success_rate": null,
+          "avg_execution_time_sec": null,
+          "total_executions": 0,
+          "last_executed_at": null,
+          "estimated_cost_per_run": null,
+          "total_cost": null,
+          "status": "active",
+          "version": "v1.0",
+          "changelog": [],
+          "depends_on_agents": [],
+          "can_delegate_to": [],
+          "description": "Master orchestrator that coordinates multi-agent workflows, manages task dependencies, and handles error recovery",
+          "tags": [
+            "orchestration",
+            "workflow",
+            "coordination"
+          ],
+          "metadata": {
+            "domains": [
+              "clinical_development",
+              "regulatory_affairs",
+              "medical_affairs"
+            ],
+            "retry_strategy": "exponential_backoff",
+            "can_delegate_to": [
+              "SPECIALIST",
+              "EXECUTOR",
+              "RETRIEVER"
+            ],
+            "max_concurrent_tasks": 10
+          },
+          "created_at": "2025-11-02T13:44:57.293167+00:00",
+          "updated_at": "2025-11-02T13:44:57.293167+00:00"
+        },
+        {
+          "id": "f051fc95-75f9-4f4e-9b64-9072d101b3a2",
+          "tenant_id": "b8026534-02a7-4d24-bf4c-344591964e02",
+          "code": "AGT-PROJECT-COORDINATOR",
+          "name": "Project Coordination Agent",
+          "unique_id": "AGT-PROJECT-COORDINATOR",
+          "agent_type": "ORCHESTRATOR",
+          "framework": "langgraph",
+          "model_config": {
+            "model": "gpt-4",
+            "max_tokens": 3000,
+            "temperature": 0.3
+          },
+          "capabilities": [
+            "Project planning",
+            "Stakeholder coordination",
+            "Timeline management",
+            "Resource allocation",
+            "Status reporting"
+          ],
+          "tools": [],
+          "prompt_templates": [],
+          "rag_sources": [],
+          "autonomy_level": "SUPERVISED",
+          "max_iterations": 3,
+          "timeout_seconds": 1800,
+          "guardrails": {},
+          "validation_rules": {},
+          "output_schema": null,
+          "success_rate": null,
+          "avg_execution_time_sec": null,
+          "total_executions": 0,
+          "last_executed_at": null,
+          "estimated_cost_per_run": null,
+          "total_cost": null,
+          "status": "active",
+          "version": "v1.0",
+          "changelog": [],
+          "depends_on_agents": [],
+          "can_delegate_to": [],
+          "description": "Coordinates cross-functional project activities, manages stakeholder communications, and tracks deliverables",
+          "tags": [
+            "project_management",
+            "coordination",
+            "stakeholder"
+          ],
+          "metadata": {
+            "domains": [
+              "clinical_development",
+              "regulatory_affairs",
+              "medical_affairs",
+              "commercial_strategy"
+            ],
+            "escalation_enabled": true,
+            "notification_channels": [
+              "email",
+              "slack"
+            ]
+          },
+          "created_at": "2025-11-02T13:44:57.293167+00:00",
+          "updated_at": "2025-11-02T13:44:57.293167+00:00"
+        }
+      ]
+    },
+    "dh_tool": {
+      "exists": true,
+      "record_count": 150,
+      "columns": [
+        {
+          "name": "id",
+          "type": "text/varchar",
+          "sample_value": "210a8872-80f9-4e54-9161-d60aa2e31456"
+        },
+        {
+          "name": "tenant_id",
+          "type": "text/varchar",
+          "sample_value": "b8026534-02a7-4d24-bf4c-344591964e02"
+        },
+        {
+          "name": "code",
+          "type": "text/varchar",
+          "sample_value": "TOOL-COMP-OWLER"
+        },
+        {
+          "name": "name",
+          "type": "text/varchar",
+          "sample_value": "Owler"
+        },
+        {
+          "name": "category",
+          "type": "text/varchar",
+          "sample_value": "Strategic Intelligence/Competitive"
+        },
+        {
+          "name": "vendor",
+          "type": "unknown (null)",
+          "sample_value": null
+        },
+        {
+          "name": "version",
+          "type": "unknown (null)",
+          "sample_value": null
+        },
+        {
+          "name": "notes",
+          "type": "unknown (null)",
+          "sample_value": null
+        },
+        {
+          "name": "metadata",
+          "type": "jsonb",
+          "sample_value": null
+        },
+        {
+          "name": "created_at",
+          "type": "text/varchar",
+          "sample_value": "2025-11-04T08:00:05.096294+00:00"
+        },
+        {
+          "name": "updated_at",
+          "type": "text/varchar",
+          "sample_value": "2025-11-04T19:49:20.214752+00:00"
+        },
+        {
+          "name": "tool_type",
+          "type": "text/varchar",
+          "sample_value": "ai_function"
+        },
+        {
+          "name": "capabilities",
+          "type": "array",
+          "sample_value": "['company_intelligence', 'competitor_tracking', 'news_alerts']"
+        },
+        {
+          "name": "access_requirements",
+          "type": "jsonb",
+          "sample_value": null
+        },
+        {
+          "name": "is_active",
+          "type": "integer",
+          "sample_value": "True"
+        },
+        {
+          "name": "unique_id",
+          "type": "text/varchar",
+          "sample_value": "TL-COMP-owler"
+        },
+        {
+          "name": "implementation_type",
+          "type": "text/varchar",
+          "sample_value": "api"
+        },
+        {
+          "name": "implementation_path",
+          "type": "unknown (null)",
+          "sample_value": null
+        },
+        {
+          "name": "function_name",
+          "type": "unknown (null)",
+          "sample_value": null
+        },
+        {
+          "name": "input_schema",
+          "type": "unknown (null)",
+          "sample_value": null
+        },
+        {
+          "name": "output_schema",
+          "type": "unknown (null)",
+          "sample_value": null
+        },
+        {
+          "name": "is_async",
+          "type": "integer",
+          "sample_value": null
+        },
+        {
+          "name": "max_execution_time_seconds",
+          "type": "unknown (null)",
+          "sample_value": null
+        },
+        {
+          "name": "retry_config",
+          "type": "unknown (null)",
+          "sample_value": null
+        },
+        {
+          "name": "rate_limit_per_minute",
+          "type": "unknown (null)",
+          "sample_value": null
+        },
+        {
+          "name": "cost_per_execution",
+          "type": "numeric",
+          "sample_value": null
+        },
+        {
+          "name": "langgraph_compatible",
+          "type": "integer",
+          "sample_value": null
+        },
+        {
+          "name": "langgraph_node_name",
+          "type": "unknown (null)",
+          "sample_value": null
+        },
+        {
+          "name": "access_level",
+          "type": "text/varchar",
+          "sample_value": "public"
+        },
+        {
+          "name": "required_env_vars",
+          "type": "unknown (null)",
+          "sample_value": null
+        },
+        {
+          "name": "allowed_tenants",
+          "type": "unknown (null)",
+          "sample_value": null
+        },
+        {
+          "name": "allowed_roles",
+          "type": "unknown (null)",
+          "sample_value": null
+        },
+        {
+          "name": "tool_description",
+          "type": "text/varchar",
+          "sample_value": "Company insights and competitive intelligence platform. Track competitors, monitor news, funding rou"
+        },
+        {
+          "name": "documentation_url",
+          "type": "text/varchar",
+          "sample_value": "https://www.owler.com/"
+        },
+        {
+          "name": "example_usage",
+          "type": "unknown (null)",
+          "sample_value": null
+        },
+        {
+          "name": "tags",
+          "type": "array",
+          "sample_value": "['competitive-intelligence', 'companies', 'competitors']"
+        },
+        {
+          "name": "lifecycle_stage",
+          "type": "text/varchar",
+          "sample_value": "development"
+        },
+        {
+          "name": "llm_description",
+          "type": "text/varchar",
+          "sample_value": "Track competitor news, funding, executives with competitive intelligence alerts"
+        },
+        {
+          "name": "usage_guide",
+          "type": "text/varchar",
+          "sample_value": "1. Free: Track 3 competitors. 2. View company profiles, news. 3. Get daily digests. 4. Compare metri"
+        },
+        {
+          "name": "category_parent",
+          "type": "text/varchar",
+          "sample_value": "Strategic Intelligence"
+        },
+        {
+          "name": "usage_count",
+          "type": "integer",
+          "sample_value": null
+        },
+        {
+          "name": "last_used_at",
+          "type": "unknown (null)",
+          "sample_value": null
+        },
+        {
+          "name": "total_execution_time_seconds",
+          "type": "integer",
+          "sample_value": null
+        },
+        {
+          "name": "avg_execution_time_seconds",
+          "type": "unknown (null)",
+          "sample_value": null
+        },
+        {
+          "name": "success_rate",
+          "type": "unknown (null)",
+          "sample_value": null
+        },
+        {
+          "name": "error_count",
+          "type": "integer",
+          "sample_value": null
+        },
+        {
+          "name": "last_error_at",
+          "type": "unknown (null)",
+          "sample_value": null
+        },
+        {
+          "name": "last_error_message",
+          "type": "unknown (null)",
+          "sample_value": null
+        },
+        {
+          "name": "rating",
+          "type": "unknown (null)",
+          "sample_value": null
+        },
+        {
+          "name": "total_ratings",
+          "type": "integer",
+          "sample_value": null
+        },
+        {
+          "name": "feedback_count",
+          "type": "integer",
+          "sample_value": null
+        },
+        {
+          "name": "positive_feedback_count",
+          "type": "integer",
+          "sample_value": null
+        },
+        {
+          "name": "negative_feedback_count",
+          "type": "integer",
+          "sample_value": null
+        },
+        {
+          "name": "health_status",
+          "type": "text/varchar",
+          "sample_value": "healthy"
+        },
+        {
+          "name": "last_health_check_at",
+          "type": "unknown (null)",
+          "sample_value": null
+        },
+        {
+          "name": "uptime_percentage",
+          "type": "unknown (null)",
+          "sample_value": null
+        },
+        {
+          "name": "maintenance_mode",
+          "type": "integer",
+          "sample_value": null
+        },
+        {
+          "name": "maintenance_message",
+          "type": "unknown (null)",
+          "sample_value": null
+        },
+        {
+          "name": "popularity_score",
+          "type": "integer",
+          "sample_value": null
+        },
+        {
+          "name": "trending_score",
+          "type": "integer",
+          "sample_value": null
+        },
+        {
+          "name": "view_count",
+          "type": "integer",
+          "sample_value": null
+        },
+        {
+          "name": "bookmark_count",
+          "type": "integer",
+          "sample_value": null
+        },
+        {
+          "name": "share_count",
+          "type": "integer",
+          "sample_value": null
+        },
+        {
+          "name": "total_cost_incurred",
+          "type": "numeric",
+          "sample_value": null
+        },
+        {
+          "name": "estimated_time_saved_hours",
+          "type": "numeric",
+          "sample_value": null
+        },
+        {
+          "name": "roi_score",
+          "type": "unknown (null)",
+          "sample_value": null
+        },
+        {
+          "name": "business_impact",
+          "type": "text/varchar",
+          "sample_value": "high"
+        },
+        {
+          "name": "is_verified",
+          "type": "integer",
+          "sample_value": null
+        },
+        {
+          "name": "verified_by",
+          "type": "unknown (null)",
+          "sample_value": null
+        },
+        {
+          "name": "verified_at",
+          "type": "unknown (null)",
+          "sample_value": null
+        },
+        {
+          "name": "quality_score",
+          "type": "unknown (null)",
+          "sample_value": null
+        },
+        {
+          "name": "last_tested_at",
+          "type": "unknown (null)",
+          "sample_value": null
+        },
+        {
+          "name": "test_results",
+          "type": "unknown (null)",
+          "sample_value": null
+        }
+      ],
+      "sample_data": [
+        {
+          "id": "210a8872-80f9-4e54-9161-d60aa2e31456",
+          "tenant_id": "b8026534-02a7-4d24-bf4c-344591964e02",
+          "code": "TOOL-COMP-OWLER",
+          "name": "Owler",
+          "category": "Strategic Intelligence/Competitive",
+          "vendor": null,
+          "version": null,
+          "notes": null,
+          "metadata": {},
+          "created_at": "2025-11-04T08:00:05.096294+00:00",
+          "updated_at": "2025-11-04T19:49:20.214752+00:00",
+          "tool_type": "ai_function",
+          "capabilities": [
+            "company_intelligence",
+            "competitor_tracking",
+            "news_alerts"
+          ],
+          "access_requirements": {},
+          "is_active": true,
+          "unique_id": "TL-COMP-owler",
+          "implementation_type": "api",
+          "implementation_path": null,
+          "function_name": null,
+          "input_schema": null,
+          "output_schema": null,
+          "is_async": false,
+          "max_execution_time_seconds": null,
+          "retry_config": null,
+          "rate_limit_per_minute": null,
+          "cost_per_execution": 0.0,
+          "langgraph_compatible": false,
+          "langgraph_node_name": null,
+          "access_level": "public",
+          "required_env_vars": null,
+          "allowed_tenants": null,
+          "allowed_roles": null,
+          "tool_description": "Company insights and competitive intelligence platform. Track competitors, monitor news, funding rounds, executive changes, receive daily alerts.",
+          "documentation_url": "https://www.owler.com/",
+          "example_usage": null,
+          "tags": [
+            "competitive-intelligence",
+            "companies",
+            "competitors"
+          ],
+          "lifecycle_stage": "development",
+          "llm_description": "Track competitor news, funding, executives with competitive intelligence alerts",
+          "usage_guide": "1. Free: Track 3 competitors. 2. View company profiles, news. 3. Get daily digests. 4. Compare metrics.",
+          "category_parent": "Strategic Intelligence",
+          "usage_count": 0,
+          "last_used_at": null,
+          "total_execution_time_seconds": 0,
+          "avg_execution_time_seconds": null,
+          "success_rate": null,
+          "error_count": 0,
+          "last_error_at": null,
+          "last_error_message": null,
+          "rating": null,
+          "total_ratings": 0,
+          "feedback_count": 0,
+          "positive_feedback_count": 0,
+          "negative_feedback_count": 0,
+          "health_status": "healthy",
+          "last_health_check_at": null,
+          "uptime_percentage": null,
+          "maintenance_mode": false,
+          "maintenance_message": null,
+          "popularity_score": 0,
+          "trending_score": 0,
+          "view_count": 0,
+          "bookmark_count": 0,
+          "share_count": 0,
+          "total_cost_incurred": 0.0,
+          "estimated_time_saved_hours": 0.0,
+          "roi_score": null,
+          "business_impact": "high",
+          "is_verified": false,
+          "verified_by": null,
+          "verified_at": null,
+          "quality_score": null,
+          "last_tested_at": null,
+          "test_results": null
+        },
+        {
+          "id": "d075d834-7616-40cd-b21f-19c6c0cd59fa",
+          "tenant_id": "b8026534-02a7-4d24-bf4c-344591964e02",
+          "code": "TOOL-VEEVA-CTMS",
+          "name": "Veeva Vault CTMS",
+          "category": "Clinical/Trial Management",
+          "vendor": "Veeva Systems",
+          "version": "Cloud",
+          "notes": "Requires commercial license",
+          "metadata": {
+            "use_cases": [
+              "Study startup",
+              "Site selection",
+              "Patient enrollment tracking",
+              "Budget management"
+            ],
+            "deployment": "Cloud (SaaS)",
+            "documentation_url": "https://www.veeva.com/products/vault-ctms/"
+          },
+          "created_at": "2025-11-02T14:21:26.776672+00:00",
+          "updated_at": "2025-11-04T19:49:20.214752+00:00",
+          "tool_type": "saas",
+          "capabilities": [],
+          "access_requirements": {},
+          "is_active": true,
+          "unique_id": "TLR-VEEVA-CTMS",
+          "implementation_type": null,
+          "implementation_path": null,
+          "function_name": null,
+          "input_schema": null,
+          "output_schema": null,
+          "is_async": false,
+          "max_execution_time_seconds": null,
+          "retry_config": null,
+          "rate_limit_per_minute": null,
+          "cost_per_execution": 0.0,
+          "langgraph_compatible": false,
+          "langgraph_node_name": null,
+          "access_level": "public",
+          "required_env_vars": null,
+          "allowed_tenants": null,
+          "allowed_roles": null,
+          "tool_description": null,
+          "documentation_url": null,
+          "example_usage": null,
+          "tags": null,
+          "lifecycle_stage": "development",
+          "llm_description": "Clinical trial management system for study operations",
+          "usage_guide": "Use for: Trial planning, site management, budget tracking. Enterprise platform. Requires license.",
+          "category_parent": "Clinical",
+          "usage_count": 0,
+          "last_used_at": null,
+          "total_execution_time_seconds": 0,
+          "avg_execution_time_seconds": null,
+          "success_rate": null,
+          "error_count": 0,
+          "last_error_at": null,
+          "last_error_message": null,
+          "rating": null,
+          "total_ratings": 0,
+          "feedback_count": 0,
+          "positive_feedback_count": 0,
+          "negative_feedback_count": 0,
+          "health_status": "unknown",
+          "last_health_check_at": null,
+          "uptime_percentage": null,
+          "maintenance_mode": false,
+          "maintenance_message": null,
+          "popularity_score": 0,
+          "trending_score": 0,
+          "view_count": 0,
+          "bookmark_count": 0,
+          "share_count": 0,
+          "total_cost_incurred": 0.0,
+          "estimated_time_saved_hours": 0.0,
+          "roi_score": null,
+          "business_impact": "critical",
+          "is_verified": false,
+          "verified_by": null,
+          "verified_at": null,
+          "quality_score": null,
+          "last_tested_at": null,
+          "test_results": null
+        }
+      ]
+    },
+    "dh_rag_source": {
+      "exists": true,
+      "record_count": 24,
+      "columns": [
+        {
+          "name": "id",
+          "type": "text/varchar",
+          "sample_value": "a1961d7f-3bed-49ed-b276-2526ca3e8f9d"
+        },
+        {
+          "name": "tenant_id",
+          "type": "text/varchar",
+          "sample_value": "b8026534-02a7-4d24-bf4c-344591964e02"
+        },
+        {
+          "name": "code",
+          "type": "text/varchar",
+          "sample_value": "FDA_PRO_2009"
+        },
+        {
+          "name": "name",
+          "type": "text/varchar",
+          "sample_value": "FDA PRO Guidance (2009)"
+        },
+        {
+          "name": "source_type",
+          "type": "text/varchar",
+          "sample_value": "guidance"
+        },
+        {
+          "name": "uri",
+          "type": "text/varchar",
+          "sample_value": "https://www.fda.gov/media/77832/download"
+        },
+        {
+          "name": "description",
+          "type": "text/varchar",
+          "sample_value": "Foundational FDA guidance covering patient-reported outcome measures for clinical trials."
+        },
+        {
+          "name": "metadata",
+          "type": "jsonb",
+          "sample_value": "{'sections': ['3.1', '4.2', '5.3'], 'authority': 'FDA', 'pii_sensitivity': 'Low', 'publication_year'"
+        },
+        {
+          "name": "created_at",
+          "type": "text/varchar",
+          "sample_value": "2025-11-02T08:50:48.625681+00:00"
+        },
+        {
+          "name": "updated_at",
+          "type": "text/varchar",
+          "sample_value": "2025-11-02T10:38:15.54012+00:00"
+        },
+        {
+          "name": "unique_id",
+          "type": "text/varchar",
+          "sample_value": "RAG-REG-FDA-PRO-2009"
+        }
+      ],
+      "sample_data": [
+        {
+          "id": "a1961d7f-3bed-49ed-b276-2526ca3e8f9d",
+          "tenant_id": "b8026534-02a7-4d24-bf4c-344591964e02",
+          "code": "FDA_PRO_2009",
+          "name": "FDA PRO Guidance (2009)",
+          "source_type": "guidance",
+          "uri": "https://www.fda.gov/media/77832/download",
+          "description": "Foundational FDA guidance covering patient-reported outcome measures for clinical trials.",
+          "metadata": {
+            "sections": [
+              "3.1",
+              "4.2",
+              "5.3"
+            ],
+            "authority": "FDA",
+            "pii_sensitivity": "Low",
+            "publication_year": 2009,
+            "regulatory_exposure": "High"
+          },
+          "created_at": "2025-11-02T08:50:48.625681+00:00",
+          "updated_at": "2025-11-02T10:38:15.54012+00:00",
+          "unique_id": "RAG-REG-FDA-PRO-2009"
+        },
+        {
+          "id": "6e4b4c73-6304-4f75-8d69-ad83f0134b5c",
+          "tenant_id": "b8026534-02a7-4d24-bf4c-344591964e02",
+          "code": "DIME_V3_FRAMEWORK",
+          "name": "Digital Medicine Society (DiMe) V3 Validation Framework",
+          "source_type": "guidance",
+          "uri": "https://www.dimesociety.org/resources/v3-validation/",
+          "description": "Industry-standard framework outlining verification, analytical validation, and clinical validation for digital measures.",
+          "metadata": {
+            "sections": [
+              "V1",
+              "V2",
+              "V3"
+            ],
+            "authority": "DiMe Society",
+            "pii_sensitivity": "Medium",
+            "publication_year": 2021,
+            "regulatory_exposure": "Medium"
+          },
+          "created_at": "2025-11-02T10:28:10.431079+00:00",
+          "updated_at": "2025-11-02T10:38:15.54012+00:00",
+          "unique_id": "RAG-FWK-DIME-V3"
+        }
+      ]
+    },
+    "dh_prompt": {
+      "exists": true,
+      "record_count": 352,
+      "columns": [
+        {
+          "name": "id",
+          "type": "text/varchar",
+          "sample_value": "50a89e98-733d-49b0-8299-a6353cb6f1af"
+        },
+        {
+          "name": "tenant_id",
+          "type": "text/varchar",
+          "sample_value": "b8026534-02a7-4d24-bf4c-344591964e02"
+        },
+        {
+          "name": "task_id",
+          "type": "text/varchar",
+          "sample_value": "b1aa4b62-6621-4d84-842b-9bc2b10ba4f7"
+        },
+        {
+          "name": "name",
+          "type": "text/varchar",
+          "sample_value": "Digital Biomarker Intended Use Definition"
+        },
+        {
+          "name": "pattern",
+          "type": "text/varchar",
+          "sample_value": "CoT"
+        },
+        {
+          "name": "system_prompt",
+          "type": "text/varchar",
+          "sample_value": "You are P06_DTXCMO, a Chief Medical Officer with expertise in digital therapeutics clinical developm"
+        },
+        {
+          "name": "user_template",
+          "type": "text/varchar",
+          "sample_value": "**TASK**: Define the Intended Use and Context of Use for a digital biomarker to guide validation str"
+        },
+        {
+          "name": "metadata",
+          "type": "jsonb",
+          "sample_value": "{'suite': 'Digital Biomarker Validation', 'workflow': 'Phase 1: V1 Verification', 'sub_suite': 'Foun"
+        },
+        {
+          "name": "created_at",
+          "type": "text/varchar",
+          "sample_value": "2025-11-03T13:00:07.566124+00:00"
+        },
+        {
+          "name": "updated_at",
+          "type": "text/varchar",
+          "sample_value": "2025-11-03T13:00:07.566124+00:00"
+        },
+        {
+          "name": "prompt_identifier",
+          "type": "text/varchar",
+          "sample_value": "CD_002_P1_1"
+        },
+        {
+          "name": "version_label",
+          "type": "text/varchar",
+          "sample_value": "v1.0"
+        },
+        {
+          "name": "owner",
+          "type": "array",
+          "sample_value": "['P06_DTXCMO']"
+        },
+        {
+          "name": "model_config",
+          "type": "jsonb",
+          "sample_value": "{'model': 'claude-3-5-sonnet-20241022', 'max_tokens': 4000, 'temperature': 0.3}"
+        },
+        {
+          "name": "guardrails",
+          "type": "jsonb",
+          "sample_value": null
+        },
+        {
+          "name": "evals",
+          "type": "jsonb",
+          "sample_value": null
+        },
+        {
+          "name": "rollout",
+          "type": "text/varchar",
+          "sample_value": "stable"
+        },
+        {
+          "name": "unique_id",
+          "type": "text/varchar",
+          "sample_value": "PRM-CD-002-P1-01"
+        },
+        {
+          "name": "category",
+          "type": "text/varchar",
+          "sample_value": "Clinical Development"
+        },
+        {
+          "name": "tags",
+          "type": "array",
+          "sample_value": "['digital_biomarker', 'validation', 'FDA', 'intended_use', 'DiMe_V3']"
+        }
+      ],
+      "sample_data": [
+        {
+          "id": "50a89e98-733d-49b0-8299-a6353cb6f1af",
+          "tenant_id": "b8026534-02a7-4d24-bf4c-344591964e02",
+          "task_id": "b1aa4b62-6621-4d84-842b-9bc2b10ba4f7",
+          "name": "Digital Biomarker Intended Use Definition",
+          "pattern": "CoT",
+          "system_prompt": "You are P06_DTXCMO, a Chief Medical Officer with expertise in digital therapeutics clinical development and FDA digital health regulatory strategy.\n\nYour core competencies include:\n- Digital biomarker validation strategy (DiMe V3 Framework)\n- FDA Pre-Submission strategy for digital endpoints\n- Clinical endpoint selection and validation planning\n- Risk assessment for novel digital measures\n- Regulatory precedent analysis (510(k), De Novo, BLA/NDA)\n\nYou have led 15+ digital health regulatory submissions and have deep relationships with FDA Digital Health Center of Excellence.",
+          "user_template": "**TASK**: Define the Intended Use and Context of Use for a digital biomarker to guide validation strategy.\n\n**INSTRUCTIONS**:\nUsing the PICO framework (Population, Intervention, Comparator, Outcome), define:\n1. Intended Use Statement (2-3 sentences)\n2. Context of Use (patient population, clinical construct, endpoint type, regulatory strategy)\n3. Validation Strategy Decision (V1 / V1+V2 / V1+V2+V3)\n4. Risk Assessment (regulatory, clinical, commercial)\n5. FDA Pre-Submission Strategy\n\n**OUTPUT**:\n- Intended Use Document (5-7 pages)\n- Validation Strategy Recommendation\n- Budget & Timeline Estimate\n- Risk Mitigation Plan",
+          "metadata": {
+            "suite": "Digital Biomarker Validation",
+            "workflow": "Phase 1: V1 Verification",
+            "sub_suite": "Foundation & Planning (V1)",
+            "complexity": "Intermediate",
+            "step_number": "1.1",
+            "deliverables": [
+              "Intended Use Statement",
+              "Context of Use Document",
+              "Validation Strategy",
+              "Risk Assessment"
+            ],
+            "estimated_time_hours": 3
+          },
+          "created_at": "2025-11-03T13:00:07.566124+00:00",
+          "updated_at": "2025-11-03T13:00:07.566124+00:00",
+          "prompt_identifier": "CD_002_P1_1",
+          "version_label": "v1.0",
+          "owner": [
+            "P06_DTXCMO"
+          ],
+          "model_config": {
+            "model": "claude-3-5-sonnet-20241022",
+            "max_tokens": 4000,
+            "temperature": 0.3
+          },
+          "guardrails": {},
+          "evals": {},
+          "rollout": "stable",
+          "unique_id": "PRM-CD-002-P1-01",
+          "category": "Clinical Development",
+          "tags": [
+            "digital_biomarker",
+            "validation",
+            "FDA",
+            "intended_use",
+            "DiMe_V3"
+          ]
+        },
+        {
+          "id": "4a58ad38-104d-490e-aa49-354e1d817459",
+          "tenant_id": "b8026534-02a7-4d24-bf4c-344591964e02",
+          "task_id": "5cd0f8e9-7b51-4597-9b02-bf1b56c15bc3",
+          "name": "Develop Comparator Risk Assessment Matrix",
+          "pattern": "CoT",
+          "system_prompt": "**ROLE**: P06_DTXCMO + P03_RA, experts in risk assessment.\n\n**TASK**: Develop comprehensive risk matrix for all comparator options.\n\n**RISK DIMENSIONS**:\n1. **Regulatory Risk**: FDA acceptance, approval delays\n2. **Operational Risk**: Complexity, timeline, cost overruns\n3. **Scientific Risk**: Study validity, internal validity threats\n4. **Ethical Risk**: Patient safety, withholding treatment\n5. **Commercial Risk**: Competitive positioning, payer acceptance\n6. **Recruitment Risk**: Patient willingness to enroll\n\n**RISK LEVELS**: Low / Medium / High\n\n**OUTPUT**:\n## Risk Matrix Table (comparator options \u00d7 risk dimensions)\n## Risk Scoring (1-5 scale)\n## High-Risk Factors Highlighted\n## Risk Mitigation Strategies\n## Overall Risk Profile by Comparator\n## Risk-Adjusted Recommendation",
+          "user_template": "**COMPARATOR OPTIONS**: {all_comparator_options}\n**REGULATORY PRECEDENT**: {regulatory_analysis}\n**YOUR RISK MATRIX**:",
+          "metadata": {
+            "suite": "FORGE\u2122",
+            "use_case": "UC_CD_004",
+            "sub_suite": "FORGE_VALIDATE",
+            "task_code": "TSK-CD-004-P2-03"
+          },
+          "created_at": "2025-11-03T15:41:59.208849+00:00",
+          "updated_at": "2025-11-03T15:41:59.208849+00:00",
+          "prompt_identifier": null,
+          "version_label": "v1.0",
+          "owner": [
+            "P06_DTXCMO",
+            "P03_RA"
+          ],
+          "model_config": {
+            "model": "claude-3-5-sonnet-20241022",
+            "max_tokens": 3500,
+            "temperature": 0.3
+          },
+          "guardrails": {},
+          "evals": {},
+          "rollout": "stable",
+          "unique_id": "PRM-CD-004-06",
+          "category": "Clinical Development",
+          "tags": [
+            "risk_assessment",
+            "comparator"
+          ]
+        }
+      ]
+    },
+    "users": {
+      "exists": true,
+      "record_count": 0,
+      "columns": [
+        {
+          "error": "{'code': '42P01', 'details': None, 'hint': None, 'message': 'relation \"public.users\" does not exist'}"
+        }
+      ],
+      "sample_data": [
+        {
+          "error": "{'code': '42P01', 'details': None, 'hint': None, 'message': 'relation \"public.users\" does not exist'}"
+        }
+      ]
+    },
+    "user_profiles": {
+      "exists": true,
+      "record_count": 9,
+      "columns": [
+        {
+          "name": "id",
+          "type": "text/varchar",
+          "sample_value": "71f6aedd-af8e-4866-90a7-39ed69d35cde"
+        },
+        {
+          "name": "email",
+          "type": "text/varchar",
+          "sample_value": "user@vitalexpert.com"
+        },
+        {
+          "name": "full_name",
+          "type": "text/varchar",
+          "sample_value": "Test User"
+        },
+        {
+          "name": "avatar_url",
+          "type": "unknown (null)",
+          "sample_value": null
+        },
+        {
+          "name": "organization_id",
+          "type": "unknown (null)",
+          "sample_value": null
+        },
+        {
+          "name": "role",
+          "type": "text/varchar",
+          "sample_value": "user"
+        },
+        {
+          "name": "job_title",
+          "type": "unknown (null)",
+          "sample_value": null
+        },
+        {
+          "name": "department",
+          "type": "unknown (null)",
+          "sample_value": null
+        },
+        {
+          "name": "preferences",
+          "type": "jsonb",
+          "sample_value": null
+        },
+        {
+          "name": "created_at",
+          "type": "text/varchar",
+          "sample_value": "2025-10-08T11:20:45.627218+00:00"
+        },
+        {
+          "name": "updated_at",
+          "type": "text/varchar",
+          "sample_value": "2025-11-06T17:14:51.85346+00:00"
+        },
+        {
+          "name": "user_id",
+          "type": "text/varchar",
+          "sample_value": "71f6aedd-af8e-4866-90a7-39ed69d35cde"
+        },
+        {
+          "name": "is_active",
+          "type": "integer",
+          "sample_value": "True"
+        },
+        {
+          "name": "last_login",
+          "type": "unknown (null)",
+          "sample_value": null
+        },
+        {
+          "name": "created_by",
+          "type": "unknown (null)",
+          "sample_value": null
+        },
+        {
+          "name": "updated_by",
+          "type": "unknown (null)",
+          "sample_value": null
+        }
+      ],
+      "sample_data": [
+        {
+          "id": "71f6aedd-af8e-4866-90a7-39ed69d35cde",
+          "email": "user@vitalexpert.com",
+          "full_name": "Test User",
+          "avatar_url": null,
+          "organization_id": null,
+          "role": "user",
+          "job_title": null,
+          "department": null,
+          "preferences": {},
+          "created_at": "2025-10-08T11:20:45.627218+00:00",
+          "updated_at": "2025-11-06T17:14:51.85346+00:00",
+          "user_id": "71f6aedd-af8e-4866-90a7-39ed69d35cde",
+          "is_active": true,
+          "last_login": null,
+          "created_by": null,
+          "updated_by": null
+        },
+        {
+          "id": "4c6cd3c3-18ac-48ed-8e4a-56a79a4b2a4e",
+          "email": "hicham@example.com",
+          "full_name": "hicham@example.com",
+          "avatar_url": null,
+          "organization_id": null,
+          "role": "user",
+          "job_title": null,
+          "department": null,
+          "preferences": {},
+          "created_at": "2025-09-18T19:59:50.054478+00:00",
+          "updated_at": "2025-11-06T17:14:51.85346+00:00",
+          "user_id": "4c6cd3c3-18ac-48ed-8e4a-56a79a4b2a4e",
+          "is_active": true,
+          "last_login": null,
+          "created_by": null,
+          "updated_by": null
+        }
+      ]
+    },
+    "organizations": {
+      "exists": true,
+      "record_count": 0,
+      "columns": [],
+      "sample_data": []
+    },
+    "teams": {
+      "exists": true,
+      "record_count": 0,
+      "columns": [
+        {
+          "error": "{'code': '42P01', 'details': None, 'hint': None, 'message': 'relation \"public.teams\" does not exist'}"
+        }
+      ],
+      "sample_data": [
+        {
+          "error": "{'code': '42P01', 'details': None, 'hint': None, 'message': 'relation \"public.teams\" does not exist'}"
+        }
+      ]
+    },
+    "roles": {
+      "exists": true,
+      "record_count": 0,
+      "columns": [],
+      "sample_data": []
+    },
+    "permissions": {
+      "exists": true,
+      "record_count": 0,
+      "columns": [
+        {
+          "error": "{'code': '42P01', 'details': None, 'hint': None, 'message': 'relation \"public.permissions\" does not exist'}"
+        }
+      ],
+      "sample_data": [
+        {
+          "error": "{'code': '42P01', 'details': None, 'hint': None, 'message': 'relation \"public.permissions\" does not exist'}"
+        }
+      ]
+    },
+    "workflow_executions": {
+      "exists": true,
+      "record_count": 0,
+      "columns": [
+        {
+          "error": "{'code': '42P01', 'details': None, 'hint': None, 'message': 'relation \"public.workflow_executions\" does not exist'}"
+        }
+      ],
+      "sample_data": [
+        {
+          "error": "{'code': '42P01', 'details': None, 'hint': None, 'message': 'relation \"public.workflow_executions\" does not exist'}"
+        }
+      ]
+    },
+    "task_executions": {
+      "exists": true,
+      "record_count": 0,
+      "columns": [
+        {
+          "error": "{'code': '42P01', 'details': None, 'hint': None, 'message': 'relation \"public.task_executions\" does not exist'}"
+        }
+      ],
+      "sample_data": [
+        {
+          "error": "{'code': '42P01', 'details': None, 'hint': None, 'message': 'relation \"public.task_executions\" does not exist'}"
+        }
+      ]
+    },
+    "agent_executions": {
+      "exists": true,
+      "record_count": 0,
+      "columns": [
+        {
+          "error": "{'code': '42P01', 'details': None, 'hint': None, 'message': 'relation \"public.agent_executions\" does not exist'}"
+        }
+      ],
+      "sample_data": [
+        {
+          "error": "{'code': '42P01', 'details': None, 'hint': None, 'message': 'relation \"public.agent_executions\" does not exist'}"
+        }
+      ]
+    },
+    "rag_domains": {
+      "exists": true,
+      "record_count": 0,
+      "columns": [
+        {
+          "error": "{'code': '42P01', 'details': None, 'hint': None, 'message': 'relation \"public.rag_domains\" does not exist'}"
+        }
+      ],
+      "sample_data": [
+        {
+          "error": "{'code': '42P01', 'details': None, 'hint': None, 'message': 'relation \"public.rag_domains\" does not exist'}"
+        }
+      ]
+    },
+    "knowledge_bases": {
+      "exists": true,
+      "record_count": 0,
+      "columns": [
+        {
+          "error": "{'code': '42P01', 'details': None, 'hint': None, 'message': 'relation \"public.knowledge_bases\" does not exist'}"
+        }
+      ],
+      "sample_data": [
+        {
+          "error": "{'code': '42P01', 'details': None, 'hint': None, 'message': 'relation \"public.knowledge_bases\" does not exist'}"
+        }
+      ]
+    },
+    "embeddings": {
+      "exists": true,
+      "record_count": 0,
+      "columns": [
+        {
+          "error": "{'code': '42P01', 'details': None, 'hint': None, 'message': 'relation \"public.embeddings\" does not exist'}"
+        }
+      ],
+      "sample_data": [
+        {
+          "error": "{'code': '42P01', 'details': None, 'hint': None, 'message': 'relation \"public.embeddings\" does not exist'}"
+        }
+      ]
+    },
+    "documents": {
+      "exists": true,
+      "record_count": 0,
+      "columns": [],
+      "sample_data": []
+    },
+    "industries": {
+      "exists": true,
+      "record_count": 16,
+      "columns": [
+        {
+          "name": "id",
+          "type": "text/varchar",
+          "sample_value": "0571859c-25a1-47d6-aac6-8d945bfeed87"
+        },
+        {
+          "name": "unique_id",
+          "type": "text/varchar",
+          "sample_value": "ind_pharma"
+        },
+        {
+          "name": "industry_code",
+          "type": "text/varchar",
+          "sample_value": "pharmaceuticals"
+        },
+        {
+          "name": "industry_name",
+          "type": "text/varchar",
+          "sample_value": "Pharmaceuticals"
+        },
+        {
+          "name": "naics_codes",
+          "type": "array",
+          "sample_value": "['325412', '325414']"
+        },
+        {
+          "name": "gics_sector",
+          "type": "text/varchar",
+          "sample_value": "35201010"
+        },
+        {
+          "name": "description",
+          "type": "text/varchar",
+          "sample_value": "Traditional pharmaceutical companies developing small molecule drugs"
+        },
+        {
+          "name": "sub_categories",
+          "type": "array",
+          "sample_value": "['small_molecule', 'specialty_pharma', 'generics', 'branded_pharma', 'otc']"
+        },
+        {
+          "name": "example_agents",
+          "type": "array",
+          "sample_value": "['Drug Information Specialist', 'Formulation Scientist', 'Regulatory Strategy Advisor']"
+        },
+        {
+          "name": "created_at",
+          "type": "text/varchar",
+          "sample_value": "2025-11-08T17:23:44.309996+00:00"
+        },
+        {
+          "name": "updated_at",
+          "type": "text/varchar",
+          "sample_value": "2025-11-08T17:23:44.309996+00:00"
+        }
+      ],
+      "sample_data": [
+        {
+          "id": "0571859c-25a1-47d6-aac6-8d945bfeed87",
+          "unique_id": "ind_pharma",
+          "industry_code": "pharmaceuticals",
+          "industry_name": "Pharmaceuticals",
+          "naics_codes": [
+            "325412",
+            "325414"
+          ],
+          "gics_sector": "35201010",
+          "description": "Traditional pharmaceutical companies developing small molecule drugs",
+          "sub_categories": [
+            "small_molecule",
+            "specialty_pharma",
+            "generics",
+            "branded_pharma",
+            "otc"
+          ],
+          "example_agents": [
+            "Drug Information Specialist",
+            "Formulation Scientist",
+            "Regulatory Strategy Advisor"
+          ],
+          "created_at": "2025-11-08T17:23:44.309996+00:00",
+          "updated_at": "2025-11-08T17:23:44.309996+00:00"
+        },
+        {
+          "id": "e975475c-adcf-4f0e-855a-b510c52fbd20",
+          "unique_id": "ind_biotech",
+          "industry_code": "biotechnology",
+          "industry_name": "Biotechnology",
+          "naics_codes": [
+            "325414",
+            "541711"
+          ],
+          "gics_sector": "35201020",
+          "description": "Biotechnology companies developing biologics, gene therapy, cell therapy",
+          "sub_categories": [
+            "biologics",
+            "gene_therapy",
+            "cell_therapy",
+            "monoclonal_antibodies",
+            "vaccines",
+            "biosimilars"
+          ],
+          "example_agents": [
+            "Gene Therapy Expert",
+            "CAR-T Specialist",
+            "Bispecific Antibody Expert"
+          ],
+          "created_at": "2025-11-08T17:23:44.309996+00:00",
+          "updated_at": "2025-11-08T17:23:44.309996+00:00"
+        }
+      ]
+    },
+    "functions": {
+      "exists": true,
+      "record_count": 0,
+      "columns": [],
+      "sample_data": []
+    },
+    "use_cases": {
+      "exists": true,
+      "record_count": 0,
+      "columns": [
+        {
+          "error": "{'code': '42P01', 'details': None, 'hint': None, 'message': 'relation \"public.use_cases\" does not exist'}"
+        }
+      ],
+      "sample_data": [
+        {
+          "error": "{'code': '42P01', 'details': None, 'hint': None, 'message': 'relation \"public.use_cases\" does not exist'}"
+        }
+      ]
+    },
+    "domains": {
+      "exists": true,
+      "record_count": 1,
+      "columns": [
+        {
+          "name": "id",
+          "type": "integer",
+          "sample_value": "1"
+        },
+        {
+          "name": "name",
+          "type": "text/varchar",
+          "sample_value": "Clinical Development"
+        },
+        {
+          "name": "code",
+          "type": "text/varchar",
+          "sample_value": "CD"
+        },
+        {
+          "name": "description",
+          "type": "unknown (null)",
+          "sample_value": null
+        },
+        {
+          "name": "created_at",
+          "type": "text/varchar",
+          "sample_value": "2025-11-01T22:12:03.714138"
+        },
+        {
+          "name": "updated_at",
+          "type": "text/varchar",
+          "sample_value": "2025-11-01T22:12:03.714138"
+        }
+      ],
+      "sample_data": [
+        {
+          "id": 1,
+          "name": "Clinical Development",
+          "code": "CD",
+          "description": null,
+          "created_at": "2025-11-01T22:12:03.714138",
+          "updated_at": "2025-11-01T22:12:03.714138"
+        }
+      ]
+    },
+    "strategic_imperatives": {
+      "exists": true,
+      "record_count": 0,
+      "columns": [
+        {
+          "error": "{'code': '42P01', 'details': None, 'hint': None, 'message': 'relation \"public.strategic_imperatives\" does not exist'}"
+        }
+      ],
+      "sample_data": [
+        {
+          "error": "{'code': '42P01', 'details': None, 'hint': None, 'message': 'relation \"public.strategic_imperatives\" does not exist'}"
+        }
+      ]
+    }
+  },
+  "summary": {
+    "total_tables": 35,
+    "total_records": 5750,
+    "tables_found": [
+      "jtbd_library",
+      "workflows",
+      "tasks",
+      "agents",
+      "prompts",
+      "tools",
+      "personas",
+      "dh_personas",
+      "strategic_priorities",
+      "dh_domain",
+      "dh_use_case",
+      "dh_workflow",
+      "dh_task",
+      "dh_agent",
+      "dh_tool",
+      "dh_rag_source",
+      "dh_prompt",
+      "users",
+      "user_profiles",
+      "organizations",
+      "teams",
+      "roles",
+      "permissions",
+      "workflow_executions",
+      "task_executions",
+      "agent_executions",
+      "rag_domains",
+      "knowledge_bases",
+      "embeddings",
+      "documents",
+      "industries",
+      "functions",
+      "use_cases",
+      "domains",
+      "strategic_imperatives"
+    ],
+    "tables_not_found": []
+  }
+}

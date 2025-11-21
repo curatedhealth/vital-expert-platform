@@ -6,10 +6,41 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
+const supabaseUrl =
+  process.env.NEXT_PUBLIC_SUPABASE_URL ||
+  process.env.SUPABASE_URL;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+if (!supabaseUrl || !supabaseServiceKey) {
+  throw new Error('Supabase URL or service role key is not configured for chat sessions API');
+}
+
 const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
+  supabaseUrl,
+  supabaseServiceKey
 );
+
+function normalizeSession(session: any) {
+  if (!session) {
+    return session;
+  }
+  const metadata = session.metadata ?? session.context ?? {};
+  const mode =
+    session.mode ??
+    session.settings?.mode ??
+    metadata.mode ??
+    session.session_type ??
+    'manual';
+  return {
+    ...session,
+    metadata,
+    mode,
+  };
+}
+
+function isPlainObject(value: unknown): value is Record<string, any> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
 
 export async function GET(request: NextRequest) {
   try {
@@ -29,15 +60,17 @@ export async function GET(request: NextRequest) {
       .select(`
         id,
         title,
-        mode,
+        session_type,
         agent_id,
         agent_name,
         created_at,
         updated_at,
         last_message_at,
         message_count,
+        total_tokens,
         is_active,
-        metadata
+        context,
+        settings
       `)
       .eq('user_id', userId)
       .eq('is_active', true)
@@ -56,8 +89,10 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to fetch sessions' }, { status: 500 });
     }
 
-    console.log(`✅ [Chat Sessions] Found ${sessions?.length || 0} sessions`);
-    return NextResponse.json({ sessions: sessions || [] });
+    const normalizedSessions = (sessions || []).map(normalizeSession);
+
+    console.log(`✅ [Chat Sessions] Found ${normalizedSessions.length} sessions`);
+    return NextResponse.json({ sessions: normalizedSessions });
 
   } catch (error) {
     console.error('❌ [Chat Sessions] Unexpected error:', error);
@@ -76,16 +111,31 @@ export async function POST(request: NextRequest) {
 
     console.log('🆕 [Chat Sessions] Creating new session:', { userId, title, mode, agentId });
 
+    const metadataPayload = isPlainObject(metadata) ? metadata : {};
+    const settingsPayload = isPlainObject((metadataPayload as any).settings)
+      ? (metadataPayload as any).settings
+      : {};
+    const contextPayload = isPlainObject((metadataPayload as any).context)
+      ? (metadataPayload as any).context
+      : metadataPayload;
+
+    const sessionPayload: Record<string, any> = {
+      user_id: userId,
+      title: title || 'New Chat',
+      session_type: mode || 'chat',
+      agent_id: agentId || null,
+      agent_name: agentName || null,
+      context: contextPayload,
+      settings: {
+        ...settingsPayload,
+        mode: mode || 'manual',
+      },
+      is_active: true,
+    };
+
     const { data: session, error } = await supabase
       .from('chat_sessions')
-      .insert({
-        user_id: userId,
-        title: title || 'New Chat',
-        mode: mode || 'manual',
-        agent_id: agentId || null,
-        agent_name: agentName || null,
-        metadata: metadata || {}
-      })
+      .insert(sessionPayload)
       .select()
       .single();
 
@@ -94,8 +144,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to create session' }, { status: 500 });
     }
 
-    console.log('✅ [Chat Sessions] Created session:', session.id);
-    return NextResponse.json({ session });
+    const normalized = normalizeSession(session);
+
+    console.log('✅ [Chat Sessions] Created session:', normalized.id);
+    return NextResponse.json({ session: normalized });
 
   } catch (error) {
     console.error('❌ [Chat Sessions] Unexpected error:', error);
@@ -106,7 +158,7 @@ export async function POST(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   try {
     const body = await request.json();
-    const { sessionId, title, agentId, agentName, metadata } = body;
+    const { sessionId, title, agentId, agentName, metadata, mode } = body;
 
     if (!sessionId) {
       return NextResponse.json({ error: 'Session ID is required' }, { status: 400 });
@@ -121,7 +173,28 @@ export async function PUT(request: NextRequest) {
     if (title !== undefined) updateData.title = title;
     if (agentId !== undefined) updateData.agent_id = agentId;
     if (agentName !== undefined) updateData.agent_name = agentName;
-    if (metadata !== undefined) updateData.metadata = metadata;
+    if (metadata !== undefined) {
+      const metadataPayload = isPlainObject(metadata) ? metadata : {};
+      const contextPayload = isPlainObject((metadataPayload as any).context)
+        ? (metadataPayload as any).context
+        : metadataPayload;
+      updateData.context = contextPayload;
+      if (isPlainObject((metadataPayload as any).settings) || mode !== undefined) {
+        updateData.settings = {
+          ...(isPlainObject((metadataPayload as any).settings)
+            ? (metadataPayload as any).settings
+            : {}),
+          mode: mode ?? (metadataPayload as any).mode ?? 'manual',
+        };
+      }
+    }
+    if (mode !== undefined) {
+      updateData.session_type = mode;
+      updateData.settings = {
+        ...(updateData.settings || {}),
+        mode,
+      };
+    }
 
     const { data: session, error } = await supabase
       .from('chat_sessions')
@@ -135,8 +208,10 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to update session' }, { status: 500 });
     }
 
+    const normalized = normalizeSession(session);
+
     console.log('✅ [Chat Sessions] Updated session:', sessionId);
-    return NextResponse.json({ session });
+    return NextResponse.json({ session: normalized });
 
   } catch (error) {
     console.error('❌ [Chat Sessions] Unexpected error:', error);

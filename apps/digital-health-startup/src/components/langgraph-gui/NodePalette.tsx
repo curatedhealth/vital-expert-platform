@@ -82,7 +82,32 @@ export const NodePalette: React.FC<NodePaletteProps> = ({
     rags: [],
   });
 
-  const availableAgents = [
+  // Import agents from the store
+  const [availableAgentsFromStore, setAvailableAgentsFromStore] = React.useState<Array<{id: string, name: string, description: string}>>([]);
+
+  React.useEffect(() => {
+    // Try to get agents from localStorage or use defaults
+    try {
+      const stored = localStorage.getItem('vitalpath-agents-store');
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        const agents = parsed?.state?.agents || [];
+        if (agents.length > 0) {
+          setAvailableAgentsFromStore(
+            agents.slice(0, 10).map((agent: any) => ({
+              id: agent.id || agent.name,
+              name: agent.display_name || agent.name,
+              description: agent.description || '',
+            }))
+          );
+        }
+      }
+    } catch (e) {
+      console.warn('Could not load agents from store:', e);
+    }
+  }, []);
+
+  const availableAgents = availableAgentsFromStore.length > 0 ? availableAgentsFromStore : [
     { id: 'medical', name: 'Medical Research Agent', description: 'Clinical trials, drug mechanisms, efficacy, safety data' },
     { id: 'digital_health', name: 'Digital Health Agent', description: 'Health tech innovations, digital therapeutics, AI/ML' },
     { id: 'regulatory', name: 'Regulatory Agent', description: 'FDA/EMA approvals, compliance, regulatory pathways' },
@@ -130,6 +155,10 @@ export const NodePalette: React.FC<NodePaletteProps> = ({
         return { color: '#06b6d4', bgColor: '#cffafe', borderColor: '#67e8f9' };
       case 'Panel':
         return { color: '#ec4899', bgColor: '#fce7f3', borderColor: '#f9a8d4' };
+      case 'Panel Workflow':
+        return { color: '#a855f7', bgColor: '#f3e8ff', borderColor: '#c084fc' };
+      case 'Agent':
+        return { color: '#7c3aed', bgColor: '#f5f3ff', borderColor: '#c4b5fd' };
       default:
         return { color: '#6b7280', bgColor: '#f3f4f6', borderColor: '#d1d5db' };
     }
@@ -177,10 +206,10 @@ export const NodePalette: React.FC<NodePaletteProps> = ({
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-1.5">
             <Sparkles className="text-primary" size={16} />
-            <h2 className="text-sm font-semibold">Palette</h2>
+            <h2 className="text-sm font-semibold">Library</h2>
           </div>
           {onClose && (
-            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={onClose} title="Close Palette">
+            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={onClose} title="Close Library">
               <X size={14} />
             </Button>
           )}
@@ -239,19 +268,21 @@ export const NodePalette: React.FC<NodePaletteProps> = ({
         <Tabs value={activeCategory} onValueChange={setActiveCategory} className="w-full">
           <TabsList className="grid w-full grid-cols-3 h-7">
             <TabsTrigger value="all" className="text-xs px-1">All</TabsTrigger>
+            <TabsTrigger value="Agent" className="text-xs px-1">Agents</TabsTrigger>
             <TabsTrigger value="Research" className="text-xs px-1">Research</TabsTrigger>
-            <TabsTrigger value="Regulatory" className="text-xs px-1">Reg</TabsTrigger>
           </TabsList>
           <div className="mt-1">
             <TabsList className="grid w-full grid-cols-3 h-7">
+              <TabsTrigger value="Regulatory" className="text-xs px-1">Reg</TabsTrigger>
               <TabsTrigger value="Data" className="text-xs px-1">Data</TabsTrigger>
               <TabsTrigger value="Analysis" className="text-xs px-1">Analysis</TabsTrigger>
-              <TabsTrigger value="Control Flow" className="text-xs px-1">Control</TabsTrigger>
             </TabsList>
           </div>
           <div className="mt-1">
-            <TabsList className="w-full h-7">
-              <TabsTrigger value="Panel" className="flex-1 text-xs px-1">Panel</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-3 h-7">
+              <TabsTrigger value="Control Flow" className="text-xs px-1">Control</TabsTrigger>
+              <TabsTrigger value="Panel" className="text-xs px-1">Panel</TabsTrigger>
+              <TabsTrigger value="Panel Workflow" className="text-xs px-1">Templates</TabsTrigger>
             </TabsList>
           </div>
         </Tabs>

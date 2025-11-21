@@ -8,7 +8,13 @@ Search Tools: PubMed, Web Search, arXiv
 
 import requests
 from typing import List, Dict
-from Bio import Entrez
+# Conditional Bio import - only import when needed (not actually used in this file)
+try:
+    from Bio import Entrez
+    BIO_AVAILABLE = True
+except ImportError:
+    Entrez = None
+    BIO_AVAILABLE = False
 import urllib.request
 import urllib.parse
 from xml.etree.ElementTree import fromstring

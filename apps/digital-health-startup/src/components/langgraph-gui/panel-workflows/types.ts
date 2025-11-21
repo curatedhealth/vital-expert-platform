@@ -21,7 +21,7 @@ export interface ExpertConfig {
  */
 export interface PanelNodeConfig {
   id: string;
-  type: 'input' | 'output' | 'task' | 'orchestrator';
+  type: 'input' | 'output' | 'task' | 'orchestrator' | 'agent';
   taskId?: string; // For task nodes, the task definition ID
   label?: string;
   position?: { x: number; y: number };
@@ -39,6 +39,7 @@ export interface PanelEdgeConfig {
   target: string;
   type?: 'smoothstep' | 'straight' | 'step' | 'default';
   animated?: boolean;
+  label?: string; // Optional label for conditional edges
 }
 
 /**

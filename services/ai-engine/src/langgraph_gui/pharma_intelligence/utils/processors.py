@@ -6,7 +6,16 @@ Compatible with pinecone-client 2.2.4
 from langchain_core.language_models import BaseChatModel
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_openai import OpenAIEmbeddings
-import pinecone
+# Conditional pinecone import - only import when needed
+try:
+    import pinecone
+    from pinecone import Pinecone, ServerlessSpec
+    PINECONE_AVAILABLE = True
+except ImportError:
+    pinecone = None
+    Pinecone = None
+    ServerlessSpec = None
+    PINECONE_AVAILABLE = False
 from typing import List, Dict
 import hashlib
 import json
@@ -130,6 +139,9 @@ class DataProcessorPinecone:
         dimension: int = 1536,
         metric: str = "cosine"
     ):
+        if not PINECONE_AVAILABLE:
+            raise ImportError("Pinecone module is not installed. Please install it with: pip install pinecone-client")
+        
         self.pinecone_api_key = pinecone_api_key
         self.index_name = index_name
         self.embeddings = embeddings

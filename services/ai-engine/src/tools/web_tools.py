@@ -8,7 +8,13 @@ import aiohttp
 from typing import Dict, List, Any, Optional
 from datetime import datetime
 import structlog
-from bs4 import BeautifulSoup
+# Conditional BeautifulSoup import - only import when needed
+try:
+    from bs4 import BeautifulSoup
+    BS4_AVAILABLE = True
+except ImportError:
+    BeautifulSoup = None
+    BS4_AVAILABLE = False
 import re
 from urllib.parse import urljoin, urlparse
 
@@ -316,6 +322,23 @@ class WebScraperTool(BaseTool):
                     html = await response.text()
             
             # Parse HTML
+            if not BS4_AVAILABLE or BeautifulSoup is None:
+                # Fallback: extract text without BeautifulSoup
+                import re
+                # Simple text extraction without HTML tags
+                text = re.sub(r'<[^>]+>', '', html)
+                text = ' '.join(text.split()[:500])  # First 500 words
+                return {
+                    "url": url,
+                    "content": text,
+                    "title": "Web Page Content",
+                    "note": "Parsed without BeautifulSoup (bs4 not installed)"
+                }
+            
+            # Double-check BeautifulSoup is available before using
+            if BeautifulSoup is None:
+                raise ImportError("BeautifulSoup (bs4) is required for HTML parsing. Please install it with: pip install beautifulsoup4")
+            
             soup = BeautifulSoup(html, "html.parser")
             
             # Extract title
@@ -395,8 +418,10 @@ class WebScraperTool(BaseTool):
                 "error": str(e)
             }
     
-    def _extract_metadata(self, soup: BeautifulSoup) -> Dict[str, str]:
+    def _extract_metadata(self, soup) -> Dict[str, str]:
         """Extract metadata from HTML head"""
+        if not BS4_AVAILABLE or soup is None:
+            return {}
         metadata = {}
         
         # Meta tags

@@ -1,5 +1,9 @@
 import { MessageSquare, Users, GitBranch, Sparkles, Layers, UserCheck } from 'lucide-react';
 import { PanelWorkflowConfig } from './types';
+import { MODE1_ASK_EXPERT_CONFIG } from './mode1-ask-expert';
+import { MODE2_ASK_EXPERT_CONFIG } from './mode2-ask-expert';
+import { MODE3_ASK_EXPERT_CONFIG } from './mode3-ask-expert';
+import { MODE4_ASK_EXPERT_CONFIG } from './mode4-ask-expert';
 
 /**
  * Structured Panel Configuration
@@ -1358,5 +1362,9 @@ export const PANEL_CONFIGS: Record<string, PanelWorkflowConfig> = {
   adversarial_panel: ADVERSARIAL_PANEL_CONFIG,
   delphi_panel: DELPHI_PANEL_CONFIG,
   hybrid_panel: HYBRID_PANEL_CONFIG,
+  mode1_ask_expert: MODE1_ASK_EXPERT_CONFIG,
+  mode2_ask_expert: MODE2_ASK_EXPERT_CONFIG,
+  mode3_ask_expert: MODE3_ASK_EXPERT_CONFIG,
+  mode4_ask_expert: MODE4_ASK_EXPERT_CONFIG,
 };
 

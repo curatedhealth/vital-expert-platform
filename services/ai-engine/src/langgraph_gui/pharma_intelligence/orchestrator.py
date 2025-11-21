@@ -28,7 +28,13 @@ from langgraph.graph import StateGraph, END
 from langchain_core.messages import BaseMessage, HumanMessage, AIMessage, SystemMessage
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 from langchain_core.prompts import ChatPromptTemplate
-import pinecone
+# Conditional pinecone import - only import when needed
+try:
+    import pinecone
+    PINECONE_AVAILABLE = True
+except ImportError:
+    pinecone = None
+    PINECONE_AVAILABLE = False
 import operator
 from datetime import datetime
 import json

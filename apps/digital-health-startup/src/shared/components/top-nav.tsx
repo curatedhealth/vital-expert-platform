@@ -47,6 +47,12 @@ const mainNavItems = [
     icon: Home,
   },
   {
+    title: 'Service Templates',
+    href: '/service-templates',
+    icon: Sparkles,
+    badge: 'New',
+  },
+  {
     title: 'Projects',
     href: '/dashboard/projects',
     icon: FolderOpen,
@@ -55,12 +61,11 @@ const mainNavItems = [
     title: 'AI Queries',
     href: '/dashboard/queries',
     icon: MessageSquare,
-    badge: 'New',
   },
   {
-    title: 'Ask Panel v1',
+    title: 'Designer',
     href: '/ask-panel-v1',
-    icon: Sparkles,
+    icon: Target,
   },
   {
     title: 'Documents',

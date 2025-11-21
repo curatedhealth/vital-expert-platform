@@ -278,6 +278,21 @@ export function autoLayoutWorkflow(nodes: Node[], edges: Edge[]): Node[] {
     });
   }
   
+  // For Mode 1 and other linear workflows, use better spacing
+  // Check if this is a Mode 1 workflow (has start/end nodes and linear flow)
+  const hasStartEnd = nodes.some(n => n.id === 'start' || n.type === 'input') && 
+                      nodes.some(n => n.id === 'end' || n.type === 'output');
+  
+  if (hasStartEnd) {
+    // Mode 1 workflow - use vertical layout with better spacing
+    return calculateHierarchicalLayout(nodes, edges, {
+      horizontalSpacing: 400,
+      verticalSpacing: 150,
+      startX: 400,
+      startY: 50,
+    });
+  }
+  
   // For other workflows, use a simpler layout
   return calculateHierarchicalLayout(nodes, edges, {
     horizontalSpacing: 300,

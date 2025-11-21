@@ -10,7 +10,13 @@ Production-ready with:
 """
 
 from langchain_openai import OpenAIEmbeddings
-import pinecone
+# Conditional pinecone import - only import when needed
+try:
+    import pinecone
+    PINECONE_AVAILABLE = True
+except ImportError:
+    pinecone = None
+    PINECONE_AVAILABLE = False
 from typing import List, Dict, Optional
 import hashlib
 import json
@@ -50,6 +56,9 @@ class RAGManager:
     
     def _init_pinecone(self):
         """Initialize Pinecone with retry logic (v2.2.4 API)"""
+        if not PINECONE_AVAILABLE:
+            raise Exception("Pinecone module is not installed. Please install it with: pip install pinecone-client")
+        
         for attempt in range(self.max_retries):
             try:
                 # Initialize without environment - will use the default from API key

@@ -145,6 +145,12 @@ export class AgentService {
       console.log(`✅ Fallback successful: ${data?.length || 0} agents from Supabase`);
       return data?.map((agent: any) => ({
         ...agent,
+        capabilities: Array.isArray(agent.capabilities)
+          ? agent.capabilities
+          : Array.isArray(agent.specializations)
+            ? agent.specializations
+            : agent.metadata?.capabilities || [],
+        knowledge_domains: agent.metadata?.knowledge_domains || [],
         categories: []
       })) || [];
     }

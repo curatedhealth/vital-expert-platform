@@ -8,7 +8,13 @@ Search Tools: PubMed, Web Search, arXiv
 
 import requests
 from typing import List, Dict
-from Bio import Entrez
+# Conditional Bio import - only import when needed
+try:
+    from Bio import Entrez
+    BIO_AVAILABLE = True
+except ImportError:
+    Entrez = None
+    BIO_AVAILABLE = False
 import urllib.request
 import urllib.parse
 from xml.etree.ElementTree import fromstring
@@ -20,6 +26,8 @@ class PubMedSearchTool:
     """
     
     def __init__(self, email: str = "your_email@example.com"):
+        if not BIO_AVAILABLE:
+            raise ImportError("BioPython (biopython) is not installed. Please install it with: pip install biopython")
         # Set your email for NCBI
         Entrez.email = email
     

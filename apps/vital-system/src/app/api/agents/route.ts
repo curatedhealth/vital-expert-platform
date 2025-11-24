@@ -50,9 +50,14 @@ export async function GET(request: NextRequest) {
         role_name,
         function_name,
         department_name
-      `)
-      .eq('status', status)
-      .order('name', { ascending: true });
+      `);
+
+    // Only filter by status if not "all"
+    if (status !== 'all') {
+      query = query.eq('status', status);
+    }
+
+    query = query.order('name', { ascending: true });
 
     const { data, error } = await query;
 

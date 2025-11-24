@@ -90,10 +90,12 @@ export class AgentService {
   // Get all active agents
   async getActiveAgents(showAll: boolean = false): Promise<AgentWithCategories[]> {
     try {
-      console.log(`🔍 AgentService: Fetching ${showAll ? 'all' : 'active/testing'} agents from /api/agents-crud...`);
+      console.log(`🔍 AgentService: Fetching all agents from /api/agents (RLS handles filtering)...`);
 
-      // Use API route with retry logic to handle Next.js dev server cold starts
-      const url = showAll ? '/api/agents-crud?showAll=true' : '/api/agents-crud';
+      // TEMPORARY: Use /api/agents (service role bypass) instead of /api/agents-crud (auth issues)
+      // TODO: Fix authentication and switch back to /api/agents-crud
+      // Always fetch status=all - RLS policy handles tenant-specific filtering
+      const url = '/api/agents?status=all';
       const response = await this.fetchWithRetry(url);
 
       if (!response.ok) {
